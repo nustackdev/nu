@@ -135,7 +135,7 @@ class HostedObserver:
     def setup(self, ctx: Context) -> None:
         """Take the observer bound in this process."""
         tags = (self.target_tag,) if self.target_tag is not None else ()
-        self._inner = ctx.get(ObserverProtocol, *tags)
+        self._inner = ctx.fabrics.get(ObserverProtocol, *tags)
 
     def cleanup(self) -> None:
         """Close every subscription this ever handed out."""

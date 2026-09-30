@@ -9,7 +9,7 @@ by every ws host. It owns the ws, the observer registry and the pending-read
 futures.
 
 The host binds it (``ctx.bind(Session, concrete)``); widget code reads it back
-with ``rt.ctx.get(Session)``.
+with ``rt.ctx.fabrics.get(Session)``.
 """
 
 from __future__ import annotations

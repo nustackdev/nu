@@ -4,8 +4,9 @@ TryCatch is a transparent Span: it forwards the body's yield (scalar / stream /
 nothing) and, on a matching failure, runs a fallback in the body's place. The
 suite pins the basis, the success/caught/propagated paths across void, scalar,
 and stream bodies, the typed ``errors`` filter, the two context disciplines
-(catch is isolated against a ctx copy carrying ``error``; ``finally_`` persists
-against the live ctx), and the async surface. Failures come from the raising
+(catch runs with ``error`` let-bound for as long as it runs, a stream catch for
+its whole drain; ``finally_`` persists against the live ctx), and the async
+surface. Failures come from the raising
 ``BoomAction`` support atom and a local failing-stream atom.
 """
 
@@ -20,6 +21,7 @@ from _support.attrs import declared
 from nu.context import ObjectRef
 from nu.core.iteration import Iter
 from nu.core.spans import TryCatch
+from nu.core.transform import Map
 from nu.lang import Attr, Cardinality, Literal, Policy, Span, StreamQuery
 from nu.lang.helpers import arun, collect, compile, run
 
@@ -84,17 +86,31 @@ def test_scalar_failure_runs_the_catch_in_place() -> None:
     assert value == 9
 
 
-def test_catch_can_read_the_error_from_its_isolated_context() -> None:
-    # The catch runs against a copy carrying ``error``; reading it yields the
-    # exception string, which forwards as the result.
+def test_catch_can_read_the_error_bound_for_it() -> None:
+    # The catch runs with ``error`` bound; reading it yields the exception
+    # string, which forwards as the result.
     value, _ = run(TryCatch(BoomAction("boom"), ObjectRef("error")))
     assert value == "boom"
 
 
-def test_catch_context_is_isolated_so_error_does_not_leak_to_the_parent() -> None:
-    # ``error`` lives on the catch's copy, not the live context.
+def test_error_is_bound_only_while_the_catch_runs() -> None:
+    # ``error`` is a let scoped to the catch; it is gone once the catch returns.
     _, ctx = run(TryCatch(BoomAction("boom"), Literal(9)))
-    assert "error" not in ctx.attrs
+    assert not ctx.attrs.exists("error")
+
+
+def test_catch_writes_land_on_the_live_context() -> None:
+    # No isolated copy: a catch setting an outer declared name is seen after.
+    catch = ObjectRef("seen").set(ObjectRef("error"))
+    _, ctx = run(TryCatch(BoomAction("boom"), catch), declared("seen"))
+    assert ctx.attrs.get("seen") == "boom"
+
+
+def test_stream_catch_reads_the_error_for_its_whole_drain() -> None:
+    # The fallback stream reads ``error`` per item, lazily, while it drains.
+    tree = TryCatch(_BoomStream(1, "mid"), Map(Iter(Literal([1, 2])), ObjectRef("error")))
+    items, _ = collect(compile(tree))
+    assert items == [0, "mid", "mid"]
 
 
 def test_error_key_is_customizable() -> None:
@@ -127,13 +143,13 @@ def test_error_inside_the_filter_is_caught() -> None:
 def test_finally_runs_on_success_and_persists() -> None:
     value, ctx = run(TryCatch(Literal(5), finally_=_set("done", True)), declared("done"))
     assert value == 5
-    assert ctx.attrs["done"] is True
+    assert ctx.attrs.get("done") is True
 
 
 def test_finally_runs_after_a_caught_failure() -> None:
     value, ctx = run(TryCatch(BoomAction("boom"), Literal(9), _set("done", True)), declared("done"))
     assert value == 9
-    assert ctx.attrs["done"] is True
+    assert ctx.attrs.get("done") is True
 
 
 def test_finally_runs_even_when_the_failure_propagates() -> None:
@@ -142,7 +158,7 @@ def test_finally_runs_even_when_the_failure_propagates() -> None:
     with pytest.raises(ValueError, match="boom"):
         run(tree, ctx)
     # finally ran against the live ctx before the error propagated.
-    assert ctx.attrs["done"] is True
+    assert ctx.attrs.get("done") is True
 
 
 # --- void body ------------------------------------------------------------
@@ -151,7 +167,7 @@ def test_finally_runs_even_when_the_failure_propagates() -> None:
 def test_void_success_forwards_nothing_and_the_body_effect_lands() -> None:
     value, ctx = run(TryCatch(_set("a", 1)), declared("a"))
     assert value is None
-    assert ctx.attrs["a"] == 1
+    assert ctx.attrs.get("a") == 1
 
 
 # --- stream body ----------------------------------------------------------
@@ -173,7 +189,7 @@ def test_stream_finally_runs_after_the_stream_drains() -> None:
     tree = TryCatch(Iter(Literal([1, 2])), finally_=_set("done", True))
     items, ctx = collect(compile(tree), declared("done"))
     assert items == [1, 2]
-    assert ctx.attrs["done"] is True
+    assert ctx.attrs.get("done") is True
 
 
 # --- async surface --------------------------------------------------------
@@ -190,7 +206,7 @@ async def test_async_catch_reads_the_error_and_finally_persists() -> None:
         declared("done"),
     )
     assert value == "boom"
-    assert ctx.attrs["done"] is True
+    assert ctx.attrs.get("done") is True
 
 
 async def test_async_failure_without_a_catch_propagates() -> None:

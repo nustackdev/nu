@@ -10,7 +10,7 @@ interactions are ``Teleport`` (execute a tree there). Both refs subclass
   are arbitrary hashable positional args - a plain string for a singleton
   (``RayServiceRef("ledger-main")``), a tuple for a keyed fleet
   (``RayServiceRef(("ledger", 0))``), etc. The tag is stored in payload and
-  forwarded verbatim to ``ctx.get(RayService, *tag)``.
+  forwarded verbatim to ``ctx.fabrics.get(RayService, *tag)``.
 """
 
 from __future__ import annotations
@@ -96,7 +96,7 @@ class RayServiceRef(FabricRef):
 
         def thunk(rt: Runtime) -> object:
             svc = service(rt)
-            return rt.ctx.get(svc, *tag) if rt.ctx.has(svc, *tag) else EMPTY
+            return rt.ctx.fabrics.get(svc, *tag) if rt.ctx.fabrics.has(svc, *tag) else EMPTY
 
         return thunk
 
@@ -107,6 +107,6 @@ class RayServiceRef(FabricRef):
 
         async def athunk(rt: Runtime) -> object:
             svc = await service(rt)
-            return rt.ctx.get(svc, *tag) if rt.ctx.has(svc, *tag) else EMPTY
+            return rt.ctx.fabrics.get(svc, *tag) if rt.ctx.fabrics.has(svc, *tag) else EMPTY
 
         return athunk

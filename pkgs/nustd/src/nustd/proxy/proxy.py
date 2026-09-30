@@ -109,13 +109,13 @@ class InvisiblesProxy(_LifecycleBracket):
         }
 
     @contextmanager
-    def _open(self, ctx: Context) -> Iterator[Context]:
+    def _open(self, ctx: Context) -> Iterator[None]:
         msg = "InvisiblesProxy requires the async runtime; use arun / afirst / acollect"
         raise RuntimeError(msg)
-        yield ctx  # pragma: no cover -- generator-shape marker
+        yield  # pragma: no cover -- generator-shape marker
 
     @asynccontextmanager
-    async def _aopen(self, ctx: Context) -> AsyncIterator[Context]:
+    async def _aopen(self, ctx: Context) -> AsyncIterator[None]:
         target = self._payload["target"]
         tag = self._payload["tag"]
         tags = (tag,) if tag is not None else ()
@@ -125,8 +125,10 @@ class InvisiblesProxy(_LifecycleBracket):
         client = InvisiblesClient(**kwargs)
         try:
             await client.asetup(ctx)
-            scoped = ctx.bind(InvisiblesClient, client, *tags)
-            scoped = scoped.bind(bind_as, client.root, *tags)
-            yield scoped
+            with (
+                ctx.fabrics.bind(InvisiblesClient, client, *tags),
+                ctx.fabrics.bind(bind_as, client.root, *tags),
+            ):
+                yield
         finally:
             await client.acleanup()

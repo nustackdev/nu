@@ -38,7 +38,7 @@ def compile_call(children: tuple[Callable, ...]) -> Callable:
         payload = ref_thunk(rt)
         args = args_thunk(rt)
         messages, overrides = _split(payload, args)
-        fabric = rt.ctx.get(LLMFabric, payload["owner_service"])
+        fabric = rt.ctx.fabrics.get(LLMFabric, payload["owner_service"])
         return fabric.chat(messages, **overrides)
 
     return thunk
@@ -52,7 +52,7 @@ def acompile_call(children: tuple[Callable, ...]) -> Callable:
         payload = await ref_thunk(rt)
         args = await args_thunk(rt)
         messages, overrides = _split(payload, args)
-        fabric = rt.ctx.get(LLMFabric, payload["owner_service"])
+        fabric = rt.ctx.fabrics.get(LLMFabric, payload["owner_service"])
         return await fabric.achat(messages, **overrides)
 
     return athunk

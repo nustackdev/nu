@@ -81,8 +81,8 @@ class Teleport(Policy):
           verbatim to ``ctx.get``: omit it for a bare ``Provide``, the index
           for ``ProvideList``, the key for ``ProvideDict``. ``None`` is a
           usable tag, distinct from omitting it.
-        - ``carry=True`` copies the caller's ``ctx.attrs`` into a shallow
-          copy of the actor's Context for that one execution, so loop
+        - ``carry=True`` binds the caller's ``ctx.attrs`` on a branch
+          of the actor's Context for that one execution, so loop
           variables bound by ``Map`` or ``Filter`` reach the body. Without
           it the body sees only what the actor's Context already holds.
         - The body resolves its refs against the actor's Context, built on
@@ -140,8 +140,8 @@ class Teleport(Policy):
         tag: tuple[object, ...] = () if target is UNSET else (target,)
 
         async def athunk(rt: Runtime) -> object:
-            service = rt.ctx.get(RayService, *tag)
-            attrs = dict(rt.ctx.attrs) if carry and rt.ctx.attrs else None
+            service = rt.ctx.fabrics.get(RayService, *tag)
+            attrs = dict(rt.ctx.attrs.items()) if carry else None
             result = await service.aexecute(body_term, attrs=attrs)
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
                 return _one(result)

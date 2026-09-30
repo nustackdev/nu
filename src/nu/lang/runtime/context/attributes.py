@@ -1,17 +1,19 @@
 """Attributes - the flat name store behind ``ctx.attrs``.
 
-Attached to Context as ctx.attrs. Carried across scope boundaries via copy().
 Refs read here, and every binder goes through the three binding operations:
-``let`` declares, ``set`` reassigns, ``exists`` asks.
+``let`` declares, ``set`` reassigns, ``exists`` asks. A starting task takes
+its own table with ``Context.branch``.
 """
 
 from __future__ import annotations
 
-from copy import deepcopy
 from typing import TYPE_CHECKING
+
+from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
+    from collections.abc import ItemsView
     from types import TracebackType
 
 
@@ -26,43 +28,22 @@ class Attributes:
     refuses a name nothing declared, so no write outlives a scope. Binders
     go through these three operations and hold no binding logic of their own.
 
-    The item surface (``attrs[k]``, ``in``, ``items``) is the raw store: it
-    carries attrs across a scope boundary or into a worker, and is not a way
-    to bind.
+    Reads (``get``, ``items``) never bind. Names a Context starts with are
+    seeded through ``Context(attrs=...)``.
 
     Usage:
         attrs = Attributes()
         with attrs.let("n", 1):
             attrs.set("n", 2)
             attrs.exists("n")           # -> True
+            attrs.get("n")              # -> 2
         attrs.exists("n")               # -> False
-
-        copied = attrs.copy()           # independent deep copy
-        arm = attrs.copy_shallow()      # own key space, values shared
     """
 
     __slots__ = ("_data",)
 
     def __init__(self, data: dict[str, object] | None = None) -> None:
         self._data: dict[str, object] = data if data is not None else {}
-
-    def __getitem__(self, key: str) -> object:
-        return self._data[key]
-
-    def __setitem__(self, key: str, value: object) -> None:
-        self._data[key] = value
-
-    def __delitem__(self, key: str) -> None:
-        del self._data[key]
-
-    def __contains__(self, key: object) -> bool:
-        return key in self._data
-
-    def __len__(self) -> int:
-        return len(self._data)
-
-    def __bool__(self) -> bool:
-        return bool(self._data)
 
     # -- binding -----------------------------------------------------------
 
@@ -98,37 +79,18 @@ class Attributes:
         """Whether ``name`` is declared, whatever it holds (EMPTY included)."""
         return name in self._data
 
-    # -- raw store -----------------------------------------------------------
+    # -- reads ---------------------------------------------------------------
 
-    def get(self, key: str, default: object = None) -> object:
-        """Get value by key with optional default."""
-        return self._data.get(key, default)
+    def get(self, name: str, default: object = EMPTY) -> object:
+        """The value ``name`` holds, or ``default`` when it is not declared."""
+        return self._data.get(name, default)
 
-    def keys(self):  # noqa: ANN201
-        """All attribute keys."""
-        return self._data.keys()
-
-    def values(self):  # noqa: ANN201
-        """All attribute values."""
-        return self._data.values()
-
-    def items(self):  # noqa: ANN201
-        """All attribute key-value pairs."""
+    def items(self) -> ItemsView[str, object]:
+        """Every declared name and its value, read-only."""
         return self._data.items()
 
-    def copy(self) -> Attributes:
-        """Deep copy for scope carry."""
-        return Attributes(deepcopy(self._data))
-
-    def copy_shallow(self) -> Attributes:
-        """Shallow copy for a concurrent branch: own key space, values shared.
-
-        Rebinding a key on the copy leaves the original alone, which is what
-        a fan-out needs so sibling arms do not stomp each other's loop
-        variable. Values are shared by reference, so a live handle (a task, a
-        client, an open store) crosses the branch intact where ``copy`` would
-        choke on it and mutating one in place is seen by everyone.
-        """
+    def _branch(self) -> Attributes:
+        """Own table, same values: a name set or let on the copy stays on the copy."""
         return Attributes(dict(self._data))
 
     def __repr__(self) -> str:

@@ -45,7 +45,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Coroutine
+    from collections.abc import Callable, Coroutine, Iterator
     from multiprocessing.connection import Connection
 
     from nu.core.spans.bracket import _LifecycleBracket
@@ -85,11 +85,10 @@ async def _run(conn: Connection, init: _LifecycleBracket | None) -> None:
 
     stack = contextlib.AsyncExitStack()
     async with stack:
+        ctx = Context()
         try:
             if init is not None:
-                ctx = await stack.enter_async_context(init._aopen(Context()))
-            else:
-                ctx = Context()
+                await stack.enter_async_context(init._aopen(ctx))
         except BaseException as exc:
             with contextlib.suppress(Exception):
                 conn.send(("failed", _portable(exc)))
@@ -149,14 +148,14 @@ async def _say(send: Callable, frame: tuple) -> None:
         await send(frame)
 
 
-def _exec_context(ctx: Context, attrs: dict | None) -> Context:
-    """The Context one request runs against: ``ctx``, or a copy carrying attrs."""
-    if not attrs:
-        return ctx
-    exec_ctx = ctx._copy()
-    for key, value in attrs.items():
-        exec_ctx.attrs[key] = value
-    return exec_ctx
+@contextlib.contextmanager
+def _exec_context(ctx: Context, attrs: dict | None) -> Iterator[Context]:
+    """The Context one request runs against: a branch of ``ctx`` with the caller's names bound."""
+    run_ctx = ctx.branch()
+    with contextlib.ExitStack() as scope:
+        for name, value in (attrs or {}).items():
+            scope.enter_context(run_ctx.attrs.let(name, value))
+        yield run_ctx
 
 
 async def _run_one(
@@ -174,7 +173,8 @@ async def _run_one(
 
     try:
         program = compile_term(tree)
-        value, _ = await aeval(program, _exec_context(ctx, attrs))
+        with _exec_context(ctx, attrs) as exec_ctx:
+            value, _ = await aeval(program, exec_ctx)
     except asyncio.CancelledError:
         raise
     except BaseException as exc:

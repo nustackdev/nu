@@ -198,7 +198,7 @@ def test_stored_values_are_serialized_primitives(bag_ctx) -> None:
     run(Bag.dec.set(Decimal("1.5")), bag_ctx)
     run(Bag.bps.set(PyBasisPoint(500)), bag_ctx)
     run(Bag.pct.set(PyPercentage(2.5)), bag_ctx)
-    raw = run(Bag.dec, bag_ctx)[1].get(dict, Bag)
+    raw = run(Bag.dec, bag_ctx)[1].fabrics.get(dict, Bag)
     assert raw["dec"] == "1.5"
     assert raw["bps"] == 500
     assert raw["pct"] == 2.5

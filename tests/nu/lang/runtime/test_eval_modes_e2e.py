@@ -24,6 +24,7 @@ from _support.async_atoms import (
     AsyncOnlyAction,
     RunsAnywhereAction,
     SyncOnlyAction,
+    recording,
 )
 
 from nu.core.flows import Parallel, Sequential
@@ -44,9 +45,10 @@ def _is_worker(name: str) -> bool:
 def test_pure_tree_runs_sync_on_the_caller_thread() -> None:
     # "no async-only anywhere -> no loop": runs on the call stack, caller thread.
     caller = _this_thread()
-    _, ctx = run(Sequential(RunsAnywhereAction("a"), RunsAnywhereAction("b")))
-    assert ctx.attrs["a"] == caller
-    assert ctx.attrs["b"] == caller
+    ran: dict = {}
+    run(Sequential(RunsAnywhereAction("a"), RunsAnywhereAction("b")), recording(ran))
+    assert ran["a"] == caller
+    assert ran["b"] == caller
 
 
 def test_async_only_tree_is_refused_by_sync_run() -> None:
@@ -57,8 +59,9 @@ def test_async_only_tree_is_refused_by_sync_run() -> None:
 
 async def test_async_only_tree_runs_under_arun() -> None:
     loop = _this_thread()
-    _, ctx = await arun(Sequential(AsyncOnlyAction("a")))
-    assert ctx.attrs["a"] == loop
+    ran: dict = {}
+    await arun(Sequential(AsyncOnlyAction("a")), recording(ran))
+    assert ran["a"] == loop
 
 
 # --- pure compute, parallel (doc: "Add | Add" -> threads) -----------------
@@ -67,9 +70,10 @@ async def test_async_only_tree_runs_under_arun() -> None:
 def test_pure_parallel_dispatches_to_threads() -> None:
     # No async-only -> on_loop=false; each runs-anywhere child inherits false
     # and dispatches to a worker thread.
-    _, ctx = run(Parallel(RunsAnywhereAction("a"), RunsAnywhereAction("b")), max_parallel=2)
-    assert _is_worker(ctx.attrs["a"])
-    assert _is_worker(ctx.attrs["b"])
+    ran: dict = {}
+    run(Parallel(RunsAnywhereAction("a"), RunsAnywhereAction("b")), recording(ran), max_parallel=2)
+    assert _is_worker(ran["a"])
+    assert _is_worker(ran["b"])
 
 
 # --- async I/O, parallel (doc: "HttpFetch | HttpFetch" -> gather) ---------
@@ -77,9 +81,10 @@ def test_pure_parallel_dispatches_to_threads() -> None:
 
 async def test_async_parallel_runs_every_child_on_the_loop() -> None:
     loop = _this_thread()
-    _, ctx = await arun(Parallel(AsyncOnlyAction("a"), AsyncOnlyAction("b")), max_parallel=2)
-    assert ctx.attrs["a"] == loop
-    assert ctx.attrs["b"] == loop
+    ran: dict = {}
+    await arun(Parallel(AsyncOnlyAction("a"), AsyncOnlyAction("b")), recording(ran), max_parallel=2)
+    assert ran["a"] == loop
+    assert ran["b"] == loop
 
 
 # --- mixed work, parallel, hybrid (doc: "HttpFetch | sum(big_array)") -----
@@ -89,9 +94,12 @@ async def test_hybrid_parallel_splits_loop_and_thread() -> None:
     # async-only child -> on_loop=true (loop); sync-only child -> on_loop=false
     # (thread). One parallel node coordinates both.
     loop = _this_thread()
-    _, ctx = await arun(Parallel(AsyncOnlyAction("io"), SyncOnlyAction("cpu")), max_parallel=2)
-    assert ctx.attrs["io"] == loop
-    assert _is_worker(ctx.attrs["cpu"])
+    ran: dict = {}
+    await arun(
+        Parallel(AsyncOnlyAction("io"), SyncOnlyAction("cpu")), recording(ran), max_parallel=2
+    )
+    assert ran["io"] == loop
+    assert _is_worker(ran["cpu"])
 
 
 # --- runs-anywhere child in a loop tree (doc: "Sleep | HttpFetch") --------
@@ -102,9 +110,12 @@ async def test_runs_anywhere_child_inherits_loop_under_async_parallel() -> None:
     # decided by the parent: a loop is already live -> it inherits on_loop=true
     # and runs on the loop, not a thread.
     loop = _this_thread()
-    _, ctx = await arun(Parallel(AsyncOnlyAction("io"), RunsAnywhereAction("any")), max_parallel=2)
-    assert ctx.attrs["io"] == loop
-    assert ctx.attrs["any"] == loop
+    ran: dict = {}
+    await arun(
+        Parallel(AsyncOnlyAction("io"), RunsAnywhereAction("any")), recording(ran), max_parallel=2
+    )
+    assert ran["io"] == loop
+    assert ran["any"] == loop
 
 
 # --- sequential containing parallel (doc: "HttpFetch >> (C1 | C2)") --------
@@ -119,10 +130,11 @@ async def test_sequential_containing_parallel_places_each_branch() -> None:
         AsyncOnlyAction("first"),
         Parallel(SyncOnlyAction("p1"), SyncOnlyAction("p2")),
     )
-    _, ctx = await arun(tree, max_parallel=2)
-    assert ctx.attrs["first"] == loop
-    assert _is_worker(ctx.attrs["p1"])
-    assert _is_worker(ctx.attrs["p2"])
+    ran: dict = {}
+    await arun(tree, recording(ran), max_parallel=2)
+    assert ran["first"] == loop
+    assert _is_worker(ran["p1"])
+    assert _is_worker(ran["p2"])
 
 
 # --- the Budget gate: max_parallel == 1 sequentializes --------------------
@@ -132,6 +144,7 @@ def test_parallel_falls_through_to_sequential_at_max_parallel_one() -> None:
     # No pool allocated -> the parallel join runs each child inline on the
     # caller thread rather than on workers.
     caller = _this_thread()
-    _, ctx = run(Parallel(RunsAnywhereAction("a"), RunsAnywhereAction("b")))
-    assert ctx.attrs["a"] == caller
-    assert ctx.attrs["b"] == caller
+    ran: dict = {}
+    run(Parallel(RunsAnywhereAction("a"), RunsAnywhereAction("b")), recording(ran))
+    assert ran["a"] == caller
+    assert ran["b"] == caller

@@ -27,7 +27,7 @@ def _split(payload: dict, args: dict) -> tuple[str, dict]:
 
 
 def _session(rt: Runtime) -> SessionHandle | None:
-    return rt.ctx.get(SessionHandle) if rt.ctx.has(SessionHandle) else None
+    return rt.ctx.fabrics.get(SessionHandle) if rt.ctx.fabrics.has(SessionHandle) else None
 
 
 def compile_call(children: tuple[Callable, ...]) -> Callable:
@@ -38,7 +38,7 @@ def compile_call(children: tuple[Callable, ...]) -> Callable:
         payload = ref_thunk(rt)
         args = args_thunk(rt)
         prompt, overrides = _split(payload, args)
-        fabric = rt.ctx.get(CCFabric, payload["owner_service"])
+        fabric = rt.ctx.fabrics.get(CCFabric, payload["owner_service"])
         handle = _session(rt)
         if handle is not None and handle.session_id:
             overrides.setdefault("resume", handle.session_id)
@@ -58,7 +58,7 @@ def acompile_call(children: tuple[Callable, ...]) -> Callable:
         payload = await ref_thunk(rt)
         args = await args_thunk(rt)
         prompt, overrides = _split(payload, args)
-        fabric = rt.ctx.get(CCFabric, payload["owner_service"])
+        fabric = rt.ctx.fabrics.get(CCFabric, payload["owner_service"])
         handle = _session(rt)
         if handle is not None and handle.session_id:
             overrides.setdefault("resume", handle.session_id)

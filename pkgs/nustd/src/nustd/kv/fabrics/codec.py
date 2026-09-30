@@ -4,7 +4,7 @@ Codecs are stateless immutables - key + value serialization pair. Instances
 are cheap to construct, no setup or teardown needed. That makes ``Codec`` a
 bare ``Fabric`` (not ``FabricLifecycle``) - the constructor does all the
 work; ``Provide`` binds the instance on ctx and inner Storage / Observer
-fabrics read it via ``ctx.get(Codec)``.
+fabrics read it via ``ctx.fabrics.get(Codec)``.
 
 Preset kwargs helpers are provided for the four common combos - binary
 (pickle), text (JSON), msgpack, and noop (passthrough). They return a plain

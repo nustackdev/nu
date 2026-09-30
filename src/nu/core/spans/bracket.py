@@ -11,29 +11,29 @@ runs its body. A fabric subclasses them and overrides the lifecycle to talk to a
 real store (see ``nustd.kv.interactions.atomicity``).
 
 The lifecycle is one method, ``_open`` - a context manager. It opens the
-boundary, ``yield``s the scoped context the body runs under, then commits on a
-clean exit or rolls back on an exception:
+boundary, provides what it opened on the task's own fabrics store for the
+body, then commits on a clean exit or rolls back on an exception:
 
     @contextmanager
     def _open(self, ctx):
-        txns = [...open...]               # per-run handles, in the frame
-        scoped = ctx.lazy(...)            # scope them into the context
+        txns = [...open...]                           # per-run handles, in the frame
         try:
-            yield scoped                  # body runs here
+            with ctx.fabrics.lazy(Txn, open_txn):     # provided for the body
+                yield                                 # body runs here
         except BaseException:
-            for t in txns: t.abort()      # roll back, then re-raise
+            for t in txns: t.abort()                  # roll back, then re-raise
             raise
         else:
-            for t in txns: t.commit()     # commit
+            for t in txns: t.commit()                 # commit
 
 The per-run handles (the open snapshots, the open transactions) live in the
 context manager's own frame, captured by closure - never on ``self``. A Term is
 immutable and shared across every execution, so it can hold no per-run state
-(see ``AUTHORING.md`` - "No per-run or cross-call state"). The boundary is scoped
-by swapping ``rt.ctx`` for the body's duration and restoring it after, the same
-discipline ``TryCatch`` uses for its isolated handler. For a stream body the
-scope spans the drain: it opens when the stream starts and closes (commit /
-rollback) when it is exhausted, realizing the body's stream inside the boundary.
+(see ``AUTHORING.md`` - "No per-run or cross-call state"). The Context is never
+replaced: the scope lives in the store and ends with the ``with``. For a stream
+body the scope spans the drain: it opens when the stream starts and closes
+(commit / rollback) when it is exhausted, realizing the body's stream inside
+the boundary.
 """
 
 from __future__ import annotations
@@ -63,22 +63,12 @@ def _guard(rt: Runtime, scope: Callable, body: Callable) -> Iterator:
             the boundary.
         body: the compiled body thunk.
 
-    Notes:
-        - ``rt.ctx`` is swapped to the scoped context before the body runs
-          and restored after, even if the consumer stops draining early or
-          the generator is closed.
-
     Yields:
         The body's stream, one item at a time, with the boundary still open
         around the whole drain.
     """
-    saved = rt.ctx
-    try:
-        with scope(saved) as scoped:
-            rt.ctx = scoped
-            yield from sync_iter(body(rt))
-    finally:
-        rt.ctx = saved
+    with scope(rt.ctx):
+        yield from sync_iter(body(rt))
 
 
 async def _aguard(rt: Runtime, ascope: Callable, body: Callable) -> AsyncIterator:
@@ -94,14 +84,9 @@ async def _aguard(rt: Runtime, ascope: Callable, body: Callable) -> AsyncIterato
         The body's stream, one item at a time, with the boundary still open
         around the whole drain.
     """
-    saved = rt.ctx
-    try:
-        async with ascope(saved) as scoped:
-            rt.ctx = scoped
-            async for v in aiter_any(await body(rt)):
-                yield v
-    finally:
-        rt.ctx = saved
+    async with ascope(rt.ctx):
+        async for v in aiter_any(await body(rt)):
+            yield v
 
 
 class _LifecycleBracket(Bracket):
@@ -122,30 +107,28 @@ class _LifecycleBracket(Bracket):
     """
 
     @contextmanager
-    def _open(self, ctx: Context) -> Iterator[Context]:
-        """Open the boundary, yield the scoped context the body runs under, close on exit.
+    def _open(self, ctx: Context) -> Iterator[None]:
+        """Open the boundary around the body, close it on exit.
 
         Args:
-            ctx: the context to scope the boundary into.
+            ctx: the task's context; what the boundary opens is provided on
+                ``ctx.fabrics`` for as long as the body runs.
 
         Notes:
-            - Core default is a pass-through: yields ``ctx`` unchanged, no
-              lifecycle of its own.
-            - A fabric override opens a real snapshot or transaction, scopes
-              it into the context, then commits on a clean exit or rolls
-              back if the body raises.
-
-        Yields:
-            The scoped context.
+            - Core default is a pass-through: no lifecycle of its own.
+            - A fabric override opens a real snapshot or transaction, provides
+              it with ``ctx.fabrics.bind`` / ``lazy``, then commits on a clean
+              exit or rolls back if the body raises.
         """
-        yield ctx
+        yield
 
     @asynccontextmanager
-    async def _aopen(self, ctx: Context) -> AsyncIterator[Context]:
-        """Open the boundary, yield the scoped context the body runs under, close on exit.
+    async def _aopen(self, ctx: Context) -> AsyncIterator[None]:
+        """Open the boundary around the body, close it on exit.
 
         Args:
-            ctx: the context to scope the boundary into.
+            ctx: the task's context; what the boundary opens is provided on
+                ``ctx.fabrics`` for as long as the body runs.
 
         Notes:
             - Core default delegates to the sync ``_open``, so any subclass
@@ -153,12 +136,9 @@ class _LifecycleBracket(Bracket):
               for free.
             - Override this directly when setup or teardown itself needs to
               await something (a subprocess spawn, an RPC, etc.).
-
-        Yields:
-            The scoped context.
         """
-        with self._open(ctx) as scoped:
-            yield scoped
+        with self._open(ctx):
+            yield
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body = children[0]
@@ -167,13 +147,8 @@ class _LifecycleBracket(Bracket):
         def thunk(rt: Runtime) -> object:
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
                 return _guard(rt, scope, body)
-            saved = rt.ctx
-            try:
-                with scope(saved) as scoped:
-                    rt.ctx = scoped
-                    return body(rt)
-            finally:
-                rt.ctx = saved
+            with scope(rt.ctx):
+                return body(rt)
 
         return thunk
 
@@ -184,13 +159,8 @@ class _LifecycleBracket(Bracket):
         async def athunk(rt: Runtime) -> object:
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
                 return _aguard(rt, ascope, body)
-            saved = rt.ctx
-            try:
-                async with ascope(saved) as scoped:
-                    rt.ctx = scoped
-                    return await body(rt)
-            finally:
-                rt.ctx = saved
+            async with ascope(rt.ctx):
+                return await body(rt)
 
         return athunk
 

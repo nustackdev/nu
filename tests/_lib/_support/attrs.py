@@ -15,9 +15,4 @@ __all__ = ["declared"]
 
 def declared(*names: str, **values: object) -> Context:
     """A Context with ``names`` bound to EMPTY and ``values`` bound as given."""
-    ctx = Context()
-    for name in names:
-        ctx.attrs[name] = EMPTY
-    for name, value in values.items():
-        ctx.attrs[name] = value
-    return ctx
+    return Context(attrs={**dict.fromkeys(names, EMPTY), **values})

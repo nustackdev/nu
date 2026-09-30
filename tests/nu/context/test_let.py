@@ -1,7 +1,7 @@
 """Tests for ``Let``: a scoped attr binding.
 
 ``Let(name, value, body)`` evaluates ``value`` once, pushes it into
-``ctx.attrs[name]`` for the body's duration, and pops on exit (restoring the
+``name`` in ``ctx.attrs`` for the body's duration, and pops on exit (restoring the
 prior slot on nesting, or removing it if there was none). The binding is
 dereferenceable via an attrs ref (``IntRef(name)``, ``ObjectRef(name)``, ...) inside the body.
 
@@ -33,7 +33,7 @@ def test_let_binds_and_dereferences_twice_in_body():
     value, ctx = run(tree)
     assert value == 14
     # And the binding does not leak past the body.
-    assert "k" not in ctx.attrs
+    assert not ctx.attrs.exists("k")
 
 
 # --- shadowing: inner Let masks outer, outer restored on pop ----------------
@@ -46,7 +46,7 @@ def test_let_shadows_and_restores_outer_binding():
     value, ctx = run(outer)
     assert value == 2
     # After the outer body the outer scope no longer sees x.
-    assert "x" not in ctx.attrs
+    assert not ctx.attrs.exists("x")
 
 
 # --- eval-once: value runs once even when body reads many times -------------
@@ -79,7 +79,7 @@ def test_let_pops_binding_when_body_raises():
     with pytest.raises(RuntimeError, match="boom"):
         run(Let("k", Literal(99), blow_up()), ctx)
     # The exception unwound through Let's finally; the slot is gone.
-    assert "k" not in ctx.attrs
+    assert not ctx.attrs.exists("k")
 
 
 # --- async parity: same semantics under arun --------------------------------
@@ -90,13 +90,13 @@ async def test_let_async_matches_sync():
     tree = Let("k", Literal(3), Add(IntRef("k"), IntRef("k")))
     value, ctx = await arun(tree)
     assert value == 6
-    assert "k" not in ctx.attrs
+    assert not ctx.attrs.exists("k")
 
     # Shadowing round-trips on async too.
     nested = Let("x", Literal(10), Let("x", Literal(20), IntRef("x")))
     value, ctx = await arun(nested)
     assert value == 20
-    assert "x" not in ctx.attrs
+    assert not ctx.attrs.exists("x")
 
 
 # --- interaction with .set(): Let scopes, a set on an outer name persists ----
@@ -105,16 +105,15 @@ async def test_let_async_matches_sync():
 def test_let_scopes_binding_while_body_sets_do_persist():
     # Body inside the Let reassigns a DIFFERENT, already declared slot; that
     # write persists, while Let's own slot is popped when the body returns.
-    ctx = Context()
-    ctx.attrs["dst"] = 0
+    ctx = Context(attrs={"dst": 0})
     tree = Let(
         "src",
         Literal(5),
         IntRef("dst").set(Add(IntRef("src"), Literal(1))),
     )
     _, ctx = run(tree, ctx)
-    assert "src" not in ctx.attrs
-    assert ctx.attrs["dst"] == 6
+    assert not ctx.attrs.exists("src")
+    assert ctx.attrs.get("dst") == 6
 
 
 # --- name as a Nu expression: resolved at eval time -------------------------
@@ -126,7 +125,7 @@ def test_let_name_can_be_a_nu_expression():
     tree = Let(Literal("dyn"), 42, body=IntRef("dyn"))
     value, ctx = run(tree)
     assert value == 42
-    assert "dyn" not in ctx.attrs
+    assert not ctx.attrs.exists("dyn")
 
 
 # --- target as an attrs ref ---------------------------------------------------
@@ -136,7 +135,7 @@ def test_let_target_can_be_an_attrs_ref():
     n = IntRef("n")
     value, ctx = run(Let(n, 4, n * 2))
     assert value == 8
-    assert "n" not in ctx.attrs
+    assert not ctx.attrs.exists("n")
 
 
 def test_let_ref_target_resolves_a_computed_address():
@@ -145,8 +144,8 @@ def test_let_ref_target_resolves_a_computed_address():
     tree = Let(key, "total", Let(IntRef(key), 5, IntRef("total") + 1))
     value, ctx = run(tree)
     assert value == 6
-    assert "key" not in ctx.attrs
-    assert "total" not in ctx.attrs
+    assert not ctx.attrs.exists("key")
+    assert not ctx.attrs.exists("total")
 
 
 async def test_let_ref_target_on_the_async_path():
@@ -168,12 +167,11 @@ def test_let_without_a_value_declares_the_name_holding_empty():
 
 
 def test_let_without_a_value_then_set():
-    ctx = Context()
-    ctx.attrs["out"] = None
+    ctx = Context(attrs={"out": None})
     x = IntRef("x")
     _, ctx = run(Let(x, body=x.set(3) >> ObjectRef("out").set(x + 1)), ctx)
-    assert ctx.attrs["out"] == 4
-    assert "x" not in ctx.attrs
+    assert ctx.attrs.get("out") == 4
+    assert not ctx.attrs.exists("x")
 
 
 def test_let_without_a_value_binds_the_empty_sentinel():
@@ -185,11 +183,10 @@ def test_let_without_a_value_binds_the_empty_sentinel():
 
 
 def test_set_on_a_declared_name_reassigns_it():
-    ctx = Context()
-    ctx.attrs["out"] = None
+    ctx = Context(attrs={"out": None})
     n = IntRef("n")
     _, ctx = run(Let(n, 1, n.set(n + 1) >> ObjectRef("out").set(n)), ctx)
-    assert ctx.attrs["out"] == 2
+    assert ctx.attrs.get("out") == 2
 
 
 def test_set_on_an_undeclared_name_raises_with_a_let_hint():
@@ -198,25 +195,22 @@ def test_set_on_an_undeclared_name_raises_with_a_let_hint():
 
 
 def test_set_rebinds_the_inner_shadow_and_the_outer_comes_back():
-    ctx = Context()
-    ctx.attrs["inner"] = None
-    ctx.attrs["outer"] = None
+    ctx = Context(attrs={"inner": None, "outer": None})
     n = IntRef("n")
     inner = Let(n, 2, n.set(3) >> ObjectRef("inner").set(n))
     tree = Let(n, 1, inner >> ObjectRef("outer").set(n))
     _, ctx = run(tree, ctx)
-    assert ctx.attrs["inner"] == 3
-    assert ctx.attrs["outer"] == 1
-    assert "n" not in ctx.attrs
+    assert ctx.attrs.get("inner") == 3
+    assert ctx.attrs.get("outer") == 1
+    assert not ctx.attrs.exists("n")
 
 
 async def test_set_rebinds_the_inner_shadow_on_the_async_path():
-    ctx = Context()
-    ctx.attrs["outer"] = None
+    ctx = Context(attrs={"outer": None})
     n = IntRef("n")
     tree = Let(n, 1, Let(n, 2, n.set(3)) >> ObjectRef("outer").set(n))
     _, ctx = await arun(tree, ctx)
-    assert ctx.attrs["outer"] == 1
+    assert ctx.attrs.get("outer") == 1
 
 
 # --- .exists() --------------------------------------------------------------------

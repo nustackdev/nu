@@ -56,9 +56,10 @@ def test_provide_tag_sugar_binds_under_that_tag():
         pass
 
     bracket = Provide(Store, {}, FabricRef(Store), tag="alpha")
-    with bracket._open(Context()) as ctx:
-        assert ctx.has(Store, "alpha")
-        assert not ctx.has(Store, "beta")
+    ctx = Context()
+    with bracket._open(ctx):
+        assert ctx.fabrics.has(Store, "alpha")
+        assert not ctx.fabrics.has(Store, "beta")
 
 
 def test_provide_tags_multi_bind_requires_full_tag_set():
@@ -70,14 +71,15 @@ def test_provide_tags_multi_bind_requires_full_tag_set():
     # back to a less-specific binding), never a less-specific request
     # matching a more-specific binding.
     bracket = Provide(Store, {}, FabricRef(Store), tags=("gpu", "worker"))
-    with bracket._open(Context()) as ctx:
-        inst = ctx.get(Store, "gpu", "worker")
+    ctx = Context()
+    with bracket._open(ctx):
+        inst = ctx.fabrics.get(Store, "gpu", "worker")
         assert inst is not None
         # A more-specific request falls back to this binding as the closest match.
-        assert ctx.get(Store, "gpu", "worker", "extra") is inst
+        assert ctx.fabrics.get(Store, "gpu", "worker", "extra") is inst
         # A single-tag request without the other tag does NOT match.
         with pytest.raises(LookupError):
-            ctx.get(Store, "gpu")
+            ctx.fabrics.get(Store, "gpu")
 
 
 def test_provide_tag_and_tags_compose_into_one_tuple():
@@ -85,11 +87,12 @@ def test_provide_tag_and_tags_compose_into_one_tuple():
         pass
 
     bracket = Provide(Store, {}, FabricRef(Store), tag="primary", tags=("gpu",))
-    with bracket._open(Context()) as ctx:
-        inst = ctx.get(Store, "primary", "gpu")
+    ctx = Context()
+    with bracket._open(ctx):
+        inst = ctx.fabrics.get(Store, "primary", "gpu")
         assert inst is not None
         # Order of tags at lookup does not matter (frozenset).
-        assert ctx.get(Store, "gpu", "primary") is inst
+        assert ctx.fabrics.get(Store, "gpu", "primary") is inst
 
 
 def test_provide_predicate_forwards_to_ctx_bind():
@@ -103,12 +106,13 @@ def test_provide_predicate_forwards_to_ctx_bind():
         return site < 5
 
     bracket = Provide(Store, {}, FabricRef(Store), predicate=match_site)
-    with bracket._open(Context()) as ctx:
-        # Predicate binding lives in _guarded, not _entries.
-        assert not ctx.has(Store)  # no data kwargs -> nothing to match
-        assert ctx.get(Store, site=3) is not None
+    ctx = Context()
+    with bracket._open(ctx):
+        # A predicate binding resolves only against data.
+        assert not ctx.fabrics.has(Store)  # no data kwargs -> nothing to match
+        assert ctx.fabrics.get(Store, site=3) is not None
         with pytest.raises(LookupError):
-            ctx.get(Store, site=10)
+            ctx.fabrics.get(Store, site=10)
 
 
 # --- ProvideList ---------------------------------------------------------
@@ -120,10 +124,11 @@ def test_provide_list_binds_each_by_index():
             self.i = i
 
     bracket = ProvideList(Store, [{"i": 0}, {"i": 1}, {"i": 2}], FabricRef(Store), base_tag=10)
-    with bracket._open(Context()) as ctx:
-        assert ctx.get(Store, 10).i == 0
-        assert ctx.get(Store, 11).i == 1
-        assert ctx.get(Store, 12).i == 2
+    ctx = Context()
+    with bracket._open(ctx):
+        assert ctx.fabrics.get(Store, 10).i == 0
+        assert ctx.fabrics.get(Store, 11).i == 1
+        assert ctx.fabrics.get(Store, 12).i == 2
 
 
 def test_provide_list_extra_tags_share_across_fleet():
@@ -132,10 +137,11 @@ def test_provide_list_extra_tags_share_across_fleet():
             self.i = i
 
     bracket = ProvideList(Store, [{"i": 0}, {"i": 1}], FabricRef(Store), extra_tags=("worker",))
-    with bracket._open(Context()) as ctx:
+    ctx = Context()
+    with bracket._open(ctx):
         # index + shared extra tag both address the same binding.
-        assert ctx.get(Store, 0, "worker").i == 0
-        assert ctx.get(Store, 1, "worker").i == 1
+        assert ctx.fabrics.get(Store, 0, "worker").i == 0
+        assert ctx.fabrics.get(Store, 1, "worker").i == 1
 
 
 def test_provide_list_teardown_is_lifo():
@@ -191,9 +197,10 @@ def test_provide_dict_binds_each_by_key():
         {"gpu": {"name": "g"}, "cpu": {"name": "c"}},
         FabricRef(Store),
     )
-    with bracket._open(Context()) as ctx:
-        assert ctx.get(Store, "gpu").name == "g"
-        assert ctx.get(Store, "cpu").name == "c"
+    ctx = Context()
+    with bracket._open(ctx):
+        assert ctx.fabrics.get(Store, "gpu").name == "g"
+        assert ctx.fabrics.get(Store, "cpu").name == "c"
 
 
 def test_provide_dict_extra_tags_share_across_fleet():
@@ -207,9 +214,10 @@ def test_provide_dict_extra_tags_share_across_fleet():
         FabricRef(Store),
         extra_tags=("shard",),
     )
-    with bracket._open(Context()) as ctx:
-        assert ctx.get(Store, "gpu", "shard").name == "g"
-        assert ctx.get(Store, "cpu", "shard").name == "c"
+    ctx = Context()
+    with bracket._open(ctx):
+        assert ctx.fabrics.get(Store, "gpu", "shard").name == "g"
+        assert ctx.fabrics.get(Store, "cpu", "shard").name == "c"
 
 
 # --- async lifecycle -----------------------------------------------------
@@ -246,7 +254,7 @@ def test_inner_provide_reads_outer_binding_via_ctx_get():
             self.codec_kind: str | None = None
 
         def setup(self, ctx: Context) -> None:
-            self.codec_kind = ctx.get(Codec).kind
+            self.codec_kind = ctx.fabrics.get(Codec).kind
 
     app = Provide(Codec, {"kind": "json"}, Provide(Storage, {}, FabricRef(Storage)))
     value, _ = run(app)

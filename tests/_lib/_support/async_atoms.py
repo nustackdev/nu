@@ -9,10 +9,14 @@ fill the gap:
 - ``AsyncOnlyAction``    - ``requires_async=True`` (needs a loop)
 - ``SyncOnlyAction``     - ``async_affinity=False`` (harmed by a loop; belongs on a thread)
 
-Each is a childless ``ScalarAction`` (mutating, so a valid Flow body) that writes
+Each is a childless ``ScalarAction`` (mutating, so a valid Flow body) that records
 ``threading.current_thread().name`` under its name and yields the name - so a join
 is observable and the *thread* it ran on is recorded. Each atom's **wrong** path
 raises, so a placement bug surfaces as an error rather than a silent pass.
+
+The record is a plain dict handed in through ``recording(ran)``: every arm runs
+on its own branch, so a write to a name would stay in the arm, while the dict is
+one shared value every branch mutates in place.
 """
 
 from __future__ import annotations
@@ -22,7 +26,7 @@ import threading
 from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
-from nu.lang import ScalarAction
+from nu.lang import Context, ScalarAction
 
 
 if TYPE_CHECKING:
@@ -36,7 +40,19 @@ __all__ = [
     "RunsAnywhereAction",
     "SleepAndRecordAction",
     "SyncOnlyAction",
+    "recording",
 ]
+
+_RAN = "ran"
+
+
+def recording(ran: dict) -> Context:
+    """A Context the atoms here record into: ``ran[name]`` is the thread ``name`` ran on."""
+    return Context(attrs={_RAN: ran})
+
+
+def _record(rt: Runtime, name: str) -> None:
+    rt.ctx.attrs.get(_RAN)[name] = threading.current_thread().name  # type: ignore[index]
 
 
 class RunsAnywhereAction(ScalarAction):
@@ -52,7 +68,7 @@ class RunsAnywhereAction(ScalarAction):
         name = self._payload["name"]
 
         def thunk(rt: Runtime) -> object:
-            rt.ctx.attrs[name] = threading.current_thread().name
+            _record(rt, name)
             return name
 
         return thunk
@@ -61,7 +77,7 @@ class RunsAnywhereAction(ScalarAction):
         name = self._payload["name"]
 
         async def athunk(rt: Runtime) -> object:
-            rt.ctx.attrs[name] = threading.current_thread().name
+            _record(rt, name)
             return name
 
         return athunk
@@ -89,7 +105,7 @@ class AsyncOnlyAction(ScalarAction):
 
         async def athunk(rt: Runtime) -> object:
             await asyncio.sleep(0)  # genuinely touch the loop
-            rt.ctx.attrs[name] = threading.current_thread().name
+            _record(rt, name)
             return name
 
         return athunk
@@ -138,7 +154,7 @@ class SyncOnlyAction(ScalarAction):
         name = self._payload["name"]
 
         def thunk(rt: Runtime) -> object:
-            rt.ctx.attrs[name] = threading.current_thread().name
+            _record(rt, name)
             return name
 
         return thunk
@@ -155,7 +171,7 @@ class SleepAndRecordAction(ScalarAction):
     """Async-only atom that sleeps N seconds, then records - for cancellation tests.
 
     Sibling under a Parallel that raises should be cancelled during the sleep,
-    so its name never lands in ``ctx.attrs``.
+    so its name never lands in the record.
     """
 
     _requires_async = Declared(value=True, name="requires_async")
@@ -179,7 +195,7 @@ class SleepAndRecordAction(ScalarAction):
 
         async def athunk(rt: Runtime) -> object:
             await asyncio.sleep(delay)
-            rt.ctx.attrs[name] = threading.current_thread().name
+            _record(rt, name)
             return name
 
         return athunk

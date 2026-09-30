@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 import pytest
 from _support.async_atoms import BoomAction
 from _support.attrs import declared
+from _support.policy_atoms import RecordAction
 
 from nu.context import ObjectRef
 from nu.core.flows import AnyN, Parallel, Race, Sequential
@@ -49,7 +50,7 @@ def test_sequential_runs_bodies_before_the_failure() -> None:
         pass
     # Re-run just the prefix to confirm the first body's effect is real.
     _, ctx = run(_set("a", 1), declared("a"))
-    ctx_holder["a"] = ctx.attrs["a"]
+    ctx_holder["a"] = ctx.attrs.get("a")
     assert ctx_holder["a"] == 1
 
 
@@ -93,8 +94,9 @@ def test_anyn_refuses_sync_run() -> None:
 async def test_anyn_succeeds_past_a_failing_branch() -> None:
     # One branch raises, the other succeeds: AnyN sets the failure aside and the
     # surviving body's effect lands, with no error surfaced.
-    _, ctx = await arun(AnyN(BoomAction("boom"), _set("ok", 1)), declared("ok"))
-    assert ctx.attrs["ok"] == 1
+    log: list = []
+    await arun(AnyN(BoomAction("boom"), RecordAction(log, "ok")))
+    assert [tag for tag, _, _ in log] == ["ok"]
 
 
 async def test_anyn_reraises_when_every_branch_fails() -> None:

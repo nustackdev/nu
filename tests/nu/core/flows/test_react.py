@@ -278,10 +278,7 @@ class _Body(ScalarAction):
 
 
 def _start(term: object, **attrs: object) -> asyncio.Task:
-    ctx = Context()
-    for key, value in attrs.items():
-        ctx.attrs[key] = value
-    return asyncio.ensure_future(arun(term, ctx))
+    return asyncio.ensure_future(arun(term, Context(attrs=attrs)))
 
 
 async def _until(check: Callable[[], bool], timeout: float = 2.0) -> None:
@@ -306,7 +303,7 @@ async def test_react_latest_restarts_and_cancels_the_stale_run():
     feed, log = _Feed(), []
 
     async def body(rt: Runtime) -> None:
-        key = rt.ctx.attrs["k"]
+        key = rt.ctx.attrs.get("k")
         log.append(("start", key))
         try:
             await asyncio.Event().wait()
@@ -329,7 +326,7 @@ async def test_react_latest_collapses_a_burst_during_a_slow_unwind():
     unwinding, gate = asyncio.Event(), asyncio.Event()
 
     async def body(rt: Runtime) -> None:
-        starts.append(rt.ctx.attrs["k"])
+        starts.append(rt.ctx.attrs.get("k"))
         try:
             await asyncio.Event().wait()
         finally:
@@ -372,7 +369,7 @@ async def test_react_latest_initial_sees_a_seeded_key():
     feed, seen = _Feed(), []
 
     async def body(rt: Runtime) -> None:
-        seen.append(rt.ctx.attrs["k"])
+        seen.append(rt.ctx.attrs.get("k"))
 
     task = _start(_latest(body, initial=True), feed=feed, k="default")
     await _until(lambda: seen)
@@ -405,7 +402,7 @@ async def test_react_latest_body_that_finishes_waits_for_the_next_change():
     feed, runs = _Feed(), []
 
     async def body(rt: Runtime) -> None:
-        runs.append(rt.ctx.attrs["k"])
+        runs.append(rt.ctx.attrs.get("k"))
 
     task = _start(_latest(body), feed=feed)
     await _until(lambda: feed.receivers)
@@ -423,7 +420,7 @@ async def test_react_latest_body_error_propagates_and_unbinds():
     feed = _Feed()
 
     async def body(rt: Runtime) -> None:
-        if rt.ctx.attrs["k"] == "boom":
+        if rt.ctx.attrs.get("k") == "boom":
             raise ValueError("boom")
         await asyncio.Event().wait()
 
@@ -460,12 +457,12 @@ async def test_react_latest_gives_each_run_a_fresh_attrs_scope():
     feed, seen = _Feed(), []
 
     async def body(rt: Runtime) -> None:
-        seen.append((rt.ctx.attrs["k"], rt.ctx.attrs.get("scratch")))
-        rt.ctx.attrs["scratch"] = rt.ctx.attrs["k"]
-        rt.ctx.attrs["k"] = "clobbered"
+        seen.append((rt.ctx.attrs.get("k"), rt.ctx.attrs.get("scratch")))
+        rt.ctx.attrs.set("scratch", rt.ctx.attrs.get("k"))
+        rt.ctx.attrs.set("k", "clobbered")
         await asyncio.Event().wait()
 
-    task = _start(_latest(body, initial=True), feed=feed, k="seed")
+    task = _start(_latest(body, initial=True), feed=feed, k="seed", scratch=None)
     await _until(lambda: seen)
     for key in ("a", "b"):
         feed.fire(key)
@@ -505,18 +502,18 @@ async def test_react_latest_restart_unwinds_nested_parallel_and_kv_boundaries():
         return _Body(fn)
 
     def write(rt: Runtime) -> None:
-        txn = rt.ctx.get(TransactionProtocol)
+        txn = rt.ctx.fabrics.get(TransactionProtocol)
         txn.put(key, 1)
         handles["txn"].append(txn)
-        handles["storage"].append(rt.ctx.get(Navigator).storage)
+        handles["storage"].append(rt.ctx.fabrics.get(Navigator).storage)
 
     def read(rt: Runtime) -> None:
-        snap = rt.ctx.get(SnapshotProtocol)
+        snap = rt.ctx.fabrics.get(SnapshotProtocol)
         snap.get(key)
         handles["snap"].append(snap)
 
     async def mark(rt: Runtime) -> None:
-        started.append(rt.ctx.attrs["k"])
+        started.append(rt.ctx.attrs.get("k"))
 
     body = _Body(mark) >> ParallelAsync(
         Transaction(arm("txn", write)),

@@ -178,7 +178,7 @@ def test_a_dead_child_leaves_no_receiver_behind(head):
 def test_local_subscribers_still_hear_everything(head):
     """Serving the observer does not take the process's own feed away."""
     heard = []
-    sub = head.ctx.get(ObserverProtocol).subscribe(_options())
+    sub = head.ctx.fabrics.get(ObserverProtocol).subscribe(_options())
     sub.bind(lambda key: heard.append(tuple(key)))
     try:
         head.write(1)

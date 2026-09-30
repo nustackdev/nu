@@ -27,7 +27,7 @@ Typical stack::
                 Provide(InMemoryObserver, {},
                     Provide(RocksDBStorage, {"path": "/data/main"},
                         Provide(Navigator, {},
-                            body,   # ctx.get(Navigator) available here
+                            body,   # ctx.fabrics.get(Navigator) available here
                         ),
                     ),
                 ),

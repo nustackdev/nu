@@ -131,7 +131,7 @@ class _SetSectionStr(Command):
         value_thunk = children[1]
 
         async def athunk(rt: Runtime) -> None:
-            session = rt.ctx.get(Session)
+            session = rt.ctx.fabrics.get(Session)
             ref_nid = rt.program.children[nid][0]
             path = await ref._aresolve_address(rt, ref_nid)
             value = await value_thunk(rt)
@@ -413,7 +413,7 @@ class _SetTabs(Command):
         value_thunk = children[1]
 
         async def athunk(rt: Runtime) -> None:
-            session = rt.ctx.get(Session)
+            session = rt.ctx.fabrics.get(Session)
             ref_nid = rt.program.children[nid][0]
             path = await ref._aresolve_address(rt, ref_nid)
             value = await value_thunk(rt)
@@ -442,7 +442,7 @@ class _SetActive(Command):
         value_thunk = children[1]
 
         async def athunk(rt: Runtime) -> None:
-            session = rt.ctx.get(Session)
+            session = rt.ctx.fabrics.get(Session)
             ref_nid = rt.program.children[nid][0]
             path = await ref._aresolve_address(rt, ref_nid)
             value = await value_thunk(rt)

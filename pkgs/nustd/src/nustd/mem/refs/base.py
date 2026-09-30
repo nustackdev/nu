@@ -128,7 +128,7 @@ class RefBase(StructuredRef, Generic[T]):
     def _root_data(self, rt: Runtime) -> object:
         """The root dict bound in the Context, scoped to this ref's root shape."""
         scope = self._root_shape
-        return rt.ctx.get(dict, scope) if scope is not None else rt.ctx.get(dict)
+        return rt.ctx.fabrics.get(dict, scope) if scope is not None else rt.ctx.fabrics.get(dict)
 
     def _resolve_path(self, rt: Runtime, nid: int) -> tuple:
         """Full key path, root-first, resolving every level's address at runtime.

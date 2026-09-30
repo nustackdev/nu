@@ -50,7 +50,7 @@ class FabricExists(ScalarQuery):
         ref = self._children[0]
 
         def thunk(rt: Runtime) -> object:
-            return rt.ctx.has(ref._address(rt, rt.program.children[nid][0]))
+            return rt.ctx.fabrics.has(ref._address(rt, rt.program.children[nid][0]))
 
         return thunk
 
@@ -58,6 +58,6 @@ class FabricExists(ScalarQuery):
         ref = self._children[0]
 
         async def athunk(rt: Runtime) -> object:
-            return rt.ctx.has(await ref._aaddress(rt, rt.program.children[nid][0]))
+            return rt.ctx.fabrics.has(await ref._aaddress(rt, rt.program.children[nid][0]))
 
         return athunk

@@ -164,13 +164,13 @@ class SessionFor(_LifecycleBracket):
         self._payload["sid_attr"] = sid_attr
 
     @asynccontextmanager
-    async def _aopen(self, ctx: Context) -> AsyncIterator[Context]:
+    async def _aopen(self, ctx: Context) -> AsyncIterator[None]:
         attr = self._payload["sid_attr"]
-        sid = ctx.attrs.get(attr)
+        sid = ctx.attrs.get(attr, None)
         if sid is None:
             msg = f"SessionFor found no {attr!r} on the Context; it runs inside the fold"
             raise LookupError(msg)
-        session = ctx.get(WebServer).session(sid)
+        session = ctx.fabrics.get(WebServer).session(sid)
         if session is None:
             # Transiently reachable: the browser can go away between the
             # connect and the fold's next pass. The arm raises, the fold
@@ -178,4 +178,5 @@ class SessionFor(_LifecycleBracket):
             msg = f"no live ws session for {sid!r}"
             raise LookupError(msg)
         cls = type(session)
-        yield ctx.bind(getattr(cls, "_nu_bind_as", None) or cls, session)
+        with ctx.fabrics.bind(getattr(cls, "_nu_bind_as", None) or cls, session):
+            yield

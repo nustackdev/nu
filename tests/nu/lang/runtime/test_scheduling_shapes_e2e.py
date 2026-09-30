@@ -21,6 +21,7 @@ from _support.async_atoms import (
     BoomAction,
     SleepAndRecordAction,
     SyncOnlyAction,
+    recording,
 )
 from _support.passthrough_span import PassBracket
 
@@ -41,21 +42,25 @@ def _is_worker(name: str) -> bool:
 
 async def test_parallel_two_async_only_children_both_on_loop() -> None:
     loop = _this_thread()
-    _, ctx = await arun(
+    ran: dict = {}
+    await arun(
         Parallel(AsyncOnlyAction("a"), AsyncOnlyAction("b")),
+        recording(ran),
         max_parallel=2,
     )
-    assert ctx.attrs["a"] == loop
-    assert ctx.attrs["b"] == loop
+    assert ran["a"] == loop
+    assert ran["b"] == loop
 
 
 async def test_parallel_two_sync_only_children_both_off_loop() -> None:
-    _, ctx = await arun(
+    ran: dict = {}
+    await arun(
         Parallel(SyncOnlyAction("a"), SyncOnlyAction("b")),
+        recording(ran),
         max_parallel=2,
     )
-    assert _is_worker(ctx.attrs["a"])
-    assert _is_worker(ctx.attrs["b"])
+    assert _is_worker(ran["a"])
+    assert _is_worker(ran["b"])
 
 
 # --- Parallel: nesting ---------------------------------------------------
@@ -67,11 +72,12 @@ async def test_nested_parallel_places_each_inner_child_correctly() -> None:
         Parallel(AsyncOnlyAction("a"), SyncOnlyAction("b")),
         Parallel(AsyncOnlyAction("c"), SyncOnlyAction("d")),
     )
-    _, ctx = await arun(tree, max_parallel=4)
-    assert ctx.attrs["a"] == loop
-    assert _is_worker(ctx.attrs["b"])
-    assert ctx.attrs["c"] == loop
-    assert _is_worker(ctx.attrs["d"])
+    ran: dict = {}
+    await arun(tree, recording(ran), max_parallel=4)
+    assert ran["a"] == loop
+    assert _is_worker(ran["b"])
+    assert ran["c"] == loop
+    assert _is_worker(ran["d"])
 
 
 # --- Parallel: under a Span transparency ---------------------------------
@@ -86,9 +92,10 @@ async def test_parallel_under_span_preserves_per_child_placement() -> None:
         PassBracket(AsyncOnlyAction("io")),
         PassBracket(SyncOnlyAction("cpu")),
     )
-    _, ctx = await arun(tree, max_parallel=2)
-    assert ctx.attrs["io"] == loop
-    assert _is_worker(ctx.attrs["cpu"])
+    ran: dict = {}
+    await arun(tree, recording(ran), max_parallel=2)
+    assert ran["io"] == loop
+    assert _is_worker(ran["cpu"])
 
 
 # --- Race: uniform and mixed children ------------------------------------
@@ -98,13 +105,15 @@ async def test_race_two_async_only_children_run_on_loop() -> None:
     # Both children complete fast (asyncio.sleep(0)); whichever the wait picks
     # first, the recorded thread must be the loop for whichever ran.
     loop = _this_thread()
-    _, ctx = await arun(
+    ran: dict = {}
+    await arun(
         Race(AsyncOnlyAction("a"), AsyncOnlyAction("b")),
+        recording(ran),
         max_parallel=2,
     )
-    ran = [(k, v) for k, v in ctx.attrs.items() if k in {"a", "b"}]
-    assert ran, "expected at least one Race child to have recorded"
-    for _, thread in ran:
+    picked = [(k, v) for k, v in ran.items() if k in {"a", "b"}]
+    assert picked, "expected at least one Race child to have recorded"
+    for _, thread in picked:
         assert thread == loop
 
 
@@ -113,29 +122,33 @@ async def test_race_mixed_async_and_sync_child_place_correctly() -> None:
     # sync-only child offloads to a worker while the async-only child stays on
     # the loop. Whichever wins first, the recorded thread must match its class.
     loop = _this_thread()
-    _, ctx = await arun(
+    ran: dict = {}
+    await arun(
         Race(AsyncOnlyAction("io"), SyncOnlyAction("cpu")),
+        recording(ran),
         max_parallel=2,
     )
-    if "io" in ctx.attrs:
-        assert ctx.attrs["io"] == loop
-    if "cpu" in ctx.attrs:
-        assert _is_worker(ctx.attrs["cpu"])
-    assert "io" in ctx.attrs or "cpu" in ctx.attrs
+    if "io" in ran:
+        assert ran["io"] == loop
+    if "cpu" in ran:
+        assert _is_worker(ran["cpu"])
+    assert "io" in ran or "cpu" in ran
 
 
 async def test_nested_race_places_children_independently_of_outer() -> None:
     loop = _this_thread()
-    _, ctx = await arun(
+    ran: dict = {}
+    await arun(
         Race(
             Race(AsyncOnlyAction("a"), AsyncOnlyAction("b")),
             AsyncOnlyAction("c"),
         ),
+        recording(ran),
         max_parallel=3,
     )
-    ran = [(k, v) for k, v in ctx.attrs.items() if k in {"a", "b", "c"}]
-    assert ran
-    for _, thread in ran:
+    picked = [(k, v) for k, v in ran.items() if k in {"a", "b", "c"}]
+    assert picked
+    for _, thread in picked:
         assert thread == loop
 
 
@@ -148,10 +161,11 @@ async def test_race_under_parallel_places_children_correctly() -> None:
         Race(AsyncOnlyAction("a"), AsyncOnlyAction("b")),
         Race(AsyncOnlyAction("c"), AsyncOnlyAction("d")),
     )
-    _, ctx = await arun(tree, max_parallel=4)
-    ran = [(k, v) for k, v in ctx.attrs.items() if k in {"a", "b", "c", "d"}]
-    assert ran
-    for _, thread in ran:
+    ran: dict = {}
+    await arun(tree, recording(ran), max_parallel=4)
+    picked = [(k, v) for k, v in ran.items() if k in {"a", "b", "c", "d"}]
+    assert picked
+    for _, thread in picked:
         assert thread == loop
 
 
@@ -160,41 +174,47 @@ async def test_race_under_parallel_places_children_correctly() -> None:
 
 async def test_any_two_async_only_children_run_on_loop() -> None:
     loop = _this_thread()
-    _, ctx = await arun(
+    ran: dict = {}
+    await arun(
         AnyN(AsyncOnlyAction("a"), AsyncOnlyAction("b")),
+        recording(ran),
         max_parallel=2,
     )
-    ran = [(k, v) for k, v in ctx.attrs.items() if k in {"a", "b"}]
-    assert ran
-    for _, thread in ran:
+    picked = [(k, v) for k, v in ran.items() if k in {"a", "b"}]
+    assert picked
+    for _, thread in picked:
         assert thread == loop
 
 
 async def test_any_mixed_async_and_sync_child_place_correctly() -> None:
     loop = _this_thread()
-    _, ctx = await arun(
+    ran: dict = {}
+    await arun(
         AnyN(AsyncOnlyAction("io"), SyncOnlyAction("cpu")),
+        recording(ran),
         max_parallel=2,
     )
-    if "io" in ctx.attrs:
-        assert ctx.attrs["io"] == loop
-    if "cpu" in ctx.attrs:
-        assert _is_worker(ctx.attrs["cpu"])
-    assert "io" in ctx.attrs or "cpu" in ctx.attrs
+    if "io" in ran:
+        assert ran["io"] == loop
+    if "cpu" in ran:
+        assert _is_worker(ran["cpu"])
+    assert "io" in ran or "cpu" in ran
 
 
 async def test_nested_any_places_children_independently_of_outer() -> None:
     loop = _this_thread()
-    _, ctx = await arun(
+    ran: dict = {}
+    await arun(
         AnyN(
             AnyN(AsyncOnlyAction("a"), AsyncOnlyAction("b")),
             AsyncOnlyAction("c"),
         ),
+        recording(ran),
         max_parallel=3,
     )
-    ran = [(k, v) for k, v in ctx.attrs.items() if k in {"a", "b", "c"}]
-    assert ran
-    for _, thread in ran:
+    picked = [(k, v) for k, v in ran.items() if k in {"a", "b", "c"}]
+    assert picked
+    for _, thread in picked:
         assert thread == loop
 
 
@@ -204,10 +224,11 @@ async def test_any_under_parallel_places_children_correctly() -> None:
         AnyN(AsyncOnlyAction("a"), AsyncOnlyAction("b")),
         AnyN(AsyncOnlyAction("c"), AsyncOnlyAction("d")),
     )
-    _, ctx = await arun(tree, max_parallel=4)
-    ran = [(k, v) for k, v in ctx.attrs.items() if k in {"a", "b", "c", "d"}]
-    assert ran
-    for _, thread in ran:
+    ran: dict = {}
+    await arun(tree, recording(ran), max_parallel=4)
+    picked = [(k, v) for k, v in ran.items() if k in {"a", "b", "c", "d"}]
+    assert picked
+    for _, thread in picked:
         assert thread == loop
 
 
@@ -217,7 +238,7 @@ async def test_any_under_parallel_places_children_correctly() -> None:
 async def test_parallel_cancels_slow_sibling_when_a_child_raises() -> None:
     # asyncio.gather propagates the first exception and cancels the rest.
     # The sleep-and-record sibling should be cancelled during its sleep so its
-    # name never lands in ctx.attrs, and the ValueError from BoomAction surfaces.
+    # name never lands in the record, and the ValueError from BoomAction surfaces.
     tree = Parallel(BoomAction("bad"), SleepAndRecordAction("slow", delay=0.5))
     with pytest.raises(ValueError, match="bad"):
         await arun(tree, max_parallel=2)

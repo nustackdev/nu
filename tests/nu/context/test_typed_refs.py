@@ -116,8 +116,7 @@ def test_int_attr_ref_add_composes_to_int_form():
 
 
 def test_int_attr_ref_add_evaluates_correctly():
-    ctx = Context()
-    ctx.attrs["x"] = 10
+    ctx = Context(attrs={"x": 10})
     value, _ = run(IntRef("x") + 3, ctx)
     assert value == 13
 
@@ -151,8 +150,7 @@ def test_tuple_ref_slice_composes_to_tuple_form():
 
 
 def test_frozenset_ref_union_evaluates():
-    ctx = Context()
-    ctx.attrs["fs"] = frozenset({1})
+    ctx = Context(attrs={"fs": frozenset({1})})
     value, _ = run(FrozenSetRef("fs").union(frozenset({2})), ctx)
     assert value == frozenset({1, 2})
 

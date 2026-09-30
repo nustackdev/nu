@@ -326,7 +326,7 @@ class Dispatch(Command):
           the child by the pool's (or the launch's) ``init`` bracket.
           Anything bound around the Dispatch in the caller's tree is not
           visible there.
-        - ``carry=True`` copies the caller's ``ctx.attrs`` into a copy of the
+        - ``carry=True`` binds the caller's ``ctx.attrs`` on a branch of the
           worker's Context for that one body, so loop variables bound by
           ``Map`` or ``Filter`` reach it.
         - Everything crossing the pipe is pickled, so the body term and what
@@ -373,7 +373,7 @@ class Dispatch(Command):
         def thunk(rt: Runtime) -> None:
             pool = _require_pool(children[0](rt))
             wid = children[1](rt)
-            attrs = dict(rt.ctx.attrs) if carry and rt.ctx.attrs else None
+            attrs = dict(rt.ctx.attrs.items()) if carry else None
             pool.dispatch(wid, body_term, attrs=attrs)
 
         return thunk
@@ -386,7 +386,7 @@ class Dispatch(Command):
         async def athunk(rt: Runtime) -> None:
             pool = _require_pool(await children[0](rt))
             wid = await children[1](rt)
-            attrs = dict(rt.ctx.attrs) if carry and rt.ctx.attrs else None
+            attrs = dict(rt.ctx.attrs.items()) if carry else None
             await pool.adispatch(wid, body_term, attrs=attrs)
 
         return athunk
@@ -459,7 +459,7 @@ class Teleport(Policy):
         def thunk(rt: Runtime) -> object:
             pool = _require_pool(children[1](rt))
             wid = children[2](rt)
-            attrs = dict(rt.ctx.attrs) if carry and rt.ctx.attrs else None
+            attrs = dict(rt.ctx.attrs.items()) if carry else None
             result = pool.teleport(wid, body_term, attrs=attrs)
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
                 return _one_sync(result)
@@ -475,7 +475,7 @@ class Teleport(Policy):
         async def athunk(rt: Runtime) -> object:
             pool = _require_pool(await children[1](rt))
             wid = await children[2](rt)
-            attrs = dict(rt.ctx.attrs) if carry and rt.ctx.attrs else None
+            attrs = dict(rt.ctx.attrs.items()) if carry else None
             result = await pool.ateleport(wid, body_term, attrs=attrs)
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
                 return _one_async(result)

@@ -31,7 +31,7 @@ __all__ = [
 
 
 def _lookup(rt: Runtime, payload: dict) -> tuple[object, str]:
-    fabric: ServiceFabric = rt.ctx.get(ServiceFabric, payload["owner_service"])
+    fabric: ServiceFabric = rt.ctx.fabrics.get(ServiceFabric, payload["owner_service"])
     attr = payload.get("target_attr") or payload["name"]
     return fabric.resolve(attr), attr
 

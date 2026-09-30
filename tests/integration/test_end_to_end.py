@@ -25,10 +25,9 @@ from nu.lang.helpers import arun, run
 
 def test_read_compute_write():
     # Read an attr, compute on it, write the result back through the ref.
-    ctx = Context()
-    ctx.attrs["total"] = 40
+    ctx = Context(attrs={"total": 40})
     _, ctx = run(ObjectRef("total").set(Add(ObjectRef("total"), Literal(2))), ctx)
-    assert ctx.attrs["total"] == 42
+    assert ctx.attrs.get("total") == 42
 
 
 def test_map_then_reduce():
@@ -62,7 +61,6 @@ async def test_async_map_then_reduce():
 
 
 async def test_async_write_through_ref():
-    ctx = Context()
-    ctx.attrs["n"] = 1
+    ctx = Context(attrs={"n": 1})
     _, ctx = await arun(ObjectRef("n").set(Add(ObjectRef("n"), Literal(9))), ctx)
-    assert ctx.attrs["n"] == 10
+    assert ctx.attrs.get("n") == 10

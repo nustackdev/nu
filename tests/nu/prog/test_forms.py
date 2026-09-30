@@ -130,8 +130,7 @@ def test_entry_threads_through_load() -> None:
 
 
 def test_entry_can_be_computed() -> None:
-    ctx = nu.Context()
-    ctx.attrs["entry"] = "build"
+    ctx = nu.Context(attrs={"entry": "build"})
     tree = Program(ENTRY_SOURCE).run(entry=nu.ObjectRef("entry"))
     assert nu.run(tree, ctx)[0] == "built"
 
@@ -146,8 +145,7 @@ def test_scope_threads_through_load() -> None:
 
 
 def test_scope_values_can_be_computed() -> None:
-    ctx = nu.Context()
-    ctx.attrs["who"] = "attrs"
+    ctx = nu.Context(attrs={"who": "attrs"})
     tree = Program(GREETING).run(scope={"who": nu.ObjectRef("who")})
     assert nu.run(tree, ctx)[0] == "hello attrs"
 

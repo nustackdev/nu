@@ -83,7 +83,7 @@ def _resolve_observer(rt: Runtime, scope: type | None) -> ObserverProtocol:
     tags = (scope,) if scope is not None else ()
     # Context falls back from a tagged lookup to the untagged binding, so a
     # tagged shape still finds an observer that was bound plainly.
-    return rt.ctx.get(ObserverProtocol, *tags)
+    return rt.ctx.fabrics.get(ObserverProtocol, *tags)
 
 
 class OnChange(ScalarQuery):

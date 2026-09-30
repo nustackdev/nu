@@ -51,7 +51,7 @@ def compile_call(children: tuple[Callable, ...]) -> Callable:
         args = args_thunk(rt)
         verb = payload["verb"]
         path, wire = _split_kwargs(verb, payload["path"], payload["defaults"], args)
-        fabric = rt.ctx.get(HttpFabric, payload["owner_service"])
+        fabric = rt.ctx.fabrics.get(HttpFabric, payload["owner_service"])
         return fabric.request(verb, path, **wire)
 
     return thunk
@@ -66,7 +66,7 @@ def acompile_call(children: tuple[Callable, ...]) -> Callable:
         args = await args_thunk(rt)
         verb = payload["verb"]
         path, wire = _split_kwargs(verb, payload["path"], payload["defaults"], args)
-        fabric = rt.ctx.get(HttpFabric, payload["owner_service"])
+        fabric = rt.ctx.fabrics.get(HttpFabric, payload["owner_service"])
         return await fabric.arequest(verb, path, **wire)
 
     return athunk

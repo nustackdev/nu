@@ -65,11 +65,15 @@ class Facet(Enum):
 def _resolve_navigator(rt: Runtime, scope: type | None, resolved_path: tuple) -> Navigator:
     """Resolve Navigator from the runtime ctx, passing site and path for routing."""
     if not resolved_path:
-        return rt.ctx.get(Navigator, scope) if scope is not None else rt.ctx.get(Navigator)
+        return (
+            rt.ctx.fabrics.get(Navigator, scope)
+            if scope is not None
+            else rt.ctx.fabrics.get(Navigator)
+        )
     site = tuple(addr for addr, _ in resolved_path)
     if scope is not None:
-        return rt.ctx.get(Navigator, scope, site=site, path=resolved_path)
-    return rt.ctx.get(Navigator, site=site, path=resolved_path)
+        return rt.ctx.fabrics.get(Navigator, scope, site=site, path=resolved_path)
+    return rt.ctx.fabrics.get(Navigator, site=site, path=resolved_path)
 
 
 def _resolve_storage_ctx(rt: Runtime, scope: type | None, resolved_path: tuple) -> object:
@@ -77,14 +81,14 @@ def _resolve_storage_ctx(rt: Runtime, scope: type | None, resolved_path: tuple) 
     tags = (scope,) if scope is not None else ()
     if not resolved_path:
         try:
-            return rt.ctx.get(TransactionProtocol, *tags)
+            return rt.ctx.fabrics.get(TransactionProtocol, *tags)
         except (KeyError, LookupError):
-            return rt.ctx.get(SnapshotProtocol, *tags)
+            return rt.ctx.fabrics.get(SnapshotProtocol, *tags)
     site = tuple(addr for addr, _ in resolved_path)
     try:
-        return rt.ctx.get(TransactionProtocol, *tags, site=site, path=resolved_path)
+        return rt.ctx.fabrics.get(TransactionProtocol, *tags, site=site, path=resolved_path)
     except (KeyError, LookupError):
-        return rt.ctx.get(SnapshotProtocol, *tags, site=site, path=resolved_path)
+        return rt.ctx.fabrics.get(SnapshotProtocol, *tags, site=site, path=resolved_path)
 
 
 def _plain(value: object) -> object:

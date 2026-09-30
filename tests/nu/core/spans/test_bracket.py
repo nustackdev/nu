@@ -1,14 +1,14 @@
 """Tests for the Bracket span: Snapshot, Transaction (core lifecycle shells).
 
 A Bracket is a transparent Span (sort BRACKET): it runs the body inside a
-``_open`` context manager - open the boundary, yield the scoped ctx the body runs
-under, commit on a clean exit or roll back on an exception - forwarding the
+``_open`` context manager - open the boundary, provide it on ``ctx.fabrics`` for
+the body, commit on a clean exit or roll back on an exception - forwarding the
 body's yield unchanged. At the core level ``_open`` is a pass-through, so a bare
 bracket is a pass-through; the suite pins that across void, scalar, and stream
 bodies, then drives a recording subclass to pin the lifecycle: _open opens before
 the body and closes after, success commits while failure rolls back and
 re-propagates, the per-run handle lives in the boundary's frame (not on ``self``),
-the body runs under the scoped context which is restored after, and a stream
+the body sees what the boundary provides and the scope ends after, and a stream
 boundary spans the whole drain (commit fires once, after exhaustion).
 """
 
@@ -23,7 +23,7 @@ from _support.attrs import declared
 from _support.law_terms import Cmd, Q, R
 from _support.laws import assert_fails, assert_passes
 
-from nu.context import ObjectRef
+from nu.context import FabricRef, ObjectRef
 from nu.core.arithmetic import Add
 from nu.core.iteration import Iter
 from nu.core.spans import Snapshot, Transaction
@@ -108,7 +108,7 @@ def test_transaction_commits_on_success() -> None:
         def _open(self, ctx):
             events.append("open")
             try:
-                yield ctx
+                yield
             except BaseException:
                 events.append("rollback")
                 raise
@@ -128,7 +128,7 @@ def test_transaction_rolls_back_and_reraises_on_failure() -> None:
         def _open(self, ctx):
             events.append("open")
             try:
-                yield ctx
+                yield
             except BaseException:
                 events.append("rollback")
                 raise
@@ -150,7 +150,7 @@ def test_per_run_handle_lives_in_the_scope_frame_not_self() -> None:
             handle = object()  # the per-run handle, captured by the frame
             opened.append(handle)
             try:
-                yield ctx
+                yield
             finally:
                 closed.append(handle)
 
@@ -160,16 +160,18 @@ def test_per_run_handle_lives_in_the_scope_frame_not_self() -> None:
 
 
 def test_bracket_scopes_ctx_for_body_then_restores() -> None:
+    class Marker:
+        pass
+
     class Scoped(Snapshot):
         @contextmanager
         def _open(self, ctx):
-            scoped = ctx._copy()
-            scoped.attrs["__scoped__"] = True
-            yield scoped
+            with ctx.fabrics.bind(Marker, Marker()):
+                yield
 
-    value, ctx = run(Scoped(ObjectRef("__scoped__")))
-    assert value is True  # body ran under the scoped ctx
-    assert ctx.attrs.get("__scoped__") is None  # restored: the copy was discarded
+    value, ctx = run(Scoped(FabricRef(Marker).exists()))
+    assert value is True  # body ran with the binding provided
+    assert not ctx.fabrics.has(Marker)  # restored: the scope ended with the body
 
 
 def test_stream_boundary_spans_the_whole_drain() -> None:
@@ -180,7 +182,7 @@ def test_stream_boundary_spans_the_whole_drain() -> None:
         def _open(self, ctx):
             events.append("open")
             try:
-                yield ctx
+                yield
             except BaseException:
                 events.append("rollback")
                 raise
@@ -203,7 +205,7 @@ async def test_transaction_commits_on_success_async() -> None:
         def _open(self, ctx):
             events.append("open")
             try:
-                yield ctx
+                yield
             except BaseException:
                 events.append("rollback")
                 raise
@@ -223,7 +225,7 @@ async def test_transaction_rolls_back_on_failure_async() -> None:
         def _open(self, ctx):
             events.append("open")
             try:
-                yield ctx
+                yield
             except BaseException:
                 events.append("rollback")
                 raise

@@ -1,13 +1,14 @@
-"""Support atoms for Policy span tests (Retry, Timeout, Throttle, Debounce).
+"""Support atoms for Policy span tests (Retry, Timeout).
 
-Each is a childless mutating atom that counts/records through ``ctx.attrs`` or an
-external log, so retry loops, hooks (which run in an isolated ctx copy), timeout
-cancellation, and throttle/debounce state are all observable from a test.
+Each is a childless mutating atom that counts its own calls or records into an
+external log or a declared name, so retry loops, hooks, and timeout
+cancellation are all observable from a test.
 """
 
 from __future__ import annotations
 
 import asyncio
+import itertools
 from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
@@ -19,13 +20,13 @@ if TYPE_CHECKING:
 
     from nu.lang.runtime import Runtime
 
-__all__ = ["CountAction", "FlakyAction", "FlakyStream", "RecordAction", "SlowAction"]
+__all__ = ["FlakyAction", "FlakyStream", "RecordAction", "SlowAction"]
 
 
 class FlakyAction(ScalarAction):
     """Fails its first ``fail_times`` calls (ValueError), then yields ``name``.
 
-    Counts calls in ``ctx.attrs`` so it survives a retry loop's fresh re-runs.
+    Counts its own calls, so the count survives a retry loop's fresh re-runs.
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -34,11 +35,10 @@ class FlakyAction(ScalarAction):
         super().__init__()
         self._payload["fail_times"] = fail_times
         self._payload["name"] = name
+        self._payload["calls"] = itertools.count()
 
     def _run(self, rt: Runtime) -> object:
-        key = f"__flaky_calls_{self._payload['name']}__"
-        n = rt.ctx.attrs.get(key, 0)
-        rt.ctx.attrs[key] = n + 1
+        n = next(self._payload["calls"])
         if n < self._payload["fail_times"]:
             msg = f"flaky {n}"
             raise ValueError(msg)
@@ -57,8 +57,7 @@ class FlakyAction(ScalarAction):
 class RecordAction(ScalarAction):
     """Appends ``(tag, attempt, error)`` to an external log; yields None.
 
-    Observes a hook firing even though hooks run against an isolated ctx copy -
-    the log is external, not ctx.
+    Observes a hook firing and what it saw bound at ``attempt`` / ``error``.
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -70,7 +69,11 @@ class RecordAction(ScalarAction):
 
     def _run(self, rt: Runtime) -> object:
         self._payload["log"].append(
-            (self._payload["tag"], rt.ctx.attrs.get("attempt"), rt.ctx.attrs.get("error")),
+            (
+                self._payload["tag"],
+                rt.ctx.attrs.get("attempt", None),
+                rt.ctx.attrs.get("error", None),
+            ),
         )
         return None
 
@@ -84,33 +87,8 @@ class RecordAction(ScalarAction):
         return athunk
 
 
-class CountAction(ScalarAction):
-    """Increments ``ctx.attrs[key]`` each run; yields the new count."""
-
-    _mutates = Declared(value=frozenset({0}), name="mutates")
-
-    def __init__(self, key: str = "count") -> None:
-        super().__init__()
-        self._payload["key"] = key
-
-    def _run(self, rt: Runtime) -> object:
-        key = self._payload["key"]
-        n = rt.ctx.attrs.get(key, 0) + 1
-        rt.ctx.attrs[key] = n
-        return n
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        return self._run
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        async def athunk(rt: Runtime) -> object:
-            return self._run(rt)
-
-        return athunk
-
-
 class SlowAction(ScalarAction):
-    """Async: sleep ``seconds``, write ``attrs[name]=True``, yield ``name``.
+    """Async: sleep ``seconds``, set the declared ``name`` to True, yield ``name``.
 
     Sync thunk returns ``name`` without sleeping (never reached under an
     async-only span).
@@ -127,7 +105,7 @@ class SlowAction(ScalarAction):
         name = self._payload["name"]
 
         def thunk(rt: Runtime) -> object:
-            rt.ctx.attrs[name] = True
+            rt.ctx.attrs.set(name, True)
             return name
 
         return thunk
@@ -138,7 +116,7 @@ class SlowAction(ScalarAction):
 
         async def athunk(rt: Runtime) -> object:
             await asyncio.sleep(seconds)
-            rt.ctx.attrs[name] = True
+            rt.ctx.attrs.set(name, True)
             return name
 
         return athunk
@@ -147,7 +125,7 @@ class SlowAction(ScalarAction):
 class FlakyStream(StreamQuery):
     """Stream that raises on its first ``fail_times`` calls, then yields ``items``.
 
-    Counts calls in ``ctx.attrs`` so a retry re-runs it fresh each attempt.
+    Counts its own calls, so a retry re-runs it fresh each attempt.
     """
 
     def __init__(self, fail_times: int, items: object, name: str = "fs") -> None:
@@ -155,12 +133,11 @@ class FlakyStream(StreamQuery):
         self._payload["fail_times"] = fail_times
         self._payload["items"] = list(items)
         self._payload["name"] = name
+        self._payload["calls"] = itertools.count()
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
-            key = f"__fs_calls_{self._payload['name']}__"
-            n = rt.ctx.attrs.get(key, 0)
-            rt.ctx.attrs[key] = n + 1
+            n = next(self._payload["calls"])
             fail_times = self._payload["fail_times"]
             items = self._payload["items"]
 
@@ -176,9 +153,7 @@ class FlakyStream(StreamQuery):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
-            key = f"__fs_calls_{self._payload['name']}__"
-            n = rt.ctx.attrs.get(key, 0)
-            rt.ctx.attrs[key] = n + 1
+            n = next(self._payload["calls"])
             fail_times = self._payload["fail_times"]
             items = self._payload["items"]
 

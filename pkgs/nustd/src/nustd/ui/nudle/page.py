@@ -87,7 +87,7 @@ class Boot(Command):
         sidebar = shape_cls._sidebar_enabled() if issubclass(shape_cls, Index) else False
 
         async def athunk(rt: Runtime) -> None:
-            session = rt.ctx.get(Session)
+            session = rt.ctx.fabrics.get(Session)
             # Down this connection's socket and no other: the clearing remove
             # wipes the tab that is booting, never a sibling tab's tree.
             await session.send(Frame(OP_REMOVE))

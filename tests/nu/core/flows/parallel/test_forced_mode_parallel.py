@@ -14,7 +14,7 @@ from __future__ import annotations
 import threading
 
 import pytest
-from _support.async_atoms import AsyncOnlyAction, RunsAnywhereAction, SyncOnlyAction
+from _support.async_atoms import AsyncOnlyAction, RunsAnywhereAction, SyncOnlyAction, recording
 
 from nu.core.flows import ParallelAsync, ParallelThreaded
 from nu.engine.validation import ValidationError
@@ -32,22 +32,26 @@ def _is_worker(name: str) -> bool:
 async def test_parallel_threaded_places_every_child_off_the_loop() -> None:
     # Both children are runs-anywhere; under Threaded they must both land on
     # worker threads regardless of the smart choice.
-    _, ctx = await arun(
+    ran: dict = {}
+    await arun(
         ParallelThreaded(RunsAnywhereAction("a"), RunsAnywhereAction("b")),
+        recording(ran),
         max_parallel=2,
     )
-    assert _is_worker(ctx.attrs["a"])
-    assert _is_worker(ctx.attrs["b"])
+    assert _is_worker(ran["a"])
+    assert _is_worker(ran["b"])
 
 
 async def test_parallel_async_places_every_child_on_the_loop() -> None:
     loop = _this_thread()
-    _, ctx = await arun(
+    ran: dict = {}
+    await arun(
         ParallelAsync(RunsAnywhereAction("a"), RunsAnywhereAction("b")),
+        recording(ran),
         max_parallel=2,
     )
-    assert ctx.attrs["a"] == loop
-    assert ctx.attrs["b"] == loop
+    assert ran["a"] == loop
+    assert ran["b"] == loop
 
 
 def test_parallel_async_sync_run_is_rejected_as_async_only() -> None:

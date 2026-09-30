@@ -319,9 +319,7 @@ def test_async_tee() -> None:
 
 
 def _outer_item_and_acc() -> Context:
-    ctx = Context()
-    ctx.attrs["item"] = "outer item"
-    ctx.attrs["acc"] = "outer acc"
+    ctx = Context(attrs={"item": "outer item", "acc": "outer acc"})
     return ctx
 
 
@@ -341,8 +339,8 @@ def test_loop_vars_are_scoped_to_each_item(build: object, expected: list) -> Non
     ctx = _outer_item_and_acc()
     value, _ = run(Collect(build()), ctx)
     assert value == expected
-    assert ctx.attrs["item"] == "outer item"
-    assert ctx.attrs["acc"] == "outer acc"
+    assert ctx.attrs.get("item") == "outer item"
+    assert ctx.attrs.get("acc") == "outer acc"
 
 
 @pytest.mark.parametrize(("build", "expected"), _SCOPED, ids=_SCOPED_IDS)
@@ -350,5 +348,5 @@ async def test_loop_vars_are_scoped_to_each_item_async(build: object, expected: 
     ctx = _outer_item_and_acc()
     value, _ = await arun(Collect(build()), ctx)
     assert value == expected
-    assert ctx.attrs["item"] == "outer item"
-    assert ctx.attrs["acc"] == "outer acc"
+    assert ctx.attrs.get("item") == "outer item"
+    assert ctx.attrs.get("acc") == "outer acc"

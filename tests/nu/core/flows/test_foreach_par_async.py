@@ -65,10 +65,7 @@ def _items(*values: object) -> Iter:
 
 
 def _seed(**attrs: object) -> Context:
-    ctx = Context()
-    for key, value in attrs.items():
-        ctx.attrs[key] = value
-    return ctx
+    return Context(attrs=attrs)
 
 
 # --- basis ----------------------------------------------------------------
@@ -98,7 +95,7 @@ async def test_arms_overlap_rather_than_run_in_sequence() -> None:
     arrived: list[object] = []
 
     async def arm(attrs: Attributes) -> None:
-        arrived.append(attrs["item"])
+        arrived.append(attrs.get("item"))
         if len(arrived) == 3:
             everyone_here.set()
         await asyncio.wait_for(everyone_here.wait(), timeout=2)
@@ -116,10 +113,10 @@ async def test_each_arm_keeps_its_own_item_across_awaits() -> None:
     seen: list[tuple[object, object]] = []
 
     async def arm(attrs: Attributes) -> None:
-        mine = attrs["item"]
+        mine = attrs.get("item")
         for _ in range(3):
             await asyncio.sleep(0.01)
-            seen.append((mine, attrs["item"]))
+            seen.append((mine, attrs.get("item")))
 
     await arun(ForEachParAsync(_items(1, 2, 3), ArmAsync(arm)))
     assert len(seen) == 9
@@ -128,18 +125,18 @@ async def test_each_arm_keeps_its_own_item_across_awaits() -> None:
 
 
 async def test_arm_writes_stay_in_the_arm_and_values_stay_shared() -> None:
-    # Own key space: the arm's own binding never reaches the caller. Shared
+    # Own key space: the arm's own write never reaches the caller. Shared
     # values: the list the caller put in attrs is the same object in the arm.
     log: list[object] = []
 
     async def arm(attrs: Attributes) -> None:
-        attrs["mine"] = attrs["item"]
-        attrs["log"].append(attrs["item"])
+        attrs.set("mine", attrs.get("item"))
+        attrs.get("log").append(attrs.get("item"))
 
-    _, ctx = await arun(ForEachParAsync(_items(1, 2), ArmAsync(arm)), _seed(log=log))
-    assert "mine" not in ctx.attrs
-    assert sorted(ctx.attrs["log"]) == [1, 2]
-    assert ctx.attrs["log"] is log
+    _, ctx = await arun(ForEachParAsync(_items(1, 2), ArmAsync(arm)), _seed(log=log, mine=None))
+    assert ctx.attrs.get("mine") is None
+    assert sorted(ctx.attrs.get("log")) == [1, 2]
+    assert ctx.attrs.get("log") is log
 
 
 # --- never-returning arms + cancellation ---------------------------------
@@ -148,27 +145,28 @@ async def test_arm_writes_stay_in_the_arm_and_values_stay_shared() -> None:
 async def test_never_returning_arms_are_cancelled_through_race() -> None:
     started: list[object] = []
     cancelled: list[object] = []
+    done: list[bool] = []
 
     async def arm(attrs: Attributes) -> None:
-        started.append(attrs["item"])
+        started.append(attrs.get("item"))
         try:
             await asyncio.Event().wait()  # never returns on its own
         except asyncio.CancelledError:
-            cancelled.append(attrs["item"])
+            cancelled.append(attrs.get("item"))
             raise
 
     async def finisher(attrs: Attributes) -> None:
         while len(started) < 3:
             await asyncio.sleep(0.01)
-        attrs["done"] = True
+        done.append(True)
 
-    _, ctx = await arun(
+    await arun(
         Race(
             ForEachParAsync(_items(1, 2, 3), ForeverDo(ArmAsync(arm))),
             ArmAsync(finisher),
         )
     )
-    assert ctx.attrs["done"] is True
+    assert done == [True]
     assert sorted(started) == [1, 2, 3]
     assert sorted(cancelled) == [1, 2, 3]
 
@@ -180,7 +178,7 @@ async def test_empty_items_completes_immediately() -> None:
     ran: list[object] = []
 
     async def arm(attrs: Attributes) -> None:
-        ran.append(attrs["item"])
+        ran.append(attrs.get("item"))
 
     await asyncio.wait_for(
         arun(ForEachParAsync(_items(), ArmAsync(arm))),
@@ -196,12 +194,12 @@ async def test_a_raising_arm_surfaces_and_the_others_are_cancelled() -> None:
     cancelled: list[object] = []
 
     async def arm(attrs: Attributes) -> None:
-        if attrs["item"] == "boom":
+        if attrs.get("item") == "boom":
             raise ValueError("boom")
         try:
             await asyncio.Event().wait()
         except asyncio.CancelledError:
-            cancelled.append(attrs["item"])
+            cancelled.append(attrs.get("item"))
             raise
 
     with pytest.raises(ValueError, match="boom"):

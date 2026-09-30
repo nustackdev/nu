@@ -54,7 +54,7 @@ class Write(Command):
         value_thunk = children[1]
 
         async def athunk(rt: Runtime) -> None:
-            session = rt.ctx.get(Session)
+            session = rt.ctx.fabrics.get(Session)
             ref_nid = rt.program.children[nid][0]
             # One walk: the chain carries the segments the plain path is made
             # of, plus the type and props the browser needs to create the node.
@@ -87,7 +87,7 @@ class Append(Command):
         value_thunks = children[1:]
 
         async def athunk(rt: Runtime) -> None:
-            session = rt.ctx.get(Session)
+            session = rt.ctx.fabrics.get(Session)
             ref_nid = rt.program.children[nid][0]
             chain = await ref._aresolve_chain(rt, ref_nid)
             path = tuple(seg for seg, _, _ in chain)
@@ -120,7 +120,7 @@ class Remove(Command):
         ref: Ref = self._children[0]
 
         async def athunk(rt: Runtime) -> None:
-            session = rt.ctx.get(Session)
+            session = rt.ctx.fabrics.get(Session)
             ref_nid = rt.program.children[nid][0]
             path = await ref._aresolve_address(rt, ref_nid)
             await session.send(Frame(self, ref=path))
@@ -153,7 +153,7 @@ class Changed(ScalarQuery):
         ref: Ref = self._children[0]
 
         async def athunk(rt: Runtime) -> Subscription:
-            session = rt.ctx.get(Session)
+            session = rt.ctx.fabrics.get(Session)
             ref_nid = rt.program.children[nid][0]
             path = await ref._aresolve_address(rt, ref_nid)
             return session.subscribe(path)

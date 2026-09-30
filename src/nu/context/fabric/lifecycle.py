@@ -21,10 +21,10 @@ Three primitives, one per attach shape:
 Tag knobs (all optional, they compose):
 
 - ``tag=`` on ``Provide`` is sugar for a single-tag ``tags=(tag,)``.
-- ``tags=`` binds under an unordered set of tags; ``ctx.get(cls, t)`` matches
+- ``tags=`` binds under an unordered set of tags; ``ctx.fabrics.get(cls, t)`` matches
   when ``t`` is a subset of the bound set (specificity fallback).
-- ``predicate=`` is a single guard callable forwarded into Context's guarded
-  registry: ``ctx.get(cls, *tags, **data)`` resolves this binding only when
+- ``predicate=`` is a single guard callable forwarded into the fabrics store's
+  guarded registry: ``ctx.fabrics.get(cls, *tags, **data)`` resolves this binding only when
   ``predicate(**data)`` returns True. Useful for "bind a Navigator whose
   shard covers this address" without pre-computing all shard tags.
 
@@ -56,6 +56,7 @@ from nu.core.spans.bracket import _LifecycleBracket
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Callable, Iterator, Mapping, Sequence
+    from contextlib import AbstractContextManager
 
     from nu.lang import Nu
     from nu.lang.runtime import Context
@@ -137,11 +138,11 @@ def _bind(
     inst: object,
     tags: Sequence[object],
     predicate: Callable | None,
-) -> Context:
-    """Bind ``inst`` on ``ctx`` under ``cls`` + tags, optionally guarded."""
+) -> AbstractContextManager[None]:
+    """The scope providing ``inst`` on ``ctx.fabrics`` under ``cls`` + tags, optionally guarded."""
     if predicate is None:
-        return ctx.bind(cls, inst, *tags)
-    return ctx.bind(cls, inst, *tags, predicate=predicate)
+        return ctx.fabrics.bind(cls, inst, *tags)
+    return ctx.fabrics.bind(cls, inst, *tags, predicate=predicate)
 
 
 # =========================================================================
@@ -176,7 +177,7 @@ class Provide(_LifecycleBracket):
         - ``predicate=`` is one guard callable handed to the Context's
           guarded registry: the binding resolves only when
           ``predicate(**data)`` returns True for the data passed to
-          ``ctx.get``. Useful for "the shard that covers this address"
+          ``ctx.fabrics.get``. Useful for "the shard that covers this address"
           without enumerating shard tags up front.
         - ``bind_as=`` binds the instance under a different type than it was
           constructed from, so an implementation can be provided where a
@@ -223,7 +224,7 @@ class Provide(_LifecycleBracket):
         self._payload["bind_as"] = bind_as
 
     @contextmanager
-    def _open(self, ctx: Context) -> Iterator[Context]:
+    def _open(self, ctx: Context) -> Iterator[None]:
         cls = self._payload["cls"]
         _refuse_async_only(cls)
         kwargs = self._payload["kwargs"]
@@ -236,12 +237,13 @@ class Provide(_LifecycleBracket):
         try:
             _setup(instance, ctx)
             setup_done.append(instance)
-            yield _bind(ctx, bind_as, instance, tags, predicate)
+            with _bind(ctx, bind_as, instance, tags, predicate):
+                yield
         finally:
             _teardown(setup_done)
 
     @asynccontextmanager
-    async def _aopen(self, ctx: Context) -> AsyncIterator[Context]:
+    async def _aopen(self, ctx: Context) -> AsyncIterator[None]:
         cls = self._payload["cls"]
         kwargs = self._payload["kwargs"]
         tags = self._payload["tags"]
@@ -253,7 +255,8 @@ class Provide(_LifecycleBracket):
         try:
             await _asetup(instance, ctx)
             setup_done.append(instance)
-            yield _bind(ctx, bind_as, instance, tags, predicate)
+            with _bind(ctx, bind_as, instance, tags, predicate):
+                yield
         finally:
             await _ateardown(setup_done)
 
@@ -319,7 +322,7 @@ class ProvideList(_LifecycleBracket):
         self._payload["bind_as"] = bind_as
 
     @contextmanager
-    def _open(self, ctx: Context) -> Iterator[Context]:
+    def _open(self, ctx: Context) -> Iterator[None]:
         cls = self._payload["cls"]
         _refuse_async_only(cls)
         specs = self._payload["specs"]
@@ -330,17 +333,18 @@ class ProvideList(_LifecycleBracket):
 
         setup_done: list[object] = []
         try:
-            for i, kwargs in enumerate(specs):
-                inst = _construct(cls, kwargs)
-                _setup(inst, ctx)
-                setup_done.append(inst)
-                ctx = _bind(ctx, bind_as, inst, (base + i, *extra), predicate)
-            yield ctx
+            with ExitStack() as provided:
+                for i, kwargs in enumerate(specs):
+                    inst = _construct(cls, kwargs)
+                    _setup(inst, ctx)
+                    setup_done.append(inst)
+                    provided.enter_context(_bind(ctx, bind_as, inst, (base + i, *extra), predicate))
+                yield
         finally:
             _teardown(setup_done)
 
     @asynccontextmanager
-    async def _aopen(self, ctx: Context) -> AsyncIterator[Context]:
+    async def _aopen(self, ctx: Context) -> AsyncIterator[None]:
         cls = self._payload["cls"]
         specs = self._payload["specs"]
         base = self._payload["base_tag"]
@@ -350,12 +354,13 @@ class ProvideList(_LifecycleBracket):
 
         setup_done: list[object] = []
         try:
-            for i, kwargs in enumerate(specs):
-                inst = _construct(cls, kwargs)
-                await _asetup(inst, ctx)
-                setup_done.append(inst)
-                ctx = _bind(ctx, bind_as, inst, (base + i, *extra), predicate)
-            yield ctx
+            with ExitStack() as provided:
+                for i, kwargs in enumerate(specs):
+                    inst = _construct(cls, kwargs)
+                    await _asetup(inst, ctx)
+                    setup_done.append(inst)
+                    provided.enter_context(_bind(ctx, bind_as, inst, (base + i, *extra), predicate))
+                yield
         finally:
             await _ateardown(setup_done)
 
@@ -423,7 +428,7 @@ class ProvideDict(_LifecycleBracket):
         self._payload["parallel"] = parallel
 
     @contextmanager
-    def _open(self, ctx: Context) -> Iterator[Context]:
+    def _open(self, ctx: Context) -> Iterator[None]:
         cls = self._payload["cls"]
         _refuse_async_only(cls)
         specs = self._payload["specs"]
@@ -433,17 +438,18 @@ class ProvideDict(_LifecycleBracket):
 
         setup_done: list[object] = []
         try:
-            for key, kwargs in specs.items():
-                inst = _construct(cls, kwargs)
-                _setup(inst, ctx)
-                setup_done.append(inst)
-                ctx = _bind(ctx, bind_as, inst, (key, *extra), predicate)
-            yield ctx
+            with ExitStack() as provided:
+                for key, kwargs in specs.items():
+                    inst = _construct(cls, kwargs)
+                    _setup(inst, ctx)
+                    setup_done.append(inst)
+                    provided.enter_context(_bind(ctx, bind_as, inst, (key, *extra), predicate))
+                yield
         finally:
             _teardown(setup_done)
 
     @asynccontextmanager
-    async def _aopen(self, ctx: Context) -> AsyncIterator[Context]:
+    async def _aopen(self, ctx: Context) -> AsyncIterator[None]:
         import asyncio
 
         cls = self._payload["cls"]
@@ -455,19 +461,20 @@ class ProvideDict(_LifecycleBracket):
 
         setup_done: list[object] = []
         try:
-            if parallel:
-                keyed = [(key, _construct(cls, kw)) for key, kw in specs.items()]
-                await asyncio.gather(*(_asetup(inst, ctx) for _, inst in keyed))
-                setup_done.extend(inst for _, inst in keyed)
-                for key, inst in keyed:
-                    ctx = _bind(ctx, bind_as, inst, (key, *extra), predicate)
-            else:
-                for key, kwargs in specs.items():
-                    inst = _construct(cls, kwargs)
-                    await _asetup(inst, ctx)
-                    setup_done.append(inst)
-                    ctx = _bind(ctx, bind_as, inst, (key, *extra), predicate)
-            yield ctx
+            with ExitStack() as provided:
+                if parallel:
+                    keyed = [(key, _construct(cls, kw)) for key, kw in specs.items()]
+                    await asyncio.gather(*(_asetup(inst, ctx) for _, inst in keyed))
+                    setup_done.extend(inst for _, inst in keyed)
+                    for key, inst in keyed:
+                        provided.enter_context(_bind(ctx, bind_as, inst, (key, *extra), predicate))
+                else:
+                    for key, kwargs in specs.items():
+                        inst = _construct(cls, kwargs)
+                        await _asetup(inst, ctx)
+                        setup_done.append(inst)
+                        provided.enter_context(_bind(ctx, bind_as, inst, (key, *extra), predicate))
+                yield
         finally:
             await _ateardown(setup_done)
 
@@ -481,9 +488,9 @@ class With(_LifecycleBracket):
     """Enters several lifecycle brackets around one body, tearing down in reverse.
 
     Python's ``with A, B, C: body``, in the tree. Each bracket is opened in
-    order and the Context accumulates across them, so a later bracket's setup
-    sees everything the earlier ones bound. The body runs against the final
-    Context, and on exit teardown fires in reverse. What it buys is flatness:
+    order and each provides on the same Context, so a later bracket's setup
+    sees everything the earlier ones bound. The body runs with all of them
+    provided, and on exit teardown fires in reverse. What it buys is flatness:
     stacking peers at one level instead of the
     ``Provide(a, kw, Provide(b, kw, Provide(c, kw, body)))`` cascade.
 
@@ -523,17 +530,15 @@ class With(_LifecycleBracket):
         self._payload["brackets"] = tuple(brackets)
 
     @contextmanager
-    def _open(self, ctx: Context) -> Iterator[Context]:
-        brackets = self._payload["brackets"]
+    def _open(self, ctx: Context) -> Iterator[None]:
         with ExitStack() as stack:
-            for b in brackets:
-                ctx = stack.enter_context(b._open(ctx))
-            yield ctx
+            for b in self._payload["brackets"]:
+                stack.enter_context(b._open(ctx))
+            yield
 
     @asynccontextmanager
-    async def _aopen(self, ctx: Context) -> AsyncIterator[Context]:
-        brackets = self._payload["brackets"]
+    async def _aopen(self, ctx: Context) -> AsyncIterator[None]:
         async with AsyncExitStack() as stack:
-            for b in brackets:
-                ctx = await stack.enter_async_context(b._aopen(ctx))
-            yield ctx
+            for b in self._payload["brackets"]:
+                await stack.enter_async_context(b._aopen(ctx))
+            yield

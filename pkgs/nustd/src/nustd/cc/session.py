@@ -95,5 +95,6 @@ class Session(_LifecycleBracket):
         super().__init__(_wrap_body(body))
 
     @contextmanager
-    def _open(self, ctx: Context) -> Iterator[Context]:
-        yield ctx.bind(SessionHandle, SessionHandle())
+    def _open(self, ctx: Context) -> Iterator[None]:
+        with ctx.fabrics.bind(SessionHandle, SessionHandle()):
+            yield

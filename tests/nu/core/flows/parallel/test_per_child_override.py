@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import threading
 
-from _support.async_atoms import RunsAnywhereAction
+from _support.async_atoms import RunsAnywhereAction, recording
 
 from nu.core.flows import Parallel
 from nu.lang.helpers import arun
@@ -31,21 +31,25 @@ def _is_worker(name: str) -> bool:
 
 async def test_parallel_per_child_threaded_overrides_smart_choice() -> None:
     loop = _this_thread()
-    _, ctx = await arun(
+    ran: dict = {}
+    await arun(
         Parallel((RunsAnywhereAction("t"), "threaded"), (RunsAnywhereAction("a"), "async")),
+        recording(ran),
         max_parallel=2,
     )
-    assert _is_worker(ctx.attrs["t"])
-    assert ctx.attrs["a"] == loop
+    assert _is_worker(ran["t"])
+    assert ran["a"] == loop
 
 
 async def test_parallel_mixed_tuple_and_bare_children() -> None:
     loop = _this_thread()
-    _, ctx = await arun(
+    ran: dict = {}
+    await arun(
         Parallel(RunsAnywhereAction("bare"), (RunsAnywhereAction("t"), "threaded")),
+        recording(ran),
         max_parallel=2,
     )
     # bare child follows the smart choice; the forced-threaded child lands
     # on a worker regardless.
-    assert _is_worker(ctx.attrs["t"])
-    assert ctx.attrs["bare"] == loop or _is_worker(ctx.attrs["bare"])
+    assert _is_worker(ran["t"])
+    assert ran["bare"] == loop or _is_worker(ran["bare"])

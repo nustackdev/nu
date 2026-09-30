@@ -2,7 +2,9 @@
 
 Strategy flows compose mutating atoms directly. Coverage builds real programs
 of ``.set()`` bodies and runs them through ``run`` / ``arun``, asserting the
-writes landed. Class-hierarchy and declared-attribute checks pin the basis.
+writes landed. A concurrent arm runs on its own branch, so its ``.set()`` stays
+in the arm: the concurrent strategies are observed through an external log
+instead. Class-hierarchy and declared-attribute checks pin the basis.
 """
 
 from __future__ import annotations
@@ -11,6 +13,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 from _support.attrs import declared
+from _support.policy_atoms import RecordAction
 
 from nu.context import ObjectRef
 from nu.core.flows import AnyN, Gather, Parallel, Race, Sequential
@@ -25,6 +28,11 @@ if TYPE_CHECKING:
 
 def _set(name: str, value: object) -> Set:
     return ObjectRef(name).set(Literal(value))
+
+
+def _tags(log: list) -> list[str]:
+    """The tags of the ``RecordAction`` children that ran, sorted."""
+    return sorted(tag for tag, _, _ in log)
 
 
 # --- basis ----------------------------------------------------------------
@@ -55,47 +63,52 @@ def test_anyn_requires_async():
 
 def test_sequential_runs_all_children_in_order():
     _, ctx = run(Sequential(_set("a", 1), _set("b", 2)), declared("a", "b"))
-    assert ctx.attrs["a"] == 1
-    assert ctx.attrs["b"] == 2
+    assert ctx.attrs.get("a") == 1
+    assert ctx.attrs.get("b") == 2
 
 
 async def test_sequential_async_runs_all_children():
     _, ctx = await arun(Sequential(_set("a", 1), _set("b", 2)), declared("a", "b"))
-    assert ctx.attrs["a"] == 1
-    assert ctx.attrs["b"] == 2
+    assert ctx.attrs.get("a") == 1
+    assert ctx.attrs.get("b") == 2
 
 
 # --- Parallel / Gather ----------------------------------------------------
 
 
 def test_parallel_runs_all_children():
-    _, ctx = run(Parallel(_set("a", 1), _set("b", 2), _set("c", 3)), declared("a", "b", "c"))
-    assert ctx.attrs["a"] == 1
-    assert ctx.attrs["b"] == 2
-    assert ctx.attrs["c"] == 3
+    log: list = []
+    run(Parallel(RecordAction(log, "a"), RecordAction(log, "b"), RecordAction(log, "c")))
+    assert _tags(log) == ["a", "b", "c"]
+
+
+def test_parallel_arm_writes_stay_in_the_arm():
+    _, ctx = run(Parallel(_set("a", 1), _set("b", 2)), declared("a", "b"))
+    assert ctx.attrs.get("a") is EMPTY
+    assert ctx.attrs.get("b") is EMPTY
 
 
 def test_parallel_runs_all_children_on_the_thread_pool():
     # max_parallel > 1 drives the Budget's thread pool rather than the
     # sequential fall-through.
-    _, ctx = run(
-        Parallel(_set("a", 1), _set("b", 2), _set("c", 3)), declared("a", "b", "c"), max_parallel=4
+    log: list = []
+    run(
+        Parallel(RecordAction(log, "a"), RecordAction(log, "b"), RecordAction(log, "c")),
+        max_parallel=4,
     )
-    assert ctx.attrs["a"] == 1
-    assert ctx.attrs["b"] == 2
-    assert ctx.attrs["c"] == 3
+    assert _tags(log) == ["a", "b", "c"]
 
 
 async def test_parallel_async_runs_all_children():
-    _, ctx = await arun(Parallel(_set("a", 1), _set("b", 2)), declared("a", "b"))
-    assert ctx.attrs["a"] == 1
-    assert ctx.attrs["b"] == 2
+    log: list = []
+    await arun(Parallel(RecordAction(log, "a"), RecordAction(log, "b")))
+    assert _tags(log) == ["a", "b"]
 
 
 def test_gather_runs_all_children():
-    _, ctx = run(Gather(_set("a", 1), _set("b", 2)), declared("a", "b"))
-    assert ctx.attrs["a"] == 1
-    assert ctx.attrs["b"] == 2
+    log: list = []
+    run(Gather(RecordAction(log, "a"), RecordAction(log, "b")))
+    assert _tags(log) == ["a", "b"]
 
 
 # --- Race (async-only) ----------------------------------------------------
@@ -112,16 +125,18 @@ def test_race_sync_run_is_rejected_as_async_only():
 
 
 async def test_race_runs_at_least_the_winner():
-    _, ctx = await arun(Race(_set("a", 1), _set("b", 2)), declared("a", "b"))
-    assert ctx.attrs["a"] is not EMPTY or ctx.attrs["b"] is not EMPTY
+    log: list = []
+    await arun(Race(RecordAction(log, "a"), RecordAction(log, "b")))
+    assert _tags(log)
 
 
 # --- AnyN -----------------------------------------------------------------
 
 
 async def test_anyn_succeeds_when_a_child_succeeds():
-    _, ctx = await arun(AnyN(_set("a", 1), _set("b", 2)), declared("a", "b"))
-    assert ctx.attrs["a"] is not EMPTY or ctx.attrs["b"] is not EMPTY
+    log: list = []
+    await arun(AnyN(RecordAction(log, "a"), RecordAction(log, "b")))
+    assert _tags(log)
 
 
 def test_anyn_sync_run_is_rejected_as_async_only():

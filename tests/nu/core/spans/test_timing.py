@@ -1,25 +1,22 @@
-"""Tests for the timing policy spans - Timeout, Throttle, Debounce.
+"""Tests for the timing policy span Timeout.
 
-All three are async-only: the sync entry is refused. Timeout bounds the body and
-runs on_timeout (live ctx) or raises; Throttle drops calls inside the interval
-(state in attrs); Debounce schedules the body and cancels a pending run on
-re-entry.
+Async-only: the sync entry is refused. Timeout bounds the body and runs
+on_timeout (live ctx) or raises.
 """
 
 from __future__ import annotations
 
-import asyncio
 import sys
 from typing import TYPE_CHECKING
 
 import pytest
-from _support.policy_atoms import CountAction, RecordAction, SlowAction
+from _support.attrs import declared
+from _support.policy_atoms import SlowAction
 
 from nu.context import ObjectRef
-from nu.core.spans import Debounce, Throttle, Timeout
+from nu.core.spans import Timeout
 from nu.lang import Literal, Policy, Span
 from nu.lang.helpers import arun, run
-from nu.lang.runtime.context.context import Context
 
 
 if TYPE_CHECKING:
@@ -34,9 +31,8 @@ def _set(name: str, value: object) -> Set:
 
 
 def test_timing_spans_are_policy_spans() -> None:
-    for kind in (Timeout, Throttle, Debounce):
-        assert issubclass(kind, Policy)
-        assert issubclass(kind, Span)
+    assert issubclass(Timeout, Policy)
+    assert issubclass(Timeout, Span)
 
 
 # --- Timeout --------------------------------------------------------------
@@ -48,9 +44,9 @@ def test_timeout_refuses_sync_run() -> None:
 
 
 async def test_timeout_within_limit_forwards_the_value() -> None:
-    value, ctx = await arun(Timeout(1.0, SlowAction(0.0, "x")))
+    value, ctx = await arun(Timeout(1.0, SlowAction(0.0, "x")), declared("x"))
     assert value == "x"
-    assert ctx.attrs["x"] is True
+    assert ctx.attrs.get("x") is True
 
 
 @pytest.mark.skipif(
@@ -67,49 +63,9 @@ async def test_timeout_exceeded_without_handler_raises() -> None:
     reason="asyncio timeout/cancellation semantics changed in 3.11",
 )
 async def test_timeout_exceeded_runs_on_timeout_on_the_live_ctx() -> None:
-    value, ctx = await arun(Timeout(0.01, SlowAction(1.0), on_timeout=_set("timed_out", True)))
+    value, ctx = await arun(
+        Timeout(0.01, SlowAction(1.0), on_timeout=_set("timed_out", True)),
+        declared("slow", "timed_out"),
+    )
     assert value is None
-    assert ctx.attrs["timed_out"] is True
-
-
-# --- Throttle -------------------------------------------------------------
-
-
-def test_throttle_refuses_sync_run() -> None:
-    with pytest.raises(RuntimeError):
-        run(Throttle(1.0, CountAction()))
-
-
-async def test_throttle_drops_a_second_call_inside_the_interval() -> None:
-    ctx = Context()
-    tree = Throttle(10.0, CountAction())
-    await arun(tree, ctx)
-    await arun(tree, ctx)
-    assert ctx.attrs["count"] == 1  # second call dropped
-
-
-# --- Debounce -------------------------------------------------------------
-
-
-def test_debounce_refuses_sync_run() -> None:
-    with pytest.raises(RuntimeError):
-        run(Debounce(0.01, CountAction()))
-
-
-async def test_debounce_fires_after_the_delay() -> None:
-    log: list = []
-    ctx = Context()
-    await arun(Debounce(0.01, RecordAction(log, "f")), ctx)
-    assert log == []  # not yet
-    await asyncio.sleep(0.05)
-    assert len(log) == 1
-
-
-async def test_debounce_reentry_cancels_the_pending_run() -> None:
-    log: list = []
-    ctx = Context()
-    tree = Debounce(0.03, RecordAction(log, "f"))
-    await arun(tree, ctx)
-    await arun(tree, ctx)  # cancels the first pending run
-    await asyncio.sleep(0.08)
-    assert len(log) == 1  # only the last run fired
+    assert ctx.attrs.get("timed_out") is True

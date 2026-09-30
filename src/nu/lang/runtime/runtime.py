@@ -16,7 +16,7 @@ Parallel-family compiles hand child nids straight there, no Runtime hop.
 
 Layout:
 
-- construction:         program / ctx / budget binding
+- construction:         program / ctx / budget binding, ``branch``
 - dispatch:             ``eval`` / ``aeval``
 - sequential:           ``eval_each`` / ``aeval_each``
 - streams:              ``iter`` / ``aiter`` / ``collect`` / ``acollect``
@@ -28,6 +28,7 @@ from __future__ import annotations
 
 import asyncio
 import contextvars
+import functools
 from typing import TYPE_CHECKING
 
 from nu.lang.sentinels import EMPTY, INVALID
@@ -46,45 +47,36 @@ if TYPE_CHECKING:
 
 __all__ = ["Runtime"]
 
-# Per-asyncio-task Context storage. Backed by ContextVar so brackets can
-# `rt.ctx = scoped` around an `await` without contaminating sibling branches
-# running under the same Runtime: each asyncio.Task inherits a copy-on-write
-# view when spawned, and `.set()` inside the task is local to that task.
-_RT_CTX: contextvars.ContextVar[Context] = contextvars.ContextVar("nu_rt_ctx")
 
+def _with_contextvars(fn: Callable) -> Callable:
+    """``fn`` run inside a copy of the caller's Python contextvars, as ``asyncio.to_thread`` does.
 
-def _carry_ctx() -> Callable[..., object]:
-    """Return a runner that calls a function inside a copy of the caller's context.
-
-    A worker thread starts with an empty contextvars context, so `_RT_CTX` is
-    unset there and `Runtime.ctx` raises `LookupError`. Taking the copy on the
-    calling side and submitting `copy.run` keeps the Context resolvable on the
-    worker. A fresh copy per branch keeps a `.set()` inside that branch local to
-    it, the same copy-on-write rule an asyncio.Task gets.
+    A pool thread starts with empty contextvars, so a var the caller set (an
+    output capture, a trace id) would be unset where the work runs. Nu's own
+    Context does not ride here: a thread arm gets it as ``rt.branch()``.
     """
-    return contextvars.copy_context().run
+    return functools.partial(contextvars.copy_context().run, fn)
 
 
 class Runtime:
-    """Per-drive Runtime. Owns a Program, a per-task Context, and a Budget."""
+    """One task's Runtime: a Program, the task's own Context, and a shared Budget.
 
-    __slots__ = ("budget", "program")
+    ``ctx`` is fixed for the Runtime's life. Scopes inside the task open on
+    the Context's stores; a task that starts runs on ``branch()``.
+    """
+
+    __slots__ = ("budget", "ctx", "program")
 
     def __init__(self, program: Program, ctx: Context, *, budget: Budget | None = None) -> None:
         from nu.lang.runtime.utils.budget import Budget as _Budget
 
         self.program = program
-        _RT_CTX.set(ctx)
+        self.ctx = ctx
         self.budget = budget if budget is not None else _Budget()
 
-    @property
-    def ctx(self) -> Context:
-        """The current asyncio-task-local Context."""
-        return _RT_CTX.get()
-
-    @ctx.setter
-    def ctx(self, value: Context) -> None:
-        _RT_CTX.set(value)
+    def branch(self) -> Runtime:
+        """The Runtime a starting task runs on: same Program and Budget, ``ctx.branch()``."""
+        return Runtime(self.program, self.ctx.branch(), budget=self.budget)
 
     # --- dispatch -----------------------------------------------------------
 
@@ -149,7 +141,7 @@ class Runtime:
         if self.budget.thread_pool is None:
             msg = "in_thread requires max_parallel > 1"
             raise RuntimeError(msg)
-        return self.budget.thread_pool.submit(_carry_ctx(), fn, *args, **kwargs)
+        return self.budget.thread_pool.submit(_with_contextvars(fn), *args, **kwargs)
 
     async def a_in_thread(self, fn: Callable, *args: object, **kwargs: object) -> object:
         """Await a blocking call on the Budget's thread pool."""
@@ -157,13 +149,9 @@ class Runtime:
             msg = "a_in_thread requires max_parallel > 1"
             raise RuntimeError(msg)
         loop = asyncio.get_running_loop()
-        run = _carry_ctx()
-        if kwargs:
-            return await loop.run_in_executor(
-                self.budget.thread_pool,
-                lambda: run(fn, *args, **kwargs),
-            )
-        return await loop.run_in_executor(self.budget.thread_pool, run, fn, *args)
+        return await loop.run_in_executor(
+            self.budget.thread_pool, _with_contextvars(functools.partial(fn, *args, **kwargs))
+        )
 
     # --- sentinel-propagating evaluation -----------------------------------
 

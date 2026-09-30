@@ -13,6 +13,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Parallel branches keep their own context, so one arm never changes another's names
+- Context lookups move to their own store; throttle and debounce are removed for redesign
 - Context names can be declared together on one shape, typed and checked at definition
 - Loop, fold and catch variables stay inside their scope and no longer leak out
 - Context values stay pure: names are declared, then reassigned, never changed in place

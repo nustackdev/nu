@@ -6,8 +6,7 @@ execution policy (Policy). The body is the required slot-0 child; auxiliary
 children sit alongside and are consumed internally.
 
 Policy:
-``TryCatch``, ``Retry``, ``Timeout``, ``Throttle``, ``Debounce`` - execution
-policy on failure or in time.
+``TryCatch``, ``Retry``, ``Timeout`` - execution policy on failure or in time.
 
 Bracket:
 ``Snapshot``, ``Transaction`` - lifecycle boundaries. The core ships them as
@@ -18,7 +17,7 @@ subclasses them and overrides the lifecycle hooks to drive a real store.
 from __future__ import annotations
 
 from .bracket import Snapshot, Transaction
-from .policy import Debounce, Retry, Throttle, Timeout, TryCatch
+from .policy import Retry, Timeout, TryCatch
 
 
-__all__ = ["Debounce", "Retry", "Snapshot", "Throttle", "Timeout", "Transaction", "TryCatch"]
+__all__ = ["Retry", "Snapshot", "Timeout", "Transaction", "TryCatch"]

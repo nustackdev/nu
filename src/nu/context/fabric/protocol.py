@@ -37,7 +37,7 @@ Example::
     class Storage(FabricLifecycle):
         def __init__(self, path): self.path = path
         def setup(self, ctx):
-            self.codec = ctx.get(Codec)       # DI happens here
+            self.codec = ctx.fabrics.get(Codec)       # DI happens here
             self.db = open(self.path, codec=self.codec)
         def cleanup(self):
             self.db.close()

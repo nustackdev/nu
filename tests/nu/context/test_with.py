@@ -90,7 +90,7 @@ def test_with_ctx_accumulates_inner_reads_outer_via_ctx_get():
             self.codec_kind: str | None = None
 
         def setup(self, ctx: Context) -> None:
-            self.codec_kind = ctx.get(Codec).kind
+            self.codec_kind = ctx.fabrics.get(Codec).kind
 
     tree = With(
         Provide(Codec, {"kind": "binary"}),
@@ -177,9 +177,10 @@ def test_with_preserves_bracket_tags():
         Provide(Store, {"name": "primary"}),
         Provide(Store, {"name": "cache"}, tag="cache"),
     )
-    with bracket._open(Context()) as ctx:
-        assert ctx.get(Store).name == "primary"
-        assert ctx.get(Store, "cache").name == "cache"
+    ctx = Context()
+    with bracket._open(ctx):
+        assert ctx.fabrics.get(Store).name == "primary"
+        assert ctx.fabrics.get(Store, "cache").name == "cache"
 
 
 # --- async lifecycle -----------------------------------------------------

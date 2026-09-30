@@ -9,7 +9,7 @@ Two protocols, both structural:
 
 - ``ObserverProtocol`` -- process-scope reactive backend. Fabrics bind
   their observer instance under this type in ctx. Reactive queries
-  resolve it via ``rt.ctx.get(ObserverProtocol)`` and call
+  resolve it via ``rt.ctx.fabrics.get(ObserverProtocol)`` and call
   ``subscribe(options)``.
 - ``Subscription`` -- handle returned by ``subscribe``. The user binds
   receiver callbacks, unbinds them, and closes it when done. All three

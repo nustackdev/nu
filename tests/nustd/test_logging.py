@@ -172,8 +172,7 @@ def test_msg_can_be_a_nu_term(caplog: pytest.LogCaptureFixture) -> None:
     log = logging.getLogger("nu.test")
     caplog.set_level(pylogging.DEBUG, logger="nu.test")
 
-    ctx = Context()
-    ctx.attrs["who"] = "gor"
+    ctx = Context(attrs={"who": "gor"})
     run(log.info("hi %s", StrRef("who")), ctx)
     assert caplog.records[0].getMessage() == "hi gor"
 

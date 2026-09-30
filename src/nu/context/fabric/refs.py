@@ -91,7 +91,7 @@ class FabricRef(_ContextRef):
 
         def thunk(rt: Runtime) -> object:
             f = fabric(rt)
-            return rt.ctx.get(f) if rt.ctx.has(f) else EMPTY
+            return rt.ctx.fabrics.get(f) if rt.ctx.fabrics.has(f) else EMPTY
 
         return thunk
 
@@ -100,7 +100,7 @@ class FabricRef(_ContextRef):
 
         async def athunk(rt: Runtime) -> object:
             f = await fabric(rt)
-            return rt.ctx.get(f) if rt.ctx.has(f) else EMPTY
+            return rt.ctx.fabrics.get(f) if rt.ctx.fabrics.has(f) else EMPTY
 
         return athunk
 

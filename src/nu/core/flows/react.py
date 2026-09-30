@@ -386,18 +386,15 @@ class ReactLatest(Control):
                 loop.call_soon_threadsafe(queue.put_nowait, k)
 
             changed_key_name = await children[2](rt) if has_ck else None
-            base = rt.ctx
 
             def start(bind: bool, key: object = None) -> asyncio.Task:
-                # A fresh branch per run, set inside the task so it stays
-                # run-local, the same way a fan-out arm gets its Context.
-                run_ctx = base.branch()
+                # Every run is a task of its own, on a fresh branch.
+                run_rt = rt.branch()
                 name = changed_key_name if bind else None
 
                 async def run() -> None:
-                    rt.ctx = run_ctx
-                    with _changed(run_ctx.attrs, name, key):
-                        await _adrain_body(rt, body)
+                    with _changed(run_rt.ctx.attrs, name, key):
+                        await _adrain_body(run_rt, body)
 
                 return asyncio.ensure_future(run())
 

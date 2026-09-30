@@ -31,7 +31,7 @@ class Navigator(_Navigator):
 
     ``_nu_bind_as`` steers ``Provide``/``InvisiblesProxy`` to bind instances
     under the raw ``virtuals.Navigator`` base so lookups (e.g. atomicity's
-    ``ctx.get(Navigator, ...)``) resolve the same class the rest of the
+    ``ctx.fabrics.get(Navigator, ...)``) resolve the same class the rest of the
     virtuals stack queries for.
     """
 
@@ -51,7 +51,7 @@ class Navigator(_Navigator):
 
     def setup(self, ctx: Context) -> None:
         """Read the storage from ctx (by storage_type + tags), init the parent."""
-        storage = ctx.get(self._storage_type, *self._storage_tags)
+        storage = ctx.fabrics.get(self._storage_type, *self._storage_tags)
         _Navigator.__init__(self, storage, self._root_view)
         self._opened = True
 

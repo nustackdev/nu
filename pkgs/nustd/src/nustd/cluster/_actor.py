@@ -20,7 +20,7 @@ import ray
 
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable, Callable
+    from collections.abc import Awaitable, Callable, Iterator
 
     from nu.core.spans.bracket import _LifecycleBracket
     from nu.lang.runtime import Context
@@ -48,8 +48,8 @@ class _RayServiceActor:
         """Build this actor's Context.
 
         Prefers ``init`` (a lifecycle bracket): enters its ``_aopen`` on a
-        fresh ``Context()``, saves the resulting Context, and keeps the exit
-        stack open so the bracket's resources stay live until ``shutdown``.
+        fresh ``Context()`` and keeps the exit stack open, so what the bracket
+        provides stays live on that Context until ``shutdown``.
 
         Falls back to ``ctx_builder`` (a callable returning a Context or
         awaitable). If both are ``None``, the actor gets a bare Context.
@@ -59,11 +59,13 @@ class _RayServiceActor:
         if init is not None:
             stack = contextlib.AsyncExitStack()
             await stack.__aenter__()
+            ctx = Context()
             try:
-                self._ctx = await stack.enter_async_context(init._aopen(Context()))
+                await stack.enter_async_context(init._aopen(ctx))
             except BaseException:
                 await stack.__aexit__(None, None, None)
                 raise
+            self._ctx = ctx
             self._init_stack = stack
             return
         if ctx_builder is None:
@@ -77,10 +79,10 @@ class _RayServiceActor:
     async def aexecute(self, tree: object, attrs: dict | None = None) -> object:
         """Compile ``tree`` and evaluate it against this actor's Context.
 
-        Returns the root's value (``None`` for effect-only trees). ``attrs``
-        is merged into a shallow-copied Context before execution so the
-        parent's ``ctx.attrs`` can carry over without polluting the actor's
-        baseline.
+        Returns the root's value (``None`` for effect-only trees). Every call
+        runs on its own branch of the actor's Context with ``attrs`` bound on
+        it, so the parent's names carry over without touching the actor's
+        baseline or a concurrent call.
 
         Value-rooted trees (Query / Command / effectful Sequential) work
         directly. A stream-rooted tree returns its async generator, which
@@ -90,18 +92,13 @@ class _RayServiceActor:
         from nu.lang.helpers import aeval
         from nu.lang.helpers import compile as compile_term
 
-        ctx = self._ctx
-        if attrs:
-            ctx = ctx._copy()
-            for key, value in attrs.items():
-                ctx.attrs[key] = value
-
         task = asyncio.current_task()
         if task is not None:
             self._inflight.add(task)
         try:
             program = compile_term(tree)
-            value, _ = await aeval(program, ctx)
+            with _exec_context(self._ctx, attrs) as ctx:
+                value, _ = await aeval(program, ctx)
             return value
         finally:
             if task is not None:
@@ -120,3 +117,13 @@ class _RayServiceActor:
                 await self._init_stack.__aexit__(None, None, None)
             self._init_stack = None
         self._ctx = None
+
+
+@contextlib.contextmanager
+def _exec_context(ctx: Context, attrs: dict | None) -> Iterator[Context]:
+    """The Context one call runs against: a branch of ``ctx`` with the caller's names bound."""
+    run_ctx = ctx.branch()
+    with contextlib.ExitStack() as scope:
+        for name, value in (attrs or {}).items():
+            scope.enter_context(run_ctx.attrs.let(name, value))
+        yield run_ctx

@@ -33,10 +33,7 @@ from nu.lang.helpers import run
 
 def ctx(**kw: object) -> Context:
     """Build a Context pre-populated with keyword attrs."""
-    c = Context()
-    for k, v in kw.items():
-        c.attrs[k] = v
-    return c
+    return Context(attrs=kw)
 
 
 def val(expr: object, c: Context | None = None) -> object:

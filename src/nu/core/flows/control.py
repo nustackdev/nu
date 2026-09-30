@@ -259,10 +259,10 @@ class ForEachParAsync(Control):
           costs no worker, and these arms are meant never to return, so there
           is nothing to ration - ``max_parallel`` bounds threads, and this
           atom uses none.
-        - Each arm runs against its own Context branch, so ``item`` is that
-          arm's element and nothing else. The branch shares attr values by
-          reference (``Attributes.copy_shallow``), so a live handle in attrs
-          crosses fine, but an arm's own writes stay in its arm.
+        - Each arm runs on its own branch (``Context.branch``), so ``item``
+          is that arm's element and nothing else. The branch shares values
+          by reference, so a live handle in attrs crosses fine, but an arm's
+          own writes stay in its arm.
         - Arms that never return are the point: a standing ``ForeverDo`` per
           element joins only when the surrounding Flow is cancelled. An empty
           ``items`` completes immediately.

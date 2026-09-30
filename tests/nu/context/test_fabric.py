@@ -24,18 +24,16 @@ class Clock:
 
 def test_fabricref_yields_a_bound_fabric():
     clock = Clock()
-    ctx = Context().bind(Clock, clock)
-    ctx.attrs["saved"] = None
+    ctx = Context(attrs={"saved": None}).bind(Clock, clock)
     _, ctx = run(ObjectRef("saved").set(FabricRef(Clock)), ctx)
-    assert ctx.attrs["saved"] is clock
+    assert ctx.attrs.get("saved") is clock
 
 
 def test_fabricref_on_an_unbound_type_is_empty():
     # Unbound -> EMPTY; the set's sentinel guard then leaves the slot unwritten.
-    ctx = Context()
-    ctx.attrs["saved"] = None
+    ctx = Context(attrs={"saved": None})
     _, ctx = run(ObjectRef("saved").set(FabricRef(Clock)), ctx)
-    assert ctx.attrs["saved"] is None
+    assert ctx.attrs.get("saved") is None
 
 
 # --- FabricExists ---------------------------------------------------

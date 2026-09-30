@@ -14,7 +14,6 @@ from nu.core._stream import aiter_any
 from nu.core.reactive import OnChildrenChange
 from nu.domains.shape.interactions import AdvanceCursor
 from nu.lang import StreamQuery
-from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -45,8 +44,9 @@ class Stream(StreamQuery):
           as they arrive, draining again on each change notification.
         - ``key`` is bound per item for as long as that item's ``body`` is
           drained, the same scoped binding ``Map`` / ``Filter`` give their
-          loop variable. ``log_key`` is the cursor's own position, kept in
-          ``ctx.attrs`` across items as untracked bookkeeping.
+          loop variable. ``log_key`` is the cursor's own position, bound for
+          the stream's whole drain (starting from an outer binding when there
+          is one) and advanced item by item.
         - Async-only: ``_compile`` raises ``NotImplementedError``, since
           following requires an event loop.
 
@@ -83,17 +83,16 @@ class Stream(StreamQuery):
         async def athunk(rt: Runtime) -> object:
             key = await children[3](rt)
             log_key = await children[4](rt)
-
-            if log_key not in rt.ctx.attrs:
-                rt.ctx.attrs[log_key] = EMPTY
+            attrs = rt.ctx.attrs
 
             async def agen() -> object:
-                async with aclosing(_drain(rt, children, key, log_key)) as drained:
-                    async for v in drained:
-                        yield v
-                async with aclosing(_react(rt, children, key, log_key)) as followed:
-                    async for v in followed:
-                        yield v
+                with attrs.let(log_key, attrs.get(log_key)):
+                    async with aclosing(_drain(rt, children, key, log_key)) as drained:
+                        async for v in drained:
+                            yield v
+                    async with aclosing(_react(rt, children, key, log_key)) as followed:
+                        async for v in followed:
+                            yield v
 
             return agen()
 
@@ -116,7 +115,7 @@ async def _drain(
         if result is None:
             break
         log_k, actual_key = result
-        rt.ctx.attrs[log_key] = log_k
+        rt.ctx.attrs.set(log_key, log_k)
         with rt.ctx.attrs.let(key, actual_key):
             async with aclosing(aiter_any(await children[2](rt))) as items:
                 async for v in items:

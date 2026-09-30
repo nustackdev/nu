@@ -35,9 +35,10 @@ def test_sync_success_first_try() -> None:
 
 
 def test_sync_retries_then_succeeds() -> None:
-    value, ctx = run(Retry(FlakyAction(1), max_attempts=3))
+    flaky = FlakyAction(1)
+    value, _ = run(Retry(flaky, max_attempts=3))
     assert value == "flaky"
-    assert ctx.attrs["__flaky_calls_flaky__"] == 2  # failed once, then succeeded
+    assert next(flaky._payload["calls"]) == 2  # failed once, then succeeded
 
 
 def test_sync_exhausts_attempts_and_raises() -> None:

@@ -55,9 +55,7 @@ def test_runs_on_async_path() -> None:
 
 
 def _outer() -> Context:
-    ctx = Context()
-    ctx.attrs["acc"] = "outer acc"
-    ctx.attrs["item"] = "outer item"
+    ctx = Context(attrs={"acc": "outer acc", "item": "outer item"})
     return ctx
 
 
@@ -65,13 +63,13 @@ def test_acc_and_item_are_scoped_to_each_step() -> None:
     ctx = _outer()
     value, _ = run(reduce(IntRef("acc") + IntRef("item"), [1, 2, 3]), ctx)
     assert value == 6
-    assert ctx.attrs["acc"] == "outer acc"
-    assert ctx.attrs["item"] == "outer item"
+    assert ctx.attrs.get("acc") == "outer acc"
+    assert ctx.attrs.get("item") == "outer item"
 
 
 async def test_acc_and_item_are_scoped_to_each_step_async() -> None:
     ctx = _outer()
     value, _ = await arun(reduce(IntRef("acc") + IntRef("item"), [1, 2, 3]), ctx)
     assert value == 6
-    assert ctx.attrs["acc"] == "outer acc"
-    assert ctx.attrs["item"] == "outer item"
+    assert ctx.attrs.get("acc") == "outer acc"
+    assert ctx.attrs.get("item") == "outer item"

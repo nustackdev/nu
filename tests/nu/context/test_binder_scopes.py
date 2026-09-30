@@ -116,10 +116,8 @@ def _items(*values: object) -> Iter:
     return Iter(Literal(list(values)))
 
 
-def _outer(name: str, value: object = "outer") -> Context:
-    ctx = Context()
-    ctx.attrs[name] = value
-    return ctx
+def _outer(name: str, value: object = "outer", **more: object) -> Context:
+    return Context(attrs={name: value, **more})
 
 
 def _seen(name: str, log: list) -> Peek:
@@ -172,19 +170,19 @@ def test_let_over_a_stream_releases_on_exhaustion() -> None:
         _outer("x"),
     )
     assert values == [11, 12]
-    assert ctx.attrs["x"] == "outer"
+    assert ctx.attrs.get("x") == "outer"
 
 
 def test_let_over_a_stream_releases_on_early_close() -> None:
     value, ctx = first(compile(Let("x", 10, Map(_items(1, 2), ObjectRef("x")))), _outer("x"))
     assert value == 10
-    assert ctx.attrs["x"] == "outer"
+    assert ctx.attrs.get("x") == "outer"
 
 
 async def test_let_over_a_stream_releases_on_early_close_async() -> None:
     value, ctx = await afirst(compile(Let("x", 10, Map(_items(1, 2), ObjectRef("x")))), _outer("x"))
     assert value == 10
-    assert ctx.attrs["x"] == "outer"
+    assert ctx.attrs.get("x") == "outer"
 
 
 async def test_let_over_a_stream_releases_on_cancel() -> None:
@@ -194,9 +192,9 @@ async def test_let_over_a_stream_releases_on_cancel() -> None:
         acollect(compile(Let("x", 10, Map(_items(1), Park(arrived)))), ctx)
     )
     await asyncio.wait_for(arrived.wait(), 2)
-    assert ctx.attrs["x"] == 10
+    assert ctx.attrs.get("x") == 10
     await _cancel(task)
-    assert ctx.attrs["x"] == "outer"
+    assert ctx.attrs.get("x") == "outer"
 
 
 # --- transforms ---------------------------------------------------------------
@@ -214,10 +212,10 @@ async def test_let_over_a_stream_releases_on_cancel() -> None:
 async def test_transform_item_is_scoped(term: object, expected: list) -> None:
     values, ctx = collect(compile(term), _outer("x"))
     assert values == expected
-    assert ctx.attrs["x"] == "outer"
+    assert ctx.attrs.get("x") == "outer"
     values, ctx = await acollect(compile(term), _outer("x"))
     assert values == expected
-    assert ctx.attrs["x"] == "outer"
+    assert ctx.attrs.get("x") == "outer"
 
 
 def test_map_item_does_not_reach_the_consumer() -> None:
@@ -235,47 +233,47 @@ def test_foreach_do_restores_the_item_after_the_loop() -> None:
     log: list = []
     _, ctx = run(ForEachDo(_items(1, 2), _seen("x", log), item="x"), _outer("x"))
     assert log == [1, 2]
-    assert ctx.attrs["x"] == "outer"
+    assert ctx.attrs.get("x") == "outer"
 
 
 def test_foreach_do_leaves_nothing_behind() -> None:
     _, ctx = run(ForEachDo(List.of(1, 2), Noop(), item="x"))
-    assert "x" not in ctx.attrs
+    assert not ctx.attrs.exists("x")
 
 
 async def test_foreach_do_restores_the_item_after_the_loop_async() -> None:
     log: list = []
     _, ctx = await arun(ForEachDo(_items(1, 2), _seen("x", log), item="x"), _outer("x"))
     assert log == [1, 2]
-    assert ctx.attrs["x"] == "outer"
+    assert ctx.attrs.get("x") == "outer"
 
 
 def test_foreach_do_restores_when_the_body_raises() -> None:
     ctx = _outer("x")
     with pytest.raises(ZeroDivisionError):
         run(ForEachDo(_items(1), Peek(lambda attrs: 1 / 0), item="x"), ctx)
-    assert ctx.attrs["x"] == "outer"
+    assert ctx.attrs.get("x") == "outer"
 
 
 def test_for_range_do_restores_the_index_after_the_loop() -> None:
     log: list = []
     _, ctx = run(ForRangeDo(0, 3, _seen("i", log), index="i"), _outer("i"))
     assert log == [0, 1, 2]
-    assert ctx.attrs["i"] == "outer"
+    assert ctx.attrs.get("i") == "outer"
 
 
 async def test_for_range_do_restores_the_index_after_the_loop_async() -> None:
     log: list = []
     _, ctx = await arun(ForRangeDo(0, 2, _seen("i", log), index="i"), _outer("i"))
     assert log == [0, 1]
-    assert ctx.attrs["i"] == "outer"
+    assert ctx.attrs.get("i") == "outer"
 
 
 async def test_foreach_par_async_binds_each_arm_and_leaves_the_caller_alone() -> None:
     log: list = []
     _, ctx = await arun(ForEachParAsync(_items(1, 2), _seen("x", log), item="x"), _outer("x"))
     assert sorted(log) == [1, 2]
-    assert ctx.attrs["x"] == "outer"
+    assert ctx.attrs.get("x") == "outer"
 
 
 # --- policy -------------------------------------------------------------------
@@ -286,7 +284,7 @@ def test_try_catch_error_is_scoped_to_the_catch() -> None:
     (caught, after), ctx = run(term, _outer("error"))
     assert caught == "division by zero"
     assert after == "outer"
-    assert ctx.attrs["error"] == "outer"
+    assert ctx.attrs.get("error") == "outer"
 
 
 async def test_retry_hook_bindings_are_scoped_to_the_hook() -> None:
@@ -296,8 +294,8 @@ async def test_retry_hook_bindings_are_scoped_to_the_hook() -> None:
     ctx = _outer("attempt")
     await arun(term, ctx)
     assert log == [(1, "division by zero"), (2, "division by zero")]
-    assert ctx.attrs["attempt"] == "outer"
-    assert "error" not in ctx.attrs
+    assert ctx.attrs.get("attempt") == "outer"
+    assert not ctx.attrs.exists("error")
 
 
 # --- reactive -----------------------------------------------------------------
@@ -305,8 +303,7 @@ async def test_retry_hook_bindings_are_scoped_to_the_hook() -> None:
 
 async def test_react_changed_key_is_scoped_to_the_body() -> None:
     feed, log = _Feed(), []
-    ctx = _outer("k")
-    ctx.attrs["feed"] = feed
+    ctx = _outer("k", feed=feed)
     task = asyncio.ensure_future(
         arun(React(ObjectRef("feed"), _seen("k", log), changed_key="k"), ctx)
     )
@@ -314,7 +311,7 @@ async def test_react_changed_key_is_scoped_to_the_body() -> None:
     feed.fire("a")
     await task
     assert log == ["a"]
-    assert ctx.attrs["k"] == "outer"
+    assert ctx.attrs.get("k") == "outer"
 
 
 async def test_react_while_condition_does_not_see_the_previous_key() -> None:
@@ -324,8 +321,7 @@ async def test_react_while_condition_does_not_see_the_previous_key() -> None:
         conds.append(attrs.get("k"))
         return len(conds) < 3
 
-    ctx = _outer("k")
-    ctx.attrs["feed"] = feed
+    ctx = _outer("k", feed=feed)
     term = ReactWhile(ObjectRef("feed"), Probe(cond), _seen("k", log), changed_key="k")
     task = asyncio.ensure_future(arun(term, ctx))
     await _until(lambda: feed.receivers)
@@ -334,28 +330,26 @@ async def test_react_while_condition_does_not_see_the_previous_key() -> None:
     await task
     assert log == ["a", "b"]
     assert conds == ["outer", "outer", "outer"]
-    assert ctx.attrs["k"] == "outer"
+    assert ctx.attrs.get("k") == "outer"
 
 
 async def test_react_forever_changed_key_is_scoped_to_each_run() -> None:
     feed, log = _Feed(), []
-    ctx = _outer("k")
-    ctx.attrs["feed"] = feed
+    ctx = _outer("k", feed=feed)
     task = asyncio.ensure_future(
         arun(ReactForever(ObjectRef("feed"), _seen("k", log), changed_key="k"), ctx)
     )
     await _until(lambda: feed.receivers)
     feed.fire("a")
     await _until(lambda: log == ["a"])
-    assert ctx.attrs["k"] == "outer"
+    assert ctx.attrs.get("k") == "outer"
     await _cancel(task)
-    assert ctx.attrs["k"] == "outer"
+    assert ctx.attrs.get("k") == "outer"
 
 
 async def test_react_latest_changed_key_stays_on_the_run_branch() -> None:
     feed, log = _Feed(), []
-    ctx = _outer("k")
-    ctx.attrs["feed"] = feed
+    ctx = _outer("k", feed=feed)
     task = asyncio.ensure_future(
         arun(ReactLatest(ObjectRef("feed"), _seen("k", log), changed_key="k"), ctx)
     )
@@ -363,7 +357,7 @@ async def test_react_latest_changed_key_stays_on_the_run_branch() -> None:
     feed.fire("a")
     await _until(lambda: log == ["a"])
     await _cancel(task)
-    assert ctx.attrs["k"] == "outer"
+    assert ctx.attrs.get("k") == "outer"
 
 
 # --- stream -------------------------------------------------------------------
@@ -380,7 +374,7 @@ async def test_stream_key_lives_while_the_item_drains_and_is_released_on_close()
         return next(keys, None)
 
     async def body(rt: Runtime) -> object:
-        return [rt.ctx.attrs["stream_key"]]
+        return [rt.ctx.attrs.get("stream_key")]
 
     async def name(value: str) -> str:
         return value
@@ -389,9 +383,9 @@ async def test_stream_key_lives_while_the_item_drains_and_is_released_on_close()
     stream = Stream(Literal(None), Literal(None))
     agen = await stream._acompile(0, children)(rt)
     assert await agen.__anext__() == "a"
-    assert ctx.attrs["stream_key"] == "a"  # alive while the item drains
+    assert ctx.attrs.get("stream_key") == "a"  # alive while the item drains
     await agen.aclose()
-    assert ctx.attrs["stream_key"] == "outer"
+    assert ctx.attrs.get("stream_key") == "outer"
 
 
 # --- nested stream scopes ---------------------------------------------------------
@@ -400,10 +394,10 @@ async def test_stream_key_lives_while_the_item_drains_and_is_released_on_close()
 def test_nested_lets_over_a_stream_release_on_early_close() -> None:
     value, ctx = first(compile(Let("x", 1, Let("y", 2, Map(_items(1, 2), ObjectRef("y"))))))
     assert value == 2
-    assert not ctx.attrs
+    assert not dict(ctx.attrs.items())
 
 
 async def test_nested_lets_over_a_stream_release_on_early_close_async() -> None:
     value, ctx = await afirst(compile(Let("x", 1, Let("y", 2, Map(_items(1, 2), ObjectRef("y"))))))
     assert value == 2
-    assert not ctx.attrs
+    assert not dict(ctx.attrs.items())

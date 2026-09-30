@@ -3,11 +3,11 @@
 The core ``Snapshot`` and ``Transaction`` brackets are shape only: they mark a
 region of the tree and run the body unchanged. The versions here fill that
 shape in against real storage. Each overrides one lifecycle method, ``_open``,
-written as a ``@contextmanager``: it finds the Navigator on the ctx, binds a
-handle under it, hands the scoped ctx to the body, and tears the handle down
-on the way out.
+written as a ``@contextmanager``: it finds the Navigator on the ctx, provides a
+handle under it on ``ctx.fabrics`` for the body, and tears the handle down on
+the way out.
 
-Binding is lazy, through ``ctx.lazy``. A bracket that wraps a body which turns
+Binding is lazy, through ``ctx.fabrics.lazy``. A bracket that wraps a body which turns
 out never to touch storage opens nothing, so wrapping generously costs nothing.
 That is what makes ``auto_flow_atomic`` safe to run over a whole tree.
 
@@ -24,15 +24,13 @@ attribute, so a tree rewrite carries it through.
 
 from __future__ import annotations
 
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from typing import TYPE_CHECKING
 
-from nu.core._stream import aiter_any, sync_iter
 from nu.core.flows.strategy import Sequential
 from nu.core.spans import Retry
 from nu.core.spans import Snapshot as _CoreSnapshot
 from nu.core.spans import Transaction as _CoreTransaction
-from nu.lang import Attr, Cardinality
 from virtuals import Navigator
 from virtuals.tkv.storage import (
     SnapshotProtocol,
@@ -43,10 +41,10 @@ from virtuals.tkv.storage import (
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator, Callable, Hashable, Iterator
+    from collections.abc import Callable, Hashable, Iterator
 
     from nu.lang import FloatArg, IntArg, Nu
-    from nu.lang.runtime import Context, Runtime
+    from nu.lang.runtime import Context
 
 
 __all__ = [
@@ -60,7 +58,7 @@ __all__ = [
 
 
 def _scope_tags(scope: Hashable | None) -> tuple:
-    """Build scope tags for ctx.get / ctx.lazy."""
+    """Build scope tags for ctx.fabrics.get / ctx.fabrics.lazy."""
     return (scope,) if scope is not None else ()
 
 
@@ -92,78 +90,36 @@ def _has_virtuals_write(node: object) -> bool:
     return False
 
 
-def _guard(rt: Runtime, opener: Callable, body: Callable) -> Iterator:
-    """Drive a stream body inside the boundary: the scope spans the whole drain."""
-    saved = rt.ctx
-    try:
-        with opener(saved) as scoped:
-            rt.ctx = scoped
-            yield from sync_iter(body(rt))
-    finally:
-        rt.ctx = saved
+@contextmanager
+def _provide_lazy(
+    ctx: Context,
+    protocol: type,
+    scope: Hashable | None,
+    begin: Callable[[Navigator], object],
+    opened: list,
+) -> Iterator[None]:
+    """Provide ``protocol`` for every Navigator under ``scope``, each opened on first use.
 
-
-async def _aguard(rt: Runtime, opener: Callable, body: Callable) -> AsyncIterator:
-    """Async sibling of :func:`_guard`."""
-    saved = rt.ctx
-    try:
-        with opener(saved) as scoped:
-            rt.ctx = scoped
-            async for v in aiter_any(await body(rt)):
-                yield v
-    finally:
-        rt.ctx = saved
-
-
-class _VirtualsBracketMixin:
-    """Shared lifecycle dispatch: run the body inside ``_open`` (a contextmanager).
-
-    ``_open`` is the fabric lifecycle; subclasses fill in the open/commit/abort
-    body. ``scope`` is a plain data attribute (the shape tag), living alongside
-    the core bracket's ``_open`` lifecycle method. This mixin overrides
-    ``compile`` / ``acompile`` to call ``self._open`` directly.
+    A sharded setup (predicate-guarded Navigators) gets one guarded binding per
+    shard; otherwise the one Navigator under the tag gets a plain binding.
+    ``begin(nav)`` opens a handle; every handle opened lands in ``opened`` for
+    the caller to close, commit or abort.
     """
+    tags = _scope_tags(scope)
+    navs = ctx.fabrics.predicates(Navigator, *tags) or [({}, ctx.fabrics.get(Navigator, *tags))]
+    with ExitStack() as provided:
+        for preds, nav in navs:
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        body = children[0]
-        opener = self._open
+            def open_handle(nav: Navigator = nav) -> object:
+                handle = begin(nav)
+                opened.append(handle)
+                return handle
 
-        def thunk(rt: Runtime) -> object:
-            if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
-                return _guard(rt, opener, body)
-            saved = rt.ctx
-            try:
-                with opener(saved) as scoped:
-                    rt.ctx = scoped
-                    return body(rt)
-            finally:
-                rt.ctx = saved
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        body = children[0]
-        opener = self._open
-
-        async def athunk(rt: Runtime) -> object:
-            if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
-                return _aguard(rt, opener, body)
-            saved = rt.ctx
-            try:
-                with opener(saved) as scoped:
-                    rt.ctx = scoped
-                    return await body(rt)
-            finally:
-                rt.ctx = saved
-
-        return athunk
-
-    @contextmanager
-    def _open(self, ctx: Context) -> Iterator[Context]:  # pragma: no cover - overridden
-        yield ctx
+            provided.enter_context(ctx.fabrics.lazy(protocol, open_handle, *tags, **preds))
+        yield
 
 
-class Snapshot(_VirtualsBracketMixin, _CoreSnapshot):
+class Snapshot(_CoreSnapshot):
     """Gives its body one consistent read view of storage, and closes it after.
 
     Every read inside sees storage as it stood when the snapshot opened, so a
@@ -212,37 +168,20 @@ class Snapshot(_VirtualsBracketMixin, _CoreSnapshot):
         return self._payload["scope"]
 
     @contextmanager
-    def _open(self, ctx: Context) -> Iterator[Context]:
-        """Open a snapshot lazily, scope it into the ctx, close on exit."""
+    def _open(self, ctx: Context) -> Iterator[None]:
+        """Provide a snapshot, opened on first read, for the body; close it on exit."""
         snaps: list[SnapshotProtocol] = []
-        nav_tags = _scope_tags(self.scope)
-        sharded = ctx.get_predicates(Navigator, *nav_tags)
-
-        if sharded:
-            child_ctx = ctx
-            for preds, nav in sharded:
-                child_ctx = self._scope_lazy(child_ctx, nav, snaps, preds)
-            scoped = child_ctx
-        else:
-            nav = ctx.get(Navigator, *nav_tags)
-            scoped = self._scope_lazy(ctx, nav, snaps, {})
-
         try:
-            yield scoped
+            with _provide_lazy(
+                ctx, SnapshotProtocol, self.scope, lambda nav: nav.storage.begin_snapshot(), snaps
+            ):
+                yield
         finally:
             for snap in snaps:
                 snap.close()
 
-    def _scope_lazy(self, ctx: Context, nav: Navigator, snaps: list, preds: dict) -> Context:
-        def open_snap() -> SnapshotProtocol:
-            snap = nav.storage.begin_snapshot()
-            snaps.append(snap)
-            return snap
 
-        return ctx.lazy(SnapshotProtocol, open_snap, *_scope_tags(self.scope), **preds)
-
-
-class Transaction(_VirtualsBracketMixin, _CoreTransaction):
+class Transaction(_CoreTransaction):
     """Runs its body inside a write transaction: all of it lands, or none of it.
 
     Writes buffer in the transaction and become visible to everyone else at
@@ -294,23 +233,18 @@ class Transaction(_VirtualsBracketMixin, _CoreTransaction):
         return self._payload["scope"]
 
     @contextmanager
-    def _open(self, ctx: Context) -> Iterator[Context]:
-        """Open a transaction lazily, commit on clean exit, abort on error."""
+    def _open(self, ctx: Context) -> Iterator[None]:
+        """Provide a transaction, opened on first use, for the body; commit on clean exit, abort on error."""
         txns: list[TransactionProtocol] = []
-        nav_tags = _scope_tags(self.scope)
-        sharded = ctx.get_predicates(Navigator, *nav_tags)
-
-        if sharded:
-            child_ctx = ctx
-            for preds, nav in sharded:
-                child_ctx = self._scope_lazy(child_ctx, nav, txns, preds)
-            scoped = child_ctx
-        else:
-            nav = ctx.get(Navigator, *nav_tags)
-            scoped = self._scope_lazy(ctx, nav, txns, {})
-
         try:
-            yield scoped
+            with _provide_lazy(
+                ctx,
+                TransactionProtocol,
+                self.scope,
+                lambda nav: nav.storage.begin_transaction(),
+                txns,
+            ):
+                yield
         except BaseException:
             for txn in txns:
                 txn.abort()
@@ -318,14 +252,6 @@ class Transaction(_VirtualsBracketMixin, _CoreTransaction):
         else:
             for txn in txns:
                 txn.commit()
-
-    def _scope_lazy(self, ctx: Context, nav: Navigator, txns: list, preds: dict) -> Context:
-        def open_txn() -> TransactionProtocol:
-            txn = nav.storage.begin_transaction()
-            txns.append(txn)
-            return txn
-
-        return ctx.lazy(TransactionProtocol, open_txn, *_scope_tags(self.scope), **preds)
 
 
 def Atomic(  # noqa: N802 (factory mimics class spelling)

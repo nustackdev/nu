@@ -214,8 +214,8 @@ class LoadNu(ScalarQuery):
         """The bound brace, or the shared in-process one."""
         raw = self._payload["brace"]
         tag: tuple[object, ...] = () if raw is UNSET else (raw,)
-        if rt.ctx.has(PyBrace, *tag):
-            return rt.ctx.get(PyBrace, *tag)
+        if rt.ctx.fabrics.has(PyBrace, *tag):
+            return rt.ctx.fabrics.get(PyBrace, *tag)
         return _FALLBACK
 
     def _term(self, result: object) -> Nu:

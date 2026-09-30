@@ -139,12 +139,11 @@ def test_iter_first_runs() -> None:
 
 
 def test_for_each_do_takes_an_iterator() -> None:
-    ctx = nu.Context()
-    ctx.attrs["sum"] = 0
+    ctx = nu.Context(attrs={"sum": 0})
     total = nu.IntRef("sum")
     body = total.set(total + nu.IntRef("item"))
     _, ctx = nu.run(nu.ForEachDo(nu.List.of(1, 2, 3).iter(), body), ctx)
-    assert ctx.attrs["sum"] == 6
+    assert ctx.attrs.get("sum") == 6
 
 
 def test_iter_map_and_filter_stay_streams() -> None:

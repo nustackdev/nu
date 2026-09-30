@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable, Callable
+    from collections.abc import Awaitable, Callable, Iterator
     from multiprocessing.connection import Connection
 
     from nu.core.spans.bracket import _LifecycleBracket
@@ -59,7 +59,8 @@ async def _run(
     stack = contextlib.AsyncExitStack()
     async with stack:
         if init is not None:
-            ctx = await stack.enter_async_context(init._aopen(Context()))
+            ctx = Context()
+            await stack.enter_async_context(init._aopen(ctx))
         elif ctx_builder is not None:
             result = ctx_builder()
             if asyncio.iscoroutine(result):
@@ -79,14 +80,20 @@ async def _run(
                 break
             _, tree, attrs = frame
             try:
-                exec_ctx = ctx
-                if attrs:
-                    exec_ctx = ctx._copy()
-                    for key, value in attrs.items():
-                        exec_ctx.attrs[key] = value
                 program = compile_term(tree)
-                value, _ = await aeval(program, exec_ctx)
+                with _exec_context(ctx, attrs) as exec_ctx:
+                    value, _ = await aeval(program, exec_ctx)
                 conn.send(("ok", value))
             except BaseException as exc:
                 with contextlib.suppress(Exception):
                     conn.send(("err", exc))
+
+
+@contextlib.contextmanager
+def _exec_context(ctx: Context, attrs: dict | None) -> Iterator[Context]:
+    """The Context one request runs against: a branch of ``ctx`` with the caller's names bound."""
+    run_ctx = ctx.branch()
+    with contextlib.ExitStack() as scope:
+        for name, value in (attrs or {}).items():
+            scope.enter_context(run_ctx.attrs.let(name, value))
+        yield run_ctx

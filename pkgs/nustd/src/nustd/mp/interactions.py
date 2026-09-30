@@ -59,8 +59,8 @@ class Teleport(Policy):
           verbatim to ``ctx.get``: omit it for a bare ``Provide``, the index
           for ``ProvideList``, the key for ``ProvideDict``. ``None`` is a
           usable tag, distinct from omitting it.
-        - ``carry=True`` copies the caller's ``ctx.attrs`` into a shallow
-          copy of the worker's Context for that one execution, so loop
+        - ``carry=True`` binds the caller's ``ctx.attrs`` on a branch
+          of the worker's Context for that one execution, so loop
           variables bound by ``Map`` or ``Filter`` reach the body. Without
           it the body sees only what the worker's Context already holds.
         - The body resolves its refs against the worker's Context, built in
@@ -111,8 +111,8 @@ class Teleport(Policy):
         tag: tuple[object, ...] = () if target is UNSET else (target,)
 
         def thunk(rt: Runtime) -> object:
-            worker = rt.ctx.get(MpWorker, *tag)
-            attrs = dict(rt.ctx.attrs) if carry and rt.ctx.attrs else None
+            worker = rt.ctx.fabrics.get(MpWorker, *tag)
+            attrs = dict(rt.ctx.attrs.items()) if carry else None
             result = worker.execute(body_term, attrs=attrs)
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
                 return _one_sync(result)
@@ -127,8 +127,8 @@ class Teleport(Policy):
         tag: tuple[object, ...] = () if target is UNSET else (target,)
 
         async def athunk(rt: Runtime) -> object:
-            worker = rt.ctx.get(MpWorker, *tag)
-            attrs = dict(rt.ctx.attrs) if carry and rt.ctx.attrs else None
+            worker = rt.ctx.fabrics.get(MpWorker, *tag)
+            attrs = dict(rt.ctx.attrs.items()) if carry else None
             result = await worker.aexecute(body_term, attrs=attrs)
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
                 return _one_async(result)

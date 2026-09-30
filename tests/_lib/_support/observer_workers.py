@@ -40,7 +40,7 @@ class Reactor:
         from virtuals.tkv.filter import PrefixFilter
         from virtuals.tkv.observer import SubscriptionOptions
 
-        observer = ctx.get(ObserverProtocol)
+        observer = ctx.fabrics.get(ObserverProtocol)
         self._sub = observer.subscribe(SubscriptionOptions(filter=PrefixFilter(prefix=self.prefix)))
         self._sub.bind(self._on_key)
         self.out.put(("ready", None))
@@ -80,7 +80,7 @@ class Rebinder:
         def kept(key: Any) -> None:
             self.out.put(("kept", tuple(key)))
 
-        observer = ctx.get(ObserverProtocol)
+        observer = ctx.fabrics.get(ObserverProtocol)
         self._sub = observer.subscribe(SubscriptionOptions(filter=PrefixFilter(prefix=self.prefix)))
         self._sub.bind(dropped)
         self._sub.bind(kept)

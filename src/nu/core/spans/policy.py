@@ -12,23 +12,20 @@ The atoms:
 - ``Retry`` - re-run the body on failure, with backoff, jitter, a typed filter,
   and per-attempt hooks (async path).
 - ``Timeout`` - bound the body by a wall-clock limit (async-only).
-- ``Throttle`` - drop body runs inside an interval of the prior run (async-only).
-- ``Debounce`` - delay the body, cancelling a pending run on re-entry (async-only).
 
 Conventions (see ``AUTHORING.md``): structure lives in the tree, not ``payload``
 (an absent optional branch is a ``Noop`` slot; names are ``StrArg`` children;
 numeric knobs are returning children); ``ctx.attrs`` is the one inter-Nu channel
-(the error string, the attempt count, and the timing spans' cross-invocation
-state all land there); a handler whose writes must not leak runs against a
-``ctx._copy()``; async-only atoms declare ``requires_async`` and raise on the
-sync path as a backstop (the sync entry refuses the subtree first).
+(the caught error and the attempt count are ``let``-bound there for the
+handler that reads them, and only for as long as it runs); async-only atoms
+declare ``requires_async`` and raise on the sync path as a backstop (the sync
+entry refuses the subtree first).
 """
 
 from __future__ import annotations
 
 import asyncio
 import random
-import time
 from contextlib import ExitStack
 from typing import TYPE_CHECKING
 
@@ -44,7 +41,7 @@ if TYPE_CHECKING:
     from nu.lang import Command, FloatArg, Flow, IntArg, Nu, Span, StrArg
     from nu.lang.runtime import Runtime
 
-__all__ = ["CaughtError", "Debounce", "Retry", "Throttle", "Timeout", "TryCatch"]
+__all__ = ["CaughtError", "Retry", "Timeout", "TryCatch"]
 
 
 class CaughtError(str):
@@ -101,28 +98,15 @@ def _async_backstop(name: str) -> Callable:
 
 
 def _run_catch(rt: Runtime, catch: Callable, error_key: Callable, exc: Exception) -> object:
-    """Run catch against a ctx copy carrying a :class:`CaughtError` at ``error_key``; return its value.
-
-    The copy isolates catch so its writes don't leak back to the live context.
-    """
-    saved = rt.ctx
-    rt.ctx = saved._copy()
-    try:
-        with rt.ctx.attrs.let(error_key(rt), CaughtError(exc)):
-            return catch(rt)
-    finally:
-        rt.ctx = saved
+    """Run catch with a :class:`CaughtError` bound at ``error_key``; return its value."""
+    with rt.ctx.attrs.let(error_key(rt), CaughtError(exc)):
+        return catch(rt)
 
 
 async def _arun_catch(rt: Runtime, catch: Callable, error_key: Callable, exc: Exception) -> object:
     """Async sibling of :func:`_run_catch`."""
-    saved = rt.ctx
-    rt.ctx = saved._copy()
-    try:
-        with rt.ctx.attrs.let(await error_key(rt), CaughtError(exc)):
-            return await catch(rt)
-    finally:
-        rt.ctx = saved
+    with rt.ctx.attrs.let(await error_key(rt), CaughtError(exc)):
+        return await catch(rt)
 
 
 def _guard(
@@ -133,14 +117,18 @@ def _guard(
     error_key: Callable,
     errors: tuple[type[Exception], ...] | None,
 ) -> Iterator:
-    """Drive the stream body; catch swaps in a fallback stream, finally always runs."""
+    """Drive the stream body; catch swaps in a fallback stream, finally always runs.
+
+    The caught error stays bound for as long as the fallback stream drains.
+    """
     try:
         try:
             yield from sync_iter(body(rt))
         except Exception as exc:
             if catch is None or (errors is not None and not isinstance(exc, errors)):
                 raise
-            yield from sync_iter(_run_catch(rt, catch, error_key, exc))
+            with rt.ctx.attrs.let(error_key(rt), CaughtError(exc)):
+                yield from sync_iter(catch(rt))
     finally:
         if finally_ is not None:
             finally_(rt)
@@ -162,8 +150,9 @@ async def _aguard(
         except Exception as exc:
             if catch is None or (errors is not None and not isinstance(exc, errors)):
                 raise
-            async for v in aiter_any(await _arun_catch(rt, catch, error_key, exc)):
-                yield v
+            with rt.ctx.attrs.let(await error_key(rt), CaughtError(exc)):
+                async for v in aiter_any(await catch(rt)):
+                    yield v
     finally:
         if finally_ is not None:
             await finally_(rt)
@@ -173,10 +162,10 @@ class TryCatch(Policy):
     """Runs ``catch`` when the body raises a matching error; ``finally_`` always runs after.
 
     Children (fixed): ``[body, catch, finally_, error_key]``. An absent
-    ``catch`` / ``finally_`` is a ``Noop`` slot. ``catch`` runs against an
-    isolated context copy, so its writes stay local and only its value
-    forwards; ``finally_`` runs against the live context, on success or
-    failure alike.
+    ``catch`` / ``finally_`` is a ``Noop`` slot. ``catch`` runs with the
+    caught error bound at ``error_key`` for as long as it runs, a stream
+    catch for its whole drain; ``finally_`` runs after, on success or failure
+    alike.
 
     Args:
         body: the guarded Term.
@@ -324,17 +313,12 @@ class TryCatch(Policy):
 # === Retry =================================================================
 
 
-async def _arun_hook(rt: Runtime, hook: Callable, sets: dict) -> None:
-    """Run a Retry hook against an isolated ctx copy carrying ``sets`` (attempt/error)."""
-    saved = rt.ctx
-    rt.ctx = saved._copy()
-    try:
-        with ExitStack() as scope:
-            for key, value in sets.items():
-                scope.enter_context(rt.ctx.attrs.let(key, value))
-            await hook(rt)
-    finally:
-        rt.ctx = saved
+async def _arun_hook(rt: Runtime, hook: Callable, lets: dict) -> None:
+    """Run a Retry hook with ``lets`` (attempt/error) bound for as long as it runs."""
+    with ExitStack() as scope:
+        for key, value in lets.items():
+            scope.enter_context(rt.ctx.attrs.let(key, value))
+        await hook(rt)
 
 
 class Retry(Policy):
@@ -343,8 +327,8 @@ class Retry(Policy):
     Sync runs a bare retry: ``max_attempts`` and ``errors`` only, no delay,
     backoff, jitter or hooks. Async runs the full policy: ``delay`` grows by
     ``backoff`` each attempt, ``jitter`` decorrelates the wait, and
-    ``on_attempt_fail`` / ``on_success`` / ``on_fail`` fire against an
-    isolated ctx copy carrying the attempt count and error. A stream body is
+    ``on_attempt_fail`` / ``on_success`` / ``on_fail`` fire with the
+    attempt count and error bound. A stream body is
     retried by atomic re-evaluation - drained fresh each attempt, emitted
     only on success, bounded streams only - and the stream path skips the
     per-attempt hooks.
@@ -552,105 +536,5 @@ class Timeout(Policy):
                     await on_timeout(rt)
                     return None
                 raise
-
-        return athunk
-
-
-class Throttle(Policy):
-    """Drops a body run that falls inside ``interval`` of the prior run.
-
-    Async-only. Meaningful only under repeated invocation (a loop or a
-    reactive context) - a single call always runs.
-
-    Args:
-        interval: the minimum gap between runs, in seconds.
-        body: the throttled Term.
-
-    Notes:
-        - The last-run timestamp is cross-invocation state, so it lives in
-          the attrs fabric keyed by this node (a Term is immutable and
-          shared, so there's no instance state to hold it).
-
-    Yields:
-        The body's value, or ``None`` when the run is dropped.
-
-    Example:
-        >>> import asyncio
-        >>> asyncio.run(nu.arun(nu.Throttle(60.0, nu.Div(1, 1))))[0]
-        1.0
-    """
-
-    _requires_async = Declared(value=True, name="requires_async")
-
-    def __init__(self, interval: FloatArg, body: Nu) -> None:
-        super().__init__(body, interval)
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        return _async_backstop("Throttle")
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        body, interval_q = children[0], children[1]
-        state_key = f"__throttle_last_{nid}__"
-
-        async def athunk(rt: Runtime) -> object:
-            interval = float(await interval_q(rt))
-            now = time.monotonic()
-            if now - rt.ctx.attrs.get(state_key, 0.0) < interval:
-                return None
-            rt.ctx.attrs[state_key] = now
-            return await body(rt)
-
-        return athunk
-
-
-class Debounce(Policy):
-    """Delays the body; a re-entry cancels the pending run and starts over.
-
-    Async-only. Meaningful only under repeated invocation - each call
-    cancels the in-flight task and schedules a fresh one, so only the last
-    call in a burst fires.
-
-    Args:
-        delay: how long to wait before running the body, in seconds.
-        body: the debounced Term.
-
-    Notes:
-        - The pending task is cross-invocation state, so it lives in the
-          attrs fabric keyed by this node.
-        - The body runs later, detached from the call that scheduled it -
-          nothing observes its result through this node.
-
-    Yields:
-        ``None``, immediately. The body's own value is never seen here.
-
-    Example:
-        >>> import asyncio
-        >>> asyncio.run(nu.arun(nu.Debounce(0.0, nu.Div(1, 1))))[0]
-    """
-
-    _requires_async = Declared(value=True, name="requires_async")
-
-    def __init__(self, delay: FloatArg, body: Nu) -> None:
-        super().__init__(body, delay)
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        return _async_backstop("Debounce")
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        body, delay_q = children[0], children[1]
-        state_key = f"__debounce_pending_{nid}__"
-
-        async def athunk(rt: Runtime) -> object:
-            delay = float(await delay_q(rt))
-            pending = rt.ctx.attrs.get(state_key)
-            if pending is not None and not pending.done():
-                pending.cancel()
-
-            async def _later() -> object:
-                await asyncio.sleep(delay)
-                return await body(rt)
-
-            rt.ctx.attrs[state_key] = asyncio.create_task(_later())
-            return None
 
         return athunk

@@ -98,7 +98,7 @@ class Spares:
     async def asetup(self, ctx: Context) -> None:
         """Take the pool this shelf launches into, and start filling."""
         try:
-            self._pool = ctx.get(WorkerPool)
+            self._pool = ctx.fabrics.get(WorkerPool)
         except LookupError:
             msg = (
                 "spares needs a WorkerPool bound around it; open it inside Provide(WorkerPool, ...)"

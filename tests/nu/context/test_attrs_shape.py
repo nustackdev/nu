@@ -75,7 +75,7 @@ def test_let_set_exists_through_slots(capsys):
     )
     _, ctx = run(tree)
     assert capsys.readouterr().out.split() == ["2", "True"]
-    assert "count" not in ctx.attrs
+    assert not ctx.attrs.exists("count")
     assert run(Attrs.count.exists())[0] is False
 
 
@@ -87,7 +87,7 @@ def test_set_through_a_slot_on_an_undeclared_name_raises():
 async def test_let_set_exists_through_slots_async():
     value, ctx = await arun(Let(Attrs.count, Literal(1), Attrs.count + 1))
     assert value == 2
-    assert "count" not in ctx.attrs
+    assert not ctx.attrs.exists("count")
     assert (await arun(Let(Attrs.ui, Literal(True), Attrs.ui.exists())))[0] is True
     assert (await arun(Attrs.ui.exists()))[0] is False
 

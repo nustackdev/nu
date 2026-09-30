@@ -69,15 +69,22 @@ async def test_wait_on_an_unknown_id_returns_none(ctx):
 
 async def test_wait_completes_when_another_branch_kills_the_worker(ctx, pool):
     wid = pool.launch()
-    ctx.attrs["code"] = nu.lang.EMPTY
+    codes: list = []
+
+    # Each Gather arm runs on its own branch, so the waiting arm reports
+    # through a host-side list rather than a name the parent would not see.
+    @nu.host(base=nu.lang.ScalarAction, mutates=frozenset({0}))
+    def keep(code: object) -> None:
+        codes.append(code)
+
     tree = nu.Gather(
-        nu.ObjectRef("code").set(Wait(worker=nu.Literal(wid))),
+        keep(Wait(worker=nu.Literal(wid))),
         nu.DelayedDo(0.2, Kill(worker=nu.Literal(wid))),
     )
     start = time.monotonic()
-    _, out = await asyncio.wait_for(nu.arun(tree, ctx), 5.0)
+    await asyncio.wait_for(nu.arun(tree, ctx), 5.0)
     assert time.monotonic() - start >= 0.2
-    assert out.attrs["code"] == -signal.SIGTERM
+    assert codes == [-signal.SIGTERM]
     assert not pool.alive(wid)
 
 
