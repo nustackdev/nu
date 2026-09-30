@@ -1,74 +1,70 @@
-"""Tests for the Context fabric: AttrRef read, SetCmd / Delete write.
+"""Tests for the Context fabric: attrs ref read, ``.set()`` write.
 
-AttrRef reads its slot in ``ctx.attrs``; SetCmd and Delete write it through the
-Ref. Together they are the keystone state path: a value written under an address
-is read back under that address. The write goes through ``ref.write`` /
-``ref.erase``, never by the Command touching ``ctx.attrs`` itself.
+An attrs ref reads its slot in ``ctx.attrs``; ``.set()`` reassigns it through
+the Ref. Together they are the keystone state path: a value written under an
+address is read back under that address. The write goes through ``ref._write``,
+never by the Command touching ``ctx.attrs`` itself, and only reaches a name
+that is already declared.
 
-The address is just a Nu child, so it can be computed: ``AttrRef(AttrRef("key"))``
-reads ``ctx.attrs`` under whatever value ``ctx.attrs["key"]`` holds - read,
-write, and delete all resolve the address through the runtime.
+The address is just a Nu child, so it can be computed: ``ObjectRef(StrRef("key"))``
+reads ``ctx.attrs`` under whatever value ``ctx.attrs["key"]`` holds - read and
+write both resolve the address through the runtime.
 """
 
 from __future__ import annotations
 
-from nu.context import AttrExists, AttrRef, Delete, SetCmd
+import pytest
+
+from nu.context import IntRef, ObjectRef, StrRef
+from nu.context.attrs import AttrRef
 from nu.core import Add
 from nu.lang import INVALID, Attr, Context, Effect, Literal
 from nu.lang.helpers import arun, compile, run
 
 
-# --- AttrRef read --------------------------------------------------------
+# --- read ----------------------------------------------------------------
 
 
 def test_attrref_reads_a_bound_slot():
     ctx = Context()
     ctx.attrs["x"] = 7
-    value, _ = run(Add(AttrRef("x"), Literal(1)), ctx)
+    value, _ = run(Add(ObjectRef("x"), Literal(1)), ctx)
     assert value == 8
 
 
 def test_attrref_on_an_unbound_address_is_empty_and_propagates():
-    value, _ = run(Add(AttrRef("missing"), Literal(1)))
+    value, _ = run(Add(ObjectRef("missing"), Literal(1)))
     assert value is INVALID
 
 
-# --- SetCmd -----------------------------------------------------------------
+# --- .set() ----------------------------------------------------------------
 
 
 def test_set_writes_through_the_ref():
     ctx = Context()
-    _, ctx = run(SetCmd(AttrRef("total"), Literal(5)), ctx)
+    ctx.attrs["total"] = 0
+    _, ctx = run(IntRef("total").set(Literal(5)), ctx)
     assert ctx.attrs["total"] == 5
 
 
 def test_set_reads_then_writes_the_same_slot():
     ctx = Context()
     ctx.attrs["total"] = 10
-    run(SetCmd(AttrRef("total"), Add(AttrRef("total"), Literal(1))), ctx)
+    total = IntRef("total")
+    run(total.set(total + 1), ctx)
     assert ctx.attrs["total"] == 11
 
 
 def test_set_does_not_store_a_sentinel():
     ctx = Context()
-    run(SetCmd(AttrRef("y"), Add(AttrRef("missing"), Literal(1))), ctx)
-    assert "y" not in ctx.attrs
+    ctx.attrs["y"] = 1
+    run(IntRef("y").set(Add(ObjectRef("missing"), Literal(1))), ctx)
+    assert ctx.attrs["y"] == 1
 
 
-# --- Delete --------------------------------------------------------------
-
-
-def test_delete_removes_a_bound_slot():
-    ctx = Context()
-    ctx.attrs["k"] = "v"
-    run(Delete(AttrRef("k")), ctx)
-    assert "k" not in ctx.attrs
-
-
-def test_delete_of_an_unbound_address_is_a_noop():
-    ctx = Context()
-    run(Delete(AttrRef("absent")), ctx)
-    assert "absent" not in ctx.attrs
+def test_set_on_an_undeclared_name_raises():
+    with pytest.raises(NameError, match=r"nu\.Let"):
+        run(IntRef("total").set(5))
 
 
 # --- computed address: the address is a Nu child -------------------------
@@ -78,45 +74,44 @@ def test_attrref_reads_a_computed_address_slot():
     ctx = Context()
     ctx.attrs["key"] = "total"
     ctx.attrs["total"] = 5
-    # AttrRef(AttrRef("key")) reads ctx.attrs[ctx.attrs["key"]] == ctx.attrs["total"].
-    value, _ = run(Add(AttrRef(AttrRef("key")), Literal(1)), ctx)
+    # ObjectRef(StrRef("key")) reads ctx.attrs[ctx.attrs["key"]] == ctx.attrs["total"].
+    value, _ = run(Add(ObjectRef(StrRef("key")), Literal(1)), ctx)
     assert value == 6
 
 
 def test_set_writes_through_a_computed_address():
     ctx = Context()
     ctx.attrs["key"] = "total"
-    _, ctx = run(SetCmd(AttrRef(AttrRef("key")), Literal(9)), ctx)
+    ctx.attrs["total"] = 0
+    _, ctx = run(ObjectRef(StrRef("key")).set(Literal(9)), ctx)
     assert ctx.attrs["total"] == 9
-
-
-def test_delete_removes_a_computed_address_slot():
-    ctx = Context()
-    ctx.attrs["key"] = "total"
-    ctx.attrs["total"] = 5
-    run(Delete(AttrRef(AttrRef("key"))), ctx)
-    assert "total" not in ctx.attrs
 
 
 async def test_computed_address_resolves_on_the_async_path():
     ctx = Context()
     ctx.attrs["key"] = "total"
-    _, ctx = await arun(SetCmd(AttrRef(AttrRef("key")), Literal(4)), ctx)
+    ctx.attrs["total"] = 0
+    _, ctx = await arun(ObjectRef(StrRef("key")).set(Literal(4)), ctx)
     assert ctx.attrs["total"] == 4
 
 
-# --- AttrExists ----------------------------------------------------------
+async def test_set_on_an_undeclared_name_raises_on_the_async_path():
+    with pytest.raises(NameError, match=r"nu\.Let"):
+        await arun(IntRef("total").set(5))
+
+
+# --- .exists() -----------------------------------------------------------
 
 
 def test_attr_exists_is_true_for_a_bound_address():
     ctx = Context()
     ctx.attrs["total"] = 0
-    value, _ = run(AttrExists(AttrRef("total")), ctx)
+    value, _ = run(ObjectRef("total").exists(), ctx)
     assert value is True
 
 
 def test_attr_exists_is_false_for_an_unbound_address():
-    value, _ = run(AttrExists(AttrRef("missing")))
+    value, _ = run(ObjectRef("missing").exists())
     assert value is False
 
 
@@ -124,7 +119,7 @@ def test_attr_exists_distinguishes_a_bound_empty_from_missing():
     # A read yields EMPTY for an unbound address; exists separates the two cases.
     ctx = Context()
     ctx.attrs["here"] = None
-    value, _ = run(AttrRef("here").exists(), ctx)
+    value, _ = run(ObjectRef("here").exists(), ctx)
     assert value is True
 
 
@@ -132,7 +127,7 @@ def test_attr_exists_distinguishes_a_bound_empty_from_missing():
 
 
 def test_attr_exists_reads_its_ref_fabric():
-    program = compile(AttrExists(AttrRef("total")))
-    assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset(
-        {(AttrRef, Effect.READ)}
-    )
+    program = compile(ObjectRef("total").exists())
+    effects = program.attr(program.root, Attr.COMPOSITION_EFFECTS)
+    assert effects == frozenset({(ObjectRef, Effect.READ)})
+    assert all(isinstance(ref, AttrRef) for ref in [ObjectRef("total")])

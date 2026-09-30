@@ -57,7 +57,9 @@ class Parallel(_ParallelBase, Strategy):
           does not mean supervised.
 
     Example:
-        >>> nu.run(nu.Parallel(nu.SetCmd(nu.AttrRef("a"), 1), nu.SetCmd(nu.AttrRef("b"), 2)))[1].attrs["a"]
+        >>> a, b = nu.IntRef("a"), nu.IntRef("b")
+        >>> arms = nu.Parallel(a.set(1), b.set(2))
+        >>> _ = nu.run(nu.Let(a, body=nu.Let(b, body=arms >> nu.print(a))))
         1
     """
 
@@ -158,6 +160,8 @@ class Gather(Parallel):
           than ``Parallel``.
 
     Example:
-        >>> nu.run(nu.Gather(nu.SetCmd(nu.AttrRef("a"), 1), nu.SetCmd(nu.AttrRef("b"), 2)))[1].attrs["b"]
+        >>> a, b = nu.IntRef("a"), nu.IntRef("b")
+        >>> arms = nu.Gather(a.set(1), b.set(2))
+        >>> _ = nu.run(nu.Let(a, body=nu.Let(b, body=arms >> nu.print(b))))
         2
     """

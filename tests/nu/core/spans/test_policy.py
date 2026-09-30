@@ -11,18 +11,25 @@ against the live ctx), and the async surface. Failures come from the raising
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import pytest
 from _support.async_atoms import BoomAction
+from _support.attrs import declared
 
-from nu.context import AttrRef, SetCmd
+from nu.context import ObjectRef
 from nu.core.iteration import Iter
 from nu.core.spans import TryCatch
 from nu.lang import Attr, Cardinality, Literal, Policy, Span, StreamQuery
 from nu.lang.helpers import arun, collect, compile, run
 
 
-def _set(name: str, value: object) -> SetCmd:
-    return SetCmd(AttrRef(name), Literal(value))
+if TYPE_CHECKING:
+    from nu.context.attrs import Set
+
+
+def _set(name: str, value: object) -> Set:
+    return ObjectRef(name).set(Literal(value))
 
 
 class _BoomStream(StreamQuery):
@@ -80,7 +87,7 @@ def test_scalar_failure_runs_the_catch_in_place() -> None:
 def test_catch_can_read_the_error_from_its_isolated_context() -> None:
     # The catch runs against a copy carrying ``error``; reading it yields the
     # exception string, which forwards as the result.
-    value, _ = run(TryCatch(BoomAction("boom"), AttrRef("error")))
+    value, _ = run(TryCatch(BoomAction("boom"), ObjectRef("error")))
     assert value == "boom"
 
 
@@ -92,7 +99,7 @@ def test_catch_context_is_isolated_so_error_does_not_leak_to_the_parent() -> Non
 
 def test_error_key_is_customizable() -> None:
     # The handler reads the error back at the key it was written under.
-    value, _ = run(TryCatch(BoomAction("boom"), AttrRef("err2"), error_key="err2"))
+    value, _ = run(TryCatch(BoomAction("boom"), ObjectRef("err2"), error_key="err2"))
     assert value == "boom"
 
 
@@ -118,21 +125,19 @@ def test_error_inside_the_filter_is_caught() -> None:
 
 
 def test_finally_runs_on_success_and_persists() -> None:
-    value, ctx = run(TryCatch(Literal(5), finally_=_set("done", True)))
+    value, ctx = run(TryCatch(Literal(5), finally_=_set("done", True)), declared("done"))
     assert value == 5
     assert ctx.attrs["done"] is True
 
 
 def test_finally_runs_after_a_caught_failure() -> None:
-    value, ctx = run(TryCatch(BoomAction("boom"), Literal(9), _set("done", True)))
+    value, ctx = run(TryCatch(BoomAction("boom"), Literal(9), _set("done", True)), declared("done"))
     assert value == 9
     assert ctx.attrs["done"] is True
 
 
 def test_finally_runs_even_when_the_failure_propagates() -> None:
-    from nu.lang.runtime.context.context import Context
-
-    ctx = Context()
+    ctx = declared("done")
     tree = TryCatch(BoomAction("boom"), finally_=_set("done", True))
     with pytest.raises(ValueError, match="boom"):
         run(tree, ctx)
@@ -144,7 +149,7 @@ def test_finally_runs_even_when_the_failure_propagates() -> None:
 
 
 def test_void_success_forwards_nothing_and_the_body_effect_lands() -> None:
-    value, ctx = run(TryCatch(_set("a", 1)))
+    value, ctx = run(TryCatch(_set("a", 1)), declared("a"))
     assert value is None
     assert ctx.attrs["a"] == 1
 
@@ -166,7 +171,7 @@ def test_stream_failure_mid_drain_appends_the_catch_stream() -> None:
 
 def test_stream_finally_runs_after_the_stream_drains() -> None:
     tree = TryCatch(Iter(Literal([1, 2])), finally_=_set("done", True))
-    items, ctx = collect(compile(tree))
+    items, ctx = collect(compile(tree), declared("done"))
     assert items == [1, 2]
     assert ctx.attrs["done"] is True
 
@@ -181,7 +186,8 @@ async def test_async_scalar_failure_runs_the_catch() -> None:
 
 async def test_async_catch_reads_the_error_and_finally_persists() -> None:
     value, ctx = await arun(
-        TryCatch(BoomAction("boom"), AttrRef("error"), _set("done", True)),
+        TryCatch(BoomAction("boom"), ObjectRef("error"), _set("done", True)),
+        declared("done"),
     )
     assert value == "boom"
     assert ctx.attrs["done"] is True

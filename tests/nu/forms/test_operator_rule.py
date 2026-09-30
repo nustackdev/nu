@@ -54,7 +54,7 @@ class _Mem(nu.Shape):
 TERMS = [
     ("Object", lambda: nu.Object(12)),
     ("Int", lambda: nu.Int(12)),
-    ("IntAttrRef", lambda: nu.IntAttrRef("n")),
+    ("IntRef", lambda: nu.IntRef("n")),
     ("Bool", lambda: nu.Int(1) > 0),
     ("Float", lambda: nu.Float(1.5)),
     ("Str", lambda: nu.Str("a")),
@@ -209,12 +209,6 @@ METHODS = [
         {1, 3},
     ),
     ("Object.merge", lambda: nu.Object({"a": 1}).merge({"b": 2}), Merge, {"a": 1, "b": 2}),
-    (
-        "Object.merge_update",
-        lambda: nu.Object({"a": 1}).merge_update({"b": 2}),
-        MergeUpdate,
-        {"a": 1, "b": 2},
-    ),
 ]
 
 

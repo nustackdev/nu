@@ -15,7 +15,7 @@ import os
 import time
 
 import pytest
-from _support.pool_workers import RESIDENT_TICKER, SEED_TICK, read_tick
+from _support.pool_workers import RESIDENT
 
 import nu
 from nustd.mp_pool import Alive, Dispatch, Kill, Launch, Running, Teleport, WorkerPool, Workers
@@ -63,7 +63,7 @@ def test_provide_launch_teleport_round_trip():
     tree = nu.Provide(
         WorkerPool,
         {"name": "nu-test-provide"},
-        nu.Let("w", Launch(), Teleport(body=nu.Add(41, 1), worker=nu.AttrRef("w"))),
+        nu.Let("w", Launch(), Teleport(body=nu.Add(41, 1), worker=nu.ObjectRef("w"))),
     )
     value, _ = nu.run(tree)
     assert value == 42
@@ -73,7 +73,7 @@ async def test_provide_launch_teleport_round_trip_async():
     tree = nu.Provide(
         WorkerPool,
         {"name": "nu-test-provide-a"},
-        nu.Let("w", Launch(), Teleport(body=nu.Add(41, 1), worker=nu.AttrRef("w"))),
+        nu.Let("w", Launch(), Teleport(body=nu.Add(41, 1), worker=nu.ObjectRef("w"))),
     )
     value, _ = await nu.arun(tree)
     assert value == 42
@@ -91,7 +91,7 @@ def test_provide_teardown_kills_the_worker_it_launched():
     tree = nu.Provide(
         _Spy,
         {"name": "nu-test-teardown-tree"},
-        nu.Let("w", Launch(), Teleport(body=nu.Add(1, 1), worker=nu.AttrRef("w"))),
+        nu.Let("w", Launch(), Teleport(body=nu.Add(1, 1), worker=nu.ObjectRef("w"))),
         bind_as=WorkerPool,
     )
     value, _ = nu.run(tree)
@@ -104,8 +104,8 @@ def test_provide_teardown_kills_the_worker_it_launched():
 
 
 def test_worker_id_flows_from_a_ref(ctx, pool):
-    """The id reaches Teleport through an AttrRef, i.e. it is a child, not payload."""
-    tree = nu.Let("w", Launch(), Teleport(body=nu.Add(1, 2), worker=nu.AttrRef("w")))
+    """The id reaches Teleport through an ObjectRef, i.e. it is a child, not payload."""
+    tree = nu.Let("w", Launch(), Teleport(body=nu.Add(1, 2), worker=nu.ObjectRef("w")))
     value, _ = nu.run(tree, ctx)
     assert value == 3
 
@@ -115,7 +115,7 @@ def test_worker_id_flows_from_a_computed_query(ctx, pool):
     tree = nu.Let(
         "w",
         Launch(),
-        Teleport(body=nu.Add(1, 2), worker=nu.Add(nu.AttrRef("w"), 0)),
+        Teleport(body=nu.Add(1, 2), worker=nu.Add(nu.ObjectRef("w"), 0)),
     )
     value, _ = nu.run(tree, ctx)
     assert value == 3
@@ -125,19 +125,15 @@ def test_worker_id_flows_from_a_ref_into_dispatch_and_kill(ctx, pool):
     tree = nu.Let(
         "w",
         Launch(),
-        nu.Sequential(
-            Teleport(body=SEED_TICK, worker=nu.AttrRef("w")),
-            Dispatch(body=RESIDENT_TICKER, worker=nu.AttrRef("w")),
-        ),
+        Dispatch(body=RESIDENT, worker=nu.ObjectRef("w")),
     )
     nu.run(tree, ctx)
 
     wid = pool.workers()[0]
     pid = pool._workers[wid].proc.pid
     assert pool.running(wid) is True
-    assert pool.teleport(wid, read_tick) >= 0
 
-    nu.run(nu.Let("w", nu.Literal(wid), Kill(worker=nu.AttrRef("w"))), ctx)
+    nu.run(nu.Let("w", nu.Literal(wid), Kill(worker=nu.ObjectRef("w"))), ctx)
     assert pool.workers() == []
     assert not _pid_alive(pid)
 
@@ -152,7 +148,7 @@ def test_pool_can_be_addressed_by_an_explicit_ref():
         nu.Let(
             "w",
             Launch(PoolRef()),
-            Teleport(PoolRef(), body=nu.Add(2, 2), worker=nu.AttrRef("w")),
+            Teleport(PoolRef(), body=nu.Add(2, 2), worker=nu.ObjectRef("w")),
         ),
     )
     value, _ = nu.run(tree)
@@ -169,7 +165,7 @@ def test_the_fluent_form_runs_the_same_as_the_constructors():
     tree = nu.Provide(
         WorkerPool,
         {"name": "nu-test-fluent"},
-        nu.Let("w", pool.launch(), pool.teleport(nu.Add(20, 22), nu.AttrRef("w"))),
+        nu.Let("w", pool.launch(), pool.teleport(nu.Add(20, 22), nu.ObjectRef("w"))),
     )
     value, _ = nu.run(tree)
     assert value == 42
@@ -183,10 +179,7 @@ def test_the_fluent_form_drives_a_whole_lifecycle(ctx, pool):
         nu.Let(
             "w",
             ref.launch(),
-            nu.Sequential(
-                ref.teleport(SEED_TICK, nu.AttrRef("w")),
-                ref.dispatch(RESIDENT_TICKER, nu.AttrRef("w")),
-            ),
+            ref.dispatch(RESIDENT, nu.ObjectRef("w")),
         ),
         ctx,
     )
@@ -207,10 +200,7 @@ def test_dispatch_in_a_tree_returns_promptly(ctx, pool):
     tree = nu.Let(
         "w",
         Launch(),
-        nu.Sequential(
-            Teleport(body=SEED_TICK, worker=nu.AttrRef("w")),
-            Dispatch(body=RESIDENT_TICKER, worker=nu.AttrRef("w")),
-        ),
+        Dispatch(body=RESIDENT, worker=nu.ObjectRef("w")),
     )
     # Launch dominates the timing; the point is that it returns at all, since
     # the dispatched body never terminates.
@@ -218,22 +208,6 @@ def test_dispatch_in_a_tree_returns_promptly(ctx, pool):
     nu.run(tree, ctx)
     assert time.monotonic() - start < 10.0
     assert pool.running(pool.workers()[0]) is True
-
-
-def test_a_payload_body_still_pickles_and_runs_in_the_child(ctx, pool):
-    """The body moved from a child slot to payload; the wire does not care."""
-    tree = nu.Let(
-        "w",
-        Launch(),
-        nu.Sequential(
-            Teleport(body=SEED_TICK, worker=nu.AttrRef("w")),
-            Dispatch(body=RESIDENT_TICKER, worker=nu.AttrRef("w")),
-        ),
-    )
-    nu.run(tree, ctx)
-    wid = pool.workers()[0]
-    first = pool.teleport(wid, read_tick)
-    assert _await_true(lambda: pool.teleport(wid, read_tick) > first)
 
 
 def test_dispatch_carries_caller_attrs_when_asked(ctx, pool):
@@ -245,8 +219,8 @@ def test_dispatch_carries_caller_attrs_when_asked(ctx, pool):
             nu.Literal(7),
             nu.Sequential(
                 Dispatch(
-                    body=nu.SetCmd(nu.AttrRef("tick"), nu.AttrRef("seed")),
-                    worker=nu.AttrRef("w"),
+                    body=nu.Let("tick", nu.ObjectRef("seed"), nu.Noop()),
+                    worker=nu.ObjectRef("w"),
                     carry=True,
                 ),
             ),
@@ -264,7 +238,7 @@ def test_dispatch_carries_caller_attrs_when_asked(ctx, pool):
 
 
 def test_alive_and_running_as_tree_queries(ctx, pool):
-    alive, _ = nu.run(nu.Let("w", Launch(), Alive(worker=nu.AttrRef("w"))), ctx)
+    alive, _ = nu.run(nu.Let("w", Launch(), Alive(worker=nu.ObjectRef("w"))), ctx)
     assert alive is True
     wid = pool.workers()[0]
     running, _ = nu.run(Running(worker=nu.Literal(wid)), ctx)

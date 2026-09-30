@@ -110,8 +110,8 @@ def browse(
         lens.on_nav(),
         nustd.kv.Snapshot(
             lens.set_columns(
-                nu.ListAttrRef(key),
-                columns(shape, nu.ListAttrRef(key), prefix=prefix, max_rows=max_rows),
+                nu.ObjectRef(key),
+                columns(shape, nu.ObjectRef(key), prefix=prefix, max_rows=max_rows),
             )
         ),
         changed_key=key,

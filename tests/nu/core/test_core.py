@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import asyncio
 
-from nu.context import SetCmd
+from nu.context.attrs import Set
 from nu.core import (
     Add,
     And,
@@ -39,7 +39,7 @@ def test_arithmetic_is_pure():
 
 def test_set_tracks_a_write_and_a_read():
     # Both Refs are the same class, so the same fabric: a WRITE and a READ on it.
-    program = compile(SetCmd(Ref(), Add(Ref(), Literal(1))))
+    program = compile(Set(Ref(), Add(Ref(), Literal(1))))
     assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset(
         {(Ref, Effect.WRITE), (Ref, Effect.READ)}
     )
@@ -58,12 +58,12 @@ def test_reduction_is_scalar_over_a_stream():
 
 
 def test_a_clean_program_validates():
-    program = compile(SetCmd(Ref("total"), Add(Ref("total"), Literal(1))))
+    program = compile(Set(Ref("total"), Add(Ref("total"), Literal(1))))
     assert validate(program) is program
 
 
 def test_a_command_in_a_query_slot_is_refused():
-    verdict = gate(compile(Add(SetCmd(Ref("x"), Literal(1)), Literal(2))), *LAWS)
+    verdict = gate(compile(Add(Set(Ref("x"), Literal(1)), Literal(2))), *LAWS)
     assert any(v.law == "composition" for v in verdict)
 
 
@@ -140,4 +140,4 @@ def test_run_raises_on_an_invalid_description():
 
     # A Command in a Query slot fails the composition law.
     with pytest.raises(ValueError, match="invalid program"):
-        run(Add(SetCmd(Ref("x"), Literal(1)), Literal(2)))
+        run(Add(Set(Ref("x"), Literal(1)), Literal(2)))

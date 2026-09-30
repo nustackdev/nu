@@ -39,8 +39,9 @@ class Sequential(Strategy):
         Nothing (VOID). The writes are the children's.
 
     Example:
-        >>> nu.run(nu.Sequential(nu.SetCmd(nu.AttrRef("a"), 1), nu.SetCmd(nu.AttrRef("b"), 2)))[1].attrs
-        Attributes(a=1, b=2)
+        >>> a = nu.IntRef("a")
+        >>> _ = nu.run(nu.Let(a, 0, nu.Sequential(a.set(a + 1), a.set(a * 10), nu.print(a))))
+        10
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

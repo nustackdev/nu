@@ -87,7 +87,7 @@ def _loop(depth: int) -> tuple[str, nu.Nu]:
     the moment either awaited.
     """
     name = f"_lens_item{depth}"
-    return name, nu.ObjectAttrRef(name)
+    return name, nu.ObjectRef(name)
 
 
 # --- one row ----------------------------------------------------------------
@@ -252,7 +252,7 @@ def _mapping_term(ref: StructuredRef, max_rows: int, depth: int) -> nu.Nu:
     """
     held = f"_lens_keys{depth}"
     item, elem = _loop(depth)
-    keys = nu.ListAttrRef(held)
+    keys = nu.ObjectRef(held)
     if _holds_shapes(ref):
         row: nu.Nu = _door(nu.ToStr(elem), "shape")
     else:
@@ -276,7 +276,7 @@ def _sequence_term(ref: StructuredRef, max_rows: int, depth: int) -> nu.Nu:
     """
     held = f"_lens_items{depth}"
     item, elem = _loop(depth)
-    items = nu.ListAttrRef(held)
+    items = nu.ObjectRef(held)
     index = nu.ToStr(nu.GetItem(elem, nu.Int(0)))
     if _holds_shapes(ref):
         row: nu.Nu = _door(index, "shape")
@@ -433,5 +433,5 @@ def columns(
             LensColumns(shape, cursor, prefix=nu.Literal(prefix), max_rows=max_rows),
             promise={"cardinality": Cardinality.SCALAR},
         ),
-        catch=nu.List.of(LensFailed(nu.ToStr(nu.AttrRef("error")))),
+        catch=nu.List.of(LensFailed(nu.ToStr(nu.ObjectRef("error")))),
     )

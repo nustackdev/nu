@@ -125,7 +125,7 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
 
         Args:
             transform: evaluated once per item; reads the item with
-                `nu.AttrRef(key)`.
+                `nu.ObjectRef(key)`.
             key: the name each item is bound under. Defaults to `"item"`.
 
         Yields:
@@ -133,7 +133,7 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
 
         Example:
             >>> xs = nu.List.of(1, 2).iter()
-            >>> nu.run(xs.map(nu.Add(nu.AttrRef("item"), 1)).to_list())[0]
+            >>> nu.run(xs.map(nu.Add(nu.ObjectRef("item"), 1)).to_list())[0]
             [2, 3]
         """
         from nu.core import Map
@@ -145,7 +145,7 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
 
         Args:
             predicate: evaluated once per item; reads the item with
-                `nu.AttrRef(key)`.
+                `nu.ObjectRef(key)`.
             key: the name each item is bound under. Defaults to `"item"`.
 
         Yields:
@@ -153,7 +153,7 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
 
         Example:
             >>> xs = nu.List.of(1, 2, 3).iter()
-            >>> nu.run(xs.filter(nu.Gt(nu.AttrRef("item"), 1)).to_list())[0]
+            >>> nu.run(xs.filter(nu.Gt(nu.ObjectRef("item"), 1)).to_list())[0]
             [2, 3]
         """
         from nu.core import Filter

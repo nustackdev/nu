@@ -6,7 +6,7 @@ AI agents, and services). No glue. 50x less code.
 
 Two ways to import. Grab what you need flat from the root:
 
-    from nu import Int, Sequential, Retry, AttrRef, Nu, run
+    from nu import Int, Sequential, Retry, IntRef, Nu, run
 
 Or reach a subpackage by dot-access:
 

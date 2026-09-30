@@ -69,8 +69,9 @@ async def test_wait_on_an_unknown_id_returns_none(ctx):
 
 async def test_wait_completes_when_another_branch_kills_the_worker(ctx, pool):
     wid = pool.launch()
+    ctx.attrs["code"] = nu.lang.EMPTY
     tree = nu.Gather(
-        nu.SetCmd(nu.AttrRef("code"), Wait(worker=nu.Literal(wid))),
+        nu.ObjectRef("code").set(Wait(worker=nu.Literal(wid))),
         nu.DelayedDo(0.2, Kill(worker=nu.Literal(wid))),
     )
     start = time.monotonic()
@@ -82,7 +83,7 @@ async def test_wait_completes_when_another_branch_kills_the_worker(ctx, pool):
 
 async def test_wait_sees_a_worker_that_exits_on_its_own(ctx, pool):
     """No kill at all: the child leaves on a stop frame and Wait reads its code."""
-    tree = nu.Let("w", Launch(), Wait(worker=nu.AttrRef("w")))
+    tree = nu.Let("w", Launch(), Wait(worker=nu.ObjectRef("w")))
     task = asyncio.ensure_future(nu.arun(tree, ctx))
     assert await _until(lambda: pool.workers() and pool._workers[pool.workers()[0]]._ready.is_set())
     handle = pool._workers[pool.workers()[0]]
@@ -162,7 +163,7 @@ async def test_take_spare_in_a_tree_leaves_nothing_behind():
         {"name": "nu-test-spares"},
         nu.With(
             spares(1),
-            body=nu.Let("w", TakeSpare(), Alive(worker=nu.AttrRef("w"))),
+            body=nu.Let("w", TakeSpare(), Alive(worker=nu.ObjectRef("w"))),
         ),
         bind_as=WorkerPool,
     )

@@ -109,7 +109,7 @@ class Ping(ScalarQuery):
         True or False.
 
     Example:
-        With(nustd.valkey.server(".vk"), body=SetCmd(AttrRef("up"), Ping()))
+        With(nustd.valkey.server(".vk"), body=Ping())
     """
 
     def __init__(self, server: Nu | None = None) -> None:

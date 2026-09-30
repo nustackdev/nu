@@ -1,47 +1,39 @@
 """The attrs axis of the Context fabric: name-keyed store for short-lived data.
 
 ``ctx.attrs`` is a flat, name-keyed dict for loop counters, accumulators,
-markers, and other short-lived primitives. ``AttrRef`` names a slot; the write
-ops (``SetCmd`` / ``Delete``) and existence query
-(``AttrExists``) are the interactions.
+markers, and other short-lived values. ``Let`` declares a name for a body's
+duration; the typed refs (``IntRef``, ``StrRef``, ..., ``ObjectRef``) read it,
+``ref.set(v)`` reassigns it (the ``Set`` command) and ``ref.exists()`` asks
+whether it is declared (the ``Exists`` query).
 """
 
 from __future__ import annotations
 
-from .interactions import AttrExists, Delete, Let, SetCmd
+from .interactions import Exists, Let, Set
 from .refs import (
     AttrRef,
-    BoolAttrRef,
-    BytesAttrRef,
-    DictAttrRef,
-    FloatAttrRef,
-    FrozenSetAttrRef,
-    IntAttrRef,
-    ListAttrRef,
-    NoneAttrRef,
-    ObjectAttrRef,
-    SetAttrRef,
-    StrAttrRef,
-    TupleAttrRef,
+    BoolRef,
+    BytesRef,
+    FloatRef,
+    FrozenSetRef,
+    IntRef,
+    ObjectRef,
+    StrRef,
+    TupleRef,
 )
 
 
 __all__ = [
-    "AttrExists",
     "AttrRef",
-    "BoolAttrRef",
-    "BytesAttrRef",
-    "Delete",
-    "DictAttrRef",
-    "FloatAttrRef",
-    "FrozenSetAttrRef",
-    "IntAttrRef",
+    "BoolRef",
+    "BytesRef",
+    "Exists",
+    "FloatRef",
+    "FrozenSetRef",
+    "IntRef",
     "Let",
-    "ListAttrRef",
-    "NoneAttrRef",
-    "ObjectAttrRef",
-    "SetAttrRef",
-    "SetCmd",
-    "StrAttrRef",
-    "TupleAttrRef",
+    "ObjectRef",
+    "Set",
+    "StrRef",
+    "TupleRef",
 ]

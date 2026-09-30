@@ -35,7 +35,7 @@ class ValkeyRef(FabricRef):
         The bound ``ValkeyServer``. EMPTY when nothing is bound.
 
     Example:
-        With(nustd.valkey.server(".vk"), body=SetCmd(AttrRef("up"), ValkeyRef().ping()))
+        With(nustd.valkey.server(".vk"), body=ValkeyRef().ping())
     """
 
     fabric = ValkeyServer

@@ -42,9 +42,10 @@ class AnyN(Strategy):
     Example:
         >>> import asyncio
         >>> fail = nu.raise_(ValueError, "nope")
-        >>> ok = nu.DelayedDo(0.05, nu.SetCmd(nu.AttrRef("winner"), "ok"))
-        >>> asyncio.run(nu.arun(nu.AnyN(fail, ok)))[1].attrs
-        Attributes(winner='ok')
+        >>> winner = nu.StrRef("winner")
+        >>> ok = nu.DelayedDo(0.05, winner.set("ok"))
+        >>> _ = asyncio.run(nu.arun(nu.Let(winner, body=nu.AnyN(fail, ok) >> nu.print(winner))))
+        ok
     """
 
     _requires_async = Declared(value=True, name="requires_async")

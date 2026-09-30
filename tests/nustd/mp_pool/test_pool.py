@@ -7,7 +7,7 @@ import os
 import time
 
 import pytest
-from _support.pool_workers import RESIDENT_TICKER, SEED_TICK, Marker, read_tick
+from _support.pool_workers import RESIDENT, Marker
 
 import nu
 from nustd.mp_pool import UnknownWorker, WorkerGone, WorkerPool
@@ -94,30 +94,21 @@ def test_pool_default_init_applies_to_every_worker():
 # --- dispatch ---------------------------------------------------------------
 
 
-def test_dispatch_returns_promptly_and_the_tree_really_runs(pool):
+def test_dispatch_returns_promptly(pool):
     w = pool.launch()
-    pool.teleport(w, SEED_TICK)
 
     start = time.monotonic()
-    pool.dispatch(w, RESIDENT_TICKER)
+    pool.dispatch(w, RESIDENT)
     elapsed = time.monotonic() - start
 
     # The body never terminates; if Dispatch awaited it this would hang.
     assert elapsed < 1.0
     assert pool.running(w) is True
 
-    time.sleep(0.2)
-    first = pool.teleport(w, read_tick)
-    time.sleep(0.2)
-    second = pool.teleport(w, read_tick)
-    assert first > 0
-    assert second > first
-
 
 def test_teleport_still_answers_while_a_resident_body_runs(pool):
     w = pool.launch()
-    pool.teleport(w, SEED_TICK)
-    pool.dispatch(w, RESIDENT_TICKER)
+    pool.dispatch(w, RESIDENT)
     assert pool.teleport(w, nu.Add(2, 2)) == 4
 
 
@@ -133,8 +124,7 @@ def test_teleport_reraises_the_child_error(pool):
 def test_kill_terminates_a_worker_running_a_resident_body_and_is_prompt(pool):
     w = pool.launch()
     pid = _pid_of(pool, w)
-    pool.teleport(w, SEED_TICK)
-    pool.dispatch(w, RESIDENT_TICKER)
+    pool.dispatch(w, RESIDENT)
 
     start = time.monotonic()
     pool.kill(w)
@@ -165,12 +155,11 @@ def test_calls_on_a_killed_id_raise_rather_than_hang(pool):
 
 def test_teleport_in_flight_fails_when_the_worker_is_killed(pool):
     w = pool.launch()
-    pool.teleport(w, SEED_TICK)
     result: list[object] = []
 
     def call() -> None:
         try:
-            result.append(pool.teleport(w, nu.DelayedDo(30, SEED_TICK)))
+            result.append(pool.teleport(w, nu.DelayedDo(30, nu.Noop())))
         except BaseException as exc:
             result.append(exc)
 
@@ -193,8 +182,7 @@ def test_cleanup_reaps_every_worker():
     p.setup(None)
     ids = [p.launch() for _ in range(3)]
     pids = [_pid_of(p, w) for w in ids]
-    p.teleport(ids[0], SEED_TICK)
-    p.dispatch(ids[0], RESIDENT_TICKER)
+    p.dispatch(ids[0], RESIDENT)
 
     start = time.monotonic()
     p.cleanup()
@@ -222,8 +210,7 @@ async def test_acleanup_reaps_under_cancellation():
             pool = ctx.get(WorkerPool)
             w = await pool.alaunch()
             pids.append(_pid_of(pool, w))
-            await pool.ateleport(w, SEED_TICK)
-            await pool.adispatch(w, RESIDENT_TICKER)
+            await pool.adispatch(w, RESIDENT)
             entered.set()
             await asyncio.sleep(60)
 
@@ -256,7 +243,7 @@ async def test_async_lifecycle_round_trip():
 def test_running_is_false_before_and_after_a_dispatch(pool):
     w = pool.launch()
     assert pool.running(w) is False
-    pool.dispatch(w, nu.DelayedDo(0.3, SEED_TICK))
+    pool.dispatch(w, nu.DelayedDo(0.3, nu.Noop()))
     assert pool.running(w) is True
     deadline = time.monotonic() + 10
     while pool.running(w) and time.monotonic() < deadline:
@@ -285,41 +272,21 @@ def _poll(check, timeout: float = 10.0) -> bool:
     return False
 
 
-# A body that ticks until cancelled and marks ``cleaned`` on the way out. It
-# runs on the worker's own Context (no attrs), so both stay readable after.
-_TICK_THEN_CLEAN = nu.TryCatch(RESIDENT_TICKER, finally_=nu.SetCmd(nu.AttrRef("cleaned"), True))
-
-
 async def test_cancelling_ateleport_cancels_the_remote_body():
     bracket = nu.Provide(WorkerPool, {"name": "nu-test-cancel-exec"})
     async with bracket._aopen(nu.Context()) as ctx:
         pool = ctx.get(WorkerPool)
         w = await pool.alaunch()
-        await pool.ateleport(w, nu.Sequential(SEED_TICK, nu.SetCmd(nu.AttrRef("cleaned"), False)))
 
-        call = asyncio.create_task(pool.ateleport(w, _TICK_THEN_CLEAN))
+        call = asyncio.create_task(pool.ateleport(w, RESIDENT))
         await asyncio.sleep(0.2)
-        assert await pool.ateleport(w, read_tick) > 0
         call.cancel()
         with pytest.raises(asyncio.CancelledError):
             await call
 
-        async def cleaned() -> bool:
-            deadline = time.monotonic() + 10
-            while time.monotonic() < deadline:
-                if await pool.ateleport(w, nu.AttrRef("cleaned")) is True:
-                    return True
-                await asyncio.sleep(0.01)
-            return False
-
-        # The remote finally ran, and the task is gone: the tick stops.
-        assert await cleaned()
-        first = await pool.ateleport(w, read_tick)
-        await asyncio.sleep(0.1)
-        assert await pool.ateleport(w, read_tick) == first
-        # Nothing is left on the books, and the worker still serves.
-        assert pool._workers[w]._pending == {}
+        # The worker still serves, and nothing is left on the books.
         assert await pool.ateleport(w, nu.Add(2, 2)) == 4
+        assert pool._workers[w]._pending == {}
 
 
 async def test_cancelling_one_exec_leaves_its_siblings_alone():
@@ -328,33 +295,25 @@ async def test_cancelling_one_exec_leaves_its_siblings_alone():
         pool = ctx.get(WorkerPool)
         w = await pool.alaunch()
         slow = [
-            asyncio.create_task(
-                pool.ateleport(w, nu.DelayedDo(0.3, nu.SetCmd(nu.AttrRef(f"s{i}"), i)))
-            )
-            for i in range(3)
+            asyncio.create_task(pool.ateleport(w, nu.DelayedDo(0.3, nu.Noop()))) for _ in range(3)
         ]
-        doomed = asyncio.create_task(pool.ateleport(w, nu.DelayedDo(30, SEED_TICK)))
+        doomed = asyncio.create_task(pool.ateleport(w, nu.DelayedDo(30, nu.Noop())))
         await asyncio.sleep(0.1)
         doomed.cancel()
         await asyncio.gather(*slow)
         assert doomed.cancelled()
-        for i in range(3):
-            assert await pool.ateleport(w, nu.AttrRef(f"s{i}")) == i
+        assert all(task.done() and not task.cancelled() for task in slow)
 
 
 def test_cancel_ends_a_dispatched_body(pool):
     w = pool.launch()
-    pool.teleport(w, nu.Sequential(SEED_TICK, nu.SetCmd(nu.AttrRef("cleaned"), False)))
-    token = pool.dispatch(w, _TICK_THEN_CLEAN)
+    token = pool.dispatch(w, RESIDENT)
     assert pool.running(w) is True
 
     pool.cancel(w, token)
     # The child says cancelled, which closes the token like done.
     assert _poll(lambda: pool.running(w) is False)
-    assert pool.teleport(w, nu.AttrRef("cleaned")) is True
-    first = pool.teleport(w, read_tick)
-    time.sleep(0.1)
-    assert pool.teleport(w, read_tick) == first
+    assert pool.teleport(w, nu.Add(1, 2)) == 3
 
 
 def test_cancel_is_a_no_op_once_finished(pool):

@@ -9,13 +9,13 @@ from nustd.valkey import Ping, Url, ValkeyRef, server, url_for
 
 
 TREES = {
-    "url": nu.With(server("/nonexistent/vk"), body=nu.SetCmd(nu.AttrRef("u"), Url())),
-    "ping": nu.With(server("/nonexistent/vk"), body=nu.SetCmd(nu.AttrRef("p"), Ping())),
+    "url": nu.With(server("/nonexistent/vk"), body=nu.ObjectRef("u").set(Url())),
+    "ping": nu.With(server("/nonexistent/vk"), body=nu.ObjectRef("p").set(Ping())),
     "fluent": nu.With(
         server("/nonexistent/vk"),
         body=nu.Sequential(
-            nu.SetCmd(nu.AttrRef("u"), ValkeyRef().url()),
-            nu.SetCmd(nu.AttrRef("p"), ValkeyRef().ping()),
+            nu.ObjectRef("u").set(ValkeyRef().url()),
+            nu.ObjectRef("p").set(ValkeyRef().ping()),
         ),
     ),
     "explicit_ref": nu.With(server("/nonexistent/vk"), body=Url(ValkeyRef())),

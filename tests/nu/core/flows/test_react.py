@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 import nu
-from nu.context import AttrRef, With
+from nu.context import ObjectRef, With
 from nu.core.flows import ParallelAsync, Race
 from nu.core.flows.react import React, ReactForever, ReactLatest, ReactWhile
 from nu.domains.shape import Shape
@@ -299,7 +299,7 @@ async def _stop(task: asyncio.Task) -> None:
 
 
 def _latest(body: Callable, **kwargs: object) -> ReactLatest:
-    return ReactLatest(AttrRef("feed"), _Body(body), changed_key="k", **kwargs)
+    return ReactLatest(ObjectRef("feed"), _Body(body), changed_key="k", **kwargs)
 
 
 async def test_react_latest_restarts_and_cancels_the_stale_run():
@@ -545,4 +545,4 @@ async def test_react_latest_restart_unwinds_nested_parallel_and_kv_boundaries():
 
 
 def _latest_of(body: object) -> ReactLatest:
-    return ReactLatest(AttrRef("feed"), body, changed_key="k")
+    return ReactLatest(ObjectRef("feed"), body, changed_key="k")

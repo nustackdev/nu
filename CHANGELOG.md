@@ -13,6 +13,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Context values stay pure: names are declared, then reassigned, never changed in place
+- Context refs get shorter names and hold only immutable values; existing code needs renaming
 - Collections return typed children from their declared value; shape collections merge into plain ones
 - Operators only compose flows; bit, set and merge operations become named methods
 - Terms never quietly turn into Python values; operators follow each value's Python meaning

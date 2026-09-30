@@ -10,19 +10,24 @@ from __future__ import annotations
 
 import asyncio
 import sys
+from typing import TYPE_CHECKING
 
 import pytest
 from _support.policy_atoms import CountAction, RecordAction, SlowAction
 
-from nu.context import AttrRef, SetCmd
+from nu.context import ObjectRef
 from nu.core.spans import Debounce, Throttle, Timeout
 from nu.lang import Literal, Policy, Span
 from nu.lang.helpers import arun, run
 from nu.lang.runtime.context.context import Context
 
 
-def _set(name: str, value: object) -> SetCmd:
-    return SetCmd(AttrRef(name), Literal(value))
+if TYPE_CHECKING:
+    from nu.context.attrs import Set
+
+
+def _set(name: str, value: object) -> Set:
+    return ObjectRef(name).set(Literal(value))
 
 
 # --- basis ----------------------------------------------------------------

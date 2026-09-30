@@ -6,21 +6,21 @@ iter_effects, is_pure, reads, writes, fabrics. The fabric predicates
 
 from __future__ import annotations
 
-from nu.context import AttrRef, SetCmd
+from nu.context import ObjectRef
 from nu.core.flows import Sequential
 from nu.lang import Literal
 from nu.tree import fabrics, is_pure, reads, writes
 
 
 def _read_ref():
-    return AttrRef("x")
+    return ObjectRef("x")
 
 
 def _write_tree():
-    """SetCmd writes AttrRef('y'); also reads AttrRef('x')."""
-    target = AttrRef("y")
-    source = AttrRef("x")
-    return SetCmd(target, source), target, source
+    """A set writes ObjectRef('y'); also reads ObjectRef('x')."""
+    target = ObjectRef("y")
+    source = ObjectRef("x")
+    return target.set(source), target, source
 
 
 def test_pure_tree_has_no_effects():
@@ -48,4 +48,4 @@ def test_write_ref_is_not_also_a_read():
 
 def test_fabrics_folds_refs_to_their_types():
     cmd, _target, _source = _write_tree()
-    assert AttrRef in fabrics(cmd)
+    assert ObjectRef in fabrics(cmd)

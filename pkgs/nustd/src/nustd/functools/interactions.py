@@ -7,7 +7,7 @@ e2e like core's folds (``Sum`` ...) since folds are a hot path.
 It is higher-order: the reducer is a Nu query child. Each step binds the
 accumulator and the current item into the loop-var side-channel (the same
 channel ``Map`` / ``Filter`` use), then evaluates the reducer, which reads them
-via a typed AttrRef (e.g. ``IntAttrRef("acc") + IntAttrRef("item")``).
+via a typed attrs ref (e.g. ``IntRef("acc") + IntRef("item")``).
 """
 
 from __future__ import annotations

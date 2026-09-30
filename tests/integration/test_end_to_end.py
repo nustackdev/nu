@@ -1,14 +1,14 @@
 """End-to-end: build a tree, compile, validate, and run it against a Context.
 
 The proof that the core + the Context fabric run together - a program that
-reads (AttrRef), writes (SetCmd through the ref), streams (Iter / Map / Filter),
+reads (ObjectRef), writes (``.set()`` through the ref), streams (Iter / Map / Filter),
 and folds (Sum / Collect), driven through the real ``run`` entry
 (compile -> validate -> drive) and checked for value and mutation.
 """
 
 from __future__ import annotations
 
-from nu.context import AttrRef, SetCmd
+from nu.context import ObjectRef
 from nu.core import (
     Add,
     Collect,
@@ -27,12 +27,12 @@ def test_read_compute_write():
     # Read an attr, compute on it, write the result back through the ref.
     ctx = Context()
     ctx.attrs["total"] = 40
-    _, ctx = run(SetCmd(AttrRef("total"), Add(AttrRef("total"), Literal(2))), ctx)
+    _, ctx = run(ObjectRef("total").set(Add(ObjectRef("total"), Literal(2))), ctx)
     assert ctx.attrs["total"] == 42
 
 
 def test_map_then_reduce():
-    tree = Sum(Map(Iter(Literal([1, 2, 3])), Mul(AttrRef("item"), Literal(10))))
+    tree = Sum(Map(Iter(Literal([1, 2, 3])), Mul(ObjectRef("item"), Literal(10))))
     value, _ = run(tree)
     assert value == 60
 
@@ -45,8 +45,8 @@ def test_iter_into_a_reduction():
 def test_filtered_mapped_stream_collected():
     tree = Collect(
         Filter(
-            Map(Iter(Literal([1, 2, 3, 4])), Mul(AttrRef("item"), Literal(10))),
-            Lt(AttrRef("item"), Literal(35)),
+            Map(Iter(Literal([1, 2, 3, 4])), Mul(ObjectRef("item"), Literal(10))),
+            Lt(ObjectRef("item"), Literal(35)),
         )
     )
     value, _ = run(tree)
@@ -57,12 +57,12 @@ def test_filtered_mapped_stream_collected():
 
 
 async def test_async_map_then_reduce():
-    value, _ = await arun(Sum(Map(Iter(Literal([1, 2, 3])), Mul(AttrRef("item"), Literal(10)))))
+    value, _ = await arun(Sum(Map(Iter(Literal([1, 2, 3])), Mul(ObjectRef("item"), Literal(10)))))
     assert value == 60
 
 
 async def test_async_write_through_ref():
     ctx = Context()
     ctx.attrs["n"] = 1
-    _, ctx = await arun(SetCmd(AttrRef("n"), Add(AttrRef("n"), Literal(9))), ctx)
+    _, ctx = await arun(ObjectRef("n").set(Add(ObjectRef("n"), Literal(9))), ctx)
     assert ctx.attrs["n"] == 10

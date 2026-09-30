@@ -132,7 +132,7 @@ def test_entry_threads_through_load() -> None:
 def test_entry_can_be_computed() -> None:
     ctx = nu.Context()
     ctx.attrs["entry"] = "build"
-    tree = Program(ENTRY_SOURCE).run(entry=nu.AttrRef("entry"))
+    tree = Program(ENTRY_SOURCE).run(entry=nu.ObjectRef("entry"))
     assert nu.run(tree, ctx)[0] == "built"
 
 
@@ -148,7 +148,7 @@ def test_scope_threads_through_load() -> None:
 def test_scope_values_can_be_computed() -> None:
     ctx = nu.Context()
     ctx.attrs["who"] = "attrs"
-    tree = Program(GREETING).run(scope={"who": nu.AttrRef("who")})
+    tree = Program(GREETING).run(scope={"who": nu.ObjectRef("who")})
     assert nu.run(tree, ctx)[0] == "hello attrs"
 
 
@@ -275,7 +275,7 @@ def test_on_error_also_catches_a_venv_brace_failure() -> None:
 
 
 def test_the_catch_branch_can_read_the_error_as_a_string() -> None:
-    tree = Program(BROKEN).run(on_error=nu.str(nu.AttrRef("error")))
+    tree = Program(BROKEN).run(on_error=nu.str(nu.ObjectRef("error")))
     value, _ = nu.run(tree)
     assert "ZeroDivisionError" in value
     assert "(line 4)" in value
@@ -285,14 +285,14 @@ def test_the_catch_branch_can_read_the_diagnostic_fields() -> None:
     # Two Vars hops: the exception's __dict__ carries ``diagnostic``, the
     # Diagnostic's carries ``lineno``. Both need a __dict__, which is why
     # neither type is slotted.
-    exc = nu.GetAttr(nu.AttrRef("error"), "exception")
+    exc = nu.GetAttr(nu.ObjectRef("error"), "exception")
     diagnostic = nu.GetItem(nu.Vars(exc), "diagnostic")
     lineno = nu.GetItem(nu.Vars(diagnostic), "lineno")
     assert nu.run(Program(BROKEN).run(on_error=lineno))[0] == 4
 
 
 def test_the_catch_branch_can_branch_on_the_line_number() -> None:
-    exc = nu.GetAttr(nu.AttrRef("error"), "exception")
+    exc = nu.GetAttr(nu.ObjectRef("error"), "exception")
     lineno = nu.GetAttr(nu.GetAttr(exc, "diagnostic"), "lineno")
     tree = Program(BROKEN).run(
         on_error=nu.If(nu.Eq(lineno, 4), nu.Literal("line four"), nu.Literal("elsewhere"))
@@ -301,7 +301,7 @@ def test_the_catch_branch_can_branch_on_the_line_number() -> None:
 
 
 async def test_the_catch_branch_reads_the_diagnostic_under_arun() -> None:
-    exc = nu.GetAttr(nu.AttrRef("error"), "exception")
+    exc = nu.GetAttr(nu.ObjectRef("error"), "exception")
     lineno = nu.GetAttr(nu.GetAttr(exc, "diagnostic"), "lineno")
     value, _ = await nu.arun(Program(BROKEN).run(on_error=lineno))
     assert value == 4

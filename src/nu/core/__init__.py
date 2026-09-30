@@ -50,7 +50,7 @@ family, crossing Query / Command / Action as the builtins do:
 
 This surface is the pure Python builtins. The fabric interactions (writing
 through a Ref into the Context store, a database, stdio) live in their own
-fabric dirs - ``nu.context`` owns ``SetCmd`` / ``Delete`` / ``AttrRef``, not
+fabric dirs - ``nu.context`` owns ``Let`` and the attrs refs, not
 here - and the Forms layer (types, classes) has its own home at ``nu.forms``.
 Flows and Spans (Seq, Par, If, Retry, Transaction) are the subpackages above.
 """

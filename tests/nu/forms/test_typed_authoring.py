@@ -1,4 +1,4 @@
-"""Unit tests for the typed-authoring surface (typed AttrRef + form operators).
+"""Unit tests for the typed-authoring surface (typed attrs refs + form operators).
 
 For each representative expression, tests assert BOTH:
 - ``isinstance(expr, ExpectedForm)`` — type-narrowing reflected in the runtime
@@ -12,19 +12,15 @@ dict, set, sentinel, and the 5 convoluted compositions.
 from __future__ import annotations
 
 from nu.context import (
-    BoolAttrRef,
-    BytesAttrRef,
-    DictAttrRef,
-    FrozenSetAttrRef,
-    IntAttrRef,
-    ListAttrRef,
-    NoneAttrRef,
-    ObjectAttrRef,
-    SetAttrRef,
-    StrAttrRef,
-    TupleAttrRef,
+    BoolRef,
+    BytesRef,
+    FrozenSetRef,
+    IntRef,
+    ObjectRef,
+    StrRef,
+    TupleRef,
 )
-from nu.forms.collections import List, Tuple
+from nu.forms.collections import Tuple
 from nu.forms.primitives import Bool, Bytes, Float, Int, Object, Str
 from nu.lang import Context, Literal
 from nu.lang.helpers import run
@@ -54,38 +50,38 @@ def val(expr: object, c: Context | None = None) -> object:
 
 
 def test_int_add_int_narrows_to_int_form():
-    n = IntAttrRef("n")
+    n = IntRef("n")
     assert isinstance(n + 3, Int)
 
 
 def test_int_add_int_evaluates():
-    assert val(IntAttrRef("n") + 3, ctx(n=10)) == 13
+    assert val(IntRef("n") + 3, ctx(n=10)) == 13
 
 
 def test_int_mul_int_narrows_to_int_form():
-    n = IntAttrRef("n")
+    n = IntRef("n")
     assert isinstance(n * 2, Int)
 
 
 def test_int_mul_int_evaluates():
-    assert val(IntAttrRef("n") * 2, ctx(n=7)) == 14
+    assert val(IntRef("n") * 2, ctx(n=7)) == 14
 
 
 def test_int_add_float_promotes_to_float_form():
-    n = IntAttrRef("n")
+    n = IntRef("n")
     assert isinstance(n + 1.5, Float)
 
 
 def test_int_add_float_evaluates():
-    assert val(IntAttrRef("n") + 1.5, ctx(n=10)) == 11.5
+    assert val(IntRef("n") + 1.5, ctx(n=10)) == 11.5
 
 
 def test_int_sub_evaluates():
-    assert val(IntAttrRef("n") - 4, ctx(n=10)) == 6
+    assert val(IntRef("n") - 4, ctx(n=10)) == 6
 
 
 def test_int_pow_evaluates():
-    assert val(IntAttrRef("n") ** 3, ctx(n=2)) == 8
+    assert val(IntRef("n") ** 3, ctx(n=2)) == 8
 
 
 # ---------------------------------------------------------------------------
@@ -94,43 +90,43 @@ def test_int_pow_evaluates():
 
 
 def test_int_gt_narrows_to_bool_form():
-    assert isinstance(IntAttrRef("n") > 5, Bool)
+    assert isinstance(IntRef("n") > 5, Bool)
 
 
 def test_int_gt_evaluates_true():
-    assert val(IntAttrRef("n") > 5, ctx(n=10)) is True
+    assert val(IntRef("n") > 5, ctx(n=10)) is True
 
 
 def test_int_gt_evaluates_false():
-    assert val(IntAttrRef("n") > 5, ctx(n=3)) is False
+    assert val(IntRef("n") > 5, ctx(n=3)) is False
 
 
 def test_int_eq_narrows_to_bool_form():
-    assert isinstance(IntAttrRef("n") == 10, Bool)
+    assert isinstance(IntRef("n") == 10, Bool)
 
 
 def test_int_lt_evaluates():
-    assert val(IntAttrRef("n") < 20, ctx(n=10)) is True
+    assert val(IntRef("n") < 20, ctx(n=10)) is True
 
 
 def test_bool_and_narrows_to_bool_form():
-    assert isinstance(BoolAttrRef("f").and_(True), Bool)
+    assert isinstance(BoolRef("f").and_(True), Bool)
 
 
 def test_bool_and_evaluates():
-    assert val(BoolAttrRef("f").and_(False), ctx(f=True)) is False
+    assert val(BoolRef("f").and_(False), ctx(f=True)) is False
 
 
 def test_bool_or_evaluates():
-    assert val(BoolAttrRef("f").or_(True), ctx(f=False)) is True
+    assert val(BoolRef("f").or_(True), ctx(f=False)) is True
 
 
 def test_bool_not_evaluates():
-    assert val(BoolAttrRef("f").not_(), ctx(f=True)) is False
+    assert val(BoolRef("f").not_(), ctx(f=True)) is False
 
 
 def test_chained_and_gt_evaluates():
-    n = IntAttrRef("n")
+    n = IntRef("n")
     assert val((n > 5).and_(n < 100), ctx(n=10)) is True
 
 
@@ -140,43 +136,43 @@ def test_chained_and_gt_evaluates():
 
 
 def test_str_upper_narrows_to_str_form():
-    assert isinstance(StrAttrRef("s").upper(), Str)
+    assert isinstance(StrRef("s").upper(), Str)
 
 
 def test_str_upper_evaluates():
-    assert val(StrAttrRef("s").upper(), ctx(s="hello")) == "HELLO"
+    assert val(StrRef("s").upper(), ctx(s="hello")) == "HELLO"
 
 
 def test_str_lower_evaluates():
-    assert val(StrAttrRef("s").lower(), ctx(s="WORLD")) == "world"
+    assert val(StrRef("s").lower(), ctx(s="WORLD")) == "world"
 
 
 def test_str_add_narrows_to_str_form():
-    assert isinstance(StrAttrRef("s") + "_x", Str)
+    assert isinstance(StrRef("s") + "_x", Str)
 
 
 def test_str_add_evaluates():
-    assert val(StrAttrRef("s") + " world", ctx(s="hello")) == "hello world"
+    assert val(StrRef("s") + " world", ctx(s="hello")) == "hello world"
 
 
 def test_str_slice_narrows_to_str_form():
-    assert isinstance(StrAttrRef("s")[0:3], Str)
+    assert isinstance(StrRef("s")[0:3], Str)
 
 
 def test_str_slice_evaluates():
-    assert val(StrAttrRef("s")[0:5], ctx(s="hello world")) == "hello"
+    assert val(StrRef("s")[0:5], ctx(s="hello world")) == "hello"
 
 
 def test_str_startswith_narrows_to_bool_form():
-    assert isinstance(StrAttrRef("s").startswith("he"), Bool)
+    assert isinstance(StrRef("s").startswith("he"), Bool)
 
 
 def test_str_startswith_evaluates():
-    assert val(StrAttrRef("s").startswith("HI"), ctx(s="HI there")) is True
+    assert val(StrRef("s").startswith("HI"), ctx(s="HI there")) is True
 
 
 def test_str_endswith_evaluates():
-    assert val(StrAttrRef("s").endswith("!"), ctx(s="hello!")) is True
+    assert val(StrRef("s").endswith("!"), ctx(s="hello!")) is True
 
 
 # ---------------------------------------------------------------------------
@@ -185,136 +181,107 @@ def test_str_endswith_evaluates():
 
 
 def test_bytes_upper_narrows_to_bytes_form():
-    assert isinstance(BytesAttrRef("b").upper(), Bytes)
+    assert isinstance(BytesRef("b").upper(), Bytes)
 
 
 def test_bytes_upper_evaluates():
-    assert val(BytesAttrRef("b").upper(), ctx(b=b"hello")) == b"HELLO"
+    assert val(BytesRef("b").upper(), ctx(b=b"hello")) == b"HELLO"
 
 
 def test_bytes_slice_narrows_to_bytes_form():
-    assert isinstance(BytesAttrRef("b")[0:3], Bytes)
+    assert isinstance(BytesRef("b")[0:3], Bytes)
 
 
 def test_bytes_slice_evaluates():
-    assert val(BytesAttrRef("b")[0:5], ctx(b=b"Hello World")) == b"Hello"
+    assert val(BytesRef("b")[0:5], ctx(b=b"Hello World")) == b"Hello"
 
 
 def test_bytes_hex_narrows_to_str_form():
-    assert isinstance(BytesAttrRef("b").hex_(), Str)
+    assert isinstance(BytesRef("b").hex_(), Str)
 
 
 def test_bytes_hex_evaluates():
-    assert val(BytesAttrRef("b").hex_(), ctx(b=b"\xff")) == "ff"
+    assert val(BytesRef("b").hex_(), ctx(b=b"\xff")) == "ff"
 
 
 def test_bytes_startswith_narrows_to_bool_form():
-    assert isinstance(BytesAttrRef("b").startswith(b"Hi"), Bool)
+    assert isinstance(BytesRef("b").startswith(b"Hi"), Bool)
 
 
 def test_bytes_startswith_evaluates():
-    assert val(BytesAttrRef("b").startswith(b"Hello"), ctx(b=b"Hello World")) is True
+    assert val(BytesRef("b").startswith(b"Hello"), ctx(b=b"Hello World")) is True
 
 
 # ---------------------------------------------------------------------------
-# ObjectAttrRef
+# ObjectRef
 # ---------------------------------------------------------------------------
 
 
 def test_any_add_narrows_to_any_form():
-    assert isinstance(ObjectAttrRef("x") + 1, Object)
+    assert isinstance(ObjectRef("x") + 1, Object)
 
 
 def test_any_add_evaluates():
-    assert val(ObjectAttrRef("x") + 8, ctx(x=42)) == 50
+    assert val(ObjectRef("x") + 8, ctx(x=42)) == 50
 
 
 def test_any_gt_narrows_to_bool_form():
-    assert isinstance(ObjectAttrRef("x") > 0, Bool)
+    assert isinstance(ObjectRef("x") > 0, Bool)
 
 
 def test_any_gt_evaluates():
-    assert val(ObjectAttrRef("x") > 10, ctx(x=42)) is True
+    assert val(ObjectRef("x") > 10, ctx(x=42)) is True
 
 
 # ---------------------------------------------------------------------------
-# NoneAttrRef
+# ObjectRef over None
 # ---------------------------------------------------------------------------
 
 
 def test_none_not_narrows_to_bool_form():
-    assert isinstance(NoneAttrRef("z").not_(), Bool)
+    assert isinstance(ObjectRef("z").not_(), Bool)
 
 
 def test_none_not_evaluates():
-    assert val(NoneAttrRef("z").not_(), ctx(z=None)) is True
+    assert val(ObjectRef("z").not_(), ctx(z=None)) is True
 
 
 def test_none_or_evaluates():
-    assert val(NoneAttrRef("z").or_(True), ctx(z=None)) is True
+    assert val(ObjectRef("z").or_(True), ctx(z=None)) is True
 
 
 # ---------------------------------------------------------------------------
-# List element / slice
+# Tuple element / slice
 # ---------------------------------------------------------------------------
 
 
-def test_list_first_elem_narrows_to_any_form():
-    assert isinstance(ListAttrRef("xs").first_elem(), Object)
+def test_tuple_first_elem_narrows_to_any_form():
+    assert isinstance(TupleRef("xs").first_elem(), Object)
 
 
-def test_list_first_elem_evaluates():
-    assert val(ListAttrRef("xs").first_elem(), ctx(xs=[3, 1, 2])) == 3
+def test_tuple_first_elem_of_three_evaluates():
+    assert val(TupleRef("xs").first_elem(), ctx(xs=(3, 1, 2))) == 3
 
 
-def test_list_getitem_index_narrows_to_any_form():
-    assert isinstance(ListAttrRef("xs")[0], Object)
+def test_tuple_mul_narrows_to_tuple_form():
+    assert isinstance(TupleRef("xs") * 2, Tuple)
 
 
-def test_list_getitem_evaluates():
-    assert val(ListAttrRef("xs")[0], ctx(xs=[10, 20, 30])) == 10
-
-
-def test_list_slice_narrows_to_list_form():
-    assert isinstance(ListAttrRef("xs")[0:2], List)
-
-
-def test_list_slice_evaluates():
-    assert val(ListAttrRef("xs")[0:2], ctx(xs=[10, 20, 30])) == [10, 20]
-
-
-def test_list_mul_narrows_to_list_form():
-    assert isinstance(ListAttrRef("xs") * 2, List)
-
-
-def test_list_mul_evaluates():
-    assert val(ListAttrRef("xs") * 2, ctx(xs=[1, 2])) == [1, 2, 1, 2]
+def test_tuple_mul_evaluates():
+    assert val(TupleRef("xs") * 2, ctx(xs=(1, 2))) == (1, 2, 1, 2)
 
 
 # ---------------------------------------------------------------------------
-# Dict get / keys / copy
+# ObjectRef over a dict
 # ---------------------------------------------------------------------------
 
 
-def test_dict_get_narrows_to_any_form():
-    assert isinstance(DictAttrRef("d").get_item("k"), Object)
+def test_dict_subscript_narrows_to_any_form():
+    assert isinstance(ObjectRef("d")["k"], Object)
 
 
-def test_dict_get_evaluates():
-    assert val(DictAttrRef("d").get_item("x"), ctx(d={"x": 1, "y": 2})) == 1
-
-
-def test_dict_get_default_evaluates():
-    assert val(DictAttrRef("d").get_item("z", 99), ctx(d={"x": 1})) == 99
-
-
-def test_dict_keys_evaluates():
-    result = val(DictAttrRef("d").keys(), ctx(d={"a": 1, "b": 2}))
-    assert set(result) == {"a", "b"}  # type: ignore[call-overload]
-
-
-def test_dict_copy_evaluates():
-    assert val(DictAttrRef("d").copy(), ctx(d={"a": 1})) == {"a": 1}
+def test_dict_subscript_evaluates():
+    assert val(ObjectRef("d")["x"], ctx(d={"x": 1, "y": 2})) == 1
 
 
 # ---------------------------------------------------------------------------
@@ -323,57 +290,60 @@ def test_dict_copy_evaluates():
 
 
 def test_set_union_evaluates():
-    st = SetAttrRef("st")
-    assert val(st.union(Literal({4, 5})), ctx(st={1, 2, 3})) == {1, 2, 3, 4, 5}
+    st = FrozenSetRef("st")
+    result = val(st.union(Literal(frozenset({4, 5}))), ctx(st=frozenset({1, 2, 3})))
+    assert result == frozenset({1, 2, 3, 4, 5})
 
 
 def test_set_intersection_evaluates():
-    st = SetAttrRef("st")
-    assert val(st.intersection(Literal({2, 3, 4})), ctx(st={1, 2, 3})) == {2, 3}
+    st = FrozenSetRef("st")
+    result = val(st.intersection(Literal(frozenset({2, 3, 4}))), ctx(st=frozenset({1, 2, 3})))
+    assert result == frozenset({2, 3})
 
 
 def test_set_issubset_narrows_to_bool_form():
-    assert isinstance(SetAttrRef("st").issubset(Literal({1, 2, 3})), Bool)
+    assert isinstance(FrozenSetRef("st").issubset(Literal(frozenset({1, 2, 3}))), Bool)
 
 
 def test_set_issubset_evaluates():
-    assert val(SetAttrRef("st").issubset(Literal({1, 2, 3, 4})), ctx(st={1, 2})) is True
+    st = FrozenSetRef("st")
+    assert val(st.issubset(Literal(frozenset({1, 2, 3, 4}))), ctx(st=frozenset({1, 2}))) is True
 
 
 def test_frozenset_union_evaluates():
-    fs = FrozenSetAttrRef("fs")
+    fs = FrozenSetRef("fs")
     result = val(fs.union(Literal(frozenset({40}))), ctx(fs=frozenset({10, 20})))
     assert result == frozenset({10, 20, 40})
 
 
 def test_frozenset_isdisjoint_evaluates():
-    fs = FrozenSetAttrRef("fs")
+    fs = FrozenSetRef("fs")
     assert val(fs.isdisjoint(Literal(frozenset({99}))), ctx(fs=frozenset({1, 2}))) is True
 
 
 # ---------------------------------------------------------------------------
-# TupleAttrRef
+# TupleRef
 # ---------------------------------------------------------------------------
 
 
 def test_tuple_getitem_narrows_to_any_form():
-    assert isinstance(TupleAttrRef("tp")[0], Object)
+    assert isinstance(TupleRef("tp")[0], Object)
 
 
 def test_tuple_getitem_evaluates():
-    assert val(TupleAttrRef("tp")[0], ctx(tp=(10, 20, 30))) == 10
+    assert val(TupleRef("tp")[0], ctx(tp=(10, 20, 30))) == 10
 
 
 def test_tuple_first_elem_evaluates():
-    assert val(TupleAttrRef("tp").first_elem(), ctx(tp=(10, 20, 30))) == 10
+    assert val(TupleRef("tp").first_elem(), ctx(tp=(10, 20, 30))) == 10
 
 
 def test_tuple_slice_narrows_to_tuple_form():
-    assert isinstance(TupleAttrRef("tp")[0:2], Tuple)
+    assert isinstance(TupleRef("tp")[0:2], Tuple)
 
 
 def test_tuple_slice_evaluates():
-    assert val(TupleAttrRef("tp")[0:2], ctx(tp=(10, 20, 30))) == (10, 20)
+    assert val(TupleRef("tp")[0:2], ctx(tp=(10, 20, 30))) == (10, 20)
 
 
 # ---------------------------------------------------------------------------
@@ -382,23 +352,23 @@ def test_tuple_slice_evaluates():
 
 
 def test_missing_ref_is_empty_narrows_to_bool_form():
-    assert isinstance(IntAttrRef("missing").is_empty(), Bool)
+    assert isinstance(IntRef("missing").is_empty(), Bool)
 
 
 def test_missing_ref_is_empty_evaluates_true():
-    assert val(IntAttrRef("missing").is_empty()) is True
+    assert val(IntRef("missing").is_empty()) is True
 
 
 def test_missing_ref_not_empty_evaluates_false():
-    assert val(IntAttrRef("missing").not_empty()) is False
+    assert val(IntRef("missing").not_empty()) is False
 
 
 def test_bound_ref_is_empty_evaluates_false():
-    assert val(IntAttrRef("n").is_empty(), ctx(n=5)) is False
+    assert val(IntRef("n").is_empty(), ctx(n=5)) is False
 
 
 def test_bound_ref_not_empty_evaluates_true():
-    assert val(IntAttrRef("n").not_empty(), ctx(n=5)) is True
+    assert val(IntRef("n").not_empty(), ctx(n=5)) is True
 
 
 # ---------------------------------------------------------------------------
@@ -408,7 +378,7 @@ def test_bound_ref_not_empty_evaluates_true():
 
 
 def test_convo1_intermediate_types():
-    n = IntAttrRef("n")
+    n = IntRef("n")
     step1 = n + 1.5
     assert isinstance(step1, Float)
     step2 = step1 * 2
@@ -418,14 +388,14 @@ def test_convo1_intermediate_types():
 
 
 def test_convo1_evaluates():
-    n = IntAttrRef("n")
+    n = IntRef("n")
     expr = (n + 1.5) * 2 > 20
     assert isinstance(expr, Bool)
     assert val(expr, ctx(n=10)) is True
 
 
 def test_convo1_evaluates_false_below_threshold():
-    n = IntAttrRef("n")
+    n = IntRef("n")
     # (5 + 1.5) * 2 = 13.0 <= 20
     assert val((n + 1.5) * 2 > 20, ctx(n=5)) is False
 
@@ -437,30 +407,30 @@ def test_convo1_evaluates_false_below_threshold():
 
 
 def test_convo2_narrows_to_bool_form():
-    a = IntAttrRef("a")
-    b = IntAttrRef("b")
-    flag = BoolAttrRef("flag")
+    a = IntRef("a")
+    b = IntRef("b")
+    flag = BoolRef("flag")
     assert isinstance((a + b > 10).and_(flag), Bool)
 
 
 def test_convo2_evaluates_true():
-    a = IntAttrRef("a")
-    b = IntAttrRef("b")
-    flag = BoolAttrRef("flag")
+    a = IntRef("a")
+    b = IntRef("b")
+    flag = BoolRef("flag")
     assert val((a + b > 10).and_(flag), ctx(a=7, b=5, flag=True)) is True
 
 
 def test_convo2_evaluates_false_when_sum_low():
-    a = IntAttrRef("a")
-    b = IntAttrRef("b")
-    flag = BoolAttrRef("flag")
+    a = IntRef("a")
+    b = IntRef("b")
+    flag = BoolRef("flag")
     assert val((a + b > 10).and_(flag), ctx(a=3, b=3, flag=True)) is False
 
 
 def test_convo2_evaluates_false_when_flag_false():
-    a = IntAttrRef("a")
-    b = IntAttrRef("b")
-    flag = BoolAttrRef("flag")
+    a = IntRef("a")
+    b = IntRef("b")
+    flag = BoolRef("flag")
     assert val((a + b > 10).and_(flag), ctx(a=7, b=5, flag=False)) is False
 
 
@@ -471,22 +441,22 @@ def test_convo2_evaluates_false_when_flag_false():
 
 
 def test_convo3_narrows_to_bool_form():
-    s = StrAttrRef("s")
+    s = StrRef("s")
     assert isinstance((s.upper() + "!").startswith("HELLO"), Bool)
 
 
 def test_convo3_evaluates_true():
-    s = StrAttrRef("s")
+    s = StrRef("s")
     assert val((s.upper() + "!").startswith("HELLO"), ctx(s="hello")) is True
 
 
 def test_convo3_evaluates_false():
-    s = StrAttrRef("s")
+    s = StrRef("s")
     assert val((s.upper() + "!").startswith("HELLO"), ctx(s="world")) is False
 
 
 def test_convo3_intermediate_str_forms():
-    s = StrAttrRef("s")
+    s = StrRef("s")
     upper_expr = s.upper()
     assert isinstance(upper_expr, Str)
     cat_expr = upper_expr + "!"
@@ -494,24 +464,24 @@ def test_convo3_intermediate_str_forms():
 
 
 # ---------------------------------------------------------------------------
-# Convoluted 4: list first_elem used in arithmetic
+# Convoluted 4: tuple first_elem used in arithmetic
 # xs.first_elem() + 3 -> Object; value = 5 + 3 = 8
 # ---------------------------------------------------------------------------
 
 
 def test_convo4_narrows_to_any_form():
-    xs = ListAttrRef("xs")
+    xs = TupleRef("xs")
     assert isinstance(xs.first_elem() + 3, Object)
 
 
 def test_convo4_evaluates():
-    xs = ListAttrRef("xs")
-    assert val(xs.first_elem() + 3, ctx(xs=[5, 10, 15])) == 8
+    xs = TupleRef("xs")
+    assert val(xs.first_elem() + 3, ctx(xs=(5, 10, 15))) == 8
 
 
 def test_convo4_different_list():
-    xs = ListAttrRef("xs")
-    assert val(xs.first_elem() + 10, ctx(xs=[100, 200])) == 110
+    xs = TupleRef("xs")
+    assert val(xs.first_elem() + 10, ctx(xs=(100, 200))) == 110
 
 
 # ---------------------------------------------------------------------------
@@ -521,21 +491,21 @@ def test_convo4_different_list():
 
 
 def test_convo5_narrows_to_bool_form():
-    n = IntAttrRef("n")
+    n = IntRef("n")
     assert isinstance(n * 2 == n + n, Bool)
 
 
 def test_convo5_lhs_rhs_are_int_forms():
-    n = IntAttrRef("n")
+    n = IntRef("n")
     assert isinstance(n * 2, Int)
     assert isinstance(n + n, Int)
 
 
 def test_convo5_evaluates_true():
-    n = IntAttrRef("n")
+    n = IntRef("n")
     assert val(n * 2 == n + n, ctx(n=7)) is True
 
 
 def test_convo5_evaluates_true_for_zero():
-    n = IntAttrRef("n")
+    n = IntRef("n")
     assert val(n * 2 == n + n, ctx(n=0)) is True

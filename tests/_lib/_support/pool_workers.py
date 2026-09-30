@@ -15,7 +15,7 @@ from __future__ import annotations
 import nu
 
 
-__all__ = ["RESIDENT_TICKER", "SEED_TICK", "Marker", "read_tick"]
+__all__ = ["RESIDENT", "Marker"]
 
 
 class Marker:
@@ -32,19 +32,7 @@ class Marker:
         """Nothing to build; the instance is the whole fabric."""
 
 
-# Seed the counter the resident body increments. A bare AttrRef read of an
-# unset name is EMPTY, and EMPTY + 1 is INVALID, so the counter has to exist
-# before the loop starts.
-SEED_TICK = nu.SetCmd(nu.AttrRef("tick"), 0)
-
-# A body that never terminates: the thing Dispatch exists for. It mutates the
-# worker's own Context, so the parent can watch it move with a Teleport.
-RESIDENT_TICKER = nu.ForeverDo(
-    nu.DelayedDo(
-        0.005,
-        nu.SetCmd(nu.AttrRef("tick"), nu.Add(nu.AttrRef("tick"), 1)),
-    )
-)
-
-# The read of that counter, to be teleported.
-read_tick = nu.AttrRef("tick")
+# A body that never terminates: the thing Dispatch exists for. It holds no
+# state across calls, so a test watches it through the pool (running, cancel,
+# kill), never by reading back what it wrote.
+RESIDENT = nu.ForeverDo(nu.Delay(0.005))

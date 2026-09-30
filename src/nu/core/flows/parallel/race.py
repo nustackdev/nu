@@ -39,10 +39,10 @@ class Race(Strategy):
 
     Example:
         >>> import asyncio
-        >>> fast = nu.SetCmd(nu.AttrRef("winner"), "fast")
-        >>> slow = nu.DelayedDo(1, nu.SetCmd(nu.AttrRef("winner"), "slow"))
-        >>> asyncio.run(nu.arun(nu.Race(fast, slow)))[1].attrs
-        Attributes(winner='fast')
+        >>> winner = nu.StrRef("winner")
+        >>> race = nu.Race(winner.set("fast"), nu.DelayedDo(1, winner.set("slow")))
+        >>> _ = asyncio.run(nu.arun(nu.Let(winner, body=race >> nu.print(winner))))
+        fast
     """
 
     _requires_async = Declared(value=True, name="requires_async")

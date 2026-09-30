@@ -51,9 +51,9 @@ class CaughtError(str):
 
     ``attrs[error_key]`` has always held the exception string, and still
     does - this compares, formats and concatenates as ``str(exc)``, so
-    ``AttrRef("error")`` reads exactly as before. What it adds is
+    ``ObjectRef("error")`` reads exactly as before. What it adds is
     ``.exception``, the live object, reachable from inside the tree with
-    ``GetAttr(AttrRef("error"), "exception")``.
+    ``GetAttr(ObjectRef("error"), "exception")``.
 
     Args:
         exc: the caught exception, wrapped as ``str(exc)``.

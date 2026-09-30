@@ -25,7 +25,6 @@ from nustd.valkey import ValkeyServer, socket_path_for, url_for
 pytestmark = pytest.mark.slow
 
 POOL = PoolRef()
-A, B = nu.AttrRef("a"), nu.AttrRef("b")
 
 
 def _await_true(fn, timeout: float = 10.0) -> bool:
@@ -68,30 +67,25 @@ def test_a_write_in_one_worker_wakes_a_reaction_in_another(ctx, data_dir):
         str(Path(data_dir, "kv.sqlite")),
         redis_url=url_for(data_dir),
     )
-    _, ctx = nu.run(
-        nu.Sequential(
-            nu.SetCmd(A, POOL.launch(stack)),
-            nu.SetCmd(B, POOL.launch(stack)),
-            POOL.teleport(B_INIT, B),
-            POOL.dispatch(B_BODY, B),
-        ),
-        ctx,
-    )
+    # The worker ids are the runs' values, carried to the next run as literals.
+    a = nu.Literal(nu.run(POOL.launch(stack), ctx)[0])
+    b = nu.Literal(nu.run(POOL.launch(stack), ctx)[0])
+    nu.run(POOL.teleport(B_INIT, b) >> POOL.dispatch(B_BODY, b), ctx)
 
     def read(term):
-        return nu.run(POOL.teleport(term, B), ctx)[0]
+        return nu.run(POOL.teleport(term, b), ctx)[0]
 
     # B's subscription registers with the server asynchronously after the
     # dispatch is acked, so keep writing until the first wake lands.
     def wrote_and_woke():
-        nu.run(POOL.teleport(a_set(42), A), ctx)
+        nu.run(POOL.teleport(a_set(42), a), ctx)
         return read(READ_WAKES) >= 1
 
     assert _await_true(wrote_and_woke), "B never woke on A's write"
     assert _await_true(lambda: read(READ_LAST) == 42)
 
     wakes = read(READ_WAKES)
-    nu.run(POOL.teleport(a_burst(1000, 100), A), ctx)
+    nu.run(POOL.teleport(a_burst(1000, 100), a), ctx)
     # Wakes coalesce under a burst; what must hold is that B catches up to the
     # last value written and woke at least once more.
     assert _await_true(lambda: read(READ_LAST) == 1099), read(READ_LAST)

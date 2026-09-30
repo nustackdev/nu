@@ -8,7 +8,7 @@ written through a Ref, so there is no fabric write op - mirrors v1.
 
 from __future__ import annotations
 
-from nu.context import AttrRef, FabricExists, FabricRef, SetCmd
+from nu.context import FabricExists, FabricRef, ObjectRef
 from nu.lang import Attr, Context, Effect
 from nu.lang.helpers import compile, run
 
@@ -25,15 +25,17 @@ class Clock:
 def test_fabricref_yields_a_bound_fabric():
     clock = Clock()
     ctx = Context().bind(Clock, clock)
-    _, ctx = run(SetCmd(AttrRef("saved"), FabricRef(Clock)), ctx)
+    ctx.attrs["saved"] = None
+    _, ctx = run(ObjectRef("saved").set(FabricRef(Clock)), ctx)
     assert ctx.attrs["saved"] is clock
 
 
 def test_fabricref_on_an_unbound_type_is_empty():
-    # Unbound -> EMPTY; SetCmd's sentinel guard then leaves the slot unwritten.
+    # Unbound -> EMPTY; the set's sentinel guard then leaves the slot unwritten.
     ctx = Context()
-    _, ctx = run(SetCmd(AttrRef("saved"), FabricRef(Clock)), ctx)
-    assert "saved" not in ctx.attrs
+    ctx.attrs["saved"] = None
+    _, ctx = run(ObjectRef("saved").set(FabricRef(Clock)), ctx)
+    assert ctx.attrs["saved"] is None
 
 
 # --- FabricExists ---------------------------------------------------

@@ -20,27 +20,25 @@ statements about the fabric's contents, not imperative escapes.
   a shelf of idle workers kept up so a take skips the spawn.
 
 Everything is Nu. Every worker id and the ``init`` override is a **child**,
-never payload, so a target can come from a ``Ref``, an ``AttrRef`` or any
+never payload, so a target can come from a ``Ref``, an ``ObjectRef`` or any
 query::
 
+    w = ObjectRef("w")
     Provide(WorkerPool, {"init": With(Provide(Store, {...})), "name": "nu"},
-        Sequential(
-            SetCmd(AttrRef("w"), Launch()),
-            Dispatch(body=resident_tree, worker=AttrRef("w")),
-            SetCmd(AttrRef("n"), Teleport(body=Add(1, 2), worker=AttrRef("w"))),
-            Kill(worker=AttrRef("w")),
-        ),
+        Let(w, Launch(), Sequential(
+            Dispatch(body=resident_tree, worker=w),
+            Let("n", Teleport(body=Add(1, 2), worker=w), Kill(worker=w)),
+        )),
     )
 
 The interactions are also reachable off the ref, which is the same term by a
 shorter road::
 
     pool = PoolRef()
-    Sequential(
-        SetCmd(AttrRef("w"), pool.launch()),
-        pool.dispatch(resident_tree, AttrRef("w")),
-        pool.kill(AttrRef("w")),
-    )
+    Let(w, pool.launch(), Sequential(
+        pool.dispatch(resident_tree, w),
+        pool.kill(w),
+    ))
 
 The one exception to "no payload" is a ``Dispatch`` body, which has to be
 payload because a Command cannot hold a Flow in a child slot. The consequence

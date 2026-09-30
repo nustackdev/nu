@@ -11,7 +11,7 @@ and ``>>`` compose flows (Race, Parallel, Sequential) on an ``Object`` like on
 every term. The value versions are named methods that pass through to the
 value: ``bitand`` / ``bitor`` / ``bitxor`` / ``bitnot`` / ``lshift`` /
 ``rshift``, ``and_`` / ``or_`` / ``not_``, ``union`` / ``intersection`` /
-``difference`` / ``symmetric_difference``, ``merge`` / ``merge_update``.
+``difference`` / ``symmetric_difference``, ``merge``.
 
 Protocol dunders (``__len__``, ``__contains__``, ``__bool__``, ``__iter__``) must return
 Python-native values and cannot be part of a Nu tree; the ``Nu`` base blocks
@@ -19,10 +19,9 @@ them with a hint. They are exposed as named methods (``len()``,
 ``contains()``, ``iter()``, ``bool_()``) that return the matching Form so
 the tree stays symbolic.
 
-Mutation via ``__setitem__`` / ``__delitem__`` is Ref-gated: the underlying
-source must be a ``Ref`` (fabric-writable), otherwise Python's assign-syntax
-would silently discard the resulting ``Command`` node and produce an
-invalid tree. A clear ``TypeError`` fires at build time in that case.
+Every operation yields a new value; none changes the value in place. There
+is no subscript write or delete and no in-place merge: build the new value
+instead.
 
 There is deliberately no ``__call__`` here - Nu programs run through
 interactions (built via ``host`` or hand-written), not raw
@@ -34,7 +33,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from nu.lang import Form, Ref, TypedNu
+from nu.lang import Form, TypedNu
 
 
 if TYPE_CHECKING:
@@ -906,29 +905,6 @@ class Object(Form, TypedNu[Any]):
 
         return Object(Merge(self, other))
 
-    def merge_update(self, other: object) -> Object:
-        """Merge other into self in place, and yield self: Python's dict `|=`.
-
-        Args:
-            other: the mapping to merge in. Its values win over self's on
-                shared keys.
-
-        Notes:
-            - Mutates slot 0 in place and yields the mutated mapping, an
-              Action like `Dict.merge_update`.
-
-        Yields:
-            Self, updated with other's entries. INVALID when either operand
-            is a sentinel.
-
-        Example:
-            >>> nu.run(nu.Object({"a": 1}).merge_update({"b": 2}))[0]
-            {'a': 1, 'b': 2}
-        """
-        from ..collections.abc.mapping_interactions import MergeUpdate
-
-        return Object(MergeUpdate(self, other))
-
     # =========================================================================
     # DYNAMIC DESCENT (subscript + attribute)
     # =========================================================================
@@ -958,51 +934,6 @@ class Object(Form, TypedNu[Any]):
             key = Slice(key.start, key.stop, key.step)
         return Object(GetItem(self, key))
 
-    def __setitem__(self, key: object, value: object) -> object:
-        """Subscript write: self[key] = value.
-
-        Args:
-            key: the index or key to write.
-            value: the value to store there.
-
-        Notes:
-            - Ref-gated at build time: the wrapped source must be a Ref
-              (a fabric-writable location). Python's assignment syntax
-              discards the return value, so a value-node write would
-              silently produce an orphaned, invalid tree; this raises
-              `TypeError` instead.
-
-        Example:
-            >>> nu.Object([1, 2, 3])[0] = 5
-            Traceback (most recent call last):
-                ...
-            TypeError: Object.__setitem__: cannot mutate through a value-node - the wrapped source must be a Ref (a fabric-writable location). Got: Literal.
-        """
-        _require_ref_source(self, "__setitem__")
-        from nu.core import SetItem
-
-        return SetItem(self, key, value)
-
-    def __delitem__(self, key: object) -> object:
-        """Subscript delete: del self[key].
-
-        Args:
-            key: the index or key to delete.
-
-        Notes:
-            - Ref-gated the same way as `__setitem__`; see there for why.
-
-        Example:
-            >>> del nu.Object([1, 2, 3])[0]
-            Traceback (most recent call last):
-                ...
-            TypeError: Object.__delitem__: cannot mutate through a value-node - the wrapped source must be a Ref (a fabric-writable location). Got: Literal.
-        """
-        _require_ref_source(self, "__delitem__")
-        from nu.core import DelItem
-
-        return DelItem(self, key)
-
     def __getattr__(self, name: str) -> Object:
         """Attribute read: self.name.
 
@@ -1020,9 +951,8 @@ class Object(Form, TypedNu[Any]):
               `and_`, `bitand`, `bitnot`, `bitor`, `bitxor`, `bool_`,
               `contains`, `difference`, `has_attr`, `intersection`, `is_`,
               `is_empty`, `is_invalid`, `is_sentinel`, `iter`, `len`,
-              `lshift`, `merge`, `merge_update`, `not_`, `not_empty`,
-              `not_invalid`, `or_`, `rshift`, `symmetric_difference`,
-              `union`. To read a value attribute with one of those names,
+              `lshift`, `merge`, `not_`, `not_empty`, `not_invalid`, `or_`,
+              `rshift`, `symmetric_difference`, `union`. To read a value attribute with one of those names,
               build the read directly: `nu.Object(nu.GetAttr(o, "len"))`.
 
         Yields:
@@ -1142,26 +1072,3 @@ class Object(Form, TypedNu[Any]):
         from .bool_ import Bool
 
         return Bool(HasAttr(self, name))
-
-
-def _require_ref_source(form: Object, op: str) -> None:
-    """Guard: the wrapped source of form must be a Ref.
-
-    Args:
-        form: the Object instance being mutated.
-        op: the name of the calling dunder, used in the error message.
-
-    Notes:
-        - Python's `x[k] = v` / `del x[k]` syntax discards the return
-          value of `__setitem__` / `__delitem__`, so a value-node Object
-          returning a Command would leave the mutation orphaned. Raises
-          `TypeError` up front instead.
-    """
-    source = form._source
-    if not isinstance(source, Ref):
-        msg = (
-            f"Object.{op}: cannot mutate through a value-node - the "
-            f"wrapped source must be a Ref (a fabric-writable location). "
-            f"Got: {type(source).__name__ if source is not None else 'None'}."
-        )
-        raise TypeError(msg)

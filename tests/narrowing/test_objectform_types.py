@@ -10,8 +10,8 @@ matching Form.
 
 ``&`` / ``|`` / ``>>`` compose flows on ``Object`` like on every term; bit,
 set and merge operations are named methods. Deliberately absent: ``__call__`` (Nu runs through
-interactions, not raw Python calls). Mutation dunders (``__setitem__`` /
-``__delitem__``) are Ref-gated at build time.
+interactions, not raw Python calls), and the in-place mutators (subscript write and
+delete, ``merge_update``): every op yields a new value.
 """
 
 from __future__ import annotations

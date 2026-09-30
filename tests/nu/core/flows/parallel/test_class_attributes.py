@@ -8,7 +8,9 @@ subtree (True); ``ParallelThreaded`` and plain ``Parallel`` do not (False).
 
 from __future__ import annotations
 
-from nu.context import AttrRef, SetCmd
+from typing import TYPE_CHECKING
+
+from nu.context import ObjectRef
 from nu.core.flows import (
     AnyN,
     Parallel,
@@ -21,8 +23,12 @@ from nu.lang.attributes.execution import ExecOrder
 from nu.lang.helpers import compile
 
 
-def _set(name: str, value: object) -> SetCmd:
-    return SetCmd(AttrRef(name), Literal(value))
+if TYPE_CHECKING:
+    from nu.context.attrs import Set
+
+
+def _set(name: str, value: object) -> Set:
+    return ObjectRef(name).set(Literal(value))
 
 
 def test_all_kinds_declare_parallel_exec_order() -> None:

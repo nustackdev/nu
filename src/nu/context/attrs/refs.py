@@ -1,17 +1,22 @@
-"""``AttrRef`` and its typed variants.
+"""``AttrRef`` and the typed attrs refs.
 
 An ``AttrRef`` names a slot in ``ctx.attrs`` by its resolved address (any child
 that yields a value). Reads self-yield the value at that key (EMPTY when
-unbound); writes and erases go through the Ref so a Command never touches
+unbound); a reassignment goes through the Ref so a Command never touches
 ``ctx.attrs`` directly - the write mechanism lives with the fabric.
+
+Attrs hold values that never change in place. A name is declared with ``Let``
+and rebound with ``.set()``, so a typed ref exists only for a Python-immutable
+value, and its form contributes read-only operators. Anything else is read
+through ``ObjectRef``.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.forms.collections import Dict, FrozenSet, List, Set, Tuple
-from nu.forms.primitives import Bool, Bytes, Float, Int, None_, Object, Str
+from nu.forms.collections import FrozenSet, Tuple
+from nu.forms.primitives import Bool, Bytes, Float, Int, Object, Str
 from nu.lang.sentinels import EMPTY
 
 from .._refs import _ContextRef
@@ -22,67 +27,68 @@ if TYPE_CHECKING:
 
     from nu.lang.runtime import Runtime
 
-    from .interactions import AttrExists
+    from .interactions import Exists, Set
 
 
 __all__ = [
     "AttrRef",
-    "BoolAttrRef",
-    "BytesAttrRef",
-    "DictAttrRef",
-    "FloatAttrRef",
-    "FrozenSetAttrRef",
-    "IntAttrRef",
-    "ListAttrRef",
-    "NoneAttrRef",
-    "ObjectAttrRef",
-    "SetAttrRef",
-    "StrAttrRef",
-    "TupleAttrRef",
+    "BoolRef",
+    "BytesRef",
+    "FloatRef",
+    "FrozenSetRef",
+    "IntRef",
+    "ObjectRef",
+    "StrRef",
+    "TupleRef",
 ]
 
 
 class AttrRef(_ContextRef):
     """A Ref into the ``ctx.attrs`` store, keyed by its resolved address.
 
-    The sole child is the address, evaluated through the runtime like any
-    other child, so a key can be fixed at write time or computed at run time.
-    Reading is the dual role: the Ref self-yields whatever sits at that key.
-    Writing and erasing never happen at the call site - a Command hands the
-    Ref its own node id, the Ref resolves its address and touches the store,
-    so the write mechanism stays with the fabric.
+    The internal base under the typed attrs refs. The sole child is the
+    address, evaluated through the runtime like any other child, so a key can
+    be fixed at write time or computed at run time. Reading is the dual role:
+    the Ref self-yields whatever sits at that key. Reassigning never happens
+    at the call site - a Command hands the Ref its own node id, the Ref
+    resolves its address and touches the store, so the write mechanism stays
+    with the fabric.
 
     Args:
-        address: evaluated to the key this Ref names. ``AttrRef("total")``
-            wraps a literal key; ``AttrRef(AttrRef("k"))`` takes the key out
+        address: evaluated to the key this Ref names. ``ObjectRef("total")``
+            wraps a literal key; ``ObjectRef(StrRef("k"))`` takes the key out
             of another slot.
 
     Notes:
+        - A name is declared by ``Let`` and only reassigned through
+          ``.set()``. Reassigning a name no ``Let`` declared raises, so every
+          binding has a scope that ends.
         - An unbound slot and a slot holding EMPTY read the same, so reach
           for ``.exists()`` when the difference matters.
         - ``ctx.attrs`` is the short-lived axis of the Context fabric: loop
           variables, counters, accumulators, markers. Anything longer-lived
           is a typed binding, read through ``FabricRef``.
         - ``Map`` and ``Filter`` bind their per-item loop variable into this
-          same store, which is why a body reads the item with an ``AttrRef``.
-        - The typed variants mix a Form in for its operator surface only.
+          same store, which is why a body reads the item with an attrs ref.
+        - The typed refs mix a Form in for its operator surface only.
           Nothing checks that the value at the key really has that type; an
-          ``IntAttrRef`` over an unbound slot yields EMPTY, and arithmetic on
-          it collapses to INVALID like any other sentinel operand.
+          ``IntRef`` over an unbound slot yields EMPTY, and arithmetic on it
+          collapses to INVALID like any other sentinel operand.
 
     Yields:
         The value at the resolved key. EMPTY when the key is unbound.
 
     Example:
-        >>> nu.run(nu.AttrRef("missing"))[0]
+        >>> nu.run(nu.ObjectRef("missing"))[0]
         <EMPTY>
 
-        >>> nu.run(nu.SetCmd(nu.AttrRef("total"), 10))[1].attrs
-        Attributes(total=10)
+        >>> total = nu.IntRef("total")
+        >>> nu.run(nu.Let(total, 10, total + 1))[0]
+        11
 
-        >>> key = nu.SetCmd(nu.AttrRef("k"), "total")
-        >>> nu.run(nu.Sequential(key, nu.SetCmd(nu.AttrRef(nu.AttrRef("k")), 5)))[1].attrs
-        Attributes(k='total', total=5)
+        >>> key = nu.StrRef("k")
+        >>> nu.run(nu.Let(key, "total", nu.Let(nu.IntRef(key), 5, nu.IntRef("total"))))[0]
+        5
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -102,91 +108,106 @@ class AttrRef(_ContextRef):
         return athunk
 
     def _write(self, rt: Runtime, value: object, nid: int) -> None:
-        """Write ``value`` to this Ref's slot in the attrs fabric."""
-        rt.ctx.attrs[self._address(rt, nid)] = value
+        """Reassign this Ref's slot in the attrs fabric; it must be declared."""
+        address = self._address(rt, nid)
+        _require_declared(rt, address)
+        rt.ctx.attrs[address] = value
 
     async def _awrite(self, rt: Runtime, value: object, nid: int) -> None:
         """Async sibling of :meth:`_write`."""
-        rt.ctx.attrs[await self._aaddress(rt, nid)] = value
-
-    def _erase(self, rt: Runtime, nid: int) -> None:
-        """Remove this Ref's slot from the attrs fabric, if present."""
-        address = self._address(rt, nid)
-        if address in rt.ctx.attrs:
-            del rt.ctx.attrs[address]
-
-    async def _aerase(self, rt: Runtime, nid: int) -> None:
-        """Async sibling of :meth:`_erase`."""
         address = await self._aaddress(rt, nid)
-        if address in rt.ctx.attrs:
-            del rt.ctx.attrs[address]
+        _require_declared(rt, address)
+        rt.ctx.attrs[address] = value
 
-    def exists(self) -> AttrExists:
-        """A Query yielding whether this Ref's address is bound in ``ctx.attrs``.
+    def set(self, value: object) -> Set:
+        """A Command reassigning this Ref's name to ``value``.
+
+        Args:
+            value: evaluated once, and its result becomes the name's value.
+
+        Notes:
+            - The name must already be declared by an enclosing ``Let``;
+              reassigning an undeclared name raises at run time.
+            - Rebinds the innermost declaration. When that ``Let`` exits the
+              outer value comes back, so a reassignment never leaks past the
+              scope that declared the name.
+            - An EMPTY or INVALID ``value`` writes nothing, so the name
+              keeps what it held.
+
+        Yields:
+            Nothing (VOID). The reassignment is the point.
+
+        Example:
+            >>> n = nu.IntRef("n")
+            >>> _ = nu.run(nu.Let(n, 1, n.set(n + 1) >> nu.print(n)))
+            2
+        """
+        from .interactions import Set
+
+        return Set(self, value)
+
+    def exists(self) -> Exists:
+        """A Query yielding whether this Ref's name is declared in ``ctx.attrs``.
 
         Notes:
             - The plain read cannot answer this: an unbound slot yields EMPTY
-              and so does a slot bound to EMPTY.
+              and so does a name declared without a value.
             - Only the address is resolved; the slot's value is never read.
         """
-        from .interactions import AttrExists
+        from .interactions import Exists
 
-        return AttrExists(self)
-
-
-# =========================================================================
-# TYPED ATTR REFS - PRIMITIVES
-# =========================================================================
+        return Exists(self)
 
 
-class IntAttrRef(AttrRef, Int):
-    """An AttrRef with the full integer interface."""
-
-
-class FloatAttrRef(AttrRef, Float):
-    """An AttrRef with the full float interface."""
-
-
-class StrAttrRef(AttrRef, Str):
-    """An AttrRef with the full string interface."""
-
-
-class BoolAttrRef(AttrRef, Bool):
-    """An AttrRef with the full boolean interface."""
-
-
-class BytesAttrRef(AttrRef, Bytes):
-    """An AttrRef with the full bytes interface."""
-
-
-class ObjectAttrRef(AttrRef, Object):
-    """An AttrRef with the Object interface, the one every term has."""
-
-
-class NoneAttrRef(AttrRef, None_):
-    """An AttrRef with the none interface."""
+def _require_declared(rt: Runtime, address: object) -> None:
+    """Raise when ``address`` has no binding to reassign."""
+    if address not in rt.ctx.attrs:
+        msg = f"cannot set attr {address!r}: it is not declared. Declare it with nu.Let({address!r}, ...) first."
+        raise NameError(msg)
 
 
 # =========================================================================
-# TYPED ATTR REFS - COLLECTIONS
+# TYPED ATTRS REFS - PRIMITIVES
 # =========================================================================
 
 
-class ListAttrRef(AttrRef, List):
-    """An AttrRef with the full list interface."""
+class IntRef(AttrRef, Int):
+    """An attrs ref with the integer interface."""
 
 
-class DictAttrRef(AttrRef, Dict):
-    """An AttrRef with the full dict interface."""
+class FloatRef(AttrRef, Float):
+    """An attrs ref with the float interface."""
 
 
-class SetAttrRef(AttrRef, Set):
-    """An AttrRef with the full set interface."""
+class StrRef(AttrRef, Str):
+    """An attrs ref with the string interface."""
 
 
-class FrozenSetAttrRef(AttrRef, FrozenSet):
-    """An AttrRef with the full frozenset interface."""
+class BoolRef(AttrRef, Bool):
+    """An attrs ref with the boolean interface."""
 
 
-class TupleAttrRef(AttrRef, Tuple):
-    """An AttrRef with the full tuple interface."""
+class BytesRef(AttrRef, Bytes):
+    """An attrs ref with the bytes interface."""
+
+
+# =========================================================================
+# TYPED ATTRS REFS - IMMUTABLE COLLECTIONS
+# =========================================================================
+
+
+class TupleRef(AttrRef, Tuple):
+    """An attrs ref with the tuple interface."""
+
+
+class FrozenSetRef(AttrRef, FrozenSet):
+    """An attrs ref with the frozenset interface."""
+
+
+# =========================================================================
+# OBJECT REF - everything else
+# =========================================================================
+
+
+class ObjectRef(AttrRef, Object):
+    """An attrs ref with the Object interface, the one every term has."""

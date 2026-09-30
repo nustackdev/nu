@@ -15,13 +15,15 @@ boundary spans the whole drain (commit fires once, after exhaustion).
 from __future__ import annotations
 
 from contextlib import contextmanager
+from typing import TYPE_CHECKING
 
 import pytest
 from _support.async_atoms import BoomAction
+from _support.attrs import declared
 from _support.law_terms import Cmd, Q, R
 from _support.laws import assert_fails, assert_passes
 
-from nu.context import AttrRef, SetCmd
+from nu.context import ObjectRef
 from nu.core.arithmetic import Add
 from nu.core.iteration import Iter
 from nu.core.spans import Snapshot, Transaction
@@ -29,8 +31,12 @@ from nu.lang import Attr, Bracket, Cardinality, Literal, Span
 from nu.lang.helpers import arun, collect, compile, run
 
 
-def _set(name: str, value: object) -> SetCmd:
-    return SetCmd(AttrRef(name), Literal(value))
+if TYPE_CHECKING:
+    from nu.context.attrs import Set
+
+
+def _set(name: str, value: object) -> Set:
+    return ObjectRef(name).set(Literal(value))
 
 
 # --- basis ----------------------------------------------------------------
@@ -82,7 +88,7 @@ def test_snapshot_passes_through_scalar() -> None:
 
 
 def test_transaction_passes_through_void() -> None:
-    _, ctx = run(Transaction(_set("a", 1)))
+    _, ctx = run(Transaction(_set("a", 1)), declared("a"))
     assert ctx.attrs.get("a") == 1
 
 
@@ -161,7 +167,7 @@ def test_bracket_scopes_ctx_for_body_then_restores() -> None:
             scoped.attrs["__scoped__"] = True
             yield scoped
 
-    value, ctx = run(Scoped(AttrRef("__scoped__")))
+    value, ctx = run(Scoped(ObjectRef("__scoped__")))
     assert value is True  # body ran under the scoped ctx
     assert ctx.attrs.get("__scoped__") is None  # restored: the copy was discarded
 

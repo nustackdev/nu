@@ -4,9 +4,9 @@ A Fabric is an addressable space where Refs live; it resolves Refs and carries
 out the Interactions over them. The Context fabric has two axes:
 
 - **attrs** - a flat, name-keyed store (``ctx.attrs``) for short-lived
-  primitives (loop counters, accumulators, markers). Ref: ``AttrRef``; writes:
-  ``SetCmd`` / ``Delete``; existence: ``AttrExists``. The read
-  is ``AttrRef`` itself.
+  values (loop counters, accumulators, markers). ``Let`` declares a name;
+  the typed refs (``IntRef``, ``StrRef``, ..., ``ObjectRef``) read it,
+  ``ref.set(v)`` reassigns it and ``ref.exists()`` asks whether it is declared.
 - **fabric** - typed bindings (``ctx.bind`` / ``ctx.get``) for every other
   ctx-bound thing: execution resources, storage handles, cluster handles,
   compute actors. Ref: ``FabricRef`` (read-only, self-yields); existence:
@@ -25,24 +25,17 @@ builtins.
 
 from __future__ import annotations
 
+from .attrs import AttrRef as AttrRef  # internal base, not in __all__
 from .attrs import (
-    AttrExists,
-    AttrRef,
-    BoolAttrRef,
-    BytesAttrRef,
-    Delete,
-    DictAttrRef,
-    FloatAttrRef,
-    FrozenSetAttrRef,
-    IntAttrRef,
+    BoolRef,
+    BytesRef,
+    FloatRef,
+    FrozenSetRef,
+    IntRef,
     Let,
-    ListAttrRef,
-    NoneAttrRef,
-    ObjectAttrRef,
-    SetAttrRef,
-    SetCmd,
-    StrAttrRef,
-    TupleAttrRef,
+    ObjectRef,
+    StrRef,
+    TupleRef,
 )
 from .fabric import (
     Fabric,
@@ -57,29 +50,21 @@ from .fabric import (
 
 
 __all__ = [
-    "AttrExists",
-    "AttrRef",
-    "BoolAttrRef",
-    "BytesAttrRef",
-    "Delete",
-    "DictAttrRef",
+    "BoolRef",
+    "BytesRef",
     "Fabric",
     "FabricExists",
     "FabricLifecycle",
     "FabricRef",
-    "FloatAttrRef",
-    "FrozenSetAttrRef",
-    "IntAttrRef",
+    "FloatRef",
+    "FrozenSetRef",
+    "IntRef",
     "Let",
-    "ListAttrRef",
-    "NoneAttrRef",
-    "ObjectAttrRef",
+    "ObjectRef",
     "Provide",
     "ProvideDict",
     "ProvideList",
-    "SetAttrRef",
-    "SetCmd",
-    "StrAttrRef",
-    "TupleAttrRef",
+    "StrRef",
+    "TupleRef",
     "With",
 ]

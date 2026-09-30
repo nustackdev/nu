@@ -10,7 +10,7 @@ every body to a mutating child (Command / Action / Flow).
 
 Loop variables ride the attrs side-channel: ``ForEachDo`` / ``ForRangeDo`` bind
 the current element under a name (itself a child, so it can be a Literal or a
-computed Ref) before each body run, read back via ``AttrRef`` - the same
+computed Ref) before each body run, read back via an attrs ref - the same
 designated channel ``Map`` / ``Filter`` use, not a tracked fabric write.
 ``ForEachParAsync`` is ``ForEachDo``'s fan-out twin: same three args, same
 binding, but every element gets its own arm on the loop at once, each on its own
@@ -72,14 +72,8 @@ class IfDo(Control):
         - A falsy ``cond`` with no ``else_`` runs nothing at all.
 
     Example:
-        >>> _, ctx = nu.run(
-        ...     nu.IfDo(
-        ...         nu.Literal(True),
-        ...         nu.SetCmd(nu.AttrRef("a"), nu.Literal(1)),
-        ...         nu.SetCmd(nu.AttrRef("a"), nu.Literal(2)),
-        ...     )
-        ... )
-        >>> ctx.attrs["a"]
+        >>> a = nu.IntRef("a")
+        >>> _ = nu.run(nu.Let(a, body=nu.IfDo(nu.Literal(True), a.set(1), a.set(2)) >> nu.print(a)))
         1
     """
 
@@ -128,16 +122,8 @@ class WhileDo(Control):
           forever.
 
     Example:
-        >>> ctx = nu.Context()
-        >>> ctx.attrs["i"] = 0
-        >>> _, ctx = nu.run(
-        ...     nu.WhileDo(
-        ...         nu.Lt(nu.AttrRef("i"), nu.Literal(3)),
-        ...         nu.SetCmd(nu.AttrRef("i"), nu.Add(nu.AttrRef("i"), nu.Literal(1))),
-        ...     ),
-        ...     ctx,
-        ... )
-        >>> ctx.attrs["i"]
+        >>> i = nu.IntRef("i")
+        >>> _ = nu.run(nu.Let(i, 0, nu.WhileDo(i < 3, i.set(i + 1)) >> nu.print(i)))
         3
     """
 
@@ -208,22 +194,15 @@ class ForEachDo(Control):
         - The current element is bound into ``rt.ctx.attrs`` under ``item``
           before each body run, the same attrs side-channel ``Map`` /
           ``Filter`` use, not a tracked fabric write. ``body`` reads it back
-          via ``AttrRef(item)``.
+          via ``ObjectRef(item)``.
         - ``item`` is itself evaluated once, before the loop starts, so it can
           be a computed Ref and not just a literal name.
         - Rebinding overwrites whatever ``item`` held before, in ``attrs``.
 
     Example:
-        >>> ctx = nu.Context()
-        >>> ctx.attrs["sum"] = 0
-        >>> _, ctx = nu.run(
-        ...     nu.ForEachDo(
-        ...         nu.Iter(nu.Literal([1, 2, 3])),
-        ...         nu.SetCmd(nu.AttrRef("sum"), nu.Add(nu.AttrRef("sum"), nu.AttrRef("item"))),
-        ...     ),
-        ...     ctx,
-        ... )
-        >>> ctx.attrs["sum"]
+        >>> total, item = nu.IntRef("sum"), nu.IntRef("item")
+        >>> loop = nu.ForEachDo(nu.Iter(nu.Literal([1, 2, 3])), total.set(total + item))
+        >>> _ = nu.run(nu.Let(total, 0, loop >> nu.print(total)))
         6
     """
 
@@ -294,16 +273,10 @@ class ForEachParAsync(Control):
 
     Example:
         >>> import asyncio
-        >>> _, ctx = asyncio.run(
-        ...     nu.arun(
-        ...         nu.ForEachParAsync(
-        ...             nu.Iter(nu.Literal([1, 2, 3])),
-        ...             nu.SetCmd(nu.AttrRef("seen"), nu.AttrRef("item")),
-        ...         )
-        ...     )
-        ... )
-        >>> "seen" in ctx.attrs
-        False
+        >>> seen = nu.ObjectRef("seen")
+        >>> arms = nu.ForEachParAsync(nu.Iter(nu.Literal([1, 2, 3])), seen.set(nu.ObjectRef("item")))
+        >>> _ = asyncio.run(nu.arun(nu.Let(seen, body=arms >> nu.print(seen.is_empty()))))
+        True
     """
 
     _param_slots = Declared(value=frozenset({0, 2}), name="param_slots")
@@ -459,22 +432,15 @@ class ForRangeDo(Control):
         - ``start``, ``stop``, ``step`` and ``index`` are each evaluated once,
           before the loop starts.
         - The current value is bound into ``rt.ctx.attrs`` under ``index``
-          before each body run, read back via ``AttrRef(index)``. Same
+          before each body run, read back via ``ObjectRef(index)``. Same
           side-channel ``ForEachDo`` uses.
         - Follows Python's ``range`` rules: a ``step`` that never reaches
           ``stop`` from ``start`` runs the body zero times rather than
           looping forever.
 
     Example:
-        >>> ctx = nu.Context()
-        >>> ctx.attrs["sum"] = 0
-        >>> _, ctx = nu.run(
-        ...     nu.ForRangeDo(
-        ...         0, 4, nu.SetCmd(nu.AttrRef("sum"), nu.Add(nu.AttrRef("sum"), nu.AttrRef("index")))
-        ...     ),
-        ...     ctx,
-        ... )
-        >>> ctx.attrs["sum"]
+        >>> total, index = nu.IntRef("sum"), nu.IntRef("index")
+        >>> _ = nu.run(nu.Let(total, 0, nu.ForRangeDo(0, 4, total.set(total + index)) >> nu.print(total)))
         6
     """
 
@@ -564,8 +530,8 @@ class DelayedDo(Control):
           on ``asyncio.sleep``.
 
     Example:
-        >>> _, ctx = nu.run(nu.DelayedDo(nu.Literal(0.0), nu.SetCmd(nu.AttrRef("a"), nu.Literal(1))))
-        >>> ctx.attrs["a"]
+        >>> a = nu.IntRef("a")
+        >>> _ = nu.run(nu.Let(a, body=nu.DelayedDo(nu.Literal(0.0), a.set(1)) >> nu.print(a)))
         1
     """
 
@@ -608,16 +574,9 @@ class SwitchDo(Control):
         - ``selector`` is evaluated once per run, before any key comparison.
 
     Example:
-        >>> _, ctx = nu.run(
-        ...     nu.SwitchDo(
-        ...         nu.Literal("b"),
-        ...         {
-        ...             "a": nu.SetCmd(nu.AttrRef("x"), nu.Literal(1)),
-        ...             "b": nu.SetCmd(nu.AttrRef("x"), nu.Literal(2)),
-        ...         },
-        ...     )
-        ... )
-        >>> ctx.attrs["x"]
+        >>> x = nu.IntRef("x")
+        >>> switch = nu.SwitchDo(nu.Literal("b"), {"a": x.set(1), "b": x.set(2)})
+        >>> _ = nu.run(nu.Let(x, body=switch >> nu.print(x)))
         2
     """
 

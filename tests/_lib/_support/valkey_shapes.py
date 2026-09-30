@@ -51,5 +51,5 @@ def a_burst(start: int, n: int) -> nu.Nu:
     return nu.ForRangeDo(
         start,
         start + n,
-        nustd.kv.Transaction(Store.value.set(nu.AttrRef("index"))),
+        nustd.kv.Transaction(Store.value.set(nu.ObjectRef("index"))),
     )

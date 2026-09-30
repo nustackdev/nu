@@ -170,21 +170,21 @@ def test_source_can_arrive_from_a_computed_child() -> None:
     # it is read at runtime from somewhere else.
     ctx = nu.Context()
     ctx.attrs["stored_program"] = GREETING
-    value, _ = nu.run(nu.Eval(LoadNu(nu.AttrRef("stored_program"))), ctx)
+    value, _ = nu.run(nu.Eval(LoadNu(nu.ObjectRef("stored_program"))), ctx)
     assert value == "hello world"
 
 
 def test_scope_values_can_be_computed_children() -> None:
     ctx = nu.Context()
     ctx.attrs["who"] = "kv"
-    tree = nu.Eval(LoadNu(GREETING, scope={"who": nu.AttrRef("who")}))
+    tree = nu.Eval(LoadNu(GREETING, scope={"who": nu.ObjectRef("who")}))
     assert nu.run(tree, ctx)[0] == "hello kv"
 
 
 async def test_scope_values_can_be_computed_children_async() -> None:
     ctx = nu.Context()
     ctx.attrs["who"] = "kv"
-    tree = nu.Eval(LoadNu(GREETING, scope={"who": nu.AttrRef("who")}))
+    tree = nu.Eval(LoadNu(GREETING, scope={"who": nu.ObjectRef("who")}))
     value, _ = await nu.arun(tree, ctx)
     assert value == "hello kv"
 
@@ -192,7 +192,7 @@ async def test_scope_values_can_be_computed_children_async() -> None:
 def test_scope_values_cross_into_a_venv_brace() -> None:
     ctx = nu.Context()
     ctx.attrs["who"] = "venv"
-    tree = venv_brace(nu.Eval(LoadNu(GREETING, scope={"who": nu.AttrRef("who")})))
+    tree = venv_brace(nu.Eval(LoadNu(GREETING, scope={"who": nu.ObjectRef("who")})))
     assert nu.run(tree, ctx)[0] == "hello venv"
 
 
@@ -209,7 +209,7 @@ def test_entry_point_name_is_a_child() -> None:
     """)
     ctx = nu.Context()
     ctx.attrs["entry"] = "build"
-    tree = nu.Eval(LoadNu(source, entry=nu.AttrRef("entry")))
+    tree = nu.Eval(LoadNu(source, entry=nu.ObjectRef("entry")))
     assert nu.run(tree, ctx)[0] == "built"
 
 

@@ -242,12 +242,12 @@ _SEED_MOVIES: list[dict] = [
 
 
 _ROW_TRANSFORM = nu.List.of(
-    nu.DictAttrRef("r")["title"],
-    nu.DictAttrRef("r")["year"],
-    nu.DictAttrRef("r")["genre"],
-    nu.DictAttrRef("r")["rating"],
-    nu.If(nu.DictAttrRef("r")["watched"], "yes", "no"),
-    nu.DictAttrRef("r")["notes"],
+    nu.ObjectRef("r")["title"],
+    nu.ObjectRef("r")["year"],
+    nu.ObjectRef("r")["genre"],
+    nu.ObjectRef("r")["rating"],
+    nu.If(nu.ObjectRef("r")["watched"], "yes", "no"),
+    nu.ObjectRef("r")["notes"],
 )
 
 
@@ -266,9 +266,9 @@ def _rows_filtered() -> nu.Nu:
     genre = nu.Str(App.movies.filters.body.genre.input)
     watched_only = nu.Bool(App.movies.filters.body.watched_only.input)
     predicate = nu.And(
-        nu.Ge(nu.DictAttrRef("r")["rating"], min_r),
-        nu.Or(nu.Eq(genre, ""), nu.Eq(nu.DictAttrRef("r")["genre"], genre)),
-        nu.Or(nu.Not(watched_only), nu.DictAttrRef("r")["watched"]),
+        nu.Ge(nu.ObjectRef("r")["rating"], min_r),
+        nu.Or(nu.Eq(genre, ""), nu.Eq(nu.ObjectRef("r")["genre"], genre)),
+        nu.Or(nu.Not(watched_only), nu.ObjectRef("r")["watched"]),
     )
     return nu.Dict.of(
         rows=nu.Collect(
@@ -341,8 +341,8 @@ on_add = nu.ReactForever(
 on_row_click = nu.ReactForever(
     App.movies.shelf.body.table.on_row_click(),
     nu.IfDo(
-        nu.Contains(nu.DictAttrRef("row_click"), "row_index"),
-        nustd.kv.Transaction(State.selected.set(nu.DictAttrRef("row_click")["row_index"]))
+        nu.Contains(nu.ObjectRef("row_click"), "row_index"),
+        nustd.kv.Transaction(State.selected.set(nu.ObjectRef("row_click")["row_index"]))
         >> nustd.kv.Snapshot(
             App.detail.heading.set(State.movies[State.selected].title)
             | App.detail.meta.meta.year.set_value(nu.str(State.movies[State.selected].year))

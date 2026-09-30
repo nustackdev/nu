@@ -166,26 +166,26 @@ def test_module_level_info_uses_root_logger(caplog: pytest.LogCaptureFixture) ->
 
 def test_msg_can_be_a_nu_term(caplog: pytest.LogCaptureFixture) -> None:
     # Log accepts Nu terms in the msg + args slots; refs resolve at
-    # eval time. Uses a bound AttrRef for a real test.
-    from nu.context import StrAttrRef
+    # eval time. Uses a bound attrs ref for a real test.
+    from nu.context import StrRef
 
     log = logging.getLogger("nu.test")
     caplog.set_level(pylogging.DEBUG, logger="nu.test")
 
     ctx = Context()
     ctx.attrs["who"] = "gor"
-    run(log.info("hi %s", StrAttrRef("who")), ctx)
+    run(log.info("hi %s", StrRef("who")), ctx)
     assert caplog.records[0].getMessage() == "hi gor"
 
 
 def test_msg_skips_on_unbound_sentinel(caplog: pytest.LogCaptureFixture) -> None:
     # An unbound attr reads EMPTY -- the whole line is dropped rather than
     # emitting a partially-formatted string.
-    from nu.context import StrAttrRef
+    from nu.context import StrRef
 
     log = logging.getLogger("nu.test")
     caplog.set_level(pylogging.DEBUG, logger="nu.test")
-    run(log.info("hi %s", StrAttrRef("missing")))
+    run(log.info("hi %s", StrRef("missing")))
     assert caplog.records == []
 
 

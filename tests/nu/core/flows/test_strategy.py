@@ -1,23 +1,30 @@
 """Tests for the Strategy flows: Sequential, Parallel, Race, Gather, AnyN.
 
 Strategy flows compose mutating atoms directly. Coverage builds real programs
-of ``SetCmd`` bodies and runs them through ``run`` / ``arun``, asserting the
+of ``.set()`` bodies and runs them through ``run`` / ``arun``, asserting the
 writes landed. Class-hierarchy and declared-attribute checks pin the basis.
 """
 
 from __future__ import annotations
 
-import pytest
+from typing import TYPE_CHECKING
 
-from nu.context import AttrRef, SetCmd
+import pytest
+from _support.attrs import declared
+
+from nu.context import ObjectRef
 from nu.core.flows import AnyN, Gather, Parallel, Race, Sequential
-from nu.lang import Attr, Cardinality, Literal, Strategy
+from nu.lang import EMPTY, Attr, Cardinality, Literal, Strategy
 from nu.lang.attributes.execution import ExecOrder
 from nu.lang.helpers import arun, compile, run
 
 
-def _set(name: str, value: object) -> SetCmd:
-    return SetCmd(AttrRef(name), Literal(value))
+if TYPE_CHECKING:
+    from nu.context.attrs import Set
+
+
+def _set(name: str, value: object) -> Set:
+    return ObjectRef(name).set(Literal(value))
 
 
 # --- basis ----------------------------------------------------------------
@@ -47,13 +54,13 @@ def test_anyn_requires_async():
 
 
 def test_sequential_runs_all_children_in_order():
-    _, ctx = run(Sequential(_set("a", 1), _set("b", 2)))
+    _, ctx = run(Sequential(_set("a", 1), _set("b", 2)), declared("a", "b"))
     assert ctx.attrs["a"] == 1
     assert ctx.attrs["b"] == 2
 
 
 async def test_sequential_async_runs_all_children():
-    _, ctx = await arun(Sequential(_set("a", 1), _set("b", 2)))
+    _, ctx = await arun(Sequential(_set("a", 1), _set("b", 2)), declared("a", "b"))
     assert ctx.attrs["a"] == 1
     assert ctx.attrs["b"] == 2
 
@@ -62,7 +69,7 @@ async def test_sequential_async_runs_all_children():
 
 
 def test_parallel_runs_all_children():
-    _, ctx = run(Parallel(_set("a", 1), _set("b", 2), _set("c", 3)))
+    _, ctx = run(Parallel(_set("a", 1), _set("b", 2), _set("c", 3)), declared("a", "b", "c"))
     assert ctx.attrs["a"] == 1
     assert ctx.attrs["b"] == 2
     assert ctx.attrs["c"] == 3
@@ -71,20 +78,22 @@ def test_parallel_runs_all_children():
 def test_parallel_runs_all_children_on_the_thread_pool():
     # max_parallel > 1 drives the Budget's thread pool rather than the
     # sequential fall-through.
-    _, ctx = run(Parallel(_set("a", 1), _set("b", 2), _set("c", 3)), max_parallel=4)
+    _, ctx = run(
+        Parallel(_set("a", 1), _set("b", 2), _set("c", 3)), declared("a", "b", "c"), max_parallel=4
+    )
     assert ctx.attrs["a"] == 1
     assert ctx.attrs["b"] == 2
     assert ctx.attrs["c"] == 3
 
 
 async def test_parallel_async_runs_all_children():
-    _, ctx = await arun(Parallel(_set("a", 1), _set("b", 2)))
+    _, ctx = await arun(Parallel(_set("a", 1), _set("b", 2)), declared("a", "b"))
     assert ctx.attrs["a"] == 1
     assert ctx.attrs["b"] == 2
 
 
 def test_gather_runs_all_children():
-    _, ctx = run(Gather(_set("a", 1), _set("b", 2)))
+    _, ctx = run(Gather(_set("a", 1), _set("b", 2)), declared("a", "b"))
     assert ctx.attrs["a"] == 1
     assert ctx.attrs["b"] == 2
 
@@ -103,16 +112,16 @@ def test_race_sync_run_is_rejected_as_async_only():
 
 
 async def test_race_runs_at_least_the_winner():
-    _, ctx = await arun(Race(_set("a", 1), _set("b", 2)))
-    assert "a" in ctx.attrs or "b" in ctx.attrs
+    _, ctx = await arun(Race(_set("a", 1), _set("b", 2)), declared("a", "b"))
+    assert ctx.attrs["a"] is not EMPTY or ctx.attrs["b"] is not EMPTY
 
 
 # --- AnyN -----------------------------------------------------------------
 
 
 async def test_anyn_succeeds_when_a_child_succeeds():
-    _, ctx = await arun(AnyN(_set("a", 1), _set("b", 2)))
-    assert "a" in ctx.attrs or "b" in ctx.attrs
+    _, ctx = await arun(AnyN(_set("a", 1), _set("b", 2)), declared("a", "b"))
+    assert ctx.attrs["a"] is not EMPTY or ctx.attrs["b"] is not EMPTY
 
 
 def test_anyn_sync_run_is_rejected_as_async_only():

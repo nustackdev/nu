@@ -110,7 +110,7 @@ def demo_program_ref() -> None:
     # by a python try block. The catch branch reads the line it died on.
     nu.run(Jobs.greeter.set("import nu\n\ndef out(who):\n    return 1 / 0\n"), ctx)
     line = nu.GetAttr(
-        nu.GetAttr(nu.GetAttr(nu.AttrRef("error"), "exception"), "diagnostic"), "lineno"
+        nu.GetAttr(nu.GetAttr(nu.ObjectRef("error"), "exception"), "diagnostic"), "lineno"
     )
     caught = nu.run(Jobs.greeter.run(scope={"who": "nobody"}, on_error=line), ctx)[0]
     print(f"  construction failed on line {caught}")
