@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Context names can be declared together on one shape, typed and checked at definition
 - Loop, fold and catch variables stay inside their scope and no longer leak out
 - Context values stay pure: names are declared, then reassigned, never changed in place
 - Context refs get shorter names and hold only immutable values; existing code needs renaming

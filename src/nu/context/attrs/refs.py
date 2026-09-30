@@ -13,8 +13,11 @@ through ``ObjectRef``.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
+from typing_extensions import Self
+
+from nu.domains.shape.dsl import Slot
 from nu.forms.collections import FrozenSet, Tuple
 from nu.forms.primitives import Bool, Bytes, Float, Int, Object, Str
 from nu.lang.sentinels import EMPTY
@@ -90,6 +93,33 @@ class AttrRef(_ContextRef):
         >>> nu.run(nu.Let(key, "total", nu.Let(nu.IntRef(key), 5, nu.IntRef("total"))))[0]
         5
     """
+
+    # A shape slot of an attrs ref names the top-level attr it is called, so
+    # ``Attrs.plane`` is ``StrRef("plane")``. See ``nu.domains.shape.dsl``.
+    _flat_slot: ClassVar[bool] = True
+
+    @classmethod
+    def slot(cls) -> Self:
+        """Declare a Shape slot naming the top-level attr of the slot's name.
+
+        A Shape of attrs slots is how a module declares the names it uses:
+        ``Attrs.plane`` is exactly ``StrRef("plane")``, so ``Let``, ``.set()``
+        and ``.exists()`` take it like any attrs ref. ``plane: nu.StrRef`` as
+        an annotation declares the same slot.
+
+        Notes:
+            - Attrs are flat. A Shape holding attrs slots holds nothing else,
+              and never nests under another Shape.
+            - One ``class Attrs(nu.Shape)`` per app is the convention; a
+              module may declare its own. A module declares what it uses.
+
+        Example:
+            >>> class Attrs(nu.Shape):
+            ...     total = nu.IntRef.slot()
+            >>> nu.run(nu.Let(Attrs.total, 10, Attrs.total + 1))[0]
+            11
+        """
+        return Slot(cls)  # type: ignore[return-value]
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         address = children[0]

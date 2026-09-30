@@ -20,6 +20,11 @@ explicit ``= <fabric>.ShapeRef.slot(Order)``; alone it is an error. Any other
 annotation synthesizes nothing and only declares the type, next to an explicit
 slot. When both spellings are written, the explicit declaration wins.
 
+A ref class may mark its slots flat (``_flat_slot = True``): the slot then names
+the top-level name it is called, not a location under the shape, and its ref is
+built from that name alone. A shape of flat slots is a list of names, so it
+holds nothing else and never nests; mixing is refused at class creation.
+
 Example::
 
     class Profile(nu.Shape):
@@ -76,6 +81,15 @@ class Slot(Generic[_RefT]):
         parent_ref: StructuredRef | None = None,
     ) -> _RefT:
         """Instantiate the Ref, wiring owner_shape and parent_ref."""
+        if getattr(self.ref_cls, "_flat_slot", False):
+            if parent_ref is not None:
+                msg = (
+                    f"Slot {self.name!r} of {owner_shape.__name__} is a flat "
+                    f"{self.ref_cls.__name__} naming a top-level name, so "
+                    f"{owner_shape.__name__} cannot nest under another shape"
+                )
+                raise TypeError(msg)
+            return self.ref_cls(self.name)
         ref = self.ref_cls(  # type: ignore[call-arg]
             self.name,
             owner_shape=owner_shape,
@@ -183,8 +197,9 @@ class ShapeMeta(ABCMeta):
             if isinstance(value, Slot) and value._owner_cls is None:
                 value._owner_cls = cls
 
-        inherited = {n for base in bases for n in getattr(base, "_slots", {})}
-        _check_slot_names(name, {n: s for n, s in slots.items() if n not in inherited})
+        if not _check_flat_slots(name, slots):
+            inherited = {n for base in bases for n in getattr(base, "_slots", {})}
+            _check_slot_names(name, {n: s for n, s in slots.items() if n not in inherited})
 
         for field_name, slot in slots.items():
             setattr(cls, field_name, SlotDescriptor(field_name, slot))
@@ -208,6 +223,28 @@ def _shape_ref_classes() -> list[type]:
             found.append(ref_cls)
             todo.extend(ref_cls.__subclasses__())
     return found
+
+
+def _check_flat_slots(shape: str, slots: dict[str, Slot]) -> bool:
+    """Whether the shape is all flat slots; refuse one that mixes them with others.
+
+    A flat slot names a top-level name, so it has no place beside slots that
+    name locations in some fabric: nested shapes, collections, leaves of
+    another fabric. A shape of flat slots is never reached through a ref, so
+    the ref-attribute clash check does not apply to it.
+    """
+    flat = [n for n, s in slots.items() if getattr(s.ref_cls, "_flat_slot", False)]
+    if not flat:
+        return False
+    others = [n for n in slots if n not in flat]
+    if others:
+        msg = (
+            f"Shape {shape}: slots {flat} name top-level names, so the shape holds "
+            f"nothing else; {others} name locations in another fabric. Declare "
+            f"them on a separate shape"
+        )
+        raise TypeError(msg)
+    return True
 
 
 def _check_slot_names(shape: str, slots: dict[str, Slot]) -> None:
