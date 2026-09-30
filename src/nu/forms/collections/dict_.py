@@ -14,11 +14,11 @@ if TYPE_CHECKING:
     from nu.lang import Arg, DictArg, Nu
 
     from ..primitives import (
-        Any,
         Bool,
         Bytes,
         Float,
         Int,
+        Object,
         Str,
     )
     from .list_ import List
@@ -35,7 +35,7 @@ V = TypeVar("V")
 
 
 class Dict(
-    MutableMappingForm[dict[K, V], K, V, "Dict[K, V]", "Any"],
+    MutableMappingForm[dict[K, V], K, V, "Dict[K, V]", "Object"],
     TypedNu[dict[K, V]],
     Generic[K, V],
 ):
@@ -50,6 +50,9 @@ class Dict(
           `Dict.create` expression builds a fresh dict, so comparing two
           separately-built dicts with `is_` is False even when their
           contents match, unlike Python's small-string interning for Str.
+        - `|` and `|=` keep their Python meaning: merge (`merge`) and
+          merge in place (`merge_update`), not flow composition. `&` and
+          `>>` stay flow, as Python's dict defines neither.
 
     Example:
         >>> nu.run(nu.Dict.of(a=1, b=2))[0]
@@ -110,22 +113,22 @@ class Dict(
 
         return DictItems(operand)
 
-    def _wrap_value_result(self, operand: Nu) -> Any:
-        """Wrap operand as a value-typed Form when known; Any otherwise.
+    def _wrap_value_result(self, operand: Nu) -> Object:
+        """Wrap operand as a value-typed Form when known; Object otherwise.
 
         When the wrapping Form carries an annotation-derived ``TypeInfo`` on
         its payload (a Ref like ``PrimitiveDictRef[str, int]``), dispatch the
         value elem to its concrete Form (``Int`` here). Plain value-node
-        ``Dict`` s (no payload) fall back to ``Any`` - the honest
+        ``Dict`` s (no payload) fall back to ``Object`` - the honest
         terminal for value-Form descent without narrowing context.
         """
         ti = self._payload.get("type_info")
         if ti is not None and ti.elem is not None:
             form_cls = ti.elem.to_form()
             return form_cls(operand)  # type: ignore[return-value]
-        from ..primitives import Any
+        from ..primitives import Object
 
-        return Any(operand)
+        return Object(operand)
 
     # ---- static overloads: narrow value type on subscript ---------------
     #
@@ -144,7 +147,7 @@ class Dict(
     @overload
     def __getitem__(self: Dict[K, bytes], key: Arg[K]) -> Bytes: ...
     @overload
-    def __getitem__(self, key: Arg[K]) -> Any: ...
+    def __getitem__(self, key: Arg[K]) -> Object: ...
     def __getitem__(self, key):  # type: ignore[no-untyped-def]
         """Value at key.
 
@@ -157,7 +160,7 @@ class Dict(
 
         Yields:
             The value, narrowed to a concrete Form (Bool, Int, Float, Str,
-            Bytes) when `V` is a known primitive type, Any otherwise.
+            Bytes) when `V` is a known primitive type, Object otherwise.
             INVALID when self is a sentinel.
 
         Example:
@@ -229,11 +232,72 @@ class Dict(
 
         return List(operand)
 
-    def _wrap_element_result(self, operand: Nu) -> Any:
-        """Wrap operand as Any element."""
-        from ..primitives import Any
+    def _wrap_element_result(self, operand: Nu) -> Object:
+        """Wrap operand as Object element."""
+        from ..primitives import Object
 
-        return Any(operand)
+        return Object(operand)
+
+    # =========================================================================
+    # MERGE (Python's dict `|` and `|=`)
+    # =========================================================================
+
+    def __or__(self, other: DictArg[K, V]) -> Dict[K, V]:  # type: ignore[override]
+        """Merge: self | other, the same op as `merge`.
+
+        Args:
+            other: the mapping to merge in. Its keys win over self's on
+                overlap.
+
+        Notes:
+            - Python meaning, not flow: on a Dict `|` is `Merge`, not
+              `Parallel`.
+
+        Yields:
+            A new dict holding self's entries overridden by other's.
+            INVALID when self or other is a sentinel.
+
+        Example:
+            >>> nu.run(nu.Dict({"a": 1}) | {"b": 2})[0]
+            {'a': 1, 'b': 2}
+        """
+        return self.merge(other)
+
+    def __ror__(self, other: DictArg[K, V]) -> Dict[K, V]:
+        """Merge: other | self, with self on the right.
+
+        Args:
+            other: the plain dict on the left of the `|`. Self's keys win
+                over its keys on overlap.
+
+        Yields:
+            A new dict holding other's entries overridden by self's.
+            INVALID when self or other is a sentinel.
+
+        Example:
+            >>> nu.run({"a": 1} | nu.Dict({"a": 2}))[0]
+            {'a': 2}
+        """
+        from .abc.mapping_interactions import Merge
+
+        return Dict(Merge(other, self))
+
+    def __ior__(self, other: DictArg[K, V]) -> Dict[K, V]:  # type: ignore[override]
+        """Merge in place: self |= other, the same op as `merge_update`.
+
+        Args:
+            other: the mapping to merge in. Its values win over self's on
+                shared keys.
+
+        Yields:
+            Self, updated with other's entries. INVALID when self or
+            other is a sentinel.
+
+        Example::
+
+            d |= {"b": 2}
+        """
+        return self.merge_update(other)
 
     # =========================================================================
     # COMPARISON
@@ -342,8 +406,6 @@ class Dict(
         from ..primitives import Bool
 
         return Bool(Le(self, other))
-
-    __hash__ = object.__hash__
 
     def __eq__(self, other: DictArg[K, V]) -> Bool:  # type: ignore[override]
         """Self equal to other by value.

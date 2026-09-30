@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import nu
 from nu.core.reactive import OnChange, OnChildrenChange
 from nu.domains.shape.dsl import Shape, Slot
 from nu.domains.shape.interactions import (
@@ -32,7 +33,7 @@ def test_shapes_sequence_ref_subscript_returns_shape_ref():
 def test_shapes_sequence_ref_child_shape_type_matches():
     s = ShapesSequenceRef("rows", item_shape_type=Row)
     child = s[0]
-    assert child._payload["shape_type"] is Row
+    assert nu.tree.payload(child)["shape_type"] is Row
 
 
 def test_shapes_sequence_ref_child_parent_is_self():
@@ -43,7 +44,7 @@ def test_shapes_sequence_ref_child_parent_is_self():
 
 def test_shapes_sequence_ref_item_shape_type_property():
     s = ShapesSequenceRef("rows", item_shape_type=Row)
-    assert s._payload["item_shape_type"] is Row
+    assert nu.tree.payload(s)["item_shape_type"] is Row
 
 
 def test_shapes_sequence_ref_slice_routes_to_slice_op():
@@ -61,7 +62,7 @@ def test_shapes_sequence_ref_slice_routes_to_slice_op():
     assert isinstance(result, tuple) and result[0] is sentinel
     getitem = result[1]
     assert isinstance(getitem, GetItem)
-    assert isinstance(getitem._children[1], Slice)
+    assert isinstance(nu.tree.children(getitem)[1], Slice)
 
 
 def test_shapes_sequence_ref_different_indices_distinct():
@@ -110,7 +111,7 @@ def test_mutable_shapes_sequence_ref_subscript_returns_mutable_shape_ref():
 
 def test_mutable_shapes_sequence_ref_child_shape_type_matches():
     s = MutableShapesSequenceRef("rows", item_shape_type=Row)
-    assert s[0]._payload["shape_type"] is Row
+    assert nu.tree.payload(s[0])["shape_type"] is Row
 
 
 def test_mutable_shapes_sequence_ref_set_returns_set_command():

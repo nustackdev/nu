@@ -7,7 +7,7 @@ returns the Form that matches the host return type:
 
 - reals (``random``, ``uniform``, ``gauss``, ...) -> ``Float``
 - ints (``randint``, ``randrange``, ``getrandbits``) -> ``Int``
-- ``choice`` -> ``Any`` (one element of the population)
+- ``choice`` -> ``Object`` (one element of the population)
 - ``choices`` / ``sample`` -> ``List``
 
 Every function here reads the global RNG (see ``interactions``).
@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.forms import Any, Float, Int, List
+from nu.forms import Float, Int, List, Object
 
 
 if TYPE_CHECKING:
@@ -84,11 +84,11 @@ def getrandbits(k: IntArg) -> Int:
 # --- sequence draws ---------------------------------------------------------
 
 
-def choice(seq: ListArg[object]) -> Any:
+def choice(seq: ListArg[object]) -> Object:
     """A random element of ``seq``: mirrors ``random.choice()``. Non-deterministic."""
     from .interactions import RandomChoice
 
-    return Any(RandomChoice(seq))
+    return Object(RandomChoice(seq))
 
 
 def choices(population: ListArg[object], k: IntArg) -> List:

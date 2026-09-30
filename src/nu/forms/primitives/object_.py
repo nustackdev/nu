@@ -1,20 +1,21 @@
-"""Any - dynamic/unknown type interface.
+"""Object - the interface every term has.
 
 The honest terminal for value-Form descent: genuinely-unknown or dynamically
-typed values live here. Every operation on an ``Any`` is absorbing -
+typed values live here. Every operation on an ``Object`` is absorbing -
 arithmetic, bitwise, subscript, and attribute access all yield another
-``Any``; comparison and logical ops yield ``Bool``.
+``Object``; comparison and logical ops yield ``Bool``.
 
-Reserved at the ``Nu`` base and deliberately NOT overridden here:
+``Object`` carries the full operator surface, bitwise ``&`` and ``|``
+included: the runtime type is unknown, so every operator keeps its Python
+meaning (``&`` is ``BitAnd``, ``|`` is ``BitOr``, ``>>`` is ``RShift``) and
+Python decides at evaluation time what it does. To compose an ``Object``
+term as a flow step, call ``nu.Sequential`` / ``nu.Parallel`` / ``nu.Race``.
 
-- ``__and__`` -> ``Race`` (flow), ``__or__`` -> ``Parallel`` (flow).
-  Use ``bitand()`` / ``bitor()`` for bitwise instead.
-
-Protocol dunders (``__len__``, ``__contains__``, ``__iter__``, ``__bool__``,
-``__int__``, ``__float__``, ...) require Python-native return types and
-cannot be part of a Nu tree. They are exposed as named methods
-(``len_()``, ``contains()``, ``iter_()``, ``bool_()``) that return the
-matching Form so the tree stays symbolic.
+Protocol dunders (``__len__``, ``__contains__``, ``__bool__``, ``__iter__``) must return
+Python-native values and cannot be part of a Nu tree; the ``Nu`` base blocks
+them with a hint. They are exposed as named methods (``len()``,
+``contains()``, ``iter()``, ``bool_()``) that return the matching Form so
+the tree stays symbolic.
 
 Mutation via ``__setitem__`` / ``__delitem__`` is Ref-gated: the underlying
 source must be a ``Ref`` (fabric-writable), otherwise Python's assign-syntax
@@ -41,15 +42,15 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Any",
+    "Object",
 ]
 
 
-class Any(Form, TypedNu[Any]):
-    """Wildcard interface. Full operator surface, no promise about the runtime type.
+class Object(Form, TypedNu[Any]):
+    """The interface every term has. Full operator surface, no promise about the runtime type.
 
     Arithmetic, bitwise, subscript, and attribute descent are all
-    absorbing: the result of any of them is another Any, since the
+    absorbing: the result of any of them is another Object, since the
     concrete type isn't known until evaluation. Comparison and logical
     operators are the exception - they still yield Bool, because "is
     this true" is a well-typed question even when the operand type
@@ -57,18 +58,18 @@ class Any(Form, TypedNu[Any]):
 
     Notes:
         - Typed as `TypedNu[Any]`, not `TypedNu[object]`. That lets an
-          Any value slot into any narrow Arg position (IntArg, StrArg,
-          ...), so `intref + anyval` resolves through Int's `__add__`
-          and lands as Int instead of falling through to Any's `__radd__`.
-        - `&` and `|` are reserved at the Nu base for flow (`Race`,
-          `Parallel`) and are not overridden here. Use `bitand()` /
-          `bitor()` for bitwise.
+          Object value slot into any narrow Arg position (IntArg, StrArg,
+          ...), so `intref + objval` resolves through Int's `__add__`
+          and lands as Int instead of falling through to Object's `__radd__`.
+        - `&`, `|` and `>>` keep their Python meaning here (`BitAnd`,
+          `BitOr`, `RShift`), not flow composition. Sequence an Object
+          term with `nu.Sequential(...)` instead.
         - There's no `__call__`. A callable value in a Nu tree goes
           through an interaction (built via `host` or hand-written),
           not raw Python call dispatch.
 
     Example:
-        >>> nu.run(nu.Any(6) * nu.Any(7))[0]
+        >>> nu.run(nu.Object(6) * nu.Object(7))[0]
         42
     """
 
@@ -76,25 +77,25 @@ class Any(Form, TypedNu[Any]):
     # ARITHMETIC
     # =========================================================================
 
-    def __add__(self, other: object) -> Any:
+    def __add__(self, other: object) -> Object:
         """Sum of self and other.
 
         Args:
             other: the value to add to self. Any type; the result stays
-                Any regardless.
+                Object regardless.
 
         Yields:
             The sum. INVALID when either operand is a sentinel.
 
         Example:
-            >>> nu.run(nu.Any(2) + nu.Any(3))[0]
+            >>> nu.run(nu.Object(2) + nu.Object(3))[0]
             5
         """
         from nu.core import Add
 
-        return Any(Add(self, other))
+        return Object(Add(self, other))
 
-    def __radd__(self, other: object) -> Any:
+    def __radd__(self, other: object) -> Object:
         """Sum of other and self, with self on the right.
 
         Args:
@@ -102,20 +103,20 @@ class Any(Form, TypedNu[Any]):
 
         Notes:
             - Reached only when the left operand's own `__add__` declines,
-              e.g. a plain Python value that doesn't know about Any.
+              e.g. a plain Python value that doesn't know about Object.
 
         Yields:
             The sum. INVALID when either operand is a sentinel.
 
         Example:
-            >>> nu.run(3 + nu.Any(2))[0]
+            >>> nu.run(3 + nu.Object(2))[0]
             5
         """
         from nu.core import Add
 
-        return Any(Add(other, self))
+        return Object(Add(other, self))
 
-    def __sub__(self, other: object) -> Any:
+    def __sub__(self, other: object) -> Object:
         """Self minus other.
 
         Args:
@@ -125,14 +126,14 @@ class Any(Form, TypedNu[Any]):
             The difference. INVALID when either operand is a sentinel.
 
         Example:
-            >>> nu.run(nu.Any(10) - nu.Any(3))[0]
+            >>> nu.run(nu.Object(10) - nu.Object(3))[0]
             7
         """
         from nu.core import Sub
 
-        return Any(Sub(self, other))
+        return Object(Sub(self, other))
 
-    def __rsub__(self, other: object) -> Any:
+    def __rsub__(self, other: object) -> Object:
         """Other minus self, with self on the right.
 
         Args:
@@ -145,14 +146,14 @@ class Any(Form, TypedNu[Any]):
             The difference. INVALID when either operand is a sentinel.
 
         Example:
-            >>> nu.run(10 - nu.Any(3))[0]
+            >>> nu.run(10 - nu.Object(3))[0]
             7
         """
         from nu.core import Sub
 
-        return Any(Sub(other, self))
+        return Object(Sub(other, self))
 
-    def __mul__(self, other: object) -> Any:
+    def __mul__(self, other: object) -> Object:
         """Product of self and other.
 
         Args:
@@ -162,14 +163,14 @@ class Any(Form, TypedNu[Any]):
             The product. INVALID when either operand is a sentinel.
 
         Example:
-            >>> nu.run(nu.Any(6) * nu.Any(7))[0]
+            >>> nu.run(nu.Object(6) * nu.Object(7))[0]
             42
         """
         from nu.core import Mul
 
-        return Any(Mul(self, other))
+        return Object(Mul(self, other))
 
-    def __rmul__(self, other: object) -> Any:
+    def __rmul__(self, other: object) -> Object:
         """Product of other and self, with self on the right.
 
         Args:
@@ -182,14 +183,14 @@ class Any(Form, TypedNu[Any]):
             The product. INVALID when either operand is a sentinel.
 
         Example:
-            >>> nu.run(3 * nu.Any(4))[0]
+            >>> nu.run(3 * nu.Object(4))[0]
             12
         """
         from nu.core import Mul
 
-        return Any(Mul(other, self))
+        return Object(Mul(other, self))
 
-    def __matmul__(self, other: object) -> Any:
+    def __matmul__(self, other: object) -> Object:
         """Matrix multiplication: self @ other.
 
         Args:
@@ -202,9 +203,9 @@ class Any(Form, TypedNu[Any]):
         """
         from nu.core import MatMul
 
-        return Any(MatMul(self, other))
+        return Object(MatMul(self, other))
 
-    def __rmatmul__(self, other: object) -> Any:
+    def __rmatmul__(self, other: object) -> Object:
         """Matrix multiplication: other @ self, with self on the right.
 
         Args:
@@ -220,9 +221,9 @@ class Any(Form, TypedNu[Any]):
         """
         from nu.core import MatMul
 
-        return Any(MatMul(other, self))
+        return Object(MatMul(other, self))
 
-    def __truediv__(self, other: object) -> Any:
+    def __truediv__(self, other: object) -> Object:
         """Self divided by other.
 
         Args:
@@ -237,14 +238,14 @@ class Any(Form, TypedNu[Any]):
             Raises at evaluation time when the divisor is zero.
 
         Example:
-            >>> nu.run(nu.Any(7) / nu.Any(2))[0]
+            >>> nu.run(nu.Object(7) / nu.Object(2))[0]
             3.5
         """
         from nu.core import Div
 
-        return Any(Div(self, other))
+        return Object(Div(self, other))
 
-    def __rtruediv__(self, other: object) -> Any:
+    def __rtruediv__(self, other: object) -> Object:
         """Other divided by self, with self as the divisor.
 
         Args:
@@ -259,14 +260,14 @@ class Any(Form, TypedNu[Any]):
             Raises at evaluation time when self evaluates to zero.
 
         Example:
-            >>> nu.run(10 / nu.Any(4))[0]
+            >>> nu.run(10 / nu.Object(4))[0]
             2.5
         """
         from nu.core import Div
 
-        return Any(Div(other, self))
+        return Object(Div(other, self))
 
-    def __floordiv__(self, other: object) -> Any:
+    def __floordiv__(self, other: object) -> Object:
         """Self floor-divided by other.
 
         Args:
@@ -280,14 +281,14 @@ class Any(Form, TypedNu[Any]):
             sentinel. Raises at evaluation time when the divisor is zero.
 
         Example:
-            >>> nu.run(nu.Any(7) // nu.Any(2))[0]
+            >>> nu.run(nu.Object(7) // nu.Object(2))[0]
             3
         """
         from nu.core import FloorDiv
 
-        return Any(FloorDiv(self, other))
+        return Object(FloorDiv(self, other))
 
-    def __rfloordiv__(self, other: object) -> Any:
+    def __rfloordiv__(self, other: object) -> Object:
         """Other floor-divided by self, with self as the divisor.
 
         Args:
@@ -302,14 +303,14 @@ class Any(Form, TypedNu[Any]):
             sentinel.
 
         Example:
-            >>> nu.run(-7 // nu.Any(2))[0]
+            >>> nu.run(-7 // nu.Object(2))[0]
             -4
         """
         from nu.core import FloorDiv
 
-        return Any(FloorDiv(other, self))
+        return Object(FloorDiv(other, self))
 
-    def __mod__(self, other: object) -> Any:
+    def __mod__(self, other: object) -> Object:
         """Self modulo other.
 
         Args:
@@ -322,14 +323,14 @@ class Any(Form, TypedNu[Any]):
             The remainder. INVALID when either operand is a sentinel.
 
         Example:
-            >>> nu.run(nu.Any(7) % nu.Any(3))[0]
+            >>> nu.run(nu.Object(7) % nu.Object(3))[0]
             1
         """
         from nu.core import Mod
 
-        return Any(Mod(self, other))
+        return Object(Mod(self, other))
 
-    def __rmod__(self, other: object) -> Any:
+    def __rmod__(self, other: object) -> Object:
         """Other modulo self, with self as the divisor.
 
         Args:
@@ -343,14 +344,14 @@ class Any(Form, TypedNu[Any]):
             The remainder. INVALID when either operand is a sentinel.
 
         Example:
-            >>> nu.run(-7 % nu.Any(3))[0]
+            >>> nu.run(-7 % nu.Object(3))[0]
             2
         """
         from nu.core import Mod
 
-        return Any(Mod(other, self))
+        return Object(Mod(other, self))
 
-    def __pow__(self, other: object) -> Any:
+    def __pow__(self, other: object) -> Object:
         """Self raised to the other power.
 
         Args:
@@ -360,14 +361,14 @@ class Any(Form, TypedNu[Any]):
             The power. INVALID when either operand is a sentinel.
 
         Example:
-            >>> nu.run(nu.Any(2) ** nu.Any(10))[0]
+            >>> nu.run(nu.Object(2) ** nu.Object(10))[0]
             1024
         """
         from nu.core import Pow
 
-        return Any(Pow(self, other))
+        return Object(Pow(self, other))
 
-    def __rpow__(self, other: object) -> Any:
+    def __rpow__(self, other: object) -> Object:
         """Other raised to the self power, with self as the exponent.
 
         Args:
@@ -380,28 +381,28 @@ class Any(Form, TypedNu[Any]):
             The power. INVALID when either operand is a sentinel.
 
         Example:
-            >>> nu.run(2 ** nu.Any(10))[0]
+            >>> nu.run(2 ** nu.Object(10))[0]
             1024
         """
         from nu.core import Pow
 
-        return Any(Pow(other, self))
+        return Object(Pow(other, self))
 
-    def __neg__(self) -> Any:
+    def __neg__(self) -> Object:
         """Negation of self.
 
         Yields:
             The negation. INVALID when self is a sentinel.
 
         Example:
-            >>> nu.run(-nu.Any(4))[0]
+            >>> nu.run(-nu.Object(4))[0]
             -4
         """
         from nu.core import Neg
 
-        return Any(Neg(self))
+        return Object(Neg(self))
 
-    def __pos__(self) -> Any:
+    def __pos__(self) -> Object:
         """Self unchanged.
 
         Notes:
@@ -412,26 +413,26 @@ class Any(Form, TypedNu[Any]):
             The value unchanged. INVALID when self is a sentinel.
 
         Example:
-            >>> nu.run(+nu.Any(-4))[0]
+            >>> nu.run(+nu.Object(-4))[0]
             -4
         """
         from nu.core import Pos
 
-        return Any(Pos(self))
+        return Object(Pos(self))
 
-    def __abs__(self) -> Any:
+    def __abs__(self) -> Object:
         """Absolute value of self.
 
         Yields:
             The magnitude. INVALID when self is a sentinel.
 
         Example:
-            >>> nu.run(abs(nu.Any(-4)))[0]
+            >>> nu.run(abs(nu.Object(-4)))[0]
             4
         """
         from nu.core import Abs
 
-        return Any(Abs(self))
+        return Object(Abs(self))
 
     # =========================================================================
     # COMPARISON
@@ -450,7 +451,7 @@ class Any(Form, TypedNu[Any]):
             the runtime types aren't comparable.
 
         Example:
-            >>> nu.run(nu.Any(5) > nu.Any(3))[0]
+            >>> nu.run(nu.Object(5) > nu.Object(3))[0]
             True
         """
         from nu.core import Gt
@@ -471,7 +472,7 @@ class Any(Form, TypedNu[Any]):
             runtime types aren't comparable.
 
         Example:
-            >>> nu.run(nu.Any(5) < nu.Any(3))[0]
+            >>> nu.run(nu.Object(5) < nu.Object(3))[0]
             False
         """
         from nu.core import Lt
@@ -492,7 +493,7 @@ class Any(Form, TypedNu[Any]):
             when the runtime types aren't comparable.
 
         Example:
-            >>> nu.run(nu.Any(5) >= nu.Any(5))[0]
+            >>> nu.run(nu.Object(5) >= nu.Object(5))[0]
             True
         """
         from nu.core import Ge
@@ -513,7 +514,7 @@ class Any(Form, TypedNu[Any]):
             the runtime types aren't comparable.
 
         Example:
-            >>> nu.run(nu.Any(3) <= nu.Any(5))[0]
+            >>> nu.run(nu.Object(3) <= nu.Object(5))[0]
             True
         """
         from nu.core import Le
@@ -521,8 +522,6 @@ class Any(Form, TypedNu[Any]):
         from .bool_ import Bool
 
         return Bool(Le(self, other))
-
-    __hash__ = object.__hash__
 
     def __eq__(self, other: object) -> Bool:  # type: ignore[override]
         """Self equal to other by value.
@@ -539,7 +538,7 @@ class Any(Form, TypedNu[Any]):
             when either operand is a sentinel.
 
         Example:
-            >>> nu.run(nu.Any(5) == 5)[0]
+            >>> nu.run(nu.Object(5) == 5)[0]
             True
         """
         from nu.core import Eq
@@ -562,7 +561,7 @@ class Any(Form, TypedNu[Any]):
             either operand is a sentinel.
 
         Example:
-            >>> nu.run(nu.Any(5) != 4)[0]
+            >>> nu.run(nu.Object(5) != 4)[0]
             True
         """
         from nu.core import Ne
@@ -586,7 +585,7 @@ class Any(Form, TypedNu[Any]):
             False otherwise.
 
         Example:
-            >>> nu.run(nu.Any(1).is_(1))[0]
+            >>> nu.run(nu.Object(1).is_(1))[0]
             True
         """
         from nu.core import Is
@@ -596,7 +595,7 @@ class Any(Form, TypedNu[Any]):
         return Bool(Is(self, other))
 
     # =========================================================================
-    # LOGICAL (named methods; ``&`` / ``|`` are reserved for flow)
+    # LOGICAL (named methods; ``&`` / ``|`` are bitwise on Object)
     # =========================================================================
 
     def and_(self, other: object) -> Bool:
@@ -609,14 +608,14 @@ class Any(Form, TypedNu[Any]):
         Notes:
             - Short-circuits like Python: the right operand is only
               evaluated when the left does not already decide the result.
-            - Bitwise AND is `bitand`, not this; `&` is reserved for `Race`.
+            - Bitwise AND is `&` / `bitand`, not this.
 
         Yields:
             True when both operands are truthy, False otherwise. INVALID
             when either operand is a sentinel.
 
         Example:
-            >>> nu.run(nu.Any(1).and_(nu.Any(0)))[0]
+            >>> nu.run(nu.Object(1).and_(nu.Object(0)))[0]
             False
         """
         from nu.core import And
@@ -635,15 +634,14 @@ class Any(Form, TypedNu[Any]):
         Notes:
             - Short-circuits like Python: the right operand is only
               evaluated when the left does not already decide the result.
-            - Bitwise OR is `bitor`, not this; `|` is reserved for
-              `Parallel`.
+            - Bitwise OR is `|` / `bitor`, not this.
 
         Yields:
             True when either operand is truthy, False otherwise. INVALID
             when either operand is a sentinel.
 
         Example:
-            >>> nu.run(nu.Any(0).or_(nu.Any(5)))[0]
+            >>> nu.run(nu.Object(0).or_(nu.Object(5)))[0]
             True
         """
         from nu.core import Or
@@ -664,7 +662,7 @@ class Any(Form, TypedNu[Any]):
             a sentinel.
 
         Example:
-            >>> nu.run(nu.Any(0).not_())[0]
+            >>> nu.run(nu.Object(0).not_())[0]
             True
         """
         from nu.core import Not
@@ -685,7 +683,7 @@ class Any(Form, TypedNu[Any]):
             when self is a sentinel.
 
         Example:
-            >>> nu.run(nu.Any(5).bool_())[0]
+            >>> nu.run(nu.Object(5).bool_())[0]
             True
         """
         from nu.core import ToBool
@@ -698,69 +696,151 @@ class Any(Form, TypedNu[Any]):
     # BITWISE
     # =========================================================================
 
-    def bitand(self, other: object) -> Any:
+    def bitand(self, other: object) -> Object:
         """Bitwise AND: self & other.
 
         Args:
             other: the value to AND with self, bit by bit.
 
         Notes:
-            - Named form rather than `__and__`: `&` is reserved at the Nu
-              base for `Race` (flow), so bitwise AND has to live elsewhere.
+            - Same op as `self & other`, as a named call.
 
         Yields:
             The bitwise AND. INVALID when either operand is a sentinel.
 
         Example:
-            >>> nu.run(nu.Any(0b1100).bitand(0b1010))[0]
+            >>> nu.run(nu.Object(0b1100).bitand(0b1010))[0]
             8
         """
         from nu.core import BitAnd
 
-        return Any(BitAnd(self, other))
+        return Object(BitAnd(self, other))
 
-    def bitor(self, other: object) -> Any:
+    def bitor(self, other: object) -> Object:
         """Bitwise OR: self | other.
 
         Args:
             other: the value to OR with self, bit by bit.
 
         Notes:
-            - Named form rather than `__or__`: `|` is reserved at the Nu
-              base for `Parallel` (flow).
+            - Same op as `self | other`, as a named call.
 
         Yields:
             The bitwise OR. INVALID when either operand is a sentinel.
 
         Example:
-            >>> nu.run(nu.Any(0b1100).bitor(0b1010))[0]
+            >>> nu.run(nu.Object(0b1100).bitor(0b1010))[0]
             14
         """
         from nu.core import BitOr
 
-        return Any(BitOr(self, other))
+        return Object(BitOr(self, other))
 
-    def bitnot(self) -> Any:
+    def bitnot(self) -> Object:
         """Bitwise NOT: ~self.
 
         Notes:
-            - Named form, symmetric with `bitand` / `bitor`, though unlike
-              those `~` isn't reserved for flow. `__invert__` is also
-              wired to the same op, so both `~self` and `self.bitnot()`
-              work.
+            - Same op as `~self`, as a named call.
 
         Yields:
             The bitwise complement. INVALID when self is a sentinel.
 
         Example:
-            >>> nu.run(nu.Any(5).bitnot())[0]
+            >>> nu.run(nu.Object(5).bitnot())[0]
             -6
         """
         from nu.core import BitNot
 
-        return Any(BitNot(self))
+        return Object(BitNot(self))
 
-    def __invert__(self) -> Any:
+    def __and__(self, other: object) -> Object:
+        """Bitwise AND: self & other.
+
+        Args:
+            other: the value to AND with self. Python decides at
+                evaluation time what `&` means for the runtime types (bits
+                for ints, intersection for sets, logical for bools).
+
+        Notes:
+            - Python meaning, not flow: on an Object `&` is `BitAnd`, not
+              `Race`. Race Object terms with `nu.Race(...)`.
+
+        Yields:
+            The AND. INVALID when either operand is a sentinel.
+
+        Example:
+            >>> nu.run(nu.Object(0b1100) & 0b1010)[0]
+            8
+        """
+        from nu.core import BitAnd
+
+        return Object(BitAnd(self, other))
+
+    def __rand__(self, other: object) -> Object:
+        """Bitwise AND: other & self, with self on the right.
+
+        Args:
+            other: the value on the left of the `&`.
+
+        Notes:
+            - Reached only when the left operand's own `__and__` declines.
+
+        Yields:
+            The AND. INVALID when either operand is a sentinel.
+
+        Example:
+            >>> nu.run(0b1100 & nu.Object(0b1010))[0]
+            8
+        """
+        from nu.core import BitAnd
+
+        return Object(BitAnd(other, self))
+
+    def __or__(self, other: object) -> Object:
+        """Bitwise OR: self | other.
+
+        Args:
+            other: the value to OR with self. Python decides at evaluation
+                time what `|` means for the runtime types (bits for ints,
+                union for sets, merge for dicts).
+
+        Notes:
+            - Python meaning, not flow: on an Object `|` is `BitOr`, not
+              `Parallel`. Run Object terms side by side with
+              `nu.Parallel(...)`.
+
+        Yields:
+            The OR. INVALID when either operand is a sentinel.
+
+        Example:
+            >>> nu.run(nu.Object(0b1100) | 0b1010)[0]
+            14
+        """
+        from nu.core import BitOr
+
+        return Object(BitOr(self, other))
+
+    def __ror__(self, other: object) -> Object:
+        """Bitwise OR: other | self, with self on the right.
+
+        Args:
+            other: the value on the left of the `|`.
+
+        Notes:
+            - Reached only when the left operand's own `__or__` declines.
+
+        Yields:
+            The OR. INVALID when either operand is a sentinel.
+
+        Example:
+            >>> nu.run(0b1100 | nu.Object(0b1010))[0]
+            14
+        """
+        from nu.core import BitOr
+
+        return Object(BitOr(other, self))
+
+    def __invert__(self) -> Object:
         """Bitwise NOT: ~self.
 
         Notes:
@@ -770,14 +850,14 @@ class Any(Form, TypedNu[Any]):
             The bitwise complement. INVALID when self is a sentinel.
 
         Example:
-            >>> nu.run(~nu.Any(5))[0]
+            >>> nu.run(~nu.Object(5))[0]
             -6
         """
         from nu.core import BitNot
 
-        return Any(BitNot(self))
+        return Object(BitNot(self))
 
-    def __xor__(self, other: object) -> Any:
+    def __xor__(self, other: object) -> Object:
         """Bitwise XOR: self ^ other.
 
         Args:
@@ -787,14 +867,14 @@ class Any(Form, TypedNu[Any]):
             The bitwise XOR. INVALID when either operand is a sentinel.
 
         Example:
-            >>> nu.run(nu.Any(0b1100) ^ nu.Any(0b1010))[0]
+            >>> nu.run(nu.Object(0b1100) ^ nu.Object(0b1010))[0]
             6
         """
         from nu.core import BitXor
 
-        return Any(BitXor(self, other))
+        return Object(BitXor(self, other))
 
-    def __rxor__(self, other: object) -> Any:
+    def __rxor__(self, other: object) -> Object:
         """Bitwise XOR: other ^ self, with self on the right.
 
         Args:
@@ -807,14 +887,14 @@ class Any(Form, TypedNu[Any]):
             The bitwise XOR. INVALID when either operand is a sentinel.
 
         Example:
-            >>> nu.run(0b1100 ^ nu.Any(0b1010))[0]
+            >>> nu.run(0b1100 ^ nu.Object(0b1010))[0]
             6
         """
         from nu.core import BitXor
 
-        return Any(BitXor(other, self))
+        return Object(BitXor(other, self))
 
-    def __lshift__(self, other: object) -> Any:
+    def __lshift__(self, other: object) -> Object:
         """Left shift: self shifted left by other bits.
 
         Args:
@@ -826,14 +906,14 @@ class Any(Form, TypedNu[Any]):
             Raises at evaluation time when the shift amount is negative.
 
         Example:
-            >>> nu.run(nu.Any(1) << nu.Any(4))[0]
+            >>> nu.run(nu.Object(1) << nu.Object(4))[0]
             16
         """
         from nu.core import LShift
 
-        return Any(LShift(self, other))
+        return Object(LShift(self, other))
 
-    def __rlshift__(self, other: object) -> Any:
+    def __rlshift__(self, other: object) -> Object:
         """Left shift: other shifted left by self bits.
 
         Args:
@@ -848,33 +928,37 @@ class Any(Form, TypedNu[Any]):
             The shifted value. INVALID when either operand is a sentinel.
 
         Example:
-            >>> nu.run(1 << nu.Any(4))[0]
+            >>> nu.run(1 << nu.Object(4))[0]
             16
         """
         from nu.core import LShift
 
-        return Any(LShift(other, self))
+        return Object(LShift(other, self))
 
-    def __rshift__(self, other: object) -> Any:
+    def __rshift__(self, other: object) -> Object:
         """Right shift: self shifted right by other bits.
 
         Args:
             other: the shift amount. Must be non-negative at evaluation
                 time.
 
+        Notes:
+            - Python meaning, not flow: on an Object `>>` is `RShift`, not
+              `Sequential`. Sequence Object terms with `nu.Sequential(...)`.
+
         Yields:
             The shifted value. INVALID when either operand is a sentinel.
             Raises at evaluation time when the shift amount is negative.
 
         Example:
-            >>> nu.run(nu.Any(16) >> nu.Any(2))[0]
+            >>> nu.run(nu.Object(16) >> nu.Object(2))[0]
             4
         """
         from nu.core import RShift
 
-        return Any(RShift(self, other))
+        return Object(RShift(self, other))
 
-    def __rrshift__(self, other: object) -> Any:
+    def __rrshift__(self, other: object) -> Object:
         """Right shift: other shifted right by self bits.
 
         Args:
@@ -889,18 +973,18 @@ class Any(Form, TypedNu[Any]):
             The shifted value. INVALID when either operand is a sentinel.
 
         Example:
-            >>> nu.run(16 >> nu.Any(2))[0]
+            >>> nu.run(16 >> nu.Object(2))[0]
             4
         """
         from nu.core import RShift
 
-        return Any(RShift(other, self))
+        return Object(RShift(other, self))
 
     # =========================================================================
     # DYNAMIC DESCENT (subscript + attribute)
     # =========================================================================
 
-    def __getitem__(self, key: object) -> Any:
+    def __getitem__(self, key: object) -> Object:
         """Subscript access: self[key].
 
         Args:
@@ -913,17 +997,17 @@ class Any(Form, TypedNu[Any]):
             evaluation time when key doesn't exist on the runtime value.
 
         Example:
-            >>> nu.run(nu.Any([1, 2, 3])[1])[0]
+            >>> nu.run(nu.Object([1, 2, 3])[1])[0]
             2
 
-            >>> nu.run(nu.Any([1, 2, 3])[0:2])[0]
+            >>> nu.run(nu.Object([1, 2, 3])[0:2])[0]
             [1, 2]
         """
         from nu.core import GetItem, Slice
 
         if isinstance(key, slice):
             key = Slice(key.start, key.stop, key.step)
-        return Any(GetItem(self, key))
+        return Object(GetItem(self, key))
 
     def __setitem__(self, key: object, value: object) -> object:
         """Subscript write: self[key] = value.
@@ -940,10 +1024,10 @@ class Any(Form, TypedNu[Any]):
               `TypeError` instead.
 
         Example:
-            >>> nu.Any([1, 2, 3])[0] = 5
+            >>> nu.Object([1, 2, 3])[0] = 5
             Traceback (most recent call last):
                 ...
-            TypeError: Any.__setitem__: cannot mutate through a value-node - the wrapped source must be a Ref (a fabric-writable location). Got: Literal.
+            TypeError: Object.__setitem__: cannot mutate through a value-node - the wrapped source must be a Ref (a fabric-writable location). Got: Literal.
         """
         _require_ref_source(self, "__setitem__")
         from nu.core import SetItem
@@ -960,17 +1044,17 @@ class Any(Form, TypedNu[Any]):
             - Ref-gated the same way as `__setitem__`; see there for why.
 
         Example:
-            >>> del nu.Any([1, 2, 3])[0]
+            >>> del nu.Object([1, 2, 3])[0]
             Traceback (most recent call last):
                 ...
-            TypeError: Any.__delitem__: cannot mutate through a value-node - the wrapped source must be a Ref (a fabric-writable location). Got: Literal.
+            TypeError: Object.__delitem__: cannot mutate through a value-node - the wrapped source must be a Ref (a fabric-writable location). Got: Literal.
         """
         _require_ref_source(self, "__delitem__")
         from nu.core import DelItem
 
         return DelItem(self, key)
 
-    def __getattr__(self, name: str) -> Any:
+    def __getattr__(self, name: str) -> Object:
         """Attribute read: self.name.
 
         Args:
@@ -991,7 +1075,7 @@ class Any(Form, TypedNu[Any]):
         Example:
             >>> class Obj:
             ...     x = 5
-            >>> nu.run(nu.Any(Obj()).x)[0]
+            >>> nu.run(nu.Object(Obj()).x)[0]
             5
         """
         if name.startswith("_"):
@@ -999,21 +1083,22 @@ class Any(Form, TypedNu[Any]):
             raise AttributeError(msg)
         from nu.core import GetAttr
 
-        return Any(GetAttr(self, name))
+        return Object(GetAttr(self, name))
 
     # =========================================================================
     # NAMED METHODS FOR PROTOCOL DUNDERS
     #
     # ``__len__`` / ``__contains__`` / ``__iter__`` / ``__bool__`` all require
     # Python-native return types at runtime, so they cannot participate in a
-    # Nu tree. Expose the tree-shaped equivalents as named methods instead.
+    # Nu tree. The ``Nu`` base blocks ``len()`` / ``in`` / ``bool()`` with a
+    # hint pointing here; these named methods are the tree-shaped equivalents.
     # =========================================================================
 
-    def len_(self) -> Int:
-        """Length of self, as len(self).
+    def len(self) -> Int:
+        """Length of self.
 
         Notes:
-            - Named `len_` because Python's `__len__` must return a
+            - Named `len` because Python's `__len__` must return a
               native int and can't carry a Nu tree node.
 
         Yields:
@@ -1021,7 +1106,7 @@ class Any(Form, TypedNu[Any]):
             evaluation time when the runtime value has no length.
 
         Example:
-            >>> nu.run(nu.Any([1, 2, 3]).len_())[0]
+            >>> nu.run(nu.Object([1, 2, 3]).len())[0]
             3
         """
         from nu.core import Len
@@ -1045,7 +1130,7 @@ class Any(Form, TypedNu[Any]):
             when either operand is a sentinel.
 
         Example:
-            >>> nu.run(nu.Any([1, 2, 3]).contains(2))[0]
+            >>> nu.run(nu.Object([1, 2, 3]).contains(2))[0]
             True
         """
         from nu.core import Contains
@@ -1054,12 +1139,12 @@ class Any(Form, TypedNu[Any]):
 
         return Bool(Contains(self, item))
 
-    def iter_(self) -> Iterator:
-        """Iterator over self, as iter(self).
+    def iter(self) -> Iterator:
+        """Lazy iterator stream over self's elements.
 
         Notes:
-            - Named `iter_` because Python's `__iter__` must return a
-              native iterator and can't carry a Nu tree node.
+            - Named because Python's `iter()` / `for` would loop over the
+              term at build time; the ``Nu`` base blocks them.
             - The returned Iterator is a stream, not a scalar: it needs to
               be consumed through a stream-shaped context (materialized
               with `to_list()` / `to_set()` / `to_tuple()`, or driven
@@ -1092,7 +1177,7 @@ class Any(Form, TypedNu[Any]):
         Example:
             >>> class Obj:
             ...     x = 5
-            >>> nu.run(nu.Any(Obj()).has_attr("x"))[0]
+            >>> nu.run(nu.Object(Obj()).has_attr("x"))[0]
             True
         """
         from nu.core import HasAttr
@@ -1102,23 +1187,23 @@ class Any(Form, TypedNu[Any]):
         return Bool(HasAttr(self, name))
 
 
-def _require_ref_source(form: Any, op: str) -> None:
+def _require_ref_source(form: Object, op: str) -> None:
     """Guard: the wrapped source of form must be a Ref.
 
     Args:
-        form: the Any instance being mutated.
+        form: the Object instance being mutated.
         op: the name of the calling dunder, used in the error message.
 
     Notes:
         - Python's `x[k] = v` / `del x[k]` syntax discards the return
-          value of `__setitem__` / `__delitem__`, so a value-node Any
+          value of `__setitem__` / `__delitem__`, so a value-node Object
           returning a Command would leave the mutation orphaned. Raises
           `TypeError` up front instead.
     """
     source = form._source
     if not isinstance(source, Ref):
         msg = (
-            f"Any.{op}: cannot mutate through a value-node - the "
+            f"Object.{op}: cannot mutate through a value-node - the "
             f"wrapped source must be a Ref (a fabric-writable location). "
             f"Got: {type(source).__name__ if source is not None else 'None'}."
         )

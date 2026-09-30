@@ -9,7 +9,6 @@ SCALAR_QUERY.
 from __future__ import annotations
 
 from nu.context import (
-    AnyAttrRef,
     AttrRef,
     BoolAttrRef,
     BytesAttrRef,
@@ -19,12 +18,13 @@ from nu.context import (
     IntAttrRef,
     ListAttrRef,
     NoneAttrRef,
+    ObjectAttrRef,
     SetAttrRef,
     StrAttrRef,
     TupleAttrRef,
 )
 from nu.forms.collections import Dict, FrozenSet, List, Set, Tuple
-from nu.forms.primitives import Any, Bool, Bytes, Float, Int, None_, Str
+from nu.forms.primitives import Bool, Bytes, Float, Int, None_, Object, Str
 from nu.lang import INVALID, Attr, Context, Sort
 from nu.lang.helpers import compile, run
 
@@ -53,7 +53,7 @@ def test_bytes_attr_ref_is_an_attr_ref():
 
 
 def test_any_attr_ref_is_an_attr_ref():
-    assert isinstance(AnyAttrRef("x"), AttrRef)
+    assert isinstance(ObjectAttrRef("x"), AttrRef)
 
 
 def test_none_attr_ref_is_an_attr_ref():
@@ -104,7 +104,7 @@ def test_bytes_attr_ref_is_a_bytes_form():
 
 
 def test_any_attr_ref_is_an_any_form():
-    assert isinstance(AnyAttrRef("x"), Any)
+    assert isinstance(ObjectAttrRef("x"), Object)
 
 
 def test_none_attr_ref_is_a_none_form():
@@ -190,7 +190,7 @@ def test_str_attr_ref_add_composes_to_str_form():
 
 def test_list_attr_ref_first_elem_builds():
     result = ListAttrRef("xs").first_elem()
-    assert isinstance(result, Any)
+    assert isinstance(result, Object)
 
 
 def test_list_attr_ref_mul_composes_to_list_form():
@@ -203,4 +203,4 @@ def test_list_attr_ref_mul_composes_to_list_form():
 
 def test_dict_attr_ref_composes_get_key():
     result = DictAttrRef("d").get_item("k")
-    assert isinstance(result, Any)
+    assert isinstance(result, Object)

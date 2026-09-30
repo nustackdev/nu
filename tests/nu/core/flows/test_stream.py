@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import pytest
 
+import nu
 from nu.core.flows.stream import Stream
 from nu.domains.shape.refs.sequence import SequenceRef
 from nu.lang import StreamQuery
@@ -32,14 +33,14 @@ def test_stream_constructs_with_source_and_body():
     body = SequenceRef("body")
     s = Stream(source, body)
     # Stream builds advance + change + body + key + log_key = 5 children
-    assert len(s._children) == 5
+    assert len(nu.tree.children(s)) == 5
 
 
 def test_stream_constructs_with_custom_keys():
     source = SequenceRef("items")
     body = SequenceRef("body")
     s = Stream(source, body, key="my_key", log_key="my_log_key")
-    assert len(s._children) == 5
+    assert len(nu.tree.children(s)) == 5
 
 
 # ---------------------------------------------------------------------------

@@ -95,7 +95,7 @@ def _loop(depth: int) -> tuple[str, nu.Nu]:
     the moment either awaited.
     """
     name = f"_lens_item{depth}"
-    return name, nu.AnyAttrRef(name)
+    return name, nu.ObjectAttrRef(name)
 
 
 # --- one row ----------------------------------------------------------------
@@ -210,7 +210,7 @@ def _descend(prefix: StructuredRef | None, shape_cls: type[Shape], cursor: tuple
             msg = f"{seg!r}: a value has nothing under it"
             raise KeyError(msg)
         if isinstance(ref, ShapeRef):
-            ref = _slot(ref._payload["shape_type"], seg, ref)
+            ref = _slot(nu.tree.payload(ref)["shape_type"], seg, ref)
         elif isinstance(ref, (ShapesSequenceRef, SequenceRef)):
             # A position is an int and a wire segment is a string, always.
             ref = ref[int(seg)]
@@ -370,7 +370,7 @@ def _column_term(
     except Exception as exc:
         return _broken(f"{'.'.join(cursor)}: {exc!r}")
     if isinstance(ref, ShapeRef):
-        return _shape_term(ref._payload["shape_type"], ref)
+        return _shape_term(nu.tree.payload(ref)["shape_type"], ref)
     if isinstance(ref, (ShapesMappingRef, MappingRef)):
         return _mapping_term(ref, max_rows, depth)
     if isinstance(ref, (ShapesSequenceRef, SequenceRef)):

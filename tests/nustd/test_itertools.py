@@ -5,7 +5,7 @@ results are materialized with a ``Collect`` over the returned stream atom
 (each function returns the raw ``StreamQuery`` -- no ``Iterator`` wrapping,
 so cardinality lines up and ``Collect`` accepts the stream directly).
 Higher-order members build their predicate / function from a typed ``AttrRef``
-over core atoms - ``AnyAttrRef("item")``, ``AnyAttrRef("acc")``,
+over core atoms - ``ObjectAttrRef("item")``, ``ObjectAttrRef("acc")``,
 ``TupleAttrRef("item")[i]``.
 
 Both paths are covered: ``run`` (sync) for every member, ``arun`` (async) for a
@@ -18,7 +18,7 @@ import asyncio
 import itertools as pit
 import operator
 
-from nu import AnyAttrRef
+from nu import ObjectAttrRef
 from nu.context import TupleAttrRef
 from nu.core import Collect
 from nu.lang.helpers import arun, run
@@ -167,29 +167,29 @@ def test_combinations_with_replacement() -> None:
 
 def test_takewhile() -> None:
     src = [1, 2, 3, 8, 1, 2]
-    got = mat(takewhile(AnyAttrRef("item") < 4, src))
+    got = mat(takewhile(ObjectAttrRef("item") < 4, src))
     assert got == list(pit.takewhile(lambda x: x < 4, src))
 
 
 def test_takewhile_first_false() -> None:
-    got = mat(takewhile(AnyAttrRef("item") < 4, [9, 1, 2]))
+    got = mat(takewhile(ObjectAttrRef("item") < 4, [9, 1, 2]))
     assert got == list(pit.takewhile(lambda x: x < 4, [9, 1, 2]))
 
 
 def test_dropwhile() -> None:
     src = [1, 2, 3, 8, 1, 2]
-    got = mat(dropwhile(AnyAttrRef("item") < 4, src))
+    got = mat(dropwhile(ObjectAttrRef("item") < 4, src))
     assert got == list(pit.dropwhile(lambda x: x < 4, src))
 
 
 def test_dropwhile_all_dropped() -> None:
-    got = mat(dropwhile(AnyAttrRef("item") < 100, [1, 2, 3]))
+    got = mat(dropwhile(ObjectAttrRef("item") < 100, [1, 2, 3]))
     assert got == list(pit.dropwhile(lambda x: x < 100, [1, 2, 3]))
 
 
 def test_filterfalse() -> None:
     src = [1, 2, 3, 4, 5, 6]
-    got = mat(filterfalse(AnyAttrRef("item") % 2, src))
+    got = mat(filterfalse(ObjectAttrRef("item") % 2, src))
     assert got == list(pit.filterfalse(lambda x: x % 2, src))
 
 
@@ -199,13 +199,13 @@ def test_accumulate_default_sum() -> None:
 
 def test_accumulate_with_func_sum() -> None:
     src = [1, 2, 3, 4]
-    got = mat(accumulate(src, AnyAttrRef("acc") + AnyAttrRef("item")))
+    got = mat(accumulate(src, ObjectAttrRef("acc") + ObjectAttrRef("item")))
     assert got == list(pit.accumulate(src, operator.add))
 
 
 def test_accumulate_with_func_product() -> None:
     src = [1, 2, 3, 4]
-    got = mat(accumulate(src, AnyAttrRef("acc") * AnyAttrRef("item")))
+    got = mat(accumulate(src, ObjectAttrRef("acc") * ObjectAttrRef("item")))
     assert got == list(pit.accumulate(src, operator.mul))
 
 
@@ -233,7 +233,7 @@ def test_groupby_identity() -> None:
 
 def test_groupby_key() -> None:
     src = [1, 3, 5, 2, 4, 7]
-    got = mat(groupby(src, AnyAttrRef("item") % 2))
+    got = mat(groupby(src, ObjectAttrRef("item") % 2))
     assert got == [(k, tuple(g)) for k, g in pit.groupby(src, lambda x: x % 2)]
 
 
@@ -285,13 +285,13 @@ def test_async_zip_longest() -> None:
 
 def test_async_takewhile() -> None:
     src = [1, 2, 3, 9, 1]
-    got = asyncio.run(amat(takewhile(AnyAttrRef("item") < 4, src)))
+    got = asyncio.run(amat(takewhile(ObjectAttrRef("item") < 4, src)))
     assert got == list(pit.takewhile(lambda x: x < 4, src))
 
 
 def test_async_accumulate_func() -> None:
     src = [1, 2, 3, 4]
-    got = asyncio.run(amat(accumulate(src, AnyAttrRef("acc") + AnyAttrRef("item"))))
+    got = asyncio.run(amat(accumulate(src, ObjectAttrRef("acc") + ObjectAttrRef("item"))))
     assert got == list(pit.accumulate(src, operator.add))
 
 

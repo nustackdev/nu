@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import pytest
 
+import nu
 from nu.domains.service import (
     Method,
     MethodDescriptor,
@@ -84,8 +85,8 @@ def test_descriptor_ref_carries_name_and_owner_service():
         one = MethodRef.method()
 
     ref = S.one
-    assert ref._payload["name"] == "one"
-    assert ref._payload["owner_service"] is S
+    assert nu.tree.payload(ref)["name"] == "one"
+    assert nu.tree.payload(ref)["owner_service"] is S
 
 
 def test_descriptor_requires_a_class():
@@ -105,8 +106,8 @@ def test_methodref_extra_kwargs_land_in_payload():
         one = Custom.method(path="/x", extra=42)
 
     ref = S.one
-    assert ref._payload["path"] == "/x"
-    assert ref._payload["extra"] == 42
+    assert nu.tree.payload(ref)["path"] == "/x"
+    assert nu.tree.payload(ref)["extra"] == 42
 
 
 def test_method_factory_captures_ref_class_and_kwargs():

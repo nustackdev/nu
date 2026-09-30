@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import ItemsView, KeysView, ValuesView
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, NoReturn, TypeVar
 
 from nu.lang import TypedNu
 
@@ -14,7 +14,7 @@ from .abc.set_ import SetLikeForm
 if TYPE_CHECKING:
     from nu.lang import Nu
 
-    from ..primitives import Any
+    from ..primitives import Object
     from .list_ import List
     from .set_ import Set
 
@@ -31,7 +31,7 @@ V = TypeVar("V")
 
 
 class DictKeys(
-    SetLikeForm[KeysView[K], K, "Set[K]", "Any"],
+    SetLikeForm[KeysView[K], K, "Set[K]", "Object"],
     TypedNu[KeysView[K]],
     Generic[K],
 ):
@@ -66,11 +66,11 @@ class DictKeys(
 
         return List(operand)
 
-    def _wrap_element_result(self, operand: Nu) -> Any:
-        """Wrap operand as Any element."""
-        from ..primitives import Any
+    def _wrap_element_result(self, operand: Nu) -> Object:
+        """Wrap operand as Object element."""
+        from ..primitives import Object
 
-        return Any(operand)
+        return Object(operand)
 
     def to_list(self) -> List[K]:
         """Snapshot the keys into a List.
@@ -107,8 +107,14 @@ class DictKeys(
         return Set(ToSet(self))
 
 
+_VALUES_EQ_HINT = (
+    "a dict values view has no value equality (Python compares it by identity): "
+    "compare a snapshot, v.to_list() == other or v.to_set() == other"
+)
+
+
 class DictValues(
-    CollectionForm[V, "List[V]", "Any"],
+    CollectionForm[V, "List[V]", "Object"],
     TypedNu[ValuesView[V]],
     Generic[V],
 ):
@@ -122,6 +128,9 @@ class DictValues(
         - Lazy and live: it holds no values of its own, it re-reads the
           backing Dict on every evaluation. Mutate the Dict and the view
           reflects it on the next `nu.run`.
+        - No `==` / `!=`: Python compares values views by identity, never
+          by content, so both raise. Compare a snapshot instead:
+          `values.to_list() == [...]`.
 
     Example:
         >>> values = nu.Dict({"a": 1, "b": 2}).values()
@@ -137,11 +146,17 @@ class DictValues(
 
         return List(operand)
 
-    def _wrap_element_result(self, operand: Nu) -> Any:
-        """Wrap operand as Any element."""
-        from ..primitives import Any
+    def _wrap_element_result(self, operand: Nu) -> Object:
+        """Wrap operand as Object element."""
+        from ..primitives import Object
 
-        return Any(operand)
+        return Object(operand)
+
+    def __eq__(self, other: object) -> NoReturn:
+        raise TypeError(_VALUES_EQ_HINT)
+
+    def __ne__(self, other: object) -> NoReturn:
+        raise TypeError(_VALUES_EQ_HINT)
 
     def to_list(self) -> List[V]:
         """Snapshot the values into a List.
@@ -182,7 +197,7 @@ class DictValues(
 
 
 class DictItems(
-    SetLikeForm[ItemsView[K, V], tuple[K, V], "Set[tuple[K, V]]", "Any"],
+    SetLikeForm[ItemsView[K, V], tuple[K, V], "Set[tuple[K, V]]", "Object"],
     TypedNu[ItemsView[K, V]],
     Generic[K, V],
 ):
@@ -218,11 +233,11 @@ class DictItems(
 
         return List(operand)
 
-    def _wrap_element_result(self, operand: Nu) -> Any:
-        """Wrap operand as Any element."""
-        from ..primitives import Any
+    def _wrap_element_result(self, operand: Nu) -> Object:
+        """Wrap operand as Object element."""
+        from ..primitives import Object
 
-        return Any(operand)
+        return Object(operand)
 
     def to_list(self) -> List[tuple[K, V]]:
         """Snapshot the items into a List.

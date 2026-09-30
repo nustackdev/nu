@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, Generic, NoReturn, TypeVar
 
 from nu.lang import Form, TypedNu
 
 
 if TYPE_CHECKING:
-    from nu.forms.primitives import Any
+    from nu.forms.primitives import Object
 
     from .list_ import List
     from .set_ import Set
@@ -23,50 +23,56 @@ __all__ = [
 
 T = TypeVar("T")
 
+_EQ_HINT = (
+    "an Iterator has no value equality (it is a stream, not a value): "
+    "drain it first, it.to_list() == other or it.to_set() == other"
+)
+
 
 class Iterator(Form, TypedNu[Iterator[T]], Generic[T]):
     """Lazy stream over another form's elements.
 
-    Opened by Python's `iter()` on an IterableForm, which wraps the source in
+    Opened by `.iter()` on an IterableForm, which wraps the source in
     a stream-shaped `Iter` term. A term of this shape produces its items one
     at a time rather than as a single value, and pulling from it advances a
     position that can run dry.
 
     Notes:
         - Stream-shaped, not scalar. `to_list`/`to_set`/`to_tuple` drain it
-          into a concrete collection; `next` pulls one item at a time.
+          into a concrete collection; `.next()` pulls one item at a time.
         - Once exhausted, stays exhausted; there's no rewinding.
+        - No `==` / `!=`: an iterator has no value to compare, so both
+          raise. Drain it first: `it.to_list() == [...]`.
 
     Yields:
         Its items in order, one per pull, until exhausted.
     """
 
-    def __iter__(self) -> Iterator[T]:
-        """Self, unchanged.
+    def __eq__(self, other: object) -> NoReturn:
+        raise TypeError(_EQ_HINT)
 
-        Notes:
-            - Python's `iter()` on an iterator returns itself; a pure read,
-              no new term is built.
-        """
-        return self
+    def __ne__(self, other: object) -> NoReturn:
+        raise TypeError(_EQ_HINT)
 
-    def __next__(self) -> Any:
+    def next(self) -> Object:
         """The next item pulled from this iterator.
 
         Notes:
             - Stepping mutates the iterator's position, so the underlying
               `Next` is an Action (mutate-and-yield), not a Query.
+            - Named because Python's `next()` would pull at build time; the
+              ``Nu`` base blocks it.
             - The element type is opaque here, so the result is wrapped as
-              `Any`.
+              `Object`.
 
         Yields:
             The next item. Raises at evaluation time once the iterator is
             exhausted, matching Python's `next`.
         """
         from nu.core import Next
-        from nu.forms.primitives import Any
+        from nu.forms.primitives import Object
 
-        return Any(Next(self))
+        return Object(Next(self))
 
     def to_list(self) -> List[T]:
         """Self drained into a List, in order.

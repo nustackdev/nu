@@ -258,6 +258,14 @@ class Path(Form, TypedNu[_PurePath]):
 
         return Bool(Le(self, other))
 
+    def __eq__(self, other: PathArg) -> Bool:  # type: ignore[override]
+        """`==` builds the same term as `eq`: a value comparison, never identity."""
+        return self.eq(other)
+
+    def __ne__(self, other: PathArg) -> Bool:  # type: ignore[override]
+        """`!=` builds the same term as `ne`: a value comparison, never identity."""
+        return self.ne(other)
+
     def eq(self, other: PathArg) -> Bool:
         """Whether two paths are equal."""
         from nu.core import Eq

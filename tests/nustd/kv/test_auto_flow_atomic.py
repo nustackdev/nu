@@ -16,6 +16,7 @@ Checks:
 
 from __future__ import annotations
 
+import nu
 from nu.core.flows import Sequential as Seq
 from nu.domains.shape import Shape
 from nustd.kv import (
@@ -77,8 +78,8 @@ def _count(tree, cls, scope_sentinel=object()) -> int:  # noqa: B008
                 n += 1
             elif node.scope is scope_sentinel:
                 n += 1
-        if node._children:
-            stack.extend(node._children)
+        if nu.tree.children(node):
+            stack.extend(nu.tree.children(node))
     return n
 
 
@@ -90,9 +91,9 @@ def _collect(tree, cls):
         node = stack.pop()
         if isinstance(node, cls):
             out.append(node)
-        if node._children:
+        if nu.tree.children(node):
             # reverse to keep pre-order-ish
-            stack.extend(reversed(node._children))
+            stack.extend(reversed(nu.tree.children(node)))
     return out
 
 
@@ -105,11 +106,13 @@ def _structure(tree) -> str:
     if isinstance(tree, (Transaction, Snapshot)):
         scope_name = tree.scope.__name__ if hasattr(tree.scope, "__name__") else repr(tree.scope)
         cls_name = type(tree).__name__
-        inner = ",".join(_structure(c) for c in tree._children if not isinstance(c, type(None)))
+        inner = ",".join(
+            _structure(c) for c in nu.tree.children(tree) if not isinstance(c, type(None))
+        )
         return f"{cls_name}({scope_name}){{{inner}}}"
-    if not tree._children:
+    if not nu.tree.children(tree):
         return ""
-    parts = [_structure(c) for c in tree._children]
+    parts = [_structure(c) for c in nu.tree.children(tree)]
     parts = [p for p in parts if p]
     return ",".join(parts)
 

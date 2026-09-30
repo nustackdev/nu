@@ -971,7 +971,7 @@ class Tee(ScalarQuery):
 
     Children: ``[source, n]``. Unlike every other atom here this is NOT a
     stream: it returns a *tuple* of ``n`` iterators (one scalar value), so it is
-    a ``ScalarQuery``, surfaced as an ``Any``. The source is materialized so
+    a ``ScalarQuery``, surfaced as an ``Object``. The source is materialized so
     the tees are safe to drain in any order.
     """
 

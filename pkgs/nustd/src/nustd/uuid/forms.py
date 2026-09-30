@@ -172,6 +172,14 @@ class UUID(Form, TypedNu[_UUID]):
 
         return Bool(Le(self, other))
 
+    def __eq__(self, other: UUIDArg) -> Bool:  # type: ignore[override]
+        """`==` builds the same term as `eq`: a value comparison, never identity."""
+        return self.eq(other)
+
+    def __ne__(self, other: UUIDArg) -> Bool:  # type: ignore[override]
+        """`!=` builds the same term as `ne`: a value comparison, never identity."""
+        return self.ne(other)
+
     def eq(self, other: UUIDArg) -> Bool:
         """Whether two UUIDs are equal."""
         from nu.core import Eq

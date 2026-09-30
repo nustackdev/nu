@@ -63,12 +63,12 @@ def test_bare_ref_annotation_synthesizes_slot() -> None:
 
 def test_bare_ref_annotation_stamps_type_info_on_ref() -> None:
     ref = LeafShape.n
-    assert ref._payload["type_info"] == TypeInfo(IntRef)
+    assert nu.tree.payload(ref)["type_info"] == TypeInfo(IntRef)
 
 
 def test_multiple_bare_refs_all_synthesize() -> None:
     assert LeafShape._slots["label"].ref_cls is StrRef
-    assert LeafShape.label._payload["type_info"] == TypeInfo(StrRef)
+    assert nu.tree.payload(LeafShape.label)["type_info"] == TypeInfo(StrRef)
 
 
 # --- parametric Ref synthesis --------------------------------------------
@@ -86,7 +86,7 @@ def test_primitive_list_ref_synthesizes_with_no_kwargs() -> None:
 
 def test_primitive_list_ref_stamps_recursive_type_info() -> None:
     ref = ListHolder.tags
-    assert ref._payload["type_info"] == TypeInfo(PrimitiveListRef, elem=TypeInfo(str))
+    assert nu.tree.payload(ref)["type_info"] == TypeInfo(PrimitiveListRef, elem=TypeInfo(str))
 
 
 class DictHolder(nu.Shape):
@@ -94,7 +94,7 @@ class DictHolder(nu.Shape):
 
 
 def test_primitive_dict_ref_stamps_key_and_elem() -> None:
-    info = DictHolder.meta._payload["type_info"]
+    info = nu.tree.payload(DictHolder.meta)["type_info"]
     assert info == TypeInfo(PrimitiveDictRef, key=TypeInfo(str), elem=TypeInfo(int))
 
 
@@ -123,7 +123,7 @@ def test_shapes_dict_ref_synthesizes_with_derived_kwargs() -> None:
 
 
 def test_shapes_dict_ref_stamps_recursive_type_info() -> None:
-    info = ShapesDictHolder.by_id._payload["type_info"]
+    info = nu.tree.payload(ShapesDictHolder.by_id)["type_info"]
     assert info == TypeInfo(ShapesDictRef, key=TypeInfo(int), elem=TypeInfo(LeafShape))
 
 
@@ -138,7 +138,7 @@ def test_shapes_list_ref_synthesizes_with_shape_kwarg() -> None:
 
 
 def test_shapes_list_ref_stamps_type_info_with_shape_elem() -> None:
-    info = ShapesListHolder.rows._payload["type_info"]
+    info = nu.tree.payload(ShapesListHolder.rows)["type_info"]
     assert info == TypeInfo(ShapesListRef, elem=TypeInfo(LeafShape))
 
 
@@ -153,7 +153,7 @@ def test_kh57_ref_synthesizes_with_derived_kwargs() -> None:
 
 
 def test_kh57_ref_stamps_recursive_type_info() -> None:
-    info = Kh57Holder.entries._payload["type_info"]
+    info = nu.tree.payload(Kh57Holder.entries)["type_info"]
     assert info == TypeInfo(Kh57Ref, elem=TypeInfo(int))
 
 
@@ -168,7 +168,7 @@ def test_kh57_shapes_ref_synthesizes_with_shape_kwarg() -> None:
 
 
 def test_kh57_shapes_ref_stamps_type_info_with_shape_elem() -> None:
-    info = Kh57ShapesHolder.points._payload["type_info"]
+    info = nu.tree.payload(Kh57ShapesHolder.points)["type_info"]
     assert info == TypeInfo(Kh57ShapesRef, elem=TypeInfo(LeafShape))
 
 
@@ -197,7 +197,7 @@ def test_bare_shape_annotation_with_assignment_stamps_shape_type_info() -> None:
     class RelHolder(nu.Shape):
         rel: LeafShape = ShapeRef.slot(LeafShape)
 
-    info = RelHolder.rel._payload["type_info"]
+    info = nu.tree.payload(RelHolder.rel)["type_info"]
     assert info == TypeInfo(LeafShape)
 
 
@@ -206,13 +206,13 @@ def test_bare_shape_annotation_with_assignment_stamps_shape_type_info() -> None:
 
 def test_legacy_python_typed_annotation_still_works() -> None:
     ref = LegacyPythonTyped.tags
-    assert ref._payload["item_type"] is str
-    assert ref._payload["type_info"] == TypeInfo(list, elem=TypeInfo(str))
+    assert nu.tree.payload(ref)["item_type"] is str
+    assert nu.tree.payload(ref)["type_info"] == TypeInfo(list, elem=TypeInfo(str))
 
 
 def test_no_annotation_no_type_info() -> None:
     ref = Bare.n
-    assert "type_info" not in ref._payload
+    assert "type_info" not in nu.tree.payload(ref)
 
 
 # --- union / optional in annotations ------------------------------------
@@ -223,7 +223,7 @@ class OptionalHolder(nu.Shape):
 
 
 def test_optional_collapses_to_inner_ref() -> None:
-    info = OptionalHolder.maybe._payload["type_info"]
+    info = nu.tree.payload(OptionalHolder.maybe)["type_info"]
     assert info == TypeInfo(IntRef)
 
 
@@ -234,7 +234,7 @@ class UnionHolder(nu.Shape):
 
 
 def test_non_trivial_union_collapses_to_any() -> None:
-    info = UnionHolder.either._payload["type_info"]
+    info = nu.tree.payload(UnionHolder.either)["type_info"]
     assert info == TypeInfo(Any)
 
 

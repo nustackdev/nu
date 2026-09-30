@@ -174,6 +174,14 @@ class timedelta(Form, TypedNu[_timedelta]):  # noqa: N801
 
         return Bool(Le(self, other))
 
+    def __eq__(self, other: TimedeltaArg) -> Bool:  # type: ignore[override]
+        """`==` builds the same term as `eq`: a value comparison, never identity."""
+        return self.eq(other)
+
+    def __ne__(self, other: TimedeltaArg) -> Bool:  # type: ignore[override]
+        """`!=` builds the same term as `ne`: a value comparison, never identity."""
+        return self.ne(other)
+
     def eq(self, other: TimedeltaArg) -> Bool:
         """Whether two spans are equal."""
         from nu.core import Eq
@@ -301,6 +309,14 @@ class time(Form, TypedNu[_time]):  # noqa: N801
         from nu.forms import Bool
 
         return Bool(Le(self, other))
+
+    def __eq__(self, other: TimeArg) -> Bool:  # type: ignore[override]
+        """`==` builds the same term as `eq`: a value comparison, never identity."""
+        return self.eq(other)
+
+    def __ne__(self, other: TimeArg) -> Bool:  # type: ignore[override]
+        """`!=` builds the same term as `ne`: a value comparison, never identity."""
+        return self.ne(other)
 
     def eq(self, other: TimeArg) -> Bool:
         """Whether two times are equal."""
@@ -482,6 +498,14 @@ class date(Form, TypedNu[_date]):  # noqa: N801
         from nu.forms import Bool
 
         return Bool(Le(self, other))
+
+    def __eq__(self, other: DateArg) -> Bool:  # type: ignore[override]
+        """`==` builds the same term as `eq`: a value comparison, never identity."""
+        return self.eq(other)
+
+    def __ne__(self, other: DateArg) -> Bool:  # type: ignore[override]
+        """`!=` builds the same term as `ne`: a value comparison, never identity."""
+        return self.ne(other)
 
     def eq(self, other: DateArg) -> Bool:
         """Whether two dates are equal."""
@@ -718,6 +742,14 @@ class datetime(Form, TypedNu[_datetime]):  # noqa: N801
 
         return Bool(Le(self, other))
 
+    def __eq__(self, other: DatetimeArg) -> Bool:  # type: ignore[override]
+        """`==` builds the same term as `eq`: a value comparison, never identity."""
+        return self.eq(other)
+
+    def __ne__(self, other: DatetimeArg) -> Bool:  # type: ignore[override]
+        """`!=` builds the same term as `ne`: a value comparison, never identity."""
+        return self.ne(other)
+
     def eq(self, other: DatetimeArg) -> Bool:
         """Whether two datetimes are equal."""
         from nu.core import Eq
@@ -773,6 +805,14 @@ class timezone(Form, TypedNu[_timezone]):  # noqa: N801
         from .interactions import TimezoneDst
 
         return None_(TimezoneDst(self, dt))
+
+    def __eq__(self, other: TimezoneArg) -> Bool:  # type: ignore[override]
+        """`==` builds the same term as `eq`: a value comparison, never identity."""
+        return self.eq(other)
+
+    def __ne__(self, other: TimezoneArg) -> Bool:  # type: ignore[override]
+        """`!=` builds the same term as `ne`: a value comparison, never identity."""
+        return self.ne(other)
 
     def eq(self, other: TimezoneArg) -> Bool:
         """Whether two zones are equal."""

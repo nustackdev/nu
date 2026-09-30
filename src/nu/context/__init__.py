@@ -26,7 +26,6 @@ builtins.
 from __future__ import annotations
 
 from .attrs import (
-    AnyAttrRef,
     AttrExists,
     AttrRef,
     BoolAttrRef,
@@ -39,6 +38,7 @@ from .attrs import (
     Let,
     ListAttrRef,
     NoneAttrRef,
+    ObjectAttrRef,
     SetAttrRef,
     SetCmd,
     StrAttrRef,
@@ -57,7 +57,6 @@ from .fabric import (
 
 
 __all__ = [
-    "AnyAttrRef",
     "AttrExists",
     "AttrRef",
     "BoolAttrRef",
@@ -74,6 +73,7 @@ __all__ = [
     "Let",
     "ListAttrRef",
     "NoneAttrRef",
+    "ObjectAttrRef",
     "Provide",
     "ProvideDict",
     "ProvideList",

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import pytest
 
+import nu
 from nu.domains.shape.dsl import Shape, Slot, SlotDescriptor
 from nu.domains.shape.refs.item import ItemRef
 from nu.domains.shape.refs.shape import ShapeRef
@@ -109,7 +110,7 @@ def test_shape_ref_slot_navigation():
 
     ref = Outer.inner
     assert isinstance(ref, ShapeRef)
-    assert ref._payload["shape_type"] is Inner
+    assert nu.tree.payload(ref)["shape_type"] is Inner
 
 
 # ---------------------------------------------------------------------------

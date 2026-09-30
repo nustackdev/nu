@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape import ReactiveSequenceRef, Slot
-from nu.forms import Any, Iterator, List
+from nu.forms import Iterator, List, Object
 from nu.lang.typeinfo import value_type_for
 
 from .base import ViewRef
@@ -78,8 +78,8 @@ class ListRef(ReactiveSequenceRef["ItemRef"], ViewRef[list[T]], Generic[T]):
     def _wrap_sliceable_result(self, operand: Nu) -> List[T]:
         return List(operand)  # slices stay materialized
 
-    def _wrap_element_result(self, operand: Nu) -> Any:
-        return Any(operand)
+    def _wrap_element_result(self, operand: Nu) -> Object:
+        return Object(operand)
 
     def __init__(
         self,

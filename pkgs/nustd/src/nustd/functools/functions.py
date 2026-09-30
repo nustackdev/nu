@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.core import Iter
-from nu.forms import Any
+from nu.forms import Object
 from nu.lang.sentinels import UNSET
 
 from .interactions import Reduce
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 __all__ = ["reduce"]
 
 
-def reduce(function: Nu, iterable: Arg[Iterable], initializer: object = UNSET) -> Any:
+def reduce(function: Nu, iterable: Arg[Iterable], initializer: object = UNSET) -> Object:
     """Fold ``iterable`` left-to-right with ``function`` (``functools.reduce``).
 
     ``function`` is a Nu query that reads the accumulator and the current item
@@ -35,5 +35,5 @@ def reduce(function: Nu, iterable: Arg[Iterable], initializer: object = UNSET) -
     """
     # A Reduction requires a stream source; Iter lifts the iterable to one.
     if initializer is UNSET:
-        return Any(Reduce(Iter(iterable), function))
-    return Any(Reduce(Iter(iterable), function, initial=initializer))
+        return Object(Reduce(Iter(iterable), function))
+    return Object(Reduce(Iter(iterable), function, initial=initializer))

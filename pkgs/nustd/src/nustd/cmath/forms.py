@@ -112,6 +112,14 @@ class complex(Form, TypedNu[_complex]):  # noqa: N801
 
         return Float(Abs(self))
 
+    def __eq__(self, other: ComplexArg) -> Bool:  # type: ignore[override]
+        """`==` builds the same term as `eq`: a value comparison, never identity."""
+        return self.eq(other)
+
+    def __ne__(self, other: ComplexArg) -> Bool:  # type: ignore[override]
+        """`!=` builds the same term as `ne`: a value comparison, never identity."""
+        return self.ne(other)
+
     def eq(self, other: ComplexArg) -> Bool:
         """Whether two complex numbers are equal."""
         from nu.core import Eq

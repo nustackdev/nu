@@ -29,6 +29,7 @@ from enum import Enum
 from logging import getLogger
 from typing import TYPE_CHECKING, Generic, TypeVar
 
+import nu
 from nu.domains.shape.refs.base import StructuredRef
 from nu.lang import EMPTY
 from nustd.kv.paths import ViewPathSer
@@ -132,7 +133,7 @@ class _VirtualsRefBase(StructuredRef, Generic[T]):
         while True:
             kids = rt.program.children[cur]
             term = rt.program.terms[cur]
-            segs.append((rt.eval(kids[1]), term._payload["type_marker"]))  # type: ignore[attr-defined]
+            segs.append((rt.eval(kids[1]), nu.tree.payload(term)["type_marker"]))  # type: ignore[attr-defined]
             parent = kids[0]
             if not isinstance(rt.program.terms[parent], StructuredRef):
                 break  # parent is the ANCHOR -> chain root
@@ -147,7 +148,7 @@ class _VirtualsRefBase(StructuredRef, Generic[T]):
         while True:
             kids = rt.program.children[cur]
             term = rt.program.terms[cur]
-            segs.append((await rt.aeval(kids[1]), term._payload["type_marker"]))  # type: ignore[attr-defined]
+            segs.append((await rt.aeval(kids[1]), nu.tree.payload(term)["type_marker"]))  # type: ignore[attr-defined]
             parent = kids[0]
             if not isinstance(rt.program.terms[parent], StructuredRef):
                 break

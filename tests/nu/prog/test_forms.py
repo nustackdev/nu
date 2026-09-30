@@ -77,7 +77,7 @@ def test_program_is_hashable() -> None:
 def test_load_composes_a_loadnu_over_the_source() -> None:
     tree = Program(GREETING).load()
     assert isinstance(tree, LoadNu)
-    assert tree._children[0] is not None
+    assert nu.tree.children(tree)[0] is not None
 
 
 def test_load_yields_a_term_without_running_it() -> None:
@@ -97,7 +97,7 @@ async def test_load_yields_a_term_async() -> None:
 def test_run_composes_eval_over_load() -> None:
     tree = Program(GREETING).run()
     assert isinstance(tree, nu.Eval)
-    assert isinstance(tree._children[0], LoadNu)
+    assert isinstance(nu.tree.children(tree)[0], LoadNu)
 
 
 def test_run_drives_the_constructed_term() -> None:
@@ -236,7 +236,7 @@ def test_without_on_error_a_construction_failure_propagates() -> None:
 def test_on_error_wraps_in_a_trycatch() -> None:
     tree = Program(BROKEN).run(on_error=nu.Literal("caught"))
     assert isinstance(tree, nu.TryCatch)
-    assert tree._payload["errors"] == (ConstructionError,)
+    assert nu.tree.payload(tree)["errors"] == (ConstructionError,)
 
 
 def test_on_error_branch_runs_and_forwards_its_value() -> None:

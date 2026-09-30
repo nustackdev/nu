@@ -34,15 +34,15 @@ def test_reads_are_scalar_queries(sort):
 
 def test_the_fluent_form_puts_the_receiver_in_the_server_slot():
     ref = ValkeyRef()
-    assert ref.url()._children[0] is ref
-    assert ref.ping()._children[0] is ref
+    assert nu.tree.children(ref.url())[0] is ref
+    assert nu.tree.children(ref.ping())[0] is ref
     assert type(ref.url()) is Url
     assert type(ref.ping()) is Ping
 
 
 def test_the_atoms_carry_no_caller_value_in_payload():
     for atom in (Url(), Ping()):
-        assert not atom._payload
+        assert not nu.tree.payload(atom)
 
 
 def test_building_the_preset_starts_nothing():

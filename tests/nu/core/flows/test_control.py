@@ -8,6 +8,7 @@ that read and write the attrs side-channel - and runs them through ``run`` /
 
 from __future__ import annotations
 
+import nu
 from nu.context import AttrRef, SetCmd
 from nu.core import Add, Iter, Lt
 from nu.core.flows.control import (
@@ -144,7 +145,7 @@ def test_forrange_honours_step_and_custom_index_name():
 def test_delay_is_childless_control():
     d = Delay(Literal(0.0))
     assert isinstance(d, Control)
-    assert len(d._children) == 1  # the delay param, no body
+    assert len(nu.tree.children(d)) == 1  # the delay param, no body
 
 
 def test_delay_runs_and_yields_none():

@@ -25,10 +25,9 @@ class None_(Form, TypedNu[None]):  # noqa: N801
         - Wraps Python's `None`. It's the typical return of an effect-only
           Command, one that runs for a side effect and yields nothing
           meaningful (`sleep`, `inc`, `dec`).
-        - Unlike every other primitive, None_ defines no `__eq__` or `is_`.
-          `==` between two None_ instances falls back to plain Python object
-          identity, not a Nu comparison term, so it never builds a tree and
-          two separate `None_()` instances compare unequal.
+        - `==` / `!=` build an `Eq` / `Ne` term like every other Form, so
+          `x == nu.None_()` asks whether x yields None at run time. There is
+          no `is_`.
         - EMPTY is a distinct sentinel from None: an address that resolved
           to no value at all, not one that resolved to the value `None`.
 
@@ -141,3 +140,48 @@ class None_(Form, TypedNu[None]):  # noqa: N801
         from .bool_ import Bool
 
         return Bool(ToBool(self))
+
+    # =========================================================================
+    # COMPARISON
+    # =========================================================================
+
+    def __eq__(self, other: object) -> Bool:  # type: ignore[override]
+        """Self equal to other by value.
+
+        Args:
+            other: the value to compare against. Any type; equality never
+                raises for mismatched types, it's just False.
+
+        Yields:
+            True when other is also None, False otherwise. INVALID when
+            either operand is a sentinel.
+
+        Example:
+            >>> nu.run(nu.None_() == nu.None_())[0]
+            True
+        """
+        from nu.core import Eq
+
+        from .bool_ import Bool
+
+        return Bool(Eq(self, other))
+
+    def __ne__(self, other: object) -> Bool:  # type: ignore[override]
+        """Self not equal to other by value.
+
+        Args:
+            other: the value to compare against.
+
+        Yields:
+            True when other is not None, False otherwise. INVALID when
+            either operand is a sentinel.
+
+        Example:
+            >>> nu.run(nu.None_() != 0)[0]
+            True
+        """
+        from nu.core import Ne
+
+        from .bool_ import Bool
+
+        return Bool(Ne(self, other))

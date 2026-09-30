@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import nu
 from nu.core.flows.control import IfDo
 from nu.core.reactive import OnPrimitiveChange
 from nu.domains.shape.dsl import Shape
@@ -25,7 +26,7 @@ def test_item_ref_is_structured_ref():
 
 def test_item_ref_constructs_with_address():
     ref = ItemRef("field_name")
-    assert ref._children  # address stored as children[0]
+    assert nu.tree.children(ref)  # address stored as children[0]
 
 
 def test_item_ref_parent_ref_none_by_default():
@@ -79,7 +80,7 @@ def test_mutable_item_ref_is_subclass_of_item_ref():
 
 def test_mutable_item_ref_constructs():
     ref = MutableItemRef("field")
-    assert ref._children
+    assert nu.tree.children(ref)
 
 
 def test_mutable_item_ref_has_set():
@@ -114,7 +115,7 @@ def test_mutable_item_ref_init_returns_ifdo_of_missing_and_set():
     ref = MutableItemRef("field")
     result = ref.init(42)
     assert isinstance(result, IfDo)
-    cond, body = result._children
+    cond, body = nu.tree.children(result)
     assert isinstance(cond, Missing)
     assert isinstance(body, SetCmd)
 
@@ -130,7 +131,7 @@ def test_reactive_item_ref_is_subclass_of_mutable_item_ref():
 
 def test_reactive_item_ref_constructs():
     ref = ReactiveItemRef("field")
-    assert ref._children
+    assert nu.tree.children(ref)
 
 
 def test_reactive_item_ref_has_on_change():
@@ -154,8 +155,8 @@ def test_reactive_item_ref_on_change_carries_self_as_slot_zero():
     # OnPrimitiveChange carries the leaf ref as its sole child; at runtime
     # ``ref._afetch_parent`` + ``ref._aaddress`` reconstruct the parent view and
     # address, regardless of whether ``parent_ref`` is wired.
-    assert len(result._children) == 1
-    assert result._children[0] is ref
+    assert len(nu.tree.children(result)) == 1
+    assert nu.tree.children(result)[0] is ref
 
 
 def test_reactive_item_ref_inherits_set_erase():

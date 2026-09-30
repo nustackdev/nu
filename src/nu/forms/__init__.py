@@ -23,7 +23,6 @@ from .collections import (
     Tuple,
 )
 from .primitives import (
-    Any,
     Bool,
     Bytes,
     EmptyForm,
@@ -31,13 +30,13 @@ from .primitives import (
     Int,
     InvalidForm,
     None_,
+    Object,
     SentinelForm,
     Str,
 )
 
 
 __all__ = [
-    "Any",
     "Bool",
     "Bytes",
     "Dict",
@@ -53,6 +52,7 @@ __all__ = [
     "Iterator",
     "List",
     "None_",
+    "Object",
     "SentinelForm",
     "Set",
     "Str",

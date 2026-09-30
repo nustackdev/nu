@@ -12,9 +12,6 @@ import typing
 from typing import Any, ClassVar, ForwardRef, Optional, Union
 
 from nu.forms import (
-    Any as AnyForm,
-)
-from nu.forms import (
     Bool,
     Bytes,
     Dict,
@@ -22,6 +19,7 @@ from nu.forms import (
     FrozenSet,
     Int,
     List,
+    Object,
     Set,
     Str,
     Tuple,
@@ -272,17 +270,17 @@ def test_to_form_maps_container_leaves() -> None:
 
 
 def test_to_form_any_yields_any_form() -> None:
-    assert TypeInfo(Any).to_form() is AnyForm
+    assert TypeInfo(Any).to_form() is Object
 
 
 def test_to_form_ref_class_falls_back_to_any_form() -> None:
     # Ref-typed nodes are handled by the wrapper's ref descent, not to_form.
     # to_form on them defaults to Any.
-    assert TypeInfo(StrRef).to_form() is AnyForm
+    assert TypeInfo(StrRef).to_form() is Object
 
 
 def test_to_form_shape_class_falls_back_to_any_form() -> None:
-    assert TypeInfo(_StubShape).to_form() is AnyForm
+    assert TypeInfo(_StubShape).to_form() is Object
 
 
 def test_to_form_ignores_tier_arg() -> None:

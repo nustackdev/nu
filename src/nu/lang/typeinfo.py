@@ -30,8 +30,8 @@ The primitive is:
 - ``TypeInfo.to_form(tier=None)`` dispatches ``py_type`` to a concrete
   ``Form`` class, meaningful at primitive-leaf yield positions. Ref-typed
   or Shape-typed levels are handled by the wrapper directly (it descends
-  into the ref/shape instead of yielding a value-Form). ``Any`` is the
-  fallback.
+  into the ref/shape instead of yielding a value-Form). The ``Object``
+  Form is the fallback.
 """
 
 from __future__ import annotations
@@ -113,7 +113,7 @@ class TypeInfo:
         return self.py_type is Any
 
     def to_form(self, tier: object | None = None) -> type[Form]:
-        """Dispatch ``py_type`` to its ``Form`` class (``Any`` fallback).
+        """Dispatch ``py_type`` to its ``Form`` class (``Object`` fallback).
 
         Meaningful only at primitive-leaf positions (inside
         ``Primitive*Ref`` type args). Ref-typed or Shape-typed levels are
@@ -204,9 +204,6 @@ def _parametric_ref(ref_cls: type, args: tuple, hints: dict[str, object]) -> Typ
 
 def _form_for(py_type: object) -> type[Form]:
     from nu.forms import (
-        Any as AnyForm,
-    )
-    from nu.forms import (
         Bool,
         Bytes,
         Dict,
@@ -214,6 +211,7 @@ def _form_for(py_type: object) -> type[Form]:
         FrozenSet,
         Int,
         List,
+        Object,
         Set,
         Str,
         Tuple,
@@ -231,11 +229,11 @@ def _form_for(py_type: object) -> type[Form]:
         frozenset: FrozenSet,
         tuple: Tuple,
     }
-    return mapping.get(py_type, AnyForm)  # type: ignore[arg-type]
+    return mapping.get(py_type, Object)  # type: ignore[arg-type]
 
 
 def value_type_for(python_type: object) -> type[Form]:
-    """Map a Python primitive type to its ``Form`` class (``Any`` fallback).
+    """Map a Python primitive type to its ``Form`` class (``Object`` fallback).
 
     Convenience wrapper over ``_form_for``: the sole dispatch source of truth.
     """

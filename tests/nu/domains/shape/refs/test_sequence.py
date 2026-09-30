@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import nu
 from nu.core.flows.control import IfDo
 from nu.core.reactive import OnChange, OnChildChange, OnChildrenChange
 from nu.domains.shape.dsl import Shape
@@ -69,7 +70,7 @@ def test_sequence_ref_slice_routes_to_slice_op():
     assert isinstance(result, tuple) and result[0] is sentinel
     getitem = result[1]
     assert isinstance(getitem, GetItem)
-    assert isinstance(getitem._children[1], Slice)
+    assert isinstance(nu.tree.children(getitem)[1], Slice)
 
 
 # ---------------------------------------------------------------------------
@@ -131,7 +132,7 @@ def test_mutable_sequence_ref_init_returns_ifdo_of_missing_and_set():
     s = MutableSequenceRef("my_seq")
     result = s.init([])
     assert isinstance(result, IfDo)
-    cond, body = result._children
+    cond, body = nu.tree.children(result)
     assert isinstance(cond, Missing)
     assert isinstance(body, SetCmd)
 

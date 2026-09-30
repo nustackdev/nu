@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import pytest
 
+import nu
 from nu.domains.shape.interactions import Erase, PrimitiveSet, SetCmd
 from nu.domains.shape.refs.item import ItemRef
 from nu.lang import Command, Literal
@@ -35,13 +36,13 @@ def test_erase_command_is_command():
 def test_set_command_constructs_with_ref_and_value():
     ref = ItemRef("slot")
     cmd = SetCmd(ref, Literal(42))
-    assert len(cmd._children) == 2
+    assert len(nu.tree.children(cmd)) == 2
 
 
 def test_erase_command_constructs_with_ref():
     ref = ItemRef("slot")
     cmd = Erase(ref)
-    assert cmd._children
+    assert nu.tree.children(cmd)
 
 
 # ---------------------------------------------------------------------------
@@ -116,7 +117,7 @@ def test_primitive_set_command_is_command():
 def test_primitive_set_command_constructs_with_ref_and_value():
     ref = ItemRef("slot")
     cmd = PrimitiveSet(ref, Literal({"a": 1}))
-    assert len(cmd._children) == 2
+    assert len(nu.tree.children(cmd)) == 2
 
 
 def test_primitive_set_command_mutates_slot_zero():

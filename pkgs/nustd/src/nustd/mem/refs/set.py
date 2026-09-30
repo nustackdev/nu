@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape import MutableSetRef, Slot
-from nu.forms import Any, Set
+from nu.forms import Object, Set
 
 from .base import RefBase
 
@@ -64,8 +64,8 @@ class SetRef(MutableSetRef, RefBase[set[T]], Generic[T]):
     def _wrap_set_result(self, operand: Nu) -> Set[T]:
         return Set(operand)
 
-    def _wrap_element_result(self, operand: Nu) -> Any:
-        return Any(operand)
+    def _wrap_element_result(self, operand: Nu) -> Object:
+        return Object(operand)
 
     def __init__(
         self,

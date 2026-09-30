@@ -13,7 +13,7 @@ from .abc.set_interactions import FrozenSetCreate, FrozenSetOf, SetCreate, SetOf
 if TYPE_CHECKING:
     from nu.lang import Arg, FrozenSetArg, Nu, SetArg
 
-    from ..primitives import Any, Bool
+    from ..primitives import Bool, Object
     from .list_ import List
 
 
@@ -27,7 +27,7 @@ T = TypeVar("T")
 
 
 class Set(
-    MutableSetForm[set[T], T, "Set[T]", "Any"],
+    MutableSetForm[set[T], T, "Set[T]", "Object"],
     TypedNu[set[T]],
     Generic[T],
 ):
@@ -102,15 +102,15 @@ class Set(
 
         return List(operand)
 
-    def _wrap_element_result(self, operand: Nu) -> Any:
-        """Wrap operand as Any element.
+    def _wrap_element_result(self, operand: Nu) -> Object:
+        """Wrap operand as Object element.
 
         Yields:
-            The operand wrapped as Any.
+            The operand wrapped as Object.
         """
-        from ..primitives import Any
+        from ..primitives import Object
 
-        return Any(operand)
+        return Object(operand)
 
     # =========================================================================
     # COMPARISON
@@ -198,8 +198,6 @@ class Set(
 
         return Bool(Le(self, other))
 
-    __hash__ = object.__hash__
-
     def __eq__(self, other: SetArg[T]) -> Bool:  # type: ignore[override]
         """Self equal to other by value.
 
@@ -274,7 +272,7 @@ class Set(
 
 
 class FrozenSet(
-    SetLikeForm[frozenset[T], T, "FrozenSet[T]", "Any"],
+    SetLikeForm[frozenset[T], T, "FrozenSet[T]", "Object"],
     TypedNu[frozenset[T]],
     Generic[T],
 ):
@@ -347,15 +345,15 @@ class FrozenSet(
 
         return List(operand)
 
-    def _wrap_element_result(self, operand: Nu) -> Any:
-        """Wrap operand as Any element.
+    def _wrap_element_result(self, operand: Nu) -> Object:
+        """Wrap operand as Object element.
 
         Yields:
-            The operand wrapped as Any.
+            The operand wrapped as Object.
         """
-        from ..primitives import Any
+        from ..primitives import Object
 
-        return Any(operand)
+        return Object(operand)
 
     # =========================================================================
     # COMPARISON
@@ -442,8 +440,6 @@ class FrozenSet(
         from ..primitives import Bool
 
         return Bool(Le(self, other))
-
-    __hash__ = object.__hash__
 
     def __eq__(self, other: FrozenSetArg[T]) -> Bool:  # type: ignore[override]
         """Self equal to other by value.

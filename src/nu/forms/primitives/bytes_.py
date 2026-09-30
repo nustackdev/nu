@@ -121,6 +121,51 @@ class Bytes(Form, TypedNu[bytes]):
         return Int(GetItem(self, key))
 
     # =========================================================================
+    # SIZE AND MEMBERSHIP (``len()`` / ``in`` can't build a term)
+    # =========================================================================
+
+    def len(self) -> Int:
+        """Length of self in bytes.
+
+        Yields:
+            The length as Int. INVALID when self is a sentinel.
+
+        Example:
+            >>> nu.run(nu.Bytes(b"abc").len())[0]
+            3
+        """
+        from nu.core import Len
+
+        from .int_ import Int
+
+        return Int(Len(self))
+
+    def contains(self, item: BytesArg | IntArg) -> Bool:
+        """Substring test: item in self.
+
+        Args:
+            item: the bytes to look for.
+
+        Notes:
+            - Named because Python's `in` must return a native bool.
+            - An int item tests for that byte value, as Python's `in` does
+              on bytes.
+
+        Yields:
+            True when item occurs in self, False otherwise. INVALID when
+            either operand is a sentinel.
+
+        Example:
+            >>> nu.run(nu.Bytes(b"abc").contains(b"b"))[0]
+            True
+        """
+        from nu.core import Contains
+
+        from .bool_ import Bool
+
+        return Bool(Contains(self, item))
+
+    # =========================================================================
     # COMPARISON
     # =========================================================================
 
@@ -203,8 +248,6 @@ class Bytes(Form, TypedNu[bytes]):
         from .bool_ import Bool
 
         return Bool(Le(self, other))
-
-    __hash__ = object.__hash__
 
     def __eq__(self, other: BytesArg) -> Bool:  # type: ignore[override]
         """Self equal to other by value.

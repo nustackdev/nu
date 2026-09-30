@@ -97,7 +97,7 @@ _SPELLINGS: dict[str, str] = {
     "__setitem__": "a[key] = value",
     "__contains__": "value in a",
     "__len__": "len(a)",
-    "__iter__": "iter(a)",
+    "__iter__": "a.iter()",
     "__call__": "a(...)",
 }
 

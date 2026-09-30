@@ -95,7 +95,7 @@ def test_validate_passes(name):
 
 def test_dispatching_a_query_is_allowed():
     """A dispatched body's value is dropped by design, whatever it yields."""
-    assert Dispatch(body=nu.Add(1, 2), worker=nu.AttrRef("w"))._payload["body"] is not None
+    assert nu.tree.payload(Dispatch(body=nu.Add(1, 2), worker=nu.AttrRef("w")))["body"] is not None
 
 
 def test_dispatching_a_non_nu_body_is_refused():
@@ -143,7 +143,7 @@ def test_dispatch_is_a_void_command():
 def test_a_flow_body_is_accepted_and_the_tree_still_validates(body):
     """The whole point of the payload: a Flow body a Command could not hold."""
     node = Dispatch(body=body, worker=nu.AttrRef("w"))
-    assert node._payload["body"] is body
+    assert nu.tree.payload(node)["body"] is body
     nu.validate(nu.compile(_provided(node)))
 
 
@@ -154,9 +154,11 @@ def _same_shape(a: nu.Nu, b: nu.Nu) -> bool:
     """Structural equality by class, payload and child shape, recursively."""
     return (
         type(a) is type(b)
-        and a._payload == b._payload
-        and len(a._children) == len(b._children)
-        and all(_same_shape(x, y) for x, y in zip(a._children, b._children, strict=True))
+        and nu.tree.payload(a) == nu.tree.payload(b)
+        and len(nu.tree.children(a)) == len(nu.tree.children(b))
+        and all(
+            _same_shape(x, y) for x, y in zip(nu.tree.children(a), nu.tree.children(b), strict=True)
+        )
     )
 
 
@@ -181,15 +183,15 @@ def test_the_fluent_form_builds_the_same_term(fluent, direct):
 
 def test_the_fluent_form_puts_the_receiver_in_the_pool_slot():
     ref = PoolRef()
-    assert ref.kill(7)._children[0] is ref
-    assert ref.launch()._children[0] is ref
-    assert ref.workers()._children[0] is ref
+    assert nu.tree.children(ref.kill(7))[0] is ref
+    assert nu.tree.children(ref.launch())[0] is ref
+    assert nu.tree.children(ref.workers())[0] is ref
     # Teleport's pool slot is children[1]; the body is children[0] by Span rule.
-    assert ref.teleport(RESIDENT, 7)._children[1] is ref
+    assert nu.tree.children(ref.teleport(RESIDENT, 7))[1] is ref
 
 
 def test_the_fluent_dispatch_still_keeps_its_body_in_payload():
-    assert PoolRef().dispatch(RESIDENT, 7)._payload["body"] is RESIDENT
+    assert nu.tree.payload(PoolRef().dispatch(RESIDENT, 7))["body"] is RESIDENT
 
 
 # --- children vs payload ----------------------------------------------------
@@ -208,33 +210,34 @@ def test_the_atoms_carry_no_caller_value_in_payload():
         Workers(),
     ]
     for atom in atoms:
-        assert 7 not in atom._payload.values()
-        assert set(atom._payload) <= {"carry", "body"}
+        # A body is a term, and `==` on a term builds a comparison: skip them.
+        assert 7 not in [v for v in nu.tree.payload(atom).values() if not isinstance(v, nu.Nu)]
+        assert set(nu.tree.payload(atom)) <= {"carry", "body"}
     # And the pool ref itself, unlike the tag nustd.mp's MpWorkerRef used to hold.
-    assert PoolRef()._payload == {}
-    assert len(PoolRef()._children) == 1
+    assert nu.tree.payload(PoolRef()) == {}
+    assert len(nu.tree.children(PoolRef())) == 1
 
 
 def test_the_worker_id_is_still_a_child_of_dispatch():
     """Only the body moved to payload. The id has to stay computable."""
     node = Dispatch(body=RESIDENT, worker=nu.AttrRef("w"))
-    assert isinstance(node._children[0], PoolRef)
-    assert node._children[1] == nu.AttrRef("w") or isinstance(node._children[1], nu.AttrRef)
+    assert isinstance(nu.tree.children(node)[0], PoolRef)
+    assert isinstance(nu.tree.children(node)[1], nu.AttrRef)
 
 
 def test_a_rewrite_carries_the_body_across_unchanged():
     """``_with_children`` shares the payload; a Nu term is immutable, so that is safe."""
     node = Dispatch(body=RESIDENT, worker=7)
-    variant = node._with_children(*node._children)
-    assert variant._payload["body"] is RESIDENT
-    assert variant._payload is node._payload
+    variant = node._with_children(*nu.tree.children(node))
+    assert nu.tree.payload(variant)["body"] is RESIDENT
+    assert nu.tree.payload(variant) is nu.tree.payload(node)
 
 
 def test_no_walker_reaches_a_dispatched_body():
     """The documented consequence, asserted: the body is not in the tree."""
     tree = _provided(Dispatch(body=RESIDENT, worker=nu.AttrRef("w")))
     program = nu.compile(tree)
-    assert RESIDENT not in program.terms
+    assert not any(t is RESIDENT for t in program.terms)
     assert not any(isinstance(t, nu.ForeverDo) for t in program.terms)
     # And it does not show in the render either.
     assert "ForeverDo" not in str(tree)

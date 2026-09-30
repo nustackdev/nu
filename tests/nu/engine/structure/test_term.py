@@ -10,6 +10,7 @@ from __future__ import annotations
 import pytest
 from _support.terms import HeavyNode, Leaf, Node
 
+import nu
 from nu.engine.structure import Declared, Term
 
 
@@ -54,22 +55,22 @@ def test_a_declared_attribute_with_an_explicit_name_keeps_it():
 def test_children_is_a_tuple_of_terms():
     a, b = Leaf(), Leaf()
     parent = Node(a, b)
-    assert parent._children == (a, b)
-    assert isinstance(parent._children, tuple)
+    assert nu.tree.children(parent) == (a, b)
+    assert isinstance(nu.tree.children(parent), tuple)
 
 
 def test_a_leaf_has_no_children():
-    assert Leaf()._children == ()
+    assert nu.tree.children(Leaf()) == ()
 
 
 def test_payload_defaults_to_an_empty_dict():
-    assert Leaf()._payload == {}
+    assert nu.tree.payload(Leaf()) == {}
 
 
 def test_each_instance_gets_its_own_payload():
     a, b = Leaf(), Leaf()
-    a._payload["k"] = "v"
-    assert b._payload == {}
+    nu.tree.payload(a)["k"] = "v"
+    assert nu.tree.payload(b) == {}
 
 
 # --- Term: with_children --------------------------------------------------
@@ -86,15 +87,15 @@ def test_with_children_replaces_the_children_tuple():
     a, b, c = Leaf(), Leaf(), Leaf()
     original = Node(a, b)
     variant = original._with_children(c)
-    assert variant._children == (c,)
-    assert original._children == (a, b)
+    assert nu.tree.children(variant) == (c,)
+    assert nu.tree.children(original) == (a, b)
 
 
 def test_with_children_shares_the_payload_object():
     original = Node()
-    original._payload["k"] = "v"
+    nu.tree.payload(original)["k"] = "v"
     variant = original._with_children(Leaf())
-    assert variant._payload is original._payload
+    assert nu.tree.payload(variant) is nu.tree.payload(original)
 
 
 # --- Term: repr -----------------------------------------------------------

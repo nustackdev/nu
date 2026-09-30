@@ -12,7 +12,6 @@ dict, set, sentinel, and the 5 convoluted compositions.
 from __future__ import annotations
 
 from nu.context import (
-    AnyAttrRef,
     BoolAttrRef,
     BytesAttrRef,
     DictAttrRef,
@@ -20,12 +19,13 @@ from nu.context import (
     IntAttrRef,
     ListAttrRef,
     NoneAttrRef,
+    ObjectAttrRef,
     SetAttrRef,
     StrAttrRef,
     TupleAttrRef,
 )
 from nu.forms.collections import List, Tuple
-from nu.forms.primitives import Any, Bool, Bytes, Float, Int, Str
+from nu.forms.primitives import Bool, Bytes, Float, Int, Object, Str
 from nu.lang import Context, Literal
 from nu.lang.helpers import run
 
@@ -217,24 +217,24 @@ def test_bytes_startswith_evaluates():
 
 
 # ---------------------------------------------------------------------------
-# AnyAttrRef
+# ObjectAttrRef
 # ---------------------------------------------------------------------------
 
 
 def test_any_add_narrows_to_any_form():
-    assert isinstance(AnyAttrRef("x") + 1, Any)
+    assert isinstance(ObjectAttrRef("x") + 1, Object)
 
 
 def test_any_add_evaluates():
-    assert val(AnyAttrRef("x") + 8, ctx(x=42)) == 50
+    assert val(ObjectAttrRef("x") + 8, ctx(x=42)) == 50
 
 
 def test_any_gt_narrows_to_bool_form():
-    assert isinstance(AnyAttrRef("x") > 0, Bool)
+    assert isinstance(ObjectAttrRef("x") > 0, Bool)
 
 
 def test_any_gt_evaluates():
-    assert val(AnyAttrRef("x") > 10, ctx(x=42)) is True
+    assert val(ObjectAttrRef("x") > 10, ctx(x=42)) is True
 
 
 # ---------------------------------------------------------------------------
@@ -260,7 +260,7 @@ def test_none_or_evaluates():
 
 
 def test_list_first_elem_narrows_to_any_form():
-    assert isinstance(ListAttrRef("xs").first_elem(), Any)
+    assert isinstance(ListAttrRef("xs").first_elem(), Object)
 
 
 def test_list_first_elem_evaluates():
@@ -268,7 +268,7 @@ def test_list_first_elem_evaluates():
 
 
 def test_list_getitem_index_narrows_to_any_form():
-    assert isinstance(ListAttrRef("xs")[0], Any)
+    assert isinstance(ListAttrRef("xs")[0], Object)
 
 
 def test_list_getitem_evaluates():
@@ -297,7 +297,7 @@ def test_list_mul_evaluates():
 
 
 def test_dict_get_narrows_to_any_form():
-    assert isinstance(DictAttrRef("d").get_item("k"), Any)
+    assert isinstance(DictAttrRef("d").get_item("k"), Object)
 
 
 def test_dict_get_evaluates():
@@ -357,7 +357,7 @@ def test_frozenset_isdisjoint_evaluates():
 
 
 def test_tuple_getitem_narrows_to_any_form():
-    assert isinstance(TupleAttrRef("tp")[0], Any)
+    assert isinstance(TupleAttrRef("tp")[0], Object)
 
 
 def test_tuple_getitem_evaluates():
@@ -495,13 +495,13 @@ def test_convo3_intermediate_str_forms():
 
 # ---------------------------------------------------------------------------
 # Convoluted 4: list first_elem used in arithmetic
-# xs.first_elem() + 3 -> Any; value = 5 + 3 = 8
+# xs.first_elem() + 3 -> Object; value = 5 + 3 = 8
 # ---------------------------------------------------------------------------
 
 
 def test_convo4_narrows_to_any_form():
     xs = ListAttrRef("xs")
-    assert isinstance(xs.first_elem() + 3, Any)
+    assert isinstance(xs.first_elem() + 3, Object)
 
 
 def test_convo4_evaluates():

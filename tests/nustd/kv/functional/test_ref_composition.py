@@ -9,6 +9,7 @@ the path resolved at runtime, that key evaluates like any other child.
 
 from __future__ import annotations
 
+import nu
 from nu import Shape, run
 from nu.lang import EMPTY
 from nustd.kv import IntRef, ShapeRef, ShapesDictRef, ShapesListRef, StrRef
@@ -77,7 +78,7 @@ def test_leaf_overwrite(ctx):
 def test_leaf_erase(ctx):
     run(VRoot.mids["m1"].note.set("x"), ctx)
     run(VRoot.mids["m1"].note.erase(), ctx)
-    assert run(VRoot.mids["m1"].note, ctx)[0] == EMPTY
+    assert run(VRoot.mids["m1"].note, ctx)[0] is EMPTY
 
 
 # --- shape-ref navigation ---------------------------------------------------
@@ -152,5 +153,5 @@ def test_primitive_dict_and_list_navigation_reads_payload():
 
     di = V.d["k"]
     li = V.rows[0]
-    assert di._payload["type_marker"] is str
-    assert li._payload["type_marker"] is int
+    assert nu.tree.payload(di)["type_marker"] is str
+    assert nu.tree.payload(li)["type_marker"] is int

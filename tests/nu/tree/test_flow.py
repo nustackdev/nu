@@ -6,6 +6,7 @@ All tests work on the Nu-layer tree with no substrate needed.
 
 from __future__ import annotations
 
+import nu
 from nu.domains.shape.interactions import Load
 from nu.domains.shape.refs.item import ItemRef
 from nu.domains.shape.refs.mapping import MappingRef
@@ -90,7 +91,7 @@ def test_has_write_on_fabric_false_for_read_only_query():
 def _tag(node):
     """Wrap a node in a Literal to mark it was visited."""
     # We use with_children to produce a structural variant; we track by identity.
-    return node._with_children(*node._children)
+    return node._with_children(*nu.tree.children(node))
 
 
 def test_wrap_flows_calls_wrapper_on_outermost_flow():

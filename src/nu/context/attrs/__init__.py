@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from .interactions import AttrExists, Delete, Let, SetCmd
 from .refs import (
-    AnyAttrRef,
     AttrRef,
     BoolAttrRef,
     BytesAttrRef,
@@ -20,6 +19,7 @@ from .refs import (
     IntAttrRef,
     ListAttrRef,
     NoneAttrRef,
+    ObjectAttrRef,
     SetAttrRef,
     StrAttrRef,
     TupleAttrRef,
@@ -27,7 +27,6 @@ from .refs import (
 
 
 __all__ = [
-    "AnyAttrRef",
     "AttrExists",
     "AttrRef",
     "BoolAttrRef",
@@ -40,6 +39,7 @@ __all__ = [
     "Let",
     "ListAttrRef",
     "NoneAttrRef",
+    "ObjectAttrRef",
     "SetAttrRef",
     "SetCmd",
     "StrAttrRef",

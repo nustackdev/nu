@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import nu
 from nu.core.flows.control import IfDo
 from nu.core.reactive import (
     OnChange,
@@ -35,7 +36,7 @@ def test_mapping_ref_subscript_key_is_address():
     m = MappingRef("my_map")
     child = m["abc"]
     # address is children[0] of the child ref
-    assert child._children  # non-empty
+    assert nu.tree.children(child)  # non-empty
 
 
 def test_mapping_ref_child_has_self_as_parent():
@@ -131,7 +132,7 @@ def test_mutable_mapping_ref_init_returns_ifdo_of_missing_and_set():
     m = MutableMappingRef("my_map")
     result = m.init({})
     assert isinstance(result, IfDo)
-    cond, body = result._children
+    cond, body = nu.tree.children(result)
     assert isinstance(cond, Missing)
     assert isinstance(body, SetCmd)
 

@@ -6,6 +6,7 @@ Sequential branches + Literal leaves, never compiled.
 
 from __future__ import annotations
 
+import nu
 from nu.core.flows import Sequential
 from nu.lang import Literal
 from nu.tree import ancestors, bfs, leaves, postorder, preorder
@@ -13,7 +14,7 @@ from nu.tree import ancestors, bfs, leaves, postorder, preorder
 
 def _vals(nodes):
     """Leaf values in iteration order; branches collapse to 'S'."""
-    return [n._payload["value"] if isinstance(n, Literal) else "S" for n in nodes]
+    return [nu.tree.payload(n)["value"] if isinstance(n, Literal) else "S" for n in nodes]
 
 
 def _tree():

@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+import nu
 from nu.context import AttrRef, With
 from nu.core.flows import ParallelAsync, Race
 from nu.core.flows.react import React, ReactForever, ReactLatest, ReactWhile
@@ -63,14 +64,14 @@ def test_react_latest_is_control():
 def test_react_constructs_with_change_only():
     change = ItemRef("sub")
     r = React(change)
-    assert r._children  # at least one child
+    assert nu.tree.children(r)  # at least one child
 
 
 def test_react_constructs_with_body():
     change = ItemRef("sub")
     body = ItemRef("body")
     r = React(change, body)
-    assert len(r._children) >= 2
+    assert len(nu.tree.children(r)) >= 2
 
 
 def test_react_changed_key_requires_body():
@@ -85,7 +86,7 @@ def test_react_while_constructs():
     cond = ItemRef("cond")
     body = ItemRef("body")
     r = ReactWhile(change, cond, body)
-    assert len(r._children) == 3
+    assert len(nu.tree.children(r)) == 3
 
 
 def test_react_while_constructs_with_changed_key():
@@ -94,21 +95,21 @@ def test_react_while_constructs_with_changed_key():
     body = ItemRef("body")
     key = ItemRef("k")
     r = ReactWhile(change, cond, body, changed_key=key)
-    assert len(r._children) == 4
+    assert len(nu.tree.children(r)) == 4
 
 
 def test_react_forever_constructs():
     change = ItemRef("sub")
     body = ItemRef("body")
     r = ReactForever(change, body)
-    assert len(r._children) == 2
+    assert len(nu.tree.children(r)) == 2
 
 
 def test_react_latest_constructs():
     change = ItemRef("sub")
     body = ItemRef("body")
-    assert len(ReactLatest(change, body)._children) == 2
-    assert len(ReactLatest(change, body, changed_key=ItemRef("k"))._children) == 3
+    assert len(nu.tree.children(ReactLatest(change, body))) == 2
+    assert len(nu.tree.children(ReactLatest(change, body, changed_key=ItemRef("k")))) == 3
 
 
 # ---------------------------------------------------------------------------

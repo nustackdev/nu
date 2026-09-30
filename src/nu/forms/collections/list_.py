@@ -14,13 +14,11 @@ if TYPE_CHECKING:
     from nu.lang import Arg, IntArg, ListArg, Nu
 
     from ..primitives import (
-        Any as AnyForm,
-    )
-    from ..primitives import (
         Bool,
         Bytes,
         Float,
         Int,
+        Object,
         Str,
     )
 
@@ -34,7 +32,7 @@ T = TypeVar("T")
 
 
 class List(
-    MutableSequenceForm[list[T], T, "List[T]", "AnyForm"],
+    MutableSequenceForm[list[T], T, "List[T]", "Object"],
     TypedNu[list[T]],
     Generic[T],
 ):
@@ -101,15 +99,15 @@ class List(
         """Wrap operand as List for slice results."""
         return List(operand)
 
-    def _wrap_element_result(self, operand: Nu) -> AnyForm:
-        """Wrap operand as an elem-typed Form when known; Any otherwise.
+    def _wrap_element_result(self, operand: Nu) -> Object:
+        """Wrap operand as an elem-typed Form when known; Object otherwise.
 
         Notes:
             - When the wrapping Form carries an annotation-derived
               `TypeInfo` on its payload (i.e. it's a Ref like
               `PrimitiveListRef[str]`), dispatch the elem to its concrete
               Form (`Str` here).
-            - Plain value-node `List`s (no payload) fall back to `Any` -
+            - Plain value-node `List`s (no payload) fall back to `Object` -
               the honest terminal for value-Form descent without
               narrowing context.
         """
@@ -117,9 +115,9 @@ class List(
         if ti is not None and ti.elem is not None:
             form_cls = ti.elem.to_form()
             return form_cls(operand)  # type: ignore[return-value]
-        from ..primitives import Any as AnyForm
+        from ..primitives import Object
 
-        return AnyForm(operand)
+        return Object(operand)
 
     # ---- static overloads: narrow elem type on subscript ----------------
     #
@@ -140,7 +138,7 @@ class List(
     @overload
     def __getitem__(self, key: slice) -> List[T]: ...
     @overload
-    def __getitem__(self, key: IntArg) -> AnyForm: ...
+    def __getitem__(self, key: IntArg) -> Object: ...
     def __getitem__(self, key):  # type: ignore[no-untyped-def]
         """Element at an int index, or subsequence for a slice.
 
@@ -156,7 +154,7 @@ class List(
             - When `T` is a known primitive (`bool`, `int`, `float`,
               `str`, `bytes`), the overloads above narrow the int-index
               result to that Form's type for the type checker; anything
-              else falls back to `Any`.
+              else falls back to `Object`.
 
         Yields:
             The element for an int key, the sublist for a slice. INVALID
@@ -414,8 +412,6 @@ class List(
         from ..primitives import Bool
 
         return Bool(Le(self, other))
-
-    __hash__ = object.__hash__
 
     def __eq__(self, other: ListArg[T]) -> Bool:  # type: ignore[override]
         """Self equal to other by value.

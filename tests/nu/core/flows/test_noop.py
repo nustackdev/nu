@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import pytest
 
+import nu
 from nu.core import Add
 from nu.core.flows import DelayedDo, IfDo, Noop, Sequential
 from nu.core.spans import Retry
@@ -39,7 +40,7 @@ def test_noop_is_an_empty_strategy() -> None:
     program = compile(Noop())
     assert program.attr(program.root, Attr.SORT) is Sort.STRATEGY
     assert program.attr(program.root, Attr.CARDINALITY) is Cardinality.VOID
-    assert not Noop()._children
+    assert not nu.tree.children(Noop())
 
 
 def test_noop_yields_none() -> None:

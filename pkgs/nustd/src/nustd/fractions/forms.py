@@ -199,6 +199,14 @@ class Fraction(Form, TypedNu[_Fraction]):
 
         return Bool(Le(self, other))
 
+    def __eq__(self, other: FractionArg | IntArg) -> Bool:  # type: ignore[override]
+        """`==` builds the same term as `eq`: a value comparison, never identity."""
+        return self.eq(other)
+
+    def __ne__(self, other: FractionArg | IntArg) -> Bool:  # type: ignore[override]
+        """`!=` builds the same term as `ne`: a value comparison, never identity."""
+        return self.ne(other)
+
     def eq(self, other: FractionArg | IntArg) -> Bool:
         """Whether two fractions are equal."""
         from nu.core import Eq

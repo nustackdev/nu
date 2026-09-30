@@ -53,7 +53,7 @@ def _nav_key(lens: LensRef) -> str:
     segments: list[str] = []
     ref: StructuredRef | None = lens
     while ref is not None:
-        segments.append(str(ref._payload.get("segment", "")))
+        segments.append(str(nu.tree.payload(ref).get("segment", "")))
         ref = ref._parent
     segments.reverse()
     return f"_lens_nav.{'.'.join(segments)}"

@@ -15,7 +15,7 @@ from .abc.sequence_interactions import TupleCreate, TupleOf
 if TYPE_CHECKING:
     from nu.lang import Arg, IntArg, Nu, TupleArg
 
-    from ..primitives import Any, Bool
+    from ..primitives import Bool, Object
     from .list_ import List
 
 
@@ -28,7 +28,7 @@ Ts = TypeVarTuple("Ts")
 
 
 class Tuple(
-    SequenceForm[tuple[Unpack[Ts]], object, "List[object]", "Any"],
+    SequenceForm[tuple[Unpack[Ts]], object, "List[object]", "Object"],
     TypedNu[tuple[Unpack[Ts]]],
     Generic[Unpack[Ts]],
 ):
@@ -96,11 +96,11 @@ class Tuple(
 
         return List(operand)
 
-    def _wrap_element_result(self, operand: Nu) -> Any:
-        """Wrap operand as Any element."""
-        from ..primitives import Any
+    def _wrap_element_result(self, operand: Nu) -> Object:
+        """Wrap operand as Object element."""
+        from ..primitives import Object
 
-        return Any(operand)
+        return Object(operand)
 
     # =========================================================================
     # ARITHMETIC (concatenation / repeat): new value, no mutation
@@ -277,8 +277,6 @@ class Tuple(
         from ..primitives import Bool
 
         return Bool(Le(self, other))
-
-    __hash__ = object.__hash__
 
     def __eq__(self, other: TupleArg[Unpack[Ts]]) -> Bool:  # type: ignore[override]
         """Self equal to other by value.

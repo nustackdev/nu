@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import pytest
 
+import nu
 from nu.domains.shape.interactions import (
     AdvanceCursor,
     Exists,
@@ -53,32 +54,32 @@ def test_advance_cursor_query_is_scalar_query():
 def test_load_query_constructs_with_ref():
     ref = ItemRef("slot")
     q = Load(ref)
-    assert q._children
+    assert nu.tree.children(q)
 
 
 def test_exists_query_constructs_with_ref():
     ref = ItemRef("slot")
     q = Exists(ref)
-    assert q._children
+    assert nu.tree.children(q)
 
 
 def test_missing_query_constructs_with_ref():
     ref = ItemRef("slot")
     q = Missing(ref)
-    assert q._children
+    assert nu.tree.children(q)
 
 
 def test_extract_query_constructs_with_ref():
     ref = ItemRef("slot")
     q = Extract(ref)
-    assert q._children
+    assert nu.tree.children(q)
 
 
 def test_advance_cursor_query_constructs_with_two_children():
     source = ItemRef("src")
     cursor = ItemRef("cur")
     q = AdvanceCursor(source, cursor)
-    assert len(q._children) == 2
+    assert len(nu.tree.children(q)) == 2
 
 
 # ---------------------------------------------------------------------------

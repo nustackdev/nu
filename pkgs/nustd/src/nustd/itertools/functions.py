@@ -6,7 +6,7 @@ order and returns the shape that matches the host:
 - every iterator-producing member -> the raw ``StreamQuery`` atom (compose
   with ``Collect`` / ``Map`` / another itertools call; cardinality
   laws line up because the atom honestly declares STREAM)
-- ``tee`` -> ``Any`` (it returns a *tuple* of iterators, not a stream)
+- ``tee`` -> ``Object`` (it returns a *tuple* of iterators, not a stream)
 
 This is a gap-fill: members Nu core already covers (``map`` / ``filter`` /
 ``zip`` / ``sorted`` / ``enumerate`` / ``reversed`` / sums and folds) are not
@@ -26,8 +26,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
+import nu
 from nu.core import Iter
-from nu.forms import Any, Iterator
+from nu.forms import Iterator, Object
 from nu.lang import StreamQuery
 
 
@@ -74,7 +75,7 @@ def _stream(iterable: Arg[Iterable]) -> Nu:
     if isinstance(iterable, StreamQuery):
         return cast("Nu", iterable)
     if isinstance(iterable, Iterator):
-        return cast("Nu", iterable._children[0])
+        return cast("Nu", nu.tree.children(iterable)[0])
     return Iter(iterable)
 
 
@@ -266,14 +267,14 @@ def groupby(iterable: Arg[Iterable], key: Nu | None = None) -> Nu:
 # --- tee --------------------------------------------------------------------
 
 
-def tee(iterable: Arg[Iterable], n: IntArg = 2) -> Any:
+def tee(iterable: Arg[Iterable], n: IntArg = 2) -> Object:
     """Split ``iterable`` into ``n`` independent iterators: ``itertools.tee()``.
 
-    Returns an ``Any`` holding a *tuple* of ``n`` iterators (not a stream),
+    Returns an ``Object`` holding a *tuple* of ``n`` iterators (not a stream),
     so it is the one member here backed by a ``ScalarQuery``. Its source rides
     as a scalar child (a ``ScalarQuery`` may not hold a stream), and the atom
     materializes it with ``sync_iter`` before splitting.
     """
     from .interactions import Tee
 
-    return Any(Tee(iterable, n))
+    return Object(Tee(iterable, n))

@@ -48,7 +48,26 @@ T_co = TypeVar("T_co", covariant=True)
 
 
 class Form:
-    """Mixin for typed interfaces. Contributes sentinel-check helpers."""
+    """Mixin for typed interfaces. Contributes sentinel-check helpers and ``==``.
+
+    ``==`` / ``!=`` on a Form build ``Eq`` / ``Ne`` over the values it yields
+    (the bare ``Nu`` base raises instead). Concrete Forms narrow the operand
+    type by overriding them; a Form with no value equality raises.
+    """
+
+    def __eq__(self, other: object) -> Bool:  # type: ignore[override]
+        """Self equal to other by value: an ``Eq`` term, never a Python bool."""
+        from nu.core import Eq
+        from nu.forms import Bool
+
+        return Bool(Eq(self, other))
+
+    def __ne__(self, other: object) -> Bool:  # type: ignore[override]
+        """Self not equal to other by value: a ``Ne`` term, never a Python bool."""
+        from nu.core import Ne
+        from nu.forms import Bool
+
+        return Bool(Ne(self, other))
 
     def is_empty(self) -> Bool:
         """True if this Form yields the EMPTY sentinel."""

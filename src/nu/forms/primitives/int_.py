@@ -35,7 +35,9 @@ class Int(Form, TypedNu[int]):
           `a > b > c` do not build a single term; write them as
           `And(a > b, b > c)`.
         - Logical operators are the named forms `and_`, `or_`, `not_`. The
-          symbols `&`, `|`, `~` are bitwise and stay Int.
+          symbols `&`, `|`, `^`, `~`, `<<`, `>>` keep their Python meaning:
+          bitwise and shifts, staying Int. So `>>` on an Int is a shift,
+          never flow sequencing; sequence Int terms with `nu.Sequential`.
 
     Example:
         >>> nu.run(nu.Int(6) * nu.Int(7))[0]
@@ -606,8 +608,6 @@ class Int(Form, TypedNu[int]):
 
         return Bool(Le(self, other))
 
-    __hash__ = object.__hash__
-
     def __eq__(self, other: IntArg | FloatArg) -> Bool:  # type: ignore[override]
         """Self equal to other by value.
 
@@ -697,7 +697,7 @@ class Int(Form, TypedNu[int]):
         Notes:
             - Short-circuits like Python: the right operand is only
               evaluated when the left does not already decide the result.
-            - Bitwise AND is `bitand`, not this.
+            - Bitwise AND is `&` / `bitand`, not this.
 
         Yields:
             True when both operands are truthy, False otherwise. INVALID when
@@ -722,7 +722,7 @@ class Int(Form, TypedNu[int]):
         Notes:
             - Short-circuits like Python: the right operand is only
               evaluated when the left does not already decide the result.
-            - Bitwise OR is `bitor`, not this.
+            - Bitwise OR is `|` / `bitor`, not this.
 
         Yields:
             True when either operand is truthy, False otherwise. INVALID when
@@ -743,7 +743,7 @@ class Int(Form, TypedNu[int]):
 
         Notes:
             - Zero yields True, every other value yields False.
-            - Bitwise NOT is `bitnot`, not this.
+            - Bitwise NOT is `~` / `bitnot`, not this.
 
         Yields:
             True when self is zero, False otherwise. INVALID when self is a
@@ -791,9 +791,7 @@ class Int(Form, TypedNu[int]):
             other: the integer to AND with self, bit by bit.
 
         Notes:
-            - Named form rather than `__and__` to keep the logical `and_`
-              and the bitwise AND from stepping on each other across the
-              Bool / Int split.
+            - Same op as `self & other`, as a named call.
 
         Yields:
             The bitwise AND. INVALID when either operand is a sentinel.
@@ -813,7 +811,7 @@ class Int(Form, TypedNu[int]):
             other: the integer to OR with self, bit by bit.
 
         Notes:
-            - Named form rather than `__or__`, symmetric with `bitand`.
+            - Same op as `self | other`, as a named call.
 
         Yields:
             The bitwise OR. INVALID when either operand is a sentinel.
@@ -825,6 +823,88 @@ class Int(Form, TypedNu[int]):
         from nu.core import BitOr
 
         return Int(BitOr(self, other))
+
+    def __and__(self, other: IntArg) -> Int:  # type: ignore[override]
+        """Bitwise AND: self & other.
+
+        Args:
+            other: the integer to AND with self, bit by bit.
+
+        Notes:
+            - Python meaning, not flow: on an Int `&` is `BitAnd`, not
+              `Race`.
+
+        Yields:
+            The bitwise AND. INVALID when either operand is a sentinel.
+
+        Example:
+            >>> nu.run(nu.Int(0b1100) & 0b1010)[0]
+            8
+        """
+        from nu.core import BitAnd
+
+        return Int(BitAnd(self, other))
+
+    def __rand__(self, other: IntArg) -> Int:
+        """Bitwise AND: other & self, with self on the right.
+
+        Args:
+            other: the integer on the left of the `&`.
+
+        Notes:
+            - Reached only when the left operand is a plain Python int.
+
+        Yields:
+            The bitwise AND. INVALID when either operand is a sentinel.
+
+        Example:
+            >>> nu.run(0b1100 & nu.Int(0b1010))[0]
+            8
+        """
+        from nu.core import BitAnd
+
+        return Int(BitAnd(other, self))
+
+    def __or__(self, other: IntArg) -> Int:  # type: ignore[override]
+        """Bitwise OR: self | other.
+
+        Args:
+            other: the integer to OR with self, bit by bit.
+
+        Notes:
+            - Python meaning, not flow: on an Int `|` is `BitOr`, not
+              `Parallel`.
+
+        Yields:
+            The bitwise OR. INVALID when either operand is a sentinel.
+
+        Example:
+            >>> nu.run(nu.Int(0b1100) | 0b1010)[0]
+            14
+        """
+        from nu.core import BitOr
+
+        return Int(BitOr(self, other))
+
+    def __ror__(self, other: IntArg) -> Int:
+        """Bitwise OR: other | self, with self on the right.
+
+        Args:
+            other: the integer on the left of the `|`.
+
+        Notes:
+            - Reached only when the left operand is a plain Python int.
+
+        Yields:
+            The bitwise OR. INVALID when either operand is a sentinel.
+
+        Example:
+            >>> nu.run(0b1100 | nu.Int(0b1010))[0]
+            14
+        """
+        from nu.core import BitOr
+
+        return Int(BitOr(other, self))
 
     def __xor__(self, other: IntArg) -> Int:
         """Bitwise XOR: self ^ other.
@@ -867,8 +947,7 @@ class Int(Form, TypedNu[int]):
         """Bitwise NOT: ~self.
 
         Notes:
-            - Named form rather than `__invert__`, symmetric with `bitand`
-              and `bitor`.
+            - Same op as `~self`, as a named call.
             - Two's complement, so `bitnot(x)` equals `-x - 1`.
 
         Yields:
@@ -876,6 +955,23 @@ class Int(Form, TypedNu[int]):
 
         Example:
             >>> nu.run(nu.Int(5).bitnot())[0]
+            -6
+        """
+        from nu.core import BitNot
+
+        return Int(BitNot(self))
+
+    def __invert__(self) -> Int:
+        """Bitwise NOT: ~self.
+
+        Notes:
+            - Two's complement, so `~x` equals `-x - 1`.
+
+        Yields:
+            The bitwise complement. INVALID when self is a sentinel.
+
+        Example:
+            >>> nu.run(~nu.Int(5))[0]
             -6
         """
         from nu.core import BitNot
@@ -935,6 +1031,8 @@ class Int(Form, TypedNu[int]):
                 evaluation time.
 
         Notes:
+            - Python meaning, not flow: on an Int `>>` is `RShift`, not
+              `Sequential`.
             - Arithmetic shift, so the sign bit is preserved: shifting a
               negative number stays negative.
             - Equivalent to `self // 2**other` for non-negative shifts.

@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, TypeVar
 
+import nu
 from nu.domains.shape.refs.base import StructuredRef
 from nu.lang import EMPTY
 
@@ -95,7 +96,7 @@ class RefBase(StructuredRef, Generic[T]):
         segs: list[object] = []
         ref = self._parent
         while ref is not None:
-            segs.append(ref._payload.get("segment"))  # type: ignore[attr-defined]
+            segs.append(nu.tree.payload(ref).get("segment"))  # type: ignore[attr-defined]
             ref = ref._parent
         segs.reverse()
         return tuple(segs)

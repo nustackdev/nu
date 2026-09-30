@@ -3,8 +3,9 @@
 IterableForm: wrapping infrastructure for collection results.
 
 Follows Python's collections.abc.Iterable pattern. In Nu's tree model,
-iteration is controlled by Flows (ForEachDo, ForRangeDo), not Python's
-iterator protocol. This marks types as iterable and provides
+iteration is controlled by Flows (ForEachDo, ForRangeDo) and streams
+(``.iter()``, Map, Filter), never Python's iterator protocol: the ``Nu`` base
+blocks ``iter()`` / ``for`` on every term. This marks types as iterable and provides
 the wrapping infrastructure for typed results.
 
 Type Parameters:
@@ -47,27 +48,28 @@ class IterableForm(Form, Generic[ElementT, CollectionResultT, ElementResultT]):
         - Subclasses must override `_wrap_iterable_result` and
           `_wrap_element_result`.
 
-    Example:
-        iter(nu.List([1, 2, 3]))
+    Example::
+
+        nu.List.of(1, 2, 3).iter()
     """
 
-    def __iter__(self) -> Iterator[ElementT]:
-        """Open self into a lazy iterator stream (Python's `iter`).
+    def iter(self) -> Iterator[ElementT]:
+        """Open self into a lazy iterator stream over its elements.
 
         Notes:
             - A pure read: builds the `Iter` stream query over self and
               wraps it as an Iterator.
-            - Unlike `len`/`contains`, whose results Python coerces at the C
-              level, `iter` keeps whatever `__iter__` returns, so the Nu
-              tree survives.
-            - The result is a lazy stream, consumed by a Flow rather than
-              handed straight to `nu.run`.
+            - Named because Python's `iter()` / `for` would loop over the
+              term at build time; the ``Nu`` base blocks them.
+            - The result is a lazy stream, consumed by a Flow or a stream
+              consumer, not handed straight to `nu.run`.
 
         Yields:
             An Iterator streaming self's elements.
 
-        Example:
-            iter(nu.List([1, 2, 3]))
+        Example::
+
+            nu.ForEachDo(nu.List.of(1, 2, 3).iter(), body)
         """
         from nu.core import Iter
         from nu.forms.collections.iterator_ import Iterator

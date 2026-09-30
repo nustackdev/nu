@@ -483,8 +483,6 @@ class Float(Form, TypedNu[float]):
 
         return Bool(Le(self, other))
 
-    __hash__ = object.__hash__
-
     def __eq__(self, other: IntArg | FloatArg) -> Bool:  # type: ignore[override]
         """Self equal to other by value.
 

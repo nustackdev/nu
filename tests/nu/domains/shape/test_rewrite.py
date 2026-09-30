@@ -7,6 +7,7 @@ child (addresses and Eval carriers included), and identity preservation.
 
 from __future__ import annotations
 
+import nu
 from nu.core.flows import Sequential
 from nu.domains.shape import Shape, reroot, rerooter
 from nu.domains.shape.refs.base import ANCHOR, StructuredRef
@@ -31,15 +32,15 @@ def path(node):
     """Static addresses of a chain, root-first."""
     segs = []
     while isinstance(node, StructuredRef):
-        segs.append(node._children[1])
-        node = node._children[0]
+        segs.append(nu.tree.children(node)[1])
+        node = nu.tree.children(node)[0]
     segs.reverse()
-    return tuple(s._payload["value"] if isinstance(s, Literal) else s for s in segs)
+    return tuple(nu.tree.payload(s)["value"] if isinstance(s, Literal) else s for s in segs)
 
 
 def chain_root(node):
-    while isinstance(node._children[0], StructuredRef):
-        node = node._children[0]
+    while isinstance(nu.tree.children(node)[0], StructuredRef):
+        node = nu.tree.children(node)[0]
     return node
 
 
@@ -47,7 +48,7 @@ def the_ref(node):
     """The first ref reachable from a rewritten command tree."""
     if isinstance(node, StructuredRef):
         return node
-    for child in node._children:
+    for child in nu.tree.children(node):
         found = the_ref(child)
         if found is not None:
             return found
@@ -75,7 +76,7 @@ def test_the_source_chain_is_untouched():
 def test_the_source_payload_is_not_aliased():
     source = ref("inp")
     reroot(source, under())
-    assert source._payload["root_shape"] is Block
+    assert nu.tree.payload(source)["root_shape"] is Block
 
 
 def test_a_ref_buried_under_a_flow_is_reached():
@@ -99,7 +100,7 @@ def test_a_ref_in_an_eval_carrier_is_reached():
 def test_the_spliced_chain_takes_the_parents_root_shape():
     out = reroot(ref("inp", parent=ref("form")), under())
     assert out._root_shape is Host
-    assert out._children[0]._root_shape is Host
+    assert nu.tree.children(out)[0]._root_shape is Host
 
 
 def test_an_exempt_chain_keeps_its_own_root_shape():
@@ -113,7 +114,7 @@ def test_an_exempt_chain_keeps_its_own_root_shape():
 def test_a_claimed_chain_root_is_left_alone():
     out = reroot(ref("inp", parent=ref("form")), under(), rooted=lambda _: True)
     assert path(out) == ("form", "inp")
-    assert chain_root(out)._children[0] is ANCHOR
+    assert nu.tree.children(chain_root(out))[0] is ANCHOR
 
 
 def test_the_predicate_sees_the_chain_root_not_the_leaf():
@@ -128,9 +129,9 @@ def test_only_the_claimed_chains_are_left_alone():
     out = reroot(
         Sequential(ref("inp", parent=mine), ref("tick", parent=theirs)),
         under(),
-        rooted=lambda r: r._children[1]._payload["value"] == "other",
+        rooted=lambda r: nu.tree.payload(nu.tree.children(r)[1])["value"] == "other",
     )
-    kept, spliced = out._children[1], out._children[0]
+    kept, spliced = nu.tree.children(out)[1], nu.tree.children(out)[0]
     assert path(spliced) == ("page", "sections", "form", "inp")
     assert path(kept) == ("other", "tick")
 
@@ -140,18 +141,18 @@ def test_only_the_claimed_chains_are_left_alone():
 
 def test_a_dynamic_address_that_is_a_ref_moves_too():
     out = reroot(ref(ref("cursor")), under())
-    assert path(out._children[1]) == ("page", "sections", "cursor")
+    assert path(nu.tree.children(out)[1]) == ("page", "sections", "cursor")
 
 
 def test_an_address_inside_an_exempt_chain_is_still_judged_on_its_own():
     out = reroot(
         ref(ref("cursor"), parent=ref("form")),
         under(),
-        rooted=lambda r: r._children[1]._payload["value"] == "form",
+        rooted=lambda r: nu.tree.payload(nu.tree.children(r)[1])["value"] == "form",
     )
     # the spine was claimed, the address is its own chain and was not
-    assert path(out._children[0]) == ("form",)
-    assert path(out._children[1]) == ("page", "sections", "cursor")
+    assert path(nu.tree.children(out)[0]) == ("form",)
+    assert path(nu.tree.children(out)[1]) == ("page", "sections", "cursor")
 
 
 # --- identity -------------------------------------------------------------

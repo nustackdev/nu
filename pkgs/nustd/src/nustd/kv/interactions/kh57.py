@@ -11,7 +11,7 @@ the tree was written. Both come back as a list of ``(int_key, value)`` pairs
 and both answer EMPTY when the container is not reachable.
 
 Neither is written directly in normal use. ``Kh57Ref.sample`` and
-``Kh57Ref.range`` build them, already wrapped in the ``Any`` form.
+``Kh57Ref.range`` build them, already wrapped in the ``Object`` form.
 """
 
 from __future__ import annotations

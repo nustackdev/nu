@@ -191,6 +191,14 @@ class Percentage(Form, TypedNu[PyPercentage]):
 
         return Bool(Le(self, other))
 
+    def __eq__(self, other: PercentageArg) -> Bool:  # type: ignore[override]
+        """`==` builds the same term as `eq`: a value comparison, never identity."""
+        return self.eq(other)
+
+    def __ne__(self, other: PercentageArg) -> Bool:  # type: ignore[override]
+        """`!=` builds the same term as `ne`: a value comparison, never identity."""
+        return self.ne(other)
+
     def eq(self, other: PercentageArg) -> Bool:
         """Whether two percentages are equal."""
         from nu.core import Eq
@@ -341,6 +349,14 @@ class BasisPoint(Form, TypedNu[PyBasisPoint]):
         from nu.forms import Bool
 
         return Bool(Le(self, other))
+
+    def __eq__(self, other: BasisPointArg) -> Bool:  # type: ignore[override]
+        """`==` builds the same term as `eq`: a value comparison, never identity."""
+        return self.eq(other)
+
+    def __ne__(self, other: BasisPointArg) -> Bool:  # type: ignore[override]
+        """`!=` builds the same term as `ne`: a value comparison, never identity."""
+        return self.ne(other)
 
     def eq(self, other: BasisPointArg) -> Bool:
         """Whether two basis-point counts are equal."""

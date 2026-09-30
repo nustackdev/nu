@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import nu
 from nu.lang import Flow, Span
 from nu.lang.attributes import Sort
 
@@ -104,7 +105,7 @@ def _iter_uncovered(
         return
     if isinstance(node, (Snapshot, Transaction)):
         inner = (*enclosing, node.scope)
-        for c in node._children:
+        for c in nu.tree.children(node):
             yield from _iter_uncovered(c, pass_scope, inner, _top=True)
         return
     if _top and isinstance(node, _VirtualsRef):
@@ -112,7 +113,7 @@ def _iter_uncovered(
         if _dominates(pass_scope, ref_scope) and not _covered_by_enclosing(enclosing, ref_scope):
             yield node, False
     mutates = _write_positions(node)
-    for slot, child in enumerate(node._children):
+    for slot, child in enumerate(nu.tree.children(node)):
         if isinstance(child, _VirtualsRef):
             ref_scope = child._root_shape
             if _dominates(pass_scope, ref_scope) and not _covered_by_enclosing(
@@ -143,8 +144,8 @@ def _effective_root_is_dyn(child: Nu) -> bool:
     then check its declared sort.
     """
     node = child
-    while isinstance(node, Span) and node._children:
-        node = node._children[0]
+    while isinstance(node, Span) and nu.tree.children(node):
+        node = nu.tree.children(node)[0]
     return _is_dynamic(node)
 
 
@@ -164,9 +165,9 @@ def _wrap_flow_child(child: Nu, pass_scope: Hashable | None, enclosing: tuple) -
         # walk has already added internal wraps for anything the descent
         # found, so anything still uncovered here needs an outer wrap.
         inner = (*enclosing, child.scope)
-        if not _has_uncovered_ref(child._children[0], pass_scope, inner):
+        if not _has_uncovered_ref(nu.tree.children(child)[0], pass_scope, inner):
             return child
-        if _has_uncovered_write(child._children[0], pass_scope, inner):
+        if _has_uncovered_write(nu.tree.children(child)[0], pass_scope, inner):
             return Transaction(child, **_wrap_kwargs(pass_scope))
         return Snapshot(child, **_wrap_kwargs(pass_scope))
 
@@ -183,21 +184,23 @@ def _walk(node: Nu, pass_scope: Hashable | None, enclosing: tuple) -> Nu:
             # Brace covers everything the pass cares about, skip descent.
             return node
         inner = (*enclosing, node.scope)
-        new_children = tuple(_walk(c, pass_scope, inner) for c in node._children)
-        if all(n is o for n, o in zip(new_children, node._children, strict=True)):
+        new_children = tuple(_walk(c, pass_scope, inner) for c in nu.tree.children(node))
+        if all(n is o for n, o in zip(new_children, nu.tree.children(node), strict=True)):
             return node
         return node._with_children(*new_children)
 
-    if not node._children:
+    if not nu.tree.children(node):
         return node
 
-    new_children = tuple(_walk(c, pass_scope, enclosing) for c in node._children)
-    changed = any(n is not o for n, o in zip(new_children, node._children, strict=True))
+    new_children = tuple(_walk(c, pass_scope, enclosing) for c in nu.tree.children(node))
+    changed = any(n is not o for n, o in zip(new_children, nu.tree.children(node), strict=True))
     new_node = node._with_children(*new_children) if changed else node
 
     if isinstance(new_node, Flow):
-        wrapped = tuple(_wrap_flow_child(c, pass_scope, enclosing) for c in new_node._children)
-        if any(w is not c for w, c in zip(wrapped, new_node._children, strict=True)):
+        wrapped = tuple(
+            _wrap_flow_child(c, pass_scope, enclosing) for c in nu.tree.children(new_node)
+        )
+        if any(w is not c for w, c in zip(wrapped, nu.tree.children(new_node), strict=True)):
             return new_node._with_children(*wrapped)
 
     return new_node

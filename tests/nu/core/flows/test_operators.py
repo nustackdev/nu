@@ -8,6 +8,7 @@ runs the same as the explicit constructor.
 
 from __future__ import annotations
 
+import nu
 from nu.context import AttrRef, SetCmd
 from nu.core.flows import Parallel, Race, Sequential
 from nu.lang import Literal
@@ -24,19 +25,19 @@ def _set(name: str, value: object) -> SetCmd:
 def test_rshift_builds_sequential() -> None:
     tree = _set("a", 1) >> _set("b", 2)
     assert isinstance(tree, Sequential)
-    assert len(tree._children) == 2
+    assert len(nu.tree.children(tree)) == 2
 
 
 def test_or_builds_parallel() -> None:
     tree = _set("a", 1) | _set("b", 2)
     assert isinstance(tree, Parallel)
-    assert len(tree._children) == 2
+    assert len(nu.tree.children(tree)) == 2
 
 
 def test_and_builds_race() -> None:
     tree = _set("a", 1) & _set("b", 2)
     assert isinstance(tree, Race)
-    assert len(tree._children) == 2
+    assert len(nu.tree.children(tree)) == 2
 
 
 # --- chaining nests left-to-right -----------------------------------------
@@ -46,7 +47,7 @@ def test_rshift_chain_nests_left() -> None:
     # a >> b >> c == Sequential(Sequential(a, b), c)
     tree = _set("a", 1) >> _set("b", 2) >> _set("c", 3)
     assert isinstance(tree, Sequential)
-    left, right = tree._children
+    left, right = nu.tree.children(tree)
     assert isinstance(left, Sequential)
     assert isinstance(right, SetCmd)
 

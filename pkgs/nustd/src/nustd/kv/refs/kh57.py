@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape import Slot
-from nu.forms import Any
+from nu.forms import Object
 from nu.lang.typeinfo import value_type_for
 
 from .dict import DictRef
@@ -116,7 +116,7 @@ class Kh57Ref(DictRef[int, V], Generic[V]):
         n: IntArg,
         begin: IntArg | None = None,
         end: IntArg | None = None,
-    ) -> Any:
+    ) -> Object:
         """Draw a uniform sample of up to ``n`` entries from a key range.
 
         Args:
@@ -146,13 +146,13 @@ class Kh57Ref(DictRef[int, V], Generic[V]):
         """
         from nustd.kv.interactions.kh57 import Kh57Sample
 
-        return Any(Kh57Sample(self, n, begin, end))
+        return Object(Kh57Sample(self, n, begin, end))
 
     def range(
         self,
         begin: IntArg,
         end: IntArg,
-    ) -> Any:
+    ) -> Object:
         """Read a key range whole, in ascending key order.
 
         Args:
@@ -177,4 +177,4 @@ class Kh57Ref(DictRef[int, V], Generic[V]):
         """
         from nustd.kv.interactions.kh57 import Kh57Range
 
-        return Any(Kh57Range(self, begin, end))
+        return Object(Kh57Range(self, begin, end))

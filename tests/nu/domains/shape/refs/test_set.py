@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+import nu
 from nu.core.reactive import OnChange, OnChildrenChange
 from nu.domains.shape.dsl import Shape
 from nu.domains.shape.interactions import (
@@ -27,7 +28,7 @@ def test_set_ref_is_structured_ref():
 
 def test_set_ref_constructs_with_address():
     ref = SetRef("my_set")
-    assert ref._children
+    assert nu.tree.children(ref)
 
 
 def test_set_ref_parent_ref_none_by_default():
@@ -77,7 +78,7 @@ def test_mutable_set_ref_is_subclass_of_set_ref():
 
 def test_mutable_set_ref_constructs():
     ref = MutableSetRef("my_set")
-    assert ref._children
+    assert nu.tree.children(ref)
 
 
 def test_mutable_set_ref_has_set():
@@ -118,7 +119,7 @@ def test_reactive_set_ref_is_subclass_of_mutable_set_ref():
 
 def test_reactive_set_ref_constructs():
     ref = ReactiveSetRef("my_set")
-    assert ref._children
+    assert nu.tree.children(ref)
 
 
 def test_reactive_set_ref_on_change_returns_on_change_action():

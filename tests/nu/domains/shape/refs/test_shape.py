@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+import nu
 from nu.core.reactive import OnChange, OnChildChange
 from nu.domains.shape.dsl import Shape, Slot
 from nu.domains.shape.interactions import (
@@ -33,7 +34,7 @@ class Outer(Shape):
 
 def test_shape_ref_requires_shape_type():
     ref = ShapeRef("loc", shape_type=Inner)
-    assert ref._payload["shape_type"] is Inner
+    assert nu.tree.payload(ref)["shape_type"] is Inner
 
 
 def test_shape_ref_is_structured_ref():
@@ -42,7 +43,7 @@ def test_shape_ref_is_structured_ref():
 
 def test_shape_ref_shape_type_property():
     ref = ShapeRef("loc", shape_type=Inner)
-    assert ref._payload["shape_type"] is Inner
+    assert nu.tree.payload(ref)["shape_type"] is Inner
 
 
 # ---------------------------------------------------------------------------
@@ -91,7 +92,7 @@ def test_shape_ref_getstate_setstate_roundtrip():
     state = ref.__getstate__()
     new_ref = object.__new__(ShapeRef)
     new_ref.__setstate__(state)
-    assert new_ref._payload["shape_type"] is Inner
+    assert nu.tree.payload(new_ref)["shape_type"] is Inner
 
 
 # ---------------------------------------------------------------------------
@@ -120,7 +121,7 @@ def test_mutable_shape_ref_is_subclass_of_shape_ref():
 
 def test_mutable_shape_ref_constructs():
     ref = MutableShapeRef("loc", shape_type=Inner)
-    assert ref._payload["shape_type"] is Inner
+    assert nu.tree.payload(ref)["shape_type"] is Inner
 
 
 def test_mutable_shape_ref_set_returns_set_command():
@@ -156,7 +157,7 @@ def test_reactive_shape_ref_is_subclass_of_mutable_shape_ref():
 
 def test_reactive_shape_ref_constructs():
     ref = ReactiveShapeRef("loc", shape_type=Inner)
-    assert ref._payload["shape_type"] is Inner
+    assert nu.tree.payload(ref)["shape_type"] is Inner
 
 
 def test_reactive_shape_ref_on_change_returns_on_change_action():

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import pytest
 
+import nu
 from nu.domains.shape.dsl import Shape
 from nu.domains.shape.refs.base import StructuredRef
 from nu.domains.shape.refs.item import ItemRef
@@ -25,7 +26,7 @@ class SomeShape(Shape):
 
 def test_structured_ref_constructs_with_address():
     ref = StructuredRef("mykey")
-    assert ref._children  # address is children[0]
+    assert nu.tree.children(ref)  # address is children[0]
 
 
 def test_structured_ref_parent_ref_defaults_to_none():

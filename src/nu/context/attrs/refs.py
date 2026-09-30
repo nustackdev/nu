@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.forms.collections import Dict, FrozenSet, List, Set, Tuple
-from nu.forms.primitives import Any, Bool, Bytes, Float, Int, None_, Str
+from nu.forms.primitives import Bool, Bytes, Float, Int, None_, Object, Str
 from nu.lang.sentinels import EMPTY
 
 from .._refs import _ContextRef
@@ -26,7 +26,6 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "AnyAttrRef",
     "AttrRef",
     "BoolAttrRef",
     "BytesAttrRef",
@@ -36,6 +35,7 @@ __all__ = [
     "IntAttrRef",
     "ListAttrRef",
     "NoneAttrRef",
+    "ObjectAttrRef",
     "SetAttrRef",
     "StrAttrRef",
     "TupleAttrRef",
@@ -159,8 +159,8 @@ class BytesAttrRef(AttrRef, Bytes):
     """An AttrRef with the full bytes interface."""
 
 
-class AnyAttrRef(AttrRef, Any):
-    """An AttrRef with the dynamic any interface."""
+class ObjectAttrRef(AttrRef, Object):
+    """An AttrRef with the Object interface, the one every term has."""
 
 
 class NoneAttrRef(AttrRef, None_):

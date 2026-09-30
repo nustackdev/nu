@@ -4,7 +4,10 @@ A thin subclass of ``Term``. Every concrete Nu sort (``Ref``, ``Interaction``,
 ``ScalarQuery``, ``StreamQuery``, ...) descends from ``Nu``; users annotate
 their applications with ``Nu`` rather than reaching for the engine-level
 ``Term``. Engine machinery still operates on ``Term`` and accepts any ``Nu``
-transparently - this class adds no behavior, only a brand surface.
+transparently. What this class adds is the operator surface every term shares:
+flow composition, and the dunders Python forces to plain values (``bool()``,
+``in``, ``len()``, iteration, and ``==`` on a term with no Form), which raise
+with a hint.
 
 Typical use::
 
@@ -25,10 +28,14 @@ to ``Runtime`` at this layer.
 
 from __future__ import annotations
 
-from typing import Generic, TypeVar, cast
+from typing import TYPE_CHECKING, Generic, NoReturn, TypeVar, cast
 
 from nu.engine import Term
 from nu.lang.runtime import Runtime
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 __all__ = ["Nu"]
@@ -91,6 +98,11 @@ class Nu(Term[Runtime, V_co], Generic[V_co]):  # PEP 695 has no variance markers
     # from lang). Each call builds a fresh two-child Strategy; chains nest
     # left-to-right (``a >> b >> c`` is ``Sequential(Sequential(a, b), c)``),
     # which the associativity attribute lets the engine flatten.
+    #
+    # A Form whose Python type gives one of these operators a meaning
+    # overrides it with that meaning (Int ``& | >>`` are bitwise, Bool
+    # ``& |`` are logical, Set ``& |`` are set algebra, Dict ``|`` merges).
+    # Everywhere else they stay flow composition.
 
     def __rshift__(self, other: object) -> Nu:
         from nu.core.flows import Sequential
@@ -106,3 +118,129 @@ class Nu(Term[Runtime, V_co], Generic[V_co]):  # PEP 695 has no variance markers
         from nu.core.flows import Race
 
         return Race(self, other)
+
+    # --- equality -------------------------------------------------------
+    #
+    # ``==`` / ``!=`` never answer with a Python bool about the Python
+    # objects. A Form (and a Ref carrying one) overrides both to build an
+    # ``Eq`` / ``Ne`` term over the values: ``x == 3`` inside a program means
+    # "compare what x yields". A bare term (an interaction, a flow, a Ref
+    # with no Form) has no value surface, so both raise here instead of
+    # quietly building comparisons. Identity stays ``is``; structural
+    # comparison of two trees is ``nu.tree.equal``. Hashing stays identity
+    # based, so terms still work as dict keys and set members (Python checks
+    # ``is`` before ``==``, and distinct live objects never share an
+    # identity hash).
+    #
+    # Python drops ``__hash__`` on any class that defines ``__eq__`` without
+    # it; ``__init_subclass__`` puts back the nearest real hash in the MRO
+    # once, here, so no Form has to repeat it. For a term that is identity
+    # hashing; a class that also carries a builtin's value hash keeps it.
+
+    __hash__ = object.__hash__
+
+    def __init_subclass__(cls, **kwargs: object) -> None:
+        super().__init_subclass__(**kwargs)
+        if cls.__hash__ is None:  # type: ignore[comparison-overlap]
+            cls.__hash__ = _inherited_hash(cls)  # type: ignore[method-assign]
+
+    # Typed as yielding a term, the contract every override keeps: a Form
+    # returns its ``Bool``, and this base never returns at all.
+    def __eq__(self, other: object) -> Nu:  # type: ignore[override]
+        raise TypeError(_eq_hint(self, "=="))
+
+    def __ne__(self, other: object) -> Nu:  # type: ignore[override]
+        raise TypeError(_eq_hint(self, "!="))
+
+    # --- blocked protocol dunders ---------------------------------------
+    #
+    # Python forces ``bool()``, ``in`` and ``len()`` to return plain values,
+    # so on a term they can only answer about the Python object, never about
+    # the value the term yields at run time. That silent answer is always a
+    # bug in a program under construction, so each raises with the explicit
+    # spelling instead. No Form overrides these. Working with a term as a
+    # Python object (its children, its size) goes through ``nu.tree``.
+
+    def __bool__(self) -> bool:
+        raise TypeError(_bool_hint(self))
+
+    def __contains__(self, item: object) -> bool:
+        raise TypeError(_contains_hint(self))
+
+    def __len__(self) -> int:
+        raise TypeError(_len_hint(self))
+
+    # Python iteration over a term (``for``, ``list()``, unpacking, ``next()``)
+    # would loop at build time over a program that has not run. Without this
+    # block, ``__getitem__`` on a Form makes Python fall back to indexing
+    # 0, 1, 2, ... forever. Nu iterates with its own streams and flows.
+
+    def __iter__(self) -> NoReturn:
+        raise TypeError(_iter_hint(self))
+
+    def __next__(self) -> NoReturn:
+        raise TypeError(_iter_hint(self))
+
+
+def _inherited_hash(cls: type) -> Callable[[object], int]:
+    """The first real ``__hash__`` up ``cls``'s MRO, skipping the dropped ones."""
+    for base in cls.__mro__[1:]:
+        found = base.__dict__.get("__hash__")
+        if found is not None:
+            return found  # type: ignore[no-any-return]
+    return object.__hash__
+
+
+def _eq_hint(term: Nu, op: str) -> str:
+    """The TypeError message for ``term == x`` on a term with no Form."""
+    name = type(term).__name__
+    return (
+        f"`t {op} x` on a bare term ({name}) can't build a comparison: wrap it in a "
+        f"form to compare values, nu.Object(t) {op} x. Compare trees with "
+        f"nu.tree.equal(a, b), identity with `is`"
+    )
+
+
+def _bool_hint(term: Nu) -> str:
+    """The TypeError message for ``bool(term)``, naming what the term offers."""
+    name = type(term).__name__
+    logic = (
+        ".and_(), .or_(), .not_()"
+        if callable(getattr(type(term), "and_", None))
+        else "nu.And, nu.Or, nu.Not"
+    )
+    return (
+        f"a Nu term has no truth value while building a program ({name}): "
+        f"use nu.If / nu.IfDo, {logic}. "
+        f"Test the term itself with `is None`; walk it with nu.tree"
+    )
+
+
+def _contains_hint(term: Nu) -> str:
+    """The TypeError message for ``x in term``, naming what the term offers."""
+    name = type(term).__name__
+    spelling = (
+        "t.contains(x)" if callable(getattr(type(term), "contains", None)) else "nu.Contains(t, x)"
+    )
+    return f"`x in t` can't build a term ({name}): use {spelling}"
+
+
+def _iter_hint(term: Nu) -> str:
+    """The TypeError message for ``for x in term`` / ``next(term)``."""
+    name = type(term).__name__
+    return (
+        f"a Nu term can't be looped over while building a program ({name}). "
+        f"To loop in the program: nu.ForEachDo / nu.Map / nu.Filter, t.iter() "
+        f"for a stream, it.next() to pull one item. To walk the term itself: "
+        f"nu.tree.preorder(t) / nu.tree.children(t)"
+    )
+
+
+def _len_hint(term: Nu) -> str:
+    """The TypeError message for ``len(term)``, naming what the term offers."""
+    name = type(term).__name__
+    spelling = "t.len()" if callable(getattr(type(term), "len", None)) else "nu.Len(t)"
+    return (
+        f"len(t) can't build a term ({name}): use {spelling}. "
+        f"For the tree's node count use nu.tree.size(t)"
+    )

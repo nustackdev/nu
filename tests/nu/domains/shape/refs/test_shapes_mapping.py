@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import nu
 from nu.core.reactive import OnChange, OnChildChange
 from nu.domains.shape.dsl import Shape, Slot
 from nu.domains.shape.interactions import (
@@ -32,7 +33,7 @@ def test_shapes_mapping_ref_subscript_returns_shape_ref():
 def test_shapes_mapping_ref_child_shape_type_matches():
     m = ShapesMappingRef("entries", item_shape_type=Entry)
     child = m["key1"]
-    assert child._payload["shape_type"] is Entry
+    assert nu.tree.payload(child)["shape_type"] is Entry
 
 
 def test_shapes_mapping_ref_child_parent_is_self():
@@ -43,7 +44,7 @@ def test_shapes_mapping_ref_child_parent_is_self():
 
 def test_shapes_mapping_ref_item_shape_type_property():
     m = ShapesMappingRef("entries", item_shape_type=Entry)
-    assert m._payload["item_shape_type"] is Entry
+    assert nu.tree.payload(m)["item_shape_type"] is Entry
 
 
 def test_shapes_mapping_ref_different_keys_distinct():
@@ -92,7 +93,7 @@ def test_mutable_shapes_mapping_ref_subscript_returns_mutable_shape_ref():
 
 def test_mutable_shapes_mapping_ref_child_shape_type_matches():
     m = MutableShapesMappingRef("entries", item_shape_type=Entry)
-    assert m["k"]._payload["shape_type"] is Entry
+    assert nu.tree.payload(m["k"])["shape_type"] is Entry
 
 
 def test_mutable_shapes_mapping_ref_set_returns_set_command():

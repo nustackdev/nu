@@ -1,6 +1,5 @@
 """Primitive interfaces and interactions."""
 
-from .any_ import Any
 from .bool_ import Bool
 from .bytes_ import Bytes
 from .bytes_interactions import (
@@ -48,6 +47,7 @@ from .bytes_interactions import (
 from .float_ import Float
 from .int_ import Int
 from .none_ import None_
+from .object_ import Object
 from .sentinel_ import EmptyForm, InvalidForm, SentinelForm
 from .str_ import Str
 from .str_interactions import (
@@ -100,7 +100,6 @@ from .str_interactions import (
 
 
 __all__ = [
-    "Any",
     "Bool",
     "Bytes",
     "BytesCapitalize",
@@ -174,6 +173,7 @@ __all__ = [
     "LStrip",
     "Lower",
     "None_",
+    "Object",
     "Partition",
     "RFind",
     "RIndex",

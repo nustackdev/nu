@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape import ReactiveMappingRef, Slot
-from nu.forms import Any, Dict, DictItems, DictKeys, DictValues, Iterator
+from nu.forms import Dict, DictItems, DictKeys, DictValues, Iterator, Object
 from nu.lang.typeinfo import value_type_for
 
 from .base import ViewRef
@@ -85,11 +85,11 @@ class DictRef(ReactiveMappingRef["ItemRef"], ViewRef[dict[K, V]], Generic[K, V])
     def _wrap_iterable_result(self, operand: Nu) -> Iterator:
         return Iterator(operand)
 
-    def _wrap_value_result(self, operand: Nu) -> Any:
-        return Any(operand)
+    def _wrap_value_result(self, operand: Nu) -> Object:
+        return Object(operand)
 
-    def _wrap_element_result(self, operand: Nu) -> Any:
-        return Any(operand)
+    def _wrap_element_result(self, operand: Nu) -> Object:
+        return Object(operand)
 
     def _wrap_mapping_result(self, operand: Nu) -> Dict[K, V]:
         return Dict(operand)

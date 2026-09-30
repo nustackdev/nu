@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import pytest
 
+import nu
 from nu.context import AttrRef, SetCmd
 from nu.core.flows import Parallel
 from nu.lang import Literal
@@ -46,4 +47,4 @@ def test_non_nu_non_tuple_child_rejected() -> None:
 def test_mixed_tuple_and_plain_construction_ok() -> None:
     # Sanity: mixing bare and tuple forms constructs without error.
     tree = Parallel((_set("a", 1), "async"), _set("b", 2))
-    assert tree._payload["parallel_modes"] == ("async", None)
+    assert nu.tree.payload(tree)["parallel_modes"] == ("async", None)

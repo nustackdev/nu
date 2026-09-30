@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import pytest
 
+import nu
 from nu.core.reactive import (
     OnChange,
     OnChildChange,
@@ -91,32 +92,32 @@ def test_all_reactive_queries_also_flat_on_nu_core():
 def test_on_change_query_constructs_with_ref():
     ref = ItemRef("slot")
     q = OnChange(ref)
-    assert q._children
+    assert nu.tree.children(q)
 
 
 def test_on_child_change_query_constructs_with_two_children():
     ref = ItemRef("slot")
     address = ItemRef("addr")
     q = OnChildChange(ref, address)
-    assert len(q._children) == 2
+    assert len(nu.tree.children(q)) == 2
 
 
 def test_on_children_change_query_constructs_with_ref():
     ref = ItemRef("slot")
     q = OnChildrenChange(ref)
-    assert q._children
+    assert nu.tree.children(q)
 
 
 def test_on_descendants_change_query_constructs_with_ref_and_pattern():
     ref = ItemRef("slot")
     q = OnDescendantsChange(ref, ItemRef("pattern"))
-    assert len(q._children) == 2
+    assert len(nu.tree.children(q)) == 2
 
 
 def test_on_primitive_change_query_constructs_with_ref():
     ref = ReactiveItemRef("slot")
     q = OnPrimitiveChange(ref)
-    assert q._children
+    assert nu.tree.children(q)
 
 
 # ---------------------------------------------------------------------------

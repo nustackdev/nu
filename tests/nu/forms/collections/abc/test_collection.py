@@ -7,6 +7,7 @@ Extract on all three collection families.
 
 from __future__ import annotations
 
+import nu
 from nu.domains.shape.interactions import Extract
 from nu.domains.shape.refs.mapping import MappingRef
 from nu.domains.shape.refs.sequence import SequenceRef
@@ -34,4 +35,4 @@ def test_set_ref_extract_returns_extract_query():
 def test_extract_query_wraps_ref():
     ref = MappingRef("data")
     result = ref.extract()
-    assert result._children[0] is ref
+    assert nu.tree.children(result)[0] is ref

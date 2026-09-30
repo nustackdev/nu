@@ -12,6 +12,7 @@ import asyncio
 import logging as pylogging
 from typing import TYPE_CHECKING
 
+import nu
 from nu import Context, arun, run
 from nu.lang import Cardinality, Sort
 from nu.lang.attributes import Attr, Effect
@@ -85,7 +86,7 @@ def test_log_command_slots_hold_the_fabric_ref() -> None:
     log = logging.getLogger("nu.test")
     cmd = log.info("hello")
     # slot 0 is the LOGGING fabric singleton
-    assert cmd._children[0] is LOGGING
+    assert nu.tree.children(cmd)[0] is LOGGING
 
 
 def test_log_command_declares_write_through_logging_ref() -> None:

@@ -9,7 +9,8 @@ Operators to cover (Python -> Nu):
 - ``<<`` -> ``LShift``, ``>>`` -> ``RShift``
 
 Sorts: all ScalarQuery (Q). ``BitAnd`` / ``BitOr`` / ``BitXor`` fold over
-their children (identity ``-1`` for AND, ``0`` for OR / XOR); the shifts are
+their children from the first one with Python's operator (with no children
+they yield the int identity, ``-1`` for AND, ``0`` for OR / XOR); the shifts are
 binary and ``BitNot`` is unary. Each atom defines ``compile`` (sync hot path)
 and ``acompile`` (async hot path), both returning a thunk that captures the
 precompiled child thunks. Sentinel propagation is inlined: an EMPTY or INVALID
@@ -32,6 +33,10 @@ if TYPE_CHECKING:
 __all__ = ["BitAnd", "BitNot", "BitOr", "BitXor", "LShift", "RShift"]
 
 
+_START = object()
+"""Fold marker: no child folded yet, so the first value starts the fold."""
+
+
 class BitAnd(ScalarQuery):
     """The bitwise AND of its scalar children.
 
@@ -39,8 +44,9 @@ class BitAnd(ScalarQuery):
         *children: the integers to AND together, folded left to right.
 
     Notes:
-        - Starts from -1 (all bits set), the AND identity, so no children at
-          all yields -1.
+        - Folds from the first child with Python's `&`, so it keeps the
+          operands' own meaning (bools stay bool, sets intersect). No
+          children at all yields -1, the int AND identity.
         - Operands are Python ints, two's-complement under the hood, so a
           negative operand ANDs its infinite leading 1s in.
         - Children are evaluated in order and the fold stops at the first
@@ -56,25 +62,25 @@ class BitAnd(ScalarQuery):
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
-            out: object = -1
+            out: object = _START
             for ct in children:
                 v = ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
-                out = out & v
-            return out
+                out = v if out is _START else out & v
+            return -1 if out is _START else out
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
-            out: object = -1
+            out: object = _START
             for ct in children:
                 v = await ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
-                out = out & v
-            return out
+                out = v if out is _START else out & v
+            return -1 if out is _START else out
 
         return athunk
 
@@ -86,7 +92,9 @@ class BitOr(ScalarQuery):
         *children: the integers to OR together, folded left to right.
 
     Notes:
-        - Starts from 0, the OR identity, so no children at all yields 0.
+        - Folds from the first child with Python's `|`, so it keeps the
+          operands' own meaning (bools stay bool, sets union, dicts merge).
+          No children at all yields 0, the int OR identity.
         - Operands are Python ints, two's-complement under the hood, so a
           negative operand carries its infinite leading 1s through.
         - Children are evaluated in order and the fold stops at the first
@@ -102,25 +110,25 @@ class BitOr(ScalarQuery):
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
-            out: object = 0
+            out: object = _START
             for ct in children:
                 v = ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
-                out = out | v
-            return out
+                out = v if out is _START else out | v
+            return 0 if out is _START else out
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
-            out: object = 0
+            out: object = _START
             for ct in children:
                 v = await ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
-                out = out | v
-            return out
+                out = v if out is _START else out | v
+            return 0 if out is _START else out
 
         return athunk
 
@@ -132,7 +140,9 @@ class BitXor(ScalarQuery):
         *children: the integers to XOR together, folded left to right.
 
     Notes:
-        - Starts from 0, the XOR identity, so no children at all yields 0.
+        - Folds from the first child with Python's `^`, so it keeps the
+          operands' own meaning (bools stay bool, sets take the symmetric
+          difference). No children at all yields 0, the int XOR identity.
         - Operands are Python ints, two's-complement under the hood, so a
           negative operand flips its infinite leading 1s in the fold.
         - Children are evaluated in order and the fold stops at the first
@@ -148,25 +158,25 @@ class BitXor(ScalarQuery):
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
-            out: object = 0
+            out: object = _START
             for ct in children:
                 v = ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
-                out = out ^ v
-            return out
+                out = v if out is _START else out ^ v
+            return 0 if out is _START else out
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
-            out: object = 0
+            out: object = _START
             for ct in children:
                 v = await ct(rt)
                 if v is EMPTY or v is INVALID:
                     return INVALID
-                out = out ^ v
-            return out
+                out = v if out is _START else out ^ v
+            return 0 if out is _START else out
 
         return athunk
 

@@ -11,6 +11,7 @@ from __future__ import annotations
 from _support.dyn_carriers import ConstCarrier
 from _support.law_terms import Q
 
+import nu
 from nu.core.flows import Sequential as Seq
 from nu.domains.shape import Shape
 from nu.lang import Bracket
@@ -38,8 +39,8 @@ def _collect(tree, cls):
         node = stack.pop()
         if isinstance(node, cls):
             out.append(node)
-        if node._children:
-            stack.extend(reversed(node._children))
+        if nu.tree.children(node):
+            stack.extend(reversed(nu.tree.children(node)))
     return out
 
 
@@ -51,7 +52,7 @@ def test_dyn_branch_is_not_wrapped() -> None:
 
     # The Cmd branch is wrapped; the Eval branch is untouched.
     assert len(_collect(out, Transaction)) == 1
-    assert isinstance(out._children[1], Eval)
+    assert isinstance(nu.tree.children(out)[1], Eval)
 
 
 def test_bracket_over_dyn_is_still_skipped_via_span_lookthrough() -> None:
@@ -62,8 +63,8 @@ def test_bracket_over_dyn_is_still_skipped_via_span_lookthrough() -> None:
 
     # The Cmd branch is wrapped; the Bracket-wrapped-Eval branch is untouched.
     assert len(_collect(out, Transaction)) == 1
-    assert isinstance(out._children[1], Bracket)
-    assert isinstance(out._children[1]._children[0], Eval)
+    assert isinstance(nu.tree.children(out)[1], Bracket)
+    assert isinstance(nu.tree.children(nu.tree.children(out)[1])[0], Eval)
     assert len(_collect(out, Snapshot)) == 0
 
 
@@ -87,7 +88,7 @@ def test_iter_uncovered_stops_at_dyn_boundary() -> None:
 
     # Sibling still visible; wrap decision fires only on the sibling branch.
     out = auto_flow_atomic(tree)
-    assert isinstance(out._children[0], Eval)
+    assert isinstance(nu.tree.children(out)[0], Eval)
     assert len(_collect(out, Transaction)) == 1
 
 

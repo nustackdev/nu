@@ -17,7 +17,6 @@ from collections.abc import ItemsView, KeysView, ValuesView
 import pytest
 
 from nu import (
-    Any,
     Contains,
     Dict,
     DictItems,
@@ -27,6 +26,7 @@ from nu import (
     Len,
     List,
     Literal,
+    Object,
     Set,
     Sorted,
     arun,
@@ -160,7 +160,7 @@ class TestListRefTypes:
     def test_element_result_is_any_value(self):
         ref = PortfolioShape.tags
         wrapped = ref._wrap_element_result(Literal("dummy"))
-        assert isinstance(wrapped, Any)
+        assert isinstance(wrapped, Object)
 
 
 class TestListRefExecution:
@@ -205,7 +205,7 @@ class TestSetRefTypes:
     def test_element_result_is_any_value(self):
         ref = PortfolioShape.members
         wrapped = ref._wrap_element_result(Literal("dummy"))
-        assert isinstance(wrapped, Any)
+        assert isinstance(wrapped, Object)
 
 
 class TestSetRefExecution:

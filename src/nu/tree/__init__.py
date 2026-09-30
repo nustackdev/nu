@@ -8,7 +8,8 @@ Effect) -- it knows no domain or fabric.
 Five modules:
 
 - ``walk``    -- lazy traversals (preorder / postorder / bfs / leaves / ancestors).
-- ``query``   -- read-only inspection (find / find_first / count / size / depth).
+- ``query``   -- read-only inspection (children / payload / find / find_first /
+  count / size / depth / equal).
 - ``rewrite`` -- generic Nu -> Nu transforms (map_nodes / replace / wrap / unwrap / ...).
 - ``effects`` -- pre-compile effect analysis (is_pure / reads / writes / fabrics / touches_fabric).
 - ``flow``    -- flow-aware wrapping primitives (wrap_flows / wrap_flow_children / is_flow).
@@ -30,7 +31,7 @@ from .effects import (
     writes,
 )
 from .flow import is_flow, wrap_flow_children, wrap_flows
-from .query import count, depth, find, find_first, size
+from .query import children, count, depth, equal, find, find_first, payload, size
 from .rewrite import (
     Transform,
     apply,
@@ -52,10 +53,12 @@ __all__ = [
     "ancestors",
     "apply",
     "bfs",
+    "children",
     "compose",
     "conditional_wrap",
     "count",
     "depth",
+    "equal",
     "fabrics",
     "find",
     "find_first",
@@ -67,6 +70,7 @@ __all__ = [
     "leaves",
     "map_children",
     "map_nodes",
+    "payload",
     "postorder",
     "preorder",
     "prune",
