@@ -10,12 +10,12 @@ Builtins to cover (Python -> Nu):
 Plus two transforms kept as core: ``Flatten`` (one-level concat) and
 ``Unique`` (drop already-seen, order preserved).
 
-``Map`` and ``Filter`` bind each item into the attrs side-channel under a name
-and evaluate a Nu child against it. The name is a **child** (a Query yielding
+``Map`` and ``Filter`` bind each item into ``ctx.attrs`` under a name and
+evaluate a Nu child against it. The name is a **child** (a Query yielding
 the name), so it can be a ``Literal`` or a Ref computed elsewhere - never an
-opaque payload. The body reads the item with ``ObjectRef(<name>)``. The per-item
-binding writes ``ctx.attrs`` directly - the model's side-channel for loop
-variables, not a tracked fabric write.
+opaque payload. The body reads the item with ``ObjectRef(<name>)``. The item is
+bound with ``ctx.attrs.let`` for the evaluation of that one item, so it shadows
+an outer name of the same spelling and never outlives the item.
 
 Sorts: all StreamQuery (Q). ``Sorted`` / ``Flatten`` / ``Unique`` stay
 structural stubs (no ``compile``) until they are filled.
@@ -55,8 +55,8 @@ class Map(StreamQuery):
         - ``key`` is itself a child (a ``Literal`` or a Ref), not a raw
           string, so it can be computed rather than fixed at write time.
         - ``transform`` reads the item with ``ObjectRef(<name>)``. The
-          binding writes ``ctx.attrs`` directly - the side-channel for loop
-          variables, not a tracked fabric write.
+          binding lasts for that item's ``transform`` and is released before
+          the result is yielded, so it never reaches the consumer.
         - Pulled lazily, one item at a time; nothing runs ahead of the pull.
         - No sentinel check of its own: an EMPTY or INVALID item, or an
           EMPTY or INVALID result from ``transform``, passes straight
@@ -83,8 +83,9 @@ class Map(StreamQuery):
 
             def gen() -> object:
                 for elem in sync_iter(source(rt)):
-                    rt.ctx.attrs[name] = elem
-                    yield transform(rt)
+                    with rt.ctx.attrs.let(name, elem):
+                        result = transform(rt)
+                    yield result
 
             return gen()
 
@@ -98,8 +99,9 @@ class Map(StreamQuery):
 
             async def agen() -> object:
                 async for elem in aiter_any(await source(rt)):
-                    rt.ctx.attrs[name] = elem
-                    yield await transform(rt)
+                    with rt.ctx.attrs.let(name, elem):
+                        result = await transform(rt)
+                    yield result
 
             return agen()
 
@@ -118,7 +120,7 @@ class Filter(StreamQuery):
 
     Notes:
         - ``predicate`` reads the item with ``ObjectRef(<name>)``, the same
-          side-channel binding as :class:`Map`.
+          scoped binding as :class:`Map`.
         - An EMPTY or INVALID ``predicate`` result drops the item rather
           than propagating the sentinel; only a genuine falsy value does
           that in Python's ``filter``.
@@ -145,8 +147,8 @@ class Filter(StreamQuery):
 
             def gen() -> object:
                 for elem in sync_iter(source(rt)):
-                    rt.ctx.attrs[name] = elem
-                    keep = predicate(rt)
+                    with rt.ctx.attrs.let(name, elem):
+                        keep = predicate(rt)
                     if keep is EMPTY or keep is INVALID:
                         continue
                     if keep:
@@ -164,8 +166,8 @@ class Filter(StreamQuery):
 
             async def agen() -> object:
                 async for elem in aiter_any(await source(rt)):
-                    rt.ctx.attrs[name] = elem
-                    keep = await predicate(rt)
+                    with rt.ctx.attrs.let(name, elem):
+                        keep = await predicate(rt)
                     if keep is EMPTY or keep is INVALID:
                         continue
                     if keep:
@@ -235,7 +237,7 @@ class SortBy(StreamQuery):
 
     Notes:
         - ``key`` reads the item with ``ObjectRef(<name>)``, the same
-          side-channel binding as :class:`Map` / :class:`Filter`.
+          scoped binding as :class:`Map` / :class:`Filter`.
         - Drains and sorts the whole source before yielding anything, the
           same barrier as :class:`Sorted`.
 
@@ -267,8 +269,8 @@ class SortBy(StreamQuery):
             name = item_t(rt)
             rows: list[tuple[object, object]] = []
             for elem in sync_iter(source(rt)):
-                rt.ctx.attrs[name] = elem
-                rows.append((key_expr(rt), elem))
+                with rt.ctx.attrs.let(name, elem):
+                    rows.append((key_expr(rt), elem))
             rows.sort(key=lambda kv: kv[0], reverse=reverse)
             return iter(v for _, v in rows)
 
@@ -282,8 +284,8 @@ class SortBy(StreamQuery):
             name = await item_t(rt)
             rows: list[tuple[object, object]] = []
             async for elem in aiter_any(await source(rt)):
-                rt.ctx.attrs[name] = elem
-                rows.append((await key_expr(rt), elem))
+                with rt.ctx.attrs.let(name, elem):
+                    rows.append((await key_expr(rt), elem))
             rows.sort(key=lambda kv: kv[0], reverse=reverse)
 
             async def agen() -> object:

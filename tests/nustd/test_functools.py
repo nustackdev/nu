@@ -12,6 +12,7 @@ import operator
 import pytest
 
 from nu import IntRef, run
+from nu.lang import Context
 from nu.lang.helpers import arun
 from nustd.functools import reduce
 
@@ -51,3 +52,26 @@ def test_runs_on_async_path() -> None:
 
     value, _ = asyncio.run(arun(reduce(IntRef("acc") * IntRef("item"), [1, 2, 3, 4])))
     assert value == 24
+
+
+def _outer() -> Context:
+    ctx = Context()
+    ctx.attrs["acc"] = "outer acc"
+    ctx.attrs["item"] = "outer item"
+    return ctx
+
+
+def test_acc_and_item_are_scoped_to_each_step() -> None:
+    ctx = _outer()
+    value, _ = run(reduce(IntRef("acc") + IntRef("item"), [1, 2, 3]), ctx)
+    assert value == 6
+    assert ctx.attrs["acc"] == "outer acc"
+    assert ctx.attrs["item"] == "outer item"
+
+
+async def test_acc_and_item_are_scoped_to_each_step_async() -> None:
+    ctx = _outer()
+    value, _ = await arun(reduce(IntRef("acc") + IntRef("item"), [1, 2, 3]), ctx)
+    assert value == 6
+    assert ctx.attrs["acc"] == "outer acc"
+    assert ctx.attrs["item"] == "outer item"

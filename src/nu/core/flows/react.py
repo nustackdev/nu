@@ -17,6 +17,7 @@ remaining slot is the body.
 from __future__ import annotations
 
 import asyncio
+from contextlib import nullcontext
 from typing import TYPE_CHECKING
 
 from nu.core._stream import aiter_any
@@ -26,8 +27,10 @@ from nu.lang import Control
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from contextlib import AbstractContextManager
 
     from nu.lang.runtime import Runtime
+    from nu.lang.runtime.context import Attributes
 
 __all__ = ["React", "ReactForever", "ReactLatest", "ReactWhile"]
 
@@ -55,6 +58,14 @@ async def _adrain_body(rt: Runtime, body_thunk: Callable) -> None:
         pass
 
 
+def _changed(attrs: Attributes, name: object, key: object) -> AbstractContextManager:
+    """The scope a body run sees the changed key in: ``key`` bound under ``name``.
+
+    Binds nothing when the flow was given no ``changed_key``.
+    """
+    return nullcontext() if name is None else attrs.let(name, key)
+
+
 class React(Control):
     """Wait for one change on the subscription, run the body once, then stop.
 
@@ -67,8 +78,8 @@ class React(Control):
             query, e.g. ``OnChange``).
         body: what to run once the change fires. Optional: leave it out to
             just wait for one change and do nothing.
-        changed_key: name to bind the changed key under (via the attrs
-            side-channel) before the body runs. Requires a body.
+        changed_key: name the changed key is bound under while the body
+            runs. Requires a body.
 
     Notes:
         - Requires a body when ``changed_key`` is given: capturing a key with
@@ -125,10 +136,9 @@ class React(Control):
             sub.bind(on_change)
             try:
                 key = await queue.get()
-                if changed_key_name is not None:
-                    rt.ctx.attrs[changed_key_name] = key
                 if has_body:
-                    await _adrain_body(rt, children[1])
+                    with _changed(rt.ctx.attrs, changed_key_name, key):
+                        await _adrain_body(rt, children[1])
             finally:
                 sub.unbind(on_change)
                 sub.close()
@@ -150,8 +160,8 @@ class ReactWhile(Control):
         condition: checked after each notification, before that turn's body
             runs. A falsy value ends the loop.
         body: what to run on a turn where the condition holds.
-        changed_key: name to bind the changed key under before the body runs
-            on that turn.
+        changed_key: name the changed key is bound under while that turn's
+            body runs.
 
     Notes:
         - Requires an async runtime; the sync path raises ``RuntimeError``.
@@ -204,9 +214,8 @@ class ReactWhile(Control):
                     key = await queue.get()
                     if not await children[1](rt):
                         break
-                    if changed_key_name is not None:
-                        rt.ctx.attrs[changed_key_name] = key
-                    await _adrain_body(rt, children[2])
+                    with _changed(rt.ctx.attrs, changed_key_name, key):
+                        await _adrain_body(rt, children[2])
             finally:
                 sub.unbind(on_change)
                 sub.close()
@@ -224,7 +233,8 @@ class ReactForever(Control):
     Args:
         change: the change subscription to wait on.
         body: what to run on every notification.
-        changed_key: name to bind the changed key under before each body run.
+        changed_key: name the changed key is bound under while each body
+            run lasts.
 
     Notes:
         - Requires an async runtime; the sync path raises ``RuntimeError``.
@@ -274,9 +284,8 @@ class ReactForever(Control):
             try:
                 while True:
                     key = await queue.get()
-                    if changed_key_name is not None:
-                        rt.ctx.attrs[changed_key_name] = key
-                    await _adrain_body(rt, children[1])
+                    with _changed(rt.ctx.attrs, changed_key_name, key):
+                        await _adrain_body(rt, children[1])
             finally:
                 sub.unbind(on_change)
                 sub.close()
@@ -298,7 +307,8 @@ class ReactLatest(Control):
         change: the change subscription to wait on.
         body: what to run on every notification. May never finish (a live
             view, a server loop); the next change is what ends it.
-        changed_key: name to bind the changed key under before each body run.
+        changed_key: name the changed key is bound under while each body
+            run lasts.
         initial: run the body once straight away, before any notification.
             That run binds nothing under ``changed_key``, so the body sees
             whatever the caller seeded there, or an unbound slot.
@@ -382,12 +392,12 @@ class ReactLatest(Control):
                 # A fresh branch per run, set inside the task so it stays
                 # run-local, the same way a fan-out arm gets its Context.
                 run_ctx = base.branch()
-                if bind and changed_key_name is not None:
-                    run_ctx.attrs[changed_key_name] = key
+                name = changed_key_name if bind else None
 
                 async def run() -> None:
                     rt.ctx = run_ctx
-                    await _adrain_body(rt, body)
+                    with _changed(run_ctx.attrs, name, key):
+                        await _adrain_body(rt, body)
 
                 return asyncio.ensure_future(run())
 

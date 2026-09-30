@@ -29,6 +29,7 @@ from __future__ import annotations
 import asyncio
 import random
 import time
+from contextlib import ExitStack
 from typing import TYPE_CHECKING
 
 from nu.core._stream import aiter_any, sync_iter
@@ -107,8 +108,8 @@ def _run_catch(rt: Runtime, catch: Callable, error_key: Callable, exc: Exception
     saved = rt.ctx
     rt.ctx = saved._copy()
     try:
-        rt.ctx.attrs[error_key(rt)] = CaughtError(exc)
-        return catch(rt)
+        with rt.ctx.attrs.let(error_key(rt), CaughtError(exc)):
+            return catch(rt)
     finally:
         rt.ctx = saved
 
@@ -118,8 +119,8 @@ async def _arun_catch(rt: Runtime, catch: Callable, error_key: Callable, exc: Ex
     saved = rt.ctx
     rt.ctx = saved._copy()
     try:
-        rt.ctx.attrs[await error_key(rt)] = CaughtError(exc)
-        return await catch(rt)
+        with rt.ctx.attrs.let(await error_key(rt), CaughtError(exc)):
+            return await catch(rt)
     finally:
         rt.ctx = saved
 
@@ -328,9 +329,10 @@ async def _arun_hook(rt: Runtime, hook: Callable, sets: dict) -> None:
     saved = rt.ctx
     rt.ctx = saved._copy()
     try:
-        for key, value in sets.items():
-            rt.ctx.attrs[key] = value
-        await hook(rt)
+        with ExitStack() as scope:
+            for key, value in sets.items():
+                scope.enter_context(rt.ctx.attrs.let(key, value))
+            await hook(rt)
     finally:
         rt.ctx = saved
 

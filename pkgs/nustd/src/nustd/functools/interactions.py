@@ -5,9 +5,9 @@ it is the only atom here. It is a ``Reduction`` (scalar-over-stream), hand-writt
 e2e like core's folds (``Sum`` ...) since folds are a hot path.
 
 It is higher-order: the reducer is a Nu query child. Each step binds the
-accumulator and the current item into the loop-var side-channel (the same
-channel ``Map`` / ``Filter`` use), then evaluates the reducer, which reads them
-via a typed attrs ref (e.g. ``IntRef("acc") + IntRef("item")``).
+accumulator and the current item for that one evaluation of the reducer (the
+same scoped binding ``Map`` / ``Filter`` use), which reads them via a typed
+attrs ref (e.g. ``IntRef("acc") + IntRef("item")``).
 """
 
 from __future__ import annotations
@@ -79,9 +79,8 @@ class Reduce(Reduction):
                     acc = elem
                     started = True
                     continue
-                rt.ctx.attrs[acc_name] = acc
-                rt.ctx.attrs[item_name] = elem
-                acc = function(rt)
+                with rt.ctx.attrs.let(acc_name, acc), rt.ctx.attrs.let(item_name, elem):
+                    acc = function(rt)
                 if acc is EMPTY or acc is INVALID:
                     return INVALID
             if not started:
@@ -113,9 +112,8 @@ class Reduce(Reduction):
                     acc = elem
                     started = True
                     continue
-                rt.ctx.attrs[acc_name] = acc
-                rt.ctx.attrs[item_name] = elem
-                acc = await function(rt)
+                with rt.ctx.attrs.let(acc_name, acc), rt.ctx.attrs.let(item_name, elem):
+                    acc = await function(rt)
                 if acc is EMPTY or acc is INVALID:
                     return INVALID
             if not started:

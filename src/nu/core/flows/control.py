@@ -8,10 +8,10 @@ the rest are bodies. The ``control_param_is_yielder`` law holds every param to
 a yielding child (Ref / Query / Action) and ``flow_body_is_mutator`` holds
 every body to a mutating child (Command / Action / Flow).
 
-Loop variables ride the attrs side-channel: ``ForEachDo`` / ``ForRangeDo`` bind
+Loop variables are scoped attrs bindings: ``ForEachDo`` / ``ForRangeDo`` bind
 the current element under a name (itself a child, so it can be a Literal or a
-computed Ref) before each body run, read back via an attrs ref - the same
-designated channel ``Map`` / ``Filter`` use, not a tracked fabric write.
+computed Ref) for one body run, read back via an attrs ref - the same
+``ctx.attrs.let`` scope ``Map`` / ``Filter`` use, not a tracked fabric write.
 ``ForEachParAsync`` is ``ForEachDo``'s fan-out twin: same three args, same
 binding, but every element gets its own arm on the loop at once, each on its own
 Context branch so the arms cannot stomp each other's loop variable. It lives
@@ -191,13 +191,13 @@ class ForEachDo(Control):
             to ``"item"``.
 
     Notes:
-        - The current element is bound into ``rt.ctx.attrs`` under ``item``
-          before each body run, the same attrs side-channel ``Map`` /
-          ``Filter`` use, not a tracked fabric write. ``body`` reads it back
+        - The current element is bound under ``item`` for one body run, the
+          same scoped binding ``Map`` / ``Filter`` use. ``body`` reads it back
           via ``ObjectRef(item)``.
         - ``item`` is itself evaluated once, before the loop starts, so it can
           be a computed Ref and not just a literal name.
-        - Rebinding overwrites whatever ``item`` held before, in ``attrs``.
+        - The binding shadows an outer ``item`` and is released after each
+          run, so the outer value is back once the loop ends.
 
     Example:
         >>> total, item = nu.IntRef("sum"), nu.IntRef("item")
@@ -217,8 +217,8 @@ class ForEachDo(Control):
         def thunk(rt: Runtime) -> None:
             name = key_t(rt)
             for elem in sync_iter(items_t(rt)):
-                rt.ctx.attrs[name] = elem
-                body(rt)
+                with rt.ctx.attrs.let(name, elem):
+                    body(rt)
 
         return thunk
 
@@ -228,8 +228,8 @@ class ForEachDo(Control):
         async def athunk(rt: Runtime) -> None:
             name = await key_t(rt)
             async for elem in aiter_any(await items_t(rt)):
-                rt.ctx.attrs[name] = elem
-                await body(rt)
+                with rt.ctx.attrs.let(name, elem):
+                    await body(rt)
 
         return athunk
 
@@ -431,9 +431,9 @@ class ForRangeDo(Control):
     Notes:
         - ``start``, ``stop``, ``step`` and ``index`` are each evaluated once,
           before the loop starts.
-        - The current value is bound into ``rt.ctx.attrs`` under ``index``
-          before each body run, read back via ``ObjectRef(index)``. Same
-          side-channel ``ForEachDo`` uses.
+        - The current value is bound under ``index`` for one body run, read
+          back via ``ObjectRef(index)``. Same scoped binding ``ForEachDo``
+          uses.
         - Follows Python's ``range`` rules: a ``step`` that never reaches
           ``stop`` from ``start`` runs the body zero times rather than
           looping forever.
@@ -463,8 +463,8 @@ class ForRangeDo(Control):
         def thunk(rt: Runtime) -> None:
             name = index_t(rt)
             for i in range(start_t(rt), stop_t(rt), step_t(rt)):
-                rt.ctx.attrs[name] = i
-                body(rt)
+                with rt.ctx.attrs.let(name, i):
+                    body(rt)
 
         return thunk
 
@@ -474,8 +474,8 @@ class ForRangeDo(Control):
         async def athunk(rt: Runtime) -> None:
             name = await index_t(rt)
             for i in range(await start_t(rt), await stop_t(rt), await step_t(rt)):
-                rt.ctx.attrs[name] = i
-                await body(rt)
+                with rt.ctx.attrs.let(name, i):
+                    await body(rt)
 
         return athunk
 

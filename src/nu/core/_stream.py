@@ -9,13 +9,14 @@ iterates the same way.
 
 from __future__ import annotations
 
+from inspect import isasyncgen
 from typing import TYPE_CHECKING
 
 from nu.lang.sentinels import EMPTY, INVALID
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator, Iterator
+    from collections.abc import AsyncGenerator, Iterator
 
 __all__ = ["aiter_any", "sync_iter"]
 
@@ -27,7 +28,7 @@ def sync_iter(value: object) -> Iterator:
     yield from value  # type: ignore[misc]
 
 
-async def aiter_any(value: object) -> AsyncIterator:
+async def aiter_any(value: object) -> AsyncGenerator:
     """Yield from a sync or async iterable; a sentinel value yields nothing.
 
     A stream child's async thunk may resolve to an async iterable (another
@@ -44,8 +45,15 @@ async def aiter_any(value: object) -> AsyncIterator:
     if value is EMPTY or value is INVALID:
         return
     if hasattr(value.__class__, "__aiter__"):
-        async for x in value:  # type: ignore[union-attr]
-            yield x
+        try:
+            async for x in value:  # type: ignore[union-attr]
+                yield x
+        finally:
+            # A stream child's async generator belongs to this walk, so
+            # closing the walk closes it too, and the scopes it holds open
+            # are released now rather than whenever it is collected.
+            if isasyncgen(value):
+                await value.aclose()
         return
     for x in value:  # type: ignore[union-attr]
         yield x

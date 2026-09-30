@@ -7,6 +7,7 @@ catch-up, live follow, and the transition between them.
 from __future__ import annotations
 
 import asyncio
+from contextlib import aclosing
 from typing import TYPE_CHECKING
 
 from nu.core._stream import aiter_any
@@ -17,7 +18,7 @@ from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import AsyncGenerator, Callable
 
     from nu.lang.runtime import Runtime
 
@@ -42,9 +43,10 @@ class Stream(StreamQuery):
         - Drains existing items first (walks ``advance`` to exhaustion,
           running ``body`` per item), then subscribes and follows new items
           as they arrive, draining again on each change notification.
-        - The cursor writes to ``ctx.attrs[key]`` / ``ctx.attrs[log_key]``
-          are untracked bookkeeping side-channels, the same allowance
-          ``Map`` / ``Filter`` give their loop-var, not fabric writes.
+        - ``key`` is bound per item for as long as that item's ``body`` is
+          drained, the same scoped binding ``Map`` / ``Filter`` give their
+          loop variable. ``log_key`` is the cursor's own position, kept in
+          ``ctx.attrs`` across items as untracked bookkeeping.
         - Async-only: ``_compile`` raises ``NotImplementedError``, since
           following requires an event loop.
 
@@ -84,14 +86,14 @@ class Stream(StreamQuery):
 
             if log_key not in rt.ctx.attrs:
                 rt.ctx.attrs[log_key] = EMPTY
-            if key not in rt.ctx.attrs:
-                rt.ctx.attrs[key] = EMPTY
 
             async def agen() -> object:
-                async for v in _drain(rt, children, key, log_key):
-                    yield v
-                async for v in _react(rt, children, key, log_key):
-                    yield v
+                async with aclosing(_drain(rt, children, key, log_key)) as drained:
+                    async for v in drained:
+                        yield v
+                async with aclosing(_react(rt, children, key, log_key)) as followed:
+                    async for v in followed:
+                        yield v
 
             return agen()
 
@@ -103,7 +105,7 @@ async def _drain(
     children: tuple[Callable, ...],
     key: str,
     log_key: str,
-) -> object:
+) -> AsyncGenerator:
     """Walk ``advance`` to exhaustion, running ``body`` per item.
 
     Yields:
@@ -114,10 +116,11 @@ async def _drain(
         if result is None:
             break
         log_k, actual_key = result
-        rt.ctx.attrs[key] = actual_key
         rt.ctx.attrs[log_key] = log_k
-        async for v in aiter_any(await children[2](rt)):
-            yield v
+        with rt.ctx.attrs.let(key, actual_key):
+            async with aclosing(aiter_any(await children[2](rt))) as items:
+                async for v in items:
+                    yield v
 
 
 async def _react(
@@ -125,7 +128,7 @@ async def _react(
     children: tuple[Callable, ...],
     key: str,
     log_key: str,
-) -> object:
+) -> AsyncGenerator:
     """Subscribe to ``change`` and re-drain on every notification.
 
     Notes:
@@ -147,8 +150,9 @@ async def _react(
         while True:
             await event.wait()
             event.clear()
-            async for v in _drain(rt, children, key, log_key):
-                yield v
+            async with aclosing(_drain(rt, children, key, log_key)) as drained:
+                async for v in drained:
+                    yield v
     finally:
         sub.unbind(on_change)
         sub.close()

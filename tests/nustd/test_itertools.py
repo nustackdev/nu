@@ -18,9 +18,12 @@ import asyncio
 import itertools as pit
 import operator
 
+import pytest
+
 from nu import ObjectRef
 from nu.context import TupleRef
 from nu.core import Collect
+from nu.lang import Context
 from nu.lang.helpers import arun, run
 from nustd.itertools import (
     accumulate,
@@ -310,3 +313,42 @@ def test_async_groupby() -> None:
 def test_async_tee() -> None:
     value, _ = asyncio.run(arun(tee([1, 2, 3], 2)))
     assert [list(it) for it in value] == [list(it) for it in pit.tee([1, 2, 3], 2)]
+
+
+# --- loop-var scope -----------------------------------------------------------
+
+
+def _outer_item_and_acc() -> Context:
+    ctx = Context()
+    ctx.attrs["item"] = "outer item"
+    ctx.attrs["acc"] = "outer acc"
+    return ctx
+
+
+_SCOPED = [
+    (lambda: takewhile(ObjectRef("item") < 3, [1, 2, 3, 1]), [1, 2]),
+    (lambda: dropwhile(ObjectRef("item") < 3, [1, 2, 3, 1]), [3, 1]),
+    (lambda: filterfalse(ObjectRef("item") < 3, [1, 2, 3, 4]), [3, 4]),
+    (lambda: accumulate([1, 2, 3], ObjectRef("acc") * ObjectRef("item")), [1, 2, 6]),
+    (lambda: starmap(TupleRef("item")[0] + TupleRef("item")[1], [(1, 2), (3, 4)]), [3, 7]),
+    (lambda: groupby([1, 1, 2], ObjectRef("item") * 10), [(10, (1, 1)), (20, (2,))]),
+]
+_SCOPED_IDS = ["takewhile", "dropwhile", "filterfalse", "accumulate", "starmap", "groupby"]
+
+
+@pytest.mark.parametrize(("build", "expected"), _SCOPED, ids=_SCOPED_IDS)
+def test_loop_vars_are_scoped_to_each_item(build: object, expected: list) -> None:
+    ctx = _outer_item_and_acc()
+    value, _ = run(Collect(build()), ctx)
+    assert value == expected
+    assert ctx.attrs["item"] == "outer item"
+    assert ctx.attrs["acc"] == "outer acc"
+
+
+@pytest.mark.parametrize(("build", "expected"), _SCOPED, ids=_SCOPED_IDS)
+async def test_loop_vars_are_scoped_to_each_item_async(build: object, expected: list) -> None:
+    ctx = _outer_item_and_acc()
+    value, _ = await arun(Collect(build()), ctx)
+    assert value == expected
+    assert ctx.attrs["item"] == "outer item"
+    assert ctx.attrs["acc"] == "outer acc"

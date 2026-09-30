@@ -242,20 +242,13 @@ async def aeval_any(
 # --- fan-out over a runtime list (loop only) -------------------------------
 
 
-def _arm_ctx(ctx: Context, name: str, elem: object) -> Context:
-    """Branch ``ctx`` for one arm, with ``elem`` bound under ``name``.
+def _spawn_arm(rt: Runtime, nid: int, elem: object, name: str) -> asyncio.Task:
+    """Start one arm of ``nid`` for ``elem``, on its own Context branch.
 
     The branch keeps its own attrs key space so sibling arms cannot stomp
     each other's loop variable, and shares every value by reference so a live
-    handle sitting in attrs crosses the fan-out intact.
-    """
-    branch = ctx.branch()
-    branch.attrs[name] = elem
-    return branch
-
-
-def _spawn_arm(rt: Runtime, nid: int, elem: object, name: str) -> asyncio.Task:
-    """Start one arm of ``nid`` for ``elem``, on its own Context branch.
+    handle sitting in attrs crosses the fan-out intact. ``elem`` is bound
+    under ``name`` on the branch for as long as the arm runs.
 
     The ``rt.ctx`` assignment has to happen inside the Task for the branch to
     stay arm-local, which is why this hands back a started Task rather than a
@@ -264,9 +257,10 @@ def _spawn_arm(rt: Runtime, nid: int, elem: object, name: str) -> asyncio.Task:
 
     async def arm(arm_ctx: Context) -> None:
         rt.ctx = arm_ctx
-        await rt.aeval(nid)
+        with arm_ctx.attrs.let(name, elem):
+            await rt.aeval(nid)
 
-    return asyncio.ensure_future(arm(_arm_ctx(rt.ctx, name, elem)))
+    return asyncio.ensure_future(arm(rt.ctx.branch()))
 
 
 async def aeval_foreach_par(rt: Runtime, nid: int, elems: Iterable, name: str) -> None:

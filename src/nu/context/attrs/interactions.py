@@ -1,10 +1,12 @@
 """Attrs interactions: ``Let``, ``Set``, ``Exists``.
 
 ``Let`` declares a name in ``ctx.attrs`` for a body's duration and restores the
-prior slot on exit (also on exception). It is the only way a name comes into
-scope, and leaving the scope is the only way it goes. It lives here (not with
-the fabric-lifecycle brackets in ``context/fabric/lifecycle.py``) because the
-binding it governs is a plain attr, not a fabric instance.
+prior slot on exit (also on exception). It is the user-facing declaration; the
+binding rules themselves live in the store (``Attributes.let`` / ``set`` /
+``exists``), which every binder shares, so a loop variable scopes exactly like
+a ``Let``. It lives here (not with the fabric-lifecycle brackets in
+``context/fabric/lifecycle.py``) because the binding it governs is a plain
+attr, not a fabric instance.
 
 ``Set`` reassigns a declared name. It delegates to the Ref (``ref._write``) so
 the write mechanism lives with the fabric, and is reached through
@@ -18,6 +20,7 @@ binds it to the right effect on the attrs fabric.
 
 from __future__ import annotations
 
+from contextlib import aclosing
 from typing import TYPE_CHECKING
 
 from nu.core._stream import aiter_any, sync_iter
@@ -127,8 +130,7 @@ class Exists(ScalarQuery):
         ref = self._children[0]
 
         def thunk(rt: Runtime) -> object:
-            address = ref._address(rt, rt.program.children[nid][0])
-            return address in rt.ctx.attrs
+            return rt.ctx.attrs.exists(ref._address(rt, rt.program.children[nid][0]))
 
         return thunk
 
@@ -136,8 +138,7 @@ class Exists(ScalarQuery):
         ref = self._children[0]
 
         async def athunk(rt: Runtime) -> object:
-            address = await ref._aaddress(rt, rt.program.children[nid][0])
-            return address in rt.ctx.attrs
+            return rt.ctx.attrs.exists(await ref._aaddress(rt, rt.program.children[nid][0]))
 
         return athunk
 
@@ -169,8 +170,8 @@ class Let(Bracket):
           outer value comes back when the inner body ends.
         - An EMPTY or INVALID ``value`` is still bound, so the name exists
           and reads back as that sentinel.
-        - Over a stream body the binding spans the whole drain, and is popped
-          when the stream is exhausted.
+        - Over a stream body the binding spans the whole drain, and is
+          released when the stream is exhausted, closed, or cancelled.
         - Children are ordered ``[body, value, target]``; the body sits in
           slot 0 to satisfy the Span transparency law.
 
@@ -209,27 +210,20 @@ class Let(Bracket):
         body_thunk, value_thunk, name_thunk = children[0], children[1], children[2]
         target = self._children[2]
 
-        def resolve(rt: Runtime) -> str:
+        def resolve(rt: Runtime) -> object:
             if isinstance(target, AttrRef):
-                return _check_name(target._address(rt, rt.program.children[nid][2]))
-            return _check_name(name_thunk(rt))
+                return target._address(rt, rt.program.children[nid][2])
+            return name_thunk(rt)
+
+        def stream(rt: Runtime) -> Iterator:
+            with rt.ctx.attrs.let(resolve(rt), value_thunk(rt)):
+                yield from sync_iter(body_thunk(rt))
 
         def thunk(rt: Runtime) -> object:
-            name = resolve(rt)
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
-                return _stream_let(rt, name, value_thunk, body_thunk)
-            v = value_thunk(rt)
-            attrs = rt.ctx.attrs
-            had_prev = name in attrs
-            prev = attrs[name] if had_prev else None
-            attrs[name] = v
-            try:
+                return stream(rt)
+            with rt.ctx.attrs.let(resolve(rt), value_thunk(rt)):
                 return body_thunk(rt)
-            finally:
-                # If a nested bracket swapped rt.ctx underneath, it has been
-                # restored by now, so the current rt.ctx.attrs is the same
-                # instance we wrote into - pop against it.
-                _restore(rt.ctx.attrs, name, had_prev, prev)
 
         return thunk
 
@@ -237,76 +231,21 @@ class Let(Bracket):
         body_thunk, value_thunk, name_thunk = children[0], children[1], children[2]
         target = self._children[2]
 
-        async def resolve(rt: Runtime) -> str:
+        async def resolve(rt: Runtime) -> object:
             if isinstance(target, AttrRef):
-                return _check_name(await target._aaddress(rt, rt.program.children[nid][2]))
-            return _check_name(await name_thunk(rt))
+                return await target._aaddress(rt, rt.program.children[nid][2])
+            return await name_thunk(rt)
+
+        async def stream(rt: Runtime) -> AsyncIterator:
+            with rt.ctx.attrs.let(await resolve(rt), await value_thunk(rt)):
+                async with aclosing(aiter_any(await body_thunk(rt))) as items:
+                    async for item in items:
+                        yield item
 
         async def athunk(rt: Runtime) -> object:
-            name = await resolve(rt)
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
-                return _astream_let(rt, name, value_thunk, body_thunk)
-            v = await value_thunk(rt)
-            attrs = rt.ctx.attrs
-            had_prev = name in attrs
-            prev = attrs[name] if had_prev else None
-            attrs[name] = v
-            try:
+                return stream(rt)
+            with rt.ctx.attrs.let(await resolve(rt), await value_thunk(rt)):
                 return await body_thunk(rt)
-            finally:
-                _restore(rt.ctx.attrs, name, had_prev, prev)
 
         return athunk
-
-
-def _check_name(name: object) -> str:
-    """The declared name, which must be a ``str``."""
-    if not isinstance(name, str):
-        msg = f"Let name must be a str, got {type(name).__name__}"
-        raise TypeError(msg)
-    return name
-
-
-def _restore(attrs: object, name: str, had_prev: bool, prev: object) -> None:
-    """Pop the scoped binding: restore prior value or delete the slot."""
-    if had_prev:
-        attrs[name] = prev  # type: ignore[index]
-    elif name in attrs:  # type: ignore[operator]
-        del attrs[name]  # type: ignore[attr-defined]
-
-
-def _stream_let(
-    rt: Runtime,
-    name: str,
-    value_thunk: Callable,
-    body_thunk: Callable,
-) -> Iterator:
-    """Sync stream body: the binding lives for the whole drain."""
-    v = value_thunk(rt)
-    attrs = rt.ctx.attrs
-    had_prev = name in attrs
-    prev = attrs[name] if had_prev else None
-    attrs[name] = v
-    try:
-        yield from sync_iter(body_thunk(rt))
-    finally:
-        _restore(rt.ctx.attrs, name, had_prev, prev)
-
-
-async def _astream_let(
-    rt: Runtime,
-    name: str,
-    value_thunk: Callable,
-    body_thunk: Callable,
-) -> AsyncIterator:
-    """Async sibling of :func:`_stream_let`."""
-    v = await value_thunk(rt)
-    attrs = rt.ctx.attrs
-    had_prev = name in attrs
-    prev = attrs[name] if had_prev else None
-    attrs[name] = v
-    try:
-        async for item in aiter_any(await body_thunk(rt)):
-            yield item
-    finally:
-        _restore(rt.ctx.attrs, name, had_prev, prev)

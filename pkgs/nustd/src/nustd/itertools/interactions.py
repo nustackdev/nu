@@ -14,19 +14,19 @@ Two atom shapes:
   materialize their one source with ``list(sync_iter(source(rt)))``.
 - **higher-order** atoms carry a Nu query child plus a loop-var-name child
   (default ``"item"``, two names ``"acc"`` / ``"item"`` for ``accumulate``),
-  exactly like ``Filter`` / ``Reduce``: bind each item into
-  ``rt.ctx.attrs[name]`` (the model's sanctioned loop-var side-channel), then
-  evaluate the Nu child. The body reads the item via ``ObjectRef("item")``.
+  exactly like ``Filter`` / ``Reduce``: bind each item under ``name`` with
+  ``ctx.attrs.let`` for one evaluation of the Nu child, which reads the item
+  via ``ObjectRef("item")``.
 
-The per-item ``ctx.attrs[name] = elem`` write is the loop-var side-channel, not
-a tracked fabric write, so these atoms are pure - no ``mutates`` declared.
+The per-item binding is scoped, not a tracked fabric write, so these atoms are
+pure - no ``mutates`` declared.
 """
 
 from __future__ import annotations
 
 import itertools as _it
 import operator
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from nu.core._stream import aiter_any, sync_iter
 from nu.engine import Term
@@ -623,8 +623,8 @@ class TakeWhile(StreamQuery):
 
             def gen() -> object:
                 for elem in sync_iter(source(rt)):
-                    rt.ctx.attrs[name] = elem
-                    keep = predicate(rt)
+                    with rt.ctx.attrs.let(name, elem):
+                        keep = predicate(rt)
                     if keep is EMPTY or keep is INVALID or not keep:
                         return
                     yield elem
@@ -641,8 +641,8 @@ class TakeWhile(StreamQuery):
 
             async def agen() -> object:
                 async for elem in aiter_any(await source(rt)):
-                    rt.ctx.attrs[name] = elem
-                    keep = await predicate(rt)
+                    with rt.ctx.attrs.let(name, elem):
+                        keep = await predicate(rt)
                     if keep is EMPTY or keep is INVALID or not keep:
                         return
                     yield elem
@@ -674,8 +674,8 @@ class DropWhile(StreamQuery):
                 dropping = True
                 for elem in sync_iter(source(rt)):
                     if dropping:
-                        rt.ctx.attrs[name] = elem
-                        keep = predicate(rt)
+                        with rt.ctx.attrs.let(name, elem):
+                            keep = predicate(rt)
                         if keep is not EMPTY and keep is not INVALID and keep:
                             continue
                         dropping = False
@@ -695,8 +695,8 @@ class DropWhile(StreamQuery):
                 dropping = True
                 async for elem in aiter_any(await source(rt)):
                     if dropping:
-                        rt.ctx.attrs[name] = elem
-                        keep = await predicate(rt)
+                        with rt.ctx.attrs.let(name, elem):
+                            keep = await predicate(rt)
                         if keep is not EMPTY and keep is not INVALID and keep:
                             continue
                         dropping = False
@@ -726,8 +726,8 @@ class FilterFalse(StreamQuery):
 
             def gen() -> object:
                 for elem in sync_iter(source(rt)):
-                    rt.ctx.attrs[name] = elem
-                    keep = predicate(rt)
+                    with rt.ctx.attrs.let(name, elem):
+                        keep = predicate(rt)
                     if keep is EMPTY or keep is INVALID:
                         continue
                     if not keep:
@@ -745,8 +745,8 @@ class FilterFalse(StreamQuery):
 
             async def agen() -> object:
                 async for elem in aiter_any(await source(rt)):
-                    rt.ctx.attrs[name] = elem
-                    keep = await predicate(rt)
+                    with rt.ctx.attrs.let(name, elem):
+                        keep = await predicate(rt)
                     if keep is EMPTY or keep is INVALID:
                         continue
                     if not keep:
@@ -806,9 +806,8 @@ class Accumulate(StreamQuery):
                     if func is None:
                         acc = operator.add(acc, elem)
                     else:
-                        rt.ctx.attrs[cast("str", acc_name)] = acc
-                        rt.ctx.attrs[cast("str", item_name)] = elem
-                        acc = func(rt)
+                        with rt.ctx.attrs.let(acc_name, acc), rt.ctx.attrs.let(item_name, elem):
+                            acc = func(rt)
                     yield acc
 
             return gen()
@@ -838,9 +837,8 @@ class Accumulate(StreamQuery):
                     if func is None:
                         acc = operator.add(acc, elem)
                     else:
-                        rt.ctx.attrs[cast("str", acc_name)] = acc
-                        rt.ctx.attrs[cast("str", item_name)] = elem
-                        acc = await func(rt)
+                        with rt.ctx.attrs.let(acc_name, acc), rt.ctx.attrs.let(item_name, elem):
+                            acc = await func(rt)
                     yield acc
 
             return agen()
@@ -868,8 +866,8 @@ class StarMap(StreamQuery):
 
             def gen() -> object:
                 for elem in sync_iter(source(rt)):
-                    rt.ctx.attrs[name] = elem
-                    result = function(rt)
+                    with rt.ctx.attrs.let(name, elem):
+                        result = function(rt)
                     if result is EMPTY or result is INVALID:
                         continue
                     yield result
@@ -886,8 +884,8 @@ class StarMap(StreamQuery):
 
             async def agen() -> object:
                 async for elem in aiter_any(await source(rt)):
-                    rt.ctx.attrs[name] = elem
-                    result = await function(rt)
+                    with rt.ctx.attrs.let(name, elem):
+                        result = await function(rt)
                     if result is EMPTY or result is INVALID:
                         continue
                     yield result
@@ -926,8 +924,8 @@ class GroupBy(StreamQuery):
             def keyer(item: object) -> object:
                 if key_fn is None:
                     return item
-                rt.ctx.attrs[cast("str", name)] = item
-                return key_fn(rt)
+                with rt.ctx.attrs.let(name, item):
+                    return key_fn(rt)
 
             def gen() -> object:
                 for kval, group in _it.groupby(sync_iter(source(rt)), keyer):
@@ -951,8 +949,8 @@ class GroupBy(StreamQuery):
                 if key_fn is None:
                     keyed.append((item, item))
                 else:
-                    rt.ctx.attrs[cast("str", name)] = item
-                    keyed.append((await key_fn(rt), item))
+                    with rt.ctx.attrs.let(name, item):
+                        keyed.append((await key_fn(rt), item))
 
             async def agen() -> object:
                 for kval, group in _it.groupby(keyed, lambda pair: pair[0]):

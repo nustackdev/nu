@@ -169,3 +169,111 @@ def test_repr_includes_items() -> None:
     r = repr(Attributes({"x": 1}))
     assert "x" in r
     assert "1" in r
+
+
+# --- binding: let / set / exists ------------------------------------------
+
+
+def test_let_declares_the_name_for_the_scope_only() -> None:
+    attrs = Attributes()
+    with attrs.let("n", 1):
+        assert attrs["n"] == 1
+    assert "n" not in attrs
+
+
+def test_let_shadows_and_restores_the_outer_binding() -> None:
+    attrs = Attributes()
+    with attrs.let("n", 1):
+        with attrs.let("n", 2):
+            assert attrs["n"] == 2
+        assert attrs["n"] == 1
+    assert "n" not in attrs
+
+
+def test_let_restores_on_error() -> None:
+    attrs = Attributes()
+    with attrs.let("n", 1):
+        with pytest.raises(ValueError, match="boom"), attrs.let("n", 2):
+            raise ValueError("boom")
+        assert attrs["n"] == 1
+    assert "n" not in attrs
+
+
+def test_let_restores_an_outer_empty_like_value() -> None:
+    # A declared name holding None is still declared, and comes back as None.
+    attrs = Attributes()
+    with attrs.let("n", None):
+        with attrs.let("n", 5):
+            pass
+        assert attrs.exists("n")
+        assert attrs["n"] is None
+
+
+def test_let_refuses_a_name_that_is_not_a_str() -> None:
+    with pytest.raises(TypeError, match="must be a str, got int"):
+        Attributes().let(1, "v")
+
+
+def test_set_reassigns_the_innermost_binding() -> None:
+    attrs = Attributes()
+    with attrs.let("n", 1):
+        with attrs.let("n", 2):
+            attrs.set("n", 3)
+            assert attrs["n"] == 3
+        assert attrs["n"] == 1
+
+
+def test_set_on_an_undeclared_name_raises_with_a_let_hint() -> None:
+    attrs = Attributes()
+    with pytest.raises(NameError, match=r"not declared.*nu\.Let\('n'"):
+        attrs.set("n", 1)
+    assert "n" not in attrs
+
+
+def test_exists_means_declared() -> None:
+    attrs = Attributes()
+    assert attrs.exists("n") is False
+    with attrs.let("n", None):
+        assert attrs.exists("n") is True
+    assert attrs.exists("n") is False
+
+
+def test_let_held_by_a_generator_lives_across_its_yields() -> None:
+    attrs = Attributes()
+
+    def stream():
+        with attrs.let("n", "bound"):
+            yield attrs["n"]
+            yield attrs["n"]
+
+    gen = stream()
+    assert next(gen) == "bound"
+    assert attrs["n"] == "bound"  # alive between pulls
+    gen.close()
+    assert "n" not in attrs  # released on close
+
+
+def test_let_held_by_a_generator_releases_on_exhaustion() -> None:
+    attrs = Attributes({"n": "outer"})
+
+    def stream():
+        with attrs.let("n", "inner"):
+            yield from (1, 2)
+
+    assert list(stream()) == [1, 2]
+    assert attrs["n"] == "outer"
+
+
+async def test_let_held_by_an_async_generator_releases_on_close() -> None:
+    attrs = Attributes({"n": "outer"})
+
+    async def stream():
+        with attrs.let("n", "inner"):
+            yield 1
+            yield 2
+
+    agen = stream()
+    assert await agen.__anext__() == 1
+    assert attrs["n"] == "inner"
+    await agen.aclose()
+    assert attrs["n"] == "outer"

@@ -109,15 +109,11 @@ class AttrRef(_ContextRef):
 
     def _write(self, rt: Runtime, value: object, nid: int) -> None:
         """Reassign this Ref's slot in the attrs fabric; it must be declared."""
-        address = self._address(rt, nid)
-        _require_declared(rt, address)
-        rt.ctx.attrs[address] = value
+        rt.ctx.attrs.set(self._address(rt, nid), value)
 
     async def _awrite(self, rt: Runtime, value: object, nid: int) -> None:
         """Async sibling of :meth:`_write`."""
-        address = await self._aaddress(rt, nid)
-        _require_declared(rt, address)
-        rt.ctx.attrs[address] = value
+        rt.ctx.attrs.set(await self._aaddress(rt, nid), value)
 
     def set(self, value: object) -> Set:
         """A Command reassigning this Ref's name to ``value``.
@@ -157,13 +153,6 @@ class AttrRef(_ContextRef):
         from .interactions import Exists
 
         return Exists(self)
-
-
-def _require_declared(rt: Runtime, address: object) -> None:
-    """Raise when ``address`` has no binding to reassign."""
-    if address not in rt.ctx.attrs:
-        msg = f"cannot set attr {address!r}: it is not declared. Declare it with nu.Let({address!r}, ...) first."
-        raise NameError(msg)
 
 
 # =========================================================================
