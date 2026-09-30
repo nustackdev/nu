@@ -17,7 +17,7 @@ import pytest
 
 from nu import Context, run
 from nu.domains.shape import Shape
-from nustd.mem import IntRef, ShapeRef, ShapesDictRef, ShapesListRef, StrRef
+from nustd.mem import DictRef, IntRef, ListRef, ShapeRef, StrRef
 
 
 # --- shapes: a genuine 3-level hierarchy ------------------------------------
@@ -29,13 +29,13 @@ class Inner(Shape):
 
 
 class Mid(Shape):
-    inners = ShapesDictRef.slot(Inner)
+    inners = DictRef.slot(Inner)
     note = StrRef.slot()
 
 
 class Root(Shape):
-    mids = ShapesDictRef.slot(Mid)
-    rows = ShapesListRef.slot(Inner)
+    mids = DictRef.slot(Mid)
+    rows = ListRef.slot(Inner)
     info = ShapeRef.slot(Inner)
     active = StrRef.slot()  # holds a key; used as a dynamic / ref-valued key
 
@@ -160,7 +160,7 @@ def test_primitive_dict_navigation_store_read_roundtrip(ctx, data):
     from nustd.mem import DictRef
 
     class Bag(Shape):
-        d = DictRef.slot(str, str)
+        d = DictRef.slot(str, key=str)
 
     bag_data: dict = {}
     bag_ctx = Context().bind(dict, bag_data, Bag)

@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 from typing_extensions import Self
 
 from nu.domains.shape import Slot
-from nu.domains.shape.refs.base import StructuredRef
+from nu.domains.shape.base import StructuredRef
 from nu.engine.structure import Declared
 
 

@@ -24,8 +24,9 @@ Usage::
 
 Typed leaves (``IntRef``, ``StrRef``, ``DatetimeRef``, ...) each carry their
 value Form, so the ref itself is an operand. Containers (``ListRef``,
-``DictRef``, ``SetRef``) hold a plain list, dict or set. ``ShapeRef``,
-``ShapesListRef`` and ``ShapesDictRef`` nest Shapes inside Shapes.
+``DictRef``, ``SetRef``) hold a plain list, dict or set, and descend to the
+ref for the value they declare: a leaf, or a ``ShapeRef`` when the value is a
+Shape. ``ShapeRef`` nests one Shape inside another.
 ``ProgramRef`` holds Nu source. ``JQueueRef``, in ``nustd.mem.refs.jqueue``,
 holds a live janus queue and is imported by its own path.
 """
@@ -43,16 +44,13 @@ from nustd.mem.refs import (
     FloatRef,
     FractionRef,
     IntRef,
-    ItemRef,
     ListRef,
+    ObjectRef,
     PathRef,
     PercentageRef,
     ProgramRef,
-    RefBase,
     SetRef,
     ShapeRef,
-    ShapesDictRef,
-    ShapesListRef,
     StrRef,
     TimedeltaRef,
     TimeRef,
@@ -74,16 +72,13 @@ __all__ = [
     "FloatRef",
     "FractionRef",
     "IntRef",
-    "ItemRef",
     "ListRef",
+    "ObjectRef",
     "PathRef",
     "PercentageRef",
     "ProgramRef",
-    "RefBase",
     "SetRef",
     "ShapeRef",
-    "ShapesDictRef",
-    "ShapesListRef",
     "StrRef",
     "TimeRef",
     "TimedeltaRef",

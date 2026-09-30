@@ -49,7 +49,7 @@ class Entry:
     ``kind`` is what the entry points at - ``ref``, ``shape`` or ``method`` -
     which is the only thing a reader needs to predict what a lookup will
     return. ``type`` is the declared type as written, rendered back from the
-    annotation (``ShapesDictRef[int, Order]``). ``config`` is the declaration
+    annotation (``DictRef[int, Order]``). ``config`` is the declaration
     kwargs that the type does not already carry: the endpoint path on a
     Service method, a non-default view class on a slot.
 
@@ -152,7 +152,7 @@ def nested_shape(cls: type, name: str) -> type | None:
     ``rel: ShapeRef[Order]``, or a bare ``rel = ShapeRef.slot(Order)`` with no
     annotation at all - and the last one resolves no type info, so the ref
     class plus its ``shape_type`` kwarg is the reading that covers all three.
-    A collection of shapes (``ShapesDictRef[int, Order]``) is not nested: the
+    A collection of shapes (``DictRef[int, Order]``) is not nested: the
     entry is the collection, and its record is the collection's.
     """
     slot = _declarations(cls).get(name)
@@ -188,7 +188,7 @@ def _held_shape(slot: Slot) -> type | None:
 
 def _navigates_shape(ref_cls: type) -> bool:
     """True for the ref family that descends into one nested Shape."""
-    from nu.domains.shape.refs.shape import ShapeRef
+    from nu.domains.shape.shape import ShapeRef
 
     return isinstance(ref_cls, type) and issubclass(ref_cls, ShapeRef)
 

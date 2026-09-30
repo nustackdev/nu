@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import nu
 from nu.domains.shape.interactions import Extract
-from nu.domains.shape.refs.mapping import MappingRef
-from nu.domains.shape.refs.sequence import SequenceRef
-from nu.domains.shape.refs.set_ import SetRef
+from nu.domains.shape.mapping import MappingRef
+from nu.domains.shape.sequence import SequenceRef
+from nu.domains.shape.set_ import SetRef
 
 
 def test_mapping_ref_extract_returns_extract_query():

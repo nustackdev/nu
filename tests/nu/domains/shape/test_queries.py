@@ -16,7 +16,7 @@ from nu.domains.shape.interactions import (
     Load,
     Missing,
 )
-from nu.domains.shape.refs.item import ItemRef
+from nu.domains.shape.item import ItemRef
 from nu.lang import ScalarQuery
 from nu.lang.sentinels import EMPTY, INVALID
 

@@ -1,42 +1,32 @@
-"""Virtuals storage substrate refs: navigate the virtuals View hierarchy.
+"""How a kv ref reads and writes: navigate the virtuals View hierarchy of a store.
 
-``ViewRef`` and ``PrimitiveRef`` are the two concrete substrates against the
-shape Ref seam (``StructuredRef``): they fill the plug-points with virtuals
-View navigation, backed by a tkv snapshot / transaction resolved from the
-Context.
+Two substrates cover every kv ref. ``ViewRef`` reads a container as a live
+View, so collection ops run against storage; ``PrimitiveRef`` subscripts its
+parent View, so a leaf reads as a plain value. Each level of a ref's path is a
+child on the tree, resolved at run time, so a key may be a literal, a computed
+expression, or a ref from another fabric. The Navigator and the storage context
+(transaction or snapshot) come from the Context under the chain's root shape.
 
-A ref names one path segment: its address, held as ``children[1]`` and
-resolved through the runtime like any child. The parent chain lives on the tree
-at ``children[0]`` (walked via ``parent_ref``); for the common shape-field case
-those are static slot names, read off each parent's stored ``(_segment,
-_type_marker)`` at compile time. The Navigator + storage context (snapshot/transaction) come from the
-Context under ``(Navigator, root_shape)`` / ``(TransactionProtocol|SnapshotProtocol,
-root_shape)`` and are resolved with predicate routing (site + path).
-
-Read is the Ref's dual role:
-- ``ViewRef._compile`` returns the navigate-and-fetch-the-view thunk (faceted
-  lazy / eager), so collection ops run against a live virtuals View.
-- ``PrimitiveRef._compile`` navigates to the parent View and subscripts the leaf.
-
-``write`` / ``erase`` resolve the address and mutate through the parent View
-(``parent[addr] = value`` / ``del parent[addr]``), which the virtuals library
-decomposes / cleans up.
+A container also decides what its children are: the ref at ``ref[key]`` is
+the kv ref for the value the container declared.
 """
 
 from __future__ import annotations
 
 from enum import Enum
 from logging import getLogger
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
 import nu
-from nu.domains.shape.refs.base import StructuredRef
+from nu.domains.shape.base import StructuredRef
 from nu.lang import EMPTY
+from nu.lang.typeinfo import TypeInfo
 from nustd.kv.paths import ViewPathSer
 from virtuals import Empty as StorageEmpty
 from virtuals import Navigator
 from virtuals.collections import Subscriptable
 from virtuals.tkv.storage import SnapshotProtocol, TransactionProtocol
+from virtuals.view import ViewBase
 
 
 if TYPE_CHECKING:
@@ -97,12 +87,19 @@ def _resolve_storage_ctx(rt: Runtime, scope: type | None, resolved_path: tuple) 
         return rt.ctx.get(SnapshotProtocol, *tags, site=site, path=resolved_path)
 
 
+def _plain(value: object) -> object:
+    """A stored value as a leaf reads it: a container stored decomposed comes back extracted."""
+    if isinstance(value, ViewBase):
+        return (value.eager if hasattr(value, "eager") else value).extract()
+    return value
+
+
 class _VirtualsRefBase(StructuredRef, Generic[T]):
     """Shared virtuals navigation: path building off the parent chain + Navigator.
 
-    Each ref stores its raw static address in payload as ``"segment"`` and its
-    type marker as ``"type_marker"`` (a View subclass for containers, a Python
-    type for leaves). The full path is ``((addr, marker), ...)`` root-first.
+    Each ref stores its raw static address in payload as ``"segment"``; a
+    container also stores its View class as ``"type_marker"``, and a leaf has
+    none. The full path is ``((addr, marker), ...)`` root-first.
     """
 
     def __init__(
@@ -125,15 +122,16 @@ class _VirtualsRefBase(StructuredRef, Generic[T]):
         Walks the on-tree parent chain via ``rt.program.children`` (``[0]`` =
         structural parent, ``[1]`` = this level's address), evaluating each
         level's address child and reading its ``"type_marker"`` off the term
-        payload. Because the parent lives on the tree, a *dynamic* parent key
-        resolves here like any other child - no static-segment shortcut needed.
+        payload (None for a leaf). Because the parent lives on the tree, a
+        *dynamic* parent key resolves here like any other child - no
+        static-segment shortcut needed.
         """
         segs: list[tuple[object, type]] = []
         cur = nid
         while True:
             kids = rt.program.children[cur]
             term = rt.program.terms[cur]
-            segs.append((rt.eval(kids[1]), nu.tree.payload(term)["type_marker"]))  # type: ignore[attr-defined]
+            segs.append((rt.eval(kids[1]), nu.tree.payload(term).get("type_marker")))  # type: ignore[attr-defined]
             parent = kids[0]
             if not isinstance(rt.program.terms[parent], StructuredRef):
                 break  # parent is the ANCHOR -> chain root
@@ -148,7 +146,7 @@ class _VirtualsRefBase(StructuredRef, Generic[T]):
         while True:
             kids = rt.program.children[cur]
             term = rt.program.terms[cur]
-            segs.append((await rt.aeval(kids[1]), nu.tree.payload(term)["type_marker"]))  # type: ignore[attr-defined]
+            segs.append((await rt.aeval(kids[1]), nu.tree.payload(term).get("type_marker")))  # type: ignore[attr-defined]
             parent = kids[0]
             if not isinstance(rt.program.terms[parent], StructuredRef):
                 break
@@ -191,6 +189,9 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
         run(Portfolio.tags.len(), ctx)
     """
 
+    _default_view: ClassVar[type[View] | None] = None
+    """The View class a slot of this ref lays its container out with, unless it names one."""
+
     def __init__(
         self,
         address: object,
@@ -201,11 +202,36 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
         **kwargs: object,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape, **kwargs)
-        # ``view_type`` may be None when the shape-blueprint __init__ routes
-        # through here without threading it; the concrete shape ref then sets
-        # ``payload["type_marker"]`` itself right after super().__init__.
-        if view_type is not None:
-            self._payload["type_marker"] = view_type
+        self._payload["type_marker"] = view_type or self._default_view
+
+    def _wrap_item_ref(self, address: object) -> StructuredRef:
+        """The child at ``address``: the kv ref for the value this container declared.
+
+        A Shape gets a ``ShapeRef`` bound to it, a kv leaf class gets itself, a
+        Python type gets the kv leaf that holds it, and a value declared as
+        anything else, or not at all, gets ``ObjectRef``. The child carries the
+        declaration on, as a slot's ref does.
+        """
+        from .containers import LEAVES, ShapeRef
+        from .items import ItemRef, ObjectRef
+
+        declared: TypeInfo = self._payload.get("type_info") or TypeInfo.any()  # type: ignore[assignment]
+        value = declared.elem or TypeInfo.any()
+        held = value.py_type
+        child: StructuredRef
+        if value.is_shape:
+            child = ShapeRef(
+                address, shape_type=held, parent_ref=self, owner_shape=self._owner_shape
+            )
+        else:
+            leaf = (
+                held
+                if isinstance(held, type) and issubclass(held, ItemRef)
+                else LEAVES.get(held, ObjectRef)
+            )
+            child = leaf(address, parent_ref=self, owner_shape=self._owner_shape)
+        child._payload["type_info"] = value
+        return child
 
     def _with_facet(self, facet: Facet) -> ViewRef[T]:
         """A faceted variant: same tree, fresh payload with the facet overridden."""
@@ -400,6 +426,8 @@ class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
         - A write materializes every ancestor along the path first, so a leaf
           can be written into storage that has nothing above it yet.
         - Erasing a leaf that is not there is a no-op.
+        - A container stored under the leaf reads back extracted, as a plain
+          dict or list, never as a live View.
         - A subclass that stores a value in some other form overrides the
           lift-on-read and the write command; the leaf address itself is
           unaffected by that.
@@ -412,18 +440,6 @@ class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
         run(Portfolio.name.set("core"), ctx)
         run(Portfolio.name, ctx)
     """
-
-    def __init__(
-        self,
-        address: object,
-        *,
-        value_type: type[T],
-        parent_ref: _VirtualsRefBase | None = None,
-        owner_shape: type[Shape] | None = None,
-        **kwargs: object,
-    ) -> None:
-        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape, **kwargs)
-        self._payload["type_marker"] = value_type
 
     # --- read (the dual role) ------------------------------------------------
 
@@ -442,7 +458,7 @@ class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
                 val = parent_view[key]
                 if isinstance(val, StorageEmpty):
                     return EMPTY
-                return self._lift(val)
+                return self._lift(_plain(val))
             msg = f"View {parent_view.__class__.__name__} is not subscriptable"
             raise TypeError(msg)
         except (KeyError, IndexError):

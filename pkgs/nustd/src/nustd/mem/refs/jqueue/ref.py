@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from nu.domains.shape import Shape
-    from nu.lang import IntArg, Nu, StrArg
+    from nu.lang import IntArg, StrArg
     from nu.lang.runtime import Runtime
 
 
@@ -88,10 +88,6 @@ class JQueueRef(RefBase[janus.Queue[T]], JQueue[T], Generic[T]):
     @property
     def _item_type(self) -> type:
         return self._payload.get("item_type", object)  # type: ignore[return-value]
-
-    def _wrap_result(self, op: Nu) -> JQueue[T]:
-        """Wrap an interaction node in the typed JQueue surface."""
-        return JQueue(op)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the sync read thunk that vivifies and yields the queue."""

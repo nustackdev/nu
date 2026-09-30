@@ -1,16 +1,8 @@
-"""virtuals-substrate refs for standard-library value types.
+"""kv standard-library leaves: values the store cannot hold as they are.
 
-Each ref is a typed leaf on the virtuals View substrate whose stored form differs
-from its domain type, so it overrides ``store`` (domain -> storage) and
-``coerce`` (storage -> domain). The value interface comes from mixing in the
-matching ``nustd`` Form, exactly as ``IntRef`` mixes in ``Int``.
-
-Storage formats:
-- Decimal / Fraction / complex / Path / UUID: ``str``
-- date / datetime / time / timezone: ``str`` (ISO / offset)
-- BasisPoint: ``int`` (raw basis points)
-- Percentage: ``float`` (raw percentage)
-- timedelta: ``float`` (total seconds)
+Each leaf pairs a standard-library value form with the kv leaf, and translates
+at the boundary: ``set`` lowers the value to a form the store holds, and a
+read lifts it back, so the ref is an operand of the real value throughout.
 """
 
 from __future__ import annotations
@@ -18,11 +10,8 @@ from __future__ import annotations
 from datetime import date, datetime, time, timedelta, timezone
 from typing import TYPE_CHECKING
 
-from typing_extensions import Self
-
 from nu.core import ToFloat, ToInt, ToStr
-from nu.domains.shape import SetCmd, Slot
-from nu.forms import Float, Int, Str
+from nu.domains.shape import SetCmd
 from nu.lang import Nu
 from nustd.cmath import complex as ComplexForm
 from nustd.datetime import date as DateForm
@@ -51,10 +40,7 @@ if TYPE_CHECKING:
     from pathlib import PurePath
     from uuid import UUID
 
-    from nu.domains.shape import Shape
-    from nu.lang import Arg, IntArg, StrArg
-
-    from .base import PrimitiveRef
+    from nu.lang import Arg
 
 
 __all__ = [
@@ -106,26 +92,6 @@ class DecimalRef(ItemRef, DecimalForm):
         run(Order.price.set(Decimal("19.99")), ctx)
     """
 
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=str,
-            value_value_type=Str,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding a Decimal value."""
-        return Slot(cls)  # type: ignore[return-value]
-
     def _lift(self, raw: object) -> Decimal:
         """Parse the stored str back to a Decimal."""
         from decimal import Decimal as DecimalCls
@@ -167,26 +133,6 @@ class FractionRef(ItemRef, FractionForm):
         run(Split.share.set(Fraction(1, 3)), ctx)
     """
 
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=str,
-            value_value_type=Str,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding a Fraction value."""
-        return Slot(cls)  # type: ignore[return-value]
-
     def _lift(self, raw: object) -> Fraction:
         """Parse the stored str back to a Fraction."""
         from fractions import Fraction as FractionCls
@@ -227,26 +173,6 @@ class ComplexRef(ItemRef, ComplexForm):
         run(Wave.amplitude.set(complex(1, 2)), ctx)
     """
 
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=str,
-            value_value_type=Str,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding a complex value."""
-        return Slot(cls)  # type: ignore[return-value]
-
     def _lift(self, raw: object) -> complex:
         """Parse the stored str back to a complex."""
         return raw if isinstance(raw, complex) else complex(raw)  # type: ignore[arg-type]
@@ -284,26 +210,6 @@ class BasisPointRef(ItemRef, BasisPointForm):
             taker = BasisPointRef.slot()
         run(Fee.taker.set(25), ctx)
     """
-
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=int,
-            value_value_type=Int,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding a BasisPoint value."""
-        return Slot(cls)  # type: ignore[return-value]
 
     def _lift(self, raw: object) -> PyBasisPoint:
         """Wrap the stored int back as a BasisPoint."""
@@ -344,26 +250,6 @@ class PercentageRef(ItemRef, PercentageForm):
             slippage = PercentageRef.slot()
         run(Fee.slippage.set(0.5), ctx)
     """
-
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=float,
-            value_value_type=Float,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding a Percentage value."""
-        return Slot(cls)  # type: ignore[return-value]
 
     def _lift(self, raw: object) -> PyPercentage:
         """Wrap the stored float back as a Percentage."""
@@ -410,26 +296,6 @@ class DateRef(ItemRef, DateForm):
         run(Order.booked.set(date(2026, 1, 31)), ctx)
     """
 
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=str,
-            value_value_type=Str,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding a date value."""
-        return Slot(cls)  # type: ignore[return-value]
-
     def _lift(self, raw: object) -> date:
         """Parse the stored ISO str back to a date."""
         return raw if isinstance(raw, date) else date.fromisoformat(str(raw))
@@ -473,26 +339,6 @@ class DatetimeRef(ItemRef, DatetimeForm):
             filled_at = DatetimeRef.slot()
         run(Order.filled_at.set(datetime.now(UTC)), ctx)
     """
-
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=str,
-            value_value_type=Str,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding a datetime value."""
-        return Slot(cls)  # type: ignore[return-value]
 
     def _lift(self, raw: object) -> datetime:
         """Parse the stored ISO str (or epoch) back to a datetime."""
@@ -539,26 +385,6 @@ class TimeRef(ItemRef, TimeForm):
         run(Window.opens.set(time(9, 30)), ctx)
     """
 
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=str,
-            value_value_type=Str,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding a time value."""
-        return Slot(cls)  # type: ignore[return-value]
-
     def _lift(self, raw: object) -> time:
         """Parse the stored ISO str back to a time."""
         return raw if isinstance(raw, time) else time.fromisoformat(str(raw))
@@ -598,26 +424,6 @@ class TimedeltaRef(ItemRef, TimedeltaForm):
             timeout = TimedeltaRef.slot()
         run(Job.timeout.set(timedelta(minutes=5)), ctx)
     """
-
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=float,
-            value_value_type=Float,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding a timedelta value."""
-        return Slot(cls)  # type: ignore[return-value]
 
     def _lift(self, raw: object) -> timedelta:
         """Rebuild the timedelta from the stored total-seconds float."""
@@ -662,26 +468,6 @@ class TimezoneRef(ItemRef, TimezoneForm):
             zone = TimezoneRef.slot()
         run(Desk.zone.set(timezone(timedelta(hours=4))), ctx)
     """
-
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=str,
-            value_value_type=Str,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding a timezone value."""
-        return Slot(cls)  # type: ignore[return-value]
 
     def _lift(self, raw: object) -> timezone:
         """Parse the stored offset str back to a timezone."""
@@ -729,26 +515,6 @@ class PathRef(ItemRef, PathForm):
         run(Job.outdir.set(PurePath("/var/log")), ctx)
     """
 
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=str,
-            value_value_type=Str,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding a Path value."""
-        return Slot(cls)  # type: ignore[return-value]
-
     def _lift(self, raw: object) -> PurePath:
         """Parse the stored str back to a PurePath."""
         from pathlib import PurePath
@@ -787,26 +553,6 @@ class UUIDRef(ItemRef, UUIDForm):
             token = UUIDRef.slot()
         run(Session.token.set(uuid4()), ctx)
     """
-
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=str,
-            value_value_type=Str,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding a UUID value."""
-        return Slot(cls)  # type: ignore[return-value]
 
     def _lift(self, raw: object) -> UUID:
         """Parse the stored str back to a UUID."""

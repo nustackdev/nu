@@ -10,8 +10,8 @@ from __future__ import annotations
 import nu
 from nu.core.flows import Sequential
 from nu.domains.shape import Shape, reroot, rerooter
-from nu.domains.shape.refs.base import ANCHOR, StructuredRef
-from nu.domains.shape.refs.item import MutableItemRef
+from nu.domains.shape.base import ANCHOR, StructuredRef
+from nu.domains.shape.item import MutableItemRef
 from nu.lang import Literal
 from nu.prog import Eval
 

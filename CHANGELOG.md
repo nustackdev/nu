@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Collections return typed children from their declared value; shape collections merge into plain ones
 - Operators only compose flows; bit, set and merge operations become named methods
 - Terms never quietly turn into Python values; operators follow each value's Python meaning
 - The any-value form is now called Object, so code using the old name needs renaming

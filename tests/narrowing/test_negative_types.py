@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import nu
 from nu.forms import Int, Str
-from nustd.kv.refs import IntRef, ShapesDictRef, StrRef
+from nustd.kv.refs import DictRef, IntRef, StrRef
 
 
 # --- Shapes (used across the negative cases) ---------------------------
@@ -35,11 +35,11 @@ class Other(nu.Shape):
 
 
 class Store(nu.Shape):
-    profiles: ShapesDictRef[int, Profile]
+    profiles: DictRef[int, Profile]
 
 
 class WithMembers(nu.Shape):
-    members: ShapesDictRef[int, Profile]
+    members: DictRef[int, Profile]
 
 
 def _type_checks_only() -> None:
@@ -53,7 +53,7 @@ def _type_checks_only() -> None:
     # 1. StrRef is not str; assigning to a raw-str variable is a mismatch.
     _wrong_leaf: str = Profile.name  # type: ignore[assignment]
 
-    # 2. Store.profiles is ShapesDictRef[int, Profile]; subscript returns
+    # 2. Store.profiles is DictRef[int, Profile]; subscript returns
     #    Profile, not Other.
     _wrong_subscript: Other = Store.profiles[42]  # type: ignore[assignment]
 

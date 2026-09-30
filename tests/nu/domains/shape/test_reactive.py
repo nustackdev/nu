@@ -19,10 +19,10 @@ from nu.core.reactive import (
     OnDescendantsChange,
     OnPrimitiveChange,
 )
-from nu.domains.shape.refs.item import ItemRef, ReactiveItemRef
-from nu.domains.shape.refs.mapping import ReactiveMappingRef
-from nu.domains.shape.refs.sequence import ReactiveSequenceRef
-from nu.domains.shape.refs.set_ import ReactiveSetRef
+from nu.domains.shape.item import ItemRef, ReactiveItemRef
+from nu.domains.shape.mapping import ReactiveMappingRef
+from nu.domains.shape.sequence import ReactiveSequenceRef
+from nu.domains.shape.set_ import ReactiveSetRef
 from nu.lang import ScalarQuery
 
 
@@ -181,19 +181,19 @@ def test_reactive_item_ref_on_change_returns_primitive_query():
 
 
 def test_reactive_collection_form_in_mapping_ref_mro():
-    from nu.domains.shape.forms.collection import ReactiveCollectionForm
+    from nu.domains.shape.collection import ReactiveCollectionForm
 
     assert issubclass(ReactiveMappingRef, ReactiveCollectionForm)
 
 
 def test_reactive_collection_form_in_sequence_ref_mro():
-    from nu.domains.shape.forms.collection import ReactiveCollectionForm
+    from nu.domains.shape.collection import ReactiveCollectionForm
 
     assert issubclass(ReactiveSequenceRef, ReactiveCollectionForm)
 
 
 def test_reactive_collection_form_in_set_ref_mro():
-    from nu.domains.shape.forms.collection import ReactiveCollectionForm
+    from nu.domains.shape.collection import ReactiveCollectionForm
 
     assert issubclass(ReactiveSetRef, ReactiveCollectionForm)
 

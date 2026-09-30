@@ -244,7 +244,7 @@ class Movie(nu.Shape):
 
 
 class State(nu.Shape):
-    movies = nustd.kv.ShapesListRef.slot(Movie)
+    movies = nustd.kv.ListRef.slot(Movie)
     total = nustd.kv.IntRef.slot()
     watched = nustd.kv.IntRef.slot()
     latest_title = nustd.kv.StrRef.slot()

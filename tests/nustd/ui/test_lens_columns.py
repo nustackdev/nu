@@ -38,8 +38,8 @@ class Zoo(nu.Shape):
     tags = nustd.kv.ListRef.slot(str)
     counts = nustd.kv.DictRef.slot(int)
     loose = nustd.kv.DictRef.slot(object)
-    keepers = nustd.kv.ShapesDictRef.slot(Keeper)
-    shifts = nustd.kv.ShapesListRef.slot(Keeper)
+    keepers = nustd.kv.DictRef.slot(Keeper)
+    shifts = nustd.kv.ListRef.slot(Keeper)
 
 
 class Store(nu.Shape):

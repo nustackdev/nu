@@ -11,7 +11,7 @@ A snippet author writes slots without knowing where they live::
 ``Section.inp`` is a chain root, so it resolves bare, at ``("inp",)``. The
 host that owns the snippet knows where it belongs and says so afterwards, by
 rewriting the term between constructing it and evaluating it: every chain
-root gets the host's parent ref spliced in where its :data:`~nu.domains.shape.refs.base.ANCHOR`
+root gets the host's parent ref spliced in where its :data:`~nu.domains.shape.base.ANCHOR`
 was, so the whole chain resolves one level deeper.
 
 This works because a ref's parent is ``children[0]`` of an immutable term,
@@ -51,7 +51,7 @@ from typing import TYPE_CHECKING
 
 from nu.tree import children
 
-from .refs.base import StructuredRef
+from .base import StructuredRef
 
 
 if TYPE_CHECKING:

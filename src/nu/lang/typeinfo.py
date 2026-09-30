@@ -9,7 +9,7 @@ A Shape slot annotation is one of:
 - **Bare ref class** (``nm.StrRef``, ``nd.HeadingRef``): a ``Ref`` subclass
   with no generic parameters. Represented as ``TypeInfo(<ref_cls>)``.
 - **Parametric ref class** (``nv.PrimitiveListRef[str]``,
-  ``nm.ShapesDictRef[int, Order]``): a ``Ref`` subclass with generic params.
+  ``nm.DictRef[int, Order]``): a ``Ref`` subclass with generic params.
   Represented as ``TypeInfo(<ref_origin>, key=..., elem=...)`` where key/elem
   recurse.
 - **Bare Shape subclass** (``Order``): a shorthand for a ``ShapeRef``

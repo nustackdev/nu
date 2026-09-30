@@ -1,24 +1,19 @@
-"""Nu shape fabric: DSL + Ref blueprints (3-tier matrix) + queries/commands.
+"""Nu shape domain: declare structure once, reach it through refs any fabric backs.
 
-Public surface:
-- ``Shape``, ``ShapeMeta``, ``Slot``, ``SlotDescriptor``: the DSL.
-- 21 Ref blueprints for structural navigation and substrate extension (7 families x 3 tiers).
-- ``SetCmd``, ``Erase``: slot-level write commands.
-- ``Load``, ``Exists``, ``Missing``, ``Extract``,
-  ``AdvanceCursor``: slot-level read queries.
-- ``reroot`` / ``rerooter``: splice the bare ref chains in a term under a
-  new parent, so a snippet written without a mount point gets one.
-- ``root_shape``: which Shape a Ref chain is rooted at, for code handed a Ref
-  as a location and building its own reads under it.
+A Shape declares slots; each slot is a ref blueprint that a fabric completes
+with its own storage. Blueprints come in families (item, mapping, sequence,
+set, shape), each in three tiers (read, mutable, reactive), and carry the whole
+Form surface of their family. A fabric supplies only how a path is read and
+written, and which of its refs a descent lands on.
 
-Reactive queries (``OnChange`` / ``OnChildChange`` /
-``OnChildrenChange`` / ``OnDescendantsChange`` /
-``OnPrimitiveChange``) live in ``nu.core.reactive`` -- one unified
-interface for every substrate, reached through the shape Form mixins.
+Reactive queries (``OnChange`` and its tree-aware siblings) live in
+``nu.core.reactive``, one interface for every substrate, reached through the
+shape Form mixins.
 """
 
 from __future__ import annotations
 
+from .base import StructuredRef, root_shape
 from .dsl import Shape, ShapeMeta, Slot, SlotDescriptor
 from .interactions import (
     AdvanceCursor,
@@ -30,80 +25,44 @@ from .interactions import (
     PrimitiveSet,
     SetCmd,
 )
-from .refs import (
-    ItemRef,
-    MappingRef,
-    MutableItemRef,
-    MutableMappingRef,
-    MutableSequenceRef,
-    MutableSetRef,
-    MutableShapeRef,
-    MutableShapesMappingRef,
-    MutableShapesSequenceRef,
-    ReactiveItemRef,
-    ReactiveMappingRef,
-    ReactiveSequenceRef,
-    ReactiveSetRef,
-    ReactiveShapeRef,
-    ReactiveShapesMappingRef,
-    ReactiveShapesSequenceRef,
-    SequenceRef,
-    SetRef,
-    ShapeRef,
-    ShapesMappingRef,
-    ShapesSequenceRef,
-    root_shape,
-)
+from .item import ItemRef, MutableItemRef, ReactiveItemRef
+from .mapping import MappingRef, MutableMappingRef, ReactiveMappingRef
 from .rewrite import reroot, rerooter
+from .sequence import MutableSequenceRef, ReactiveSequenceRef, SequenceRef
+from .set_ import MutableSetRef, ReactiveSetRef, SetRef
+from .shape import MutableShapeRef, ReactiveShapeRef, ShapeRef
 
 
 __all__ = [
-    # Queries
     "AdvanceCursor",
-    # Commands
     "Erase",
     "Exists",
     "Extract",
-    # Item Refs
     "ItemRef",
     "Load",
-    # Mapping Refs
     "MappingRef",
     "Missing",
     "MutableItemRef",
     "MutableMappingRef",
-    # Sequence Refs
     "MutableSequenceRef",
-    # Set Refs
     "MutableSetRef",
-    # Shape Refs
     "MutableShapeRef",
-    # ShapesMapping Refs
-    "MutableShapesMappingRef",
-    # ShapesSequence Refs
-    "MutableShapesSequenceRef",
     "PrimitiveSet",
     "ReactiveItemRef",
     "ReactiveMappingRef",
     "ReactiveSequenceRef",
     "ReactiveSetRef",
     "ReactiveShapeRef",
-    "ReactiveShapesMappingRef",
-    "ReactiveShapesSequenceRef",
     "SequenceRef",
     "SetCmd",
     "SetRef",
-    # DSL
     "Shape",
     "ShapeMeta",
     "ShapeRef",
-    "ShapesMappingRef",
-    "ShapesSequenceRef",
     "Slot",
     "SlotDescriptor",
-    # Rewrites
+    "StructuredRef",
     "reroot",
     "rerooter",
-    # Chain metadata
     "root_shape",
 ]

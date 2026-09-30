@@ -1,38 +1,19 @@
 """The refs that address KV storage: one slot in a shape, one place on disk.
 
-Two substrates underneath, and everything else is a specialisation of one of
-them. ``ViewRef`` reads as a live container view, so collection ops run
-against storage; ``PrimitiveRef`` subscripts its parent, so a leaf reads as
-its value.
+A slot's ref class decides how its value is laid out, and that is the one
+choice worth thinking about. A leaf holds one value read and written whole,
+with its value form mixed in. A container gives each element an address of its
+own, and the value it declares types every descent and every read. A blob
+container holds a whole collection as one leaf value.
 
-Which ref a slot is declared with decides how the value is laid out, and that
-is the one choice worth thinking about:
-
-- Leaves: ``ItemRef`` untyped, ``IntRef`` / ``StrRef`` / ``FloatRef`` /
-  ``BoolRef`` / ``BytesRef`` typed, each with its Form's operators.
-- Std-library leaves: ``DecimalRef``, ``FractionRef``, ``ComplexRef``,
-  ``BasisPointRef``, ``PercentageRef``, ``DateRef``, ``DatetimeRef``,
-  ``TimeRef``, ``TimedeltaRef``, ``TimezoneRef``, ``PathRef``, ``UUIDRef``.
-  Each stores a form the substrate can hold and lifts it back on read.
-- Decomposed containers: ``ListRef``, ``DictRef``, ``SetRef``, ``ShapeRef``,
-  ``ShapesListRef``, ``ShapesDictRef``. Elements get their own addresses, so
-  they can be read, written and watched one at a time.
-- Whole-blob containers: ``PrimitiveListRef``, ``PrimitiveDictRef``,
-  ``PrimitiveTupleRef``, ``PrimitiveSetRef``, ``PrimitiveFrozenSetRef``. One
-  opaque value, heterogeneous contents, no per-element addresses.
-- Sampled maps: ``Kh57Ref`` and ``Kh57ShapesRef``, int-keyed and laid out so
-  a sample of a key range costs the same at any scale.
-- ``ProgramRef``: Nu source stored in a leaf, runnable from the slot.
+The substrate bases (``ItemRef``, ``PrimitiveRef``, ``ViewRef``, ``Facet``)
+are here for fabric and library authors; a subscript never hands one back.
 """
 
 from .base import Facet, PrimitiveRef, ViewRef
-from .dict import DictRef
-from .dictshape import ShapesDictRef
-from .items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, StrRef
+from .containers import DictRef, ListRef, SetRef, ShapeRef
+from .items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, ObjectRef, StrRef
 from .kh57 import Kh57Ref
-from .kh57shape import Kh57ShapesRef
-from .list import ListRef
-from .listshape import ShapesListRef
 from .primitives import (
     PrimitiveDictRef,
     PrimitiveFrozenSetRef,
@@ -41,8 +22,6 @@ from .primitives import (
     PrimitiveTupleRef,
 )
 from .prog import ProgramRef
-from .set import SetRef
-from .shape import ShapeRef
 from .std import (
     BasisPointRef,
     ComplexRef,
@@ -74,8 +53,8 @@ __all__ = [
     "IntRef",
     "ItemRef",
     "Kh57Ref",
-    "Kh57ShapesRef",
     "ListRef",
+    "ObjectRef",
     "PathRef",
     "PercentageRef",
     "PrimitiveDictRef",
@@ -87,8 +66,6 @@ __all__ = [
     "ProgramRef",
     "SetRef",
     "ShapeRef",
-    "ShapesDictRef",
-    "ShapesListRef",
     "StrRef",
     "TimeRef",
     "TimedeltaRef",

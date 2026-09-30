@@ -13,8 +13,6 @@ from nustd.mem import (
     ListRef,
     SetRef,
     ShapeRef,
-    ShapesDictRef,
-    ShapesListRef,
     StrRef,
 )
 
@@ -57,8 +55,8 @@ class OrderShape(Shape):
 
 class TeamShape(Shape):
     name = StrRef.slot()
-    members = ShapesDictRef.slot(UserShape)
-    roster = ShapesListRef.slot(OrderShape)
+    members = DictRef.slot(UserShape)
+    roster = ListRef.slot(OrderShape)
     info = ShapeRef.slot(UserShape)
 
 

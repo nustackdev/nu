@@ -5,6 +5,7 @@ from __future__ import annotations
 import nu
 from nu.core.flows.control import IfDo
 from nu.core.reactive import OnPrimitiveChange
+from nu.domains.shape.base import StructuredRef
 from nu.domains.shape.dsl import Shape
 from nu.domains.shape.interactions import (
     Erase,
@@ -12,8 +13,7 @@ from nu.domains.shape.interactions import (
     Missing,
     SetCmd,
 )
-from nu.domains.shape.refs.base import StructuredRef
-from nu.domains.shape.refs.item import ItemRef, MutableItemRef, ReactiveItemRef
+from nu.domains.shape.item import ItemRef, MutableItemRef, ReactiveItemRef
 
 
 class MyShape(Shape):

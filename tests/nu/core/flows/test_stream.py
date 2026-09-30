@@ -10,7 +10,7 @@ import pytest
 
 import nu
 from nu.core.flows.stream import Stream
-from nu.domains.shape.refs.sequence import SequenceRef
+from nu.domains.shape.sequence import SequenceRef
 from nu.lang import StreamQuery
 
 

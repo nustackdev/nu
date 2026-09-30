@@ -6,6 +6,7 @@ import pytest
 
 import nu
 from nu.core.reactive import OnChange, OnChildrenChange
+from nu.domains.shape.base import StructuredRef
 from nu.domains.shape.dsl import Shape
 from nu.domains.shape.interactions import (
     Erase,
@@ -13,8 +14,7 @@ from nu.domains.shape.interactions import (
     Missing,
     SetCmd,
 )
-from nu.domains.shape.refs.base import StructuredRef
-from nu.domains.shape.refs.set_ import MutableSetRef, ReactiveSetRef, SetRef
+from nu.domains.shape.set_ import MutableSetRef, ReactiveSetRef, SetRef
 from nu.forms.primitives import Int
 
 

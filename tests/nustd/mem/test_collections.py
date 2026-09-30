@@ -18,7 +18,6 @@ import pytest
 
 from nu import (
     Contains,
-    Dict,
     DictItems,
     DictKeys,
     DictValues,
@@ -26,9 +25,9 @@ from nu import (
     Len,
     List,
     Literal,
-    Object,
     Set,
     Sorted,
+    Str,
     arun,
     run,
 )
@@ -55,10 +54,6 @@ class TestDictRefViewTypes:
     def test_items_returns_dict_items_value(self):
         items = PortfolioShape.metadata.items()
         assert isinstance(items, DictItems)
-
-    def test_result_returns_dict_value(self):
-        result = PortfolioShape.metadata._wrap_result(Literal("dummy"))
-        assert isinstance(result, Dict)
 
 
 class TestDictRefExecution:
@@ -157,10 +152,10 @@ class TestListRefTypes:
         wrapped = ref._wrap_sliceable_result(Literal("dummy"))
         assert isinstance(wrapped, List)
 
-    def test_element_result_is_any_value(self):
+    def test_element_result_is_the_declared_value_form(self):
         ref = PortfolioShape.tags
         wrapped = ref._wrap_element_result(Literal("dummy"))
-        assert isinstance(wrapped, Object)
+        assert type(wrapped) is Str
 
 
 class TestListRefExecution:
@@ -202,10 +197,10 @@ class TestSetRefTypes:
         wrapped = ref._wrap_set_result(Literal("dummy"))
         assert isinstance(wrapped, Set)
 
-    def test_element_result_is_any_value(self):
+    def test_element_result_is_the_declared_value_form(self):
         ref = PortfolioShape.members
         wrapped = ref._wrap_element_result(Literal("dummy"))
-        assert isinstance(wrapped, Object)
+        assert type(wrapped) is Str
 
 
 class TestSetRefExecution:
@@ -271,12 +266,12 @@ class TestShapeRefExecution:
 
 
 # ============================================================================
-# ShapesDictRef — mapping of shapes with view types
+# DictRef — mapping of shapes with view types
 # ============================================================================
 
 
-class TestShapesDictRefViewTypes:
-    """ShapesDictRef returns proper view types."""
+class TestDictOfShapesViewTypes:
+    """DictRef returns proper view types."""
 
     def test_keys_returns_dict_keys_value(self):
         keys = TeamShape.members.keys()
@@ -291,8 +286,8 @@ class TestShapesDictRefViewTypes:
         assert isinstance(items, DictItems)
 
 
-class TestShapesDictRefExecution:
-    """ShapesDictRef collection ops execute correctly."""
+class TestDictOfShapesExecution:
+    """DictRef collection ops execute correctly."""
 
     def test_keys(self, data, team_ctx):
         data["members"] = {
@@ -485,7 +480,7 @@ class TestEndToEnd:
 
 
 class TestEndToEndShapeNavigation:
-    """End-to-end with nested shapes — ShapesDictRef, ShapesListRef, ShapeRef."""
+    """End-to-end with nested shapes — DictRef, ListRef, ShapeRef."""
 
     @pytest.fixture
     def nav_data(self):
@@ -517,20 +512,20 @@ class TestEndToEndShapeNavigation:
         # populate nested shape
         d["info"] = {"name": "Team Alpha", "age": 5, "score": 9.0}
 
-        # --- ShapesDictRef navigation ---
+        # --- DictRef navigation ---
         alice_name = run(TeamShape.members["alice"].name, nav_ctx)[0]
         assert alice_name == "Alice"
 
         bob_age = run(TeamShape.members["bob"].age, nav_ctx)[0]
         assert bob_age == 25
 
-        # --- ShapesDictRef keys ---
+        # --- DictRef keys ---
         member_keys = run(TeamShape.members.keys(), nav_ctx)[0]
         assert set(member_keys) == {"alice", "bob", "charlie"}
 
         # (lazy Take over keys covered in TestLazyTake — skipped until TakeQuery lands)
 
-        # --- ShapesListRef navigation ---
+        # --- ListRef navigation ---
         sym0 = run(TeamShape.roster[0].symbol, nav_ctx)[0]
         assert sym0 == "AAPL"
 

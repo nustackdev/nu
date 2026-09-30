@@ -34,8 +34,6 @@ from nustd.mem.refs import (
     IntRef,
     ListRef,
     ShapeRef,
-    ShapesDictRef,
-    ShapesListRef,
     StrRef,
 )
 
@@ -107,15 +105,15 @@ def test_primitive_dict_ref_records_key_and_elem() -> None:
 
 
 def test_shapes_dict_ref_records_key_and_shape_elem() -> None:
-    info = TypeInfo.from_annotation(ShapesDictRef[int, _StubShape])
-    assert info == TypeInfo(ShapesDictRef, key=TypeInfo(int), elem=TypeInfo(_StubShape))
+    info = TypeInfo.from_annotation(DictRef[int, _StubShape])
+    assert info == TypeInfo(DictRef, key=TypeInfo(int), elem=TypeInfo(_StubShape))
     assert info.is_ref
     assert info.elem is not None and info.elem.is_shape
 
 
 def test_shapes_list_ref_records_shape_elem() -> None:
-    info = TypeInfo.from_annotation(ShapesListRef[_StubShape])
-    assert info == TypeInfo(ShapesListRef, elem=TypeInfo(_StubShape))
+    info = TypeInfo.from_annotation(ListRef[_StubShape])
+    assert info == TypeInfo(ListRef, elem=TypeInfo(_StubShape))
 
 
 def test_shape_ref_records_shape_elem() -> None:

@@ -51,20 +51,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import nu
-from nu.domains.shape import (
-    ItemRef,
-    MappingRef,
-    SequenceRef,
-    ShapeRef,
-    ShapesMappingRef,
-    ShapesSequenceRef,
-)
+from nu.domains.shape import ItemRef, MappingRef, SequenceRef, ShapeRef
 from nu.lang import EMPTY, INVALID, Cardinality
 
 
 if TYPE_CHECKING:
-    from nu.domains.shape import Shape
-    from nu.domains.shape.refs import StructuredRef
+    from nu.domains.shape import Shape, StructuredRef
 
 
 __all__ = [
@@ -169,15 +161,21 @@ def _door(key: nu.Nu, kind: str) -> nu.Nu:
 
 def _kind_of(ref_cls: type) -> str:
     """The column a ref of this class opens. The browser's ``kind`` vocabulary."""
-    if issubclass(ref_cls, (ShapesMappingRef, MappingRef)):
+    if issubclass(ref_cls, MappingRef):
         return "mapping"
-    if issubclass(ref_cls, (ShapesSequenceRef, SequenceRef)):
+    if issubclass(ref_cls, SequenceRef):
         return "sequence"
     if issubclass(ref_cls, ShapeRef):
         return "shape"
     if issubclass(ref_cls, ItemRef):
         return "leaf"
     return "unknown"
+
+
+def _holds_shapes(ref: StructuredRef) -> bool:
+    """True when a collection declares a Shape as its value, so each row is a door."""
+    declared = nu.tree.payload(ref).get("type_info")
+    return declared is not None and declared.elem is not None and declared.elem.is_shape
 
 
 def _slot(shape_cls: type[Shape], name: str, parent: StructuredRef | None) -> Any:  # noqa: ANN401
@@ -211,7 +209,7 @@ def _descend(prefix: StructuredRef | None, shape_cls: type[Shape], cursor: tuple
             raise KeyError(msg)
         if isinstance(ref, ShapeRef):
             ref = _slot(nu.tree.payload(ref)["shape_type"], seg, ref)
-        elif isinstance(ref, (ShapesSequenceRef, SequenceRef)):
+        elif isinstance(ref, SequenceRef):
             # A position is an int and a wire segment is a string, always.
             ref = ref[int(seg)]
         else:
@@ -255,7 +253,7 @@ def _mapping_term(ref: StructuredRef, max_rows: int, depth: int) -> nu.Nu:
     held = f"_lens_keys{depth}"
     item, elem = _loop(depth)
     keys = nu.ListAttrRef(held)
-    if isinstance(ref, ShapesMappingRef):
+    if _holds_shapes(ref):
         row: nu.Nu = _door(nu.ToStr(elem), "shape")
     else:
         row = LensCell(nu.ToStr(elem), ref[elem], nu.Str("leaf"), nu.Bool(True), nu.Bool(False))
@@ -280,7 +278,7 @@ def _sequence_term(ref: StructuredRef, max_rows: int, depth: int) -> nu.Nu:
     item, elem = _loop(depth)
     items = nu.ListAttrRef(held)
     index = nu.ToStr(nu.GetItem(elem, nu.Int(0)))
-    if isinstance(ref, ShapesSequenceRef):
+    if _holds_shapes(ref):
         row: nu.Nu = _door(index, "shape")
     else:
         row = LensCell(
@@ -371,9 +369,9 @@ def _column_term(
         return _broken(f"{'.'.join(cursor)}: {exc!r}")
     if isinstance(ref, ShapeRef):
         return _shape_term(nu.tree.payload(ref)["shape_type"], ref)
-    if isinstance(ref, (ShapesMappingRef, MappingRef)):
+    if isinstance(ref, MappingRef):
         return _mapping_term(ref, max_rows, depth)
-    if isinstance(ref, (ShapesSequenceRef, SequenceRef)):
+    if isinstance(ref, SequenceRef):
         return _sequence_term(ref, max_rows, depth)
     return _leaf_term(ref)
 

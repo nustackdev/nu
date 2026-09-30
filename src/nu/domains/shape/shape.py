@@ -1,42 +1,17 @@
-"""ShapeRef hierarchy: structured container Ref with named-slot navigation.
+"""Shape family: a nested Shape in a shape fabric, navigated by slot name.
 
-    ShapeRef         = shape.MappingForm + StructuredRef
-    MutableShapeRef  = shape.MutableMappingForm + ShapeRef
-    ReactiveShapeRef = shape.ReactiveMappingForm + MutableShapeRef
-
-A Shape is structurally a mapping (dict[str, object]).  Using the shape-domain
-``MappingForm`` (which already weaves generic MappingForm + shape CollectionForm)
-gives all 3 tiers the full mapping surface (keys/values/items/extract/__getitem__,
-len, contains) PLUS shape ops (exists/missing/set/erase), without a separate
-ItemForm in the MRO.
-
-Slot navigation is available two ways:
-  - Attribute:  ``ref.field``   via ``__getattr__`` (MRO fallback)
-  - Bracket:    ``ref["field"]`` via ``__getitem__`` override
-
-Both produce a correctly-typed child Ref from the slot definition.
-
-Form composition provides:
-    base:     exists(), missing(), extract(), keys(), values(), items(),
-              len(), contains(), [key], .attr
-    mutable:  + store(v), erase(), set(k,v), delete(k), update(), ...
-    reactive: + on_change() (generic), on_child_change(), on_children_change(),
-                on_descendants_change() (shape-domain)
-
-Notes:
-- MutableShapeRef / ReactiveShapeRef are included.
-- ReactiveShapeRef composes with shape.ReactiveMappingForm (shape IS a mapping).
-- _wrap_* abstract methods from MappingForm raise NotImplementedError on the
-  blueprint. Substrate subclasses fill them in (consistent with MappingRef etc.).
+A Shape is structurally a mapping of its slot names, so the ref wears the
+mapping forms. Descent is by name, not by value: ``ref.field`` and
+``ref["field"]`` resolve the slot the Shape declared, and that slot builds its
+own ref under this one.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.domains.shape.forms.mapping import MappingForm, MutableMappingForm, ReactiveMappingForm
-
 from .base import StructuredRef
+from .mapping import MappingForm, MutableMappingForm, ReactiveMappingForm
 
 
 if TYPE_CHECKING:
@@ -54,8 +29,6 @@ class ShapeRef(MappingForm, StructuredRef):
 
     API: full MappingForm surface: exists(), missing(), extract(), keys(),
     values(), items(), len(), contains(), [key], .attr from shape MappingForm.
-    ``_wrap_*`` methods raise NotImplementedError on the blueprint; substrate
-    subclasses override them.
     """
 
     def __init__(
@@ -65,9 +38,16 @@ class ShapeRef(MappingForm, StructuredRef):
         shape_type: type[Shape],
         parent_ref: StructuredRef | None = None,
         owner_shape: type[Shape] | None = None,
+        **kwargs: object,
     ) -> None:
-        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
+        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape, **kwargs)
         self._payload["shape_type"] = shape_type
+
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """The Shape an annotation like ``ShapeRef[Order]`` navigates."""
+        (shape_type,) = args
+        return {"shape_type": shape_type}
 
     def __getitem__(self, key: object) -> StructuredRef:
         """Navigate into shape slots via bracket access; mirror of __getattr__."""
@@ -109,7 +89,4 @@ class ReactiveShapeRef(ReactiveMappingForm, MutableShapeRef):
     Adds: on_change() (generic), on_child_change(), on_children_change(),
     on_descendants_change() (shape-domain, from shape.ReactiveMappingForm)
     on top of MutableShapeRef.
-
-    shape.ReactiveMappingForm is used because a Shape IS a mapping; this provides
-    the full reactive surface (generic on_change + shape tree-aware).
     """

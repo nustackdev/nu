@@ -1,10 +1,8 @@
-"""Virtuals kh57 mapping reference: sparse int-keyed map with range sampling.
+"""kv sampled map: an int-keyed mapping laid out so a key range samples cheaply.
 
-Thin extension of :class:`DictRef` that pins keys to non-negative 57-bit ints,
-defaults the view to :class:`~virtuals.views.Kh57View`, and adds
-``.sample(n, begin, end)`` and ``.range(begin, end)`` on top of the standard
-mapping surface. Physical storage lives under kh57-encoded child segments so
-range reservoir sampling (``kh57.sample``) runs with low read amplification.
+A dict slot whose keys are pinned to non-negative 57-bit ints and whose
+storage is kh57-encoded, so sampling or scanning a window of keys reads only
+that window. Everything else, descent and typing included, is a ``DictRef``.
 """
 
 from __future__ import annotations
@@ -13,17 +11,15 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape import Slot
 from nu.forms import Object
-from nu.lang.typeinfo import value_type_for
+from nu.lang.typeinfo import TypeInfo
+from virtuals.views import Kh57View
 
-from .dict import DictRef
+from .containers import DictRef
 
 
 if TYPE_CHECKING:
-    from nu.domains.shape.dsl import Shape
-    from nu.lang import IntArg, StrArg
+    from nu.lang import IntArg
     from virtuals.views import Kh57ViewBase
-
-    from .base import ViewRef
 
 
 __all__ = [
@@ -50,8 +46,10 @@ class Kh57Ref(DictRef[int, V], Generic[V]):
           order the writes happened in.
         - ``sample`` and ``range`` are what the layout buys; everything else
           behaves as it does on a plain dict slot.
-        - Values are plain values here. Reach for Kh57ShapesRef when each
-          entry should be a shape with fields of its own.
+        - Declare a Shape as the value and each entry is a row with fields
+          of its own: ``series[ts].value`` reads one field of one row.
+          ``sample`` and ``range`` then yield each row as a view over its
+          stored fields, for reading a window rather than descending.
 
     Example:
         class Ledger(Shape):
@@ -60,56 +58,26 @@ class Kh57Ref(DictRef[int, V], Generic[V]):
         run(Ledger.entries.sample(10, begin=0, end=1000), ctx)
     """
 
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        value_type: type[V],
-        value_value_type: type,
-        view_type: type[Kh57ViewBase] | None = None,
-        parent_ref: ViewRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        from virtuals.views import Kh57View
-
-        super().__init__(
-            address,
-            value_type=value_type,
-            key_type=int,
-            key_value_type=value_type_for(int),
-            value_value_type=value_value_type,
-            view_type=view_type or Kh57View,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
+    _default_view = Kh57View
 
     @classmethod
     def slot(  # type: ignore[override]
-        cls,
-        value_type: type[DV],
-        view_type: type[Kh57ViewBase] | None = None,
+        cls, value: type[DV], *, view: type[Kh57ViewBase] | None = None
     ) -> Kh57Ref[DV]:
-        """Declare a kh57 mapping slot with ``value_type`` values (int keys)."""
-        from virtuals.views import Kh57View
+        """Declare a kh57 mapping slot holding ``value`` under int keys.
 
-        return Slot(
-            cls,
-            value_type=value_type,
-            value_value_type=value_type_for(value_type),
-            view_type=view_type or Kh57View,
-        )  # type: ignore[return-value]
+        Args:
+            value: what each key holds: a Python type, a Shape, or a kv leaf
+                class.
+            view: the View class laying the map out. Defaults to
+                ``Kh57View``.
 
-    @classmethod
-    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
-        """Derive slot kwargs from an annotation like ``Kh57Ref[V]`` (int keys)."""
-        from virtuals.views import Kh57View
-
-        (value_type,) = args
-        return {
-            "value_type": value_type,
-            "value_value_type": value_type_for(value_type),
-            "view_type": Kh57View,
-        }
+        Notes:
+            - ``points: Kh57Ref[Point]`` as an annotation declares the same
+              slot.
+        """
+        declared = TypeInfo.from_annotation(cls[value])  # type: ignore[index]
+        return Slot(cls, type_info=declared, view_type=view)  # type: ignore[return-value]
 
     def sample(
         self,

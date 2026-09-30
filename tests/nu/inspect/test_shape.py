@@ -14,7 +14,7 @@ from nu.inspect import (
     verify_shape,
 )
 from nu.inspect.entry import entry_names, is_shape, nested_shape
-from nustd.mem.refs import IntRef, ShapesDictRef, StrRef
+from nustd.mem.refs import DictRef, IntRef, StrRef
 
 
 class Person(nu.Shape):
@@ -46,7 +46,7 @@ class Legacy(nu.Shape):
 class Board(nu.Shape):
     """Tasks by id. A collection of shapes is not a nested shape."""
 
-    tasks: ShapesDictRef[int, Task]
+    tasks: DictRef[int, Task]
 
 
 # --- the record ------------------------------------------------------------
@@ -80,7 +80,7 @@ def test_the_record_is_two_levels_and_never_expands() -> None:
 
 def test_a_parametric_slot_renders_the_declared_type_back() -> None:
     (entry,) = parse_shape(Board).entries
-    assert entry.type == "ShapesDictRef[int, Task]"
+    assert entry.type == "DictRef[int, Task]"
     assert entry.kind == "ref"
 
 
@@ -111,7 +111,7 @@ def test_a_nested_shape_entry_resolves_to_the_shape_record() -> None:
 def test_a_collection_of_shapes_resolves_to_the_collection_ref() -> None:
     record = parse_entry(Board, "tasks")
     assert isinstance(record, RefRecord)
-    assert record.name == "ShapesDictRef"
+    assert record.name == "DictRef"
 
 
 def test_an_unknown_entry_resolves_to_none() -> None:

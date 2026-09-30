@@ -20,7 +20,7 @@ from nu.context import AttrRef, With
 from nu.core.flows import ParallelAsync, Race
 from nu.core.flows.react import React, ReactForever, ReactLatest, ReactWhile
 from nu.domains.shape import Shape
-from nu.domains.shape.refs.item import ItemRef
+from nu.domains.shape.item import ItemRef
 from nu.engine.structure import Declared
 from nu.lang import Attr, Context, Control, ScalarAction
 from nu.lang.helpers import arun, compile, validate

@@ -14,8 +14,8 @@ import nustd.kv
 import nustd.mem
 from nu.domains.shape import dsl
 from nu.domains.shape.dsl import Shape, ShapeMeta, Slot, SlotDescriptor
-from nu.domains.shape.refs.item import ItemRef
-from nu.domains.shape.refs.shape import ShapeRef
+from nu.domains.shape.item import ItemRef
+from nu.domains.shape.shape import ShapeRef
 
 
 # ---------------------------------------------------------------------------

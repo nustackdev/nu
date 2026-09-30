@@ -428,7 +428,7 @@ class ReactiveSetForm(
     Notes:
         - The three tree-aware methods (on_child_change,
           on_children_change, on_descendants_change) are shape-domain and
-          live on `nu.domains.shape.forms.collection.ReactiveCollectionForm`,
+          live on `nu.domains.shape.collection.ReactiveCollectionForm`,
           not here.
 
     Example::

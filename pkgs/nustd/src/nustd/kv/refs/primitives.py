@@ -1,32 +1,22 @@
-"""virtuals-substrate refs for whole-blob compound values.
+"""kv blob containers: a whole collection held as one leaf value.
 
-Unlike the decomposing container refs (``ListRef`` / ``DictRef`` / ``SetRef``,
-which fan a container out into per-element storage), these write the whole
-container as one opaque value via ``ItemPrimitiveSetCmd`` and read it back as
-a plain Python object. Each mixes in the matching collection Form, so the value
-still carries the full list / dict / tuple / set interface.
-
-Use for opaque or heterogeneous containers that should round-trip whole rather
-than shape-decompose (log lines, raw account blobs, balance arrays, ...).
+A blob is written and read whole, with no per-element addresses, so it holds
+heterogeneous or opaque contents that should round-trip exactly as written.
+Each mixes in its collection form, so the value still carries the full
+collection surface; the decomposed containers are the other choice.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, TypeVar
 
-from typing_extensions import Self
-
-from nu.domains.shape import Slot
 from nu.forms import Dict, FrozenSet, List, Set, Tuple
 
 from .items import ItemRef
 
 
 if TYPE_CHECKING:
-    from nu.domains.shape import Shape
-    from nu.lang import Arg, IntArg, StrArg
-
-    from .base import PrimitiveRef
+    from nu.lang import Arg
 
 
 __all__ = [
@@ -64,31 +54,6 @@ class PrimitiveListRef(ItemRef, List[T], Generic[T]):
         run(Bag.rows.set([1, "two", {"three": 3}]), ctx)
         run(Bag.rows, ctx)
     """
-
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=list,
-            value_value_type=List,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding a whole-blob primitive list."""
-        return Slot(cls)  # type: ignore[return-value]
-
-    @classmethod
-    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
-        """The elem type is purely for typing; no runtime kwargs needed."""
-        return {}
 
     def _lift(self, raw: object) -> list:
         """Return the stored value as a plain list."""
@@ -138,31 +103,6 @@ class PrimitiveDictRef(ItemRef, Dict[K, V], Generic[K, V]):
         run(Bag.meta, ctx)
     """
 
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=dict,
-            value_value_type=Dict,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding a whole-blob primitive dict."""
-        return Slot(cls)  # type: ignore[return-value]
-
-    @classmethod
-    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
-        """The elem type is purely for typing; no runtime kwargs needed."""
-        return {}
-
     def _lift(self, raw: object) -> dict:
         """Return the stored value as a plain dict."""
         return raw if isinstance(raw, dict) else dict(raw)  # type: ignore[arg-type]
@@ -208,31 +148,6 @@ class PrimitiveTupleRef(ItemRef, Tuple):
         run(Bag.pair, ctx)
     """
 
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=tuple,
-            value_value_type=Tuple,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding a whole-blob primitive tuple."""
-        return Slot(cls)  # type: ignore[return-value]
-
-    @classmethod
-    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
-        """The elem type is purely for typing; no runtime kwargs needed."""
-        return {}
-
     def _lift(self, raw: object) -> tuple:
         """Return the stored value as a plain tuple."""
         return raw if isinstance(raw, tuple) else tuple(raw)  # type: ignore[arg-type]
@@ -277,31 +192,6 @@ class PrimitiveSetRef(ItemRef, Set[T], Generic[T]):
         run(Bag.members, ctx)
     """
 
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=set,
-            value_value_type=Set,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding a whole-blob primitive set."""
-        return Slot(cls)  # type: ignore[return-value]
-
-    @classmethod
-    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
-        """The elem type is purely for typing; no runtime kwargs needed."""
-        return {}
-
     def _lift(self, raw: object) -> set:
         """Return the stored value as a plain set."""
         return raw if isinstance(raw, set) else set(raw)  # type: ignore[arg-type]
@@ -344,31 +234,6 @@ class PrimitiveFrozenSetRef(ItemRef, FrozenSet[T], Generic[T]):
         run(Bag.locked.set(frozenset({1, 2})), ctx)
         run(Bag.locked, ctx)
     """
-
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=frozenset,
-            value_value_type=FrozenSet,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding a whole-blob primitive frozenset."""
-        return Slot(cls)  # type: ignore[return-value]
-
-    @classmethod
-    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
-        """The elem type is purely for typing; no runtime kwargs needed."""
-        return {}
 
     def _lift(self, raw: object) -> frozenset:
         """Return the stored value as a plain frozenset."""

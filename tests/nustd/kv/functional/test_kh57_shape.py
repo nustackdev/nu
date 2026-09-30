@@ -1,5 +1,5 @@
 # ruff: noqa: S311 - seeded Random is exactly what deterministic tests need
-"""Functional tests for Kh57ShapesRef — sparse int-keyed map of shapes.
+"""Functional tests for Kh57Ref — sparse int-keyed map of shapes.
 
 Mirrors :mod:`test_kh57` but for shape-valued kh57 maps: descent to sub-fields
 via ``ref[k].field``, sample/range over shape rows, iteration order.
@@ -10,7 +10,7 @@ from __future__ import annotations
 import random
 
 from nu import Shape, run
-from nustd.kv import FloatRef, IntRef, Kh57ShapesRef, StrRef
+from nustd.kv import FloatRef, IntRef, Kh57Ref, StrRef
 
 
 class Point(Shape):
@@ -25,7 +25,7 @@ class Series(Shape):
     """Owner shape holding a sparse int-keyed map of Points."""
 
     name = StrRef.slot()
-    points = Kh57ShapesRef.slot(Point)
+    points = Kh57Ref.slot(Point)
 
 
 # ============================================================================

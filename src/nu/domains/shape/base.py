@@ -1,20 +1,12 @@
-"""StructuredRef: abstract base for all shape-fabric Refs.
+"""The address chain every shape ref is: a parent on the tree, then its own address.
 
-A StructuredRef encodes a hierarchical path into a shape fabric. The parent
-lives IN the tree as ``children[0]`` (marked ``structural``: address structure,
-never value-read); this Ref's own address is ``children[1]`` (a value, resolved
-through the runtime like any child). A chain's top Ref points ``children[0]`` at
-the shared :data:`ANCHOR`, a leaf Ref that terminates the chain at the fabric
-root.
+A ref's parent is ``children[0]`` (structural: walked, never value-read) and its
+own address is ``children[1]`` (a value, resolved through the runtime like any
+child). A chain's top ref points at the shared :data:`ANCHOR`, so every generic
+pass reaches the whole chain as ordinary tree.
 
-With the parent on the tree, every generic pass reaches the whole Ref uniformly:
-no ``walk_ref_chain`` bridging two worlds, and inline becomes a plain fold.
-
-``address`` / ``aaddress`` resolve ``children[1]`` through the runtime. Substrate
-plug-points (``_afetch_parent``, ``_aresolve_address``) carry their signatures and
-raise NotImplementedError; substrate subclasses override these. ``compile`` /
-``acompile`` are left to substrate subclasses (or blueprint Refs used purely for
-structural navigation).
+Substrates fill the plug-points here with their own storage walk; nothing in
+this module knows how any fabric reads or writes.
 """
 
 from __future__ import annotations
@@ -127,6 +119,16 @@ class StructuredRef(Ref):
     async def _aresolve_address(self, rt: Runtime, nid: int) -> object:
         """Resolve this segment's address against the runtime. Substrate-specific."""
         msg = f"{type(self).__name__}._aresolve_address is not implemented"
+        raise NotImplementedError(msg)
+
+    def _wrap_item_ref(self, address: object) -> StructuredRef:
+        """Build the child Ref at ``address``, with self as parent. Substrate-specific.
+
+        The one wrap hook that returns a ref rather than a form: which ref holds
+        a container's declared value is the fabric's to say, so no blueprint
+        builds one.
+        """
+        msg = f"{type(self).__name__}._wrap_item_ref is not implemented"
         raise NotImplementedError(msg)
 
     def _primitive_write(self, rt: Runtime, value: object, nid_self: int) -> None:

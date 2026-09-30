@@ -9,11 +9,13 @@ the path resolved at runtime, that key evaluates like any other child.
 
 from __future__ import annotations
 
-import nu
+from typing import ClassVar
+
 from nu import Shape, run
 from nu.lang import EMPTY
-from nustd.kv import IntRef, ShapeRef, ShapesDictRef, ShapesListRef, StrRef
+from nustd.kv import DictRef, IntRef, ListRef, ShapeRef, StrRef
 from nustd.mem import StrRef as MemStrRef
+from virtuals.views import DictView
 
 
 # --- virtuals shapes: a 3-level hierarchy -----------------------------------
@@ -25,13 +27,13 @@ class Inner(Shape):
 
 
 class Mid(Shape):
-    inners = ShapesDictRef.slot(Inner)
+    inners = DictRef.slot(Inner)
     note = StrRef.slot()
 
 
 class VRoot(Shape):
-    mids = ShapesDictRef.slot(Mid)
-    rows = ShapesListRef.slot(Inner)
+    mids = DictRef.slot(Mid)
+    rows = ListRef.slot(Inner)
     info = ShapeRef.slot(Inner)
     active = StrRef.slot()  # a virtuals key source
 
@@ -137,21 +139,57 @@ def test_cross_fabric_mem_key_write_then_read(ctx):
     assert run(VRoot.mids["mintZ"].note, xctx)[0] == "written"
 
 
-# --- primitive collection navigation reads value_type off payload -----------
+# --- the value is positional, the key and view keyword-only -----------------
 
 
-def test_primitive_dict_and_list_navigation_reads_payload():
-    """Regression: virtuals DictRef/ListRef.__getitem__ builds the child ItemRef
-    from ``value_type`` in ``payload`` (the payload migration privatized the old
-    public ``value_type``/``item_type`` attrs, so a stale ``self.value_type``
-    read would AttributeError here)."""
-    from nustd.kv import DictRef, ListRef
+def test_dict_and_list_navigation_land_on_the_declared_leaf(ctx):
+    """Regression: ``DictRef.slot(str, str)`` once meant key=str in mem and
+    view=str in kv, and every kv write through that slot crashed. The key is
+    keyword-only now, so one spelling means one thing in both fabrics."""
+    from nustd.kv import DictRef, IntRef, ListRef, StrRef
 
     class V(Shape):
-        d = DictRef.slot(str, str)
+        d = DictRef.slot(str, key=str)
         rows = ListRef.slot(int)
 
-    di = V.d["k"]
-    li = V.rows[0]
-    assert nu.tree.payload(di)["type_marker"] is str
-    assert nu.tree.payload(li)["type_marker"] is int
+    assert type(V.d["k"]) is StrRef
+    assert type(V.rows[0]) is IntRef
+    run(V.d["k"].set("v"), ctx)
+    assert run(V.d["k"].upper(), ctx)[0] == "V"
+
+
+# --- a custom view lays the container out on real reads and writes ----------
+
+
+class ShoutingView(DictView):
+    """A DictView that stores every string upper-cased and records each write.
+
+    The upper-casing is visible in what storage hands back, and the record
+    names the view class that took the write, so a slot that only recorded the
+    view and still wrote through the default ``DictView`` would fail both.
+    """
+
+    writes: ClassVar[list[tuple[str, object]]] = []
+
+    def __setitem__(self, address: str | int, value: object) -> None:
+        type(self).writes.append((type(self).__name__, address))
+        super().__setitem__(address, value.upper() if isinstance(value, str) else value)
+
+
+class Viewed(Shape):
+    loud = DictRef.slot(str, view=ShoutingView)
+    plain = DictRef.slot(str)
+
+
+def test_a_custom_view_is_the_one_reads_and_writes_go_through(ctx):
+    ShoutingView.writes.clear()
+    run(Viewed.loud["a"].set("gor"), ctx)
+    run(Viewed.loud.set_item("b", "sam"), ctx)
+    run(Viewed.plain["a"].set("gor"), ctx)
+
+    assert type(run(Viewed.loud, ctx)[0]) is ShoutingView
+    assert type(run(Viewed.plain, ctx)[0]) is DictView
+    assert ShoutingView.writes == [("ShoutingView", "a"), ("ShoutingView", "b")]
+    assert run(Viewed.loud["a"], ctx)[0] == "GOR"
+    assert run(Viewed.loud.get_item("b"), ctx)[0] == "SAM"
+    assert run(Viewed.plain["a"], ctx)[0] == "gor"

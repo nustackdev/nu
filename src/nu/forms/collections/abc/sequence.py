@@ -399,7 +399,7 @@ class ReactiveSequenceForm(
         - Adds `on_change` for any-change observation on this slot. The
           three tree-aware variants (on_child_change, on_children_change,
           on_descendants_change) are shape-domain and live on
-          `nu.domains.shape.forms.collection.ReactiveCollectionForm`, not
+          `nu.domains.shape.collection.ReactiveCollectionForm`, not
           here.
     """
 

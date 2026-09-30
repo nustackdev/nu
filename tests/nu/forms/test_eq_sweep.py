@@ -78,14 +78,14 @@ class _Row(nu.Shape):
 class _Kv(nu.Shape):
     n = nustd.kv.IntRef.slot()
     xs = nustd.kv.ListRef.slot(int)
-    d = nustd.kv.DictRef.slot(str, int)
+    d = nustd.kv.DictRef.slot(int)
     st = nustd.kv.SetRef.slot(int)
-    rows = nustd.kv.ShapesListRef.slot(_Row)
+    rows = nustd.kv.ListRef.slot(_Row)
 
 
 class _Mem(nu.Shape):
     xs = nustd.mem.ListRef.slot(int)
-    d = nustd.mem.DictRef.slot(str, int)
+    d = nustd.mem.DictRef.slot(int)
     st = nustd.mem.SetRef.slot(int)
 
 
@@ -99,7 +99,7 @@ def test_container_refs_build_comparisons(ref: object) -> None:
 
 
 def test_a_bare_item_ref_never_answers_with_a_python_bool() -> None:
-    from nu.domains.shape.refs.item import ItemRef
+    from nu.domains.shape.item import ItemRef
 
     ref = ItemRef("x")
     assert isinstance(ref == 1, nu.Nu)

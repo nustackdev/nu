@@ -10,9 +10,9 @@ from __future__ import annotations
 import pytest
 
 import nu
+from nu.domains.shape.base import StructuredRef
 from nu.domains.shape.dsl import Shape
-from nu.domains.shape.refs.base import StructuredRef
-from nu.domains.shape.refs.item import ItemRef
+from nu.domains.shape.item import ItemRef
 
 
 class SomeShape(Shape):

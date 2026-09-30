@@ -1,6 +1,6 @@
 """Task-119 typing tests: decomposed shape collections.
 
-``ShapesDictRef[K, T]`` / ``ShapesListRef[T]`` subscript returns ``T`` (the
+``DictRef[K, T]`` / ``ListRef[T]`` subscript returns ``T`` (the
 Shape) statically for dot-nav autocomplete; runtime returns a ``ShapeRef``.
 Chained subscript + attribute access flows through cleanly.
 """
@@ -13,11 +13,10 @@ import nu
 import nustd
 from nu.forms import Bool, Int, Str
 from nustd.kv.refs import (
+    DictRef,
     IntRef,
     Kh57Ref,
-    Kh57ShapesRef,
-    ShapesDictRef,
-    ShapesListRef,
+    ListRef,
     StrRef,
 )
 
@@ -32,20 +31,20 @@ class Profile(nu.Shape):
 
 
 class Team(nu.Shape):
-    members: nustd.kv.ShapesDictRef[int, Profile]
-    ranks: nustd.kv.ShapesListRef[Profile]
+    members: nustd.kv.DictRef[int, Profile]
+    ranks: nustd.kv.ListRef[Profile]
 
 
 class Org(nu.Shape):
-    teams: nustd.kv.ShapesDictRef[str, Team]
+    teams: nustd.kv.DictRef[str, Team]
 
 
 # --- Whole-container access -------------------------------------------
 
 
-assert_type(Team.members, ShapesDictRef[int, Profile])
-assert_type(Team.ranks, ShapesListRef[Profile])
-assert_type(Org.teams, ShapesDictRef[str, Team])
+assert_type(Team.members, DictRef[int, Profile])
+assert_type(Team.ranks, ListRef[Profile])
+assert_type(Org.teams, DictRef[str, Team])
 
 
 # --- Subscript -> Shape (annotation lie) ------------------------------
@@ -79,7 +78,7 @@ class Cache(nu.Shape):
 
 class Root(nu.Shape):
     cache: Cache = nustd.kv.ShapeRef.slot(Cache)
-    members: nustd.kv.ShapesDictRef[int, Profile]
+    members: nustd.kv.DictRef[int, Profile]
 
 
 # Subscript with an IntRef (Nu-typed key) still returns Profile.
@@ -129,7 +128,7 @@ class Match(nu.Shape):
 
 
 class Season(nu.Shape):
-    matches: nustd.kv.ShapesListRef[Match]
+    matches: nustd.kv.ListRef[Match]
 
 
 assert_type(Season.matches[0], Match)
@@ -142,19 +141,19 @@ assert_type(
 )
 
 
-# --- Kh57Ref / Kh57ShapesRef ------------------------------------------
+# --- Kh57Ref / Kh57Ref ------------------------------------------
 
 
 class TickSeries(nu.Shape):
     counters: nustd.kv.Kh57Ref[int]
-    points: nustd.kv.Kh57ShapesRef[Profile]
+    points: nustd.kv.Kh57Ref[Profile]
 
 
 # Whole-container types
 assert_type(TickSeries.counters, Kh57Ref[int])
-assert_type(TickSeries.points, Kh57ShapesRef[Profile])
+assert_type(TickSeries.points, Kh57Ref[Profile])
 
-# Kh57ShapesRef subscript -> Shape; then field access
+# Kh57Ref subscript -> Shape; then field access
 assert_type(TickSeries.points[100], Profile)
 assert_type(TickSeries.points[100].name, StrRef)
 assert_type(TickSeries.points[100].age, IntRef)

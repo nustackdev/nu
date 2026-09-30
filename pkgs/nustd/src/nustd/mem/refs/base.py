@@ -1,19 +1,13 @@
-"""Dict substrate refs: navigate nested Python dicts under the runtime.
+"""How a mem ref reads and writes: walk a path of keys through nested Python dicts.
 
-``RefBase`` is the first concrete substrate against the shape Ref seam
-(``StructuredRef``): it fills the plug-points with nested-dict navigation.
+``RefBase`` is the one substrate every mem ref builds on. Each level of a ref's
+path is a child on the tree, resolved at run time, so a key may be a literal,
+a computed expression, or a ref from another fabric. The root is the plain dict
+bound in the Context under the chain's root shape; reads walk it, writes
+mutate it in place and create the levels they need.
 
-A ref names one path segment, its address, held as ``children[1]`` and resolved
-through the runtime like any child. The parent chain lives on the tree at
-``children[0]`` (walked via ``parent_ref``); for the common shape-field case
-those are static slot names, read off each parent's stored segment at compile
-time. The root dict is bound in the Context under ``(dict, root_shape)`` and
-fetched with ``rt.ctx.get(dict, scope)``.
-
-Read is the Ref's dual role (``compile`` returns the navigate-and-fetch thunk);
-``write`` / ``erase`` resolve the address and mutate the parent container,
-auto-creating intermediate dicts. Dynamic parent keys (a computed segment above
-the leaf) resolve at runtime via ``_resolve_path(rt, nid)``.
+A container also decides what its children are: the ref at ``ref[key]`` is
+the mem ref for the value the container declared.
 """
 
 from __future__ import annotations
@@ -21,8 +15,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 import nu
-from nu.domains.shape.refs.base import StructuredRef
+from nu.domains.shape.base import StructuredRef
 from nu.lang import EMPTY
+from nu.lang.typeinfo import TypeInfo
 
 
 if TYPE_CHECKING:
@@ -88,6 +83,35 @@ class RefBase(StructuredRef, Generic[T]):
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
         # raw static segment, in payload so it rides base with_children
         self._payload["segment"] = address
+
+    def _wrap_item_ref(self, address: object) -> StructuredRef:
+        """The child at ``address``: the mem ref for the value this container declared.
+
+        A Shape gets a ``ShapeRef`` bound to it, a mem leaf class gets itself, a
+        Python type gets the mem leaf that holds it, and a value declared as
+        anything else, or not at all, gets ``ObjectRef``. The child carries the
+        declaration on, as a slot's ref does.
+        """
+        from .containers import LEAVES, ShapeRef
+        from .items import ItemRef, ObjectRef
+
+        declared: TypeInfo = self._payload.get("type_info") or TypeInfo.any()  # type: ignore[assignment]
+        value = declared.elem or TypeInfo.any()
+        held = value.py_type
+        child: StructuredRef
+        if value.is_shape:
+            child = ShapeRef(
+                address, shape_type=held, parent_ref=self, owner_shape=self._owner_shape
+            )
+        else:
+            leaf = (
+                held
+                if isinstance(held, type) and issubclass(held, ItemRef)
+                else LEAVES.get(held, ObjectRef)
+            )
+            child = leaf(address, parent_ref=self, owner_shape=self._owner_shape)
+        child._payload["type_info"] = value
+        return child
 
     # --- path building -------------------------------------------------------
 

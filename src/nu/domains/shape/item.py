@@ -1,20 +1,8 @@
-"""Item (leaf) shape-fabric Forms: three tiers.
+"""Leaf family: a single value in a shape fabric, with no descent below it.
 
-Three tiers that compose into ItemRef / MutableItemRef / ReactiveItemRef:
-
-    ItemForm          exists(), missing()
-    MutableItemForm   + set(), erase()
-    ReactiveItemForm  + on_change()
-
-Pure Form mixins, no Ref or substrate knowledge. Composed into
-the shape/refs/* blueprints so the user-facing API comes from these Forms.
-
-No generic peer: the Item trunk is shape-specific (a leaf value in the
-document model has no pure-Python collection equivalent).
-
-Notes:
-- No generic type params (T, InterfaceT); Refs are unparameterised.
-- No value_type / interface_cls properties; substrate concern, not Form.
+Forms give the slot-level surface (read, write, observe the one value); refs
+bind that surface to an address. A fabric's leaves mix a value form in beside
+these, so the ref itself is an operand of the value it names.
 """
 
 from __future__ import annotations
@@ -22,6 +10,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import Form
+
+from .base import StructuredRef
 
 
 if TYPE_CHECKING:
@@ -37,8 +27,11 @@ if TYPE_CHECKING:
 
 __all__ = [
     "ItemForm",
+    "ItemRef",
     "MutableItemForm",
+    "MutableItemRef",
     "ReactiveItemForm",
+    "ReactiveItemRef",
 ]
 
 
@@ -97,3 +90,24 @@ class ReactiveItemForm(MutableItemForm):
         from nu.core.reactive import OnPrimitiveChange
 
         return OnPrimitiveChange(self)
+
+
+class ItemRef(ItemForm, StructuredRef):
+    """Leaf Ref: single typed value, no child descent.
+
+    API: exists(), missing() (from ItemForm).
+    """
+
+
+class MutableItemRef(MutableItemForm, ItemRef):
+    """Mutable leaf Ref: single typed value with write/erase.
+
+    API: exists(), missing(), set(v), erase() (from MutableItemForm).
+    """
+
+
+class ReactiveItemRef(ReactiveItemForm, MutableItemRef):
+    """Reactive leaf Ref: single typed value with observation.
+
+    API: exists(), missing(), set(v), erase(), on_change() (from ReactiveItemForm).
+    """

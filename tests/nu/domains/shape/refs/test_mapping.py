@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 import nu
 from nu.core.flows.control import IfDo
 from nu.core.reactive import (
@@ -17,53 +19,87 @@ from nu.domains.shape.interactions import (
     Missing,
     SetCmd,
 )
-from nu.domains.shape.refs.item import ItemRef, MutableItemRef, ReactiveItemRef
-from nu.domains.shape.refs.mapping import MappingRef, MutableMappingRef, ReactiveMappingRef
-from nu.forms.primitives import Int
+from nu.domains.shape.item import ItemRef
+from nu.domains.shape.mapping import MappingRef, MutableMappingRef, ReactiveMappingRef
+from nu.forms import Dict, DictKeys, DictValues, Int, Object, Str
+from nu.lang import TypeInfo
 
 
 class MyShape(Shape):
     pass
 
 
-def test_mapping_ref_subscript_returns_item_ref():
-    m = MappingRef("my_map")
-    child = m["key"]
-    assert isinstance(child, ItemRef)
+class StubMappingRef(ReactiveMappingRef):
+    """A substrate stand-in: descends to a bare core leaf, as a fabric would to its own."""
+
+    def _wrap_item_ref(self, address):
+        return ItemRef(address, parent_ref=self, owner_shape=self._owner_shape)
 
 
-def test_mapping_ref_subscript_key_is_address():
-    m = MappingRef("my_map")
-    child = m["abc"]
-    # address is children[0] of the child ref
-    assert nu.tree.children(child)  # non-empty
+def _declared(ref, key, value):
+    ref._payload["type_info"] = TypeInfo(type(ref), key=TypeInfo(key), elem=TypeInfo(value))
+    return ref
+
+
+def test_mapping_ref_subscript_needs_a_substrate():
+    with pytest.raises(NotImplementedError, match="_wrap_item_ref"):
+        MappingRef("my_map")["k"]
+
+
+def test_mapping_ref_subscript_routes_through_wrap_item_ref():
+    m = StubMappingRef("my_map")
+    assert isinstance(m["key"], ItemRef)
 
 
 def test_mapping_ref_child_has_self_as_parent():
-    m = MappingRef("my_map")
+    m = StubMappingRef("my_map")
     child = m["k"]
     assert child._parent is m
 
 
 def test_mapping_ref_child_inherits_owner_shape():
-    m = MappingRef("my_map", owner_shape=MyShape)
+    m = StubMappingRef("my_map", owner_shape=MyShape)
     child = m["k"]
     assert child._owner_shape is MyShape
 
 
 def test_mapping_ref_different_keys_produce_different_refs():
-    m = MappingRef("my_map")
-    a = m["a"]
-    b = m["b"]
-    assert a is not b
+    m = StubMappingRef("my_map")
+    assert m["a"] is not m["b"]
 
 
-def test_mapping_ref_same_key_produces_equal_structure():
-    m = MappingRef("my_map")
-    a1 = m["a"]
-    a2 = m["a"]
-    assert type(a1) is type(a2)
-    assert a1._parent is a2._parent
+# ---------------------------------------------------------------------------
+# Results typed by the declaration
+# ---------------------------------------------------------------------------
+
+
+def test_mapping_ref_value_results_take_the_declared_value_form():
+    m = _declared(MutableMappingRef("my_map"), str, int)
+    assert type(m.get_item("a", 0)) is Int
+    assert type(m.pop("a")) is Int
+    assert type(m.setdefault("a", 0)) is Int
+
+
+def test_mapping_ref_undeclared_value_results_are_object():
+    m = MutableMappingRef("my_map")
+    assert type(m.get_item("a")) is Object
+    assert type(m.pop("a")) is Object
+
+
+def test_mapping_ref_collection_results_carry_the_declaration():
+    m = _declared(MutableMappingRef("my_map"), str, int)
+    copied = m.copy()
+    assert type(copied) is Dict
+    assert type(copied["a"]) is Int
+    assert nu.tree.payload(m.keys())["type_info"].elem == TypeInfo(str)
+    assert nu.tree.payload(m.values())["type_info"].elem == TypeInfo(int)
+    assert isinstance(m.keys(), DictKeys)
+    assert isinstance(m.values(), DictValues)
+
+
+def test_mapping_ref_element_results_take_the_declared_key_form():
+    m = _declared(MappingRef("my_map"), str, int)
+    assert type(m._wrap_element_result(nu.Literal("k"))) is Str
 
 
 # ---------------------------------------------------------------------------
@@ -93,17 +129,6 @@ def test_mapping_ref_len_returns_int_form():
 
 def test_mutable_mapping_ref_is_subclass_of_mapping_ref():
     assert issubclass(MutableMappingRef, MappingRef)
-
-
-def test_mutable_mapping_ref_subscript_returns_mutable_item_ref():
-    m = MutableMappingRef("my_map")
-    child = m["k"]
-    assert isinstance(child, MutableItemRef)
-
-
-def test_mutable_mapping_ref_child_parent_is_self():
-    m = MutableMappingRef("my_map")
-    assert m["k"]._parent is m
 
 
 def test_mutable_mapping_ref_has_set():
@@ -144,17 +169,6 @@ def test_mutable_mapping_ref_init_returns_ifdo_of_missing_and_set():
 
 def test_reactive_mapping_ref_is_subclass_of_mutable_mapping_ref():
     assert issubclass(ReactiveMappingRef, MutableMappingRef)
-
-
-def test_reactive_mapping_ref_subscript_returns_reactive_item_ref():
-    m = ReactiveMappingRef("my_map")
-    child = m["k"]
-    assert isinstance(child, ReactiveItemRef)
-
-
-def test_reactive_mapping_ref_child_parent_is_self():
-    m = ReactiveMappingRef("my_map")
-    assert m["k"]._parent is m
 
 
 def test_reactive_mapping_ref_on_change_returns_on_change_action():

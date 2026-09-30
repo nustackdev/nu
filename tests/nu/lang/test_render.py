@@ -44,7 +44,7 @@ def test_ref_label_shows_payload() -> None:
 def test_ref_label_shows_owner_shape() -> None:
     # A structured (Shape) Ref shows its owning Shape, not a payload hint.
     from nu.domains.shape import Shape, Slot
-    from nu.domains.shape.refs.item import ItemRef
+    from nu.domains.shape.item import ItemRef
 
     class Widget(Shape):
         size = Slot(ItemRef)

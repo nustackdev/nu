@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import Iterator as PyIterator
-from typing import TYPE_CHECKING, Generic, NoReturn, TypeVar
+from typing import TYPE_CHECKING, Generic, NoReturn, TypeVar, overload
 
 from nu.lang import Form, TypedNuStream
+from nu.lang.typeinfo import TypeInfo
 
 
 if TYPE_CHECKING:
-    from nu.forms.primitives import Object
+    from nu.forms.primitives import Bool, Bytes, Float, Int, Object, Str
     from nu.lang import Nu, StrArg
 
     from .list_ import List
@@ -23,6 +24,7 @@ __all__ = [
 
 
 T = TypeVar("T")
+_F = TypeVar("_F", bound=Form)
 
 _EQ_HINT = (
     "an Iterator has no value equality (it is a stream, not a value): "
@@ -44,6 +46,11 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
           it into a concrete collection, `next` pulls one item.
         - No `==` / `!=`: an iterator has no value to compare, so both
           raise. Drain it first: `it.to_list() == [...]`.
+        - An element type rides on the payload as ``type_info`` when the
+          source declared one (a typed collection ref opened with `.iter()`).
+          The item `first` reads takes that type's form, and every op whose
+          items are still the source's (`filter`, `to_list`, `to_set`)
+          carries it on. `map` does not: the transform makes new items.
 
     Yields:
         Its items in order, one per pull, until exhausted.
@@ -59,15 +66,45 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
     def __ne__(self, other: object) -> NoReturn:
         raise TypeError(_EQ_HINT)
 
-    def first(self) -> Object:
+    @property
+    def _declared_elem(self) -> TypeInfo | None:
+        """The element type the source declared; None when nothing is known."""
+        ti = self._payload.get("type_info")
+        return ti.elem if isinstance(ti, TypeInfo) else None
+
+    def _holding(self, result: _F, py_type: type) -> _F:
+        """``result`` carrying this stream's declared element type, when it has one."""
+        elem = self._declared_elem
+        if elem is not None:
+            result._payload["type_info"] = TypeInfo(py_type, elem=elem)  # type: ignore[attr-defined]
+        return result
+
+    # ---- static overloads: narrow the item type on first() -------------
+    #
+    # Runtime dispatch reads the payload; here we tell mypy which concrete
+    # Form to expect based on ``T``, as ``List.__getitem__`` does.
+
+    @overload
+    def first(self: Iterator[bool]) -> Bool: ...
+    @overload
+    def first(self: Iterator[int]) -> Int: ...
+    @overload
+    def first(self: Iterator[float]) -> Float: ...
+    @overload
+    def first(self: Iterator[str]) -> Str: ...
+    @overload
+    def first(self: Iterator[bytes]) -> Bytes: ...
+    @overload
+    def first(self) -> Object: ...
+    def first(self):  # type: ignore[no-untyped-def]
         """The first item this stream yields.
 
         Notes:
             - The stream opens fresh on every evaluation, so there is no
               cursor to advance: this is its first item, pulled and nothing
               past it. Python's `next()` is blocked by the ``Nu`` base.
-            - The element type is opaque here, so the result is wrapped as
-              `Object`.
+            - The item takes the declared element type's form when the
+              stream carries one, `Object` otherwise.
 
         Yields:
             The first item. EMPTY when the stream is empty.
@@ -79,7 +116,9 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
         from nu.core import First
         from nu.forms.primitives import Object
 
-        return Object(First(self))
+        elem = self._declared_elem
+        form_cls = elem.to_form() if elem is not None else Object
+        return form_cls(First(self))
 
     def map(self, transform: Nu, key: StrArg = "item") -> Iterator:
         """Each item replaced by transform's value, still a stream.
@@ -119,7 +158,7 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
         """
         from nu.core import Filter
 
-        return Iterator(Filter(self, predicate, key))
+        return self._holding(Iterator(Filter(self, predicate, key)), PyIterator)
 
     def to_list(self) -> List[T]:
         """Self drained into a List, in order.
@@ -135,7 +174,7 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
 
         from .list_ import List
 
-        return List(Collect(self))
+        return self._holding(List(Collect(self)), list)
 
     def to_set(self) -> Set[T]:
         """Self drained into a Set.
@@ -154,7 +193,7 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
 
         from .set_ import Set
 
-        return Set(ToSet(Collect(self)))
+        return self._holding(Set(ToSet(Collect(self))), set)
 
     def to_tuple(self) -> Tuple:
         """Self drained into a Tuple, in order.

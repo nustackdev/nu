@@ -33,8 +33,8 @@ class ShapeCache(nu.Shape):
 
 
 class Store(nu.Shape):
-    profiles: nustd.kv.ShapesDictRef[int, Profile]
-    ranks: nustd.kv.ShapesListRef[Profile]
+    profiles: nustd.kv.DictRef[int, Profile]
+    ranks: nustd.kv.ListRef[Profile]
     indexes: nustd.kv.PrimitiveListRef[int]
     cache: ShapeCache = nustd.kv.ShapeRef.slot(ShapeCache)
 
@@ -92,7 +92,7 @@ assert_type(
 
 # Store.indexes[0] is currently Any (Phase 3 gap). Using it as a key
 # into shape-decomposed profiles still returns Profile via the
-# ShapesDictRef binding.
+# DictRef binding.
 assert_type(Store.profiles[Store.indexes[0]], Profile)
 assert_type(Store.profiles[Store.indexes[0]].name, StrRef)
 assert_type(Store.profiles[Store.indexes[0]].score * 2, Int)
@@ -113,8 +113,8 @@ class Team(nu.Shape):
 
 
 class League(nu.Shape):
-    teams: nustd.kv.ShapesListRef[Team]
-    winners: nustd.kv.ShapesDictRef[str, Team]
+    teams: nustd.kv.ListRef[Team]
+    winners: nustd.kv.DictRef[str, Team]
 
 
 assert_type(League.teams[0], Team)

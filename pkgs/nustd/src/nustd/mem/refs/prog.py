@@ -1,44 +1,15 @@
-"""Dict-substrate ref for a stored Nu program.
+"""mem program leaf: Nu source stored in a slot, runnable from it.
 
-``ProgramRef`` is a slot in the nested-dict substrate whose stored value is
-python source text and whose value interface is
-:class:`~nu.prog.forms.Program`. That makes a program a first-class slot on
-a Shape::
-
-    class App(Shape):
-        job = ProgramRef.slot()
-
-    run(App.job.set(SOURCE), ctx)
-    run(App.job.run(), ctx)
-
-No codec, unlike its neighbours in ``std``. ``DecimalRef`` and friends
-override ``_lift`` / ``set`` because their domain type is not what the
-substrate can hold; a program is source text on both sides, so the stored
-form *is* the domain form and there is nothing to translate. The mixin is
-carrying an interface, not a representation.
-
-MRO note: ``ItemRef`` comes first, ``Program`` second. That order decides
-whose ``_compile`` and whose declared ``sort`` win, and getting it backwards
-is silent - see the class docstring.
+The stored form is the value form (source text on both sides), so the leaf
+carries an interface rather than a codec. The base order is load-bearing: the
+leaf comes first so the ref reads storage; see the class docstring.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from typing_extensions import Self
-
-from nu.domains.shape import Slot
 from nu.prog import Program
 
 from .items import ItemRef
-
-
-if TYPE_CHECKING:
-    from nu.domains.shape import Shape
-    from nu.lang import IntArg, StrArg
-
-    from .base import RefBase
 
 
 __all__ = ["ProgramRef"]
@@ -86,28 +57,3 @@ class ProgramRef(ItemRef, Program):
         >>> nu.run(App.job.run(), ctx)[0]
         3
     """
-
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: RefBase | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=str,
-            value_value_type=Program,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding Nu program source text.
-
-        Example:
-            class App(Shape):
-                job = ProgramRef.slot()
-        """
-        return Slot(cls)  # type: ignore[return-value]

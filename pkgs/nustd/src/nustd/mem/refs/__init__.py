@@ -1,34 +1,19 @@
-"""Every ref the dict substrate offers.
+"""The refs that address a plain nested dict: one slot in a shape, one path of keys.
 
-Base:
-    RefBase         path of keys through nested dicts; all the rest build on it
+A slot's ref class decides what sits at its key. A leaf holds one value with
+its value form mixed in. A container holds a plain list, dict or set, and the
+value it declares types every descent and every read. A shape ref holds an
+inner dict laid out by another Shape.
 
-Items:
-    ItemRef         untyped value holder, what a container descends into
-    IntRef, StrRef, FloatRef, BoolRef, BytesRef   typed leaves
-    DecimalRef, FractionRef, ComplexRef, BasisPointRef, PercentageRef,
-    DateRef, DatetimeRef, TimeRef, TimedeltaRef, TimezoneRef,
-    PathRef, UUIDRef                              stdlib leaves, each stored
-                                                  in a form a dict can hold
-
-Collections:
-    ShapeRef, DictRef, ListRef, SetRef, ShapesListRef, ShapesDictRef
-
-Programs:
-    ProgramRef      Nu source text in a slot, with the Program verbs
-
-``JQueueRef`` lives in ``jqueue`` and is not re-exported here: it needs janus.
+The substrate bases (``ItemRef``, ``RefBase``) are here for fabric and library
+authors; a subscript never hands one back. ``JQueueRef`` lives in ``jqueue``
+and is not re-exported here: it needs janus.
 """
 
 from .base import RefBase
-from .dict import DictRef
-from .dictshape import ShapesDictRef
-from .items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, StrRef
-from .list import ListRef
-from .listshape import ShapesListRef
+from .containers import DictRef, ListRef, SetRef, ShapeRef
+from .items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, ObjectRef, StrRef
 from .prog import ProgramRef
-from .set import SetRef
-from .shape import ShapeRef
 from .std import (
     BasisPointRef,
     ComplexRef,
@@ -59,14 +44,13 @@ __all__ = [
     "IntRef",
     "ItemRef",
     "ListRef",
+    "ObjectRef",
     "PathRef",
     "PercentageRef",
     "ProgramRef",
     "RefBase",
     "SetRef",
     "ShapeRef",
-    "ShapesDictRef",
-    "ShapesListRef",
     "StrRef",
     "TimeRef",
     "TimedeltaRef",

@@ -34,9 +34,9 @@ class _Row(nu.Shape):
 class _Kv(nu.Shape):
     n = nustd.kv.IntRef.slot()
     xs = nustd.kv.ListRef.slot(int)
-    d = nustd.kv.DictRef.slot(str, int)
+    d = nustd.kv.DictRef.slot(int)
     st = nustd.kv.SetRef.slot(int)
-    rows = nustd.kv.ShapesListRef.slot(_Row)
+    rows = nustd.kv.ListRef.slot(_Row)
     row = nustd.kv.ShapeRef.slot(_Row)
     pd: nustd.kv.PrimitiveDictRef[str, int]
     ps: nustd.kv.PrimitiveSetRef[int]
@@ -45,7 +45,7 @@ class _Kv(nu.Shape):
 class _Mem(nu.Shape):
     n = nustd.mem.IntRef.slot()
     xs = nustd.mem.ListRef.slot(int)
-    d = nustd.mem.DictRef.slot(str, int)
+    d = nustd.mem.DictRef.slot(int)
     st = nustd.mem.SetRef.slot(int)
     q = JQueueRef.slot(item_type=int)
 
@@ -76,7 +76,7 @@ TERMS = [
     ("kv.ListRef", lambda: _Kv.xs),
     ("kv.DictRef", lambda: _Kv.d),
     ("kv.SetRef", lambda: _Kv.st),
-    ("kv.ShapesListRef", lambda: _Kv.rows),
+    ("kv.ListRef", lambda: _Kv.rows),
     ("kv.ShapeRef", lambda: _Kv.row),
     ("kv.PrimitiveDictRef", lambda: _Kv.pd),
     ("kv.PrimitiveSetRef", lambda: _Kv.ps),

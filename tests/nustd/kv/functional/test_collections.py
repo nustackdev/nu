@@ -19,7 +19,6 @@ import nu
 from nu import (
     Contains,
     Context,
-    Dict,
     DictItems,
     DictKeys,
     DictValues,
@@ -38,11 +37,8 @@ from nustd.kv import (
     FloatRef,
     IntRef,
     Kh57Ref,
-    Kh57ShapesRef,
     ListRef,
     SetRef,
-    ShapesDictRef,
-    ShapesListRef,
     StrRef,
 )
 from nustd.kv.refs.base import Facet
@@ -66,10 +62,10 @@ class Portfolio(Shape):
     tags = ListRef.slot(str)
     metadata = DictRef.slot(str)
     members = SetRef.slot(str)
-    orders = ShapesListRef.slot(Order)
-    team = ShapesDictRef.slot(Order)
+    orders = ListRef.slot(Order)
+    team = DictRef.slot(Order)
     events = Kh57Ref.slot(str)
-    series = Kh57ShapesRef.slot(Order)
+    series = Kh57Ref.slot(Order)
 
 
 # ============================================================================
@@ -161,10 +157,6 @@ class TestDictRefWrapTypes:
     def test_items_returns_dict_items_value(self):
         items = Portfolio.metadata.items()
         assert isinstance(items, DictItems)
-
-    def test_result_returns_dict_value(self):
-        result = Portfolio.metadata._wrap_result(Literal("x"))
-        assert isinstance(result, Dict)
 
 
 class TestDictRefExecution:
@@ -279,8 +271,8 @@ class TestSetRefExecution:
 # ============================================================================
 
 
-class TestShapesListRefExecution:
-    """ShapesListRef operations through virtuals."""
+class TestListOfShapesExecution:
+    """ListRef operations through virtuals."""
 
     def test_set_and_navigate(self, portfolio_ctx):
         set(
@@ -312,8 +304,8 @@ class TestShapesListRefExecution:
 # ============================================================================
 
 
-class TestShapesDictRefWrapTypes:
-    """ShapesDictRef returns DictKeys/DictValues/DictItems."""
+class TestDictOfShapesWrapTypes:
+    """DictRef returns DictKeys/DictValues/DictItems."""
 
     def test_keys_returns_dict_keys_value(self):
         keys = Portfolio.team.keys()
@@ -328,8 +320,8 @@ class TestShapesDictRefWrapTypes:
         assert isinstance(items, DictItems)
 
 
-class TestShapesDictRefExecution:
-    """ShapesDictRef operations through virtuals."""
+class TestDictOfShapesExecution:
+    """DictRef operations through virtuals."""
 
     def test_set_and_keys(self, portfolio_ctx):
         set(
@@ -375,10 +367,6 @@ class TestKh57RefWrapTypes:
         items = Portfolio.events.items()
         assert isinstance(items, DictItems)
 
-    def test_result_returns_dict_value(self):
-        result = Portfolio.events._wrap_result(Literal("x"))
-        assert isinstance(result, Dict)
-
 
 class TestKh57RefExecution:
     """Kh57Ref operations through virtuals."""
@@ -417,8 +405,8 @@ class TestKh57RefExecution:
 # ============================================================================
 
 
-class TestKh57ShapesRefWrapTypes:
-    """Kh57ShapesRef inherits ShapesDictRef wrapping."""
+class TestKh57OfShapesWrapTypes:
+    """Kh57Ref inherits DictRef wrapping."""
 
     def test_keys_returns_dict_keys_value(self):
         keys = Portfolio.series.keys()
@@ -433,8 +421,8 @@ class TestKh57ShapesRefWrapTypes:
         assert isinstance(items, DictItems)
 
 
-class TestKh57ShapesRefExecution:
-    """Kh57ShapesRef operations through virtuals."""
+class TestKh57OfShapesExecution:
+    """Kh57Ref operations through virtuals."""
 
     def test_set_and_keys(self, portfolio_ctx):
         set(

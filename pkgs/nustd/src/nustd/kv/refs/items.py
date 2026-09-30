@@ -1,14 +1,9 @@
-"""Virtuals item refs: typed leaf-value holders backed by virtuals storage.
+"""kv leaves: one value at one address, read and written whole.
 
-``ItemRef`` combines the shape ``ReactiveItemRef`` blueprint (slot-level CRUD +
-change observation) with ``PrimitiveRef`` (virtuals leaf navigation). Typed
-refs (``IntRef``, ``StrRef``, ...) add the matching primitive Form so the value
-carries its full operator interface.
-
-Reactivity is uniform: ``ReactiveItemForm.on_change()`` -> ``nu.core.reactive
-.OnPrimitiveChange`` calls ``ref._afetch_parent`` + ``ref._aaddress`` on the
-leaf, and the virtuals ``PrimitiveRef`` implements both -- no substrate-side
-override needed.
+``ItemRef`` is the leaf itself (slot-level read, write, erase and observe over
+a kv leaf) and declares a slot once for every leaf. Each value leaf mixes one
+value form in beside it, so the ref is an operand of the value it names; the
+form decides the surface, the leaf decides where the value lives.
 """
 
 from __future__ import annotations
@@ -18,15 +13,13 @@ from typing import TYPE_CHECKING
 from typing_extensions import Self
 
 from nu.domains.shape import ReactiveItemRef, Slot
-from nu.forms import Bool, Bytes, Float, Int, None_, Str
+from nu.forms import Bool, Bytes, Float, Int, None_, Object, Str
 
 from .base import PrimitiveRef
 
 
 if TYPE_CHECKING:
-    from nu.domains.shape.dsl import Shape
-    from nu.lang import IntArg, StrArg
-
+    from nu.lang import IntArg
 
 __all__ = [
     "BoolRef",
@@ -34,51 +27,47 @@ __all__ = [
     "FloatRef",
     "IntRef",
     "ItemRef",
+    "ObjectRef",
     "StrRef",
 ]
 
 
 class ItemRef(ReactiveItemRef, PrimitiveRef):
-    """An untyped leaf slot in KV storage: read it, set it, erase it, watch it.
+    """A leaf slot in KV storage: read it, set it, erase it, watch it.
 
-    The value type and the Form its reads are wrapped in are both given at
-    declaration time, so one class covers any leaf whose type is only known
-    where the slot is written. A typed sibling (``IntRef``, ``StrRef``, ...)
-    is the same leaf with that pair fixed and the matching operator surface
-    mixed in.
+    The base every kv leaf builds on. It carries no value surface of its own;
+    a leaf class mixes in the form of the value it holds (``IntRef`` is this
+    plus ``Int``), and that one pairing is the whole of a leaf class.
 
     Notes:
-        - Carries no operator surface of its own; reach for a typed ref when
-          the value should support arithmetic, comparison or string ops.
         - Reads yield EMPTY when the leaf is absent rather than raising.
         - ``on_change`` works with no substrate-side wiring, because the leaf
           navigation already exposes the parent view and the address.
+    """
+
+    @classmethod
+    def slot(cls) -> Self:
+        """Declare a slot holding this leaf."""
+        return Slot(cls)  # type: ignore[return-value]
+
+
+class ObjectRef(ItemRef, Object):
+    """A leaf in KV storage holding a value of no declared type.
+
+    What a container descends to when its value is ``object``, undeclared, or
+    a type with no kv leaf of its own. It carries the whole ``Object`` surface,
+    so the ref is still an operand: ``==`` builds an ``Eq``, attribute and
+    subscript access descend into the value read, and a cast narrows it.
+
+    Notes:
+        - A dict or list stored here reads back as a plain value, not a View.
 
     Example:
         class Bag(Shape):
-            payload = ItemRef.slot(str, Str)
-        run(Bag.payload.set("hello"), ctx)
-        run(Bag.payload, ctx)
+            meta = DictRef.slot(object)
+        run(Bag.meta["title"] == "hello", ctx)
+        run(nu.Str(Bag.meta["title"]).upper(), ctx)
     """
-
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        value_type: type,
-        value_value_type: type,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address, value_type=value_type, parent_ref=parent_ref, owner_shape=owner_shape
-        )
-        self._payload["value_value_type"] = value_value_type
-
-    @classmethod
-    def slot(cls, value_type: type, value_value_type: type) -> Self:
-        """Declare a generic item slot for ``value_type`` (with its Form)."""
-        return Slot(cls, value_type=value_type, value_value_type=value_value_type)  # type: ignore[return-value]
 
 
 # =============================================================================
@@ -101,21 +90,6 @@ class IntRef(ItemRef, Int):
         run(Counter.hits.set(0), ctx)
         run(Counter.hits.inc(), ctx)
     """
-
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=int,
-            value_value_type=Int,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
 
     def inc(self, step: IntArg = 1) -> None_:
         """Add ``step`` to the stored int and write the result back.
@@ -151,11 +125,6 @@ class IntRef(ItemRef, Int):
         """
         return self.set(self - step)
 
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding this typed value."""
-        return Slot(cls)  # type: ignore[return-value]
-
 
 class StrRef(ItemRef, Str):
     """A str leaf in KV storage, carrying the whole Str operator surface.
@@ -172,26 +141,6 @@ class StrRef(ItemRef, Str):
         run(Portfolio.name.upper(), ctx)
     """
 
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=str,
-            value_value_type=Str,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding this typed value."""
-        return Slot(cls)  # type: ignore[return-value]
-
 
 class FloatRef(ItemRef, Float):
     """A float leaf in KV storage, carrying the whole Float operator surface.
@@ -206,26 +155,6 @@ class FloatRef(ItemRef, Float):
             price = FloatRef.slot()
         run(Order.price.set(12.5), ctx)
     """
-
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=float,
-            value_value_type=Float,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding this typed value."""
-        return Slot(cls)  # type: ignore[return-value]
 
 
 class BoolRef(ItemRef, Bool):
@@ -243,26 +172,6 @@ class BoolRef(ItemRef, Bool):
         run(Flags.live.not_(), ctx)
     """
 
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=bool,
-            value_value_type=Bool,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding this typed value."""
-        return Slot(cls)  # type: ignore[return-value]
-
 
 class BytesRef(ItemRef, Bytes):
     """A bytes leaf in KV storage, carrying the whole Bytes operator surface.
@@ -278,23 +187,3 @@ class BytesRef(ItemRef, Bytes):
         run(Blob.raw.set(b"payload"), ctx)
         run(Blob.raw.hex_(), ctx)
     """
-
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: PrimitiveRef | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=bytes,
-            value_value_type=Bytes,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a slot holding this typed value."""
-        return Slot(cls)  # type: ignore[return-value]

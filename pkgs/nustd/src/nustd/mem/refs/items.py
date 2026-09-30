@@ -1,8 +1,9 @@
-"""Dict substrate item refs: typed value holders in nested dicts.
+"""mem leaves: one value at one key, read and written whole.
 
-``ItemRef`` combines the shape ``MutableItemRef`` blueprint (slot-level CRUD)
-with ``RefBase`` (dict navigation). Typed refs (``IntRef``, ``StrRef``, ...) add
-the matching primitive Form so the value carries its full operator interface.
+``ItemRef`` is the leaf itself (slot-level read, write and erase over one key
+of a nested dict) and declares a slot once for every leaf. Each value leaf
+mixes one value form in beside it, so the ref is an operand of the value it
+names; the form decides the surface, the leaf decides where the value lives.
 """
 
 from __future__ import annotations
@@ -12,14 +13,13 @@ from typing import TYPE_CHECKING
 from typing_extensions import Self
 
 from nu.domains.shape import MutableItemRef, Slot
-from nu.forms import Bool, Bytes, Float, Int, None_, Str
+from nu.forms import Bool, Bytes, Float, Int, None_, Object, Str
 
 from .base import RefBase
 
 
 if TYPE_CHECKING:
-    from nu.domains.shape.dsl import Shape
-    from nu.lang import IntArg, StrArg
+    from nu.lang import IntArg
 
 
 __all__ = [
@@ -28,64 +28,51 @@ __all__ = [
     "FloatRef",
     "IntRef",
     "ItemRef",
+    "ObjectRef",
     "StrRef",
 ]
 
 
 class ItemRef(MutableItemRef, RefBase):
-    """A single stored value in the dict substrate, with no value interface.
+    """A single stored value in the dict substrate: read it, set it, erase it.
 
-    The untyped leaf: it reads, writes and erases one key, and carries the
-    element type as metadata for whoever needs it, but exposes none of the
-    operators a typed ref does. Reach for it when the held type is decided by
-    a container above (``ListRef[i]`` and ``DictRef[k]`` both descend into
-    one) rather than declared on a Shape.
+    The base every mem leaf builds on. It carries no value surface of its own;
+    a leaf class mixes in the form of the value it holds (``IntRef`` is this
+    plus ``Int``), and that one pairing is the whole of a leaf class.
+
+    Args:
+        address: this level's key, a literal or a Nu term yielding one.
+    """
+
+    @classmethod
+    def slot(cls) -> Self:
+        """Declare a slot holding this leaf."""
+        return Slot(cls)  # type: ignore[return-value]
+
+
+class ObjectRef(ItemRef, Object):
+    """A single stored value in the dict substrate, of no declared type.
+
+    What a container descends to when its value is ``object``, undeclared, or
+    a type with no mem leaf of its own. It carries the whole ``Object``
+    surface, so the ref is still an operand: ``==`` builds an ``Eq``,
+    attribute and subscript access descend into the value read, and a cast
+    narrows it.
 
     Args:
         address: this level's key, a literal or a Nu term yielding one.
 
-    Notes:
-        - The type carried is metadata only: nothing coerces or rejects a
-          value on write, and nothing checks what comes back on read.
+    Yields:
+        The stored value as it sits in the data dict. EMPTY when the slot was
+        never written or its path is broken.
 
     Example:
         >>> class Port(nu.Shape):
-        ...     tags = nustd.mem.ListRef.slot(str)
-        >>> ctx = nu.Context().bind(dict, {"tags": ["a", "b"]}, Port)
-        >>> nu.run(Port.tags[1], ctx)[0]
-        'b'
+        ...     meta = nustd.mem.DictRef.slot(object)
+        >>> ctx = nu.Context().bind(dict, {"meta": {"title": "hi"}}, Port)
+        >>> nu.run(Port.meta["title"] == "hi", ctx)[0]
+        True
     """
-
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        value_type: type,
-        value_value_type: type,
-        parent_ref: RefBase | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
-        self._payload["value_type"] = value_type
-        self._payload["value_value_type"] = value_value_type
-
-    @classmethod
-    def slot(cls, value_type: type, value_value_type: type) -> Self:
-        """Declare an untyped item slot holding ``value_type`` values.
-
-        Args:
-            value_type: the Python type the slot holds.
-            value_value_type: the Nu Form matching ``value_type``.
-
-        Notes:
-            - Written in a Shape class body; the metaclass turns it into a
-              bound ``ItemRef`` addressed by the attribute name.
-
-        Example:
-            class Row(Shape):
-                cell = ItemRef.slot(int, Int)
-        """
-        return Slot(cls, value_type=value_type, value_value_type=value_value_type)  # type: ignore[return-value]
 
 
 # =============================================================================
@@ -116,21 +103,6 @@ class IntRef(ItemRef, Int):
         >>> nu.run(User.age + 1, ctx)[0]
         42
     """
-
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: RefBase | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=int,
-            value_value_type=Int,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
 
     def inc(self, step: IntArg = 1) -> None_:
         """Add ``step`` to the stored int and write the result back.
@@ -170,11 +142,6 @@ class IntRef(ItemRef, Int):
         """
         return self.set(self - step)
 
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare an int slot in a Shape class body."""
-        return Slot(cls)  # type: ignore[return-value]
-
 
 class StrRef(ItemRef, Str):
     """A str slot in the dict substrate, carrying the whole Str surface.
@@ -198,26 +165,6 @@ class StrRef(ItemRef, Str):
         'ADA'
     """
 
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: RefBase | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=str,
-            value_value_type=Str,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a str slot in a Shape class body."""
-        return Slot(cls)  # type: ignore[return-value]
-
 
 class FloatRef(ItemRef, Float):
     """A float slot in the dict substrate, carrying the whole Float surface.
@@ -239,26 +186,6 @@ class FloatRef(ItemRef, Float):
         >>> nu.run(User.score * 2, ctx)[0]
         3.0
     """
-
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: RefBase | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=float,
-            value_value_type=Float,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a float slot in a Shape class body."""
-        return Slot(cls)  # type: ignore[return-value]
 
 
 class BoolRef(ItemRef, Bool):
@@ -283,26 +210,6 @@ class BoolRef(ItemRef, Bool):
         False
     """
 
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: RefBase | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=bool,
-            value_value_type=Bool,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a bool slot in a Shape class body."""
-        return Slot(cls)  # type: ignore[return-value]
-
 
 class BytesRef(ItemRef, Bytes):
     """A bytes slot in the dict substrate, carrying the whole Bytes surface.
@@ -325,23 +232,3 @@ class BytesRef(ItemRef, Bytes):
         >>> nu.run(Blob.body.decode(), ctx)[0]
         'hi'
     """
-
-    def __init__(
-        self,
-        address: StrArg | IntArg,
-        *,
-        parent_ref: RefBase | None = None,
-        owner_shape: type[Shape] | None = None,
-    ) -> None:
-        super().__init__(
-            address,
-            value_type=bytes,
-            value_value_type=Bytes,
-            parent_ref=parent_ref,
-            owner_shape=owner_shape,
-        )
-
-    @classmethod
-    def slot(cls) -> Self:  # type: ignore[override]
-        """Declare a bytes slot in a Shape class body."""
-        return Slot(cls)  # type: ignore[return-value]

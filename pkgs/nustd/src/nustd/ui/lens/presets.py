@@ -30,8 +30,7 @@ from .columns import DEFAULT_MAX_ROWS, columns
 
 
 if TYPE_CHECKING:
-    from nu.domains.shape import Shape
-    from nu.domains.shape.refs import StructuredRef
+    from nu.domains.shape import Shape, StructuredRef
 
     from .ref import LensRef
 

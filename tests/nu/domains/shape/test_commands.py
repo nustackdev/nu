@@ -10,7 +10,7 @@ import pytest
 
 import nu
 from nu.domains.shape.interactions import Erase, PrimitiveSet, SetCmd
-from nu.domains.shape.refs.item import ItemRef
+from nu.domains.shape.item import ItemRef
 from nu.lang import Command, Literal
 from nu.lang.sentinels import EMPTY, INVALID
 

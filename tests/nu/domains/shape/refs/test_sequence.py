@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 import nu
 from nu.core.flows.control import IfDo
 from nu.core.reactive import OnChange, OnChildChange, OnChildrenChange
@@ -12,45 +14,85 @@ from nu.domains.shape.interactions import (
     Missing,
     SetCmd,
 )
-from nu.domains.shape.refs.item import ItemRef, MutableItemRef, ReactiveItemRef
-from nu.domains.shape.refs.sequence import MutableSequenceRef, ReactiveSequenceRef, SequenceRef
-from nu.forms.primitives import Int
+from nu.domains.shape.item import ItemRef
+from nu.domains.shape.sequence import MutableSequenceRef, ReactiveSequenceRef, SequenceRef
+from nu.forms import Int, List, Object, Str
+from nu.lang import TypeInfo
 
 
 class MyShape(Shape):
     pass
 
 
-def test_sequence_ref_subscript_returns_item_ref():
-    s = SequenceRef("my_seq")
-    child = s[0]
-    assert isinstance(child, ItemRef)
+class StubSequenceRef(ReactiveSequenceRef):
+    """A substrate stand-in: descends to a bare core leaf, as a fabric would to its own."""
+
+    def _wrap_item_ref(self, address):
+        return ItemRef(address, parent_ref=self, owner_shape=self._owner_shape)
+
+
+def _declared(ref, value):
+    ref._payload["type_info"] = TypeInfo(type(ref), elem=TypeInfo(value))
+    return ref
+
+
+def test_sequence_ref_subscript_needs_a_substrate():
+    with pytest.raises(NotImplementedError, match="_wrap_item_ref"):
+        SequenceRef("my_seq")[0]
+
+
+def test_sequence_ref_subscript_routes_through_wrap_item_ref():
+    s = StubSequenceRef("my_seq")
+    assert isinstance(s[0], ItemRef)
 
 
 def test_sequence_ref_child_has_self_as_parent():
-    s = SequenceRef("my_seq")
+    s = StubSequenceRef("my_seq")
     child = s[3]
     assert child._parent is s
 
 
 def test_sequence_ref_child_inherits_owner_shape():
-    s = SequenceRef("my_seq", owner_shape=MyShape)
+    s = StubSequenceRef("my_seq", owner_shape=MyShape)
     child = s[0]
     assert child._owner_shape is MyShape
 
 
 def test_sequence_ref_different_indices_produce_different_refs():
-    s = SequenceRef("my_seq")
-    a = s[0]
-    b = s[1]
-    assert a is not b
+    s = StubSequenceRef("my_seq")
+    assert s[0] is not s[1]
 
 
 def test_sequence_ref_string_index_is_accepted():
     # subscript is typed as object — string keys are valid for some substrates
-    s = SequenceRef("my_seq")
+    s = StubSequenceRef("my_seq")
     child = s["log_key_0"]
     assert isinstance(child, ItemRef)
+
+
+# ---------------------------------------------------------------------------
+# Results typed by the declaration
+# ---------------------------------------------------------------------------
+
+
+def test_sequence_ref_element_results_take_the_declared_value_form():
+    s = _declared(MutableSequenceRef("my_seq"), str)
+    assert type(s.first_elem()) is Str
+    assert type(s.last_elem()) is Str
+    assert type(s.pop()) is Str
+
+
+def test_sequence_ref_undeclared_element_results_are_object():
+    s = MutableSequenceRef("my_seq")
+    assert type(s.first_elem()) is Object
+
+
+def test_sequence_ref_slice_carries_the_declared_element_type():
+    s = _declared(SequenceRef("my_seq"), int)
+    sliced = s[0:2]
+    assert type(sliced) is List
+    assert type(sliced.first_elem()) is Int
+    assert type(sliced[0]) is Int
 
 
 def test_sequence_ref_slice_routes_to_slice_op():
@@ -102,16 +144,6 @@ def test_mutable_sequence_ref_is_subclass_of_sequence_ref():
     assert issubclass(MutableSequenceRef, SequenceRef)
 
 
-def test_mutable_sequence_ref_subscript_returns_mutable_item_ref():
-    s = MutableSequenceRef("my_seq")
-    assert isinstance(s[0], MutableItemRef)
-
-
-def test_mutable_sequence_ref_child_parent_is_self():
-    s = MutableSequenceRef("my_seq")
-    assert s[0]._parent is s
-
-
 def test_mutable_sequence_ref_set_returns_set_command():
     s = MutableSequenceRef("my_seq")
     assert isinstance(s.set([1, 2, 3]), SetCmd)
@@ -144,11 +176,6 @@ def test_mutable_sequence_ref_init_returns_ifdo_of_missing_and_set():
 
 def test_reactive_sequence_ref_is_subclass_of_mutable_sequence_ref():
     assert issubclass(ReactiveSequenceRef, MutableSequenceRef)
-
-
-def test_reactive_sequence_ref_subscript_returns_reactive_item_ref():
-    s = ReactiveSequenceRef("my_seq")
-    assert isinstance(s[0], ReactiveItemRef)
 
 
 def test_reactive_sequence_ref_on_change_returns_on_change_action():

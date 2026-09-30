@@ -1,29 +1,21 @@
-"""Shape-domain Collection Form chain.
+"""What every shape collection shares: slot-level ops, and results typed by its declaration.
 
-Three tiers:
-    CollectionForm          exists(), missing(), extract()
-    MutableCollectionForm   + set(), erase()
-    ReactiveCollectionForm  + on_child_change(), on_children_change(),
-                              on_descendants_change()
+A collection slot declares what it holds (a value type, plus a key type for a
+mapping) and that declaration rides on the ref as its ``type_info``. Every form
+a collection op returns is read off that declaration: a single element reads as
+the declared type's core form, and a collection result carries the declared
+types on to the form it returns, so they are not lost one op later.
 
-Pure Form mixins: no Ref or substrate knowledge. They sit BETWEEN
-the generic collection forms and the concrete Refs, adding shape-domain ops
-(existence checks, fabric-level set/erase, tree-aware observation) on top of
-whatever generic collection surface the Ref already exposes.
-
-``on_change()`` (observe self) is deliberately absent here. It is generic and
-lives on the generic ``ReactiveXxxForm`` tiers in ``nu.forms.collections.abc``,
-returning ``nu.core.reactive.OnChange``. ``ReactiveCollectionForm``
-provides only the three tree-aware methods, which reach for the shape-tier
-counterparts in ``nu.core.reactive`` too: one unified location for every
-reactive query.
+Pure Form mixins: no Ref or substrate knowledge, and no fabric class. Which ref
+a descent lands on is the fabric's business, not this module's.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 from nu.lang import Form
+from nu.lang.typeinfo import TypeInfo
 
 
 if TYPE_CHECKING:
@@ -49,8 +41,32 @@ __all__ = [
 ]
 
 
+_UNDECLARED = TypeInfo.any()
+
+_F = TypeVar("_F", bound=Form)
+
+
+def form_of(declared: TypeInfo | None) -> type[Form]:
+    """The core form a declared type reads as; ``Object`` when nothing is declared."""
+    return (declared or _UNDECLARED).to_form()
+
+
+def holding(
+    result: _F, py_type: type, *, key: TypeInfo | None = None, elem: TypeInfo | None = None
+) -> _F:
+    """``result`` carrying the declared key and element types, so its own ops stay typed."""
+    if key is not None or elem is not None:
+        result._payload["type_info"] = TypeInfo(py_type, key=key, elem=elem)  # type: ignore[attr-defined]
+    return result
+
+
 class CollectionForm(Form):
     """Shape collection Form. Ops: ``exists()``, ``missing()``, ``extract()``."""
+
+    @property
+    def _declared(self) -> TypeInfo:
+        """What the slot declared this collection holds; nothing known when undeclared."""
+        return self._payload.get("type_info") or _UNDECLARED  # type: ignore[attr-defined, no-any-return]
 
     def exists(self) -> Exists:
         """Build an ``Exists`` query."""
