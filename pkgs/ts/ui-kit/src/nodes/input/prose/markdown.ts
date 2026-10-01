@@ -139,6 +139,17 @@ const HEADING = /^(#{1,3})[ \t]+(.*)$/;
 const QUOTE = /^>[ \t]?/;
 const BULLET = /^([ \t]*)([-*+])([ \t]+)/;
 const ORDERED = /^([ \t]*)(\d+)([.)])([ \t]+)/;
+/** A checklist item: a bullet, then `[ ]` or `[x]`. Tried before BULLET. */
+const TASK = /^([ \t]*)([-*+])([ \t]+)\[([ xX])\](?:[ \t]+|$)/;
+
+type ListKind = "bullet" | "ordered" | "task";
+
+function listKind(text: string): ListKind | null {
+	if (TASK.test(text)) return "task";
+	if (BULLET.test(text)) return "bullet";
+	if (ORDERED.test(text)) return "ordered";
+	return null;
+}
 
 function leadingWs(text: string): number {
 	const m = /^[ \t]*/.exec(text);
@@ -260,22 +271,30 @@ export function createMarkdown(s: ProseSchema): Markdown {
 	function parseList(
 		lines: Line[],
 		start: number,
-		ordered: boolean,
+		kind: ListKind,
 		ctx: Ctx,
 	): { node: PMNode; next: number } {
-		const re = ordered ? ORDERED : BULLET;
+		const ordered = kind === "ordered";
+		const re = kind === "task" ? TASK : ordered ? ORDERED : BULLET;
 		const indent = leadingWs(lines[start].text);
 		const items: PMNode[] = [];
 		let order = 1;
 		let i = start;
 
 		while (i < lines.length) {
+			// A bullet that turns into a checkbox (or back) ends this list and
+			// starts the other kind, so the two never mix in one node.
+			if (listKind(lines[i].text) !== kind) break;
 			const m = re.exec(lines[i].text);
 			if (!m || m[1].length !== indent) break;
 			if (ordered && items.length === 0) order = Number(m[2]) || 1;
+			const checked = kind === "task" && m[4] !== " ";
 
-			const markerLen = m[0].length;
-			const body: Line[] = [{ text: lines[i].text.slice(markerLen), at: lines[i].at + markerLen }];
+			// The body starts after the checkbox, but continuation lines only
+			// have to clear the bullet, which is what the serializer indents by.
+			const cut = m[0].length;
+			const markerLen = kind === "task" ? m[1].length + m[2].length + m[3].length : cut;
+			const body: Line[] = [{ text: lines[i].text.slice(cut), at: lines[i].at + cut }];
 			i += 1;
 
 			// Continuation: anything indented past the marker belongs to this item.
@@ -305,10 +324,15 @@ export function createMarkdown(s: ProseSchema): Markdown {
 			if (content[0].type !== nodeType.paragraph) {
 				content = [nodeType.paragraph.create(), ...content];
 			}
-			items.push(nodeType.listItem.create(null, content));
+			items.push(
+				kind === "task"
+					? nodeType.taskItem.create({ checked }, content)
+					: nodeType.listItem.create(null, content),
+			);
 		}
 
-		const type = ordered ? nodeType.orderedList : nodeType.bulletList;
+		const type =
+			kind === "task" ? nodeType.taskList : ordered ? nodeType.orderedList : nodeType.bulletList;
 		return { node: type.create(ordered ? { order } : null, items), next: i };
 	}
 
@@ -355,9 +379,9 @@ export function createMarkdown(s: ProseSchema): Markdown {
 				continue;
 			}
 
-			if (BULLET.test(line.text) || ORDERED.test(line.text)) {
-				const ordered = ORDERED.test(line.text);
-				const { node, next } = parseList(lines, i, ordered, ctx);
+			const kind = listKind(line.text);
+			if (kind) {
+				const { node, next } = parseList(lines, i, kind, ctx);
 				out.push(node);
 				i = next;
 				continue;
@@ -434,7 +458,13 @@ export function createMarkdown(s: ProseSchema): Markdown {
 	/** Escape a leading marker so a line of prose is not read back as a block. */
 	function escapeLineStart(text: string): string {
 		if (RULE.test(text)) return `\\${text}`;
-		return text.replace(/^(#{1,3}[ \t]|[-*+][ \t]|\d+[.)][ \t]|>)/, (m) => `\\${m}`);
+		// `[ ]` is only a checkbox right after a bullet, but escaping it wherever
+		// a line opens with it is what keeps a list item's text from turning
+		// into one.
+		return text.replace(
+			/^(#{1,3}[ \t]|[-*+][ \t]|\d+[.)][ \t]|>|\[[ xX]\](?=[ \t]|$))/,
+			(m) => `\\${m}`,
+		);
 	}
 
 	function sameMarks(a: readonly Mark[], b: readonly Mark[]): boolean {
@@ -507,7 +537,11 @@ export function createMarkdown(s: ProseSchema): Markdown {
 	}
 
 	function isList(node: PMNode): boolean {
-		return node.type === nodeType.bulletList || node.type === nodeType.orderedList;
+		return (
+			node.type === nodeType.bulletList ||
+			node.type === nodeType.orderedList ||
+			node.type === nodeType.taskList
+		);
 	}
 
 	/**
@@ -552,6 +586,15 @@ export function createMarkdown(s: ProseSchema): Markdown {
 				const items: string[] = [];
 				node.forEach((item) => {
 					items.push(prefixLines(serializeChildren(item, true), "- ", "  "));
+				});
+				return items.join("\n");
+			}
+
+			case nodeType.taskList: {
+				const items: string[] = [];
+				node.forEach((item) => {
+					const box = item.attrs.checked ? "- [x] " : "- [ ] ";
+					items.push(prefixLines(serializeChildren(item, true), box, "  "));
 				});
 				return items.join("\n");
 			}

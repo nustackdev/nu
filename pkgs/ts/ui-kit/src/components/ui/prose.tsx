@@ -15,6 +15,10 @@ const proseSelectors = [
 	// container defaults
 	"font-display text-text-primary text-base leading-normal",
 	"max-w-none",
+	// Block margins space blocks apart, never the block from its own box: the
+	// first child drops its top, the last its bottom, at every depth. Beats the
+	// per-element margins below on specificity, not on order.
+	"[&_*:first-child]:mt-0 [&_*:last-child]:mb-0",
 	// headings
 	"[&_h1]:font-display [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:text-text-primary [&_h1]:mt-6 [&_h1]:mb-3",
 	"[&_h2]:font-display [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:text-text-primary [&_h2]:mt-5 [&_h2]:mb-2",
@@ -28,6 +32,12 @@ const proseSelectors = [
 	"[&_ul]:my-2 [&_ul]:pl-5 [&_ul]:list-disc [&_ul]:text-text-primary",
 	"[&_ol]:my-2 [&_ol]:pl-5 [&_ol]:list-decimal [&_ol]:text-text-primary",
 	"[&_li]:my-0.5 [&_li]:leading-normal",
+	// checklists: the box sits on the first line, a done item goes quiet
+	"[&_[data-task-list]]:list-none [&_[data-task-list]]:pl-0",
+	"[&_[data-task-item]]:flex [&_[data-task-item]]:items-start [&_[data-task-item]]:gap-2",
+	"[&_[data-task-box]]:flex [&_[data-task-box]]:h-[1lh] [&_[data-task-box]]:shrink-0 [&_[data-task-box]]:items-center",
+	"[&_[data-task-body]]:min-w-0 [&_[data-task-body]]:flex-1",
+	"[&_[data-checked=true]>[data-task-body]>p]:text-text-muted [&_[data-checked=true]>[data-task-body]>p]:line-through",
 	// blockquote
 	"[&_blockquote]:my-3 [&_blockquote]:pl-3 [&_blockquote]:border-l-2 [&_blockquote]:border-accent-line [&_blockquote]:text-text-secondary [&_blockquote]:italic",
 	// inline code and pre

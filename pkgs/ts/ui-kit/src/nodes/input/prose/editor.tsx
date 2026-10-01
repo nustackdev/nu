@@ -30,9 +30,12 @@ import { baseKeymap, chainCommands, toggleMark } from "prosemirror-commands";
 import { history, redo, undo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
 import { liftListItem, sinkListItem, splitListItem } from "prosemirror-schema-list";
+import { DOMSerializer, type Node as PMNode } from "prosemirror-model";
 import { type Command, EditorState, type Transaction } from "prosemirror-state";
-import { EditorView } from "prosemirror-view";
+import { EditorView, type NodeView } from "prosemirror-view";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { createRoot } from "react-dom/client";
+import { Checkbox } from "../../../components/ui/checkbox";
 import { cn } from "../../../lib/utils";
 import { createMarkdown, type Markdown } from "./markdown";
 import { placeholder, proseInputRules } from "./rules";
@@ -40,6 +43,66 @@ import { type ProseSchema, proseSchema } from "./schema";
 
 /** Quiet-moment autosave. Long enough that a typist never triggers it. */
 const SAVE_DELAY = 800;
+
+/**
+ * A checklist item: the schema's own `toDOM` for the layout, with the kit's
+ * `Checkbox` mounted where the static one goes. The box is not document
+ * content, so a click on it is an attribute flip, never a caret move, and it
+ * saves like any other edit.
+ */
+function taskItemView(node: PMNode, view: EditorView, getPos: () => number | undefined): NodeView {
+	const spec = node.type.spec.toDOM?.(node);
+	if (!spec) throw new Error("task_item has no toDOM");
+	const { dom, contentDOM } = DOMSerializer.renderSpec(document, spec);
+	const li = dom as HTMLElement;
+	const box = li.querySelector("[data-task-box]") as HTMLElement;
+	box.replaceChildren();
+	const root = createRoot(box);
+	let current = node;
+
+	const toggle = () => {
+		const pos = getPos();
+		if (pos === undefined || !view.editable) return;
+		view.dispatch(
+			view.state.tr.setNodeMarkup(pos, undefined, {
+				...current.attrs,
+				checked: !current.attrs.checked,
+			}),
+		);
+	};
+
+	const render = () => {
+		li.setAttribute("data-checked", String(current.attrs.checked));
+		root.render(
+			<Checkbox
+				size="sm"
+				checked={current.attrs.checked as boolean}
+				onCheckedChange={toggle}
+				tabIndex={-1}
+				aria-label={current.attrs.checked ? "Mark not done" : "Mark done"}
+				// Keep the caret where it is: the box is not a place to type.
+				onMouseDown={(e) => e.preventDefault()}
+			/>,
+		);
+	};
+	render();
+
+	return {
+		dom: li,
+		contentDOM: contentDOM ?? undefined,
+		update(next) {
+			if (next.type !== current.type) return false;
+			current = next;
+			render();
+			return true;
+		},
+		stopEvent: (e) => box.contains(e.target as Node),
+		ignoreMutation: (m) =>
+			m.type !== "selection" && !(contentDOM?.contains(m.target as Node) ?? false),
+		// Unmounting inside a React commit warns; the view can be torn down in one.
+		destroy: () => queueMicrotask(() => root.unmount()),
+	};
+}
 
 export type ProseEditorProps = {
 	/** The markdown source. Owned by whoever renders this. */
@@ -121,9 +184,14 @@ export function ProseEditor({
 		};
 
 		const editing = keymap({
-			Enter: chainCommands(splitListItem(nodeType.listItem), baseKeymap.Enter),
-			Tab: sinkListItem(nodeType.listItem),
-			"Shift-Tab": liftListItem(nodeType.listItem),
+			Enter: chainCommands(
+				splitListItem(nodeType.listItem),
+				// A new checklist item starts undone, whatever the one above says.
+				splitListItem(nodeType.taskItem, { checked: false }),
+				baseKeymap.Enter,
+			),
+			Tab: chainCommands(sinkListItem(nodeType.listItem), sinkListItem(nodeType.taskItem)),
+			"Shift-Tab": chainCommands(liftListItem(nodeType.listItem), liftListItem(nodeType.taskItem)),
 			"Mod-b": toggleMark(markType.strong),
 			"Mod-i": toggleMark(markType.em),
 			"Mod-e": toggleMark(markType.code),
@@ -148,6 +216,9 @@ export function ProseEditor({
 			state,
 			editable: () => !cb.current.readOnly,
 			attributes: { class: "nu-prose-editor", spellcheck: "true" },
+			nodeViews: {
+				[nodeType.taskItem.name]: (node, v, getPos) => taskItemView(node, v, getPos),
+			},
 			dispatchTransaction(tr: Transaction) {
 				const next = view.state.apply(tr);
 				view.updateState(next);

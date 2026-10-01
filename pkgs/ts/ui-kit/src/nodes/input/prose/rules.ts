@@ -16,7 +16,8 @@ import {
 	wrappingInputRule,
 } from "prosemirror-inputrules";
 import type { MarkType } from "prosemirror-model";
-import { type EditorState, Plugin } from "prosemirror-state";
+import { type EditorState, Plugin, TextSelection } from "prosemirror-state";
+import { canJoin, findWrapping } from "prosemirror-transform";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import type { ProseSchema } from "./schema";
 
@@ -39,23 +40,70 @@ function markInputRule(re: RegExp, type: MarkType, s: ProseSchema): InputRule {
 	});
 }
 
+/**
+ * `[] `, `[ ] ` or `[x] ` at the start of a line -> a checklist item.
+ *
+ * On a bare paragraph it wraps it, joining a checklist right above. On the
+ * first item of a fresh one-item bullet list (`- ` then `[ ] `, the GFM
+ * spelling) it turns that list into a checklist instead of nesting one.
+ * Anywhere else it declines and the text stays literal.
+ */
+function taskInputRule(s: ProseSchema): InputRule {
+	const { nodeType } = s;
+	return new InputRule(/^\[([ xX]?)\]\s$/, (state, match, start, end) => {
+		const checked = match[1] === "x" || match[1] === "X";
+		const $start = state.doc.resolve(start);
+		const d = $start.depth;
+
+		if (
+			d >= 2 &&
+			$start.node(d - 1).type === nodeType.listItem &&
+			$start.index(d - 1) === 0 &&
+			$start.node(d - 2).type === nodeType.bulletList &&
+			$start.node(d - 2).childCount === 1
+		) {
+			const tr = state.tr.delete(start, end);
+			const at = $start.before(d - 2);
+			const item = tr.doc.nodeAt(at)?.firstChild;
+			if (!item) return null;
+			const list = nodeType.taskList.create(null, nodeType.taskItem.create({ checked }, item.content));
+			tr.replaceWith(at, at + (tr.doc.nodeAt(at)?.nodeSize ?? 0), list);
+			// ul, li, p: the caret goes to the start of the item's text.
+			return tr.setSelection(TextSelection.create(tr.doc, at + 3));
+		}
+
+		const tr = state.tr.delete(start, end);
+		const range = tr.doc.resolve(start).blockRange();
+		const wrapping = range && findWrapping(range, nodeType.taskList);
+		if (!range || !wrapping) return null;
+		tr.wrap(
+			range,
+			wrapping.map((w) => (w.type === nodeType.taskItem ? { type: w.type, attrs: { checked } } : w)),
+		);
+		const before = tr.doc.resolve(start - 1).nodeBefore;
+		if (before?.type === nodeType.taskList && canJoin(tr.doc, start - 1)) tr.join(start - 1);
+		return tr;
+	});
+}
+
 export function proseInputRules(s: ProseSchema): Plugin {
 	const { nodeType, markType } = s;
 	return inputRules({
 		rules: [
 			// blocks
-			textblockTypeInputRule(/^(#{1,3})[ \t]$/, nodeType.heading, (m) => ({
+			textblockTypeInputRule(/^(#{1,3})\s$/, nodeType.heading, (m) => ({
 				level: m[1].length,
 			})),
-			wrappingInputRule(/^\s*([-+*])[ \t]$/, nodeType.bulletList),
+			wrappingInputRule(/^\s*([-+*])\s$/, nodeType.bulletList),
 			wrappingInputRule(
-				/^(\d+)[.)][ \t]$/,
+				/^(\d+)[.)]\s$/,
 				nodeType.orderedList,
 				(m) => ({ order: Number(m[1]) }),
 				// Only continue an existing list when the numbers line up.
 				(m, node) => node.childCount + (node.attrs.order as number) === +m[1],
 			),
-			wrappingInputRule(/^\s*>[ \t]$/, nodeType.blockquote),
+			wrappingInputRule(/^\s*>\s$/, nodeType.blockquote),
+			taskInputRule(s),
 			new InputRule(/^(?:---|\*\*\*|___)$/, (state, _m, start, end) =>
 				state.tr.replaceRangeWith(start, end, nodeType.rule.create()),
 			),

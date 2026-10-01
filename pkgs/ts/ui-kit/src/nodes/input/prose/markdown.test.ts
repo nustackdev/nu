@@ -58,6 +58,28 @@ describe("blocks round-trip", () => {
 
 	it("keeps a list mixed with a heading", () => stable("# title\n\n- a\n- b\n\nbody\n"));
 
+	it("keeps checklists", () => stable("- [ ] todo\n- [x] done\n"));
+
+	it("keeps a nested checklist", () => stable("- [ ] a\n  - [x] b\n- [ ] c\n"));
+
+	it("keeps an empty checklist item", () => stable("- [ ] \n"));
+
+	it("reads checklist state and kind", () => {
+		const list = parseMarkdown("- [ ] a\n- [X] b\n").doc.firstChild;
+		expect(list?.type.name).toBe("task_list");
+		expect(list?.child(0).attrs.checked).toBe(false);
+		expect(list?.child(1).attrs.checked).toBe(true);
+	});
+
+	it("splits a bullet list from a checklist", () => {
+		const doc = parseMarkdown("- a\n- [ ] b\n- c\n").doc;
+		expect(doc.content.content.map((n) => n.type.name)).toEqual([
+			"bullet_list",
+			"task_list",
+			"bullet_list",
+		]);
+	});
+
 	it("empty source is empty", () => {
 		expect(lap("")).toBe("");
 		expect(parseMarkdown("").doc.childCount).toBe(1);
@@ -96,6 +118,13 @@ describe("escaping", () => {
 		const doc = parseMarkdown("\\# not a heading\n").doc;
 		expect(doc.firstChild?.type.name).toBe("paragraph");
 		expect(doc.textContent).toBe("# not a heading");
+		stable(serializeMarkdown(doc));
+	});
+
+	it("escapes a list item that only looks like a checkbox", () => {
+		const doc = parseMarkdown("- \\[ ] literal\n").doc;
+		expect(doc.firstChild?.type.name).toBe("bullet_list");
+		expect(doc.textContent).toBe("[ ] literal");
 		stable(serializeMarkdown(doc));
 	});
 

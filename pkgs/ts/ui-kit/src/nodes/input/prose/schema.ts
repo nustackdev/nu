@@ -2,7 +2,8 @@
 //
 // ProseMirror is a document engine; a schema is how you tell it what a
 // document is allowed to be. Ours says: paragraphs, three heading levels,
-// two list flavours, a quote, a rule, and four inline marks. That is a few
+// three list flavours (bullets, numbers, checkboxes), a quote, a rule, and
+// four inline marks. That is a few
 // paragraphs of prose and nothing wider.
 //
 // What is deliberately absent is what keeps this safe to embed. There is no
@@ -36,6 +37,8 @@ export type ProseClasses = {
 	bulletList?: string;
 	orderedList?: string;
 	listItem?: string;
+	taskList?: string;
+	taskItem?: string;
 	rule?: string;
 	strong?: string;
 	em?: string;
@@ -50,6 +53,8 @@ export type ProseNodeTypes = {
 	bulletList: NodeType;
 	orderedList: NodeType;
 	listItem: NodeType;
+	taskList: NodeType;
+	taskItem: NodeType;
 	rule: NodeType;
 };
 
@@ -146,6 +151,48 @@ export function createProseSchema(classes: ProseClasses = {}): ProseSchema {
 			toDOM: () => ["li", attrs(classes.listItem), 0],
 		},
 
+		// A checklist: GFM's `- [ ]` / `- [x]`. Its own list type rather than a
+		// flag on `list_item`, so a bullet list never grows a checkbox by
+		// accident and the input rules can tell the two apart.
+		//
+		// Both parse rules outrank the plain `ul` / `li` ones, and `toDOM`
+		// lays the item out as checkbox + body. The checkbox is not editable
+		// content: the editor's node view (./editor.tsx) owns the click.
+		task_list: {
+			content: "task_item+",
+			group: "block",
+			parseDOM: [{ tag: "ul[data-task-list]", priority: 60 }],
+			toDOM: () => ["ul", attrs(classes.taskList, { "data-task-list": "" }), 0],
+		},
+
+		task_item: {
+			attrs: { checked: { default: false } },
+			content: "paragraph block*",
+			defining: true,
+			parseDOM: [
+				{
+					tag: "li[data-task-item]",
+					priority: 60,
+					getAttrs: (dom) => ({
+						checked: (dom as HTMLElement).getAttribute("data-checked") === "true",
+					}),
+				},
+			],
+			toDOM: (node) => [
+				"li",
+				attrs(classes.taskItem, {
+					"data-task-item": "",
+					"data-checked": String(node.attrs.checked),
+				}),
+				[
+					"span",
+					{ contenteditable: "false", "data-task-box": "" },
+					["input", node.attrs.checked ? { type: "checkbox", checked: "" } : { type: "checkbox" }],
+				],
+				["div", { "data-task-body": "" }, 0],
+			],
+		},
+
 		horizontal_rule: {
 			group: "block",
 			parseDOM: [{ tag: "hr" }],
@@ -215,6 +262,8 @@ export function createProseSchema(classes: ProseClasses = {}): ProseSchema {
 			bulletList: schema.nodes.bullet_list,
 			orderedList: schema.nodes.ordered_list,
 			listItem: schema.nodes.list_item,
+			taskList: schema.nodes.task_list,
+			taskItem: schema.nodes.task_item,
 			rule: schema.nodes.horizontal_rule,
 		},
 		markType: {
