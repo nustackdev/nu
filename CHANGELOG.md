@@ -7,12 +7,13 @@
 - **nucli** (the `nu` command) — 0.5.5
 - **nudle** — 0.1.6
 - **ui-core** — 0.2.0
-- **ui-kit** — 0.2.5
+- **ui-kit** — 0.2.6
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- UI kit 0.2.6 ships proper close buttons on dialogs and sheets
 - Dialog and sheet close buttons look and behave like every other icon button
 - Count the two new key refs in the node registry test
 - UI kit 0.2.5 ships key caps variants and platform-aware shortcuts
