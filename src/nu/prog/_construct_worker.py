@@ -11,11 +11,17 @@ driving that term is the parent's job.
 
 **stdout is the wire.** A snippet is arbitrary python and arbitrary python
 prints. If a ``print`` landed on stdout it would appear mid-frame and desync
-the parent for good. So the first thing the worker does, before importing
-``nu`` and long before exec'ing any snippet, is ``os.dup`` the real stdout to
-a private fd and repoint fd 1 at stderr. From then on ``print``, a chatty
+the parent for good. So the first thing ``main`` does, before any request is
+read and long before exec'ing any snippet, is ``os.dup`` the real stdout to a
+private fd and repoint fd 1 at stderr. From then on ``print``, a chatty
 import, and a C extension writing to fd 1 all land on stderr where they are
 visible to a human and harmless to the protocol.
+
+``python -m`` imports the ``nu`` package before this module runs, so that
+import happens before the claim and cannot be redirected by it. It is safe
+because importing ``nu`` writes nothing to stdout, and it has to stay that
+way: the parent treats any byte before the ``ready`` frame as a frame
+header.
 
 Wire format: 4-byte big-endian length prefix, then a ``nu.lang.wire``
 (cloudpickle) payload.
@@ -28,8 +34,9 @@ Frames::
     ('diag', diagnostic)                            worker -> parent
 
 The ``ready`` frame exists so a parent can tell "this venv has no usable
-``nu``" from "this snippet is slow". A worker that cannot import ``nu``
-never sends it and exits non-zero; the parent sees EOF instead of hanging.
+``nu``" from "this snippet is slow". A worker that cannot import ``nu``, or
+has no ``nu.prog`` to run, never sends it and exits non-zero; the parent sees
+EOF instead of hanging.
 """
 
 from __future__ import annotations

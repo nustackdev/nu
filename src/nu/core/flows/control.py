@@ -121,10 +121,8 @@ class WhileDo(Control):
           forever.
 
     Example:
-        >>> class Loop(nu.Shape):
-        ...     i = nu.IntRef.slot()
-        >>> count = nu.WhileDo(Loop.i < 3, Loop.i.set(Loop.i + 1))
-        >>> _ = nu.run(nu.Frame(Loop, count >> nu.print(Loop.i), i=0))
+        >>> count = lambda i: nu.WhileDo(i < 3, i.set(i + 1)) >> nu.print(i)
+        >>> _ = nu.run(nu.let(0, count))
         3
     """
 
@@ -262,7 +260,7 @@ class ForEachParAsync(Control):
         - Each arm runs on its own branch (``Context.branch``), so ``item``
           is that arm's element and nothing else. The branch shares values
           by reference, so a live handle in attrs crosses fine, but an arm's
-          own writes stay in its arm.
+          own bindings stay in its arm.
         - Arms that never return are the point: a standing ``ForeverDo`` per
           element joins only when the surrounding Flow is cancelled. An empty
           ``items`` completes immediately.

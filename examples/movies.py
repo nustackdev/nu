@@ -93,7 +93,7 @@ class FilterRow(nustd.ui.Row):
     genre = FilterGenreField.slot(label="Genre")
     watched_only = WatchedOnlyField.slot(label="Already watched")
     apply = nustd.ui.ButtonRef.slot(label="Apply", variant="secondary")
-    clear = nustd.ui.ButtonRef.slot(label="Clear", variant="ghost")
+    reset = nustd.ui.ButtonRef.slot(label="Clear", variant="ghost")
 
 
 class FilterCard(nustd.ui.Card):
@@ -193,7 +193,7 @@ class Movie(nu.Shape):
 
 
 class State(nu.Shape):
-    movies = nustd.kv.ShapesListRef.slot(Movie)
+    movies = nustd.kv.ListRef.slot(Movie)
     total = nustd.kv.IntRef.slot()
     watched = nustd.kv.IntRef.slot()
     latest_title = nustd.kv.StrRef.slot()
@@ -383,7 +383,7 @@ on_filter_apply = nu.ReactForever(
 
 
 on_filter_clear = nu.ReactForever(
-    App.movies.filters.body.clear.on_click(),
+    App.movies.filters.body.reset.on_click(),
     nustd.kv.Snapshot(
         App.movies.filters.body.min_rating.input.set(1.0)
         | App.movies.filters.body.genre.input.set("")

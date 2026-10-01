@@ -59,9 +59,8 @@ class JQueueRef(RefBase[janus.Queue[T]], JQueue[T], Generic[T]):
         The live ``janus.Queue`` at this slot, created on first read.
 
     Example:
-        >>> from nustd.queue import JQueueRef
         >>> class Buf(nu.Shape):
-        ...     queue = JQueueRef.slot(capacity=2, item_type=int)
+        ...     queue = nustd.queue.JQueueRef.slot(capacity=2, item_type=int)
         >>> ctx = nu.Context().bind(dict, {}, Buf)
         >>> _ = nu.run(Buf.queue.put(1), ctx)
         >>> nu.run(Buf.queue.get(), ctx)[0]
@@ -145,7 +144,7 @@ class JQueueRef(RefBase[janus.Queue[T]], JQueue[T], Generic[T]):
               queue already vivified in a backing dict.
 
         Example:
-            class Buf(Shape):
-                queue = JQueueRef.slot(capacity=16, item_type=int)
+            class Buf(nu.Shape):
+                queue = nustd.queue.JQueueRef.slot(capacity=16, item_type=int)
         """
         return Slot(cls, capacity=capacity, item_type=item_type)  # type: ignore[return-value]

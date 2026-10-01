@@ -38,9 +38,9 @@ mapping and shows exactly what a program wrote into it, keys no Shape ever
 named included -- the shape supplies the protocol, kv supplies the contents.
 The walk stops only at something no shape declares as a container at all.
 
-Nothing here opens a store, and the one fabric used is the kernel's
-``nu.mem``, for the frame a column keeps its single pass in. Building the term needs no
-Navigator; only running it touches one. So the storage boundary
+Nothing here opens a store; the only state is the one value a column holds
+its single pass in, a ``nu.let``. Building the term needs no Navigator; only
+running it touches one. So the storage boundary
 belongs to whoever runs the term: :func:`nustd.ui.lens.browse` places it for
 you, and a caller wiring the arm by hand writes the ``nustd.kv.Snapshot(...)``
 itself. An ``Eval`` is opaque to the static effect walk, so that bracket can
@@ -78,17 +78,6 @@ DEFAULT_MAX_ROWS = 200
 #: What a row's ``preview`` is trimmed to, and what the leaf reader pane gets.
 PREVIEW = 120
 TEXT = 4000
-
-
-def _loop(depth: int) -> tuple[str, nu.Nu]:
-    """The name one column's ``Map`` binds its element under, and a ref for it.
-
-    Per column rather than one shared name: columns are siblings under one
-    ``List``, and two of them binding one key would read each other's element
-    the moment either awaited.
-    """
-    name = f"_lens_item{depth}"
-    return name, nu.Attr(name)
 
 
 # --- one row ----------------------------------------------------------------
@@ -244,69 +233,56 @@ def _shape_term(shape_cls: type[Shape], at: StructuredRef | None) -> nu.Nu:
     return _column("shape", nu.List.of(*entries), nu.Int(len(entries)))
 
 
-class _Column(nu.Shape):
-    """The frame a mapping or sequence column holds its one pass over the store in."""
+def _capped(held: nu.Nu, max_rows: int) -> nu.Nu:
+    """The first ``max_rows`` of a held list."""
+    return nu.GetItem(held, nu.Slice(None, max_rows, None))
 
-    held = nu.ObjectRef.slot()
 
-
-def _mapping_term(ref: StructuredRef, max_rows: int, depth: int) -> nu.Nu:
+def _mapping_term(ref: StructuredRef, max_rows: int) -> nu.Nu:
     """A mapping's keys, capped, with the total beside them.
 
-    Held once in a frame: the cap and the total are two reads of one key
-    list, and iterating a container twice to answer one column would be a
-    second pass over the store for nothing.
+    The key list is held once: the cap and the total are two reads of it, and
+    iterating a container twice to answer one column would be a second pass
+    over the store for nothing.
     """
-    item, elem = _loop(depth)
-    keys = _Column.held
+    key = nu.Attr("item")
     if _holds_shapes(ref):
-        row: nu.Nu = _door(nu.ToStr(elem), "shape")
+        row: nu.Nu = _door(nu.ToStr(key), "shape")
     else:
-        row = LensCell(nu.ToStr(elem), ref[elem], nu.Str("leaf"), nu.Bool(True), nu.Bool(False))
-    return nu.Frame(
-        _Column,
-        _column(
-            "mapping",
-            nu.Collect(nu.Map(nu.GetItem(keys, nu.Slice(None, max_rows, None)), row, key=item)),
-            nu.Len(keys),
+        row = LensCell(nu.ToStr(key), ref[key], nu.Str("leaf"), nu.Bool(True), nu.Bool(False))
+    return nu.let(
+        nu.list(ref.keys()),
+        lambda keys: _column(
+            "mapping", nu.Collect(nu.Map(_capped(keys, max_rows), row)), nu.Len(keys)
         ),
-        held=nu.list(ref.keys()),
     )
 
 
-def _sequence_term(ref: StructuredRef, max_rows: int, depth: int) -> nu.Nu:
+def _sequence_term(ref: StructuredRef, max_rows: int) -> nu.Nu:
     """A sequence's elements, capped, keyed by position.
 
     A sequence of Shapes keys its rows the same way and makes them doors: the
     position is the whole row, and what is behind it is a column of its own.
     """
-    item, elem = _loop(depth)
-    items = _Column.held
-    index = nu.ToStr(nu.GetItem(elem, nu.Int(0)))
+    pair = nu.Attr("item")
+    index = nu.ToStr(nu.GetItem(pair, nu.Int(0)))
     if _holds_shapes(ref):
         row: nu.Nu = _door(index, "shape")
     else:
         row = LensCell(
             index,
-            nu.GetItem(elem, nu.Int(1)),
+            nu.GetItem(pair, nu.Int(1)),
             nu.Str("leaf"),
             nu.Bool(False),
             nu.Bool(False),
         )
-    return nu.Frame(
-        _Column,
-        _column(
+    return nu.let(
+        nu.Collect(nu.Iter(ref)),
+        lambda items: _column(
             "sequence",
-            nu.Collect(
-                nu.Map(
-                    nu.Enumerate(nu.GetItem(items, nu.Slice(None, max_rows, None))),
-                    row,
-                    key=item,
-                )
-            ),
+            nu.Collect(nu.Map(nu.Enumerate(_capped(items, max_rows)), row)),
             nu.Len(items),
         ),
-        held=nu.Collect(nu.Iter(ref)),
     )
 
 
@@ -358,7 +334,6 @@ def _column_term(
     cursor: tuple[str, ...],
     prefix: StructuredRef | None,
     max_rows: int,
-    depth: int,
 ) -> nu.Nu:
     """The column for whatever ``cursor`` lands on. Protocol dispatch, in python.
 
@@ -375,9 +350,9 @@ def _column_term(
     if isinstance(ref, ShapeRef):
         return _shape_term(nu.tree.payload(ref)["shape_type"], ref)
     if isinstance(ref, MappingRef):
-        return _mapping_term(ref, max_rows, depth)
+        return _mapping_term(ref, max_rows)
     if isinstance(ref, SequenceRef):
-        return _sequence_term(ref, max_rows, depth)
+        return _sequence_term(ref, max_rows)
     return _leaf_term(ref)
 
 
@@ -401,7 +376,7 @@ def column_terms(
         max_rows: how many rows one column ships.
     """
     steps = tuple(str(s) for s in (cursor or ()))
-    cols = [_column_term(shape, steps[:i], prefix, max_rows, i) for i in range(len(steps) + 1)]
+    cols = [_column_term(shape, steps[:i], prefix, max_rows) for i in range(len(steps) + 1)]
     return nu.List.of(*cols)
 
 

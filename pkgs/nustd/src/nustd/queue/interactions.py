@@ -80,9 +80,8 @@ class Put(Command):
         Nothing.
 
     Example:
-        >>> from nustd.queue import JQueueRef
         >>> class Buf(nu.Shape):
-        ...     queue = JQueueRef.slot(capacity=2, item_type=int)
+        ...     queue = nustd.queue.JQueueRef.slot(capacity=2, item_type=int)
         >>> ctx = nu.Context().bind(dict, {}, Buf)
         >>> _ = nu.run(Buf.queue.put(1), ctx)
         >>> nu.run(Buf.queue.qsize(), ctx)[0]
@@ -140,9 +139,8 @@ class Get(ScalarAction):
         The item taken from the queue.
 
     Example:
-        >>> from nustd.queue import JQueueRef
         >>> class Buf(nu.Shape):
-        ...     queue = JQueueRef.slot(capacity=2, item_type=int)
+        ...     queue = nustd.queue.JQueueRef.slot(capacity=2, item_type=int)
         >>> ctx = nu.Context().bind(dict, {}, Buf)
         >>> _ = nu.run(Buf.queue.put(7), ctx)
         >>> nu.run(Buf.queue.get(), ctx)[0]
@@ -196,9 +194,8 @@ class QSize(ScalarQuery):
         The item count as an int.
 
     Example:
-        >>> from nustd.queue import JQueueRef
         >>> class Buf(nu.Shape):
-        ...     queue = JQueueRef.slot(item_type=int)
+        ...     queue = nustd.queue.JQueueRef.slot(item_type=int)
         >>> ctx = nu.Context().bind(dict, {}, Buf)
         >>> nu.run(Buf.queue.qsize(), ctx)[0]
         0
@@ -243,14 +240,13 @@ class Close(Command):
         Nothing.
 
     Example:
-        >>> from nustd.queue import JQueueRef, QueueClosed
         >>> class Buf(nu.Shape):
-        ...     queue = JQueueRef.slot(item_type=int)
+        ...     queue = nustd.queue.JQueueRef.slot(item_type=int)
         >>> ctx = nu.Context().bind(dict, {}, Buf)
         >>> _ = nu.run(Buf.queue.close(), ctx)
         >>> try:
         ...     _ = nu.run(Buf.queue.put(1), ctx)
-        ... except QueueClosed:
+        ... except nustd.queue.QueueClosed:
         ...     print("closed")
         closed
     """

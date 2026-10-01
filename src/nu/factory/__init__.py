@@ -6,7 +6,9 @@ tree. ``nu.core`` atoms stay hand-written end-to-end for the hot path;
 the factory is for the rest.
 
 - **core** - ``InteractionFactory``, the generic mechanism everything else
-  builds on. Takes any callable + base kind.
+  builds on. Takes a callable and a scalar base kind: ``ScalarQuery``,
+  ``Command`` or ``ScalarAction``. Streams, reductions, flows and spans stay
+  hand-written.
 - **host** - the ``@host`` decorator, minimum-ceremony over
   ``InteractionFactory``. Defaults the base kind to ``ScalarQuery`` so
   wrapping a pure function is a one-liner.

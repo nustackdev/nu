@@ -7,8 +7,8 @@ a Python function, return the result" boilerplate that most non-hot
 interactions are.
 
 ``nu.core`` atoms stay hand-written end-to-end (a clean thunk, no extra hop)
-for the hot path. The factory is for the rest - the ``nustd`` library and
-anything else that just bridges to a host callable.
+for the hot path. The factory is for the rest: anything that just bridges to
+a host callable.
 
 A method call needs no special support here: an *unbound* method is a plain
 callable whose first argument is the receiver, so ``d.weekday()`` is
@@ -46,10 +46,14 @@ Declared attributes are passed by keyword. Raw values are wrapped in
 ``Declared``; pre-built ``Attribute`` instances (including computed
 ``Synthesized`` / ``Inherited``) pass through unchanged::
 
-    Set = InteractionFactory(
-        Command, "Set", lambda ref, value: ...,
+    Touch = InteractionFactory(
+        Command, "Touch", pathlib.Path.touch,
         mutates=frozenset({0}),
     )
+
+The callable always receives resolved values, never the children's terms: a
+ref child arrives as the value it holds, so a factory atom cannot write a
+ref. Writes go through the ref's own interactions.
 
 Note: IDEs and static type checkers see the return as ``type[B]`` where ``B``
 is the base; they cannot show a docstring or signature specific to the

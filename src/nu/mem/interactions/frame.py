@@ -62,10 +62,12 @@ class Frame(_LifecycleBracket):
 
     Example:
         >>> class Tally(nu.Shape):
-        ...     n = nu.IntRef.slot()
-        >>> loop = nu.ForEachDo(nu.Iter([1, 2, 3]), Tally.n.set(Tally.n + nu.Attr("item")))
-        >>> _ = nu.run(nu.Frame(Tally, loop >> nu.print(Tally.n), n=0))
-        6
+        ...     count = nu.IntRef.slot()
+        ...     total = nu.IntRef.slot()
+        >>> step = Tally.count.set(Tally.count + 1) >> Tally.total.set(Tally.total + nu.Attr("item"))
+        >>> mean = nu.ForEachDo(nu.Iter([1, 2, 6]), step) >> nu.print(Tally.total / Tally.count)
+        >>> _ = nu.run(nu.Frame(Tally, mean, count=0, total=0))
+        3.0
     """
 
     def __init__(self, shape: type[Shape], body: Nu, **initial: object) -> None:

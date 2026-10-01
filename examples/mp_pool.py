@@ -26,14 +26,6 @@ class Ticks(nu.Shape):
     n = nu.IntRef.slot()
 
 
-class Local(nu.Shape):
-    """The demo's own frame: the worker it launched."""
-
-    worker = nu.IntRef.slot()
-
-
-WORKER = Local.worker
-
 # Resident work: a tree that never terminates, so it must be dispatched
 # rather than teleported -- nobody is ever going to wait for its value.
 # Top-level so it survives the pickle into a spawned child.
@@ -52,28 +44,27 @@ def demo() -> None:
         # Every worker comes up holding one Ticks dict, so the resident body
         # and the teleports that read it see the same one.
         {"name": "nu", "init": nu.Provide(dict, {}, tag=Ticks)},
-        # Launch yields the new worker's id; the frame keeps it for the rest.
-        nu.Frame(
-            Local,
-            nu.Sequential(
-                nu.Print(nu.STDOUT, "worker id        :", WORKER),
+        # Launch yields the new worker's id; let holds it for the rest.
+        nu.let(
+            POOL.launch(),
+            lambda worker: nu.Sequential(
+                nu.Print(nu.STDOUT, "worker id        :", worker),
                 # Dispatch returns as soon as the child has the tree. It does not wait,
                 # which is the whole reason resident work is possible at all.
-                POOL.dispatch(TICKER, WORKER),
+                POOL.dispatch(TICKER, worker),
                 # Meanwhile a teleport reads the same worker, and is answered while
                 # the resident body is still running in it.
                 nu.DelayedDo(
-                    0.3, nu.Print(nu.STDOUT, "ticks after 0.3s :", POOL.teleport(Ticks.n, WORKER))
+                    0.3, nu.Print(nu.STDOUT, "ticks after 0.3s :", POOL.teleport(Ticks.n, worker))
                 ),
                 nu.DelayedDo(
-                    0.3, nu.Print(nu.STDOUT, "ticks after 0.6s :", POOL.teleport(Ticks.n, WORKER))
+                    0.3, nu.Print(nu.STDOUT, "ticks after 0.6s :", POOL.teleport(Ticks.n, worker))
                 ),
                 # A real kill: terminate and reap. No cooperative stop sentinel,
                 # because a worker busy with a resident body never reads its pipe.
-                POOL.kill(WORKER),
-                nu.Print(nu.STDOUT, "alive after kill :", POOL.alive(WORKER)),
+                POOL.kill(worker),
+                nu.Print(nu.STDOUT, "alive after kill :", POOL.alive(worker)),
             ),
-            worker=POOL.launch(),
         ),
     )
     nu.run(tree)

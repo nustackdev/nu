@@ -21,28 +21,21 @@ statements about the fabric's contents, not imperative escapes.
 
 Everything is Nu. Every worker id and the ``init`` override is a **child**,
 never payload, so a target can come from a ``Ref``, a mem slot or any
-query::
+query. Here ``nu.let`` holds the launched worker's id for the body::
 
-    class Local(Shape):
-        worker = nu.IntRef.slot()
-
-    w = Local.worker
-    Provide(WorkerPool, {"init": With(Provide(Store, {...})), "name": "nu"},
-        Frame(Local, Sequential(
+    nu.Provide(WorkerPool, {"init": nu.With(nu.Provide(Store, {...})), "name": "nu"},
+        nu.let(Launch(), lambda w: nu.Sequential(
             Dispatch(body=resident_tree, worker=w),
-            Teleport(body=Add(1, 2), worker=w),
+            Teleport(body=nu.Add(1, 2), worker=w),
             Kill(worker=w),
-        ), worker=Launch()),
+        )),
     )
 
 The interactions are also reachable off the ref, which is the same term by a
 shorter road::
 
     pool = PoolRef()
-    Frame(Local, Sequential(
-        pool.dispatch(resident_tree, w),
-        pool.kill(w),
-    ), worker=pool.launch())
+    nu.let(pool.launch(), lambda w: pool.dispatch(resident_tree, w) >> pool.kill(w))
 
 The one exception to "no payload" is a ``Dispatch`` body, which has to be
 payload because a Command cannot hold a Flow in a child slot. The consequence

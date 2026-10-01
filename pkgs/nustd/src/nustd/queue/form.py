@@ -51,9 +51,8 @@ class JQueue(Form, TypedNu[janus.Queue[T]], Generic[T]):
         not a value of its own.
 
     Example:
-        >>> from nustd.queue import JQueueRef
         >>> class Buf(nu.Shape):
-        ...     queue = JQueueRef.slot(item_type=int)
+        ...     queue = nustd.queue.JQueueRef.slot(item_type=int)
         >>> ctx = nu.Context().bind(dict, {}, Buf)
         >>> _ = nu.run(Buf.queue.put(7), ctx)
         >>> nu.run(Buf.queue.qsize(), ctx)[0]

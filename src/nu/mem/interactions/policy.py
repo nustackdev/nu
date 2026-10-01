@@ -39,8 +39,8 @@ class Throttle(Policy):
     Args:
         interval: the minimum gap between runs, in seconds.
         body: the throttled Term.
-        last: the mem ref holding the time of the last run. Unset means the
-            body has never run.
+        last: the mem ref holding the time of the last run. Unset or ``None``
+            means the body has never run.
 
     Notes:
         - The time is ``time.monotonic()``, written before the body runs.
@@ -52,10 +52,8 @@ class Throttle(Policy):
 
     Example:
         >>> import asyncio
-        >>> class Rate(nu.Shape):
-        ...     last = nu.FloatRef.slot()
-        >>> ping = nu.Throttle(60.0, nu.print("ping"), last=Rate.last)
-        >>> _ = asyncio.run(nu.arun(nu.Frame(Rate, ping >> ping)))
+        >>> pings = lambda last: nu.ForRangeDo(0, 3, nu.Throttle(60.0, nu.print("ping"), last=last))
+        >>> _ = asyncio.run(nu.arun(nu.let(None, pings)))
         ping
     """
 
@@ -76,7 +74,8 @@ class Throttle(Policy):
             interval = float(await interval_q(rt))
             prior = await last_q(rt)
             now = time.monotonic()
-            if prior is not EMPTY and prior is not INVALID and now - prior < interval:
+            never = prior is None or prior is EMPTY or prior is INVALID
+            if not never and now - prior < interval:
                 return None
             await last._awrite(rt, now, rt.program.children[nid][2])
             return await body(rt)
@@ -94,6 +93,7 @@ class Debounce(Policy):
         delay: how long to wait before running the body, in seconds.
         body: the debounced Term.
         pending: the mem ref holding the scheduled run, an ``asyncio.Task``.
+            Unset or ``None`` means nothing is scheduled.
 
     Notes:
         - The body runs later, detached from the call that scheduled it:
@@ -106,11 +106,8 @@ class Debounce(Policy):
 
     Example:
         >>> import asyncio
-        >>> class Quiet(nu.Shape):
-        ...     pending = nu.ObjectRef.slot()
-        >>> save = nu.Debounce(0.01, nu.print("saved"), pending=Quiet.pending)
-        >>> wait = nu.DelayedDo(0.05, nu.Noop())
-        >>> _ = asyncio.run(nu.arun(nu.Frame(Quiet, save >> save >> wait)))
+        >>> saves = lambda pending: nu.ForRangeDo(0, 3, nu.Debounce(0.01, nu.print("saved"), pending=pending))
+        >>> _ = asyncio.run(nu.arun(nu.let(None, saves) >> nu.Delay(0.05)))
         saved
     """
 

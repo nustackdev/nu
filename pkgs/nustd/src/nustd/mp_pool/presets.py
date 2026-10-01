@@ -20,9 +20,9 @@ nothing in between, or two branches taking at once are handed the same
 worker. Nu has no atomic pop over a list, so the shelf is a small class whose
 pop runs with no await point inside it::
 
-    Provide(WorkerPool, {"name": "nu"},
-        With(spares(2),
-            body=Frame(Local, Dispatch(body=resident, worker=Local.worker), worker=TakeSpare()),
+    nu.Provide(WorkerPool, {"name": "nu"},
+        nu.With(spares(2),
+            body=nu.let(TakeSpare(), lambda w: Dispatch(body=resident, worker=w)),
         ),
     )
 
@@ -245,7 +245,7 @@ class TakeSpare(ScalarAction):
         The worker's id, an int.
 
     Example:
-        Frame(Local, Dispatch(body=resident, worker=Local.worker), worker=TakeSpare())
+        nu.let(TakeSpare(), lambda w: Dispatch(body=resident, worker=w))
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")

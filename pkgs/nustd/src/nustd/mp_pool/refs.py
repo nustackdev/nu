@@ -50,8 +50,9 @@ class PoolRef(FabricRef):
         The bound ``WorkerPool``. EMPTY when nothing is bound.
 
     Example:
-        Provide(WorkerPool, {"name": "nu"},
-            Frame(Local, PoolRef().kill(Local.worker), worker=PoolRef().launch()),
+        pool = PoolRef()
+        nu.Provide(WorkerPool, {"name": "nu"},
+            nu.let(pool.launch(), lambda w: pool.kill(w)),
         )
     """
 

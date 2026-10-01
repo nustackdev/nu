@@ -9,11 +9,12 @@ declared.
 
 A slot is written two ways, and both give the same ref with the same typing:
 
-- **Explicit**: ``orders = kv.DictRef.slot(Order, key=int)``. The ref class's
-  ``slot`` builds the ``Slot`` and its declaration.
-- **Annotation**: ``orders: kv.DictRef[int, Order]``. The metaclass reads the
-  annotation, synthesizes the ``Slot`` and declares the same ``TypeInfo`` from
-  it. A bare ref class (``name: kv.StrRef``) synthesizes a plain ``Slot``.
+- **Explicit**: ``orders = nustd.kv.DictRef.slot(Order, key=int)``. The ref
+  class's ``slot`` builds the ``Slot`` and its declaration.
+- **Annotation**: ``orders: nustd.kv.DictRef[int, Order]``. The metaclass reads
+  the annotation, synthesizes the ``Slot`` and declares the same ``TypeInfo``
+  from it. A bare ref class (``name: nustd.kv.StrRef``) synthesizes a plain
+  ``Slot``.
 
 A bare Shape annotation (``rel: Order``) cannot name the fabric, so it needs an
 explicit ``= <fabric>.ShapeRef.slot(Order)``; alone it is an error. Any other
@@ -23,11 +24,11 @@ slot. When both spellings are written, the explicit declaration wins.
 Example::
 
     class Profile(nu.Shape):
-        name: nm.StrRef
-        tags: nm.ListRef[str]
-        orders: nm.DictRef[int, Order]
-        rel: Order = nm.ShapeRef.slot(Order)
-        events = nv.Kh57Ref.slot(int, view=nv.Kh57View)
+        name: nustd.kv.StrRef
+        tags: nustd.kv.ListRef[str]
+        orders: nustd.kv.DictRef[int, Order]
+        rel: Order = nustd.kv.ShapeRef.slot(Order)
+        events = nustd.kv.Kh57Ref.slot(int)
 """
 
 from __future__ import annotations
@@ -258,7 +259,7 @@ def _synthesize_slot(ann: object, cls: type, field_name: str) -> Slot | None:
         msg = (
             f"Bare Shape annotation {cls.__name__}.{field_name}: "
             f"{ann.__name__!r} requires an explicit `.slot()` naming the "
-            f"fabric, e.g. `= nm.ShapeRef.slot({ann.__name__})`."
+            f"fabric, e.g. `= nu.ShapeRef.slot({ann.__name__})`."
         )
         raise TypeError(msg)
 
@@ -273,16 +274,16 @@ class Shape(metaclass=ShapeMeta):
 
     Example::
 
-        class Profile(Shape):
-            name: nm.StrRef
-            age:  nm.IntRef
+        class Profile(nu.Shape):
+            name: nu.StrRef
+            age: nu.IntRef
 
-        class User(Shape):
-            name: nm.StrRef
-            profile: Profile = nm.ShapeRef.slot(Profile)
+        class User(nu.Shape):
+            name: nu.StrRef
+            profile: Profile = nu.ShapeRef.slot(Profile)
 
         User.name            # -> Ref
-        User.profile.email   # -> Ref (nested via ShapeRef.__getattr__)
+        User.profile.age     # -> Ref (nested via ShapeRef.__getattr__)
     """
 
     _slots: ClassVar[dict[str, Slot]] = {}

@@ -10,11 +10,8 @@ Needs janus, which rides the optional ``nustd[queue]`` extra.
 
 Usage::
 
-    from nustd.queue import JQueueRef
-    from nu.domains.shape import Shape
-
-    class Buf(Shape):
-        queue = JQueueRef.slot(capacity=16, item_type=int)
+    class Buf(nu.Shape):
+        queue = nustd.queue.JQueueRef.slot(capacity=16, item_type=int)
 """
 
 from .form import JQueue

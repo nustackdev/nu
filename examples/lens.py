@@ -52,7 +52,7 @@ class Machine(nu.Shape):
     ram_gb = nustd.kv.IntRef.slot()
     gpu = nustd.kv.StrRef.slot()
     tags = nustd.kv.ListRef.slot(str)
-    disks = nustd.kv.ShapesListRef.slot(Disk)
+    disks = nustd.kv.ListRef.slot(Disk)
     counters = nustd.kv.DictRef.slot(int)
     # Declared as a mapping and nothing more. Whatever a program drops in here
     # shows up in the column, keys and types included.
@@ -62,7 +62,7 @@ class Machine(nu.Shape):
 class Cluster(nu.Shape):
     name = nustd.kv.StrRef.slot()
     notes = nustd.kv.StrRef.slot()
-    machines = nustd.kv.ShapesDictRef.slot(Machine)
+    machines = nustd.kv.DictRef.slot(Machine)
 
 
 NOTES = (

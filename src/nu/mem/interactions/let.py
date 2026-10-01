@@ -61,6 +61,15 @@ def let(value: object, fn: Callable[[ObjectRef], Nu]) -> Frame:
     with the value going into it. Decisions over the value are nodes of the
     body (``nu.If``, ``nu.Add``) and happen when it runs.
 
+    The common slip is to reach for Python over the value. A Python ``if``,
+    ``and``/``or`` or ``len()`` runs once, while the tree is built: on a ref
+    it raises, and on a literal it quietly bakes one answer into every run.
+    Build the expression instead::
+
+        nu.let(price, lambda p: nu.print(nu.If(p > 100, "high", "low")))
+
+    and never ``nu.print("high" if price > 100 else "low")``.
+
     Args:
         value: the slot's starting value, a plain value or a Nu term. Evaluated
             once on entry, like a ``Frame`` initial.

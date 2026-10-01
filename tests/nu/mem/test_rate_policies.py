@@ -50,6 +50,13 @@ def test_throttle_drops_a_call_inside_the_interval() -> None:
     assert _arun(nm.Frame(Rate, nu.ForEachDo(nu.Iter([1, 2, 3]), once))) == [1]
 
 
+def test_throttle_reads_none_as_never_run() -> None:
+    loop = nm.let(
+        None, lambda last: nu.ForEachDo(nu.Iter([1, 2, 3]), nm.Throttle(60.0, _ran(), last=last))
+    )
+    assert _arun(loop) == [1]
+
+
 def test_throttle_runs_again_once_the_interval_passed() -> None:
     once = nm.Throttle(0.02, _ran(), last=Rate.last)
     assert _arun(nm.Frame(Rate, once >> nu.Delay(0.05) >> once)) == [1, 1]

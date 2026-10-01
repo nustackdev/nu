@@ -46,6 +46,11 @@ value. Build-time Python may shape the tree but never branches on or computes
 with the values going into it. The function a binder such as ``let`` takes
 runs once, at construction, and only builds the tree; decisions over the
 value are nodes of that tree.
+
+So never write a Python ``if`` or arithmetic on a value on its way into a
+constructor, even one you can see: ``"high" if price > 100 else "low"``
+decides once, at build time, for every run. Build the Nu expression,
+``nu.If(p > 100, "high", "low")``, and the run decides.
 """
 
 from nu.mem import interactions, refs

@@ -1,8 +1,8 @@
 """``@host``: decorator sugar over ``InteractionFactory``.
 
 Turns a host Python callable into a Nu atom with minimal ceremony. Default
-base is ``ScalarQuery``; atom name defaults to the function's ``__name__``
-snake-cased into CamelCase.
+base is ``ScalarQuery``; the atom name defaults to the function's snake_case
+``__name__`` in CamelCase, so ``creation_mint`` builds ``CreationMint``.
 
     @nu.host
     def creation_mint(tx) -> str: ...
@@ -12,7 +12,7 @@ snake-cased into CamelCase.
 
 Also usable as a plain wrapper on an existing callable::
 
-    MintFromTx = nu.host(extract_mint)
+    MintFromTx = nu.host(extract_mint, name="MintFromTx")
 """
 
 from __future__ import annotations
@@ -47,8 +47,9 @@ def host(  # type: ignore[misc]
 ) -> object:
     """Decorator sugar over ``InteractionFactory``: turn a host callable into a Nu atom.
 
-    Default base is ``ScalarQuery``; atom name defaults to the function's
-    ``__name__`` snake-cased into CamelCase.
+    Default base is ``ScalarQuery``; the atom name defaults to the function's
+    snake_case ``__name__`` in CamelCase. A lambda has no usable name, so it
+    needs ``name``.
     """
 
     def wrap(f: Callable[..., object]) -> type[Nu]:

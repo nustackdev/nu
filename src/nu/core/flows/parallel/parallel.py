@@ -166,6 +166,6 @@ class Gather(Parallel):
         ...     a = nu.IntRef.slot()
         ...     b = nu.IntRef.slot()
         >>> arms = nu.Gather(Pair.a.set(1), Pair.b.set(2))
-        >>> _ = nu.run(nu.Frame(Pair, arms >> nu.print(Pair.b)))
-        2
+        >>> _ = nu.run(nu.Frame(Pair, arms >> nu.print(Pair.a + Pair.b)))
+        3
     """

@@ -183,8 +183,8 @@ class Launch(ScalarAction):
         The new worker's id, an int.
 
     Example:
-        Provide(WorkerPool, {"name": "nu"},
-            Frame(Local, Kill(worker=Local.worker), worker=Launch()),
+        nu.Provide(WorkerPool, {"name": "nu"},
+            nu.let(Launch(), lambda w: Kill(worker=w)),
         )
     """
 

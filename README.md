@@ -86,8 +86,8 @@ Reach any value by name; it survives restarts. Same code local or sharded across
 class DB(nu.Shape):
     hits = nustd.kv.IntRef.slot()
 
-# +1 to a persistent counter
-op = DB.hits.set(DB.hits + 1)
+# +1 to a persistent counter, starting at 0
+op = DB.hits.init(0) >> DB.hits.inc()
 
 app = nu.With(
     nustd.kv.rocksdb_navigator(".db"),
@@ -136,7 +136,7 @@ class DB(nu.Shape):
     hits = nustd.kv.IntRef.slot()
 
 # any Nu op
-op = DB.hits.set(DB.hits + 1)
+op = DB.hits.init(0) >> DB.hits.inc()
 
 # same op — teleport it to a worker
 remote = nustd.cluster.Teleport(op, target="gpu-0")
@@ -209,7 +209,7 @@ Each one boots a live browser dashboard and picks up where it left off on restar
 
 # 🔋 Nu STD
 
-Batteries included. 25 modules ship on top of the kernel. The kernel holds one fabric of its own, `nu.mem`: in-memory state over plain dicts, `users.age.set(12)`.
+Batteries included. 25 modules ship on top of the kernel. The kernel holds one fabric of its own, `nu.mem`: in-memory state over plain dicts, `users.age.set(12)`, and the locals a program keeps while it runs, `nu.let(0, lambda n: n.set(n + 1))`.
 
 Eleven are **fabrics**. Bind one and every Ref inside the bracket reaches a real system.
 
@@ -239,7 +239,7 @@ pip install nucore "nustd[kv,ui]"    # or one extra per fabric
 | [nustd.time](https://nustack.dev/docs/reference/nustd/time) | The process clock. | `time.monotonic()` |
 | [nustd.datetime](https://nustack.dev/docs/reference/nustd/datetime) | Dates, times, deltas, timezones. | `datetime.date.today()` |
 | [nustd.itertools](https://nustack.dev/docs/reference/nustd/itertools) | Iterator building blocks. | `itertools.product(a, b)` |
-| [nustd.functools](https://nustack.dev/docs/reference/nustd/functools) | A fold over a stream. | `functools.reduce(Add, xs)` |
+| [nustd.functools](https://nustack.dev/docs/reference/nustd/functools) | A fold over a stream. | `functools.reduce(nu.Attr("acc") + nu.Attr("item"), xs)` |
 | [nustd.asyncio](https://nustack.dev/docs/reference/nustd/asyncio) | The non-blocking sleep. | `asyncio.sleep(1)` |
 | [nustd.logging](https://nustack.dev/docs/reference/nustd/logging) | Loggers and level shortcuts. | `logging.getLogger(__name__)` |
 | [nustd.pathlib](https://nustack.dev/docs/reference/nustd/pathlib) | Lexical path operations. | `pathlib.Path.of("a", "b")` |
