@@ -12,6 +12,7 @@ import { X } from "lucide-react";
 import type * as React from "react";
 
 import { cn } from "../../lib/utils";
+import { IconButton } from "./icon-button";
 
 // Sizes cap content max-width; consumer content decides height / scroll.
 // Values sit one step above shadcn defaults so IDE dashboards read roomier
@@ -119,19 +120,19 @@ function DialogContent({
 			>
 				{children}
 				{showClose && (
-					<DialogPrimitive.Close
-						data-slot="dialog-close-icon"
-						className={cn(
-							"absolute right-4 top-4 rounded-sm text-text-secondary",
-							"cursor-pointer",
-							"transition-colors duration-fast ease-out",
-							"hover:text-text-primary",
-							"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated",
-							"disabled:pointer-events-none",
-						)}
-					>
-						<X className="size-4" />
-						<span className="sr-only">Close</span>
+					// A kit IconButton, like every other icon-only control: a box,
+					// a hover wash, the inset ring.
+					<DialogPrimitive.Close asChild>
+						<IconButton
+							data-slot="dialog-close-icon"
+							variant="ghost"
+							size="sm"
+							ring="inset"
+							aria-label="Close"
+							className="absolute right-4 top-4"
+						>
+							<X />
+						</IconButton>
 					</DialogPrimitive.Close>
 				)}
 			</DialogPrimitive.Content>

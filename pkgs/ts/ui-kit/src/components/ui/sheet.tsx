@@ -15,6 +15,7 @@ import { X } from "lucide-react";
 import type * as React from "react";
 
 import { cn } from "../../lib/utils";
+import { IconButton } from "./icon-button";
 
 // Fixed edge-anchored positioning per side + slide-in/out per side.
 const sheetContentVariants = cva(
@@ -144,18 +145,18 @@ function SheetContent({
 			>
 				{children}
 				{showClose && (
-					<SheetPrimitive.Close
-						data-slot="sheet-close-icon"
-						className={cn(
-							"absolute right-4 top-4 rounded-sm text-text-secondary",
-							"transition-colors duration-fast ease-out",
-							"hover:text-text-primary",
-							"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated",
-							"disabled:pointer-events-none",
-						)}
-					>
-						<X className="size-4" />
-						<span className="sr-only">Close</span>
+					// A kit IconButton, like every other icon-only control.
+					<SheetPrimitive.Close asChild>
+						<IconButton
+							data-slot="sheet-close-icon"
+							variant="ghost"
+							size="sm"
+							ring="inset"
+							aria-label="Close"
+							className="absolute right-4 top-4"
+						>
+							<X />
+						</IconButton>
 					</SheetPrimitive.Close>
 				)}
 			</SheetPrimitive.Content>
