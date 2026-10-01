@@ -7,12 +7,13 @@
 - **nucli** (the `nu` command) — 0.5.5
 - **nudle** — 0.1.6
 - **ui-core** — 0.2.0
-- **ui-kit** — 0.2.3
+- **ui-kit** — 0.2.4
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- UI kit 0.2.4 ships the soft button variant
 - Buttons get a soft variant, filled with no border; smallest icon buttons get smaller icons
 - Examples and docs keep state in memory, and the movies demo runs again
 - Memory state is part of the core, and one-off values get their own frame
