@@ -5,7 +5,8 @@ values there for its body: a loop its item, a fold its accumulator, a catch the
 error, a retry the attempt, a reaction the key that changed. Only interactions
 write it, imperatively in their compile through ``ctx.attrs.let`` / ``set``.
 The tree only reads, through ``Attr(name)``, and ``Attr(name).exists()`` asks
-whether a name is bound. State of any kind goes through a fabric instead:
+whether a name is bound. A body given as a lambda gets those reads as its
+parameters, over names the interaction mints (``binders``). State of any kind goes through a fabric instead:
 ``nu.mem`` for local state, kv for records.
 
 What an interaction hands over is immutable. Concurrent tasks share bound

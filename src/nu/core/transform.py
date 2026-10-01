@@ -16,18 +16,22 @@ stream in, stream out. ``Sorted`` is a ScalarQuery, like Python's ``sorted``:
 ordering must see every item before it yields the first, so it takes an
 iterable value and yields a list rather than posing as a stream.
 
-``Map`` and ``Filter`` bind each item into ``ctx.attrs`` under a name and
-evaluate a Nu child against it. The name is a **child** (a Query yielding
-the name), so it can be a ``Literal`` or a Ref computed elsewhere - never an
-opaque payload. The body reads the item with ``Attr(<name>)``. The item is
-bound with ``ctx.attrs.let`` for the evaluation of that one item, so it shadows
-an outer name of the same spelling and never outlives the item.
+``Map``, ``Filter`` and ``SortBy`` bind each item into ``ctx.attrs`` under a
+name and evaluate a Nu child against it. The child is usually a lambda over
+the item (``lambda x: x > 1``): it runs once, at construction, with a ref to
+the item and returns the child tree, and the name is minted for it. Given as a
+plain tree instead, the child reads the item with ``Attr(<name>)`` under an
+explicit name, itself a **child** (a ``Literal`` or a Ref computed elsewhere,
+never an opaque payload). The item is bound with ``ctx.attrs.let`` for the
+evaluation of that one item, so it shadows an outer name of the same spelling
+and never outlives the item.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu.context.attrs.binders import bind
 from nu.engine import Term
 from nu.lang import ScalarQuery, StreamQuery
 from nu.lang.literal import Literal
@@ -39,6 +43,7 @@ from ._stream import aiter_any, sync_iter
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
+    from nu.context import Attr
     from nu.lang import Arg, Nu, StrArg
     from nu.lang.runtime import Runtime
 
@@ -50,16 +55,22 @@ class Map(StreamQuery):
 
     Args:
         source: the stream to map over.
-        transform: evaluated once per item; its value replaces the item.
-        key: name each item is bound under while transform runs. Defaults
-            to ``"item"``.
+        transform: evaluated once per item; its value replaces the item. A
+            lambda over the item, or a tree reading it with ``Attr(key)``.
+        key: name each item is bound under while transform runs, for a tree
+            ``transform``. Defaults to ``"item"``; a lambda mints its own.
 
     Notes:
+        - The lambda runs once, at construction, and gets a ref, not a value:
+          it builds the tree and never branches on the item in Python.
+        - The name belongs to the lambda's code: nested lambdas each get
+          their own, while one lambda used again inside its own body
+          shadows the outer binding, as with ``nu.let``. An explicit ``key``
+          keeps both readable.
         - ``key`` is itself a child (a ``Literal`` or a Ref), not a raw
           string, so it can be computed rather than fixed at write time.
-        - ``transform`` reads the item with ``Attr(<name>)``. The
-          binding lasts for that item's ``transform`` and is released before
-          the result is yielded, so it never reaches the consumer.
+        - The binding lasts for that item's ``transform`` and is released
+          before the result is yielded, so it never reaches the consumer.
         - Pulled lazily, one item at a time; nothing runs ahead of the pull.
         - No sentinel check of its own: an EMPTY item, or an EMPTY result
           from ``transform``, passes straight through as a value rather
@@ -70,13 +81,23 @@ class Map(StreamQuery):
         each item ``transform``'s result.
 
     Example:
-        >>> nu.run(nu.Collect(nu.Map(nu.Iter([1, 2, 3]), nu.Add(nu.Attr("item"), 1))))[0]
+        >>> nu.run(nu.Collect(nu.Map(nu.Iter([1, 2, 3]), lambda x: nu.Int(x) + 1)))[0]
+        [2, 3, 4]
+
+        The same with an explicit name:
+
+        >>> nu.run(nu.Collect(nu.Map(nu.Iter([1, 2, 3]), nu.Add(nu.Attr("n"), 1), key="n")))[0]
         [2, 3, 4]
     """
 
-    def __init__(self, source: Arg[Iterable], transform: Nu, key: StrArg = "item") -> None:
-        key_node = key if isinstance(key, Term) else Literal(key)
-        super().__init__(source, transform, key_node)
+    def __init__(
+        self,
+        source: Arg[Iterable],
+        transform: Nu | Callable[[Attr], Nu],
+        key: StrArg | None = None,
+    ) -> None:
+        transform, (key,) = bind("Map", transform, key=key)
+        super().__init__(source, transform, "item" if key is None else key)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, transform, key_t = children
@@ -117,13 +138,13 @@ class Filter(StreamQuery):
     Args:
         source: the stream to filter.
         predicate: evaluated once per item; the item passes when this is
-            truthy.
-        key: name each item is bound under while predicate runs. Defaults
-            to ``"item"``.
+            truthy. A lambda over the item, or a tree reading it with
+            ``Attr(key)``.
+        key: name each item is bound under while predicate runs, for a tree
+            ``predicate``. Defaults to ``"item"``; a lambda mints its own.
 
     Notes:
-        - ``predicate`` reads the item with ``Attr(<name>)``, the same
-          scoped binding as :class:`Map`.
+        - The same scoped binding, and the same lambda form, as :class:`Map`.
         - An EMPTY ``predicate`` result counts as false and drops the item,
           like any falsy value.
         - Pulled lazily, one item at a time.
@@ -133,13 +154,23 @@ class Filter(StreamQuery):
         the items where ``predicate`` held.
 
     Example:
+        >>> nu.run(nu.Collect(nu.Filter(nu.Iter([1, 2, 3, 4]), lambda x: x > 2)))[0]
+        [3, 4]
+
+        The same with the default name:
+
         >>> nu.run(nu.Collect(nu.Filter(nu.Iter([1, 2, 3, 4]), nu.Gt(nu.Attr("item"), 2))))[0]
         [3, 4]
     """
 
-    def __init__(self, source: Arg[Iterable], predicate: Nu, key: StrArg = "item") -> None:
-        key_node = key if isinstance(key, Term) else Literal(key)
-        super().__init__(source, predicate, key_node)
+    def __init__(
+        self,
+        source: Arg[Iterable],
+        predicate: Nu | Callable[[Attr], Nu],
+        key: StrArg | None = None,
+    ) -> None:
+        predicate, (key,) = bind("Filter", predicate, key=key)
+        super().__init__(source, predicate, "item" if key is None else key)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, predicate, key_t = children
@@ -233,14 +264,16 @@ class SortBy(StreamQuery):
 
     Args:
         source: the stream to sort.
-        key: evaluated once per item to produce its sort key.
+        key: evaluated once per item to produce its sort key. A lambda over
+            the item, like Python's ``sorted(key=...)``, or a tree reading it
+            with ``Attr(item)``.
         reverse: descending order when truthy. Defaults to ``False``.
-        item: name each item is bound under while ``key`` runs. Defaults
-            to ``"item"``.
+        item: name each item is bound under while ``key`` runs, for a tree
+            ``key``. Defaults to ``"item"``; a lambda mints its own.
 
     Notes:
-        - ``key`` reads the item with ``Attr(<name>)``, the same
-          scoped binding as :class:`Map` / :class:`Filter`.
+        - The same scoped binding, and the same lambda form, as
+          :class:`Map` / :class:`Filter`.
         - Drains and sorts the whole source before yielding anything, so
           a pull on its output waits for the whole source.
 
@@ -249,6 +282,11 @@ class SortBy(StreamQuery):
         (stream in, stream out).
 
     Example:
+        >>> nu.run(nu.Collect(nu.SortBy(nu.Iter(["bb", "a", "ccc"]), lambda s: nu.Len(s))))[0]
+        ['a', 'bb', 'ccc']
+
+        The same with the default name:
+
         >>> nu.run(nu.Collect(nu.SortBy(nu.Iter(["bb", "a", "ccc"]), nu.Len(nu.Attr("item")))))[0]
         ['a', 'bb', 'ccc']
     """
@@ -256,13 +294,13 @@ class SortBy(StreamQuery):
     def __init__(
         self,
         source: Arg[Iterable],
-        key: Nu,
+        key: Nu | Callable[[Attr], Nu],
         reverse: Arg[bool] = False,
-        item: StrArg = "item",
+        item: StrArg | None = None,
     ) -> None:
+        key, (item,) = bind("SortBy", key, item=item)
         reverse_node = reverse if isinstance(reverse, Term) else Literal(reverse)
-        item_node = item if isinstance(item, Term) else Literal(item)
-        super().__init__(source, key, reverse_node, item_node)
+        super().__init__(source, key, reverse_node, "item" if item is None else item)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, key_expr, reverse_t, item_t = children

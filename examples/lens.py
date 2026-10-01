@@ -177,16 +177,15 @@ class App(nustd.ui.Index):
 # you and all it is doing.
 
 
-def by_hand(lens, shape, prefix, key):
+def by_hand(lens, shape, prefix):
     """Paint the root column, then repaint the cascade on every move.
 
     The cursor is the browser's, so the arm is a pure "recompute the columns
     for whatever cursor you were handed" loop and remembers nothing between
     frames.
 
-    The two reads of ``key`` are built separately on purpose: a Nu node is a
-    value, and one object sitting in two tree positions is one compiled node
-    that the two of them would then share at runtime.
+    The body is a lambda over the cursor the move carries, so the arm never
+    names where that cursor is parked.
 
     The ``Snapshot`` is not optional. The walk builds a term at run time, and a
     term built at run time is invisible to the pass that would otherwise place
@@ -201,13 +200,9 @@ def by_hand(lens, shape, prefix, key):
     )
     on_nav = nu.ReactForever(
         lens.on_nav(),
-        nustd.kv.Snapshot(
-            lens.set_columns(
-                nu.Attr(key),
-                nustd.ui.lens.columns(shape, nu.Attr(key), prefix=prefix),
-            )
+        lambda cursor: nustd.kv.Snapshot(
+            lens.set_columns(cursor, nustd.ui.lens.columns(shape, cursor, prefix=prefix))
         ),
-        changed_key=key,
     )
     return boot >> on_nav
 
@@ -220,7 +215,7 @@ ui = (
     # smart Parallel refuses to pick a mode for a branch it cannot see into.
     >> nu.ParallelAsync(
         nustd.ui.lens.browse(App.home.whole.lens, Cluster),
-        by_hand(App.home.anchored.lens, Machine, Cluster.machines["red"], "red_nav"),
+        by_hand(App.home.anchored.lens, Machine, Cluster.machines["red"]),
     )
 )
 

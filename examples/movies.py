@@ -241,23 +241,21 @@ _SEED_MOVIES: list[dict] = [
 # ---- Wire -------------------------------------------------------------------
 
 
-_ROW_TRANSFORM = nu.List.of(
-    nu.Attr("r")["title"],
-    nu.Attr("r")["year"],
-    nu.Attr("r")["genre"],
-    nu.Attr("r")["rating"],
-    nu.If(nu.Attr("r")["watched"], "yes", "no"),
-    nu.Attr("r")["notes"],
-)
+def _row(movie: nu.Attr) -> nu.Nu:
+    """One stored movie dict as the positional row TableRef expects."""
+    return nu.List.of(
+        movie["title"],
+        movie["year"],
+        movie["genre"],
+        movie["rating"],
+        nu.If(movie["watched"], "yes", "no"),
+        movie["notes"],
+    )
 
 
 def _rows_form() -> nu.Nu:
     """Map each stored movie dict into a positional row TableRef expects."""
-    return nu.Dict.of(
-        rows=nu.Collect(
-            nu.Map(nu.Iter(State.movies), transform=_ROW_TRANSFORM, key="r"),
-        ),
-    )
+    return nu.Dict.of(rows=nu.Collect(nu.Map(nu.Iter(State.movies), _row)))
 
 
 def _rows_filtered() -> nu.Nu:
@@ -265,19 +263,16 @@ def _rows_filtered() -> nu.Nu:
     min_r = nu.Float(App.movies.filters.body.min_rating.input)
     genre = nu.Str(App.movies.filters.body.genre.input)
     watched_only = nu.Bool(App.movies.filters.body.watched_only.input)
-    predicate = nu.And(
-        nu.Ge(nu.Attr("r")["rating"], min_r),
-        nu.Or(nu.Eq(genre, ""), nu.Eq(nu.Attr("r")["genre"], genre)),
-        nu.Or(nu.Not(watched_only), nu.Attr("r")["watched"]),
+    shown = nu.Filter(
+        nu.Iter(State.movies),
+        lambda movie: nu.And(
+            nu.Ge(movie["rating"], min_r),
+            nu.Or(nu.Eq(genre, ""), nu.Eq(movie["genre"], genre)),
+            nu.Or(nu.Not(watched_only), movie["watched"]),
+        ),
     )
     return nu.Dict.of(
-        rows=nu.Collect(
-            nu.Map(
-                nu.Filter(nu.Iter(State.movies), predicate=predicate, key="r"),
-                transform=_ROW_TRANSFORM,
-                key="r",
-            ),
-        ),
+        rows=nu.Collect(nu.Map(shown, _row)),
     )
 
 
@@ -340,9 +335,9 @@ on_add = nu.ReactForever(
 
 on_row_click = nu.ReactForever(
     App.movies.shelf.body.table.on_row_click(),
-    nu.IfDo(
-        nu.Contains(nu.Attr("row_click"), "row_index"),
-        nustd.kv.Transaction(State.selected.set(nu.Attr("row_click")["row_index"]))
+    lambda click: nu.IfDo(
+        nu.Contains(click, "row_index"),
+        nustd.kv.Transaction(State.selected.set(click["row_index"]))
         >> nustd.kv.Snapshot(
             App.detail.heading.set(State.movies[State.selected].title)
             | App.detail.meta.meta.year.set_value(nu.str(State.movies[State.selected].year))
@@ -355,7 +350,6 @@ on_row_click = nu.ReactForever(
         )
         >> App.nav.set("/detail"),
     ),
-    changed_key="row_click",
 )
 
 

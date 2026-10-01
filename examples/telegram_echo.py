@@ -34,14 +34,17 @@ class Cursor(nu.Shape):
 
 # ---- One poll tick: fetch batch, echo each message, bump offset -----------
 
-msg = nu.Dict(nu.Attr("u")["message"])
-handle_one = Bot.send_message(
-    chat_id=nu.Dict(msg["chat"])["id"],
-    text="echo: " + nu.Str(msg["text"]),
-) >> Cursor.offset.set(nu.Int(nu.Attr("u")["update_id"]) + 1)
+
+def handle_one(update: nu.Attr) -> nu.Nu:
+    msg = nu.Dict(update["message"])
+    return Bot.send_message(
+        chat_id=nu.Dict(msg["chat"])["id"],
+        text="echo: " + nu.Str(msg["text"]),
+    ) >> Cursor.offset.set(nu.Int(update["update_id"]) + 1)
+
 
 tick = nu.ForEachDo(
-    nu.Dict(Bot.get_updates(offset=Cursor.offset, timeout=30))["result"], handle_one, item="u"
+    nu.Dict(Bot.get_updates(offset=Cursor.offset, timeout=30))["result"], handle_one
 )
 
 

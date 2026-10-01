@@ -31,9 +31,10 @@ class Attr(_ContextRef, Object):
 
     A loop binds its item, a fold its accumulator, a catch the error, a retry
     the attempt, a reaction the key that changed. ``Attr(name)`` is how the
-    body reads it. The sole child is the address, evaluated through the
-    runtime like any other child, so a name can be fixed at write time or
-    computed at run time.
+    body reads it. A body written as a lambda never spells one out: the
+    interaction mints the name and hands the lambda an ``Attr`` over it. The
+    sole child is the address, evaluated through the runtime like any other
+    child, so a name can be fixed at write time or computed at run time.
 
     Args:
         address: evaluated to the key this Ref names. ``Attr("item")``

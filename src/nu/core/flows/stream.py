@@ -10,6 +10,7 @@ import asyncio
 from contextlib import aclosing
 from typing import TYPE_CHECKING
 
+from nu.context.attrs.binders import bind
 from nu.core._stream import aiter_any
 from nu.core.reactive import OnChildrenChange
 from nu.domains.shape.interactions import AdvanceCursor
@@ -29,9 +30,11 @@ class Stream(StreamQuery):
 
     Args:
         source: the ordered collection to stream over.
-        body: the Nu run per item, once ``key`` is bound to its position.
+        body: the Nu run per item: a lambda over the item's cursor key, or a
+            tree reading it with ``Attr(key)``.
         key: the ``ctx.attrs`` name the current item's cursor key is bound
-            under, for ``body`` to read.
+            under, for a tree ``body`` to read. Defaults to
+            ``"stream_key"``; a lambda mints its own.
         log_key: the ``ctx.attrs`` name the underlying log cursor is bound
             under.
 
@@ -57,7 +60,7 @@ class Stream(StreamQuery):
         A stream needs a real ordered-collection substrate to drive
         ``advance`` / ``change``, so it can't run standalone here::
 
-            Stream(SequenceRef("items"), SequenceRef("body"))
+            Stream(SequenceRef("items"), lambda key: nu.print(key))
     """
 
     def __init__(
@@ -65,10 +68,14 @@ class Stream(StreamQuery):
         source: object,
         body: object,
         *,
-        key: object = "stream_key",
+        key: object = None,
         log_key: object = "stream_log_key",
     ) -> None:
         from nu.context import Attr
+
+        body, (key,) = bind("Stream", body, key=key)
+        if key is None:
+            key = "stream_key"
 
         cursor_ref = Attr(log_key)
         advance = AdvanceCursor(source, cursor_ref)

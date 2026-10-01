@@ -12,6 +12,11 @@ it only ever runs the latest one.
 ``param_slots`` names the consumed queries (the change subscription at slot
 0, a condition where present, an optional ``changed_key`` name); the
 remaining slot is the body.
+
+A body that wants the key that changed is a lambda over it
+(``lambda key: ...``): it runs once, at construction, with a ref to the key,
+and the name it binds under is minted for it. A plain tree body binds nothing,
+unless ``changed_key`` names where to put the key for it.
 """
 
 from __future__ import annotations
@@ -20,6 +25,7 @@ import asyncio
 from contextlib import nullcontext
 from typing import TYPE_CHECKING
 
+from nu.context.attrs.binders import bind
 from nu.core._stream import aiter_any
 from nu.engine.structure import Declared
 from nu.lang import Control
@@ -76,10 +82,11 @@ class React(Control):
     Args:
         change: the change subscription to wait on (a ``Subscription``-yielding
             query, e.g. ``OnChange``).
-        body: what to run once the change fires. Optional: leave it out to
-            just wait for one change and do nothing.
-        changed_key: name the changed key is bound under while the body
-            runs. Requires a body.
+        body: what to run once the change fires: a lambda over the changed
+            key, or a tree. Optional: leave it out to just wait for one
+            change and do nothing.
+        changed_key: name the changed key is bound under while a tree body
+            runs. Requires a body; a lambda mints its own.
 
     Notes:
         - Requires a body when ``changed_key`` is given: capturing a key with
@@ -101,6 +108,7 @@ class React(Control):
         *,
         changed_key: object = None,
     ) -> None:
+        body, (changed_key,) = bind("React", body, changed_key=changed_key)
         if changed_key is not None and body is None:
             msg = "React changed_key requires a body"
             raise ValueError(msg)
@@ -159,9 +167,10 @@ class ReactWhile(Control):
         change: the change subscription to wait on.
         condition: checked after each notification, before that turn's body
             runs. A falsy value ends the loop.
-        body: what to run on a turn where the condition holds.
+        body: what to run on a turn where the condition holds: a lambda over
+            the changed key, or a tree.
         changed_key: name the changed key is bound under while that turn's
-            body runs.
+            tree body runs; a lambda mints its own.
 
     Notes:
         - Requires an async runtime; the sync path raises ``RuntimeError``.
@@ -182,6 +191,7 @@ class ReactWhile(Control):
         *,
         changed_key: object = None,
     ) -> None:
+        body, (changed_key,) = bind("ReactWhile", body, changed_key=changed_key)
         has_changed_key = changed_key is not None
         if changed_key is not None:
             super().__init__(change, condition, body, changed_key)
@@ -232,9 +242,10 @@ class ReactForever(Control):
 
     Args:
         change: the change subscription to wait on.
-        body: what to run on every notification.
-        changed_key: name the changed key is bound under while each body
-            run lasts.
+        body: what to run on every notification: a lambda over the changed
+            key, or a tree.
+        changed_key: name the changed key is bound under while each run of
+            a tree body lasts; a lambda mints its own.
 
     Notes:
         - Requires an async runtime; the sync path raises ``RuntimeError``.
@@ -254,6 +265,7 @@ class ReactForever(Control):
         *,
         changed_key: object = None,
     ) -> None:
+        body, (changed_key,) = bind("ReactForever", body, changed_key=changed_key)
         has_changed_key = changed_key is not None
         if changed_key is not None:
             super().__init__(change, body, changed_key)
@@ -305,13 +317,15 @@ class ReactLatest(Control):
 
     Args:
         change: the change subscription to wait on.
-        body: what to run on every notification. May never finish (a live
-            view, a server loop); the next change is what ends it.
-        changed_key: name the changed key is bound under while each body
-            run lasts.
+        body: what to run on every notification: a lambda over the changed
+            key, or a tree. May never finish (a live view, a server loop);
+            the next change is what ends it.
+        changed_key: name the changed key is bound under while each run of
+            a tree body lasts; a lambda mints its own.
         initial: run the body once straight away, before any notification.
-            That run binds nothing under ``changed_key``, so the body sees
-            whatever the caller seeded there, or an unbound slot.
+            That run binds no key, so the body sees whatever the caller
+            seeded under ``changed_key``, or an unbound name (a lambda's key
+            reads EMPTY).
 
     Notes:
         - Notifications that pile up while a cancelled run is unwinding are
@@ -342,6 +356,10 @@ class ReactLatest(Control):
                 nustd.ui.lens.browse(Cell.lens, Movies),
                 initial=True,
             )
+
+        A body reading the key that changed::
+
+            ReactForever(Cell.source.on_change(), lambda key: nu.print(key))
     """
 
     _mutates = Declared(value=frozenset(), name="mutates")
@@ -356,6 +374,7 @@ class ReactLatest(Control):
         changed_key: object = None,
         initial: bool = False,
     ) -> None:
+        body, (changed_key,) = bind("ReactLatest", body, changed_key=changed_key)
         has_changed_key = changed_key is not None
         if changed_key is not None:
             super().__init__(change, body, changed_key)

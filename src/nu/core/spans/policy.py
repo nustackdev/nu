@@ -17,7 +17,8 @@ Conventions (see ``AUTHORING.md``): structure lives in the tree, not ``payload``
 (an absent optional branch is a ``Noop`` slot; names are ``StrArg`` children;
 numeric knobs are returning children); ``ctx.attrs`` is the one inter-Nu channel
 (the caught error and the attempt count are ``let``-bound there for the
-handler that reads them, and only for as long as it runs); async-only atoms
+handler that reads them, and only for as long as it runs; a handler written as
+a lambda gets refs to them as its parameters); async-only atoms
 declare ``requires_async`` and raise on the sync path as a backstop (the sync
 entry refuses the subtree first).
 """
@@ -29,6 +30,7 @@ import random
 from contextlib import ExitStack
 from typing import TYPE_CHECKING
 
+from nu.context.attrs.binders import bind
 from nu.core._stream import aiter_any, sync_iter
 from nu.core.flows import Noop
 from nu.engine.structure import Declared
@@ -169,20 +171,32 @@ class TryCatch(Policy):
 
     Args:
         body: the guarded Term.
-        catch: runs on a matching failure, in place of the body. Optional.
+        catch: runs on a matching failure, in place of the body: a lambda
+            over the caught error, or a tree. Optional.
         finally_: runs after, regardless of outcome. Optional.
         errors: the exception type(s) to catch. ``None`` catches everything;
             an unmatched exception propagates past this node untouched.
         error_key: where the caught exception (a :class:`CaughtError`) lands
-            in the attrs fabric for ``catch`` to read.
+            in the attrs fabric for a tree ``catch`` to read. Defaults to
+            ``"error"``; a lambda mints its own.
+
+    Notes:
+        - The lambda runs once, at construction, and gets a ref to the error,
+          not the error: it builds the handler and never inspects it in
+          Python.
 
     Yields:
         The body's value on success, or ``catch``'s value on a caught
         failure. Transparent otherwise: forwards the branch's shape as-is.
 
     Example:
-        >>> nu.run(nu.TryCatch(nu.Div(1, 0), catch=nu.Str("failed")))[0]
-        'failed'
+        >>> nu.run(nu.TryCatch(nu.Div(1, 0), catch=lambda err: "failed: " + nu.Str(err)))[0]
+        'failed: division by zero'
+
+        A tree catch, reading the error under the default name:
+
+        >>> nu.run(nu.TryCatch(nu.Div(1, 0), catch=nu.Str(nu.Attr("error")).upper()))[0]
+        'DIVISION BY ZERO'
     """
 
     def __init__(
@@ -191,15 +205,16 @@ class TryCatch(Policy):
         catch: Nu | None = None,
         finally_: Flow | Command | Span | None = None,
         errors: tuple[type[Exception], ...] | type[Exception] | None = None,
-        error_key: StrArg = "error",
+        error_key: StrArg | None = None,
     ) -> None:
         if errors is not None and not isinstance(errors, tuple):
             errors = (errors,)
+        catch, (error_key,) = bind("TryCatch", catch, error_key=error_key)
         super().__init__(
             body,
             catch if catch is not None else Noop(),
             finally_ if finally_ is not None else Noop(),
-            error_key,
+            "error" if error_key is None else error_key,
         )
         self._payload["errors"] = errors
 
@@ -328,7 +343,10 @@ class Retry(Policy):
     backoff, jitter or hooks. Async runs the full policy: ``delay`` grows by
     ``backoff`` each attempt, ``jitter`` decorrelates the wait, and
     ``on_attempt_fail`` / ``on_success`` / ``on_fail`` fire with the
-    attempt count and error bound. A stream body is
+    attempt count and error bound. A hook is a lambda over what it can see
+    (``lambda err, attempt: ...`` for a failure, ``lambda attempt: ...`` for
+    success, where there is no error), or a tree reading them under
+    ``error_key`` / ``attempt_key``. A stream body is
     retried by atomic re-evaluation - drained fresh each attempt, emitted
     only on success, bounded streams only - and the stream path skips the
     per-attempt hooks.
@@ -344,14 +362,23 @@ class Retry(Policy):
         errors: the exception type(s) that trigger a retry. ``None``
             matches any exception; an unmatched one propagates unretried.
         on_attempt_fail: runs after a failed attempt that still has retries
-            left (async only). Optional.
-        on_success: runs once the body succeeds (async only). Optional.
+            left (async only): ``lambda err, attempt: ...`` or a tree.
+            Optional.
+        on_success: runs once the body succeeds (async only):
+            ``lambda attempt: ...`` or a tree. Optional.
         on_fail: runs once attempts are exhausted, in place of re-raising
-            (async only). Optional.
-        error_key: where the failing attempt's error lands in the attrs
-            fabric for a hook to read.
-        attempt_key: where the attempt number lands in the attrs fabric for
-            a hook to read.
+            (async only): ``lambda err, attempt: ...`` or a tree. Optional.
+        error_key: where the failing attempt's error message lands in the
+            attrs fabric for a tree hook to read. Defaults to ``"error"``.
+        attempt_key: where the attempt number (from 1) lands in the attrs
+            fabric for a tree hook to read. Defaults to ``"attempt"``.
+
+    Notes:
+        - Each hook binds under names of its own, so lambda hooks and tree
+          hooks mix freely. An explicit name next to a lambda hook that
+          binds the same value raises.
+        - A lambda hook runs once, at construction, and gets refs, not
+          values: it builds the hook and never inspects them in Python.
 
     Yields:
         The body's value on the attempt that succeeds. On exhaustion:
@@ -362,6 +389,12 @@ class Retry(Policy):
         >>> import asyncio
         >>> asyncio.run(nu.arun(nu.Retry(nu.Div(1, 1), max_attempts=1)))[0]
         1.0
+
+        A hook reading what it is handed:
+
+        >>> gave_up = lambda err, attempt: nu.print("gave up after", attempt, "-", err)
+        >>> _ = asyncio.run(nu.arun(nu.Retry(nu.Div(1, 0), max_attempts=2, on_fail=gave_up)))
+        gave up after 2 - division by zero
     """
 
     def __init__(
@@ -376,11 +409,20 @@ class Retry(Policy):
         on_attempt_fail: Flow | Command | Span | None = None,
         on_success: Flow | Command | Span | None = None,
         on_fail: Flow | Command | Span | None = None,
-        error_key: StrArg = "error",
-        attempt_key: StrArg = "attempt",
+        error_key: StrArg | None = None,
+        attempt_key: StrArg | None = None,
     ) -> None:
         if errors is not None and not isinstance(errors, tuple):
             errors = (errors,)
+        # Each hook binds under names of its own: a lambda hook mints them, a
+        # plain one takes the explicit names, so one Retry can mix the two.
+        on_attempt_fail, (oaf_error, oaf_attempt) = bind(
+            "Retry on_attempt_fail", on_attempt_fail, error_key=error_key, attempt_key=attempt_key
+        )
+        on_success, (osc_attempt,) = bind("Retry on_success", on_success, attempt_key=attempt_key)
+        on_fail, (ofl_error, ofl_attempt) = bind(
+            "Retry on_fail", on_fail, error_key=error_key, attempt_key=attempt_key
+        )
         super().__init__(
             body,
             max_attempts,
@@ -390,8 +432,11 @@ class Retry(Policy):
             on_attempt_fail if on_attempt_fail is not None else Noop(),
             on_success if on_success is not None else Noop(),
             on_fail if on_fail is not None else Noop(),
-            error_key,
-            attempt_key,
+            "error" if oaf_error is None else oaf_error,
+            "attempt" if oaf_attempt is None else oaf_attempt,
+            "attempt" if osc_attempt is None else osc_attempt,
+            "error" if ofl_error is None else ofl_error,
+            "attempt" if ofl_attempt is None else ofl_attempt,
         )
         self._payload["errors"] = errors
 
@@ -435,7 +480,7 @@ class Retry(Policy):
             children[4],
         )
         oaf, osc, ofl = self._hooks(children)
-        error_key, attempt_key = children[8], children[9]
+        oaf_error, oaf_attempt, osc_attempt, ofl_error, ofl_attempt = children[8:13]
         errors = self._payload["errors"]
 
         async def athunk(rt: Runtime) -> object:
@@ -455,24 +500,26 @@ class Retry(Policy):
             delay = float(await delay_q(rt))
             backoff = float(await backoff_q(rt))
             jitter = float(await jitter_q(rt))
-            ek, ak = await error_key(rt), await attempt_key(rt)
+            oaf_ek, oaf_ak = await oaf_error(rt), await oaf_attempt(rt)
+            osc_ak = await osc_attempt(rt)
+            ofl_ek, ofl_ak = await ofl_error(rt), await ofl_attempt(rt)
 
             for attempt in range(1, attempts + 1):
                 try:
                     result = await body(rt)
                     if osc is not None:
-                        await _arun_hook(rt, osc, {ak: attempt})
+                        await _arun_hook(rt, osc, {osc_ak: attempt})
                     return result
                 except Exception as exc:
                     if errors is not None and not isinstance(exc, errors):
                         raise
                     if attempt >= attempts:
                         if ofl is not None:
-                            await _arun_hook(rt, ofl, {ak: attempt, ek: str(exc)})
+                            await _arun_hook(rt, ofl, {ofl_ek: str(exc), ofl_ak: attempt})
                             return None
                         raise
                     if oaf is not None:
-                        await _arun_hook(rt, oaf, {ak: attempt, ek: str(exc)})
+                        await _arun_hook(rt, oaf, {oaf_ek: str(exc), oaf_ak: attempt})
                     wait = delay
                     if jitter > 0.0 and wait > 0.0:
                         spread = max(0.0, min(1.0, jitter))

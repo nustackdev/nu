@@ -15,7 +15,8 @@ Two atom shapes:
 - **higher-order** atoms carry a Nu query child plus a loop-var-name child
   (default ``"item"``, two names ``"acc"`` / ``"item"`` for ``accumulate``),
   exactly like ``Filter`` / ``Reduce``: bind each item under ``name`` with
-  ``ctx.attrs.let`` for one evaluation of the Nu child, which reads the item
+  ``ctx.attrs.let`` for one evaluation of the Nu child. The child is a lambda
+  over what it is handed, which mints the names, or a tree reading the item
   via ``Attr("item")``.
 
 The per-item binding is scoped, not a tracked fabric write, so these atoms are
@@ -28,15 +29,16 @@ import itertools as _it
 import operator
 from typing import TYPE_CHECKING
 
+from nu.context.attrs.binders import bind
 from nu.core._stream import aiter_any, sync_iter
-from nu.engine import Term
-from nu.lang import Literal, ScalarQuery, StreamQuery
+from nu.lang import ScalarQuery, StreamQuery
 from nu.lang.sentinels import EMPTY, UNSET
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from nu.context import Attr
     from nu.lang import Arg, Nu, StrArg
     from nu.lang.runtime import Runtime
 
@@ -608,12 +610,15 @@ class TakeWhile(StreamQuery):
     Children: ``[source, predicate, key]``. Each item is bound under the name
     ``key`` yields, then ``predicate`` runs; the item is yielded while truthy
     and iteration stops at the first falsy result. An EMPTY result is falsy.
-    The body reads the item with ``Attr("item")``.
+    ``predicate`` is a lambda over the item, or a tree reading it with
+    ``Attr(key)``.
     """
 
-    def __init__(self, source: Arg, predicate: Nu, key: StrArg = "item") -> None:
-        key_node = key if isinstance(key, Term) else Literal(key)
-        super().__init__(source, predicate, key_node)
+    def __init__(
+        self, source: Arg, predicate: Nu | Callable[[Attr], Nu], key: StrArg | None = None
+    ) -> None:
+        predicate, (key,) = bind("TakeWhile", predicate, key=key)
+        super().__init__(source, predicate, "item" if key is None else key)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, predicate, key_t = children
@@ -657,13 +662,15 @@ class DropWhile(StreamQuery):
 
     Children: ``[source, predicate, key]``. Skips items while ``predicate`` is
     truthy; once it is falsy (EMPTY included), yields that item and every item
-    after it with no further predicate evaluation. The body reads the item via
-    ``Attr("item")``.
+    after it with no further predicate evaluation. ``predicate`` is a lambda
+    over the item, or a tree reading it with ``Attr(key)``.
     """
 
-    def __init__(self, source: Arg, predicate: Nu, key: StrArg = "item") -> None:
-        key_node = key if isinstance(key, Term) else Literal(key)
-        super().__init__(source, predicate, key_node)
+    def __init__(
+        self, source: Arg, predicate: Nu | Callable[[Attr], Nu], key: StrArg | None = None
+    ) -> None:
+        predicate, (key,) = bind("DropWhile", predicate, key=key)
+        super().__init__(source, predicate, "item" if key is None else key)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, predicate, key_t = children
@@ -713,13 +720,15 @@ class FilterFalse(StreamQuery):
 
     Children: ``[source, predicate, key]``. The complement of ``filter``. An
     EMPTY predicate is unknown rather than false, so it never passes: the item
-    is skipped, as ``filter`` over ``Not(predicate)`` would. The body reads it
-    via ``Attr("item")``.
+    is skipped, as ``filter`` over ``Not(predicate)`` would. ``predicate`` is a
+    lambda over the item, or a tree reading it with ``Attr(key)``.
     """
 
-    def __init__(self, source: Arg, predicate: Nu, key: StrArg = "item") -> None:
-        key_node = key if isinstance(key, Term) else Literal(key)
-        super().__init__(source, predicate, key_node)
+    def __init__(
+        self, source: Arg, predicate: Nu | Callable[[Attr], Nu], key: StrArg | None = None
+    ) -> None:
+        predicate, (key,) = bind("FilterFalse", predicate, key=key)
+        super().__init__(source, predicate, "item" if key is None else key)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, predicate, key_t = children
@@ -767,23 +776,25 @@ class Accumulate(StreamQuery):
     item_key]``. The first item is yielded as-is; each later item binds the
     running value under ``acc_key`` and the item under ``item_key``, evaluates
     ``func``, and yields the new running value. Without ``func`` it sums via
-    ``operator.add``. The body reads them via ``Attr("acc")`` / ``Attr("item")``.
+    ``operator.add``. ``func`` is a lambda over the running value and the item,
+    or a tree reading them via ``Attr(acc_key)`` / ``Attr(item_key)``.
     """
 
     def __init__(
         self,
         source: Arg,
-        func: Nu | None = None,
-        acc_key: StrArg = "acc",
-        item_key: StrArg = "item",
+        func: Nu | Callable[[Attr, Attr], Nu] | None = None,
+        acc_key: StrArg | None = None,
+        item_key: StrArg | None = None,
     ) -> None:
+        func, (acc_key, item_key) = bind("Accumulate", func, acc_key=acc_key, item_key=item_key)
         if func is None:
             super().__init__(source)
             self._payload = {"has_func": False}
         else:
-            acc_node = acc_key if isinstance(acc_key, Term) else Literal(acc_key)
-            item_node = item_key if isinstance(item_key, Term) else Literal(item_key)
-            super().__init__(source, func, acc_node, item_node)
+            acc_key = "acc" if acc_key is None else acc_key
+            item_key = "item" if item_key is None else item_key
+            super().__init__(source, func, acc_key, item_key)
             self._payload = {"has_func": True}
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -853,13 +864,16 @@ class StarMap(StreamQuery):
     """``itertools.starmap(function, iterable)`` - apply ``function`` to unpacked items.
 
     Children: ``[source, function, key]``. Each item is a tuple bound under
-    ``key``; ``function`` reads its parts via ``Attr("item")[0]``,
-    ``[1]``, ... The result is yielded. An EMPTY result is skipped.
+    ``key``. ``function`` is a lambda over the tuple, or a tree reading its
+    parts via ``Attr(key)[0]``, ``[1]``, ... The result is yielded. An EMPTY
+    result is skipped.
     """
 
-    def __init__(self, source: Arg, function: Nu, key: StrArg = "item") -> None:
-        key_node = key if isinstance(key, Term) else Literal(key)
-        super().__init__(source, function, key_node)
+    def __init__(
+        self, source: Arg, function: Nu | Callable[[Attr], Nu], key: StrArg | None = None
+    ) -> None:
+        function, (key,) = bind("StarMap", function, key=key)
+        super().__init__(source, function, "item" if key is None else key)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, function, key_t = children
@@ -902,17 +916,23 @@ class GroupBy(StreamQuery):
     """``itertools.groupby(iterable, key=None)`` - group consecutive items by key.
 
     Children: ``[source]`` (group by identity) or ``[source, key, name]``. The
-    key function reads the item via ``Attr("item")``. Yields ``(key_value,
-    tuple(group))`` for each run of consecutive items sharing a key.
+    key function is a lambda over the item, or a tree reading it via
+    ``Attr(name)``. Yields ``(key_value, tuple(group))`` for each run of
+    consecutive items sharing a key.
     """
 
-    def __init__(self, source: Arg, key: Nu | None = None, name: StrArg = "item") -> None:
+    def __init__(
+        self,
+        source: Arg,
+        key: Nu | Callable[[Attr], Nu] | None = None,
+        name: StrArg | None = None,
+    ) -> None:
+        key, (name,) = bind("GroupBy", key, name=name)
         if key is None:
             super().__init__(source)
             self._payload = {"has_key": False}
         else:
-            name_node = name if isinstance(name, Term) else Literal(name)
-            super().__init__(source, key, name_node)
+            super().__init__(source, key, "item" if name is None else name)
             self._payload = {"has_key": True}
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

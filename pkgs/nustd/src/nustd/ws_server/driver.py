@@ -73,11 +73,10 @@ def run_once(body: Nu, *, sid_attr: str = SID_ATTR) -> Nu:
         session_for(SID_ATTR, run_once(program))
     """
     sid = nu.Attr(sid_attr)
-    report = nu.Print(
-        STDOUT,
-        nu.Str("ws session arm failed:"),
-        nu.ToStr(nu.Attr("error")),
-    )
+
+    def report(error: nu.Attr) -> nu.Nu:
+        return nu.Print(STDOUT, nu.Str("ws session arm failed:"), nu.ToStr(error))
+
     return nu.IfDo(
         nu.Not(ServerRef().done(sid)),
         nu.TryCatch(body, catch=report) >> ServerRef().mark_done(sid),

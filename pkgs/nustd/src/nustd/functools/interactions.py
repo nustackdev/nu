@@ -6,23 +6,26 @@ e2e like core's folds (``Sum`` ...) since folds are a hot path.
 
 It is higher-order: the reducer is a Nu query child. Each step binds the
 accumulator and the current item for that one evaluation of the reducer (the
-same scoped binding ``Map`` / ``Filter`` use), which reads them with
-``Attr`` (e.g. ``Attr("acc") + Attr("item")``).
+same scoped binding ``Map`` / ``Filter`` use). The reducer is usually a lambda
+over the two (``lambda acc, x: acc + x``), which mints their names; a plain
+tree reads them with ``Attr`` under explicit names
+(``Attr("acc") + Attr("item")``).
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu.context.attrs.binders import bind
 from nu.core._stream import aiter_any, sync_iter
-from nu.engine import Term
-from nu.lang import Literal, Reduction
+from nu.lang import Reduction
 from nu.lang.sentinels import EMPTY, UNSET
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from nu.context import Attr
     from nu.lang import Nu, StrArg
     from nu.lang.runtime import Runtime
 
@@ -37,24 +40,28 @@ class Reduce(Reduction):
     source left-to-right. With an initializer the accumulator starts there;
     without one it starts at the first item. An empty source with no initializer
     raises ``TypeError`` (matching ``functools.reduce``).
+
+    ``function`` is a lambda over the accumulator and the item, run once at
+    construction with refs to both, or a tree reading them under ``acc_key``
+    (default ``"acc"``) and ``item_key`` (default ``"item"``).
     """
 
     def __init__(
         self,
         source: object,
-        function: Nu,
+        function: Nu | Callable[[Attr, Attr], Nu],
         *,
         initial: object = UNSET,
-        acc_key: StrArg = "acc",
-        item_key: StrArg = "item",
+        acc_key: StrArg | None = None,
+        item_key: StrArg | None = None,
     ) -> None:
-        acc_node = acc_key if isinstance(acc_key, Term) else Literal(acc_key)
-        item_node = item_key if isinstance(item_key, Term) else Literal(item_key)
+        function, (acc_key, item_key) = bind("Reduce", function, acc_key=acc_key, item_key=item_key)
+        names = ("acc" if acc_key is None else acc_key, "item" if item_key is None else item_key)
         if initial is UNSET:
-            super().__init__(source, function, acc_node, item_node)
+            super().__init__(source, function, *names)
             self._payload = {"has_initial": False}
         else:
-            super().__init__(source, function, acc_node, item_node, initial)
+            super().__init__(source, function, *names, initial)
             self._payload = {"has_initial": True}
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

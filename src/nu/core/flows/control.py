@@ -9,9 +9,11 @@ a yielding child (Ref / Query / Action) and ``flow_body_is_mutator`` holds
 every body to a mutating child (Command / Action / Flow).
 
 Loop variables are scoped attrs bindings: ``ForEachDo`` / ``ForRangeDo`` bind
-the current element under a name (itself a child, so it can be a Literal or a
-computed Ref) for one body run, read back via an attrs ref - the same
+the current element under a name for one body run - the same
 ``ctx.attrs.let`` scope ``Map`` / ``Filter`` use, not a tracked fabric write.
+The body is usually a lambda over the element, which mints the name; a plain
+body reads it via an attrs ref under an explicit name (itself a child, so it
+can be a Literal or a computed Ref).
 ``ForEachParAsync`` is ``ForEachDo``'s fan-out twin: same three args, same
 binding, but every element gets its own arm on the loop at once, each on its own
 Context branch so the arms cannot stomp each other's loop variable. It lives
@@ -31,6 +33,7 @@ import asyncio
 import time
 from typing import TYPE_CHECKING
 
+from nu.context.attrs.binders import bind
 from nu.core._stream import aiter_any, sync_iter
 from nu.engine.structure import Declared
 from nu.lang import Control
@@ -183,33 +186,54 @@ class ForeverDo(Control):
 
 
 class ForEachDo(Control):
-    """``ForEachDo(items, body, item="item")`` - runs ``body`` once per element of ``items``.
+    """``ForEachDo(items, lambda x: body)`` - runs ``body`` once per element of ``items``.
 
     Args:
         items: the iterable to walk.
-        body: the loop body, run once per element.
-        item: the name to bind the current element under. Optional, defaults
-            to ``"item"``.
+        body: the loop body, run once per element. A lambda over the element,
+            or a tree reading it with ``Attr(item)``.
+        item: the name to bind the current element under, for a tree body.
+            Optional, defaults to ``"item"``; a lambda mints its own.
 
     Notes:
-        - The current element is bound under ``item`` for one body run, the
-          same scoped binding ``Map`` / ``Filter`` use. ``body`` reads it back
-          via ``Attr(item)``.
+        - The lambda runs once, at construction, and gets a ref, not a value:
+          it builds the body and never branches on the element in Python.
+        - The name belongs to the lambda's code, so nested lambdas each get
+          their own and an inner body still reads the outer element. One
+          lambda used again inside its own body binds the same name, and the
+          inner binding shadows the outer, as with ``nu.let``; an explicit
+          ``item`` keeps both readable.
+        - The current element is bound for one body run, the same scoped
+          binding ``Map`` / ``Filter`` use.
         - ``item`` is itself evaluated once, before the loop starts, so it can
           be a computed Ref and not just a literal name.
-        - The binding shadows an outer ``item`` and is released after each
-          run, so the outer value is back once the loop ends.
+        - The binding shadows an outer one of the same name and is released
+          after each run, so the outer value is back once the loop ends.
 
     Example:
-        >>> _ = nu.run(nu.ForEachDo(nu.Iter(nu.Literal([1, 2])), nu.print(nu.Attr("item"))))
+        >>> _ = nu.run(nu.ForEachDo(nu.Iter([1, 2]), lambda x: nu.print(x)))
+        1
+        2
+
+        Nested, each body reading its own element:
+
+        >>> rows = nu.Iter([["a", "b"]])
+        >>> _ = nu.run(nu.ForEachDo(rows, lambda row: nu.ForEachDo(row, lambda c: nu.print(c))))
+        a
+        b
+
+        A tree body under an explicit name:
+
+        >>> _ = nu.run(nu.ForEachDo(nu.Iter([1, 2]), nu.print(nu.Attr("n")), item="n"))
         1
         2
     """
 
     _param_slots = Declared(value=frozenset({0, 2}), name="param_slots")
 
-    def __init__(self, items: object, body: object, item: object = "item") -> None:
-        super().__init__(items, body, item)
+    def __init__(self, items: object, body: object, item: object = None) -> None:
+        body, (item,) = bind("ForEachDo", body, item=item)
+        super().__init__(items, body, "item" if item is None else item)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         items_t, body, key_t = children
@@ -235,17 +259,19 @@ class ForEachDo(Control):
 
 
 class ForEachParAsync(Control):
-    """``ForEachParAsync(items, body, item="item")`` - runs ``body`` once per element of ``items``, every arm on the loop at once.
+    """``ForEachParAsync(items, lambda x: body)`` - runs ``body`` once per element of ``items``, every arm on the loop at once.
 
     Args:
         items: the iterable to fan out over, evaluated once before any arm
             starts.
-        body: the arm, run once per element, concurrently with the others.
-        item: the name to bind that arm's element under. Optional, defaults
-            to ``"item"``.
+        body: the arm, run once per element, concurrently with the others. A
+            lambda over the element, or a tree reading it with ``Attr(item)``.
+        item: the name to bind that arm's element under, for a tree body.
+            Optional, defaults to ``"item"``; a lambda mints its own.
 
     Notes:
-        - Same three args and the same ``item`` binding as ``ForEachDo``,
+        - Same three args, the same lambda form and the same binding as
+          ``ForEachDo``,
           which is why it sits here rather than in ``parallel/``; the
           scheduling itself is ``parallel._scheduling.aeval_foreach_par``.
         - Joins on all, like ``Parallel``, but over a runtime-sized list:
@@ -273,7 +299,7 @@ class ForEachParAsync(Control):
 
     Example:
         >>> import asyncio
-        >>> arms = nu.ForEachParAsync(nu.Iter(nu.Literal([7])), nu.print(nu.Attr("item")))
+        >>> arms = nu.ForEachParAsync(nu.Iter([7]), lambda x: nu.print(x))
         >>> _ = asyncio.run(nu.arun(arms))
         7
     """
@@ -282,8 +308,9 @@ class ForEachParAsync(Control):
     _exec_order = Declared(value=ExecOrder.PARALLEL, name="exec_order")
     _requires_async = Declared(value=True, name="requires_async")
 
-    def __init__(self, items: object, body: object, item: object = "item") -> None:
-        super().__init__(items, body, item)
+    def __init__(self, items: object, body: object, item: object = None) -> None:
+        body, (item,) = bind("ForEachParAsync", body, item=item)
+        super().__init__(items, body, "item" if item is None else item)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
@@ -307,7 +334,7 @@ class ForEachParAsync(Control):
 
 
 class ForEachParReactive(Control):
-    """``ForEachParReactive(items, change, body, item="item")`` - one arm per element, kept live against ``change``.
+    """``ForEachParReactive(items, change, lambda x: body)`` - one arm per element, kept live against ``change``.
 
     Args:
         items: the elements to fan out over, re-evaluated on every
@@ -316,9 +343,10 @@ class ForEachParReactive(Control):
         change: the change subscription that says the element set may have
             moved. Bound once, before the first fan-out, and held for as long
             as this runs.
-        body: the arm, run once per element, concurrently with the others.
-        item: the name to bind that arm's element under. Optional, defaults
-            to ``"item"``.
+        body: the arm, run once per element, concurrently with the others. A
+            lambda over the element, or a tree reading it with ``Attr(item)``.
+        item: the name to bind that arm's element under, for a tree body.
+            Optional, defaults to ``"item"``; a lambda mints its own.
 
     Notes:
         - ``ForEachParAsync`` fused with ``ReactForever``: the fan-out is the
@@ -359,7 +387,7 @@ class ForEachParReactive(Control):
         Following a live collection needs a real substrate behind the
         subscription, so it cannot run standalone here::
 
-            ForEachParReactive(users.keys(), users.on_children_change(), body)
+            ForEachParReactive(users.keys(), users.on_children_change(), lambda user: body)
     """
 
     _param_slots = Declared(value=frozenset({0, 1, 3}), name="param_slots")
@@ -371,9 +399,10 @@ class ForEachParReactive(Control):
         items: object,
         change: object,
         body: object,
-        item: object = "item",
+        item: object = None,
     ) -> None:
-        super().__init__(items, change, body, item)
+        body, (item,) = bind("ForEachParReactive", body, item=item)
+        super().__init__(items, change, body, "item" if item is None else item)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
@@ -417,27 +446,33 @@ class ForEachParReactive(Control):
 
 
 class ForRangeDo(Control):
-    """``ForRangeDo(start, stop, body, *, step=1, index="index")`` - runs ``body`` once per value of ``range(start, stop, step)``.
+    """``ForRangeDo(start, stop, lambda i: body, *, step=1)`` - runs ``body`` once per value of ``range(start, stop, step)``.
 
     Args:
         start: the range's start.
         stop: the range's exclusive end.
-        body: the loop body, run once per value.
-        index: the name to bind the current value under. Optional, defaults
-            to ``"index"``.
+        body: the loop body, run once per value. A lambda over the value, or
+            a tree reading it with ``Attr(index)``.
+        index: the name to bind the current value under, for a tree body.
+            Optional, defaults to ``"index"``; a lambda mints its own.
         step: the range's step. Optional, defaults to 1.
 
     Notes:
         - ``start``, ``stop``, ``step`` and ``index`` are each evaluated once,
           before the loop starts.
-        - The current value is bound under ``index`` for one body run, read
-          back via ``Attr(index)``. Same scoped binding ``ForEachDo``
-          uses.
+        - The current value is bound for one body run. Same scoped binding,
+          and the same lambda form, as ``ForEachDo``.
         - Follows Python's ``range`` rules: a ``step`` that never reaches
           ``stop`` from ``start`` runs the body zero times rather than
           looping forever.
 
     Example:
+        >>> _ = nu.run(nu.ForRangeDo(0, 2, lambda i: nu.print(i)))
+        0
+        1
+
+        A tree body under the default name:
+
         >>> _ = nu.run(nu.ForRangeDo(0, 2, nu.print(nu.Attr("index"))))
         0
         1
@@ -452,9 +487,10 @@ class ForRangeDo(Control):
         body: object,
         *,
         step: object = 1,
-        index: object = "index",
+        index: object = None,
     ) -> None:
-        super().__init__(start, stop, step, body, index)
+        body, (index,) = bind("ForRangeDo", body, index=index)
+        super().__init__(start, stop, step, body, "index" if index is None else index)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         start_t, stop_t, step_t, body, index_t = children

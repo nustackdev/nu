@@ -12,7 +12,7 @@ import types
 import nu.core as core
 import nu.core.flows as flows
 import nu.lang as lang
-from nu.core import Add, Filter, Map, Sub
+from nu.core import Add, Filter, SortBy, Sub
 from nu.core.flows import IfDo
 from nu.inspect import catalogue_interactions as catalogue
 from nu.inspect import parse_interaction, verify_interaction
@@ -126,7 +126,7 @@ def test_args_come_from_a_declared_constructor_when_there_is_one() -> None:
 
 
 def test_the_call_form_is_on_the_record_and_nobody_reassembles_it() -> None:
-    assert parse_interaction(Filter).call == "Filter(source, predicate, key='item')"
+    assert parse_interaction(Filter).call == "Filter(source, predicate, key=None)"
     assert parse_interaction(Add).call == "Add(*children)"
 
 
@@ -154,8 +154,8 @@ def test_the_names_a_module_also_exports_a_subject_under_reach_the_record() -> N
 
 
 def test_a_default_is_read_off_the_code_not_the_prose() -> None:
-    (key,) = [arg for arg in parse_interaction(Map).args if arg.name == "key"]
-    assert key.default == "'item'"
+    (reverse,) = [arg for arg in parse_interaction(SortBy).args if arg.name == "reverse"]
+    assert reverse.default == "False"
 
 
 def test_a_variadic_atom_has_no_arity() -> None:

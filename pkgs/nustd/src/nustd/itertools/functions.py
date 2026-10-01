@@ -15,11 +15,13 @@ re-implemented here.
 Each function builds its interaction atom (lazily imported, like ``nustd.math``)
 and returns it. Iterable arguments are lifted into a stream child with
 ``Iter`` (a scalar iterable), passed through when already a stream atom,
-or unwrapped when they're an ``Iterator`` wrapper. Higher-order
-members (``takewhile`` / ``dropwhile`` / ``filterfalse`` / ``accumulate`` /
-``starmap`` / ``groupby``) take their predicate/function as a Nu term that
-reads the current item via an ``Attr("item")`` (and the running value via
-``Attr("acc")`` for ``accumulate``).
+or unwrapped when they're an ``Iterator`` wrapper. Higher-order members take
+their predicate or function the way Python does, as a lambda
+(``takewhile(lambda x: x < 3, xs)``). It runs once, at construction, with refs
+to what it is handed, so it builds the step and never computes with them in
+Python. A plain Nu term works too, reading the current item via
+``Attr("item")`` (and the running value via ``Attr("acc")`` for
+``accumulate``).
 """
 
 from __future__ import annotations
@@ -32,9 +34,13 @@ from nu.lang import StreamQuery
 
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
+    from nu.context import Attr
     from nu.lang import Arg, IntArg, Nu
+
+    Step = Nu | Callable[[Attr], Nu]
+    Step2 = Nu | Callable[[Attr, Attr], Nu]
 
 
 __all__ = [
@@ -193,42 +199,62 @@ def combinations_with_replacement(iterable: Arg[Iterable], r: IntArg) -> Nu:
 # --- higher-order -----------------------------------------------------------
 
 
-def takewhile(predicate: Nu, iterable: Arg[Iterable]) -> Nu:
+def takewhile(predicate: Step, iterable: Arg[Iterable]) -> Nu:
     """Yield while ``predicate`` holds, stop at the first falsy: ``itertools.takewhile()``.
 
-    ``predicate`` reads the current item via ``Attr("item")``.
+    ``predicate`` is a lambda over the item, or a tree reading it via
+    ``Attr("item")``.
+
+    Example:
+        >>> nu.run(nu.Collect(nustd.itertools.takewhile(lambda x: x < 3, [1, 2, 5, 1])))[0]
+        [1, 2]
     """
     from .interactions import TakeWhile
 
     return TakeWhile(_stream(iterable), predicate)
 
 
-def dropwhile(predicate: Nu, iterable: Arg[Iterable]) -> Nu:
+def dropwhile(predicate: Step, iterable: Arg[Iterable]) -> Nu:
     """Skip while ``predicate`` holds, then yield the rest: ``itertools.dropwhile()``.
 
-    ``predicate`` reads the current item via ``Attr("item")``.
+    ``predicate`` is a lambda over the item, or a tree reading it via
+    ``Attr("item")``.
+
+    Example:
+        >>> nu.run(nu.Collect(nustd.itertools.dropwhile(lambda x: x < 3, [1, 2, 5, 1])))[0]
+        [5, 1]
     """
     from .interactions import DropWhile
 
     return DropWhile(_stream(iterable), predicate)
 
 
-def filterfalse(predicate: Nu, iterable: Arg[Iterable]) -> Nu:
+def filterfalse(predicate: Step, iterable: Arg[Iterable]) -> Nu:
     """Keep items where ``predicate`` is falsy: mirrors ``itertools.filterfalse()``.
 
-    ``predicate`` reads the current item via ``Attr("item")``.
+    ``predicate`` is a lambda over the item, or a tree reading it via
+    ``Attr("item")``.
+
+    Example:
+        >>> nu.run(nu.Collect(nustd.itertools.filterfalse(lambda x: x > 1, [1, 2, 3])))[0]
+        [1]
     """
     from .interactions import FilterFalse
 
     return FilterFalse(_stream(iterable), predicate)
 
 
-def accumulate(iterable: Arg[Iterable], func: Nu | None = None) -> Nu:
+def accumulate(iterable: Arg[Iterable], func: Step2 | None = None) -> Nu:
     """Running accumulation: mirrors ``itertools.accumulate()``.
 
-    Without ``func`` it is a running sum. With ``func`` (a Nu term) each step
-    reads the running value via ``Attr("acc")`` and the item via
-    ``Attr("item")``; the first item is yielded as-is.
+    Without ``func`` it is a running sum. With ``func``, a lambda over the
+    running value and the item, or a tree reading them via ``Attr("acc")``
+    and ``Attr("item")``, each step yields its result; the first item is
+    yielded as-is.
+
+    Example:
+        >>> nu.run(nu.Collect(nustd.itertools.accumulate([1, 2, 3], lambda acc, x: nu.Int(acc) * x)))[0]
+        [1, 2, 6]
     """
     from .interactions import Accumulate
 
@@ -237,22 +263,33 @@ def accumulate(iterable: Arg[Iterable], func: Nu | None = None) -> Nu:
     return Accumulate(_stream(iterable), func)
 
 
-def starmap(function: Nu, iterable: Arg[Iterable]) -> Nu:
+def starmap(function: Step, iterable: Arg[Iterable]) -> Nu:
     """Apply ``function`` to unpacked items: mirrors ``itertools.starmap()``.
 
-    Each item is a tuple; ``function`` reads its parts via
+    Each item is a tuple. ``function`` is a lambda over the whole tuple,
+    reading its parts by index, or a tree reading them via
     ``Attr("item")[0]``, ``[1]``, ...
+
+    Example:
+        >>> pairs = [(2, 3), (4, 5)]
+        >>> nu.run(nu.Collect(nustd.itertools.starmap(lambda p: nu.Int(p[0]) * p[1], pairs)))[0]
+        [6, 20]
     """
     from .interactions import StarMap
 
     return StarMap(_stream(iterable), function)
 
 
-def groupby(iterable: Arg[Iterable], key: Nu | None = None) -> Nu:
+def groupby(iterable: Arg[Iterable], key: Step | None = None) -> Nu:
     """Group consecutive items by ``key``: mirrors ``itertools.groupby()``.
 
-    Yields ``(key_value, tuple(group))`` pairs. With ``key`` (a Nu term) the key
-    reads the item via ``Attr("item")``; without it items group by identity.
+    Yields ``(key_value, tuple(group))`` pairs. ``key`` is a lambda over the
+    item, or a tree reading it via ``Attr("item")``; without it items group
+    by identity.
+
+    Example:
+        >>> nu.run(nu.Collect(nustd.itertools.groupby([1, 3, 2], lambda x: nu.Int(x) % 2)))[0]
+        [(1, (1, 3)), (0, (2,))]
     """
     from .interactions import GroupBy
 

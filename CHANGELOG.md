@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Loops, lenses, error handlers and reactions can take a lambda instead of naming values
 - Shortcuts read like Notion's: one soft chip per shortcut, plain muted text in menus
 - Sorting yields a whole list like Python, and removals can ignore missing items
 - UI kit 0.2.7 ships readable menu shortcuts

@@ -103,9 +103,6 @@ def browse(
             columns(shape, nu.List.of(), prefix=prefix, max_rows=max_rows),
         )
     )
-    # Two reads of one key, built separately: a Nu node is a value, and one
-    # object sitting in two tree positions is one compiled node that the two
-    # of them would then share at run time.
     moved = nu.ReactForever(
         lens.on_nav(),
         nustd.kv.Snapshot(

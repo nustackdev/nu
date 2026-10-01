@@ -243,11 +243,15 @@ def _mapping_term(ref: StructuredRef, max_rows: int) -> nu.Nu:
     iterating a container twice to answer one column would be a second pass
     over the store for nothing.
     """
-    key = nu.Attr("item")
-    if _holds_shapes(ref):
-        row: nu.Nu = _door(nu.ToStr(key), "shape")
-    else:
-        row = LensCell(nu.ToStr(key), ref[key], nu.Str("leaf"), nu.Bool(True), nu.Bool(False))
+
+    def row(key: nu.Attr) -> nu.Nu:
+        if _holds_shapes(ref):
+            return _door(nu.ToStr(key), "shape")
+        cell: nu.Nu = LensCell(
+            nu.ToStr(key), ref[key], nu.Str("leaf"), nu.Bool(True), nu.Bool(False)
+        )
+        return cell
+
     return nu.let(
         nu.list(ref.keys()),
         lambda keys: _column(
@@ -262,18 +266,20 @@ def _sequence_term(ref: StructuredRef, max_rows: int) -> nu.Nu:
     A sequence of Shapes keys its rows the same way and makes them doors: the
     position is the whole row, and what is behind it is a column of its own.
     """
-    pair = nu.Attr("item")
-    index = nu.ToStr(nu.GetItem(pair, nu.Int(0)))
-    if _holds_shapes(ref):
-        row: nu.Nu = _door(index, "shape")
-    else:
-        row = LensCell(
+
+    def row(pair: nu.Attr) -> nu.Nu:
+        index = nu.ToStr(nu.GetItem(pair, nu.Int(0)))
+        if _holds_shapes(ref):
+            return _door(index, "shape")
+        cell: nu.Nu = LensCell(
             index,
             nu.GetItem(pair, nu.Int(1)),
             nu.Str("leaf"),
             nu.Bool(False),
             nu.Bool(False),
         )
+        return cell
+
     return nu.let(
         nu.Collect(nu.Iter(ref)),
         lambda items: _column(
@@ -411,5 +417,5 @@ def columns(
             LensColumns(shape, cursor, prefix=nu.Literal(prefix), max_rows=max_rows),
             promise={"cardinality": Cardinality.SCALAR},
         ),
-        catch=nu.List.of(LensFailed(nu.ToStr(nu.Attr("error")))),
+        catch=lambda error: nu.List.of(LensFailed(nu.ToStr(error))),
     )
