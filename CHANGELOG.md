@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Programs can show key caps and platform-aware shortcuts in their UI
 - Key caps get variants, and shortcuts are written once and spelled per platform
 - UI kit 0.2.4 ships the soft button variant
 - Buttons get a soft variant, filled with no border; smallest icon buttons get smaller icons

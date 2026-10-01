@@ -617,6 +617,89 @@ class StatusDotRef(Ref):
         return Write(self, Dict.of(**payload))
 
 
+KbdVariant = Literal["default", "ghost"]
+KbdSize = Literal["sm", "md"]
+
+
+class KbdRef(Ref):
+    """One key cap, display only: a `K`, a `⌘`, an `Esc`.
+
+    Draws its label as given, on any platform. For a combination that should
+    read right on every platform (command on a Mac, control elsewhere), use
+    `ShortcutRef`. `default` sits on a well, for a hint on its own; `ghost`
+    drops it, for a hint inside something that already has a box.
+    """
+
+    _wire_type = "KbdRef"
+
+    @classmethod
+    def slot(
+        cls, *, label: str = "", variant: KbdVariant = "default", size: KbdSize = "md"
+    ) -> Self:
+        return super().slot(label=label, variant=variant, size=size)
+
+    def set_variant(self, name: KbdVariant | StrArg) -> Nu:
+        return Write(self, Dict.of(variant=name))
+
+    def set_size(self, name: KbdSize | StrArg) -> Nu:
+        return Write(self, Dict.of(size=name))
+
+    def set(
+        self,
+        label: StrArg,
+        variant: KbdVariant | StrArg = UNSET,
+        size: KbdSize | StrArg = UNSET,
+    ) -> Nu:
+        payload: dict[str, object] = {"label": label}
+        if variant is not UNSET:
+            payload["variant"] = variant
+        if size is not UNSET:
+            payload["size"] = size
+        return Write(self, Dict.of(**payload))
+
+
+class ShortcutRef(Ref):
+    """A key combination by key name, display only: `["mod", "K"]`.
+
+    The browser spells it for the reader's platform, one cap per key: `mod`
+    is command on a Mac and control elsewhere, and `shift`, `alt`, `enter`,
+    `esc`, `tab`, `backspace`, `delete`, `space` and the arrows (`up`,
+    `down`, `left`, `right`) get their glyphs. Any other name is the key as
+    typed. Modifiers first, in the order they are held.
+    """
+
+    _wire_type = "ShortcutRef"
+
+    @classmethod
+    def slot(
+        cls,
+        *,
+        keys: list[str] | None = None,
+        variant: KbdVariant = "default",
+        size: KbdSize = "md",
+    ) -> Self:
+        return super().slot(keys=list(keys or []), variant=variant, size=size)
+
+    def set_variant(self, name: KbdVariant | StrArg) -> Nu:
+        return Write(self, Dict.of(variant=name))
+
+    def set_size(self, name: KbdSize | StrArg) -> Nu:
+        return Write(self, Dict.of(size=name))
+
+    def set(
+        self,
+        keys: ListArg[str],
+        variant: KbdVariant | StrArg = UNSET,
+        size: KbdSize | StrArg = UNSET,
+    ) -> Nu:
+        payload: dict[str, object] = {"keys": keys}
+        if variant is not UNSET:
+            payload["variant"] = variant
+        if size is not UNSET:
+            payload["size"] = size
+        return Write(self, Dict.of(**payload))
+
+
 SortDirection = Literal["asc", "desc"]
 
 

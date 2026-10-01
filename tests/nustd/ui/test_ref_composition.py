@@ -578,3 +578,26 @@ def test_badge_dashed_rides_the_variant_slot():
         "label": "empty",
         "variant": "dashed",
     }
+
+
+def test_kbd_set_carries_label_first():
+    from nustd.ui.refs import KbdRef
+
+    handle = _mount(KbdRef)
+    [frame] = _frames(handle.set("K", variant="ghost"))
+    assert frame.chain[-1][1:] == ("KbdRef", {"label": "", "variant": "default", "size": "md"})
+    assert frame.payload == {"label": "K", "variant": "ghost"}
+    assert _frames(handle.set_size("sm"))[0].payload == {"size": "sm"}
+
+
+def test_shortcut_carries_key_names_not_glyphs():
+    from nustd.ui.refs import ShortcutRef
+
+    handle = _mount(ShortcutRef)
+    [frame] = _frames(handle.set(["mod", "K"], size="sm"))
+    assert frame.chain[-1][1:] == (
+        "ShortcutRef",
+        {"keys": [], "variant": "default", "size": "md"},
+    )
+    assert frame.payload == {"keys": ["mod", "K"], "size": "sm"}
+    assert _frames(handle.set_variant("ghost"))[0].payload == {"variant": "ghost"}

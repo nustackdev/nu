@@ -10,10 +10,12 @@ import { GaugeRef } from "./gauge";
 import { HeadingRef } from "./heading";
 import { ImageRef } from "./image";
 import { JsonViewerRef } from "./json-viewer";
+import { KbdRef } from "./kbd";
 import { LensRef } from "./lens";
 import { LinkRef } from "./link";
 import { MarkdownRef } from "./markdown";
 import { ProgressRef } from "./progress";
+import { ShortcutRef } from "./shortcut";
 import { StatRef } from "./stat";
 import { StatusDotRef } from "./status-dot";
 import { TableRef } from "./table";
@@ -25,6 +27,8 @@ export const outputEntries: Record<string, NodeEntry> = {
 	MarkdownRef,
 	BadgeRef,
 	StatusDotRef,
+	KbdRef,
+	ShortcutRef,
 	AlertRef,
 	StatRef,
 	DividerRef,
