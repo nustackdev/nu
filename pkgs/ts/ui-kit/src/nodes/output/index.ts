@@ -13,6 +13,7 @@ import { JsonViewerRef } from "./json-viewer";
 import { KbdRef } from "./kbd";
 import { LensRef } from "./lens";
 import { LinkRef } from "./link";
+import { ListRef } from "./list";
 import { MarkdownRef } from "./markdown";
 import { ProgressRef } from "./progress";
 import { ShortcutRef } from "./shortcut";
@@ -24,6 +25,7 @@ import { TextRef } from "./text";
 export const outputEntries: Record<string, NodeEntry> = {
 	HeadingRef,
 	TextRef,
+	ListRef,
 	MarkdownRef,
 	BadgeRef,
 	StatusDotRef,

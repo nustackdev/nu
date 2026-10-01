@@ -6,7 +6,7 @@ Grouped by kind, one module per group.
   (`window.history`, `document.title`). NavRef, TitleRef.
 - output:     server-owned Refs that render into the body as sinks
   (server pushes via write/append; browser never reads back).
-  HeadingRef, TextRef, MarkdownRef, CodeBlockRef, ImageRef, LinkRef,
+  HeadingRef, TextRef, MarkdownRef, CodeBlockRef, ImageRef, LinkRef, ListRef,
   BadgeRef, StatusDotRef, KbdRef, ShortcutRef, AlertRef, DividerRef,
   EmptyStateRef, StatRef, ProgressRef, GaugeRef, JsonViewerRef, TableRef.
 - input:      tab-owned Refs; host reads on demand + subscribes to
@@ -89,6 +89,7 @@ from .output import (
     JsonViewerRef,
     KbdRef,
     LinkRef,
+    ListRef,
     MarkdownRef,
     ProgressRef,
     ShortcutRef,
@@ -130,6 +131,7 @@ __all__ = [
     "KbdRef",
     "LineChart",
     "LinkRef",
+    "ListRef",
     "MarkdownRef",
     "Modal",
     "ModalRef",

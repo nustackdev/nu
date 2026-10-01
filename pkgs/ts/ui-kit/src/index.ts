@@ -44,6 +44,13 @@ export { Checkbox, checkboxVariants } from "./components/ui/checkbox";
 export { IconButton, iconButtonVariants } from "./components/ui/icon-button";
 export { Input, inputVariants } from "./components/ui/input";
 export { Kbd, type KbdProps, kbdVariants } from "./components/ui/kbd";
+export {
+	List,
+	ListItem,
+	type ListProps,
+	type ListVariant,
+	listVariants,
+} from "./components/ui/list";
 export { Shortcut, type ShortcutProps } from "./components/ui/shortcut";
 export { NumberInput, numberInputVariants } from "./components/ui/number-input";
 export {

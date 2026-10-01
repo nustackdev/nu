@@ -429,6 +429,53 @@ class JsonViewerRef(Ref):
         return Write(self, Dict.of(**payload))
 
 
+ListVariant = Literal["bullet", "number"]
+
+
+class ListRef(Ref):
+    """A bulleted or numbered list of short text items, display only.
+
+    One string per item, drawn as given. `set` replaces the items whole,
+    `append` adds one to the end. `start` is the first number of a numbered
+    list. Composes the kit List primitive, which draws a list the way a
+    markdown list renders in prose.
+    """
+
+    _wire_type = "ListRef"
+
+    @classmethod
+    def slot(
+        cls,
+        *,
+        items: list[str] | None = None,
+        variant: ListVariant = "bullet",
+        start: int = 1,
+    ) -> Self:
+        return super().slot(items=list(items or []), variant=variant, start=start)
+
+    def set(
+        self,
+        items: ListArg[str],
+        variant: ListVariant | StrArg = UNSET,
+        start: IntArg = UNSET,
+    ) -> Nu:
+        payload: dict[str, object] = {"items": items}
+        if variant is not UNSET:
+            payload["variant"] = variant
+        if start is not UNSET:
+            payload["start"] = start
+        return Write(self, Dict.of(**payload))
+
+    def set_variant(self, name: ListVariant | StrArg) -> Nu:
+        return Write(self, Dict.of(variant=name))
+
+    def append(self, item: StrArg) -> Nu:
+        return Append(self, item)
+
+    def clear(self) -> Nu:
+        return Write(self, Dict.of(items=[]))
+
+
 Target = Literal["_self", "_blank"]
 
 

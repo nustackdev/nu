@@ -601,3 +601,14 @@ def test_shortcut_carries_key_names_not_glyphs():
     )
     assert frame.payload == {"keys": ["mod", "K"], "size": "sm"}
     assert _frames(handle.set_variant("ghost"))[0].payload == {"variant": "ghost"}
+
+
+def test_list_set_carries_items_first():
+    from nustd.ui.refs import ListRef
+
+    handle = _mount(ListRef)
+    [frame] = _frames(handle.set(["a", "b"], variant="number"))
+    assert frame.chain[-1][1:] == ("ListRef", {"items": [], "variant": "bullet", "start": 1})
+    assert frame.payload == {"items": ["a", "b"], "variant": "number"}
+    assert _frames(handle.append("c"))[0].payload == "c"
+    assert _frames(handle.clear())[0].payload == {"items": []}
