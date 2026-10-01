@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- A plain prose example shows the editor with nothing around it
 - Prose gets checklists, headings and lists that convert as you type
 - Loops, lenses, error handlers and reactions can take a lambda instead of naming values
 - Shortcuts read like Notion's: one soft chip per shortcut, plain muted text in menus
