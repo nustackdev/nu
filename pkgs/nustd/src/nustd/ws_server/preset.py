@@ -53,10 +53,10 @@ def listen(
             before cancelling the task.
 
     Example:
-        >>> nu.With(
-        ...     nustd.ws_server.listen(session_cls=EchoSession, port=8080),
-        ...     body=program,
-        ... )
+        nu.With(
+            nustd.ws_server.listen(session_cls=EchoSession, port=8080),
+            body=program,
+        )
     """
     return Provide(
         WebServer,

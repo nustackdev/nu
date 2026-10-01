@@ -36,6 +36,7 @@ Concretely:
     |   |-- kv/
     |   |-- ui/
     |   `-- test_uuid.py       <- the stdlib mirrors are one file each
+    |-- doctests/              <- docstring examples, every package
     |-- narrowing/             <- type narrowing, spans both packages
     `-- integration/
         |-- conftest.py        <- integration fixtures (real Nu schema, ...)

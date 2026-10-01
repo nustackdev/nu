@@ -18,4 +18,5 @@ app = nu.With(
     body=nu.print(nu.Dict(Agent.ask(prompt="write a 3-line haiku about rocksdb"))["text"]),
 )
 
-nu.run(app)
+if __name__ == "__main__":
+    nu.run(app)

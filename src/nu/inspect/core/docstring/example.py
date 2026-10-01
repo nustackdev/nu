@@ -3,7 +3,7 @@
 Two forms are accepted. Doctest form carries the value the example produces,
 so it can be executed and cannot lie about what it does::
 
-    >>> nu.run(nu.Int(10) - nu.Int(3))
+    >>> nu.run(nu.Int(10) - nu.Int(3))[0]
     7
 
 Plain form is a snippet with no expected value, for an atom that needs a live

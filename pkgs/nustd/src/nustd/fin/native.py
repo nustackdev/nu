@@ -23,9 +23,10 @@ class PyPercentage:
     """A percentage, stored as a float (``75.5`` = 75.5%).
 
     Examples:
-        >>> PyPercentage(75.5)            # 75.5%
-        >>> PyPercentage.from_dec(0.755)  # 75.5%
-        >>> PyPercentage.from_bps(7550)   # 75.5%
+        >>> PyPercentage.from_dec(0.755)
+        PyPercentage(value=75.5)
+        >>> PyPercentage.from_bps(7550)
+        PyPercentage(value=75.5)
     """
 
     value: float
@@ -159,9 +160,10 @@ class PyBasisPoint:
     Integer storage keeps rate/fee math exact (no binary-float drift).
 
     Examples:
-        >>> PyBasisPoint(500)            # 5%
-        >>> PyBasisPoint.from_pct(5.0)   # 500 bps
-        >>> PyBasisPoint.from_dec(0.05)  # 500 bps
+        >>> PyBasisPoint.from_pct(5.0)
+        PyBasisPoint(value=500)
+        >>> PyBasisPoint.from_dec(0.05)
+        PyBasisPoint(value=500)
     """
 
     value: int

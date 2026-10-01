@@ -454,7 +454,7 @@ class Bytes(Form, TypedNu[bytes]):
             sentinel.
 
         Example:
-            >>> nu.run(nu.Bytes(b"\\xff\\x00").hex_())[0]
+            >>> nu.run(nu.Bytes(b"\xff\x00").hex_())[0]
             'ff00'
         """
         from .bytes_interactions import Hex
@@ -814,7 +814,7 @@ class Bytes(Form, TypedNu[bytes]):
             The lines as a List of Bytes. INVALID when self is a sentinel.
 
         Example:
-            >>> nu.run(nu.Bytes(b"a\\nb\\nc").splitlines())[0]
+            >>> nu.run(nu.Bytes(b"a\nb\nc").splitlines())[0]
             [b'a', b'b', b'c']
         """
         from ..collections.list_ import List
@@ -1173,7 +1173,7 @@ class Bytes(Form, TypedNu[bytes]):
             The expanded bytes. INVALID when self is a sentinel.
 
         Example:
-            >>> nu.run(nu.Bytes(b"a\\tb").expandtabs(4))[0]
+            >>> nu.run(nu.Bytes(b"a\tb").expandtabs(4))[0]
             b'a   b'
         """
         from .bytes_interactions import BytesExpandTabs

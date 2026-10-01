@@ -220,10 +220,10 @@ class WebServer:
             before cancelling the task.
 
     Example:
-        >>> nu.With(
-        ...     nustd.ws_server.listen(session_cls=EchoSession, port=8080),
-        ...     body=program,
-        ... )
+        nu.With(
+            nustd.ws_server.listen(session_cls=EchoSession, port=8080),
+            body=program,
+        )
     """
 
     # Uvicorn is booted on a task and readiness is awaited, so there is no

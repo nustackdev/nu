@@ -68,7 +68,7 @@ __all__ = [
 
 
 class StdioBackend:
-    """A Context fabric that overrides the real stdio streams.
+    r"""A Context fabric that overrides the real stdio streams.
 
     Args:
         stdout: stream to use in place of the real stdout. Optional.
@@ -81,7 +81,12 @@ class StdioBackend:
           scripted input, without touching the real console.
 
     Example:
-        >>> ctx = Context().bind(StdioBackend, StdioBackend(stdout=buf))
+        >>> import io
+        >>> buf = io.StringIO()
+        >>> ctx = nu.Context().bind(StdioBackend, StdioBackend(stdout=buf))
+        >>> nu.run(nu.print("hi"), ctx)[0]
+        >>> buf.getvalue()
+        'hi\n'
     """
 
     def __init__(
@@ -199,8 +204,8 @@ class Print(Command):
         Nothing (VOID).
 
     Example:
-        >>> ctx = Context().bind(StdioBackend, StdioBackend(stdout=buf))
-        >>> run(Print(STDOUT, "hi"), ctx)
+        >>> nu.run(Print(STDOUT, "hi"))[0]
+        hi
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -282,9 +287,9 @@ class Input(ScalarAction):
         The line read, newline stripped.
 
     Example:
-        >>> inbuf = io.StringIO("a line\n")
-        >>> ctx = Context().bind(StdioBackend, StdioBackend(stdin=inbuf))
-        >>> run(Input(STDIN), ctx)[0]
+        >>> import io
+        >>> ctx = nu.Context().bind(StdioBackend, StdioBackend(stdin=io.StringIO("a line\n")))
+        >>> nu.run(Input(STDIN), ctx)[0]
         'a line'
     """
 
@@ -339,8 +344,8 @@ def print(  # shadowing the builtin is intended
         compose it in a Flow.
 
     Example:
-        >>> ctx = Context().bind(StdioBackend, StdioBackend(stdout=buf))
-        >>> run(nu.core.io.print("hi"), ctx)
+        >>> nu.run(nu.print("hi"))[0]
+        hi
     """
     return Print(file if file is not None else STDOUT, *values, sep=sep, end=end, flush=flush)
 
@@ -358,9 +363,9 @@ def input() -> Str:  # shadowing the builtin is intended
         A Nu ``Str`` wrapping the line read.
 
     Example:
-        >>> inbuf = io.StringIO("a line\n")
-        >>> ctx = Context().bind(StdioBackend, StdioBackend(stdin=inbuf))
-        >>> run(nu.core.io.input(), ctx)[0]
+        >>> import io
+        >>> ctx = nu.Context().bind(StdioBackend, StdioBackend(stdin=io.StringIO("a line\n")))
+        >>> nu.run(nu.input(), ctx)[0]
         'a line'
     """
     from nu.forms.primitives import Str

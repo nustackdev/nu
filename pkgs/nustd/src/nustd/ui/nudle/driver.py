@@ -60,13 +60,13 @@ def serve(
         shutdown_timeout: how long to wait for it to go down gracefully.
 
     Example:
-        >>> app = nu.With(
-        ...     nustd.kv.rocksdb_navigator(".db"),
-        ...     body=nu.ParallelAsync(
-        ...         nustd.ui.serve(App, ui),
-        ...         nustd.kv.auto_flow_atomic(tick),
-        ...     ),
-        ... )
+        app = nu.With(
+            nustd.kv.rocksdb_navigator(".db"),
+            body=nu.ParallelAsync(
+                nustd.ui.serve(App, ui),
+                nustd.kv.auto_flow_atomic(tick),
+            ),
+        )
     """
     return nu.With(
         listen(

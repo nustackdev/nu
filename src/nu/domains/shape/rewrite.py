@@ -100,9 +100,15 @@ def reroot(
         The rewritten tree. ``root`` itself is untouched.
 
     Example:
-        >>> term = Section.inp.set("hi")
-        >>> reroot(term, Page.sections["form"])
-        # resolves at ("sections", "form", "inp")
+        >>> class Section(nu.Shape):
+        ...     inp = nu.IntRef.slot()
+        >>> class Page(nu.Shape):
+        ...     sections = nu.DictRef.slot(Section)
+        >>> store = {}
+        >>> ctx = nu.Context().bind(dict, store, Page)
+        >>> nu.run(reroot(Section.inp.set(7), Page.sections["form"]), ctx)[0]
+        >>> store
+        {'sections': {'form': {'inp': 7}}}
     """
 
     def splice(node: StructuredRef) -> Nu:
@@ -158,7 +164,7 @@ def rerooter(
         A transform that re-roots any tree handed to it.
 
     Example:
-        >>> nu.LoadNu(src, rewrite=rerooter(Page.sections[name]))
+        nu.LoadNu(src, rewrite=rerooter(Page.sections[name]))
     """
 
     def transform(root: Nu) -> Nu:

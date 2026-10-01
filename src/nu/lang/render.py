@@ -245,8 +245,8 @@ def render_str(
     Example:
         >>> print(nu.render_str(nu.Add(1, 2), as_="plain"))
         ● Add
-        ├── 1
-        └── 2
+        ├── Literal(1)
+        └── Literal(2)
     """
     return _render(nu, label=label, color=as_ == "ansi")
 

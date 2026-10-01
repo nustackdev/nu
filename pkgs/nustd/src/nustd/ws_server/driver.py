@@ -51,7 +51,7 @@ def session_for(sid_attr: str = SID_ATTR, body: Nu | None = None) -> SessionFor:
     """``SessionFor`` in call order: the attr first, then what runs under it.
 
     Example:
-        >>> session_for(SID_ATTR, run_once(program))
+        session_for(SID_ATTR, run_once(program))
     """
     return SessionFor(body, sid_attr=sid_attr)
 
@@ -70,7 +70,7 @@ def run_once(body: Nu, *, sid_attr: str = SID_ATTR) -> Nu:
         sid_attr: the attr the fold parked this arm's session id under.
 
     Example:
-        >>> session_for(SID_ATTR, run_once(program))
+        session_for(SID_ATTR, run_once(program))
     """
     sid = nu.Attr(sid_attr)
     report = nu.Print(
