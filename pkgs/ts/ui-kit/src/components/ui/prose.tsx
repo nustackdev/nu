@@ -1,8 +1,13 @@
 // Prose primitive.
 //
-// Wrapper for Markdown output. No Tailwind Typography plugin, no external
-// stylesheet: everything reaches tokens via arbitrary-variant selectors so
-// the whole prose block themes automatically with .dark.
+// The kit's reading surface. Body copy sits at text-lg, a step above the kit's
+// dense text-base, and headings, code and tables scale with it, so long-form
+// text reads like a document while controls around it stay compact. The box
+// carries its own small vertical padding; its blocks never push past it.
+//
+// No Tailwind Typography plugin, no external stylesheet: everything reaches
+// tokens via arbitrary-variant selectors so the whole prose block themes
+// automatically with .dark.
 //
 // The class list is long by design (each selector targets one element); this
 // keeps the primitive dependency-free and tuneable per element.
@@ -13,11 +18,12 @@ import { cn } from "../../lib/utils";
 
 const proseSelectors = [
 	// container defaults
-	"font-display text-text-primary text-base leading-normal",
-	"max-w-none",
+	"font-display text-text-primary text-lg leading-normal",
+	"max-w-none py-1",
 	// Block margins space blocks apart, never the block from its own box: the
 	// first child drops its top, the last its bottom, at every depth. Beats the
-	// per-element margins below on specificity, not on order.
+	// per-element margins below on specificity, not on order. The box's own
+	// edge air is the padding above, which never collapses into a wrapper.
 	"[&_*:first-child]:mt-0 [&_*:last-child]:mb-0",
 	// headings
 	"[&_h1]:font-display [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:text-text-primary [&_h1]:mt-6 [&_h1]:mb-3",
@@ -27,11 +33,11 @@ const proseSelectors = [
 	"[&_h5]:font-display [&_h5]:text-base [&_h5]:font-semibold [&_h5]:text-text-primary [&_h5]:mt-3 [&_h5]:mb-1",
 	"[&_h6]:font-display [&_h6]:text-sm [&_h6]:font-semibold [&_h6]:text-text-secondary [&_h6]:mt-3 [&_h6]:mb-1 [&_h6]:uppercase [&_h6]:tracking-[0.02em]",
 	// paragraphs
-	"[&_p]:my-2 [&_p]:text-base [&_p]:text-text-primary",
+	"[&_p]:my-2.5 [&_p]:text-lg [&_p]:text-text-primary",
 	// lists
-	"[&_ul]:my-2 [&_ul]:pl-5 [&_ul]:list-disc [&_ul]:text-text-primary",
-	"[&_ol]:my-2 [&_ol]:pl-5 [&_ol]:list-decimal [&_ol]:text-text-primary",
-	"[&_li]:my-0.5 [&_li]:leading-normal",
+	"[&_ul]:my-2.5 [&_ul]:pl-5 [&_ul]:list-disc [&_ul]:text-text-primary",
+	"[&_ol]:my-2.5 [&_ol]:pl-5 [&_ol]:list-decimal [&_ol]:text-text-primary",
+	"[&_li]:my-0.5 [&_li]:text-lg [&_li]:leading-normal",
 	// checklists: the box sits on the first line, a done item goes quiet
 	"[&_[data-task-list]]:list-none [&_[data-task-list]]:pl-0",
 	"[&_[data-task-item]]:flex [&_[data-task-item]]:items-start [&_[data-task-item]]:gap-2",
@@ -41,8 +47,8 @@ const proseSelectors = [
 	// blockquote
 	"[&_blockquote]:my-3 [&_blockquote]:pl-3 [&_blockquote]:border-l-2 [&_blockquote]:border-accent-line [&_blockquote]:text-text-secondary [&_blockquote]:italic",
 	// inline code and pre
-	"[&_code]:font-mono [&_code]:text-sm [&_code]:bg-bg-sunken [&_code]:text-text-primary [&_code]:rounded-sm [&_code]:px-1 [&_code]:py-0.5",
-	"[&_pre]:my-3 [&_pre]:font-mono [&_pre]:text-sm [&_pre]:bg-bg-sunken [&_pre]:text-text-primary [&_pre]:border [&_pre]:border-border-subtle [&_pre]:rounded-md [&_pre]:p-3 [&_pre]:overflow-x-auto",
+	"[&_code]:font-mono [&_code]:text-base [&_code]:bg-bg-sunken [&_code]:text-text-primary [&_code]:rounded-sm [&_code]:px-1 [&_code]:py-0.5",
+	"[&_pre]:my-3 [&_pre]:font-mono [&_pre]:text-base [&_pre]:bg-bg-sunken [&_pre]:text-text-primary [&_pre]:border [&_pre]:border-border-subtle [&_pre]:rounded-md [&_pre]:p-3 [&_pre]:overflow-x-auto",
 	// nested pre>code cancels the inline chip look
 	"[&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:border-0",
 	// anchors
@@ -51,8 +57,8 @@ const proseSelectors = [
 	"[&_hr]:my-4 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-border-subtle",
 	// tables (basic)
 	"[&_table]:my-3 [&_table]:w-full [&_table]:border-collapse",
-	"[&_th]:text-left [&_th]:font-semibold [&_th]:text-sm [&_th]:text-text-secondary [&_th]:border-b [&_th]:border-border-default [&_th]:px-2 [&_th]:py-1.5",
-	"[&_td]:text-sm [&_td]:text-text-primary [&_td]:border-b [&_td]:border-border-subtle [&_td]:px-2 [&_td]:py-1.5",
+	"[&_th]:text-left [&_th]:font-semibold [&_th]:text-base [&_th]:text-text-secondary [&_th]:border-b [&_th]:border-border-default [&_th]:px-2 [&_th]:py-1.5",
+	"[&_td]:text-base [&_td]:text-text-primary [&_td]:border-b [&_td]:border-border-subtle [&_td]:px-2 [&_td]:py-1.5",
 	// images
 	"[&_img]:max-w-full [&_img]:rounded-md",
 	// strong / em

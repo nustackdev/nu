@@ -6,12 +6,12 @@ import { cn } from "../../lib/utils";
 // Semantic `<ul>` / `<ol>`, so a screen reader announces a list and its
 // length.
 //
-// It draws a list the way `Prose` draws one written in markdown (./prose.tsx):
-// same markers, same 20px indent, same 2px between items, same type. A list
-// built from data and a list typed into a document are one thing to the
-// reader. The one difference is the outer margin: none here, since a list
-// placed in a layout is spaced by that layout. Items take any content: text,
-// a link, a badge.
+// It is the kit-density sibling of a markdown list in `Prose` (./prose.tsx):
+// same markers, 20px indent and 2px between items, but set at the kit's
+// text-base body, where Prose sets its reading size a step up. So
+// it sits with the dense text around it (a TextRef, a label), not with a
+// document's prose. No outer margin: a list placed in a layout is spaced by
+// that layout. Items take any content: text, a link, a badge.
 const listVariants = cva(
 	[
 		"pl-5 font-display text-base leading-normal text-text-primary",

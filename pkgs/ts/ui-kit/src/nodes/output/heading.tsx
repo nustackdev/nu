@@ -7,9 +7,11 @@
 // the one thing this type owns, so it carries a `write` handler for it and
 // leaves the object case to the default merge. Level and align are normalized
 // at read time. Composes the kit Heading primitive: level maps to size, align
-// to text-align utility.
+// to text-align utility. Its box carries the same 4px of vertical padding as
+// every text output (see TextRef, Prose), padding and never margin.
 
 import { Heading } from "../../components/ui/heading";
+import { cn } from "../../lib/utils";
 import { type NodeEntry, type NodeProps, useNumberProp, useStringProp } from "../../tree";
 
 // Match level to typography ladder from primitives.md §Heading.
@@ -41,7 +43,7 @@ function HeadingView({ path }: NodeProps) {
 	const alignCls = ALIGN_CLASSES[align] ?? ALIGN_CLASSES.left;
 	const as = `h${level}` as "h1" | "h2" | "h3" | "h4";
 	return (
-		<Heading as={as} size={size} className={alignCls}>
+		<Heading as={as} size={size} className={cn("py-1", alignCls)}>
 			{label}
 		</Heading>
 	);

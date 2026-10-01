@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Prose reads larger than chrome, and text blocks share one edge spacing
 - Presence checks read as bools, form map and filter take lambdas, format yields text
 - Bulleted and numbered lists, drawn like prose lists, set or appended from a program
 - A plain prose example shows the editor with nothing around it

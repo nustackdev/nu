@@ -1,7 +1,9 @@
 // ListRef -- a bulleted or numbered list of short text items, display only.
 //
 // Server-owned. The items live on the node as `items: string[]`, one string
-// per item, drawn as given. Composes the kit List primitive.
+// per item, drawn as given. Composes the kit List primitive. Its box carries
+// the same 4px of vertical padding as every text output (see TextRef, Prose),
+// padding and never margin.
 //
 // Wire:
 //   write   a list replaces the items wholesale, each one stringified; a map
@@ -24,7 +26,7 @@ function ListView({ path }: NodeProps) {
 	const rawStart = useProp<unknown>(path, "start", 1);
 	const start = typeof rawStart === "number" ? rawStart : 1;
 	return (
-		<List variant={VARIANTS.has(variant) ? variant : "bullet"} start={start}>
+		<List variant={VARIANTS.has(variant) ? variant : "bullet"} start={start} className="py-1">
 			{normalizeItems(items).map((item, i) => (
 				// Items are plain strings with no id of their own; position is the identity.
 				// biome-ignore lint/suspicious/noArrayIndexKey: see above

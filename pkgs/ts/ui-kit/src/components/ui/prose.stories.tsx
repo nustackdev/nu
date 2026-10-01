@@ -10,7 +10,7 @@ const SAMPLE = (
 		</p>
 		<h2>Second level</h2>
 		<p>
-			Body copy sits at <code>text-base</code> with{" "}
+			Body copy sits at <code>text-lg</code> with{" "}
 			<code>text-text-primary</code>. Links land at{" "}
 			<a href="#">accent-2</a> for a legible read.
 		</p>
