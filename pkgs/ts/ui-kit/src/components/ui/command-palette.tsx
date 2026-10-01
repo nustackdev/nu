@@ -208,12 +208,12 @@ function CommandShortcut({
 	children,
 	...props
 }: React.HTMLAttributes<HTMLSpanElement> & {
-	/** Key names, drawn as small caps on their well (see `Shortcut`). Text children otherwise. */
+	/** Key names, drawn as muted text (see `Shortcut`). Text children otherwise. */
 	keys?: readonly string[];
 }) {
 	return (
-		<span data-slot="command-palette-shortcut" className={cn("ml-auto font-mono text-xs tracking-wide text-text-muted", className)} {...props}>
-			{keys ? <Shortcut keys={keys} size="sm" /> : children}
+		<span data-slot="command-palette-shortcut" className={cn("ml-auto pl-4 text-xs tracking-wide text-text-muted", className)} {...props}>
+			{keys ? <Shortcut keys={keys} variant="ghost" /> : children}
 		</span>
 	);
 }

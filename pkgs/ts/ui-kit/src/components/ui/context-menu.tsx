@@ -239,12 +239,12 @@ function ContextMenuShortcut({
 	children,
 	...props
 }: React.HTMLAttributes<HTMLSpanElement> & {
-	/** Key names, drawn as small caps on their well (see `Shortcut`). Text children otherwise. */
+	/** Key names, drawn as muted text (see `Shortcut`). Text children otherwise. */
 	keys?: readonly string[];
 }) {
 	return (
 		<span data-slot="context-menu-shortcut" className={cn(menuShortcutClasses, className)} {...props}>
-			{keys ? <Shortcut keys={keys} size="sm" /> : children}
+			{keys ? <Shortcut keys={keys} variant="ghost" /> : children}
 		</span>
 	);
 }

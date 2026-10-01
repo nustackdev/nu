@@ -37,8 +37,8 @@ const menuItemDangerClasses = [
 // Divider between item groups, flush to the content's edges through its p-1.
 const menuSeparatorClasses = "-mx-1 my-1 h-px bg-border-subtle";
 
-// Trailing kbd chip. Mono face + muted color so it sits as metadata.
-const menuShortcutClasses = "ml-auto font-mono text-xs tracking-wide text-text-muted";
+// The trailing shortcut: muted, in the text face, a step down from the label.
+const menuShortcutClasses = "ml-auto pl-4 text-xs tracking-wide text-text-muted";
 
 const menuContentClasses = [
 	"z-50 min-w-[10rem] overflow-hidden p-1",
@@ -266,12 +266,12 @@ function DropdownMenuShortcut({
 	children,
 	...props
 }: React.HTMLAttributes<HTMLSpanElement> & {
-	/** Key names, drawn as small caps on their well (see `Shortcut`). Text children otherwise. */
+	/** Key names, drawn as muted text (see `Shortcut`). Text children otherwise. */
 	keys?: readonly string[];
 }) {
 	return (
 		<span data-slot="dropdown-menu-shortcut" className={cn(menuShortcutClasses, className)} {...props}>
-			{keys ? <Shortcut keys={keys} size="sm" /> : children}
+			{keys ? <Shortcut keys={keys} variant="ghost" /> : children}
 		</span>
 	);
 }

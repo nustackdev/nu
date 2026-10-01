@@ -2,31 +2,31 @@ import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
 import { cn } from "../../lib/utils";
 
-// One key cap. Semantic `<kbd>`, mono face (design/primitives.md §Kbd +
-// typography.md §4 Kbd). It draws whatever it is given and knows nothing of
-// platforms: a combination is a `Shortcut` (./shortcut.tsx), which names the
-// keys and lays out one cap each.
+// A key, or a whole combination as one: semantic `<kbd>` in the text face
+// (design/primitives.md §Kbd). It draws whatever it is given and knows nothing
+// of platforms: a combination spelled per platform is a `Shortcut`
+// (./shortcut.tsx), which hands its text to one of these.
 //
-// `default` sits on the sunken well, for a hint on its own or in a list (a
-// tooltip, a footer, a menu row). `ghost` drops the well and goes muted, for a
-// hint inside a field that already has a box (a search input). Fixed heights,
-// so caps of different glyphs line up in a row.
+// `default` is a soft chip: a wash mixed from the text color and no border,
+// so it reads on any surface in both themes. For a hint that stands apart:
+// in a field, a tooltip, a list of shortcuts. `ghost` is muted text and
+// nothing else, for a hint beside a label it belongs to: a menu row.
 const kbdVariants = cva(
-	"inline-flex items-center justify-center rounded-sm border font-mono font-medium text-xs leading-none",
+	"inline-flex items-center justify-center whitespace-nowrap rounded-sm font-sans font-medium text-xs leading-none tracking-wide",
 	{
 		variants: {
 			variant: {
-				default: "border-border-subtle bg-bg-sunken text-text-secondary",
-				ghost: "border-transparent bg-transparent text-text-muted",
+				default: "bg-text-primary/10 text-text-secondary",
+				ghost: "bg-transparent text-text-muted",
 			},
 			size: {
-				sm: "h-4 min-w-4 px-1",
-				md: "h-4.5 min-w-4.5 px-1.5",
+				sm: "h-4.5 min-w-4.5 px-1",
+				md: "h-5 min-w-5 px-1.5",
 			},
 		},
 		compoundVariants: [
-			// No well to fill, so no pad either: the glyphs set the width.
-			{ variant: "ghost", className: "min-w-0 px-0" },
+			// No chip to fill, so no box either: the text sets the size.
+			{ variant: "ghost", className: "h-auto min-w-0 px-0" },
 		],
 		defaultVariants: {
 			variant: "default",

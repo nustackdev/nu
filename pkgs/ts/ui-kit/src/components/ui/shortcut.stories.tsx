@@ -64,7 +64,7 @@ export const Sizes: StoryObj = {
 	),
 };
 
-/** Where each variant goes: a well on its own, ghost inside a box. */
+/** Where each variant goes: a chip that stands apart, ghost text beside a label. */
 export const InContext: StoryObj = {
 	render: () => (
 		<div className="p-8 space-y-8">
@@ -88,15 +88,34 @@ export const InContext: StoryObj = {
 			</div>
 
 			<div>
-				<div className={label}>search entry (ghost)</div>
+				<div className={label}>search entry (default)</div>
 				<button
 					type="button"
 					className="flex h-8 w-64 items-center gap-2 rounded-md bg-text-primary/6 px-2 text-text-muted"
 				>
 					<Search className="size-4" />
 					<span className="flex-1 text-left text-sm">Search</span>
-					<Shortcut keys={["mod", "K"]} variant="ghost" />
+					<Shortcut keys={["mod", "K"]} />
 				</button>
+			</div>
+
+			<div>
+				<div className={label}>menu rows (ghost)</div>
+				<div className="w-64 rounded-md border border-border-subtle bg-bg-elevated p-1">
+					{[
+						["Duplicate", ["mod", "D"]],
+						["Rename", ["mod", "shift", "R"]],
+						["Move to", ["mod", "shift", "P"]],
+					].map(([name, keys]) => (
+						<div
+							key={name as string}
+							className="flex h-8 items-center rounded-sm px-2 text-sm text-text-primary hover:bg-text-primary/8"
+						>
+							{name as string}
+							<Shortcut keys={keys as string[]} variant="ghost" className="ml-auto" />
+						</div>
+					))}
+				</div>
 			</div>
 
 			<div>
