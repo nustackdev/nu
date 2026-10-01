@@ -100,6 +100,13 @@ def test_attr_exists_distinguishes_a_name_bound_to_empty_from_missing():
     assert value is True
 
 
+def test_attr_exists_is_a_bool_form():
+    term = nu.context.Attr("total").exists()
+    assert isinstance(term, nu.Bool)
+    assert run(term.not_())[0] is True
+    assert run(term.or_(True))[0] is True
+
+
 # --- effects -------------------------------------------------------------
 
 

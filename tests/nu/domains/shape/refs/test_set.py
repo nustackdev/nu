@@ -54,12 +54,14 @@ def test_set_ref_has_no_subscript():
 
 def test_set_ref_exists_returns_exists_query():
     ref = SetRef("my_set")
-    assert isinstance(ref.exists(), Exists)
+    assert isinstance(ref.exists(), nu.Bool)
+    assert isinstance(ref.exists()._source, Exists)
 
 
 def test_set_ref_missing_returns_missing_query():
     ref = SetRef("my_set")
-    assert isinstance(ref.missing(), Missing)
+    assert isinstance(ref.missing(), nu.Bool)
+    assert isinstance(ref.missing()._source, Missing)
 
 
 def test_set_ref_len_returns_int_form():
@@ -98,8 +100,10 @@ def test_mutable_set_ref_erase_returns_erase_command():
 
 def test_mutable_set_ref_inherits_exists_missing():
     ref = MutableSetRef("my_set")
-    assert isinstance(ref.exists(), Exists)
-    assert isinstance(ref.missing(), Missing)
+    assert isinstance(ref.exists(), nu.Bool)
+    assert isinstance(ref.exists()._source, Exists)
+    assert isinstance(ref.missing(), nu.Bool)
+    assert isinstance(ref.missing()._source, Missing)
 
 
 def test_mutable_set_ref_has_no_subscript():

@@ -18,9 +18,8 @@ from .._refs import _ContextRef
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from nu.forms.primitives import Bool
     from nu.lang.runtime import Runtime
-
-    from .queries import FabricExists
 
 
 __all__ = ["FabricRef"]
@@ -104,13 +103,21 @@ class FabricRef(_ContextRef):
 
         return athunk
 
-    def exists(self) -> FabricExists:
-        """A Query yielding whether this Ref's fabric type is bound on the Context.
+    def exists(self) -> Bool:
+        """Whether this Ref's fabric type is bound on the Context, as a ``Bool``.
 
         Notes:
             - The plain read cannot answer this: an unbound type yields EMPTY
               and so does a type bound to EMPTY.
+            - Always a bool, so it reads as one: ``.not_()``, ``.and_()``.
+
+        Example:
+            >>> class Clock: ...
+            >>> nu.run(nu.context.FabricRef(Clock).exists().not_())[0]
+            True
         """
+        from nu.forms.primitives import Bool
+
         from .queries import FabricExists
 
-        return FabricExists(self)
+        return Bool(FabricExists(self))

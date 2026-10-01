@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 
+import nu
 from nu.core.repr import Ascii as Ascii
 from nu.core.repr import Bin as Bin
 from nu.core.repr import Chr as Chr
@@ -93,3 +94,22 @@ def test_aeval_mirrors_eval():
     assert asyncio.run(_aeval(Hex(Literal(255)))) == "0xff"
     assert asyncio.run(_aeval(Format(Literal(255), Literal("x")))) == "ff"
     assert asyncio.run(_aeval(Format(Literal(EMPTY)))) is EMPTY
+
+
+# --- nu.format -------------------------------------------------------------
+
+
+def test_format_function_gives_a_str_form():
+    term = nu.format(3.14159, ".2f")
+    assert isinstance(term, nu.Str)
+    assert isinstance(term._source, Format)
+    assert _eval(term.upper() + "s") == "3.14s"
+
+
+def test_format_function_without_a_spec_applies_the_empty_spec():
+    assert _eval(nu.format(7)) == "7"
+
+
+def test_format_function_does_not_leak_into_star_imports():
+    assert "format" not in nu.__all__
+    assert nu.format is not format

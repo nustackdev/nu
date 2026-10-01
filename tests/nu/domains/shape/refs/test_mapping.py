@@ -109,12 +109,14 @@ def test_mapping_ref_element_results_take_the_declared_key_form():
 
 def test_mapping_ref_exists_returns_exists_query():
     m = MappingRef("my_map")
-    assert isinstance(m.exists(), Exists)
+    assert isinstance(m.exists(), nu.Bool)
+    assert isinstance(m.exists()._source, Exists)
 
 
 def test_mapping_ref_missing_returns_missing_query():
     m = MappingRef("my_map")
-    assert isinstance(m.missing(), Missing)
+    assert isinstance(m.missing(), nu.Bool)
+    assert isinstance(m.missing()._source, Missing)
 
 
 def test_mapping_ref_len_returns_int_form():
@@ -148,8 +150,10 @@ def test_mutable_mapping_ref_erase_returns_erase_command():
 
 def test_mutable_mapping_ref_inherits_exists_missing_len():
     m = MutableMappingRef("my_map")
-    assert isinstance(m.exists(), Exists)
-    assert isinstance(m.missing(), Missing)
+    assert isinstance(m.exists(), nu.Bool)
+    assert isinstance(m.exists()._source, Exists)
+    assert isinstance(m.missing(), nu.Bool)
+    assert isinstance(m.missing()._source, Missing)
     assert isinstance(m.len(), Int)
 
 
@@ -158,7 +162,8 @@ def test_mutable_mapping_ref_init_returns_ifdo_of_missing_and_set():
     result = m.init({})
     assert isinstance(result, IfDo)
     cond, body = nu.tree.children(result)
-    assert isinstance(cond, Missing)
+    assert isinstance(cond, nu.Bool)
+    assert isinstance(cond._source, Missing)
     assert isinstance(body, SetCmd)
 
 

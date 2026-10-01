@@ -122,12 +122,14 @@ def test_sequence_ref_slice_routes_to_slice_op():
 
 def test_sequence_ref_exists_returns_exists_query():
     s = SequenceRef("my_seq")
-    assert isinstance(s.exists(), Exists)
+    assert isinstance(s.exists(), nu.Bool)
+    assert isinstance(s.exists()._source, Exists)
 
 
 def test_sequence_ref_missing_returns_missing_query():
     s = SequenceRef("my_seq")
-    assert isinstance(s.missing(), Missing)
+    assert isinstance(s.missing(), nu.Bool)
+    assert isinstance(s.missing()._source, Missing)
 
 
 def test_sequence_ref_len_returns_int_form():
@@ -156,8 +158,10 @@ def test_mutable_sequence_ref_erase_returns_erase_command():
 
 def test_mutable_sequence_ref_inherits_exists_missing():
     s = MutableSequenceRef("my_seq")
-    assert isinstance(s.exists(), Exists)
-    assert isinstance(s.missing(), Missing)
+    assert isinstance(s.exists(), nu.Bool)
+    assert isinstance(s.exists()._source, Exists)
+    assert isinstance(s.missing(), nu.Bool)
+    assert isinstance(s.missing()._source, Missing)
 
 
 def test_mutable_sequence_ref_init_returns_ifdo_of_missing_and_set():
@@ -165,7 +169,8 @@ def test_mutable_sequence_ref_init_returns_ifdo_of_missing_and_set():
     result = s.init([])
     assert isinstance(result, IfDo)
     cond, body = nu.tree.children(result)
-    assert isinstance(cond, Missing)
+    assert isinstance(cond, nu.Bool)
+    assert isinstance(cond._source, Missing)
     assert isinstance(body, SetCmd)
 
 

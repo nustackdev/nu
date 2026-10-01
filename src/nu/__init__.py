@@ -173,7 +173,8 @@ from .lang.helpers import (
 
 # NOTE: several flat re-exports above shadow Python builtins at module scope
 # — coercion atoms (``set``/``frozenset``/``tuple``/``list``/``dict``/``int``/
-# ``float``/``str``/``bool``), IO atoms (``print``/``input``), and language
+# ``float``/``str``/``bool``), the builtin mirrors (``sorted``/``format``), IO
+# atoms (``print``/``input``), and language
 # helpers (``compile``/``eval``). They stay reachable as ``nu.set`` etc., but
 # ``from nu import *`` skips them (see ``_SHADOWS_BUILTIN`` below) so callers
 # don't get their builtins silently swapped. Any set/dict-builder logic in

@@ -64,3 +64,9 @@ def test_fabric_exists_reads_its_ref_fabric():
     assert program.attr(program.root, Attr.COMPOSITION_EFFECTS) == frozenset(
         {(FabricRef, Effect.READ)}
     )
+
+
+def test_fabric_exists_is_a_bool_form():
+    term = FabricRef(Clock).exists()
+    assert isinstance(term, nu.Bool)
+    assert run(term.not_())[0] is True

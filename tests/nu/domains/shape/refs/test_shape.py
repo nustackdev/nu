@@ -102,12 +102,14 @@ def test_shape_ref_getstate_setstate_roundtrip():
 
 def test_shape_ref_exists_returns_exists_query():
     ref = ShapeRef("loc", shape_type=Inner)
-    assert isinstance(ref.exists(), Exists)
+    assert isinstance(ref.exists(), nu.Bool)
+    assert isinstance(ref.exists()._source, Exists)
 
 
 def test_shape_ref_missing_returns_missing_query():
     ref = ShapeRef("loc", shape_type=Inner)
-    assert isinstance(ref.missing(), Missing)
+    assert isinstance(ref.missing(), nu.Bool)
+    assert isinstance(ref.missing()._source, Missing)
 
 
 # ---------------------------------------------------------------------------
@@ -142,8 +144,10 @@ def test_mutable_shape_ref_inherits_slot_navigation():
 
 def test_mutable_shape_ref_inherits_exists_missing():
     ref = MutableShapeRef("loc", shape_type=Inner)
-    assert isinstance(ref.exists(), Exists)
-    assert isinstance(ref.missing(), Missing)
+    assert isinstance(ref.exists(), nu.Bool)
+    assert isinstance(ref.exists()._source, Exists)
+    assert isinstance(ref.missing(), nu.Bool)
+    assert isinstance(ref.missing()._source, Missing)
 
 
 # ---------------------------------------------------------------------------

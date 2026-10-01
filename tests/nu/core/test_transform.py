@@ -115,6 +115,48 @@ def test_filter_keeps_matching_items():
     assert value == [1, 2]
 
 
+# --- Iterator.map / Iterator.filter -------------------------------------
+
+
+def test_iterator_map_takes_a_lambda():
+    assert run(nu.List.of(1, 2).iter().map(lambda x: nu.Int(x) * 10).to_list())[0] == [10, 20]
+
+
+def test_iterator_map_takes_a_tree_under_the_default_name():
+    assert run(nu.List.of(1, 2).iter().map(Mul(AttrRef("item"), 10)).to_list())[0] == [10, 20]
+
+
+def test_iterator_map_takes_a_tree_under_an_explicit_name():
+    assert run(nu.List.of(1, 2).iter().map(Mul(AttrRef("n"), 10), key="n").to_list())[0] == [10, 20]
+
+
+def test_iterator_filter_takes_a_lambda():
+    assert run(nu.List.of(1, 2, 3, 4).iter().filter(lambda x: x > 2).to_list())[0] == [3, 4]
+
+
+def test_iterator_filter_takes_a_tree_under_the_default_name():
+    assert run(nu.List.of(1, 2, 3).iter().filter(Lt(AttrRef("item"), 3)).to_list())[0] == [1, 2]
+
+
+def test_iterator_filter_takes_a_tree_under_an_explicit_name():
+    assert run(nu.List.of(1, 2, 3).iter().filter(Lt(AttrRef("n"), 3), key="n").to_list())[0] == [
+        1,
+        2,
+    ]
+
+
+@pytest.mark.parametrize("method", ["map", "filter"])
+def test_iterator_methods_refuse_a_lambda_with_an_explicit_name(method):
+    xs = nu.List.of(1, 2).iter()
+    with pytest.raises(ValueError, match="not both"):
+        getattr(xs, method)(lambda x: x, key="n")
+
+
+def test_iterator_lambdas_chain():
+    xs = nu.List.of(1, 2, 3).iter().filter(lambda x: x > 1).map(lambda x: nu.Int(x) * 10)
+    assert run(xs.to_list())[0] == [20, 30]
+
+
 # --- composition ---------------------------------------------------------
 
 

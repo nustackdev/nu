@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.forms.primitives import Object
+from nu.forms.primitives import Bool, Object
 from nu.lang.sentinels import EMPTY
 
 from .._refs import _ContextRef
@@ -19,8 +19,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from nu.lang.runtime import Runtime
-
-    from .interactions import AttrExists
 
 
 __all__ = ["Attr"]
@@ -76,14 +74,19 @@ class Attr(_ContextRef, Object):
 
         return athunk
 
-    def exists(self) -> AttrExists:
-        """A Query yielding whether this Ref's name is bound in ``ctx.attrs``.
+    def exists(self) -> Bool:
+        """Whether this Ref's name is bound in ``ctx.attrs``, as a ``Bool``.
 
         Notes:
             - The plain read cannot answer this: an unbound name yields EMPTY
               and so does a name bound to EMPTY.
             - Only the address is resolved; the value is never read.
+            - Always a bool, so it reads as one: ``.not_()``, ``.and_()``.
+
+        Example:
+            >>> nu.run(nu.context.Attr("total").exists().not_())[0]
+            True
         """
         from .interactions import AttrExists
 
-        return AttrExists(self)
+        return Bool(AttrExists(self))

@@ -138,6 +138,23 @@ assert_type(Profile.age.is_empty(), Bool)
 assert_type(Profile.age.not_empty(), Bool)
 
 
+# --- Presence checks are bools ------------------------------------------
+
+
+assert_type(Profile.age.exists(), Bool)
+assert_type(Profile.age.missing(), Bool)
+assert_type(Profile.age.exists().not_(), Bool)
+assert_type(MemProfile.name.missing().and_(MemProfile.age.exists()), Bool)
+assert_type(nu.context.Attr("item").exists(), Bool)
+
+
+# --- Builtin mirrors ----------------------------------------------------
+
+
+assert_type(nu.format(Profile.score, ".2f"), Str)
+assert_type(nu.format(Profile.score, ".2f").upper(), Str)
+
+
 # --- Nothing here should introduce Any ------------------------------
 
 

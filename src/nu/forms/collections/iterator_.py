@@ -10,6 +10,9 @@ from nu.lang.typeinfo import TypeInfo
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from nu.context import Attr
     from nu.forms.primitives import Bool, Bytes, Float, Int, Object, Str
     from nu.lang import Nu, StrArg
 
@@ -120,19 +123,30 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
         form_cls = elem.to_form() if elem is not None else Object
         return form_cls(First(self))
 
-    def map(self, transform: Nu, key: StrArg = "item") -> Iterator:
+    def map(self, transform: Nu | Callable[[Attr], Nu], key: StrArg | None = None) -> Iterator:
         """Each item replaced by transform's value, still a stream.
 
         Args:
-            transform: evaluated once per item; reads the item with
+            transform: evaluated once per item; its value replaces the item.
+                A lambda over the item, or a tree reading it with
                 `nu.Attr(key)`.
-            key: the name each item is bound under. Defaults to `"item"`.
+            key: the name each item is bound under, for a tree transform.
+                Defaults to `"item"`; a lambda mints its own.
+
+        Notes:
+            - The same binding as `nu.Map`: ``key`` is passed on only when
+              given, so a lambda and an explicit name never meet.
 
         Yields:
             An Iterator the same length as self, lazily mapped.
 
         Example:
             >>> xs = nu.List.of(1, 2).iter()
+            >>> nu.run(xs.map(lambda x: nu.Int(x) + 1).to_list())[0]
+            [2, 3]
+
+            The same with a tree reading the default name:
+
             >>> nu.run(xs.map(nu.Add(nu.Attr("item"), 1)).to_list())[0]
             [2, 3]
         """
@@ -140,20 +154,33 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
 
         return Iterator(Map(self, transform, key))
 
-    def filter(self, predicate: Nu, key: StrArg = "item") -> Iterator[T]:
+    def filter(
+        self, predicate: Nu | Callable[[Attr], Nu], key: StrArg | None = None
+    ) -> Iterator[T]:
         """Only the items predicate holds for, still a stream.
 
         Args:
-            predicate: evaluated once per item; reads the item with
+            predicate: evaluated once per item; the item stays when it is
+                truthy. A lambda over the item, or a tree reading it with
                 `nu.Attr(key)`.
-            key: the name each item is bound under. Defaults to `"item"`.
+            key: the name each item is bound under, for a tree predicate.
+                Defaults to `"item"`; a lambda mints its own.
+
+        Notes:
+            - The same binding as `nu.Filter`: ``key`` is passed on only
+              when given, so a lambda and an explicit name never meet.
 
         Yields:
             An Iterator over the kept items, in order.
 
         Example:
             >>> xs = nu.List.of(1, 2, 3).iter()
-            >>> nu.run(xs.filter(nu.Gt(nu.Attr("item"), 1)).to_list())[0]
+            >>> nu.run(xs.filter(lambda x: x > 1).to_list())[0]
+            [2, 3]
+
+            The same with a tree reading an explicit name:
+
+            >>> nu.run(xs.filter(nu.Gt(nu.Attr("n"), 1), key="n").to_list())[0]
             [2, 3]
         """
         from nu.core import Filter

@@ -113,6 +113,7 @@ from nu.core.cast import (
 from nu.core.cast_fns import (
     dict,
     float,
+    format,
     frozenset,
     int,
     list,
@@ -284,6 +285,7 @@ __all__ = [
     "bool",
     "dict",
     "float",
+    "format",
     "frozenset",
     "input",
     "int",

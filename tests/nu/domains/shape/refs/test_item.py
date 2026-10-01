@@ -60,13 +60,15 @@ def test_item_ref_root_shape_from_parent():
 def test_item_ref_exists_returns_exists_query():
     ref = ItemRef("field")
     result = ref.exists()
-    assert isinstance(result, Exists)
+    assert isinstance(result, nu.Bool)
+    assert isinstance(result._source, Exists)
 
 
 def test_item_ref_missing_returns_missing_query():
     ref = ItemRef("field")
     result = ref.missing()
-    assert isinstance(result, Missing)
+    assert isinstance(result, nu.Bool)
+    assert isinstance(result._source, Missing)
 
 
 # ---------------------------------------------------------------------------
@@ -107,8 +109,10 @@ def test_mutable_item_ref_erase_returns_erase_command():
 
 def test_mutable_item_ref_inherits_exists_missing():
     ref = MutableItemRef("field")
-    assert isinstance(ref.exists(), Exists)
-    assert isinstance(ref.missing(), Missing)
+    assert isinstance(ref.exists(), nu.Bool)
+    assert isinstance(ref.exists()._source, Exists)
+    assert isinstance(ref.missing(), nu.Bool)
+    assert isinstance(ref.missing()._source, Missing)
 
 
 def test_mutable_item_ref_init_returns_ifdo_of_missing_and_set():
@@ -116,7 +120,8 @@ def test_mutable_item_ref_init_returns_ifdo_of_missing_and_set():
     result = ref.init(42)
     assert isinstance(result, IfDo)
     cond, body = nu.tree.children(result)
-    assert isinstance(cond, Missing)
+    assert isinstance(cond, nu.Bool)
+    assert isinstance(cond._source, Missing)
     assert isinstance(body, SetCmd)
 
 

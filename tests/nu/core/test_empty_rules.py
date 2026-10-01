@@ -162,6 +162,14 @@ def test_exists_is_a_plain_bool_never_empty(run):
     assert run(User.age.set(0), then=User.age.exists()) is True
 
 
+def test_exists_and_missing_are_bool_forms(run):
+    for term in (User.age.exists(), User.age.missing(), User.tags.exists(), User.tags.missing()):
+        assert isinstance(term, nu.Bool)
+    assert run(User.age.exists().not_()) is True
+    assert run(User.age.missing().and_(User.tags.exists())) is True
+    assert run(User.tags.missing().or_(User.age.exists())) is False
+
+
 # --- fallback --------------------------------------------------------------
 
 

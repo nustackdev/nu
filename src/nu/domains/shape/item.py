@@ -19,10 +19,9 @@ if TYPE_CHECKING:
     from nu.core.reactive import OnPrimitiveChange
     from nu.domains.shape.interactions import (
         Erase,
-        Exists,
-        Missing,
         SetCmd,
     )
+    from nu.forms import Bool
 
 
 __all__ = [
@@ -38,17 +37,41 @@ __all__ = [
 class ItemForm(Form):
     """Slot-level read surface for a leaf value. Ops: ``exists()``, ``missing()``."""
 
-    def exists(self) -> Exists:
-        """Build an ``Exists`` query."""
+    def exists(self) -> Bool:
+        """Whether this slot holds a value, as a ``Bool``.
+
+        Notes:
+            - Always a bool, so it reads as one: ``.not_()``, ``.and_()``
+              and ``nu.If`` take it as is.
+            - Only the address is checked; a slot set to a falsy value
+              (``0``, ``""``) still exists.
+
+        Example:
+            >>> class User(nu.Shape):
+            ...     name = nu.StrRef.slot()
+            >>> ctx = nu.Context().bind(dict, {}, User)
+            >>> nu.run(User.name.exists().not_(), ctx)[0]
+            True
+        """
         from nu.domains.shape.interactions import Exists
+        from nu.forms import Bool
 
-        return Exists(self)
+        return Bool(Exists(self))
 
-    def missing(self) -> Missing:
-        """Build a ``Missing`` query."""
+    def missing(self) -> Bool:
+        """Whether this slot holds no value, as a ``Bool``: the negation of ``exists()``.
+
+        Example:
+            >>> class User(nu.Shape):
+            ...     name = nu.StrRef.slot()
+            >>> ctx = nu.Context().bind(dict, {"name": "ada"}, User)
+            >>> nu.run(User.name.missing(), ctx)[0]
+            False
+        """
         from nu.domains.shape.interactions import Missing
+        from nu.forms import Bool
 
-        return Missing(self)
+        return Bool(Missing(self))
 
 
 class MutableItemForm(ItemForm):

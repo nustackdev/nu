@@ -4,8 +4,8 @@ Lives in a separate module from ``cast`` because these functions shadow the
 Python builtins (``str``, ``int``, ``list``, ...) and would collide with the
 same names used as type annotations inside ``cast.py``.
 
-``sorted`` sits here too: not a cast, but the same kind of builtin mirror,
-wrapping its query in the Form it yields.
+``sorted`` and ``format`` sit here too: not casts, but the same kind of
+builtin mirror, wrapping their query in the Form it yields.
 """
 
 from __future__ import annotations
@@ -22,6 +22,7 @@ from nu.core.cast import (
     ToStr,
     ToTuple,
 )
+from nu.core.repr import Format
 from nu.core.transform import Sorted
 
 
@@ -32,6 +33,7 @@ if TYPE_CHECKING:
 __all__ = [
     "dict",
     "float",
+    "format",
     "frozenset",
     "int",
     "list",
@@ -124,3 +126,26 @@ def sorted(x: object) -> List:  # shadowing the builtin is intended
     from nu.forms.collections import List
 
     return List(Sorted(x))
+
+
+def format(value: object, spec: object = None) -> Str:  # shadowing the builtin is intended
+    """Format ``value`` under ``spec`` into a Nu ``Str`` term. ``Str(Format(...))`` in one call.
+
+    Args:
+        value: the value to format.
+        spec: the format spec, e.g. ``".2f"``. Left out, the empty spec
+            applies, as with Python's ``format(value)``.
+
+    Notes:
+        - Always a string, so it reads as one: ``.upper()``, ``+`` and the
+          rest of the ``Str`` surface take it as is.
+
+    Example:
+        >>> nu.run(nu.format(3.14159, ".2f") + "s")[0]
+        '3.14s'
+        >>> nu.run(nu.format(7))[0]
+        '7'
+    """
+    from nu.forms.primitives import Str
+
+    return Str(Format(value) if spec is None else Format(value, spec))
