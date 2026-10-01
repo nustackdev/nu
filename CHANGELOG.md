@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Count the two new key refs in the node registry test
 - UI kit 0.2.5 ships key caps variants and platform-aware shortcuts
 - Programs can show key caps and platform-aware shortcuts in their UI
 - Key caps get variants, and shortcuts are written once and spelled per platform

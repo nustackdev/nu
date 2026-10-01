@@ -10,7 +10,7 @@ import { nodeEntries } from ".";
 
 describe("node registry", () => {
 	it("ships every type", () => {
-		expect(Object.keys(nodeEntries)).toHaveLength(47);
+		expect(Object.keys(nodeEntries)).toHaveLength(49);
 	});
 
 	it("gives every type a component", () => {
