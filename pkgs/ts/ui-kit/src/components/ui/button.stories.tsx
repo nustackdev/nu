@@ -3,7 +3,7 @@ import { Fragment } from "react";
 import { ArrowRight, Sparkles, Github } from "lucide-react";
 import { Button } from "./button";
 
-const VARIANTS = ["default", "secondary", "ghost", "outline", "destructive", "link"] as const;
+const VARIANTS = ["default", "secondary", "ghost", "soft", "outline", "destructive", "link"] as const;
 const SIZES = ["xs", "sm", "md", "lg"] as const;
 
 export const Default: StoryObj = {

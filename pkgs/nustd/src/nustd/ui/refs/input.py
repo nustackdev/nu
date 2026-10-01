@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 
-Variant = Literal["primary", "secondary", "ghost", "danger"]
+Variant = Literal["primary", "secondary", "ghost", "soft", "danger"]
 
 
 class ButtonRef(Ref):

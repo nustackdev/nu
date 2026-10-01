@@ -14,12 +14,13 @@ import { OPS } from "@nustackdev/ui-core";
 import { Button } from "../../components/ui/button";
 import { type NodeEntry, type NodeProps, useBoolProp, useSend, useStringProp } from "../../tree";
 
-type ButtonVariant = "default" | "secondary" | "ghost" | "destructive";
+type ButtonVariant = "default" | "secondary" | "ghost" | "soft" | "destructive";
 
 const VARIANT_TO_KIT: Record<string, ButtonVariant> = {
 	primary: "default",
 	secondary: "secondary",
 	ghost: "ghost",
+	soft: "soft",
 	danger: "destructive",
 };
 

@@ -30,6 +30,9 @@ const iconButtonVariants = cva(
 					"bg-transparent text-text-muted border border-transparent hover:bg-text-primary/8 hover:text-text-primary active:bg-text-primary/12",
 				outline:
 					"bg-transparent text-text-primary border border-border-default hover:bg-bg-elevated hover:border-border-strong",
+				// Ghost's wash held at rest, no border: a tile on a surface that
+				// groups by fill rather than by line.
+				soft: "bg-text-primary/6 text-text-muted border border-transparent hover:bg-text-primary/10 hover:text-text-primary active:bg-text-primary/14",
 				destructive:
 					"bg-status-danger text-status-danger-fg border border-transparent hover:bg-status-danger/90",
 				// kept for parity with Button; primitives.md discourages link
@@ -37,7 +40,7 @@ const iconButtonVariants = cva(
 				link: "bg-transparent text-accent border border-transparent hover:opacity-80",
 			},
 			size: {
-				xs: "size-5 rounded-sm [&_svg]:size-3.5",
+				xs: "size-5 rounded-sm [&_svg]:size-3",
 				sm: "size-6 [&_svg]:size-3.5",
 				md: "size-8 [&_svg]:size-4",
 				lg: "size-10 [&_svg]:size-4.5",

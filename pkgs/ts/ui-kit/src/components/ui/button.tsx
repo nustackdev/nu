@@ -30,6 +30,8 @@ const buttonVariants = cva(
 					"bg-transparent text-text-secondary border border-transparent hover:bg-text-primary/8 hover:text-text-primary active:bg-text-primary/12",
 				outline:
 					"bg-transparent text-text-primary border border-border-default hover:bg-bg-elevated hover:border-border-strong",
+				// Ghost's wash held at rest, no border.
+				soft: "bg-text-primary/6 text-text-secondary border border-transparent hover:bg-text-primary/10 hover:text-text-primary active:bg-text-primary/14",
 				destructive:
 					"bg-status-danger text-status-danger-fg border border-transparent hover:bg-status-danger/90",
 				// `link` ignores size (per primitives.md); pad + height zeroed so

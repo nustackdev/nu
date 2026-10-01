@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Search, Star, Trash2 } from "lucide-react";
 import { IconButton } from "./icon-button";
 
-const VARIANTS = ["default", "secondary", "ghost", "outline", "destructive"] as const;
+const VARIANTS = ["default", "secondary", "ghost", "soft", "outline", "destructive"] as const;
 const SIZES = ["xs", "sm", "md", "lg"] as const;
 
 export const Default: StoryObj = {
