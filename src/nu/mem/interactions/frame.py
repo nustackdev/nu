@@ -54,7 +54,7 @@ class Frame(_LifecycleBracket):
           raises ``LookupError`` naming the Shape.
         - An ``initial`` key that is not a slot of ``shape`` raises
           ``TypeError`` at construction. An initial value that evaluates to
-          EMPTY or INVALID raises on entry, as any mem write does.
+          EMPTY raises on entry, as any mem write does.
         - Over a stream body the frame stays bound for the whole drain.
 
     Yields:

@@ -12,7 +12,7 @@ import nu
 from nu.core import Add
 from nu.lang import Literal
 from nu.lang.helpers import run
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 
 def test_int_child_is_wrapped() -> None:
@@ -52,11 +52,10 @@ def test_callable_is_wrapped_as_value() -> None:
     assert nu.tree.payload(nu.tree.children(term)[0])["value"] is f
 
 
-def test_sentinels_are_wrapped() -> None:
-    term = Add(EMPTY, INVALID)
+def test_empty_is_wrapped() -> None:
+    term = Add(EMPTY, 1)
     assert all(isinstance(c, Literal) for c in nu.tree.children(term))
     assert nu.tree.payload(nu.tree.children(term)[0])["value"] is EMPTY
-    assert nu.tree.payload(nu.tree.children(term)[1])["value"] is INVALID
 
 
 def test_mixed_children_are_wrapped_individually() -> None:

@@ -55,7 +55,7 @@ class Float(Form, TypedNu[float]):
                 stay Float.
 
         Yields:
-            The sum. INVALID when either operand is a sentinel.
+            The sum. EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Float(2.5) + nu.Float(1.5))[0]
@@ -80,7 +80,7 @@ class Float(Form, TypedNu[float]):
               `__add__` first and never lands here.
 
         Yields:
-            The sum. INVALID when either operand is a sentinel.
+            The sum. EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(1 + nu.Float(2.5))[0]
@@ -97,7 +97,7 @@ class Float(Form, TypedNu[float]):
             other: the value to subtract from self.
 
         Yields:
-            The difference. INVALID when either operand is a sentinel.
+            The difference. EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Float(10.0) - nu.Float(3.5))[0]
@@ -119,7 +119,7 @@ class Float(Form, TypedNu[float]):
               instead.
 
         Yields:
-            The difference. INVALID when either operand is a sentinel.
+            The difference. EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(10 - nu.Float(3.5))[0]
@@ -136,7 +136,7 @@ class Float(Form, TypedNu[float]):
             other: the value to multiply self by.
 
         Yields:
-            The product. INVALID when either operand is a sentinel.
+            The product. EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Float(6.0) * nu.Float(7.0))[0]
@@ -158,7 +158,7 @@ class Float(Form, TypedNu[float]):
               instead.
 
         Yields:
-            The product. INVALID when either operand is a sentinel.
+            The product. EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(3 * nu.Float(4.0))[0]
@@ -180,7 +180,7 @@ class Float(Form, TypedNu[float]):
               `inf`.
 
         Yields:
-            The quotient. INVALID when either operand is a sentinel. Raises
+            The quotient. EMPTY when either operand is EMPTY. Raises
             at evaluation time when the divisor is zero.
 
         Example:
@@ -202,7 +202,7 @@ class Float(Form, TypedNu[float]):
               float.
 
         Yields:
-            The quotient. INVALID when either operand is a sentinel. Raises
+            The quotient. EMPTY when either operand is EMPTY. Raises
             at evaluation time when self evaluates to zero.
 
         Example:
@@ -225,8 +225,8 @@ class Float(Form, TypedNu[float]):
               as Python's `//` does.
 
         Yields:
-            The floored quotient. INVALID when either operand is a
-            sentinel. Raises at evaluation time when the divisor is zero.
+            The floored quotient. EMPTY when either operand is
+            EMPTY. Raises at evaluation time when the divisor is zero.
 
         Example:
             >>> nu.run(nu.Float(7.5) // nu.Float(2.0))[0]
@@ -251,8 +251,8 @@ class Float(Form, TypedNu[float]):
               float.
 
         Yields:
-            The floored quotient. INVALID when either operand is a
-            sentinel.
+            The floored quotient. EMPTY when either operand is
+            EMPTY.
 
         Example:
             >>> nu.run(-7.5 // nu.Float(2.0))[0]
@@ -273,7 +273,7 @@ class Float(Form, TypedNu[float]):
               so `-7.5 % 3.0` is `1.5` and not `-1.5`.
 
         Yields:
-            The remainder. INVALID when either operand is a sentinel.
+            The remainder. EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Float(-7.5) % nu.Float(3.0))[0]
@@ -295,7 +295,7 @@ class Float(Form, TypedNu[float]):
               float.
 
         Yields:
-            The remainder. INVALID when either operand is a sentinel.
+            The remainder. EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(-7.5 % nu.Float(3.0))[0]
@@ -317,7 +317,7 @@ class Float(Form, TypedNu[float]):
               complex number rather than raising, matching `**`.
 
         Yields:
-            The power. INVALID when either operand is a sentinel.
+            The power. EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Float(2.0) ** nu.Float(10.0))[0]
@@ -337,7 +337,7 @@ class Float(Form, TypedNu[float]):
             - Reached only when the base is a plain Python int or float.
 
         Yields:
-            The power. INVALID when either operand is a sentinel.
+            The power. EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(2.0 ** nu.Float(10.0))[0]
@@ -351,7 +351,7 @@ class Float(Form, TypedNu[float]):
         """Negation of self.
 
         Yields:
-            The negation. INVALID when self is a sentinel.
+            The negation. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(-nu.Float(4.5))[0]
@@ -369,7 +369,7 @@ class Float(Form, TypedNu[float]):
               `+x` inside an expression is still a Nu term.
 
         Yields:
-            The value unchanged. INVALID when self is a sentinel.
+            The value unchanged. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(+nu.Float(-4.5))[0]
@@ -383,7 +383,7 @@ class Float(Form, TypedNu[float]):
         """Absolute value of self.
 
         Yields:
-            The magnitude. INVALID when self is a sentinel.
+            The magnitude. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(abs(nu.Float(-4.5)))[0]
@@ -405,8 +405,8 @@ class Float(Form, TypedNu[float]):
                 number.
 
         Yields:
-            True when self is greater, False otherwise. INVALID when either
-            operand is a sentinel. False whenever either side is nan.
+            True when self is greater, False otherwise. EMPTY when either
+            operand is EMPTY. False whenever either side is nan.
 
         Example:
             >>> nu.run(nu.Float(5.5) > nu.Float(3.0))[0]
@@ -426,8 +426,8 @@ class Float(Form, TypedNu[float]):
                 number.
 
         Yields:
-            True when self is less, False otherwise. INVALID when either
-            operand is a sentinel. False whenever either side is nan.
+            True when self is less, False otherwise. EMPTY when either
+            operand is EMPTY. False whenever either side is nan.
 
         Example:
             >>> nu.run(nu.Float(5.5) < nu.Float(3.0))[0]
@@ -447,8 +447,8 @@ class Float(Form, TypedNu[float]):
                 number.
 
         Yields:
-            True when self is greater or equal, False otherwise. INVALID
-            when either operand is a sentinel. False whenever either side
+            True when self is greater or equal, False otherwise. EMPTY
+            when either operand is EMPTY. False whenever either side
             is nan.
 
         Example:
@@ -469,8 +469,8 @@ class Float(Form, TypedNu[float]):
                 number.
 
         Yields:
-            True when self is less or equal, False otherwise. INVALID when
-            either operand is a sentinel. False whenever either side is
+            True when self is less or equal, False otherwise. EMPTY when
+            either operand is EMPTY. False whenever either side is
             nan.
 
         Example:
@@ -495,8 +495,8 @@ class Float(Form, TypedNu[float]):
             - `nan` is never equal to anything, including another nan.
 
         Yields:
-            True when the values compare equal, False otherwise. INVALID
-            when either operand is a sentinel.
+            True when the values compare equal, False otherwise. EMPTY
+            when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Float(1.0) == 1)[0]
@@ -522,8 +522,8 @@ class Float(Form, TypedNu[float]):
             - `nan` is unequal to everything, including another nan.
 
         Yields:
-            True when the values differ, False otherwise. INVALID when
-            either operand is a sentinel.
+            True when the values differ, False otherwise. EMPTY when
+            either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Float(1.0) != nu.Float(2.0))[0]
@@ -575,8 +575,8 @@ class Float(Form, TypedNu[float]):
               evaluated when the left does not already decide the result.
 
         Yields:
-            True when both operands are truthy, False otherwise. INVALID
-            when either operand is a sentinel.
+            True when both operands are truthy, False otherwise. An EMPTY
+            operand counts as false.
 
         Example:
             >>> nu.run(nu.Float(1.5).and_(nu.Float(0.0)))[0]
@@ -600,8 +600,8 @@ class Float(Form, TypedNu[float]):
               evaluated when the left does not already decide the result.
 
         Yields:
-            True when either operand is truthy, False otherwise. INVALID
-            when either operand is a sentinel.
+            True when either operand is truthy, False otherwise. An EMPTY
+            operand counts as false.
 
         Example:
             >>> nu.run(nu.Float(0.0).or_(nu.Float(5.5)))[0]
@@ -620,8 +620,8 @@ class Float(Form, TypedNu[float]):
             - Zero yields True, every other value yields False.
 
         Yields:
-            True when self is zero, False otherwise. INVALID when self is a
-            sentinel.
+            True when self is zero, False otherwise. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Float(0.0).not_())[0]
@@ -641,8 +641,8 @@ class Float(Form, TypedNu[float]):
               Python's truthiness rule.
 
         Yields:
-            True when self is non-zero, False when self is zero. INVALID
-            when self is a sentinel.
+            True when self is non-zero, False when self is zero. EMPTY
+            when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Float(5.5).bool_())[0]

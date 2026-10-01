@@ -29,7 +29,7 @@ from nu.inspect.service import parse_service
 from nu.inspect.shape import ShapeRecord, parse_shape
 from nu.lang import ScalarQuery
 from nu.lang.kinds import Interaction, Ref
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -68,8 +68,9 @@ class Inspect(ScalarQuery):
           way, so ``myapp.Task.owner.email`` resolves.
 
     Yields:
-        The formatted text. INVALID when the path resolves to nothing that
-        nu.inspect can describe.
+        The formatted text. EMPTY when the path is EMPTY or resolves to
+        nothing that nu.inspect can describe. A path that is not a str
+        raises.
 
     Example:
         >>> nu.run(nu.inspect.Inspect("nu.core.arithmetic"))[0].splitlines()[0]
@@ -81,10 +82,12 @@ class Inspect(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = child(rt)
-            if v is EMPTY or v is INVALID or not isinstance(v, str):
-                return INVALID
-            text = render(v)
-            return text if text else INVALID
+            if v is EMPTY:
+                return EMPTY
+            if not isinstance(v, str):
+                msg = f"Inspect needs a dotted path str, got {type(v).__name__}"
+                raise TypeError(msg)
+            return render(v) or EMPTY
 
         return thunk
 
@@ -93,10 +96,12 @@ class Inspect(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await child(rt)
-            if v is EMPTY or v is INVALID or not isinstance(v, str):
-                return INVALID
-            text = render(v)
-            return text if text else INVALID
+            if v is EMPTY:
+                return EMPTY
+            if not isinstance(v, str):
+                msg = f"Inspect needs a dotted path str, got {type(v).__name__}"
+                raise TypeError(msg)
+            return render(v) or EMPTY
 
         return athunk
 

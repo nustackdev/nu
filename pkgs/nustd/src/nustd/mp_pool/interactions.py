@@ -71,7 +71,7 @@ from nu.lang import (
     ScalarQuery,
     StreamQuery,
 )
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 from .refs import PoolRef
 from .resources import WorkerPool
@@ -121,7 +121,7 @@ def _init_node(init: object) -> Nu:
 
 def _require_pool(value: object) -> WorkerPool:
     """Unwrap the pool slot's value, refusing sentinels with a usable message."""
-    if value is EMPTY or value is INVALID or value is None:
+    if value is EMPTY or value is None:
         msg = "no WorkerPool is bound on the Context; wrap the tree in Provide(WorkerPool, ...)"
         raise RuntimeError(msg)
     if not isinstance(value, WorkerPool):
@@ -199,7 +199,7 @@ class Launch(ScalarAction):
         def thunk(rt: Runtime) -> object:
             pool = _require_pool(children[0](rt))
             init = children[1](rt)
-            return pool.launch(None if init is EMPTY or init is INVALID else init)
+            return pool.launch(None if init is EMPTY else init)
 
         return thunk
 
@@ -209,7 +209,7 @@ class Launch(ScalarAction):
         async def athunk(rt: Runtime) -> object:
             pool = _require_pool(await children[0](rt))
             init = await children[1](rt)
-            return await pool.alaunch(None if init is EMPTY or init is INVALID else init)
+            return await pool.alaunch(None if init is EMPTY else init)
 
         return athunk
 

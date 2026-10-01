@@ -17,7 +17,7 @@ from nu.core.repr import Hex as Hex
 from nu.core.repr import Oct as Oct
 from nu.core.repr import Ord as Ord
 from nu.core.repr import Repr as Repr
-from nu.lang import EMPTY, INVALID
+from nu.lang import EMPTY
 from nu.lang.helpers import aeval, compile, eval
 from nu.lang.literal import Literal
 
@@ -77,12 +77,12 @@ def test_ord_and_chr_round_trip():
 # --- sentinel propagation ------------------------------------------------
 
 
-def test_a_sentinel_operand_collapses_to_invalid():
-    assert _eval(Repr(Literal(EMPTY))) is INVALID
-    assert _eval(Hex(Literal(INVALID))) is INVALID
-    assert _eval(Format(Literal(EMPTY))) is INVALID
-    assert _eval(Format(Literal(1), Literal(EMPTY))) is INVALID
-    assert _eval(Format(Literal(INVALID), Literal("x"))) is INVALID
+def test_an_empty_operand_collapses_to_empty():
+    assert _eval(Repr(Literal(EMPTY))) is EMPTY
+    assert _eval(Hex(Literal(EMPTY))) is EMPTY
+    assert _eval(Format(Literal(EMPTY))) is EMPTY
+    assert _eval(Format(Literal(1), Literal(EMPTY))) is EMPTY
+    assert _eval(Format(Literal(EMPTY), Literal("x"))) is EMPTY
 
 
 # --- async parity --------------------------------------------------------
@@ -92,4 +92,4 @@ def test_aeval_mirrors_eval():
     assert asyncio.run(_aeval(Repr(Literal("hi")))) == "'hi'"
     assert asyncio.run(_aeval(Hex(Literal(255)))) == "0xff"
     assert asyncio.run(_aeval(Format(Literal(255), Literal("x")))) == "ff"
-    assert asyncio.run(_aeval(Format(Literal(EMPTY)))) is INVALID
+    assert asyncio.run(_aeval(Format(Literal(EMPTY)))) is EMPTY

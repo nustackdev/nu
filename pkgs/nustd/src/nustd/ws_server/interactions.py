@@ -1,7 +1,7 @@
 """Every term that reaches the connection book, and the bracket that opens one.
 
 The four atoms take a ``ServerRef`` in slot 0 and read the ``WebServer`` it
-resolves to, yielding INVALID when no server bracket is open around this
+resolves to, yielding EMPTY when no server bracket is open around this
 subtree. ``SessionFor`` is the bracket an arm runs inside, holding that
 connection's transport.
 """
@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 from nu.core.spans.bracket import _LifecycleBracket
 from nu.engine.structure import Declared
 from nu.lang import Command, ScalarQuery
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 from .fabric import WebServer
 
@@ -65,8 +65,8 @@ class LiveSessions(_ServerQuery):
 
         async def athunk(rt: Runtime) -> object:
             server = await server_thunk(rt)
-            if server is EMPTY or server is INVALID:
-                return INVALID
+            if server is EMPTY:
+                return EMPTY
             return server.live_ids()
 
         return athunk
@@ -85,8 +85,8 @@ class SessionsChanged(_ServerQuery):
 
         async def athunk(rt: Runtime) -> object:
             server = await server_thunk(rt)
-            if server is EMPTY or server is INVALID:
-                return INVALID
+            if server is EMPTY:
+                return EMPTY
             return server.subscribe()
 
         return athunk
@@ -104,11 +104,11 @@ class SessionDone(_ServerQuery):
 
         async def athunk(rt: Runtime) -> object:
             server = await server_thunk(rt)
-            if server is EMPTY or server is INVALID:
-                return INVALID
+            if server is EMPTY:
+                return EMPTY
             sid = await sid_thunk(rt)
-            if sid is EMPTY or sid is INVALID:
-                return INVALID
+            if sid is EMPTY:
+                return EMPTY
             return server.is_done(sid)
 
         return athunk
@@ -118,7 +118,7 @@ class MarkSessionDone(Command):
     """Record that the program of the connection at slot 1 has ended.
 
     A sid the server does not hold is a plain miss: nothing is created and
-    nothing is announced.
+    nothing is announced. An EMPTY server or sid raises, as any write does.
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -135,11 +135,10 @@ class MarkSessionDone(Command):
 
         async def athunk(rt: Runtime) -> None:
             server = await server_thunk(rt)
-            if server is EMPTY or server is INVALID:
-                return
             sid = await sid_thunk(rt)
-            if sid is EMPTY or sid is INVALID:
-                return
+            if server is EMPTY or sid is EMPTY:
+                msg = "cannot write with an EMPTY operand"
+                raise ValueError(msg)
             server.mark_done(sid)
 
         return athunk

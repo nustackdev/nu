@@ -20,7 +20,7 @@ core stays the 1:1 map of native builtins.
 
 Every atom is EVALUABLE: each ``Reduction`` defines ``compile`` (sync) and
 ``acompile`` (async) returning a thunk that drains its stream child to a scalar,
-with EMPTY / INVALID sentinel propagation.
+with EMPTY propagation.
 
 Sorts: all ScalarQuery / Reduction (Q-scalar over Q-stream).
 """
@@ -30,7 +30,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import Reduction
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 from ._stream import aiter_any, sync_iter
 
@@ -62,10 +62,10 @@ class Sum(Reduction):
     Notes:
         - Folds from 0, the additive identity, so an empty stream yields 0
           rather than EMPTY.
-        - The fold stops at the first EMPTY or INVALID item it drains.
+        - The fold stops at the first EMPTY item it drains.
 
     Yields:
-        The sum. INVALID if any item is EMPTY or INVALID.
+        The sum. EMPTY if any item is EMPTY.
 
     Example:
         >>> nu.run(nu.Sum(nu.Iter([1, 2, 3])))[0]
@@ -78,8 +78,8 @@ class Sum(Reduction):
         def thunk(rt: Runtime) -> object:
             total: object = 0
             for v in sync_iter(stream(rt)):
-                if v is EMPTY or v is INVALID:
-                    return INVALID
+                if v is EMPTY:
+                    return EMPTY
                 total = total + v
             return total
 
@@ -91,8 +91,8 @@ class Sum(Reduction):
         async def athunk(rt: Runtime) -> object:
             total: object = 0
             async for v in aiter_any(await stream(rt)):
-                if v is EMPTY or v is INVALID:
-                    return INVALID
+                if v is EMPTY:
+                    return EMPTY
                 total = total + v
             return total
 
@@ -112,8 +112,8 @@ class Min(Reduction):
           ``min`` which raises.
 
     Yields:
-        The smallest item. EMPTY if the stream is empty, INVALID if any
-        item is EMPTY or INVALID.
+        The smallest item. EMPTY if the stream is empty or any item
+        is EMPTY.
 
     Example:
         >>> nu.run(nu.Min(nu.Iter([3, 1, 2])))[0]
@@ -126,8 +126,8 @@ class Min(Reduction):
         def thunk(rt: Runtime) -> object:
             items = []
             for v in sync_iter(stream(rt)):
-                if v is EMPTY or v is INVALID:
-                    return INVALID
+                if v is EMPTY:
+                    return EMPTY
                 items.append(v)
             return min(items) if items else EMPTY
 
@@ -139,8 +139,8 @@ class Min(Reduction):
         async def athunk(rt: Runtime) -> object:
             items = []
             async for v in aiter_any(await stream(rt)):
-                if v is EMPTY or v is INVALID:
-                    return INVALID
+                if v is EMPTY:
+                    return EMPTY
                 items.append(v)
             return min(items) if items else EMPTY
 
@@ -160,8 +160,8 @@ class Max(Reduction):
           ``max`` which raises.
 
     Yields:
-        The largest item. EMPTY if the stream is empty, INVALID if any
-        item is EMPTY or INVALID.
+        The largest item. EMPTY if the stream is empty or any item
+        is EMPTY.
 
     Example:
         >>> nu.run(nu.Max(nu.Iter([3, 1, 2])))[0]
@@ -174,8 +174,8 @@ class Max(Reduction):
         def thunk(rt: Runtime) -> object:
             items = []
             for v in sync_iter(stream(rt)):
-                if v is EMPTY or v is INVALID:
-                    return INVALID
+                if v is EMPTY:
+                    return EMPTY
                 items.append(v)
             return max(items) if items else EMPTY
 
@@ -187,8 +187,8 @@ class Max(Reduction):
         async def athunk(rt: Runtime) -> object:
             items = []
             async for v in aiter_any(await stream(rt)):
-                if v is EMPTY or v is INVALID:
-                    return INVALID
+                if v is EMPTY:
+                    return EMPTY
                 items.append(v)
             return max(items) if items else EMPTY
 
@@ -207,7 +207,7 @@ class AnyOf(Reduction):
         - An empty stream yields False, Python's ``any`` rule for no items.
 
     Yields:
-        True or False. INVALID if a sentinel is met before a truthy item.
+        True or False, never EMPTY. An EMPTY item counts as false.
 
     Example:
         >>> nu.run(nu.AnyOf(nu.Iter([0, 0, 1])))[0]
@@ -219,8 +219,6 @@ class AnyOf(Reduction):
 
         def thunk(rt: Runtime) -> object:
             for v in sync_iter(stream(rt)):
-                if v is EMPTY or v is INVALID:
-                    return INVALID
                 if v:
                     return True
             return False
@@ -232,8 +230,6 @@ class AnyOf(Reduction):
 
         async def athunk(rt: Runtime) -> object:
             async for v in aiter_any(await stream(rt)):
-                if v is EMPTY or v is INVALID:
-                    return INVALID
                 if v:
                     return True
             return False
@@ -253,7 +249,7 @@ class AllOf(Reduction):
         - An empty stream yields True, Python's ``all`` rule for no items.
 
     Yields:
-        True or False. INVALID if a sentinel is met before a falsy item.
+        True or False, never EMPTY. An EMPTY item counts as false.
 
     Example:
         >>> nu.run(nu.AllOf(nu.Iter([1, 1, 1])))[0]
@@ -265,8 +261,6 @@ class AllOf(Reduction):
 
         def thunk(rt: Runtime) -> object:
             for v in sync_iter(stream(rt)):
-                if v is EMPTY or v is INVALID:
-                    return INVALID
                 if not v:
                     return False
             return True
@@ -278,8 +272,6 @@ class AllOf(Reduction):
 
         async def athunk(rt: Runtime) -> object:
             async for v in aiter_any(await stream(rt)):
-                if v is EMPTY or v is INVALID:
-                    return INVALID
                 if not v:
                     return False
             return True
@@ -297,8 +289,8 @@ class Count(Reduction):
         - Drains the whole stream to count it; there is no shortcut.
 
     Yields:
-        The count. 0 for an empty stream. INVALID if any item is EMPTY
-        or INVALID.
+        The count. 0 for an empty stream. EMPTY if any item is
+        EMPTY.
 
     Example:
         >>> nu.run(nu.Count(nu.Iter([1, 2, 3])))[0]
@@ -311,8 +303,8 @@ class Count(Reduction):
         def thunk(rt: Runtime) -> object:
             n = 0
             for v in sync_iter(stream(rt)):
-                if v is EMPTY or v is INVALID:
-                    return INVALID
+                if v is EMPTY:
+                    return EMPTY
                 n += 1
             return n
 
@@ -324,8 +316,8 @@ class Count(Reduction):
         async def athunk(rt: Runtime) -> object:
             n = 0
             async for v in aiter_any(await stream(rt)):
-                if v is EMPTY or v is INVALID:
-                    return INVALID
+                if v is EMPTY:
+                    return EMPTY
                 n += 1
             return n
 
@@ -343,8 +335,8 @@ class First(Reduction):
           never touched.
 
     Yields:
-        The first item. EMPTY if the stream is empty, INVALID if that
-        first item is EMPTY or INVALID.
+        The first item. EMPTY if the stream is empty or that first item is
+        EMPTY.
 
     Example:
         >>> nu.run(nu.First(nu.Iter([1, 2, 3])))[0]
@@ -356,8 +348,6 @@ class First(Reduction):
 
         def thunk(rt: Runtime) -> object:
             for v in sync_iter(stream(rt)):
-                if v is EMPTY or v is INVALID:
-                    return INVALID
                 return v
             return EMPTY
 
@@ -368,8 +358,6 @@ class First(Reduction):
 
         async def athunk(rt: Runtime) -> object:
             async for v in aiter_any(await stream(rt)):
-                if v is EMPTY or v is INVALID:
-                    return INVALID
                 return v
             return EMPTY
 
@@ -387,8 +375,7 @@ class Last(Reduction):
           shortcut from the tail.
 
     Yields:
-        The last item. EMPTY if the stream is empty, INVALID if any item
-        is EMPTY or INVALID.
+        The last item. EMPTY if the stream is empty or any item is EMPTY.
 
     Example:
         >>> nu.run(nu.Last(nu.Iter([1, 2, 3])))[0]
@@ -401,8 +388,8 @@ class Last(Reduction):
         def thunk(rt: Runtime) -> object:
             last: object = EMPTY
             for v in sync_iter(stream(rt)):
-                if v is EMPTY or v is INVALID:
-                    return INVALID
+                if v is EMPTY:
+                    return EMPTY
                 last = v
             return last
 
@@ -414,8 +401,8 @@ class Last(Reduction):
         async def athunk(rt: Runtime) -> object:
             last: object = EMPTY
             async for v in aiter_any(await stream(rt)):
-                if v is EMPTY or v is INVALID:
-                    return INVALID
+                if v is EMPTY:
+                    return EMPTY
                 last = v
             return last
 
@@ -434,7 +421,7 @@ class Collect(Reduction):
 
     Yields:
         A list of every item, in order. Empty list for an empty stream.
-        INVALID if any item is EMPTY or INVALID.
+        EMPTY if any item is EMPTY.
 
     Example:
         >>> nu.run(nu.Collect(nu.Iter([1, 2, 3])))[0]
@@ -447,8 +434,8 @@ class Collect(Reduction):
         def thunk(rt: Runtime) -> object:
             out: list = []
             for v in sync_iter(stream(rt)):
-                if v is EMPTY or v is INVALID:
-                    return INVALID
+                if v is EMPTY:
+                    return EMPTY
                 out.append(v)
             return out
 
@@ -460,8 +447,8 @@ class Collect(Reduction):
         async def athunk(rt: Runtime) -> object:
             out: list = []
             async for v in aiter_any(await stream(rt)):
-                if v is EMPTY or v is INVALID:
-                    return INVALID
+                if v is EMPTY:
+                    return EMPTY
                 out.append(v)
             return out
 

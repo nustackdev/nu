@@ -27,7 +27,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -93,17 +93,12 @@ class Decode(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes):
-                return INVALID
-            try:
-                return left.decode(right)
-            except (UnicodeDecodeError, LookupError):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
+            return left.decode(right)
 
         return thunk
 
@@ -112,17 +107,12 @@ class Decode(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes):
-                return INVALID
-            try:
-                return left.decode(right)
-            except (UnicodeDecodeError, LookupError):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
+            return left.decode(right)
 
         return athunk
 
@@ -135,10 +125,8 @@ class Hex(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.hex()
 
         return thunk
@@ -148,10 +136,8 @@ class Hex(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.hex()
 
         return athunk
@@ -170,10 +156,8 @@ class BytesUpper(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.upper()
 
         return thunk
@@ -183,10 +167,8 @@ class BytesUpper(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.upper()
 
         return athunk
@@ -200,10 +182,8 @@ class BytesLower(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.lower()
 
         return thunk
@@ -213,10 +193,8 @@ class BytesLower(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.lower()
 
         return athunk
@@ -235,15 +213,11 @@ class BytesStrip(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes):
-                return INVALID
-            if right is not None and not isinstance(right, bytes):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.strip(right)
 
         return thunk
@@ -253,15 +227,11 @@ class BytesStrip(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes):
-                return INVALID
-            if right is not None and not isinstance(right, bytes):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.strip(right)
 
         return athunk
@@ -275,15 +245,11 @@ class BytesLStrip(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes):
-                return INVALID
-            if right is not None and not isinstance(right, bytes):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.lstrip(right)
 
         return thunk
@@ -293,15 +259,11 @@ class BytesLStrip(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes):
-                return INVALID
-            if right is not None and not isinstance(right, bytes):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.lstrip(right)
 
         return athunk
@@ -315,15 +277,11 @@ class BytesRStrip(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes):
-                return INVALID
-            if right is not None and not isinstance(right, bytes):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.rstrip(right)
 
         return thunk
@@ -333,15 +291,11 @@ class BytesRStrip(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes):
-                return INVALID
-            if right is not None and not isinstance(right, bytes):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.rstrip(right)
 
         return athunk
@@ -360,18 +314,14 @@ class BytesSplit(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             first = first_t(rt)
-            if first is EMPTY or first is INVALID:
-                return INVALID
+            if first is EMPTY:
+                return EMPTY
             second = second_t(rt)
-            if second is EMPTY or second is INVALID:
-                return INVALID
+            if second is EMPTY:
+                return EMPTY
             third = third_t(rt)
-            if third is EMPTY or third is INVALID:
-                return INVALID
-            if not isinstance(first, bytes):
-                return INVALID
-            if second is not None and not isinstance(second, bytes):
-                return INVALID
+            if third is EMPTY:
+                return EMPTY
             return first.split(second, int(third))
 
         return thunk
@@ -381,18 +331,14 @@ class BytesSplit(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             first = await first_t(rt)
-            if first is EMPTY or first is INVALID:
-                return INVALID
+            if first is EMPTY:
+                return EMPTY
             second = await second_t(rt)
-            if second is EMPTY or second is INVALID:
-                return INVALID
+            if second is EMPTY:
+                return EMPTY
             third = await third_t(rt)
-            if third is EMPTY or third is INVALID:
-                return INVALID
-            if not isinstance(first, bytes):
-                return INVALID
-            if second is not None and not isinstance(second, bytes):
-                return INVALID
+            if third is EMPTY:
+                return EMPTY
             return first.split(second, int(third))
 
         return athunk
@@ -411,19 +357,17 @@ class BytesFind(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             sub = sub_t(rt)
-            if sub is EMPTY or sub is INVALID:
-                return INVALID
+            if sub is EMPTY:
+                return EMPTY
             start = start_t(rt)
-            if start is EMPTY or start is INVALID:
-                return INVALID
+            if start is EMPTY:
+                return EMPTY
             end = end_t(rt)
-            if end is EMPTY or end is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes) or not isinstance(sub, bytes):
-                return INVALID
+            if end is EMPTY:
+                return EMPTY
             if end is None:
                 return operand.find(sub, int(start))
             return operand.find(sub, int(start), int(end))
@@ -435,19 +379,17 @@ class BytesFind(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             sub = await sub_t(rt)
-            if sub is EMPTY or sub is INVALID:
-                return INVALID
+            if sub is EMPTY:
+                return EMPTY
             start = await start_t(rt)
-            if start is EMPTY or start is INVALID:
-                return INVALID
+            if start is EMPTY:
+                return EMPTY
             end = await end_t(rt)
-            if end is EMPTY or end is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes) or not isinstance(sub, bytes):
-                return INVALID
+            if end is EMPTY:
+                return EMPTY
             if end is None:
                 return operand.find(sub, int(start))
             return operand.find(sub, int(start), int(end))
@@ -463,13 +405,11 @@ class BytesCount(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes) or not isinstance(right, bytes):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.count(right)
 
         return thunk
@@ -479,13 +419,11 @@ class BytesCount(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes) or not isinstance(right, bytes):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.count(right)
 
         return athunk
@@ -504,13 +442,11 @@ class BytesStartsWith(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes) or not isinstance(right, bytes):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.startswith(right)
 
         return thunk
@@ -520,13 +456,11 @@ class BytesStartsWith(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes) or not isinstance(right, bytes):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.startswith(right)
 
         return athunk
@@ -540,13 +474,11 @@ class BytesEndsWith(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes) or not isinstance(right, bytes):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.endswith(right)
 
         return thunk
@@ -556,13 +488,11 @@ class BytesEndsWith(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes) or not isinstance(right, bytes):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.endswith(right)
 
         return athunk
@@ -581,23 +511,17 @@ class BytesReplace(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             old = old_t(rt)
-            if old is EMPTY or old is INVALID:
-                return INVALID
+            if old is EMPTY:
+                return EMPTY
             new = new_t(rt)
-            if new is EMPTY or new is INVALID:
-                return INVALID
+            if new is EMPTY:
+                return EMPTY
             count = count_t(rt)
-            if count is EMPTY or count is INVALID:
-                return INVALID
-            if (
-                not isinstance(operand, bytes)
-                or not isinstance(old, bytes)
-                or not isinstance(new, bytes)
-            ):
-                return INVALID
+            if count is EMPTY:
+                return EMPTY
             count_int = int(count)
             if count_int == -1:
                 return operand.replace(old, new)
@@ -610,23 +534,17 @@ class BytesReplace(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             old = await old_t(rt)
-            if old is EMPTY or old is INVALID:
-                return INVALID
+            if old is EMPTY:
+                return EMPTY
             new = await new_t(rt)
-            if new is EMPTY or new is INVALID:
-                return INVALID
+            if new is EMPTY:
+                return EMPTY
             count = await count_t(rt)
-            if count is EMPTY or count is INVALID:
-                return INVALID
-            if (
-                not isinstance(operand, bytes)
-                or not isinstance(old, bytes)
-                or not isinstance(new, bytes)
-            ):
-                return INVALID
+            if count is EMPTY:
+                return EMPTY
             count_int = int(count)
             if count_int == -1:
                 return operand.replace(old, new)
@@ -643,13 +561,11 @@ class BytesRemovePrefix(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes) or not isinstance(right, bytes):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.removeprefix(right)
 
         return thunk
@@ -659,13 +575,11 @@ class BytesRemovePrefix(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes) or not isinstance(right, bytes):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.removeprefix(right)
 
         return athunk
@@ -679,13 +593,11 @@ class BytesRemoveSuffix(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes) or not isinstance(right, bytes):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.removesuffix(right)
 
         return thunk
@@ -695,13 +607,11 @@ class BytesRemoveSuffix(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes) or not isinstance(right, bytes):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.removesuffix(right)
 
         return athunk
@@ -715,24 +625,15 @@ class BytesTranslate(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             table = table_t(rt)
-            if table is EMPTY or table is INVALID:
-                return INVALID
+            if table is EMPTY:
+                return EMPTY
             delete = delete_t(rt)
-            if delete is EMPTY or delete is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
-            if table is not None and not isinstance(table, bytes):
-                return INVALID
-            if not isinstance(delete, bytes):
-                return INVALID
-            try:
-                return operand.translate(table, delete)
-            except ValueError:
-                return INVALID
+            if delete is EMPTY:
+                return EMPTY
+            return operand.translate(table, delete)
 
         return thunk
 
@@ -741,24 +642,15 @@ class BytesTranslate(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             table = await table_t(rt)
-            if table is EMPTY or table is INVALID:
-                return INVALID
+            if table is EMPTY:
+                return EMPTY
             delete = await delete_t(rt)
-            if delete is EMPTY or delete is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
-            if table is not None and not isinstance(table, bytes):
-                return INVALID
-            if not isinstance(delete, bytes):
-                return INVALID
-            try:
-                return operand.translate(table, delete)
-            except ValueError:
-                return INVALID
+            if delete is EMPTY:
+                return EMPTY
+            return operand.translate(table, delete)
 
         return athunk
 
@@ -776,10 +668,8 @@ class BytesTitle(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.title()
 
         return thunk
@@ -789,10 +679,8 @@ class BytesTitle(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.title()
 
         return athunk
@@ -806,10 +694,8 @@ class BytesCapitalize(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.capitalize()
 
         return thunk
@@ -819,10 +705,8 @@ class BytesCapitalize(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.capitalize()
 
         return athunk
@@ -836,10 +720,8 @@ class BytesSwapCase(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.swapcase()
 
         return thunk
@@ -849,10 +731,8 @@ class BytesSwapCase(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.swapcase()
 
         return athunk
@@ -871,18 +751,14 @@ class BytesRSplit(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             first = first_t(rt)
-            if first is EMPTY or first is INVALID:
-                return INVALID
+            if first is EMPTY:
+                return EMPTY
             second = second_t(rt)
-            if second is EMPTY or second is INVALID:
-                return INVALID
+            if second is EMPTY:
+                return EMPTY
             third = third_t(rt)
-            if third is EMPTY or third is INVALID:
-                return INVALID
-            if not isinstance(first, bytes):
-                return INVALID
-            if second is not None and not isinstance(second, bytes):
-                return INVALID
+            if third is EMPTY:
+                return EMPTY
             return first.rsplit(second, int(third))
 
         return thunk
@@ -892,18 +768,14 @@ class BytesRSplit(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             first = await first_t(rt)
-            if first is EMPTY or first is INVALID:
-                return INVALID
+            if first is EMPTY:
+                return EMPTY
             second = await second_t(rt)
-            if second is EMPTY or second is INVALID:
-                return INVALID
+            if second is EMPTY:
+                return EMPTY
             third = await third_t(rt)
-            if third is EMPTY or third is INVALID:
-                return INVALID
-            if not isinstance(first, bytes):
-                return INVALID
-            if second is not None and not isinstance(second, bytes):
-                return INVALID
+            if third is EMPTY:
+                return EMPTY
             return first.rsplit(second, int(third))
 
         return athunk
@@ -917,13 +789,11 @@ class BytesSplitLines(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.splitlines(bool(right))
 
         return thunk
@@ -933,13 +803,11 @@ class BytesSplitLines(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.splitlines(bool(right))
 
         return athunk
@@ -953,17 +821,12 @@ class BytesPartition(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes) or not isinstance(right, bytes):
-                return INVALID
-            try:
-                return left.partition(right)
-            except ValueError:
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
+            return left.partition(right)
 
         return thunk
 
@@ -972,17 +835,12 @@ class BytesPartition(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes) or not isinstance(right, bytes):
-                return INVALID
-            try:
-                return left.partition(right)
-            except ValueError:
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
+            return left.partition(right)
 
         return athunk
 
@@ -995,17 +853,12 @@ class BytesRPartition(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes) or not isinstance(right, bytes):
-                return INVALID
-            try:
-                return left.rpartition(right)
-            except ValueError:
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
+            return left.rpartition(right)
 
         return thunk
 
@@ -1014,17 +867,12 @@ class BytesRPartition(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes) or not isinstance(right, bytes):
-                return INVALID
-            try:
-                return left.rpartition(right)
-            except ValueError:
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
+            return left.rpartition(right)
 
         return athunk
 
@@ -1042,19 +890,17 @@ class BytesRFind(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             sub = sub_t(rt)
-            if sub is EMPTY or sub is INVALID:
-                return INVALID
+            if sub is EMPTY:
+                return EMPTY
             start = start_t(rt)
-            if start is EMPTY or start is INVALID:
-                return INVALID
+            if start is EMPTY:
+                return EMPTY
             end = end_t(rt)
-            if end is EMPTY or end is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes) or not isinstance(sub, bytes):
-                return INVALID
+            if end is EMPTY:
+                return EMPTY
             if end is None:
                 return operand.rfind(sub, int(start))
             return operand.rfind(sub, int(start), int(end))
@@ -1066,19 +912,17 @@ class BytesRFind(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             sub = await sub_t(rt)
-            if sub is EMPTY or sub is INVALID:
-                return INVALID
+            if sub is EMPTY:
+                return EMPTY
             start = await start_t(rt)
-            if start is EMPTY or start is INVALID:
-                return INVALID
+            if start is EMPTY:
+                return EMPTY
             end = await end_t(rt)
-            if end is EMPTY or end is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes) or not isinstance(sub, bytes):
-                return INVALID
+            if end is EMPTY:
+                return EMPTY
             if end is None:
                 return operand.rfind(sub, int(start))
             return operand.rfind(sub, int(start), int(end))
@@ -1087,32 +931,30 @@ class BytesRFind(ScalarQuery):
 
 
 class BytesIndex(ScalarQuery):
-    """Index of sub-bytes (ValueError if absent): bytes.index(sub, start, end)."""
+    """Index of sub-bytes, EMPTY if absent: bytes.index(sub, start, end)."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         operand_t, sub_t, start_t, end_t = children
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             sub = sub_t(rt)
-            if sub is EMPTY or sub is INVALID:
-                return INVALID
+            if sub is EMPTY:
+                return EMPTY
             start = start_t(rt)
-            if start is EMPTY or start is INVALID:
-                return INVALID
+            if start is EMPTY:
+                return EMPTY
             end = end_t(rt)
-            if end is EMPTY or end is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes) or not isinstance(sub, bytes):
-                return INVALID
+            if end is EMPTY:
+                return EMPTY
             try:
                 if end is None:
                     return operand.index(sub, int(start))
                 return operand.index(sub, int(start), int(end))
             except ValueError:
-                return INVALID
+                return EMPTY
 
         return thunk
 
@@ -1121,56 +963,52 @@ class BytesIndex(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             sub = await sub_t(rt)
-            if sub is EMPTY or sub is INVALID:
-                return INVALID
+            if sub is EMPTY:
+                return EMPTY
             start = await start_t(rt)
-            if start is EMPTY or start is INVALID:
-                return INVALID
+            if start is EMPTY:
+                return EMPTY
             end = await end_t(rt)
-            if end is EMPTY or end is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes) or not isinstance(sub, bytes):
-                return INVALID
+            if end is EMPTY:
+                return EMPTY
             try:
                 if end is None:
                     return operand.index(sub, int(start))
                 return operand.index(sub, int(start), int(end))
             except ValueError:
-                return INVALID
+                return EMPTY
 
         return athunk
 
 
 class BytesRIndex(ScalarQuery):
-    """Index of sub-bytes from the right (ValueError if absent): bytes.rindex(sub, start, end)."""
+    """Index of sub-bytes from the right, EMPTY if absent: bytes.rindex(sub, start, end)."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         operand_t, sub_t, start_t, end_t = children
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             sub = sub_t(rt)
-            if sub is EMPTY or sub is INVALID:
-                return INVALID
+            if sub is EMPTY:
+                return EMPTY
             start = start_t(rt)
-            if start is EMPTY or start is INVALID:
-                return INVALID
+            if start is EMPTY:
+                return EMPTY
             end = end_t(rt)
-            if end is EMPTY or end is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes) or not isinstance(sub, bytes):
-                return INVALID
+            if end is EMPTY:
+                return EMPTY
             try:
                 if end is None:
                     return operand.rindex(sub, int(start))
                 return operand.rindex(sub, int(start), int(end))
             except ValueError:
-                return INVALID
+                return EMPTY
 
         return thunk
 
@@ -1179,25 +1017,23 @@ class BytesRIndex(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             sub = await sub_t(rt)
-            if sub is EMPTY or sub is INVALID:
-                return INVALID
+            if sub is EMPTY:
+                return EMPTY
             start = await start_t(rt)
-            if start is EMPTY or start is INVALID:
-                return INVALID
+            if start is EMPTY:
+                return EMPTY
             end = await end_t(rt)
-            if end is EMPTY or end is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes) or not isinstance(sub, bytes):
-                return INVALID
+            if end is EMPTY:
+                return EMPTY
             try:
                 if end is None:
                     return operand.rindex(sub, int(start))
                 return operand.rindex(sub, int(start), int(end))
             except ValueError:
-                return INVALID
+                return EMPTY
 
         return athunk
 
@@ -1215,10 +1051,8 @@ class BytesIsAscii(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.isascii()
 
         return thunk
@@ -1228,10 +1062,8 @@ class BytesIsAscii(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.isascii()
 
         return athunk
@@ -1245,10 +1077,8 @@ class BytesIsDigit(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.isdigit()
 
         return thunk
@@ -1258,10 +1088,8 @@ class BytesIsDigit(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.isdigit()
 
         return athunk
@@ -1275,10 +1103,8 @@ class BytesIsAlpha(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.isalpha()
 
         return thunk
@@ -1288,10 +1114,8 @@ class BytesIsAlpha(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.isalpha()
 
         return athunk
@@ -1305,10 +1129,8 @@ class BytesIsAlnum(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.isalnum()
 
         return thunk
@@ -1318,10 +1140,8 @@ class BytesIsAlnum(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.isalnum()
 
         return athunk
@@ -1335,10 +1155,8 @@ class BytesIsSpace(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.isspace()
 
         return thunk
@@ -1348,10 +1166,8 @@ class BytesIsSpace(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.isspace()
 
         return athunk
@@ -1365,10 +1181,8 @@ class BytesIsTitle(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.istitle()
 
         return thunk
@@ -1378,10 +1192,8 @@ class BytesIsTitle(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.istitle()
 
         return athunk
@@ -1395,10 +1207,8 @@ class BytesIsUpper(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.isupper()
 
         return thunk
@@ -1408,10 +1218,8 @@ class BytesIsUpper(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.isupper()
 
         return athunk
@@ -1425,10 +1233,8 @@ class BytesIsLower(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.islower()
 
         return thunk
@@ -1438,10 +1244,8 @@ class BytesIsLower(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY or operand is INVALID:
-                return INVALID
-            if not isinstance(operand, bytes):
-                return INVALID
+            if operand is EMPTY:
+                return EMPTY
             return operand.islower()
 
         return athunk
@@ -1460,18 +1264,14 @@ class BytesCenter(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             first = first_t(rt)
-            if first is EMPTY or first is INVALID:
-                return INVALID
+            if first is EMPTY:
+                return EMPTY
             second = second_t(rt)
-            if second is EMPTY or second is INVALID:
-                return INVALID
+            if second is EMPTY:
+                return EMPTY
             third = third_t(rt)
-            if third is EMPTY or third is INVALID:
-                return INVALID
-            if not isinstance(first, bytes) or not isinstance(second, int):
-                return INVALID
-            if not isinstance(third, bytes) or len(third) != 1:
-                return INVALID
+            if third is EMPTY:
+                return EMPTY
             return first.center(second, third)
 
         return thunk
@@ -1481,18 +1281,14 @@ class BytesCenter(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             first = await first_t(rt)
-            if first is EMPTY or first is INVALID:
-                return INVALID
+            if first is EMPTY:
+                return EMPTY
             second = await second_t(rt)
-            if second is EMPTY or second is INVALID:
-                return INVALID
+            if second is EMPTY:
+                return EMPTY
             third = await third_t(rt)
-            if third is EMPTY or third is INVALID:
-                return INVALID
-            if not isinstance(first, bytes) or not isinstance(second, int):
-                return INVALID
-            if not isinstance(third, bytes) or len(third) != 1:
-                return INVALID
+            if third is EMPTY:
+                return EMPTY
             return first.center(second, third)
 
         return athunk
@@ -1506,18 +1302,14 @@ class BytesLJust(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             first = first_t(rt)
-            if first is EMPTY or first is INVALID:
-                return INVALID
+            if first is EMPTY:
+                return EMPTY
             second = second_t(rt)
-            if second is EMPTY or second is INVALID:
-                return INVALID
+            if second is EMPTY:
+                return EMPTY
             third = third_t(rt)
-            if third is EMPTY or third is INVALID:
-                return INVALID
-            if not isinstance(first, bytes) or not isinstance(second, int):
-                return INVALID
-            if not isinstance(third, bytes) or len(third) != 1:
-                return INVALID
+            if third is EMPTY:
+                return EMPTY
             return first.ljust(second, third)
 
         return thunk
@@ -1527,18 +1319,14 @@ class BytesLJust(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             first = await first_t(rt)
-            if first is EMPTY or first is INVALID:
-                return INVALID
+            if first is EMPTY:
+                return EMPTY
             second = await second_t(rt)
-            if second is EMPTY or second is INVALID:
-                return INVALID
+            if second is EMPTY:
+                return EMPTY
             third = await third_t(rt)
-            if third is EMPTY or third is INVALID:
-                return INVALID
-            if not isinstance(first, bytes) or not isinstance(second, int):
-                return INVALID
-            if not isinstance(third, bytes) or len(third) != 1:
-                return INVALID
+            if third is EMPTY:
+                return EMPTY
             return first.ljust(second, third)
 
         return athunk
@@ -1552,18 +1340,14 @@ class BytesRJust(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             first = first_t(rt)
-            if first is EMPTY or first is INVALID:
-                return INVALID
+            if first is EMPTY:
+                return EMPTY
             second = second_t(rt)
-            if second is EMPTY or second is INVALID:
-                return INVALID
+            if second is EMPTY:
+                return EMPTY
             third = third_t(rt)
-            if third is EMPTY or third is INVALID:
-                return INVALID
-            if not isinstance(first, bytes) or not isinstance(second, int):
-                return INVALID
-            if not isinstance(third, bytes) or len(third) != 1:
-                return INVALID
+            if third is EMPTY:
+                return EMPTY
             return first.rjust(second, third)
 
         return thunk
@@ -1573,18 +1357,14 @@ class BytesRJust(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             first = await first_t(rt)
-            if first is EMPTY or first is INVALID:
-                return INVALID
+            if first is EMPTY:
+                return EMPTY
             second = await second_t(rt)
-            if second is EMPTY or second is INVALID:
-                return INVALID
+            if second is EMPTY:
+                return EMPTY
             third = await third_t(rt)
-            if third is EMPTY or third is INVALID:
-                return INVALID
-            if not isinstance(first, bytes) or not isinstance(second, int):
-                return INVALID
-            if not isinstance(third, bytes) or len(third) != 1:
-                return INVALID
+            if third is EMPTY:
+                return EMPTY
             return first.rjust(second, third)
 
         return athunk
@@ -1598,13 +1378,11 @@ class BytesZFill(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes) or not isinstance(right, int):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.zfill(right)
 
         return thunk
@@ -1614,13 +1392,11 @@ class BytesZFill(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes) or not isinstance(right, int):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.zfill(right)
 
         return athunk
@@ -1639,13 +1415,11 @@ class BytesExpandTabs(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes) or not isinstance(right, int):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.expandtabs(right)
 
         return thunk
@@ -1655,13 +1429,11 @@ class BytesExpandTabs(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes) or not isinstance(right, int):
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
             return left.expandtabs(right)
 
         return athunk
@@ -1680,17 +1452,12 @@ class BytesJoin(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes):
-                return INVALID
-            try:
-                return left.join(right)
-            except TypeError:
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
+            return left.join(right)
 
         return thunk
 
@@ -1699,16 +1466,11 @@ class BytesJoin(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY or left is INVALID:
-                return INVALID
+            if left is EMPTY:
+                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY or right is INVALID:
-                return INVALID
-            if not isinstance(left, bytes):
-                return INVALID
-            try:
-                return left.join(right)
-            except TypeError:
-                return INVALID
+            if right is EMPTY:
+                return EMPTY
+            return left.join(right)
 
         return athunk

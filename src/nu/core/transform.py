@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING
 from nu.engine import Term
 from nu.lang import StreamQuery
 from nu.lang.literal import Literal
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 from ._stream import aiter_any, sync_iter
 
@@ -58,9 +58,9 @@ class Map(StreamQuery):
           binding lasts for that item's ``transform`` and is released before
           the result is yielded, so it never reaches the consumer.
         - Pulled lazily, one item at a time; nothing runs ahead of the pull.
-        - No sentinel check of its own: an EMPTY or INVALID item, or an
-          EMPTY or INVALID result from ``transform``, passes straight
-          through as a value rather than collapsing.
+        - No sentinel check of its own: an EMPTY item, or an EMPTY result
+          from ``transform``, passes straight through as a value rather
+          than collapsing.
 
     Yields:
         A stream the same length as ``source`` (stream in, stream out),
@@ -121,9 +121,8 @@ class Filter(StreamQuery):
     Notes:
         - ``predicate`` reads the item with ``Attr(<name>)``, the same
           scoped binding as :class:`Map`.
-        - An EMPTY or INVALID ``predicate`` result drops the item rather
-          than propagating the sentinel; only a genuine falsy value does
-          that in Python's ``filter``.
+        - An EMPTY ``predicate`` result counts as false and drops the item,
+          like any falsy value.
         - Pulled lazily, one item at a time.
 
     Yields:
@@ -149,7 +148,7 @@ class Filter(StreamQuery):
                 for elem in sync_iter(source(rt)):
                     with rt.ctx.attrs.let(name, elem):
                         keep = predicate(rt)
-                    if keep is EMPTY or keep is INVALID:
+                    if keep is EMPTY:
                         continue
                     if keep:
                         yield elem
@@ -168,7 +167,7 @@ class Filter(StreamQuery):
                 async for elem in aiter_any(await source(rt)):
                     with rt.ctx.attrs.let(name, elem):
                         keep = await predicate(rt)
-                    if keep is EMPTY or keep is INVALID:
+                    if keep is EMPTY:
                         continue
                     if keep:
                         yield elem
@@ -189,9 +188,8 @@ class Sorted(StreamQuery):
           barrier among these lenses. A pull on its output blocks until
           the whole source is drained and sorted.
         - Items must support ordering against each other.
-        - No sentinel check of its own: an EMPTY or INVALID item is
-          compared like any other value and raises if it can't be ordered
-          against the rest.
+        - No sentinel check of its own: an EMPTY item is compared like any
+          other value and raises if it can't be ordered against the rest.
 
     Yields:
         A stream holding every item of ``source``, ascending (stream in,
@@ -307,8 +305,8 @@ class Flatten(StreamQuery):
     Notes:
         - Only one level deep - an item that yields more iterables stays
           nested.
-        - No sentinel check of its own: an EMPTY or INVALID sub-item is
-          treated like any other value and raises since it isn't iterable.
+        - No sentinel check of its own: an EMPTY sub-item is treated like
+          any other value and raises since it isn't iterable.
 
     Yields:
         A stream of every item from every sub-iterable of ``source``, in
@@ -356,8 +354,8 @@ class Unique(StreamQuery):
         - Keeps every distinct item seen so far to check membership, so
           memory grows with the number of distinct items, not the length
           of ``source``.
-        - No sentinel check of its own: an EMPTY or INVALID item is kept
-          like any other value and only passes through once.
+        - No sentinel check of its own: an EMPTY item is kept like any
+          other value and only passes through once.
 
     Yields:
         A stream holding each distinct item of ``source`` once, in

@@ -108,9 +108,9 @@ class Eval(Interaction):
           local to the subtree that ran it.
 
     Yields:
-        Whatever the inner tree yields, unchanged. Eval adds no EMPTY or
-        INVALID rule of its own, so a sentinel from the inner tree passes
-        straight out.
+        Whatever the inner tree yields, unchanged. Eval adds no EMPTY rule of
+        its own, so EMPTY from the inner tree passes straight
+        out.
 
     Example:
         >>> src = '''

@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 
 from nu.core.comparison import Eq, Ge, Gt, Is, Le, Lt, Ne
-from nu.lang import EMPTY, INVALID
+from nu.lang import EMPTY
 from nu.lang.helpers import aeval, compile, eval
 from nu.lang.literal import Literal
 
@@ -55,7 +55,7 @@ def test_aeval_mirrors_eval():
     assert asyncio.run(_aeval(Ge(Literal(2), Literal(1)))) is True
 
 
-def test_a_sentinel_operand_collapses_to_invalid():
-    assert _eval(Eq(Literal(EMPTY), Literal(1))) is INVALID
-    assert _eval(Lt(Literal(1), Literal(INVALID))) is INVALID
-    assert asyncio.run(_aeval(Gt(Literal(EMPTY), Literal(1)))) is INVALID
+def test_an_empty_operand_collapses_to_empty():
+    assert _eval(Eq(Literal(EMPTY), Literal(1))) is EMPTY
+    assert _eval(Lt(Literal(1), Literal(EMPTY))) is EMPTY
+    assert asyncio.run(_aeval(Gt(Literal(EMPTY), Literal(1)))) is EMPTY

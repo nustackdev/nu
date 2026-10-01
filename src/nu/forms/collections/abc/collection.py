@@ -56,8 +56,7 @@ class CollectionForm(
               expression `nu.run` can evaluate on its own.
 
         Yields:
-            The materialised Python value. Preserves EMPTY vs INVALID when
-            self is a sentinel rather than collapsing them together.
+            The materialised Python value. EMPTY when self is EMPTY.
 
         Example:
             nu.List([1, 2, 3]).extract()

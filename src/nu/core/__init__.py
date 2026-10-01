@@ -34,7 +34,7 @@ family, crossing Query / Command / Action as the builtins do:
 - ``arithmetic`` - numeric ops (Add, Sub, Mul, Pow, Abs, DivMod, Round)
 - ``comparison`` - ordering and identity (Eq, Lt, Gt, Is)
 - ``logical`` - boolean ops (And, Or, Not, ToBool)
-- ``conditional`` - value-yielding branch selection (If)
+- ``conditional`` - value-yielding branch selection (If, Switch)
 - ``bitwise`` - bit ops (BitAnd, BitOr, BitXor, LShift)
 - ``cast`` - type construction / conversion (ToInt, ToStr, ToList, ToDict, ToSet)
 - ``repr`` - representations (Repr, Format, Bin, Hex, Ord, Chr)
@@ -43,7 +43,7 @@ family, crossing Query / Command / Action as the builtins do:
 - ``transform`` - stream-to-stream lenses (Map, Filter, Sorted, Flatten)
 - ``reduction`` - stream-to-scalar folds (Sum, Min, Max, AnyOf, AllOf, Collect)
 - ``reflection`` - introspection (Type, IsInstance, Callable, Id, Hash)
-- ``sentinel`` - the EMPTY / INVALID predicates (IsEmpty, IsInvalid)
+- ``sentinel`` - the queries that observe EMPTY (IsEmpty, Fallback)
 - ``io`` - console effects through the stdio fabric (Print, Input).
         Logging lives at ``nustd.logging`` -- a Python ``logging`` module wrap.
 - ``dynamic`` - host-namespace escape hatches (Globals, Locals)
@@ -163,7 +163,7 @@ from nu.core.repr import (
     Ord,
     Repr,
 )
-from nu.core.sentinel import IsEmpty, IsInvalid, NotEmpty, NotInvalid
+from nu.core.sentinel import Fallback, IsEmpty, NotEmpty
 from nu.core.transform import (
     Filter,
     Flatten,
@@ -201,6 +201,7 @@ __all__ = [
     "DivMod",
     "Enumerate",
     "Eq",
+    "Fallback",
     "Filter",
     "First",
     "Flatten",
@@ -220,7 +221,6 @@ __all__ = [
     "Is",
     "IsEmpty",
     "IsInstance",
-    "IsInvalid",
     "IsSubclass",
     "Iter",
     "LShift",
@@ -240,7 +240,6 @@ __all__ = [
     "Next",
     "Not",
     "NotEmpty",
-    "NotInvalid",
     "Oct",
     "OnChange",
     "OnChildChange",

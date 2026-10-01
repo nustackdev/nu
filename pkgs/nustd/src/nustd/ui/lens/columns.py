@@ -53,7 +53,7 @@ from typing import TYPE_CHECKING, Any
 
 import nu
 from nu.domains.shape import ItemRef, MappingRef, SequenceRef, ShapeRef
-from nu.lang import EMPTY, INVALID, Cardinality
+from nu.lang import EMPTY, Cardinality
 
 
 if TYPE_CHECKING:
@@ -84,11 +84,9 @@ TEXT = 4000
 
 
 def _vtype(value: object) -> str:
-    """The wire word for a value's type. Sentinels get their own words."""
+    """The wire word for a value's type. EMPTY gets its own word."""
     if value is EMPTY:
         return "empty"
-    if value is INVALID:
-        return "invalid"
     if value is None:
         return "none"
     if isinstance(value, bool):
@@ -100,7 +98,7 @@ def _vtype(value: object) -> str:
 
 def _text(value: object) -> str:
     """A value as the browser should read it. Strings unquoted, the rest repr'd."""
-    if value is EMPTY or value is INVALID or value is None:
+    if value is EMPTY or value is None:
         return ""
     return value if isinstance(value, str) else repr(value)
 

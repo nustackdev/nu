@@ -2,8 +2,8 @@
 
 Each atom is a pure ScalarQuery that computes from its operand values, so it
 carries compile / acompile thunks and is exercised end to end: compile the
-term, drive it, check the value. Sentinel propagation (EMPTY / INVALID on any
-operand collapses to INVALID) is checked alongside, and the async siblings are
+term, drive it, check the value. EMPTY propagation (an EMPTY operand
+collapses the result to EMPTY) is checked alongside, and the async siblings are
 asserted to mirror the sync hot path.
 """
 
@@ -25,7 +25,7 @@ from nu.core.arithmetic import (
     Round,
     Sub,
 )
-from nu.lang import EMPTY, INVALID
+from nu.lang import EMPTY
 from nu.lang.helpers import aeval, compile, eval
 from nu.lang.literal import Literal
 
@@ -114,13 +114,13 @@ def test_nested_arithmetic():
 # --- sentinels -----------------------------------------------------------
 
 
-def test_a_sentinel_operand_collapses_to_invalid():
-    assert _eval(Add(Literal(EMPTY), Literal(1))) is INVALID
-    assert _eval(Mul(Literal(2), Literal(INVALID))) is INVALID
-    assert _eval(Sub(Literal(1), Literal(EMPTY))) is INVALID
-    assert _eval(Neg(Literal(INVALID))) is INVALID
-    assert _eval(DivMod(Literal(EMPTY), Literal(2))) is INVALID
-    assert _eval(Round(Literal(1.5), Literal(EMPTY))) is INVALID
+def test_an_empty_operand_collapses_to_empty():
+    assert _eval(Add(Literal(EMPTY), Literal(1))) is EMPTY
+    assert _eval(Mul(Literal(2), Literal(EMPTY))) is EMPTY
+    assert _eval(Sub(Literal(1), Literal(EMPTY))) is EMPTY
+    assert _eval(Neg(Literal(EMPTY))) is EMPTY
+    assert _eval(DivMod(Literal(EMPTY), Literal(2))) is EMPTY
+    assert _eval(Round(Literal(1.5), Literal(EMPTY))) is EMPTY
 
 
 # --- async mirrors sync --------------------------------------------------
@@ -132,4 +132,4 @@ def test_aeval_mirrors_eval():
     assert asyncio.run(_aeval(Abs(Literal(-4)))) == 4
     assert asyncio.run(_aeval(DivMod(Literal(17), Literal(5)))) == (3, 2)
     assert asyncio.run(_aeval(Round(Literal(3.14159), Literal(2)))) == 3.14
-    assert asyncio.run(_aeval(Mul(Literal(2), Literal(EMPTY)))) is INVALID
+    assert asyncio.run(_aeval(Mul(Literal(2), Literal(EMPTY)))) is EMPTY

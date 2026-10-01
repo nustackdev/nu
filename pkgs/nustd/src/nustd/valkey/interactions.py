@@ -22,7 +22,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import Nu, ScalarQuery
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 from .refs import ValkeyRef
 from .resources import ValkeyServer
@@ -44,7 +44,7 @@ def _server_node(server: Nu | None) -> Nu:
 
 def _require_server(value: object) -> ValkeyServer:
     """Unwrap the server slot's value, refusing sentinels with a usable message."""
-    if value is EMPTY or value is INVALID or value is None:
+    if value is EMPTY or value is None:
         msg = "no ValkeyServer is bound on the Context; wrap the tree in nustd.valkey.server(...)"
         raise RuntimeError(msg)
     if not isinstance(value, ValkeyServer):

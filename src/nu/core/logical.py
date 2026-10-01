@@ -18,10 +18,9 @@ as guards: ``And(not_empty(x), contains(x))`` never runs ``contains`` when
 ``x`` is empty. ``And`` yields ``True`` over no operands, ``Or`` yields
 ``False``.
 
-Sentinels: every operand that is actually evaluated is checked; an ``EMPTY``
-or ``INVALID`` operand collapses the whole query to ``INVALID`` (per
-``nu.lang.sentinels``). Short-circuit wins over sentinel poisoning - an
-operand that is never evaluated can never poison the result.
+Sentinels: ``And`` / ``Or`` decide on truthiness, so an ``EMPTY`` operand is
+just a falsy one (per ``nu.lang.sentinels``) and never poisons the result.
+``Not`` and ``ToBool`` are queries over a value and propagate ``EMPTY``.
 """
 
 from __future__ import annotations
@@ -30,7 +29,7 @@ import builtins
 from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -52,13 +51,11 @@ class And(ScalarQuery):
           decides the result and the children after it are never
           evaluated. This is what lets ``And`` guard - a guard that still
           runs the thing it is guarding is not a guard.
-        - Short-circuit beats sentinel poisoning: a child that is never
-          evaluated never contributes its sentinel, so
-          ``And(False, <INVALID>)`` is ``False``, not INVALID.
+        - An EMPTY child counts as false, like any falsy value.
         - No children at all yields True.
 
     Yields:
-        A plain bool. INVALID when an evaluated child is EMPTY or INVALID.
+        A plain bool, never EMPTY.
 
     Example:
         >>> nu.run(nu.And(True, True))[0]
@@ -71,8 +68,6 @@ class And(ScalarQuery):
         def thunk(rt: Runtime) -> object:
             for ct in children:
                 v = ct(rt)
-                if v is EMPTY or v is INVALID:
-                    return INVALID
                 if not builtins.bool(v):
                     return False
             return True
@@ -83,8 +78,6 @@ class And(ScalarQuery):
         async def athunk(rt: Runtime) -> object:
             for ct in children:
                 v = await ct(rt)
-                if v is EMPTY or v is INVALID:
-                    return INVALID
                 if not builtins.bool(v):
                     return False
             return True
@@ -103,13 +96,11 @@ class Or(ScalarQuery):
           decides the result and the children after it are never
           evaluated. This is what lets ``Or`` guard - a guard that still
           runs the thing it is guarding is not a guard.
-        - Short-circuit beats sentinel poisoning: a child that is never
-          evaluated never contributes its sentinel, so
-          ``Or(True, <INVALID>)`` is ``True``, not INVALID.
+        - An EMPTY child counts as false, like any falsy value.
         - No children at all yields False.
 
     Yields:
-        A plain bool. INVALID when an evaluated child is EMPTY or INVALID.
+        A plain bool, never EMPTY.
 
     Example:
         >>> nu.run(nu.Or(False, True))[0]
@@ -122,8 +113,6 @@ class Or(ScalarQuery):
         def thunk(rt: Runtime) -> object:
             for ct in children:
                 v = ct(rt)
-                if v is EMPTY or v is INVALID:
-                    return INVALID
                 if builtins.bool(v):
                     return True
             return False
@@ -134,8 +123,6 @@ class Or(ScalarQuery):
         async def athunk(rt: Runtime) -> object:
             for ct in children:
                 v = await ct(rt)
-                if v is EMPTY or v is INVALID:
-                    return INVALID
                 if builtins.bool(v):
                     return True
             return False
@@ -150,7 +137,7 @@ class Not(ScalarQuery):
         value: the value to negate.
 
     Yields:
-        A plain bool. INVALID when the child is EMPTY or INVALID.
+        A plain bool. EMPTY when the child is EMPTY.
 
     Example:
         >>> nu.run(nu.Not(True))[0]
@@ -162,8 +149,8 @@ class Not(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY or v is INVALID:
-                return INVALID
+            if v is EMPTY:
+                return EMPTY
             return not v
 
         return thunk
@@ -173,8 +160,8 @@ class Not(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY or v is INVALID:
-                return INVALID
+            if v is EMPTY:
+                return EMPTY
             return not v
 
         return athunk
@@ -187,7 +174,7 @@ class ToBool(ScalarQuery):
         value: the value to coerce.
 
     Yields:
-        A plain bool. INVALID when the child is EMPTY or INVALID.
+        A plain bool. EMPTY when the child is EMPTY.
 
     Example:
         >>> nu.run(nu.core.logical.ToBool(0))[0]
@@ -199,8 +186,8 @@ class ToBool(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY or v is INVALID:
-                return INVALID
+            if v is EMPTY:
+                return EMPTY
             return builtins.bool(v)
 
         return thunk
@@ -210,8 +197,8 @@ class ToBool(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY or v is INVALID:
-                return INVALID
+            if v is EMPTY:
+                return EMPTY
             return builtins.bool(v)
 
         return athunk

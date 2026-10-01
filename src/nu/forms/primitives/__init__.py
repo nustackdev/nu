@@ -48,7 +48,7 @@ from .float_ import Float
 from .int_ import Int
 from .none_ import None_
 from .object_ import Object
-from .sentinel_ import EmptyForm, InvalidForm, SentinelForm
+from .sentinel_ import EmptyForm, SentinelForm
 from .str_ import Str
 from .str_interactions import (
     Capitalize,
@@ -155,7 +155,6 @@ __all__ = [
     "Hex",
     "Index",
     "Int",
-    "InvalidForm",
     "IsAlnum",
     "IsAlpha",
     "IsAscii",

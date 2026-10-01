@@ -18,7 +18,7 @@ from nu.domains.shape.interactions import (
 )
 from nu.domains.shape.item import ItemRef
 from nu.lang import ScalarQuery
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 
 # ---------------------------------------------------------------------------
@@ -108,12 +108,6 @@ def test_exists_thunk_false_for_empty():
     assert thunk(None) is False
 
 
-def test_exists_thunk_false_for_invalid():
-    q = Exists(ItemRef("x"))
-    thunk = q._compile(0, (_make_thunk(INVALID),))
-    assert thunk(None) is False
-
-
 def test_missing_thunk_true_for_empty():
     q = Missing(ItemRef("x"))
     thunk = q._compile(0, (_make_thunk(EMPTY),))
@@ -148,17 +142,7 @@ def test_extract_thunk_returns_empty_for_empty_view():
     q = Extract(ItemRef("x"))
     thunk = q._compile(0, (_make_thunk(EMPTY),))
     result = thunk(None)
-    # v1 parity: preserve the sentinel identity — EMPTY stays EMPTY, not INVALID
     assert result is EMPTY
-
-
-def test_extract_thunk_returns_invalid_for_invalid_view():
-    from nu.lang.sentinels import INVALID
-
-    q = Extract(ItemRef("x"))
-    thunk = q._compile(0, (_make_thunk(INVALID),))
-    result = thunk(None)
-    assert result is INVALID
 
 
 @pytest.mark.skip(reason="substrate impl deferred — AdvanceCursor needs view.next_key_after()")

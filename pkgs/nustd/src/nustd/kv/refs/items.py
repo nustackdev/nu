@@ -101,9 +101,9 @@ class IntRef(ItemRef, Int):
             - Read-modify-write in one term, not a storage-level atomic
               increment; wrap it in a transaction when concurrent writers
               can touch the same leaf.
-            - An absent leaf reads as EMPTY, so the addition collapses to
-              INVALID and the write refuses to store a sentinel. Set the
-              slot before incrementing it.
+            - An absent leaf reads as EMPTY, so the addition is EMPTY and
+              the write refuses to store it. Set the slot before
+              incrementing it.
 
         Example:
             run(Counter.hits.inc(), ctx)

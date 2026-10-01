@@ -23,7 +23,7 @@ from nu.lang import (
     StreamQuery,
 )
 from nu.lang.helpers import arun, run
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 
 # --- class shape --------------------------------------------------------
@@ -96,7 +96,7 @@ def test_mixed_positional_and_keyword() -> None:
 def test_keyword_child_sentinel_short_circuits() -> None:
     Sub = InteractionFactory(ScalarQuery, "Sub", lambda a, *, b: a - b)
     value, _ = run(Sub(10, b=Literal(EMPTY)))
-    assert value is INVALID
+    assert value is EMPTY
 
 
 def test_keyword_args_run_on_async_path() -> None:
@@ -128,9 +128,9 @@ def test_scalar_query_factory_binds_an_unbound_method() -> None:
 def test_sentinel_short_circuits_by_default() -> None:
     Add = InteractionFactory(ScalarQuery, "Add", lambda a, b: a + b)
     value, _ = run(Add(Literal(EMPTY), 1))
-    assert value is INVALID
-    value, _ = run(Add(1, Literal(INVALID)))
-    assert value is INVALID
+    assert value is EMPTY
+    value, _ = run(Add(1, Literal(EMPTY)))
+    assert value is EMPTY
 
 
 def test_propagate_off_passes_sentinels_through() -> None:
@@ -141,9 +141,9 @@ def test_propagate_off_passes_sentinels_through() -> None:
         return "ok"
 
     NoProp = InteractionFactory(ScalarQuery, "NoProp", keep, propagate_sentinels=False)
-    value, _ = run(NoProp(Literal(EMPTY), Literal(INVALID)))
+    value, _ = run(NoProp(Literal(EMPTY), Literal(EMPTY)))
     assert value == "ok"
-    assert seen == [(EMPTY, INVALID)]
+    assert seen == [(EMPTY, EMPTY)]
 
 
 # --- command shape ------------------------------------------------------
@@ -172,7 +172,7 @@ def test_command_thunk_returns_none_and_calls_fn() -> None:
     assert calls == [()]
 
 
-def test_command_short_circuits_to_none_on_sentinel() -> None:
+def test_command_refuses_an_empty_operand() -> None:
     calls: list[object] = []
 
     def fn(x: object) -> object:
@@ -187,7 +187,8 @@ def test_command_short_circuits_to_none_on_sentinel() -> None:
         return EMPTY
 
     thunk = instance._compile(0, (child_thunk,))
-    assert thunk(rt=None) is None
+    with pytest.raises(ValueError, match="EMPTY"):
+        thunk(rt=None)
     assert calls == []  # fn never ran
 
 

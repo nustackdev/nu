@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, cast
 
 from nu.engine.structure import Declared
 from nu.lang import Command, Ref
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -114,10 +114,9 @@ class Log(Command):
     values, resolved at eval time. Structured ``extra`` fields ride in
     :attr:`_payload` (static Python values captured at construction).
 
-    A ``msg`` or ``arg`` that reads as an unbound sentinel drops the whole
-    line, the same skip-on-EMPTY guard :class:`Print` uses. That
-    keeps a log call safe against attrs that may not be populated on every
-    branch.
+    A ``msg`` or ``arg`` that reads as EMPTY raises before anything is
+    logged, as any write does. Give a value that may be missing a default
+    with ``fallback`` to keep the line.
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -143,13 +142,13 @@ class Log(Command):
 
         def thunk(rt: Runtime) -> None:
             msg = msg_thunk(rt)
-            if msg is EMPTY or msg is INVALID:
-                return
+            if msg is EMPTY:
+                raise ValueError("cannot write EMPTY")
             args: list[object] = []
             for at in arg_thunks:
                 v = at(rt)
-                if v is EMPTY or v is INVALID:
-                    return
+                if v is EMPTY:
+                    raise ValueError("cannot write EMPTY")
                 args.append(v)
             level = _to_level(level_thunk(rt))
             logger_name = str(logger_thunk(rt))
@@ -166,13 +165,13 @@ class Log(Command):
 
         async def athunk(rt: Runtime) -> None:
             msg = await msg_thunk(rt)
-            if msg is EMPTY or msg is INVALID:
-                return
+            if msg is EMPTY:
+                raise ValueError("cannot write EMPTY")
             args: list[object] = []
             for at in arg_thunks:
                 v = await at(rt)
-                if v is EMPTY or v is INVALID:
-                    return
+                if v is EMPTY:
+                    raise ValueError("cannot write EMPTY")
                 args.append(v)
             level = _to_level(await level_thunk(rt))
             logger_name = str(await logger_thunk(rt))

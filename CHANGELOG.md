@@ -13,6 +13,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Missing values flow through expressions, count as false in conditions, and refuse to be stored
+- Any value can fall back to alternatives when it is missing
 - UI kit 0.2.6 ships proper close buttons on dialogs and sheets
 - Dialog and sheet close buttons look and behave like every other icon button
 - Count the two new key refs in the node registry test

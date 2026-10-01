@@ -103,11 +103,10 @@ class Frame:
 def _msgpack_default(obj: object) -> Any:
     """Coerce values msgpack can't pack on its own.
 
-    Nu sentinels (EMPTY / INVALID) are first-class values: a Ref resolves to
-    one when its address is absent or an operation didn't apply. The wire
-    carries Nu values, so the display layer maps them to msgpack nil (which
-    decodes to None / null on the browser) rather than crashing the
-    connection.
+    EMPTY is a first-class value: a Ref resolves to it when its address is
+    absent, and queries over it carry it on. The wire carries Nu values, so
+    the display layer maps it to msgpack nil (which decodes to None / null on
+    the browser) rather than crashing the connection.
     """
     if is_sentinel(obj):
         return None

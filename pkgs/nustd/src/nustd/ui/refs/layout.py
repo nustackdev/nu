@@ -25,7 +25,7 @@ from typing_extensions import Self
 from nu.engine.structure import Declared
 from nu.forms import Dict
 from nu.lang import Command
-from nu.lang.sentinels import UNSET
+from nu.lang.sentinels import EMPTY, UNSET
 from nustd.ui.core import Frame, Ref, Section, SectionRef, Session
 from nustd.ui.core.interactions import Changed, Write
 
@@ -135,6 +135,8 @@ class _SetSectionStr(Command):
             ref_nid = rt.program.children[nid][0]
             path = await ref._aresolve_address(rt, ref_nid)
             value = await value_thunk(rt)
+            if value is EMPTY:
+                raise ValueError("cannot write EMPTY")
             await session.send(Frame(self._op, ref=path, payload=value))
 
         return athunk
@@ -417,6 +419,8 @@ class _SetTabs(Command):
             ref_nid = rt.program.children[nid][0]
             path = await ref._aresolve_address(rt, ref_nid)
             value = await value_thunk(rt)
+            if value is EMPTY:
+                raise ValueError("cannot write EMPTY")
             if isinstance(value, list):
                 value = _normalize_tabs(value)
             await session.send(Frame("set_tabs", ref=path, payload=value))
@@ -446,6 +450,8 @@ class _SetActive(Command):
             ref_nid = rt.program.children[nid][0]
             path = await ref._aresolve_address(rt, ref_nid)
             value = await value_thunk(rt)
+            if value is EMPTY:
+                raise ValueError("cannot write EMPTY")
             payload = "" if value is None else str(value)
             await session.send(Frame("set_active", ref=path, payload=payload))
 

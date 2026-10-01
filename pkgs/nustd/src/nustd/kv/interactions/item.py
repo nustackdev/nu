@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Command, ScalarQuery
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -111,9 +111,7 @@ class ItemPrimitiveGetUnsafe(ScalarQuery):
         - Does not create anything. A missing parent chain stays missing.
 
     Yields:
-        The stored value. EMPTY when nothing is stored at the address, and
-        also when the substrate hands back INVALID - the two collapse to one
-        answer here, so this atom never yields INVALID.
+        The stored value. EMPTY when nothing is stored at the address.
 
     Example:
         app = nu.With(
@@ -130,7 +128,7 @@ class ItemPrimitiveGetUnsafe(ScalarQuery):
             parent = ref._fetch_parent_view(rt, ref._resolve_path(rt, cnid))
             address = ref._address(rt, cnid)
             value = parent._unsafe_primitive_read(address)
-            return EMPTY if value is EMPTY or value is INVALID else value
+            return EMPTY if value is EMPTY else value
 
         return thunk
 
@@ -142,7 +140,7 @@ class ItemPrimitiveGetUnsafe(ScalarQuery):
             parent = ref._fetch_parent_view(rt, await ref._aresolve_path(rt, cnid))
             address = await ref._aaddress(rt, cnid)
             value = parent._unsafe_primitive_read(address)
-            return EMPTY if value is EMPTY or value is INVALID else value
+            return EMPTY if value is EMPTY else value
 
         return athunk
 
@@ -167,8 +165,8 @@ class _UnsafeSetBase(Command):
             parent = ref._fetch_parent_view(rt, ref._resolve_path(rt, cnid))
             address = ref._address(rt, cnid)
             value = value_thunk(rt)
-            if value is EMPTY or value is INVALID:
-                raise ValueError("cannot store sentinel value")
+            if value is EMPTY:
+                raise ValueError("cannot store EMPTY")
             parent._unsafe_primitive_write(address, value, ensure_exists=ensure)
 
         return thunk
@@ -183,8 +181,8 @@ class _UnsafeSetBase(Command):
             parent = ref._fetch_parent_view(rt, await ref._aresolve_path(rt, cnid))
             address = await ref._aaddress(rt, cnid)
             value = await value_thunk(rt)
-            if value is EMPTY or value is INVALID:
-                raise ValueError("cannot store sentinel value")
+            if value is EMPTY:
+                raise ValueError("cannot store EMPTY")
             parent._unsafe_primitive_write(address, value, ensure_exists=ensure)
 
         return athunk
@@ -207,8 +205,8 @@ class ItemPrimitiveSetUnsafeCmd(_UnsafeSetBase):
         - Declares slot 0 as a mutation position, so ``auto_flow_atomic``
           braces the branch in a Transaction.
         - The value is evaluated after the parent view and address resolve.
-        - Raises ``ValueError`` when the value slot evaluates to EMPTY or
-          INVALID; sentinels are never stored.
+        - Raises ``ValueError`` when the value slot evaluates to EMPTY;
+          EMPTY is never stored.
 
     Yields:
         Nothing.
@@ -242,8 +240,8 @@ class ItemPrimitiveSetUnsafeParentSkipCmd(_UnsafeSetBase):
     Notes:
         - Declares slot 0 as a mutation position, so ``auto_flow_atomic``
           braces the branch in a Transaction.
-        - Raises ``ValueError`` when the value slot evaluates to EMPTY or
-          INVALID; sentinels are never stored.
+        - Raises ``ValueError`` when the value slot evaluates to EMPTY;
+          EMPTY is never stored.
 
     Yields:
         Nothing.
@@ -334,8 +332,8 @@ class ItemPrimitiveSetCmd(Command):
           braces the branch in a Transaction.
         - The value is evaluated before the parent view resolves, the reverse
           of the unsafe writers' order.
-        - Raises ``ValueError`` when the value slot evaluates to EMPTY or
-          INVALID; sentinels are never stored.
+        - Raises ``ValueError`` when the value slot evaluates to EMPTY;
+          EMPTY is never stored.
 
     Yields:
         Nothing.
@@ -358,8 +356,8 @@ class ItemPrimitiveSetCmd(Command):
 
         def thunk(rt: Runtime) -> None:
             data = data_thunk(rt)
-            if data is EMPTY or data is INVALID:
-                raise ValueError("cannot store sentinel value")
+            if data is EMPTY:
+                raise ValueError("cannot store EMPTY")
             cnid = _child_nid(rt, nid, 0)
             parent = ref._fetch_parent_view(rt, ref._resolve_path(rt, cnid))
             parent._primitive_write(ref._address(rt, cnid), data)
@@ -372,8 +370,8 @@ class ItemPrimitiveSetCmd(Command):
 
         async def athunk(rt: Runtime) -> None:
             data = await data_thunk(rt)
-            if data is EMPTY or data is INVALID:
-                raise ValueError("cannot store sentinel value")
+            if data is EMPTY:
+                raise ValueError("cannot store EMPTY")
             cnid = _child_nid(rt, nid, 0)
             parent = ref._fetch_parent_view(rt, await ref._aresolve_path(rt, cnid))
             parent._primitive_write(await ref._aaddress(rt, cnid), data)

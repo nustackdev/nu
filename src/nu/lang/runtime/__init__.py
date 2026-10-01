@@ -5,7 +5,7 @@
 - ``utils``     - ``Budget``, ``into_loop``, ``safely_(a)closing``: per-call
   resources and lifecycle helpers.
 
-Sentinels (``EMPTY`` / ``INVALID`` / ``Sentinel``) live one level up as
+Sentinels (``EMPTY`` / ``UNSET`` / ``Sentinel``) live one level up as
 ``nu.lang.sentinels``: they are value-space vocabulary, not runtime
 mechanics. Top-level entry points (``run``, ``eval``, ``aeval``, ...) live
 in ``nu.lang.helpers``.

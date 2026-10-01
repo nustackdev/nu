@@ -31,7 +31,7 @@ from typing import TYPE_CHECKING
 from nu.core._stream import aiter_any, sync_iter
 from nu.engine import Term
 from nu.lang import Literal, ScalarQuery, StreamQuery
-from nu.lang.sentinels import EMPTY, INVALID, UNSET
+from nu.lang.sentinels import EMPTY, UNSET
 
 
 if TYPE_CHECKING:
@@ -154,7 +154,7 @@ class Repeat(StreamQuery):
             if times_t is None:
                 return _it.repeat(elem)
             times = times_t(rt)
-            if times is EMPTY or times is INVALID:
+            if times is EMPTY:
                 return iter(())
             return _it.repeat(elem, times)
 
@@ -169,7 +169,7 @@ class Repeat(StreamQuery):
             times = None
             if times_t is not None:
                 times = await times_t(rt)
-                if times is EMPTY or times is INVALID:
+                if times is EMPTY:
                     times = 0
             src = _it.repeat(elem) if times is None else _it.repeat(elem, times)
 
@@ -607,7 +607,7 @@ class TakeWhile(StreamQuery):
 
     Children: ``[source, predicate, key]``. Each item is bound under the name
     ``key`` yields, then ``predicate`` runs; the item is yielded while truthy
-    and iteration stops at the first falsy result. A sentinel predicate stops.
+    and iteration stops at the first falsy result. An EMPTY result is falsy.
     The body reads the item with ``Attr("item")``.
     """
 
@@ -625,7 +625,7 @@ class TakeWhile(StreamQuery):
                 for elem in sync_iter(source(rt)):
                     with rt.ctx.attrs.let(name, elem):
                         keep = predicate(rt)
-                    if keep is EMPTY or keep is INVALID or not keep:
+                    if not keep:
                         return
                     yield elem
 
@@ -643,7 +643,7 @@ class TakeWhile(StreamQuery):
                 async for elem in aiter_any(await source(rt)):
                     with rt.ctx.attrs.let(name, elem):
                         keep = await predicate(rt)
-                    if keep is EMPTY or keep is INVALID or not keep:
+                    if not keep:
                         return
                     yield elem
 
@@ -656,8 +656,9 @@ class DropWhile(StreamQuery):
     """``itertools.dropwhile(predicate, iterable)`` - skip while the predicate holds.
 
     Children: ``[source, predicate, key]``. Skips items while ``predicate`` is
-    truthy; once it is falsy, yields that item and every item after it with no
-    further predicate evaluation. The body reads the item via ``Attr("item")``.
+    truthy; once it is falsy (EMPTY included), yields that item and every item
+    after it with no further predicate evaluation. The body reads the item via
+    ``Attr("item")``.
     """
 
     def __init__(self, source: Arg, predicate: Nu, key: StrArg = "item") -> None:
@@ -676,7 +677,7 @@ class DropWhile(StreamQuery):
                     if dropping:
                         with rt.ctx.attrs.let(name, elem):
                             keep = predicate(rt)
-                        if keep is not EMPTY and keep is not INVALID and keep:
+                        if keep:
                             continue
                         dropping = False
                     yield elem
@@ -697,7 +698,7 @@ class DropWhile(StreamQuery):
                     if dropping:
                         with rt.ctx.attrs.let(name, elem):
                             keep = await predicate(rt)
-                        if keep is not EMPTY and keep is not INVALID and keep:
+                        if keep:
                             continue
                         dropping = False
                     yield elem
@@ -710,8 +711,10 @@ class DropWhile(StreamQuery):
 class FilterFalse(StreamQuery):
     """``itertools.filterfalse(predicate, iterable)`` - keep items where the predicate is falsy.
 
-    Children: ``[source, predicate, key]``. The complement of ``filter``. A
-    sentinel predicate skips the item. The body reads it via ``Attr("item")``.
+    Children: ``[source, predicate, key]``. The complement of ``filter``. An
+    EMPTY predicate is unknown rather than false, so it never passes: the item
+    is skipped, as ``filter`` over ``Not(predicate)`` would. The body reads it
+    via ``Attr("item")``.
     """
 
     def __init__(self, source: Arg, predicate: Nu, key: StrArg = "item") -> None:
@@ -728,7 +731,7 @@ class FilterFalse(StreamQuery):
                 for elem in sync_iter(source(rt)):
                     with rt.ctx.attrs.let(name, elem):
                         keep = predicate(rt)
-                    if keep is EMPTY or keep is INVALID:
+                    if keep is EMPTY:
                         continue
                     if not keep:
                         yield elem
@@ -747,7 +750,7 @@ class FilterFalse(StreamQuery):
                 async for elem in aiter_any(await source(rt)):
                     with rt.ctx.attrs.let(name, elem):
                         keep = await predicate(rt)
-                    if keep is EMPTY or keep is INVALID:
+                    if keep is EMPTY:
                         continue
                     if not keep:
                         yield elem
@@ -851,7 +854,7 @@ class StarMap(StreamQuery):
 
     Children: ``[source, function, key]``. Each item is a tuple bound under
     ``key``; ``function`` reads its parts via ``Attr("item")[0]``,
-    ``[1]``, ... The result is yielded. A sentinel result is skipped.
+    ``[1]``, ... The result is yielded. An EMPTY result is skipped.
     """
 
     def __init__(self, source: Arg, function: Nu, key: StrArg = "item") -> None:
@@ -868,7 +871,7 @@ class StarMap(StreamQuery):
                 for elem in sync_iter(source(rt)):
                     with rt.ctx.attrs.let(name, elem):
                         result = function(rt)
-                    if result is EMPTY or result is INVALID:
+                    if result is EMPTY:
                         continue
                     yield result
 
@@ -886,7 +889,7 @@ class StarMap(StreamQuery):
                 async for elem in aiter_any(await source(rt)):
                     with rt.ctx.attrs.let(name, elem):
                         result = await function(rt)
-                    if result is EMPTY or result is INVALID:
+                    if result is EMPTY:
                         continue
                     yield result
 

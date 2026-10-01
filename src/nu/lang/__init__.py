@@ -5,7 +5,7 @@
 - ``nu``         - the ``Nu`` base class.
 - ``kinds``      - the kind taxonomy (``Ref`` / ``Interaction`` / ``ScalarQuery`` / ...).
 - ``args``       - argument type aliases (``IntArg``, ``StrArg``, ...) for kind signatures.
-- ``sentinels``  - ``EMPTY`` / ``INVALID`` and their guards.
+- ``sentinels``  - ``EMPTY`` / ``UNSET`` and their guards.
 - ``attributes`` - the attribute concerns (sort, cardinality, effects, execution).
 - ``laws``       - ``LAWS`` and the predicate library.
 - ``runtime``    - ``Runtime``, ``Context``, ``Budget``, lifecycle helpers.
@@ -80,14 +80,11 @@ from .nu import Nu
 from .runtime import Context, Runtime
 from .sentinels import (
     EMPTY,
-    INVALID,
     UNSET,
     Empty,
-    Invalid,
     Sentinel,
     Unset,
     is_empty,
-    is_invalid,
     is_sentinel,
 )
 from .typeinfo import TypeInfo, value_type_for
@@ -98,7 +95,6 @@ if TYPE_CHECKING:
 
 __all__ = [
     "EMPTY",
-    "INVALID",
     "LAWS",
     "MATRIX",
     "SCHEMA",
@@ -124,7 +120,6 @@ __all__ = [
     "FrozenSetArg",
     "IntArg",
     "Interaction",
-    "Invalid",
     "Law",
     "ListArg",
     "Literal",
@@ -166,7 +161,6 @@ __all__ = [
     "first",
     "gate",
     "is_empty",
-    "is_invalid",
     "is_sentinel",
     "matrix_sort",
     "predicate",

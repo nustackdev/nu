@@ -3,7 +3,7 @@
 A Form is what a fabric location holds (an Int, a Str, a Dict, a ToList) and the
 fluent typed surface for building Nu over it. The base mixin ``Form`` and the
 passthrough ``TypedNu`` live in ``nu.lang`` (re-exported here for convenience);
-the sentinel predicates (``IsEmpty`` / ``IsInvalid``) live in ``nu.core``.
+the sentinel queries (``IsEmpty``, ``Fallback``) live in ``nu.core``.
 
 Concrete primitive Forms live in ``primitives/``, concrete collection Forms in
 ``collections/`` (with abstract contracts in ``collections/abc/``).
@@ -28,7 +28,6 @@ from .primitives import (
     EmptyForm,
     Float,
     Int,
-    InvalidForm,
     None_,
     Object,
     SentinelForm,
@@ -48,7 +47,6 @@ __all__ = [
     "Form",
     "FrozenSet",
     "Int",
-    "InvalidForm",
     "Iterator",
     "List",
     "None_",

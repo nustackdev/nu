@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 from nu.engine.structure import Declared
 from nu.factory import host
 from nu.lang import Command, ScalarAction, ScalarQuery
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -57,8 +57,8 @@ ListCreate = host(list, name="ListCreate")
 # Empty tuple: deterministic and immutable (sharing one () is fine).
 TupleCreate = host(tuple, name="TupleCreate")
 # Tuple from positional items: TupleOf(a, b) evaluates each child expression and
-# packs the values into a fresh tuple. Sibling to DictOf. A sentinel item
-# short-circuits the whole tuple to INVALID (propagate_sentinels default).
+# packs the values into a fresh tuple. Sibling to DictOf. An EMPTY item
+# short-circuits the whole tuple to EMPTY (propagate_sentinels default).
 TupleOf = host(lambda *items: items, name="TupleOf")
 # List from positional items: sibling to TupleOf; each eval yields a fresh
 # mutable list.
@@ -71,19 +71,19 @@ ListOf = host(lambda *items: list(items), name="ListOf")
 
 
 class First(ScalarQuery):
-    """First element: seq[0]. Returns Invalid if empty."""
+    """First element: seq[0]. EMPTY if the sequence is empty."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (operand,) = children
 
         def thunk(rt: Runtime) -> object:
             obj = operand(rt)
-            if obj is EMPTY or obj is INVALID:
-                return INVALID
+            if obj is EMPTY:
+                return EMPTY
             if not isinstance(obj, Sequence):
                 raise TypeError(f"first() requires sequence, got {type(obj).__name__}")
             if len(obj) == 0:
-                return INVALID
+                return EMPTY
             return obj[0]
 
         return thunk
@@ -93,31 +93,31 @@ class First(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
-            if obj is EMPTY or obj is INVALID:
-                return INVALID
+            if obj is EMPTY:
+                return EMPTY
             if not isinstance(obj, Sequence):
                 raise TypeError(f"first() requires sequence, got {type(obj).__name__}")
             if len(obj) == 0:
-                return INVALID
+                return EMPTY
             return obj[0]
 
         return athunk
 
 
 class Last(ScalarQuery):
-    """Last element: seq[-1]. Returns Invalid if empty."""
+    """Last element: seq[-1]. EMPTY if the sequence is empty."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (operand,) = children
 
         def thunk(rt: Runtime) -> object:
             obj = operand(rt)
-            if obj is EMPTY or obj is INVALID:
-                return INVALID
+            if obj is EMPTY:
+                return EMPTY
             if not isinstance(obj, Sequence):
                 raise TypeError(f"last() requires sequence, got {type(obj).__name__}")
             if len(obj) == 0:
-                return INVALID
+                return EMPTY
             return obj[-1]
 
         return thunk
@@ -127,36 +127,36 @@ class Last(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
-            if obj is EMPTY or obj is INVALID:
-                return INVALID
+            if obj is EMPTY:
+                return EMPTY
             if not isinstance(obj, Sequence):
                 raise TypeError(f"last() requires sequence, got {type(obj).__name__}")
             if len(obj) == 0:
-                return INVALID
+                return EMPTY
             return obj[-1]
 
         return athunk
 
 
 class IndexOf(ScalarQuery):
-    """Find index of value: seq.index(value). Returns Invalid if not found."""
+    """Find index of value: seq.index(value). EMPTY if not found."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         a_t, b_t = children
 
         def thunk(rt: Runtime) -> object:
             a = a_t(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                return EMPTY
             b = b_t(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
+            if b is EMPTY:
+                return EMPTY
             if not isinstance(a, Sequence):
                 raise TypeError(f"index_() requires sequence, got {type(a).__name__}")
             try:
                 return a.index(b)
             except ValueError:
-                return INVALID
+                return EMPTY
 
         return thunk
 
@@ -165,17 +165,17 @@ class IndexOf(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await a_t(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                return EMPTY
             b = await b_t(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
+            if b is EMPTY:
+                return EMPTY
             if not isinstance(a, Sequence):
                 raise TypeError(f"index_() requires sequence, got {type(a).__name__}")
             try:
                 return a.index(b)
             except ValueError:
-                return INVALID
+                return EMPTY
 
         return athunk
 
@@ -188,11 +188,11 @@ class Count(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             a = a_t(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                return EMPTY
             b = b_t(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
+            if b is EMPTY:
+                return EMPTY
             if not isinstance(a, Sequence):
                 raise TypeError(f"count_() requires sequence, got {type(a).__name__}")
             return a.count(b)
@@ -204,11 +204,11 @@ class Count(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await a_t(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                return EMPTY
             b = await b_t(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
+            if b is EMPTY:
+                return EMPTY
             if not isinstance(a, Sequence):
                 raise TypeError(f"count_() requires sequence, got {type(a).__name__}")
             return a.count(b)
@@ -224,8 +224,8 @@ class Copy(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             target = target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return INVALID
+            if target is EMPTY:
+                return EMPTY
             return target.copy()
 
         return thunk
@@ -235,8 +235,8 @@ class Copy(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             target = await target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return INVALID
+            if target is EMPTY:
+                return EMPTY
             return target.copy()
 
         return athunk
@@ -257,11 +257,11 @@ class Append(Command):
 
         def thunk(rt: Runtime) -> None:
             target = target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             value = value_t(rt)
-            if value is EMPTY or value is INVALID:
-                return
+            if value is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             target.append(value)
 
         return thunk
@@ -271,11 +271,11 @@ class Append(Command):
 
         async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             value = await value_t(rt)
-            if value is EMPTY or value is INVALID:
-                return
+            if value is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             target.append(value)
 
         return athunk
@@ -291,14 +291,14 @@ class Insert(Command):
 
         def thunk(rt: Runtime) -> None:
             target = target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             index = index_t(rt)
-            if index is EMPTY or index is INVALID:
-                return
+            if index is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             value = value_t(rt)
-            if value is EMPTY or value is INVALID:
-                return
+            if value is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             if not isinstance(index, int):
                 raise TypeError(f"insert() requires int index, got {type(index).__name__}")
             target.insert(index, value)
@@ -310,14 +310,14 @@ class Insert(Command):
 
         async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             index = await index_t(rt)
-            if index is EMPTY or index is INVALID:
-                return
+            if index is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             value = await value_t(rt)
-            if value is EMPTY or value is INVALID:
-                return
+            if value is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             if not isinstance(index, int):
                 raise TypeError(f"insert() requires int index, got {type(index).__name__}")
             target.insert(index, value)
@@ -335,11 +335,11 @@ class Extend(Command):
 
         def thunk(rt: Runtime) -> None:
             target = target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             other = other_t(rt)
-            if other is EMPTY or other is INVALID:
-                return
+            if other is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             target.extend(other)
 
         return thunk
@@ -349,11 +349,11 @@ class Extend(Command):
 
         async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             other = await other_t(rt)
-            if other is EMPTY or other is INVALID:
-                return
+            if other is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             target.extend(other)
 
         return athunk
@@ -369,11 +369,11 @@ class RemoveValue(Command):
 
         def thunk(rt: Runtime) -> None:
             target = target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             value = value_t(rt)
-            if value is EMPTY or value is INVALID:
-                return
+            if value is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             target.remove(value)
 
         return thunk
@@ -383,11 +383,11 @@ class RemoveValue(Command):
 
         async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             value = await value_t(rt)
-            if value is EMPTY or value is INVALID:
-                return
+            if value is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             target.remove(value)
 
         return athunk
@@ -403,8 +403,8 @@ class Reverse(Command):
 
         def thunk(rt: Runtime) -> None:
             target = target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             target.reverse()
 
         return thunk
@@ -414,8 +414,8 @@ class Reverse(Command):
 
         async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             target.reverse()
 
         return athunk
@@ -434,8 +434,8 @@ class Sort(Command):
 
         def thunk(rt: Runtime) -> None:
             target = target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             target.sort()
 
         return thunk
@@ -445,8 +445,8 @@ class Sort(Command):
 
         async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             target.sort()
 
         return athunk
@@ -462,14 +462,14 @@ class SetIndex(Command):
 
         def thunk(rt: Runtime) -> None:
             target = target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             index = index_t(rt)
-            if index is EMPTY or index is INVALID:
-                return
+            if index is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             value = value_t(rt)
-            if value is EMPTY or value is INVALID:
-                return
+            if value is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             target[index] = value
 
         return thunk
@@ -479,14 +479,14 @@ class SetIndex(Command):
 
         async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             index = await index_t(rt)
-            if index is EMPTY or index is INVALID:
-                return
+            if index is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             value = await value_t(rt)
-            if value is EMPTY or value is INVALID:
-                return
+            if value is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             target[index] = value
 
         return athunk
@@ -502,11 +502,11 @@ class DelIndex(Command):
 
         def thunk(rt: Runtime) -> None:
             target = target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             index = index_t(rt)
-            if index is EMPTY or index is INVALID:
-                return
+            if index is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             del target[index]
 
         return thunk
@@ -516,11 +516,11 @@ class DelIndex(Command):
 
         async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             index = await index_t(rt)
-            if index is EMPTY or index is INVALID:
-                return
+            if index is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             del target[index]
 
         return athunk
@@ -544,17 +544,15 @@ class Pop(ScalarAction):
 
         def thunk(rt: Runtime) -> object:
             a = a_t(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             b = b_t(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
-            if not isinstance(b, int):
-                return INVALID
+            if b is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             try:
                 return a.pop(b)
             except IndexError:
-                return INVALID
+                return EMPTY
 
         return thunk
 
@@ -563,17 +561,15 @@ class Pop(ScalarAction):
 
         async def athunk(rt: Runtime) -> object:
             a = await a_t(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             b = await b_t(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
-            if not isinstance(b, int):
-                return INVALID
+            if b is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             try:
                 return a.pop(b)
             except IndexError:
-                return INVALID
+                return EMPTY
 
         return athunk
 
@@ -588,11 +584,11 @@ class IAdd(ScalarAction):
 
         def thunk(rt: Runtime) -> object:
             target = target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return INVALID
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             other = other_t(rt)
-            if other is EMPTY or other is INVALID:
-                return INVALID
+            if other is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             target += other
             return target
 
@@ -603,11 +599,11 @@ class IAdd(ScalarAction):
 
         async def athunk(rt: Runtime) -> object:
             target = await target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return INVALID
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             other = await other_t(rt)
-            if other is EMPTY or other is INVALID:
-                return INVALID
+            if other is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             target += other
             return target
 
@@ -624,11 +620,11 @@ class IMul(ScalarAction):
 
         def thunk(rt: Runtime) -> object:
             target = target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return INVALID
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             n = n_t(rt)
-            if n is EMPTY or n is INVALID:
-                return INVALID
+            if n is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             target *= n
             return target
 
@@ -639,11 +635,11 @@ class IMul(ScalarAction):
 
         async def athunk(rt: Runtime) -> object:
             target = await target_t(rt)
-            if target is EMPTY or target is INVALID:
-                return INVALID
+            if target is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             n = await n_t(rt)
-            if n is EMPTY or n is INVALID:
-                return INVALID
+            if n is EMPTY:
+                raise ValueError("cannot write with an EMPTY operand")
             target *= n
             return target
 

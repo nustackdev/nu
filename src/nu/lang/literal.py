@@ -44,7 +44,7 @@ class Literal(ScalarQuery):
           expected wraps it in a Literal automatically.
 
     Yields:
-        ``value``, unchanged, every time. Never EMPTY or INVALID on its own -
+        ``value``, unchanged, every time. Never EMPTY on its own -
         a Literal has no children to propagate a sentinel from.
 
     Example:

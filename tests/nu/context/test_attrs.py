@@ -13,7 +13,7 @@ import pytest
 import nu
 import nu.context.attrs
 from nu.core import Add
-from nu.lang import EMPTY, INVALID, Attr, Context, Effect, Literal
+from nu.lang import EMPTY, Attr, Context, Effect, Literal
 from nu.lang.helpers import arun, compile, run
 
 
@@ -31,7 +31,7 @@ def test_attr_reads_a_seeded_name():
 
 def test_attr_on_an_unbound_name_is_empty_and_propagates():
     assert run(nu.context.Attr("missing"))[0] is EMPTY
-    assert run(Add(nu.context.Attr("missing"), Literal(1)))[0] is INVALID
+    assert run(Add(nu.context.Attr("missing"), Literal(1)))[0] is EMPTY
 
 
 def test_attr_reads_what_map_bound_for_each_item():

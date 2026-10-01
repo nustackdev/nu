@@ -112,7 +112,7 @@ class IntRef(ItemRef, Int):
               step; wrap it in a transaction when something else may write
               in between.
             - On an unwritten slot the read is EMPTY, so the addition is
-              INVALID and that is what gets stored.
+              EMPTY and the write raises.
 
         Example:
             >>> class User(nu.Shape):

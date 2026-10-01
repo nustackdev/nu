@@ -13,7 +13,7 @@ from nu.forms.collections.abc.set_interactions import (
     SymmetricDifference,
     Union,
 )
-from nu.lang import INVALID
+from nu.lang import EMPTY
 from nu.lang.helpers import compile, eval
 from nu.lang.literal import Literal
 
@@ -78,9 +78,9 @@ def test_symmetric_difference_disjoint_sets():
 # --- sentinel propagation ------------------------------------------------
 
 
-def test_union_propagates_invalid_left():
-    assert _eval(Union(Literal(INVALID), Literal([1, 2]))) is INVALID
+def test_union_propagates_empty_left():
+    assert _eval(Union(Literal(EMPTY), Literal([1, 2]))) is EMPTY
 
 
-def test_union_propagates_invalid_right():
-    assert _eval(Union(Literal({1, 2}), Literal(INVALID))) is INVALID
+def test_union_propagates_empty_right():
+    assert _eval(Union(Literal({1, 2}), Literal(EMPTY))) is EMPTY

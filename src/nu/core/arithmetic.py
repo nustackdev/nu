@@ -21,8 +21,8 @@ Each atom defines ``compile`` (sync hot path) and ``acompile`` (async hot
 path). Both return a thunk ``(rt) -> value`` (sync) or ``(rt) -> awaitable``
 (async) that captures the precompiled child thunks, so recursion skips the
 ``Runtime.eval`` / ``Runtime.aeval`` dispatch hop per child. Sentinel
-propagation is inlined: an EMPTY or INVALID operand collapses the result to
-INVALID without further folding.
+propagation is inlined: an EMPTY operand collapses the result to EMPTY
+without further folding.
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -69,7 +69,7 @@ class Add(ScalarQuery):
           sentinel it meets.
 
     Yields:
-        The sum. INVALID when any child is EMPTY or INVALID.
+        The sum. EMPTY when any child is EMPTY.
 
     Example:
         >>> nu.run(nu.Add(1, 2, 3))[0]
@@ -81,8 +81,8 @@ class Add(ScalarQuery):
             s: object = 0  # additive identity for the no-children case
             for i, ct in enumerate(children):
                 v = ct(rt)
-                if v is EMPTY or v is INVALID:
-                    return INVALID
+                if v is EMPTY:
+                    return EMPTY
                 # Fold from the first operand so `+` works for any type that
                 # supports it (str / list / tuple concat), not only numbers.
                 s = v if i == 0 else s + v
@@ -95,8 +95,8 @@ class Add(ScalarQuery):
             s: object = 0  # additive identity for the no-children case
             for i, ct in enumerate(children):
                 v = await ct(rt)
-                if v is EMPTY or v is INVALID:
-                    return INVALID
+                if v is EMPTY:
+                    return EMPTY
                 s = v if i == 0 else s + v
             return s
 
@@ -116,7 +116,7 @@ class Mul(ScalarQuery):
           sentinel it meets.
 
     Yields:
-        The product. INVALID when any child is EMPTY or INVALID.
+        The product. EMPTY when any child is EMPTY.
 
     Example:
         >>> nu.run(nu.Mul(2, 3, 4))[0]
@@ -128,8 +128,8 @@ class Mul(ScalarQuery):
             out: object = 1
             for ct in children:
                 v = ct(rt)
-                if v is EMPTY or v is INVALID:
-                    return INVALID
+                if v is EMPTY:
+                    return EMPTY
                 out = out * v
             return out
 
@@ -140,8 +140,8 @@ class Mul(ScalarQuery):
             out: object = 1
             for ct in children:
                 v = await ct(rt)
-                if v is EMPTY or v is INVALID:
-                    return INVALID
+                if v is EMPTY:
+                    return EMPTY
                 out = out * v
             return out
 
@@ -165,7 +165,7 @@ class MatMul(ScalarQuery):
           a sentinel on the left short-circuits without touching the right.
 
     Yields:
-        The product. INVALID when either child is EMPTY or INVALID.
+        The product. EMPTY when either child is EMPTY.
 
     Example:
         >>> class Grid:
@@ -180,11 +180,11 @@ class MatMul(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             a = left(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                return EMPTY
             b = right(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
+            if b is EMPTY:
+                return EMPTY
             return a @ b
 
         return thunk
@@ -194,11 +194,11 @@ class MatMul(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await left(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                return EMPTY
             b = await right(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
+            if b is EMPTY:
+                return EMPTY
             return a @ b
 
         return athunk
@@ -216,7 +216,7 @@ class Sub(ScalarQuery):
           a sentinel on the left short-circuits without touching the right.
 
     Yields:
-        The difference. INVALID when either child is EMPTY or INVALID.
+        The difference. EMPTY when either child is EMPTY.
 
     Example:
         >>> nu.run(nu.Sub(10, 3))[0]
@@ -228,11 +228,11 @@ class Sub(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             a = left(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                return EMPTY
             b = right(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
+            if b is EMPTY:
+                return EMPTY
             return a - b
 
         return thunk
@@ -242,11 +242,11 @@ class Sub(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await left(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                return EMPTY
             b = await right(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
+            if b is EMPTY:
+                return EMPTY
             return a - b
 
         return athunk
@@ -261,11 +261,11 @@ class Div(ScalarQuery):
 
     Notes:
         - True division, so two ints yield a float.
-        - A zero denominator raises. Only sentinels collapse to INVALID; a
-          real error stays a real error.
+        - A zero denominator raises. Only EMPTY collapses to EMPTY; a real
+          error stays a real error.
 
     Yields:
-        The quotient. INVALID when either child is EMPTY or INVALID.
+        The quotient. EMPTY when either child is EMPTY.
 
     Example:
         >>> nu.run(nu.Div(7, 2))[0]
@@ -277,11 +277,11 @@ class Div(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             a = left(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                return EMPTY
             b = right(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
+            if b is EMPTY:
+                return EMPTY
             return a / b
 
         return thunk
@@ -291,11 +291,11 @@ class Div(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await left(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                return EMPTY
             b = await right(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
+            if b is EMPTY:
+                return EMPTY
             return a / b
 
         return athunk
@@ -313,7 +313,7 @@ class FloorDiv(ScalarQuery):
           -7 floor-divided by 2 is -4 and not -3.
 
     Yields:
-        The floored quotient. INVALID when either child is EMPTY or INVALID.
+        The floored quotient. EMPTY when either child is EMPTY.
 
     Example:
         >>> nu.run(nu.FloorDiv(7, 2))[0]
@@ -325,11 +325,11 @@ class FloorDiv(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             a = left(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                return EMPTY
             b = right(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
+            if b is EMPTY:
+                return EMPTY
             return a // b
 
         return thunk
@@ -339,11 +339,11 @@ class FloorDiv(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await left(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                return EMPTY
             b = await right(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
+            if b is EMPTY:
+                return EMPTY
             return a // b
 
         return athunk
@@ -361,7 +361,7 @@ class Mod(ScalarQuery):
           so -7 modulo 3 is 2 and not -1.
 
     Yields:
-        The remainder. INVALID when either child is EMPTY or INVALID.
+        The remainder. EMPTY when either child is EMPTY.
 
     Example:
         >>> nu.run(nu.Mod(7, 2))[0]
@@ -373,11 +373,11 @@ class Mod(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             a = left(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                return EMPTY
             b = right(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
+            if b is EMPTY:
+                return EMPTY
             return a % b
 
         return thunk
@@ -387,11 +387,11 @@ class Mod(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await left(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                return EMPTY
             b = await right(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
+            if b is EMPTY:
+                return EMPTY
             return a % b
 
         return athunk
@@ -408,7 +408,7 @@ class Pow(ScalarQuery):
         - A negative exponent yields a float, as Python's ``**`` does.
 
     Yields:
-        The power. INVALID when either child is EMPTY or INVALID.
+        The power. EMPTY when either child is EMPTY.
 
     Example:
         >>> nu.run(nu.Pow(2, 10))[0]
@@ -420,11 +420,11 @@ class Pow(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             a = left(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                return EMPTY
             b = right(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
+            if b is EMPTY:
+                return EMPTY
             return a**b
 
         return thunk
@@ -434,11 +434,11 @@ class Pow(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await left(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                return EMPTY
             b = await right(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
+            if b is EMPTY:
+                return EMPTY
             return a**b
 
         return athunk
@@ -451,7 +451,7 @@ class Neg(ScalarQuery):
         value: the value to negate.
 
     Yields:
-        The negation. INVALID when the child is EMPTY or INVALID.
+        The negation. EMPTY when the child is EMPTY.
 
     Example:
         >>> nu.run(nu.Neg(4))[0]
@@ -463,8 +463,8 @@ class Neg(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY or v is INVALID:
-                return INVALID
+            if v is EMPTY:
+                return EMPTY
             return -v
 
         return thunk
@@ -474,8 +474,8 @@ class Neg(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY or v is INVALID:
-                return INVALID
+            if v is EMPTY:
+                return EMPTY
             return -v
 
         return athunk
@@ -492,7 +492,7 @@ class Pos(ScalarQuery):
           defining ``__pos__`` decides what it means.
 
     Yields:
-        The value. INVALID when the child is EMPTY or INVALID.
+        The value. EMPTY when the child is EMPTY.
 
     Example:
         >>> nu.run(nu.Pos(-4))[0]
@@ -504,8 +504,8 @@ class Pos(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY or v is INVALID:
-                return INVALID
+            if v is EMPTY:
+                return EMPTY
             return +v
 
         return thunk
@@ -515,8 +515,8 @@ class Pos(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY or v is INVALID:
-                return INVALID
+            if v is EMPTY:
+                return EMPTY
             return +v
 
         return athunk
@@ -529,7 +529,7 @@ class Abs(ScalarQuery):
         value: the value to take the magnitude of.
 
     Yields:
-        The absolute value. INVALID when the child is EMPTY or INVALID.
+        The absolute value. EMPTY when the child is EMPTY.
 
     Example:
         >>> nu.run(nu.Abs(-4))[0]
@@ -541,8 +541,8 @@ class Abs(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY or v is INVALID:
-                return INVALID
+            if v is EMPTY:
+                return EMPTY
             return abs(v)
 
         return thunk
@@ -552,8 +552,8 @@ class Abs(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY or v is INVALID:
-                return INVALID
+            if v is EMPTY:
+                return EMPTY
             return abs(v)
 
         return athunk
@@ -571,7 +571,7 @@ class DivMod(ScalarQuery):
           it is how either half is reached.
 
     Yields:
-        The pair. INVALID when either child is EMPTY or INVALID.
+        The pair. EMPTY when either child is EMPTY.
 
     Example:
         >>> nu.run(nu.DivMod(7, 2))[0]
@@ -583,11 +583,11 @@ class DivMod(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             a = left(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                return EMPTY
             b = right(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
+            if b is EMPTY:
+                return EMPTY
             return divmod(a, b)
 
         return thunk
@@ -597,11 +597,11 @@ class DivMod(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await left(rt)
-            if a is EMPTY or a is INVALID:
-                return INVALID
+            if a is EMPTY:
+                return EMPTY
             b = await right(rt)
-            if b is EMPTY or b is INVALID:
-                return INVALID
+            if b is EMPTY:
+                return EMPTY
             return divmod(a, b)
 
         return athunk
@@ -622,7 +622,7 @@ class Round(ScalarQuery):
           the value's own type.
 
     Yields:
-        The rounded value. INVALID when either child is EMPTY or INVALID.
+        The rounded value. EMPTY when either child is EMPTY.
 
     Example:
         >>> nu.run(nu.Round(3.14159, 2))[0]
@@ -635,8 +635,8 @@ class Round(ScalarQuery):
 
             def thunk_value(rt: Runtime) -> object:
                 v = only(rt)
-                if v is EMPTY or v is INVALID:
-                    return INVALID
+                if v is EMPTY:
+                    return EMPTY
                 return round(v)
 
             return thunk_value
@@ -645,11 +645,11 @@ class Round(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = value(rt)
-            if v is EMPTY or v is INVALID:
-                return INVALID
+            if v is EMPTY:
+                return EMPTY
             n = ndigits(rt)
-            if n is EMPTY or n is INVALID:
-                return INVALID
+            if n is EMPTY:
+                return EMPTY
             return round(v, n)
 
         return thunk
@@ -660,8 +660,8 @@ class Round(ScalarQuery):
 
             async def athunk_value(rt: Runtime) -> object:
                 v = await only(rt)
-                if v is EMPTY or v is INVALID:
-                    return INVALID
+                if v is EMPTY:
+                    return EMPTY
                 return round(v)
 
             return athunk_value
@@ -670,11 +670,11 @@ class Round(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await value(rt)
-            if v is EMPTY or v is INVALID:
-                return INVALID
+            if v is EMPTY:
+                return EMPTY
             n = await ndigits(rt)
-            if n is EMPTY or n is INVALID:
-                return INVALID
+            if n is EMPTY:
+                return EMPTY
             return round(v, n)
 
         return athunk

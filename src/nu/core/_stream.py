@@ -3,8 +3,7 @@
 A stream atom's thunk returns an iterator. Sources build one, lenses (Map /
 Filter) wrap one, folds (Sum / Collect) drain one. These helpers bridge the
 two shapes a child thunk can hand back - a sync iterable or an async one - and
-treat a sentinel (EMPTY / INVALID) as an empty stream, so every stream atom
-iterates the same way.
+treat EMPTY as an empty stream, so every stream atom iterates the same way.
 """
 
 from __future__ import annotations
@@ -12,7 +11,7 @@ from __future__ import annotations
 from inspect import isasyncgen
 from typing import TYPE_CHECKING
 
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -23,7 +22,7 @@ __all__ = ["aiter_any", "sync_iter"]
 
 def sync_iter(value: object) -> Iterator:
     """Yield from a sync iterable; a sentinel value yields nothing."""
-    if value is EMPTY or value is INVALID:
+    if value is EMPTY:
         return
     yield from value  # type: ignore[misc]
 
@@ -42,7 +41,7 @@ async def aiter_any(value: object) -> AsyncGenerator:
     instead: for netrefs that's a descriptor returning the *remote* class,
     so the presence of ``__aiter__`` on the actual target is what decides.
     """
-    if value is EMPTY or value is INVALID:
+    if value is EMPTY:
         return
     if hasattr(value.__class__, "__aiter__"):
         try:

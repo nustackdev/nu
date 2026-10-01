@@ -35,8 +35,8 @@ class AttrExists(ScalarQuery):
         - Only the address is resolved; the value is never read.
 
     Yields:
-        True or False, never a sentinel. An address that resolves to EMPTY or
-        INVALID is looked up as a key like any other, and is simply absent.
+        True or False, never a sentinel. An address that resolves to EMPTY
+        is looked up as a key like any other, and is simply absent.
 
     Example:
         >>> nu.run(nu.Attr("x").exists())[0]

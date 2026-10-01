@@ -135,10 +135,7 @@ assert_type((Profile.age + 1) > Profile.age, Bool)
 
 
 assert_type(Profile.age.is_empty(), Bool)
-assert_type(Profile.age.is_invalid(), Bool)
-assert_type(Profile.age.is_sentinel(), Bool)
 assert_type(Profile.age.not_empty(), Bool)
-assert_type(Profile.age.not_invalid(), Bool)
 
 
 # --- Nothing here should introduce Any ------------------------------

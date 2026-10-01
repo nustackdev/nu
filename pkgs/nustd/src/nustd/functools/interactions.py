@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 from nu.core._stream import aiter_any, sync_iter
 from nu.engine import Term
 from nu.lang import Literal, Reduction
-from nu.lang.sentinels import EMPTY, INVALID, UNSET
+from nu.lang.sentinels import EMPTY, UNSET
 
 
 if TYPE_CHECKING:
@@ -69,20 +69,20 @@ class Reduce(Reduction):
             acc: object = None
             if initial_t is not None:
                 acc = initial_t(rt)
-                if acc is EMPTY or acc is INVALID:
-                    return INVALID
+                if acc is EMPTY:
+                    return EMPTY
                 started = True
             for elem in sync_iter(source(rt)):
-                if elem is EMPTY or elem is INVALID:
-                    return INVALID
+                if elem is EMPTY:
+                    return EMPTY
                 if not started:
                     acc = elem
                     started = True
                     continue
                 with rt.ctx.attrs.let(acc_name, acc), rt.ctx.attrs.let(item_name, elem):
                     acc = function(rt)
-                if acc is EMPTY or acc is INVALID:
-                    return INVALID
+                if acc is EMPTY:
+                    return EMPTY
             if not started:
                 msg = "reduce() of empty iterable with no initial value"
                 raise TypeError(msg)
@@ -102,20 +102,20 @@ class Reduce(Reduction):
             acc: object = None
             if initial_t is not None:
                 acc = await initial_t(rt)
-                if acc is EMPTY or acc is INVALID:
-                    return INVALID
+                if acc is EMPTY:
+                    return EMPTY
                 started = True
             async for elem in aiter_any(await source(rt)):
-                if elem is EMPTY or elem is INVALID:
-                    return INVALID
+                if elem is EMPTY:
+                    return EMPTY
                 if not started:
                     acc = elem
                     started = True
                     continue
                 with rt.ctx.attrs.let(acc_name, acc), rt.ctx.attrs.let(item_name, elem):
                     acc = await function(rt)
-                if acc is EMPTY or acc is INVALID:
-                    return INVALID
+                if acc is EMPTY:
+                    return EMPTY
             if not started:
                 msg = "reduce() of empty iterable with no initial value"
                 raise TypeError(msg)

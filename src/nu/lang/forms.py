@@ -39,6 +39,8 @@ from .kinds import ScalarQuery, StreamQuery
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from typing_extensions import Self
+
     from nu.forms import Bool
     from nu.lang.runtime import Runtime
 
@@ -82,24 +84,53 @@ class Form:
 
         return Bool(IsEmpty(self))
 
-    def is_invalid(self) -> Bool:
-        """True if this Form yields the INVALID sentinel."""
-        from nu.core import IsInvalid
-        from nu.forms import Bool
-
-        return Bool(IsInvalid(self))
-
-    def is_sentinel(self) -> Bool:
-        """True if this Form yields either sentinel (EMPTY or INVALID)."""
-        return self.is_empty().or_(self.is_invalid())
-
     def not_empty(self) -> Bool:
         """True if this Form does not yield EMPTY."""
         return self.is_empty().not_()
 
-    def not_invalid(self) -> Bool:
-        """True if this Form does not yield INVALID."""
-        return self.is_invalid().not_()
+    def fallback(self, *alternatives: object) -> Self:
+        """The first of this value and ``alternatives`` that is not EMPTY.
+
+        Args:
+            *alternatives: the values to try in order when this one is EMPTY.
+                At least one.
+
+        Notes:
+            - Checks presence, not truthiness: ``0``, ``""``, ``False`` and
+              ``None`` are present values and are kept.
+            - Evaluates only as far as it needs: an alternative after the
+              first present value never runs.
+            - Reads as this value's Form, so the result keeps its surface
+              (a ``Str`` stays a ``Str``, a ``StrRef`` reads as ``Str``).
+
+        Yields:
+            The first present value. EMPTY only when all of them are EMPTY.
+
+        Example:
+            >>> class User(nu.Shape):
+            ...     name = nu.StrRef.slot()
+            >>> ctx = nu.Context().bind(dict, {}, User)
+            >>> nu.run(User.name.fallback("guest").upper(), ctx)[0]
+            'GUEST'
+            >>> nu.run(nu.Int(0).fallback(5))[0]
+            0
+        """
+        from nu.core import Fallback
+
+        if not alternatives:
+            msg = "fallback() needs at least one alternative"
+            raise TypeError(msg)
+        return self._value_form()(Fallback(self, *alternatives))  # type: ignore[call-arg, return-value]
+
+    def _value_form(self) -> type[Form]:
+        """This Form's value Form, past any Ref mixed in: a ``StrRef`` reads as ``Str``."""
+        from nu.forms import Object
+        from nu.lang.kinds import Ref
+
+        for cls in type(self).__mro__:
+            if issubclass(cls, TypedNu) and issubclass(cls, Form) and not issubclass(cls, Ref):
+                return cls
+        return Object
 
 
 class TypedNu(ScalarQuery[T_co], Generic[T_co]):  # PEP 695 has no variance markers

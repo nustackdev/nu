@@ -66,10 +66,10 @@ def test_inspect_atom_runs_end_to_end() -> None:
     assert "INTERACTION" in text
 
 
-def test_inspect_yields_invalid_on_unknown_path() -> None:
-    from nu.lang.sentinels import INVALID
+def test_inspect_yields_empty_on_unknown_path() -> None:
+    from nu.lang.sentinels import EMPTY
 
-    assert nu.run(nu.inspect.Inspect("nowhere.at.all"))[0] is INVALID
+    assert nu.run(nu.inspect.Inspect("nowhere.at.all"))[0] is EMPTY
 
 
 # --- the declarative kinds: a user's own app -------------------------------

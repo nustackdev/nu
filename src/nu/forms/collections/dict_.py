@@ -44,8 +44,8 @@ class Dict(
     Notes:
         - Keys preserve insertion order, matching Python's `dict`.
         - Ordering comparisons (`>`, `<`, `>=`, `<=`) raise `TypeError` at
-          evaluation time rather than yielding INVALID - Python dicts don't
-          support them either. Use `==`/`!=` for content comparison.
+          evaluation time - Python dicts don't support them either. Use
+          `==`/`!=` for content comparison.
         - `is_` tests object identity. Each evaluation of a `Dict.of`/
           `Dict.create` expression builds a fresh dict, so comparing two
           separately-built dicts with `is_` is False even when their
@@ -82,11 +82,11 @@ class Dict(
                 plain literals.
 
         Notes:
-            - A field that resolves to a sentinel collapses the whole
-              result to INVALID.
+            - A field that resolves to EMPTY collapses the whole result to
+              EMPTY.
 
         Yields:
-            The assembled dict. INVALID when any field is a sentinel.
+            The assembled dict. EMPTY when any field is EMPTY.
 
         Example:
             >>> nu.run(nu.Dict.of(a=1, b=2))[0]
@@ -160,7 +160,7 @@ class Dict(
         Yields:
             The value, narrowed to a concrete Form (Bool, Int, Float, Str,
             Bytes) when `V` is a known primitive type, Object otherwise.
-            INVALID when self is a sentinel.
+            EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Dict.of(a=1, b=2)["a"])[0]
@@ -179,7 +179,7 @@ class Dict(
             - Insertion order, matching Python's `dict.keys()`.
 
         Yields:
-            The keys, wrapped as DictKeys. INVALID when self is a sentinel.
+            The keys, wrapped as DictKeys. EMPTY when self is EMPTY.
 
         Example:
             >>> list(nu.run(nu.Dict.of(a=1, b=2).keys())[0])
@@ -196,8 +196,8 @@ class Dict(
             - Insertion order, matching Python's `dict.values()`.
 
         Yields:
-            The values, wrapped as DictValues. INVALID when self is a
-            sentinel.
+            The values, wrapped as DictValues. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> list(nu.run(nu.Dict.of(a=1, b=2).values())[0])
@@ -214,8 +214,8 @@ class Dict(
             - Insertion order, matching Python's `dict.items()`.
 
         Yields:
-            The (key, value) pairs, wrapped as DictItems. INVALID when self
-            is a sentinel.
+            The (key, value) pairs, wrapped as DictItems. EMPTY when self
+            is EMPTY.
 
         Example:
             >>> list(nu.run(nu.Dict.of(a=1, b=2).items())[0])
@@ -249,8 +249,8 @@ class Dict(
 
         Notes:
             - Python dicts don't support ordering, so this raises
-              `TypeError` at evaluation time rather than yielding INVALID.
-              Compare with `==`/`!=` instead.
+              `TypeError` at evaluation time. Compare with `==`/`!=`
+              instead.
 
         Yields:
             Never yields; the comparison always raises.
@@ -275,8 +275,8 @@ class Dict(
 
         Notes:
             - Python dicts don't support ordering, so this raises
-              `TypeError` at evaluation time rather than yielding INVALID.
-              Compare with `==`/`!=` instead.
+              `TypeError` at evaluation time. Compare with `==`/`!=`
+              instead.
 
         Yields:
             Never yields; the comparison always raises.
@@ -301,8 +301,8 @@ class Dict(
 
         Notes:
             - Python dicts don't support ordering, so this raises
-              `TypeError` at evaluation time rather than yielding INVALID.
-              Compare with `==`/`!=` instead.
+              `TypeError` at evaluation time. Compare with `==`/`!=`
+              instead.
 
         Yields:
             Never yields; the comparison always raises.
@@ -327,8 +327,8 @@ class Dict(
 
         Notes:
             - Python dicts don't support ordering, so this raises
-              `TypeError` at evaluation time rather than yielding INVALID.
-              Compare with `==`/`!=` instead.
+              `TypeError` at evaluation time. Compare with `==`/`!=`
+              instead.
 
         Yields:
             Never yields; the comparison always raises.
@@ -356,8 +356,7 @@ class Dict(
 
         Yields:
             True when the dicts have the same keys and values, False
-            otherwise. INVALID when either operand is not a Dict or is a
-            sentinel.
+            otherwise. EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Dict.of(a=1) == nu.Dict.of(a=1))[0]
@@ -379,8 +378,8 @@ class Dict(
             - Value inequality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the dicts differ, False otherwise. INVALID when
-            either operand is not a Dict or is a sentinel.
+            True when the dicts differ, False otherwise. EMPTY when either
+            operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Dict.of(a=1) != nu.Dict.of(a=2))[0]

@@ -52,8 +52,8 @@ class Bool(Form, TypedNu[bool]):
               evaluated when the left does not already decide the result.
 
         Yields:
-            True when both operands are True, False otherwise. INVALID when
-            either operand is a sentinel.
+            True when both operands are True, False otherwise. An EMPTY operand
+            counts as false.
 
         Example:
             >>> nu.run(nu.Bool(True).and_(nu.Bool(False)))[0]
@@ -74,8 +74,8 @@ class Bool(Form, TypedNu[bool]):
               evaluated when the left does not already decide the result.
 
         Yields:
-            True when either operand is True, False otherwise. INVALID when
-            either operand is a sentinel.
+            True when either operand is True, False otherwise. An EMPTY operand
+            counts as false.
 
         Example:
             >>> nu.run(nu.Bool(False).or_(nu.Bool(True)))[0]
@@ -89,8 +89,8 @@ class Bool(Form, TypedNu[bool]):
         """Logical NOT of self.
 
         Yields:
-            True when self is False, False when self is True. INVALID when
-            self is a sentinel.
+            True when self is False, False when self is True. EMPTY when
+            self is EMPTY.
 
         Example:
             >>> nu.run(nu.Bool(True).not_())[0]
@@ -108,7 +108,7 @@ class Bool(Form, TypedNu[bool]):
               consistency with `Int.bool_` and `Float.bool_`.
 
         Yields:
-            self, unchanged. INVALID when self is a sentinel.
+            self, unchanged. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Bool(True).bool_())[0]
@@ -131,7 +131,7 @@ class Bool(Form, TypedNu[bool]):
 
         Yields:
             True when self is True and other is False, False otherwise.
-            INVALID when either operand is a sentinel.
+            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Bool(True) > nu.Bool(False))[0]
@@ -150,7 +150,7 @@ class Bool(Form, TypedNu[bool]):
 
         Yields:
             True when self is False and other is True, False otherwise.
-            INVALID when either operand is a sentinel.
+            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Bool(True) < nu.Bool(False))[0]
@@ -168,8 +168,8 @@ class Bool(Form, TypedNu[bool]):
                 with False less than True.
 
         Yields:
-            True when self is at least other, False otherwise. INVALID when
-            either operand is a sentinel.
+            True when self is at least other, False otherwise. EMPTY when
+            either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Bool(True) >= nu.Bool(True))[0]
@@ -187,8 +187,8 @@ class Bool(Form, TypedNu[bool]):
                 with False less than True.
 
         Yields:
-            True when self is at most other, False otherwise. INVALID when
-            either operand is a sentinel.
+            True when self is at most other, False otherwise. EMPTY when
+            either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Bool(False) <= nu.Bool(True))[0]
@@ -208,8 +208,8 @@ class Bool(Form, TypedNu[bool]):
             - Value equality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the values compare equal, False otherwise. INVALID
-            when either operand is a sentinel.
+            True when the values compare equal, False otherwise. EMPTY
+            when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Bool(True) == True)[0]
@@ -229,8 +229,8 @@ class Bool(Form, TypedNu[bool]):
             - Value inequality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the values differ, False otherwise. INVALID when
-            either operand is a sentinel.
+            True when the values differ, False otherwise. EMPTY when
+            either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Bool(True) != nu.Bool(False))[0]

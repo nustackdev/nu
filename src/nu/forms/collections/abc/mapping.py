@@ -131,7 +131,7 @@ class MappingForm(
               of a raise.
 
         Yields:
-            The value at key. INVALID when self or key is a sentinel.
+            The value at key. EMPTY when self or key is EMPTY.
 
         Example:
             >>> nu.run(nu.Dict({"a": 1})["a"])[0]
@@ -145,8 +145,8 @@ class MappingForm(
         """All keys of the mapping: mapping.keys().
 
         Yields:
-            A view over the keys, in insertion order. INVALID when self is
-            a sentinel.
+            A view over the keys, in insertion order. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Dict({"a": 1, "b": 2}).keys())[0]
@@ -160,8 +160,8 @@ class MappingForm(
         """All values of the mapping: mapping.values().
 
         Yields:
-            A view over the values, in insertion order. INVALID when self
-            is a sentinel.
+            A view over the values, in insertion order. EMPTY when self
+            is EMPTY.
 
         Example:
             >>> nu.run(nu.Dict({"a": 1, "b": 2}).values())[0]
@@ -175,8 +175,8 @@ class MappingForm(
         """All (key, value) pairs of the mapping: mapping.items().
 
         Yields:
-            A view over the (key, value) pairs, in insertion order. INVALID
-            when self is a sentinel.
+            A view over the (key, value) pairs, in insertion order. EMPTY
+            when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Dict({"a": 1, "b": 2}).items())[0]
@@ -201,7 +201,7 @@ class MappingForm(
 
         Yields:
             The value at key, or default when key is missing and default
-            is given. INVALID when self or key is a sentinel.
+            is given. EMPTY when self or key is EMPTY.
 
         Example:
             >>> nu.run(nu.Dict({"a": 1}).get_item("a"))[0]
@@ -218,8 +218,8 @@ class MappingForm(
         """Shallow copy of self: mapping.copy().
 
         Yields:
-            A new mapping with the same key/value pairs. INVALID when self
-            is a sentinel.
+            A new mapping with the same key/value pairs. EMPTY when self
+            is EMPTY.
 
         Example:
             >>> nu.run(nu.Dict({"a": 1}).copy())[0]
@@ -233,8 +233,8 @@ class MappingForm(
         """Keys in reverse insertion order: reversed(mapping).
 
         Yields:
-            An iterator over the keys, reversed. INVALID when self is a
-            sentinel.
+            An iterator over the keys, reversed. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> list(nu.run(nu.Dict({"a": 1, "b": 2}).reversed_keys())[0])
@@ -248,8 +248,8 @@ class MappingForm(
         """Values in reverse insertion order: reversed(mapping.values()).
 
         Yields:
-            An iterator over the values, reversed. INVALID when self is a
-            sentinel.
+            An iterator over the values, reversed. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> list(nu.run(nu.Dict({"a": 1, "b": 2}).reversed_values())[0])
@@ -263,8 +263,8 @@ class MappingForm(
         """(key, value) pairs in reverse insertion order: reversed(mapping.items()).
 
         Yields:
-            An iterator over the (key, value) pairs, reversed. INVALID
-            when self is a sentinel.
+            An iterator over the (key, value) pairs, reversed. EMPTY
+            when self is EMPTY.
 
         Example:
             >>> list(nu.run(nu.Dict({"a": 1, "b": 2}).reversed_items())[0])
@@ -283,7 +283,7 @@ class MappingForm(
 
         Yields:
             A new mapping holding self's entries overridden by other's.
-            INVALID when self or other is a sentinel.
+            EMPTY when self or other is EMPTY.
 
         Example:
             >>> nu.run(nu.Dict({"a": 1}).merge({"b": 2}))[0]
@@ -374,14 +374,14 @@ class MutableMappingForm(
         Notes:
             - Mutates slot 0 (removes the entry) and yields a value:
               an Action, not a Command.
-            - Without a default, a missing key yields INVALID rather than
+            - Without a default, a missing key yields EMPTY rather than
               raising - unlike `__getitem__`/`get_item` with no default,
               which raise.
+            - An EMPTY self or key raises, as any write does.
 
         Yields:
-            The removed value, or default when key is missing. INVALID
-            when key is missing and no default is given, or when self or
-            key is a sentinel.
+            The removed value, or default when key is missing. EMPTY when
+            key is missing and no default is given.
 
         Example:
             >>> nu.run(nu.Dict({"a": 1}).pop("a"))[0]
@@ -403,8 +403,8 @@ class MutableMappingForm(
             - Removes in LIFO order, matching Python's `dict.popitem`.
 
         Yields:
-            The removed (key, value) pair. INVALID when self is empty or a
-            sentinel.
+            The removed (key, value) pair. EMPTY when self has no entries.
+            An EMPTY self raises, as any write does.
 
         Example:
             >>> nu.run(nu.Dict({"a": 1, "b": 2}).popitem())[0]
@@ -428,8 +428,8 @@ class MutableMappingForm(
               only inserted on a miss.
 
         Yields:
-            The value already at key, or default once inserted. INVALID
-            when self or key is a sentinel.
+            The value already at key, or default once inserted. EMPTY
+            when self or key is EMPTY.
 
         Example:
             >>> nu.run(nu.Dict({"a": 1}).setdefault("a", 9))[0]
@@ -454,8 +454,8 @@ class MutableMappingForm(
               Action, not a Command, mirroring Python's `dict.__ior__`.
 
         Yields:
-            Self, updated with other's entries. INVALID when self or
-            other is a sentinel.
+            Self, updated with other's entries. EMPTY when self or
+            other is EMPTY.
 
         Example:
             >>> nu.run(nu.Dict({"a": 1}).merge_update({"b": 2}))[0]

@@ -16,7 +16,7 @@ from nu.core.bitwise import (
     LShift,
     RShift,
 )
-from nu.lang import EMPTY, INVALID, Attr
+from nu.lang import EMPTY, Attr
 from nu.lang.helpers import aeval, compile, eval
 from nu.lang.literal import Literal
 
@@ -126,11 +126,11 @@ def test_async_fold_keeps_non_int_operands():
 # --- sentinels -----------------------------------------------------------
 
 
-def test_a_sentinel_operand_collapses_to_invalid():
-    assert _eval(BitAnd(Literal(EMPTY), Literal(1))) is INVALID
-    assert _eval(BitOr(Literal(1), Literal(INVALID))) is INVALID
-    assert _eval(BitXor(Literal(EMPTY), Literal(1))) is INVALID
-    assert _eval(BitNot(Literal(EMPTY))) is INVALID
-    assert _eval(LShift(Literal(EMPTY), Literal(1))) is INVALID
-    assert _eval(RShift(Literal(1), Literal(INVALID))) is INVALID
-    assert asyncio.run(_aeval(BitAnd(Literal(1), Literal(EMPTY)))) is INVALID
+def test_an_empty_operand_collapses_to_empty():
+    assert _eval(BitAnd(Literal(EMPTY), Literal(1))) is EMPTY
+    assert _eval(BitOr(Literal(1), Literal(EMPTY))) is EMPTY
+    assert _eval(BitXor(Literal(EMPTY), Literal(1))) is EMPTY
+    assert _eval(BitNot(Literal(EMPTY))) is EMPTY
+    assert _eval(LShift(Literal(EMPTY), Literal(1))) is EMPTY
+    assert _eval(RShift(Literal(1), Literal(EMPTY))) is EMPTY
+    assert asyncio.run(_aeval(BitAnd(Literal(1), Literal(EMPTY)))) is EMPTY

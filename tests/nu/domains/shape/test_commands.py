@@ -12,7 +12,7 @@ import nu
 from nu.domains.shape.interactions import Erase, PrimitiveSet, SetCmd
 from nu.domains.shape.item import ItemRef
 from nu.lang import Command, Literal
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 
 # ---------------------------------------------------------------------------
@@ -93,15 +93,7 @@ def test_set_command_thunk_raises_on_empty():
     ref = ItemRef("slot")
     cmd = SetCmd(ref, Literal(42))
     thunk = cmd._compile(0, (_make_thunk(None), _make_thunk(EMPTY)))
-    with pytest.raises(ValueError, match="sentinel"):
-        thunk(None)
-
-
-def test_set_command_thunk_raises_on_invalid():
-    ref = ItemRef("slot")
-    cmd = SetCmd(ref, Literal(42))
-    thunk = cmd._compile(0, (_make_thunk(None), _make_thunk(INVALID)))
-    with pytest.raises(ValueError, match="sentinel"):
+    with pytest.raises(ValueError, match="EMPTY"):
         thunk(None)
 
 
@@ -130,13 +122,5 @@ def test_primitive_set_command_thunk_raises_on_empty():
     ref = ItemRef("slot")
     cmd = PrimitiveSet(ref, Literal(42))
     thunk = cmd._compile(0, (_make_thunk(None), _make_thunk(EMPTY)))
-    with pytest.raises(ValueError, match="sentinel"):
-        thunk(None)
-
-
-def test_primitive_set_command_thunk_raises_on_invalid():
-    ref = ItemRef("slot")
-    cmd = PrimitiveSet(ref, Literal(42))
-    thunk = cmd._compile(0, (_make_thunk(None), _make_thunk(INVALID)))
-    with pytest.raises(ValueError, match="sentinel"):
+    with pytest.raises(ValueError, match="EMPTY"):
         thunk(None)

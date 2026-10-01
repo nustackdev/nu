@@ -1,21 +1,21 @@
-"""Sentinel atoms: the predicates that observe EMPTY / INVALID.
+"""Sentinel atoms: the queries that observe EMPTY.
 
-The one core family that is not a Python builtin: ``IsEmpty`` / ``IsInvalid``
-(and their negations) ask whether a value IS one of Nu's sentinels. Every other
-atom propagates a sentinel operand; these observe it, so they are the only core
-atoms that do **not** guard - the compile thunk runs the predicate on the raw
-child value with no EMPTY / INVALID short-circuit.
+The one core family that is not a Python builtin: ``IsEmpty`` / ``NotEmpty``
+ask whether a value IS EMPTY, and ``Fallback`` picks the first value that is
+not. Every other query propagates an EMPTY operand; these observe it, so they
+are the only core atoms that do **not** guard - the compile thunk reads the
+raw child value with no EMPTY short-circuit.
 
 They live in core because they are reused everywhere (the ``Form`` base exposes
-them as ``is_empty()`` / ``is_invalid()``, flows branch on them, callers guard
-on them). Sort: all ScalarQuery (Q).
+them as ``is_empty()`` / ``not_empty()`` / ``fallback()``, flows branch on them,
+callers guard on them). Sort: all ScalarQuery (Q).
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.lang import ScalarQuery, is_empty, is_invalid
+from nu.lang import EMPTY, ScalarQuery, is_empty
 
 
 if TYPE_CHECKING:
@@ -24,10 +24,9 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 __all__ = [
+    "Fallback",
     "IsEmpty",
-    "IsInvalid",
     "NotEmpty",
-    "NotInvalid",
 ]
 
 
@@ -38,13 +37,12 @@ class IsEmpty(ScalarQuery):
         value: the value to test.
 
     Notes:
-        - Accepts sentinels rather than propagating them: this is one of the
-          few core atoms that does not guard, since observing EMPTY /
-          INVALID is the whole point.
+        - Accepts EMPTY rather than propagating it: this is one of the few
+          core atoms that does not guard, since observing EMPTY is the whole
+          point.
 
     Yields:
-        A plain bool. Never INVALID - there is no sentinel operand for it to
-        collapse on.
+        A plain bool, never EMPTY.
 
     Example:
         >>> from nu.lang.sentinels import EMPTY
@@ -78,11 +76,10 @@ class NotEmpty(ScalarQuery):
         value: the value to test.
 
     Notes:
-        - Accepts sentinels rather than propagating them, same as
-          :class:`IsEmpty`. INVALID counts as "not EMPTY" and yields True.
+        - Accepts EMPTY rather than propagating it, same as :class:`IsEmpty`.
 
     Yields:
-        A plain bool. Never INVALID.
+        A plain bool, never EMPTY.
 
     Example:
         >>> from nu.lang.sentinels import EMPTY
@@ -109,77 +106,48 @@ class NotEmpty(ScalarQuery):
         return athunk
 
 
-class IsInvalid(ScalarQuery):
-    """True if its one child yields the INVALID sentinel.
+class Fallback(ScalarQuery):
+    """The first of its children that is not EMPTY.
 
     Args:
-        value: the value to test.
+        value: the value to keep when it is present.
+        *alternatives: tried in order while everything before them is EMPTY.
 
     Notes:
-        - Accepts sentinels rather than propagating them, same as
-          :class:`IsEmpty`. EMPTY is not INVALID and yields False.
+        - Checks presence, not truthiness: ``0``, ``""``, ``False`` and
+          ``None`` are present values and are kept.
+        - Short-circuits: children after the first present one are never
+          evaluated.
+        - Reached as ``x.fallback(a, b, ...)`` on every Form, which also
+          keeps the result in ``x``'s Form.
 
     Yields:
-        A plain bool. Never INVALID.
+        The first present child. EMPTY only when every child is EMPTY.
 
     Example:
-        >>> from nu.lang.sentinels import INVALID
-        >>> nu.run(nu.IsInvalid(INVALID))[0]
-        True
-        >>> nu.run(nu.IsInvalid(5))[0]
-        False
+        >>> from nu.lang.sentinels import EMPTY
+        >>> nu.run(nu.Fallback(EMPTY, 0, 5))[0]
+        0
+        >>> nu.run(nu.Fallback(EMPTY, EMPTY))[0]
+        <EMPTY>
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        (only,) = children
-
         def thunk(rt: Runtime) -> object:
-            return is_invalid(only(rt))
+            for ct in children:
+                v = ct(rt)
+                if v is not EMPTY:
+                    return v
+            return EMPTY
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        (only,) = children
-
         async def athunk(rt: Runtime) -> object:
-            return is_invalid(await only(rt))
-
-        return athunk
-
-
-class NotInvalid(ScalarQuery):
-    """True if its one child does not yield INVALID.
-
-    Args:
-        value: the value to test.
-
-    Notes:
-        - Accepts sentinels rather than propagating them, same as
-          :class:`IsEmpty`. EMPTY counts as "not INVALID" and yields True.
-
-    Yields:
-        A plain bool. Never INVALID.
-
-    Example:
-        >>> from nu.lang.sentinels import INVALID
-        >>> nu.run(nu.NotInvalid(INVALID))[0]
-        False
-        >>> nu.run(nu.NotInvalid(5))[0]
-        True
-    """
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        (only,) = children
-
-        def thunk(rt: Runtime) -> object:
-            return not is_invalid(only(rt))
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        (only,) = children
-
-        async def athunk(rt: Runtime) -> object:
-            return not is_invalid(await only(rt))
+            for ct in children:
+                v = await ct(rt)
+                if v is not EMPTY:
+                    return v
+            return EMPTY
 
         return athunk

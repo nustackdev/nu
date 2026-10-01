@@ -63,10 +63,8 @@ assert_type(anyval <= 100, Bool)
 
 
 assert_type(anyval.is_empty(), Bool)
-assert_type(anyval.is_invalid(), Bool)
-assert_type(anyval.is_sentinel(), Bool)
 assert_type(anyval.not_empty(), Bool)
-assert_type(anyval.not_invalid(), Bool)
+assert_type(anyval.fallback(0), Object)
 
 
 # --- Origin: primitive-blob subscript is Object today --------------

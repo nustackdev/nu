@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import ScalarAction, StreamQuery
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 from ._stream import aiter_any, sync_iter
 
@@ -87,8 +87,8 @@ class Enumerate(StreamQuery):
         start: the first index. Optional: leave the child out to start at 0.
 
     Notes:
-        - An EMPTY or INVALID ``start`` collapses the whole result to an
-          empty stream rather than raising or falling back to 0.
+        - An EMPTY ``start`` collapses the whole result to an empty stream
+          rather than raising or falling back to 0.
 
     Yields:
         ``(index, item)`` tuples, one per item of ``source``, the index
@@ -110,7 +110,7 @@ class Enumerate(StreamQuery):
             if start is None:
                 return enumerate(sync_iter(source(rt)))
             s = start(rt)
-            if s is EMPTY or s is INVALID:
+            if s is EMPTY:
                 return iter(())
             return enumerate(sync_iter(source(rt)), s)
 
@@ -124,7 +124,7 @@ class Enumerate(StreamQuery):
             begin = 0
             if start is not None:
                 s = await start(rt)
-                if s is EMPTY or s is INVALID:
+                if s is EMPTY:
                     return aiter_any(())
                 begin = s
             src = await source(rt)

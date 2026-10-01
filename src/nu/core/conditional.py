@@ -13,9 +13,10 @@ Short-circuit: only the taken branch is evaluated - matches Python's
 conditional expression, and lets ``If(cond, safe, unsafe)`` guard the
 ``unsafe`` branch from firing when ``cond`` is truthy.
 
-Sentinels: an ``EMPTY`` or ``INVALID`` selector/condition collapses to
-``INVALID`` (per ``nu.lang.sentinels``); an ``EMPTY`` / ``INVALID`` result on
-the taken branch propagates through as ``INVALID``.
+Sentinels: the condition or selector decides, so an ``EMPTY`` one never
+passes (per ``nu.lang.sentinels``): ``If`` takes the else branch and
+``Switch`` matches no key. The taken branch's value, ``EMPTY`` included,
+passes through unchanged.
 """
 
 from __future__ import annotations
@@ -23,7 +24,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -47,29 +48,27 @@ class If(ScalarQuery):
         - Short-circuits: only the taken branch is evaluated, matching
           Python's ``then if cond else else_``. This lets the untaken branch
           hold work that would fail or be unsafe to run.
+        - Untyped: wrap it in the Form you want to keep working with, e.g.
+          ``nu.Str(nu.If(c, "Admin", "Member")).upper()``.
 
     Yields:
-        The taken branch's value. INVALID when ``cond`` is EMPTY or INVALID,
-        or when the taken branch itself yields EMPTY or INVALID.
+        The taken branch's value. An EMPTY ``cond`` counts as false and
+        takes ``else_``.
 
     Example:
         >>> nu.run(nu.If(True, "yes", "no"))[0]
         'yes'
         >>> nu.run(nu.If(False, "yes", "no"))[0]
         'no'
+        >>> nu.run(nu.Str(nu.If(None, "Admin", "Member")).upper())[0]
+        'MEMBER'
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         cond, then_, else_ = children
 
         def thunk(rt: Runtime) -> object:
-            c = cond(rt)
-            if c is EMPTY or c is INVALID:
-                return INVALID
-            v = then_(rt) if c else else_(rt)
-            if v is EMPTY or v is INVALID:
-                return INVALID
-            return v
+            return then_(rt) if cond(rt) else else_(rt)
 
         return thunk
 
@@ -77,13 +76,7 @@ class If(ScalarQuery):
         cond, then_, else_ = children
 
         async def athunk(rt: Runtime) -> object:
-            c = await cond(rt)
-            if c is EMPTY or c is INVALID:
-                return INVALID
-            v = await (then_(rt) if c else else_(rt))
-            if v is EMPTY or v is INVALID:
-                return INVALID
-            return v
+            return await (then_(rt) if await cond(rt) else else_(rt))
 
         return athunk
 
@@ -95,13 +88,14 @@ class Switch(ScalarQuery):
         selector: the value to match against the case keys.
         cases: a mapping from key to case value.
         default: yielded when no key matches. Optional: leave it out to
-            get INVALID on no match instead.
+            get EMPTY on no match instead.
 
     Notes:
         - The case keys are intrinsic constants, kept in the payload rather
           than as children, so they survive ``with_children`` unchanged.
         - Keys are matched by equality against the selector value, in the
-          mapping's iteration order; the first match wins.
+          mapping's iteration order; the first match wins. An EMPTY
+          selector matches no key.
         - Short-circuits: only the matching case value (or the default) is
           evaluated, not the others.
         - Sibling to the mutating ``nu.core.flows.control.SwitchDo``, which runs
@@ -109,9 +103,7 @@ class Switch(ScalarQuery):
 
     Yields:
         The matching case value, or the default when given and nothing
-        matches. INVALID when the selector is EMPTY or INVALID, when nothing
-        matches and there is no default, or when the yielded branch itself
-        is EMPTY or INVALID.
+        matches. EMPTY when nothing matches and there is no default.
 
     Example:
         >>> nu.run(nu.Switch(2, {1: "one", 2: "two"}))[0]
@@ -141,20 +133,13 @@ class Switch(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             s = selector(rt)
-            if s is EMPTY or s is INVALID:
-                return INVALID
-            for i, key in enumerate(keys):
-                if key == s:
-                    v = values[i](rt)
-                    if v is EMPTY or v is INVALID:
-                        return INVALID
-                    return v
+            if s is not EMPTY:
+                for i, key in enumerate(keys):
+                    if key == s:
+                        return values[i](rt)
             if has_default:
-                v = values[-1](rt)
-                if v is EMPTY or v is INVALID:
-                    return INVALID
-                return v
-            return INVALID
+                return values[-1](rt)
+            return EMPTY
 
         return thunk
 
@@ -166,19 +151,12 @@ class Switch(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             s = await selector(rt)
-            if s is EMPTY or s is INVALID:
-                return INVALID
-            for i, key in enumerate(keys):
-                if key == s:
-                    v = await values[i](rt)
-                    if v is EMPTY or v is INVALID:
-                        return INVALID
-                    return v
+            if s is not EMPTY:
+                for i, key in enumerate(keys):
+                    if key == s:
+                        return await values[i](rt)
             if has_default:
-                v = await values[-1](rt)
-                if v is EMPTY or v is INVALID:
-                    return INVALID
-                return v
-            return INVALID
+                return await values[-1](rt)
+            return EMPTY
 
         return athunk

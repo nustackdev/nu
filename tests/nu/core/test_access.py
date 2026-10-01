@@ -12,6 +12,8 @@ from __future__ import annotations
 import asyncio
 from types import SimpleNamespace
 
+import pytest
+
 from nu.core.access import (
     Contains,
     DelAttr,
@@ -24,7 +26,7 @@ from nu.core.access import (
     SetItem,
     Slice,
 )
-from nu.lang import EMPTY, INVALID
+from nu.lang import EMPTY
 from nu.lang.helpers import aeval, compile, eval
 from nu.lang.literal import Literal
 
@@ -90,14 +92,14 @@ def test_async_reads_mirror_sync():
 # --- reads: sentinel propagation -----------------------------------------
 
 
-def test_a_sentinel_operand_collapses_a_read_to_invalid():
-    assert _eval(GetItem(Literal(EMPTY), Literal(0))) is INVALID
-    assert _eval(GetItem(Literal([1, 2]), Literal(INVALID))) is INVALID
-    assert _eval(Len(Literal(EMPTY))) is INVALID
-    assert _eval(Contains(Literal(INVALID), Literal(1))) is INVALID
-    assert _eval(GetAttr(Literal(EMPTY), Literal("x"))) is INVALID
-    assert _eval(HasAttr(Literal(1j), Literal(EMPTY))) is INVALID
-    assert _eval(Slice(Literal(EMPTY), Literal(1), Literal(1))) is INVALID
+def test_an_empty_operand_collapses_a_read_to_empty():
+    assert _eval(GetItem(Literal(EMPTY), Literal(0))) is EMPTY
+    assert _eval(GetItem(Literal([1, 2]), Literal(EMPTY))) is EMPTY
+    assert _eval(Len(Literal(EMPTY))) is EMPTY
+    assert _eval(Contains(Literal(EMPTY), Literal(1))) is EMPTY
+    assert _eval(GetAttr(Literal(EMPTY), Literal("x"))) is EMPTY
+    assert _eval(HasAttr(Literal(1j), Literal(EMPTY))) is EMPTY
+    assert _eval(Slice(Literal(EMPTY), Literal(1), Literal(1))) is EMPTY
 
 
 # --- writes: evaluation --------------------------------------------------
@@ -132,18 +134,24 @@ def test_del_attr_removes_attribute_returns_none():
     assert not hasattr(obj, "y")
 
 
-# --- writes: sentinel propagation ----------------------------------------
-# A sentinel operand causes the command to bail early without mutation.
+# --- writes: EMPTY --------------------------------------------------------
+# An EMPTY operand makes the write raise before anything is mutated.
 
 
-def test_a_sentinel_operand_skips_a_write():
+@pytest.mark.parametrize(
+    "write",
+    [
+        lambda grid: SetItem(Literal(EMPTY), Literal("k"), Literal(1)),
+        lambda grid: SetItem(Literal(grid), Literal("k"), Literal(EMPTY)),
+        lambda grid: DelItem(Literal(grid), Literal(EMPTY)),
+        lambda grid: SetAttr(Literal(EMPTY), Literal("x"), Literal(1)),
+        lambda grid: DelAttr(Literal(EMPTY), Literal("x")),
+    ],
+)
+def test_an_empty_operand_makes_a_write_raise(write):
     grid = {"a": 1}
-    # EMPTY/INVALID container or key/value: bail, no mutation, return None
-    assert _eval(SetItem(Literal(EMPTY), Literal("k"), Literal(1))) is None
-    assert _eval(SetItem(Literal(grid), Literal("k"), Literal(INVALID))) is None
-    assert _eval(DelItem(Literal(grid), Literal(EMPTY))) is None
-    assert _eval(SetAttr(Literal(EMPTY), Literal("x"), Literal(1))) is None
-    assert _eval(DelAttr(Literal(INVALID), Literal("x"))) is None
+    with pytest.raises(ValueError, match="EMPTY"):
+        _eval(write(grid))
     # A refused write leaves the value untouched.
     assert grid == {"a": 1}
 

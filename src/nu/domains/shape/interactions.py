@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Command, ScalarQuery
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -71,14 +71,14 @@ class Load(ScalarQuery):
 
 
 class Exists(ScalarQuery):
-    """Yield True if the slot-0 Ref's address is bound (value is not a sentinel)."""
+    """Yield True if the slot-0 Ref's address is bound (value is not EMPTY). Never EMPTY."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref_thunk = children[0]
 
         def thunk(rt: Runtime) -> bool:
             v = ref_thunk(rt)
-            return v is not EMPTY and v is not INVALID
+            return v is not EMPTY
 
         return thunk
 
@@ -87,20 +87,20 @@ class Exists(ScalarQuery):
 
         async def athunk(rt: Runtime) -> bool:
             v = await ref_thunk(rt)
-            return v is not EMPTY and v is not INVALID
+            return v is not EMPTY
 
         return athunk
 
 
 class Missing(ScalarQuery):
-    """Yield True if the slot-0 Ref's address is unbound (value is a sentinel)."""
+    """Yield True if the slot-0 Ref's address is unbound (value is EMPTY). Never EMPTY."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref_thunk = children[0]
 
         def thunk(rt: Runtime) -> bool:
             v = ref_thunk(rt)
-            return v is EMPTY or v is INVALID
+            return v is EMPTY
 
         return thunk
 
@@ -109,7 +109,7 @@ class Missing(ScalarQuery):
 
         async def athunk(rt: Runtime) -> bool:
             v = await ref_thunk(rt)
-            return v is EMPTY or v is INVALID
+            return v is EMPTY
 
         return athunk
 
@@ -128,8 +128,8 @@ class Extract(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             view = ref_thunk(rt)
-            if view is EMPTY or view is INVALID:
-                return view  # preserve EMPTY vs INVALID identity
+            if view is EMPTY:
+                return EMPTY
             if hasattr(view, "eager"):
                 view = view.eager
             return view.extract()
@@ -141,8 +141,8 @@ class Extract(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             view = await ref_thunk(rt)
-            if view is EMPTY or view is INVALID:
-                return view  # preserve EMPTY vs INVALID identity
+            if view is EMPTY:
+                return EMPTY
             if hasattr(view, "eager"):
                 view = view.eager
             return view.extract()
@@ -164,7 +164,7 @@ class AdvanceCursor(ScalarQuery):
         def thunk(rt: Runtime) -> object:
             view = source_thunk(rt)
             cursor = cursor_thunk(rt)
-            if cursor is EMPTY or cursor is INVALID:
+            if cursor is EMPTY:
                 cursor = None
             return view.next_key_after(cursor)
 
@@ -176,7 +176,7 @@ class AdvanceCursor(ScalarQuery):
         async def athunk(rt: Runtime) -> object:
             view = await source_thunk(rt)
             cursor = await cursor_thunk(rt)
-            if cursor is EMPTY or cursor is INVALID:
+            if cursor is EMPTY:
                 cursor = None
             return view.next_key_after(cursor)
 
@@ -199,8 +199,8 @@ class SetCmd(Command):
 
         def thunk(rt: Runtime) -> None:
             v = value(rt)
-            if v is EMPTY or v is INVALID:
-                raise ValueError("cannot store sentinel value")
+            if v is EMPTY:
+                raise ValueError("cannot store EMPTY")
             ref._write(rt, v, rt.program.children[nid][0])
 
         return thunk
@@ -211,8 +211,8 @@ class SetCmd(Command):
 
         async def athunk(rt: Runtime) -> None:
             v = await value(rt)
-            if v is EMPTY or v is INVALID:
-                raise ValueError("cannot store sentinel value")
+            if v is EMPTY:
+                raise ValueError("cannot store EMPTY")
             await ref._awrite(rt, v, rt.program.children[nid][0])
 
         return athunk
@@ -263,8 +263,8 @@ class PrimitiveSet(Command):
 
         def thunk(rt: Runtime) -> None:
             v = value(rt)
-            if v is EMPTY or v is INVALID:
-                raise ValueError("cannot store sentinel value")
+            if v is EMPTY:
+                raise ValueError("cannot store EMPTY")
             ref._primitive_write(rt, v, rt.program.children[nid][0])  # type: ignore[attr-defined]
 
         return thunk
@@ -275,8 +275,8 @@ class PrimitiveSet(Command):
 
         async def athunk(rt: Runtime) -> None:
             v = await value(rt)
-            if v is EMPTY or v is INVALID:
-                raise ValueError("cannot store sentinel value")
+            if v is EMPTY:
+                raise ValueError("cannot store EMPTY")
             await ref._aprimitive_write(rt, v, rt.program.children[nid][0])  # type: ignore[attr-defined]
 
         return athunk

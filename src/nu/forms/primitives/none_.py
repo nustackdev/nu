@@ -64,8 +64,8 @@ class None_(Form, TypedNu[None]):  # noqa: N801
               evaluated when the left does not already decide the result.
 
         Yields:
-            False, since self is always falsy. INVALID when either operand
-            is a sentinel.
+            False, since self is always falsy. An EMPTY operand counts as
+            false.
 
         Example:
             >>> nu.run(nu.None_().and_(nu.None_()))[0]
@@ -90,7 +90,7 @@ class None_(Form, TypedNu[None]):  # noqa: N801
 
         Yields:
             True when other is truthy, False otherwise since self never is.
-            INVALID when either operand is a sentinel.
+            An EMPTY operand counts as false.
 
         Example:
             >>> nu.run(nu.None_().or_(nu.None_()))[0]
@@ -109,7 +109,7 @@ class None_(Form, TypedNu[None]):  # noqa: N801
             - Self is always falsy, so this always yields True.
 
         Yields:
-            True. INVALID when self is a sentinel.
+            True. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.None_().not_())[0]
@@ -129,7 +129,7 @@ class None_(Form, TypedNu[None]):  # noqa: N801
               always yields False.
 
         Yields:
-            False. INVALID when self is a sentinel.
+            False. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.None_().bool_())[0]
@@ -153,8 +153,8 @@ class None_(Form, TypedNu[None]):  # noqa: N801
                 raises for mismatched types, it's just False.
 
         Yields:
-            True when other is also None, False otherwise. INVALID when
-            either operand is a sentinel.
+            True when other is also None, False otherwise. EMPTY when
+            either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.None_() == nu.None_())[0]
@@ -173,8 +173,8 @@ class None_(Form, TypedNu[None]):  # noqa: N801
             other: the value to compare against.
 
         Yields:
-            True when other is not None, False otherwise. INVALID when
-            either operand is a sentinel.
+            True when other is not None, False otherwise. EMPTY when
+            either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.None_() != 0)[0]

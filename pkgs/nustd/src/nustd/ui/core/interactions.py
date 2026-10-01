@@ -19,7 +19,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
-from nu.lang import Command, ScalarQuery
+from nu.lang import EMPTY, Command, ScalarQuery
 
 from .protocol import Frame
 from .session import Session
@@ -38,7 +38,7 @@ __all__ = ["Append", "Changed", "Remove", "Write"]
 
 
 class Write(Command):
-    """Send a `write` frame on a Ref -- replace the value."""
+    """Send a `write` frame on a Ref -- replace the value. An EMPTY value raises."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
     _requires_async = Declared(value=True, name="requires_async")
@@ -61,6 +61,8 @@ class Write(Command):
             chain = await ref._aresolve_chain(rt, ref_nid)
             path = tuple(seg for seg, _, _ in chain)
             value = await value_thunk(rt)
+            if value is EMPTY:
+                raise ValueError("cannot write EMPTY")
             await session.send(Frame(self, ref=path, payload=value, chain=chain))
 
         return athunk
@@ -92,6 +94,8 @@ class Append(Command):
             chain = await ref._aresolve_chain(rt, ref_nid)
             path = tuple(seg for seg, _, _ in chain)
             values = [await t(rt) for t in value_thunks]
+            if any(v is EMPTY for v in values):
+                raise ValueError("cannot write EMPTY")
             payload = values[0] if len(values) == 1 else values
             await session.send(Frame(self, ref=path, payload=payload, chain=chain))
 

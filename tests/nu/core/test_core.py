@@ -25,7 +25,7 @@ from nu.core import (
     Sum,
 )
 from nu.domains.shape.interactions import SetCmd
-from nu.lang import EMPTY, INVALID, LAWS, Attr, Cardinality, Effect, Literal, Ref, gate
+from nu.lang import EMPTY, LAWS, Attr, Cardinality, Effect, Literal, Ref, gate
 from nu.lang.helpers import aeval, arun, compile, eval, run, validate
 
 
@@ -118,13 +118,13 @@ def test_aeval_mirrors_eval():
     assert asyncio.run(_aeval(And(Literal(True), Literal(True)))) is True
 
 
-def test_a_sentinel_operand_collapses_a_query_to_invalid():
+def test_an_empty_operand_collapses_a_query_to_empty():
     # Literal yields its payload value as-is, so a Literal carrying EMPTY
-    # serves as a sentinel-producing leaf. Add's sentinel-aware fold
-    # collapses on it.
-    assert _eval(Add(Literal(EMPTY), Literal(1))) is INVALID
-    assert _eval(Mul(Literal(2), Literal(INVALID))) is INVALID
-    assert asyncio.run(_aeval(And(Literal(True), Literal(EMPTY)))) is INVALID
+    # serves as an EMPTY-producing leaf. Add's fold collapses on it; And
+    # decides on truthiness, so it reads EMPTY as false.
+    assert _eval(Add(Literal(EMPTY), Literal(1))) is EMPTY
+    assert _eval(Mul(Literal(2), Literal(EMPTY))) is EMPTY
+    assert asyncio.run(_aeval(And(Literal(True), Literal(EMPTY)))) is False
 
 
 def test_run_compiles_validates_and_evaluates_a_description():

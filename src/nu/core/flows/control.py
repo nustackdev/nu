@@ -69,7 +69,8 @@ class IfDo(Control):
     Notes:
         - ``cond`` is evaluated exactly once per run, unlike ``WhileDo`` which
           re-checks it every turn.
-        - A falsy ``cond`` with no ``else_`` runs nothing at all.
+        - A falsy ``cond`` with no ``else_`` runs nothing at all. An EMPTY
+          ``cond`` counts as false.
 
     Example:
         >>> _ = nu.run(nu.IfDo(nu.Literal(True), nu.print("yes"), nu.print("no")))
@@ -117,6 +118,7 @@ class WhileDo(Control):
     Notes:
         - ``cond`` is re-evaluated before every turn, including the first, so
           a falsy ``cond`` at the start runs ``body`` zero times.
+        - An EMPTY ``cond`` counts as false and ends the loop.
         - No built-in turn cap: a ``cond`` that never turns falsy loops
           forever.
 
@@ -568,6 +570,7 @@ class SwitchDo(Control):
         - Keys are checked in the order ``cases`` was given, first equal match
           wins; a later duplicate key is unreachable.
         - ``selector`` is evaluated once per run, before any key comparison.
+          An EMPTY selector matches no key.
 
     Example:
         >>> _ = nu.run(nu.SwitchDo(nu.Literal("b"), {"a": nu.print(1), "b": nu.print(2)}))

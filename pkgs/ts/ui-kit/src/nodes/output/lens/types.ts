@@ -5,7 +5,7 @@
 //   KIND   the structural kind of a row - what kind of column it opens.
 //          shape | mapping | sequence | leaf | unknown.
 //   VTYPE  the type of the VALUE a row holds. str | int | float | bool |
-//          bytes | none | empty | invalid | error | list | dict.
+//          bytes | none | empty | error | list | dict.
 //
 // A row shows the vtype glyph when it holds a value and the kind glyph when it
 // does not (a shape slot, a key onto a shape). That is what makes a string, an
@@ -71,20 +71,18 @@ const VTYPE_ICON: Record<string, LucideIcon> = {
 	bytes: Binary,
 	none: CircleSlash,
 	empty: CircleDashed,
-	invalid: TriangleAlert,
 	error: TriangleAlert,
 	list: Brackets,
 	dict: Braces,
 };
 
 /** Types that render as a word in a chip rather than as text. */
-export const SENTINEL = new Set(["empty", "none", "invalid", "error"]);
+export const SENTINEL = new Set(["empty", "none", "error"]);
 
 /** The word a sentinel renders as, inside its chip. */
 export const SENTINEL_LABEL: Record<string, string> = {
 	empty: "empty",
 	none: "none",
-	invalid: "invalid",
 	error: "error",
 };
 
@@ -113,7 +111,7 @@ export function rowIcon(kind: string, vtype: string): LucideIcon {
  * rows stay muted, and only a genuinely bad state earns a status hue.
  */
 export function glyphTone(vtype: string, navigable: boolean): string {
-	if (vtype === "invalid" || vtype === "error") return "text-status-danger";
+	if (vtype === "error") return "text-status-danger";
 	if (vtype === "empty" || vtype === "none") return "text-text-muted";
 	return navigable ? "text-accent-2" : "text-text-muted";
 }
@@ -128,7 +126,6 @@ export function valueTone(vtype: string): string {
 			return "text-accent";
 		case "str":
 			return "text-text-secondary";
-		case "invalid":
 		case "error":
 			return "text-status-danger";
 		case "none":

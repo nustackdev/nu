@@ -31,10 +31,10 @@ no observer coupling. Each query resolves the ``ObserverProtocol`` from ctx
 under the root Shape of the Ref it was built from -- the same tag that Ref's
 Navigator and storage resolve under -- and calls ``observer.subscribe(options)``.
 
-Sentinel handling. If the underlying view resolves to ``EMPTY`` / ``INVALID``
-(the address is unbound, the intermediate container is missing), the
-subscription cannot be created and the query yields ``INVALID`` -- consistent
-with the rest of ``nu.core``.
+Sentinel handling. If the underlying view resolves to ``EMPTY`` (the address
+is unbound, the intermediate container is missing), the subscription cannot
+be created and the query yields ``EMPTY`` -- consistent with the rest of
+``nu.core``.
 
 Sync path. Building a real subscription requires calling into an Observer,
 which is a lifecycle-managed resource that lives inside an async runtime.
@@ -48,7 +48,7 @@ from typing import TYPE_CHECKING
 
 from nu.core.reactive.protocol import ObserverProtocol
 from nu.lang import ScalarQuery
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -111,8 +111,8 @@ class OnChange(ScalarQuery):
 
     Yields:
         The ``Subscription`` handle from ``observer.subscribe(options)``.
-        INVALID when the view resolves to EMPTY or INVALID (unbound address,
-        missing intermediate container) - no subscription is opened.
+        EMPTY when the view resolves to EMPTY (unbound address, missing
+        intermediate container) - no subscription is opened.
 
     Example:
         nu.arun(nu.ReactForever(users.on_change(), body))
@@ -134,8 +134,8 @@ class OnChange(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             view = await view_thunk(rt)
-            if view is EMPTY or view is INVALID:
-                return INVALID
+            if view is EMPTY:
+                return EMPTY
             options = view.on_change()
             observer = _resolve_observer(rt, scope)
             return observer.subscribe(options)
@@ -163,8 +163,8 @@ class OnChildChange(ScalarQuery):
 
     Yields:
         The ``Subscription`` handle from ``observer.subscribe(options)``.
-        INVALID when either the view or the address is EMPTY or INVALID - no
-        subscription is opened.
+        EMPTY when either the view or the address is EMPTY - no subscription
+        is opened.
 
     Example:
         nu.arun(nu.React(users.on_child_change("alice"), body))
@@ -186,11 +186,11 @@ class OnChildChange(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             view = await view_thunk(rt)
-            if view is EMPTY or view is INVALID:
-                return INVALID
+            if view is EMPTY:
+                return EMPTY
             address = await address_thunk(rt)
-            if address is EMPTY or address is INVALID:
-                return INVALID
+            if address is EMPTY:
+                return EMPTY
             options = view.on_child_change(address)
             observer = _resolve_observer(rt, scope)
             return observer.subscribe(options)
@@ -216,7 +216,7 @@ class OnChildrenChange(ScalarQuery):
 
     Yields:
         The ``Subscription`` handle from ``observer.subscribe(options)``.
-        INVALID when the view is EMPTY or INVALID - no subscription is opened.
+        EMPTY when the view is EMPTY - no subscription is opened.
 
     Example:
         nu.arun(nu.ReactForever(users.on_children_change(), body))
@@ -238,8 +238,8 @@ class OnChildrenChange(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             view = await view_thunk(rt)
-            if view is EMPTY or view is INVALID:
-                return INVALID
+            if view is EMPTY:
+                return EMPTY
             options = view.on_children_change()
             observer = _resolve_observer(rt, scope)
             return observer.subscribe(options)
@@ -271,7 +271,7 @@ class OnDescendantsChange(ScalarQuery):
 
     Yields:
         The ``Subscription`` handle from ``observer.subscribe(options)``.
-        INVALID when the view or any pattern segment is EMPTY or INVALID - no
+        EMPTY when the view or any pattern segment is EMPTY - no
         subscription is opened.
 
     Example:
@@ -295,15 +295,15 @@ class OnDescendantsChange(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             view = await view_thunk(rt)
-            if view is EMPTY or view is INVALID:
-                return INVALID
+            if view is EMPTY:
+                return EMPTY
             if not pattern_thunks:
                 raise ValueError("Pattern cannot be empty for on_descendants_change")
             pattern = []
             for pt in pattern_thunks:
                 p = await pt(rt)
-                if p is EMPTY or p is INVALID:
-                    return INVALID
+                if p is EMPTY:
+                    return EMPTY
                 pattern.append(p)
             options = view.on_descendants_change(pattern[0], *pattern[1:])
             observer = _resolve_observer(rt, scope)
@@ -338,9 +338,8 @@ class OnPrimitiveChange(ScalarQuery):
 
     Yields:
         The ``Subscription`` handle from ``observer.subscribe(options)``.
-        INVALID when the parent view or the address is EMPTY or INVALID, which
-        is what a leaf under a missing container gives - no subscription is
-        opened.
+        EMPTY when the parent view or the address is EMPTY, which is what a
+        leaf under a missing container gives - no subscription is opened.
 
     Example:
         nu.arun(nu.React(user["email"].on_change(), body))
@@ -368,11 +367,11 @@ class OnPrimitiveChange(ScalarQuery):
         async def athunk(rt: Runtime) -> object:
             ref_nid = rt.program.children[nid][0]
             parent = await ref._afetch_parent(rt, ref_nid)
-            if parent is EMPTY or parent is INVALID:
-                return INVALID
+            if parent is EMPTY:
+                return EMPTY
             address = await ref._aaddress(rt, ref_nid)
-            if address is EMPTY or address is INVALID:
-                return INVALID
+            if address is EMPTY:
+                return EMPTY
             options = parent.on_child_change(address)
             observer = _resolve_observer(rt, scope)
             return observer.subscribe(options)

@@ -33,7 +33,7 @@ class SizedForm(Form):
         """Length of self.
 
         Yields:
-            The element count as Int. INVALID when self is a sentinel.
+            The element count as Int. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.List([1, 2, 3]).len())[0]

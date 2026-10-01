@@ -33,11 +33,10 @@ class Str(Form, TypedNu[str]):
         - Logical operators are the named forms `and_`, `or_`, `not_`, and
           coerce by truthiness: the empty string is False, every other
           string is True.
-        - Most string methods degrade to INVALID on failure rather than
-          raising at evaluation time (a missing `index`/`rindex` match, a
-          multi-character `fillchar`, an unencodable character, a missing
-          `format_map` key). Indexing with an out-of-range int is the
-          exception: it raises, matching Python.
+        - A search that finds nothing (`index`/`rindex`) yields EMPTY.
+          Every other failure (a wrong type, a multi-character `fillchar`,
+          an unencodable character, a missing `format_map` key, an
+          out-of-range index) raises, matching Python.
 
     Example:
         >>> nu.run(nu.Str("ab") + nu.Str("cd"))[0]
@@ -55,8 +54,8 @@ class Str(Form, TypedNu[str]):
             other: the string to append to self.
 
         Yields:
-            The concatenation. INVALID when either operand is not a Str or
-            is a sentinel.
+            The concatenation. EMPTY when either operand is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("foo") + nu.Str("bar"))[0]
@@ -78,8 +77,8 @@ class Str(Form, TypedNu[str]):
               never lands here.
 
         Yields:
-            The concatenation. INVALID when either operand is not a Str or
-            is a sentinel.
+            The concatenation. EMPTY when either operand is
+            EMPTY.
 
         Example:
             >>> nu.run("foo" + nu.Str("bar"))[0]
@@ -112,7 +111,7 @@ class Str(Form, TypedNu[str]):
 
         Yields:
             The single character for an int key, the substring for a slice.
-            INVALID when self is a sentinel or not a Str.
+            EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("hello")[1])[0]
@@ -135,7 +134,7 @@ class Str(Form, TypedNu[str]):
         """Length of self in characters.
 
         Yields:
-            The length as Int. INVALID when self is a sentinel.
+            The length as Int. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("abc").len())[0]
@@ -157,8 +156,8 @@ class Str(Form, TypedNu[str]):
             - Named because Python's `in` must return a native bool.
 
         Yields:
-            True when item occurs in self, False otherwise. INVALID when
-            either operand is a sentinel.
+            True when item occurs in self, False otherwise. EMPTY when
+            either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("abc").contains("b"))[0]
@@ -181,8 +180,8 @@ class Str(Form, TypedNu[str]):
             other: the string to compare against.
 
         Yields:
-            True when self sorts after other, False otherwise. INVALID when
-            either operand is not a Str or is a sentinel.
+            True when self sorts after other, False otherwise. EMPTY when
+            either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("banana") > nu.Str("apple"))[0]
@@ -201,8 +200,8 @@ class Str(Form, TypedNu[str]):
             other: the string to compare against.
 
         Yields:
-            True when self sorts before other, False otherwise. INVALID
-            when either operand is not a Str or is a sentinel.
+            True when self sorts before other, False otherwise. EMPTY
+            when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("apple") < nu.Str("banana"))[0]
@@ -222,7 +221,7 @@ class Str(Form, TypedNu[str]):
 
         Yields:
             True when self sorts after or equal to other, False otherwise.
-            INVALID when either operand is not a Str or is a sentinel.
+            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("apple") >= nu.Str("apple"))[0]
@@ -242,7 +241,7 @@ class Str(Form, TypedNu[str]):
 
         Yields:
             True when self sorts before or equal to other, False otherwise.
-            INVALID when either operand is not a Str or is a sentinel.
+            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("apple") <= nu.Str("banana"))[0]
@@ -264,8 +263,8 @@ class Str(Form, TypedNu[str]):
             - Value equality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the strings compare equal, False otherwise. INVALID
-            when either operand is not a Str or is a sentinel.
+            True when the strings compare equal, False otherwise. EMPTY
+            when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("hi") == nu.Str("hi"))[0]
@@ -287,8 +286,8 @@ class Str(Form, TypedNu[str]):
             - Value inequality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the strings differ, False otherwise. INVALID when
-            either operand is not a Str or is a sentinel.
+            True when the strings differ, False otherwise. EMPTY when
+            either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("hi") != nu.Str("bye"))[0]
@@ -343,8 +342,8 @@ class Str(Form, TypedNu[str]):
               evaluated when the left does not already decide the result.
 
         Yields:
-            True when both operands are truthy, False otherwise. INVALID
-            when either operand is a sentinel.
+            True when both operands are truthy, False otherwise. An EMPTY
+            operand counts as false.
 
         Example:
             >>> nu.run(nu.Str("hi").and_(nu.Str("")))[0]
@@ -368,8 +367,8 @@ class Str(Form, TypedNu[str]):
               evaluated when the left does not already decide the result.
 
         Yields:
-            True when either operand is truthy, False otherwise. INVALID
-            when either operand is a sentinel.
+            True when either operand is truthy, False otherwise. An EMPTY
+            operand counts as false.
 
         Example:
             >>> nu.run(nu.Str("").or_(nu.Str("hi")))[0]
@@ -389,8 +388,8 @@ class Str(Form, TypedNu[str]):
               False.
 
         Yields:
-            True when self is the empty string, False otherwise. INVALID
-            when self is a sentinel.
+            True when self is the empty string, False otherwise. EMPTY
+            when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("").not_())[0]
@@ -410,8 +409,8 @@ class Str(Form, TypedNu[str]):
               True, matching Python's truthiness rule.
 
         Yields:
-            True when self is non-empty, False when self is empty. INVALID
-            when self is a sentinel.
+            True when self is non-empty, False when self is empty. EMPTY
+            when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("hi").bool_())[0]
@@ -431,8 +430,8 @@ class Str(Form, TypedNu[str]):
         """Self converted to uppercase.
 
         Yields:
-            The uppercased string. INVALID when self is a sentinel or not a
-            Str.
+            The uppercased string. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("Hello World").upper())[0]
@@ -446,8 +445,8 @@ class Str(Form, TypedNu[str]):
         """Self converted to lowercase.
 
         Yields:
-            The lowercased string. INVALID when self is a sentinel or not a
-            Str.
+            The lowercased string. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("Hello World").lower())[0]
@@ -461,8 +460,8 @@ class Str(Form, TypedNu[str]):
         """Self converted to title case.
 
         Yields:
-            The titlecased string. INVALID when self is a sentinel or not a
-            Str.
+            The titlecased string. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("hello world").title())[0]
@@ -480,8 +479,8 @@ class Str(Form, TypedNu[str]):
               Python's `str.capitalize`.
 
         Yields:
-            The capitalized string. INVALID when self is a sentinel or not
-            a Str.
+            The capitalized string. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("hello world").capitalize())[0]
@@ -495,8 +494,8 @@ class Str(Form, TypedNu[str]):
         """Self with uppercase and lowercase characters swapped.
 
         Yields:
-            The case-swapped string. INVALID when self is a sentinel or not
-            a Str.
+            The case-swapped string. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("Hello World").swapcase())[0]
@@ -514,8 +513,8 @@ class Str(Form, TypedNu[str]):
               German `ß` folding to `ss`.
 
         Yields:
-            The casefolded string. INVALID when self is a sentinel or not a
-            Str.
+            The casefolded string. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("Straße").casefold())[0]
@@ -537,8 +536,8 @@ class Str(Form, TypedNu[str]):
                 independently. When omitted, strips whitespace.
 
         Yields:
-            The stripped string. INVALID when self is a sentinel or not a
-            Str.
+            The stripped string. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("  hi  ").strip())[0]
@@ -559,8 +558,8 @@ class Str(Form, TypedNu[str]):
                 independently. When omitted, strips whitespace.
 
         Yields:
-            The left-stripped string. INVALID when self is a sentinel or
-            not a Str.
+            The left-stripped string. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("  hi  ").lstrip())[0]
@@ -578,8 +577,8 @@ class Str(Form, TypedNu[str]):
                 independently. When omitted, strips whitespace.
 
         Yields:
-            The right-stripped string. INVALID when self is a sentinel or
-            not a Str.
+            The right-stripped string. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("  hi  ").rstrip())[0]
@@ -602,8 +601,8 @@ class Str(Form, TypedNu[str]):
             maxsplit: the maximum number of splits. `-1` means unlimited.
 
         Yields:
-            The list of pieces. INVALID when self is a sentinel or not a
-            Str.
+            The list of pieces. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("a,b,c").split(","))[0]
@@ -630,8 +629,8 @@ class Str(Form, TypedNu[str]):
               splits are taken starting from the right end of the string.
 
         Yields:
-            The list of pieces. INVALID when self is a sentinel or not a
-            Str.
+            The list of pieces. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("a,b,c").rsplit(",", 1))[0]
@@ -650,8 +649,8 @@ class Str(Form, TypedNu[str]):
                 end of each piece instead of dropping them.
 
         Yields:
-            The list of lines. INVALID when self is a sentinel or not a
-            Str.
+            The list of lines. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("a\nb\nc").splitlines())[0]
@@ -673,8 +672,8 @@ class Str(Form, TypedNu[str]):
               found, that's `(self, "", "")`.
 
         Yields:
-            The 3-tuple of pieces. INVALID when self is a sentinel, not a
-            Str, or sep is empty.
+            The 3-tuple of pieces. EMPTY when self is EMPTY. Raises when
+            sep is empty.
 
         Example:
             >>> nu.run(nu.Str("a,b,c").partition(","))[0]
@@ -696,8 +695,8 @@ class Str(Form, TypedNu[str]):
               found, that's `("", "", self)`.
 
         Yields:
-            The 3-tuple of pieces. INVALID when self is a sentinel, not a
-            Str, or sep is empty.
+            The 3-tuple of pieces. EMPTY when self is EMPTY. Raises when
+            sep is empty.
 
         Example:
             >>> nu.run(nu.Str("a,b,c").rpartition(","))[0]
@@ -723,7 +722,7 @@ class Str(Form, TypedNu[str]):
 
         Yields:
             The lowest matching index, or `-1` when sub is not found.
-            INVALID when self is a sentinel or not a Str.
+            EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("hello world").find("o"))[0]
@@ -748,7 +747,7 @@ class Str(Form, TypedNu[str]):
 
         Yields:
             The highest matching index, or `-1` when sub is not found.
-            INVALID when self is a sentinel or not a Str.
+            EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("hello world").rfind("o"))[0]
@@ -770,12 +769,12 @@ class Str(Form, TypedNu[str]):
 
         Notes:
             - Unlike Python's `str.index`, a missing sub does not raise: it
-              yields INVALID instead. Use `find` if `-1` on a miss is the
+              yields EMPTY instead. Use `find` if `-1` on a miss is the
               behaviour you want.
 
         Yields:
-            The lowest matching index. INVALID when self is a sentinel, not
-            a Str, or sub is not found.
+            The lowest matching index. EMPTY when self is EMPTY or sub is
+            not found.
 
         Example:
             >>> nu.run(nu.Str("hello world").index("o"))[0]
@@ -797,12 +796,12 @@ class Str(Form, TypedNu[str]):
 
         Notes:
             - Unlike Python's `str.rindex`, a missing sub does not raise:
-              it yields INVALID instead. Use `rfind` if `-1` on a miss is
+              it yields EMPTY instead. Use `rfind` if `-1` on a miss is
               the behaviour you want.
 
         Yields:
-            The highest matching index. INVALID when self is a sentinel,
-            not a Str, or sub is not found.
+            The highest matching index. EMPTY when self is EMPTY or sub is
+            not found.
 
         Example:
             >>> nu.run(nu.Str("hello world").rindex("o"))[0]
@@ -820,8 +819,8 @@ class Str(Form, TypedNu[str]):
             sub: the substring to count.
 
         Yields:
-            The occurrence count. INVALID when self is a sentinel or not a
-            Str.
+            The occurrence count. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("banana").count_substring("an"))[0]
@@ -843,8 +842,8 @@ class Str(Form, TypedNu[str]):
             prefix: the string to test for at the start of self.
 
         Yields:
-            True when self starts with prefix, False otherwise. INVALID
-            when self is a sentinel or not a Str.
+            True when self starts with prefix, False otherwise. EMPTY
+            when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("hello").startswith("he"))[0]
@@ -862,8 +861,8 @@ class Str(Form, TypedNu[str]):
             suffix: the string to test for at the end of self.
 
         Yields:
-            True when self ends with suffix, False otherwise. INVALID when
-            self is a sentinel or not a Str.
+            True when self ends with suffix, False otherwise. EMPTY when
+            self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("hello").endswith("lo"))[0]
@@ -879,7 +878,7 @@ class Str(Form, TypedNu[str]):
 
         Yields:
             True when self is non-empty and every character is a digit,
-            False otherwise. INVALID when self is a sentinel or not a Str.
+            False otherwise. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("123").isdigit())[0]
@@ -895,7 +894,7 @@ class Str(Form, TypedNu[str]):
 
         Yields:
             True when self is non-empty and every character is alphabetic,
-            False otherwise. INVALID when self is a sentinel or not a Str.
+            False otherwise. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("abc").isalpha())[0]
@@ -911,7 +910,7 @@ class Str(Form, TypedNu[str]):
 
         Yields:
             True when self is non-empty and every character is alphanumeric,
-            False otherwise. INVALID when self is a sentinel or not a Str.
+            False otherwise. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("abc123").isalnum())[0]
@@ -927,7 +926,7 @@ class Str(Form, TypedNu[str]):
 
         Yields:
             True when self is non-empty and every character is whitespace,
-            False otherwise. INVALID when self is a sentinel or not a Str.
+            False otherwise. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("   ").isspace())[0]
@@ -947,7 +946,7 @@ class Str(Form, TypedNu[str]):
 
         Yields:
             True when self is non-empty and every character is numeric,
-            False otherwise. INVALID when self is a sentinel or not a Str.
+            False otherwise. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("123").isnumeric())[0]
@@ -967,7 +966,7 @@ class Str(Form, TypedNu[str]):
 
         Yields:
             True when self is non-empty and every character is decimal,
-            False otherwise. INVALID when self is a sentinel or not a Str.
+            False otherwise. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("123").isdecimal())[0]
@@ -983,7 +982,7 @@ class Str(Form, TypedNu[str]):
 
         Yields:
             True when self would be a legal Python identifier, False
-            otherwise. INVALID when self is a sentinel or not a Str.
+            otherwise. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("my_var").isidentifier())[0]
@@ -1004,7 +1003,7 @@ class Str(Form, TypedNu[str]):
 
         Yields:
             True when every character is printable, False otherwise.
-            INVALID when self is a sentinel or not a Str.
+            EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("abc").isprintable())[0]
@@ -1020,8 +1019,8 @@ class Str(Form, TypedNu[str]):
 
         Yields:
             True when self is non-empty and titlecased (each word starts
-            uppercase, the rest lowercase), False otherwise. INVALID when
-            self is a sentinel or not a Str.
+            uppercase, the rest lowercase), False otherwise. EMPTY when
+            self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("Hello World").istitle())[0]
@@ -1037,8 +1036,8 @@ class Str(Form, TypedNu[str]):
 
         Yields:
             True when self has at least one cased character and all of
-            them are uppercase, False otherwise. INVALID when self is a
-            sentinel or not a Str.
+            them are uppercase, False otherwise. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("ABC").isupper())[0]
@@ -1054,8 +1053,8 @@ class Str(Form, TypedNu[str]):
 
         Yields:
             True when self has at least one cased character and all of
-            them are lowercase, False otherwise. INVALID when self is a
-            sentinel or not a Str.
+            them are lowercase, False otherwise. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("abc").islower())[0]
@@ -1074,8 +1073,8 @@ class Str(Form, TypedNu[str]):
               here rather than False.
 
         Yields:
-            True when every character is ASCII, False otherwise. INVALID
-            when self is a sentinel or not a Str.
+            True when every character is ASCII, False otherwise. EMPTY
+            when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("").isascii())[0]
@@ -1099,12 +1098,10 @@ class Str(Form, TypedNu[str]):
             fillchar: the padding character.
 
         Notes:
-            - fillchar must be exactly one character; anything else yields
-              INVALID rather than raising.
+            - fillchar must be exactly one character; anything else raises.
 
         Yields:
-            The centered string. INVALID when self is a sentinel, not a
-            Str, or fillchar is not a single character.
+            The centered string. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("hi").center(6, "*"))[0]
@@ -1123,12 +1120,10 @@ class Str(Form, TypedNu[str]):
             fillchar: the padding character.
 
         Notes:
-            - fillchar must be exactly one character; anything else yields
-              INVALID rather than raising.
+            - fillchar must be exactly one character; anything else raises.
 
         Yields:
-            The left-justified string. INVALID when self is a sentinel, not
-            a Str, or fillchar is not a single character.
+            The left-justified string. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("hi").ljust(6, "*"))[0]
@@ -1147,12 +1142,10 @@ class Str(Form, TypedNu[str]):
             fillchar: the padding character.
 
         Notes:
-            - fillchar must be exactly one character; anything else yields
-              INVALID rather than raising.
+            - fillchar must be exactly one character; anything else raises.
 
         Yields:
-            The right-justified string. INVALID when self is a sentinel,
-            not a Str, or fillchar is not a single character.
+            The right-justified string. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("hi").rjust(6, "*"))[0]
@@ -1175,8 +1168,8 @@ class Str(Form, TypedNu[str]):
               `str.zfill`.
 
         Yields:
-            The zero-filled string. INVALID when self is a sentinel or not
-            a Str.
+            The zero-filled string. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("-42").zfill(5))[0]
@@ -1193,8 +1186,8 @@ class Str(Form, TypedNu[str]):
             tabsize: the number of columns between tab stops.
 
         Yields:
-            The expanded string. INVALID when self is a sentinel or not a
-            Str.
+            The expanded string. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("a\tb").expandtabs(4))[0]
@@ -1218,8 +1211,8 @@ class Str(Form, TypedNu[str]):
                 means replace all of them.
 
         Yields:
-            The replaced string. INVALID when self is a sentinel or not a
-            Str.
+            The replaced string. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("hello world").replace("o", "0"))[0]
@@ -1240,8 +1233,8 @@ class Str(Form, TypedNu[str]):
                 doesn't start with prefix.
 
         Yields:
-            The string with prefix removed. INVALID when self is a
-            sentinel or not a Str.
+            The string with prefix removed. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("hello.txt").removeprefix("hello"))[0]
@@ -1259,8 +1252,8 @@ class Str(Form, TypedNu[str]):
                 doesn't end with suffix.
 
         Yields:
-            The string with suffix removed. INVALID when self is a
-            sentinel or not a Str.
+            The string with suffix removed. EMPTY when self is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Str("hello.txt").removesuffix(".txt"))[0]
@@ -1278,12 +1271,10 @@ class Str(Form, TypedNu[str]):
                 string, or None to delete the character.
 
         Notes:
-            - A malformed table (bad ordinal, bad replacement type) yields
-              INVALID rather than raising.
+            - A malformed table (bad ordinal, bad replacement type) raises.
 
         Yields:
-            The translated string. INVALID when self is a sentinel, not a
-            Str, or table is malformed.
+            The translated string. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("hello").translate({104: 72}))[0]
@@ -1305,12 +1296,10 @@ class Str(Form, TypedNu[str]):
                 would use `**kwargs`.
 
         Notes:
-            - A missing field, or any other formatting error, yields
-              INVALID rather than raising.
+            - A missing field, or any other formatting error, raises.
 
         Yields:
-            The formatted string. INVALID when self is a sentinel, not a
-            Str, or formatting fails.
+            The formatted string. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("{name} is {age}").format_map({"name": "Nu", "age": 1}))[0]
@@ -1332,12 +1321,10 @@ class Str(Form, TypedNu[str]):
 
         Notes:
             - A character that can't be represented in the given encoding,
-              or an unknown encoding name, yields INVALID rather than
-              raising.
+              or an unknown encoding name, raises.
 
         Yields:
-            The encoded bytes. INVALID when self is a sentinel, not a Str,
-            or encoding fails.
+            The encoded bytes. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str("hello").encode())[0]
@@ -1359,11 +1346,10 @@ class Str(Form, TypedNu[str]):
             iterable: the strings to join. Every element must be a string.
 
         Notes:
-            - A non-string element yields INVALID rather than raising.
+            - A non-string element raises.
 
         Yields:
-            The joined string. INVALID when self is a sentinel, not a Str,
-            or iterable contains a non-string element.
+            The joined string. EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Str(", ").join(["a", "b", "c"]))[0]

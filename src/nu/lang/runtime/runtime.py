@@ -31,7 +31,7 @@ import contextvars
 import functools
 from typing import TYPE_CHECKING
 
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 from .utils.loop import safely_aclosing, safely_closing
 
@@ -158,15 +158,15 @@ class Runtime:
     def eval_or_short(self, nids: Iterable[int]) -> list | object:
         """Evaluate every nid, short-circuiting on a sentinel.
 
-        Implements the Query propagation rule: if any operand is EMPTY or
-        INVALID, the result is INVALID. Otherwise returns the values list.
+        Implements the Query propagation rule: if any operand is EMPTY, the
+        result is EMPTY. Otherwise returns the values list.
         """
         values: list = []
         eval_ = self.eval
         for n in nids:
             v = eval_(n)
-            if v is EMPTY or v is INVALID:
-                return INVALID
+            if v is EMPTY:
+                return EMPTY
             values.append(v)
         return values
 
@@ -175,8 +175,8 @@ class Runtime:
         values: list = []
         for n in nids:
             v = await self.aeval(n)
-            if v is EMPTY or v is INVALID:
-                return INVALID
+            if v is EMPTY:
+                return EMPTY
             values.append(v)
         return values
 

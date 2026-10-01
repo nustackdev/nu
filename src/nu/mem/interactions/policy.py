@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 from nu.core.spans.policy import _async_backstop
 from nu.engine.structure import Declared
 from nu.lang import Policy
-from nu.lang.sentinels import EMPTY, INVALID
+from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -74,7 +74,7 @@ class Throttle(Policy):
             interval = float(await interval_q(rt))
             prior = await last_q(rt)
             now = time.monotonic()
-            never = prior is None or prior is EMPTY or prior is INVALID
+            never = prior is None or prior is EMPTY
             if not never and now - prior < interval:
                 return None
             await last._awrite(rt, now, rt.program.children[nid][2])

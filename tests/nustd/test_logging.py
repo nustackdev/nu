@@ -10,7 +10,8 @@ from __future__ import annotations
 
 import asyncio
 import logging as pylogging
-from typing import TYPE_CHECKING
+
+import pytest
 
 import nu
 from nu import Context, arun, run
@@ -19,10 +20,6 @@ from nu.lang.attributes import Attr, Effect
 from nu.lang.helpers import compile
 from nustd import logging
 from nustd.logging import LOGGING, Log, LoggingRef
-
-
-if TYPE_CHECKING:
-    import pytest
 
 
 # --- API surface: mirror of Python's logging ---------------------------------
@@ -177,15 +174,25 @@ def test_msg_can_be_a_nu_term(caplog: pytest.LogCaptureFixture) -> None:
     assert caplog.records[0].getMessage() == "hi gor"
 
 
-def test_msg_skips_on_unbound_sentinel(caplog: pytest.LogCaptureFixture) -> None:
-    # An unbound attr reads EMPTY -- the whole line is dropped rather than
-    # emitting a partially-formatted string.
+def test_an_empty_arg_raises_and_logs_nothing(caplog: pytest.LogCaptureFixture) -> None:
+    # An unbound attr reads EMPTY, and a log line is a write: it refuses EMPTY
+    # rather than emitting a partially-formatted string.
     from nu.context import Attr
 
     log = logging.getLogger("nu.test")
     caplog.set_level(pylogging.DEBUG, logger="nu.test")
-    run(log.info("hi %s", Attr("missing")))
+    with pytest.raises(ValueError, match="EMPTY"):
+        run(log.info("hi %s", Attr("missing")))
     assert caplog.records == []
+
+
+def test_fallback_keeps_a_line_with_a_missing_arg(caplog: pytest.LogCaptureFixture) -> None:
+    from nu.context import Attr
+
+    log = logging.getLogger("nu.test")
+    caplog.set_level(pylogging.DEBUG, logger="nu.test")
+    run(log.info("hi %s", Attr("missing").fallback("guest")))
+    assert caplog.records[0].getMessage() == "hi guest"
 
 
 # --- fabric identity ---------------------------------------------------------

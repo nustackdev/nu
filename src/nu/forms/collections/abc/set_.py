@@ -90,8 +90,8 @@ class SetLikeForm(
             other: the set to union with self.
 
         Yields:
-            A new set with every element from self and other. INVALID
-            when self or other is a sentinel.
+            A new set with every element from self and other. EMPTY
+            when self or other is EMPTY.
 
         Example:
             >>> nu.run(nu.Set({1, 2}).union({2, 3}))[0]
@@ -108,8 +108,8 @@ class SetLikeForm(
             other: the set to intersect with self.
 
         Yields:
-            A new set with only the elements found in both. INVALID when
-            self or other is a sentinel.
+            A new set with only the elements found in both. EMPTY when
+            self or other is EMPTY.
 
         Example:
             >>> nu.run(nu.Set({1, 2, 3}).intersection({2, 3, 4}))[0]
@@ -127,7 +127,7 @@ class SetLikeForm(
 
         Yields:
             A new set with the elements of self minus the elements of
-            other. INVALID when self or other is a sentinel.
+            other. EMPTY when self or other is EMPTY.
 
         Example:
             >>> nu.run(nu.Set({1, 2, 3}).difference({2, 3}))[0]
@@ -147,7 +147,7 @@ class SetLikeForm(
 
         Yields:
             A new set with the elements that are in self or other but not
-            in both. INVALID when self or other is a sentinel.
+            in both. EMPTY when self or other is EMPTY.
 
         Example:
             >>> nu.run(nu.Set({1, 2, 3}).symmetric_difference({2, 3, 4}))[0]
@@ -165,7 +165,7 @@ class SetLikeForm(
 
         Yields:
             True when self is a subset of other (equal sets count), False
-            otherwise. INVALID when self or other is a sentinel.
+            otherwise. EMPTY when self or other is EMPTY.
 
         Example:
             >>> nu.run(nu.Set({1, 2, 3}).issubset({1, 2, 3, 4}))[0]
@@ -185,7 +185,7 @@ class SetLikeForm(
 
         Yields:
             True when self is a superset of other (equal sets count),
-            False otherwise. INVALID when self or other is a sentinel.
+            False otherwise. EMPTY when self or other is EMPTY.
 
         Example:
             >>> nu.run(nu.Set({1, 2, 3}).issuperset({1, 2}))[0]
@@ -205,7 +205,7 @@ class SetLikeForm(
 
         Yields:
             True when self and other have no elements in common, False
-            otherwise. INVALID when self or other is a sentinel.
+            otherwise. EMPTY when self or other is EMPTY.
 
         Example:
             >>> nu.run(nu.Set({1, 2, 3}).isdisjoint({9, 10}))[0]
@@ -221,8 +221,8 @@ class SetLikeForm(
         """Shallow copy of self.
 
         Yields:
-            A new set with the same elements as self. INVALID when self
-            is a sentinel.
+            A new set with the same elements as self. EMPTY when self
+            is EMPTY.
 
         Example:
             >>> nu.run(nu.Set({1, 2, 3}).copy())[0]

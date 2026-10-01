@@ -16,10 +16,8 @@ Wire-up:
 
 - ``exc_cls`` is a plain Python class captured in the atom's payload -- the
   exception type is a structural detail of the tree, not run-time data.
-- ``msg`` is any Nu expression yielding a value (typically a str). If the
-  message resolves to a sentinel (``EMPTY`` / ``INVALID``) the raise is
-  skipped -- "the condition is not yet ready", not "raise something
-  obscured".
+- ``msg`` is any Nu expression yielding a value (typically a str). An
+  ``EMPTY`` message still raises, with ``<EMPTY>`` as the message.
 """
 
 from __future__ import annotations
@@ -28,7 +26,6 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Control
-from nu.lang.sentinels import EMPTY, INVALID
 
 
 if TYPE_CHECKING:
@@ -53,11 +50,11 @@ class Raise(Control):
         - ``exc_cls`` is a plain Python class captured in the payload, not a
           child - the exception type is a structural detail of the tree, not
           run-time data.
-        - If ``msg`` resolves to EMPTY or INVALID the raise is skipped: "the
-          condition is not yet ready", not "raise something obscured".
+        - An EMPTY ``msg`` still raises, with ``<EMPTY>`` as the message, the
+          way ``print`` shows it. A raise is never skipped.
 
     Yields:
-        Never returns normally; raises ``exc_cls(msg)`` or skips.
+        Never returns normally; raises ``exc_cls(msg)``.
 
     Example:
         >>> try:
@@ -79,8 +76,6 @@ class Raise(Control):
 
         def thunk(rt: Runtime) -> None:
             msg = msg_t(rt)
-            if msg is EMPTY or msg is INVALID:
-                return
             raise exc_cls(msg)
 
         return thunk
@@ -91,8 +86,6 @@ class Raise(Control):
 
         async def athunk(rt: Runtime) -> None:
             msg = await msg_t(rt)
-            if msg is EMPTY or msg is INVALID:
-                return
             raise exc_cls(msg)
 
         return athunk

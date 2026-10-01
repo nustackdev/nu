@@ -40,7 +40,6 @@ from typing import TYPE_CHECKING, cast
 
 from nu.engine.structure import Declared
 from nu.lang import Command, Ref, ScalarAction
-from nu.lang.sentinels import EMPTY, INVALID
 
 
 if TYPE_CHECKING:
@@ -197,8 +196,8 @@ class Print(Command):
         - ``sep`` / ``end`` / ``flush`` are captured at construction and
           ride in :attr:`_payload` as static Python values, never resolved
           as Nu terms.
-        - If any value is EMPTY or INVALID, nothing is written at all: the
-          check runs before the write, not per already-collected value.
+        - A debugging tool, so it shows what it gets: an EMPTY value prints
+          as ``<EMPTY>`` rather than raising like other writes.
 
     Yields:
         Nothing (VOID).
@@ -236,10 +235,7 @@ class Print(Command):
         def thunk(rt: Runtime) -> None:
             parts: list[str] = []
             for vt in value_thunks:
-                v = vt(rt)
-                if v is EMPTY or v is INVALID:
-                    return
-                parts.append(str(v))
+                parts.append(str(vt(rt)))
             stream = ref._resolve_stream(rt)
             stream.write(sep.join(parts) + end)
             if flush:
@@ -257,10 +253,7 @@ class Print(Command):
         async def athunk(rt: Runtime) -> None:
             parts: list[str] = []
             for vt in value_thunks:
-                v = await vt(rt)
-                if v is EMPTY or v is INVALID:
-                    return
-                parts.append(str(v))
+                parts.append(str(await vt(rt)))
             stream = ref._resolve_stream(rt)
             stream.write(sep.join(parts) + end)
             if flush:

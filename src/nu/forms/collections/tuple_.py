@@ -78,7 +78,7 @@ class Tuple(
               `List.of` and `Dict.of`.
 
         Yields:
-            The packed tuple. INVALID when any item resolves to a sentinel.
+            The packed tuple. EMPTY when any item is EMPTY.
 
         Example:
             >>> nu.run(nu.Tuple.of(1, 2, 3))[0]
@@ -113,8 +113,8 @@ class Tuple(
             other: the tuple to append after self.
 
         Yields:
-            A new tuple with self's items followed by other's. INVALID when
-            either operand is not a Tuple or is a sentinel.
+            A new tuple with self's items followed by other's. EMPTY when
+            either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Tuple.of(1, 2) + nu.Tuple.of(3, 4))[0]
@@ -136,8 +136,8 @@ class Tuple(
               never lands here.
 
         Yields:
-            A new tuple with other's items followed by self's. INVALID when
-            either operand is not a Tuple or is a sentinel.
+            A new tuple with other's items followed by self's. EMPTY when
+            either operand is EMPTY.
 
         Example:
             >>> nu.run((1, 2) + nu.Tuple.of(3, 4))[0]
@@ -155,7 +155,7 @@ class Tuple(
 
         Yields:
             A new tuple with self's items repeated n times, in order.
-            INVALID when self is a sentinel.
+            EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Tuple.of(1, 2) * 3)[0]
@@ -175,8 +175,8 @@ class Tuple(
             - Reached only when the left operand is a plain Python int.
 
         Yields:
-            A new tuple with self's items repeated n times. INVALID when
-            self is a sentinel.
+            A new tuple with self's items repeated n times. EMPTY when
+            self is EMPTY.
 
         Example:
             >>> nu.run(2 * nu.Tuple.of(1, 2))[0]
@@ -201,8 +201,8 @@ class Tuple(
               differing pair decides.
 
         Yields:
-            True when self sorts after other, False otherwise. INVALID when
-            either operand is not a Tuple or is a sentinel.
+            True when self sorts after other, False otherwise. EMPTY when
+            either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Tuple.of(1, 3) > nu.Tuple.of(1, 2))[0]
@@ -225,8 +225,8 @@ class Tuple(
               differing pair decides.
 
         Yields:
-            True when self sorts before other, False otherwise. INVALID
-            when either operand is not a Tuple or is a sentinel.
+            True when self sorts before other, False otherwise. EMPTY
+            when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Tuple.of(1, 2) < nu.Tuple.of(1, 3))[0]
@@ -246,7 +246,7 @@ class Tuple(
 
         Yields:
             True when self sorts after or equal to other, False otherwise.
-            INVALID when either operand is not a Tuple or is a sentinel.
+            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Tuple.of(1, 2) >= nu.Tuple.of(1, 2))[0]
@@ -266,7 +266,7 @@ class Tuple(
 
         Yields:
             True when self sorts before or equal to other, False otherwise.
-            INVALID when either operand is not a Tuple or is a sentinel.
+            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Tuple.of(1, 2) <= nu.Tuple.of(1, 3))[0]
@@ -289,8 +289,8 @@ class Tuple(
 
         Yields:
             True when the tuples have the same length and equal items in
-            order, False otherwise. INVALID when either operand is not a
-            Tuple or is a sentinel.
+            order, False otherwise. EMPTY when either operand is
+            EMPTY.
 
         Example:
             >>> nu.run(nu.Tuple.of(1, 2) == nu.Tuple.of(1, 2))[0]
@@ -312,8 +312,8 @@ class Tuple(
             - Value inequality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the tuples differ, False otherwise. INVALID when
-            either operand is not a Tuple or is a sentinel.
+            True when the tuples differ, False otherwise. EMPTY when
+            either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Tuple.of(1, 2) != nu.Tuple.of(1, 3))[0]
