@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Menu shortcuts show as key caps, so they stay readable on the menu
 - Missing values flow through expressions, count as false in conditions, and refuse to be stored
 - Any value can fall back to alternatives when it is missing
 - UI kit 0.2.6 ships proper close buttons on dialogs and sheets

@@ -7,10 +7,10 @@ import { cn } from "../../lib/utils";
 // platforms: a combination is a `Shortcut` (./shortcut.tsx), which names the
 // keys and lays out one cap each.
 //
-// `default` sits on the sunken well, for a hint standing on its own (a
-// tooltip, a footer). `ghost` drops the well and goes muted, for a hint inside
-// something that already has a box (an input, a menu row). Fixed heights, so
-// caps of different glyphs line up in a row.
+// `default` sits on the sunken well, for a hint on its own or in a list (a
+// tooltip, a footer, a menu row). `ghost` drops the well and goes muted, for a
+// hint inside a field that already has a box (a search input). Fixed heights,
+// so caps of different glyphs line up in a row.
 const kbdVariants = cva(
 	"inline-flex items-center justify-center rounded-sm border font-mono font-medium text-xs leading-none",
 	{

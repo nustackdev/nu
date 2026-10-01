@@ -266,12 +266,12 @@ function DropdownMenuShortcut({
 	children,
 	...props
 }: React.HTMLAttributes<HTMLSpanElement> & {
-	/** Key names, drawn as ghost caps (see `Shortcut`). Text children otherwise. */
+	/** Key names, drawn as small caps on their well (see `Shortcut`). Text children otherwise. */
 	keys?: readonly string[];
 }) {
 	return (
 		<span data-slot="dropdown-menu-shortcut" className={cn(menuShortcutClasses, className)} {...props}>
-			{keys ? <Shortcut keys={keys} variant="ghost" /> : children}
+			{keys ? <Shortcut keys={keys} size="sm" /> : children}
 		</span>
 	);
 }
