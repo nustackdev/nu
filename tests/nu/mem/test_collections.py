@@ -183,6 +183,28 @@ class TestListRefExecution:
         await arun(PortfolioShape.tags.append("y"), portfolio_ctx)
         assert data["tags"] == ["x", "y"]
 
+    def test_remove_drops_the_first_occurrence(self, data, portfolio_ctx):
+        data["tags"] = ["a", "b", "a"]
+        run(PortfolioShape.tags.remove("a"), portfolio_ctx)
+        assert data["tags"] == ["b", "a"]
+
+    def test_remove_absent_raises_by_default(self, data, portfolio_ctx):
+        data["tags"] = ["a"]
+        with pytest.raises(ValueError):
+            run(PortfolioShape.tags.remove("z"), portfolio_ctx)
+
+    def test_remove_missing_ok_present(self, data, portfolio_ctx):
+        data["tags"] = ["a", "b", "a"]
+        run(PortfolioShape.tags.remove("a", missing_ok=True), portfolio_ctx)
+        assert data["tags"] == ["b", "a"]
+
+    @pytest.mark.asyncio
+    async def test_remove_missing_ok_absent_is_a_noop(self, data, portfolio_ctx):
+        data["tags"] = ["a"]
+        run(PortfolioShape.tags.remove("z", missing_ok=True), portfolio_ctx)
+        await arun(PortfolioShape.tags.remove("z", missing_ok=True), portfolio_ctx)
+        assert data["tags"] == ["a"]
+
 
 # ============================================================================
 # SetRef — set operations
@@ -210,6 +232,23 @@ class TestSetRefExecution:
         data["members"] = {"alice"}
         run(PortfolioShape.members.add("bob"), portfolio_ctx)
         assert data["members"] == {"alice", "bob"}
+
+    def test_remove_absent_raises_by_default(self, data, portfolio_ctx):
+        data["members"] = {"alice"}
+        with pytest.raises(KeyError):
+            run(PortfolioShape.members.remove("bob"), portfolio_ctx)
+
+    def test_remove_missing_ok_present(self, data, portfolio_ctx):
+        data["members"] = {"alice", "bob"}
+        run(PortfolioShape.members.remove("bob", missing_ok=True), portfolio_ctx)
+        assert data["members"] == {"alice"}
+
+    @pytest.mark.asyncio
+    async def test_remove_missing_ok_absent_is_a_noop(self, data, portfolio_ctx):
+        data["members"] = {"alice"}
+        run(PortfolioShape.members.remove("bob", missing_ok=True), portfolio_ctx)
+        await arun(PortfolioShape.members.remove("bob", missing_ok=True), portfolio_ctx)
+        assert data["members"] == {"alice"}
 
     def test_union(self, data, portfolio_ctx):
         data["members"] = {"alice", "bob"}

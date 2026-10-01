@@ -1,25 +1,73 @@
-"""Tests for the transform atoms (stream-to-stream lenses).
+"""Tests for the transform atoms.
 
 Map and Filter bind each item under a name (a child, default "item") and
-evaluate a Nu child against it, read via Attr. Sorted / Flatten / Unique are
-single-source lenses. Coverage runs real programs through ``run``.
+evaluate a Nu child against it, read via Attr. Flatten / Unique are
+single-source lenses. Sorted is a scalar query: iterable in, list out.
+Coverage runs real programs through ``run``.
 """
 
 from __future__ import annotations
 
+import asyncio
+
+import pytest
+
+import nu
 from nu.context import Attr as AttrRef
 from nu.core import Collect, Filter, Iter, Lt, Map, Mul
 from nu.core.transform import Flatten, Sorted, Unique
-from nu.lang import Attr, Cardinality, Literal
-from nu.lang.helpers import compile, run, validate
+from nu.engine.validation.law import ValidationError
+from nu.forms.collections import List
+from nu.lang import EMPTY, Attr, Cardinality, Literal
+from nu.lang.helpers import arun, compile, run, validate
 
 
-# --- single-source lenses (Sorted / Flatten / Unique) --------------------
+# --- Sorted: iterable in, list out ----------------------------------------
 
 
-def test_sorted_orders_its_source():
-    value, _ = run(Collect(Sorted(Iter(Literal([3, 1, 2])))))
+def test_sorted_orders_a_list_value_into_a_new_list():
+    value, _ = run(Sorted(Literal((3, 1, 2))))
     assert value == [1, 2, 3]
+
+
+def test_sorted_orders_a_ref():
+    class Port(nu.Shape):
+        tags = nu.ListRef.slot(str)
+
+    ctx = nu.Context().bind(dict, {"tags": ["b", "c", "a"]}, Port)
+    assert run(Sorted(Port.tags), ctx)[0] == ["a", "b", "c"]
+
+
+def test_sorted_orders_a_collected_stream_sync_and_async():
+    term = Sorted(Collect(Map(Iter(Literal([3, 1, 2])), Mul(AttrRef("item"), Literal(10)))))
+    assert run(term)[0] == [10, 20, 30]
+    assert asyncio.run(arun(term))[0] == [10, 20, 30]
+
+
+def test_sorted_refuses_a_bare_stream():
+    with pytest.raises(ValidationError, match="scalar_stream_refused"):
+        run(Sorted(Iter(Literal([3, 1, 2]))))
+
+
+def test_sorted_propagates_empty():
+    assert run(Sorted(Literal(EMPTY)))[0] is EMPTY
+    assert asyncio.run(arun(Sorted(Literal(EMPTY))))[0] is EMPTY
+
+
+def test_sorted_is_a_scalar_and_validates():
+    program = compile(Sorted(Literal([3, 1, 2])))
+    assert program.attr(program.root, Attr.CARDINALITY) is Cardinality.SCALAR
+    assert validate(program) is program
+
+
+def test_sorted_function_gives_a_list_form():
+    xs = nu.sorted([3, 1, 2])
+    assert isinstance(xs, List)
+    assert run(xs.len())[0] == 3
+    assert run(xs.index(3))[0] == 2
+
+
+# --- single-source lenses (Flatten / Unique) -----------------------------
 
 
 def test_flatten_concatenates_one_level():
@@ -33,7 +81,7 @@ def test_unique_drops_repeats_first_seen_order():
 
 
 def test_a_single_source_lens_is_a_stream_and_validates():
-    program = compile(Sorted(Literal([3, 1, 2])))
+    program = compile(Unique(Literal([3, 1, 2])))
     assert program.attr(program.root, Attr.CARDINALITY) is Cardinality.STREAM
     assert validate(program) is program
 

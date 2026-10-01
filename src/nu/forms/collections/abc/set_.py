@@ -274,27 +274,34 @@ class MutableSetForm(
 
         return AddCmd(self, value)
 
-    def remove(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
+    def remove(self, value: Arg[ElementT], *, missing_ok: bool = False) -> Any:  # noqa: ANN401
         """Remove value from self.
 
         Args:
             value: the element to remove.
+            missing_ok: when ``True``, an absent value is a no-op. A plain
+                Python bool fixed at construction, not a Nu value.
 
         Notes:
-            - Raises at evaluation time when value is absent. Use
-              `discard` when a missing value shouldn't raise.
+            - By default raises at evaluation time when value is absent,
+              matching Python's `set.remove`.
 
         Yields:
-            Nothing (Command). Mutates self in place. Raises at
-            evaluation time when value is not in self.
+            Nothing (Command). Mutates self in place.
 
-        Example::
-
-            my_set.remove(4)
+        Example:
+            >>> class Port(nu.Shape):
+            ...     members = nu.SetRef.slot(str)
+            >>> data = {"members": {"a", "b"}}
+            >>> ctx = nu.Context().bind(dict, data, Port)
+            >>> _ = nu.run(Port.members.remove("a"), ctx)
+            >>> _ = nu.run(Port.members.remove("z", missing_ok=True), ctx)
+            >>> data
+            {'members': {'b'}}
         """
         from .set_interactions import Remove
 
-        return Remove(self, value)
+        return Remove(self, value, missing_ok=missing_ok)
 
     def discard(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
         """Remove value from self if present.

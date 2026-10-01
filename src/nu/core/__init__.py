@@ -40,7 +40,8 @@ family, crossing Query / Command / Action as the builtins do:
 - ``repr`` - representations (Repr, Format, Bin, Hex, Ord, Chr)
 - ``access`` - item and attribute access (GetItem, Len, GetAttr, SetAttr)
 - ``iteration`` - iterator sources (Iter, Next, Enumerate, Zip, Reversed)
-- ``transform`` - stream-to-stream lenses (Map, Filter, Sorted, Flatten)
+- ``transform`` - iterable transforms (Map, Filter, Flatten as stream lenses;
+  Sorted yields a list)
 - ``reduction`` - stream-to-scalar folds (Sum, Min, Max, AnyOf, AllOf, Collect)
 - ``reflection`` - introspection (Type, IsInstance, Callable, Id, Hash)
 - ``sentinel`` - the queries that observe EMPTY (IsEmpty, Fallback)
@@ -116,6 +117,7 @@ from nu.core.cast_fns import (
     int,
     list,
     set,
+    sorted,
     str,
     tuple,
 )
@@ -288,6 +290,7 @@ __all__ = [
     "list",
     "print",
     "set",
+    "sorted",
     "str",
     "tuple",
 ]

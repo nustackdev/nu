@@ -190,7 +190,7 @@ import builtins as _builtins  # noqa: E402  (placed here to avoid the shadowed s
 _HIDDEN = {"annotations", "domains"}
 _SHADOWS_BUILTIN = {n for n in dir(_builtins) if not n.startswith("_")}
 _names = dir()
-__all__ = sorted(
+__all__ = _builtins.sorted(
     ({*_names} - _HIDDEN - _SHADOWS_BUILTIN) - {n for n in _names if n.startswith("_")}
 )
 del _builtins, _names

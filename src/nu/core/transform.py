@@ -1,14 +1,20 @@
-"""Transform atoms: Python's stream-to-stream builtins.
+"""Transform atoms: Python's iterable-transforming builtins.
 
-Maps Python's builtins that take an iterable and yield another iterable onto Nu
-StreamQueries (lazy lenses - pulled per item, no materialization). Pure shape
-over their source; effects only ride in through Ref children.
+Maps Python's builtins that take an iterable and yield another iterable onto
+Nu Queries. Pure shape over their source; effects only ride in through Ref
+children.
 
-Builtins to cover (Python -> Nu):
+Builtins covered (Python -> Nu):
 - ``map`` -> ``Map``, ``filter`` -> ``Filter``, ``sorted`` -> ``Sorted``
 
-Plus two transforms kept as core: ``Flatten`` (one-level concat) and
-``Unique`` (drop already-seen, order preserved).
+Plus three transforms kept as core: ``SortBy`` (ordered by a key expression),
+``Flatten`` (one-level concat) and ``Unique`` (drop already-seen, order
+preserved).
+
+``Map``, ``Filter``, ``SortBy``, ``Flatten`` and ``Unique`` are StreamQueries:
+stream in, stream out. ``Sorted`` is a ScalarQuery, like Python's ``sorted``:
+ordering must see every item before it yields the first, so it takes an
+iterable value and yields a list rather than posing as a stream.
 
 ``Map`` and ``Filter`` bind each item into ``ctx.attrs`` under a name and
 evaluate a Nu child against it. The name is a **child** (a Query yielding
@@ -16,9 +22,6 @@ the name), so it can be a ``Literal`` or a Ref computed elsewhere - never an
 opaque payload. The body reads the item with ``Attr(<name>)``. The item is
 bound with ``ctx.attrs.let`` for the evaluation of that one item, so it shadows
 an outer name of the same spelling and never outlives the item.
-
-Sorts: all StreamQuery (Q). ``Sorted`` / ``Flatten`` / ``Unique`` stay
-structural stubs (no ``compile``) until they are filled.
 """
 
 from __future__ import annotations
@@ -26,7 +29,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.engine import Term
-from nu.lang import StreamQuery
+from nu.lang import ScalarQuery, StreamQuery
 from nu.lang.literal import Literal
 from nu.lang.sentinels import EMPTY
 
@@ -177,34 +180,39 @@ class Filter(StreamQuery):
         return athunk
 
 
-class Sorted(StreamQuery):
-    """Its source child, ordered (eager).
+class Sorted(ScalarQuery):
+    """Its iterable child collected into an ascending ``list`` (``sorted``).
 
     Args:
-        source: the stream to sort.
+        source: the iterable to sort.
 
     Notes:
-        - Drains the whole source before yielding anything - the one
-          barrier among these lenses. A pull on its output blocks until
-          the whole source is drained and sorted.
+        - Takes an iterable value, like the collection casts. A stream is
+          drained into one first with :class:`Collect`.
         - Items must support ordering against each other.
-        - No sentinel check of its own: an EMPTY item is compared like any
-          other value and raises if it can't be ordered against the rest.
+        - An EMPTY item is compared like any other value and raises if it
+          can't be ordered against the rest.
 
     Yields:
-        A stream holding every item of ``source``, ascending (stream in,
-        stream out).
+        A new list holding every item of ``source``, ascending. EMPTY when
+        the child is EMPTY.
 
     Example:
-        >>> nu.run(nu.Collect(nu.Sorted(nu.Iter([3, 1, 2]))))[0]
+        >>> nu.run(nu.Sorted([3, 1, 2]))[0]
         [1, 2, 3]
+
+        >>> nu.run(nu.Sorted(nu.Collect(nu.Iter({"b", "a"}))))[0]
+        ['a', 'b']
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (source,) = children
 
         def thunk(rt: Runtime) -> object:
-            return iter(sorted(sync_iter(source(rt))))
+            v = source(rt)
+            if v is EMPTY:
+                return EMPTY
+            return sorted(v)
 
         return thunk
 
@@ -212,13 +220,10 @@ class Sorted(StreamQuery):
         (source,) = children
 
         async def athunk(rt: Runtime) -> object:
-            items = sorted([x async for x in aiter_any(await source(rt))])
-
-            async def agen() -> object:
-                for x in items:
-                    yield x
-
-            return agen()
+            v = await source(rt)
+            if v is EMPTY:
+                return EMPTY
+            return sorted(v)
 
         return athunk
 
@@ -236,8 +241,8 @@ class SortBy(StreamQuery):
     Notes:
         - ``key`` reads the item with ``Attr(<name>)``, the same
           scoped binding as :class:`Map` / :class:`Filter`.
-        - Drains and sorts the whole source before yielding anything, the
-          same barrier as :class:`Sorted`.
+        - Drains and sorts the whole source before yielding anything, so
+          a pull on its output waits for the whole source.
 
     Yields:
         A stream holding every item of ``source``, ordered by ``key``

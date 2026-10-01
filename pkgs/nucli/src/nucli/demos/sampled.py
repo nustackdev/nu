@@ -71,7 +71,7 @@ class App(nustd.ui.Index):
 ui = nu.ReactForever(
     State.nums.on_change(),
     App.home.chart.set_points(
-        nu.Collect(nu.Sorted(nu.Iter(State.nums.sample(200, 0, State.cursor)))),
+        nu.sorted(State.nums.sample(200, 0, State.cursor)),
     ),
 )
 

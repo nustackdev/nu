@@ -376,13 +376,20 @@ class AddCmd(Command):
 class Remove(Command):
     """Remove element from set: s.remove(value). Mutates the set; returns nothing.
 
-    Raises KeyError if the element is absent (Python parity).
+    Raises KeyError if the element is absent (Python parity), unless the
+    construction-time ``missing_ok`` flag (carried in the payload) is set,
+    which makes an absent element a no-op.
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
+    def __init__(self, target: object, value: object, *, missing_ok: bool = False) -> None:
+        super().__init__(target, value)
+        self._payload = {**self._payload, "missing_ok": missing_ok}
+
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, value_t = children
+        missing_ok = bool(self._payload["missing_ok"])
 
         def thunk(rt: Runtime) -> None:
             target = target_t(rt)
@@ -391,12 +398,15 @@ class Remove(Command):
             value = value_t(rt)
             if value is EMPTY:
                 raise ValueError("cannot write with an EMPTY operand")
+            if missing_ok and value not in target:
+                return
             target.remove(value)
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, value_t = children
+        missing_ok = bool(self._payload["missing_ok"])
 
         async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)
@@ -405,6 +415,8 @@ class Remove(Command):
             value = await value_t(rt)
             if value is EMPTY:
                 raise ValueError("cannot write with an EMPTY operand")
+            if missing_ok and value not in target:
+                return
             target.remove(value)
 
         return athunk

@@ -3,7 +3,7 @@
 SequenceForm = Collection + Sliceable + first/last/index/count/reversed
 MutableSequenceForm = Sequence + append/insert/pop/extend/remove/reverse
 
-Sorted/Reversed are standalone functions in ``abc.fn``.
+Sorted/Reversed are standalone core atoms (``nu.Sorted``, ``nu.Reversed``).
 
 Follows Python's collections.abc.Sequence / MutableSequence pattern.
 
@@ -308,24 +308,36 @@ class MutableSequenceForm(
 
         return DelIndex(self, index)
 
-    def remove(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
+    def remove(self, value: Arg[ElementT], *, missing_ok: bool = False) -> Any:  # noqa: ANN401
         """Remove the first occurrence of value.
 
         Args:
             value: the element to remove.
+            missing_ok: when ``True``, an absent value is a no-op. A plain
+                Python bool fixed at construction, not a Nu value.
 
         Notes:
             - Mutates self and needs a Ref on the left; it can't run
               standalone against a plain sequence value.
-            - A value that isn't present raises at evaluation time,
-              matching Python's `list.remove`.
+            - By default a value that isn't present raises at evaluation
+              time, matching Python's `list.remove`.
 
         Yields:
             Nothing (Command).
+
+        Example:
+            >>> class Port(nu.Shape):
+            ...     tags = nu.ListRef.slot(str)
+            >>> data = {"tags": ["a", "b", "a"]}
+            >>> ctx = nu.Context().bind(dict, data, Port)
+            >>> _ = nu.run(Port.tags.remove("a"), ctx)
+            >>> _ = nu.run(Port.tags.remove("z", missing_ok=True), ctx)
+            >>> data
+            {'tags': ['b', 'a']}
         """
         from .sequence_interactions import RemoveValue
 
-        return RemoveValue(self, value)
+        return RemoveValue(self, value, missing_ok=missing_ok)
 
     def reverse(self) -> Any:  # noqa: ANN401
         """Reverse self in place.

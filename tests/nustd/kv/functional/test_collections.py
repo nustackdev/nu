@@ -237,6 +237,13 @@ class TestListRefExecution:
         result = run(Portfolio.tags, portfolio_ctx)[0]
         assert list(result) == ["x", "y"]
 
+    def test_remove_missing_ok(self, portfolio_ctx):
+        set(Portfolio.tags, ["a", "b", "a"], portfolio_ctx)
+        run(Portfolio.tags.remove("a", missing_ok=True), portfolio_ctx)
+        run(Portfolio.tags.remove("z", missing_ok=True), portfolio_ctx)
+        result = run(Portfolio.tags, portfolio_ctx)[0]
+        assert list(result) == ["b", "a"]
+
 
 # ============================================================================
 # SET REF
@@ -259,6 +266,13 @@ class TestSetRefExecution:
         run(Portfolio.members.add("bob"), portfolio_ctx)
         result = run(Portfolio.members, portfolio_ctx)[0]
         assert builtins.set(result) == {"alice", "bob"}
+
+    def test_remove_missing_ok(self, portfolio_ctx):
+        set(Portfolio.members, {"alice", "bob"}, portfolio_ctx)
+        run(Portfolio.members.remove("bob", missing_ok=True), portfolio_ctx)
+        run(Portfolio.members.remove("zed", missing_ok=True), portfolio_ctx)
+        result = run(Portfolio.members, portfolio_ctx)[0]
+        assert builtins.set(result) == {"alice"}
 
     def test_union(self, portfolio_ctx):
         set(Portfolio.members, {"alice", "bob"}, portfolio_ctx)
@@ -589,9 +603,7 @@ class TestEndToEnd:
         assert "eve" in builtins.set(result)
 
         # --- fn combinators ---
-        # Sorted is a StreamQuery — arun yields a stream; materialize it.
-        sorted_stream = (await arun(Sorted(Portfolio.metadata.keys()), ctx))[0]
-        sorted_keys = [k async for k in sorted_stream]
+        sorted_keys = (await arun(Sorted(Portfolio.metadata.keys()), ctx))[0]
         assert sorted_keys == ["horizon", "risk", "sector", "strategy"]
 
         key_count = (await arun(Len(Portfolio.metadata.keys()), ctx))[0]

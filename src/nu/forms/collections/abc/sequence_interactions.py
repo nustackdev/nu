@@ -360,12 +360,21 @@ class Extend(Command):
 
 
 class RemoveValue(Command):
-    """Remove first occurrence of value: seq.remove(value). Mutates slot 0; returns nothing."""
+    """Remove first occurrence of value: seq.remove(value). Mutates slot 0; returns nothing.
+
+    ``missing_ok`` is a construction-time flag carried in the payload: when
+    set, an absent value is a no-op instead of raising ``ValueError``.
+    """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
+    def __init__(self, target: object, value: object, *, missing_ok: bool = False) -> None:
+        super().__init__(target, value)
+        self._payload = {**self._payload, "missing_ok": missing_ok}
+
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, value_t = children
+        missing_ok = bool(self._payload["missing_ok"])
 
         def thunk(rt: Runtime) -> None:
             target = target_t(rt)
@@ -374,12 +383,15 @@ class RemoveValue(Command):
             value = value_t(rt)
             if value is EMPTY:
                 raise ValueError("cannot write with an EMPTY operand")
+            if missing_ok and value not in target:
+                return
             target.remove(value)
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, value_t = children
+        missing_ok = bool(self._payload["missing_ok"])
 
         async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)
@@ -388,6 +400,8 @@ class RemoveValue(Command):
             value = await value_t(rt)
             if value is EMPTY:
                 raise ValueError("cannot write with an EMPTY operand")
+            if missing_ok and value not in target:
+                return
             target.remove(value)
 
         return athunk

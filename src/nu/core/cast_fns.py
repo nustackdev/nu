@@ -3,6 +3,9 @@
 Lives in a separate module from ``cast`` because these functions shadow the
 Python builtins (``str``, ``int``, ``list``, ...) and would collide with the
 same names used as type annotations inside ``cast.py``.
+
+``sorted`` sits here too: not a cast, but the same kind of builtin mirror,
+wrapping its query in the Form it yields.
 """
 
 from __future__ import annotations
@@ -19,6 +22,7 @@ from nu.core.cast import (
     ToStr,
     ToTuple,
 )
+from nu.core.transform import Sorted
 
 
 if TYPE_CHECKING:
@@ -32,6 +36,7 @@ __all__ = [
     "int",
     "list",
     "set",
+    "sorted",
     "str",
     "tuple",
 ]
@@ -107,3 +112,15 @@ def dict(x: object) -> Dict:  # shadowing the builtin is intended
     from nu.forms.collections import Dict
 
     return Dict(ToDict(x))
+
+
+def sorted(x: object) -> List:  # shadowing the builtin is intended
+    """Sort ``x`` into a Nu ``List`` term. ``List(Sorted(x))`` in one call.
+
+    Example:
+        >>> nu.run(nu.sorted([3, 1, 2]).slice(0, 2))[0]
+        [1, 2]
+    """
+    from nu.forms.collections import List
+
+    return List(Sorted(x))

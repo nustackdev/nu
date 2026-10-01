@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Sorting yields a whole list like Python, and removals can ignore missing items
 - UI kit 0.2.7 ships readable menu shortcuts
 - Menu shortcuts show as key caps, so they stay readable on the menu
 - Missing values flow through expressions, count as false in conditions, and refuse to be stored
