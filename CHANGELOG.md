@@ -7,12 +7,13 @@
 - **nucli** (the `nu` command) — 0.5.5
 - **nudle** — 0.1.6
 - **ui-core** — 0.2.0
-- **ui-kit** — 0.2.4
+- **ui-kit** — 0.2.5
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- UI kit 0.2.5 ships key caps variants and platform-aware shortcuts
 - Programs can show key caps and platform-aware shortcuts in their UI
 - Key caps get variants, and shortcuts are written once and spelled per platform
 - UI kit 0.2.4 ships the soft button variant
