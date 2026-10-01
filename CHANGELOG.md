@@ -7,12 +7,13 @@
 - **nucli** (the `nu` command) — 0.5.5
 - **nudle** — 0.1.6
 - **ui-core** — 0.2.0
-- **ui-kit** — 0.2.6
+- **ui-kit** — 0.2.7
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- UI kit 0.2.7 ships readable menu shortcuts
 - Menu shortcuts show as key caps, so they stay readable on the menu
 - Missing values flow through expressions, count as false in conditions, and refuse to be stored
 - Any value can fall back to alternatives when it is missing
