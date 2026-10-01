@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Key caps get variants, and shortcuts are written once and spelled per platform
 - UI kit 0.2.4 ships the soft button variant
 - Buttons get a soft variant, filled with no border; smallest icon buttons get smaller icons
 - Examples and docs keep state in memory, and the movies demo runs again

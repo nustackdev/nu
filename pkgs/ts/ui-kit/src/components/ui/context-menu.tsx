@@ -13,6 +13,7 @@ import { Check, ChevronRight, Circle } from "lucide-react";
 import type * as React from "react";
 
 import { cn } from "../../lib/utils";
+import { Shortcut } from "./shortcut";
 import {
 	menuItemClasses,
 	menuItemDangerClasses,
@@ -234,14 +235,17 @@ function ContextMenuSubContent({
 
 function ContextMenuShortcut({
 	className,
+	keys,
+	children,
 	...props
-}: React.HTMLAttributes<HTMLSpanElement>) {
+}: React.HTMLAttributes<HTMLSpanElement> & {
+	/** Key names, drawn as ghost caps (see `Shortcut`). Text children otherwise. */
+	keys?: readonly string[];
+}) {
 	return (
-		<span
-			data-slot="context-menu-shortcut"
-			className={cn(menuShortcutClasses, className)}
-			{...props}
-		/>
+		<span data-slot="context-menu-shortcut" className={cn(menuShortcutClasses, className)} {...props}>
+			{keys ? <Shortcut keys={keys} variant="ghost" /> : children}
+		</span>
 	);
 }
 

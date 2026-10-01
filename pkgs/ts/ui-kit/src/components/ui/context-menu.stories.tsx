@@ -23,18 +23,18 @@ function Sample() {
 				<ContextMenuItem>
 					<Edit3 />
 					Rename
-					<ContextMenuShortcut>R</ContextMenuShortcut>
+					<ContextMenuShortcut keys={["mod", "R"]} />
 				</ContextMenuItem>
 				<ContextMenuItem>
 					<Copy />
 					Duplicate
-					<ContextMenuShortcut>D</ContextMenuShortcut>
+					<ContextMenuShortcut keys={["mod", "D"]} />
 				</ContextMenuItem>
 				<ContextMenuSeparator />
 				<ContextMenuItem variant="danger">
 					<Trash2 />
 					Delete
-					<ContextMenuShortcut>Del</ContextMenuShortcut>
+					<ContextMenuShortcut keys={["delete"]} />
 				</ContextMenuItem>
 			</ContextMenuContent>
 		</ContextMenu>

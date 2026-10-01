@@ -31,12 +31,12 @@ function BasicMenu() {
 				<DropdownMenuItem>
 					<Edit3 />
 					Edit
-					<DropdownMenuShortcut>E</DropdownMenuShortcut>
+					<DropdownMenuShortcut keys={["mod", "E"]} />
 				</DropdownMenuItem>
 				<DropdownMenuItem>
 					<Copy />
 					Duplicate
-					<DropdownMenuShortcut>D</DropdownMenuShortcut>
+					<DropdownMenuShortcut keys={["mod", "D"]} />
 				</DropdownMenuItem>
 				<DropdownMenuSub>
 					<DropdownMenuSubTrigger>
@@ -67,7 +67,7 @@ function BasicMenu() {
 				<DropdownMenuItem variant="danger">
 					<Trash2 />
 					Delete
-					<DropdownMenuShortcut>Del</DropdownMenuShortcut>
+					<DropdownMenuShortcut keys={["delete"]} />
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>

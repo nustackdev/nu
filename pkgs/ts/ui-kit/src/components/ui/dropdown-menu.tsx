@@ -11,6 +11,7 @@ import { Check, ChevronRight, Circle } from "lucide-react";
 import type * as React from "react";
 
 import { cn } from "../../lib/utils";
+import { Shortcut } from "./shortcut";
 
 // Shared recipes. ContextMenu borrows them verbatim, and a hand-built menu that
 // keeps focus somewhere else (an inline slash menu over an editor) puts them on
@@ -261,14 +262,17 @@ function DropdownMenuSubContent({
 
 function DropdownMenuShortcut({
 	className,
+	keys,
+	children,
 	...props
-}: React.HTMLAttributes<HTMLSpanElement>) {
+}: React.HTMLAttributes<HTMLSpanElement> & {
+	/** Key names, drawn as ghost caps (see `Shortcut`). Text children otherwise. */
+	keys?: readonly string[];
+}) {
 	return (
-		<span
-			data-slot="dropdown-menu-shortcut"
-			className={cn(menuShortcutClasses, className)}
-			{...props}
-		/>
+		<span data-slot="dropdown-menu-shortcut" className={cn(menuShortcutClasses, className)} {...props}>
+			{keys ? <Shortcut keys={keys} variant="ghost" /> : children}
+		</span>
 	);
 }
 

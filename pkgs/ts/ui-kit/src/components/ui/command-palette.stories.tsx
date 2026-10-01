@@ -32,12 +32,12 @@ function Sample() {
 						<CommandItem>
 							<LayoutDashboard />
 							Go to dashboard
-							<CommandShortcut>G D</CommandShortcut>
+							<CommandShortcut keys={["G", "D"]} />
 						</CommandItem>
 						<CommandItem>
 							<Calendar />
 							Go to schedule
-							<CommandShortcut>G S</CommandShortcut>
+							<CommandShortcut keys={["G", "S"]} />
 						</CommandItem>
 					</CommandGroup>
 					<CommandSeparator />

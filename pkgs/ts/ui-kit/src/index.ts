@@ -14,6 +14,7 @@ export * from "./tree";
 export { nodeEntries } from "./nodes";
 export { cn, ringVariants } from "./lib/utils";
 export { useKeyScope } from "./lib/keyboard";
+export { formatShortcut, isMac, keyLabel, keySpoken, type Platform } from "./lib/shortcut";
 export type { KeyBindings, KeyScope } from "./lib/keyboard";
 export { ErrorBoundary } from "./components/ErrorBoundary";
 export { Badge, badgeVariants } from "./components/ui/badge";
@@ -42,7 +43,8 @@ export {
 export { Checkbox, checkboxVariants } from "./components/ui/checkbox";
 export { IconButton, iconButtonVariants } from "./components/ui/icon-button";
 export { Input, inputVariants } from "./components/ui/input";
-export { Kbd } from "./components/ui/kbd";
+export { Kbd, type KbdProps, kbdVariants } from "./components/ui/kbd";
+export { Shortcut, type ShortcutProps } from "./components/ui/shortcut";
 export { NumberInput, numberInputVariants } from "./components/ui/number-input";
 export {
 	Panel,

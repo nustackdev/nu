@@ -17,6 +17,7 @@ import { Search } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "../../lib/utils";
+import { Shortcut } from "./shortcut";
 
 interface CommandPaletteProps
 	extends React.ComponentProps<typeof CommandPrimitive> {
@@ -203,17 +204,17 @@ function CommandItem({
 
 function CommandShortcut({
 	className,
+	keys,
+	children,
 	...props
-}: React.HTMLAttributes<HTMLSpanElement>) {
+}: React.HTMLAttributes<HTMLSpanElement> & {
+	/** Key names, drawn as ghost caps (see `Shortcut`). Text children otherwise. */
+	keys?: readonly string[];
+}) {
 	return (
-		<span
-			data-slot="command-palette-shortcut"
-			className={cn(
-				"ml-auto font-mono text-xs tracking-wide text-text-muted",
-				className,
-			)}
-			{...props}
-		/>
+		<span data-slot="command-palette-shortcut" className={cn("ml-auto font-mono text-xs tracking-wide text-text-muted", className)} {...props}>
+			{keys ? <Shortcut keys={keys} variant="ghost" /> : children}
+		</span>
 	);
 }
 
