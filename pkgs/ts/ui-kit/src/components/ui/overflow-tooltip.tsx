@@ -1,8 +1,10 @@
 // OverflowTooltip: the full text of a truncated label, shown only while the
 // ellipsis is actually hiding some of it.
 //
-// Whether the text is cut off is read when the tooltip asks to open, not on
-// every render, so a resize or a rename needs nothing to keep it right. The
+// Whether the text is cut off is read when the tooltip would start opening
+// (the kit Tooltip's `canOpen`), not on every render, so a resize or a rename
+// needs nothing to keep it right. Refusing there, and never in
+// `onOpenChange`, keeps the provider's delay intact (see ./tooltip.tsx). The
 // measured box is the trigger or any element inside it, so a link whose inner
 // span carries the ellipsis works the same as a bare span.
 //
@@ -72,23 +74,21 @@ export function OverflowTooltip({
 		if (disabled) setOpen(false);
 	}, [disabled]);
 
+	const canOpen = useCallback(() => !disabled && truncatedIn(trigger.current) !== null, [disabled]);
+
+	// Only placement is decided here: whether to open at all is `canOpen`.
 	const onOpenChange = useCallback(
 		(next: boolean) => {
-			if (!next || disabled) {
-				setOpen(false);
-				return;
-			}
 			const el = trigger.current;
-			const text = truncatedIn(el);
-			if (!el || !text) return;
-			setAt(side === "right" && !fitsRight(el, text) ? "bottom" : side);
-			setOpen(true);
+			const text = next ? truncatedIn(el) : null;
+			if (el && text) setAt(side === "right" && !fitsRight(el, text) ? "bottom" : side);
+			setOpen(next);
 		},
-		[disabled, side],
+		[side],
 	);
 
 	return (
-		<Tooltip open={open && !disabled} onOpenChange={onOpenChange}>
+		<Tooltip open={open && !disabled} onOpenChange={onOpenChange} canOpen={canOpen}>
 			<TooltipTrigger asChild ref={triggerRef}>
 				{children}
 			</TooltipTrigger>
