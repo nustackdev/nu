@@ -293,6 +293,19 @@
 	--chart-6: var(--blue-info-500);
 	--chart-7: #d946ef;
 	--chart-8: #14b8a6;
+
+	/* syntax: what a code view colors by role. Eight roles and no more, so
+	 * code reads as text with a few accents rather than a fruit salad. Ink
+	 * steps sit one or two darker than the anchors to hold contrast on a
+	 * sunken surface. */
+	--syntax-keyword:         var(--purple-600);
+	--syntax-string:          var(--green-700);
+	--syntax-constant:        var(--blue-600);
+	--syntax-function:        var(--blue-700);
+	--syntax-type:            var(--yellow-800);
+	--syntax-meta:            var(--yellow-700);
+	--syntax-comment:         var(--text-muted);
+	--syntax-punct:           var(--text-secondary);
 }
 
 /* ============================== L2: semantic (dark) =======================
@@ -376,6 +389,16 @@
 	--chart-6: var(--blue-info-300);
 	--chart-7: #e879f9;
 	--chart-8: #2dd4bf;
+
+	/* syntax: the light steps would sink into a dark canvas, so each lifts */
+	--syntax-keyword:         #a684ff;
+	--syntax-string:          var(--green-300);
+	--syntax-constant:        var(--blue-300);
+	--syntax-function:        var(--blue-200);
+	--syntax-type:            var(--yellow-200);
+	--syntax-meta:            var(--yellow-300);
+	--syntax-comment:         var(--text-muted);
+	--syntax-punct:           var(--text-secondary);
 }
 
 /* ============================== base ====================================== */
@@ -418,7 +441,7 @@ body {
 
 /* ============================== prose editor ==============================
  * The three rules a contenteditable needs that a class recipe cannot express.
- * Everything else about a ProseRef's look comes from the `Prose` container it
+ * Everything else about a MarkdownRef's look comes from the `Prose` container it
  * mounts inside, so the same styles apply whether you are reading the document
  * or typing in it. No colors of its own: both values below are L2 roles, so
  * they flip with the theme.
@@ -444,9 +467,22 @@ body {
 	border-color: var(--accent);
 }
 
+/* What ProseMirror needs to map the DOM back to the document: spaces as
+ * typed, long words broken rather than overflowing. */
+.nu-prose-editor {
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
 /* Undo the UA outline on the editable host. A focus ring drawn around a whole
  * paragraph reads as chrome on a document; the caret is the marker. */
 .nu-prose-editor:focus,
 .nu-prose-editor:focus-visible {
 	outline: none;
+}
+
+/* Read-only, a checklist box is a picture of the state, not a control: no
+ * hover, no pointer, nothing that suggests a click would do something. */
+.nu-prose-editor[contenteditable="false"] [data-task-box] {
+	pointer-events: none;
 }

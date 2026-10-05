@@ -3,7 +3,6 @@
 import type { NodeEntry } from "../../tree";
 import { AlertRef } from "./alert";
 import { BadgeRef } from "./badge";
-import { CodeBlockRef } from "./code-block";
 import { DividerRef } from "./divider";
 import { EmptyStateRef } from "./empty-state";
 import { GaugeRef } from "./gauge";
@@ -14,7 +13,6 @@ import { KbdRef } from "./kbd";
 import { LensRef } from "./lens";
 import { LinkRef } from "./link";
 import { ListRef } from "./list";
-import { MarkdownRef } from "./markdown";
 import { ProgressRef } from "./progress";
 import { ShortcutRef } from "./shortcut";
 import { StatRef } from "./stat";
@@ -27,7 +25,6 @@ export const outputEntries: Record<string, NodeEntry> = {
 	HeadingRef,
 	TextRef,
 	ListRef,
-	MarkdownRef,
 	BadgeRef,
 	StatusDotRef,
 	KbdRef,
@@ -36,7 +33,6 @@ export const outputEntries: Record<string, NodeEntry> = {
 	StatRef,
 	DividerRef,
 	EmptyStateRef,
-	CodeBlockRef,
 	ImageRef,
 	LinkRef,
 	ProgressRef,

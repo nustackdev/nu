@@ -1,28 +1,25 @@
-// ProseRef -- editable rich text. Browser is source of truth while you type.
+// MarkdownRef -- a markdown document, read-only by default, editable on request.
 //
-// The value is a markdown string, both ways. The browser renders it as a live
-// document and never shows the source; the server writes and reads the same
-// string it always did. Sibling to MarkdownRef, which renders the same dialect
-// read-only and costs no editor.
+// One node for both faces of a document. The value is a markdown string both
+// ways, and the browser never shows the source: read-only it renders the
+// document, with `editable` on it is a live wysiwyg editor and the browser is
+// source of truth while you type. Renders the kit's `Markdown` primitive, one
+// engine either way, so what a document looks like never depends on whether
+// you can type in it.
 //
 // Commit moments (a quiet moment, blur): the node's `value` prop updates
 // locally, then a notify goes out and the server reads back. A server-initiated
 // write replaces the source, and needs a handler for the InputRef reason: nil
 // must land as "" so the editor never sees null and a following read answers
-// "". The map form merges {value, placeholder, read_only} the way the store
+// "". The map form merges {value, placeholder, editable} the way the store
 // merges everything else.
 //
 // Last actor wins. No OT, no CRDT: two people in one node clobber each other,
 // and that is the contract, not a gap.
-//
-// The editor itself (schema, markdown, rules) lives in ./prose/ -- pure
-// editor machinery, no store coupling, so it survived the tree port
-// untouched.
 
 import { OPS } from "@nustackdev/ui-core";
 import { useCallback } from "react";
-import { Prose } from "../../components/ui/prose";
-import { ProseEditor } from "./prose/editor";
+import { Markdown } from "../../components/ui/markdown";
 import {
 	type NodeEntry,
 	type NodeProps,
@@ -32,10 +29,10 @@ import {
 	useStringProp,
 } from "../../tree";
 
-function ProseView({ path }: NodeProps) {
+function MarkdownView({ path }: NodeProps) {
 	const value = useStringProp(path, "value");
 	const hint = useStringProp(path, "placeholder");
-	const readOnly = useBoolProp(path, "read_only");
+	const editable = useBoolProp(path, "editable");
 	const setValue = useSetValue(path);
 	const send = useSend(path);
 
@@ -49,15 +46,11 @@ function ProseView({ path }: NodeProps) {
 		[setValue, send],
 	);
 
-	return (
-		<Prose>
-			<ProseEditor value={value} placeholder={hint} readOnly={readOnly} onCommit={commit} />
-		</Prose>
-	);
+	return <Markdown value={value} placeholder={hint} readOnly={!editable} onCommit={commit} />;
 }
 
-export const ProseRef: NodeEntry = {
-	component: ProseView,
+export const MarkdownRef: NodeEntry = {
+	component: MarkdownView,
 	handlers: {
 		write: (ctx, payload) =>
 			ctx.update((props) => {

@@ -292,13 +292,13 @@ def test_input_read_resolves_path_and_reads_session():
     assert result[0] == "browser-value"
 
 
-def test_prose_round_trips_markdown_both_ways():
-    """ProseRef is bidirectional: `set` ships the markdown source out as a bare
-    string, and reading the handle pulls the browser's edited source back."""
-    from nustd.ui.refs import ProseRef
+def test_markdown_round_trips_both_ways():
+    """MarkdownRef is bidirectional: `set` ships the markdown source out as a
+    bare string, and reading the handle pulls the browser's edited source back."""
+    from nustd.ui.refs import MarkdownRef
 
     class Doc(Row):
-        body = ProseRef.slot(placeholder="Write something")
+        body = MarkdownRef.slot(placeholder="Write something", editable=True)
 
     class DocPage(Page):
         doc = Doc.slot()
@@ -322,13 +322,13 @@ def test_prose_round_trips_markdown_both_ways():
     assert result[0] == "# edited\n\nby the browser\n"
 
 
-def test_prose_partial_write_carries_a_dict():
-    """The chrome setters use the map form, so a placeholder change does not
+def test_markdown_partial_write_carries_a_dict():
+    """The chrome setters use the map form, so flipping the mode does not
     also blow away the document."""
-    from nustd.ui.refs import ProseRef
+    from nustd.ui.refs import MarkdownRef
 
     class Doc2(Row):
-        body = ProseRef.slot()
+        body = MarkdownRef.slot()
 
     class DocPage2(Page):
         doc = Doc2.slot()
@@ -338,8 +338,51 @@ def test_prose_partial_write_carries_a_dict():
 
     sess = _RecordingSession()
     ctx = Context().bind(Session, sess)
-    asyncio.run(nu.arun(DocApp2.doc.doc.body.set_read_only(True), ctx))
-    assert sess.frames[0].payload == {"read_only": True}
+    asyncio.run(nu.arun(DocApp2.doc.doc.body.set_editable(True), ctx))
+    assert sess.frames[0].payload == {"editable": True}
+
+
+def test_markdown_and_code_default_to_read_only():
+    """Display is the common case, so both two-faced Refs start read-only."""
+    from nustd.ui.refs import CodeRef, MarkdownRef
+
+    assert MarkdownRef.slot().props["editable"] is False
+    assert CodeRef.slot().props["editable"] is False
+
+
+def test_code_round_trips_both_ways():
+    """CodeRef ships the source as a bare string, reads the browser's buffer
+    back, and drives language and mode through the map form."""
+    from nustd.ui.refs import CodeRef
+
+    class Src(Row):
+        code = CodeRef.slot(language="python", editable=True)
+
+    class SrcPage(Page):
+        src = Src.slot()
+
+    class SrcApp(Index):
+        src = SrcPage.slot("/")
+
+    class ReadSession(_RecordingSession):
+        async def aread(self, path: tuple[str, ...]) -> object:
+            return "x = 2\n"
+
+    sess = ReadSession()
+    ctx = Context().bind(Session, sess)
+    ref = SrcApp.src.src.code
+
+    asyncio.run(nu.arun(ref.set("x = 1\n"), ctx))
+    asyncio.run(nu.arun(ref.set_language("sql"), ctx))
+    asyncio.run(nu.arun(ref.set_editable(False), ctx))
+    assert [f.payload for f in sess.frames] == [
+        "x = 1\n",
+        {"language": "sql"},
+        {"editable": False},
+    ]
+
+    result = asyncio.run(nu.arun(ref, ctx))
+    assert result[0] == "x = 2\n"
 
 
 # --- widget interaction sweep (auto-covers every leaf widget) ----------------

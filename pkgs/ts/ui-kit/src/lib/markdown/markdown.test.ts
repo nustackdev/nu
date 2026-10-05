@@ -2,7 +2,7 @@
 //
 // The contract the Ref's value rests on: markdown in, the same markdown out.
 // Anything the editor can produce has to survive a lap through the document
-// model unchanged, or a ProseRef churns on every touch.
+// model unchanged, or a MarkdownRef churns on every touch.
 //
 // Two properties are tested separately because they are different claims:
 //
@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from "vitest";
 import { createMarkdown, parseMarkdown, posForOffset, serializeMarkdown } from "./markdown";
-import { createProseSchema } from "./schema";
+import { createProseSchema, safeUrl } from "./schema";
 
 function lap(md: string): string {
 	return serializeMarkdown(parseMarkdown(md).doc);
@@ -40,7 +40,8 @@ describe("blocks round-trip", () => {
 
 	it("keeps blank-line separated paragraphs", () => stable("first para\n\nsecond para\n"));
 
-	it("keeps all three heading levels", () => stable("# one\n\n## two\n\n### three\n"));
+	it("keeps all six heading levels", () =>
+		stable("# one\n\n## two\n\n### three\n\n#### four\n\n##### five\n\n###### six\n"));
 
 	it("keeps bullet lists", () => stable("- a\n- b\n- c\n"));
 
@@ -63,6 +64,38 @@ describe("blocks round-trip", () => {
 	it("keeps a nested checklist", () => stable("- [ ] a\n  - [x] b\n- [ ] c\n"));
 
 	it("keeps an empty checklist item", () => stable("- [ ] \n"));
+
+	it("keeps a code fence", () => stable("```python\ndef f():\n    return 1\n```\n"));
+
+	it("keeps a code fence with no language", () => stable("```\nplain\n```\n"));
+
+	it("keeps an empty code fence", () => stable("```\n```\n"));
+
+	it("keeps blank lines and markup inside a fence literally", () =>
+		stable("```md\n# not a heading\n\n- not a list **x**\n```\n"));
+
+	it("keeps a fence between paragraphs", () => stable("before\n\n```sh\nls -la\n```\n\nafter\n"));
+
+	it("keeps a fence inside a list item", () => stable("- run this\n\n  ```sh\n  ls\n  ```\n- done\n"));
+
+	it("outgrows backticks inside the fence", () => {
+		const doc = parseMarkdown("````\n```\ninner\n```\n````\n").doc;
+		expect(doc.firstChild?.type.name).toBe("code_block");
+		expect(doc.textContent).toBe("```\ninner\n```");
+		stable(serializeMarkdown(doc));
+	});
+
+	it("reads a tilde fence and normalizes it to backticks", () => {
+		const doc = parseMarkdown("~~~js\nx\n~~~\n").doc;
+		expect(doc.firstChild?.attrs.language).toBe("js");
+		expect(settles("~~~js\nx\n~~~\n")).toBe("```js\nx\n```\n");
+	});
+
+	it("runs an unclosed fence to the end", () => {
+		const doc = parseMarkdown("```\na\n\nb\n").doc;
+		expect(doc.childCount).toBe(1);
+		expect(doc.textContent).toBe("a\n\nb");
+	});
 
 	it("reads checklist state and kind", () => {
 		const list = parseMarkdown("- [ ] a\n- [X] b\n").doc.firstChild;
@@ -95,6 +128,16 @@ describe("marks round-trip", () => {
 	it("keeps a link around a mark", () => stable("[**bold link**](https://x.dev)\n"));
 	it("keeps marks inside a list item", () => stable("- `/` opens the menu\n"));
 	it("keeps marks inside a heading", () => stable("# a **loud** title\n"));
+	it("keeps images", () => stable("look ![a cat](https://x.dev/cat.png) here\n"));
+	it("keeps an image inside a link", () => stable("[![logo](logo.svg)](https://x.dev)\n"));
+	it("keeps an image with no alt text", () => stable("![](a.png)\n"));
+
+	it("reads an image as a node, not as text", () => {
+		const p = parseMarkdown("![a \\] b](x.png)\n").doc.firstChild;
+		expect(p?.firstChild?.type.name).toBe("image");
+		expect(p?.firstChild?.attrs.alt).toBe("a ] b");
+		stable(serializeMarkdown(parseMarkdown("![a \\] b](x.png)\n").doc));
+	});
 });
 
 describe("escaping", () => {
@@ -125,6 +168,18 @@ describe("escaping", () => {
 		const doc = parseMarkdown("- \\[ ] literal\n").doc;
 		expect(doc.firstChild?.type.name).toBe("bullet_list");
 		expect(doc.textContent).toBe("[ ] literal");
+		stable(serializeMarkdown(doc));
+	});
+
+	it("escapes a paragraph that would open a fence", () => {
+		const doc = parseMarkdown("\\```not a fence\n").doc;
+		expect(doc.firstChild?.type.name).toBe("paragraph");
+		stable(serializeMarkdown(doc));
+	});
+
+	it("escapes text that would read back as an image", () => {
+		const doc = parseMarkdown("\\!\\[x](y)\n").doc;
+		expect(doc.textContent).toBe("![x](y)");
 		stable(serializeMarkdown(doc));
 	});
 
@@ -209,5 +264,20 @@ describe("schema parameterisation", () => {
 		const doc = parseMarkdown("## two\n").doc;
 		const out = doc.firstChild?.type.spec.toDOM?.(doc.firstChild) as [string, object];
 		expect(out[1]).toEqual({});
+	});
+});
+
+describe("urls", () => {
+	it("passes web, mail and relative urls", () => {
+		for (const u of ["https://x.dev", "http://x.dev", "mailto:a@b.c", "/a", "a.png", "#top"]) {
+			expect(safeUrl(u)).toBe(u);
+		}
+	});
+
+	it("drops script and data urls", () => {
+		const bad = ["javascript:alert(1)", " JavaScript:alert(1)", "data:text/html,x", "vbscript:x"];
+		for (const u of bad) {
+			expect(safeUrl(u)).toBe("");
+		}
 	});
 });

@@ -19,6 +19,13 @@
 // that round-trips to the same markdown is dropped and an inbound value is
 // ignored while the document is dirty.
 //
+// ## Read-only
+//
+// The same view with editing off, which is how a document is displayed: one
+// engine, so reading and typing can never disagree on what the markdown
+// means. Read-only shows no hint, never commits, and an inbound value always
+// lands, since nobody can be mid-edit.
+//
 // ## What is deliberately not here
 //
 // Nothing about neighbours. No split, no merge-up, no arrow-out, no slash
@@ -35,14 +42,17 @@ import { type Command, EditorState, type Transaction } from "prosemirror-state";
 import { EditorView, type NodeView } from "prosemirror-view";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
-import { Checkbox } from "../../../components/ui/checkbox";
-import { cn } from "../../../lib/utils";
+import { Checkbox } from "../../components/ui/checkbox";
+import { cn } from "../utils";
 import { createMarkdown, type Markdown } from "./markdown";
 import { placeholder, proseInputRules } from "./rules";
 import { type ProseSchema, proseSchema } from "./schema";
 
 /** Quiet-moment autosave. Long enough that a typist never triggers it. */
 const SAVE_DELAY = 800;
+
+/** Marks a transaction as the inbound value landing, not an edit. */
+const INBOUND = "nu-inbound";
 
 /**
  * A checklist item: the schema's own `toDOM` for the layout, with the kit's
@@ -154,6 +164,7 @@ export function ProseEditor({
 		}
 		if (!dirtyRef.current) return;
 		dirtyRef.current = false;
+		if (cb.current.readOnly) return;
 		const view = viewRef.current;
 		if (!view) return;
 		const next = md().serializeMarkdown(view.state.doc);
@@ -208,21 +219,26 @@ export function ProseEditor({
 				editing,
 				keymap(baseKeymap),
 				history(),
-				placeholder(() => cb.current.hint, schema),
+				placeholder(() => (cb.current.readOnly ? "" : cb.current.hint), schema),
 			],
 		});
 
 		const view = new EditorView(host, {
 			state,
 			editable: () => !cb.current.readOnly,
-			attributes: { class: "nu-prose-editor", spellcheck: "true" },
+			attributes: () => ({
+				class: "nu-prose-editor",
+				spellcheck: cb.current.readOnly ? "false" : "true",
+			}),
 			nodeViews: {
 				[nodeType.taskItem.name]: (node, v, getPos) => taskItemView(node, v, getPos),
 			},
 			dispatchTransaction(tr: Transaction) {
 				const next = view.state.apply(tr);
 				view.updateState(next);
-				if (tr.docChanged) {
+				// The inbound value landing is not an edit: committing it back would
+				// echo the server's write, normalized, as if someone had typed it.
+				if (tr.docChanged && !tr.getMeta(INBOUND)) {
 					dirtyRef.current = true;
 					queueSave();
 				}
@@ -260,12 +276,17 @@ export function ProseEditor({
 		const parsed = md().parseMarkdown(value);
 		const tr = view.state.tr.replaceWith(0, view.state.doc.content.size, parsed.doc.content);
 		tr.setMeta("addToHistory", false);
+		tr.setMeta(INBOUND, true);
 		view.dispatch(tr);
 	}, [value]);
 
-	// `editable` is a function, so a read-only flip only needs a nudge.
+	// `editable` and `attributes` read through `cb`, so a read-only flip only
+	// needs a nudge to re-evaluate them and redraw the hint.
 	useEffect(() => {
-		viewRef.current?.setProps({ editable: () => !readOnly });
+		const view = viewRef.current;
+		if (!view) return;
+		view.setProps({ editable: () => !readOnly });
+		view.dispatch(view.state.tr.setMeta(INBOUND, true));
 	}, [readOnly]);
 
 	return <div ref={hostRef} className={cn("nu-prose-host", className)} />;

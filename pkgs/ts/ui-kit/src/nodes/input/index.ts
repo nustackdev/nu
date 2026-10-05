@@ -3,11 +3,11 @@
 import type { NodeEntry } from "../../tree";
 import { ButtonRef } from "./button";
 import { CheckboxRef } from "./checkbox";
+import { CodeRef } from "./code";
 import { DatePickerRef } from "./date-picker";
 import { InputRef } from "./input";
-import { MonacoRef } from "./monaco";
+import { MarkdownRef } from "./markdown";
 import { NumberInputRef } from "./number-input";
-import { ProseRef } from "./prose";
 import { RadioGroupRef } from "./radio-group";
 import { SelectRef } from "./select";
 import { SliderRef } from "./slider";
@@ -27,6 +27,6 @@ export const inputEntries: Record<string, NodeEntry> = {
 	NumberInputRef,
 	DatePickerRef,
 	TagInputRef,
-	ProseRef,
-	MonacoRef,
+	MarkdownRef,
+	CodeRef,
 };

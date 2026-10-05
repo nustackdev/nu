@@ -13,6 +13,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Markdown and code each get one Ref that reads by default and edits on request
+- Markdown gains code fences, images and six heading levels, and drops unsafe links
 - Claude Code sessions can be named, resumed later, and kept on one process
 - Table header and row clicks arrive separately, so row handlers no longer see sorts
 - Foldable trees with select, open, rename and drag, from the kit or a program

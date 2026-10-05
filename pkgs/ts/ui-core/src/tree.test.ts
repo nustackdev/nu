@@ -348,14 +348,14 @@ describe("dispatch", () => {
 	it("lets a type answer a read itself", () => {
 		const sent: TreeFrame[] = [];
 		const behaviours: Record<string, Behaviour> = {
-			ProseRef: {
+			MarkdownRef: {
 				handlers: {
 					read: (ctx) => ctx.send(OPS.read, `md:${ctx.node.props.value}`, ctx.frame.id),
 				},
 			},
 		};
 		const store = createTreeStore({ send: (f) => sent.push(f), resolve: (t) => behaviours[t] });
-		store.getState().write([step("p", "ProseRef", { value: "hi" })]);
+		store.getState().write([step("p", "MarkdownRef", { value: "hi" })]);
 		store.getState().dispatch({ op: OPS.read, ref: ["p"], payload: null, id: "f2" });
 		expect(sent).toEqual([{ op: OPS.read, ref: ["p"], payload: "md:hi", id: "f2" }]);
 	});

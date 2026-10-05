@@ -36,6 +36,14 @@
 		"test:watch": "vitest"
 	},
 	"dependencies": {
+		"@codemirror/autocomplete": "^6.20.3",
+		"@codemirror/commands": "^6.11.1",
+		"@codemirror/language": "^6.12.4",
+		"@codemirror/language-data": "^6.5.2",
+		"@codemirror/search": "^6.7.2",
+		"@codemirror/state": "^6.7.6",
+		"@codemirror/view": "^6.43.13",
+		"@lezer/highlight": "^1.2.5",
 		"@nustackdev/ui-core": "^0.2.0",
 		"@uiw/react-json-view": "^2.0.0-alpha.43",
 		"class-variance-authority": "^0.7.1",
@@ -44,7 +52,6 @@
 		"date-fns": "^4.4.0",
 		"immer": "^11.1.8",
 		"lucide-react": "^0.564.0",
-		"monaco-editor": "^0.56.0",
 		"prosemirror-commands": "^1.7.2",
 		"prosemirror-history": "^1.5.0",
 		"prosemirror-inputrules": "^1.5.1",
@@ -58,9 +65,7 @@
 		"react": "^19.2.0",
 		"react-day-picker": "^10.0.1",
 		"react-dom": "^19.2.0",
-		"react-markdown": "^10.1.0",
 		"recharts": "^3.8.1",
-		"shiki": "^3.15.0",
 		"tailwind-merge": "^3.4.0",
 		"tailwindcss": "^4.1.18",
 		"zustand": "^5.0.13"

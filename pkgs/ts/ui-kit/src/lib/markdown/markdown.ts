@@ -72,6 +72,7 @@ function sliceSrc(s: Src, from: number, to: number): Src {
 const ESCAPABLE = /[\\`*_[\]()#+\-.!>]/;
 
 type Delim =
+	| { kind: "image"; inner: [number, number]; next: number; href: string }
 	| { kind: "code"; inner: [number, number]; next: number }
 	| { kind: "strong"; inner: [number, number]; next: number }
 	| { kind: "em"; inner: [number, number]; next: number }
@@ -97,6 +98,12 @@ function findUnescaped(text: string, token: string, from: number): number {
  */
 export function matchDelim(text: string, i: number): Delim | null {
 	const c = text[i];
+
+	if (c === "!" && text[i + 1] === "[") {
+		const link = matchDelim(text, i + 1);
+		if (link?.kind !== "link") return null;
+		return { kind: "image", inner: link.inner, next: link.next, href: link.href };
+	}
 
 	if (c === "`") {
 		const j = findUnescaped(text, "`", i + 1);
@@ -135,7 +142,9 @@ export function matchDelim(text: string, i: number): Delim | null {
 /* ============================== block grammar ============================ */
 
 const RULE = /^(---|\*\*\*|___)\s*$/;
-const HEADING = /^(#{1,3})[ \t]+(.*)$/;
+const HEADING = /^(#{1,6})[ \t]+(.*)$/;
+/** A code fence: three or more backticks or tildes, then an optional language. */
+const FENCE = /^(`{3,}|~{3,})[ \t]*([^`\s]*)[ \t]*$/;
 const QUOTE = /^>[ \t]?/;
 const BULLET = /^([ \t]*)([-*+])([ \t]+)/;
 const ORDERED = /^([ \t]*)(\d+)([.)])([ \t]+)/;
@@ -160,6 +169,7 @@ function isBlockStart(text: string): boolean {
 	return (
 		RULE.test(text) ||
 		HEADING.test(text) ||
+		FENCE.test(text) ||
 		QUOTE.test(text) ||
 		BULLET.test(text) ||
 		ORDERED.test(text)
@@ -234,7 +244,11 @@ export function createMarkdown(s: ProseSchema): Markdown {
 			if (d) {
 				flush();
 				const inner = sliceSrc(src, d.inner[0], d.inner[1]);
-				if (d.kind === "code") {
+				if (d.kind === "image") {
+					// Alt text is plain: escapes resolve, nothing nests.
+					const alt = inner.text.replace(/\\(.)/g, "$1");
+					out.push(nodeType.image.create({ src: d.href, alt }, null, marks as Mark[]));
+				} else if (d.kind === "code") {
 					// Literal span: no escapes, no nested marks. Backticks are what
 					// markdown says they are.
 					const mark = markType.code.create();
@@ -354,6 +368,34 @@ export function createMarkdown(s: ProseSchema): Markdown {
 				continue;
 			}
 
+			const f = FENCE.exec(line.text);
+			if (f) {
+				// Everything up to a closing fence of the same character, at least
+				// as long, is literal. No closing fence runs to the end, the way
+				// commonmark reads it.
+				const fence = f[1];
+				const close = new RegExp(`^${fence[0] === "`" ? "`" : "~"}{${fence.length},}[ \\t]*$`);
+				const body: Line[] = [];
+				i += 1;
+				while (i < lines.length && !close.test(lines[i].text)) {
+					body.push(lines[i]);
+					i += 1;
+				}
+				// Unclosed, the source's own trailing newline is not code.
+				if (i >= lines.length) {
+					while (body.length > 0 && body[body.length - 1].text.trim() === "") body.pop();
+				}
+				i += 1;
+				const text = body.map((l) => l.text).join("\n");
+				const content = text ? [schema.text(text)] : [];
+				if (text) {
+					const last = body[body.length - 1];
+					ctx.anchors.push({ from: body[0].at, to: last.at + last.text.length });
+				}
+				out.push(nodeType.codeBlock.create({ language: f[2] }, content));
+				continue;
+			}
+
 			const h = HEADING.exec(line.text);
 			if (h) {
 				const level = h[1].length;
@@ -462,7 +504,7 @@ export function createMarkdown(s: ProseSchema): Markdown {
 		// a line opens with it is what keeps a list item's text from turning
 		// into one.
 		return text.replace(
-			/^(#{1,3}[ \t]|[-*+][ \t]|\d+[.)][ \t]|>|\[[ xX]\](?=[ \t]|$))/,
+			/^(#{1,6}[ \t]|[-*+][ \t]|\d+[.)][ \t]|>|```|~~~|\[[ xX]\](?=[ \t]|$))/,
 			(m) => `\\${m}`,
 		);
 	}
@@ -495,11 +537,18 @@ export function createMarkdown(s: ProseSchema): Markdown {
 	 * decide what stays open.
 	 */
 	function serializeInline(node: PMNode): string {
-		const runs: { marks: readonly Mark[]; text: string }[] = [];
+		// `raw` runs are already markdown (an image) and never merge or escape.
+		const runs: { marks: readonly Mark[]; text: string; raw?: boolean }[] = [];
 		node.forEach((child) => {
+			if (child.type === nodeType.image) {
+				const alt = String(child.attrs.alt).replace(/[[\]\\]/g, "\\$&");
+				const src = String(child.attrs.src).replace(/[()\s]/g, encodeURIComponent);
+				runs.push({ marks: child.marks, text: `![${alt}](${src})`, raw: true });
+				return;
+			}
 			if (!child.isText || child.text === undefined) return;
 			const last = runs[runs.length - 1];
-			if (last && sameMarks(last.marks, child.marks)) last.text += child.text;
+			if (last && !last.raw && sameMarks(last.marks, child.marks)) last.text += child.text;
 			else runs.push({ marks: child.marks, text: child.text });
 		});
 
@@ -522,7 +571,7 @@ export function createMarkdown(s: ProseSchema): Markdown {
 				open.push(run.marks[i]);
 			}
 			const isCode = run.marks.some((m) => m.type === markType.code);
-			out += isCode ? run.text : escapeInline(run.text);
+			out += isCode || run.raw ? run.text : escapeInline(run.text);
 		}
 		closeDown(0);
 
@@ -578,6 +627,16 @@ export function createMarkdown(s: ProseSchema): Markdown {
 
 			case nodeType.rule:
 				return "---";
+
+			case nodeType.codeBlock: {
+				// The fence outgrows any run of backticks inside, so the body can
+				// never close it early.
+				const text = node.textContent;
+				const longest = Math.max(2, ...(text.match(/`+/g) ?? []).map((r) => r.length));
+				const fence = "`".repeat(longest + 1);
+				const body = text ? `${text}\n` : "";
+				return `${fence}${String(node.attrs.language)}\n${body}${fence}`;
+			}
 
 			case nodeType.blockquote:
 				return prefixLines(serializeChildren(node), "> ", "> ");

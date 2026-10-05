@@ -1,19 +1,19 @@
-"""Prose: type rich text in the browser, read the markdown back in the program.
+"""Markdown: type rich text in the browser, read the markdown back in the program.
 
-The demo is the round trip, nothing else. `Editor.body` is a ProseRef: the
-server seeds it with markdown, the browser renders that as a live document
-(headings, lists, bold, links, undo), and every commit ships the edited
-markdown back. The right pane is the proof -- it is drawn from what the
-program read, not from what the browser is holding.
+The demo is the round trip, nothing else. `Editor.body` is an editable
+MarkdownRef: the server seeds it with markdown, the browser renders that as a
+live document (headings, lists, code, bold, links, undo), and every commit
+ships the edited markdown back. The right pane is the proof -- it is drawn
+from what the program read, not from what the browser is holding.
 
-Run: uv run python examples/prose.py   ->   http://localhost:8080
+Run: uv run python examples/markdown.py   ->   http://localhost:8080
 """
 
 import nu
 import nustd
 
 
-SEED = """# Prose ref
+SEED = """# Markdown ref
 
 Type in here. It is a real document, not a textarea: `# ` makes a heading,
 `- ` starts a list, cmd+b bolds the selection.
@@ -21,16 +21,22 @@ Type in here. It is a real document, not a textarea: `# ` makes a heading,
 - markdown in, markdown out
 - last actor wins, no merge
 - the source is what the program sees
+
+```python
+print("a fence: type ``` and a space to start one")
+```
 """
 
 
 class Editor(nustd.ui.Card):
-    body = nustd.ui.ProseRef.slot(value=SEED, placeholder="Write, or type # for a heading")
+    body = nustd.ui.MarkdownRef.slot(
+        value=SEED, placeholder="Write, or type # for a heading", editable=True
+    )
 
 
 class Mirror(nustd.ui.Card):
     chars = nustd.ui.StatRef.slot(label="characters")
-    source = nustd.ui.CodeBlockRef.slot(code=SEED, language="markdown")
+    source = nustd.ui.CodeRef.slot(value=SEED, language="markdown")
 
 
 class Split(nustd.ui.Row):
@@ -43,7 +49,7 @@ class Home(nustd.ui.Page):
 
 
 class App(nustd.ui.Index):
-    title = nustd.ui.TitleRef.slot(default="Prose")
+    title = nustd.ui.TitleRef.slot(default="Markdown")
     home = Home.slot("/")
 
 
@@ -51,7 +57,7 @@ class App(nustd.ui.Index):
 # back through the session: same Ref, other direction.
 on_edit = nu.ReactForever(
     App.home.split.editor.body.on_change(),
-    App.home.split.mirror.source.set(code=nu.Str(App.home.split.editor.body))
+    App.home.split.mirror.source.set(nu.Str(App.home.split.editor.body))
     | App.home.split.mirror.chars.set_value(nu.str(nu.Len(nu.Str(App.home.split.editor.body)))),
 )
 

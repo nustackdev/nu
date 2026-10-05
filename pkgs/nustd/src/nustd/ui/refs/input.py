@@ -1,5 +1,8 @@
 """Input Refs -- tab-owned; server reads via `read` + `notify` path.
 
+Also home to the two Refs with both faces, `MarkdownRef` and `CodeRef`:
+read-only by default, editable on request, readable either way.
+
 The browser owns the live value. Host reads via `Ref` (round-trip
 through session), subscribes to changes via `.on_change()` / `.on_click()`.
 """
@@ -174,46 +177,55 @@ class InputRef(Ref):
         return Changed(self)
 
 
-class MonacoRef(Ref):
-    """Editable source code. Value is the text; the browser edits it in a real editor.
+class CodeRef(Ref):
+    """Source code, read-only by default. Value is the text, both ways.
 
-    Bidirectional, unlike `CodeBlockRef` (display-only). The server seeds the
-    text with `set`, reads it back through `Ref` like any input Ref, and
-    subscribes with `on_change()`. The browser commits on cmd+enter and on
-    blur, not on every keystroke, so a read between commits sees the last
-    committed text and not what is under the caret.
+    Read-only it renders a highlighted block with a copy button. With
+    `editable=True` the same view becomes an editor: the server seeds the text
+    with `set`, reads it back through `Ref` like any input Ref, and subscribes
+    with `on_change()`. The browser commits on cmd+enter and on blur, not on
+    every keystroke, so a read between commits sees the last committed text
+    and not what is under the caret. One engine for both modes, so flipping
+    `editable` never changes how the code looks.
 
-    Last actor wins, same as `ProseRef`. A `set` from the server replaces the
-    buffer outright, a notify from the browser replaces the server's copy,
-    and there is no merge.
+    Last actor wins, same as `MarkdownRef`. A `set` from the server replaces
+    the buffer outright, a notify from the browser replaces the server's
+    copy, and there is no merge.
 
     Args:
-        language: a Monaco language id (`python`, `sql`, `markdown`, `shell`,
-            `yaml`, `javascript`, `typescript`, `html`, `css`). Anything else
-            renders unhighlighted rather than failing.
-        min_height: pixels. The editor grows with its content between the
-            bounds, then scrolls.
-
-    The browser pays for a large editor chunk the first time one of these
-    mounts, so a code surface nobody edits wants `CodeBlockRef` instead.
+        language: a language name or alias (`python`, `sql`, `markdown`,
+            `shell`, `yaml`, `ts`, `json`, ...). Anything unknown renders
+            unhighlighted rather than failing.
+        line_numbers: `None` follows the mode, numbered while editable and
+            bare while read-only.
+        wrap: soft-wrap long lines instead of scrolling sideways.
+        show_copy: the copy button, shown only while read-only.
+        min_height, max_height: pixels. The view grows with its content
+            between the bounds, then scrolls. `None` is no bound.
     """
 
-    _wire_type = "MonacoRef"
+    _wire_type = "CodeRef"
 
     @classmethod
     def slot(
         cls,
         *,
         value: str = "",
-        language: str = "python",
-        read_only: bool = False,
-        min_height: int = 42,
-        max_height: int = 560,
+        language: str = "",
+        editable: bool = False,
+        line_numbers: bool | None = None,
+        wrap: bool = False,
+        show_copy: bool = True,
+        min_height: int | None = None,
+        max_height: int | None = None,
     ) -> Self:
         return super().slot(
             value=value,
             language=language,
-            read_only=read_only,
+            editable=editable,
+            line_numbers=line_numbers,
+            wrap=wrap,
+            show_copy=show_copy,
             min_height=min_height,
             max_height=max_height,
         )
@@ -230,8 +242,8 @@ class MonacoRef(Ref):
     def set_language(self, name: StrArg) -> Nu:
         return Write(self, Dict.of(language=name))
 
-    def set_read_only(self, flag: BoolArg) -> Nu:
-        return Write(self, Dict.of(read_only=flag))
+    def set_editable(self, flag: BoolArg) -> Nu:
+        return Write(self, Dict.of(editable=flag))
 
     def on_change(self) -> Changed:
         return Changed(self)
@@ -309,24 +321,26 @@ class NumberInputRef(Ref):
         return Changed(self)
 
 
-class ProseRef(Ref):
-    """Editable rich text. Value is a markdown string; the browser edits wysiwyg.
+class MarkdownRef(Ref):
+    """A markdown document, read-only by default. Value is the markdown, both ways.
 
-    Bidirectional, unlike `MarkdownRef` (display-only). The server writes the
-    source with `set`, reads it back through `Ref` like any input Ref, and
-    subscribes with `on_change()`. The browser renders the markdown as a live
-    document and notifies back on a quiet moment or on blur.
+    The browser never shows the source. Read-only it renders the document;
+    with `editable=True` the same view becomes a live wysiwyg editor: the
+    server writes the source with `set`, reads it back through `Ref` like any
+    input Ref, and subscribes with `on_change()`. The browser notifies back
+    on a quiet moment or on blur. One engine for both modes, so a document
+    looks the same whether or not you can type in it.
+
+    The dialect: paragraphs, headings, bullet, numbered and checkbox lists,
+    quotes, code fences, rules, images, bold, italic, inline code and links.
 
     Last actor wins. There is no merge, no OT, no CRDT: a `set` from the
     server replaces the document outright, and a notify from the browser
     replaces the server's copy. Two people typing into the same Ref at the
     same time will clobber each other, by design.
-
-    `read_only=True` renders the same document but refuses edits, so a
-    program can reuse one renderer for both faces.
     """
 
-    _wire_type = "ProseRef"
+    _wire_type = "MarkdownRef"
 
     @classmethod
     def slot(
@@ -334,9 +348,9 @@ class ProseRef(Ref):
         *,
         value: str = "",
         placeholder: str = "",
-        read_only: bool = False,
+        editable: bool = False,
     ) -> Self:
-        return super().slot(value=value, placeholder=placeholder, read_only=read_only)
+        return super().slot(value=value, placeholder=placeholder, editable=editable)
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> Any:
@@ -350,8 +364,8 @@ class ProseRef(Ref):
     def set_placeholder(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(placeholder=text))
 
-    def set_read_only(self, flag: BoolArg) -> Nu:
-        return Write(self, Dict.of(read_only=flag))
+    def set_editable(self, flag: BoolArg) -> Nu:
+        return Write(self, Dict.of(editable=flag))
 
     def on_change(self) -> Changed:
         return Changed(self)
@@ -638,11 +652,11 @@ class TextAreaRef(Ref):
 __all__ = [
     "ButtonRef",
     "CheckboxRef",
+    "CodeRef",
     "DatePickerRef",
     "InputRef",
-    "MonacoRef",
+    "MarkdownRef",
     "NumberInputRef",
-    "ProseRef",
     "RadioGroupRef",
     "SelectRef",
     "SliderRef",

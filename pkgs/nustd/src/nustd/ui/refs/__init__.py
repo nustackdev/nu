@@ -6,13 +6,13 @@ Grouped by kind, one module per group.
   (`window.history`, `document.title`). NavRef, TitleRef.
 - output:     server-owned Refs that render into the body as sinks
   (server pushes via write/append; browser never reads back).
-  HeadingRef, TextRef, MarkdownRef, CodeBlockRef, ImageRef, LinkRef, ListRef,
-  BadgeRef, StatusDotRef, KbdRef, ShortcutRef, AlertRef, DividerRef,
+  HeadingRef, TextRef, ImageRef, LinkRef, ListRef, BadgeRef, StatusDotRef, KbdRef, ShortcutRef, AlertRef, DividerRef,
   EmptyStateRef, StatRef, ProgressRef, GaugeRef, JsonViewerRef, TableRef.
 - input:      tab-owned Refs; host reads on demand + subscribes to
   `notify`. ButtonRef, InputRef, NumberInputRef, TextAreaRef,
-  ProseRef, MonacoRef, CheckboxRef, SwitchRef, SliderRef,
-  SelectRef, RadioGroupRef, TagInputRef, DatePickerRef.
+  CheckboxRef, SwitchRef, SliderRef, SelectRef, RadioGroupRef,
+  TagInputRef, DatePickerRef. Also MarkdownRef and CodeRef, which have
+  both faces: read-only by default, editable on request.
 - chart:      output sinks with chart-specific payload contracts.
   LineChart, BarChart, AreaChart, PieChart, Sparkline.
 - tree:       TreeRef, nested rows that fold; server-owned nodes, one notify
@@ -50,11 +50,11 @@ from .chart import AreaChart, BarChart, LineChart, PieChart, Sparkline
 from .input import (
     ButtonRef,
     CheckboxRef,
+    CodeRef,
     DatePickerRef,
     InputRef,
-    MonacoRef,
+    MarkdownRef,
     NumberInputRef,
-    ProseRef,
     RadioGroupRef,
     SelectRef,
     SliderRef,
@@ -83,7 +83,6 @@ from .layout import (
 from .output import (
     AlertRef,
     BadgeRef,
-    CodeBlockRef,
     DividerRef,
     EmptyStateRef,
     GaugeRef,
@@ -93,7 +92,6 @@ from .output import (
     KbdRef,
     LinkRef,
     ListRef,
-    MarkdownRef,
     ProgressRef,
     ShortcutRef,
     StatRef,
@@ -116,7 +114,7 @@ __all__ = [
     "Card",
     "CardRef",
     "CheckboxRef",
-    "CodeBlockRef",
+    "CodeRef",
     "Column",
     "Container",
     "DatePickerRef",
@@ -139,12 +137,10 @@ __all__ = [
     "MarkdownRef",
     "Modal",
     "ModalRef",
-    "MonacoRef",
     "NavRef",
     "NumberInputRef",
     "PieChart",
     "ProgressRef",
-    "ProseRef",
     "RadioGroupRef",
     "Ref",
     "Row",

@@ -91,8 +91,12 @@ export function proseInputRules(s: ProseSchema): Plugin {
 	return inputRules({
 		rules: [
 			// blocks
-			textblockTypeInputRule(/^(#{1,3})\s$/, nodeType.heading, (m) => ({
+			textblockTypeInputRule(/^(#{1,6})\s$/, nodeType.heading, (m) => ({
 				level: m[1].length,
+			})),
+			// ``` or ```python, then a space: the line becomes a code fence
+			textblockTypeInputRule(/^```([\w+#.-]*)\s$/, nodeType.codeBlock, (m) => ({
+				language: m[1],
 			})),
 			wrappingInputRule(/^\s*([-+*])\s$/, nodeType.bulletList),
 			wrappingInputRule(

@@ -111,40 +111,6 @@ class BadgeRef(Ref):
         return Write(self, Dict.of(**payload))
 
 
-class CodeBlockRef(Ref):
-    """Display-only code block. One `write` carries a partial dict {code, language, show_copy}."""
-
-    _wire_type = "CodeBlockRef"
-
-    @classmethod
-    def slot(
-        cls,
-        *,
-        code: str = "",
-        language: str = "",
-        show_copy: bool = True,
-    ) -> Self:
-        return super().slot(code=code, language=language, show_copy=show_copy)
-
-    def set(
-        self,
-        code: StrArg = UNSET,
-        language: StrArg = UNSET,
-    ) -> Nu:
-        payload: dict[str, object] = {}
-        if code is not UNSET:
-            payload["code"] = code
-        if language is not UNSET:
-            payload["language"] = language
-        return Write(self, Dict.of(**payload))
-
-    def set_code(self, code: StrArg) -> Nu:
-        return Write(self, Dict.of(code=code))
-
-    def set_language(self, language: StrArg) -> Nu:
-        return Write(self, Dict.of(language=language))
-
-
 Align = Literal["left", "center", "right"]
 
 
@@ -528,19 +494,6 @@ class LinkRef(Ref):
         return Write(self, Dict.of(**payload))
 
 
-class MarkdownRef(Ref):
-    """Display-only markdown ref. Source string rendered as commonmark."""
-
-    _wire_type = "MarkdownRef"
-
-    @classmethod
-    def slot(cls, *, value: str = "") -> Self:
-        return super().slot(value=value)
-
-    def set(self, value: StrArg) -> Nu:
-        return Write(self, value)
-
-
 class ProgressRef(Ref):
     """Display-only progress ref. One `write` op carries every mutation."""
 
@@ -822,16 +775,17 @@ class TextRef(Ref):
 __all__ = [
     "AlertRef",
     "BadgeRef",
-    "CodeBlockRef",
     "DividerRef",
     "EmptyStateRef",
     "GaugeRef",
     "HeadingRef",
     "ImageRef",
     "JsonViewerRef",
+    "KbdRef",
     "LinkRef",
-    "MarkdownRef",
+    "ListRef",
     "ProgressRef",
+    "ShortcutRef",
     "StatRef",
     "StatusDotRef",
     "TableRef",

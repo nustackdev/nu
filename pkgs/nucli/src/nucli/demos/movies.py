@@ -189,8 +189,8 @@ class About(nustd.ui.Page):
     source_intro = nustd.ui.TextRef.slot(
         value="The whole app, one file. Storage, UI, and the wires between them.",
     )
-    source = nustd.ui.CodeBlockRef.slot(
-        code=Path(__file__).read_text(),
+    source = nustd.ui.CodeRef.slot(
+        value=Path(__file__).read_text(),
         language="python",
     )
     actions = AboutActions.slot(gap=3, align="center")
