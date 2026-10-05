@@ -307,7 +307,7 @@ async def test_react_changed_key_is_scoped_to_the_body() -> None:
     assert ctx.attrs.get("k") == "outer"
 
 
-async def test_react_while_condition_does_not_see_the_previous_key() -> None:
+async def test_react_while_condition_sees_its_own_turns_key() -> None:
     feed, log, conds = _Feed(), [], []
 
     def cond(attrs: Attributes) -> bool:
@@ -322,7 +322,7 @@ async def test_react_while_condition_does_not_see_the_previous_key() -> None:
         feed.fire(key)
     await task
     assert log == ["a", "b"]
-    assert conds == ["outer", "outer", "outer"]
+    assert conds == ["a", "b", "c"]
     assert ctx.attrs.get("k") == "outer"
 
 

@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Reactive loops can decide whether to continue by looking at what changed
 - Markdown and code each get one Ref that reads by default and edits on request
 - Markdown gains code fences, images and six heading levels, and drops unsafe links
 - Claude Code sessions can be named, resumed later, and kept on one process

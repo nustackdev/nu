@@ -10,19 +10,20 @@ no collapsing; ``ReactLatest`` collapses a backlog to its newest key, since
 it only ever runs the latest one.
 
 ``param_slots`` names the consumed queries (the change subscription at slot
-0, a condition where present, an optional ``changed_key`` name); the
+0, a condition where present, the names the changed key binds under); the
 remaining slot is the body.
 
 A body that wants the key that changed is a lambda over it
 (``lambda key: ...``): it runs once, at construction, with a ref to the key,
 and the name it binds under is minted for it. A plain tree body binds nothing,
-unless ``changed_key`` names where to put the key for it.
+unless ``changed_key`` names where to put the key for it. ``ReactWhile``'s
+condition is a binder slot the same way.
 """
 
 from __future__ import annotations
 
 import asyncio
-from contextlib import nullcontext
+from contextlib import ExitStack, nullcontext
 from typing import TYPE_CHECKING
 
 from nu.context.attrs.binders import bind
@@ -163,17 +164,31 @@ class ReactWhile(Control):
     change. The condition is re-evaluated fresh on every notification, not
     just once at the start.
 
+    The condition sees the changed key as the body does, so a loop can wait
+    out the changes it does not care about and end on the first one it does.
+
     Args:
         change: the change subscription to wait on.
         condition: checked after each notification, before that turn's body
-            runs. A falsy value ends the loop.
+            runs: a lambda over the changed key, or a tree. A falsy value
+            ends the loop.
         body: what to run on a turn where the condition holds: a lambda over
             the changed key, or a tree.
         changed_key: name the changed key is bound under while that turn's
-            tree body runs; a lambda mints its own.
+            tree condition and tree body run; a lambda mints its own.
 
     Notes:
+        - The key is bound for the whole turn, condition and body alike. A
+          lambda condition and a lambda body each read it under the name
+          their own code mints.
         - Requires an async runtime; the sync path raises ``RuntimeError``.
+
+    Example:
+        Wait for the first change to a key the caller cares about::
+
+            ReactWhile(Space.cells.on_descendants_change("*", "prog"),
+                       lambda key: mine.contains(key).not_(),
+                       nu.Noop())
 
     Yields:
         Nothing.
@@ -181,7 +196,7 @@ class ReactWhile(Control):
 
     _mutates = Declared(value=frozenset(), name="mutates")
     _requires_async = Declared(value=True, name="requires_async")
-    _param_slots = Declared(value=frozenset({0, 1, 3}), name="param_slots")
+    _param_slots = Declared(value=frozenset({0, 1, 3, 4}), name="param_slots")
 
     def __init__(
         self,
@@ -191,13 +206,13 @@ class ReactWhile(Control):
         *,
         changed_key: object = None,
     ) -> None:
-        body, (changed_key,) = bind("ReactWhile", body, changed_key=changed_key)
-        has_changed_key = changed_key is not None
-        if changed_key is not None:
-            super().__init__(change, condition, body, changed_key)
-        else:
-            super().__init__(change, condition, body)
-        self._payload["has_changed_key"] = has_changed_key
+        condition, (condition_key,) = bind("ReactWhile", condition, changed_key=changed_key)
+        body, (body_key,) = bind("ReactWhile", body, changed_key=changed_key)
+        # One name when both are trees: the given ``changed_key``, or none.
+        pair = (condition_key,) if condition_key is body_key else (condition_key, body_key)
+        names = tuple(name for name in pair if name is not None)
+        super().__init__(change, condition, body, *names)
+        self._payload["key_names"] = len(names)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
@@ -207,10 +222,10 @@ class ReactWhile(Control):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        has_ck = self._payload["has_changed_key"]
+        name_slots = children[3 : 3 + self._payload["key_names"]]
 
         async def athunk(rt: Runtime) -> None:
-            changed_key_name = await children[3](rt) if has_ck else None
+            names = [await slot(rt) for slot in name_slots]
             loop = asyncio.get_running_loop()
             queue: asyncio.Queue[object] = asyncio.Queue()
 
@@ -222,9 +237,11 @@ class ReactWhile(Control):
             try:
                 while True:
                     key = await queue.get()
-                    if not await children[1](rt):
-                        break
-                    with _changed(rt.ctx.attrs, changed_key_name, key):
+                    with ExitStack() as turn:
+                        for name in names:
+                            turn.enter_context(_changed(rt.ctx.attrs, name, key))
+                        if not await children[1](rt):
+                            break
                         await _adrain_body(rt, children[2])
             finally:
                 sub.unbind(on_change)

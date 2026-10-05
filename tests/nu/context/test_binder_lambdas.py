@@ -292,6 +292,35 @@ async def test_react_while_takes_a_lambda() -> None:
     await _cancel(task)
 
 
+async def test_react_while_condition_takes_a_lambda() -> None:
+    feed, log = _Feed(), []
+    term = nu.ReactWhile(
+        nu.Attr("feed"), lambda key: nu.Str(key) != "stop", lambda key: Record(key, log)
+    )
+    task = _start(term, feed=feed)
+    await _until(lambda: feed.receivers)
+    feed.fire("a")
+    feed.fire("stop")
+    await task
+    assert log == ["a"]
+
+
+async def test_react_while_condition_reads_a_named_key() -> None:
+    feed, log = _Feed(), []
+    term = nu.ReactWhile(
+        nu.Attr("feed"),
+        nu.Str(nu.Attr("k")) != "stop",
+        Record(nu.Attr("k"), log),
+        changed_key="k",
+    )
+    task = _start(term, feed=feed)
+    await _until(lambda: feed.receivers)
+    feed.fire("a")
+    feed.fire("stop")
+    await task
+    assert log == ["a"]
+
+
 @pytest.mark.parametrize("flow", [nu.ReactForever, nu.ReactLatest])
 async def test_react_forever_and_latest_take_a_lambda(flow: type) -> None:
     feed, log = _Feed(), []
