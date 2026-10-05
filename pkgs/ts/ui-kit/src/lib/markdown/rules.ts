@@ -9,9 +9,11 @@
 // Deliberately no rule fires on anything the serializer cannot emit. The
 // dialect is closed: what you can type, markdown.ts can write back.
 //
-// A table is the one block that starts on Enter rather than on a typed
-// character: `| a | b |` is a complete header only once the line is done, and
-// waiting for the closing pipe alone would fire on every cell typed on the way.
+// A table starts on Enter rather than on a typed character: `| a | b |` is a
+// complete header only once the line is done, and waiting for the closing
+// pipe alone would fire on every cell typed on the way. A fence takes either:
+// ```python then a space, or ```python then Enter, which is what anyone who
+// writes markdown by hand reaches for.
 
 import {
 	InputRule,
@@ -155,6 +157,42 @@ export function tableFromRow(s: ProseSchema): Command {
 			const tr = state.tr.replaceWith(at, $from.after(), table);
 			// Into the table, past the header, into the row, the cell, the paragraph.
 			tr.setSelection(TextSelection.create(tr.doc, at + 1 + head.nodeSize + 3));
+			dispatch(tr.scrollIntoView());
+		}
+		return true;
+	};
+}
+
+/** The opening line of a fence: three backticks and an optional one-word language. */
+const FENCE_LINE = /^```([\w+#.-]*)$/;
+
+/**
+ * Enter at the end of a line like ```python: the line becomes an empty code
+ * fence in that language, the caret inside it. Only where a fence may stand:
+ * not as a list item's first line, not in a table cell.
+ */
+export function fenceFromLine(s: ProseSchema): Command {
+	const { nodeType } = s;
+	return (state, dispatch) => {
+		const { $from, empty } = state.selection;
+		const para = $from.parent;
+		if (!empty || para.type !== nodeType.paragraph || $from.parentOffset !== para.content.size) {
+			return false;
+		}
+		const m = FENCE_LINE.exec(para.textContent);
+		if (!m) return false;
+		const index = $from.index($from.depth - 1);
+		if (!$from.node($from.depth - 1).canReplaceWith(index, index + 1, nodeType.codeBlock)) {
+			return false;
+		}
+		if (dispatch) {
+			const at = $from.before();
+			const tr = state.tr.replaceWith(
+				at,
+				$from.after(),
+				nodeType.codeBlock.create({ language: m[1] }),
+			);
+			tr.setSelection(TextSelection.create(tr.doc, at + 1));
 			dispatch(tr.scrollIntoView());
 		}
 		return true;

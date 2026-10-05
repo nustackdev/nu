@@ -435,6 +435,51 @@ describe("ProseEditor tables", () => {
 		expect(onCommit).toHaveBeenCalledWith("intro\n\n| a | \\*\\*b** |\n| --- | --- |\n| 1 |  |\n");
 	});
 
+	it("turns ```python then Enter into an empty fence, the caret inside it", async () => {
+		vi.useFakeTimers();
+		const onCommit = vi.fn();
+		let view: EditorView | null = null;
+		const el = mount(
+			<ProseEditor value={"intro\n"} onCommit={onCommit} onView={(v) => (view = v)} />,
+		);
+		const pm = view as unknown as EditorView;
+		act(() => {
+			const end = pm.state.doc.content.size;
+			pm.dispatch(pm.state.tr.insert(end, pm.state.schema.nodes.paragraph.create()));
+		});
+		type(pm, "```python");
+		expect(key(pm, "Enter")).toBe(true);
+		const block = pm.state.doc.child(1);
+		expect(block.type.name).toBe("code_block");
+		expect(block.attrs.language).toBe("python");
+		expect(pm.state.selection.$head.parent.type.name).toBe("code_block");
+		const cm = fence(el);
+		act(() => cm.dispatch({ changes: { from: 0, insert: "x = 1" } }));
+		await act(async () => {
+			vi.advanceTimersByTime(1000);
+		});
+		expect(onCommit).toHaveBeenCalledWith("intro\n\n```python\nx = 1\n```\n");
+	});
+
+	it("opens a fence with no language on ``` then Enter, and leaves other lines alone", () => {
+		let view: EditorView | null = null;
+		mount(<ProseEditor value={"intro\n"} onCommit={() => {}} onView={(v) => (view = v)} />);
+		const pm = view as unknown as EditorView;
+		type(pm, " ```");
+		key(pm, "Enter");
+		// Not the whole line: a paragraph ending in backticks is just text.
+		expect(pm.state.doc.child(0).type.name).toBe("paragraph");
+		act(() => {
+			const end = pm.state.doc.content.size;
+			pm.dispatch(pm.state.tr.insert(end, pm.state.schema.nodes.paragraph.create()));
+		});
+		type(pm, "```");
+		key(pm, "Enter");
+		const last = pm.state.doc.lastChild;
+		expect(last?.type.name).toBe("code_block");
+		expect(last?.attrs.language).toBe("");
+	});
+
 	it("leaves a pipe line alone where a table cannot go, or with nothing in it", () => {
 		let view: EditorView | null = null;
 		mount(<ProseEditor value={"- x\n"} onCommit={() => {}} onView={(v) => (view = v)} />);

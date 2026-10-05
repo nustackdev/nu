@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Code fences open on Enter as well as space after the opening backticks
 - Markdown gains tables you can type, tab through and reshape from a menu
 - Markdown code fences highlight and edit like code blocks, with a language picker
 - Reactive loops can decide whether to continue by looking at what changed

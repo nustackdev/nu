@@ -55,7 +55,7 @@ import { Checkbox } from "../../components/ui/checkbox";
 import { cn } from "../utils";
 import { codeFences } from "./fence";
 import { createMarkdown, type Markdown } from "./markdown";
-import { placeholder, proseInputRules, tableFromRow } from "./rules";
+import { fenceFromLine, placeholder, proseInputRules, tableFromRow } from "./rules";
 import { type ProseSchema, proseSchema } from "./schema";
 import { cellBelow, exitTable, leaveTable, nextCell, previousCell, proseTables } from "./table";
 
@@ -209,6 +209,8 @@ export function ProseEditor({
 			Enter: chainCommands(
 				// `| a | b |` then Enter: that row becomes a table's header.
 				tableFromRow(schema),
+				// ```python then Enter: the line opens a fence.
+				fenceFromLine(schema),
 				cellBelow,
 				splitListItem(nodeType.listItem),
 				// A new checklist item starts undone, whatever the one above says.
