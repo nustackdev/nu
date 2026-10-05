@@ -33,7 +33,7 @@ from .diagnostics import ConstructionError, Diagnostic
 from .eval import Eval
 from .eval_promise import EvalPromiseError
 from .forms import Program
-from .load import LoadNu, RewriteEscapeError
+from .load import LoadNu
 
 
 __all__ = [
@@ -47,7 +47,6 @@ __all__ = [
     "LoadNu",
     "Program",
     "PyBrace",
-    "RewriteEscapeError",
     "Venv",
 ]
 

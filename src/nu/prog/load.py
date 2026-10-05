@@ -48,11 +48,8 @@ itself stays reachable on ``.diagnostic``, which is what a feedback loop
 handing the failure back to its author reads.
 
 A rewrite reaches the whole term it is handed, ``Eval`` carriers included,
-because a carrier is a plain child. The one thing it cannot reach is a term
-some *other* load builds at run time, inside a nested Runtime, after this
-rewrite already ran. Rather than let that term through un-rewritten and write
-to bare paths, a load carrying a rewrite refuses to yield a term with another
-``LoadNu`` in it (:class:`RewriteEscapeError`). Nothing nests loads today.
+because a carrier is a plain child. A term some *other* load builds at run
+time is that load's own: it gets the rewrite bound on it, not this one.
 
 Async classification: portable. The construction is blocking (a venv brace
 sits on a pipe read for its whole duration), so ``_acompile`` runs it
@@ -65,7 +62,6 @@ from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
 from nu.lang.sentinels import UNSET
-from nu.tree.walk import preorder
 
 from .brace import PyBrace
 from .diagnostics import ConstructionError, Diagnostic
@@ -81,17 +77,7 @@ if TYPE_CHECKING:
     from nu.tree import Transform
 
 
-__all__ = ["LoadNu", "RewriteEscapeError"]
-
-
-class RewriteEscapeError(RuntimeError):
-    """A load's rewrite cannot reach a term another load builds at run time.
-
-    Raised when a ``LoadNu`` carrying a ``rewrite`` constructs a term that
-    holds another ``LoadNu``. The inner load runs later, in its own Runtime,
-    so whatever it builds is never handed to this rewrite. Bind the rewrite
-    on the inner load instead of nesting one inside the other.
-    """
+__all__ = ["LoadNu"]
 
 
 # The brace a LoadNu uses when nothing is bound. Stateless and reusable: an
@@ -165,9 +151,8 @@ class LoadNu(ScalarQuery):
         - The rewrite runs on this side of the brace, on the term that came
           back, so it is a live python callable and never has to pickle.
         - A rewrite is bound per load and there is no way around it, which
-          is the point of it being a slot. A load with a rewrite refuses to
-          yield a term holding another ``LoadNu``, because that inner load
-          builds its term later and would escape.
+          is the point of it being a slot. A nested load builds its term
+          later, so it rewrites with its own slot, never with this one.
 
     Yields:
         The Nu term the entry point returned, rewritten and unevaluated.
@@ -175,8 +160,6 @@ class LoadNu(ScalarQuery):
     Raises:
         ConstructionError: the source did not construct. The record is on
             ``.diagnostic``.
-        RewriteEscapeError: a rewrite is bound and the term holds a nested
-            ``LoadNu``, whose own term the rewrite could never reach.
 
     Example:
         >>> src = '''
@@ -225,21 +208,7 @@ class LoadNu(ScalarQuery):
         rewrite: Transform | None = self._payload["rewrite"]  # type: ignore[assignment]
         if rewrite is None:
             return result  # type: ignore[return-value]
-        return self._reachable(rewrite(result))  # type: ignore[arg-type]
-
-    def _reachable(self, term: Nu) -> Nu:
-        """Refuse a rewritten term holding a load whose own term would escape."""
-        for node in preorder(term):
-            if isinstance(node, LoadNu):
-                msg = (
-                    "LoadNu: a rewrite is bound here, but the constructed term "
-                    "holds another LoadNu. That load builds its term at run "
-                    "time, in its own Runtime, so this rewrite never sees it "
-                    "and it would resolve against bare paths. Bind the rewrite "
-                    "on the inner load instead."
-                )
-                raise RewriteEscapeError(msg)
-        return term
+        return rewrite(result)  # type: ignore[arg-type]
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, entry, filename = children[0], children[1], children[2]

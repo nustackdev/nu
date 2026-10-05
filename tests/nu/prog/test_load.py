@@ -15,7 +15,7 @@ import textwrap
 import pytest
 
 import nu
-from nu.prog import ConstructionError, LoadNu, PyBrace, RewriteEscapeError
+from nu.prog import ConstructionError, LoadNu, PyBrace
 
 
 def src(text: str) -> str:
@@ -338,12 +338,11 @@ async def test_the_rewrite_runs_on_the_async_path() -> None:
     assert nu.run(term)[0] == "swapped"
 
 
-def test_a_nested_load_is_refused_when_a_rewrite_is_bound() -> None:
-    with pytest.raises(RewriteEscapeError, match="another LoadNu"):
-        nu.run(LoadNu(NESTED, rewrite=lambda term: term))
+def test_a_nested_load_runs_under_an_outer_rewrite() -> None:
+    assert nu.run(nu.Eval(LoadNu(NESTED, rewrite=lambda term: term)))[0] == "inner"
 
 
-def test_a_nested_load_is_fine_with_no_rewrite_to_escape() -> None:
+def test_a_nested_load_is_fine_with_no_rewrite() -> None:
     assert nu.run(nu.Eval(LoadNu(NESTED)))[0] == "inner"
 
 
