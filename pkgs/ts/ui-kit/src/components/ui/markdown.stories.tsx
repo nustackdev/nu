@@ -22,6 +22,12 @@ A paragraph of body text. **Bold**, *italic*, \`inline code\` and a
 
 > A quote, for the left rule and the slant.
 
+| Ref | Kind | Reads | Note |
+| :--- | :---: | ---: | --- |
+| **MarkdownRef** | input | 1284 | the value is \`markdown\` |
+| *CodeRef* | input | 421 | [docs](https://nustack.dev) |
+| \`TableRef\` | display | 3120 | a \\| pipe, escaped |
+
 \`\`\`python
 def fence(lang):
     return f"a {lang} code fence"
@@ -124,6 +130,53 @@ function FencesSideBySide() {
 
 export const Fences: StoryObj = {
 	render: () => <FencesSideBySide />,
+};
+
+const TABLES = `GFM tables: type \`| a | b |\` and press Enter for a new one. Tab moves between
+cells, Enter goes down a cell, and the button on the table holding the caret adds,
+removes and aligns.
+
+| Run | Model | Tokens | Status | Latency |
+| --- | --- | ---: | :---: | ---: |
+| \`run_142\` | gpt-5 | 1284 | **ok** | 820ms |
+| \`run_141\` | gpt-5-mini | 421 | ok | 180ms |
+| \`run_140\` | claude-4.7 | 3120 | *warn* | 3.4s |
+| \`run_139\` | [gpt-5](https://nustack.dev) | 640 | a \\| b |  |
+
+| Only a header |
+| --- |
+`;
+
+function TablesSideBySide() {
+	const [value, setValue] = useState(TABLES);
+	return (
+		<div className="space-y-8 p-8">
+			<div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+				<div>
+					<div className="mb-2 font-mono text-xs uppercase tracking-widest text-text-muted">
+						read-only
+					</div>
+					<Markdown value={value} />
+				</div>
+				<div>
+					<div className="mb-2 font-mono text-xs uppercase tracking-widest text-text-muted">
+						editable
+					</div>
+					<Markdown value={value} readOnly={false} onCommit={setValue} />
+				</div>
+			</div>
+			<div>
+				<div className="mb-2 font-mono text-xs uppercase tracking-widest text-text-muted">
+					committed markdown
+				</div>
+				<Code block language="markdown" value={value} />
+			</div>
+		</div>
+	);
+}
+
+export const Tables: StoryObj = {
+	render: () => <TablesSideBySide />,
 };
 
 const meta: Meta = {

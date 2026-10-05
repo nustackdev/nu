@@ -332,7 +332,11 @@ class MarkdownRef(Ref):
     looks the same whether or not you can type in it.
 
     The dialect: paragraphs, headings, bullet, numbered and checkbox lists,
-    quotes, code fences, rules, images, bold, italic, inline code and links.
+    quotes, code fences, GFM pipe tables, rules, images, bold, italic, inline
+    code and links. Code fences are syntax highlighted, with a language picker
+    when editable. Table cells hold inline content only, a pipe inside one is
+    backslash-escaped, and the editor writes every table in one form (outer
+    pipes, one space of padding, `---` / `:---` / `:---:` / `---:` delimiters).
 
     Last actor wins. There is no merge, no OT, no CRDT: a `set` from the
     server replaces the document outright, and a notify from the browser

@@ -191,6 +191,331 @@ describe("escaping", () => {
 	});
 });
 
+describe("tables", () => {
+	const { schema, nodeType } = proseSchema;
+
+	/** The table's cells as text, row by row. */
+	function grid(md: string): string[][] {
+		const table = parseMarkdown(md).doc.firstChild;
+		expect(table?.type.name).toBe("table");
+		const rows: string[][] = [];
+		table?.forEach((row) => {
+			const cells: string[] = [];
+			row.forEach((cell) => {
+				cells.push(cell.textContent);
+			});
+			rows.push(cells);
+		});
+		return rows;
+	}
+
+	function aligns(md: string): (string | null)[] {
+		const out: (string | null)[] = [];
+		parseMarkdown(md).doc.firstChild?.firstChild?.forEach((cell) => {
+			out.push(cell.attrs.align);
+		});
+		return out;
+	}
+
+	/** A one-cell table whose cell holds `inline`, as the editor would build it. */
+	function cellDoc(...inline: ReturnType<typeof schema.text>[]) {
+		const p = nodeType.paragraph.create(null, inline);
+		const row = nodeType.tableRow.create(null, [nodeType.tableHeader.create(null, p)]);
+		return schema.topNodeType.create(null, [nodeType.table.create(null, [row])]);
+	}
+
+	it("keeps a table", () => stable("| a | b |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |\n"));
+
+	it("keeps a header-only table", () => stable("| a | b |\n| --- | --- |\n"));
+
+	it("keeps a one-column table", () => stable("| a |\n| --- |\n| 1 |\n"));
+
+	it("keeps every alignment", () => {
+		const md = "| n | l | c | r |\n| --- | :--- | :---: | ---: |\n| 1 | 2 | 3 | 4 |\n";
+		stable(md);
+		expect(aligns(md)).toEqual([null, "left", "center", "right"]);
+		// every cell of a column carries the column's alignment
+		const body = parseMarkdown(md).doc.firstChild?.child(1);
+		expect(body?.child(3).attrs.align).toBe("right");
+	});
+
+	it("reads the header as header cells and the rest as body cells", () => {
+		const table = parseMarkdown("| a |\n| --- |\n| 1 |\n").doc.firstChild;
+		expect(table?.child(0).firstChild?.type.name).toBe("table_header");
+		expect(table?.child(1).firstChild?.type.name).toBe("table_cell");
+		expect(table?.child(1).firstChild?.firstChild?.type.name).toBe("paragraph");
+	});
+
+	it("keeps empty cells", () => {
+		stable("| a |  | c |\n| --- | --- | --- |\n|  | 2 |  |\n");
+		expect(grid("| a |  | c |\n| --- | --- | --- |\n|  | 2 |  |\n")).toEqual([
+			["a", "", "c"],
+			["", "2", ""],
+		]);
+	});
+
+	it("keeps an all-empty table", () => stable("|  |  |\n| --- | --- |\n|  |  |\n"));
+
+	it("keeps marks, code, links and images in cells", () =>
+		stable(
+			"| **bold** | *em* | `code` | [link](https://x.dev) | ![alt](a.png) |\n" +
+				"| --- | --- | --- | --- | --- |\n" +
+				"| a **b *c*** | `x()` y | [**l**](u) | [![i](i.png)](u) | \\*lit* |\n",
+		));
+
+	it("keeps a table between other blocks", () =>
+		stable("# t\n\nintro\n\n| a | b |\n| --- | --- |\n| 1 | 2 |\n\nafter\n"));
+
+	it("keeps two tables in a row", () => stable("| a |\n| --- |\n| 1 |\n\n| b |\n| --- |\n| 2 |\n"));
+
+	it("keeps a table in a quote and in a list item", () => {
+		stable("> | a | b |\n> | --- | --- |\n> | 1 | 2 |\n");
+		stable("- item\n\n  | a | b |\n  | --- | --- |\n  | 1 | 2 |\n- next\n");
+		stable("- item\n\n  | a |\n  | --- |\n  - nested\n");
+	});
+
+	describe("pipes in cells", () => {
+		it("reads an escaped pipe as a pipe, not a boundary", () => {
+			expect(grid("| a \\| b | c |\n| --- | --- |\n")).toEqual([["a | b", "c"]]);
+			stable("| a \\| b | c |\n| --- | --- |\n");
+		});
+
+		it("reads an escaped pipe inside code as a pipe", () => {
+			const md = "| `a \\| b` |\n| --- |\n";
+			const cell = parseMarkdown(md).doc.firstChild?.firstChild?.firstChild;
+			expect(cell?.textContent).toBe("a | b");
+			expect(cell?.firstChild?.firstChild?.marks.map((m) => m.type.name)).toEqual(["code"]);
+			stable(md);
+		});
+
+		it("writes every pipe a cell holds escaped, code included", () => {
+			const text = cellDoc(
+				schema.text("x|y "),
+				schema.text("a|b", [proseSchema.markType.code.create()]),
+			);
+			const md = serializeMarkdown(text);
+			expect(md).toBe("| x\\|y `a\\|b` |\n| --- |\n");
+			expect(parseMarkdown(md).doc.textContent).toBe("x|y a|b");
+			stable(md);
+		});
+
+		it("keeps backslashes next to pipes apart from the escape", () => {
+			for (const t of ["a\\", "a\\|b", "\\|", "|\\", "\\\\|", "a | \\ | b"]) {
+				const md = serializeMarkdown(cellDoc(schema.text(t)));
+				expect(parseMarkdown(md).doc.textContent).toBe(t);
+				stable(md);
+			}
+			const code = proseSchema.markType.code.create();
+			// (Code ending in a backslash is out of reach anywhere, cell or not.)
+			for (const t of ["a\\|b", "|", "a|\\b", "\\|"]) {
+				const md = serializeMarkdown(cellDoc(schema.text(t, [code])));
+				expect(parseMarkdown(md).doc.textContent).toBe(t);
+				stable(md);
+			}
+		});
+
+		it("keeps a pipe in a link, an image and its alt", () => {
+			const md = "| [a\\|b](x?q=1\\|2) | ![p\\|q](i\\|.png) |\n| --- | --- |\n";
+			const p = parseMarkdown(md).doc.firstChild?.firstChild;
+			expect(p?.child(0).firstChild?.firstChild?.marks[0].attrs.href).toBe("x?q=1|2");
+			expect(p?.child(1).firstChild?.firstChild?.attrs.alt).toBe("p|q");
+			expect(p?.child(1).firstChild?.firstChild?.attrs.src).toBe("i|.png");
+			stable(md);
+		});
+	});
+
+	describe("cells are not blocks", () => {
+		it("does not block-escape what would open a block on a line of its own", () => {
+			const md =
+				"| - a | # b | > c | 1. d | --- | ``` | [ ] e |\n" +
+				"| --- | --- | --- | --- | --- | --- | --- |\n";
+			stable(md);
+			expect(grid(md)).toEqual([["- a", "# b", "> c", "1. d", "---", "```", "[ ] e"]]);
+		});
+
+		it("still escapes marks in a cell", () => {
+			const md = serializeMarkdown(cellDoc(schema.text("2 * 3 * 4")));
+			expect(md).toBe("| 2 \\* 3 * 4 |\n| --- |\n");
+			stable(md);
+		});
+
+		it("settles a hand-escaped block marker in a cell", () =>
+			expect(settles("| \\- a |\n| --- |\n")).toBe("| - a |\n| --- |\n"));
+
+		it("drops edge whitespace in a cell, which only reads back as padding", () => {
+			const md = serializeMarkdown(cellDoc(schema.text("  a b  ")));
+			expect(md).toBe("| a b |\n| --- |\n");
+			stable(md);
+		});
+	});
+
+	describe("hand-written tables settle into the one form", () => {
+		const cases: [string, string][] = [
+			["no outer pipes", "a | b\n--- | ---\n1 | 2\n"],
+			["leading pipes only", "| a | b\n| --- | ---\n| 1 | 2\n"],
+			["trailing pipes only", "a | b |\n--- | --- |\n1 | 2 |\n"],
+			["ragged widths", "| a   | b |\n|-----|:-:|\n| 1 |    2     |\n"],
+			["tight pipes", "|a|b|\n|-|-|\n|1|2|\n"],
+			["extra spaces and dashes", "|   a   |   b   |\n|  ------  |  ------:  |\n|  1  |  2  |\n"],
+		];
+		for (const [name, md] of cases) {
+			it(name, () => {
+				const once = settles(md);
+				expect(once).toMatch(/^\| a \| b \|\n\| --- \| (---|:---:|---:) \|\n\| 1 \| 2 \|\n$/);
+			});
+		}
+
+		it("pads a short row with empty cells", () =>
+			expect(settles("| a | b | c |\n| --- | --- | --- |\n| 1 |\n")).toBe(
+				"| a | b | c |\n| --- | --- | --- |\n| 1 |  |  |\n",
+			));
+
+		it("drops the extra cells of a long row", () =>
+			expect(settles("| a |\n| --- |\n| 1 | 2 | 3 |\n")).toBe("| a |\n| --- |\n| 1 |\n"));
+
+		it("takes a line with no pipe as a one-cell row", () =>
+			expect(settles("| a | b |\n| --- | --- |\nfoo\n")).toBe(
+				"| a | b |\n| --- | --- |\n| foo |  |\n",
+			));
+
+		it("ends at a blank line or the next block", () => {
+			const doc = parseMarkdown("| a |\n| --- |\n| 1 |\n- list\n\n| b |\n| --- |\n# h\n").doc;
+			expect(doc.content.content.map((n) => n.type.name)).toEqual([
+				"table",
+				"bullet_list",
+				"table",
+				"heading",
+			]);
+		});
+
+		it("starts a table under a hard-wrapped paragraph line", () => {
+			const doc = parseMarkdown("intro\nline\n| a |\n| --- |\n").doc;
+			expect(doc.content.content.map((n) => n.type.name)).toEqual(["paragraph", "table"]);
+			expect(doc.firstChild?.textContent).toBe("intro line");
+		});
+
+		it("reads a table in a list item's continuation", () => {
+			const doc = parseMarkdown("- item\n  | a |\n  | --- |\n").doc;
+			expect(doc.firstChild?.firstChild?.child(1).type.name).toBe("table");
+		});
+	});
+
+	describe("what is not a table", () => {
+		const prose = (md: string, names: string[]) => {
+			const doc = parseMarkdown(md).doc;
+			expect(doc.content.content.map((n) => n.type.name)).toEqual(names);
+			stable(serializeMarkdown(doc));
+		};
+
+		it("a lone pipe line", () => prose("| a | b |\n", ["paragraph"]));
+
+		it("a header and delimiter with different counts", () =>
+			prose("| a | b |\n| --- |\n", ["paragraph"]));
+
+		it("a delimiter line with no pipe", () => {
+			// `---` under a line is a rule here, not a one-column table
+			const doc = parseMarkdown("| a |\n---\n").doc;
+			expect(doc.content.content.map((n) => n.type.name)).toEqual(["paragraph", "horizontal_rule"]);
+		});
+
+		it("a header line with no pipe", () => prose("a\n-|-\n", ["paragraph"]));
+
+		it("a delimiter cell that is not dashes", () =>
+			prose("| a | b |\n| --- | x |\n", ["paragraph"]));
+
+		it("a delimiter row that is a list item", () => {
+			const doc = parseMarkdown("a | b\n- | -\n").doc;
+			expect(doc.content.content.map((n) => n.type.name)).toEqual(["paragraph", "bullet_list"]);
+		});
+
+		it("an escaped pipe is no header", () => prose("a \\| b\n--- | ---\n", ["paragraph"]));
+
+		it("pipes in a paragraph, then a delimiter-looking paragraph", () => {
+			// Two paragraphs: the serializer never puts them on adjacent lines.
+			const doc = schema.topNodeType.create(null, [
+				nodeType.paragraph.create(null, schema.text("| a | b |")),
+				nodeType.paragraph.create(null, schema.text("| --- | --- |")),
+			]);
+			const md = serializeMarkdown(doc);
+			expect(md).toBe("| a | b |\n\n| --- | --- |\n");
+			expect(parseMarkdown(md).doc.childCount).toBe(2);
+			stable(md);
+		});
+
+		it("a list item with pipes over a nested item that looks like a delimiter", () => {
+			for (const nested of ["| --- |", "--- | ---", ":-: | -"]) {
+				const item = nodeType.listItem.create(null, [
+					nodeType.paragraph.create(null, schema.text("| a |")),
+					nodeType.bulletList.create(null, [
+						nodeType.listItem.create(null, nodeType.paragraph.create(null, schema.text(nested))),
+					]),
+				]);
+				const doc = schema.topNodeType.create(null, [nodeType.bulletList.create(null, [item])]);
+				const md = serializeMarkdown(doc);
+				expect(parseMarkdown(md).doc.eq(doc)).toBe(true);
+				stable(md);
+			}
+		});
+
+		it("list items that look like a header and a delimiter", () =>
+			prose("- | a | b |\n- | --- | --- |\n", ["bullet_list"]));
+	});
+
+	it("maps a cell's source offset to its text", () => {
+		const md = "| ab | cd |\n| --- | --- |\n| ef | g\\|h |\n";
+		const parsed = parseMarkdown(md);
+		const at = md.indexOf("g\\|h") + 4; // after `g\|h`
+		const pos = posForOffset(parsed, at);
+		expect(parsed.doc.resolve(pos).parent.textContent).toBe("g|h");
+	});
+
+	it("writes a spanning cell as itself plus empty cells", () => {
+		const cell = (t: string, attrs = {}) =>
+			nodeType.tableCell.create(attrs, nodeType.paragraph.create(null, t ? schema.text(t) : null));
+		const head = (t: string) =>
+			nodeType.tableHeader.create(null, nodeType.paragraph.create(null, schema.text(t)));
+		const doc = schema.topNodeType.create(null, [
+			nodeType.table.create(null, [
+				nodeType.tableRow.create(null, [head("a"), head("b"), head("c")]),
+				nodeType.tableRow.create(null, [cell("wide", { colspan: 2 }), cell("x")]),
+			]),
+		]);
+		const md = serializeMarkdown(doc);
+		expect(md).toBe("| a | b | c |\n| --- | --- | --- |\n| wide |  | x |\n");
+		stable(md);
+	});
+
+	it("takes a column's alignment from the first cell that sets it", () => {
+		const cell = (t: string, align: string | null) =>
+			nodeType.tableCell.create({ align }, nodeType.paragraph.create(null, schema.text(t)));
+		const doc = schema.topNodeType.create(null, [
+			nodeType.table.create(null, [
+				nodeType.tableRow.create(null, [
+					nodeType.tableHeader.create(null, nodeType.paragraph.create(null, schema.text("h"))),
+				]),
+				nodeType.tableRow.create(null, [cell("1", "center")]),
+				nodeType.tableRow.create(null, [cell("2", null)]),
+			]),
+		]);
+		expect(serializeMarkdown(doc)).toBe("| h |\n| :---: |\n| 1 |\n| 2 |\n");
+	});
+
+	it("refuses an alignment markdown cannot write", () => {
+		const cell = nodeType.tableCell.create({ align: "justify" }, nodeType.paragraph.create());
+		expect(() => cell.check()).toThrow();
+	});
+
+	it("puts alignment on the cell's DOM and reads it back", () => {
+		const cell = nodeType.tableCell.create({ align: "right" }, nodeType.paragraph.create());
+		const out = cell.type.spec.toDOM?.(cell) as [string, Record<string, string>];
+		expect(out[0]).toBe("td");
+		expect(out[1]).toEqual({ style: "text-align: right" });
+		const plain = nodeType.tableHeader.create(null, nodeType.paragraph.create());
+		const bare = plain.type.spec.toDOM?.(plain) as [string, object];
+		expect(bare[1]).toEqual({});
+	});
+});
+
 describe("normalization settles after one lap", () => {
 	// Hand-written markdown, hard-wrapped the way a person writes it.
 	const WRAPPED = `# Pages

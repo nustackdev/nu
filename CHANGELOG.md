@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Markdown gains tables you can type, tab through and reshape from a menu
 - Markdown code fences highlight and edit like code blocks, with a language picker
 - Reactive loops can decide whether to continue by looking at what changed
 - Markdown and code each get one Ref that reads by default and edits on request

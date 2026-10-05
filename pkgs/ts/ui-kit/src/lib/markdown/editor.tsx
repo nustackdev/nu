@@ -37,10 +37,12 @@
 // menu. Those only mean something to a host that owns a sequence of blocks,
 // and this editor owns exactly one value. Keys it does not bind are left to
 // bubble, so such a host can still act on them from above. (Inside the
-// document the caret does arrow in and out of code fences; that is the
-// fences' own business, see ./fence.tsx.)
+// document the caret does arrow in and out of code fences, and Tab and Enter
+// move through table cells; that is the fences' and the tables' own
+// business, see ./fence.tsx and ./table.tsx.)
 
 import { baseKeymap, chainCommands, toggleMark } from "prosemirror-commands";
+import { gapCursor } from "prosemirror-gapcursor";
 import { history, redo, undo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
 import { DOMSerializer, type Node as PMNode } from "prosemirror-model";
@@ -53,8 +55,9 @@ import { Checkbox } from "../../components/ui/checkbox";
 import { cn } from "../utils";
 import { codeFences } from "./fence";
 import { createMarkdown, type Markdown } from "./markdown";
-import { placeholder, proseInputRules } from "./rules";
+import { placeholder, proseInputRules, tableFromRow } from "./rules";
 import { type ProseSchema, proseSchema } from "./schema";
+import { cellBelow, exitTable, leaveTable, nextCell, previousCell, proseTables } from "./table";
 
 /** Quiet-moment autosave. Long enough that a typist never triggers it. */
 const SAVE_DELAY = 800;
@@ -204,13 +207,27 @@ export function ProseEditor({
 
 		const editing = keymap({
 			Enter: chainCommands(
+				// `| a | b |` then Enter: that row becomes a table's header.
+				tableFromRow(schema),
+				cellBelow,
 				splitListItem(nodeType.listItem),
 				// A new checklist item starts undone, whatever the one above says.
 				splitListItem(nodeType.taskItem, { checked: false }),
 				baseKeymap.Enter,
 			),
-			Tab: chainCommands(sinkListItem(nodeType.listItem), sinkListItem(nodeType.taskItem)),
-			"Shift-Tab": chainCommands(liftListItem(nodeType.listItem), liftListItem(nodeType.taskItem)),
+			Tab: chainCommands(
+				nextCell,
+				sinkListItem(nodeType.listItem),
+				sinkListItem(nodeType.taskItem),
+			),
+			"Shift-Tab": chainCommands(
+				previousCell,
+				liftListItem(nodeType.listItem),
+				liftListItem(nodeType.taskItem),
+			),
+			"Mod-Enter": exitTable,
+			ArrowDown: leaveTable(1),
+			ArrowUp: leaveTable(-1),
 			"Mod-b": toggleMark(markType.strong),
 			"Mod-i": toggleMark(markType.em),
 			"Mod-e": toggleMark(markType.code),
@@ -221,6 +238,7 @@ export function ProseEditor({
 		});
 
 		const fences = codeFences(schema);
+		const tables = proseTables(schema);
 
 		const state = EditorState.create({
 			doc: md().parseMarkdown(cb.current.value).doc,
@@ -231,6 +249,12 @@ export function ProseEditor({
 				keymap(baseKeymap),
 				history(),
 				placeholder(() => (cb.current.readOnly ? "" : cb.current.hint), schema),
+				// The caret in the gap before or after a block it cannot enter, like a
+				// table that ends the document. Ahead of the tables, which would
+				// otherwise take the arrow.
+				gapCursor(),
+				// Last: it handles arrows and clicks in tables broadly, after everyone else.
+				...tables.plugins,
 			],
 		});
 
@@ -243,6 +267,7 @@ export function ProseEditor({
 			}),
 			nodeViews: {
 				...fences.nodeViews,
+				...tables.nodeViews,
 				[nodeType.taskItem.name]: (node, v, getPos) => taskItemView(node, v, getPos),
 			},
 			dispatchTransaction(tr: Transaction) {

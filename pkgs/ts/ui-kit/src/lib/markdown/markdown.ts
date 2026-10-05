@@ -19,6 +19,37 @@
 // *means* - the alternative is showing the author their source wrapping as if
 // it were content. Nothing commits unless the document actually changed, so
 // untouched values never churn.
+//
+// ## Tables
+//
+// GFM pipe tables: a header row, a delimiter row that sets each column's
+// alignment, then body rows, up to a blank line or the next block. Cells hold
+// inline content only, the way GitHub's do. One form is written back, whatever
+// was read:
+//
+//     | Name | Qty | Note |
+//     | :--- | ---: | :---: |
+//     | a | 1 |  |
+//
+// Leading and trailing pipes, one space either side of a cell, and no padding
+// to column width, so editing one cell rewrites one line instead of every row
+// in the table and the stored diff is the edit. A hand-written table settles
+// into this form in one lap: missing outer pipes, ragged widths, longer
+// dashes, and rows shorter or longer than the header (padded with empty
+// cells, or cut, as GFM does). A cell keeps no edge whitespace, the same as a
+// table cell anywhere.
+//
+// A pipe inside a cell is `\|`, inline code included: the row is split on
+// pipes before a cell is read as inline markdown, so that one escape is
+// resolved first and everything else reads as it would in a paragraph.
+//
+// The pair of lines is the whole signal: a header line holding a pipe, then a
+// delimiter line of `---`, `:---`, `:---:` or `---:` cells with the same
+// count. Nothing else the serializer writes can form that pair. A paragraph is
+// always one line with a blank line after it, and the only lines written
+// straight under one are a nested list's, which open with a list marker, and
+// a line that opens a block is never a delimiter row. So prose holding pipes
+// needs no table escaping, and `| a |` alone stays a paragraph.
 
 import type { Mark, Node as PMNode } from "prosemirror-model";
 import type { ProseSchema } from "./schema";
@@ -150,6 +181,8 @@ const BULLET = /^([ \t]*)([-*+])([ \t]+)/;
 const ORDERED = /^([ \t]*)(\d+)([.)])([ \t]+)/;
 /** A checklist item: a bullet, then `[ ]` or `[x]`. Tried before BULLET. */
 const TASK = /^([ \t]*)([-*+])([ \t]+)\[([ xX])\](?:[ \t]+|$)/;
+/** One delimiter-row cell, trimmed: dashes, a colon on the aligned side(s). */
+const DELIM_CELL = /^(:?)-+(:?)$/;
 
 /**
  * A language as a fence can carry it: what FENCE reads back, so no whitespace
@@ -159,6 +192,70 @@ const TASK = /^([ \t]*)([-*+])([ \t]+)\[([ xX])\](?:[ \t]+|$)/;
  */
 export function fenceInfo(language: string): string {
 	return language.replace(/[\s`]+/g, "");
+}
+
+/** A column's alignment, as the delimiter row spells it. */
+export type Align = "left" | "center" | "right" | null;
+
+/** Index of each pipe in `text` that is a cell boundary, i.e. not written `\|`. */
+function pipes(text: string): number[] {
+	const out: number[] = [];
+	for (let i = 0; i < text.length; i++) {
+		if (text[i] === "|" && text[i - 1] !== "\\") out.push(i);
+	}
+	return out;
+}
+
+/**
+ * A table row's cells as [from, to) offsets into `text`, untrimmed. The outer
+ * pipes are optional; every other unescaped pipe is a boundary.
+ */
+function rowCells(text: string): [number, number][] {
+	const bounds = pipes(text);
+	let from = leadingWs(text);
+	let to = text.trimEnd().length;
+	if (bounds[0] === from) {
+		bounds.shift();
+		from += 1;
+	}
+	if (bounds.length > 0 && bounds[bounds.length - 1] === to - 1) {
+		bounds.pop();
+		to -= 1;
+	}
+	const cells: [number, number][] = [];
+	let at = from;
+	for (const b of bounds) {
+		cells.push([at, b]);
+		at = b + 1;
+	}
+	cells.push([at, to]);
+	return cells;
+}
+
+/** The delimiter row's alignments, or null when `text` is not one. */
+function delimiterRow(text: string): Align[] | null {
+	if (pipes(text).length === 0 || isBlockStart(text)) return null;
+	const out: Align[] = [];
+	for (const [from, to] of rowCells(text)) {
+		const m = DELIM_CELL.exec(text.slice(from, to).trim());
+		if (!m) return null;
+		out.push(m[1] && m[2] ? "center" : m[2] ? "right" : m[1] ? "left" : null);
+	}
+	return out;
+}
+
+/**
+ * The alignments when lines[i] and lines[i + 1] open a table, else null: a
+ * header line with a pipe, then a delimiter row with as many cells.
+ */
+function tableAt(lines: Line[], i: number): Align[] | null {
+	const head = lines[i]?.text;
+	const next = lines[i + 1]?.text;
+	if (head === undefined || next === undefined) return null;
+	if (pipes(head).length === 0 || isBlockStart(head)) return null;
+	const aligns = delimiterRow(next);
+	if (!aligns || aligns.length !== rowCells(head).length) return null;
+	return aligns;
 }
 
 type ListKind = "bullet" | "ordered" | "task";
@@ -360,6 +457,55 @@ export function createMarkdown(s: ProseSchema): Markdown {
 		return { node: type.create(ordered ? { order } : null, items), next: i };
 	}
 
+	/**
+	 * One cell's inline content. The row was split on unescaped pipes, so here
+	 * `\|` is just a pipe, and it is resolved before the inline scan so it
+	 * means a pipe inside code spans too. Edge whitespace is padding.
+	 */
+	function cellInline(line: Line, from: number, to: number, ctx: Ctx): PMNode[] {
+		const text: string[] = [];
+		const map: number[] = [];
+		for (let k = from; k < to; k++) {
+			if (line.text[k] === "\\" && line.text[k + 1] === "|") continue;
+			text.push(line.text[k]);
+			map.push(line.at + k);
+		}
+		let a = 0;
+		let b = text.length;
+		while (a < b && /\s/.test(text[a])) a++;
+		while (b > a && /\s/.test(text[b - 1])) b--;
+		const out: PMNode[] = [];
+		scanInline({ text: text.slice(a, b).join(""), map: map.slice(a, b) }, [], out, ctx);
+		return out;
+	}
+
+	function parseTable(
+		lines: Line[],
+		start: number,
+		aligns: Align[],
+		ctx: Ctx,
+	): { node: PMNode; next: number } {
+		const row = (line: Line, cell: typeof nodeType.tableCell): PMNode => {
+			const spans = rowCells(line.text);
+			// Short rows pad with empty cells, long ones lose the extras: the
+			// header decides the width.
+			const cells = aligns.map((align, k) => {
+				const span = spans[k];
+				const content = span ? cellInline(line, span[0], span[1], ctx) : [];
+				return cell.create({ align }, nodeType.paragraph.create(null, content));
+			});
+			return nodeType.tableRow.create(null, cells);
+		};
+
+		const rows = [row(lines[start], nodeType.tableHeader)];
+		let i = start + 2;
+		while (i < lines.length && lines[i].text.trim() !== "" && !isBlockStart(lines[i].text)) {
+			rows.push(row(lines[i], nodeType.tableCell));
+			i += 1;
+		}
+		return { node: nodeType.table.create(null, rows), next: i };
+	}
+
 	function parseBlocks(lines: Line[], ctx: Ctx): PMNode[] {
 		const out: PMNode[] = [];
 		let i = 0;
@@ -439,8 +585,22 @@ export function createMarkdown(s: ProseSchema): Markdown {
 				continue;
 			}
 
+			const aligns = tableAt(lines, i);
+			if (aligns) {
+				const { node, next } = parseTable(lines, i, aligns, ctx);
+				out.push(node);
+				i = next;
+				continue;
+			}
+
 			const buf: Line[] = [];
-			while (i < lines.length && lines[i].text.trim() !== "" && !isBlockStart(lines[i].text)) {
+			while (
+				i < lines.length &&
+				lines[i].text.trim() !== "" &&
+				!isBlockStart(lines[i].text) &&
+				// A table right under a hard-wrapped line starts there, as GFM has it.
+				!(buf.length > 0 && tableAt(lines, i))
+			) {
 				buf.push(lines[i]);
 				i += 1;
 			}
@@ -585,7 +745,74 @@ export function createMarkdown(s: ProseSchema): Markdown {
 		}
 		closeDown(0);
 
-		return escapeLineStart(out);
+		return out;
+	}
+
+	/** A textblock's inline content as a line of prose: a leading marker is escaped. */
+	function serializeLine(node: PMNode): string {
+		return escapeLineStart(serializeInline(node));
+	}
+
+	/**
+	 * A table cell. Never block-escaped, since a cell is never read as a block,
+	 * but every pipe is written `\|`, even in code: the parser splits the row
+	 * before it reads a cell, and gives `\|` back as `|` before anything else.
+	 * Edge whitespace would only be read back as padding, so it is not written.
+	 */
+	function serializeCell(cell: PMNode | undefined): string {
+		if (!cell) return "";
+		const parts: string[] = [];
+		cell.forEach((block) => {
+			if (block.isTextblock) parts.push(serializeInline(block));
+		});
+		return parts.join(" ").replace(/\|/g, "\\|").trim();
+	}
+
+	/** First set alignment down a column: the whole column's, as markdown has it. */
+	function columnAlign(rows: (PMNode | undefined)[][], col: number): Align {
+		for (const row of rows) {
+			const align = row[col]?.attrs.align as Align | undefined;
+			if (align) return align;
+		}
+		return null;
+	}
+
+	/**
+	 * A table in the one form the parser settles on. Merged cells cannot be
+	 * written in markdown and the editor offers no way to make one, but a
+	 * spanning cell is still written as itself plus empty cells, so a table
+	 * from anywhere keeps its shape.
+	 */
+	function serializeTable(node: PMNode): string {
+		const rows: (PMNode | undefined)[][] = [];
+		node.forEach((row) => {
+			const cells: (PMNode | undefined)[] = [];
+			row.forEach((cell) => {
+				cells.push(cell);
+				const span = Number(cell.attrs.colspan) || 1;
+				for (let k = 1; k < span; k++) cells.push(undefined);
+			});
+			rows.push(cells);
+		});
+		const width = Math.max(0, ...rows.map((r) => r.length));
+		if (width === 0) return "";
+		const line = (cells: string[]) => `| ${cells.join(" | ")} |`;
+		const cols = Array.from({ length: width }, (_, c) => c);
+		const delim = cols.map((c) => {
+			const align = columnAlign(rows, c);
+			return align === "center"
+				? ":---:"
+				: align === "right"
+					? "---:"
+					: align === "left"
+						? ":---"
+						: "---";
+		});
+		return [
+			line(cols.map((c) => serializeCell(rows[0][c]))),
+			line(delim),
+			...rows.slice(1).map((r) => line(cols.map((c) => serializeCell(r[c])))),
+		].join("\n");
 	}
 
 	function prefixLines(text: string, first: string, rest: string): string {
@@ -630,10 +857,13 @@ export function createMarkdown(s: ProseSchema): Markdown {
 	function serializeBlock(node: PMNode): string {
 		switch (node.type) {
 			case nodeType.paragraph:
-				return serializeInline(node);
+				return serializeLine(node);
 
 			case nodeType.heading:
-				return `${"#".repeat(node.attrs.level as number)} ${serializeInline(node)}`;
+				return `${"#".repeat(node.attrs.level as number)} ${serializeLine(node)}`;
+
+			case nodeType.table:
+				return serializeTable(node);
 
 			case nodeType.rule:
 				return "---";

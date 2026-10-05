@@ -3,8 +3,8 @@
 // ProseMirror is a document engine; a schema is how you tell it what a
 // document is allowed to be. Ours says: paragraphs, six heading levels,
 // three list flavours (bullets, numbers, checkboxes), a quote, a code fence,
-// a rule, inline images and four inline marks. That is a document's worth of
-// prose and nothing wider.
+// a table, a rule, inline images and four inline marks. That is a document's
+// worth of prose and nothing wider.
 //
 // What is deliberately absent is what keeps this safe to embed. There is no
 // node for a program, a section or a page, so the engine cannot represent a
@@ -43,6 +43,10 @@ export type ProseClasses = {
 	listItem?: string;
 	taskList?: string;
 	taskItem?: string;
+	table?: string;
+	tableRow?: string;
+	tableHeader?: string;
+	tableCell?: string;
 	rule?: string;
 	image?: string;
 	strong?: string;
@@ -61,6 +65,10 @@ export type ProseNodeTypes = {
 	listItem: NodeType;
 	taskList: NodeType;
 	taskItem: NodeType;
+	table: NodeType;
+	tableRow: NodeType;
+	tableHeader: NodeType;
+	tableCell: NodeType;
 	rule: NodeType;
 	image: NodeType;
 };
@@ -93,6 +101,40 @@ export function safeUrl(url: string): string {
 /** `{ class: x }` only when x is a non-empty string, so `class=""` never ships. */
 function attrs(cls: string | undefined, extra: Record<string, string> = {}) {
 	return cls ? { ...extra, class: cls } : extra;
+}
+
+const ALIGNS = ["left", "center", "right"];
+
+/** A cell's alignment as the DOM carries it, or null for the default. */
+function readAlign(dom: HTMLElement): string | null {
+	const align = (dom.style.textAlign || dom.getAttribute("align") || "").toLowerCase();
+	return ALIGNS.includes(align) ? align : null;
+}
+
+/** A header or body cell: same attributes, same content, its own tag. */
+function cellSpec(tag: "th" | "td", role: string, cls: string | undefined): NodeSpec {
+	return {
+		content: "paragraph",
+		attrs: {
+			colspan: { default: 1 },
+			rowspan: { default: 1 },
+			align: {
+				default: null,
+				validate: (value) => {
+					if (value !== null && !ALIGNS.includes(value as string)) {
+						throw new RangeError(`table cell align must be null or one of ${ALIGNS}`);
+					}
+				},
+			},
+		},
+		tableRole: role,
+		isolating: true,
+		parseDOM: [{ tag, getAttrs: (dom) => ({ align: readAlign(dom as HTMLElement) }) }],
+		toDOM: (node) => {
+			const align = node.attrs.align as string | null;
+			return [tag, attrs(cls, align ? { style: `text-align: ${align}` } : {}), 0];
+		},
+	};
 }
 
 export function createProseSchema(classes: ProseClasses = {}): ProseSchema {
@@ -235,6 +277,34 @@ export function createProseSchema(classes: ProseClasses = {}): ProseSchema {
 			],
 		},
 
+		// A GFM table, in the shape prosemirror-tables works on (`tableRole`),
+		// held to what a pipe table can say. A cell is one paragraph, since GFM
+		// cells hold inline content only; the table commands fill new cells
+		// with `createAndFill`, which makes exactly that. The first row is the
+		// header. `align` is the column's, from the delimiter row, kept on every
+		// cell of the column because that is where the table commands look.
+		// The spans exist because prosemirror-tables reads them; markdown has
+		// no merged cells, so they are always 1 coming in, pasted HTML too.
+		table: {
+			content: "table_row+",
+			tableRole: "table",
+			isolating: true,
+			group: "block",
+			parseDOM: [{ tag: "table" }],
+			toDOM: () => ["table", attrs(classes.table), ["tbody", 0]],
+		},
+
+		table_row: {
+			content: "(table_cell | table_header)*",
+			tableRole: "row",
+			parseDOM: [{ tag: "tr" }],
+			toDOM: () => ["tr", attrs(classes.tableRow), 0],
+		},
+
+		table_header: cellSpec("th", "header_cell", classes.tableHeader),
+
+		table_cell: cellSpec("td", "cell", classes.tableCell),
+
 		horizontal_rule: {
 			group: "block",
 			parseDOM: [{ tag: "hr" }],
@@ -330,6 +400,10 @@ export function createProseSchema(classes: ProseClasses = {}): ProseSchema {
 			listItem: schema.nodes.list_item,
 			taskList: schema.nodes.task_list,
 			taskItem: schema.nodes.task_item,
+			table: schema.nodes.table,
+			tableRow: schema.nodes.table_row,
+			tableHeader: schema.nodes.table_header,
+			tableCell: schema.nodes.table_cell,
 			rule: schema.nodes.horizontal_rule,
 			image: schema.nodes.image,
 		},

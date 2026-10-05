@@ -8,6 +8,10 @@
 //
 // Deliberately no rule fires on anything the serializer cannot emit. The
 // dialect is closed: what you can type, markdown.ts can write back.
+//
+// A table is the one block that starts on Enter rather than on a typed
+// character: `| a | b |` is a complete header only once the line is done, and
+// waiting for the closing pipe alone would fire on every cell typed on the way.
 
 import {
 	InputRule,
@@ -15,8 +19,8 @@ import {
 	textblockTypeInputRule,
 	wrappingInputRule,
 } from "prosemirror-inputrules";
-import type { MarkType } from "prosemirror-model";
-import { type EditorState, Plugin, TextSelection } from "prosemirror-state";
+import type { MarkType, Node as PMNode } from "prosemirror-model";
+import { type Command, type EditorState, Plugin, TextSelection } from "prosemirror-state";
 import { canJoin, findWrapping } from "prosemirror-transform";
 import { Decoration, DecorationSet } from "prosemirror-view";
 import type { ProseSchema } from "./schema";
@@ -66,7 +70,10 @@ function taskInputRule(s: ProseSchema): InputRule {
 			const at = $start.before(d - 2);
 			const item = tr.doc.nodeAt(at)?.firstChild;
 			if (!item) return null;
-			const list = nodeType.taskList.create(null, nodeType.taskItem.create({ checked }, item.content));
+			const list = nodeType.taskList.create(
+				null,
+				nodeType.taskItem.create({ checked }, item.content),
+			);
 			tr.replaceWith(at, at + (tr.doc.nodeAt(at)?.nodeSize ?? 0), list);
 			// ul, li, p: the caret goes to the start of the item's text.
 			return tr.setSelection(TextSelection.create(tr.doc, at + 3));
@@ -78,12 +85,80 @@ function taskInputRule(s: ProseSchema): InputRule {
 		if (!range || !wrapping) return null;
 		tr.wrap(
 			range,
-			wrapping.map((w) => (w.type === nodeType.taskItem ? { type: w.type, attrs: { checked } } : w)),
+			wrapping.map((w) =>
+				w.type === nodeType.taskItem ? { type: w.type, attrs: { checked } } : w,
+			),
 		);
 		const before = tr.doc.resolve(start - 1).nodeBefore;
 		if (before?.type === nodeType.taskList && canJoin(tr.doc, start - 1)) tr.join(start - 1);
 		return tr;
 	});
+}
+
+/** Header cells as [from, to) offsets into a paragraph: the text between its pipes, trimmed. */
+function rowCells(para: PMNode, code: MarkType): [number, number][] | null {
+	// One character per offset, images included, so offsets are positions.
+	const text = para.textBetween(0, para.content.size, undefined, "\ufffc");
+	if (!/^\s*\|.*\|\s*$/.test(text)) return null;
+	// A pipe inside inline code is code, not a boundary.
+	const bounds: number[] = [];
+	para.forEach((child, offset) => {
+		if (!child.isText || child.marks.some((m) => m.type === code)) return;
+		const t = child.text ?? "";
+		for (let k = 0; k < t.length; k++) if (t[k] === "|") bounds.push(offset + k);
+	});
+	if (bounds.length < 2) return null;
+	const cells: [number, number][] = [];
+	for (let i = 0; i + 1 < bounds.length; i++) {
+		let from = bounds[i] + 1;
+		let to = bounds[i + 1];
+		while (from < to && /\s/.test(text[from])) from++;
+		while (to > from && /\s/.test(text[to - 1])) to--;
+		cells.push([from, to]);
+	}
+	// `||` is a typo more often than an empty one-column table.
+	if (cells.every(([from, to]) => from === to)) return null;
+	return cells;
+}
+
+/**
+ * Enter at the end of a line like `| a | b |`: the line becomes a table with
+ * that header, one empty row under it, and the caret in that row's first
+ * cell. The cells keep their marks. Only where a table may stand: not as a
+ * list item's first line, not inside another table.
+ */
+export function tableFromRow(s: ProseSchema): Command {
+	const { nodeType } = s;
+	return (state, dispatch) => {
+		const { $from, empty } = state.selection;
+		const para = $from.parent;
+		if (!empty || para.type !== nodeType.paragraph || $from.parentOffset !== para.content.size) {
+			return false;
+		}
+		const cells = rowCells(para, s.markType.code);
+		if (!cells) return false;
+		const index = $from.index($from.depth - 1);
+		if (!$from.node($from.depth - 1).canReplaceWith(index, index + 1, nodeType.table)) {
+			return false;
+		}
+		if (dispatch) {
+			const header = cells.map(([from, to]) =>
+				nodeType.tableHeader.create(
+					null,
+					nodeType.paragraph.create(null, para.content.cut(from, to)),
+				),
+			);
+			const body = cells.map(() => nodeType.tableCell.create(null, nodeType.paragraph.create()));
+			const head = nodeType.tableRow.create(null, header);
+			const table = nodeType.table.create(null, [head, nodeType.tableRow.create(null, body)]);
+			const at = $from.before();
+			const tr = state.tr.replaceWith(at, $from.after(), table);
+			// Into the table, past the header, into the row, the cell, the paragraph.
+			tr.setSelection(TextSelection.create(tr.doc, at + 1 + head.nodeSize + 3));
+			dispatch(tr.scrollIntoView());
+		}
+		return true;
+	};
 }
 
 export function proseInputRules(s: ProseSchema): Plugin {

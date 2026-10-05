@@ -55,10 +55,18 @@ const proseSelectors = [
 	"[&_a]:text-accent-2 [&_a]:underline [&_a]:underline-offset-2 [&_a:hover]:text-accent-2-hover",
 	// horizontal rule
 	"[&_hr]:my-4 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-border-subtle",
-	// tables (basic)
-	"[&_table]:my-3 [&_table]:w-full [&_table]:border-collapse",
-	"[&_th]:text-left [&_th]:font-semibold [&_th]:text-base [&_th]:text-text-secondary [&_th]:border-b [&_th]:border-border-default [&_th]:px-2 [&_th]:py-1.5",
-	"[&_td]:text-base [&_td]:text-text-primary [&_td]:border-b [&_td]:border-border-subtle [&_td]:px-2 [&_td]:py-1.5",
+	// tables: the kit `Table` look at its default density, so a markdown table
+	// and a TableRef read as the same thing. The editor wraps each table in a
+	// box that scrolls sideways when the table is wider than the page.
+	"[&_[data-slot=prose-table]]:relative [&_[data-slot=prose-table]]:my-3 [&_[data-table-scroll]]:w-full [&_[data-table-scroll]]:overflow-x-auto",
+	"[&_table]:my-3 [&_table]:w-full [&_table]:border-separate [&_table]:border-spacing-0 [&_table]:border [&_table]:border-border-default [&_table]:rounded-md [&_table]:overflow-hidden [&_table]:text-sm [&_table]:text-text-primary",
+	"[&_tr]:h-7 [&_tr]:transition-colors [&_tr]:duration-fast [&_tr]:ease-out [&_tr:has(>td):hover]:bg-bg-elevated",
+	"[&_th]:px-2.5 [&_th]:py-1.5 [&_th]:text-left [&_th]:align-middle [&_th]:whitespace-nowrap [&_th]:bg-bg-sunken [&_th]:text-text-secondary [&_th]:text-xs [&_th]:font-medium [&_th]:uppercase [&_th]:tracking-wide [&_th]:border-b [&_th]:border-border-default",
+	"[&_td]:px-2.5 [&_td]:py-1.5 [&_td]:align-middle [&_td]:text-sm [&_td]:text-text-primary [&_td]:border-b [&_td]:border-border-subtle [&_tr:last-child>:is(th,td)]:border-b-0",
+	// A cell's paragraph is the cell's text: no paragraph air, the cell's size
+	// and color. Code steps down with it, as it does from body copy.
+	"[&_:is(th,td)_p]:my-0 [&_:is(th,td)_p]:[font-size:inherit] [&_:is(th,td)_p]:[color:inherit]",
+	"[&_:is(th,td)_code]:text-xs [&_:is(th,td)_code]:normal-case [&_:is(th,td)_code]:tracking-normal",
 	// images
 	"[&_img]:max-w-full [&_img]:rounded-md",
 	// strong / em
@@ -69,13 +77,7 @@ const proseSelectors = [
 export interface ProseProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 function Prose({ className, ...props }: ProseProps) {
-	return (
-		<div
-			data-slot="prose"
-			className={cn("nu-prose", proseSelectors, className)}
-			{...props}
-		/>
-	);
+	return <div data-slot="prose" className={cn("nu-prose", proseSelectors, className)} {...props} />;
 }
 
 export { Prose };

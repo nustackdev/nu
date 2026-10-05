@@ -440,11 +440,11 @@ body {
 }
 
 /* ============================== prose editor ==============================
- * The three rules a contenteditable needs that a class recipe cannot express.
+ * The rules a contenteditable needs that a class recipe cannot express.
  * Everything else about a MarkdownRef's look comes from the `Prose` container it
  * mounts inside, so the same styles apply whether you are reading the document
- * or typing in it. No colors of its own: both values below are L2 roles, so
- * they flip with the theme.
+ * or typing in it. No colors of its own: every value below is an L2 role, so
+ * it flips with the theme.
  * ==========================================================================*/
 
 /* The empty-document hint. A decoration puts the text on the node as an
@@ -479,6 +479,45 @@ body {
 .nu-prose-editor:focus,
 .nu-prose-editor:focus-visible {
 	outline: none;
+}
+
+/* Cells selected as cells (a drag across a table, or a whole row or column)
+ * are tinted as a block; the text selection inside them would only be noise,
+ * so ProseMirror hides it and this draws the cells instead. */
+.nu-prose-editor .selectedCell {
+	background-color: var(--accent-soft);
+}
+.nu-prose-editor.ProseMirror-hideselection *::selection {
+	background: transparent;
+}
+.nu-prose-editor.ProseMirror-hideselection {
+	caret-color: transparent;
+}
+
+/* The gap cursor: the caret where no text is, before or after a block the
+ * caret cannot enter (a table that starts or ends the document). A short
+ * blinking line in the caret's color, shown only while the editor has focus. */
+.nu-prose-editor .ProseMirror-gapcursor {
+	display: none;
+	pointer-events: none;
+	position: absolute;
+}
+.nu-prose-editor .ProseMirror-gapcursor::after {
+	content: "";
+	display: block;
+	position: absolute;
+	top: -2px;
+	width: 20px;
+	border-top: 1px solid var(--text-primary);
+	animation: nu-gapcursor-blink 1.1s steps(2, start) infinite;
+}
+.nu-prose-editor.ProseMirror-focused .ProseMirror-gapcursor {
+	display: block;
+}
+@keyframes nu-gapcursor-blink {
+	to {
+		visibility: hidden;
+	}
 }
 
 /* Read-only, a checklist box is a picture of the state, not a control: no
