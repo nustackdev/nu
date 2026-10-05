@@ -14,6 +14,12 @@ export * from "./tree";
 export { nodeEntries } from "./nodes";
 export { cn, ringVariants } from "./lib/utils";
 export { useKeyScope } from "./lib/keyboard";
+export {
+	ROVING_KEY,
+	type RovingFocus,
+	type RovingOptions,
+	useRovingFocus,
+} from "./lib/roving";
 export { formatShortcut, isMac, keyLabel, keySpoken, type Platform } from "./lib/shortcut";
 export type { KeyBindings, KeyScope } from "./lib/keyboard";
 export { ErrorBoundary } from "./components/ErrorBoundary";
@@ -43,6 +49,7 @@ export {
 export { Checkbox, checkboxVariants } from "./components/ui/checkbox";
 export { IconButton, iconButtonVariants } from "./components/ui/icon-button";
 export { Input, inputVariants } from "./components/ui/input";
+export { InlineEdit, type InlineEditProps } from "./components/ui/inline-edit";
 export { Kbd, type KbdProps, kbdVariants } from "./components/ui/kbd";
 export {
 	List,
@@ -251,3 +258,12 @@ export {
 	CommandShortcut,
 	useCommandPaletteHotkey,
 } from "./components/ui/command-palette";
+export {
+	Tree,
+	TreeItem,
+	type TreeHandle,
+	type TreeItemProps,
+	type TreeItemState,
+	type TreeProps,
+} from "./components/ui/tree";
+export type { TreeMove, TreeRow, TreeSource } from "./components/ui/tree-model";

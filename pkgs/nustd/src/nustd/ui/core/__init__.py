@@ -25,7 +25,7 @@ targets this core, not any specific host.
 
 from .base import Ref
 from .chains import Chain, boot_chains
-from .interactions import Append, Changed, Remove, Write
+from .interactions import EVENT, Append, Changed, Remove, Write
 from .protocol import (
     OP_ERROR,
     OP_INIT,
@@ -42,6 +42,7 @@ from .session import Session, Subscription, WsSession, WsSubscription
 
 
 __all__ = [
+    "EVENT",
     "OP_ERROR",
     "OP_INIT",
     "OP_NOTIFY",

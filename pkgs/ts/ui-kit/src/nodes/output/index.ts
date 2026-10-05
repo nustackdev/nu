@@ -21,6 +21,7 @@ import { StatRef } from "./stat";
 import { StatusDotRef } from "./status-dot";
 import { TableRef } from "./table";
 import { TextRef } from "./text";
+import { TreeRef } from "./tree";
 
 export const outputEntries: Record<string, NodeEntry> = {
 	HeadingRef,
@@ -43,4 +44,5 @@ export const outputEntries: Record<string, NodeEntry> = {
 	TableRef,
 	JsonViewerRef,
 	LensRef,
+	TreeRef,
 };

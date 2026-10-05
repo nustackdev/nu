@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Foldable trees with select, open, rename and drag, from the kit or a program
 - A program loaded with a rewrite may load other programs inside it
 - Tooltips keep their delay after a refused one and hand over between neighbours
 - Prose reads larger than chrome, and text blocks share one edge spacing

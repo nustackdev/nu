@@ -15,6 +15,9 @@ Grouped by kind, one module per group.
   SelectRef, RadioGroupRef, TagInputRef, DatePickerRef.
 - chart:      output sinks with chart-specific payload contracts.
   LineChart, BarChart, AreaChart, PieChart, Sparkline.
+- tree:       TreeRef, nested rows that fold; server-owned nodes, one notify
+  stream with the intent named in `event` (select, open, toggle, rename,
+  move), and an `on_*` per intent.
 - layout:     Shape-based container Sections that mount other Refs.
   Row, Column, Container, Card, Modal, Accordion, Tabs, Fieldset,
   Form, Field.
@@ -99,6 +102,7 @@ from .output import (
     TextRef,
 )
 from .structural import NavRef, TitleRef
+from .tree import TreeRef
 
 
 __all__ = [
@@ -160,4 +164,5 @@ __all__ = [
     "TextAreaRef",
     "TextRef",
     "TitleRef",
+    "TreeRef",
 ]

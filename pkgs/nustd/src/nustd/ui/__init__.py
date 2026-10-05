@@ -101,6 +101,7 @@ from .refs import (
     TextAreaRef,
     TextRef,
     TitleRef,
+    TreeRef,
 )
 
 
@@ -217,6 +218,7 @@ __all__ = [
     "TextAreaRef",
     "TextRef",
     "TitleRef",
+    "TreeRef",
     "Write",
     "WsSession",
     # Submodules and presets
