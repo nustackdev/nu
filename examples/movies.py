@@ -335,8 +335,7 @@ on_add = nu.ReactForever(
 
 on_row_click = nu.ReactForever(
     App.movies.shelf.body.table.on_row_click(),
-    lambda click: nu.IfDo(
-        nu.Contains(click, "row_index"),
+    lambda click: (
         nustd.kv.Transaction(State.selected.set(click["row_index"]))
         >> nustd.kv.Snapshot(
             App.detail.heading.set(State.movies[State.selected].title)
@@ -348,7 +347,7 @@ on_row_click = nu.ReactForever(
             )
             | App.detail.notes.body.set(State.movies[State.selected].notes)
         )
-        >> App.nav.set("/detail"),
+        >> App.nav.set("/detail")
     ),
 )
 

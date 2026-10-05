@@ -13,11 +13,13 @@
 // Shapes of cells and columns are normalized at read time, in the view.
 //
 // Sort is server-driven: the browser shows arrows on the active column and
-// emits a notify {sort_column, sort_direction} when a header is clicked.
-// The server decides whether to re-sort and confirms via set_sort.
+// emits a notify {event: "sort", sort_column, sort_direction} when a header
+// is clicked. The server decides whether to re-sort and confirms via set_sort.
 //
 // When clickable_rows is true, body rows hover and emit a notify
-// {row_index} on click. The browser does not select or mutate locally.
+// {event: "row", row_index} on click. The browser does not select or mutate
+// locally. `event` names which of the two it is, so the server's on_sort and
+// on_row_click each take only their own.
 //
 // Composes the kit Table primitive family; density maps striped to
 // primitive's `striped` variant and dense to `compact`. Sort arrows are
@@ -99,12 +101,12 @@ function TableView({ path }: NodeProps) {
 
 	function onHeaderClick(col: string) {
 		const nextDir = col === sortColumn && sortDirection === "asc" ? "desc" : "asc";
-		send(OPS.notify, { sort_column: col, sort_direction: nextDir });
+		send(OPS.notify, { event: "sort", sort_column: col, sort_direction: nextDir });
 	}
 
 	function onRowClick(i: number) {
 		if (!clickableRows) return;
-		send(OPS.notify, { row_index: i });
+		send(OPS.notify, { event: "row", row_index: i });
 	}
 
 	return (

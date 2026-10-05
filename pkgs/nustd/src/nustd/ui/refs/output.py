@@ -755,6 +755,10 @@ class TableRef(Ref):
 
     Composes the kit Table primitive family. `dense=True` maps to the
     primitive's `compact` density; `striped=True` selects the `striped` variant.
+
+    A header click and a row click are two kinds of notify on the one table,
+    named in their `event` field; `on_sort` and `on_row_click` each take only
+    their own.
     """
 
     _wire_type = "TableRef"
@@ -794,7 +798,12 @@ class TableRef(Ref):
         return Write(self, Dict.of(sort_column=column, sort_direction=direction))
 
     def on_row_click(self) -> Changed:
-        return Changed(self)
+        """``{event, row_index}``: a body row clicked. Needs ``clickable_rows``."""
+        return Changed(self, "row")
+
+    def on_sort(self) -> Changed:
+        """``{event, sort_column, sort_direction}``: a header clicked; confirm with ``set_sort``."""
+        return Changed(self, "sort")
 
 
 class TextRef(Ref):
