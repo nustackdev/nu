@@ -19,6 +19,11 @@
 // that round-trips to the same markdown is dropped and an inbound value is
 // ignored while the document is dirty.
 //
+// A code fence is an editor of its own inside this one (./fence.tsx), and
+// focus in it is not focus on ProseMirror's element, so ProseMirror never
+// hears a blur that starts there. So the host also watches focus leave it
+// altogether, from wherever inside it focus was.
+//
 // ## Read-only
 //
 // The same view with editing off, which is how a document is displayed: one
@@ -31,19 +36,22 @@
 // Nothing about neighbours. No split, no merge-up, no arrow-out, no slash
 // menu. Those only mean something to a host that owns a sequence of blocks,
 // and this editor owns exactly one value. Keys it does not bind are left to
-// bubble, so such a host can still act on them from above.
+// bubble, so such a host can still act on them from above. (Inside the
+// document the caret does arrow in and out of code fences; that is the
+// fences' own business, see ./fence.tsx.)
 
 import { baseKeymap, chainCommands, toggleMark } from "prosemirror-commands";
 import { history, redo, undo } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
-import { liftListItem, sinkListItem, splitListItem } from "prosemirror-schema-list";
 import { DOMSerializer, type Node as PMNode } from "prosemirror-model";
+import { liftListItem, sinkListItem, splitListItem } from "prosemirror-schema-list";
 import { type Command, EditorState, type Transaction } from "prosemirror-state";
 import { EditorView, type NodeView } from "prosemirror-view";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { Checkbox } from "../../components/ui/checkbox";
 import { cn } from "../utils";
+import { codeFences } from "./fence";
 import { createMarkdown, type Markdown } from "./markdown";
 import { placeholder, proseInputRules } from "./rules";
 import { type ProseSchema, proseSchema } from "./schema";
@@ -212,10 +220,13 @@ export function ProseEditor({
 			"Shift-Mod-z": redo,
 		});
 
+		const fences = codeFences(schema);
+
 		const state = EditorState.create({
 			doc: md().parseMarkdown(cb.current.value).doc,
 			plugins: [
 				proseInputRules(schema),
+				...fences.plugins,
 				editing,
 				keymap(baseKeymap),
 				history(),
@@ -231,6 +242,7 @@ export function ProseEditor({
 				spellcheck: cb.current.readOnly ? "false" : "true",
 			}),
 			nodeViews: {
+				...fences.nodeViews,
 				[nodeType.taskItem.name]: (node, v, getPos) => taskItemView(node, v, getPos),
 			},
 			dispatchTransaction(tr: Transaction) {
@@ -244,8 +256,9 @@ export function ProseEditor({
 				}
 			},
 			handleDOMEvents: {
-				blur: () => {
-					commit();
+				blur: (_view, e) => {
+					// Into a fence is still inside the editor, not a save point.
+					if (!host.contains((e as FocusEvent).relatedTarget as Node | null)) commit();
 					return false;
 				},
 			},
@@ -253,7 +266,15 @@ export function ProseEditor({
 		viewRef.current = view;
 		cb.current.onView?.(view);
 
+		// ProseMirror's blur covers its own element. This covers focus leaving
+		// from inside a fence, which ProseMirror's element never sees.
+		const leave = (e: FocusEvent) => {
+			if (!host.contains(e.relatedTarget as Node | null)) commit();
+		};
+		host.addEventListener("focusout", leave);
+
 		return () => {
+			host.removeEventListener("focusout", leave);
 			cb.current.onView?.(null);
 			if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
 			saveTimer.current = null;

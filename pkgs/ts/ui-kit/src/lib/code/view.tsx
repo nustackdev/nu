@@ -26,43 +26,21 @@
 // live view up so such a host can bind its own keys on top.
 //
 // Engine only: no box, no chrome. `Code` (components/ui/code.tsx) draws the
-// surface around it.
+// surface around it. The extension sets themselves live in ./extensions.ts,
+// shared with the markdown editor's code fences.
 
-import {
-	autocompletion,
-	closeBrackets,
-	closeBracketsKeymap,
-	completionKeymap,
-} from "@codemirror/autocomplete";
-import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
-import {
-	bracketMatching,
-	indentOnInput,
-	indentUnit,
-	syntaxHighlighting,
-} from "@codemirror/language";
-import { highlightSelectionMatches, searchKeymap } from "@codemirror/search";
 import {
 	Annotation,
 	Compartment,
 	EditorState,
 	type Extension,
-	Prec,
 	Transaction,
 } from "@codemirror/state";
-import {
-	drawSelection,
-	EditorView,
-	highlightActiveLineGutter,
-	highlightSpecialChars,
-	keymap,
-	lineNumbers,
-} from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 import type * as React from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { codeBase, codeEditing, codeGutter, codeReading } from "./extensions";
 import { loadLanguage } from "./languages";
-import { kitSearch } from "./search";
-import { kitHighlight, kitTheme } from "./theme";
 
 export type CodeMirrorViewProps = {
 	/** The source. Owned by whoever renders this. */
@@ -93,43 +71,21 @@ export type CodeMirrorViewProps = {
 /** Marks a transaction as the inbound value landing, not a keystroke. */
 const inbound = Annotation.define<boolean>();
 
-/** Everything that only means something while the text can change. */
+/** The editing set, with this view's own undo stack and its deliberate-save key. */
 function editing(commit: () => void): Extension {
-	return [
-		EditorView.editable.of(true),
-		EditorState.readOnly.of(false),
-		history(),
-		indentOnInput(),
-		bracketMatching(),
-		closeBrackets(),
-		autocompletion(),
-		highlightSelectionMatches(),
-		kitSearch(),
-		Prec.highest(
-			keymap.of([
-				{
-					key: "Mod-Enter",
-					run: () => {
-						commit();
-						return true;
-					},
+	return codeEditing({
+		history: true,
+		keys: [
+			{
+				key: "Mod-Enter",
+				run: () => {
+					commit();
+					return true;
 				},
-			]),
-		),
-		keymap.of([
-			...closeBracketsKeymap,
-			...defaultKeymap,
-			...searchKeymap,
-			...historyKeymap,
-			...completionKeymap,
-			indentWithTab,
-		]),
-	];
+			},
+		],
+	});
 }
-
-const reading: Extension = [EditorView.editable.of(false), EditorState.readOnly.of(true)];
-
-const gutter: Extension = [lineNumbers(), highlightActiveLineGutter()];
 
 export function CodeMirrorView({
 	value,
@@ -171,7 +127,7 @@ export function CodeMirrorView({
 		cb.current.onCommit?.(next);
 	}, []);
 
-	const modeFor = useCallback((ro: boolean) => (ro ? reading : editing(commit)), [commit]);
+	const modeFor = useCallback((ro: boolean) => (ro ? codeReading : editing(commit)), [commit]);
 
 	useLayoutEffect(() => {
 		const host = hostRef.current;
@@ -184,14 +140,9 @@ export function CodeMirrorView({
 				extensions: [
 					slots.mode.of(modeFor(readOnly)),
 					slots.language.of([]),
-					slots.gutter.of(showNumbers ? gutter : []),
+					slots.gutter.of(showNumbers ? codeGutter : []),
 					slots.wrap.of(wrap ? EditorView.lineWrapping : []),
-					highlightSpecialChars(),
-					drawSelection(),
-					EditorState.tabSize.of(4),
-					indentUnit.of("    "),
-					syntaxHighlighting(kitHighlight),
-					kitTheme,
+					codeBase,
 					EditorView.updateListener.of((u) => {
 						if (u.docChanged && u.transactions.some((tr) => !tr.annotation(inbound))) {
 							dirtyRef.current = true;
@@ -234,7 +185,7 @@ export function CodeMirrorView({
 	}, [readOnly, modeFor, slots]);
 
 	useEffect(() => {
-		viewRef.current?.dispatch({ effects: slots.gutter.reconfigure(showNumbers ? gutter : []) });
+		viewRef.current?.dispatch({ effects: slots.gutter.reconfigure(showNumbers ? codeGutter : []) });
 	}, [showNumbers, slots]);
 
 	useEffect(() => {

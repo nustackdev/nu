@@ -151,6 +151,16 @@ const ORDERED = /^([ \t]*)(\d+)([.)])([ \t]+)/;
 /** A checklist item: a bullet, then `[ ]` or `[x]`. Tried before BULLET. */
 const TASK = /^([ \t]*)([-*+])([ \t]+)\[([ xX])\](?:[ \t]+|$)/;
 
+/**
+ * A language as a fence can carry it: what FENCE reads back, so no whitespace
+ * and no backtick. The serializer writes only this, so a language attribute
+ * set from anywhere (a picker, a paste, a host) can never turn its fence line
+ * into text and shift every fence after it.
+ */
+export function fenceInfo(language: string): string {
+	return language.replace(/[\s`]+/g, "");
+}
+
 type ListKind = "bullet" | "ordered" | "task";
 
 function listKind(text: string): ListKind | null {
@@ -635,7 +645,7 @@ export function createMarkdown(s: ProseSchema): Markdown {
 				const longest = Math.max(2, ...(text.match(/`+/g) ?? []).map((r) => r.length));
 				const fence = "`".repeat(longest + 1);
 				const body = text ? `${text}\n` : "";
-				return `${fence}${String(node.attrs.language)}\n${body}${fence}`;
+				return `${fence}${fenceInfo(String(node.attrs.language))}\n${body}${fence}`;
 			}
 
 			case nodeType.blockquote:

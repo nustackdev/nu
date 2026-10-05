@@ -74,6 +74,58 @@ export const Empty: StoryObj = {
 	),
 };
 
+const FENCES = `Fences are drawn by the same engine as a \`Code\` block.
+
+\`\`\`python
+def fence(lang: str) -> str:
+    return f"a {lang} code fence"  # comment
+\`\`\`
+
+\`\`\`ts
+export const add = (a: number, b: number): number => a + b;
+\`\`\`
+
+\`\`\`sql
+SELECT name, count(*) FROM refs WHERE kind = 'code' GROUP BY name;
+\`\`\`
+
+\`\`\`shell
+uv venv --python 3.10 && uv pip install nucli
+\`\`\`
+
+\`\`\`nulang
+an unknown language renders plain, and keeps its name
+\`\`\`
+
+\`\`\`
+no language at all
+\`\`\`
+`;
+
+function FencesSideBySide() {
+	const [value, setValue] = useState(FENCES);
+	return (
+		<div className="grid grid-cols-1 gap-8 p-8 lg:grid-cols-2">
+			<div>
+				<div className="mb-2 font-mono text-xs uppercase tracking-widest text-text-muted">
+					read-only
+				</div>
+				<Markdown value={value} />
+			</div>
+			<div>
+				<div className="mb-2 font-mono text-xs uppercase tracking-widest text-text-muted">
+					editable
+				</div>
+				<Markdown value={value} readOnly={false} onCommit={setValue} />
+			</div>
+		</div>
+	);
+}
+
+export const Fences: StoryObj = {
+	render: () => <FencesSideBySide />,
+};
+
 const meta: Meta = {
 	title: "UI/Markdown",
 };

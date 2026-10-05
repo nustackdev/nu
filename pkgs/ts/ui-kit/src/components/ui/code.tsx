@@ -43,6 +43,13 @@ export interface CodeProps extends Omit<React.HTMLAttributes<HTMLElement>, "onCh
 	children?: React.ReactNode;
 }
 
+/**
+ * The box a code block sits in. Shared with the markdown editor's code fences,
+ * so a fence in a document and a block on a page are the same surface.
+ */
+const codeBlockBox =
+	"relative w-full overflow-hidden rounded-md bg-bg-sunken border border-border-subtle";
+
 function Code({
 	className,
 	block = false,
@@ -67,10 +74,7 @@ function Code({
 				data-slot="code-block"
 				data-language={language || undefined}
 				data-editable={readOnly ? undefined : ""}
-				className={cn(
-					"relative w-full overflow-hidden rounded-md bg-bg-sunken border border-border-subtle",
-					className,
-				)}
+				className={cn(codeBlockBox, className)}
 				{...props}
 			>
 				<CodeMirrorView
@@ -106,6 +110,7 @@ function Code({
 	);
 }
 
+/** The corner copy affordance of a read-only block. Also drawn on markdown code fences. */
 function CopyButton({ text }: { text: string }) {
 	const [copied, setCopied] = useState(false);
 	const copy = useCallback(() => {
@@ -133,4 +138,4 @@ function CopyButton({ text }: { text: string }) {
 	);
 }
 
-export { Code };
+export { Code, CopyButton, codeBlockBox };

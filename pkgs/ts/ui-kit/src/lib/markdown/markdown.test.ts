@@ -17,7 +17,7 @@
 
 import { describe, expect, it } from "vitest";
 import { createMarkdown, parseMarkdown, posForOffset, serializeMarkdown } from "./markdown";
-import { createProseSchema, safeUrl } from "./schema";
+import { createProseSchema, proseSchema, safeUrl } from "./schema";
 
 function lap(md: string): string {
 	return serializeMarkdown(parseMarkdown(md).doc);
@@ -76,7 +76,8 @@ describe("blocks round-trip", () => {
 
 	it("keeps a fence between paragraphs", () => stable("before\n\n```sh\nls -la\n```\n\nafter\n"));
 
-	it("keeps a fence inside a list item", () => stable("- run this\n\n  ```sh\n  ls\n  ```\n- done\n"));
+	it("keeps a fence inside a list item", () =>
+		stable("- run this\n\n  ```sh\n  ls\n  ```\n- done\n"));
 
 	it("outgrows backticks inside the fence", () => {
 		const doc = parseMarkdown("````\n```\ninner\n```\n````\n").doc;
@@ -224,6 +225,41 @@ back, minus the source wrapping.
 			"Every block above is a live Nu program in its own supervised\nsection.\n",
 		];
 		for (const md of blocks) settles(md);
+	});
+});
+
+describe("a fence language the parser cannot read is never written", () => {
+	const { schema, nodeType } = proseSchema;
+
+	/** A document of: a fence with `language`, a paragraph, a second fence. */
+	function fenced(language: string) {
+		return schema.topNodeType.create(null, [
+			nodeType.codeBlock.create({ language }, schema.text("x = 1")),
+			nodeType.paragraph.create(null, schema.text("between")),
+			nodeType.codeBlock.create({ language: "sql" }, schema.text("select 1;")),
+		]);
+	}
+
+	for (const language of ["my lang", "py`thon", "\tts ", "```"]) {
+		it(`drops what a fence line cannot hold: ${JSON.stringify(language)}`, () => {
+			const md = serializeMarkdown(fenced(language));
+			const doc = parseMarkdown(md).doc;
+			// still three blocks: the fence did not turn into text and eat the rest
+			expect(doc.childCount).toBe(3);
+			expect(doc.child(0).type.name).toBe("code_block");
+			expect(doc.child(0).textContent).toBe("x = 1");
+			expect(doc.child(1).textContent).toBe("between");
+			expect(doc.child(2).type.name).toBe("code_block");
+			expect(doc.child(2).attrs.language).toBe("sql");
+			expect(doc.child(2).textContent).toBe("select 1;");
+			settles(md);
+		});
+	}
+
+	it("keeps a language with no space or backtick verbatim", () => {
+		const md = serializeMarkdown(fenced("c++"));
+		expect(md.startsWith("```c++\n")).toBe(true);
+		stable(md);
 	});
 });
 

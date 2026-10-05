@@ -15,9 +15,23 @@ function find(name: string): LanguageDescription | null {
 	const key = name.trim().toLowerCase();
 	if (!key) return null;
 	for (const desc of languages) {
-		if (desc.name.toLowerCase() === key || desc.alias.includes(key)) return desc;
+		if (desc.name.toLowerCase() === key || desc.alias.includes(key) || token(desc) === key) {
+			return desc;
+		}
 	}
 	return null;
+}
+
+/**
+ * The one-word name a language is written with. A fence's info string ends at
+ * the first space, so "MS SQL" cannot be a fence language: the lowercased name
+ * when it is one word, else the first one-word alias, else the name hyphenated.
+ */
+function token(desc: LanguageDescription): string {
+	const name = desc.name.toLowerCase();
+	if (!/[\s`]/.test(name)) return name;
+	const alias = desc.alias.find((a) => a !== "" && !/[\s`]/.test(a));
+	return alias ?? name.replace(/[\s`]+/g, "-");
 }
 
 const cache = new Map<string, Promise<LanguageSupport | null>>();
@@ -32,4 +46,26 @@ export function loadLanguage(name: string): Promise<LanguageSupport | null> {
 		cache.set(key, hit);
 	}
 	return hit;
+}
+
+export type LanguageEntry = {
+	/** What a fence or a `language` prop is written with: one word, no spaces or backticks. */
+	value: string;
+	/** The name as people spell it. */
+	label: string;
+	/** Other names that load the same grammar (`py`, `ts`). */
+	aliases: readonly string[];
+};
+
+/** Every language the kit can highlight, for a picker. Names only, no grammar loaded. */
+export const languageCatalogue: readonly LanguageEntry[] = languages
+	.map((desc) => ({ value: token(desc), label: desc.name, aliases: desc.alias }))
+	.sort((a, b) => a.label.localeCompare(b.label));
+
+/** The catalogue entry a name or alias points at, or null for a name the kit has no grammar for. */
+export function findLanguage(name: string): LanguageEntry | null {
+	const desc = find(name);
+	if (!desc) return null;
+	const value = token(desc);
+	return languageCatalogue.find((entry) => entry.value === value) ?? null;
 }
