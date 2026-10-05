@@ -1,20 +1,20 @@
-"""CCPrompt: ScalarAction that runs one Claude Code prompt turn."""
+"""CCPrompt runs one Claude Code prompt turn; NewSession mints the id of a conversation."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
-from nu.lang import ScalarAction
+from nu.lang import ScalarAction, ScalarQuery
 
-from .core import acompile_call, compile_call
+from .core import acompile_call, acompile_new_session, compile_call, compile_new_session
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-__all__ = ["CCPrompt"]
+__all__ = ["CCPrompt", "NewSession"]
 
 
 class CCPrompt(ScalarAction):
@@ -36,10 +36,10 @@ class CCPrompt(ScalarAction):
     Notes:
         - Declared as mutating its Ref child, so runs against one agent stay
           ordered and are never folded together.
-        - Under a ``nustd.cc.Session`` bracket it reads the session id off the
-          handle and resumes; the first call in the bracket starts fresh and
-          writes its id back for the rest.
-        - An explicit ``resume=`` override wins over the bracket's handle.
+        - Outside a ``nustd.cc.Session`` it is one-shot: a ``claude`` process
+          for this prompt alone, which ``resume=`` can point at an earlier
+          conversation. Inside one it is a turn of the brace's conversation,
+          and on the async path a turn on the brace's one process.
         - The sync path drives the async SDK through ``asyncio.run``, so it
           raises if a loop is already running. Use ``nu.arun`` anywhere near
           an event loop.
@@ -69,3 +69,37 @@ class CCPrompt(ScalarAction):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return acompile_call(children)
+
+
+class NewSession(ScalarQuery):
+    """A new conversation id, for a ``nustd.cc.Session`` to begin under.
+
+    The CLI lets a caller choose the id of a conversation, so creating one is
+    minting a UUID and nothing else: no process starts and nothing is written.
+    The conversation begins on the first prompt in a Session given this id,
+    and every later Session given it continues it. So the id can be stored
+    before anything is said, and whoever holds it can pick the conversation
+    back up after a restart.
+
+    Notes:
+        - A Query that reads randomness, as ``nustd.uuid.uuid4`` is: every
+          evaluation is a new id, and nothing is mutated.
+
+    Yields:
+        The id, a str.
+
+    Example:
+        app = nu.With(
+            nustd.cc.bind(Agent),
+            body=nu.let(
+                nustd.cc.NewSession(),
+                lambda sid: nustd.cc.Session(Agent.ask("hello"), sid=sid),
+            ),
+        )
+    """
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        return compile_new_session(children)
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        return acompile_new_session(children)

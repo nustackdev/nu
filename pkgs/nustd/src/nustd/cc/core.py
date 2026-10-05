@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import uuid
 from typing import TYPE_CHECKING
 
 from .fabric import CCFabric
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 
-__all__ = ["acompile_call", "compile_call"]
+__all__ = ["acompile_call", "acompile_new_session", "compile_call", "compile_new_session"]
 
 
 def _split(payload: dict, args: dict) -> tuple[str, dict]:
@@ -31,40 +32,50 @@ def _session(rt: Runtime) -> SessionHandle | None:
 
 
 def compile_call(children: tuple[Callable, ...]) -> Callable:
-    """Sync compile: wraps the async fabric call in asyncio.run."""
+    """Sync compile: one ``asyncio.run`` per prompt, through the Session if one is open."""
     ref_thunk, args_thunk = children
 
     def thunk(rt: Runtime) -> object:
         payload = ref_thunk(rt)
-        args = args_thunk(rt)
-        prompt, overrides = _split(payload, args)
+        prompt, overrides = _split(payload, args_thunk(rt))
         fabric = rt.ctx.fabrics.get(CCFabric, payload["owner_service"])
         handle = _session(rt)
-        if handle is not None and handle.session_id:
-            overrides.setdefault("resume", handle.session_id)
-        result = asyncio.run(fabric.aprompt(prompt, **overrides))
-        if handle is not None and result.get("session_id"):
-            handle.session_id = result["session_id"]
-        return result
+        if handle is None:
+            return asyncio.run(fabric.aprompt(prompt, **overrides))
+        return handle.prompt(fabric, prompt, overrides)
 
     return thunk
 
 
 def acompile_call(children: tuple[Callable, ...]) -> Callable:
-    """Async compile: dispatch through CCFabric."""
+    """Async compile: one-shot outside a Session, a turn on its process inside one."""
     ref_thunk, args_thunk = children
 
     async def athunk(rt: Runtime) -> object:
         payload = await ref_thunk(rt)
-        args = await args_thunk(rt)
-        prompt, overrides = _split(payload, args)
+        prompt, overrides = _split(payload, await args_thunk(rt))
         fabric = rt.ctx.fabrics.get(CCFabric, payload["owner_service"])
         handle = _session(rt)
-        if handle is not None and handle.session_id:
-            overrides.setdefault("resume", handle.session_id)
-        result = await fabric.aprompt(prompt, **overrides)
-        if handle is not None and result.get("session_id"):
-            handle.session_id = result["session_id"]
-        return result
+        if handle is None:
+            return await fabric.aprompt(prompt, **overrides)
+        return await handle.aprompt(fabric, prompt, overrides)
+
+    return athunk
+
+
+def compile_new_session(children: tuple[Callable, ...]) -> Callable:
+    """Sync compile: a fresh conversation id."""
+
+    def thunk(rt: Runtime) -> object:
+        return str(uuid.uuid4())
+
+    return thunk
+
+
+def acompile_new_session(children: tuple[Callable, ...]) -> Callable:
+    """Async compile: a fresh conversation id."""
+
+    async def athunk(rt: Runtime) -> object:
+        return str(uuid.uuid4())
 
     return athunk

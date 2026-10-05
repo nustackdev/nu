@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Claude Code sessions can be named, resumed later, and kept on one process
 - Table header and row clicks arrive separately, so row handlers no longer see sorts
 - Foldable trees with select, open, rename and drag, from the kit or a program
 - A program loaded with a rewrite may load other programs inside it

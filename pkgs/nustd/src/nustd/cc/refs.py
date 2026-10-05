@@ -33,8 +33,8 @@ class PromptRef(MethodRef):
 
     Notes:
         - Every call spawns a fresh Claude Code session unless it runs
-          inside a ``nustd.cc.Session`` bracket, which threads the session id
-          through so the calls read as one conversation.
+          inside a ``nustd.cc.Session``, which makes the calls under it turns
+          of one conversation.
         - The Ref needs the ``claude-agent-sdk`` package and a working
           ``claude`` CLI on the machine that evaluates it.
 
