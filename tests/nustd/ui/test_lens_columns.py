@@ -417,6 +417,38 @@ async def test_browse_reads_a_store_bound_only_under_its_shape():
 
 
 @pytest.mark.timeout(60)
+async def test_browse_repaints_where_the_browser_is_when_the_store_is_written():
+    """A write under the shape repaints the cascade at the cursor last sent."""
+    session = _Recorder()
+    rename = nustd.kv.Transaction(Store.left.title.set(nu.Str("renamed")), scope=Store)
+    program = nu.With(
+        nustd.kv.memory_navigator(tags=(Store,)),
+        body=nustd.kv.Transaction(_seed(), scope=Store)
+        >> nu.ParallelAsync(
+            nustd.ui.lens.browse(LENS, Store),
+            nu.Delay(0.3) >> rename >> nu.Delay(60),
+        ),
+    )
+
+    def previews():
+        return [
+            f.payload["columns"][-1]["entries"][0]["preview"]
+            for f in session.writes(LENS_PATH)
+            if f.payload["cursor"] == ["left", "title"]
+        ]
+
+    ctx = nu.Context().bind(nustd.ui.Session, session)
+    arm = asyncio.create_task(nu.arun(program, ctx))
+    try:
+        assert await _settle(lambda: session.writes(LENS_PATH))
+        session.subscriptions[LENS_PATH].fire(["left", "title"])
+        assert await _settle(lambda: "renamed" in previews())
+        assert previews()[0] == "a zoo"
+    finally:
+        arm.cancel()
+
+
+@pytest.mark.timeout(60)
 async def test_two_lenses_on_one_page_do_not_share_a_cursor():
     """The arm's attrs key comes off the slot chain, so two lenses are two keys."""
 

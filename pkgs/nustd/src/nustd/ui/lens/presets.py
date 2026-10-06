@@ -59,6 +59,22 @@ def _nav_key(lens: LensRef) -> str:
     return f"_lens_nav.{'.'.join(segments)}"
 
 
+#: How long a burst of writes is waited out before the lens repaints once.
+REPAINT_DELAY = 0.25
+
+
+def _changes(shape: type[Shape], prefix: StructuredRef | None) -> list[nu.Nu]:
+    """Every change under the browsed shape, one subscription per slot.
+
+    Per slot rather than one on ``prefix``, because the root of a store is a
+    class and not a ref, so there is nothing to subscribe to above the slots.
+    """
+    return [
+        slot.create_ref(owner_shape=shape, parent_ref=prefix).on_change()
+        for slot in shape._slots.values()
+    ]
+
+
 def browse(
     lens: LensRef,
     shape: type[Shape],
@@ -66,7 +82,7 @@ def browse(
     prefix: StructuredRef | None = None,
     max_rows: int = DEFAULT_MAX_ROWS,
 ) -> nu.Nu:
-    """A working lens, as one tree: the first cascade, then one per move.
+    """A working lens, as one tree: the first cascade, then one per move or write.
 
     Argument for argument this is :func:`~nustd.ui.lens.columns.columns` with
     the lens in front and the cursor taken out. The cursor is the one thing a
@@ -76,6 +92,11 @@ def browse(
     The first cascade is built here rather than waited for: the empty cursor is
     the one cursor that is known before the browser says anything, so the page
     paints on the first frame instead of on the first click.
+
+    The lens is live. A write anywhere under the shape repaints the cascade at
+    the cursor the browser last sent, so what is shown is what is stored. A
+    burst of writes is waited out and repainted once, which keeps a lens on a
+    busy store from repainting on every one of them.
 
     Never finishes, which is what the ws host holds a tab's program to. Put
     several in a :class:`nu.ParallelAsync` -- not in a smart ``|``, which
@@ -101,22 +122,24 @@ def browse(
     # The reads are rooted where the prefix is, or at the shape, and the
     # snapshot has to open on the store that root names.
     scope = shape if prefix is None else root_shape(prefix)
-    boot = nustd.kv.Snapshot(
-        lens.set_columns(
-            nu.List.of(),
-            columns(shape, nu.List.of(), prefix=prefix, max_rows=max_rows),
-        ),
-        scope=scope,
-    )
-    moved = nu.ReactForever(
-        lens.on_nav(),
-        nustd.kv.Snapshot(
-            lens.set_columns(
-                nu.Attr(key),
-                columns(shape, nu.Attr(key), prefix=prefix, max_rows=max_rows),
-            ),
+
+    def paint(cursor: nu.Nu) -> nu.Nu:
+        return nustd.kv.Snapshot(
+            lens.set_columns(cursor, columns(shape, cursor, prefix=prefix, max_rows=max_rows)),
             scope=scope,
-        ),
-        changed_key=key,
-    )
-    return boot >> moved
+        )
+
+    def live(cursor: nu.Nu, pending: nu.Nu) -> nu.Nu:
+        moved = nu.ReactForever(
+            lens.on_nav(), cursor.set(nu.Attr(key)) >> paint(nu.list(cursor)), changed_key=key
+        )
+        written = [
+            nu.ReactForever(
+                nustd.kv.Snapshot(change, scope=scope),
+                nu.Debounce(REPAINT_DELAY, paint(nu.list(cursor)), pending=pending),
+            )
+            for change in _changes(shape, prefix)
+        ]
+        return paint(nu.list(cursor)) >> nu.ParallelAsync(moved, *written)
+
+    return nu.let(nu.List.of(), lambda cursor: nu.let(None, lambda pending: live(cursor, pending)))
