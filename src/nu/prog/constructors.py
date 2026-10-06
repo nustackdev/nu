@@ -108,7 +108,7 @@ class Constructor(Protocol):
 
         Args:
             source: python source for a whole module.
-            entry: name of the entry point function in that module.
+            entry: name of the entry point in that module: a term, or a function returning one.
             scope: plain values bound to the entry point by parameter name.
             filename: name frames and diagnostics attribute the source to.
 
@@ -358,7 +358,7 @@ class Venv:
 
         Args:
             source: python source for a whole module.
-            entry: name of the entry point function in that module.
+            entry: name of the entry point in that module: a term, or a function returning one.
             scope: plain values bound by parameter name. They are pickled to
                 the child, so they must be picklable and they must mean the
                 same thing on both sides.

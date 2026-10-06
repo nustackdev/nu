@@ -6,10 +6,15 @@ that: source text in, one Nu term out (or a :class:`Diagnostic`).
 
 A *script*, not an expression. An expression cannot say
 ``class Movie(nu.Service)``, so the unit is a module with an **entry
-point** -- by default a function named ``out``. The entry point's
-signature is the scope contract: a snippet that needs a path marker
-writes ``def out(path):`` and thereby declares it, instead of relying on
-an out-of-band convention about what happens to be in scope.
+point**, by default named ``out``. It is either the term itself, for a
+program that takes nothing from its scope::
+
+    out = nu.Str("hi")
+
+or a function returning it, whose signature is the scope contract: a
+snippet that needs a path marker writes ``def out(path):`` and thereby
+declares it, instead of relying on an out-of-band convention about what
+happens to be in scope::
 
     class Movie(nu.Service):
         title: str
@@ -88,21 +93,23 @@ def construct(
     scope: Mapping[str, object] | None = None,
     filename: str = DEFAULT_FILENAME,
 ) -> Nu | Diagnostic:
-    """Run ``source`` as a module and call its entry point for a Nu term.
+    """Run ``source`` as a module and take its entry point's Nu term.
 
     Args:
         source: python source for a whole module.
-        entry: name of the entry point function in that module.
-        scope: values offered to the entry point, bound **by parameter
-            name**. Keys the entry point does not ask for are ignored; a
-            parameter with no matching key and no default is an error.
+        entry: name of the entry point in that module: a Nu term, taken as
+            it is, or a function, called for one.
+        scope: values offered to an entry point function, bound **by
+            parameter name**. Keys it does not ask for are ignored; a
+            parameter with no matching key and no default is an error. An
+            entry point that is a term takes none of them.
         filename: name frames and diagnostics attribute the source to.
 
     Notes:
         - Total. Every way a snippet can fail is a Diagnostic return, in the
           order they are reached: the source does not parse, the module body
-          raises, the entry point is missing, the entry point is not
-          callable, a declared parameter cannot be bound, the entry point
+          raises, the entry point is missing, the entry point is neither a
+          term nor callable, a declared parameter cannot be bound, the entry point
           raises, the entry point returns a non-Nu. Failures in *our* code
           still raise, because the caller may be a subprocess that has to
           ship a snippet's failure home and cannot ship ours.
@@ -118,7 +125,7 @@ def construct(
           positional-only parameter cannot be bound from scope.
 
     Returns:
-        The Nu term the entry point returned, or a Diagnostic describing
+        The entry point's Nu term, or a Diagnostic describing
         the first thing that went wrong.
     """
     from nu.lang.nu import Nu as _Nu
@@ -151,9 +158,15 @@ def construct(
     fn = namespace.get(entry)
     if fn is None:
         return Diagnostic(message=f"source defines no entry point {entry!r}")
+    # A term is the program as it stands. No term is callable, so the two never overlap.
+    if isinstance(fn, _Nu):
+        return fn
     if not callable(fn):
         return Diagnostic(
-            message=f"entry point {entry!r} is not callable, it is {type(fn).__name__}"
+            message=(
+                f"entry point {entry!r} is neither a Nu term nor callable, "
+                f"it is {type(fn).__name__}"
+            )
         )
 
     try:

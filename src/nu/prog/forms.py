@@ -108,7 +108,7 @@ class Program(Form, TypedNu[str]):
         Nu term and stops there.
 
         Args:
-            entry: name of the entry point function in the source module.
+            entry: name of the entry point in the source module: a term, or a function returning one.
             scope: plain-data values offered to the entry point, bound by
                 parameter name.
             filename: name frames and diagnostics attribute the source to.
@@ -148,7 +148,7 @@ class Program(Form, TypedNu[str]):
         """Construct the term and drive it.
 
         Args:
-            entry: name of the entry point function in the source module.
+            entry: name of the entry point in the source module: a term, or a function returning one.
             scope: plain-data values offered to the entry point, bound by
                 parameter name.
             filename: name frames and diagnostics attribute the source to.

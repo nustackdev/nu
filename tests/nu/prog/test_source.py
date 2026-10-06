@@ -22,6 +22,19 @@ def test_returns_the_term() -> None:
     assert value == "hi"
 
 
+def test_entry_point_may_be_the_term_itself() -> None:
+    term = construct("import nu\n\nout = nu.Str('hi')\n")
+    assert isinstance(term, nu.Nu)
+    value, _ = nu.run(term)
+    assert value == "hi"
+
+
+def test_a_term_entry_point_takes_no_scope() -> None:
+    # Offered scope is ignored, as a function that names none of it would.
+    term = construct("import nu\n\nout = nu.Str('hi')\n", scope={"path": "/x"})
+    assert nu.run(term)[0] == "hi"
+
+
 def test_module_level_class_definition() -> None:
     # The reason the unit is a script and not an expression.
     source = (
@@ -113,6 +126,13 @@ def test_unbound_parameter_names_what_it_wanted() -> None:
     assert isinstance(diag, Diagnostic)
     assert "path" in diag.message
     assert "space" in diag.message
+
+
+def test_entry_point_neither_term_nor_callable() -> None:
+    result = construct("out = 42\n")
+    assert isinstance(result, Diagnostic)
+    assert "neither a Nu term nor callable" in result.message
+    assert "int" in result.message
 
 
 def test_non_nu_return() -> None:

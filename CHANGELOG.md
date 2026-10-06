@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- A program's entry point can be the term itself, not only a function
 - Table handles follow the pointer or the keyboard, without jumping or vanishing
 - One example page puts every kind of table side by side to try
 - A new table row's dropdown cell can be set like any other

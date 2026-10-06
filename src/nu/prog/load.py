@@ -103,7 +103,7 @@ class LoadNu(ScalarQuery):
     Args:
         source: python source for a whole module. Any ``Nu[str]``; a bare
             string auto-wraps into a Literal.
-        entry: name of the entry point function in that module.
+        entry: name of the entry point in that module: a term, or a function returning one.
         scope: plain-data values offered to the entry point, bound by
             parameter name. Values are Nu children, so any of them may be
             computed; they must end up picklable for a venv brace.
@@ -136,7 +136,8 @@ class LoadNu(ScalarQuery):
           a construction failure, not a ``TypeError``.
         - Every way the snippet can fail is one failure: the source does not
           parse, module-level code raises, the entry point is missing or is
-          not callable, it raises, or it returns something that is not a Nu.
+          neither a term nor callable, it raises, or it returns something
+          that is not a Nu.
           All five come back as a ``Diagnostic`` and are raised as one
           ``ConstructionError``.
         - It never yields a Diagnostic, only raises. A downstream ``Eval``
