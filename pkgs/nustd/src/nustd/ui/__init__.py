@@ -7,7 +7,7 @@ Layout under ``src/nustd/ui/``:
 - ``core/``   -- host-independent UI fabric: ``Ref``, ``Section`` /
                  ``SectionRef``, abstract ``Session`` / ``Subscription``,
                  wire ``Frame`` + interactions (``Write`` / ``Append`` /
-                 ``Remove`` / ``Changed``). Reusable by any host.
+                 ``Patch`` / ``Remove`` / ``Changed``). Reusable by any host.
 - ``refs/``   -- widget kit (Row, Card, Table, Input, ...); depends only on core.
 - ``nudle/``  -- Page-based host: ``Index`` / ``Page`` / ``PageRef``, the
                  ``Boot`` term, and the ``serve`` preset that assembles a
@@ -44,7 +44,7 @@ from typing import TYPE_CHECKING
 
 from . import core, lens, refs
 from .core import Frame, Ref, Section, SectionRef, Session, Subscription, WsSession
-from .core.interactions import Append, Changed, Remove, Write
+from .core.interactions import Append, Changed, Patch, Remove, Write
 from .refs import (
     Accordion,
     AccordionRef,
@@ -190,6 +190,7 @@ __all__ = [
     "NumberInputRef",
     "Page",
     "PageRef",
+    "Patch",
     "PieChart",
     "ProgressRef",
     "RadioGroupRef",

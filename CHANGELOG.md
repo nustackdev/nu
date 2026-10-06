@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Program tables can update one row or the row order without resending everything
 - Grid and document tables show the same row and column handles and menus
 - Program tables can select, edit, add, delete and move rows, with the server confirming
 - An editable data grid for the kit, where the host confirms every change

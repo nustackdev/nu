@@ -7,11 +7,12 @@ Changed, HeadingRef.set -> Write).
 
 - Write   -- server -> client, replace a Ref's value
 - Append  -- server -> client, append to a sequence-typed Ref
+- Patch   -- server -> client, a partial change the Ref's node defines
 - Remove  -- server -> client, drop a Ref's node and everything under it
 - Changed -- subscribe to client-side notifications on a Ref, all of them
              or only one event's
 
-All four target the abstract ``Session`` from core.session -- the host
+All five target the abstract ``Session`` from core.session -- the host
 plugs in its concrete transport (nudle over ws; others in future).
 """
 
@@ -36,7 +37,7 @@ if TYPE_CHECKING:
     from .session import Subscription
 
 
-__all__ = ["EVENT", "Append", "Changed", "Remove", "Write"]
+__all__ = ["EVENT", "Append", "Changed", "Patch", "Remove", "Write"]
 
 
 #: The payload field a notify names its event in, for a Ref that sends more
@@ -106,6 +107,43 @@ class Append(Command):
                 raise ValueError("cannot write EMPTY")
             payload = values[0] if len(values) == 1 else values
             await session.send(Frame(self, ref=path, payload=payload, chain=chain))
+
+        return athunk
+
+
+class Patch(Command):
+    """Send a `patch` frame on a Ref -- a partial change its node defines.
+
+    Where a write replaces whole props, a patch ships only what changed: one
+    row of a table, or only its order. The payload is one mapping naming the
+    change in its ``op`` field, the rest its arguments, eg ``{"op":
+    "set_row", "key": "m1", "row": {...}}``. Which ops exist is up to the
+    node's ``patch`` handler, and the Ref's methods are the way to build
+    them; a node ignores an op it does not know. An EMPTY payload raises.
+    """
+
+    _mutates = Declared(value=frozenset({0}), name="mutates")
+    _requires_async = Declared(value=True, name="requires_async")
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> None:
+            raise RuntimeError("nustd.ui is async-only; use nu.arun")
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref: Ref = self._children[0]
+        value_thunk = children[1]
+
+        async def athunk(rt: Runtime) -> None:
+            session = rt.ctx.fabrics.get(Session)
+            ref_nid = rt.program.children[nid][0]
+            chain = await ref._aresolve_chain(rt, ref_nid)
+            path = tuple(seg for seg, _, _ in chain)
+            value = await value_thunk(rt)
+            if value is EMPTY:
+                raise ValueError("cannot patch EMPTY")
+            await session.send(Frame(self, ref=path, payload=value, chain=chain))
 
         return athunk
 

@@ -10,9 +10,9 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from typing_extensions import Self
 
-from nu.forms import Dict
+from nu.forms import Dict, List
 from nu.lang.sentinels import UNSET
-from nustd.ui.core import Append, Changed, Ref, Write
+from nustd.ui.core import Append, Changed, Patch, Ref, Write
 
 
 if TYPE_CHECKING:
@@ -725,10 +725,12 @@ class TableRef(Ref):
 
     The browser never changes the rows itself. An edit, an add, a delete or a
     move is a request: the server applies it to whatever the table stands for
-    and ships the rows again with :meth:`set_rows` (a sort it confirms with
-    :meth:`set_sort`). A request the server turns down leaves the table as it
-    was. Which rows are selected the browser keeps as you click, and the
-    server can set it with :meth:`set_selected`.
+    and ships the rows again, all of them with :meth:`set_rows` or only what
+    changed with :meth:`set_row`, :meth:`insert_row`, :meth:`remove_rows` and
+    :meth:`set_order` (a sort it confirms with :meth:`set_sort`). A request
+    the server turns down leaves the table as it was. Which rows are selected
+    the browser keeps as you click, and the server can set it with
+    :meth:`set_selected`.
 
     **Columns** are strings or mappings, mixed freely. A string ``s`` is
     ``{"key": s}``; a mapping is ``{key, label?, kind?, options?, editable?,
@@ -759,7 +761,8 @@ class TableRef(Ref):
         label: The table's accessible name, eg "Movies".
         striped: Alternate rows tinted.
         dense: The compact row height.
-        max_rows: Keep only the newest rows on ``set`` and ``append``; 0 keeps all.
+        max_rows: Keep only the newest rows on ``set``, ``append``, ``set_row``
+            and ``insert_row``; 0 keeps all.
         sort_column: The column the arrows show, by key.
         sort_direction: "asc" or "desc".
         clickable_rows: A row click arrives on :meth:`on_row_click`.
@@ -830,6 +833,48 @@ class TableRef(Ref):
     def append(self, row: ListArg[Any] | DictArg[str, Any]) -> Nu:
         """Add one row at the end, a list or a mapping; ``max_rows`` drops the oldest."""
         return Append(self, row)
+
+    def set_columns(self, columns: ListArg[Any]) -> Nu:
+        """Replace the columns, strings or mappings as on the slot; the rows stay."""
+        return Write(self, Dict.of(columns=columns))
+
+    # The row-level ops below each ship one ``patch`` frame with only the row
+    # or the order that changed. They name rows by key as the browser computes
+    # it (the ``row_key`` field, or the position as a string without one), and
+    # the first row with that key is the one they touch.
+
+    def set_row(self, key: StrArg, row: ListArg[Any] | DictArg[str, Any]) -> Nu:
+        """Replace the row keyed ``key`` in place, or add it at the end if none is shown.
+
+        An upsert: a row that is new to the browser lands last (``max_rows``
+        drops the oldest), and :meth:`set_order` can put it where it belongs.
+        ``row`` is a whole row, a list or a mapping, not a partial one.
+        """
+        return Patch(self, Dict.of(op="set_row", key=key, row=row))
+
+    def insert_row(self, index: IntArg, row: ListArg[Any] | DictArg[str, Any]) -> Nu:
+        """Insert ``row`` before the row at ``index``, or last past the end.
+
+        ``index`` counts the rows shown and is clamped to them; ``max_rows``
+        then drops the oldest.
+        """
+        return Patch(self, Dict.of(op="insert_row", index=index, row=row))
+
+    def remove_row(self, key: StrArg) -> Nu:
+        """Drop the row keyed ``key``; a key not shown is a no-op."""
+        return Patch(self, Dict.of(op="remove_rows", keys=List.of(key)))
+
+    def remove_rows(self, keys: ListArg[str]) -> Nu:
+        """Drop the rows with these keys; keys not shown are skipped."""
+        return Patch(self, Dict.of(op="remove_rows", keys=keys))
+
+    def set_order(self, keys: ListArg[str]) -> Nu:
+        """Reorder the rows shown to these keys, without shipping a row.
+
+        Rows named come first in this order; the ones left out keep their
+        order after them; keys not shown are skipped.
+        """
+        return Patch(self, Dict.of(op="set_order", keys=keys))
 
     def set_sort(self, column: StrArg, direction: SortDirection | StrArg) -> Nu:
         """Show the arrows on ``column``; the rows are the server's to sort."""

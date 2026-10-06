@@ -15,6 +15,7 @@ The reusable seam under nustd.ui:
   ``encode/decode``    -- wire protocol envelope
 - ``Write`` /
   ``Append`` /
+  ``Patch`` /
   ``Remove`` /
   ``Changed``          -- interactions that flow over a Session on a Ref
 
@@ -25,7 +26,7 @@ targets this core, not any specific host.
 
 from .base import Ref
 from .chains import Chain, boot_chains
-from .interactions import EVENT, Append, Changed, Remove, Write
+from .interactions import EVENT, Append, Changed, Patch, Remove, Write
 from .protocol import (
     OP_ERROR,
     OP_INIT,
@@ -53,6 +54,7 @@ __all__ = [
     "Chain",
     "Changed",
     "Frame",
+    "Patch",
     "Ref",
     "Remove",
     "Section",

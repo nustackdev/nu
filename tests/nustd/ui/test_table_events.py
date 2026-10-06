@@ -205,3 +205,69 @@ def test_an_edit_reads_its_fields():
         sess,
     )
     assert [f.payload for f in sess.frames] == ["a.title=B"]
+
+
+# --- row-level ops ------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("term", "payload"),
+    [
+        (
+            GridApp.grid.table.set_row("m1", {"id": "m1", "title": "B"}),
+            {"op": "set_row", "key": "m1", "row": {"id": "m1", "title": "B"}},
+        ),
+        (
+            GridApp.grid.table.set_row("1", ["m1", "B"]),
+            {"op": "set_row", "key": "1", "row": ["m1", "B"]},
+        ),
+        (
+            GridApp.grid.table.insert_row(2, {"id": "m9"}),
+            {"op": "insert_row", "index": 2, "row": {"id": "m9"}},
+        ),
+        (GridApp.grid.table.remove_row("m1"), {"op": "remove_rows", "keys": ["m1"]}),
+        (
+            GridApp.grid.table.remove_rows(["m1", "m2"]),
+            {"op": "remove_rows", "keys": ["m1", "m2"]},
+        ),
+        (GridApp.grid.table.set_order(["m2", "m1"]), {"op": "set_order", "keys": ["m2", "m1"]}),
+    ],
+)
+def test_row_ops_patch_the_table_path(term, payload):
+    sess = _Session()
+    _run(term, sess)
+    (frame,) = sess.frames
+    assert (frame.op, frame.ref, frame.payload) == ("patch", ("grid", "table"), payload)
+
+
+def test_set_columns_writes_the_columns():
+    sess = _Session()
+    _run(GridApp.grid.table.set_columns(["id", {"key": "year", "kind": "number"}]), sess)
+    (frame,) = sess.frames
+    assert (frame.op, frame.payload) == (
+        "write",
+        {"columns": ["id", {"key": "year", "kind": "number"}]},
+    )
+
+
+def test_row_ops_take_terms():
+    sess = _Session({"event": "delete", "keys": ["m2"], "row_indexes": [1]})
+    table = GridApp.grid.table
+    _run(
+        nu.React(
+            table.on_delete(),
+            lambda ev: table.remove_row(ev["keys"][0]) >> table.set_order(ev["keys"]),
+        ),
+        sess,
+    )
+    assert [(f.op, f.payload) for f in sess.frames] == [
+        ("patch", {"op": "remove_rows", "keys": ["m2"]}),
+        ("patch", {"op": "set_order", "keys": ["m2"]}),
+    ]
+
+
+def test_patch_frames_encode_with_their_op():
+    sess = _Session()
+    _run(GridApp.grid.table.set_order(["a"]), sess)
+    (frame,) = sess.frames
+    assert frame.to_dict()["op"] == "patch"

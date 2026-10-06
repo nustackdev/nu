@@ -1,7 +1,8 @@
 // TableRef on the kit DataTable: the old wire (string columns, list rows, the
 // sort and row notifies, the write / append / read handlers) unchanged, and
 // the new one (dict columns and rows, row keys, select, edit, add, delete,
-// move), each intent one notify naming its kind in `event`.
+// move), each intent one notify naming its kind in `event`, and the patch
+// handler's row-level ops (set_row, insert_row, remove_rows, set_order).
 
 import { OPS, type TreeFrame } from "@nustackdev/ui-core";
 import { act } from "react";
@@ -328,5 +329,153 @@ describe("TableRef, the new wire", () => {
 		mount({ columns: ["id"], rows: [{ id: "a" }], max_rows: 1 });
 		dispatch("append", { id: "b" });
 		expect(props().rows).toEqual([{ id: "b" }]);
+	});
+});
+
+describe("TableRef, row-level patches", () => {
+	const DICTS = [
+		{ id: "a", title: "A" },
+		{ id: "b", title: "B" },
+		{ id: "c", title: "C" },
+	];
+	const LISTS = [
+		["a", "A"],
+		["b", "B"],
+		["c", "C"],
+	];
+	const patch = (p: unknown) => dispatch("patch", p);
+	const ids = () =>
+		(props().rows as unknown[]).map((r) => (Array.isArray(r) ? r[0] : (r as { id: string }).id));
+
+	it("replaces a dict row in place by row_key, and draws it", () => {
+		mount({ columns: ["id", "title"], rows: DICTS, row_key: "id" });
+		patch({ op: "set_row", key: "b", row: { id: "b", title: "Bee" } });
+		expect(props().rows).toEqual([DICTS[0], { id: "b", title: "Bee" }, DICTS[2]]);
+		expect(cell("b", "title").textContent).toBe("Bee");
+	});
+
+	it("replaces a list row in place by the row_key column's position", () => {
+		mount({ columns: ["title", "id"], rows: LISTS.map(([i, t]) => [t, i]), row_key: "id" });
+		patch({ op: "set_row", key: "c", row: ["See", "c"] });
+		expect(props().rows).toEqual([
+			["A", "a"],
+			["B", "b"],
+			["See", "c"],
+		]);
+	});
+
+	it("keys by position without row_key", () => {
+		mount({ columns: ["id", "title"], rows: LISTS });
+		patch({ op: "set_row", key: "0", row: ["z", "Z"] });
+		patch({ op: "remove_rows", keys: ["2"] });
+		expect(props().rows).toEqual([
+			["z", "Z"],
+			["b", "B"],
+		]);
+		patch({ op: "set_order", keys: ["1"] });
+		expect(ids()).toEqual(["b", "z"]);
+		patch({ op: "set_row", key: 1, row: ["y", "Y"] });
+		expect(ids()).toEqual(["b", "y"]);
+	});
+
+	it("upserts: a key not shown appends, under the cap", () => {
+		mount({ columns: ["id", "title"], rows: DICTS, row_key: "id", max_rows: 3 });
+		patch({ op: "set_row", key: "d", row: { id: "d", title: "D" } });
+		expect(ids()).toEqual(["b", "c", "d"]);
+		expect(cell("d", "title").textContent).toBe("D");
+	});
+
+	it("touches the first row with a key", () => {
+		mount({ columns: ["id", "title"], rows: [...DICTS, { id: "a", title: "A2" }], row_key: "id" });
+		patch({ op: "set_row", key: "a", row: { id: "a", title: "first" } });
+		patch({ op: "set_row", key: "a~2", row: { id: "a", title: "second" } });
+		expect((props().rows as { title: string }[]).map((r) => r.title)).toEqual([
+			"first",
+			"B",
+			"C",
+			"second",
+		]);
+	});
+
+	it("inserts at an index, clamped, list and dict rows alike", () => {
+		mount({ columns: ["id", "title"], rows: DICTS, row_key: "id" });
+		patch({ op: "insert_row", index: 1, row: { id: "x", title: "X" } });
+		patch({ op: "insert_row", index: 99, row: ["y", "Y"] });
+		patch({ op: "insert_row", index: -5, row: { id: "w", title: "W" } });
+		expect(ids()).toEqual(["w", "a", "x", "b", "c", "y"]);
+		expect(cell("y", "title").textContent).toBe("Y");
+	});
+
+	it("caps an insert at max_rows, oldest first out", () => {
+		mount({ columns: ["id", "title"], rows: DICTS, row_key: "id", max_rows: 3 });
+		patch({ op: "insert_row", index: 1, row: { id: "x", title: "X" } });
+		expect(ids()).toEqual(["x", "b", "c"]);
+	});
+
+	it("removes rows by key, skipping keys not shown", () => {
+		mount({ columns: ["id", "title"], rows: LISTS, row_key: "id" });
+		patch({ op: "remove_rows", keys: ["a", "nope", "c"] });
+		expect(props().rows).toEqual([["b", "B"]]);
+	});
+
+	it("orders named rows first, the rest after, unknown keys skipped", () => {
+		mount({
+			columns: ["id", "title"],
+			rows: [...DICTS, { id: "d", title: "D" }],
+			row_key: "id",
+		});
+		patch({ op: "set_order", keys: ["c", "nope", "a", "c"] });
+		expect(ids()).toEqual(["c", "a", "b", "d"]);
+		expect(texts("tbody tr td:nth-child(1)")).toEqual(["c", "a", "b", "d"]);
+		patch({ op: "set_order", keys: ["d", "c", "b", "a"] });
+		expect(ids()).toEqual(["d", "c", "b", "a"]);
+	});
+
+	it("keeps the selection on rows still shown and drops removed ones", () => {
+		mount({ columns: ["id", "title"], rows: DICTS, row_key: "id", selection: "multi" });
+		dispatch(OPS.write, { selected: ["a", "c"] });
+		patch({ op: "set_order", keys: ["c"] });
+		expect(props().selected).toEqual(["a", "c"]);
+		patch({ op: "remove_rows", keys: ["a"] });
+		expect(props().selected).toEqual(["c"]);
+		expect(cell("c", "title").closest("tr")?.getAttribute("aria-selected")).toBe("true");
+		expect(notifies()).toEqual([]);
+	});
+
+	it("ignores malformed and unknown patches", () => {
+		mount({ columns: ["id", "title"], rows: DICTS, row_key: "id" });
+		for (const p of [
+			null,
+			"set_row",
+			["set_row"],
+			{},
+			{ op: "nope", keys: ["a"] },
+			{ op: "set_row", key: "a" },
+			{ op: "set_row", key: "a", row: "A" },
+			{ op: "set_row", key: null, row: { id: "a" } },
+			{ op: "set_row", key: { k: 1 }, row: { id: "a" } },
+			{ op: "insert_row", row: { id: "x" } },
+			{ op: "insert_row", index: "1", row: { id: "x" } },
+			{ op: "insert_row", index: Number.NaN, row: { id: "x" } },
+			{ op: "insert_row", index: 0, row: 7 },
+			{ op: "remove_rows", keys: "a" },
+			{ op: "remove_rows" },
+			{ op: "set_order", keys: "c" },
+		]) {
+			patch(p);
+		}
+		expect(props().rows).toEqual(DICTS);
+		expect(texts("tbody tr td:nth-child(2)")).toEqual(["A", "B", "C"]);
+	});
+
+	it("leaves write, append and read as they were", () => {
+		mount({ columns: ["id", "title"], rows: DICTS, row_key: "id" });
+		patch({ op: "set_order", keys: ["b"] });
+		dispatch("append", { id: "d", title: "D" });
+		dispatch(OPS.read, null, "r3");
+		expect(sent.find((f) => f.op === OPS.read)?.payload).toEqual({
+			columns: ["id", "title"],
+			rows: [DICTS[1], DICTS[0], DICTS[2], { id: "d", title: "D" }],
+		});
 	});
 });
