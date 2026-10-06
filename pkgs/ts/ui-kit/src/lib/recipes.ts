@@ -126,6 +126,17 @@ const tableHandle = {
 	column: "-translate-x-1/2 -translate-y-1/2",
 	shown: "opacity-100",
 	hidden: "invisible opacity-0",
+	/**
+	 * Hidden but still a tab stop, while the focus is in the table: Tab from a
+	 * clicked cell reaches the handle, which shows the moment it has focus.
+	 */
+	reachable: "opacity-0 focus-within:opacity-100",
+	/**
+	 * Faded out where it stood but still under the pointer's reach, so a hand
+	 * coming back to that spot brings it back. Not a tab stop (the host sets
+	 * that), unless reachable as well.
+	 */
+	faded: "opacity-0",
 };
 
 /* ================================= list ================================== */

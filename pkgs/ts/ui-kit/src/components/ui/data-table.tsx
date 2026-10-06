@@ -58,8 +58,9 @@
 // A click focuses the cell, selects (Shift for a range, Cmd/Ctrl to toggle)
 // and activates; a double click edits; a bool's checkbox flips on a click; a
 // sortable header sorts. The handles (`TableHandles`) follow the cell under
-// the pointer, else the focused one, and show while the pointer or the focus
-// is in the table: the row handle on the left edge opens the row's menu
+// the pointer and show while it is over the table; working from the keyboard
+// they stand on the focused cell instead, wherever the pointer rests (a click
+// focuses a cell too, but does not hold the handles there). The row handle on the left edge opens the row's menu
 // (insert above / below, move up / down, delete), the column handle on the
 // top edge the column's (insert left / right, move left / right, sort,
 // rename, type, align, delete: what is on); a handle with nothing to offer
@@ -89,6 +90,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { watchKeyboardUse } from "../../lib/modality";
 import { table } from "../../lib/recipes";
 import { ROVING_KEY, useRovingFocus } from "../../lib/roving";
 import { cn } from "../../lib/utils";
@@ -121,6 +123,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import {
 	columnMenu,
 	rowMenu,
+	TABLE_HANDLE_LEAVE_DELAY,
 	type TableHandleKind,
 	TableHandles,
 	type TableHandlesHandle,
@@ -361,7 +364,14 @@ export function DataTable({
 	const box = useRef<HTMLDivElement | null>(null);
 	const handles = useRef<TableHandlesHandle | null>(null);
 	const [hover, setHover] = useState<Spot | null>(null);
+	// Where the pointer last was over a cell: the handles fade out there, not
+	// on some other cell, once it leaves.
+	const lastHover = useRef<Spot | null>(null);
+	if (hover) lastHover.current = hover;
 	const [focusIn, setFocusIn] = useState(false);
+	// Working from the keyboard: then, and only then, the handles show on the
+	// focused cell when the pointer is not over the table.
+	const [keyboard, setKeyboard] = useState(false);
 	const [handleAt, setHandleAt] = useState<Spot | null>(null);
 	// With its row's index then, so a delete puts the focus where the row was.
 	const handleTarget = useRef<(Spot & { index: number; colIndex: number }) | null>(null);
@@ -674,6 +684,7 @@ export function DataTable({
 	/** Open a handle's menu from the keyboard, on the focused cell. */
 	const openByKey = (which: TableHandleKind) => {
 		setHover(null);
+		setKeyboard(true);
 		setShortcut(which);
 	};
 
@@ -1248,8 +1259,10 @@ export function DataTable({
 	// --- Handles -------------------------------------------------------------
 
 	// What the handles stand for: the cell a menu is open on, else the one
-	// under the pointer, else the focused one.
-	const spot = handleAt ?? hover ?? spotOf(tabKey);
+	// under the pointer, else the focused one. Where they stand is one thing,
+	// whether they show another: see `visible` below.
+	const spot =
+		handleAt ?? hover ?? (keyboard ? spotOf(tabKey) : lastHover.current) ?? spotOf(tabKey);
 	const spotRow = spot?.row != null ? order.indexOf(spot.row) : -1;
 	const spotCol = spot ? cols.findIndex((c) => c.key === spot.col) : -1;
 	const handleRow = spotRow >= 0 ? rows[spotRow] : undefined;
@@ -1259,7 +1272,13 @@ export function DataTable({
 		if (handleAt || drag) return;
 		const target = e.target as Element;
 		const td = target.closest?.("td, th") as HTMLTableCellElement | null;
-		if (!td || !box.current?.contains(td)) return;
+		if (!td || !box.current?.contains(td)) {
+			// Back on a handle that had faded where it stood: it stands for that cell again.
+			if (!hover && lastHover.current && target.closest?.("[data-table-handle]")) {
+				setHover(lastHover.current);
+			}
+			return;
+		}
 		const tr = td.parentElement as HTMLElement | null;
 		const col = cols[td.cellIndex];
 		if (!tr || !col) return;
@@ -1279,8 +1298,23 @@ export function DataTable({
 		const el = box.current;
 		const all = containerRef.current;
 		if (!el || !all) return;
-		const over = (e: PointerEvent) => onPointer.current(e);
-		const leave = () => setHover(null);
+		let leaving: number | null = null;
+		const stay = () => {
+			if (leaving !== null) window.clearTimeout(leaving);
+			leaving = null;
+		};
+		const over = (e: PointerEvent) => {
+			stay();
+			onPointer.current(e);
+		};
+		// Not at once: see TABLE_HANDLE_LEAVE_DELAY.
+		const leave = () => {
+			stay();
+			leaving = window.setTimeout(() => {
+				leaving = null;
+				setHover(null);
+			}, TABLE_HANDLE_LEAVE_DELAY);
+		};
 		const focusin = () => setFocusIn(true);
 		const focusout = (e: FocusEvent) => {
 			if (!all.contains(e.relatedTarget as Node | null)) setFocusIn(false);
@@ -1289,7 +1323,10 @@ export function DataTable({
 		el.addEventListener("pointerleave", leave);
 		all.addEventListener("focusin", focusin);
 		all.addEventListener("focusout", focusout);
+		const unwatch = watchKeyboardUse(all, setKeyboard);
 		return () => {
+			stay();
+			unwatch();
 			el.removeEventListener("pointerover", over);
 			el.removeEventListener("pointerleave", leave);
 			all.removeEventListener("focusin", focusin);
@@ -1352,7 +1389,11 @@ export function DataTable({
 			columnLabel={
 				handleCol ? tableMenuText.columnHandle(handleCol.label) : tableMenuText.columnHandleIdle
 			}
-			visible={hover !== null || focusIn}
+			// Under the pointer, or on the focused cell while working from the
+			// keyboard. A click focuses a cell too, but the handles do not stay
+			// on it once the pointer leaves the table.
+			visible={hover !== null || (focusIn && keyboard)}
+			reachable={focusIn}
 			onOpenChange={(which) => {
 				if (which) {
 					pending.current = null;

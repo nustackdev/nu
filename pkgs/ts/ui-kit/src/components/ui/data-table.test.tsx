@@ -26,7 +26,7 @@ import {
 	spaceSelection,
 	stepIndex,
 } from "./data-table-model";
-import { tableMenuKeys, tableMenuText } from "./table-handles";
+import { TABLE_HANDLE_LEAVE_DELAY, tableMenuKeys, tableMenuText } from "./table-handles";
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -723,7 +723,7 @@ describe("DataTable", () => {
 		const settle = () => act(async () => void (await new Promise((r) => setTimeout(r, 0))));
 		const all = { onAdd: vi.fn(), onDelete: vi.fn(), onMove: vi.fn(), onSort: vi.fn() };
 
-		it("draws a labelled row and column handle that show with the focus", () => {
+		it("draws a labelled row and column handle that show with keyboard use", () => {
 			mount(all);
 			const row = handle("row");
 			const column = handle("column");
@@ -733,9 +733,90 @@ describe("DataTable", () => {
 			// Out of sight, and out of the tab order, until the table is in use.
 			expect(row?.parentElement?.className).toContain("invisible");
 			act(() => cell("r2", "points").focus());
+			press(cell("r2", "points"), "ArrowRight");
+			press(cell("r2", "done"), "ArrowLeft");
 			expect(row?.parentElement?.className).not.toContain("invisible");
 			expect(row?.getAttribute("aria-label")).toBe(t.rowHandle("Beta"));
 			expect(column?.getAttribute("aria-label")).toBe(t.columnHandle("points"));
+		});
+
+		// The grid's pointer box: the table and its handles, where hover is tracked.
+		const leaveAll = () =>
+			act(() => {
+				for (const el of host.querySelectorAll("*")) {
+					el.dispatchEvent(new PointerEvent("pointerleave"));
+				}
+			});
+		const pastLeaveDelay = () =>
+			act(async () => {
+				await new Promise((r) => setTimeout(r, TABLE_HANDLE_LEAVE_DELAY + 50));
+			});
+		const seen = (el: Element | null | undefined) =>
+			(el?.className ?? "").split(" ").includes("opacity-100");
+
+		it("does not stay on a clicked cell once the pointer leaves", async () => {
+			mount(all);
+			const row = handle("row");
+			const target = cell("r2", "points");
+			act(() => {
+				target.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+				target.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+				target.focus();
+			});
+			expect(seen(row?.parentElement)).toBe(true);
+			leaveAll();
+			await pastLeaveDelay();
+			// Focus is still on the cell, but a click is not keyboard use: out of
+			// sight, though Tab can still reach it.
+			expect(document.activeElement).toBe(target);
+			expect(seen(row?.parentElement)).toBe(false);
+			expect(row?.parentElement?.className).not.toContain("invisible");
+			// A key pressed there brings them back, on the focused cell.
+			press(target, "ArrowDown");
+			expect(seen(row?.parentElement)).toBe(true);
+			expect(row?.getAttribute("aria-label")).toBe(t.rowHandle("Gamma"));
+		});
+
+		it("keeps the handles through a slip off and back, and fades them where they were", async () => {
+			mount(all);
+			const row = handle("row");
+			act(() => cell("r1", "title").focus());
+			act(() => {
+				cell("r3", "points").dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+			});
+			expect(row?.getAttribute("aria-label")).toBe(t.rowHandle("Gamma"));
+			// A pixel off the edge and straight back: nothing happens.
+			leaveAll();
+			act(() => {
+				row?.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+			});
+			await pastLeaveDelay();
+			expect(seen(row?.parentElement)).toBe(true);
+			expect(row?.getAttribute("aria-label")).toBe(t.rowHandle("Gamma"));
+			// Really gone: they fade on Gamma, not on the focused Alpha.
+			leaveAll();
+			await pastLeaveDelay();
+			expect(seen(row?.parentElement)).toBe(false);
+			expect(row?.getAttribute("aria-label")).toBe(t.rowHandle("Gamma"));
+		});
+
+		it("fades them where the pointer left, not on the cell typed in before", async () => {
+			mount(all);
+			const row = handle("row");
+			act(() => cell("r1", "title").focus());
+			press(cell("r1", "title"), "ArrowRight");
+			expect(row?.getAttribute("aria-label")).toBe(t.rowHandle("Alpha"));
+			// Back to the mouse: it moves over Gamma, then off the table.
+			const over = cell("r3", "points");
+			act(() => {
+				over.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+				over.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, screenX: 10 }));
+				over.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, screenX: 12 }));
+			});
+			leaveAll();
+			await pastLeaveDelay();
+			expect(seen(row?.parentElement)).toBe(false);
+			expect(row?.getAttribute("aria-label")).toBe(t.rowHandle("Gamma"));
 		});
 
 		it("follows the cell under the pointer over the focused one", () => {

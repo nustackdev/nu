@@ -36,9 +36,11 @@
 // up / down, delete row), one on its top edge over a column, opening the
 // column's (insert left / right, move left / right, alignment, delete
 // column); both end with "Delete table". They follow the cell under the
-// pointer, else the caret's, and show while the pointer is over the table,
-// while the caret or the focus is in it or its handles, and while a menu is
-// open. Opening a menu from a handle puts the caret in that row or column
+// pointer and show while it is over the table; working from the keyboard
+// (typing, arrows, Tab) they stand on the caret's cell instead, wherever the
+// pointer rests, and a handle focused or a menu open holds them too. A click
+// puts the caret in a cell as well, but does not hold the handles there:
+// moved away, the pointer takes them along. Opening a menu from a handle puts the caret in that row or column
 // first (unless the selection already spans it), so a pick is an ordinary
 // command on the selection. Shift+F10 or the Menu key opens the caret row's
 // menu and Alt+Shift+F10 its column's, since Tab here moves between cells.
@@ -92,6 +94,7 @@ import {
 	type ColumnAlign,
 	columnMenu,
 	rowMenu,
+	TABLE_HANDLE_LEAVE_DELAY,
 	type TableAction,
 	type TableHandleKind,
 	TableHandles,
@@ -99,6 +102,7 @@ import {
 	type TableMenuItem,
 	tableMenuText,
 } from "../../components/ui/table-handles";
+import { watchKeyboardUse } from "../modality";
 import type { Align } from "./markdown";
 import type { ProseSchema } from "./schema";
 
@@ -533,9 +537,16 @@ class TableView implements NodeView {
 	private editable: boolean | null = null;
 	/** The cell under the pointer, while the pointer is over the table. */
 	private hover: Spot | null = null;
+	/** Where the pointer last was over a cell: the handles fade out there once it leaves. */
+	private lastHover: Spot | null = null;
+	/** The pending leave, see TABLE_HANDLE_LEAVE_DELAY. */
+	private leaving: number | null = null;
 	private pointerIn = false;
 	/** Focus is on a handle. */
 	private handleFocus = false;
+	/** Working from the keyboard: only then do the handles show on the caret's cell. */
+	private keyboard = false;
+	private readonly unwatch: () => void;
 	/** The open menu and the cell it was opened on, held while it is open. */
 	private menu: { which: TableHandleKind; at: Spot } | null = null;
 	/** What `sync` last drew, to skip drawing the same again on every keystroke. */
@@ -578,11 +589,19 @@ class TableView implements NodeView {
 		this.dom.appendChild(this.control);
 		this.root = createRoot(this.control);
 
-		this.dom.addEventListener("pointerover", (e) => this.pointerOver(e));
+		this.dom.addEventListener("pointerover", (e) => {
+			this.stay();
+			this.pointerOver(e);
+		});
+		// Not at once: see TABLE_HANDLE_LEAVE_DELAY.
 		this.dom.addEventListener("pointerleave", () => {
-			this.pointerIn = false;
-			if (!this.menu) this.hover = null;
-			this.sync();
+			this.stay();
+			this.leaving = window.setTimeout(() => {
+				this.leaving = null;
+				this.pointerIn = false;
+				if (!this.menu) this.hover = null;
+				this.sync();
+			}, TABLE_HANDLE_LEAVE_DELAY);
 		});
 		this.control.addEventListener("focusin", () => {
 			this.handleFocus = true;
@@ -591,6 +610,12 @@ class TableView implements NodeView {
 		this.control.addEventListener("focusout", (e) => {
 			if (this.control.contains(e.relatedTarget as Node | null)) return;
 			this.handleFocus = false;
+			this.sync();
+		});
+		// The whole editor, not just this table: the caret arrives here by keys
+		// typed anywhere in the document.
+		this.unwatch = watchKeyboardUse(view.dom, (keyboard) => {
+			this.keyboard = keyboard;
 			this.sync();
 		});
 		this.sync();
@@ -612,6 +637,15 @@ class TableView implements NodeView {
 			const row = [...this.contentDOM.children].indexOf(tr);
 			const col = cell.cellIndex;
 			if (this.hover?.row !== row || this.hover.col !== col) this.hover = { row, col };
+			this.lastHover = this.hover;
+		} else if (
+			!this.menu &&
+			!this.hover &&
+			this.lastHover &&
+			this.control.contains(e.target as Node)
+		) {
+			// Back on a handle that had faded where it stood: it stands for that cell again.
+			this.hover = this.lastHover;
 		}
 		this.sync();
 	}
@@ -623,9 +657,18 @@ class TableView implements NodeView {
 		return { row: top, col: left };
 	}
 
-	/** What the handles stand for: the open menu's cell, else the pointer's, else the caret's. */
+	/**
+	 * What the handles stand for: the open menu's cell, else the pointer's,
+	 * else the caret's. Whether they show is `sync`'s call, not this one's.
+	 */
 	private spot(): Spot | null {
-		return this.menu?.at ?? this.hover ?? this.caretSpot();
+		const rest = this.keyboard ? this.caretSpot() : (this.lastHover ?? this.caretSpot());
+		return this.menu?.at ?? this.hover ?? rest;
+	}
+
+	private stay(): void {
+		if (this.leaving !== null) window.clearTimeout(this.leaving);
+		this.leaving = null;
 	}
 
 	private rowEl(): HTMLElement | null {
@@ -664,7 +707,7 @@ class TableView implements NodeView {
 			(this.menu !== null ||
 				this.pointerIn ||
 				this.handleFocus ||
-				(this.view.hasFocus() && this.holdsCaret()));
+				(this.keyboard && this.view.hasFocus() && this.holdsCaret()));
 		this.dom.toggleAttribute("data-active", show);
 		if (!editable) return;
 
@@ -702,6 +745,7 @@ class TableView implements NodeView {
 	/** A shortcut opens a menu on the caret's cell, wherever the pointer is. */
 	openMenu(which: TableHandleKind): boolean {
 		this.hover = null;
+		this.keyboard = true;
 		this.sync();
 		return this.handles.current?.open(which) ?? false;
 	}
@@ -756,6 +800,8 @@ class TableView implements NodeView {
 	}
 
 	destroy(): void {
+		this.stay();
+		this.unwatch();
 		this.forget();
 		// Unmounting inside a React commit warns; the view can be torn down in one.
 		queueMicrotask(() => this.root.unmount());

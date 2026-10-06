@@ -382,8 +382,10 @@ describe("ProseEditor tables", () => {
 		expect(column?.querySelector("button")?.getAttribute("aria-label")).toBe(
 			tableMenuText.columnHandle("a"),
 		);
-		expect(row?.className).toContain("invisible");
-		expect(column?.className).toContain("invisible");
+		// Out of sight: hidden or faded, never shown, and no tab stop.
+		expect(row?.className.split(" ")).not.toContain("opacity-100");
+		expect(column?.className.split(" ")).not.toContain("opacity-100");
+		expect(row?.getAttribute("aria-hidden")).toBe("true");
 		rerender(<ProseEditor value={TABLE} readOnly onCommit={() => {}} />);
 		expect(el.querySelector("[data-table-handle]")).toBeNull();
 	});
@@ -734,8 +736,38 @@ describe("ProseEditor tables", () => {
 		rerender(<ProseEditor value={TABLE} readOnly onCommit={() => {}} />);
 		expect(document.querySelector('[role="menu"]')).toBeNull();
 		rerender(<ProseEditor value={TABLE} onCommit={() => {}} />);
-		expect(el.querySelector("[data-table-handle=row]")?.className).toContain("invisible");
+		expect(el.querySelector("[data-table-handle=row]")?.className.split(" ")).not.toContain(
+			"opacity-100",
+		);
 		expect(el.querySelector("[data-slot=prose-table]")?.hasAttribute("data-active")).toBe(false);
+	});
+
+	it("shows the handles on the caret's cell only while working from the keyboard", () => {
+		let view: EditorView | null = null;
+		const el = mount(<ProseEditor value={TABLE} onCommit={() => {}} onView={(v) => (view = v)} />);
+		const pm = view as unknown as EditorView;
+		const box = el.querySelector("[data-slot=prose-table]");
+		const active = () => box?.hasAttribute("data-active");
+		act(() => pm.focus());
+		// A click puts the caret in a cell: the handles are the pointer's, and go with it.
+		act(() => {
+			pm.dom.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true }));
+		});
+		caretInCell(pm, 2);
+		act(() => {
+			box?.dispatchEvent(new PointerEvent("pointerleave"));
+		});
+		expect(pm.hasFocus()).toBe(true);
+		expect(active()).toBe(false);
+		// A key pressed in the document: they stand on the caret's cell.
+		act(() => {
+			pm.dom.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+		});
+		caretInCell(pm, 3);
+		expect(active()).toBe(true);
+		expect(el.querySelector("[data-table-handle=row] button")?.getAttribute("aria-label")).toBe(
+			tableMenuText.rowHandle("2"),
+		);
 	});
 
 	it("moves rows and columns, the caret along, the top row the header", () => {

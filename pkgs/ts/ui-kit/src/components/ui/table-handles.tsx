@@ -167,6 +167,16 @@ export const tableMenuKeys = {
 export type TableHandleKind = "row" | "column";
 
 /**
+ * How long the handles wait, once the pointer leaves the table and its
+ * handles, before they go. A handle straddles the table's edge, so the pointer
+ * on its way to one, or a hand a pixel off it, leaves now and then; coming
+ * back within this is no leave at all. While they wait, and while they fade
+ * after, the handles keep their place: one that jumped to another row as the
+ * pointer slipped off it could not be found again by moving back.
+ */
+export const TABLE_HANDLE_LEAVE_DELAY = 300;
+
+/**
  * Which menu a key event asks for: Shift+F10 or the Menu key the row's,
  * Alt+Shift+F10 the column's, anything else none.
  */
@@ -447,6 +457,12 @@ export type TableHandlesProps = {
 	columnLabel: string;
 	/** Whether the host shows the handles now; an open menu keeps them shown. */
 	visible: boolean;
+	/**
+	 * Hidden handles stay tab stops: for a host whose handles come next in the
+	 * tab order while the focus is in it, so Tab still reaches one whose table
+	 * was last used with the pointer.
+	 */
+	reachable?: boolean;
 	onOpenChange?: (which: TableHandleKind | null) => void;
 	/** Where focus goes once a menu closes; the host's cell or caret. */
 	onCloseAutoFocus?: (e: Event) => void;
@@ -483,6 +499,7 @@ export function TableHandles({
 	rowLabel,
 	columnLabel,
 	visible,
+	reachable = false,
 	onOpenChange,
 	onCloseAutoFocus,
 	ref,
@@ -615,10 +632,17 @@ export function TableHandles({
 			<span
 				ref={box}
 				data-table-handle={which}
+				aria-hidden={on || reachable ? undefined : true}
 				className={cn(
 					tableHandle.base,
 					tableHandle[which],
-					on ? tableHandle.shown : tableHandle.hidden,
+					on
+						? tableHandle.shown
+						: point === null
+							? tableHandle.hidden
+							: reachable
+								? tableHandle.reachable
+								: tableHandle.faded,
 				)}
 				style={point ? { left: point.x, top: point.y } : undefined}
 			>
@@ -636,6 +660,8 @@ export function TableHandles({
 							size="xs"
 							aria-label={label}
 							aria-keyshortcuts={tableMenuKeys[which]}
+							// Faded, it answers the pointer but is no tab stop.
+							tabIndex={on || reachable ? undefined : -1}
 							// Opens on press; keeping the press from moving focus keeps the cell or caret.
 							onMouseDown={(e) => e.preventDefault()}
 							// The keys it advertises open its own menu here too.
