@@ -5,8 +5,9 @@ See projects/nu/stack/nudle/protocol.md in the Go space for the spec.
 Frame can be built two ways:
 - `Frame("init", ref=path, chain=...)` for lifecycle ops (op is a string)
 - `Frame(interaction_instance, ref=path, payload=v)` for interactions; the
-  op name is the lowercased class name of the interaction. Interactions
-  don't declare their own op; the wire name follows the class.
+  op name is the interaction's class name in snake_case (`Write` -> `write`,
+  `SetRow` -> `set_row`). Interactions don't declare their own op; the wire
+  name follows the class.
 
 `ref` is a path: the Ref chain's segments, root-first, shipped as an array.
 It stays a sequence end to end -- a segment may hold any character, dots
@@ -23,6 +24,7 @@ choose the concrete channel (ws, sse, etc).
 
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING, Any
 
 import msgpack
@@ -58,9 +60,10 @@ OP_INIT = "init"
 
 
 def _op_of(op_or_interaction: object) -> str:
+    """The op an interaction ships as: its class name in snake_case (``SetRow`` -> ``set_row``)."""
     if isinstance(op_or_interaction, str):
         return op_or_interaction
-    return type(op_or_interaction).__name__.lower()
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", type(op_or_interaction).__name__).lower()
 
 
 class Frame:

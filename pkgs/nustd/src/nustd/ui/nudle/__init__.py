@@ -9,7 +9,7 @@ Vite SPA + PyPI wheel that ships the compiled bundle from ``pkgs/ts/nudle``.
 
 from __future__ import annotations
 
-from nustd.ui.core import Append, Changed, Frame, Patch, Subscription, Write, decode, encode
+from nustd.ui.core import Append, Changed, Frame, Send, Subscription, Write, decode, encode
 
 from .driver import serve
 from .page import Boot, Index, Page, PageRef
@@ -23,7 +23,7 @@ __all__ = [
     "Index",
     "Page",
     "PageRef",
-    "Patch",
+    "Send",
     "Subscription",
     "Write",
     "decode",

@@ -88,18 +88,19 @@
 //
 //   write   a partial merge, except `max_rows` is a sliding window over `rows`.
 //   append  push one row (a list or a dict), same cap.
-//   patch   one row-level change, named in `op`, so the server ships only what changed:
-//             {op: "set_row", key, row}     replace the row keyed `key` in place, or
-//                                           append it when no row has that key (same cap)
-//             {op: "insert_row", index, row}  insert at index, clamped to the rows (same cap)
-//             {op: "remove_rows", keys}     drop the rows with these keys
-//             {op: "set_order", keys}       these rows first, in this order; the rest keep
-//                                           their order after them; unknown keys skipped
-//           Keys are the ones the grid draws (see "Row keys", suffixes included), the first
-//           row with a key is the one touched, and a malformed patch changes nothing.
+//   The row-level changes, one op each (the Python TableRef's SetRow, InsertRow,
+//   RemoveRows and SetOrder interactions), so the server ships only what changed:
+//   set_row      {key, row}    replace the row keyed `key` in place, or append it when no
+//                              row has that key (same cap)
+//   insert_row   {index, row}  insert at index, clamped to the rows (same cap)
+//   remove_rows  {keys}        drop the rows with these keys
+//   set_order    {keys}        these rows first, in this order; the rest keep their order
+//                              after them; unknown keys skipped
+//   Keys are the ones the grid draws (see "Row keys", suffixes included), the first row
+//   with a key is the one touched, and a malformed payload changes nothing.
 //   read    answer {columns, rows} as they were sent.
 
-import { OPS, type Props } from "@nustackdev/ui-core";
+import { type NodeHandler, OPS, type Props } from "@nustackdev/ui-core";
 import { useCallback, useEffect, useMemo } from "react";
 import {
 	DataTable,
@@ -226,7 +227,7 @@ function keysOf(rows: readonly WireRow[], props: Props): string[] {
 	return readTableRows(rows, cols, rowKey).map((r) => r.key);
 }
 
-/** A key as a patch names it: a string, or a number by its digits. */
+/** A key as a row-level op names it: a string, or a number by its digits. */
 function keyArg(v: unknown): string | null {
 	if (typeof v === "string") return v;
 	if (typeof v === "number" && Number.isFinite(v)) return String(v);
@@ -242,53 +243,66 @@ function isRow(v: unknown): v is WireRow {
 	return Array.isArray(v) || isDict(v);
 }
 
-/** The rows after one patch, or null when the patch is malformed or unknown. */
-function patched(
+/**
+ * One row-level change: the rows after it, or null when its payload is
+ * malformed. Each is the browser half of one Python interaction.
+ */
+type RowOp = (
 	rows: WireRow[],
 	keys: readonly string[],
-	patch: Record<string, unknown>,
+	args: Record<string, unknown>,
 	maxRows: number,
-): WireRow[] | null {
-	switch (patch.op) {
-		case "set_row": {
-			const key = keyArg(patch.key);
-			const row = patch.row;
-			if (key === null || !isRow(row)) return null;
-			const at = keys.indexOf(key);
-			if (at < 0) return cap([...rows, row], maxRows);
-			const next = [...rows];
-			next[at] = row;
-			return next;
-		}
-		case "insert_row": {
-			const index = patch.index;
-			const row = patch.row;
-			if (typeof index !== "number" || !Number.isFinite(index) || !isRow(row)) return null;
-			const at = Math.min(Math.max(0, Math.floor(index)), rows.length);
-			return cap([...rows.slice(0, at), row, ...rows.slice(at)], maxRows);
-		}
-		case "remove_rows": {
-			const drop = keyList(patch.keys);
-			if (drop === null) return null;
-			const gone = new Set(drop);
-			return rows.filter((_, i) => !gone.has(keys[i]));
-		}
-		case "set_order": {
-			const order = keyList(patch.keys);
-			if (order === null) return null;
-			const placed = new Set<number>();
-			const first: WireRow[] = [];
-			for (const key of order) {
-				const at = keys.indexOf(key);
-				if (at < 0 || placed.has(at)) continue;
-				placed.add(at);
-				first.push(rows[at]);
-			}
-			return [...first, ...rows.filter((_, i) => !placed.has(i))];
-		}
-		default:
-			return null;
+) => WireRow[] | null;
+
+const setRow: RowOp = (rows, keys, args, maxRows) => {
+	const key = keyArg(args.key);
+	const row = args.row;
+	if (key === null || !isRow(row)) return null;
+	const at = keys.indexOf(key);
+	if (at < 0) return cap([...rows, row], maxRows);
+	const next = [...rows];
+	next[at] = row;
+	return next;
+};
+
+const insertRow: RowOp = (rows, _keys, args, maxRows) => {
+	const index = args.index;
+	const row = args.row;
+	if (typeof index !== "number" || !Number.isFinite(index) || !isRow(row)) return null;
+	const at = Math.min(Math.max(0, Math.floor(index)), rows.length);
+	return cap([...rows.slice(0, at), row, ...rows.slice(at)], maxRows);
+};
+
+const removeRows: RowOp = (rows, keys, args) => {
+	const drop = keyList(args.keys);
+	if (drop === null) return null;
+	const gone = new Set(drop);
+	return rows.filter((_, i) => !gone.has(keys[i]));
+};
+
+const setOrder: RowOp = (rows, keys, args) => {
+	const order = keyList(args.keys);
+	if (order === null) return null;
+	const placed = new Set<number>();
+	const first: WireRow[] = [];
+	for (const key of order) {
+		const at = keys.indexOf(key);
+		if (at < 0 || placed.has(at)) continue;
+		placed.add(at);
+		first.push(rows[at]);
 	}
+	return [...first, ...rows.filter((_, i) => !placed.has(i))];
+};
+
+/** A node handler running one row-level change against the node's rows. */
+function rowHandler(op: RowOp): NodeHandler {
+	return (ctx, payload) =>
+		ctx.update((props) => {
+			if (!isDict(payload)) return;
+			const rows = readRows(props.rows);
+			const next = op(rows, keysOf(rows, props), payload, maxRowsOf(props));
+			if (next) props.rows = next;
+		});
 }
 
 function TableView({ path }: NodeProps) {
@@ -474,13 +488,10 @@ export const TableRef: NodeEntry = {
 				if (!Array.isArray(payload) && !isDict(payload)) return;
 				props.rows = cap([...readRows(props.rows), payload], maxRowsOf(props));
 			}),
-		patch: (ctx, payload) =>
-			ctx.update((props) => {
-				if (!isDict(payload)) return;
-				const rows = readRows(props.rows);
-				const next = patched(rows, keysOf(rows, props), payload, maxRowsOf(props));
-				if (next) props.rows = next;
-			}),
+		set_row: rowHandler(setRow),
+		insert_row: rowHandler(insertRow),
+		remove_rows: rowHandler(removeRows),
+		set_order: rowHandler(setOrder),
 		read: (ctx) =>
 			ctx.send(
 				OPS.read,

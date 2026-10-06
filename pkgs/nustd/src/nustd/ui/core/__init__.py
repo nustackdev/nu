@@ -13,9 +13,9 @@ The reusable seam under nustd.ui:
   ``boot_chains``      -- a Shape's slots as the init frames that seed a tree
 - ``Frame`` /
   ``encode/decode``    -- wire protocol envelope
-- ``Write`` /
+- ``Send`` /
+  ``Write`` /
   ``Append`` /
-  ``Patch`` /
   ``Remove`` /
   ``Changed``          -- interactions that flow over a Session on a Ref
 
@@ -26,7 +26,7 @@ targets this core, not any specific host.
 
 from .base import Ref
 from .chains import Chain, boot_chains
-from .interactions import EVENT, Append, Changed, Patch, Remove, Write
+from .interactions import EVENT, Append, Changed, Remove, Send, Write
 from .protocol import (
     OP_ERROR,
     OP_INIT,
@@ -54,11 +54,11 @@ __all__ = [
     "Chain",
     "Changed",
     "Frame",
-    "Patch",
     "Ref",
     "Remove",
     "Section",
     "SectionRef",
+    "Send",
     "Session",
     "Subscription",
     "Write",

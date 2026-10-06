@@ -226,33 +226,33 @@ def test_an_edit_reads_its_fields():
 
 
 @pytest.mark.parametrize(
-    ("term", "payload"),
+    ("term", "op", "payload"),
     [
         (
             GridApp.grid.table.set_row("m1", {"id": "m1", "title": "B"}),
-            {"op": "set_row", "key": "m1", "row": {"id": "m1", "title": "B"}},
+            "set_row",
+            {"key": "m1", "row": {"id": "m1", "title": "B"}},
         ),
         (
             GridApp.grid.table.set_row("1", ["m1", "B"]),
-            {"op": "set_row", "key": "1", "row": ["m1", "B"]},
+            "set_row",
+            {"key": "1", "row": ["m1", "B"]},
         ),
         (
             GridApp.grid.table.insert_row(2, {"id": "m9"}),
-            {"op": "insert_row", "index": 2, "row": {"id": "m9"}},
+            "insert_row",
+            {"index": 2, "row": {"id": "m9"}},
         ),
-        (GridApp.grid.table.remove_row("m1"), {"op": "remove_rows", "keys": ["m1"]}),
-        (
-            GridApp.grid.table.remove_rows(["m1", "m2"]),
-            {"op": "remove_rows", "keys": ["m1", "m2"]},
-        ),
-        (GridApp.grid.table.set_order(["m2", "m1"]), {"op": "set_order", "keys": ["m2", "m1"]}),
+        (GridApp.grid.table.remove_row("m1"), "remove_rows", {"keys": ["m1"]}),
+        (GridApp.grid.table.remove_rows(["m1", "m2"]), "remove_rows", {"keys": ["m1", "m2"]}),
+        (GridApp.grid.table.set_order(["m2", "m1"]), "set_order", {"keys": ["m2", "m1"]}),
     ],
 )
-def test_row_ops_patch_the_table_path(term, payload):
+def test_row_ops_ship_their_own_op_on_the_table_path(term, op, payload):
     sess = _Session()
     _run(term, sess)
     (frame,) = sess.frames
-    assert (frame.op, frame.ref, frame.payload) == ("patch", ("grid", "table"), payload)
+    assert (frame.op, frame.ref, frame.payload) == (op, ("grid", "table"), payload)
 
 
 def test_set_columns_writes_the_columns():
@@ -276,16 +276,24 @@ def test_row_ops_take_terms():
         sess,
     )
     assert [(f.op, f.payload) for f in sess.frames] == [
-        ("patch", {"op": "remove_rows", "keys": ["m2"]}),
-        ("patch", {"op": "set_order", "keys": ["m2"]}),
+        ("remove_rows", {"keys": ["m2"]}),
+        ("set_order", {"keys": ["m2"]}),
     ]
 
 
-def test_patch_frames_encode_with_their_op():
+def test_row_op_frames_encode_with_their_op():
     sess = _Session()
     _run(GridApp.grid.table.set_order(["a"]), sess)
     (frame,) = sess.frames
-    assert frame.to_dict()["op"] == "patch"
+    assert frame.to_dict()["op"] == "set_order"
+
+
+def test_a_table_interaction_is_named_in_snake_case():
+    from nustd.ui.core.protocol import _op_of
+    from nustd.ui.refs import InsertRow, RemoveRows, SetOrder, SetRow
+
+    ops = [_op_of(c.__new__(c)) for c in (SetRow, InsertRow, RemoveRows, SetOrder)]
+    assert ops == ["set_row", "insert_row", "remove_rows", "set_order"]
 
 
 def test_columns_editable_is_a_slot_flag():

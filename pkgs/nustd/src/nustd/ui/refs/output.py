@@ -12,7 +12,7 @@ from typing_extensions import Self
 
 from nu.forms import Dict, List
 from nu.lang.sentinels import UNSET
-from nustd.ui.core import Append, Changed, Patch, Ref, Write
+from nustd.ui.core import Append, Changed, Ref, Send, Write
 
 
 if TYPE_CHECKING:
@@ -705,6 +705,38 @@ class ShortcutRef(Ref):
 SortDirection = Literal["asc", "desc"]
 Selection = Literal["none", "single", "multi"]
 
+# ---- table interactions -----------------------------------------------------
+#
+# A table's own changes, each its own op on the wire (``set_row``,
+# ``insert_row``, ``remove_rows``, ``set_order``) and its own handler on the
+# browser's TableRef node. The TableRef methods build them; they are exported
+# for code that composes frames directly. Keys are the ones the browser draws:
+# the ``row_key`` field, or the position as a string without one.
+
+
+class SetRow(Send):
+    """Replace the row keyed ``key`` with ``row``, or add it last when none is shown."""
+
+    _payload_fields = ("key", "row")
+
+
+class InsertRow(Send):
+    """Insert ``row`` before the row at ``index``, clamped to the rows shown."""
+
+    _payload_fields = ("index", "row")
+
+
+class RemoveRows(Send):
+    """Drop the rows with these ``keys``; keys not shown are skipped."""
+
+    _payload_fields = ("keys",)
+
+
+class SetOrder(Send):
+    """Show the rows named by ``keys`` first, in that order; the rest keep theirs after."""
+
+    _payload_fields = ("keys",)
+
 
 class TableRef(Ref):
     """Rows and columns. The server owns the rows; the browser reports what you do.
@@ -868,8 +900,9 @@ class TableRef(Ref):
         """
         return Write(self, Dict.of(columns=columns))
 
-    # The row-level ops below each ship one ``patch`` frame with only the row
-    # or the order that changed. They name rows by key as the browser computes
+    # The row-level ops below each ship one frame of their own (``SetRow``,
+    # ``InsertRow``, ``RemoveRows``, ``SetOrder``) with only the row or the
+    # order that changed. They name rows by key as the browser computes
     # it (the ``row_key`` field, or the position as a string without one), and
     # the first row with that key is the one they touch.
 
@@ -880,7 +913,7 @@ class TableRef(Ref):
         drops the oldest), and :meth:`set_order` can put it where it belongs.
         ``row`` is a whole row, a list or a mapping, not a partial one.
         """
-        return Patch(self, Dict.of(op="set_row", key=key, row=row))
+        return SetRow(self, key, row)
 
     def insert_row(self, index: IntArg, row: ListArg[Any] | DictArg[str, Any]) -> Nu:
         """Insert ``row`` before the row at ``index``, or last past the end.
@@ -888,15 +921,15 @@ class TableRef(Ref):
         ``index`` counts the rows shown and is clamped to them; ``max_rows``
         then drops the oldest.
         """
-        return Patch(self, Dict.of(op="insert_row", index=index, row=row))
+        return InsertRow(self, index, row)
 
     def remove_row(self, key: StrArg) -> Nu:
         """Drop the row keyed ``key``; a key not shown is a no-op."""
-        return Patch(self, Dict.of(op="remove_rows", keys=List.of(key)))
+        return RemoveRows(self, List.of(key))
 
     def remove_rows(self, keys: ListArg[str]) -> Nu:
         """Drop the rows with these keys; keys not shown are skipped."""
-        return Patch(self, Dict.of(op="remove_rows", keys=keys))
+        return RemoveRows(self, keys)
 
     def set_order(self, keys: ListArg[str]) -> Nu:
         """Reorder the rows shown to these keys, without shipping a row.
@@ -904,7 +937,7 @@ class TableRef(Ref):
         Rows named come first in this order; the ones left out keep their
         order after them; keys not shown are skipped.
         """
-        return Patch(self, Dict.of(op="set_order", keys=keys))
+        return SetOrder(self, keys)
 
     def set_sort(self, column: StrArg, direction: SortDirection | StrArg) -> Nu:
         """Show the arrows on ``column``; the rows are the server's to sort."""
@@ -1044,11 +1077,15 @@ __all__ = [
     "GaugeRef",
     "HeadingRef",
     "ImageRef",
+    "InsertRow",
     "JsonViewerRef",
     "KbdRef",
     "LinkRef",
     "ListRef",
     "ProgressRef",
+    "RemoveRows",
+    "SetOrder",
+    "SetRow",
     "ShortcutRef",
     "StatRef",
     "StatusDotRef",

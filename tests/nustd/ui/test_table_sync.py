@@ -178,12 +178,12 @@ class _Tab(nustd.ui.Session):
         self.subscriptions[PATH].fire(payload)
 
     def ops(self):
-        """(op, payload) per frame on the table, a patch named by its own op."""
+        """(op, payload) per frame on the table."""
         out = []
         for f in self.frames:
             if f.ref != PATH:
                 continue
-            out.append((f.payload["op"], f.payload) if f.op == "patch" else (f.op, f.payload))
+            out.append((f.op, f.payload))
         return out
 
     def since(self, n):
@@ -352,7 +352,7 @@ async def test_a_delete_deletes_and_drops_the_keys_from_the_order(store):
     assert await _settle(lambda: tab.since(n))
     assert await store.order() == ["m2"]
     assert not await store.has("m1")
-    assert tab.since(n)[0] == ("remove_rows", {"op": "remove_rows", "keys": ["m1", "m3"]})
+    assert tab.since(n)[0] == ("remove_rows", {"keys": ["m1", "m3"]})
 
 
 @pytest.mark.timeout(30)
@@ -362,7 +362,7 @@ async def test_a_move_rewrites_only_the_order(store):
     tab.fire(event="move", key="m3", row_index=2, index=0)
     assert await _settle(lambda: tab.since(n))
     assert await store.order() == ["m3", "m1", "m2"]
-    assert tab.since(n)[0] == ("set_order", {"op": "set_order", "keys": ["m3", "m1", "m2"]})
+    assert tab.since(n)[0] == ("set_order", {"keys": ["m3", "m1", "m2"]})
 
 
 @pytest.mark.timeout(30)
@@ -374,7 +374,7 @@ async def test_a_sort_rewrites_the_order_and_stores_the_arrows_until_a_move(stor
     assert await store.order() == ["m3", "m2", "m1"]
     assert await _read(store.ctx, Sheet.sort) == {"column": "year", "direction": "desc"}
     assert tab.since(n)[:2] == [
-        ("set_order", {"op": "set_order", "keys": ["m3", "m2", "m1"]}),
+        ("set_order", {"keys": ["m3", "m2", "m1"]}),
         ("write", {"sort_column": "year", "sort_direction": "desc"}),
     ]
     # An edit of a sorted column keeps the rows where the arrows say.

@@ -8,8 +8,8 @@ Layout under ``src/nustd/ui/``:
                  across tabs, and ``Row``, the stored row it reads.
 - ``core/``   -- host-independent UI fabric: ``Ref``, ``Section`` /
                  ``SectionRef``, abstract ``Session`` / ``Subscription``,
-                 wire ``Frame`` + interactions (``Write`` / ``Append`` /
-                 ``Patch`` / ``Remove`` / ``Changed``). Reusable by any host.
+                 wire ``Frame`` + interactions (``Send`` / ``Write`` /
+                 ``Append`` / ``Remove`` / ``Changed``). Reusable by any host.
 - ``refs/``   -- widget kit (Row, Card, Table, Input, ...); depends only on core.
 - ``nudle/``  -- Page-based host: ``Index`` / ``Page`` / ``PageRef``, the
                  ``Boot`` term, and the ``serve`` preset that assembles a
@@ -46,7 +46,7 @@ from typing import TYPE_CHECKING
 
 from . import core, lens, refs, table
 from .core import Frame, Ref, Section, SectionRef, Session, Subscription, WsSession
-from .core.interactions import Append, Changed, Patch, Remove, Write
+from .core.interactions import Append, Changed, Remove, Send, Write
 from .refs import (
     Accordion,
     AccordionRef,
@@ -73,6 +73,7 @@ from .refs import (
     HeadingRef,
     ImageRef,
     InputRef,
+    InsertRow,
     JsonViewerRef,
     KbdRef,
     LineChart,
@@ -86,8 +87,11 @@ from .refs import (
     PieChart,
     ProgressRef,
     RadioGroupRef,
+    RemoveRows,
     Row,
     SelectRef,
+    SetOrder,
+    SetRow,
     ShortcutRef,
     SliderRef,
     Sparkline,
@@ -149,7 +153,6 @@ def __dir__() -> list[str]:
 
 
 __all__ = [
-    # Widget kit
     "Accordion",
     "AccordionRef",
     "AlertRef",
@@ -180,6 +183,7 @@ __all__ = [
     "ImageRef",
     "Index",
     "InputRef",
+    "InsertRow",
     "JsonViewerRef",
     "KbdRef",
     "LineChart",
@@ -192,17 +196,20 @@ __all__ = [
     "NumberInputRef",
     "Page",
     "PageRef",
-    "Patch",
     "PieChart",
     "ProgressRef",
     "RadioGroupRef",
     "Ref",
     "Remove",
+    "RemoveRows",
     "Row",
     "Section",
     "SectionRef",
     "SelectRef",
+    "Send",
     "Session",
+    "SetOrder",
+    "SetRow",
     "ShortcutRef",
     "SliderRef",
     "Sparkline",
@@ -220,7 +227,6 @@ __all__ = [
     "TreeRef",
     "Write",
     "WsSession",
-    # Submodules and presets
     "core",
     "lens",
     "nudle",
