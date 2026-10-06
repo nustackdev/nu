@@ -4,7 +4,9 @@
 // string and the source is never shown: read-only it renders the document,
 // `readOnly={false}` makes the same view a live wysiwyg editor. One engine
 // (lib/markdown) for both, so a document looks the same whether or not you
-// can type in it. Styling is all `Prose`; this adds only the engine.
+// can type in it. Headings, lists and tables carry the element recipes
+// (lib/recipes.ts) from the schema; the rest of the styling is `Prose`. This
+// adds only the engine.
 
 import type * as React from "react";
 

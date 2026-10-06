@@ -7,22 +7,19 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
 
+import { heading } from "../../lib/recipes";
 import { cn } from "../../lib/utils";
 
-const headingVariants = cva("font-display text-text-primary", {
+// The sizes are the heading recipe (lib/recipes.ts), which a markdown
+// document's h1..h4 are drawn with too:
+//   display -> h1 hero, 32/1.2/-0.02
+//   3xl     -> h2 page title, 24/1.3/-0.015
+//   2xl     -> h3 card/dialog title, 20/1.4/-0.01
+//   xl      -> h4 subsection, 16/1.55/-0.006
+//   lg      -> h5 label, 14/1.45/-0.003
+const headingVariants = cva(heading.base, {
 	variants: {
-		size: {
-			// display -> h1 hero, 32/1.2/-0.02
-			display: "text-display font-bold",
-			// 3xl -> h2 page title, 24/1.3/-0.015
-			"3xl": "text-3xl font-bold",
-			// 2xl -> h3 card/dialog title, 20/1.4/-0.01
-			"2xl": "text-2xl font-semibold",
-			// xl -> h4 subsection, 16/1.55/-0.006
-			xl: "text-xl font-semibold",
-			// lg -> h5 label, 14/1.45/-0.003
-			lg: "text-lg font-semibold",
-		},
+		size: heading.size,
 	},
 	defaultVariants: {
 		size: "2xl",
@@ -41,11 +38,7 @@ export interface HeadingProps
 function Heading({ className, size, as = "h2", children, ...props }: HeadingProps) {
 	const Comp = as;
 	return (
-		<Comp
-			data-slot="heading"
-			className={cn(headingVariants({ size }), className)}
-			{...props}
-		>
+		<Comp data-slot="heading" className={cn(headingVariants({ size }), className)} {...props}>
 			{children}
 		</Comp>
 	);

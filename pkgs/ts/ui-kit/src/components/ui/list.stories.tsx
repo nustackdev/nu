@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Badge } from "./badge";
 import { List, ListItem } from "./list";
-import { Prose } from "./prose";
+import { Markdown } from "./markdown";
 
 const label = "mb-3 font-mono text-xs uppercase tracking-widest text-text-muted";
 
@@ -61,8 +61,8 @@ export const Matrix: StoryObj = {
 				<div className={label}>long items wrap under their text</div>
 				<List>
 					<ListItem>
-						A long item that runs past the measure, so the second line has to sit under the
-						first line's text and not under the marker.
+						A long item that runs past the measure, so the second line has to sit under the first
+						line's text and not under the marker.
 					</ListItem>
 					<ListItem>A short one after it</ListItem>
 				</List>
@@ -92,7 +92,18 @@ export const Matrix: StoryObj = {
 	),
 };
 
-/** The same list from data and from markdown: they should be indistinguishable. */
+const SAME_AS_PROSE = `- markdown in, markdown out
+- last actor wins, no merge
+- the source is what the program sees
+
+1. first
+2. second
+`;
+
+/**
+ * The same list from data and from markdown: markers, indent and item spacing
+ * match (both are the list recipe); the markdown one reads a size up.
+ */
 export const SameAsProse: StoryObj = {
 	render: () => (
 		<div className="grid max-w-3xl grid-cols-2 gap-10 p-8">
@@ -110,18 +121,8 @@ export const SameAsProse: StoryObj = {
 				</List>
 			</div>
 			<div>
-				<div className={label}>Prose</div>
-				<Prose>
-					<ul>
-						<li>markdown in, markdown out</li>
-						<li>last actor wins, no merge</li>
-						<li>the source is what the program sees</li>
-					</ul>
-					<ol>
-						<li>first</li>
-						<li>second</li>
-					</ol>
-				</Prose>
+				<div className={label}>Markdown</div>
+				<Markdown value={SAME_AS_PROSE} />
 			</div>
 		</div>
 	),

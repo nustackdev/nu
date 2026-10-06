@@ -11,10 +11,14 @@
 // document bigger than one Ref's value and cannot grow opinions about
 // ordering or lifecycle above it. Whatever hosts the Ref owns those.
 //
-// Styling comes from the ancestor by default: the renderer mounts the view
-// inside the kit's `Prose` container, whose descendant selectors style `p`,
-// `h1`, `li` and friends. So a document looks the same whether you are reading
-// it or typing in it, and `toDOM` hands out no classes at all.
+// Styling comes from two places. The kit's own schema (`proseSchema`) hands
+// the element recipes (../recipes.ts) to `toDOM` for headings, lists and
+// tables, so a markdown table is drawn by the same classes as the kit's
+// `Table`, a heading by the same sizes as `Heading`. Everything else, and the
+// spacing between blocks, comes from the `Prose` container the renderer
+// mounts the view in. So a document looks the same whether you are reading
+// it or typing in it. `createProseSchema()` with no recipes hands out no
+// classes at all and leaves every element to the container.
 //
 // Every URL that reaches the DOM goes through `safeUrl` first. The value is a
 // string anyone upstream may have written, and a `javascript:` link rendered
@@ -31,6 +35,8 @@ import {
 	type NodeType,
 	Schema,
 } from "prosemirror-model";
+
+import { heading, list, table } from "../recipes";
 
 /** Per-element class recipes handed to `toDOM`. Empty means "inherit". */
 export type ProseClasses = {
@@ -416,5 +422,25 @@ export function createProseSchema(classes: ProseClasses = {}): ProseSchema {
 	};
 }
 
-/** The kit's own schema. Unstyled by `toDOM`; `Prose` styles it from above. */
-export const proseSchema: ProseSchema = createProseSchema();
+/**
+ * The kit's recipes as a document's classes: headings, lists and tables at
+ * the look their kit components have, tables at `Table`'s default density.
+ * A markdown table has no `<thead>`: its header row is the first body row,
+ * which is why the header tint sits on the header cell in the recipe.
+ */
+export const proseRecipes: ProseClasses = {
+	heading: (level) => heading.level[level] ?? "",
+	bulletList: [list.base, list.bullet].join(" "),
+	orderedList: [list.base, list.number].join(" "),
+	taskList: list.base,
+	table: [table.root, table.framed].join(" "),
+	tableRow: [table.rowHeight.default, table.row].join(" "),
+	tableHeader: [table.cellPad.default, table.head].join(" "),
+	tableCell: [table.cellPad.default, table.cell].join(" "),
+};
+
+/**
+ * The kit's own schema: element looks from the recipes, the rest from the
+ * `Prose` container around it.
+ */
+export const proseSchema: ProseSchema = createProseSchema(proseRecipes);

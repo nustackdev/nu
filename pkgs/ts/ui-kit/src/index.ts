@@ -132,7 +132,7 @@ export { Markdown } from "./components/ui/markdown";
 export type { MarkdownProps } from "./components/ui/markdown";
 export { ProseEditor } from "./lib/markdown/editor";
 export type { ProseEditorProps } from "./lib/markdown/editor";
-export { createProseSchema, proseSchema, safeUrl } from "./lib/markdown/schema";
+export { createProseSchema, proseRecipes, proseSchema, safeUrl } from "./lib/markdown/schema";
 export type { ProseClasses, ProseSchema } from "./lib/markdown/schema";
 export { createMarkdown, markdown } from "./lib/markdown/markdown";
 export type { Markdown as MarkdownCodec, Parsed, SourceMap } from "./lib/markdown/markdown";

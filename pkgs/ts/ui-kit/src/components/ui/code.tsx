@@ -8,6 +8,9 @@
 // The source is `value`, or string children when there is no `value`. Font is
 // JetBrains Mono; colors come from the `--syntax-*` tokens, so the `.dark`
 // flip restyles every block with no observer. Unknown languages render plain.
+//
+// The block's box is the code box recipe (lib/recipes.ts), which the markdown
+// editor's fences sit in too, so a fence and a block on a page are one surface.
 
 import type { EditorView } from "@codemirror/view";
 import { Check, Copy } from "lucide-react";
@@ -15,6 +18,7 @@ import type * as React from "react";
 import { useCallback, useState } from "react";
 
 import { CodeMirrorView } from "../../lib/code/view";
+import { codeBox } from "../../lib/recipes";
 import { cn } from "../../lib/utils";
 
 export interface CodeProps extends Omit<React.HTMLAttributes<HTMLElement>, "onChange"> {
@@ -43,13 +47,6 @@ export interface CodeProps extends Omit<React.HTMLAttributes<HTMLElement>, "onCh
 	children?: React.ReactNode;
 }
 
-/**
- * The box a code block sits in. Shared with the markdown editor's code fences,
- * so a fence in a document and a block on a page are the same surface.
- */
-const codeBlockBox =
-	"relative w-full overflow-hidden rounded-md bg-bg-sunken border border-border-subtle";
-
 function Code({
 	className,
 	block = false,
@@ -74,7 +71,7 @@ function Code({
 				data-slot="code-block"
 				data-language={language || undefined}
 				data-editable={readOnly ? undefined : ""}
-				className={cn(codeBlockBox, className)}
+				className={cn(codeBox, className)}
 				{...props}
 			>
 				<CodeMirrorView
@@ -138,4 +135,4 @@ function CopyButton({ text }: { text: string }) {
 	);
 }
 
-export { Code, CopyButton, codeBlockBox };
+export { Code, CopyButton };

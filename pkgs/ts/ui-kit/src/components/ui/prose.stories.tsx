@@ -1,52 +1,52 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { Prose } from "./prose";
+import { Markdown } from "./markdown";
 
-const SAMPLE = (
-	<>
-		<h1>Design system</h1>
-		<p>
-			Prose renders arbitrary HTML through kit tokens. This block themes on both
-			light and dark canvases with no extra wrapping.
-		</p>
-		<h2>Second level</h2>
-		<p>
-			Body copy sits at <code>text-lg</code> with{" "}
-			<code>text-text-primary</code>. Links land at{" "}
-			<a href="#">accent-2</a> for a legible read.
-		</p>
-		<h3>Lists</h3>
-		<ul>
-			<li>Unordered item one</li>
-			<li>Unordered item two</li>
-			<li>Unordered item three</li>
-		</ul>
-		<ol>
-			<li>Ordered item one</li>
-			<li>Ordered item two</li>
-		</ol>
-		<blockquote>
-			The primitives are the alphabet. Compose them into your sentence, and
-			don't reach for a bespoke component before you have to.
-		</blockquote>
-		<h3>Code</h3>
-		<pre>
-			<code>{`import { Button } from "@nustackdev/ui-kit";
+// Prose is the reading surface a document sits on; the document itself is
+// drawn by the prose schema, whose headings, lists and tables carry the
+// element recipes (lib/recipes.ts). So the sample is real markdown through
+// `Markdown` (Prose + the engine), not raw HTML, which would show only half
+// the look.
+const SAMPLE = `# Design system
 
-<Button>Save</Button>`}</code>
-		</pre>
-		<hr />
-		<p>
-			Horizontal rules use <strong>border-subtle</strong>. Emphasized text stays
-			<em> italic </em>and inline styling flows naturally.
-		</p>
-	</>
-);
+Prose renders a document through kit tokens. This block themes on both
+light and dark canvases with no extra wrapping.
+
+## Second level
+
+Body copy sits at \`text-lg\` with \`text-text-primary\`. Links land at
+[accent-2](#) for a legible read.
+
+### Lists
+
+- Unordered item one
+- Unordered item two
+- Unordered item three
+
+1. Ordered item one
+2. Ordered item two
+
+> The primitives are the alphabet. Compose them into your sentence, and
+> don't reach for a bespoke component before you have to.
+
+### Code
+
+\`\`\`tsx
+import { Button } from "@nustackdev/ui-kit";
+
+<Button>Save</Button>
+\`\`\`
+
+---
+
+Horizontal rules use **border-subtle**. Emphasized text stays *italic* and
+inline styling flows naturally.
+`;
 
 export const Default: StoryObj = {
 	render: () => (
 		<div className="p-8 max-w-2xl">
-				<Prose>{SAMPLE}</Prose>
-			</div>
+			<Markdown value={SAMPLE} />
+		</div>
 	),
 };
 

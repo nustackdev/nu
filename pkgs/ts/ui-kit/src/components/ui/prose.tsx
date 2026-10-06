@@ -1,16 +1,20 @@
 // Prose primitive.
 //
 // The kit's reading surface. Body copy sits at text-lg, a step above the kit's
-// dense text-base, and headings, code and tables scale with it, so long-form
-// text reads like a document while controls around it stay compact. The box
+// dense text-base, and code and inline text scale with it, so long-form text
+// reads like a document while controls around it stay compact. The box
 // carries its own small vertical padding; its blocks never push past it.
+//
+// Where the looks come from: a heading, a list and a table are drawn by the
+// element recipes (lib/recipes.ts), which the kit's prose schema puts on the
+// elements themselves, the same classes `Heading`, `List` and `Table` use.
+// What is left here is what only a document has: the reading size, the
+// spacing between blocks, and the elements no kit component draws (quotes,
+// inline code, links, rules, images, checklists, a table cell's paragraph).
 //
 // No Tailwind Typography plugin, no external stylesheet: everything reaches
 // tokens via arbitrary-variant selectors so the whole prose block themes
 // automatically with .dark.
-//
-// The class list is long by design (each selector targets one element); this
-// keeps the primitive dependency-free and tuneable per element.
 
 import type * as React from "react";
 
@@ -25,19 +29,14 @@ const proseSelectors = [
 	// per-element margins below on specificity, not on order. The box's own
 	// edge air is the padding above, which never collapses into a wrapper.
 	"[&_*:first-child]:mt-0 [&_*:last-child]:mb-0",
-	// headings
-	"[&_h1]:font-display [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:text-text-primary [&_h1]:mt-6 [&_h1]:mb-3",
-	"[&_h2]:font-display [&_h2]:text-2xl [&_h2]:font-semibold [&_h2]:text-text-primary [&_h2]:mt-5 [&_h2]:mb-2",
-	"[&_h3]:font-display [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:text-text-primary [&_h3]:mt-4 [&_h3]:mb-2",
-	"[&_h4]:font-display [&_h4]:text-lg [&_h4]:font-semibold [&_h4]:text-text-primary [&_h4]:mt-4 [&_h4]:mb-2",
-	"[&_h5]:font-display [&_h5]:text-base [&_h5]:font-semibold [&_h5]:text-text-primary [&_h5]:mt-3 [&_h5]:mb-1",
-	"[&_h6]:font-display [&_h6]:text-sm [&_h6]:font-semibold [&_h6]:text-text-secondary [&_h6]:mt-3 [&_h6]:mb-1 [&_h6]:uppercase [&_h6]:tracking-[0.02em]",
+	// headings: the space around them (their look is the heading recipe)
+	"[&_h1]:mt-6 [&_h1]:mb-3 [&_h2]:mt-5 [&_h2]:mb-2 [&_h3]:mt-4 [&_h3]:mb-2",
+	"[&_h4]:mt-4 [&_h4]:mb-2 [&_h5]:mt-3 [&_h5]:mb-1 [&_h6]:mt-3 [&_h6]:mb-1",
 	// paragraphs
 	"[&_p]:my-2.5 [&_p]:text-lg [&_p]:text-text-primary",
-	// lists
-	"[&_ul]:my-2.5 [&_ul]:pl-5 [&_ul]:list-disc [&_ul]:text-text-primary",
-	"[&_ol]:my-2.5 [&_ol]:pl-5 [&_ol]:list-decimal [&_ol]:text-text-primary",
-	"[&_li]:my-0.5 [&_li]:text-lg [&_li]:leading-normal",
+	// lists: the space around them (markers, indent and item spacing are the
+	// list recipe; items read at the container's size)
+	"[&_ul]:my-2.5 [&_ol]:my-2.5",
 	// checklists: the box sits on the first line, a done item goes quiet
 	"[&_[data-task-list]]:list-none [&_[data-task-list]]:pl-0",
 	"[&_[data-task-item]]:flex [&_[data-task-item]]:items-start [&_[data-task-item]]:gap-2",
@@ -55,17 +54,15 @@ const proseSelectors = [
 	"[&_a]:text-accent-2 [&_a]:underline [&_a]:underline-offset-2 [&_a:hover]:text-accent-2-hover",
 	// horizontal rule
 	"[&_hr]:my-4 [&_hr]:border-0 [&_hr]:border-t [&_hr]:border-border-subtle",
-	// tables: the kit `Table` look at its default density, so a markdown table
-	// and a TableRef read as the same thing. The editor wraps each table in a
-	// box that scrolls sideways when the table is wider than the page.
+	// tables: the space around them and the box the editor wraps each one in,
+	// which scrolls sideways when the table is wider than the page. The table
+	// itself is the table recipe, `Table`'s look at its default density.
 	"[&_[data-slot=prose-table]]:relative [&_[data-slot=prose-table]]:my-3 [&_[data-table-scroll]]:w-full [&_[data-table-scroll]]:overflow-x-auto",
-	"[&_table]:my-3 [&_table]:w-full [&_table]:border-separate [&_table]:border-spacing-0 [&_table]:border [&_table]:border-border-default [&_table]:rounded-md [&_table]:overflow-hidden [&_table]:text-sm [&_table]:text-text-primary",
-	"[&_tr]:h-7 [&_tr]:transition-colors [&_tr]:duration-fast [&_tr]:ease-out [&_tr:has(>td):hover]:bg-bg-elevated",
-	"[&_th]:px-2.5 [&_th]:py-1.5 [&_th]:text-left [&_th]:align-middle [&_th]:whitespace-nowrap [&_th]:bg-bg-sunken [&_th]:text-text-secondary [&_th]:text-xs [&_th]:font-medium [&_th]:uppercase [&_th]:tracking-wide [&_th]:border-b [&_th]:border-border-default",
-	"[&_td]:px-2.5 [&_td]:py-1.5 [&_td]:align-middle [&_td]:text-sm [&_td]:text-text-primary [&_td]:border-b [&_td]:border-border-subtle [&_tr:last-child>:is(th,td)]:border-b-0",
-	// A cell's paragraph is the cell's text: no paragraph air, the cell's size
-	// and color. Code steps down with it, as it does from body copy.
-	"[&_:is(th,td)_p]:my-0 [&_:is(th,td)_p]:[font-size:inherit] [&_:is(th,td)_p]:[color:inherit]",
+	"[&_table]:my-3",
+	// A cell's paragraph is the cell's text: no paragraph air, the cell's size,
+	// line height and color, so a markdown row is as tall as a `Table` row.
+	// Code steps down with it, as it does from body copy.
+	"[&_:is(th,td)_p]:my-0 [&_:is(th,td)_p]:[font-size:inherit] [&_:is(th,td)_p]:[line-height:inherit] [&_:is(th,td)_p]:[color:inherit]",
 	"[&_:is(th,td)_code]:text-xs [&_:is(th,td)_code]:normal-case [&_:is(th,td)_code]:tracking-normal",
 	// images
 	"[&_img]:max-w-full [&_img]:rounded-md",

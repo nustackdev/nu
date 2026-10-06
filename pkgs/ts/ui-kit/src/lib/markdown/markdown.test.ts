@@ -16,8 +16,9 @@
 // Run: npm test -w @nustackdev/ui-kit
 
 import { describe, expect, it } from "vitest";
+import { table } from "../recipes";
 import { createMarkdown, parseMarkdown, posForOffset, serializeMarkdown } from "./markdown";
-import { createProseSchema, proseSchema, safeUrl } from "./schema";
+import { createProseSchema, proseRecipes, proseSchema, safeUrl } from "./schema";
 
 function lap(md: string): string {
 	return serializeMarkdown(parseMarkdown(md).doc);
@@ -509,10 +510,22 @@ describe("tables", () => {
 		const cell = nodeType.tableCell.create({ align: "right" }, nodeType.paragraph.create());
 		const out = cell.type.spec.toDOM?.(cell) as [string, Record<string, string>];
 		expect(out[0]).toBe("td");
-		expect(out[1]).toEqual({ style: "text-align: right" });
+		expect(out[1]).toEqual({ style: "text-align: right", class: proseRecipes.tableCell });
 		const plain = nodeType.tableHeader.create(null, nodeType.paragraph.create());
 		const bare = plain.type.spec.toDOM?.(plain) as [string, object];
-		expect(bare[1]).toEqual({});
+		expect(bare[1]).toEqual({ class: proseRecipes.tableHeader });
+	});
+
+	it("draws markdown tables with the kit Table's classes", () => {
+		const rec = proseRecipes;
+		for (const [key, recipe] of [
+			["table", [table.root, table.framed]],
+			["tableRow", [table.rowHeight.default, table.row]],
+			["tableHeader", [table.cellPad.default, table.head]],
+			["tableCell", [table.cellPad.default, table.cell]],
+		] as const) {
+			expect(rec[key]).toBe(recipe.join(" "));
+		}
 	});
 });
 
@@ -622,7 +635,8 @@ describe("schema parameterisation", () => {
 	});
 
 	it("ships no class attribute when there is no recipe", () => {
-		const doc = parseMarkdown("## two\n").doc;
+		const bare = createMarkdown(createProseSchema());
+		const doc = bare.parseMarkdown("## two\n").doc;
 		const out = doc.firstChild?.type.spec.toDOM?.(doc.firstChild) as [string, object];
 		expect(out[1]).toEqual({});
 	});

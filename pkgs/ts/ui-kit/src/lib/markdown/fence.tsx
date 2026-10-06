@@ -53,7 +53,7 @@ import { type Command, Plugin, Selection, TextSelection } from "prosemirror-stat
 import type { EditorView, NodeView, NodeViewConstructor } from "prosemirror-view";
 import { useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { CopyButton, codeBlockBox } from "../../components/ui/code";
+import { CopyButton } from "../../components/ui/code";
 import {
 	Combobox,
 	ComboboxContent,
@@ -70,6 +70,7 @@ import {
 	languageCatalogue,
 	loadLanguage,
 } from "../code/languages";
+import { codeBox } from "../recipes";
 import { cn } from "../utils";
 import { fenceInfo } from "./markdown";
 import type { ProseSchema } from "./schema";
@@ -192,7 +193,7 @@ class FenceView implements NodeView {
 		// a page never gets: the prose tracking, and the wrapping rules the
 		// contenteditable needs for its own text.
 		this.dom.className = cn(
-			codeBlockBox,
+			codeBox,
 			"my-3 tracking-normal whitespace-normal [overflow-wrap:normal]",
 		);
 

@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Tables, lists and headings share one look across pages and documents
 - Lenses repaint on their own when the data they show changes
 - Lenses read from the right store when a program keeps several of them
 - Code fences open on Enter as well as space after the opening backticks
