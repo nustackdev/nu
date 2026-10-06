@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING
 
 import nu
 import nustd.kv
+from nu.domains.shape import root_shape
 
 from .columns import DEFAULT_MAX_ROWS, columns
 
@@ -97,11 +98,15 @@ def browse(
         )
     """
     key = _nav_key(lens)
+    # The reads are rooted where the prefix is, or at the shape, and the
+    # snapshot has to open on the store that root names.
+    scope = shape if prefix is None else root_shape(prefix)
     boot = nustd.kv.Snapshot(
         lens.set_columns(
             nu.List.of(),
             columns(shape, nu.List.of(), prefix=prefix, max_rows=max_rows),
-        )
+        ),
+        scope=scope,
     )
     moved = nu.ReactForever(
         lens.on_nav(),
@@ -109,7 +114,8 @@ def browse(
             lens.set_columns(
                 nu.Attr(key),
                 columns(shape, nu.Attr(key), prefix=prefix, max_rows=max_rows),
-            )
+            ),
+            scope=scope,
         ),
         changed_key=key,
     )

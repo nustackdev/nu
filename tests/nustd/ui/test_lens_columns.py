@@ -400,6 +400,23 @@ async def test_browse_paints_the_root_column_then_repaints_on_a_move(store):
 
 
 @pytest.mark.timeout(60)
+async def test_browse_reads_a_store_bound_only_under_its_shape():
+    """A store bound under its shape alone, as several stores are, still answers."""
+    with nustd.kv.memory_storage() as storage:
+        session = _Recorder()
+        ctx = nu.Context().bind(Navigator, Navigator(storage), Store)
+        await nu.arun(nustd.kv.Transaction(_seed(), scope=Store), ctx)
+        ctx = ctx.bind(nustd.ui.Session, session)
+        arm = asyncio.create_task(nu.arun(nustd.ui.lens.browse(LENS, Store), ctx))
+        try:
+            assert await _settle(lambda: session.writes(LENS_PATH))
+            boot = session.writes(LENS_PATH)[0].payload
+            assert [c["kind"] for c in boot["columns"]] == ["shape"]
+        finally:
+            arm.cancel()
+
+
+@pytest.mark.timeout(60)
 async def test_two_lenses_on_one_page_do_not_share_a_cursor():
     """The arm's attrs key comes off the slot chain, so two lenses are two keys."""
 
