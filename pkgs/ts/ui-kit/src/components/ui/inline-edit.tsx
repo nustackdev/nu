@@ -6,7 +6,10 @@
 // rename, is the caller's call.
 //
 // Keys are kept from the row around it: arrows, Home and End move the caret
-// here, not the focus of a tree or list the row belongs to.
+// here, not the focus of a tree or list the row belongs to. Tab leaves the
+// input as usual (a blur, so a commit) unless `onTab` is given: then Tab and
+// Shift+Tab end the edit with the value and the direction, for a grid that
+// moves the edit on to the next cell.
 
 import type * as React from "react";
 import { useEffect, useRef } from "react";
@@ -21,10 +24,22 @@ export type InlineEditProps = {
 	/** `how` says whether Enter or a blur committed it, eg to put focus back. */
 	onCommit: (value: string, how: "enter" | "blur") => void;
 	onCancel: () => void;
+	/** Tab ends the edit with the value, `back` for Shift+Tab, instead of leaving the input. */
+	onTab?: (value: string, back: boolean) => void;
+	/** The on-screen keyboard to ask for, eg "decimal" for a number. */
+	inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
 	className?: string;
 };
 
-export function InlineEdit({ initial, label, onCommit, onCancel, className }: InlineEditProps) {
+export function InlineEdit({
+	initial,
+	label,
+	onCommit,
+	onCancel,
+	onTab,
+	inputMode,
+	className,
+}: InlineEditProps) {
 	const done = useRef(false);
 	const input = useRef<HTMLInputElement | null>(null);
 	useEffect(() => {
@@ -45,6 +60,7 @@ export function InlineEdit({ initial, label, onCommit, onCancel, className }: In
 				size="sm"
 				ring="inset"
 				aria-label={label}
+				inputMode={inputMode}
 				defaultValue={initial}
 				className={cn("h-6 min-w-0 flex-1 px-1 py-0", className)}
 				onBlur={(e) => {
@@ -62,6 +78,11 @@ export function InlineEdit({ initial, label, onCommit, onCancel, className }: In
 					} else if (e.key === "Escape") {
 						e.preventDefault();
 						finish(onCancel);
+					} else if (e.key === "Tab" && onTab) {
+						e.preventDefault();
+						const value = e.currentTarget.value;
+						const back = e.shiftKey;
+						finish(() => onTab(value, back));
 					}
 				}}
 			/>

@@ -80,6 +80,30 @@ const table = {
 	/** Body cell. */
 	cell: "align-middle text-sm text-text-primary border-b border-border-subtle",
 	caption: "mt-2 text-xs text-text-muted",
+	/**
+	 * A grid cell (`DataTable`): one tab stop moved by the arrows, so it draws
+	 * the kit's inset ring (an outer one would be clipped by the frame).
+	 */
+	gridCell: [
+		"cursor-default",
+		"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
+	].join(" "),
+	/**
+	 * The editor laid over a cell being edited: it fills the cell edge to edge,
+	 * so the row keeps its height and the column its width.
+	 */
+	editor: "absolute inset-0 flex",
+	/** The editor's field: square, borderless, the ring alone marks it. */
+	editorField: "h-full rounded-none border-0 bg-bg-surface",
+	/** Field padding per density: the cell's own, so the text stays put as the edit opens. */
+	editorPad: {
+		compact: "px-2",
+		default: "px-2.5",
+		comfortable: "px-3",
+	} satisfies Record<TableDensity, string>,
+	/** The drop line a row draws on its top or bottom edge while a drag aims there. */
+	dropBefore: "shadow-[inset_0_2px_0_0_var(--accent)]",
+	dropAfter: "shadow-[inset_0_-2px_0_0_var(--accent)]",
 };
 
 /* ================================= list ================================== */

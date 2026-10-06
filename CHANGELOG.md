@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- An editable data grid for the kit, where the host confirms every change
 - Tables, lists and headings share one look across pages and documents
 - Lenses repaint on their own when the data they show changes
 - Lenses read from the right store when a program keeps several of them

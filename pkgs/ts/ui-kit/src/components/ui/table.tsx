@@ -50,11 +50,14 @@ const TableContext = React.createContext<TableCtx>({
 
 export interface TableProps
 	extends React.TableHTMLAttributes<HTMLTableElement>,
-		VariantProps<typeof tableVariants> {}
+		VariantProps<typeof tableVariants> {
+	/** Alternate rows tinted with any variant; the `striped` variant implies it. */
+	striped?: boolean;
+}
 
-export function Table({ className, variant, density, ...props }: TableProps) {
+export function Table({ className, variant, density, striped: stripe, ...props }: TableProps) {
 	const effectiveDensity: TableDensity = density ?? "default";
-	const striped = variant === "striped";
+	const striped = stripe ?? variant === "striped";
 	return (
 		<TableContext.Provider value={{ density: effectiveDensity, striped }}>
 			<div className={table.frame}>

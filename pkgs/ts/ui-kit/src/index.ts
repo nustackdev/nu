@@ -154,6 +154,16 @@ export {
 	TableCaption,
 	tableVariants,
 } from "./components/ui/table";
+export {
+	DataTable,
+	type DataTableColumn,
+	type DataTableEdit,
+	type DataTableHandle,
+	type DataTableKind,
+	type DataTableProps,
+	type DataTableRow,
+	type DataTableSort,
+} from "./components/ui/data-table";
 export { LineChart } from "./components/ui/line-chart";
 export { BarChart } from "./components/ui/bar-chart";
 export { AreaChart } from "./components/ui/area-chart";
