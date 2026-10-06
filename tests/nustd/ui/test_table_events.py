@@ -1,4 +1,4 @@
-"""TableRef's two notifies: ``on_sort`` and ``on_row_click`` each take only their own.
+"""TableRef: frames out, and notifies in where each ``on_*`` takes only its own kind.
 
 A fake subscription fires every payload the moment a reaction binds, so
 ``React`` runs its body on the first one its filter lets through.
@@ -7,6 +7,8 @@ A fake subscription fires every payload the moment a reaction binds, so
 from __future__ import annotations
 
 import asyncio
+
+import pytest
 
 import nu
 from nu import Context
@@ -80,3 +82,126 @@ def test_sort_skips_a_row_click():
         sess,
     )
     assert [f.payload for f in sess.frames] == ["title desc"]
+
+
+# --- the editable table -------------------------------------------------------
+
+
+class GridPage(Page):
+    table = TableRef.slot(
+        columns=["id", {"key": "title", "label": "Title", "kind": "text"}],
+        row_key="id",
+        selection="multi",
+        editable=True,
+        addable=True,
+        deletable=True,
+        draggable=True,
+    )
+    out = TextRef.slot()
+
+
+class GridApp(Index):
+    grid = GridPage.slot("/")
+
+
+_KINDS = ("sort", "row", "select", "edit", "add", "delete", "move")
+_ON = {"sort": "on_sort", "row": "on_row_click"}
+
+
+def _echo(change) -> nu.Nu:
+    """React once, writing the event's ``event`` field to ``out``."""
+    return nu.React(change, lambda ev: GridApp.grid.out.set(nu.Str(ev["event"])))
+
+
+def test_slot_defaults_keep_the_old_props():
+    props = nu.tree.payload(ShelfPage.table)["props"]
+    assert props == {
+        "columns": ["title"],
+        "label": "Table",
+        "striped": True,
+        "dense": False,
+        "max_rows": 0,
+        "sort_column": "",
+        "sort_direction": "asc",
+        "clickable_rows": True,
+        "row_key": "",
+        "selection": "none",
+        "editable": False,
+        "addable": False,
+        "deletable": False,
+        "draggable": False,
+    }
+
+
+def test_slot_takes_mapping_columns_and_copies_them():
+    column = {"key": "year", "kind": "number"}
+
+    class Mixed(Page):
+        table = TableRef.slot(columns=["title", column])
+
+    column["kind"] = "text"
+    props = nu.tree.payload(Mixed.table)["props"]
+    assert props["columns"] == ["title", {"key": "year", "kind": "number"}]
+
+
+@pytest.mark.parametrize(
+    ("term", "payload"),
+    [
+        (GridApp.grid.table.set_rows([{"id": "a"}]), {"rows": [{"id": "a"}]}),
+        (GridApp.grid.table.set_selected(["a", "b"]), {"selected": ["a", "b"]}),
+        (
+            GridApp.grid.table.set_sort("title", "desc"),
+            {"sort_column": "title", "sort_direction": "desc"},
+        ),
+        (GridApp.grid.table.clear(), {"rows": []}),
+    ],
+)
+def test_writes_merge_on_the_table_path(term, payload):
+    sess = _Session()
+    _run(term, sess)
+    (frame,) = sess.frames
+    assert (frame.op, frame.ref, frame.payload) == ("write", ("grid", "table"), payload)
+
+
+def test_append_takes_a_mapping_row():
+    sess = _Session()
+    _run(GridApp.grid.table.append({"id": "a", "title": "A"}), sess)
+    (frame,) = sess.frames
+    assert (frame.op, frame.payload) == ("append", {"id": "a", "title": "A"})
+
+
+@pytest.mark.parametrize("name", _KINDS)
+def test_each_on_takes_only_its_own_event(name):
+    others = [{"event": e} for e in _KINDS if e != name]
+    sess = _Session(*others, {"event": name, "key": "a"})
+    _run(_echo(getattr(GridApp.grid.table, _ON.get(name, f"on_{name}"))()), sess)
+    assert [f.payload for f in sess.frames] == [name]
+
+
+def test_on_change_takes_every_event():
+    sess = _Session({"event": "move", "key": "a", "index": 0})
+    _run(_echo(GridApp.grid.table.on_change()), sess)
+    assert [f.payload for f in sess.frames] == ["move"]
+
+
+def test_an_edit_reads_its_fields():
+    sess = _Session(
+        {
+            "event": "edit",
+            "key": "a",
+            "row_index": 0,
+            "column": "title",
+            "value": "B",
+            "previous": "A",
+        }
+    )
+    _run(
+        nu.React(
+            GridApp.grid.table.on_edit(),
+            lambda ev: GridApp.grid.out.set(
+                nu.Str(ev["key"]) + "." + nu.Str(ev["column"]) + "=" + nu.Str(ev["value"])
+            ),
+        ),
+        sess,
+    )
+    assert [f.payload for f in sess.frames] == ["a.title=B"]

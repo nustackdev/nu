@@ -550,9 +550,14 @@ export function DataTable({
 		if (selecting) {
 			const range = e.shiftKey && multi;
 			const toggle = (e.metaKey || e.ctrlKey) && multi;
-			select(
-				clickSelection(selection, selected, order, row.key, anchor.current, { range, toggle }),
-			);
+			const next = clickSelection(selection, selected, order, row.key, anchor.current, {
+				range,
+				toggle,
+			});
+			// A click that changes nothing (a second click of a double click, or a
+			// click on the row already selected) asks for nothing.
+			const same = next.length === selected.length && next.every((k) => selected.includes(k));
+			if (!same) select(next);
 			if (!range || anchor.current === null || !order.includes(anchor.current)) {
 				anchor.current = row.key;
 			}

@@ -423,6 +423,19 @@ describe("DataTable", () => {
 		expect(input().value).toBe("3");
 	});
 
+	it("asks for no selection a click does not change", () => {
+		const spy = vi.fn();
+		act(() => root.render(<Selecting mode="multi" spy={spy} />));
+		click(cell("r2", "title"));
+		click(cell("r2", "title"));
+		click(cell("r2", "points"));
+		expect(spy).toHaveBeenCalledTimes(1);
+		expect(spy).toHaveBeenLastCalledWith(["r2"]);
+		click(cell("r3", "title"), { metaKey: true });
+		expect(spy).toHaveBeenLastCalledWith(["r2", "r3"]);
+		expect(spy).toHaveBeenCalledTimes(2);
+	});
+
 	it("selects one row in single mode", () => {
 		const spy = vi.fn();
 		act(() => root.render(<Selecting mode="single" spy={spy} />));
