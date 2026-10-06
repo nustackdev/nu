@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- One example page puts every kind of table side by side to try
 - A new table row's dropdown cell can be set like any other
 - Table updates travel as their own operations, and unknown ones get reported
 - A table preset keeps a grid and its store in step, live across tabs
