@@ -20,16 +20,26 @@
 //   onAdd(index)                "a new row at index"; the host decides what is in it
 //   onDelete(keys)              these rows, please
 //   onMove(key, index)          this row to there (index counts rows without it)
+//   onColumnAdd(index)          "a new column at index"; the host decides what it is
+//   onColumnDelete(key)         this column, please
+//   onColumnRename(key, label)  this header text instead
+//   onColumnMove(key, index)    this column to there (index counts columns without it)
+//   onColumnKind(key, kind)     values of this column read as another kind
+//   onColumnAlign(key, align)   this column lines up another way
 //
 // Every feature is on only when its callback is given; with none the table
 // reads. An edit is a request: the cell shows the old value until the host
 // hands back rows that carry the new one, and a host that refuses changes
 // nothing. So a server confirms every edit and the grid never runs ahead of it.
+// Columns are the same: the table never changes them, a rename keeps the old
+// label until the host hands back columns with the new one.
 //
 // ## Keyboard
 //
 // Cells are one roving tab stop (`useRovingFocus` over cell keys); the header
-// row joins the grid when some column sorts. Arrows move a cell, Home / End to
+// row joins the grid when some column sorts or any column request is on. F2 on
+// a header renames it (Enter too, on one that does not sort): Enter commits,
+// Escape cancels, both back on the header. Arrows move a cell, Home / End to
 // the row's ends, Ctrl/Cmd + Home / End to the grid's, PageUp / PageDown ten
 // rows. Enter or F2 edits a cell that edits (a bool flips, a select opens),
 // Enter elsewhere activates. While editing: Enter commits, Escape cancels, both
@@ -51,9 +61,14 @@
 // the pointer, else the focused one, and show while the pointer or the focus
 // is in the table: the row handle on the left edge opens the row's menu
 // (insert above / below, move up / down, delete), the column handle on the
-// top edge the column's (sort ascending / descending); a handle with nothing
-// to offer is not drawn. Right-click is the second way in: "Edit cell", then
-// the row's menu, the same items from the same builders. With `onMove` rows
+// top edge the column's (insert left / right, move left / right, sort,
+// rename, type, align, delete: what is on); a handle with nothing to offer
+// is not drawn. Right-click is the second way in: on a cell "Edit cell", then
+// the row's menu; on a header the column's menu; the same items from the
+// same builders. Once the host answers a column insert, delete or move, the
+// focus goes to the new column, the column now where the deleted one was, or
+// the moved one. A table always keeps one column: delete is greyed out on the
+// last one. With `onMove` rows
 // also drag, a line marking where the drop lands. "Add row" sits under the
 // table when `onAdd` is given.
 //
@@ -177,6 +192,15 @@ export type DataTableProps = {
 	onDelete?: (keys: string[]) => void;
 	/** Row `key` to `index`, counted among the rows without it. */
 	onMove?: (key: string, index: number) => void;
+	/** A new column at `index`; the host decides what it is. */
+	onColumnAdd?: (index: number) => void;
+	onColumnDelete?: (key: string) => void;
+	/** The header text typed in place; the old one shows until the host confirms. */
+	onColumnRename?: (key: string, label: string) => void;
+	/** Column `key` to `index`, counted among the columns without it. */
+	onColumnMove?: (key: string, index: number) => void;
+	onColumnKind?: (key: string, kind: DataTableKind) => void;
+	onColumnAlign?: (key: string, align: "left" | "center" | "right") => void;
 	/** Draws a cell that is not being edited; return undefined for the default look. */
 	renderCell?: (value: unknown, column: DataTableColumn, row: DataTableRow) => React.ReactNode;
 	/** What the body shows with no rows. */
@@ -201,6 +225,21 @@ type Pending = {
 	index: number;
 	/** What was asked: a delete is answered once the row is gone, a move once it sits at `index`. */
 	ask?: "delete" | "move";
+	/** Where the column was, for when it is gone by the time the focus comes back. */
+	colIndex?: number;
+};
+
+/** What the focus should land on once the host's columns come back. */
+type ColumnPending = {
+	ask: "add" | "delete" | "move";
+	/** The row whose cell takes the focus; null for the header. */
+	row: string | null;
+	/** The column asked about (add: none). */
+	col: string;
+	/** add: where; delete: where it was; move: where it goes. */
+	index: number;
+	/** add: the column keys before, so the new one stands out. */
+	before: readonly string[];
 };
 
 const ALIGN = { left: "text-left", center: "text-center", right: "text-right" } as const;
@@ -242,6 +281,12 @@ export function DataTable({
 	onAdd,
 	onDelete,
 	onMove,
+	onColumnAdd,
+	onColumnDelete,
+	onColumnRename,
+	onColumnMove,
+	onColumnKind,
+	onColumnAlign,
 	renderCell,
 	empty,
 	className,
@@ -264,7 +309,18 @@ export function DataTable({
 		[columns, onEdit, onSort],
 	);
 	const order = useMemo(() => rows.map((r) => r.key), [rows]);
-	const header = cols.some((c) => c.sortable);
+	const columnOps =
+		onColumnAdd !== undefined ||
+		onColumnDelete !== undefined ||
+		onColumnRename !== undefined ||
+		onColumnMove !== undefined ||
+		onColumnKind !== undefined ||
+		onColumnAlign !== undefined;
+	// Held by content, not by `cols`: a host passing new callbacks every render
+	// recomputes `cols`, and the column effects below are about keys changing.
+	const colSig = JSON.stringify(cols.map((c) => c.key));
+	const colKeys = useMemo(() => JSON.parse(colSig) as string[], [colSig]);
+	const header = columnOps || cols.some((c) => c.sortable);
 	const dims: GridDims = { rows: rows.length, cols: cols.length, header };
 	const multi = selection === "multi";
 	const selecting = selection !== "none" && onSelect !== undefined;
@@ -308,12 +364,27 @@ export function DataTable({
 	const [focusIn, setFocusIn] = useState(false);
 	const [handleAt, setHandleAt] = useState<Spot | null>(null);
 	// With its row's index then, so a delete puts the focus where the row was.
-	const handleTarget = useRef<(Spot & { index: number }) | null>(null);
+	const handleTarget = useRef<(Spot & { index: number; colIndex: number }) | null>(null);
 	// A shortcut asks for a menu: opened once the handles stand on the focused cell.
 	const [shortcut, setShortcut] = useState<TableHandleKind | null>(null);
 	// When a shortcut last opened a menu: the browser's own context menu event
 	// that the same key may send right after opens nothing.
 	const shortcutAt = useRef(0);
+
+	// Columns: the header being renamed, a rename asked for from a menu (it
+	// waits for the menu to close, as "Edit cell" does), the header a
+	// right-click opened its menu on, and where the focus goes once a column
+	// request is answered.
+	const [renaming, setRenaming] = useState<string | null>(null);
+	const renameAfterMenu = useRef<string | null>(null);
+	const [headMenuAt, setHeadMenuAt] = useState<{ col: string; row: string | null } | null>(null);
+	const headMenuOffered = useRef(false);
+	const colPending = useRef<ColumnPending | null>(null);
+	// Where a column answer that came while its menu was still open wants the
+	// focus: the menu puts it there as it closes, instead of back where it was.
+	const colDest = useRef<string | null>(null);
+	// The header a right-click opened its menu on, by keys, for the focus to come back to.
+	const headTarget = useRef<(Spot & { colIndex: number }) | null>(null);
 
 	const focusCell = useCallback(
 		(rowKey: string, columnKey: string) => focusKey(cellKey(rowKey, columnKey)),
@@ -337,10 +408,8 @@ export function DataTable({
 	/** Focus a row's cell, or what now sits where the row was when it is gone. */
 	const restore = useCallback(
 		(p: Pending) => {
-			const col = Math.max(
-				0,
-				cols.findIndex((c) => c.key === p.col),
-			);
+			const at = cols.findIndex((c) => c.key === p.col);
+			const col = at >= 0 ? at : Math.max(0, Math.min(p.colIndex ?? 0, cols.length - 1));
 			const still = order.indexOf(p.row);
 			if (still >= 0) focusAt({ row: still, col });
 			else if (rows.length > 0) focusAt({ row: Math.min(p.index, rows.length - 1), col });
@@ -371,6 +440,38 @@ export function DataTable({
 		if (active && active !== document.body && box && !box.contains(active)) return;
 		restore(p);
 	}, [rows]);
+
+	// Columns come back from the host the same way: an edit, a rename or a
+	// menu on a column that went away ends; a request answered puts the focus
+	// on the new column, the one now where the deleted one was, or the moved one.
+	useLayoutEffect(() => {
+		const was = editingRef.current;
+		if (was && !colKeys.includes(was.col)) setEditing(null);
+		if (renaming !== null && !colKeys.includes(renaming)) setRenaming(null);
+		const p = colPending.current;
+		if (!p) return;
+		colPending.current = null;
+		let to = -1;
+		if (p.ask === "move") to = colKeys.indexOf(p.col) === p.index ? p.index : -1;
+		else if (p.ask === "delete") {
+			to = colKeys.includes(p.col) ? -1 : Math.min(p.index, colKeys.length - 1);
+		} else to = colKeys.findIndex((k) => !p.before.includes(k));
+		const col = colKeys[to];
+		if (col === undefined) return;
+		let dest: string;
+		if (p.row !== null && order.includes(p.row)) dest = cellKey(p.row, col);
+		else if (header) dest = cellKey(null, col);
+		else if (rows[0]) dest = cellKey(rows[0].key, col);
+		else return;
+		if (handleTarget.current || headTarget.current) {
+			colDest.current = dest;
+			return;
+		}
+		const active = document.activeElement;
+		const box = containerRef.current;
+		if (active && active !== document.body && box && !box.contains(active)) return;
+		focusKey(dest);
+	}, [colKeys]);
 
 	// --- Intents ---------------------------------------------------------------
 
@@ -493,16 +594,81 @@ export function DataTable({
 		});
 	};
 
-	/** The column menu: sorting, for now, when the column sorts. */
-	const columnItems = (c: number): TableMenuItem[] => {
+	/** Ask a column request, the focus to follow once the host answers it. */
+	const askColumn = (p: ColumnPending, run: () => void) => {
+		pending.current = null;
+		colDest.current = null;
+		colPending.current = p;
+		run();
+	};
+
+	/**
+	 * The column menu for column `c`, built from the column features that are
+	 * on; `row` is the row whose cell the focus comes back to (null: the header).
+	 */
+	const columnItems = (c: number, row: string | null): TableMenuItem[] => {
 		const col = cols[c];
-		if (!col?.sortable || !onSort) return [];
+		if (!col) return [];
+		const ask = (what: Omit<ColumnPending, "row" | "before">, run: () => void) => () =>
+			askColumn({ ...what, row, before: colKeys }, run);
+		const step = (delta: -1 | 1) => {
+			const to = stepIndex(colKeys, col.key, delta);
+			return {
+				disabled: to === null,
+				run: ask({ ask: "move", col: col.key, index: to ?? c }, () => {
+					if (to !== null) onColumnMove?.(col.key, to);
+				}),
+			};
+		};
 		return columnMenu({
-			sort: {
-				ascending: () => onSort(col.key, "asc"),
-				descending: () => onSort(col.key, "desc"),
+			insertLeft: onColumnAdd && ask({ ask: "add", col: "", index: c }, () => onColumnAdd(c)),
+			insertRight:
+				onColumnAdd && ask({ ask: "add", col: "", index: c + 1 }, () => onColumnAdd(c + 1)),
+			moveLeft: onColumnMove && step(-1),
+			moveRight: onColumnMove && step(1),
+			sort:
+				col.sortable && onSort
+					? {
+							ascending: () => onSort(col.key, "asc"),
+							descending: () => onSort(col.key, "desc"),
+						}
+					: undefined,
+			rename:
+				onColumnRename &&
+				(() => {
+					renameAfterMenu.current = col.key;
+				}),
+			kind: onColumnKind && {
+				value: col.kind,
+				onValueChange: (kind) => {
+					if (kind !== col.kind) onColumnKind(col.key, kind);
+				},
+			},
+			align: onColumnAlign && {
+				value: col.align,
+				onValueChange: (align) => {
+					if (align !== col.align) onColumnAlign(col.key, align);
+				},
+			},
+			// A table always keeps one column.
+			remove: onColumnDelete && {
+				disabled: cols.length <= 1,
+				run: ask({ ask: "delete", col: col.key, index: c }, () => onColumnDelete(col.key)),
 			},
 		});
+	};
+
+	/** After a column menu closed: the rename it asked for, if any. */
+	const renameAfter = () => {
+		const key = renameAfterMenu.current;
+		renameAfterMenu.current = null;
+		if (key !== null && colKeys.includes(key)) setRenaming(key);
+	};
+
+	/** End a rename, the focus back on the header (or not, on a blur). */
+	const endRename = (key: string, refocus: boolean) => {
+		setRenaming(null);
+		if (refocus && header) focusKey(cellKey(null, key));
 	};
 
 	/** Open a handle's menu from the keyboard, on the focused cell. */
@@ -525,6 +691,8 @@ export function DataTable({
 	const onHeadKeyDown = (e: React.KeyboardEvent, c: number) => {
 		const col = cols[c];
 		if (!col) return;
+		// The keyboard has moved on: an answer still out leaves the focus alone.
+		colPending.current = null;
 		// A header has no row: both shortcuts open its column's menu.
 		if (tableMenuKey(e)) {
 			e.preventDefault();
@@ -542,6 +710,9 @@ export function DataTable({
 		if ((e.key === "Enter" || e.key === " ") && col.sortable) {
 			e.preventDefault();
 			sortBy(col);
+		} else if ((e.key === "F2" || e.key === "Enter") && onColumnRename) {
+			e.preventDefault();
+			setRenaming(col.key);
 		}
 	};
 
@@ -550,6 +721,7 @@ export function DataTable({
 		const col = cols[c];
 		if (!row || !col) return;
 		pending.current = null;
+		colPending.current = null;
 		const menu = tableMenuKey(e);
 		if (menu) {
 			e.preventDefault();
@@ -638,6 +810,7 @@ export function DataTable({
 		const row = rows[r];
 		if (!row) return;
 		pending.current = null;
+		colPending.current = null;
 		// Keep the keyboard on the cell, so the arrows work next.
 		const el = e.currentTarget;
 		if (!el.contains(document.activeElement)) el.focus({ preventScroll: true });
@@ -959,6 +1132,115 @@ export function DataTable({
 		</TableBody>
 	);
 
+	// --- Header --------------------------------------------------------------
+
+	const hasColumnMenu = cols.some((_, c) => columnItems(c, null).length > 0);
+
+	const onHeadContextMenu = (e: React.MouseEvent<HTMLElement>, c: number) => {
+		const col = cols[c];
+		if (!col) return;
+		if (Date.now() - shortcutAt.current < 1000) return;
+		if (columnItems(c, null).length === 0) return;
+		headMenuOffered.current = true;
+		if (header) e.currentTarget.focus({ preventScroll: true });
+		colDest.current = null;
+		renameAfterMenu.current = null;
+		headTarget.current = { row: null, col: col.key, colIndex: c };
+		setHeadMenuAt({ col: col.key, row: null });
+	};
+
+	const head = (
+		<TableHeader
+			onContextMenu={
+				hasColumnMenu
+					? (e) => {
+							// Runs before the menu's own handler: no header offered one, so no menu.
+							if (!headMenuOffered.current) e.preventDefault();
+							headMenuOffered.current = false;
+						}
+					: undefined
+			}
+		>
+			<TableRow role="row" aria-rowindex={1} className="hover:bg-transparent">
+				{cols.map((col, c) => {
+					const active = sort?.column === col.key ? sort.direction : null;
+					const key = cellKey(null, col.key);
+					return (
+						<TableHead
+							key={col.key}
+							role="columnheader"
+							style={col.width ? { width: col.width } : undefined}
+							aria-sort={
+								col.sortable
+									? active === "asc"
+										? "ascending"
+										: active === "desc"
+											? "descending"
+											: "none"
+									: undefined
+							}
+							{...(header
+								? {
+										tabIndex: key === tabKey ? 0 : -1,
+										[ROVING_KEY]: key,
+										onFocus: () => setActiveKey(key),
+										onKeyDown: (e: React.KeyboardEvent) => onHeadKeyDown(e, c),
+									}
+								: {})}
+							onClick={
+								header
+									? (e: React.MouseEvent<HTMLElement>) => {
+											if (renaming === col.key) return;
+											colPending.current = null;
+											e.currentTarget.focus({ preventScroll: true });
+											sortBy(col);
+										}
+									: undefined
+							}
+							onContextMenu={
+								hasColumnMenu
+									? (e: React.MouseEvent<HTMLElement>) => onHeadContextMenu(e, c)
+									: undefined
+							}
+							className={cn(
+								renaming === col.key && "relative",
+								ALIGN[col.align],
+								header && table.gridCell,
+								col.sortable && "cursor-pointer select-none hover:text-text-primary",
+								active && "text-text-primary",
+							)}
+						>
+							<span className={cn("inline-flex items-center gap-1", FLEX_ALIGN[col.align])}>
+								{col.label}
+								{active === "asc" ? <ChevronUp aria-hidden="true" className="size-3.5" /> : null}
+								{active === "desc" ? <ChevronDown aria-hidden="true" className="size-3.5" /> : null}
+							</span>
+							{renaming === col.key ? (
+								<div className={table.editor}>
+									<InlineEdit
+										initial={col.label}
+										label={`Rename ${col.label}`}
+										className={cn(
+											table.editorField,
+											table.editorPad[density],
+											"normal-case tracking-normal",
+											ALIGN[col.align],
+										)}
+										onCommit={(text, how) => {
+											if (text !== col.label) onColumnRename?.(col.key, text);
+											endRename(col.key, how === "enter");
+										}}
+										onCancel={() => endRename(col.key, true)}
+									/>
+								</div>
+							) : null}
+						</TableHead>
+					);
+				})}
+			</TableRow>
+		</TableHeader>
+	);
+
 	// --- Handles -------------------------------------------------------------
 
 	// What the handles stand for: the cell a menu is open on, else the one
@@ -1011,15 +1293,29 @@ export function DataTable({
 		};
 	}, [containerRef]);
 
+	/** Back to a cell, or where its row (or column) was when it is gone. */
+	const backTo = (at: Spot & { index: number; colIndex: number }) => {
+		if (at.row !== null) {
+			restore({ row: at.row, col: at.col, index: at.index, colIndex: at.colIndex });
+		} else if (header) {
+			const c = colKeys.includes(at.col)
+				? at.col
+				: colKeys[Math.min(at.colIndex, colKeys.length - 1)];
+			if (c !== undefined) focusKey(cellKey(null, c));
+		} else if (tabKey) focusKey(tabKey);
+	};
+
 	/** Back to the cell a handle's menu was opened on, or where its row was. */
 	const backFromHandle = () => {
 		const at = handleTarget.current;
 		handleTarget.current = null;
 		if (!at) return;
-		if (at.row !== null) {
-			restore({ row: at.row, col: at.col, index: at.index });
-		} else if (header) focusKey(cellKey(null, at.col));
-		else if (tabKey) focusKey(tabKey);
+		// A column answer that came back while the menu was open already put the focus.
+		const dest = colDest.current;
+		colDest.current = null;
+		if (dest !== null) focusKey(dest);
+		else backTo(at);
+		renameAfter();
 	};
 
 	const handleEls = (
@@ -1045,7 +1341,7 @@ export function DataTable({
 					? () => (handleRow && handleCol ? rowItems(spotRow, handleCol.key) : [])
 					: []
 			}
-			columnItems={handleCol ? columnItems(spotCol) : []}
+			columnItems={handleCol ? columnItems(spotCol, spot?.row ?? null) : []}
 			rowLabel={
 				handleRow ? tableMenuText.rowHandle(rowName(handleRow)) : tableMenuText.rowHandleIdle
 			}
@@ -1056,7 +1352,11 @@ export function DataTable({
 			onOpenChange={(which) => {
 				if (which) {
 					pending.current = null;
-					handleTarget.current = spot && { ...spot, index: Math.max(0, spotRow) };
+					handleTarget.current = spot && {
+						...spot,
+						index: Math.max(0, spotRow),
+						colIndex: Math.max(0, spotCol),
+					};
 					setHandleAt(spot);
 				} else setHandleAt(null);
 			}}
@@ -1084,62 +1384,37 @@ export function DataTable({
 					density={density}
 					striped={striped}
 				>
-					<TableHeader>
-						<TableRow role="row" aria-rowindex={1} className="hover:bg-transparent">
-							{cols.map((col, c) => {
-								const active = sort?.column === col.key ? sort.direction : null;
-								const key = cellKey(null, col.key);
-								return (
-									<TableHead
-										key={col.key}
-										role="columnheader"
-										style={col.width ? { width: col.width } : undefined}
-										aria-sort={
-											col.sortable
-												? active === "asc"
-													? "ascending"
-													: active === "desc"
-														? "descending"
-														: "none"
-												: undefined
-										}
-										{...(header
-											? {
-													tabIndex: key === tabKey ? 0 : -1,
-													[ROVING_KEY]: key,
-													onFocus: () => setActiveKey(key),
-													onKeyDown: (e: React.KeyboardEvent) => onHeadKeyDown(e, c),
-												}
-											: {})}
-										onClick={
-											header
-												? (e: React.MouseEvent<HTMLElement>) => {
-														e.currentTarget.focus({ preventScroll: true });
-														sortBy(col);
-													}
-												: undefined
-										}
-										className={cn(
-											ALIGN[col.align],
-											header && table.gridCell,
-											col.sortable && "cursor-pointer select-none hover:text-text-primary",
-											active && "text-text-primary",
-										)}
-									>
-										<span className={cn("inline-flex items-center gap-1", FLEX_ALIGN[col.align])}>
-											{col.label}
-											{active === "asc" ? (
-												<ChevronUp aria-hidden="true" className="size-3.5" />
-											) : null}
-											{active === "desc" ? (
-												<ChevronDown aria-hidden="true" className="size-3.5" />
-											) : null}
-										</span>
-									</TableHead>
-								);
-							})}
-						</TableRow>
-					</TableHeader>
+					{hasColumnMenu ? (
+						<ContextMenu
+							onOpenChange={(open) => {
+								if (!open) setHeadMenuAt(null);
+							}}
+						>
+							<ContextMenuTrigger asChild>{head}</ContextMenuTrigger>
+							<ContextMenuContent
+								className="min-w-48"
+								onCloseAutoFocus={(e) => {
+									e.preventDefault();
+									const at = headTarget.current;
+									headTarget.current = null;
+									if (!at) return;
+									const dest = colDest.current;
+									colDest.current = null;
+									if (dest !== null) focusKey(dest);
+									else backTo({ ...at, index: 0 });
+									renameAfter();
+								}}
+							>
+								{headMenuAt && colKeys.includes(headMenuAt.col) ? (
+									<TableMenuContextItems
+										items={columnItems(colKeys.indexOf(headMenuAt.col), headMenuAt.row)}
+									/>
+								) : null}
+							</ContextMenuContent>
+						</ContextMenu>
+					) : (
+						head
+					)}
 					{hasMenu ? (
 						<ContextMenu
 							onOpenChange={(open) => {

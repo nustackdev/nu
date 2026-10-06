@@ -854,5 +854,242 @@ describe("DataTable", () => {
 			});
 			expect(menuTexts()).toEqual(["Edit cell", ...fromHandle]);
 		});
+
+		describe("columns", () => {
+			const ops = () => ({
+				onSort: vi.fn(),
+				onColumnAdd: vi.fn(),
+				onColumnDelete: vi.fn(),
+				onColumnRename: vi.fn(),
+				onColumnMove: vi.fn(),
+				onColumnKind: vi.fn(),
+				onColumnAlign: vi.fn(),
+			});
+			const item = (name: string) => {
+				const el = [...document.querySelectorAll('[role="menu"] [role^="menuitem"]')].find(
+					(m) => m.textContent === name,
+				);
+				if (!el) throw new Error(`no item ${name}`);
+				return el;
+			};
+
+			it("offers every column request that is on, in the shared words", () => {
+				mount(ops());
+				act(() => cell("r1", "title").focus());
+				openHandle("column");
+				expect(menuTexts()).toEqual([
+					t.insertColumnLeft,
+					t.insertColumnRight,
+					t.moveColumnLeft,
+					t.moveColumnRight,
+					t.sortAscending,
+					t.sortDescending,
+					t.renameColumn,
+					t.columnType,
+					t.alignLeft,
+					t.alignCenter,
+					t.alignRight,
+					t.deleteColumn,
+				]);
+				// The first column moves no further left.
+				expect(item(t.moveColumnLeft).hasAttribute("data-disabled")).toBe(true);
+				expect(item(t.alignLeft).getAttribute("aria-checked")).toBe("true");
+			});
+
+			it("asks the host for each column request and changes nothing itself", () => {
+				const o = ops();
+				mount(o);
+				act(() => cell("r1", "points").focus());
+				openHandle("column");
+				click(item(t.insertColumnRight));
+				expect(o.onColumnAdd).toHaveBeenCalledWith(2);
+				openHandle("column");
+				click(item(t.moveColumnLeft));
+				expect(o.onColumnMove).toHaveBeenCalledWith("points", 0);
+				openHandle("column");
+				click(item(t.alignCenter));
+				expect(o.onColumnAlign).toHaveBeenCalledWith("points", "center");
+				openHandle("column");
+				click(item(t.deleteColumn));
+				expect(o.onColumnDelete).toHaveBeenCalledWith("points");
+				// Nothing changed under the requests: the host has not answered.
+				expect(host.querySelectorAll("thead th").length).toBe(4);
+			});
+
+			it("switches a column's kind from the type submenu", () => {
+				const o = ops();
+				mount(o);
+				act(() => cell("r1", "title").focus());
+				openHandle("column");
+				const sub = item(t.columnType) as HTMLElement;
+				act(() => sub.focus());
+				press(sub, "ArrowRight");
+				const kinds = [...document.querySelectorAll('[role="menuitemradio"]')].map(
+					(m) => m.textContent,
+				);
+				expect(kinds).toEqual(expect.arrayContaining(Object.values(t.kinds)));
+				const number = [...document.querySelectorAll('[role="menuitemradio"]')].find(
+					(m) => m.textContent === t.kinds.number,
+				);
+				if (number) click(number);
+				expect(o.onColumnKind).toHaveBeenCalledWith("title", "number");
+			});
+
+			it("renames a header in place by keyboard, the label kept until the host confirms", () => {
+				const o = ops();
+				mount(o);
+				const head = cell(null, "title");
+				act(() => head.focus());
+				press(head, "F2");
+				type("Name", "Enter");
+				expect(o.onColumnRename).toHaveBeenCalledWith("title", "Name");
+				expect(head.textContent).toBe("title");
+				expect(document.activeElement).toBe(head);
+				press(head, "F2");
+				type("Other", "Escape");
+				expect(o.onColumnRename).toHaveBeenCalledTimes(1);
+				expect(document.activeElement).toBe(head);
+			});
+
+			it("opens the same column items on a header right-click", async () => {
+				mount(ops());
+				act(() => cell("r1", "points").focus());
+				openHandle("column");
+				const fromHandle = menuTexts();
+				press(document.activeElement ?? document.body, "Escape");
+				await settle();
+				act(() => {
+					cell(null, "points").dispatchEvent(
+						new MouseEvent("contextmenu", { bubbles: true, cancelable: true }),
+					);
+				});
+				expect(menuTexts()).toEqual(fromHandle);
+				click(item(t.renameColumn));
+				await settle();
+				expect(host.querySelector("thead input")).not.toBeNull();
+			});
+
+			it("keeps one column: delete is greyed out on the last", () => {
+				const o = ops();
+				mount({ ...o, columns: [{ key: "title" }], rows: [{ key: "r1", cells: ["Alpha"] }] });
+				act(() => cell("r1", "title").focus());
+				openHandle("column");
+				expect(item(t.deleteColumn).hasAttribute("data-disabled")).toBe(true);
+				click(item(t.deleteColumn));
+				expect(o.onColumnDelete).not.toHaveBeenCalled();
+			});
+
+			it("cancels a rename on Escape, asking nothing", () => {
+				const o = ops();
+				mount(o);
+				const head = cell(null, "points");
+				act(() => head.focus());
+				press(head, "F2");
+				type("Score", "Escape");
+				expect(o.onColumnRename).not.toHaveBeenCalled();
+				expect(host.querySelector("thead input")).toBeNull();
+				expect(document.activeElement).toBe(head);
+			});
+
+			it("asks for a rename when the editor loses focus", () => {
+				const o = ops();
+				mount(o);
+				const head = cell(null, "points");
+				act(() => head.focus());
+				press(head, "F2");
+				act(() => {
+					input().value = "Score";
+				});
+				act(() => cell("r1", "title").focus());
+				expect(o.onColumnRename).toHaveBeenCalledWith("points", "Score");
+				expect(host.querySelector("thead input")).toBeNull();
+				// A blur goes where it went, not back to the header.
+				expect(document.activeElement).toBe(cell("r1", "title"));
+			});
+
+			it("ends a rename whose column the host takes away", () => {
+				const o = ops();
+				mount(o);
+				const head = cell(null, "points");
+				act(() => head.focus());
+				press(head, "F2");
+				expect(host.querySelector("thead input")).not.toBeNull();
+				mount({ ...o, columns: COLUMNS.filter((c) => c.key !== "points") });
+				expect(host.querySelector("thead input")).toBeNull();
+				expect([...host.querySelectorAll("thead th")].map((th) => th.textContent)).toEqual([
+					"title",
+					"done",
+					"state",
+				]);
+			});
+
+			it("offers sorting alone with no column request on", () => {
+				mount({ onSort: () => {} });
+				act(() => cell("r1", "title").focus());
+				openHandle("column");
+				expect(menuTexts()).toEqual([t.sortAscending, t.sortDescending]);
+			});
+
+			it("puts the focus where a deleted, added or moved column landed", async () => {
+				function Host() {
+					const [columns, setColumns] = useState(COLUMNS);
+					const [rows, setRows] = useState(ROWS);
+					return (
+						<DataTable
+							aria-label="T"
+							columns={columns}
+							rows={rows}
+							onColumnDelete={(key) => {
+								const at = columns.findIndex((c) => c.key === key);
+								setColumns(columns.filter((c) => c.key !== key));
+								setRows(rows.map((r) => ({ ...r, cells: r.cells.filter((_, i) => i !== at) })));
+							}}
+							onColumnAdd={(index) => {
+								setColumns([...columns.slice(0, index), { key: "new" }, ...columns.slice(index)]);
+								setRows(
+									rows.map((r) => ({
+										...r,
+										cells: [...r.cells.slice(0, index), "", ...r.cells.slice(index)],
+									})),
+								);
+							}}
+							onColumnMove={(key, index) => {
+								const col = columns.find((c) => c.key === key) as DataTableColumn;
+								const at = columns.indexOf(col);
+								const rest = columns.filter((c) => c !== col);
+								setColumns([...rest.slice(0, index), col, ...rest.slice(index)]);
+								setRows(
+									rows.map((r) => {
+										const v = r.cells[at];
+										const others = r.cells.filter((_, i) => i !== at);
+										return { ...r, cells: [...others.slice(0, index), v, ...others.slice(index)] };
+									}),
+								);
+							}}
+						/>
+					);
+				}
+				act(() => root.render(<Host />));
+				act(() => cell("r2", "points").focus());
+				openHandle("column");
+				click(item(t.deleteColumn));
+				await settle();
+				expect(document.activeElement).toBe(cell("r2", "done"));
+				openHandle("column");
+				click(item(t.insertColumnLeft));
+				await settle();
+				expect(document.activeElement).toBe(cell("r2", "new"));
+				openHandle("column");
+				click(item(t.moveColumnRight));
+				await settle();
+				expect(document.activeElement).toBe(cell("r2", "new"));
+				expect([...host.querySelectorAll("thead th")].map((th) => th.textContent)).toEqual([
+					"title",
+					"done",
+					"new",
+					"state",
+				]);
+			});
+		});
 	});
 });

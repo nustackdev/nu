@@ -1,5 +1,6 @@
 // TableRef -- rows and columns on the kit DataTable: reads by default, and
-// selects, edits, inserts, deletes and moves rows when the server asks it to.
+// selects, edits, inserts, deletes and moves rows, and reshapes columns, when
+// the server asks it to.
 //
 // Server-owned rows, browser-owned moment. The server ships `columns` and
 // `rows` as plain props; which rows are selected the browser keeps in its own
@@ -7,6 +8,8 @@
 // whoever wrote last wins. The browser never edits the rows. An edit, an
 // insert, a delete or a move is a request the server answers by shipping the
 // rows as they now are; a request it turns down leaves the table as it was.
+// Columns the same: a column request is answered by shipping the columns
+// (`set_columns`), and the rows too when it rewrote cells.
 //
 // ## Props
 //
@@ -27,6 +30,8 @@
 //   editable        every column edits unless its dict says `editable: false`; the
 //                   `row_key` column never does.
 //   addable, deletable, draggable   insert, delete and move rows (keyboard, menu, drag).
+//   columns_editable   every column request on: insert, delete, rename, move, kind, align
+//                   (the column handle's menu, a header right-click, F2 on a header).
 //
 // Every header sorts unless its dict says `sortable: false`, as it always has.
 //
@@ -54,11 +59,30 @@
 //   {event: "add", index}                            a new row at index; needs addable
 //   {event: "delete", keys, row_indexes}             needs deletable
 //   {event: "move", key, row_index, index}           index counts rows without key; needs draggable
+//   {event: "column_add", index}                     a new column at index
+//   {event: "column_delete", column, column_index}
+//   {event: "column_rename", column, column_index, label, previous}
+//   {event: "column_move", column, column_index, index}  index counts columns without it
+//   {event: "column_kind", column, column_index, kind, previous}
+//   {event: "column_align", column, column_index, align, previous}
+//                                                    the column_* need columns_editable
 //
 // `row_indexes` runs parallel to `keys`. Every position (`row_index`,
 // `row_indexes`, the add and move `index`) counts within the rows shown, which
 // under `max_rows` are the newest ones only. Columns in a notify are as the
-// server sent them (`column` is the column's key, `sort_column` too).
+// server sent them (`column` is the column's key, `sort_column` too), and
+// `column_index` is its position among the columns shown. A kind or align
+// `previous` is what the column shows: "text" and its kind's alignment
+// (number right, bool center, else left) when the column dict sets none.
+//
+// Rows and column reshapes: list rows hold cells by position, so a server that
+// inserts, deletes or moves columns must ship list rows again with their cells
+// where the new columns are, in the same frame as the columns
+// (`set({columns, rows})`): two writes show cells under the wrong header in
+// between. Dict rows hold cells by key and come through a reshape untouched (a
+// column added shows empty until its cells are written). A server switching a
+// column to "select" sends its `options` with it. A table always keeps one
+// column: column_delete is not offered on the last one.
 //
 // ## Handlers
 //
@@ -84,6 +108,7 @@ import {
 	type DataTableKind,
 	type DataTableRow,
 } from "../../components/ui/data-table";
+import { defaultAlign } from "../../components/ui/data-table-model";
 import { Text } from "../../components/ui/text";
 import {
 	type NodeEntry,
@@ -284,6 +309,7 @@ function TableView({ path }: NodeProps) {
 	const addable = useBoolProp(path, "addable");
 	const deletable = useBoolProp(path, "deletable");
 	const draggable = useBoolProp(path, "draggable");
+	const columnsEditable = useBoolProp(path, "columns_editable");
 	const setProps = useSetProps(path);
 	const send = useSend(path);
 
@@ -357,6 +383,47 @@ function TableView({ path }: NodeProps) {
 		[notify, indexOf],
 	);
 
+	/** A column request's fields: the key as sent, and where the column is. */
+	const columnAt = useCallback(
+		(key: string) => {
+			const at = cols.findIndex((c) => c.key === key);
+			return { col: cols[at], fields: { column: nameOf(key), column_index: at } };
+		},
+		[cols, nameOf],
+	);
+
+	const onColumnAdd = useCallback((index: number) => notify("column_add", { index }), [notify]);
+	const onColumnDelete = useCallback(
+		(key: string) => notify("column_delete", columnAt(key).fields),
+		[notify, columnAt],
+	);
+	const onColumnRename = useCallback(
+		(key: string, label: string) => {
+			const { col, fields } = columnAt(key);
+			notify("column_rename", { ...fields, label, previous: col?.label ?? "" });
+		},
+		[notify, columnAt],
+	);
+	const onColumnMove = useCallback(
+		(key: string, index: number) => notify("column_move", { ...columnAt(key).fields, index }),
+		[notify, columnAt],
+	);
+	const onColumnKind = useCallback(
+		(key: string, kind: DataTableKind) => {
+			const { col, fields } = columnAt(key);
+			notify("column_kind", { ...fields, kind, previous: col?.kind ?? "text" });
+		},
+		[notify, columnAt],
+	);
+	const onColumnAlign = useCallback(
+		(key: string, align: "left" | "center" | "right") => {
+			const { col, fields } = columnAt(key);
+			const previous = col ? (col.align ?? defaultAlign(col.kind ?? "text")) : "left";
+			notify("column_align", { ...fields, align, previous });
+		},
+		[notify, columnAt],
+	);
+
 	if (rows.length === 0 && cols.length === 0) {
 		return (
 			<Text size="sm" tone="muted">
@@ -382,6 +449,12 @@ function TableView({ path }: NodeProps) {
 			onAdd={addable ? onAdd : undefined}
 			onDelete={deletable ? onDelete : undefined}
 			onMove={draggable ? onMove : undefined}
+			onColumnAdd={columnsEditable ? onColumnAdd : undefined}
+			onColumnDelete={columnsEditable ? onColumnDelete : undefined}
+			onColumnRename={columnsEditable ? onColumnRename : undefined}
+			onColumnMove={columnsEditable ? onColumnMove : undefined}
+			onColumnKind={columnsEditable ? onColumnKind : undefined}
+			onColumnAlign={columnsEditable ? onColumnAlign : undefined}
 			className={clickableRows ? "[&_tbody_tr]:cursor-pointer" : undefined}
 		/>
 	);

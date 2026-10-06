@@ -59,6 +59,7 @@ import {
 	GripVertical,
 	type LucideIcon,
 	Pencil,
+	Shapes,
 	Trash2,
 } from "lucide-react";
 import type * as React from "react";
@@ -281,6 +282,7 @@ export function columnMenu(a: ColumnMenuActions): TableMenuItem[] {
 						type: "sub",
 						id: "kind",
 						label: t.columnType,
+						icon: Shapes,
 						items: [
 							{
 								type: "radio",

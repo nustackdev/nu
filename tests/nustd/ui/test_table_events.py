@@ -104,7 +104,21 @@ class GridApp(Index):
     grid = GridPage.slot("/")
 
 
-_KINDS = ("sort", "row", "select", "edit", "add", "delete", "move")
+_KINDS = (
+    "sort",
+    "row",
+    "select",
+    "edit",
+    "add",
+    "delete",
+    "move",
+    "column_add",
+    "column_delete",
+    "column_rename",
+    "column_move",
+    "column_kind",
+    "column_align",
+)
 _ON = {"sort": "on_sort", "row": "on_row_click"}
 
 
@@ -130,6 +144,7 @@ def test_slot_defaults_keep_the_old_props():
         "addable": False,
         "deletable": False,
         "draggable": False,
+        "columns_editable": False,
     }
 
 
@@ -271,3 +286,47 @@ def test_patch_frames_encode_with_their_op():
     _run(GridApp.grid.table.set_order(["a"]), sess)
     (frame,) = sess.frames
     assert frame.to_dict()["op"] == "patch"
+
+
+def test_columns_editable_is_a_slot_flag():
+    class Columns(Page):
+        table = TableRef.slot(columns=["a"], columns_editable=True)
+
+    assert nu.tree.payload(Columns.table)["props"]["columns_editable"] is True
+
+
+def test_a_column_rename_reads_its_fields():
+    sess = _Session(
+        {"event": "column_kind", "column": "title", "column_index": 1, "kind": "number"},
+        {
+            "event": "column_rename",
+            "column": "title",
+            "column_index": 1,
+            "label": "Name",
+            "previous": "Title",
+        },
+    )
+    _run(
+        nu.React(
+            GridApp.grid.table.on_column_rename(),
+            lambda ev: GridApp.grid.out.set(
+                nu.Str(ev["column"]) + ": " + nu.Str(ev["previous"]) + " -> " + nu.Str(ev["label"])
+            ),
+        ),
+        sess,
+    )
+    assert [f.payload for f in sess.frames] == ["title: Title -> Name"]
+
+
+def test_a_column_reshape_over_list_rows_is_one_frame():
+    sess = _Session()
+    columns = ["b", {"key": "a", "label": "A", "align": "center"}]
+    _run(GridApp.grid.table.set({"columns": columns, "rows": [[2, 1]]}), sess)
+    (frame,) = sess.frames
+    assert (frame.op, frame.payload) == ("write", {"columns": columns, "rows": [[2, 1]]})
+
+
+def test_set_columns_alone_leaves_the_rows():
+    sess = _Session()
+    _run(GridApp.grid.table.set_columns(["b", "a"]), sess)
+    assert [(f.op, f.payload) for f in sess.frames] == [("write", {"columns": ["b", "a"]})]

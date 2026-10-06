@@ -2,13 +2,15 @@
 // sort and row notifies, the write / append / read handlers) unchanged, and
 // the new one (dict columns and rows, row keys, select, edit, add, delete,
 // move), each intent one notify naming its kind in `event`, and the patch
-// handler's row-level ops (set_row, insert_row, remove_rows, set_order).
+// handler's row-level ops (set_row, insert_row, remove_rows, set_order), and
+// the column requests `columns_editable` turns on.
 
 import { OPS, type TreeFrame } from "@nustackdev/ui-core";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { cellKey } from "../../components/ui/data-table-model";
+import { tableMenuText } from "../../components/ui/table-handles";
 import { NodeView, tree } from "../../tree";
 import "..";
 
@@ -477,5 +479,101 @@ describe("TableRef, row-level patches", () => {
 			columns: ["id", "title"],
 			rows: [DICTS[1], DICTS[0], DICTS[2], { id: "d", title: "D" }],
 		});
+	});
+});
+
+describe("TableRef, column requests", () => {
+	const t = tableMenuText;
+	const COLS = [
+		{ key: "id", label: "ID" },
+		"a",
+		{ key: "a", label: "A again", kind: "number" },
+		{ key: "on", kind: "bool", align: "left" },
+	];
+
+	const head = (key: string) => {
+		const el = host.querySelector<HTMLElement>(`[data-key='${cellKey(null, key)}']`);
+		if (!el) throw new Error(`no header ${key}`);
+		return el;
+	};
+	const openColumnMenu = (key: string) => {
+		act(() => head(key).focus());
+		press(head(key), "F10", { shiftKey: true, altKey: true });
+	};
+	const menuTexts = () =>
+		[...document.querySelectorAll('[role="menu"] [role^="menuitem"]')].map((m) => m.textContent);
+	const pick = (name: string) => {
+		const el = [...document.querySelectorAll('[role="menu"] [role^="menuitem"]')].find(
+			(m) => m.textContent === name,
+		);
+		if (!el) throw new Error(`no item ${name}`);
+		click(el);
+	};
+	const settle = () => act(async () => void (await new Promise((r) => setTimeout(r, 0))));
+
+	it("offers only sorting without columns_editable", () => {
+		mount({ columns: COLS, rows: [[1, "x", 2, true]] });
+		openColumnMenu("a");
+		expect(menuTexts()).toEqual([t.sortAscending, t.sortDescending]);
+	});
+
+	it("names each column request one notify, the column by its key as sent", async () => {
+		mount({ columns: COLS, rows: [[1, "x", 2, true]], columns_editable: true });
+		// The second "a" is "a~2" to the grid, "a" on the wire.
+		openColumnMenu("a~2");
+		pick(t.deleteColumn);
+		await settle();
+		openColumnMenu("a~2");
+		pick(t.moveColumnLeft);
+		await settle();
+		openColumnMenu("a~2");
+		pick(t.insertColumnRight);
+		await settle();
+		openColumnMenu("a~2");
+		pick(t.alignCenter);
+		await settle();
+		openColumnMenu("on");
+		pick(t.alignCenter);
+		await settle();
+		expect(notifies()).toEqual([
+			{ event: "column_delete", column: "a", column_index: 2 },
+			{ event: "column_move", column: "a", column_index: 2, index: 1 },
+			{ event: "column_add", index: 3 },
+			// No align sent: a number column shows right.
+			{ event: "column_align", column: "a", column_index: 2, align: "center", previous: "right" },
+			{ event: "column_align", column: "on", column_index: 3, align: "center", previous: "left" },
+		]);
+		// A request is not an answer: the columns are as sent.
+		expect(texts("thead th")).toEqual(["ID", "a", "A again", "on"]);
+	});
+
+	it("asks for a kind and a rename with what they were", async () => {
+		mount({ columns: COLS, rows: [[1, "x", 2, true]], columns_editable: true });
+		openColumnMenu("id");
+		const sub = [...document.querySelectorAll('[role="menuitem"]')].find(
+			(m) => m.textContent === t.columnType,
+		) as HTMLElement;
+		act(() => sub.focus());
+		press(sub, "ArrowRight");
+		pick(t.kinds.select);
+		await settle();
+		act(() => head("id").focus());
+		press(head("id"), "F2");
+		typeInto("Key", "Enter");
+		expect(notifies()).toEqual([
+			{ event: "column_kind", column: "id", column_index: 0, kind: "select", previous: "text" },
+			{ event: "column_rename", column: "id", column_index: 0, label: "Key", previous: "ID" },
+		]);
+		expect(head("id").textContent).toBe("ID");
+	});
+
+	it("takes the server's answer: new columns, and list rows re-shipped to match", () => {
+		mount({ columns: ["a", "b"], rows: [[1, 2]], columns_editable: true });
+		dispatch("write", { columns: ["b", "new", "a"], rows: [[2, "", 1]] });
+		expect(texts("thead th")).toEqual(["b", "new", "a"]);
+		expect(texts("tbody td")).toEqual(["2", "", "1"]);
+		// Dict rows follow the columns by key, untouched.
+		dispatch("write", { columns: ["y", "x"], rows: [{ x: 1, y: 2 }] });
+		expect(texts("tbody td")).toEqual(["2", "1"]);
 	});
 });

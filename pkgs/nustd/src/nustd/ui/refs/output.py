@@ -732,6 +732,24 @@ class TableRef(Ref):
     the browser keeps as you click, and the server can set it with
     :meth:`set_selected`.
 
+    **Column requests** (``columns_editable``) work the same way: an insert,
+    delete, rename, move, kind or align change arrives as an ``on_column_*``
+    event, and the server confirms it by shipping the columns again with
+    :meth:`set_columns`, and the rows too when it rewrote cells. List rows
+    hold cells by position, so a server that inserts, deletes or moves
+    columns must ship list rows again with their cells where the new columns
+    are, in one frame with the columns: ``table.set({"columns": ..., "rows":
+    ...})``, not ``set_columns(...) | set_rows(...)``, which arrives as two
+    frames and shows cells under the wrong header in between. Mapping rows
+    hold cells by column key and come through a reshape untouched (a column
+    added shows empty until its cells are written). A table always keeps one
+    column: delete is not offered on the last one::
+
+        nu.ReactForever(
+            Shelf.table.on_column_rename(),
+            lambda ev: Shelf.table.set_columns(renamed(ev["column"], ev["label"])),
+        )
+
     **Columns** are strings or mappings, mixed freely. A string ``s`` is
     ``{"key": s}``; a mapping is ``{key, label?, kind?, options?, editable?,
     align?, width?, sortable?}`` with ``kind`` one of "text" (the default),
@@ -776,6 +794,10 @@ class TableRef(Ref):
         deletable: Delete or the row menu; a request arrives on :meth:`on_delete`.
         draggable: Rows move by Alt + Up / Down, the row menu or a drag; a
             request arrives on :meth:`on_move`.
+        columns_editable: Columns can be inserted, deleted, renamed, moved,
+            and given another kind or alignment, from the column handle's
+            menu, a header right-click or F2 on a header; each request
+            arrives on its ``on_column_*``.
     """
 
     _wire_type = "TableRef"
@@ -798,6 +820,7 @@ class TableRef(Ref):
         addable: bool = False,
         deletable: bool = False,
         draggable: bool = False,
+        columns_editable: bool = False,
     ) -> Self:
         return super().slot(
             columns=[c if isinstance(c, str) else dict(c) for c in columns or ()],
@@ -814,6 +837,7 @@ class TableRef(Ref):
             addable=addable,
             deletable=deletable,
             draggable=draggable,
+            columns_editable=columns_editable,
         )
 
     # --- server -> browser ---------------------------------------------------
@@ -835,7 +859,13 @@ class TableRef(Ref):
         return Append(self, row)
 
     def set_columns(self, columns: ListArg[Any]) -> Nu:
-        """Replace the columns, strings or mappings as on the slot; the rows stay."""
+        """Replace the columns, strings or mappings as on the slot; the rows stay.
+
+        Mapping rows follow the columns by key. Over list rows a reshape
+        (insert, delete, move) needs the rows in the same frame:
+        ``set({"columns": columns, "rows": rows})``, since a second frame
+        would show the old cells under the new headers until it lands.
+        """
         return Write(self, Dict.of(columns=columns))
 
     # The row-level ops below each ship one ``patch`` frame with only the row
@@ -934,6 +964,63 @@ class TableRef(Ref):
         without it, so the row lands before the row at that index, or last.
         """
         return Changed(self, "move")
+
+    # Each column event names the column by its key as sent (``column``) and
+    # by its position among the columns shown (``column_index``).
+
+    def on_column_add(self) -> Changed:
+        """``{event, index}``: a new column asked for at ``index``. Needs ``columns_editable``.
+
+        The server decides what it is (key, label, kind) and confirms with
+        :meth:`set_columns`; list rows go again with a cell at ``index``.
+        """
+        return Changed(self, "column_add")
+
+    def on_column_delete(self) -> Changed:
+        """``{event, column, column_index}``: a column asked to go. Needs ``columns_editable``.
+
+        Confirm with :meth:`set_columns`; list rows go again without its
+        cells, in the same frame (:meth:`set`). A table always keeps one
+        column: the browser does not offer delete on the last one.
+        """
+        return Changed(self, "column_delete")
+
+    def on_column_rename(self) -> Changed:
+        """``{event, column, column_index, label, previous}``: new header text. Needs ``columns_editable``.
+
+        ``label`` is as typed, untrimmed and possibly empty; ``previous`` is
+        the label shown. The header keeps ``previous`` until the server
+        confirms with :meth:`set_columns`.
+        """
+        return Changed(self, "column_rename")
+
+    def on_column_move(self) -> Changed:
+        """``{event, column, column_index, index}``: a column asked to move. Needs ``columns_editable``.
+
+        ``index`` counts the columns without it, so the column lands before
+        the column at that index, or last. Confirm with :meth:`set_columns`;
+        list rows go again with their cells moved the same way.
+        """
+        return Changed(self, "column_move")
+
+    def on_column_kind(self) -> Changed:
+        """``{event, column, column_index, kind, previous}``: another kind asked for. Needs ``columns_editable``.
+
+        ``kind`` and ``previous`` are "text", "number", "bool" or "select"
+        (``previous`` "text" when the column sets none). Confirm with
+        :meth:`set_columns`, and the rows when their cells were converted. A
+        column switched to "select" needs its ``options`` sent with it.
+        """
+        return Changed(self, "column_kind")
+
+    def on_column_align(self) -> Changed:
+        """``{event, column, column_index, align, previous}``: another alignment. Needs ``columns_editable``.
+
+        ``align`` and ``previous`` are "left", "center" or "right";
+        ``previous`` is what the column shows, its kind's default (number
+        right, bool center, else left) when it sets none.
+        """
+        return Changed(self, "column_align")
 
 
 class TextRef(Ref):

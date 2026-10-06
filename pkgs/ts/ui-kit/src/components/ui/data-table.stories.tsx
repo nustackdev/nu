@@ -4,6 +4,7 @@ import {
 	DataTable,
 	type DataTableColumn,
 	type DataTableEdit,
+	type DataTableKind,
 	type DataTableRow,
 	type DataTableSort,
 } from "./data-table";
@@ -12,6 +13,8 @@ import { Text } from "./text";
 // In-memory hosts that take the table's intents the way an app would: the kit
 // reports, the host applies (or refuses), the table redraws from what comes
 // back. The Server confirm story puts a delay and a few refusals in between.
+// Columns the same: a column request comes back as new columns, and new rows
+// whose cells moved with them (cells here are by position).
 
 const COLUMNS: DataTableColumn[] = [
 	{ key: "id", label: "ID", editable: false, width: "5rem" },
@@ -91,6 +94,126 @@ function sorted(
 	});
 }
 
+// --- What a host does with each column request -------------------------------
+
+type Table = { columns: readonly DataTableColumn[]; rows: readonly DataTableRow[] };
+type Align = "left" | "center" | "right";
+
+let madeColumns = 0;
+
+/** Every row's cells reshaped the way the columns were. */
+function cellsBy(rows: readonly DataTableRow[], fn: (cells: unknown[]) => unknown[]) {
+	return rows.map((r) => ({ ...r, cells: fn([...r.cells]) }));
+}
+
+function columnAdded(t: Table, index: number): Table {
+	madeColumns += 1;
+	const column: DataTableColumn = { key: `c-${madeColumns}`, label: `Column ${madeColumns}` };
+	const columns = [...t.columns];
+	columns.splice(index, 0, column);
+	return { columns, rows: cellsBy(t.rows, (c) => [...c.slice(0, index), "", ...c.slice(index)]) };
+}
+
+function columnDeleted(t: Table, key: string): Table {
+	const at = t.columns.findIndex((c) => c.key === key);
+	if (at < 0) return t;
+	return {
+		columns: t.columns.filter((c) => c.key !== key),
+		rows: cellsBy(t.rows, (c) => c.filter((_, i) => i !== at)),
+	};
+}
+
+function columnMoved(t: Table, key: string, index: number): Table {
+	const at = t.columns.findIndex((c) => c.key === key);
+	const column = t.columns[at];
+	if (!column) return t;
+	const columns = t.columns.filter((c) => c.key !== key);
+	columns.splice(index, 0, column);
+	const rows = cellsBy(t.rows, (c) => {
+		const [v] = c.splice(at, 1);
+		c.splice(index, 0, v);
+		return c;
+	});
+	return { columns, rows };
+}
+
+function columnChanged(t: Table, key: string, change: Partial<DataTableColumn>): Table {
+	return { ...t, columns: t.columns.map((c) => (c.key === key ? { ...c, ...change } : c)) };
+}
+
+/** A cell read as another kind: a number parsed, a bool from its truth, else its text. */
+function asKind(v: unknown, kind: DataTableKind): unknown {
+	if (kind === "number") {
+		const n = Number(v);
+		return typeof v === "boolean" ? Number(v) : Number.isFinite(n) && v !== "" ? n : 0;
+	}
+	if (kind === "bool")
+		return v === true || v === "true" || v === "yes" || (typeof v === "number" && v !== 0);
+	return v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
+}
+
+function columnKinded(t: Table, key: string, kind: DataTableKind): Table {
+	const at = t.columns.findIndex((c) => c.key === key);
+	if (at < 0) return t;
+	const rows = cellsBy(t.rows, (c) => c.map((v, i) => (i === at ? asKind(v, kind) : v)));
+	const values = [...new Set(rows.map((r) => String(r.cells[at] ?? "")).filter((v) => v !== ""))];
+	const options = kind === "select" ? (values.length ? values : ["one", "two"]) : undefined;
+	return { rows, columns: columnChanged(t, key, { kind, options, align: undefined }).columns };
+}
+
+/** The six column callbacks over one table state, applied as they come (or `wrap`ped). */
+function columnOps(
+	set: (fn: (t: Table) => Table) => void,
+	log: (text: string) => void,
+	wrap: (what: string, refuse: (t: Table) => string | null, fn: (t: Table) => Table) => void = (
+		what,
+		_refuse,
+		fn,
+	) => {
+		set(fn);
+		log(what);
+	},
+) {
+	return {
+		onColumnAdd: (index: number) =>
+			wrap(
+				`add column at ${index}`,
+				() => null,
+				(t) => columnAdded(t, index),
+			),
+		onColumnDelete: (key: string) =>
+			wrap(
+				`delete column ${key}`,
+				(t) => (t.columns.length <= 1 ? "the table keeps at least one column" : null),
+				(t) => columnDeleted(t, key),
+			),
+		onColumnRename: (key: string, label: string) =>
+			wrap(
+				`rename ${key} to "${label}"`,
+				() => (label.trim() === "" ? "a column needs a name" : null),
+				(t) => columnChanged(t, key, { label: label.trim() }),
+			),
+		onColumnMove: (key: string, index: number) =>
+			wrap(
+				`move column ${key} to ${index}`,
+				() => null,
+				(t) => columnMoved(t, key, index),
+			),
+		onColumnKind: (key: string, kind: DataTableKind) =>
+			wrap(
+				`column ${key} as ${kind}`,
+				() => null,
+				(t) => columnKinded(t, key, kind),
+			),
+		onColumnAlign: (key: string, align: Align) =>
+			wrap(
+				`align ${key} ${align}`,
+				() => null,
+				(t) => columnChanged(t, key, { align }),
+			),
+	};
+}
+
 const frame = "p-8 max-w-3xl space-y-3";
 
 // --- Default -----------------------------------------------------------------
@@ -114,23 +237,28 @@ type Args = {
 	movable: boolean;
 	sortable: boolean;
 	activatable: boolean;
+	columnsEditable: boolean;
 	density: "compact" | "default" | "comfortable";
 	striped: boolean;
 	variant: "default" | "borderless";
 };
 
 function PlaygroundHost(args: Args) {
-	const [rows, setRows] = useState<readonly DataTableRow[]>(SEED);
+	const [table, setTable] = useState<Table>({ columns: COLUMNS, rows: SEED });
+	const { columns, rows } = table;
+	const setRows = (fn: (rows: readonly DataTableRow[]) => readonly DataTableRow[]) =>
+		setTable((t) => ({ ...t, rows: fn(t.rows) }));
 	const [selected, setSelected] = useState<string[]>([]);
 	const [sort, setSort] = useState<DataTableSort>(null);
 	const [log, setLog] = useState(
 		"Click a cell, then the keyboard: arrows, Enter, F2, Space, Delete",
 	);
+	const ops = columnOps(setTable, setLog);
 	return (
 		<div className={frame}>
 			<DataTable
 				aria-label="Tasks"
-				columns={COLUMNS}
+				columns={columns}
 				rows={rows}
 				density={args.density}
 				striped={args.striped}
@@ -149,7 +277,7 @@ function PlaygroundHost(args: Args) {
 					args.sortable
 						? (column, direction) => {
 								setSort({ column, direction });
-								setRows((prev) => sorted(prev, COLUMNS, column, direction));
+								setRows((prev) => sorted(prev, columns, column, direction));
 								setLog(`sort ${column} ${direction}`);
 							}
 						: undefined
@@ -157,7 +285,7 @@ function PlaygroundHost(args: Args) {
 				onEdit={
 					args.editable
 						? (e) => {
-								setRows((prev) => edited(prev, e, COLUMNS));
+								setRows((prev) => edited(prev, e, columns));
 								setLog(`edit ${e.key}.${e.column}: ${String(e.previous)} -> ${String(e.value)}`);
 							}
 						: undefined
@@ -165,7 +293,7 @@ function PlaygroundHost(args: Args) {
 				onAdd={
 					args.addable
 						? (index) => {
-								setRows((prev) => added(prev, index, COLUMNS));
+								setRows((prev) => added(prev, index, columns));
 								setLog(`add at ${index}`);
 							}
 						: undefined
@@ -188,6 +316,7 @@ function PlaygroundHost(args: Args) {
 							}
 						: undefined
 				}
+				{...(args.columnsEditable ? ops : {})}
 			/>
 			<Text size="xs" tone="muted" mono>
 				{log}
@@ -203,10 +332,14 @@ const DELAY = 400;
 /**
  * A fake server: every intent goes out, waits, and comes back applied or
  * refused. The table shows the old value until the answer lands. It refuses an
- * empty title, a negative number and deleting the last row.
+ * empty title, a negative number, deleting the last row, deleting the last
+ * column and a rename to an empty name.
  */
 function ServerHost() {
-	const [rows, setRows] = useState<readonly DataTableRow[]>(SEED);
+	const [table, setTable] = useState<Table>({ columns: COLUMNS, rows: SEED });
+	const { columns, rows } = table;
+	const setRows = (fn: (rows: readonly DataTableRow[]) => readonly DataTableRow[]) =>
+		setTable((t) => ({ ...t, rows: fn(t.rows) }));
 	const [selected, setSelected] = useState<string[]>([]);
 	const [sort, setSort] = useState<DataTableSort>(null);
 	const [status, setStatus] = useState<{ text: string; tone: "muted" | "ok" | "danger" }>({
@@ -215,6 +348,8 @@ function ServerHost() {
 	});
 	const live = useRef(rows);
 	live.current = rows;
+	const liveTable = useRef(table);
+	liveTable.current = table;
 	// Answers still in flight die with the story.
 	const timers = useRef(new Set<ReturnType<typeof setTimeout>>());
 	useEffect(() => {
@@ -240,11 +375,22 @@ function ServerHost() {
 		timers.current.add(id);
 	};
 
+	const ops = columnOps(
+		setTable,
+		() => {},
+		(what, refuse, fn) =>
+			ask(
+				what,
+				() => refuse(liveTable.current),
+				() => setTable(fn),
+			),
+	);
+
 	return (
 		<div className={frame}>
 			<DataTable
 				aria-label="Tasks on the server"
-				columns={COLUMNS}
+				columns={columns}
 				rows={rows}
 				selection="multi"
 				selected={selected}
@@ -256,7 +402,7 @@ function ServerHost() {
 						() => null,
 						() => {
 							setSort({ column, direction });
-							setRows((prev) => sorted(prev, COLUMNS, column, direction));
+							setRows((prev) => sorted(prev, columns, column, direction));
 						},
 					)
 				}
@@ -269,14 +415,14 @@ function ServerHost() {
 								: typeof e.value === "number" && e.value < 0
 									? "points cannot be negative"
 									: null,
-						() => setRows((prev) => edited(prev, e, COLUMNS)),
+						() => setRows((prev) => edited(prev, e, columns)),
 					)
 				}
 				onAdd={(index) =>
 					ask(
 						`add at ${index}`,
 						() => null,
-						() => setRows((prev) => added(prev, index, COLUMNS)),
+						() => setRows((prev) => added(prev, index, columns)),
 					)
 				}
 				onDelete={(keys) =>
@@ -302,6 +448,7 @@ function ServerHost() {
 						},
 					)
 				}
+				{...ops}
 			/>
 			<Text size="xs" tone={status.tone} mono>
 				{status.text}
@@ -327,7 +474,9 @@ const KIND_ROWS: DataTableRow[] = [
 ];
 
 function Kinds() {
-	const [rows, setRows] = useState<readonly DataTableRow[]>(KIND_ROWS);
+	const [table, setTable] = useState<Table>({ columns: KINDS, rows: KIND_ROWS });
+	const [log, setLog] = useState("Column type and alignment switch from the column handle");
+	const { onColumnKind, onColumnAlign } = columnOps(setTable, setLog);
 	return (
 		<div className={`${frame} space-y-8`}>
 			<div className="space-y-2">
@@ -336,10 +485,15 @@ function Kinds() {
 				</Text>
 				<DataTable
 					aria-label="Kinds, editable"
-					columns={KINDS}
-					rows={rows}
-					onEdit={(e) => setRows((prev) => edited(prev, e, KINDS))}
+					columns={table.columns}
+					rows={table.rows}
+					onEdit={(e) => setTable((t) => ({ ...t, rows: edited(t.rows, e, t.columns) }))}
+					onColumnKind={onColumnKind}
+					onColumnAlign={onColumnAlign}
 				/>
+				<Text size="xs" tone="muted" mono>
+					{log}
+				</Text>
 			</div>
 			<div className="space-y-2">
 				<Text size="sm" tone="secondary">
@@ -374,6 +528,7 @@ export const Playground: StoryObj<Args> = {
 		movable: true,
 		sortable: true,
 		activatable: false,
+		columnsEditable: true,
 		density: "default",
 		striped: false,
 		variant: "default",
