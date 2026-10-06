@@ -4,6 +4,8 @@ Layout under ``src/nustd/ui/``:
 
 - ``lens/``   -- the Shape lens: ``LensRef``, the walk that turns a Shape and
                  a cursor into columns, and ``browse`` to assemble the two.
+- ``table/``  -- ``sync``: a ``TableRef`` kept equal to a kv store, live
+                 across tabs, and ``Row``, the stored row it reads.
 - ``core/``   -- host-independent UI fabric: ``Ref``, ``Section`` /
                  ``SectionRef``, abstract ``Session`` / ``Subscription``,
                  wire ``Frame`` + interactions (``Write`` / ``Append`` /
@@ -42,7 +44,7 @@ from __future__ import annotations
 import importlib
 from typing import TYPE_CHECKING
 
-from . import core, lens, refs
+from . import core, lens, refs, table
 from .core import Frame, Ref, Section, SectionRef, Session, Subscription, WsSession
 from .core.interactions import Append, Changed, Patch, Remove, Write
 from .refs import (
@@ -224,4 +226,5 @@ __all__ = [
     "nudle",
     "refs",
     "serve",
+    "table",
 ]

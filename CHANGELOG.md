@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- A table preset keeps a grid and its store in step, live across tabs
 - Tables can add, delete, rename, move, retype and realign columns on request
 - Program tables can update one row or the row order without resending everything
 - Grid and document tables show the same row and column handles and menus
