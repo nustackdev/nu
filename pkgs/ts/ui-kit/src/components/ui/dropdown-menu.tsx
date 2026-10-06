@@ -139,6 +139,8 @@ function DropdownMenuItem({
 	);
 }
 
+// The check and the radio dot carry `!`: the item's own `[&_svg]` size and
+// tint would otherwise win, drawing the dot as a full-size disc.
 function DropdownMenuCheckboxItem({
 	className,
 	children,
@@ -154,7 +156,7 @@ function DropdownMenuCheckboxItem({
 		>
 			<span className="absolute left-2 flex size-4 items-center justify-center">
 				<DropdownMenuPrimitive.ItemIndicator>
-					<Check className="size-3.5 text-accent" />
+					<Check className="size-3.5! text-accent!" />
 				</DropdownMenuPrimitive.ItemIndicator>
 			</span>
 			{children}
@@ -175,7 +177,7 @@ function DropdownMenuRadioItem({
 		>
 			<span className="absolute left-2 flex size-4 items-center justify-center">
 				<DropdownMenuPrimitive.ItemIndicator>
-					<Circle className="size-2 fill-accent text-accent" />
+					<Circle className="size-2! fill-accent text-accent!" />
 				</DropdownMenuPrimitive.ItemIndicator>
 			</span>
 			{children}

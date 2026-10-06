@@ -18,6 +18,7 @@ import type { ReactElement } from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { tableMenuText } from "../../components/ui/table-handles";
 import { loadLanguage } from "../code/languages";
 import { ProseEditor } from "./editor";
 import { serializeMarkdown } from "./markdown";
@@ -339,6 +340,22 @@ function caretCellText(view: EditorView): string {
 
 const TABLE = "| a | b |\n| --- | ---: |\n| 1 | 2 |\n";
 
+/** Press a table handle, the way a pointer opens its menu. */
+function openHandle(el: HTMLElement, which: "row" | "column"): void {
+	const button = el.querySelector(`[data-table-handle=${which}] button`);
+	if (!button) throw new Error(`no ${which} handle`);
+	act(() => {
+		button.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0 }));
+	});
+}
+
+/** The open menu's items, radio items too, by their text. */
+function menuTexts(): (string | null)[] {
+	return [...document.querySelectorAll('[role="menu"] [role^="menuitem"]')].map(
+		(m) => m.textContent,
+	);
+}
+
 describe("ProseEditor tables", () => {
 	it("draws a table: a header row of th, body rows of td, alignment on the cells", () => {
 		const el = mount(<ProseEditor value={TABLE} readOnly onCommit={() => {}} />);
@@ -351,17 +368,24 @@ describe("ProseEditor tables", () => {
 		expect(ed.querySelector("[data-slot=prose-table] [data-table-scroll] table")).not.toBeNull();
 	});
 
-	it("has no control when read only, and gains one on the flip", () => {
+	it("has no handles when read only, and gains them on the flip", () => {
 		const el = mount(<ProseEditor value={TABLE} readOnly onCommit={() => {}} />);
-		expect(el.querySelector("[aria-label='Table options']")).toBeNull();
+		expect(el.querySelector("[data-table-handle]")).toBeNull();
 		expect(el.querySelector("[data-slot=prose-table]")?.hasAttribute("data-active")).toBe(false);
 		rerender(<ProseEditor value={TABLE} onCommit={() => {}} />);
-		// There for an editable table, out of sight until the caret is in it.
-		const button = el.querySelector("[aria-label='Table options']");
-		expect(button).not.toBeNull();
-		expect(button?.closest("[data-table-control]")?.className).toContain("invisible");
+		// There for an editable table, out of sight until it is in use.
+		const row = el.querySelector("[data-table-handle=row]");
+		const column = el.querySelector("[data-table-handle=column]");
+		expect(row?.querySelector("button")?.getAttribute("aria-label")).toBe(
+			tableMenuText.rowHandle("1"),
+		);
+		expect(column?.querySelector("button")?.getAttribute("aria-label")).toBe(
+			tableMenuText.columnHandle("a"),
+		);
+		expect(row?.className).toContain("invisible");
+		expect(column?.className).toContain("invisible");
 		rerender(<ProseEditor value={TABLE} readOnly onCommit={() => {}} />);
-		expect(el.querySelector("[aria-label='Table options']")).toBeNull();
+		expect(el.querySelector("[data-table-handle]")).toBeNull();
 	});
 
 	it("moves between cells on Tab and Shift-Tab", () => {
@@ -701,17 +725,123 @@ describe("ProseEditor tables", () => {
 		);
 	});
 
-	it("drops the control, open menu or not, when the document turns read only", () => {
-		const el = mount(<ProseEditor value={TABLE} onCommit={() => {}} />);
-		const button = el.querySelector("[aria-label='Table options']") as HTMLElement;
-		act(() => {
-			button.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0 }));
-		});
+	it("drops the handles, open menu or not, when the document turns read only", () => {
+		let view: EditorView | null = null;
+		const el = mount(<ProseEditor value={TABLE} onCommit={() => {}} onView={(v) => (view = v)} />);
+		caretInCell(view as unknown as EditorView, 0);
+		openHandle(el, "row");
+		expect(document.querySelector('[role="menu"]')).not.toBeNull();
 		rerender(<ProseEditor value={TABLE} readOnly onCommit={() => {}} />);
+		expect(document.querySelector('[role="menu"]')).toBeNull();
 		rerender(<ProseEditor value={TABLE} onCommit={() => {}} />);
-		const control = el.querySelector("[data-table-control]");
-		expect(control?.className).toContain("invisible");
+		expect(el.querySelector("[data-table-handle=row]")?.className).toContain("invisible");
 		expect(el.querySelector("[data-slot=prose-table]")?.hasAttribute("data-active")).toBe(false);
+	});
+
+	it("moves rows and columns, the caret along, the top row the header", () => {
+		let view: EditorView | null = null;
+		mount(<ProseEditor value={TABLE} onCommit={() => {}} onView={(v) => (view = v)} />);
+		const pm = view as unknown as EditorView;
+		const run = (c: Command) => act(() => void c(pm.state, pm.dispatch, pm));
+		const md = () => serializeMarkdown(pm.state.doc);
+
+		caretInCell(pm, 2); // `1`
+		expect(tableCommands.moveRowDown(pm.state)).toBe(false);
+		run(tableCommands.moveRowUp);
+		expect(md()).toBe("| 1 | 2 |\n| --- | ---: |\n| a | b |\n");
+		expect(caretCellText(pm)).toBe("1");
+		const table = pm.state.doc.firstChild;
+		expect(table?.child(0).firstChild?.type.name).toBe("table_header");
+		expect(table?.child(1).firstChild?.type.name).toBe("table_cell");
+		expect(tableCommands.moveRowUp(pm.state)).toBe(false);
+		run(tableCommands.moveRowDown);
+		expect(md()).toBe(TABLE);
+
+		// A column takes its alignment along.
+		caretInCell(pm, 0); // `a`
+		expect(tableCommands.moveColumnLeft(pm.state)).toBe(false);
+		run(tableCommands.moveColumnRight);
+		expect(md()).toBe("| b | a |\n| ---: | --- |\n| 2 | 1 |\n");
+		expect(caretCellText(pm)).toBe("a");
+		run(tableCommands.moveColumnLeft);
+		expect(md()).toBe(TABLE);
+	});
+
+	it("opens the row and column menus in the shared words, from a handle or a key", () => {
+		let view: EditorView | null = null;
+		const el = mount(<ProseEditor value={TABLE} onCommit={() => {}} onView={(v) => (view = v)} />);
+		const pm = view as unknown as EditorView;
+		const t = tableMenuText;
+		caretInCell(pm, 2);
+		expect(key(pm, "F10", { shiftKey: true })).toBe(true);
+		expect(menuTexts()).toEqual([
+			t.insertRowAbove,
+			t.insertRowBelow,
+			t.moveRowUp,
+			t.moveRowDown,
+			t.deleteRow,
+			t.deleteTable,
+		]);
+		expect(el.querySelector("[data-table-handle=row] button")?.getAttribute("aria-label")).toBe(
+			t.rowHandle("2"),
+		);
+		// The bottom row moves no further down.
+		const down = [...document.querySelectorAll('[role="menuitem"]')][3];
+		expect(down?.hasAttribute("data-disabled")).toBe(true);
+		act(() => {
+			document.activeElement?.dispatchEvent(
+				new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+			);
+		});
+		expect(document.querySelector('[role="menu"]')).toBeNull();
+
+		expect(key(pm, "F10", { shiftKey: true, altKey: true })).toBe(true);
+		expect(menuTexts()).toEqual([
+			t.insertColumnLeft,
+			t.insertColumnRight,
+			t.moveColumnLeft,
+			t.moveColumnRight,
+			t.alignLeft,
+			t.alignCenter,
+			t.alignRight,
+			t.deleteColumn,
+			t.deleteTable,
+		]);
+		const right = [...document.querySelectorAll('[role="menuitem"]')][3];
+		act(() => {
+			right?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+		});
+		expect(serializeMarkdown(pm.state.doc)).toBe("| b | a |\n| ---: | --- |\n| 2 | 1 |\n");
+	});
+
+	it("closes a menu whose row goes away under it", () => {
+		let view: EditorView | null = null;
+		const el = mount(<ProseEditor value={TABLE} onCommit={() => {}} onView={(v) => (view = v)} />);
+		const pm = view as unknown as EditorView;
+		caretInCell(pm, 2); // `1`, the last row
+		openHandle(el, "row");
+		expect(document.querySelector('[role="menu"]')).not.toBeNull();
+		// As a replace from elsewhere would: the row is gone, the menu with it.
+		act(() => void tableCommands.deleteRow(pm.state, pm.dispatch));
+		expect(document.querySelector('[role="menu"]')).toBeNull();
+	});
+
+	it("puts the caret in the row a handle's menu is opened on", () => {
+		let view: EditorView | null = null;
+		const el = mount(<ProseEditor value={TABLE} onCommit={() => {}} onView={(v) => (view = v)} />);
+		const pm = view as unknown as EditorView;
+		caretInCell(pm, 0); // `a`
+		const cell = el.querySelectorAll("td")[1] as HTMLElement; // `2`
+		act(() => {
+			cell.dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+		});
+		openHandle(el, "row");
+		expect(caretCellText(pm)).toBe("2");
+		const up = [...document.querySelectorAll('[role="menuitem"]')][2];
+		act(() => {
+			up?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+		});
+		expect(serializeMarkdown(pm.state.doc)).toBe("| 1 | 2 |\n| --- | ---: |\n| a | b |\n");
 	});
 
 	it("will not delete the last column or the header-only table's last row", () => {

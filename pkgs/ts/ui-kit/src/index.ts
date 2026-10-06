@@ -164,6 +164,28 @@ export {
 	type DataTableRow,
 	type DataTableSort,
 } from "./components/ui/data-table";
+export {
+	TableHandles,
+	TableMenuContextItems,
+	TableMenuDropdownItems,
+	columnMenu,
+	rowMenu,
+	tableMenuKey,
+	tableMenuKeys,
+	tableMenuText,
+	type ColumnAlign,
+	type ColumnKind,
+	type ColumnMenuActions,
+	type RowMenuActions,
+	type TableAction,
+	type TableAnchor,
+	type TableChoice,
+	type TableHandleKind,
+	type TableHandlesHandle,
+	type TableHandlesProps,
+	type TableMenuItem,
+	type TableMenuItems,
+} from "./components/ui/table-handles";
 export { LineChart } from "./components/ui/line-chart";
 export { BarChart } from "./components/ui/bar-chart";
 export { AreaChart } from "./components/ui/area-chart";

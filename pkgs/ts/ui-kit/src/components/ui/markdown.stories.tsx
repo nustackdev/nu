@@ -133,8 +133,8 @@ export const Fences: StoryObj = {
 };
 
 const TABLES = `GFM tables: type \`| a | b |\` and press Enter for a new one. Tab moves between
-cells, Enter goes down a cell, and the button on the table holding the caret adds,
-removes and aligns.
+cells, Enter goes down a cell. The handles on the row and column under the pointer
+(or the caret) add, move, align and delete; Shift+F10 and Alt+Shift+F10 open their menus.
 
 | Run | Model | Tokens | Status | Latency |
 | --- | --- | ---: | :---: | ---: |

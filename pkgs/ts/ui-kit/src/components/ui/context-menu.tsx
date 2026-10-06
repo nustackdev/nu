@@ -112,6 +112,8 @@ function ContextMenuItem({
 	);
 }
 
+// The check and the radio dot carry `!`: the item's own `[&_svg]` size and
+// tint would otherwise win, drawing the dot as a full-size disc.
 function ContextMenuCheckboxItem({
 	className,
 	children,
@@ -127,7 +129,7 @@ function ContextMenuCheckboxItem({
 		>
 			<span className="absolute left-2 flex size-4 items-center justify-center">
 				<ContextMenuPrimitive.ItemIndicator>
-					<Check className="size-3.5 text-accent" />
+					<Check className="size-3.5! text-accent!" />
 				</ContextMenuPrimitive.ItemIndicator>
 			</span>
 			{children}
@@ -148,7 +150,7 @@ function ContextMenuRadioItem({
 		>
 			<span className="absolute left-2 flex size-4 items-center justify-center">
 				<ContextMenuPrimitive.ItemIndicator>
-					<Circle className="size-2 fill-accent text-accent" />
+					<Circle className="size-2! fill-accent text-accent!" />
 				</ContextMenuPrimitive.ItemIndicator>
 			</span>
 			{children}

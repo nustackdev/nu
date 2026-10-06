@@ -38,14 +38,22 @@
 // selects the row (multi: toggles it); Shift + Up / Down extends a multi
 // selection, Ctrl/Cmd + A takes every row. Delete / Backspace deletes the
 // selection when the focused row is in it, else that row. Alt + Up / Down
-// moves the row. Tab out of a cell that is not editing leaves the grid.
+// moves the row. Shift+F10 or the Menu key opens the focused row's menu,
+// Alt+Shift+F10 its column's (on a header both open the column's); Escape
+// closes it, back on the cell. Tab out of a cell that is not editing goes to
+// the row handle, then the column handle, then "Add row", then out.
 //
 // ## Mouse
 //
 // A click focuses the cell, selects (Shift for a range, Cmd/Ctrl to toggle)
 // and activates; a double click edits; a bool's checkbox flips on a click; a
-// sortable header sorts. Right-click opens a menu built from what is on: edit
-// the cell, insert above / below, move up / down, delete. With `onMove` rows
+// sortable header sorts. The handles (`TableHandles`) follow the cell under
+// the pointer, else the focused one, and show while the pointer or the focus
+// is in the table: the row handle on the left edge opens the row's menu
+// (insert above / below, move up / down, delete), the column handle on the
+// top edge the column's (sort ascending / descending); a handle with nothing
+// to offer is not drawn. Right-click is the second way in: "Edit cell", then
+// the row's menu, the same items from the same builders. With `onMove` rows
 // also drag, a line marking where the drop lands. "Add row" sits under the
 // table when `onAdd` is given.
 //
@@ -55,7 +63,7 @@
 // cells, clipboard, type-to-edit, optimistic edits, and sorting or filtering
 // in the browser: the host sorts, the grid shows what it is handed.
 
-import { ChevronDown, ChevronUp, Plus } from "lucide-react";
+import { ChevronDown, ChevronUp, Pencil, Plus, SquareCheck } from "lucide-react";
 import type * as React from "react";
 import {
 	useCallback,
@@ -71,13 +79,7 @@ import { ROVING_KEY, useRovingFocus } from "../../lib/roving";
 import { cn } from "../../lib/utils";
 import { Button } from "./button";
 import { Checkbox } from "./checkbox";
-import {
-	ContextMenu,
-	ContextMenuContent,
-	ContextMenuItem,
-	ContextMenuSeparator,
-	ContextMenuTrigger,
-} from "./context-menu";
+import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from "./context-menu";
 import {
 	type CellPos,
 	cellKey,
@@ -101,6 +103,17 @@ import { EmptyState } from "./empty-state";
 import { InlineEdit } from "./inline-edit";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table";
+import {
+	columnMenu,
+	rowMenu,
+	type TableHandleKind,
+	TableHandles,
+	type TableHandlesHandle,
+	TableMenuContextItems,
+	type TableMenuItem,
+	tableMenuKey,
+	tableMenuText,
+} from "./table-handles";
 
 export type { DataTableKind } from "./data-table-model";
 
@@ -197,6 +210,16 @@ const FLEX_ALIGN = {
 	right: "justify-end",
 } as const;
 
+/** A cell by keys, as the handles stand for it: a null row is the header. */
+type Spot = { row: string | null; col: string };
+
+/** A cell's spot from its roving key (`cellKey` is JSON of the pair). */
+function spotOf(key: string | null): Spot | null {
+	if (key === null) return null;
+	const [row, col] = JSON.parse(key) as [string | null, string];
+	return { row, col };
+}
+
 /** A control inside a cell handles its own click; the cell leaves it alone. */
 function onControl(e: React.SyntheticEvent): boolean {
 	return (e.target as HTMLElement).closest("button, input, a, [role=checkbox]") !== null;
@@ -275,6 +298,22 @@ export function DataTable({
 	const editAfterMenu = useRef(false);
 	const [drag, setDrag] = useState<string | null>(null);
 	const [aim, setAim] = useState<{ key: string; edge: "before" | "after" } | null>(null);
+
+	// The handles: the cell under the pointer, whether the focus is in the
+	// table, and the cell a handle's menu was opened on (held while it is open,
+	// so the pointer wandering off does not move what the menu acts on).
+	const box = useRef<HTMLDivElement | null>(null);
+	const handles = useRef<TableHandlesHandle | null>(null);
+	const [hover, setHover] = useState<Spot | null>(null);
+	const [focusIn, setFocusIn] = useState(false);
+	const [handleAt, setHandleAt] = useState<Spot | null>(null);
+	// With its row's index then, so a delete puts the focus where the row was.
+	const handleTarget = useRef<(Spot & { index: number }) | null>(null);
+	// A shortcut asks for a menu: opened once the handles stand on the focused cell.
+	const [shortcut, setShortcut] = useState<TableHandleKind | null>(null);
+	// When a shortcut last opened a menu: the browser's own context menu event
+	// that the same key may send right after opens nothing.
+	const shortcutAt = useRef(0);
 
 	const focusCell = useCallback(
 		(rowKey: string, columnKey: string) => focusKey(cellKey(rowKey, columnKey)),
@@ -437,11 +476,61 @@ export function DataTable({
 		if (col.sortable) onSort?.(col.key, nextDirection(sort, col.key));
 	};
 
+	// --- Menus -----------------------------------------------------------------
+
+	/** The row menu for row `r`, built from the row features that are on. */
+	const rowItems = (r: number, colKey: string): TableMenuItem[] => {
+		const row = rows[r];
+		if (!row) return [];
+		const n = deleteTargets(selected, row.key).length;
+		return rowMenu({
+			insertAbove: onAdd && (() => onAdd(r)),
+			insertBelow: onAdd && (() => onAdd(r + 1)),
+			moveUp: onMove && { run: () => step(r, colKey, -1), disabled: r === 0 },
+			moveDown: onMove && { run: () => step(r, colKey, 1), disabled: r === rows.length - 1 },
+			remove: onDelete && (() => remove(r, colKey)),
+			removeLabel: n > 1 ? tableMenuText.deleteRows(n) : undefined,
+		});
+	};
+
+	/** The column menu: sorting, for now, when the column sorts. */
+	const columnItems = (c: number): TableMenuItem[] => {
+		const col = cols[c];
+		if (!col?.sortable || !onSort) return [];
+		return columnMenu({
+			sort: {
+				ascending: () => onSort(col.key, "asc"),
+				descending: () => onSort(col.key, "desc"),
+			},
+		});
+	};
+
+	/** Open a handle's menu from the keyboard, on the focused cell. */
+	const openByKey = (which: TableHandleKind) => {
+		setHover(null);
+		setShortcut(which);
+	};
+
+	// Once the render with the hover dropped is in, the handles stand on the
+	// focused cell: open there.
+	useLayoutEffect(() => {
+		if (!shortcut) return;
+		setShortcut(null);
+		// Armed only when a menu did open: else a right-click right after is its own.
+		if (handles.current?.open(shortcut)) shortcutAt.current = Date.now();
+	}, [shortcut]);
+
 	// --- Keyboard ------------------------------------------------------------
 
 	const onHeadKeyDown = (e: React.KeyboardEvent, c: number) => {
 		const col = cols[c];
 		if (!col) return;
+		// A header has no row: both shortcuts open its column's menu.
+		if (tableMenuKey(e)) {
+			e.preventDefault();
+			openByKey("column");
+			return;
+		}
 		const mod = e.ctrlKey || e.metaKey;
 		if (e.altKey || e.shiftKey || (mod && e.key !== "Home" && e.key !== "End")) return;
 		const to = navigate(e.key, mod, { row: -1, col: c }, dims);
@@ -461,6 +550,12 @@ export function DataTable({
 		const col = cols[c];
 		if (!row || !col) return;
 		pending.current = null;
+		const menu = tableMenuKey(e);
+		if (menu) {
+			e.preventDefault();
+			openByKey(menu);
+			return;
+		}
 		const mod = e.ctrlKey || e.metaKey;
 		const at = { row: r, col: c };
 
@@ -565,67 +660,29 @@ export function DataTable({
 		onActivate?.(row.key, r, e);
 	};
 
-	const menuItems = (at: CellPos) => {
+	/** The right-click menu: edit the cell, then the row's menu. */
+	const menuItems = (at: CellPos): TableMenuItem[] | null => {
 		const col = cols[at.col];
 		const row = rows[at.row];
 		if (!col || !row) return null;
-		const items: React.ReactNode[] = [];
-		const edit = col.editable;
-		const add = onAdd !== undefined;
-		const move = onMove !== undefined;
-		const del = onDelete !== undefined;
-		if (edit) {
-			items.push(
-				<ContextMenuItem
-					key="edit"
-					onSelect={() => {
-						if (col.kind === "bool") startEdit(at);
-						else editAfterMenu.current = true;
-					}}
-				>
-					{col.kind === "bool" ? "Toggle" : "Edit cell"}
-				</ContextMenuItem>,
-			);
+		const items: TableMenuItem[] = [];
+		if (col.editable) {
+			const bool = col.kind === "bool";
+			items.push({
+				type: "item",
+				id: "edit",
+				label: bool ? "Toggle" : "Edit cell",
+				icon: bool ? SquareCheck : Pencil,
+				onSelect: () => {
+					if (bool) startEdit(at);
+					else editAfterMenu.current = true;
+				},
+			});
 		}
-		if (add) {
-			if (items.length) items.push(<ContextMenuSeparator key="s1" />);
-			items.push(
-				<ContextMenuItem key="above" onSelect={() => onAdd?.(at.row)}>
-					Insert row above
-				</ContextMenuItem>,
-				<ContextMenuItem key="below" onSelect={() => onAdd?.(at.row + 1)}>
-					Insert row below
-				</ContextMenuItem>,
-			);
-		}
-		if (move) {
-			if (items.length) items.push(<ContextMenuSeparator key="s2" />);
-			items.push(
-				<ContextMenuItem
-					key="up"
-					disabled={at.row === 0}
-					onSelect={() => step(at.row, col.key, -1)}
-				>
-					Move up
-				</ContextMenuItem>,
-				<ContextMenuItem
-					key="down"
-					disabled={at.row === rows.length - 1}
-					onSelect={() => step(at.row, col.key, 1)}
-				>
-					Move down
-				</ContextMenuItem>,
-			);
-		}
-		if (del) {
-			const n = deleteTargets(selected, row.key).length;
-			if (items.length) items.push(<ContextMenuSeparator key="s3" />);
-			items.push(
-				<ContextMenuItem key="delete" variant="danger" onSelect={() => remove(at.row, col.key)}>
-					{n > 1 ? `Delete ${n} rows` : "Delete row"}
-				</ContextMenuItem>,
-			);
-		}
+		const more = rowItems(at.row, col.key);
+		if (items.length > 0 && more.length > 0)
+			items.push({ type: "separator", id: "edit-separator" });
+		items.push(...more);
 		return items.length ? items : null;
 	};
 
@@ -634,6 +691,9 @@ export function DataTable({
 		const col = cols[c];
 		if (!row || !col) return;
 		pending.current = null;
+		// The context menu event a menu shortcut sends after it: the shortcut's
+		// own menu is open already, so this one opens nothing.
+		if (Date.now() - shortcutAt.current < 1000) return;
 		if (!menuItems({ row: r, col: c })) return;
 		menuOffered.current = true;
 		e.currentTarget.focus({ preventScroll: true });
@@ -839,6 +899,7 @@ export function DataTable({
 					<TableRow
 						key={row.key}
 						role="row"
+						data-row={row.key}
 						aria-rowindex={r + 2}
 						aria-selected={selection !== "none" ? isSelected : undefined}
 						selected={isSelected}
@@ -898,116 +959,232 @@ export function DataTable({
 		</TableBody>
 	);
 
+	// --- Handles -------------------------------------------------------------
+
+	// What the handles stand for: the cell a menu is open on, else the one
+	// under the pointer, else the focused one.
+	const spot = handleAt ?? hover ?? spotOf(tabKey);
+	const spotRow = spot?.row != null ? order.indexOf(spot.row) : -1;
+	const spotCol = spot ? cols.findIndex((c) => c.key === spot.col) : -1;
+	const handleRow = spotRow >= 0 ? rows[spotRow] : undefined;
+	const handleCol = spotCol >= 0 ? cols[spotCol] : undefined;
+
+	const pointerOver = (e: PointerEvent) => {
+		if (handleAt || drag) return;
+		const target = e.target as Element;
+		const td = target.closest?.("td, th") as HTMLTableCellElement | null;
+		if (!td || !box.current?.contains(td)) return;
+		const tr = td.parentElement as HTMLElement | null;
+		const col = cols[td.cellIndex];
+		if (!tr || !col) return;
+		const row = tr.dataset.row ?? null;
+		// The empty state's row stands for no row and no column.
+		if (row === null && !tr.closest("thead")) return;
+		if (hover?.row !== row || hover.col !== col.key) setHover({ row, col: col.key });
+	};
+	const onPointer = useRef(pointerOver);
+	onPointer.current = pointerOver;
+
+	// Listened for natively: the boxes are layout, not controls, and the menus
+	// portalled out of them are none of their business. The pointer counts
+	// over the table and its handles; the focus anywhere in the component, so
+	// Shift+Tab back from "Add row" finds the handles there.
+	useEffect(() => {
+		const el = box.current;
+		const all = containerRef.current;
+		if (!el || !all) return;
+		const over = (e: PointerEvent) => onPointer.current(e);
+		const leave = () => setHover(null);
+		const focusin = () => setFocusIn(true);
+		const focusout = (e: FocusEvent) => {
+			if (!all.contains(e.relatedTarget as Node | null)) setFocusIn(false);
+		};
+		el.addEventListener("pointerover", over);
+		el.addEventListener("pointerleave", leave);
+		all.addEventListener("focusin", focusin);
+		all.addEventListener("focusout", focusout);
+		return () => {
+			el.removeEventListener("pointerover", over);
+			el.removeEventListener("pointerleave", leave);
+			all.removeEventListener("focusin", focusin);
+			all.removeEventListener("focusout", focusout);
+		};
+	}, [containerRef]);
+
+	/** Back to the cell a handle's menu was opened on, or where its row was. */
+	const backFromHandle = () => {
+		const at = handleTarget.current;
+		handleTarget.current = null;
+		if (!at) return;
+		if (at.row !== null) {
+			restore({ row: at.row, col: at.col, index: at.index });
+		} else if (header) focusKey(cellKey(null, at.col));
+		else if (tabKey) focusKey(tabKey);
+	};
+
+	const handleEls = (
+		<TableHandles
+			ref={handles}
+			row={() =>
+				handleRow
+					? ([...(box.current?.querySelectorAll<HTMLElement>("tbody > tr[data-row]") ?? [])].find(
+							(tr) => tr.dataset.row === handleRow.key,
+						) ?? null)
+					: null
+			}
+			column={() =>
+				handleCol
+					? (box.current?.querySelectorAll<HTMLElement>("thead > tr > th")[spotCol] ?? null)
+					: null
+			}
+			scroller={() => box.current?.querySelector<HTMLElement>(":scope > div") ?? null}
+			// Read when the menu opens; drawn whenever a row feature is on, hidden
+			// while no row is active (the header, say), so the tab order holds still.
+			rowItems={
+				onAdd || onMove || onDelete
+					? () => (handleRow && handleCol ? rowItems(spotRow, handleCol.key) : [])
+					: []
+			}
+			columnItems={handleCol ? columnItems(spotCol) : []}
+			rowLabel={
+				handleRow ? tableMenuText.rowHandle(rowName(handleRow)) : tableMenuText.rowHandleIdle
+			}
+			columnLabel={
+				handleCol ? tableMenuText.columnHandle(handleCol.label) : tableMenuText.columnHandleIdle
+			}
+			visible={hover !== null || focusIn}
+			onOpenChange={(which) => {
+				if (which) {
+					pending.current = null;
+					handleTarget.current = spot && { ...spot, index: Math.max(0, spotRow) };
+					setHandleAt(spot);
+				} else setHandleAt(null);
+			}}
+			onCloseAutoFocus={(e) => {
+				e.preventDefault();
+				backFromHandle();
+			}}
+		/>
+	);
+
 	return (
 		<div
 			ref={containerRef}
 			data-slot="data-table"
 			className={cn("flex min-w-0 flex-col items-start gap-1.5", className)}
 		>
-			<Table
-				role="grid"
-				aria-label={label}
-				aria-rowcount={Math.max(1, rows.length) + 1}
-				aria-multiselectable={multi ? true : undefined}
-				variant={variant}
-				density={density}
-				striped={striped}
-			>
-				<TableHeader>
-					<TableRow role="row" aria-rowindex={1} className="hover:bg-transparent">
-						{cols.map((col, c) => {
-							const active = sort?.column === col.key ? sort.direction : null;
-							const key = cellKey(null, col.key);
-							return (
-								<TableHead
-									key={col.key}
-									role="columnheader"
-									style={col.width ? { width: col.width } : undefined}
-									aria-sort={
-										col.sortable
-											? active === "asc"
-												? "ascending"
-												: active === "desc"
-													? "descending"
-													: "none"
-											: undefined
-									}
-									{...(header
-										? {
-												tabIndex: key === tabKey ? 0 : -1,
-												[ROVING_KEY]: key,
-												onFocus: () => setActiveKey(key),
-												onKeyDown: (e: React.KeyboardEvent) => onHeadKeyDown(e, c),
-											}
-										: {})}
-									onClick={
-										header
-											? (e: React.MouseEvent<HTMLElement>) => {
-													e.currentTarget.focus({ preventScroll: true });
-													sortBy(col);
+			{/* The box the handles sit in: outside the sideways scroll, so they are not clipped. */}
+			<div ref={box} className="relative w-full">
+				<Table
+					role="grid"
+					aria-label={label}
+					aria-rowcount={Math.max(1, rows.length) + 1}
+					aria-multiselectable={multi ? true : undefined}
+					variant={variant}
+					density={density}
+					striped={striped}
+				>
+					<TableHeader>
+						<TableRow role="row" aria-rowindex={1} className="hover:bg-transparent">
+							{cols.map((col, c) => {
+								const active = sort?.column === col.key ? sort.direction : null;
+								const key = cellKey(null, col.key);
+								return (
+									<TableHead
+										key={col.key}
+										role="columnheader"
+										style={col.width ? { width: col.width } : undefined}
+										aria-sort={
+											col.sortable
+												? active === "asc"
+													? "ascending"
+													: active === "desc"
+														? "descending"
+														: "none"
+												: undefined
+										}
+										{...(header
+											? {
+													tabIndex: key === tabKey ? 0 : -1,
+													[ROVING_KEY]: key,
+													onFocus: () => setActiveKey(key),
+													onKeyDown: (e: React.KeyboardEvent) => onHeadKeyDown(e, c),
 												}
-											: undefined
-									}
-									className={cn(
-										ALIGN[col.align],
-										header && table.gridCell,
-										col.sortable && "cursor-pointer select-none hover:text-text-primary",
-										active && "text-text-primary",
-									)}
-								>
-									<span className={cn("inline-flex items-center gap-1", FLEX_ALIGN[col.align])}>
-										{col.label}
-										{active === "asc" ? (
-											<ChevronUp aria-hidden="true" className="size-3.5" />
-										) : null}
-										{active === "desc" ? (
-											<ChevronDown aria-hidden="true" className="size-3.5" />
-										) : null}
-									</span>
-								</TableHead>
-							);
-						})}
-					</TableRow>
-				</TableHeader>
-				{hasMenu ? (
-					<ContextMenu
-						onOpenChange={(open) => {
-							if (!open) setMenuAt(null);
-						}}
-					>
-						<ContextMenuTrigger asChild>{body}</ContextMenuTrigger>
-						<ContextMenuContent
-							className="min-w-48"
-							onCloseAutoFocus={(e) => {
-								// Back to the cell, or where its row was if a delete or a
-								// move took it away; then the edit "Edit cell" asked for.
-								e.preventDefault();
-								const at = menuTarget.current;
-								if (!at) return;
-								restore(at);
-								if (editAfterMenu.current) {
-									editAfterMenu.current = false;
-									const row = order.indexOf(at.row);
-									const col = cols.findIndex((c) => c.key === at.col);
-									if (row >= 0 && col >= 0) startEdit({ row, col });
-								}
+											: {})}
+										onClick={
+											header
+												? (e: React.MouseEvent<HTMLElement>) => {
+														e.currentTarget.focus({ preventScroll: true });
+														sortBy(col);
+													}
+												: undefined
+										}
+										className={cn(
+											ALIGN[col.align],
+											header && table.gridCell,
+											col.sortable && "cursor-pointer select-none hover:text-text-primary",
+											active && "text-text-primary",
+										)}
+									>
+										<span className={cn("inline-flex items-center gap-1", FLEX_ALIGN[col.align])}>
+											{col.label}
+											{active === "asc" ? (
+												<ChevronUp aria-hidden="true" className="size-3.5" />
+											) : null}
+											{active === "desc" ? (
+												<ChevronDown aria-hidden="true" className="size-3.5" />
+											) : null}
+										</span>
+									</TableHead>
+								);
+							})}
+						</TableRow>
+					</TableHeader>
+					{hasMenu ? (
+						<ContextMenu
+							onOpenChange={(open) => {
+								if (!open) setMenuAt(null);
 							}}
 						>
-							{menuAt && order.includes(menuAt.row)
-								? menuItems({
-										row: order.indexOf(menuAt.row),
-										col: Math.max(
-											0,
-											cols.findIndex((c) => c.key === menuAt.col),
-										),
-									})
-								: null}
-						</ContextMenuContent>
-					</ContextMenu>
-				) : (
-					body
-				)}
-			</Table>
+							<ContextMenuTrigger asChild>{body}</ContextMenuTrigger>
+							<ContextMenuContent
+								className="min-w-48"
+								onCloseAutoFocus={(e) => {
+									// Back to the cell, or where its row was if a delete or a
+									// move took it away; then the edit "Edit cell" asked for.
+									e.preventDefault();
+									const at = menuTarget.current;
+									if (!at) return;
+									restore(at);
+									if (editAfterMenu.current) {
+										editAfterMenu.current = false;
+										const row = order.indexOf(at.row);
+										const col = cols.findIndex((c) => c.key === at.col);
+										if (row >= 0 && col >= 0) startEdit({ row, col });
+									}
+								}}
+							>
+								{menuAt && order.includes(menuAt.row) ? (
+									<TableMenuContextItems
+										items={
+											menuItems({
+												row: order.indexOf(menuAt.row),
+												col: Math.max(
+													0,
+													cols.findIndex((c) => c.key === menuAt.col),
+												),
+											}) ?? []
+										}
+									/>
+								) : null}
+							</ContextMenuContent>
+						</ContextMenu>
+					) : (
+						body
+					)}
+				</Table>
+				{handleEls}
+			</div>
 			{onAdd ? (
 				<Button
 					ref={addButton}

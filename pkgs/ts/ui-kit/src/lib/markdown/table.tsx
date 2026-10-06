@@ -29,25 +29,31 @@
 //
 // ## The control
 //
-// The table the caret is in shows one button in its corner, the kit's
-// IconButton, opening the kit's DropdownMenu: rows, columns, alignment,
-// delete. It is a node view's chrome, mounted with React the way a fence's
-// picker is (./fence.tsx), and it follows the read-only flip the same way, so
-// a read-only table draws exactly what an editable one does minus the button.
-// The menu takes focus out of the document while it is open, which counts as
-// leaving it, so a pick is an ordinary edit afterwards: it lands in the
-// document, the quiet-moment save picks it up, and focus goes back to the
+// An editable table shows the kit's row and column handles (TableHandles,
+// components/ui/table-handles.tsx), the same ones a `DataTable` shows, with
+// menus from the same builders in the same words: one on the table's left
+// edge level with a row, opening the row's menu (insert above / below, move
+// up / down, delete row), one on its top edge over a column, opening the
+// column's (insert left / right, move left / right, alignment, delete
+// column); both end with "Delete table". They follow the cell under the
+// pointer, else the caret's, and show while the pointer is over the table,
+// while the caret or the focus is in it or its handles, and while a menu is
+// open. Opening a menu from a handle puts the caret in that row or column
+// first (unless the selection already spans it), so a pick is an ordinary
+// command on the selection. Shift+F10 or the Menu key opens the caret row's
+// menu and Alt+Shift+F10 its column's, since Tab here moves between cells.
+//
+// The handles are a node view's chrome, mounted with React the way a fence's
+// picker is (./fence.tsx), and they follow the read-only flip the same way:
+// a read-only table draws exactly what an editable one does minus the
+// handles. A menu takes focus out of the document while it is open, which
+// counts as leaving it, so a pick is an ordinary edit afterwards: it lands in
+// the document, the quiet-moment save picks it up, and focus goes back to the
 // caret when the menu closes.
 
-import {
-	BetweenHorizontalEnd,
-	BetweenHorizontalStart,
-	BetweenVerticalEnd,
-	BetweenVerticalStart,
-	Ellipsis,
-	Trash2,
-} from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { GapCursor } from "prosemirror-gapcursor";
+import { keymap } from "prosemirror-keymap";
 import { DOMSerializer, Fragment, type Node as PMNode, Slice } from "prosemirror-model";
 import {
 	type Command,
@@ -80,19 +86,19 @@ import type {
 	NodeViewConstructor,
 	ViewMutationRecord,
 } from "prosemirror-view";
-import { useState } from "react";
+import { createRef } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuRadioGroup,
-	DropdownMenuRadioItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "../../components/ui/dropdown-menu";
-import { IconButton } from "../../components/ui/icon-button";
-import { cn } from "../utils";
+	type ColumnAlign,
+	columnMenu,
+	rowMenu,
+	type TableAction,
+	type TableHandleKind,
+	TableHandles,
+	type TableHandlesHandle,
+	type TableMenuItem,
+	tableMenuText,
+} from "../../components/ui/table-handles";
 import type { Align } from "./markdown";
 import type { ProseSchema } from "./schema";
 
@@ -325,12 +331,80 @@ function flattenIntoCell(slice: Slice, view: EditorView, cells: boolean): Slice 
 	return new Slice(Fragment.from(inline), 0, 0);
 }
 
-/** What the menu offers. Exported so a test can run exactly what a pick runs. */
+/**
+ * Move the selected rows (or columns) one step up or down (left or right):
+ * the block the selection spans trades places with the row or column next
+ * to it, the selection going along. GFM has no merged cells, so this is a
+ * plain permutation of the table node. The normalizer then does the rest:
+ * a row moved to the top becomes the header and the old header a body row,
+ * and a column's cells carry their alignment with them.
+ */
+export function moveCells(axis: "row" | "column", dir: -1 | 1): Command {
+	return (state, dispatch) => {
+		if (!isInTable(state)) return false;
+		const rect = selectedRect(state);
+		const { map, table, tableStart } = rect;
+		const row = axis === "row";
+		const [lo, hi, size] = row
+			? [rect.top, rect.bottom, map.height]
+			: [rect.left, rect.right, map.width];
+		if (dir < 0 ? lo === 0 : hi === size) return false;
+		if (!dispatch) return true;
+
+		// The new order: the block [lo, hi) one step over, its neighbour on the other side.
+		const at = [...Array(size).keys()];
+		const order =
+			dir < 0
+				? [...at.slice(0, lo - 1), ...at.slice(lo, hi), lo - 1, ...at.slice(hi)]
+				: [...at.slice(0, lo), hi, ...at.slice(lo, hi), ...at.slice(hi + 1)];
+		const moved: number[] = [];
+		order.forEach((was, now) => {
+			moved[was] = now;
+		});
+		const rows: PMNode[] = [];
+		if (row) for (const i of order) rows.push(table.child(i));
+		else {
+			table.forEach((r) => {
+				rows.push(r.copy(Fragment.from(order.map((i) => r.child(i)))));
+			});
+		}
+		const next = table.copy(Fragment.from(rows));
+		const nextMap = TableMap.get(next);
+
+		// A position in a cell, to the same place in that cell where it now sits.
+		const depth = state.doc.resolve(tableStart).depth;
+		const place = (pos: number) => {
+			const $p = state.doc.resolve(pos);
+			const cellStart = $p.depth > depth ? $p.before(depth + 2) : pos;
+			const { top, left } = map.findCell(cellStart - tableStart);
+			const r = row ? (moved[top] ?? top) : top;
+			const c = row ? left : (moved[left] ?? left);
+			return tableStart + (nextMap.map[r * nextMap.width + c] ?? 0) + (pos - cellStart);
+		};
+		const sel = state.selection;
+		const tr = state.tr.replaceWith(tableStart, tableStart + table.content.size, next.content);
+		if (sel instanceof CellSelection) {
+			tr.setSelection(
+				CellSelection.create(tr.doc, place(sel.$anchorCell.pos), place(sel.$headCell.pos)),
+			);
+		} else {
+			tr.setSelection(TextSelection.create(tr.doc, place(sel.anchor), place(sel.head)));
+		}
+		dispatch(tr.scrollIntoView());
+		return true;
+	};
+}
+
+/** What the menus offer. Exported so a test can run exactly what a pick runs. */
 export const tableCommands = {
 	addRowBefore: inserting(addRowBefore, (r) => [r.top, r.left]),
 	addRowAfter: inserting(addRowAfter, (r) => [r.bottom, r.left]),
 	addColumnBefore: inserting(addColumnBefore, (r) => [r.top, r.left]),
 	addColumnAfter: inserting(addColumnAfter, (r) => [r.top, r.right]),
+	moveRowUp: moveCells("row", -1),
+	moveRowDown: moveCells("row", 1),
+	moveColumnLeft: moveCells("column", -1),
+	moveColumnRight: moveCells("column", 1),
 	deleteRow: deleteRowOnly,
 	deleteColumn: deleteColumnOnly,
 	deleteTable,
@@ -388,100 +462,58 @@ function normalizer(s: ProseSchema): Plugin {
 
 /* ============================== the control ============================== */
 
-type Icon = typeof Trash2;
+/** A cell by row and column index. */
+type Spot = { row: number; col: number };
 
-const INSERTS: [string, Icon, Command][] = [
-	["Insert row above", BetweenHorizontalStart, tableCommands.addRowBefore],
-	["Insert row below", BetweenHorizontalEnd, tableCommands.addRowAfter],
-	["Insert column left", BetweenVerticalStart, tableCommands.addColumnBefore],
-	["Insert column right", BetweenVerticalEnd, tableCommands.addColumnAfter],
-];
-
-// No icons here: the radio dot sits where an item's icon does, so the labels line up.
-const ALIGNS: [string, Align & string][] = [
-	["Align left", "left"],
-	["Align center", "center"],
-	["Align right", "right"],
-];
-
-const DELETES: [string, Command][] = [
-	["Delete row", tableCommands.deleteRow],
-	["Delete column", tableCommands.deleteColumn],
-	["Delete table", tableCommands.deleteTable],
-];
-
-type ControlProps = {
-	view: EditorView;
-	onOpenChange: (open: boolean) => void;
-};
-
-function TableMenu({ view, onOpenChange }: ControlProps) {
-	// Re-read on open: what applies depends on where the caret is now.
-	const [, setTick] = useState(0);
-	const run = (command: Command) => {
-		command(view.state, view.dispatch, view);
+/** A command as a menu action: greyed out where it would not apply. */
+function action(view: EditorView, command: Command): TableAction {
+	return {
+		run: () => void command(view.state, view.dispatch, view),
+		disabled: !command(view.state, undefined, view),
 	};
-	const can = (command: Command) => command(view.state, undefined, view);
-	const align = columnAlign(view.state) ?? "left";
-	return (
-		<DropdownMenu
-			modal={false}
-			onOpenChange={(open) => {
-				if (open) setTick((t) => t + 1);
-				onOpenChange(open);
-			}}
-		>
-			<DropdownMenuTrigger asChild>
-				<IconButton
-					variant="secondary"
-					size="xs"
-					aria-label="Table options"
-					// Opens on press; keeping the press from moving focus keeps the caret.
-					onMouseDown={(e) => e.preventDefault()}
-				>
-					<Ellipsis />
-				</IconButton>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent
-				align="end"
-				className="w-48"
-				onCloseAutoFocus={(e) => {
-					e.preventDefault();
-					view.focus();
-				}}
-			>
-				{INSERTS.map(([label, Icon, command]) => (
-					<DropdownMenuItem key={label} disabled={!can(command)} onSelect={() => run(command)}>
-						<Icon />
-						{label}
-					</DropdownMenuItem>
-				))}
-				<DropdownMenuSeparator />
-				<DropdownMenuRadioGroup
-					value={align}
-					onValueChange={(next) => run(tableCommands.alignColumn(next as Align))}
-				>
-					{ALIGNS.map(([label, value]) => (
-						<DropdownMenuRadioItem key={value} value={value}>
-							{label}
-						</DropdownMenuRadioItem>
-					))}
-				</DropdownMenuRadioGroup>
-				<DropdownMenuSeparator />
-				{DELETES.map(([label, command]) => (
-					<DropdownMenuItem
-						key={label}
-						variant={command === tableCommands.deleteTable ? "danger" : "default"}
-						disabled={!can(command)}
-						onSelect={() => run(command)}
-					>
-						<Trash2 />
-						{label}
-					</DropdownMenuItem>
-				))}
-			</DropdownMenuContent>
-		</DropdownMenu>
-	);
+}
+
+/** Last in both menus: the table itself. */
+function deleteTableItem(view: EditorView): TableMenuItem {
+	return {
+		type: "item",
+		id: "delete-table",
+		label: tableMenuText.deleteTable,
+		icon: Trash2,
+		danger: true,
+		onSelect: () => void tableCommands.deleteTable(view.state, view.dispatch),
+	};
+}
+
+/** The row menu, read off the selection: by the time it opens the caret is in the row. */
+function rowItems(view: EditorView): TableMenuItem[] {
+	const c = tableCommands;
+	return rowMenu({
+		insertAbove: action(view, c.addRowBefore),
+		insertBelow: action(view, c.addRowAfter),
+		moveUp: action(view, c.moveRowUp),
+		moveDown: action(view, c.moveRowDown),
+		remove: action(view, c.deleteRow),
+		extra: [deleteTableItem(view)],
+	});
+}
+
+/** The column menu, read off the selection the same way. */
+function columnItems(view: EditorView): TableMenuItem[] {
+	const c = tableCommands;
+	return columnMenu({
+		insertLeft: action(view, c.addColumnBefore),
+		insertRight: action(view, c.addColumnAfter),
+		moveLeft: action(view, c.moveColumnLeft),
+		moveRight: action(view, c.moveColumnRight),
+		align: {
+			value: columnAlign(view.state) ?? "left",
+			onValueChange: (next: ColumnAlign) =>
+				void c.alignColumn(next)(view.state, view.dispatch, view),
+		},
+		remove: action(view, c.deleteColumn),
+		extra: [deleteTableItem(view)],
+	});
 }
 
 /* ============================== node view ================================ */
@@ -493,14 +525,21 @@ class TableView implements NodeView {
 	private readonly view: EditorView;
 	private readonly getPos: () => number | undefined;
 	private readonly forget: () => void;
+	private readonly scroll: HTMLElement;
 	private readonly control: HTMLElement;
 	private readonly root: Root;
-	/** The menu is open: the control stays while focus is in it. */
-	private open = false;
-	/** Whether the control is mounted; null until the first `sync`. */
+	private readonly handles = createRef<TableHandlesHandle>();
+	/** Whether the handles are mounted; null until the first `sync`. */
 	private editable: boolean | null = null;
-	/** What `sync` last drew; null until the first one. */
-	private shown: boolean | null = null;
+	/** The cell under the pointer, while the pointer is over the table. */
+	private hover: Spot | null = null;
+	private pointerIn = false;
+	/** Focus is on a handle. */
+	private handleFocus = false;
+	/** The open menu and the cell it was opened on, held while it is open. */
+	private menu: { which: TableHandleKind; at: Spot } | null = null;
+	/** What `sync` last drew, to skip drawing the same again on every keystroke. */
+	private drawn: { sig: string; node: PMNode } | null = null;
 
 	constructor(
 		node: PMNode,
@@ -522,19 +561,38 @@ class TableView implements NodeView {
 		if (!contentDOM) throw new Error("table toDOM has no content hole");
 		this.contentDOM = contentDOM;
 
-		const scroll = document.createElement("div");
-		scroll.setAttribute("data-table-scroll", "");
-		scroll.appendChild(table);
+		this.scroll = document.createElement("div");
+		this.scroll.setAttribute("data-table-scroll", "");
+		this.scroll.appendChild(table);
 
+		// The handles are placed in this box, outside the scrolling one, so the
+		// edges they straddle do not clip them.
 		this.dom = document.createElement("div");
 		this.dom.setAttribute("data-slot", "prose-table");
-		this.dom.appendChild(scroll);
+		this.dom.className = "relative";
+		this.dom.appendChild(this.scroll);
 
 		this.control = document.createElement("div");
 		this.control.contentEditable = "false";
 		this.control.setAttribute("data-table-control", "");
 		this.dom.appendChild(this.control);
 		this.root = createRoot(this.control);
+
+		this.dom.addEventListener("pointerover", (e) => this.pointerOver(e));
+		this.dom.addEventListener("pointerleave", () => {
+			this.pointerIn = false;
+			if (!this.menu) this.hover = null;
+			this.sync();
+		});
+		this.control.addEventListener("focusin", () => {
+			this.handleFocus = true;
+			this.sync();
+		});
+		this.control.addEventListener("focusout", (e) => {
+			if (this.control.contains(e.relatedTarget as Node | null)) return;
+			this.handleFocus = false;
+			this.sync();
+		});
 		this.sync();
 	}
 
@@ -545,49 +603,150 @@ class TableView implements NodeView {
 		return true;
 	}
 
+	private pointerOver(e: PointerEvent): void {
+		if (!this.editable) return;
+		this.pointerIn = true;
+		const cell = (e.target as Element | null)?.closest?.("td, th") as HTMLTableCellElement | null;
+		const tr = cell?.parentElement;
+		if (!this.menu && cell && tr && tr.parentElement === this.contentDOM) {
+			const row = [...this.contentDOM.children].indexOf(tr);
+			const col = cell.cellIndex;
+			if (this.hover?.row !== row || this.hover.col !== col) this.hover = { row, col };
+		}
+		this.sync();
+	}
+
+	/** The cell the caret (or the selection's head) is in, when it is in this table. */
+	private caretSpot(): Spot | null {
+		if (!this.holdsCaret() || !isInTable(this.view.state)) return null;
+		const { top, left } = selectedRect(this.view.state);
+		return { row: top, col: left };
+	}
+
+	/** What the handles stand for: the open menu's cell, else the pointer's, else the caret's. */
+	private spot(): Spot | null {
+		return this.menu?.at ?? this.hover ?? this.caretSpot();
+	}
+
+	private rowEl(): HTMLElement | null {
+		const at = this.spot();
+		return at ? ((this.contentDOM.children[at.row] as HTMLElement | undefined) ?? null) : null;
+	}
+
+	private columnEl(): HTMLElement | null {
+		const at = this.spot();
+		const head = this.contentDOM.children[0];
+		return at && head ? ((head.children[at.col] as HTMLElement | undefined) ?? null) : null;
+	}
+
 	/**
-	 * Called on every editor update and on focus moving: the control shows on
-	 * an editable table holding the caret while the document has focus (or
-	 * its own menu does).
+	 * Called on every editor update, focus move and pointer move over the
+	 * table: the handles show on an editable table under the pointer, holding
+	 * the caret while the document has focus, or with a handle focused or its
+	 * menu open.
 	 */
 	sync(): void {
 		const editable = this.view.editable;
 		if (editable !== this.editable) {
 			this.editable = editable;
-			// Read-only has no control at all, not a hidden one, and a menu
-			// open when the flip came went with it.
-			if (!editable) this.open = false;
-			this.root.render(
-				editable ? (
-					<TableMenu
-						view={this.view}
-						onOpenChange={(open) => {
-							this.open = open;
-							this.sync();
-						}}
-					/>
-				) : null,
-			);
+			this.drawn = null;
+			// Read-only has no handles at all, not hidden ones, and a menu open
+			// when the flip came went with them.
+			if (!editable) {
+				this.menu = null;
+				this.hover = null;
+				this.handleFocus = false;
+				this.root.render(null);
+			}
 		}
-		const show = editable && (this.open || (this.view.hasFocus() && this.holdsCaret()));
-		if (show === this.shown) return;
-		this.shown = show;
+		const show =
+			editable &&
+			(this.menu !== null ||
+				this.pointerIn ||
+				this.handleFocus ||
+				(this.view.hasFocus() && this.holdsCaret()));
 		this.dom.toggleAttribute("data-active", show);
-		// Hidden is `invisible` as well, so the button is out of the tab order too.
-		this.control.className = cn(
-			"absolute -top-2.5 -right-2.5 z-10 transition-opacity duration-fast",
-			show ? "opacity-100" : "invisible opacity-0",
+		if (!editable) return;
+
+		const at = this.spot();
+		const head = this.node.firstChild;
+		const name =
+			at && head && at.col < head.childCount ? head.child(at.col).textContent.trim() : "";
+		const rowLabel = at ? tableMenuText.rowHandle(String(at.row + 1)) : tableMenuText.rowHandleIdle;
+		const columnLabel = at
+			? tableMenuText.columnHandle(name || String(at.col + 1))
+			: tableMenuText.columnHandleIdle;
+		const sig = `${show}|${at?.row}|${at?.col}|${rowLabel}|${columnLabel}`;
+		if (this.drawn?.sig === sig && this.drawn.node === this.node) return;
+		this.drawn = { sig, node: this.node };
+		this.root.render(
+			<TableHandles
+				ref={this.handles}
+				row={() => this.rowEl()}
+				column={() => this.columnEl()}
+				scroller={this.scroll}
+				rowItems={() => rowItems(this.view)}
+				columnItems={() => columnItems(this.view)}
+				rowLabel={rowLabel}
+				columnLabel={columnLabel}
+				visible={show}
+				onOpenChange={(which) => this.menuChange(which)}
+				onCloseAutoFocus={(e) => {
+					e.preventDefault();
+					this.view.focus();
+				}}
+			/>,
 		);
 	}
 
-	private holdsCaret(): boolean {
+	/** A shortcut opens a menu on the caret's cell, wherever the pointer is. */
+	openMenu(which: TableHandleKind): boolean {
+		this.hover = null;
+		this.sync();
+		return this.handles.current?.open(which) ?? false;
+	}
+
+	private menuChange(which: TableHandleKind | null): void {
+		if (which) {
+			const at = this.spot();
+			if (!at) return;
+			this.menu = { which, at };
+			this.selectFor(which, at);
+		} else this.menu = null;
+		this.sync();
+	}
+
+	/**
+	 * The caret into the cell a menu was opened on, so its commands act there;
+	 * left alone when the selection already spans that row (or column).
+	 */
+	private selectFor(which: TableHandleKind, at: Spot): void {
+		const pos = this.getPos();
+		if (pos === undefined) return;
+		const { state } = this.view;
+		if (this.holdsCaret() && isInTable(state)) {
+			const r = selectedRect(state);
+			const inside =
+				which === "row"
+					? at.row >= r.top && at.row < r.bottom
+					: at.col >= r.left && at.col < r.right;
+			if (inside) return;
+		}
+		const map = TableMap.get(this.node);
+		const cell = map.map[at.row * map.width + at.col];
+		if (cell === undefined) return;
+		// Into the table, past `cell`, into the cell, into its paragraph.
+		this.view.dispatch(state.tr.setSelection(TextSelection.create(state.doc, pos + 1 + cell + 2)));
+	}
+
+	holdsCaret(): boolean {
 		const pos = this.getPos();
 		if (pos === undefined) return false;
 		const { from, to } = this.view.state.selection;
 		return from > pos && to < pos + this.node.nodeSize;
 	}
 
-	/** The control is not document content: its clicks and keys are its own. */
+	/** The handles are not document content: their clicks and keys are their own. */
 	stopEvent(e: Event): boolean {
 		return this.control.contains(e.target as Node);
 	}
@@ -606,7 +765,7 @@ class TableView implements NodeView {
 /* ============================== wiring =================================== */
 
 export type ProseTables = {
-	/** Grid editing, the shape normalizer, and the control following focus and read-only. */
+	/** Grid editing, the shape normalizer, the menu keys, and the handles following focus and read-only. */
 	plugins: Plugin[];
 	nodeViews: Record<string, NodeViewConstructor>;
 };
@@ -620,6 +779,27 @@ export function proseTables(s: ProseSchema): ProseTables {
 
 	/** Whether the clipboard being parsed held table cells; see `flattenIntoCell`. */
 	let clipboardCells = false;
+
+	/** When a shortcut last opened a menu; see the `contextmenu` handler. */
+	let shortcutAt = 0;
+	const openMenu =
+		(which: TableHandleKind): Command =>
+		(state, dispatch, view) => {
+			if (!view?.editable || !isInTable(state)) return false;
+			const table = [...live].find((t) => t.holdsCaret());
+			if (!table) return false;
+			if (!dispatch) return true;
+			// Armed only when a menu did open; a key that opened none is the browser's.
+			if (!table.openMenu(which)) return false;
+			shortcutAt = Date.now();
+			return true;
+		};
+	// Tab moves between cells here, so these are the keyboard's way to the handles' menus.
+	const menus = keymap({
+		"Shift-F10": openMenu("row"),
+		ContextMenu: openMenu("row"),
+		"Alt-Shift-F10": openMenu("column"),
+	});
 
 	const sync = new Plugin({
 		view: () => ({ update: syncAll }),
@@ -648,6 +828,13 @@ export function proseTables(s: ProseSchema): ProseTables {
 				return flattenIntoCell(slice, view, cells);
 			},
 			handleDOMEvents: {
+				// The key that opened a menu may send the browser's own context
+				// menu right after it; the table's menu is open already.
+				contextmenu: (_view, e) => {
+					if (Date.now() - shortcutAt > 1000) return false;
+					e.preventDefault();
+					return true;
+				},
 				// Read-only, a drag across cells is the browser's own text selection,
 				// not a tinted cell selection: prosemirror-tables never sees the press.
 				mousedown: (view, e) =>
@@ -666,7 +853,7 @@ export function proseTables(s: ProseSchema): ProseTables {
 	});
 
 	return {
-		plugins: [sync, normalizer(s), tableEditing()],
+		plugins: [sync, menus, normalizer(s), tableEditing()],
 		nodeViews: {
 			[s.nodeType.table.name]: (node, view, getPos) => {
 				const table: TableView = new TableView(node, view, getPos, () => live.delete(table));

@@ -26,6 +26,7 @@ import {
 	spaceSelection,
 	stepIndex,
 } from "./data-table-model";
+import { tableMenuKeys, tableMenuText } from "./table-handles";
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -576,7 +577,11 @@ describe("DataTable", () => {
 			);
 		});
 		const items = [...document.querySelectorAll('[role="menuitem"]')];
-		expect(items.map((m) => m.textContent)).toEqual(["Edit cell", "Move up", "Move down"]);
+		expect(items.map((m) => m.textContent)).toEqual([
+			"Edit cell",
+			tableMenuText.moveRowUp,
+			tableMenuText.moveRowDown,
+		]);
 		expect(items[1]?.hasAttribute("data-disabled")).toBe(true);
 		act(() => root.unmount());
 		root = createRoot(host);
@@ -683,5 +688,171 @@ describe("DataTable", () => {
 		});
 		expect(e.defaultPrevented).toBe(false);
 		expect(document.activeElement).toBe(cell("r1", "title"));
+	});
+
+	describe("handles", () => {
+		const t = tableMenuText;
+		const handle = (which: "row" | "column") =>
+			host.querySelector<HTMLElement>(`[data-table-handle=${which}] button`);
+		const menuTexts = () =>
+			[...document.querySelectorAll('[role="menu"] [role^="menuitem"]')].map((m) => m.textContent);
+		const openHandle = (which: "row" | "column") => {
+			const button = handle(which);
+			if (!button) throw new Error(`no ${which} handle`);
+			act(() => {
+				button.dispatchEvent(
+					new PointerEvent("pointerdown", { bubbles: true, cancelable: true, button: 0 }),
+				);
+			});
+		};
+		// Radix hands focus back a tick after a menu closes.
+		const settle = () => act(async () => void (await new Promise((r) => setTimeout(r, 0))));
+		const all = { onAdd: vi.fn(), onDelete: vi.fn(), onMove: vi.fn(), onSort: vi.fn() };
+
+		it("draws a labelled row and column handle that show with the focus", () => {
+			mount(all);
+			const row = handle("row");
+			const column = handle("column");
+			expect(row?.getAttribute("aria-haspopup")).toBe("menu");
+			expect(row?.getAttribute("aria-keyshortcuts")).toBe(tableMenuKeys.row);
+			expect(column?.getAttribute("aria-keyshortcuts")).toBe(tableMenuKeys.column);
+			// Out of sight, and out of the tab order, until the table is in use.
+			expect(row?.parentElement?.className).toContain("invisible");
+			act(() => cell("r2", "points").focus());
+			expect(row?.parentElement?.className).not.toContain("invisible");
+			expect(row?.getAttribute("aria-label")).toBe(t.rowHandle("Beta"));
+			expect(column?.getAttribute("aria-label")).toBe(t.columnHandle("points"));
+		});
+
+		it("follows the cell under the pointer over the focused one", () => {
+			mount(all);
+			act(() => cell("r1", "title").focus());
+			act(() => {
+				cell("r3", "points").dispatchEvent(new PointerEvent("pointerover", { bubbles: true }));
+			});
+			expect(handle("row")?.getAttribute("aria-label")).toBe(t.rowHandle("Gamma"));
+			expect(handle("column")?.getAttribute("aria-label")).toBe(t.columnHandle("points"));
+		});
+
+		it("sits between the grid and Add row in the tab order", () => {
+			mount(all);
+			const add = [...host.querySelectorAll("button")].find((b) => b.textContent === "Add row");
+			const row = handle("row") as HTMLElement;
+			const column = handle("column") as HTMLElement;
+			const after = (a: Node, b: Node) =>
+				(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+			expect(after(cell("r3", "state"), row)).toBe(true);
+			expect(after(row, column)).toBe(true);
+			expect(after(column, add as Node)).toBe(true);
+		});
+
+		it("draws no handle with nothing to offer", () => {
+			mount();
+			expect(handle("row")).toBeNull();
+			expect(handle("column")).toBeNull();
+			act(() => root.unmount());
+			root = createRoot(host);
+			mount({ onDelete: () => {} });
+			expect(handle("row")).not.toBeNull();
+			expect(handle("column")).toBeNull();
+		});
+
+		it("opens the row menu in the shared words, and its picks ask the host", () => {
+			const onAdd = vi.fn();
+			const onMove = vi.fn();
+			mount({ ...all, onAdd, onMove, selection: "multi", selected: ["r1", "r2"] });
+			act(() => cell("r2", "title").focus());
+			openHandle("row");
+			expect(menuTexts()).toEqual([
+				t.insertRowAbove,
+				t.insertRowBelow,
+				t.moveRowUp,
+				t.moveRowDown,
+				t.deleteRows(2),
+			]);
+			const below = [...document.querySelectorAll('[role="menuitem"]')][1];
+			if (below) click(below);
+			expect(onAdd).toHaveBeenCalledWith(2);
+		});
+
+		it("opens the column menu with the sorts of a column that sorts", () => {
+			const onSort = vi.fn();
+			mount({ ...all, onSort });
+			act(() => cell("r1", "points").focus());
+			openHandle("column");
+			expect(menuTexts()).toEqual([t.sortAscending, t.sortDescending]);
+			const desc = [...document.querySelectorAll('[role="menuitem"]')][1];
+			if (desc) click(desc);
+			expect(onSort).toHaveBeenCalledWith("points", "desc");
+		});
+
+		it("opens the menus on Shift+F10, the Menu key and Alt+Shift+F10", async () => {
+			mount(all);
+			act(() => cell("r2", "title").focus());
+			press(cell("r2", "title"), "F10", { shiftKey: true });
+			expect(menuTexts()[0]).toBe(t.insertRowAbove);
+			expect(handle("row")?.getAttribute("aria-expanded")).toBe("true");
+			press(document.activeElement ?? document.body, "Escape");
+			await settle();
+			expect(document.querySelector('[role="menu"]')).toBeNull();
+			expect(document.activeElement).toBe(cell("r2", "title"));
+
+			press(cell("r2", "title"), "ContextMenu");
+			expect(menuTexts()[0]).toBe(t.insertRowAbove);
+			press(document.activeElement ?? document.body, "Escape");
+			await settle();
+
+			press(cell("r2", "title"), "F10", { shiftKey: true, altKey: true });
+			expect(menuTexts()).toEqual([t.sortAscending, t.sortDescending]);
+			expect(handle("column")?.getAttribute("aria-label")).toBe(t.columnHandle("title"));
+			press(document.activeElement ?? document.body, "Escape");
+			await settle();
+			expect(document.activeElement).toBe(cell("r2", "title"));
+		});
+
+		it("names a handle with no row to stand for sanely", () => {
+			mount(all);
+			// Nothing focused yet: the tab stop is a header cell, so no row.
+			expect(handle("row")?.getAttribute("aria-label")).toBe(t.rowHandleIdle);
+		});
+
+		it("opens a focused handle's menu on its own shortcut", () => {
+			mount(all);
+			act(() => cell("r1", "title").focus());
+			const row = handle("row") as HTMLElement;
+			act(() => row.focus());
+			press(row, "F10", { shiftKey: true });
+			expect(menuTexts()[0]).toBe(t.insertRowAbove);
+		});
+
+		it("closes a menu whose row the host takes away", () => {
+			let setRows: (rows: DataTableRow[]) => void = () => {};
+			function Host() {
+				const [rows, set] = useState(ROWS);
+				setRows = set;
+				return <DataTable aria-label="T" columns={COLUMNS} rows={rows} onDelete={() => {}} />;
+			}
+			act(() => root.render(<Host />));
+			act(() => cell("r2", "title").focus());
+			openHandle("row");
+			expect(document.querySelector('[role="menu"]')).not.toBeNull();
+			act(() => setRows(ROWS.filter((r) => r.key !== "r2")));
+			expect(document.querySelector('[role="menu"]')).toBeNull();
+		});
+
+		it("offers the same row items on a right-click, after Edit cell", async () => {
+			mount({ ...all, onEdit: () => {} });
+			act(() => cell("r2", "title").focus());
+			openHandle("row");
+			const fromHandle = menuTexts();
+			press(document.activeElement ?? document.body, "Escape");
+			await settle();
+			act(() => {
+				cell("r2", "title").dispatchEvent(
+					new MouseEvent("contextmenu", { bubbles: true, cancelable: true }),
+				);
+			});
+			expect(menuTexts()).toEqual(["Edit cell", ...fromHandle]);
+		});
 	});
 });

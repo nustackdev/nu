@@ -106,6 +106,28 @@ const table = {
 	dropAfter: "shadow-[inset_0_-2px_0_0_var(--accent)]",
 };
 
+/**
+ * The row and column handles (`TableHandles`) a `DataTable` and a markdown
+ * table both draw. The host measures a point, the handle sits centred on it:
+ * the row handle on the table's left edge level with the row's middle, the
+ * column handle on the table's top edge over the column's middle, so each
+ * straddles the edge it belongs to. Hidden is `invisible` as well as clear,
+ * so a hidden handle is out of the tab order and out of reach of the pointer.
+ */
+const tableHandle = {
+	/**
+	 * Both handles: above the cells, fading in and out. Visibility transitions
+	 * too, so a handle going hidden stays visible until its fade is done.
+	 */
+	base: "absolute z-10 transition-[opacity,visibility] duration-fast ease-out",
+	/** The row handle: centred on the point at the left edge, level with the row's middle. */
+	row: "-translate-x-1/2 -translate-y-1/2",
+	/** The column handle: centred on the point at the top edge, over the column's middle. */
+	column: "-translate-x-1/2 -translate-y-1/2",
+	shown: "opacity-100",
+	hidden: "invisible opacity-0",
+};
+
 /* ================================= list ================================== */
 
 /**
@@ -155,4 +177,4 @@ const heading = { base: headingBase, size: headingSize, level: headingLevel };
 const codeBox =
 	"relative w-full overflow-hidden rounded-md bg-bg-sunken border border-border-subtle";
 
-export { codeBox, heading, list, type TableDensity, table };
+export { codeBox, heading, list, type TableDensity, table, tableHandle };
