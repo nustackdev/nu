@@ -2,17 +2,18 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.5.5
-- **nustd** (fabrics) — 0.5.5
-- **nucli** (the `nu` command) — 0.5.5
+- **nucore** (kernel) — 0.6.0
+- **nustd** (fabrics) — 0.6.0
+- **nucli** (the `nu` command) — 0.6.0
 - **nudle** — 0.1.6
 - **ui-core** — 0.2.0
-- **ui-kit** — 0.2.7
+- **ui-kit** — 0.3.0
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.6.0 — 2026-10-06
 
+- Release nu 0.6.0 and UI kit 0.3.0
 - A program's entry point can be the term itself, not only a function
 - Table handles follow the pointer or the keyboard, without jumping or vanishing
 - One example page puts every kind of table side by side to try
