@@ -402,6 +402,20 @@ describe("DataTable", () => {
 		expect(document.querySelector('[role="listbox"]')).toBeNull();
 	});
 
+	it("emits the pick from a select cell that starts empty", () => {
+		// A fresh row's select cell holds "": the pick must still reach the host.
+		const onEdit = vi.fn();
+		mount({ onEdit, rows: [...ROWS, { key: "r4", cells: ["", null, false, ""] }] });
+		act(() => cell("r4", "state").focus());
+		press(cell("r4", "state"), "Enter");
+		const doing = [...document.querySelectorAll('[role="option"]')][1];
+		if (doing) press(doing, "Enter");
+		expect(onEdit).toHaveBeenCalledWith(
+			expect.objectContaining({ key: "r4", column: "state", value: "doing", previous: "" }),
+		);
+		expect(document.querySelector('[role="listbox"]')).toBeNull();
+	});
+
 	it("reads, not edits, a column that says so, and activates there", () => {
 		const onEdit = vi.fn();
 		const onActivate = vi.fn();

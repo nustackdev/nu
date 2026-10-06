@@ -966,7 +966,11 @@ export function DataTable({
 			return (
 				<Select
 					open
-					value={current === "" ? undefined : current}
+					// Controlled even when empty: "" is Radix's "nothing picked". Left
+					// undefined, the Select runs uncontrolled and reports a pick an effect
+					// later, by when closing the list has ended the edit and unmounted it,
+					// so a fresh row's empty cell could never be set.
+					value={current}
 					onValueChange={(v) => {
 						emitEdit(at.row, col, v);
 					}}
