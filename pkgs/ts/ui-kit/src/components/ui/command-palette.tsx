@@ -19,6 +19,26 @@ import * as React from "react";
 import { cn } from "../../lib/utils";
 import { Shortcut } from "./shortcut";
 
+// The palette's recipes, exported for a list that wears them without being
+// one: driven by an input it does not own (a slash menu typed into an editor
+// line), so neither the dialog nor cmdk fit. Rows light on `data-selected`.
+
+/** The panel: raised surface, border, shadow. Placement is the caller's. */
+const commandSurfaceClasses =
+	"bg-bg-elevated text-text-primary border border-border-default rounded-lg shadow-lg overflow-hidden";
+
+/** A group's heading row. */
+const commandHeadingClasses = "px-3 py-1 text-xs font-medium text-text-secondary";
+
+const commandItemClasses = [
+	"relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-2",
+	"text-sm text-text-primary outline-hidden",
+	"data-[selected=true]:bg-accent-wash",
+	"data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
+	"[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 [&_svg]:text-text-secondary",
+	"data-[selected=true]:[&_svg]:text-text-primary",
+].join(" ");
+
 interface CommandPaletteProps
 	extends React.ComponentProps<typeof CommandPrimitive> {
 	open: boolean;
@@ -52,7 +72,7 @@ function CommandPalette({
 					data-slot="command-palette-content"
 					className={cn(
 						"fixed left-1/2 top-[20%] z-50 w-full max-w-lg -translate-x-1/2",
-						"bg-bg-elevated text-text-primary border border-border-default rounded-lg shadow-lg overflow-hidden",
+						commandSurfaceClasses,
 						"data-[state=open]:animate-in data-[state=closed]:animate-out",
 						"data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
 						"data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
@@ -183,12 +203,7 @@ function CommandItem({
 			data-slot="command-palette-item"
 			data-variant={variant}
 			className={cn(
-				"relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-2",
-				"text-sm text-text-primary outline-hidden",
-				"data-[selected=true]:bg-accent-wash",
-				"data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
-				"[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 [&_svg]:text-text-secondary",
-				"data-[selected=true]:[&_svg]:text-text-primary",
+				commandItemClasses,
 				variant === "danger" && [
 					"text-status-danger",
 					"data-[selected=true]:bg-status-danger-wash data-[selected=true]:text-status-danger",
@@ -246,4 +261,7 @@ export {
 	CommandSeparator,
 	CommandShortcut,
 	useCommandPaletteHotkey,
+	commandSurfaceClasses,
+	commandHeadingClasses,
+	commandItemClasses,
 };

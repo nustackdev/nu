@@ -268,6 +268,9 @@ export {
 	CommandSeparator,
 	CommandShortcut,
 	useCommandPaletteHotkey,
+	commandSurfaceClasses,
+	commandHeadingClasses,
+	commandItemClasses,
 } from "./components/ui/command-palette";
 export {
 	Tree,
