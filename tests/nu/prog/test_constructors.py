@@ -68,6 +68,57 @@ def test_in_process_is_a_context_manager():
         assert isinstance(b.construct(HELLO), nu.Nu)
 
 
+def test_in_process_snippets_importing_siblings_at_once_do_not_deadlock(tmp_path, monkeypatch):
+    """Two loads on two threads, each importing a child of a package whose
+    ``__init__`` imports both children, the shape of a snippets registry.
+
+    Unserialized, each thread holds the lock on its own child while the
+    package's ``__init__`` waits for the other's: a ``_DeadlockError``. The
+    slow children keep both threads inside the import long enough to meet.
+    """
+    pkg = tmp_path / "racepkg" / "snippets"
+    pkg.mkdir(parents=True)
+    (pkg.parent / "__init__.py").write_text("")
+    (pkg / "__init__.py").write_text("from . import left, right\n")
+    for side in ("left", "right"):
+        (pkg / f"{side}.py").write_text(f"import time\ntime.sleep(0.3)\nNAME = {side!r}\n")
+    monkeypatch.syspath_prepend(str(tmp_path))
+    for name in [m for m in sys.modules if m.split(".")[0] == "racepkg"]:
+        monkeypatch.delitem(sys.modules, name)
+
+    def snippet(side: str) -> str:
+        return f"import nu\nfrom racepkg.snippets.{side} import NAME\n\nout = nu.Str(NAME)\n"
+
+    brace = InProcess()
+    start = threading.Barrier(2)
+    built: dict[str, object] = {}
+
+    def load(side: str) -> None:
+        start.wait()
+        built[side] = brace.construct(snippet(side))
+
+    threads = [threading.Thread(target=load, args=(side,)) for side in ("left", "right")]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(timeout=10)
+    for side in ("left", "right"):
+        assert isinstance(built[side], nu.Nu), built[side]
+        assert nu.run(built[side])[0] == side
+
+
+def test_in_process_snippet_loading_a_snippet_does_not_wait_on_itself():
+    inner = "import nu\n\nout = nu.Str('inner')\n"
+    outer = src(f"""
+        import nu
+        from nu.prog.constructors import InProcess
+
+        out = InProcess().construct({inner!r})
+    """)
+    term = InProcess().construct(outer)
+    assert nu.run(term)[0] == "inner"
+
+
 def test_both_braces_satisfy_the_protocol(brace):
     assert isinstance(InProcess(), Constructor)
     assert isinstance(brace, Constructor)

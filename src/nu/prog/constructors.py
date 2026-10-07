@@ -60,7 +60,7 @@ import struct
 import subprocess
 import threading
 from pathlib import Path
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
 from nu.lang import wire
 
@@ -133,11 +133,21 @@ class InProcess:
         - No isolation of any kind. The snippet's module body runs here, so
           it can import, mutate globals and touch this process however it
           likes; the exec namespace is fresh, nothing else is.
+        - One construction at a time per process. Async loads construct on
+          pool threads, and two snippets importing at once can deadlock in
+          the import system: a submodule is locked before its parent, and a
+          parent whose ``__init__`` imports its children then waits on the
+          other thread. Building a term is short, so queueing costs little.
         - Stateless across calls, so one instance is the same thing as one
           per node and the unbound fallback brace is safely shared.
         - Nothing to start and nothing to stop. ``close`` exists only so
           both braces close the same way.
     """
+
+    # On the class, not the instance: what two constructions race on is
+    # ``sys.modules``, and a process has one. Reentrant, so a snippet whose
+    # module body loads another snippet does not wait on itself.
+    _lock: ClassVar[threading.RLock] = threading.RLock()
 
     def construct(
         self,
@@ -150,7 +160,8 @@ class InProcess:
         """Construct a Nu term from ``source`` in this interpreter."""
         from .source import construct as _construct
 
-        return _construct(source, entry=entry, scope=scope, filename=filename)
+        with InProcess._lock:
+            return _construct(source, entry=entry, scope=scope, filename=filename)
 
     def close(self) -> None:
         """No-op, kept so both braces close the same way."""
