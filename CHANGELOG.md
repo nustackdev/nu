@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Child subscriptions document that subtree changes need descendant subscriptions
 - In-process programs build one at a time, so concurrent imports cannot deadlock
 
 ## 0.6.0 — 2026-10-06

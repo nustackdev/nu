@@ -145,13 +145,13 @@ class ReactiveCollectionForm(MutableCollectionForm):
     """
 
     def on_child_change(self, address: object) -> OnChildChange:
-        """Observe changes at a specific child address."""
+        """Observe writes at one child's own address; for its subtree use ``on_descendants_change``."""
         from nu.core.reactive import OnChildChange
 
         return OnChildChange(self, address)
 
     def on_children_change(self) -> OnChildrenChange:
-        """Observe changes across all direct children."""
+        """Observe writes at the direct children only; for subtrees use ``on_descendants_change``."""
         from nu.core.reactive import OnChildrenChange
 
         return OnChildrenChange(self)

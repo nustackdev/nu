@@ -155,7 +155,9 @@ class OnChildChange(ScalarQuery):
         - Async only. The sync path raises ``RuntimeError``; use ``nu.arun``.
         - ``address`` is evaluated only after the view resolves, so a sentinel
           view short-circuits without touching it.
-        - Watches that one child slot, not the subtree under it.
+        - Watches that one child slot, not the subtree under it. A compound
+          child (a dict or shape value, stored as a subtree) changing deeper
+          does not fire it; use ``OnDescendantsChange`` for that.
         - The atom resolves the ``ObserverProtocol`` from ctx under the Ref's
           root shape, then passes the view's opaque options through to
           ``subscribe`` unread.
@@ -207,7 +209,9 @@ class OnChildrenChange(ScalarQuery):
 
     Notes:
         - Async only. The sync path raises ``RuntimeError``; use ``nu.arun``.
-        - Covers the immediate children only. Anything deeper needs
+        - Covers the immediate children only. A compound child (a dict or
+          shape value, stored as a subtree) changing one of its fields is a
+          deeper write and does not fire it. Anything deeper needs
           ``OnDescendantsChange``.
         - The atom resolves the ``ObserverProtocol`` from ctx under the Ref's
           root shape, then passes the view's opaque options through to
