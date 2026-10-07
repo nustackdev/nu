@@ -18,7 +18,7 @@ import { Shortcut } from "./shortcut";
 // its own elements to match. Rows light up on `data-highlighted`, so such a
 // menu sets that attribute on its active row.
 const menuItemClasses = [
-	"relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5",
+	"relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5",
 	"text-sm text-text-primary outline-hidden",
 	"transition-colors duration-fast ease-out",
 	"data-[highlighted]:bg-accent-wash",

@@ -64,7 +64,7 @@ function RadioGroupView({ path }: NodeProps) {
 				return (
 					<div key={o.value} className="flex items-center gap-2">
 						<RadioGroupItem value={o.value} id={id} />
-						<label htmlFor={id} className="text-base text-text-primary cursor-pointer">
+						<label htmlFor={id} className="text-base text-text-primary cursor-default">
 							{o.label}
 						</label>
 					</div>

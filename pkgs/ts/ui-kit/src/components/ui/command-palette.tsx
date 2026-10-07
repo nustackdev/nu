@@ -31,7 +31,7 @@ const commandSurfaceClasses =
 const commandHeadingClasses = "px-3 py-1 text-xs font-medium text-text-secondary";
 
 const commandItemClasses = [
-	"relative flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-2",
+	"relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-2",
 	"text-sm text-text-primary outline-hidden",
 	"data-[selected=true]:bg-accent-wash",
 	"data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",

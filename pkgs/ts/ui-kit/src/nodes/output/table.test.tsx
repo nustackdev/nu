@@ -101,11 +101,10 @@ describe("TableRef, the old wire", () => {
 		expect(notifies()).toEqual([{ event: "row", row_index: 0, key: "0" }]);
 	});
 
-	it("draws string columns, list rows, stripes and a pointer on clickable rows", () => {
+	it("draws string columns, list rows and stripes", () => {
 		expect(texts("th")).toEqual(["title", "year"]);
 		expect(texts("tbody td")).toEqual(["Arrival", "2016"]);
 		expect(host.querySelector("table")?.getAttribute("aria-label")).toBe("Table");
-		expect(host.querySelector("[data-slot=data-table]")?.className).toContain("cursor-pointer");
 		// Read-only: no edits, no menu, no add.
 		expect(cell("0", "title").getAttribute("aria-readonly")).toBe("true");
 		expect(host.textContent).not.toContain("Add row");

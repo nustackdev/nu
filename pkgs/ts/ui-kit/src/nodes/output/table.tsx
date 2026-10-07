@@ -469,7 +469,6 @@ function TableView({ path }: NodeProps) {
 			onColumnMove={columnsEditable ? onColumnMove : undefined}
 			onColumnKind={columnsEditable ? onColumnKind : undefined}
 			onColumnAlign={columnsEditable ? onColumnAlign : undefined}
-			className={clickableRows ? "[&_tbody_tr]:cursor-pointer" : undefined}
 		/>
 	);
 }

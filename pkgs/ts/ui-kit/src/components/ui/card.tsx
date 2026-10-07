@@ -36,7 +36,7 @@ const cardVariants = cva(
 			},
 			interactive: {
 				true: [
-					"cursor-pointer",
+					"cursor-default",
 					"hover:border-border-strong",
 					"focus-ring",
 				].join(" "),

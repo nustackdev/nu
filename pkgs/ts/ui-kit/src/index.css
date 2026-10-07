@@ -461,7 +461,7 @@ body {
 /* A trailing block node (a divider) leaves nowhere to click. ProseMirror's gap
  * cursor is not wired, so give the caret a real target instead. */
 .nu-prose-editor > hr {
-	cursor: pointer;
+	cursor: text;
 }
 .nu-prose-editor > hr.ProseMirror-selectednode {
 	border-color: var(--accent);

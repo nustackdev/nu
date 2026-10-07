@@ -1221,7 +1221,7 @@ export function DataTable({
 								renaming === col.key && "relative",
 								ALIGN[col.align],
 								header && table.gridCell,
-								col.sortable && "cursor-pointer select-none hover:text-text-primary",
+								col.sortable && "cursor-default select-none hover:text-text-primary",
 								active && "text-text-primary",
 							)}
 						>

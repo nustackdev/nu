@@ -38,7 +38,7 @@ function CheckboxView({ path }: NodeProps) {
 				}}
 			/>
 			{label && (
-				<label htmlFor={id} className="text-base text-text-primary cursor-pointer">
+				<label htmlFor={id} className="text-base text-text-primary cursor-default">
 					{label}
 				</label>
 			)}

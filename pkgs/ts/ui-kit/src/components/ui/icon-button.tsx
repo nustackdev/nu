@@ -10,7 +10,7 @@ import { cn, ringVariants } from "../../lib/utils";
 const iconButtonVariants = cva(
 	[
 		"inline-flex items-center justify-center rounded-md",
-		"cursor-pointer",
+		"cursor-default",
 		"transition-colors duration-fast ease-out",
 		"disabled:pointer-events-none disabled:opacity-50",
 		"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",

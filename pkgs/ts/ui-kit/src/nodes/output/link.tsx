@@ -44,7 +44,7 @@ function LinkView({ path }: NodeProps) {
 			href={href || undefined}
 			target={safeTarget}
 			rel={rel}
-			className="text-accent-2 hover:text-accent-2-hover"
+			className="cursor-pointer text-accent-2 hover:text-accent-2-hover"
 		>
 			<span>{text}</span>
 			{showExternal ? <ExternalLink aria-hidden="true" className="size-3.5" /> : null}
