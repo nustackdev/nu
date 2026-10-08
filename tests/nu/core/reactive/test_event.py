@@ -19,7 +19,7 @@ import nu
 from nu.context import Attr as AttrRef
 from nu.context import With
 from nu.core.flows import ParallelAsync, Race
-from nu.core.flows.react import React, ReactForever, ReactLatest, ReactWhile
+from nu.core.reactive.event import React, ReactForever, ReactLatest, ReactWhile
 from nu.domains.shape import Shape
 from nu.domains.shape.item import ItemRef
 from nu.engine.structure import Declared

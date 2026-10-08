@@ -1,13 +1,22 @@
-"""Reactive control flows: React, ReactWhile, ReactForever, ReactLatest.
+"""Event flows: React, ReactWhile, ReactForever, ReactLatest.
 
-Subscribe to a change event and run a body in response. All four are
-``Control`` flows: they drive a mutating body under query parameters (a
-change subscription, a condition) and yield nothing, exactly like ``WhileDo``
-/ ``ForeverDo``. A change notification is bridged into async via
-``asyncio.Queue``, so all four require an async runtime and raise from their
-sync ``_compile`` path. The first three take one wake per notification with
-no collapsing; ``ReactLatest`` collapses a backlog to its newest key, since
-it only ever runs the latest one.
+An event flow runs its body for a change: the body is handed the real key of
+a real notification and nothing else wakes it. That makes it the right kind
+for reacting to something that happened (a click, a message, a key that was
+written) and the wrong kind for keeping state right, because delivery is best
+effort: a subscription can miss a write made just after it opened, and a
+backend may drop a message. Neither is made up for here. A body that reads
+state and puts it right, whatever changed, belongs in a level flow
+(``ReconcileReactive``, ``WaitReactive``, ``ForEachParReactive``), which can afford
+re-checks precisely because it ignores the key.
+
+All four are ``Control`` flows: they drive a mutating body under query
+parameters (a change subscription, a condition) and yield nothing, exactly
+like ``WhileDo`` / ``ForeverDo``. A change notification is bridged into async
+via ``asyncio.Queue``, so all four require an async runtime and raise from
+their sync ``_compile`` path. The first three take one wake per notification
+with no collapsing; ``ReactLatest`` collapses a backlog to its newest key,
+since it only ever runs the latest one.
 
 ``param_slots`` names the consumed queries (the change subscription at slot
 0, a condition where present, the names the changed key binds under); the
@@ -28,6 +37,7 @@ from typing import TYPE_CHECKING
 
 from nu.context.attrs.binders import bind
 from nu.core._stream import aiter_any
+from nu.core.flows.parallel._scheduling import _settle
 from nu.engine.structure import Declared
 from nu.lang import Control
 
@@ -408,8 +418,6 @@ class ReactLatest(Control):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        from .parallel._scheduling import _settle
-
         has_ck = self._payload["has_changed_key"]
         initial = self._payload["initial"]
         body = children[1]

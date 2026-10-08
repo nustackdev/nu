@@ -12,9 +12,10 @@ from typing import TYPE_CHECKING
 
 from nu.context.attrs.binders import bind
 from nu.core._stream import aiter_any
-from nu.core.reactive import OnChildrenChange
 from nu.domains.shape.interactions import AdvanceCursor
 from nu.lang import StreamQuery
+
+from .interactions import OnChildrenChange
 
 
 if TYPE_CHECKING:

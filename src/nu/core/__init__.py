@@ -5,11 +5,12 @@ terms - the builtins - and the three other atom families sit beside them as
 subpackages:
 
 - ``flows``    - control flow (``Sequential``, ``Parallel``, ``Race``, ``IfDo``,
-  ``WhileDo``, ``Stream``).
+  ``WhileDo``).
 - ``spans``    - transparent wrappers governing a region (``Retry``,
   ``Timeout``, ``TryCatch``, ``Transaction``, ``Snapshot``).
-- ``reactive`` - the reactivity standard: the observer contract plus the
-  ``On*Change`` atoms fabrics bind against.
+- ``reactive`` - the reactivity standard: the observer contract, the
+  ``On*Change`` atoms fabrics bind against, and the flows that run bodies on
+  change (event: ``React`` and kin; level: ``ReconcileReactive`` and kin; ``Stream``).
 
 Everything under here is an Interaction. Forms (``nu.forms``), the kind
 taxonomy (``nu.lang``) and the fabric refs (``nu.context``, and the fabrics in
@@ -59,8 +60,10 @@ Flows and Spans (Seq, Par, If, Retry, Transaction) are the subpackages above.
 from __future__ import annotations
 
 # Subpackage dot-access: ``nu.core.flows.Race``, ``nu.core.spans.Retry``,
-# ``nu.core.reactive.OnChange``. Their atoms re-export flat from the nu root,
-# not from here -- this module's ``__all__`` stays the builtins.
+# ``nu.core.reactive.OnChange``. Flows and spans re-export flat from the nu
+# root, not from here. The reactive atoms and flows are the exception: they
+# re-export from here, the contract types (``Subscription``,
+# ``ObserverProtocol``) stay at ``nu.core.reactive``.
 from nu.core import flows, reactive, spans  # noqa: F401
 from nu.core.access import (
     Contains,
@@ -128,12 +131,20 @@ from nu.core.dynamic import Globals, Locals
 from nu.core.io import STDERR, STDIN, STDOUT, Input, Print, input, print
 from nu.core.iteration import Enumerate, Iter, Next, Reversed, Zip
 from nu.core.logical import And, Not, Or, ToBool, bool
-from nu.core.reactive.interactions import (
+from nu.core.reactive import (
+    ForEachParReactive,
     OnChange,
     OnChildChange,
     OnChildrenChange,
     OnDescendantsChange,
     OnPrimitiveChange,
+    React,
+    ReactForever,
+    ReactLatest,
+    ReactWhile,
+    ReconcileReactive,
+    Stream,
+    WaitReactive,
 )
 from nu.core.reduction import (
     AllOf,
@@ -209,6 +220,7 @@ __all__ = [
     "First",
     "Flatten",
     "FloorDiv",
+    "ForEachParReactive",
     "Format",
     "Ge",
     "GetAttr",
@@ -255,6 +267,11 @@ __all__ = [
     "Pow",
     "Print",
     "RShift",
+    "React",
+    "ReactForever",
+    "ReactLatest",
+    "ReactWhile",
+    "ReconcileReactive",
     "Repr",
     "Reversed",
     "Round",
@@ -263,6 +280,7 @@ __all__ = [
     "Slice",
     "SortBy",
     "Sorted",
+    "Stream",
     "Sub",
     "Sum",
     "Switch",
@@ -281,6 +299,7 @@ __all__ = [
     "Type",
     "Unique",
     "Vars",
+    "WaitReactive",
     "Zip",
     "bool",
     "dict",

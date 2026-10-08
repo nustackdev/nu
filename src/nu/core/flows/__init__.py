@@ -1,22 +1,19 @@
 """Nu2 Flow atoms: the Command-composing sub-kind.
 
-Two families plus the reactive set:
+Two families:
 
 - **Strategy** - compose mutating atoms directly: ``Sequential`` (``>>``),
   ``Parallel`` (``|``), ``Race`` (``&``), ``Gather``, ``AnyN``. ``Parallel``
   also exposes forced-mode variants ``ParallelThreaded`` / ``ParallelAsync``
   for explicit placement (Race / AnyN are async-only, no variants).
 - **Control** - compose bodies under Query parameters: ``IfDo``, ``WhileDo``,
-  ``ForeverDo``, ``ForEachDo``, ``ForEachParAsync``, ``ForEachParReactive``,
-  ``ForRangeDo``, ``Delay``, ``DelayedDo``, ``SwitchDo``. ``ForEachParAsync``
-  is the fan-out ForEach: one arm per element on the loop, all at once,
-  joining on all. ``ForEachParReactive`` is that fan-out held open against a
-  change subscription, one arm per element for as long as the element is
-  there.
-- **Reactive** - consume change subscriptions and execute bodies in response:
-  ``React``, ``ReactWhile``, ``ReactForever``, ``ReactLatest``, ``Stream``.
-  ``ReactLatest`` is ``ReactForever`` that cancels a stale run instead of
-  queueing behind it.
+  ``ForeverDo``, ``ForEachDo``, ``ForEachParAsync``, ``ForRangeDo``,
+  ``Delay``, ``DelayedDo``, ``SwitchDo``. ``ForEachParAsync`` is the fan-out
+  ForEach: one arm per element on the loop, all at once, joining on all.
+
+The flows driven by change subscriptions (``React`` and the rest of the event
+kind, ``ReconcileReactive`` and the rest of the level kind, ``Stream``) live in
+``nu.core.reactive``, next to the subscriptions they consume.
 """
 
 from .control import (
@@ -24,7 +21,6 @@ from .control import (
     DelayedDo,
     ForEachDo,
     ForEachParAsync,
-    ForEachParReactive,
     ForeverDo,
     ForRangeDo,
     IfDo,
@@ -41,9 +37,7 @@ from .parallel import (
     Race,
 )
 from .raise_ import Raise, raise_
-from .react import React, ReactForever, ReactLatest, ReactWhile
 from .strategy import Sequential
-from .stream import Stream
 
 
 __all__ = [
@@ -52,7 +46,6 @@ __all__ = [
     "DelayedDo",
     "ForEachDo",
     "ForEachParAsync",
-    "ForEachParReactive",
     "ForRangeDo",
     "ForeverDo",
     "Gather",
@@ -63,12 +56,7 @@ __all__ = [
     "ParallelThreaded",
     "Race",
     "Raise",
-    "React",
-    "ReactForever",
-    "ReactLatest",
-    "ReactWhile",
     "Sequential",
-    "Stream",
     "SwitchDo",
     "WhileDo",
     "raise_",

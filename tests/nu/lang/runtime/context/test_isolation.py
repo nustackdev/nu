@@ -27,7 +27,8 @@ import pytest
 
 import nu
 from nu.context import Attr, FabricRef, Provide
-from nu.core.flows import AnyN, ForEachParAsync, Parallel, ParallelThreaded, Race, ReactLatest
+from nu.core.flows import AnyN, ForEachParAsync, Parallel, ParallelThreaded, Race
+from nu.core.reactive import ReactLatest
 from nu.engine.structure import Declared
 from nu.lang import Context, ScalarAction
 from nu.lang.helpers import arun, run

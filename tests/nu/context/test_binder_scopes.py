@@ -18,8 +18,8 @@ from nu.context import Attr
 from nu.core import Add, Div, Filter, Iter, Map, SortBy
 from nu.core.flows import Noop
 from nu.core.flows.control import ForEachDo, ForEachParAsync, ForRangeDo
-from nu.core.flows.react import React, ReactForever, ReactLatest, ReactWhile
-from nu.core.flows.stream import Stream
+from nu.core.reactive.event import React, ReactForever, ReactLatest, ReactWhile
+from nu.core.reactive.stream import Stream
 from nu.core.spans.policy import Retry, TryCatch
 from nu.engine.structure import Declared
 from nu.forms.collections import List

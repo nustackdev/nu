@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 import nu
-from nu.core.flows.stream import Stream
+from nu.core.reactive.stream import Stream
 from nu.domains.shape.sequence import SequenceRef
 from nu.lang import Context, Literal, StreamQuery
 

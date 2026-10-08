@@ -17,7 +17,7 @@ import pytest
 
 import nu
 import nustd
-from nu.core.flows.stream import Stream
+from nu.core.reactive.stream import Stream
 from nu.engine.structure import Declared
 from nu.lang import Context, ScalarAction, wire
 from nu.lang.sentinels import EMPTY
