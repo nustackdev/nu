@@ -330,9 +330,8 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
         Safe on read-only storage contexts (snapshots, RO secondaries).
         Callers that intend to WRITE via the returned view should use
         ``_fetch_and_ensure_parent_view`` instead so every ancestor along
-        the path is materialized with its declared view type before the
-        leaf write can auto-create it with the container layer's default
-        marker.
+        the path is materialized with its declared view type, each one
+        created by its parent view so the parent counts or indexes it.
         """
         nav = _resolve_navigator(rt, self._root_shape, path)
         storage_ctx = _resolve_storage_ctx(rt, self._root_shape, path)
@@ -348,10 +347,11 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
 
         Same shape as ``_fetch_parent_view`` but uses
         ``open_at_path_and_ensure`` so every intermediate container gets
-        stamped with the correct marker (via ``ensure_created`` at each
-        level, which also runs ``_ensure_internal_layout`` on views like
-        ``LogIndexedDictView`` that carry a custom sub-layout). Only call
-        on a write-capable context.
+        stamped with the correct marker by its parent view (``ensure_child``
+        at each level, which also runs ``_ensure_internal_layout`` on views
+        like ``LogIndexedDictView`` that carry a custom sub-layout, and lets
+        the parent record the new child). Only call on a write-capable
+        context.
         """
         nav = _resolve_navigator(rt, self._root_shape, path)
         storage_ctx = _resolve_storage_ctx(rt, self._root_shape, path)

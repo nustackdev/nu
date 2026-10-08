@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Nested kv writes now count new keys, so len and keys stay correct
 - Concurrent async transactions on SQLite now queue for the writer instead of failing
 - Child subscriptions document that subtree changes need descendant subscriptions
 - In-process programs build one at a time, so concurrent imports cannot deadlock

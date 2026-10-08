@@ -207,6 +207,12 @@ class ItemPrimitiveSetUnsafeCmd(_UnsafeSetBase):
         - The value is evaluated after the parent view and address resolve.
         - Raises ``ValueError`` when the value slot evaluates to EMPTY;
           EMPTY is never stored.
+        - Does no parent bookkeeping for the written key. The parent chain
+          it creates is recorded as usual, but a NEW key written this way is
+          not counted or indexed by a parent view that keeps a count or an
+          index (a ``DictView``'s length, an indexed dict's keys), so
+          ``len()`` and key iteration miss it. Overwriting an existing key
+          is safe, and so is any parent that counts live.
 
     Yields:
         Nothing.
@@ -242,6 +248,10 @@ class ItemPrimitiveSetUnsafeParentSkipCmd(_UnsafeSetBase):
           braces the branch in a Transaction.
         - Raises ``ValueError`` when the value slot evaluates to EMPTY;
           EMPTY is never stored.
+        - Does no parent bookkeeping: a NEW key written this way is not
+          counted or indexed by a parent view that keeps a count or an index,
+          so ``len()`` and key iteration miss it. Meant for overwriting keys
+          that already exist.
 
     Yields:
         Nothing.
@@ -263,6 +273,9 @@ class ItemPrimitiveSetUnsafeParentSkipCmd(_UnsafeSetBase):
 
 class ItemPrimitiveDeleteUnsafeCmd(Command):
     """Deletes one primitive as a bare storage delete.
+
+    Like the unsafe setters, it does no parent bookkeeping, so a parent that
+    keeps a count or an index still lists the deleted key.
 
     Args:
         ref: the leaf Ref whose value is removed.
