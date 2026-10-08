@@ -2,17 +2,18 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.6.0
-- **nustd** (fabrics) — 0.6.0
-- **nucli** (the `nu` command) — 0.6.0
+- **nucore** (kernel) — 0.6.1
+- **nustd** (fabrics) — 0.6.1
+- **nucli** (the `nu` command) — 0.6.1
 - **nudle** — 0.1.6
 - **ui-core** — 0.2.0
-- **ui-kit** — 0.3.0
+- **ui-kit** — 0.3.1
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.6.1 — 2026-10-08
 
+- Release nu 0.6.1 and UI kit 0.3.1
 - Timeouts run their fallback on every Python version and never swallow a cancel
 - Loops that keep state in step can no longer miss a change for long
 - Nested kv writes now count new keys, so len and keys stay correct
