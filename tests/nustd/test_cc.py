@@ -208,7 +208,7 @@ async def test_the_process_stops_when_the_body_fails(claude: Claude) -> None:
 
 async def test_the_process_stops_when_the_session_is_cancelled(claude: Claude) -> None:
     body = nu.Timeout(0.05, nustd.cc.Session(nu.List.of(Agent.ask("a"), Agent.ask("hang"))))
-    with pytest.raises(asyncio.TimeoutError):
+    with pytest.raises(TimeoutError):
         await _arun(body)
     (client,) = claude.clients
     assert client.disconnected

@@ -6,7 +6,7 @@ on_timeout (live ctx) or raises.
 
 from __future__ import annotations
 
-import sys
+import asyncio
 from typing import TYPE_CHECKING
 
 import pytest
@@ -55,19 +55,11 @@ async def test_timeout_within_limit_forwards_the_value() -> None:
     assert ctx.attrs.get("x") is True
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 11),
-    reason="asyncio timeout/cancellation semantics changed in 3.11",
-)
 async def test_timeout_exceeded_without_handler_raises() -> None:
     with pytest.raises(TimeoutError):
         await arun(Timeout(0.01, SlowAction(1.0)))
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 11),
-    reason="asyncio timeout/cancellation semantics changed in 3.11",
-)
 async def test_timeout_exceeded_runs_on_timeout_on_the_live_ctx() -> None:
     data: dict = {}
     value, _ = await arun(
@@ -76,3 +68,14 @@ async def test_timeout_exceeded_runs_on_timeout_on_the_live_ctx() -> None:
     )
     assert value is None
     assert data["timed_out"] is True
+
+
+async def test_timeout_keeps_a_cancel_that_lands_as_the_body_finishes() -> None:
+    flow = Timeout(10.0, SlowAction(0.0)) >> SlowAction(0.05, "after")
+    for steps in range(1, 6):
+        task = asyncio.ensure_future(arun(flow, declared("slow", "after")))
+        for _ in range(steps):
+            await asyncio.sleep(0)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task

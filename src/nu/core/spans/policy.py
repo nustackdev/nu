@@ -33,6 +33,7 @@ from typing import TYPE_CHECKING
 from nu.context.attrs.binders import bind
 from nu.core._stream import aiter_any, sync_iter
 from nu.core.flows import Noop
+from nu.core.flows.parallel._scheduling import _settle
 from nu.engine.structure import Declared
 from nu.lang import Attr, Cardinality, Policy
 
@@ -546,9 +547,11 @@ class Timeout(Policy):
             Optional: without it, the timeout raises ``TimeoutError``.
 
     Notes:
-        - ``asyncio.wait_for`` cancels the awaited body coroutine; a
-          sync-only body offloaded to a thread can't be interrupted, so the
-          limit stops the wait, not the thread itself.
+        - Hitting the limit cancels the body; a sync-only body offloaded to
+          a thread can't be interrupted, so the limit stops the wait, not
+          the thread itself.
+        - A cancel from outside always propagates, even when it lands as
+          the body finishes.
 
     Yields:
         The body's value. ``None`` if ``on_timeout`` ran; otherwise
@@ -576,12 +579,21 @@ class Timeout(Policy):
 
         async def athunk(rt: Runtime) -> object:
             timeout = float(await timeout_q(rt))
+            # The body runs as a task of its own, not under ``asyncio.wait_for``:
+            # before 3.12 that returns the body's value and drops a cancel
+            # landing in the same step, and before 3.11 it raises an error
+            # that is not ``TimeoutError``. It stays on ``rt``: this span is
+            # transparent and only waits while the body runs.
+            task = asyncio.ensure_future(body(rt))
             try:
-                return await asyncio.wait_for(body(rt), timeout=timeout)
-            except TimeoutError:
-                if on_timeout is not None:
-                    await on_timeout(rt)
-                    return None
-                raise
+                await asyncio.wait((task,), timeout=timeout)
+            finally:
+                await _settle((task,))
+            if not task.cancelled():
+                return task.result()
+            if on_timeout is None:
+                raise TimeoutError
+            await on_timeout(rt)
+            return None
 
         return athunk

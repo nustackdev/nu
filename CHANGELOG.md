@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Timeouts run their fallback on every Python version and never swallow a cancel
 - Loops that keep state in step can no longer miss a change for long
 - Nested kv writes now count new keys, so len and keys stay correct
 - Concurrent async transactions on SQLite now queue for the writer instead of failing
