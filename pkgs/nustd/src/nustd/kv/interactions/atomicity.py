@@ -5,7 +5,8 @@ region of the tree and run the body unchanged. The versions here fill that
 shape in against real storage. Each overrides one lifecycle method, ``_open``,
 written as a ``@contextmanager``: it finds the Navigator on the ctx, provides a
 handle under it on ``ctx.fabrics`` for the body, and tears the handle down on
-the way out.
+the way out. ``Transaction`` also overrides ``_aopen``, so that on an event
+loop it can wait for a storage's writer slot without blocking the loop.
 
 Binding is lazy, through ``ctx.fabrics.lazy``. A bracket that wraps a body which turns
 out never to touch storage opens nothing, so wrapping generously costs nothing.
@@ -24,7 +25,7 @@ attribute, so a tree rewrite carries it through.
 
 from __future__ import annotations
 
-from contextlib import ExitStack, contextmanager
+from contextlib import ExitStack, asynccontextmanager, contextmanager
 from typing import TYPE_CHECKING
 
 from nu.core.flows.strategy import Sequential
@@ -41,7 +42,7 @@ from virtuals.tkv.storage import (
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Hashable, Iterator
+    from collections.abc import AsyncIterator, Callable, Hashable, Iterator
 
     from nu.lang import FloatArg, IntArg, Nu
     from nu.lang.runtime import Context
@@ -90,6 +91,12 @@ def _has_virtuals_write(node: object) -> bool:
     return False
 
 
+def _scope_navigators(ctx: Context, scope: Hashable | None) -> list[tuple[dict, Navigator]]:
+    """Every Navigator under ``scope``, with its guard predicates (empty if unsharded)."""
+    tags = _scope_tags(scope)
+    return ctx.fabrics.predicates(Navigator, *tags) or [({}, ctx.fabrics.get(Navigator, *tags))]
+
+
 @contextmanager
 def _provide_lazy(
     ctx: Context,
@@ -106,9 +113,8 @@ def _provide_lazy(
     the caller to close, commit or abort.
     """
     tags = _scope_tags(scope)
-    navs = ctx.fabrics.predicates(Navigator, *tags) or [({}, ctx.fabrics.get(Navigator, *tags))]
     with ExitStack() as provided:
-        for preds, nav in navs:
+        for preds, nav in _scope_navigators(ctx, scope):
 
             def open_handle(nav: Navigator = nav) -> object:
                 handle = begin(nav)
@@ -117,6 +123,29 @@ def _provide_lazy(
 
             provided.enter_context(ctx.fabrics.lazy(protocol, open_handle, *tags, **preds))
         yield
+
+
+class _HeldWriteSlots(dict):
+    """Writer slots held for the Transaction body in scope, by ``id(storage)``.
+
+    Bound on ``ctx.fabrics`` by ``Transaction._aopen`` so a nested
+    Transaction on the same storage borrows the enclosing slot instead of
+    waiting on it, which would wait on itself.
+    """
+
+
+def _begin_transaction(nav: Navigator, slots: dict[int, object]) -> TransactionProtocol:
+    """Begin a transaction on ``nav``'s storage, handing it the writer slot if one is held.
+
+    ``slots`` maps ``id(storage)`` to a slot reserved up front by
+    ``Transaction._aopen``. Only a slot still held is handed over; a second
+    transaction on the same storage begins as usual.
+    """
+    storage = nav.storage
+    slot = slots.get(id(storage))
+    if slot is not None and slot.held:  # type: ignore[attr-defined]
+        return storage.begin_transaction(write_slot=slot)  # type: ignore[call-arg]
+    return storage.begin_transaction()
 
 
 class Snapshot(_CoreSnapshot):
@@ -198,6 +227,11 @@ class Transaction(_CoreTransaction):
     Notes:
         - The transaction opens on first use, not on entry, so a body that
           never touches storage opens nothing and commits nothing.
+        - On the async runtime, a storage with a writer slot (SQLite) is
+          waited for on entry, without blocking the event loop, so
+          concurrent coroutines queue for it instead of failing. The
+          transaction itself still opens on first use, but the slot is held
+          for the whole body, even one that never touches storage.
         - Under a stream body the boundary spans the whole drain, so the
           commit waits for the consumer to finish rather than firing when
           the stream is built.
@@ -233,15 +267,22 @@ class Transaction(_CoreTransaction):
         return self._payload["scope"]
 
     @contextmanager
-    def _open(self, ctx: Context) -> Iterator[None]:
-        """Provide a transaction, opened on first use, for the body; commit on clean exit, abort on error."""
+    def _open(self, ctx: Context, slots: dict[int, object] | None = None) -> Iterator[None]:
+        """Provide a transaction, opened on first use, for the body; commit on clean exit, abort on error.
+
+        Args:
+            ctx: the task's context.
+            slots: writer slots already held, by ``id(storage)``, for the
+                transactions to take over. Filled by ``_aopen``.
+        """
+        held = slots or {}
         txns: list[TransactionProtocol] = []
         try:
             with _provide_lazy(
                 ctx,
                 TransactionProtocol,
                 self.scope,
-                lambda nav: nav.storage.begin_transaction(),
+                lambda nav: _begin_transaction(nav, held),
                 txns,
             ):
                 yield
@@ -252,6 +293,42 @@ class Transaction(_CoreTransaction):
         else:
             for txn in txns:
                 txn.commit()
+
+    @asynccontextmanager
+    async def _aopen(self, ctx: Context) -> AsyncIterator[None]:
+        """Wait for each storage's writer slot, then run ``_open`` with the slots held.
+
+        A writable storage offering ``areserve_write_slot`` is waited on
+        here, so a coroutine never blocks the loop in the sync begin. The
+        lazy transaction takes the slot over and releases it on commit or
+        abort; a slot no transaction took is released on the way out, on
+        any BaseException too. A slot an enclosing Transaction holds is
+        borrowed, not waited on, and left for that Transaction to release.
+        Storages without it open exactly as ``_open``.
+        """
+        fabrics = ctx.fabrics
+        enclosing = fabrics.get(_HeldWriteSlots) if fabrics.has(_HeldWriteSlots) else {}
+        slots = _HeldWriteSlots()
+        owned: list = []
+        try:
+            for _, nav in _scope_navigators(ctx, self.scope):
+                storage = nav.storage
+                key = id(storage)
+                if key in slots:
+                    continue
+                if key in enclosing:
+                    slots[key] = enclosing[key]
+                    continue
+                reserve = getattr(storage, "areserve_write_slot", None)
+                if reserve is None or getattr(storage, "read_only", False):
+                    continue
+                slots[key] = await reserve()
+                owned.append(slots[key])
+            with fabrics.bind(_HeldWriteSlots, slots), self._open(ctx, slots):
+                yield
+        finally:
+            for slot in owned:
+                slot.release()
 
 
 def Atomic(  # noqa: N802 (factory mimics class spelling)

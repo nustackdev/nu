@@ -46,3 +46,39 @@ async def test_sqlite_navigator_async(tmp_path: Path):
     await nu.arun(nu.With(nustd.kv.sqlite_navigator(path), body=WRITE))
     got, _ = await nu.arun(nu.With(nustd.kv.sqlite_navigator(path), body=READ))
     assert list(got) == [2, {"a": "x", "b": "y"}]
+
+
+def _bump(i: int) -> nu.Nu:
+    """A write, an await mid-transaction, then a second write."""
+    return Transaction(Store.count.inc() >> nu.Delay(0.01) >> Store.names[f"k{i}"].set("v"))
+
+
+INIT = Transaction(Store.count.set(0) >> Store.names.set({}))
+
+
+async def test_sqlite_concurrent_async_transactions_wait_their_turn(tmp_path: Path):
+    path = str(tmp_path / "kv.sqlite")
+    n = 8
+    await nu.arun(nu.With(nustd.kv.sqlite_navigator(path), body=INIT))
+    await nu.arun(
+        nu.With(
+            nustd.kv.sqlite_navigator(path), body=nu.ParallelAsync(*(_bump(i) for i in range(n)))
+        )
+    )
+    got, _ = await nu.arun(nu.With(nustd.kv.sqlite_navigator(path), body=READ))
+    assert list(got) == [n, {f"k{i}": "v" for i in range(n)}]
+
+
+async def test_sqlite_async_nested_and_idle_transactions(tmp_path: Path):
+    path = str(tmp_path / "kv.sqlite")
+    idle = Transaction(nu.Delay(0.01))  # holds the slot, never touches storage
+    nested = Transaction(Transaction(Store.count.inc() >> nu.Delay(0.01)))
+    await nu.arun(nu.With(nustd.kv.sqlite_navigator(path), body=INIT))
+    await nu.arun(
+        nu.With(
+            nustd.kv.sqlite_navigator(path),
+            body=nu.ParallelAsync(idle, nested, _bump(0)) >> nested,
+        )
+    )
+    got, _ = await nu.arun(nu.With(nustd.kv.sqlite_navigator(path), body=READ))
+    assert list(got) == [3, {"k0": "v"}]
