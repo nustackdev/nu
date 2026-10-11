@@ -56,7 +56,7 @@ function LineView({ path }: NodeProps) {
 	return (
 		<LinePrimitive align={align} wrap={wrap}>
 			<FlowProvider flow="inline">
-				<NodeChildren path={path} cell={LineCell} />
+				<NodeChildren path={path} cell={LineCell} indexed />
 			</FlowProvider>
 		</LinePrimitive>
 	);

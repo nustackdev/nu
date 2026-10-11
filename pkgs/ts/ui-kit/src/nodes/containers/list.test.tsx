@@ -92,4 +92,22 @@ describe("ListRef", () => {
 		send(OPS.write, null);
 		expect(items()).toEqual(["kept"]);
 	});
+
+	it("draws indexed children in index order, whatever order they were written", () => {
+		act(() => {
+			for (const [i, v] of [["2", "third"], ["0", "first"], ["1", "second"]]) {
+				tree.getState().write([["l", "ListRef"], [i, "TextRef", { value: v }]]);
+			}
+		});
+		expect(items()).toEqual(["first", "second", "third"]);
+	});
+
+	it("keeps named children in place among indexed ones", () => {
+		act(() => {
+			for (const [seg, v] of [["1", "b"], ["head", "named"], ["0", "a"]]) {
+				tree.getState().write([["l", "ListRef"], [seg, "TextRef", { value: v }]]);
+			}
+		});
+		expect(items()).toEqual(["a", "named", "b"]);
+	});
 });
