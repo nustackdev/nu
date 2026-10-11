@@ -15,6 +15,7 @@
 // contract stays numeric until then.
 
 import {
+	FlowProvider,
 	NodeChildren,
 	type NodeEntry,
 	type NodeProps,
@@ -76,7 +77,9 @@ function ColumnView({ path }: NodeProps) {
 
 	return (
 		<div className={`flex flex-col ${gapCls} ${padCls} ${alignCls} ${justifyCls}`}>
-			<NodeChildren path={path} />
+			<FlowProvider flow="block">
+				<NodeChildren path={path} />
+			</FlowProvider>
 		</div>
 	);
 }

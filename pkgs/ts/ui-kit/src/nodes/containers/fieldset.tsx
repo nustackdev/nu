@@ -9,6 +9,7 @@
 // opacity for the disabled treatment.
 
 import {
+	FlowProvider,
 	NodeChildren,
 	type NodeEntry,
 	type NodeProps,
@@ -40,7 +41,9 @@ function FieldsetView({ path }: NodeProps) {
 				<legend className="px-1 text-sm font-semibold text-text-secondary">{legend}</legend>
 			) : null}
 			<div className={`flex flex-col ${gapCls}`}>
-				<NodeChildren path={path} />
+				<FlowProvider flow="block">
+					<NodeChildren path={path} />
+				</FlowProvider>
 			</div>
 		</fieldset>
 	);

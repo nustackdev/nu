@@ -14,6 +14,7 @@
 // ladder statically to keep every candidate in the compiled bundle.
 
 import {
+	FlowProvider,
 	NodeChildren,
 	type NodeEntry,
 	type NodeProps,
@@ -80,7 +81,9 @@ function RowView({ path }: NodeProps) {
 
 	return (
 		<div className={`flex flex-row ${gapCls} ${padCls} ${alignCls} ${justifyCls} ${wrapCls}`}>
-			<NodeChildren path={path} />
+			<FlowProvider flow="row">
+				<NodeChildren path={path} />
+			</FlowProvider>
 		</div>
 	);
 }

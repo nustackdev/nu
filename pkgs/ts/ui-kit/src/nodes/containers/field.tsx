@@ -14,6 +14,7 @@
 import { useId } from "react";
 import { Text } from "../../components/ui/text";
 import {
+	FlowProvider,
 	type NodeEntry,
 	type NodeProps,
 	NodeView,
@@ -50,7 +51,9 @@ function FieldView({ path }: NodeProps) {
 			) : null}
 			<div aria-describedby={describedBy} aria-invalid={hasError || undefined}>
 				{child ? (
-					<NodeView path={[...path, child]} />
+					<FlowProvider flow="block">
+						<NodeView path={[...path, child]} />
+					</FlowProvider>
 				) : (
 					<Text size="xs" tone="danger" mono>
 						no child under {path.join(" / ")}

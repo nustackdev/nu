@@ -15,7 +15,13 @@ import {
 	Card as CardPrimitive,
 	CardTitle,
 } from "../../components/ui/card";
-import { NodeChildren, type NodeEntry, type NodeProps, useStringProp } from "../../tree";
+import {
+	FlowProvider,
+	NodeChildren,
+	type NodeEntry,
+	type NodeProps,
+	useStringProp,
+} from "../../tree";
 
 function coerceStr(v: unknown): string {
 	return v == null ? "" : String(v);
@@ -37,7 +43,9 @@ function CardView({ path }: NodeProps) {
 				</CardHeader>
 			) : null}
 			<CardContent className="flex flex-col gap-3 py-3">
-				<NodeChildren path={path} />
+				<FlowProvider flow="block">
+					<NodeChildren path={path} />
+				</FlowProvider>
 			</CardContent>
 			{footer !== "" ? (
 				<CardFooter className="border-t border-border-subtle pt-2 text-xs text-text-secondary">

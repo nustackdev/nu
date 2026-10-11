@@ -14,6 +14,7 @@
 
 import { Heading } from "../../components/ui/heading";
 import {
+	FlowProvider,
 	NodeChildren,
 	type NodeEntry,
 	type NodeProps,
@@ -74,7 +75,9 @@ function FormView({ path }: NodeProps) {
 					{title}
 				</Heading>
 			) : null}
-			<NodeChildren path={path} />
+			<FlowProvider flow="block">
+				<NodeChildren path={path} />
+			</FlowProvider>
 		</form>
 	);
 }

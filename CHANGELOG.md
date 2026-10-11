@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Kit nodes learn their parent's flow, and node stories draw real trees
 - Every layout container gets its own Ref, so any UI builds without Shapes
 - Containers work as plain Refs without Shapes, and leaves refuse children clearly
 - Boxed accordion rows run flush to the border, content aligned with titles

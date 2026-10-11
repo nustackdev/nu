@@ -25,6 +25,7 @@ import {
 	TabsTrigger,
 } from "../../components/ui/tabs";
 import {
+	FlowProvider,
 	type NodeEntry,
 	type NodeProps,
 	NodeView,
@@ -92,7 +93,9 @@ function TabsView({ path }: NodeProps) {
 						value={tab.id}
 						hidden={tab.id !== activeId}
 					>
-						<NodeView path={[...path, segment]} />
+						<FlowProvider flow="block">
+							<NodeView path={[...path, segment]} />
+						</FlowProvider>
 					</TabsContent>
 				);
 			})}
