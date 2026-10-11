@@ -226,9 +226,9 @@ class MovieDetail(nustd.ui.Page):
 class App(nustd.ui.Index):
     title: nustd.ui.TitleRef
     nav: nustd.ui.NavRef
-    movies = Movies.slot("/")
-    detail = MovieDetail.slot("/detail")
-    about = About.slot("/about")
+    movies = Movies.slot("/", label="Movies", icon="🍿")
+    detail = MovieDetail.slot("/detail", label="Detail", icon="🎬")
+    about = About.slot("/about", label="About", icon="💡")
 
 
 # ---- State ------------------------------------------------------------------

@@ -7,7 +7,16 @@
 // Same two steps the old mount-payload version did, minus the payload.
 
 import { type ReactNode, useMemo, useRef } from "react";
-import { Tree, TreeItem, type TreeItemState, type TreeSource, tree, useStringProp } from "@nustackdev/ui-kit";
+import {
+	ResizeHandle,
+	Tree,
+	TreeItem,
+	type TreeItemState,
+	type TreeSource,
+	tree,
+	useResizableWidth,
+	useStringProp,
+} from "@nustackdev/ui-kit";
 import { OPS } from "@nustackdev/ui-core";
 import { useNavSegment } from "./router";
 
@@ -24,16 +33,39 @@ type Props = {
 const NOTHING_OPEN: ReadonlySet<string> = new Set();
 const noFold = () => {};
 
+// A page with no `icon` prop gets a plain page glyph (lucide file-text), so
+// every row keeps the same icon lane as nuspace's planes.
+function PageGlyph() {
+	return (
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+			<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+			<path d="M14 2v4a2 2 0 0 0 2 2h4" />
+			<path d="M10 9H8" />
+			<path d="M16 13H8" />
+			<path d="M16 17H8" />
+		</svg>
+	);
+}
+
 function PageItem({ item, routes }: { item: TreeItemState; routes: Map<string, string> }) {
 	const segment = item.row.key;
 	const route = useStringProp([segment], "route", `/${segment}`);
 	const label = useStringProp([segment], "label", segment);
+	const icon = useStringProp([segment], "icon", "");
 	routes.set(segment, route);
-	return <TreeItem item={item} title={label} />;
+	return (
+		<TreeItem
+			item={item}
+			title={label}
+			icon={icon ? <span className="text-base leading-none">{icon}</span> : <PageGlyph />}
+		/>
+	);
 }
 
 export function Sidebar({ appName, pages, active, footer }: Props) {
 	const nav = useNavSegment();
+	// Drag the edge to resize, click it to snap back. Same bounds as nuspace.
+	const { width, onResizeStart, onResizeReset } = useResizableWidth("nudle.sidebar.width");
 
 	const routes = useRef(new Map<string, string>()).current;
 	const source = useMemo<TreeSource>(() => ({ roots: pages, childrenOf: () => [] }), [pages]);
@@ -48,7 +80,10 @@ export function Sidebar({ appName, pages, active, footer }: Props) {
 	};
 
 	return (
-		<aside className="w-60 shrink-0 border-r border-border-subtle bg-bg-sunken flex flex-col">
+		<aside
+			className="relative shrink-0 border-r border-border-subtle bg-bg-sunken flex flex-col"
+			style={{ width }}
+		>
 			<div className="px-4 pt-4 pb-2">
 				<span className="text-sm font-semibold text-text-primary">
 					{appName}
@@ -67,6 +102,7 @@ export function Sidebar({ appName, pages, active, footer }: Props) {
 				/>
 			</nav>
 			{footer ? <div className="px-4 py-3">{footer}</div> : null}
+			<ResizeHandle onPointerDown={onResizeStart} onDoubleClick={onResizeReset} />
 		</aside>
 	);
 }

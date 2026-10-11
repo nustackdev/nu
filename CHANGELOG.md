@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- nudle sidebar resizes like nuspace's, and pages can carry an icon
 - UI kit and nudle move to calmer Dusk and Paper grounds with neutral hovers
 
 ## 0.6.1 — 2026-10-08

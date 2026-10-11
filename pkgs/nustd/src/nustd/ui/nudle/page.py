@@ -141,7 +141,10 @@ class Page(Section):
 
         ``route`` and ``label`` go in as declared props, which is how they
         reach the browser's router and sidebar: the chain carries them onto
-        the page node.
+        the page node. ``label=`` overrides ``nav_label``, and ``icon=`` (an
+        emoji or a short glyph) is drawn before the label in the sidebar::
+
+            movies = Movies.slot("/", label="Movies", icon="🍿")
         """
         declared: dict[str, object] = {
             "route": route,
