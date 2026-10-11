@@ -10,9 +10,9 @@ from nustd.ui.refs.containers.chrome import (
 )
 from nustd.ui.shapes import (
     Accordion,
+    Box,
     Card,
     Column,
-    Container,
     Field,
     Fieldset,
     Form,
@@ -25,10 +25,10 @@ from nustd.ui.shapes import (
 __all__ = [
     "Accordion",
     "AccordionRef",
+    "Box",
     "Card",
     "CardRef",
     "Column",
-    "Container",
     "Field",
     "FieldRef",
     "Fieldset",

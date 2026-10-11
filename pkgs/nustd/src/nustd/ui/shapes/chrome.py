@@ -1,4 +1,4 @@
-"""Chrome Shapes -- Card, Container, Tabs, Modal, Accordion, Form, Fieldset, Field.
+"""Chrome Shapes -- Card, Box, Tabs, Modal, Accordion, Form, Fieldset, Field.
 
 Each is a Section over its container Ref (``nustd.ui.refs.containers.chrome``):
 the Ref carries the chrome methods, the slot defaults and the wire type, and
@@ -21,7 +21,7 @@ from nustd.ui.refs.containers.chrome import (
 )
 
 
-__all__ = ["Accordion", "Card", "Container", "Field", "Fieldset", "Form", "Modal", "Tabs"]
+__all__ = ["Accordion", "Box", "Card", "Field", "Fieldset", "Form", "Modal", "Tabs"]
 
 
 class Accordion(Section):
@@ -36,7 +36,7 @@ class Card(Section):
     _ref_cls = CardRef
 
 
-class Container(Section):
+class Box(Section):
     """Styled card-like box. Pin chrome on slot()."""
 
     _ref_cls = BoxRef

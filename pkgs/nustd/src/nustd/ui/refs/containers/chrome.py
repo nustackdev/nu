@@ -1,6 +1,6 @@
 """Chrome containers -- Refs for the boxes that frame their children.
 
-Card, Container (``BoxRef``), Tabs, Modal, Accordion, Form, Fieldset and
+Card, Box (``BoxRef``), Tabs, Modal, Accordion, Form, Fieldset and
 Field. Each is a ``ContainerRef``: children are open-ended, and the chrome
 the box carries of its own (a Card's title, a Tabs' active tab, a Field's
 label) is props seeded by ``slot()`` and driven by ``set_*``. The Shapes over
@@ -148,13 +148,13 @@ Shadow = Literal["none", "sm", "md"]
 Gap = Literal["none", "sm", "md", "lg"]
 
 
-# Backs the ``Container`` Shape and draws as the browser's "Container" node.
+# Backs the ``Box`` Shape and draws as the browser's "Box" node.
 # It cannot be called ContainerRef: that name is the base every container
 # Ref subclasses, so the Ref behind this one box is BoxRef.
 class BoxRef(ContainerRef):
     """Styled card-like box with an optional title. Pin chrome on slot()."""
 
-    _wire_type = "Container"
+    _wire_type = "Box"
 
     @classmethod
     def slot(

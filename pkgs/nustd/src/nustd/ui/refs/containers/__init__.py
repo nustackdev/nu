@@ -2,7 +2,7 @@
 
 - base:   ContainerRef, the abstract base.
 - flow:   ColumnRef, RowRef, GridRef, LineRef.
-- chrome: CardRef, BoxRef (the Container box), TabsRef, ModalRef,
+- chrome: CardRef, BoxRef (the Box), TabsRef, ModalRef,
           AccordionRef, FormRef, FieldsetRef, FieldRef.
 - disclosure: CollapsibleRef, SheetRef.
 - list:   ListRef, string items first, then any child node as an item.

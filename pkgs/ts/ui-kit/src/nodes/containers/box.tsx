@@ -1,4 +1,4 @@
-// Container -- styled box wrapping other nodes. Title, padding, border,
+// Box -- styled box wrapping other nodes. Title, padding, border,
 // background, shadow and gap are plain props; the default store `write`
 // merges them, and the read-time fallbacks below match what the old factory
 // seeded, so there is no handler here.
@@ -45,7 +45,7 @@ const SHADOW_CLASSES: Record<string, string> = {
 	md: "shadow-floating",
 };
 
-function ContainerView({ path }: NodeProps) {
+function BoxView({ path }: NodeProps) {
 	const title = useStringProp(path, "title");
 	const padding = useStringProp(path, "padding", "md");
 	const border = useStringProp(path, "border", "hairline");
@@ -79,4 +79,4 @@ function ContainerView({ path }: NodeProps) {
 	);
 }
 
-export const Container: NodeEntry = { component: ContainerView, fill: true };
+export const Box: NodeEntry = { component: BoxView, fill: true };

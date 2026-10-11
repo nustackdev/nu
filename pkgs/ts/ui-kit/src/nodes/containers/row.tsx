@@ -23,7 +23,7 @@
 // Fill: LineChart, AreaChart, BarChart, PieChart, TableRef, TreeRef,
 // JsonViewerRef, LensRef, CodeRef, MarkdownRef, InputRef, NumberInputRef,
 // TextAreaRef, TagInputRef, DatePickerRef, SliderRef, ProgressRef, AlertRef,
-// EmptyStateRef, ImageRef, HeadingRef, and the containers Card, Container,
+// EmptyStateRef, ImageRef, HeadingRef, and the containers Card, Box,
 // Form, Fieldset, Field, Tabs, Accordion, Column, Row, ListRef (Grid, Line,
 // Select, Skeleton, Collapsible set their own). Content: everything else,
 // including TextRef, LinkRef, BadgeRef, KbdRef, ShortcutRef, StatusDotRef,
