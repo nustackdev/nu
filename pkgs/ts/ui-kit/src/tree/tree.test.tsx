@@ -10,7 +10,8 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { OPS, type Path } from "@nustackdev/ui-core";
-import { NodeChildren, NodeView } from "./NodeView";
+import { type Flow, FlowProvider, useFill, useFlow } from "./flow";
+import { type CellProps, NodeChildren, NodeView } from "./NodeView";
 import { useChildren, useProps, useStringProp } from "./hooks";
 import { registry, register } from "./registry";
 import { tree } from "./store";
@@ -283,5 +284,106 @@ describe("registry", () => {
 			tree.getState().dispatch({ op: OPS.remove, ref: ["h"], payload: null });
 		});
 		expect(gone).toEqual(["h"]);
+	});
+});
+
+describe("NodeChildren cell", () => {
+	function Cell({ path, children }: CellProps) {
+		return <li data-cell={path.join("/")}>{children}</li>;
+	}
+
+	function Boxed({ path }: { path: Path }) {
+		return (
+			<ul data-testid={path.join("/")}>
+				<NodeChildren path={path} cell={Cell} />
+			</ul>
+		);
+	}
+
+	beforeEach(() => {
+		add("Leaf", { component: Leaf });
+		add("Boxed", { component: Boxed });
+		add("Box", { component: Box });
+	});
+
+	it("wraps every child in the cell, in insertion order", () => {
+		tree.getState().write([["b", "Boxed"], ["one", "Leaf", { value: "1" }]]);
+		tree.getState().write([["b", "Boxed"], ["two", "Leaf", { value: "2" }]]);
+		mount(<NodeView path={["b"]} />);
+		const cells = [...host.querySelectorAll("li")];
+		expect(cells.map((li) => li.dataset.cell)).toEqual(["b/one", "b/two"]);
+		expect(cells.map((li) => li.textContent)).toEqual(["1", "2"]);
+	});
+
+	it("draws children bare without one", () => {
+		tree.getState().write([["x", "Box"], ["one", "Leaf", { value: "1" }]]);
+		mount(<NodeView path={["x"]} />);
+		expect(host.querySelector("li")).toBeNull();
+		expect(text("x/one")).toBe("1");
+	});
+});
+
+describe("flow", () => {
+	function ShowFlow({ path }: { path: Path }) {
+		return <span data-testid={path.join("/")}>{useFlow()}</span>;
+	}
+
+	function Provides(flow: Flow) {
+		return function Container({ path }: { path: Path }) {
+			return (
+				<FlowProvider flow={flow}>
+					<NodeChildren path={path} />
+				</FlowProvider>
+			);
+		};
+	}
+
+	beforeEach(() => {
+		add("ShowFlow", { component: ShowFlow });
+		add("RowLike", { component: Provides("row") });
+		add("LineLike", { component: Provides("inline") });
+	});
+
+	it("is block when no container provides one", () => {
+		tree.getState().write([["f", "ShowFlow"]]);
+		mount(<NodeView path={["f"]} />);
+		expect(text("f")).toBe("block");
+	});
+
+	it("is the nearest container's", () => {
+		tree.getState().write([["r", "RowLike"], ["f", "ShowFlow"]]);
+		tree.getState().write([["r", "RowLike"], ["l", "LineLike"], ["f", "ShowFlow"]]);
+		mount(<NodeView path={["r"]} />);
+		expect(text("r/f")).toBe("row");
+		expect(text("r/l/f")).toBe("inline");
+	});
+});
+
+describe("useFill", () => {
+	function ShowFill({ path }: { path: Path }) {
+		return <span data-testid={path.join("/")}>{String(useFill(path))}</span>;
+	}
+
+	it("reads the fill hint off the node's registered type", () => {
+		add("Wide", { component: ShowFill, fill: true });
+		add("Narrow", { component: ShowFill });
+		tree.getState().write([["w", "Wide"]]);
+		tree.getState().write([["n", "Narrow"]]);
+		mount(
+			<>
+				<NodeView path={["w"]} />
+				<NodeView path={["n"]} />
+			</>,
+		);
+		expect(text("w")).toBe("true");
+		expect(text("n")).toBe("false");
+	});
+
+	it("is false for a path with no node", () => {
+		function Probe() {
+			return <span data-testid="probe">{String(useFill(["nothing"]))}</span>;
+		}
+		mount(<Probe />);
+		expect(text("probe")).toBe("false");
 	});
 });

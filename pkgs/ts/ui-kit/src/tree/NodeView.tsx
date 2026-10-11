@@ -7,8 +7,9 @@
 // when a level in the middle means nothing to the browser.
 
 import type { Path } from "@nustackdev/ui-core";
+import type { ComponentType, ReactNode } from "react";
 import { ErrorBoundary } from "../components/ErrorBoundary";
-import { useChildren, useNode, pathKey } from "./hooks";
+import { pathKey, useChildren, useNode } from "./hooks";
 import { componentFor } from "./registry";
 
 export function NodeView({ path }: { path: Path }) {
@@ -16,9 +17,7 @@ export function NodeView({ path }: { path: Path }) {
 	const Comp = componentFor(type);
 	if (!Comp) {
 		if (type) {
-			return (
-				<div className="text-xs text-status-danger font-mono">no component for {type}</div>
-			);
+			return <div className="text-xs text-status-danger font-mono">no component for {type}</div>;
 		}
 		return <NodeChildren path={path} />;
 	}
@@ -29,14 +28,35 @@ export function NodeView({ path }: { path: Path }) {
 	);
 }
 
-/** Every child of a node, in insertion order. What a layout type renders. */
-export function NodeChildren({ path }: { path: Path }) {
+/** What a container wraps each child in: the child's path, and the child drawn. */
+export type CellProps = { path: Path; children: ReactNode };
+
+/**
+ * Every child of a node, in insertion order. What a container type renders.
+ *
+ * `cell` wraps each child, for a container that needs a box per child (a
+ * list item, a grid cell, a row slot that fills). Without it the children
+ * are drawn bare, side by side in the container's own element.
+ */
+export function NodeChildren({
+	path,
+	cell: Cell,
+}: {
+	path: Path;
+	cell?: ComponentType<CellProps>;
+}) {
 	const children = useChildren(path);
 	return (
 		<>
-			{children.map((segment) => (
-				<NodeView key={segment} path={[...path, segment]} />
-			))}
+			{children.map((segment) => {
+				const child = [...path, segment];
+				if (!Cell) return <NodeView key={segment} path={child} />;
+				return (
+					<Cell key={segment} path={child}>
+						<NodeView path={child} />
+					</Cell>
+				);
+			})}
 		</>
 	);
 }

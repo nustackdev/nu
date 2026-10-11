@@ -13,6 +13,10 @@ export type NodeProps = { path: Path };
 
 export type NodeEntry = Behaviour & {
 	component?: ComponentType<NodeProps>;
+	// The node has no intrinsic width (a chart, a table, an input), so a row
+	// gives it a share of the free width rather than its content size. Read
+	// by the parent through `useFill`; unset means "size to content".
+	fill?: boolean;
 };
 
 export type { DisposeCtx, NodeHandler };

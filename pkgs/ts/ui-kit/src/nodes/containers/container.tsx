@@ -9,7 +9,13 @@
 // classes.
 
 import { Panel, PanelContent, PanelHeader, PanelTitle } from "../../components/ui/panel";
-import { NodeChildren, type NodeEntry, type NodeProps, useStringProp } from "../../tree";
+import {
+	FlowProvider,
+	NodeChildren,
+	type NodeEntry,
+	type NodeProps,
+	useStringProp,
+} from "../../tree";
 
 const PADDING_TO_SIZE: Record<string, "sm" | "md" | "lg"> = {
 	none: "sm",
@@ -64,7 +70,9 @@ function ContainerView({ path }: NodeProps) {
 			) : null}
 			<PanelContent>
 				<div className={`flex flex-col ${gapCls}`}>
-					<NodeChildren path={path} />
+					<FlowProvider flow="block">
+						<NodeChildren path={path} />
+					</FlowProvider>
 				</div>
 			</PanelContent>
 		</Panel>

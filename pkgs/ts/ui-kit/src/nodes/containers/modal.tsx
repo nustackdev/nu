@@ -24,6 +24,7 @@ import { OPS } from "@nustackdev/ui-core";
 import { useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
 import {
+	FlowProvider,
 	NodeChildren,
 	type NodeEntry,
 	type NodeProps,
@@ -56,7 +57,9 @@ function ModalView({ path }: NodeProps) {
 					</DialogHeader>
 				) : null}
 				<div className="flex flex-col gap-4">
-					<NodeChildren path={path} />
+					<FlowProvider flow="block">
+						<NodeChildren path={path} />
+					</FlowProvider>
 				</div>
 			</DialogContent>
 		</Dialog>

@@ -27,6 +27,7 @@ import {
 	AccordionTrigger,
 } from "../../components/ui/accordion";
 import {
+	FlowProvider,
 	type NodeEntry,
 	type NodeProps,
 	NodeView,
@@ -100,7 +101,11 @@ function AccordionView({ path }: NodeProps) {
 					<AccordionItem key={`${i}-${s.id}`} value={s.id}>
 						<AccordionTrigger>{s.label}</AccordionTrigger>
 						<AccordionContent>
-							{segment ? <NodeView path={[...path, segment]} /> : null}
+							{segment ? (
+								<FlowProvider flow="block">
+									<NodeView path={[...path, segment]} />
+								</FlowProvider>
+							) : null}
 						</AccordionContent>
 					</AccordionItem>
 				);
