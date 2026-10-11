@@ -2,8 +2,8 @@
 
 Breadcrumb and header, a sentence built from runs, a toolbar, a grid of live
 stat cards, charts beside cards, a list whose items are sentences, a gallery
-built from Refs alone with computed keys, a folded table, and a sheet the
-toolbar opens.
+built from Refs alone with computed keys, a folded table, a sheet the
+toolbar opens, and a modal that confirms clearing the log.
 """
 
 import asyncio
@@ -52,6 +52,7 @@ class Intro(ui.Line):
 class Toolbar(ui.Row):
     back = ui.ButtonRef.slot(icon="arrow-left", tooltip="Back", variant="ghost")
     reload = ui.ButtonRef.slot(icon="refresh-cw", tooltip="Reload", variant="ghost")
+    wipe = ui.ButtonRef.slot(icon="trash-2", tooltip="Clear trap log", variant="ghost")
     sep = ui.DividerRef.slot()
     night = ui.ToggleRef.slot(icon="moon", label="Night traps")
     pins = ui.ToggleRef.slot(icon="pin", pressed=True)
@@ -140,6 +141,18 @@ class SightingForm(ui.Form):
     save = ui.ButtonRef.slot(label="Save sighting")
 
 
+class ConfirmActions(ui.Row):
+    cancel = ui.ButtonRef.slot(label="Cancel", variant="secondary")
+    confirm = ui.ButtonRef.slot(label="Clear log", icon="trash-2", variant="danger")
+
+
+class ConfirmClear(ui.Modal):
+    body = ui.TextRef.slot(
+        value="This removes every entry from the trap log. Counts and the atlas stay as they are."
+    )
+    actions = ConfirmActions.slot(gap=2, justify="end")
+
+
 class LogSheet(ui.Sheet):
     hint = ui.TextRef.slot(value="Saved sightings land in the log below.")
     form = SightingForm.slot()
@@ -166,6 +179,7 @@ class Home(ui.Page):
     atlas = ui.Column.slot()
     log = Log.slot(title="Trap log")
     sheet = LogSheet.slot(title="Log a sighting", side="right")
+    confirm = ConfirmClear.slot(title="Clear the trap log?")
 
 
 class App(ui.Index):
@@ -256,6 +270,12 @@ program = seed >> nu.ParallelAsync(
     nu.ForeverDo(chain(*ticks)),
     nu.ReactForever(h.toolbar.edit.on_click(), h.sheet.set_open(True)),
     nu.ReactForever(h.sheet.form.save.on_click(), h.sheet.set_open(False)),
+    nu.ReactForever(h.toolbar.wipe.on_click(), h.confirm.set_open(True)),
+    nu.ReactForever(h.confirm.actions.cancel.on_click(), h.confirm.set_open(False)),
+    nu.ReactForever(
+        h.confirm.actions.confirm.on_click(),
+        h.log.runs.set_rows([]) >> h.confirm.set_open(False),
+    ),
 )
 
 app = ui.serve(App, program)
