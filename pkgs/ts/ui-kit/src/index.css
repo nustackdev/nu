@@ -3,7 +3,7 @@
  *
  * Layer 1  language tokens    the nustack color language: ground, line, ink,
  *                             Afterglow, Starlight, aurora / sunset / ember /
- *                             moonlight, chart slots and ramps. Paper
+ *                             moonlight, chart slots and ramps. Dawn
  *                             (light) on :root, Dusk (dark) on .dark
  * Layer 2  kit roles          role names components use, same names in both
  *                             themes, mapped onto layer 1
@@ -94,12 +94,12 @@
 
 /* ============================== L1: language tokens =======================
  * The nustack color language, both themes. Names and values come from the
- * Go design docs (language/color.md) and only live here. Paper (light)
+ * Go design docs (language/color.md) and only live here. Dawn (light)
  * on :root, Dusk (dark) on .dark: same names, tuned per theme.
  * Components never reach for these; they go through the L2 roles below.
  * ==========================================================================*/
 :root {
-	/* ground: Paper, white with the faintest cool lean (hue 264, chroma
+	/* ground: Dawn, white with the faintest cool lean (hue 264, chroma
 	 * 0.003). The document, cards and menus are pure white. */
 	--ground-deep:            #f7f8fa;
 	--ground:                 #f9fafc;
@@ -397,7 +397,7 @@
 	--syntax-punct:           var(--ink-2);
 }
 
-/* ============================== L2: light (Paper) ========================= */
+/* ============================== L2: light (Dawn) ========================== */
 :root {
 	/* What the browser paints for itself: scrollbars, form controls, the
 	 * caret, the canvas behind an overscroll. Those are chrome, not tokens,

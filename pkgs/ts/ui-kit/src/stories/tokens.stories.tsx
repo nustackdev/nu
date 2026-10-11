@@ -195,7 +195,7 @@ export const Language: StoryObj = {
 				L1 language tokens
 			</Heading>
 			<Text size="sm" tone="secondary" className="mb-10">
-				Every value in the color language, Paper (light) and Dusk (dark) side by side. Components
+				Every value in the color language, Dawn (light) and Dusk (dark) side by side. Components
 				never use these directly; they go through the L2 roles.
 			</Text>
 			<Table groups={LANGUAGE} />
