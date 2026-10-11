@@ -16,10 +16,9 @@
 // the row gives it a share of the free width instead of its content size.
 
 import type { Path } from "@nustackdev/ui-core";
-import { getNode } from "@nustackdev/ui-core";
 import { createContext, type ReactNode, useContext } from "react";
-import { registry } from "./registry";
-import { useTree } from "./store";
+import { useNode } from "./hooks";
+import { isFill } from "./registry";
 
 export type Flow = "block" | "row" | "grid" | "inline";
 
@@ -37,6 +36,6 @@ export function useFlow(): Flow {
 
 /** Whether the node at `path` has no intrinsic width, read off its type's registry entry. */
 export function useFill(path: Path): boolean {
-	const type = useTree((s) => getNode(s.root, path)?.type ?? null);
-	return type ? registry[type]?.fill === true : false;
+	const { type, props } = useNode(path);
+	return isFill(type, props);
 }

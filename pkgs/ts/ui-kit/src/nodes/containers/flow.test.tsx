@@ -113,7 +113,7 @@ describe("Column", () => {
 			["inp", "InputRef"],
 		]);
 		draw(["c"]);
-		const wrapped = [...host.querySelectorAll("[data-slot=column-cell]")];
+		const wrapped = [...host.querySelectorAll("[data-slot=block-cell]")];
 		expect(wrapped).toHaveLength(1);
 		expect(wrapped[0].querySelector("button")?.textContent).toBe("Go");
 	});
@@ -124,7 +124,7 @@ describe("Column", () => {
 			["btn", "ButtonRef", { label: "Go" }],
 		]);
 		draw(["c"]);
-		expect(host.querySelector("[data-slot=column-cell]")).toBeNull();
+		expect(host.querySelector("[data-slot=block-cell]")).toBeNull();
 	});
 });
 

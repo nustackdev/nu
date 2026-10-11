@@ -15,22 +15,18 @@
 // contract stays numeric until then. A value off the ladder snaps to the
 // nearest step.
 //
-// In the default stretch alignment each child sits in a cell that tells the
-// two kinds apart (see Row for the `fill` classification): a fill child
-// (a chart, an input, a card) stretches to the column's width, a content
-// child (a button, a badge, a line of text) keeps its own width at the start
-// edge instead of being pulled into a full width bar. A type the registry
-// does not know stretches, as it always did. Any other alignment applies to
-// every child alike.
+// In the default stretch alignment each child sits in a `BlockCell`, the
+// cell every block flow uses (see Row for the `fill` classification): a fill
+// child stretches to the column's width, a content child keeps its own
+// width at the start edge. Any other alignment applies to every child alike.
 
 import {
-	type CellProps,
+	BareCell,
+	BlockCell,
 	FlowProvider,
 	NodeChildren,
 	type NodeEntry,
 	type NodeProps,
-	registry,
-	useNode,
 	useNumberProp,
 	useStringProp,
 } from "../../tree";
@@ -79,19 +75,6 @@ const JUSTIFY_CLASSES: Record<string, string> = {
 	around: "justify-around",
 };
 
-// A content child keeps its width; a fill child, or one of a type nobody
-// registered, is drawn bare and stretches like before.
-function StretchCell({ path, children }: CellProps) {
-	const { type } = useNode(path);
-	const entry = type ? registry[type] : undefined;
-	if (!entry || entry.fill) return <>{children}</>;
-	return (
-		<div data-slot="column-cell" className="flex min-w-0 flex-col items-start">
-			{children}
-		</div>
-	);
-}
-
 function ColumnView({ path }: NodeProps) {
 	const gap = useNumberProp(path, "gap", 4);
 	const align = useStringProp(path, "align", "stretch");
@@ -108,7 +91,7 @@ function ColumnView({ path }: NodeProps) {
 			<FlowProvider flow="block">
 				<NodeChildren
 					path={path}
-					cell={alignCls === ALIGN_CLASSES.stretch ? StretchCell : undefined}
+					cell={alignCls === ALIGN_CLASSES.stretch ? BlockCell : BareCell}
 				/>
 			</FlowProvider>
 		</div>
