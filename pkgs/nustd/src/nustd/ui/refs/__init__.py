@@ -16,9 +16,10 @@ Layout under ``refs/``:
 - containers/: open-ended children, optional chrome. ``ContainerRef`` (base),
   flow (``ColumnRef``, ``RowRef``) and chrome (``CardRef``, ``BoxRef`` behind
   the Container box, ``TabsRef``, ``ModalRef``, ``AccordionRef``, ``FormRef``,
-  ``FieldsetRef``, ``FieldRef``).
+  ``FieldsetRef``, ``FieldRef``) and ``ListRef``, whose items are its
+  plain strings and then any child node.
 - leaves/: one thing drawn from props, never children. ``LeafRef`` (base),
-  output (``HeadingRef``, ``TextRef``, ``ImageRef``, ``LinkRef``, ``ListRef``,
+  output (``HeadingRef``, ``TextRef``, ``ImageRef``, ``LinkRef``,
   ``BadgeRef``, ``StatusDotRef``, ``KbdRef``, ``ShortcutRef``, ``AlertRef``,
   ``DividerRef``, ``EmptyStateRef``, ``StatRef``, ``ProgressRef``,
   ``GaugeRef``, ``JsonViewerRef``), table (``TableRef`` and its row ops),
@@ -77,6 +78,7 @@ from .containers import (
     FieldRef,
     FieldsetRef,
     FormRef,
+    ListRef,
     ModalRef,
     RowRef,
     TabsRef,
@@ -102,7 +104,6 @@ from .leaves import (
     LeafRef,
     LineChart,
     LinkRef,
-    ListRef,
     MarkdownRef,
     NumberInputRef,
     PieChart,
@@ -137,6 +138,7 @@ from nustd.ui.shapes import (
     Field,
     Fieldset,
     Form,
+    List,
     Modal,
     Row,
     Tabs,
@@ -179,6 +181,7 @@ __all__ = [
     "LeafRef",
     "LineChart",
     "LinkRef",
+    "List",
     "ListRef",
     "MarkdownRef",
     "Modal",

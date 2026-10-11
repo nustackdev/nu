@@ -267,7 +267,7 @@ def test_shape_slot_props_equal_the_refs():
 
 
 def test_kit_wire_types_of_shapes():
-    from nustd.ui import Card, Container, Form, Row
+    from nustd.ui import Card, Container, Form, List, Row
 
     class Toolbar(Row):
         pass
@@ -277,6 +277,7 @@ def test_kit_wire_types_of_shapes():
     assert _wire_type_of(Card) == "Card"
     assert _wire_type_of(Container) == "Container"
     assert _wire_type_of(Form) == "Form"
+    assert _wire_type_of(List) == "ListRef"
 
 
 def test_kit_computed_keys_resolve_distinct_paths():
@@ -293,7 +294,7 @@ def test_kit_computed_keys_resolve_distinct_paths():
 
 
 def test_kit_boot_chains_of_a_page():
-    from nustd.ui import Card, Row, RowRef, TextRef
+    from nustd.ui import BadgeRef, Card, List, ListRef, Row, RowRef, TextRef
     from nustd.ui.nudle import Page
 
     class Bar(Row):
@@ -302,9 +303,14 @@ def test_kit_boot_chains_of_a_page():
     class Box(Card):
         b = TextRef.slot()
 
+    class Tags(List):
+        c = BadgeRef.slot(label="x")
+
     class Home(Page):
         bar = Bar.slot()
         box = Box.slot(title="T")
+        tags = Tags.slot(items=["s"])
+        names = ListRef.slot(items=["n"])
         free = RowRef.slot(wrap=True)
 
     chains = Home._boot_chains()
@@ -313,10 +319,31 @@ def test_kit_boot_chains_of_a_page():
         [("bar", "Row"), ("a", "TextRef")],
         [("box", "Card")],
         [("box", "Card"), ("b", "TextRef")],
+        [("tags", "ListRef")],
+        [("tags", "ListRef"), ("c", "BadgeRef")],
+        [("names", "ListRef")],
         [("free", "Row")],
     ]
     assert chains[2][0][2]["title"] == "T"
-    assert chains[4][0][2]["wrap"] is True
+    assert chains[4][0][2] == {"items": ["s"], "variant": "bullet", "start": 1}
+    assert chains[7][0][2]["wrap"] is True
+
+
+def test_list_takes_any_node_as_an_item():
+    from nustd.ui import BadgeRef, LinkRef, ListRef
+
+    names = ListRef("names", props={"items": ["first"]})
+    frames = _frames(
+        names.append("second")
+        >> BadgeRef("b", parent_ref=names).set("live")
+        >> LinkRef("l", parent_ref=names).set("/docs", label="Docs")
+    )
+    assert frames[0].payload == "second"
+    assert [_chain(f) for f in frames[1:]] == [
+        [("names", "ListRef"), ("b", "BadgeRef")],
+        [("names", "ListRef"), ("l", "LinkRef")],
+    ]
+    assert frames[1].chain[0][2] == {"items": ["first"], "variant": "bullet", "start": 1}
 
 
 # --- every Ref sits under the right base ------------------------------------
