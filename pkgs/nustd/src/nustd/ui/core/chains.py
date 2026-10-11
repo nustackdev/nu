@@ -36,15 +36,20 @@ def boot_chains(base: Chain, shape_cls: type[Shape]) -> list[Chain]:
 
     Depth-first in declaration order, so the browser's per-node insertion
     order is the order the class body reads. A Section slot contributes its
-    own level and then everything under it.
+    own level and then everything under it. A container Ref declared
+    directly (``RowRef.slot()``, ``ListRef.slot()``) carries no Section, so
+    it is one level like any leaf: its children are whatever the program
+    writes under it later.
     """
     out: list[Chain] = []
     for name, slot in shape_cls._slots.items():
         ref_cls = slot.ref_cls
         if not issubclass(ref_cls, Ref):
             continue
-        if issubclass(ref_cls, SectionRef):
-            section_cls: type[Section] = slot.kwargs["section_cls"]
+        section_cls: type[Section] | None = (
+            slot.kwargs.get("section_cls") if issubclass(ref_cls, SectionRef) else None
+        )
+        if section_cls is not None:
             chain = (*base, (name, _wire_type_of(section_cls), dict(slot.props)))
             out.append(chain)
             out.extend(boot_chains(chain, section_cls))
