@@ -3,7 +3,7 @@
 - base:   LeafRef, the abstract base.
 - output: content sinks (Heading, Text, Image, Link, Badge, StatusDot, Kbd,
           Shortcut, Alert, Divider, EmptyState, Stat, Progress, Gauge,
-          JsonViewer, List).
+          JsonViewer).
 - table:  TableRef and its row ops.
 - tree:   TreeRef.
 - input:  tab-owned inputs, plus MarkdownRef and CodeRef.
@@ -38,7 +38,6 @@ from .output import (
     JsonViewerRef,
     KbdRef,
     LinkRef,
-    ListRef,
     ProgressRef,
     ShortcutRef,
     StatRef,
@@ -70,7 +69,6 @@ __all__ = [
     "LeafRef",
     "LineChart",
     "LinkRef",
-    "ListRef",
     "MarkdownRef",
     "NumberInputRef",
     "PieChart",

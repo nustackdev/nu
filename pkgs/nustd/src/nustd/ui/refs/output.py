@@ -1,5 +1,6 @@
-"""Kept for old import paths: the output names, now in ``leaves.output`` and ``leaves.table``."""
+"""Kept for old import paths: the output names, now in ``leaves`` and ``containers.list``."""
 
+from nustd.ui.refs.containers.list import ListRef
 from nustd.ui.refs.leaves.output import (
     AlertRef,
     BadgeRef,
@@ -11,7 +12,6 @@ from nustd.ui.refs.leaves.output import (
     JsonViewerRef,
     KbdRef,
     LinkRef,
-    ListRef,
     ProgressRef,
     ShortcutRef,
     StatRef,

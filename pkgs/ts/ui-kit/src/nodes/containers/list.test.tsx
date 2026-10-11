@@ -1,4 +1,5 @@
-// ListRef over the real tree store: what each wire op leaves on screen.
+// ListRef over the real tree store: what each wire op leaves on screen, and
+// child nodes drawn as items after the strings.
 
 import { OPS } from "@nustackdev/ui-core";
 import { act } from "react";
@@ -68,5 +69,27 @@ describe("ListRef", () => {
 	it("falls back to bullets on an unknown variant", () => {
 		send(OPS.write, { items: ["a"], variant: "zigzag" });
 		expect(list().tagName).toBe("UL");
+	});
+
+	it("draws each child node as one more item, after the strings", () => {
+		send(OPS.write, ["a", "b"]);
+		act(() => {
+			tree.getState().write([["l", "ListRef"], ["badge", "BadgeRef", { label: "live" }]]);
+			tree.getState().write([["l", "ListRef"], ["note", "TextRef", { value: "plain node" }]]);
+		});
+		expect(items()).toEqual(["a", "b", "live", "plain node"]);
+		const last = host.querySelectorAll("li")[2];
+		expect(last.getAttribute("data-slot")).toBe("list-item");
+		expect(last.querySelector("[data-slot=badge]")).not.toBeNull();
+	});
+
+	it("keeps child items when the strings are replaced or cleared", () => {
+		act(() => {
+			tree.getState().write([["l", "ListRef"], ["note", "TextRef", { value: "kept" }]]);
+		});
+		send(OPS.write, ["x"]);
+		expect(items()).toEqual(["x", "kept"]);
+		send(OPS.write, null);
+		expect(items()).toEqual(["kept"]);
 	});
 });

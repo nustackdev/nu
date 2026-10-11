@@ -4,11 +4,13 @@
 - flow:   ColumnRef, RowRef.
 - chrome: CardRef, BoxRef (the Container box), TabsRef, ModalRef,
           AccordionRef, FormRef, FieldsetRef, FieldRef.
+- list:   ListRef, string items first, then any child node as an item.
 """
 
 from .base import ContainerRef
 from .chrome import AccordionRef, BoxRef, CardRef, FieldRef, FieldsetRef, FormRef, ModalRef, TabsRef
 from .flow import ColumnRef, RowRef
+from .list import ListRef
 
 
 __all__ = [
@@ -20,6 +22,7 @@ __all__ = [
     "FieldRef",
     "FieldsetRef",
     "FormRef",
+    "ListRef",
     "ModalRef",
     "RowRef",
     "TabsRef",

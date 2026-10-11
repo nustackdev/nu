@@ -13,12 +13,14 @@ Anything a Shape declares can also be built from Refs alone; see
 
 - flow:   Column, Row.
 - chrome: Card, Container, Tabs, Modal, Accordion, Form, Fieldset, Field.
+- list:   List, one item per slot.
 """
 
 from __future__ import annotations
 
 from .chrome import Accordion, Card, Container, Field, Fieldset, Form, Modal, Tabs
 from .flow import Column, Row
+from .list import List
 
 
 __all__ = [
@@ -29,6 +31,7 @@ __all__ = [
     "Field",
     "Fieldset",
     "Form",
+    "List",
     "Modal",
     "Row",
     "Tabs",

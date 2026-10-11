@@ -1,23 +1,42 @@
-// ListRef -- a bulleted or numbered list of short text items, display only.
+// ListRef -- a bulleted or numbered list whose items are any nodes.
 //
-// Server-owned. The items live on the node as `items: string[]`, one string
-// per item, drawn as given. Composes the kit List primitive. Its box carries
-// the same 4px of vertical padding as every text output (see TextRef, Prose),
-// padding and never margin.
+// A container. Plain string items come first: they live on the node as
+// `items: string[]`, one string per item, drawn as given. Then every child
+// node is one more item after them, each in its own `ListItem`, in insertion
+// order, so numbering runs on from the strings. There is no item type: any
+// child is an item. Children see a block flow, the same as in a Column.
 //
-// Wire:
+// Composes the kit List primitive. Its box carries the same 4px of vertical
+// padding as every text output (see TextRef, Prose), padding and never
+// margin.
+//
+// Wire (the strings only; children arrive as their own nodes):
 //   write   a list replaces the items wholesale, each one stringified; a map
 //           merges {items, variant, start} like every other node; nil clears.
 //   append  push one item to the end.
 
 import { List, ListItem, type ListVariant } from "../../components/ui/list";
-import { type NodeEntry, type NodeProps, useListProp, useProp, useStringProp } from "../../tree";
+import {
+	type CellProps,
+	FlowProvider,
+	NodeChildren,
+	type NodeEntry,
+	type NodeProps,
+	useListProp,
+	useProp,
+	useStringProp,
+} from "../../tree";
 
 const VARIANTS = new Set<ListVariant>(["bullet", "number"]);
 
 function normalizeItems(raw: unknown): string[] {
 	if (!Array.isArray(raw)) return [];
 	return raw.filter((item) => item != null).map(String);
+}
+
+// One child node, one item.
+function ItemCell({ children }: CellProps) {
+	return <ListItem>{children}</ListItem>;
 }
 
 function ListView({ path }: NodeProps) {
@@ -32,6 +51,9 @@ function ListView({ path }: NodeProps) {
 				// biome-ignore lint/suspicious/noArrayIndexKey: see above
 				<ListItem key={i}>{item}</ListItem>
 			))}
+			<FlowProvider flow="block">
+				<NodeChildren path={path} cell={ItemCell} />
+			</FlowProvider>
 		</List>
 	);
 }

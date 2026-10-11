@@ -12,6 +12,7 @@ import { Container } from "./container";
 import { Field } from "./field";
 import { Fieldset } from "./fieldset";
 import { Form } from "./form";
+import { ListRef } from "./list";
 import { Modal } from "./modal";
 import { Row } from "./row";
 import { Tabs } from "./tabs";
@@ -27,4 +28,5 @@ export const containerEntries: Record<string, NodeEntry> = {
 	Tabs,
 	Accordion,
 	Modal,
+	ListRef,
 };
