@@ -91,7 +91,7 @@ function TabsRows() {
 function Links() {
 	return (
 		<Block title="Links">
-			{(["default", "underline"] as const).map((variant) => (
+			{(["default"] as const).map((variant) => (
 				<Row key={variant} label={`NavLink ${variant}`}>
 					<NavLink variant={variant} href="#" active>
 						<Home />

@@ -134,7 +134,7 @@ function SelectContent({
 				position={position}
 				className={cn(
 					"relative z-50 min-w-[8rem] overflow-hidden rounded-md",
-					"bg-bg-elevated text-text-primary border border-border-default shadow-lg",
+					"bg-bg-elevated text-text-primary border border-border-default shadow-floating",
 					"data-[state=open]:duration-base data-[state=open]:ease-out",
 					"data-[state=closed]:duration-base data-[state=closed]:ease-in",
 					"data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",

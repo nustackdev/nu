@@ -126,6 +126,7 @@
 	--afterglow-pressed:      #7335bc;
 	--afterglow-ring:         #6e34b3;
 	--afterglow-text:         #7638c0;
+	--afterglow-focus:        #7638c0; /* focus ring */
 	--afterglow-soft:         #ede5fe;
 
 	/* Starlight Blue: the accent */
@@ -196,8 +197,8 @@
 	--ground:                 #15181f;
 	--ground-raised:          #191c24;
 	--ground-card:            #1e222a;
-	--ground-overlay:         #232730;
-	--ground-hover:           #282d36;
+	--ground-overlay:         #292e37;
+	--ground-hover:           #2e333d;
 
 	/* lines */
 	--line-subtle:            #232831;
@@ -211,12 +212,14 @@
 	--ink-4:                  #777d8a;
 	--ink-twilight:           #abb2e3;
 
-	/* Afterglow Violet: the fill is the same in both themes */
+	/* Afterglow Violet: the fill is the same in both themes, and so are its
+	 * steps: hover and pressed go darker, so the white label only gains */
 	--afterglow:              #8946db;
-	--afterglow-hover:        #9256e2;
-	--afterglow-pressed:      #7a3dc5;
+	--afterglow-hover:        #7f3ccd;
+	--afterglow-pressed:      #7335bc;
 	--afterglow-ring:         #6d37ae;
 	--afterglow-text:         #cbaeff;
+	--afterglow-focus:        #a274ec; /* focus ring: brand violet, 4:1 on every surface */
 	--afterglow-soft:         #3e2a5d;
 
 	/* Starlight Blue */
@@ -245,10 +248,10 @@
 	--moonlight-soft-hover:   #0c3d52;
 	--moonlight-line:         #185b78;
 
-	/* destructive fill: hover goes lighter in dark */
+	/* destructive fill: hover and pressed go darker, as in light */
 	--ember-solid:            #c72c34;
-	--ember-solid-hover:      #d2383d;
-	--ember-solid-pressed:    #b71f2a;
+	--ember-solid-hover:      #b82530;
+	--ember-solid-pressed:    #a51d27;
 	--ember-solid-ring:       #a01722;
 
 	/* chart slots */
@@ -345,7 +348,7 @@
 	--status-danger-solid-pressed: var(--ember-solid-pressed);
 
 	/* focus ring */
-	--ring:                   var(--afterglow-text);
+	--ring:                   var(--afterglow-focus);
 
 	/* tree geometry. One left edge per depth: pad + depth * indent, then the
 	 * icon lane, then the title. An app retunes a tree by overriding these. */
@@ -407,11 +410,24 @@
 
 	--bg-overlay:             color-mix(in oklab, var(--ink-1) 24%, transparent);
 
+	/* elevation, three levels over flat (level 0 has no shadow, a border only).
+	 * Soft, tinted by the ink. Each level: a tight contact shadow plus an
+	 * ambient one, both growing with height. */
+	--elevation-raised:       0 1px 1px rgb(26 29 36 / 0.04), 0 1px 3px rgb(26 29 36 / 0.06);
+	--elevation-floating:     0 2px 4px rgb(26 29 36 / 0.05), 0 6px 16px rgb(26 29 36 / 0.09);
+	--elevation-modal:        0 4px 8px rgb(26 29 36 / 0.06), 0 20px 48px rgb(26 29 36 / 0.16);
+
 	/* one hover and one press for every surface: a wash of ink, so it shares
 	 * the ground's tint, reads on any surface and stacks (a chevron hovered
 	 * on a hovered row still shows). Never a hue. */
 	--bg-hover:               color-mix(in oklab, var(--ink-1) 5%, transparent);
 	--bg-press:               color-mix(in oklab, var(--ink-1) 9%, transparent);
+	/* the third step, for things already washed at rest (soft buttons) */
+	--bg-press-strong:        color-mix(in oklab, var(--ink-1) 13%, transparent);
+	/* the same steps baked onto an elevated fill (secondary buttons), opaque
+	 * so the control keeps its own surface while it reacts */
+	--bg-elevated-hover:      color-mix(in oklab, var(--bg-elevated), var(--ink-1) 5%);
+	--bg-elevated-press:      color-mix(in oklab, var(--bg-elevated), var(--ink-1) 9%);
 	/* selected text and cells: a Starlight tint, the one hue a selection may carry */
 	--bg-selection:           color-mix(in oklab, var(--starlight) 18%, transparent);
 
@@ -436,9 +452,18 @@
 
 	--bg-overlay:             color-mix(in oklab, var(--ground-deep) 65%, transparent);
 
+	/* elevation in dark: the same three levels, shadows far heavier to read
+	 * on a dark ground, plus a faint top highlight that catches the edge */
+	--elevation-raised:       inset 0 1px 0 rgb(255 255 255 / 0.03), 0 1px 2px rgb(0 0 0 / 0.35);
+	--elevation-floating:     inset 0 1px 0 rgb(255 255 255 / 0.05), 0 2px 4px rgb(0 0 0 / 0.3), 0 8px 20px rgb(0 0 0 / 0.4);
+	--elevation-modal:        inset 0 1px 0 rgb(255 255 255 / 0.05), 0 8px 16px rgb(0 0 0 / 0.35), 0 24px 56px rgb(0 0 0 / 0.5);
+
 	/* hover and press washes, a little stronger on a dark ground */
 	--bg-hover:               color-mix(in oklab, var(--ink-1) 7%, transparent);
 	--bg-press:               color-mix(in oklab, var(--ink-1) 11%, transparent);
+	--bg-press-strong:        color-mix(in oklab, var(--ink-1) 15%, transparent);
+	--bg-elevated-hover:      color-mix(in oklab, var(--bg-elevated), var(--ink-1) 7%);
+	--bg-elevated-press:      color-mix(in oklab, var(--bg-elevated), var(--ink-1) 11%);
 	--bg-selection:           color-mix(in oklab, var(--starlight) 24%, transparent);
 
 	/* labels on solid fills */

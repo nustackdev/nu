@@ -186,7 +186,7 @@ export function NumberInput({
 						className={cn(
 							"inline-flex items-center justify-center rounded-sm text-text-secondary",
 							"transition-colors duration-fast ease-out",
-							"hover:bg-bg-hover hover:text-text-primary",
+							"hover:bg-bg-hover hover:text-text-primary active:bg-bg-press",
 							"disabled:pointer-events-none disabled:opacity-50",
 							stepperSizes[size ?? "md"],
 						)}
@@ -202,7 +202,7 @@ export function NumberInput({
 						className={cn(
 							"inline-flex items-center justify-center rounded-sm text-text-secondary",
 							"transition-colors duration-fast ease-out",
-							"hover:bg-bg-hover hover:text-text-primary",
+							"hover:bg-bg-hover hover:text-text-primary active:bg-bg-press",
 							"disabled:pointer-events-none disabled:opacity-50",
 							stepperSizes[size ?? "md"],
 						)}

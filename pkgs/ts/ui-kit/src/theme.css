@@ -22,7 +22,16 @@
 	--color-bg-overlay:           var(--bg-overlay);
 	--color-bg-hover:             var(--bg-hover);
 	--color-bg-press:             var(--bg-press);
+	--color-bg-press-strong:      var(--bg-press-strong);
+	--color-bg-elevated-hover:    var(--bg-elevated-hover);
+	--color-bg-elevated-press:    var(--bg-elevated-press);
 	--color-bg-selection:         var(--bg-selection);
+
+	/* elevation: shadow-raised / -floating / -modal, per theme. Components use
+	 * these three and nothing else (no shadow-sm/md/lg). */
+	--shadow-raised:              var(--elevation-raised);
+	--shadow-floating:            var(--elevation-floating);
+	--shadow-modal:               var(--elevation-modal);
 
 	/* text */
 	--color-text-primary:         var(--text-primary);

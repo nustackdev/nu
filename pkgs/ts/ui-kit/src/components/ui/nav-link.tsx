@@ -27,18 +27,12 @@ const navLinkVariants = cva(
 		variants: {
 			variant: {
 				default: [
-					"text-text-secondary hover:bg-bg-hover hover:text-text-primary",
+					"text-text-secondary hover:bg-bg-hover hover:text-text-primary active:bg-bg-press",
 					// Active state driven by aria-current OR data-active so React
 					// Router NavLink (which sets aria-current) and hand-wired active
 					// props both work.
 					"aria-[current=page]:bg-bg-press aria-[current=page]:text-text-primary aria-[current=page]:font-medium",
 					"data-[active=true]:bg-bg-press data-[active=true]:text-text-primary data-[active=true]:font-medium",
-				].join(" "),
-				// Underline variant: minimal chrome, accent underline on active.
-				underline: [
-					"text-text-secondary hover:text-text-primary",
-					"aria-[current=page]:text-text-primary aria-[current=page]:shadow-[inset_0_-2px_0_var(--accent)]",
-					"data-[active=true]:text-text-primary data-[active=true]:shadow-[inset_0_-2px_0_var(--accent)]",
 				].join(" "),
 			},
 			size: {

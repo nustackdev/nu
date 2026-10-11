@@ -19,14 +19,14 @@ const inputVariants = cva(
 		"disabled:bg-bg-sunken disabled:opacity-50 disabled:pointer-events-none",
 		// `aria-invalid` variant so consumers can wire the invalid look
 		// through the a11y attribute directly, without the `invalid` prop.
-		"aria-invalid:border-status-danger aria-invalid:focus-visible:ring-status-danger/40 aria-invalid:focus-visible:border-status-danger",
+		"aria-invalid:border-status-danger aria-invalid:focus-visible:ring-status-danger aria-invalid:focus-visible:border-status-danger",
 	].join(" "),
 	{
 		variants: {
 			variant: {
 				default: "border-border-default focus-visible:ring-ring",
 				invalid:
-					"border-status-danger focus-visible:ring-status-danger/40 focus-visible:border-status-danger",
+					"border-status-danger focus-visible:ring-status-danger focus-visible:border-status-danger",
 			},
 			size: {
 				sm: "h-6 px-2 py-1 text-sm",

@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import { Check, Minus } from "lucide-react";
+import { Minus } from "lucide-react";
 import { Checkbox as CheckboxPrimitive } from "radix-ui";
 import type * as React from "react";
 
@@ -38,6 +38,25 @@ export interface CheckboxProps
 	invalid?: boolean;
 }
 
+// The kit's own tick: a short left leg and a long right one, optically
+// centred in the box, round ends. Lighter than a stock check at small sizes.
+function Tick({ className }: { className?: string }) {
+	return (
+		<svg
+			viewBox="0 0 16 16"
+			fill="none"
+			stroke="currentColor"
+			strokeWidth={2.25}
+			strokeLinecap="round"
+			strokeLinejoin="round"
+			aria-hidden="true"
+			className={className}
+		>
+			<path d="M4 8.4 6.7 11 12 5.2" />
+		</svg>
+	);
+}
+
 export function Checkbox({ className, size, invalid, ...props }: CheckboxProps) {
 	return (
 		<CheckboxPrimitive.Root
@@ -52,10 +71,7 @@ export function Checkbox({ className, size, invalid, ...props }: CheckboxProps) 
 			>
 				{/* group-data on the Root reads Radix's data-state so the correct
 				    glyph shows for checked vs indeterminate without extra state. */}
-				<Check
-					strokeWidth={3}
-					className="size-full group-data-[state=indeterminate]:hidden"
-				/>
+				<Tick className="size-full group-data-[state=indeterminate]:hidden" />
 				<Minus
 					strokeWidth={3}
 					className="hidden size-full group-data-[state=indeterminate]:block"

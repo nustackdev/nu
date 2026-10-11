@@ -20,7 +20,7 @@ import { IconButton } from "./icon-button";
 const dialogContentVariants = cva(
 	[
 		"fixed left-1/2 top-1/2 z-50 grid w-full -translate-x-1/2 -translate-y-1/2 gap-4",
-		"bg-bg-elevated text-text-primary border border-border-default rounded-lg shadow-lg",
+		"bg-bg-elevated text-text-primary border border-border-default rounded-lg shadow-modal",
 		"p-6",
 		// Motion tokens per motion.md §3 Dialog.
 		"data-[state=open]:animate-in data-[state=closed]:animate-out",

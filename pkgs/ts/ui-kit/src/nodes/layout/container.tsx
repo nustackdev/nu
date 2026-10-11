@@ -35,8 +35,8 @@ const BACKGROUND_CLASSES: Record<string, string> = {
 
 const SHADOW_CLASSES: Record<string, string> = {
 	none: "",
-	sm: "shadow-sm",
-	md: "shadow-md",
+	sm: "shadow-raised",
+	md: "shadow-floating",
 };
 
 function ContainerView({ path }: NodeProps) {

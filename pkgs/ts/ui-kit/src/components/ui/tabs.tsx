@@ -82,7 +82,7 @@ const triggerVariantClass = {
 	segmented: [
 		"rounded-sm",
 		"data-[state=active]:bg-bg-surface data-[state=active]:text-text-primary",
-		"data-[state=active]:shadow-sm",
+		"data-[state=active]:shadow-raised",
 	].join(" "),
 } as const;
 

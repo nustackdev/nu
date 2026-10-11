@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- UI kit gets elevation levels, clearer press states, a brand focus ring
 - nudle sidebar resizes like nuspace's, and pages can carry an icon
 - UI kit and nudle move to calmer Dusk and Paper grounds with neutral hovers
 

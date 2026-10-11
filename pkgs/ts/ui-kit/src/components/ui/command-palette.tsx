@@ -25,7 +25,7 @@ import { Shortcut } from "./shortcut";
 
 /** The panel: raised surface, border, shadow. Placement is the caller's. */
 const commandSurfaceClasses =
-	"bg-bg-elevated text-text-primary border border-border-default rounded-lg shadow-lg overflow-hidden";
+	"bg-bg-elevated text-text-primary border border-border-default rounded-lg shadow-modal overflow-hidden";
 
 /** A group's heading row. */
 const commandHeadingClasses = "px-3 py-1 text-xs font-medium text-text-secondary";

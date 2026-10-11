@@ -109,7 +109,7 @@ function TooltipContent({
 				sideOffset={sideOffset}
 				className={cn(
 					"z-50 max-w-xs px-2 py-1 rounded-sm",
-					"bg-bg-elevated text-text-primary border border-border-default shadow-sm",
+					"bg-bg-elevated text-text-primary border border-border-default shadow-floating",
 					"text-xs leading-tight",
 					"data-[state=delayed-open]:animate-in data-[state=closed]:animate-out",
 					"data-[state=delayed-open]:fade-in-0 data-[state=closed]:fade-out-0",

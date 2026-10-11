@@ -3,7 +3,7 @@ import { Home, Layers, Settings } from "lucide-react";
 import { Badge } from "./badge";
 import { NavLink } from "./nav-link";
 
-const VARIANTS = ["default", "underline"] as const;
+const VARIANTS = ["default"] as const;
 const SIZES = ["sm", "md", "lg"] as const;
 
 export const Default: StoryObj = {

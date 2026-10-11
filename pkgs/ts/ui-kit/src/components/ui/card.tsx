@@ -24,7 +24,7 @@ const cardVariants = cva(
 			variant: {
 				default: "bg-bg-surface border border-border-default",
 				elevated:
-					"bg-bg-elevated border border-border-default shadow-sm",
+					"bg-bg-elevated border border-border-default shadow-raised",
 				sunken: "bg-bg-hover border border-transparent",
 				outline: "bg-transparent border border-border-default",
 			},

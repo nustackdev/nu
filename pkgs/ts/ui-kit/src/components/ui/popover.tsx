@@ -62,7 +62,7 @@ function PopoverContent({
 				sideOffset={sideOffset}
 				className={cn(
 					"z-50 w-72 p-3 outline-hidden",
-					"bg-bg-elevated text-text-primary border border-border-default rounded-md shadow-lg",
+					"bg-bg-elevated text-text-primary border border-border-default rounded-md shadow-floating",
 					// Motion tokens per motion.md §3 Popover.
 					"data-[state=open]:animate-in data-[state=closed]:animate-out",
 					"data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",

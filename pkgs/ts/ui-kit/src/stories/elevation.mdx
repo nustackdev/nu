@@ -1,0 +1,29 @@
+import { Meta, Canvas } from "@storybook/addon-docs/blocks";
+import * as ElevationStories from "./elevation.stories";
+
+<Meta of={ElevationStories} />
+
+# Elevation
+
+How high a surface sits. Four levels, each one fixed recipe of surface, border and shadow. A component picks a level, never a shadow.
+
+| level | recipe | use |
+| --- | --- | --- |
+| **0 flat** | `bg-bg-surface`, `border-border-default`, no shadow | cards and panels in a document, inputs, tables |
+| **1 raised** | `bg-bg-elevated`, `border-border-default`, `shadow-raised` | elevated card and panel, segmented tab thumb |
+| **2 floating** | `bg-bg-elevated`, `border-border-default`, `shadow-floating` | menus, popover, select, combobox, date picker, tooltips |
+| **3 modal** | `bg-bg-elevated`, `border-border-default`, `shadow-modal`, over `bg-bg-overlay` | dialog, sheet, command palette |
+
+Rules:
+
+- **Only three shadows.** `shadow-raised`, `shadow-floating`, `shadow-modal`. No `shadow-sm/md/lg`, no arbitrary shadows.
+- **Height is the shadow, not the fill.** In light, every level above flat is white; the shadow and the border carry it. In dark, `bg-elevated` is a clear step above the document, and the shadow adds weight and a faint top highlight.
+- **Each shadow has two parts:** a tight contact shadow and a softer ambient one, both growing with height.
+- **One modal at a time**, and only a modal gets the scrim.
+- Radius follows the level: floating `rounded-md`, modal `rounded-lg`, tooltips `rounded-sm`.
+
+<Canvas of={ElevationStories.Levels} />
+
+## Stacked
+
+<Canvas of={ElevationStories.Stack} />

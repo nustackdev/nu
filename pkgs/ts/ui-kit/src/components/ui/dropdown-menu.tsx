@@ -42,7 +42,7 @@ const menuShortcutClasses = "ml-auto pl-4 text-xs tracking-wide text-text-muted"
 
 const menuContentClasses = [
 	"z-50 min-w-[10rem] overflow-hidden p-1",
-	"bg-bg-elevated text-text-primary border border-border-default rounded-md shadow-lg",
+	"bg-bg-elevated text-text-primary border border-border-default rounded-md shadow-floating",
 	"data-[state=open]:animate-in data-[state=closed]:animate-out",
 	"data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
 	"data-[state=open]:duration-base data-[state=closed]:duration-base",

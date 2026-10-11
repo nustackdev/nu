@@ -56,10 +56,10 @@ export function AccordionTrigger({
 				data-slot="accordion-trigger"
 				className={cn(
 					"group flex flex-1 items-center justify-between gap-2",
-					"py-3 text-left text-base font-medium text-text-primary",
+					"rounded-md px-3 py-3 text-left text-base font-medium text-text-primary",
 					"cursor-default",
 					"transition-colors duration-fast ease-out",
-					"hover:bg-bg-hover",
+					"hover:bg-bg-hover active:bg-bg-press",
 					"disabled:pointer-events-none disabled:opacity-50",
 					"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas",
 					"[&_svg]:pointer-events-none [&_svg]:shrink-0",
@@ -98,7 +98,7 @@ export function AccordionContent({
 			)}
 			{...props}
 		>
-			<div className={cn("pt-2 pb-3", className)}>{children}</div>
+			<div className={cn("px-3 pt-1 pb-3", className)}>{children}</div>
 		</AccordionPrimitive.Content>
 	);
 }

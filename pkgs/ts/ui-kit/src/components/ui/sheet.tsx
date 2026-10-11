@@ -20,7 +20,7 @@ import { IconButton } from "./icon-button";
 // Fixed edge-anchored positioning per side + slide-in/out per side.
 const sheetContentVariants = cva(
 	[
-		"fixed z-50 flex flex-col gap-4 bg-bg-elevated border-border-default text-text-primary shadow-lg",
+		"fixed z-50 flex flex-col gap-4 bg-bg-elevated border-border-default text-text-primary shadow-modal",
 		"p-5",
 		"data-[state=open]:animate-in data-[state=closed]:animate-out",
 		"data-[state=open]:duration-slow data-[state=closed]:duration-slow",

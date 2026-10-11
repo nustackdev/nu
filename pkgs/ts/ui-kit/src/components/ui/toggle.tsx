@@ -15,7 +15,7 @@ const toggleVariants = cva(
 		"disabled:pointer-events-none disabled:opacity-50",
 		"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
 		"[&_svg]:pointer-events-none [&_svg]:shrink-0",
-		"text-text-secondary hover:bg-bg-hover hover:text-text-primary",
+		"text-text-secondary hover:bg-bg-hover hover:text-text-primary active:bg-bg-press",
 		"data-[state=on]:bg-bg-press data-[state=on]:text-text-primary",
 	].join(" "),
 	{

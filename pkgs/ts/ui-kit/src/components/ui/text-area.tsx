@@ -14,14 +14,14 @@ const textAreaVariants = cva(
 		"hover:border-border-strong",
 		"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:border-border-strong",
 		"disabled:bg-bg-sunken disabled:opacity-50 disabled:pointer-events-none",
-		"aria-invalid:border-status-danger aria-invalid:focus-visible:ring-status-danger/40 aria-invalid:focus-visible:border-status-danger",
+		"aria-invalid:border-status-danger aria-invalid:focus-visible:ring-status-danger aria-invalid:focus-visible:border-status-danger",
 	].join(" "),
 	{
 		variants: {
 			variant: {
 				default: "border-border-default focus-visible:ring-ring",
 				invalid:
-					"border-status-danger focus-visible:ring-status-danger/40 focus-visible:border-status-danger",
+					"border-status-danger focus-visible:ring-status-danger focus-visible:border-status-danger",
 			},
 			size: {
 				sm: "min-h-14 px-2 py-2 text-sm",

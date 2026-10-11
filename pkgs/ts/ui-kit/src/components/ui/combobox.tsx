@@ -128,7 +128,7 @@ function ComboboxContent({
 				sideOffset={sideOffset}
 				className={cn(
 					"z-50 w-[var(--radix-popover-trigger-width)] min-w-[8rem] overflow-hidden rounded-md",
-					"bg-bg-elevated text-text-primary border border-border-default shadow-lg",
+					"bg-bg-elevated text-text-primary border border-border-default shadow-floating",
 					"data-[state=open]:duration-base data-[state=open]:ease-out",
 					"data-[state=closed]:duration-base data-[state=closed]:ease-in",
 					"data-[state=open]:animate-in data-[state=open]:fade-in-0",

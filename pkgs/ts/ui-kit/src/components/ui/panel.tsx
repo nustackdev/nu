@@ -20,7 +20,7 @@ const panelVariants = cva("flex flex-col rounded-lg", {
 			default: "bg-bg-surface border border-border-default",
 			sunken: "bg-bg-hover border border-transparent",
 			elevated:
-				"bg-bg-elevated border border-border-default shadow-sm",
+				"bg-bg-elevated border border-border-default shadow-raised",
 		},
 		size: {
 			sm: "gap-1.5",
