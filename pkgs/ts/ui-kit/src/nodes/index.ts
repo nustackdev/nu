@@ -10,6 +10,7 @@
 import { type NodeEntry, register } from "../tree";
 import { chartEntries } from "./chart";
 import { containerEntries } from "./containers";
+import { displayEntries } from "./display";
 import { inputEntries } from "./input";
 import { outputEntries } from "./output";
 import { structuralEntries } from "./structural";
@@ -17,6 +18,7 @@ import { structuralEntries } from "./structural";
 export const nodeEntries: Record<string, NodeEntry> = {
 	...structuralEntries,
 	...outputEntries,
+	...displayEntries,
 	...inputEntries,
 	...chartEntries,
 	...containerEntries,

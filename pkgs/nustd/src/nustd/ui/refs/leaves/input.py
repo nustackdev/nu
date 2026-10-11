@@ -655,6 +655,21 @@ class TextAreaRef(LeafRef):
         return Changed(self)
 
 
+class ToggleRef(LeafRef):
+    """Two-state toolbar button. STUB: wired end to end, the inputs unit fills it in.
+
+    Pressed or not is the value, read live like ``SwitchRef``'s. ``SwitchRef``
+    stays the control for a setting; this is for a toolbar (bold, wrap, pin).
+    No ``set()`` or ``on_change()`` yet; the inputs unit adds them.
+    """
+
+    _wire_type = "ToggleRef"
+
+    @classmethod
+    def slot(cls, *, label: str = "", pressed: bool = False) -> Self:
+        return super().slot(label=label, pressed=bool(pressed))
+
+
 __all__ = [
     "ButtonRef",
     "CheckboxRef",
@@ -669,4 +684,5 @@ __all__ = [
     "SwitchRef",
     "TagInputRef",
     "TextAreaRef",
+    "ToggleRef",
 ]

@@ -13,20 +13,22 @@ container Refs, and draw nothing a Ref could not.
 
 Layout under ``refs/``:
 
-- containers/: open-ended children, optional chrome. ``ContainerRef`` (base),
-  flow (``ColumnRef``, ``RowRef``) and chrome (``CardRef``, ``BoxRef`` behind
-  the Container box, ``TabsRef``, ``ModalRef``, ``AccordionRef``, ``FormRef``,
-  ``FieldsetRef``, ``FieldRef``) and ``ListRef``, whose items are its
-  plain strings and then any child node.
-- leaves/: one thing drawn from props, never children. ``LeafRef`` (base),
+- containers/: open-ended children, optional chrome. ``ContainerRef``
+  (base); flow (``ColumnRef``, ``RowRef``, ``GridRef``, ``LineRef``);
+  chrome (``CardRef``, ``BoxRef`` behind the Container box, ``TabsRef``,
+  ``ModalRef``, ``AccordionRef``, ``FormRef``, ``FieldsetRef``,
+  ``FieldRef``); disclosure (``CollapsibleRef``, ``SheetRef``); and
+  ``ListRef``, whose items are its plain strings and then any child node.
+- leaves/: one thing drawn from props, never children. ``LeafRef`` (base);
   output (``HeadingRef``, ``TextRef``, ``ImageRef``, ``LinkRef``,
   ``BadgeRef``, ``StatusDotRef``, ``KbdRef``, ``ShortcutRef``, ``AlertRef``,
   ``DividerRef``, ``EmptyStateRef``, ``StatRef``, ``ProgressRef``,
-  ``GaugeRef``, ``JsonViewerRef``), table (``TableRef`` and its row ops),
-  tree (``TreeRef``), input (tab-owned: ``ButtonRef``, ``InputRef``, ...,
-  plus ``MarkdownRef`` and ``CodeRef``, read-only by default and editable on
-  request) and chart (``LineChart``, ``BarChart``, ``AreaChart``,
-  ``PieChart``, ``Sparkline``).
+  ``GaugeRef``, ``JsonViewerRef``); display (``AvatarRef``,
+  ``BreadcrumbRef``, ``SkeletonRef``, ``SpinnerRef``, ``StatusPillRef``);
+  table (``TableRef`` and its row ops); tree (``TreeRef``); input (tab-owned:
+  ``ButtonRef``, ``InputRef``, ``ToggleRef``, ..., plus ``MarkdownRef`` and
+  ``CodeRef``, read-only by default and editable on request); and chart
+  (``LineChart``, ``BarChart``, ``AreaChart``, ``PieChart``, ``Sparkline``).
 - structural.py: Index-level leaves bound to non-render browser APIs
   (``window.history``, ``document.title``). ``NavRef``, ``TitleRef``.
 - layout.py, output.py, input.py, chart.py, tree.py: kept for old import
@@ -73,21 +75,27 @@ from .containers import (
     AccordionRef,
     BoxRef,
     CardRef,
+    CollapsibleRef,
     ColumnRef,
     ContainerRef,
     FieldRef,
     FieldsetRef,
     FormRef,
+    GridRef,
+    LineRef,
     ListRef,
     ModalRef,
     RowRef,
+    SheetRef,
     TabsRef,
 )
 from .leaves import (
     AlertRef,
     AreaChart,
+    AvatarRef,
     BadgeRef,
     BarChart,
+    BreadcrumbRef,
     ButtonRef,
     CheckboxRef,
     CodeRef,
@@ -114,15 +122,19 @@ from .leaves import (
     SetOrder,
     SetRow,
     ShortcutRef,
+    SkeletonRef,
     SliderRef,
     Sparkline,
+    SpinnerRef,
     StatRef,
     StatusDotRef,
+    StatusPillRef,
     SwitchRef,
     TableRef,
     TagInputRef,
     TextAreaRef,
     TextRef,
+    ToggleRef,
     TreeRef,
 )
 from .structural import NavRef, TitleRef
@@ -133,14 +145,18 @@ from .structural import NavRef, TitleRef
 from nustd.ui.shapes import (
     Accordion,
     Card,
+    Collapsible,
     Column,
     Container,
     Field,
     Fieldset,
     Form,
+    Grid,
+    Line,
     List,
     Modal,
     Row,
+    Sheet,
     Tabs,
 )
 
@@ -150,14 +166,18 @@ __all__ = [
     "AccordionRef",
     "AlertRef",
     "AreaChart",
+    "AvatarRef",
     "BadgeRef",
     "BarChart",
     "BoxRef",
+    "BreadcrumbRef",
     "ButtonRef",
     "Card",
     "CardRef",
     "CheckboxRef",
     "CodeRef",
+    "Collapsible",
+    "CollapsibleRef",
     "Column",
     "ColumnRef",
     "Container",
@@ -172,6 +192,8 @@ __all__ = [
     "Form",
     "FormRef",
     "GaugeRef",
+    "Grid",
+    "GridRef",
     "HeadingRef",
     "ImageRef",
     "InputRef",
@@ -179,7 +201,9 @@ __all__ = [
     "JsonViewerRef",
     "KbdRef",
     "LeafRef",
+    "Line",
     "LineChart",
+    "LineRef",
     "LinkRef",
     "List",
     "ListRef",
@@ -200,11 +224,16 @@ __all__ = [
     "SelectRef",
     "SetOrder",
     "SetRow",
+    "Sheet",
+    "SheetRef",
     "ShortcutRef",
+    "SkeletonRef",
     "SliderRef",
     "Sparkline",
+    "SpinnerRef",
     "StatRef",
     "StatusDotRef",
+    "StatusPillRef",
     "SwitchRef",
     "TableRef",
     "Tabs",
@@ -213,5 +242,6 @@ __all__ = [
     "TextAreaRef",
     "TextRef",
     "TitleRef",
+    "ToggleRef",
     "TreeRef",
 ]
