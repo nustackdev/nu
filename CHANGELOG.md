@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Programs can compose one sentence from text, links, badges, keys and dots
 - Toolbars get a two-state pressed button the program can set, read and hear
 - Text, links, badges, keys and dots read as words inside a sentence
 - Kit gains an inline layout where text, links, badges and keys wrap together
