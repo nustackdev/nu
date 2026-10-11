@@ -4,9 +4,12 @@
 // the node's props, which is the default store behaviour, so this type is a
 // component and nothing else. An unknown tone reads as `neutral`. Composes
 // the kit StatusDot primitive.
+//
+// In a Line (inline flow) the dot centers on the text's x-height.
 
+import { lineDot } from "../../components/ui/line";
 import { StatusDot } from "../../components/ui/status-dot";
-import { type NodeEntry, type NodeProps, useBoolProp, useStringProp } from "../../tree";
+import { type NodeEntry, type NodeProps, useBoolProp, useFlow, useStringProp } from "../../tree";
 
 type Tone = "neutral" | "info" | "ok" | "warn" | "danger";
 
@@ -22,7 +25,15 @@ function StatusDotView({ path }: NodeProps) {
 	const tone = TONES[useStringProp(path, "tone", "neutral")] ?? "neutral";
 	const label = useStringProp(path, "label");
 	const pulse = useBoolProp(path, "pulse");
-	return <StatusDot tone={tone} pulse={pulse} label={label || undefined} />;
+	const inline = useFlow() === "inline";
+	return (
+		<StatusDot
+			tone={tone}
+			pulse={pulse}
+			label={label || undefined}
+			className={inline ? lineDot : undefined}
+		/>
+	);
 }
 
 export const StatusDotRef: NodeEntry = { component: StatusDotView };
