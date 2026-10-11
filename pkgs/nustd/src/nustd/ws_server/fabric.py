@@ -1,6 +1,6 @@
 """``WebServer`` -- the uvicorn lifecycle and the registry of live connections.
 
-Boots uvicorn behind a FastAPI app with a ``/ws`` endpoint and a static mount,
+Boots uvicorn behind a Starlette app with a ``/ws`` endpoint and a static mount,
 binds itself to the Context, and stops uvicorn on the way out. It never sees
 the program a connection runs: that is a child of the tree, one arm per live
 connection, and the protocol on the wire is the session class's business.
@@ -26,15 +26,20 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Protocol
 
 import uvicorn
-from fastapi import FastAPI, WebSocket
-from fastapi.staticfiles import StaticFiles
+from starlette.applications import Starlette
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.responses import JSONResponse
+from starlette.routing import Mount, Route, WebSocketRoute
+from starlette.staticfiles import StaticFiles
 
 from nu._config.branding import BLUE, PURPLE, color_enabled, paint, render_header
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from starlette.requests import Request
+    from starlette.websockets import WebSocket
 
     from nu.lang.runtime import Context
 
@@ -260,7 +265,7 @@ class WebServer:
     # ---- lifecycle ----------------------------------------------------------
 
     async def asetup(self, ctx: Context) -> None:
-        """Build the FastAPI app, boot uvicorn, wait for ``started``.
+        """Build the Starlette app, boot uvicorn, wait for ``started``.
 
         A boot failure surfaces here instead of hanging: if the serve task
         finishes before ``server.started`` flips, we re-raise its exception.
@@ -272,6 +277,11 @@ class WebServer:
             port=self._port,
             log_level=self._log_level,
             access_log=False,
+            # Pinned rather than "auto", so the server is the same whatever
+            # else happens to be installed (uvloop, httptools, wsproto).
+            loop="asyncio",
+            http="h11",
+            ws="websockets",
         )
         server = uvicorn.Server(config)
         task = asyncio.create_task(server.serve())
@@ -341,13 +351,11 @@ class WebServer:
 
     # ---- the http surface ---------------------------------------------------
 
-    def _build_app(self) -> FastAPI:
-        """The FastAPI app: ``/ws``, the telemetry config, and the SPA mount."""
-        fastapi_app = FastAPI(title="nustd.ws_server")
+    def _build_app(self) -> Starlette:
+        """The Starlette app: ``/ws``, the telemetry config, and the SPA mount."""
 
-        @fastapi_app.websocket("/ws")
         async def ws_endpoint(ws: WebSocket) -> None:
-            # A session lives exactly as long as this coroutine: FastAPI closes
+            # A session lives exactly as long as this coroutine: uvicorn closes
             # the socket the moment the handler returns. So accept, register,
             # drain intake until the client goes away, unregister.
             await ws.accept()
@@ -361,21 +369,23 @@ class WebServer:
                 self._connections.pop(sid, None)
                 self._channel.emit(sid)
 
-        @fastapi_app.get("/api/telemetry-config")
-        async def telemetry_config() -> dict[str, object]:
+        async def telemetry_config(request: Request) -> JSONResponse:
+            del request
             from nu._config.telemetry import config_for_browser
 
-            return config_for_browser()
+            return JSONResponse(config_for_browser())
 
+        routes: list[Route | WebSocketRoute | Mount] = [
+            WebSocketRoute("/ws", ws_endpoint),
+            Route("/api/telemetry-config", telemetry_config, methods=["GET"]),
+        ]
         if self._static is not None:
             static_dir = _bundled_static(self._static)
             if static_dir is not None and static_dir.exists():
-                fastapi_app.mount(
-                    "/",
-                    _SPAStatic(directory=static_dir, html=True),
-                    name="static",
+                routes.append(
+                    Mount("/", app=_SPAStatic(directory=static_dir, html=True), name="static"),
                 )
-        return fastapi_app
+        return Starlette(routes=routes)
 
     # ---- banner -------------------------------------------------------------
 

@@ -55,9 +55,9 @@ queue = [
 ]
 # `nustd.ws_server` is the bare connection lifecycle: no wire format, no SPA.
 ws_server = [
-    "fastapi>=0.115.0",
-    "uvicorn[standard]>=0.30.0",
-    "watchfiles>=0.24.0",
+    "starlette>=0.37.2",
+    "uvicorn>=0.30.0",
+    "websockets>=10.4",
 ]
 # `nustd.ui` stacks its own wire codec and the nudle SPA wheel on that.
 ui = [

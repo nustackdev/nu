@@ -4,7 +4,7 @@ A Session is the handle a Ref reaches the client through: send a Frame,
 round-trip a read, subscribe to change notifications. The ABC is the seam, so
 the widget kit does not know which host it is running under.
 
-``WsSession`` is the concrete one, a Session over a FastAPI websocket, shared
+``WsSession`` is the concrete one, a Session over a Starlette websocket, shared
 by every ws host. It owns the ws, the observer registry and the pending-read
 futures.
 
@@ -25,7 +25,7 @@ from .protocol import OP_ERROR, OP_NOTIFY, OP_READ, Frame, decode, encode
 
 
 if TYPE_CHECKING:
-    from fastapi import WebSocket
+    from starlette.websockets import WebSocket
 
 
 __all__ = ["Session", "Subscription", "WsSession", "WsSubscription"]
@@ -163,7 +163,7 @@ class WsSession(Session):
 
     async def run_intake(self) -> None:
         """Drive the ws read loop, dispatch client->server frames."""
-        from fastapi import WebSocketDisconnect
+        from starlette.websockets import WebSocketDisconnect
 
         try:
             while not self._stopped:

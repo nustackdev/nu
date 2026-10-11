@@ -12,7 +12,7 @@ from .fabric import SessionProtocol, WebServer
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from fastapi import WebSocket
+    from starlette.websockets import WebSocket
 
 
 __all__ = ["listen"]

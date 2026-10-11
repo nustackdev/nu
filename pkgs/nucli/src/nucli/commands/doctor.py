@@ -24,8 +24,8 @@ from nucli._meta import nu_version
 _FABRICS: dict[str, tuple[str, ...]] = {
     "kv": ("virtuals",),
     "queue": ("janus",),
-    "ws_server": ("fastapi", "uvicorn", "watchfiles"),
-    "ui": ("fastapi", "uvicorn", "msgpack", "watchfiles", "nudle"),
+    "ws_server": ("starlette", "uvicorn", "websockets"),
+    "ui": ("starlette", "uvicorn", "websockets", "msgpack", "nudle"),
     "cluster": ("ray",),
     "proxy": ("invisibles",),
     "http": ("httpx",),

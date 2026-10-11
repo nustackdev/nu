@@ -36,7 +36,7 @@ a widget, and a surface split between two names is worse than one more dot.
 
 **The host half loads on first use.** Building Refs and serving them are two
 different jobs and only one of them needs a web server: ``nudle`` reaches
-``nustd.ws_server``, which reaches uvicorn and fastapi, and that was most of
+``nustd.ws_server``, which reaches uvicorn and starlette, and that was most of
 what ``import nustd.ui`` cost. Plenty of processes only ever build Refs. The
 case that made this worth doing is a worker drawing on a connection it holds
 a proxy to: it pays the import on every launch and serves nothing, ever. So

@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Web apps start faster, install lighter: plain Starlette and uvicorn, no FastAPI or pydantic
 - Field station example builds its atlas and watch list from templates
 - Lists and sentences draw indexed children in index order
 - Tab and accordion bodies pair by id, so write order no longer matters
