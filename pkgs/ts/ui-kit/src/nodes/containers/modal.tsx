@@ -1,6 +1,6 @@
-// Modal -- dialog overlay Section. Server-owned `open` / `title`; the tab
-// sends `notify` with {open: false} when the user dismisses (backdrop /
-// Escape) and `dismissible` is true.
+// Modal -- dialog overlay Section. Server-owned `open` / `title`; when the
+// user dismisses (backdrop, Escape, the close button) and `dismissible` is
+// true, it closes in this tab and sends `notify` with {open: false}.
 //
 // `open`, `title` and `dismissible` are plain props: the default `write`
 // merges them and the read-time coercions below apply the same nil handling
@@ -30,6 +30,7 @@ import {
 	type NodeProps,
 	useBoolProp,
 	useSend,
+	useSetProps,
 	useStringProp,
 } from "../../tree";
 
@@ -38,14 +39,18 @@ function ModalView({ path }: NodeProps) {
 	const title = useStringProp(path, "title");
 	const dismissible = useBoolProp(path, "dismissible", true);
 	const send = useSend(path);
+	const setProps = useSetProps(path);
 
+	// A dismiss closes in this tab and tells the program, like a Collapsible
+	// toggle. A later write of `open: true` opens it again.
 	const onOpenChange = useCallback(
 		(next: boolean) => {
 			if (next) return;
 			if (!dismissible) return;
+			setProps({ open: false });
 			send(OPS.notify, { open: false });
 		},
-		[dismissible, send],
+		[dismissible, send, setProps],
 	);
 
 	return (
