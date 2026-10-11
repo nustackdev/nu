@@ -11,6 +11,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- UI kit packages publish from CI with no stored token, signed with provenance
+
 ## 0.6.2 — 2026-10-12
 
 - Release nu 0.6.2, UI kit 0.3.2, UI core 0.2.1 and nudle 0.1.7

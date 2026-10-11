@@ -1,10 +1,9 @@
 # Publishes @nustackdev/ui-core to npm on a tag push like `ui-core@0.2.1`.
 # Manual "Run workflow" dispatch builds and typechecks but does NOT publish.
 #
-# Setup once:
-#   1. Generate a granular npm access token scoped to @nustackdev/*, with
-#      publish permission, bypass-2FA enabled.
-#   2. Add it as GitHub repo secret `NPM_TOKEN`.
+# Setup once: on npmjs.com, @nustackdev/ui-core -> Settings -> Trusted
+# publishing, add GitHub Actions with repo nustackdev/nu and workflow
+# publish-ui-core.yml. No token or secret needed.
 #
 # Release flow:
 #   1. Bump `pkgs/ts/ui-core/package.json` version.
@@ -59,10 +58,13 @@ jobs:
             exit 1
           fi
 
-      # Provenance is off because the source repo is private on the free npm
-      # tier. Add `--provenance` back once the repo is public.
+      # Trusted publishing: npm trades the job's OIDC token for a one-off
+      # publish credential, no stored secret. Needs npm 11.5.1 or newer, and
+      # signs provenance on its own since the repo is public.
+      - name: npm with trusted publishing
+        if: startsWith(github.ref, 'refs/tags/ui-core@')
+        run: npm install -g npm@latest
+
       - name: publish
         if: startsWith(github.ref, 'refs/tags/ui-core@')
         run: npm publish --workspace @nustackdev/ui-core --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

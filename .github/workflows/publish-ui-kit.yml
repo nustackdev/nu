@@ -3,6 +3,10 @@
 #
 # Kit depends on @nustackdev/ui-core, so publish core first if the version of
 # core has changed. Otherwise kit consumers may install a mismatched core.
+#
+# Setup once: on npmjs.com, @nustackdev/ui-kit -> Settings -> Trusted
+# publishing, add GitHub Actions with repo nustackdev/nu and workflow
+# publish-ui-kit.yml. No token or secret needed.
 name: Publish @nustackdev/ui-kit
 
 on:
@@ -67,10 +71,13 @@ jobs:
             exit 1
           fi
 
-      # Provenance is off because the source repo is private on the free npm
-      # tier. Add `--provenance` back once the repo is public.
+      # Trusted publishing: npm trades the job's OIDC token for a one-off
+      # publish credential, no stored secret. Needs npm 11.5.1 or newer, and
+      # signs provenance on its own since the repo is public.
+      - name: npm with trusted publishing
+        if: startsWith(github.ref, 'refs/tags/ui-kit@')
+        run: npm install -g npm@latest
+
       - name: publish
         if: startsWith(github.ref, 'refs/tags/ui-kit@')
         run: npm publish --workspace @nustackdev/ui-kit --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
