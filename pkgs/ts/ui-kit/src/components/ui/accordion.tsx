@@ -9,6 +9,12 @@
 //
 // Content height animation uses Radix's --radix-accordion-content-height CSS
 // var; consumers do not need to measure content themselves.
+//
+// Two variants. `plain` rows sit in the flow, separated by hairlines, the
+// trigger a rounded hover pill. `boxed` draws the bordered container itself
+// and runs every row flush to its edges: the trigger wash fills the row, the
+// focus ring sits inside it, and trigger text and content share one inset.
+// Never pad the items of a boxed accordion; the trigger and content own it.
 
 import { Accordion as AccordionPrimitive } from "radix-ui";
 import { ChevronDown } from "lucide-react";
@@ -18,12 +24,18 @@ import { cn } from "../../lib/utils";
 
 export function Accordion({
 	className,
+	variant = "plain",
 	...props
-}: React.ComponentProps<typeof AccordionPrimitive.Root>) {
+}: React.ComponentProps<typeof AccordionPrimitive.Root> & { variant?: "plain" | "boxed" }) {
 	return (
 		<AccordionPrimitive.Root
 			data-slot="accordion"
-			className={cn("flex flex-col", className)}
+			data-variant={variant}
+			className={cn(
+				"group/accordion flex flex-col",
+				variant === "boxed" && "overflow-hidden rounded-md border border-border-default",
+				className,
+			)}
 			{...props}
 		/>
 	);
@@ -62,6 +74,7 @@ export function AccordionTrigger({
 					"hover:bg-bg-hover active:bg-bg-press",
 					"disabled:pointer-events-none disabled:opacity-50",
 					"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas",
+					"group-data-[variant=boxed]/accordion:rounded-none group-data-[variant=boxed]/accordion:focus-visible:ring-inset group-data-[variant=boxed]/accordion:focus-visible:ring-offset-0",
 					"[&_svg]:pointer-events-none [&_svg]:shrink-0",
 					className,
 				)}

@@ -92,12 +92,12 @@ function AccordionView({ path }: NodeProps) {
 	return (
 		<AccordionPrimitive
 			{...rootProps}
-			className="rounded-md border border-border-default divide-y divide-border-subtle"
+			variant="boxed"
 		>
 			{sections.map((s, i) => {
 				const segment = children[i];
 				return (
-					<AccordionItem key={`${i}-${s.id}`} value={s.id} className="px-3">
+					<AccordionItem key={`${i}-${s.id}`} value={s.id}>
 						<AccordionTrigger>{s.label}</AccordionTrigger>
 						<AccordionContent>
 							{segment ? <NodeView path={[...path, segment]} /> : null}

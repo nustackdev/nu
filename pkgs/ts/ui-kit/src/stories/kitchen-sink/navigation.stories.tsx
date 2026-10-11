@@ -173,6 +173,22 @@ function Disclosure() {
 					</AccordionItem>
 				</Accordion>
 			</Row>
+			<Row label="Accordion boxed">
+				<Accordion type="single" defaultValue="two" collapsible variant="boxed" className="w-full max-w-md">
+					<AccordionItem value="one">
+						<AccordionTrigger>Closed item</AccordionTrigger>
+						<AccordionContent>Hidden.</AccordionContent>
+					</AccordionItem>
+					<AccordionItem value="two">
+						<AccordionTrigger>Config</AccordionTrigger>
+						<AccordionContent>
+							<Text size="sm" tone="secondary">
+								Rows run flush to the border; trigger text and content share one inset.
+							</Text>
+						</AccordionContent>
+					</AccordionItem>
+				</Accordion>
+			</Row>
 			<Row label="Collapsible">
 				<Collapsible defaultOpen className="w-full max-w-md">
 					<CollapsibleTrigger asChild>
