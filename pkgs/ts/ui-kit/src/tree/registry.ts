@@ -15,8 +15,10 @@ export type NodeEntry = Behaviour & {
 	component?: ComponentType<NodeProps>;
 	// The node has no intrinsic width (a chart, a table, an input), so a row
 	// gives it a share of the free width rather than its content size. Read
-	// by the parent through `useFill`; unset means "size to content".
-	fill?: boolean;
+	// by the parent through `useFill`; unset means "size to content". A
+	// function decides per node from its props (a circle skeleton keeps its
+	// size, a text skeleton fills).
+	fill?: boolean | ((props: Record<string, unknown>) => boolean);
 };
 
 export type { DisposeCtx, NodeHandler };
@@ -31,6 +33,12 @@ export function register(type: string, entry: NodeEntry): void {
 /** Behaviour lookup handed to the store. */
 export function resolve(type: string): NodeEntry | undefined {
 	return registry[type];
+}
+
+/** Whether a node of `type` with `props` has no intrinsic width. Unknown types size to content. */
+export function isFill(type: string | null, props: Record<string, unknown>): boolean {
+	const fill = type ? registry[type]?.fill : undefined;
+	return typeof fill === "function" ? fill(props) : fill === true;
 }
 
 export function componentFor(type: string | null): ComponentType<NodeProps> | undefined {

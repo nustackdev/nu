@@ -29,7 +29,7 @@ export {
 	useValue,
 } from "./hooks";
 export type { CellProps } from "./NodeView";
-export { ChildView, NodeChildren, NodeView } from "./NodeView";
+export { BareCell, BlockCell, ChildView, NodeChildren, NodeView } from "./NodeView";
 export type { NodeEntry, NodeProps } from "./registry";
-export { componentFor, register, registry, resolve } from "./registry";
+export { componentFor, isFill, register, registry, resolve } from "./registry";
 export { tree, useTree } from "./store";

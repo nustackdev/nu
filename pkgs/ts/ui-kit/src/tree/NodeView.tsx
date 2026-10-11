@@ -9,8 +9,9 @@
 import type { Path } from "@nustackdev/ui-core";
 import type { ComponentType, ReactNode } from "react";
 import { ErrorBoundary } from "../components/ErrorBoundary";
+import { useFlow } from "./flow";
 import { pathKey, useChildren, useNode } from "./hooks";
-import { componentFor } from "./registry";
+import { componentFor, isFill, registry } from "./registry";
 
 export function NodeView({ path }: { path: Path }) {
 	const { type } = useNode(path);
@@ -32,20 +33,44 @@ export function NodeView({ path }: { path: Path }) {
 export type CellProps = { path: Path; children: ReactNode };
 
 /**
+ * The default cell in a block flow (Column, Card, Box, Form, ...). A fill
+ * child (a chart, an input, a card) stretches to the container's width; a
+ * content child (a button, a badge, a key, a line of text) keeps its own
+ * width at the start edge instead of being pulled into a full width bar. A
+ * type nobody registered is drawn bare and stretches.
+ */
+export function BlockCell({ path, children }: CellProps) {
+	const { type, props } = useNode(path);
+	if (!type || !registry[type] || isFill(type, props)) return <>{children}</>;
+	return (
+		<div data-slot="block-cell" className="flex min-w-0 flex-col items-start">
+			{children}
+		</div>
+	);
+}
+
+/** A cell that draws its child bare: the container's own element lays it out. */
+export function BareCell({ children }: CellProps) {
+	return <>{children}</>;
+}
+
+/**
  * Every child of a node, in insertion order. What a container type renders.
  *
  * `cell` wraps each child, for a container that needs a box per child (a
- * list item, a grid cell, a row slot that fills). Without it the children
- * are drawn bare, side by side in the container's own element.
+ * list item, a grid cell, a row slot that fills). Without it a block flow
+ * wraps each child in `BlockCell`, and any other flow draws them bare.
  */
 export function NodeChildren({
 	path,
-	cell: Cell,
+	cell,
 }: {
 	path: Path;
 	cell?: ComponentType<CellProps>;
 }) {
 	const children = useChildren(path);
+	const flow = useFlow();
+	const Cell = cell ?? (flow === "block" ? BlockCell : undefined);
 	return (
 		<>
 			{children.map((segment) => {

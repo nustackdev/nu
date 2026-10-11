@@ -110,8 +110,12 @@ type Sizing = { minWidth: number; stretch: boolean };
 
 const SizingContext = createContext<Sizing>({ minWidth: MIN_WIDTH, stretch: false });
 
-// One child, one cell. A flex column, so the child takes the cell's width; in
-// a stretch row the child also grows to the cell's height.
+// One child, one cell. A flex column, so the child takes the cell's width.
+// A fill cell always stretches to the line's height and its child grows to
+// fill it, so cards side by side share one height and one top edge whatever
+// the row's `align`; `align` places the content children (buttons, text,
+// badges), which is what a toolbar wants centered. In a stretch row content
+// children grow too.
 function RowCell({ path, children }: CellProps) {
 	const fill = useFill(path);
 	const { minWidth, stretch } = useContext(SizingContext);
@@ -119,7 +123,7 @@ function RowCell({ path, children }: CellProps) {
 		<div
 			data-slot="row-cell"
 			data-fill={fill ? "" : undefined}
-			className={cn("flex flex-col", fill && "min-w-0", stretch && "*:grow")}
+			className={cn("flex flex-col", fill && "min-w-0 self-stretch *:grow", stretch && "*:grow")}
 			style={{ flex: fill ? `1 1 ${minWidth}px` : "0 1 auto" }}
 		>
 			{children}
