@@ -2,7 +2,8 @@
 
 A container. Plain string items render first, from the ``items`` prop, the
 way the list always drew; then every child node is one more item after
-them, in the order it was first written. There is no item Ref: any child is
+them. Indexed children (``list[0]``, from an item template) draw in index
+order; named ones in the order they were first written. There is no item Ref: any child is
 an item, so a Badge, a Link or a whole Row can each be one.
 
 The string half stays for compatibility and because short text lists are
@@ -21,12 +22,13 @@ from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Append, Write
 
-from .base import ContainerRef
+from .base import ListContainerRef
 
 
 if TYPE_CHECKING:
     from nu.lang import Nu
     from nu.lang.args import IntArg, ListArg, StrArg
+    from nustd.ui.core import Ref, Section
 
 
 __all__ = ["ListRef"]
@@ -35,7 +37,7 @@ __all__ = ["ListRef"]
 ListVariant = Literal["bullet", "number"]
 
 
-class ListRef(ContainerRef):
+class ListRef(ListContainerRef):
     """A bulleted or numbered list: string items first, then each child node.
 
     One string per item, drawn as given. `set` replaces the strings whole,
@@ -53,12 +55,14 @@ class ListRef(ContainerRef):
     @classmethod
     def slot(
         cls,
+        item: type[Section] | type[Ref] | None = None,
+        /,
         *,
         items: list[str] | None = None,
         variant: ListVariant = "bullet",
         start: int = 1,
     ) -> Self:
-        return super().slot(items=list(items or []), variant=variant, start=start)
+        return super().slot(item, items=list(items or []), variant=variant, start=start)
 
     def set(
         self,

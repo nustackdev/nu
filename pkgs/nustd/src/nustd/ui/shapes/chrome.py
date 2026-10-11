@@ -25,7 +25,10 @@ __all__ = ["Accordion", "Box", "Card", "Field", "Fieldset", "Form", "Modal", "Ta
 
 
 class Accordion(Section):
-    """Stack of collapsible sections. Tab owns open state, server owns the section list."""
+    """Stack of collapsible sections, each body the child at the section's id.
+
+    The tab owns open state, the server owns the section list.
+    """
 
     _ref_cls = AccordionRef
 
@@ -76,6 +79,9 @@ class Modal(Section):
 
 
 class Tabs(Section):
-    """Tab strip plus active body. Subclass and declare one child slot per tab body."""
+    """Tab strip plus active body, each body the child at its tab id.
+
+    That is a slot named after the tab, or ``tabs[id]`` with an item template.
+    """
 
     _ref_cls = TabsRef

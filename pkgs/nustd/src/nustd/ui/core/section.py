@@ -17,6 +17,11 @@ a whole container: its children are Refs built with ``parent_ref=`` it.
 Chrome a container can drive (Card's title, Tabs' active tab, ...) lives on
 its Ref, so the write targets the bound Ref and resolves through the chain
 like everything else.
+
+Children by key or index: ``Grid.slot(SpeciesCard)`` declares an item
+template on the slot, and ``ref["lion"]`` is a SpeciesCard there. The
+template rides the Ref's payload; whether a container takes one is its kind
+(see ``refs.containers.base``).
 """
 
 from __future__ import annotations
@@ -45,6 +50,10 @@ class SectionRef(Ref):
     optional: a container Ref built alone has no Shape to navigate, and its
     children are built as Refs with ``parent_ref=`` it.
     """
+
+    # Whether this Ref takes an item template for children by key or index.
+    # The container kinds that do set it; ``Section.slot`` reads it.
+    _takes_item: ClassVar[bool] = False
 
     def __init__(
         self,
@@ -109,12 +118,22 @@ class Section(Shape):
     _wire_type: ClassVar[str] = ""
 
     @classmethod
-    def slot(cls, **props: object) -> Self:
-        """Declare this Section as a slot. Props go to the Ref as they are.
+    def slot(cls, item: type[Section] | type[Ref] | None = None, /, **props: object) -> Self:
+        """Declare this Section as a slot. Props and ``item`` go to the Ref as they are.
 
         The Ref's own ``slot()`` normalizes them and fills its defaults, so a
         Shape and the Ref built alone (``RowRef("r", props=...)``) carry the
-        same props.
+        same props. ``item`` is the template keyed children are built from
+        (``Grid.slot(SpeciesCard)``), and only a container that takes
+        children by key or index accepts one.
         """
-        declared = cls._ref_cls.slot(**props)
-        return Slot(cls._ref_cls, props=dict(declared.props), section_cls=cls)  # type: ignore[return-value]
+        if item is None:
+            declared = cls._ref_cls.slot(**props)
+        elif cls._ref_cls._takes_item:
+            declared = cls._ref_cls.slot(item, **props)  # type: ignore[call-arg]
+        else:
+            msg = f"{cls.__name__} holds only the children it declares and takes no item template"
+            raise TypeError(msg)
+        return Slot(  # type: ignore[return-value]
+            cls._ref_cls, props=dict(declared.props), section_cls=cls, **declared.kwargs
+        )

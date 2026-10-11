@@ -36,12 +36,13 @@ from typing_extensions import Self
 from nu.forms import Dict
 from nustd.ui.core import Write
 
-from .base import ContainerRef
+from .base import DictContainerRef
 
 
 if TYPE_CHECKING:
     from nu.lang import Nu
     from nu.lang.args import IntArg
+    from nustd.ui.core import Ref, Section
 
 
 __all__ = ["GridRef"]
@@ -50,7 +51,7 @@ __all__ = ["GridRef"]
 GridAlign = Literal["stretch", "start", "center", "end"]
 
 
-class GridRef(ContainerRef):
+class GridRef(DictContainerRef):
     """Equal cells, one child per cell, as many per row as the width allows.
 
     `columns` caps the cells on a row (0: no cap, the width decides),
@@ -65,6 +66,8 @@ class GridRef(ContainerRef):
     @classmethod
     def slot(
         cls,
+        item: type[Section] | type[Ref] | None = None,
+        /,
         *,
         columns: int = 0,
         min_width: int = 240,
@@ -73,6 +76,7 @@ class GridRef(ContainerRef):
         padding: int = 0,
     ) -> Self:
         return super().slot(
+            item,
             columns=int(columns),
             min_width=int(min_width),
             gap=int(gap),

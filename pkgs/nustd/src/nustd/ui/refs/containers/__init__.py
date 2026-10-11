@@ -1,6 +1,7 @@
 """Container Refs: layer 1 layout. Flat re-exports of every container Ref.
 
-- base:   ContainerRef, the abstract base.
+- base:   ContainerRef, the abstract base, and the kinds: DictContainerRef,
+          ListContainerRef, ShapeContainerRef.
 - flow:   ColumnRef, RowRef, GridRef, LineRef.
 - chrome: CardRef, BoxRef (the Box), TabsRef, ModalRef,
           AccordionRef, FormRef, FieldsetRef, FieldRef.
@@ -8,7 +9,7 @@
 - list:   ListRef, string items first, then any child node as an item.
 """
 
-from .base import ContainerRef
+from .base import ContainerRef, DictContainerRef, ListContainerRef, ShapeContainerRef
 from .chrome import AccordionRef, BoxRef, CardRef, FieldRef, FieldsetRef, FormRef, ModalRef, TabsRef
 from .disclosure import CollapsibleRef, SheetRef
 from .flow import ColumnRef, RowRef
@@ -24,14 +25,17 @@ __all__ = [
     "CollapsibleRef",
     "ColumnRef",
     "ContainerRef",
+    "DictContainerRef",
     "FieldRef",
     "FieldsetRef",
     "FormRef",
     "GridRef",
     "LineRef",
+    "ListContainerRef",
     "ListRef",
     "ModalRef",
     "RowRef",
+    "ShapeContainerRef",
     "SheetRef",
     "TabsRef",
 ]

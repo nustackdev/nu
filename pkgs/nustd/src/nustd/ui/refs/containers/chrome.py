@@ -25,13 +25,13 @@ from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core.interactions import Changed, Send, Write
 
-from .base import ContainerRef
+from .base import DictContainerRef, ShapeContainerRef
 
 
 if TYPE_CHECKING:
     from nu.lang import Nu
     from nu.lang.args import Arg, BoolArg, ListArg, StrArg
-    from nustd.ui.core import Ref
+    from nustd.ui.core import Ref, Section
 
 
 __all__ = [
@@ -71,20 +71,26 @@ def _normalize_open(ids: object) -> list[str]:
     return [str(x) for x in ids if x is not None]
 
 
-class AccordionRef(ContainerRef):
-    """Stack of collapsible sections. Tab owns open state, server owns the section list."""
+class AccordionRef(DictContainerRef):
+    """Stack of collapsible sections, each body the child at the section's id.
+
+    The tab owns open state, the server owns the section list.
+    """
 
     _wire_type = "Accordion"
 
     @classmethod
     def slot(
         cls,
+        item: type[Section] | type[Ref] | None = None,
+        /,
         *,
         sections: list[dict[str, str]] | None = None,
         open: list[str] | None = None,
         multi: bool = True,
     ) -> Self:
         return super().slot(
+            item,
             sections=_normalize_sections(sections or []),
             open=_normalize_open(open or []),
             multi=bool(multi),
@@ -122,14 +128,22 @@ class _SetSectionStr(Send):
         return values[0]
 
 
-class CardRef(ContainerRef):
+class CardRef(DictContainerRef):
     """Card-styled container: title + subtitle + body children + footer."""
 
     _wire_type = "Card"
 
     @classmethod
-    def slot(cls, *, title: str = "", subtitle: str = "", footer: str = "") -> Self:
-        return super().slot(title=title, subtitle=subtitle, footer=footer)
+    def slot(
+        cls,
+        item: type[Section] | type[Ref] | None = None,
+        /,
+        *,
+        title: str = "",
+        subtitle: str = "",
+        footer: str = "",
+    ) -> Self:
+        return super().slot(item, title=title, subtitle=subtitle, footer=footer)
 
     def set_title(self, text: StrArg) -> Nu:
         return _SetSectionStr(self, "set_title", text)
@@ -151,7 +165,7 @@ Gap = Literal["none", "sm", "md", "lg"]
 # Backs the ``Box`` Shape and draws as the browser's "Box" node.
 # It cannot be called ContainerRef: that name is the base every container
 # Ref subclasses, so the Ref behind this one box is BoxRef.
-class BoxRef(ContainerRef):
+class BoxRef(DictContainerRef):
     """Styled card-like box with an optional title. Pin chrome on slot()."""
 
     _wire_type = "Box"
@@ -159,6 +173,8 @@ class BoxRef(ContainerRef):
     @classmethod
     def slot(
         cls,
+        item: type[Section] | type[Ref] | None = None,
+        /,
         *,
         title: str = "",
         padding: Padding = "md",
@@ -168,6 +184,7 @@ class BoxRef(ContainerRef):
         gap: Gap = "md",
     ) -> Self:
         return super().slot(
+            item,
             title=title,
             padding=padding,
             border=border,
@@ -177,7 +194,7 @@ class BoxRef(ContainerRef):
         )
 
 
-class FieldRef(ContainerRef):
+class FieldRef(ShapeContainerRef):
     """Label + one child input + help / error text."""
 
     _wire_type = "Field"
@@ -209,7 +226,7 @@ class FieldRef(ContainerRef):
 FieldsetGap = Literal["sm", "md", "lg"]
 
 
-class FieldsetRef(ContainerRef):
+class FieldsetRef(DictContainerRef):
     """Grouped fields with a legend. Display-only, server-owned."""
 
     _wire_type = "Fieldset"
@@ -217,12 +234,14 @@ class FieldsetRef(ContainerRef):
     @classmethod
     def slot(
         cls,
+        item: type[Section] | type[Ref] | None = None,
+        /,
         *,
         legend: str = "",
         gap: FieldsetGap = "md",
         disabled: bool = False,
     ) -> Self:
-        return super().slot(legend=legend, gap=gap, disabled=disabled)
+        return super().slot(item, legend=legend, gap=gap, disabled=disabled)
 
     def set_legend(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(legend=text))
@@ -237,7 +256,7 @@ class FieldsetRef(ContainerRef):
 Align = Literal["start", "center", "end", "stretch"]
 
 
-class FormRef(ContainerRef):
+class FormRef(DictContainerRef):
     """Semantic form wrapper. Pin chrome on slot(); submit lives on a child ButtonRef."""
 
     _wire_type = "Form"
@@ -245,16 +264,18 @@ class FormRef(ContainerRef):
     @classmethod
     def slot(
         cls,
+        item: type[Section] | type[Ref] | None = None,
+        /,
         *,
         title: str = "",
         gap: int = 4,
         padding: int = 0,
         align: Align = "stretch",
     ) -> Self:
-        return super().slot(title=title, gap=gap, padding=padding, align=align)
+        return super().slot(item, title=title, gap=gap, padding=padding, align=align)
 
 
-class ModalRef(ContainerRef):
+class ModalRef(DictContainerRef):
     """Dialog overlay. Open vs closed is the thing it carries, so it has a `set()`."""
 
     _wire_type = "Modal"
@@ -262,12 +283,14 @@ class ModalRef(ContainerRef):
     @classmethod
     def slot(
         cls,
+        item: type[Section] | type[Ref] | None = None,
+        /,
         *,
         open: bool = False,
         title: str = "",
         dismissible: bool = True,
     ) -> Self:
-        return super().slot(open=open, title=title, dismissible=dismissible)
+        return super().slot(item, open=open, title=title, dismissible=dismissible)
 
     def set_open(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(open=flag))
@@ -325,19 +348,21 @@ class _SetActive(Send):
         return "" if value is None else str(value)
 
 
-class TabsRef(ContainerRef):
-    """Tab strip plus active body. One child per tab body."""
+class TabsRef(DictContainerRef):
+    """Tab strip plus active body. A tab's body is the child at the tab's id."""
 
     _wire_type = "Tabs"
 
     @classmethod
     def slot(
         cls,
+        item: type[Section] | type[Ref] | None = None,
+        /,
         *,
         tabs: list[dict[str, str]] | None = None,
         active: str = "",
     ) -> Self:
-        return super().slot(tabs=_normalize_tabs(tabs or []), active=active)
+        return super().slot(item, tabs=_normalize_tabs(tabs or []), active=active)
 
     def set_tabs(self, value: ListArg[dict[str, str]]) -> Nu:
         return _SetTabs(self, value)

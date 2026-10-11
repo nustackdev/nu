@@ -22,12 +22,13 @@ from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core.interactions import Changed, Write
 
-from .base import ContainerRef
+from .base import DictContainerRef
 
 
 if TYPE_CHECKING:
     from nu.lang import Nu
     from nu.lang.args import BoolArg, StrArg
+    from nustd.ui.core import Ref, Section
 
 
 __all__ = ["CollapsibleRef", "SheetRef"]
@@ -43,7 +44,7 @@ def _open_title(open: object, title: object) -> dict[str, object]:
     return payload
 
 
-class CollapsibleRef(ContainerRef):
+class CollapsibleRef(DictContainerRef):
     """One titled region whose children fold away.
 
     A trigger row (chevron + title) over a body of open-ended children. The
@@ -55,8 +56,15 @@ class CollapsibleRef(ContainerRef):
     _wire_type = "Collapsible"
 
     @classmethod
-    def slot(cls, *, title: str = "", open: bool = False) -> Self:
-        return super().slot(title=title, open=bool(open))
+    def slot(
+        cls,
+        item: type[Section] | type[Ref] | None = None,
+        /,
+        *,
+        title: str = "",
+        open: bool = False,
+    ) -> Self:
+        return super().slot(item, title=title, open=bool(open))
 
     def set_open(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(open=flag))
@@ -75,7 +83,7 @@ Side = Literal["left", "right", "top", "bottom"]
 SheetSize = Literal["sm", "md", "lg"]
 
 
-class SheetRef(ContainerRef):
+class SheetRef(DictContainerRef):
     """Drawer that slides in from an edge over the page, children as its body.
 
     Server-owned ``open`` and ``title``. When ``dismissible`` is true the user
@@ -91,6 +99,8 @@ class SheetRef(ContainerRef):
     @classmethod
     def slot(
         cls,
+        item: type[Section] | type[Ref] | None = None,
+        /,
         *,
         open: bool = False,
         title: str = "",
@@ -99,6 +109,7 @@ class SheetRef(ContainerRef):
         dismissible: bool = True,
     ) -> Self:
         return super().slot(
+            item,
             open=bool(open),
             title=title,
             side=side,
