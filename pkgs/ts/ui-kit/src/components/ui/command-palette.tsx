@@ -1,7 +1,7 @@
 // CommandPalette primitive: global cmd+k command runner.
 // Design refs:
 //   primitives.md    §CommandPalette (parts, motion, mod+k contract)
-//   palette.md       §2.1 backgrounds, §2.4 accent-wash (selection tint)
+//   palette.md       backgrounds, bg-hover (highlight)
 //   space-radius.md  input row 40, item row 32
 //   motion.md        §3 CommandPalette (`duration-base` fade+scale on dialog)
 //   a11y.md          §3 CommandPalette (Esc close, arrows navigate)
@@ -33,7 +33,7 @@ const commandHeadingClasses = "px-3 py-1 text-xs font-medium text-text-secondary
 const commandItemClasses = [
 	"relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-2",
 	"text-sm text-text-primary outline-hidden",
-	"data-[selected=true]:bg-accent-wash",
+	"data-[selected=true]:bg-bg-hover",
 	"data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
 	"[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 [&_svg]:text-text-secondary",
 	"data-[selected=true]:[&_svg]:text-text-primary",
@@ -182,7 +182,7 @@ function CommandSeparator({
 	return (
 		<CommandPrimitive.Separator
 			data-slot="command-palette-separator"
-			className={cn("-mx-1 my-1 h-px bg-border-subtle", className)}
+			className={cn("-mx-1 my-1 h-px bg-border-default", className)}
 			{...props}
 		/>
 	);

@@ -30,7 +30,6 @@ const RADII: Array<{ name: string; value: string; twClass: string }> = [
 	{ name: "md", value: "6px", twClass: "rounded-md" },
 	{ name: "lg", value: "8px", twClass: "rounded-lg" },
 	{ name: "xl", value: "12px", twClass: "rounded-xl" },
-	{ name: "2xl", value: "16px", twClass: "rounded-2xl" },
 	{ name: "full", value: "9999px", twClass: "rounded-full" },
 ];
 
@@ -85,7 +84,7 @@ export const Radius: StoryObj = {
 					{RADII.map((r) => (
 						<div key={r.name} className="flex flex-col items-center gap-2">
 							<div
-								className={`size-20 bg-accent-wash border border-accent-line ${r.twClass}`}
+								className={`size-20 bg-bg-hover border border-accent-line ${r.twClass}`}
 							/>
 							<div className="text-center">
 								<div className="font-mono text-xs text-text-primary">{r.name}</div>
@@ -116,7 +115,7 @@ export const Containers: StoryObj = {
 								<span className="text-text-muted">{c.value}</span>
 							</div>
 							<div
-								className="h-4 rounded-sm border border-border-subtle bg-accent-wash"
+								className="h-4 rounded-sm border border-border-subtle bg-bg-hover"
 								style={{
 									maxWidth: c.value,
 								}}

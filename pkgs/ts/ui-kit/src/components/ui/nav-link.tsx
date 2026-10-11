@@ -2,7 +2,7 @@
 //
 // Design refs:
 //   primitives.md    §NavLink (variants, sizes, states, asChild for router link)
-//   palette.md       §2.4 accent-wash (active bg), §2.2 text tiers
+//   palette.md       bg-press (active bg), text tiers
 //   space-radius.md  §Density Button (24/32/40 row map)
 //   motion.md        §3 NavLink row (bg + color, duration-fast ease-out)
 //   a11y.md          §4 aria-current="page" on active
@@ -27,12 +27,12 @@ const navLinkVariants = cva(
 		variants: {
 			variant: {
 				default: [
-					"text-text-secondary hover:bg-bg-elevated hover:text-text-primary",
+					"text-text-secondary hover:bg-bg-hover hover:text-text-primary",
 					// Active state driven by aria-current OR data-active so React
 					// Router NavLink (which sets aria-current) and hand-wired active
 					// props both work.
-					"aria-[current=page]:bg-accent-wash aria-[current=page]:text-accent aria-[current=page]:font-medium",
-					"data-[active=true]:bg-accent-wash data-[active=true]:text-accent data-[active=true]:font-medium",
+					"aria-[current=page]:bg-bg-press aria-[current=page]:text-text-primary aria-[current=page]:font-medium",
+					"data-[active=true]:bg-bg-press data-[active=true]:text-text-primary data-[active=true]:font-medium",
 				].join(" "),
 				// Underline variant: minimal chrome, accent underline on active.
 				underline: [

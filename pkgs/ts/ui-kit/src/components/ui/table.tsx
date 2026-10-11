@@ -2,7 +2,7 @@
 //
 // Design refs:
 //   primitives.md    §Table (compound parts, variants, density, states)
-//   palette.md       §2.1 backgrounds, §2.3 borders, §2.4 accent-wash
+//   palette.md       backgrounds, borders
 //   space-radius.md  §Density Table (rows 24/28/32, cell pad 6x8, header 8x8)
 //   typography.md    §4 Table cell (sm 400 for cells, sm 600 uppercase for header)
 //   a11y.md          §4 <th scope>, aria-sort on sortable headers

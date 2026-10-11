@@ -2,7 +2,7 @@
 //
 // Design refs:
 //   primitives.md    §Breadcrumb (compound parts, sizes, variants)
-//   palette.md       §2.2 text tiers, §2.4 accent for links
+//   palette.md       text tiers, accent for links
 //   a11y.md          §4 <nav aria-label="Breadcrumb"><ol>
 //
 // Compound shape (BreadcrumbList/Item/Link/Page/Separator/Ellipsis) matches
@@ -76,7 +76,7 @@ export function BreadcrumbLink({
 			className={cn(
 				"text-text-secondary transition-colors duration-fast ease-out",
 				"cursor-default",
-				"hover:text-accent",
+				"hover:text-accent-text",
 				"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas rounded-sm",
 				className,
 			)}

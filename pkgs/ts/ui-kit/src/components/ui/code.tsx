@@ -125,7 +125,7 @@ function CopyButton({ text }: { text: string }) {
 			className={cn(
 				"absolute top-1.5 right-1.5 inline-flex size-6 items-center justify-center",
 				"rounded-sm text-text-secondary bg-bg-elevated border border-border-subtle",
-				"hover:text-text-primary hover:bg-bg-surface",
+				"hover:text-text-primary hover:bg-bg-hover",
 				"transition-colors duration-fast ease-out",
 				"focus-visible:outline-none focus-ring",
 			)}

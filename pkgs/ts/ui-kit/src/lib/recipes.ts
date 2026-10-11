@@ -55,10 +55,10 @@ const table = {
 	row: [
 		"transition-colors duration-fast ease-out",
 		"hover:bg-bg-elevated",
-		"data-[state=selected]:bg-accent-wash",
+		"data-[state=selected]:bg-bg-press",
 	].join(" "),
 	/** Alternate rows get a sunken tint for scan density. */
-	striped: "even:bg-bg-sunken/40",
+	striped: "even:bg-bg-hover",
 	/** Row height per density: 24 / 28 / 32. */
 	rowHeight: {
 		compact: "h-6",

@@ -441,7 +441,7 @@ export function TreeItem({
 				selected
 					? "bg-(--tree-selected) text-text-primary"
 					: highlighted
-						? "bg-(--tree-highlight) hover:bg-(--tree-hover)"
+						? "bg-(--tree-highlight) hover:bg-(--tree-hover) hover:text-text-primary"
 						: "hover:bg-(--tree-hover) hover:text-text-primary",
 				item.dragged && "opacity-50",
 				item.dropInto && "ring-2 ring-accent ring-inset",

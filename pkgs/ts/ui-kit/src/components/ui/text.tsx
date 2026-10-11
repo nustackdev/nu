@@ -26,7 +26,7 @@ const textVariants = cva("", {
 			warn: "text-status-warn",
 			ok: "text-status-ok",
 			info: "text-status-info",
-			accent: "text-accent",
+			accent: "text-accent-text",
 		},
 		weight: {
 			regular: "font-normal",

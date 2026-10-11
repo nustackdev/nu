@@ -1,7 +1,7 @@
 // Popover primitive: anchored floating content, not focus-trapping.
 // Design refs:
 //   primitives.md    §Popover (parts, motion)
-//   palette.md       §2.1 backgrounds, §2.3 borders
+//   palette.md       backgrounds, borders
 //   space-radius.md  §Density Popover (pad 12, radius `md`)
 //   motion.md        §3 Popover (`duration-base` fade+y-shift)
 //   a11y.md          §3 Popover (Esc, focus restore, no trap)
@@ -42,7 +42,7 @@ function PopoverArrow({
 	return (
 		<PopoverPrimitive.Arrow
 			data-slot="popover-arrow"
-			className={cn("fill-bg-surface", className)}
+			className={cn("fill-bg-elevated", className)}
 			{...props}
 		/>
 	);
@@ -62,7 +62,7 @@ function PopoverContent({
 				sideOffset={sideOffset}
 				className={cn(
 					"z-50 w-72 p-3 outline-hidden",
-					"bg-bg-surface text-text-primary border border-border-subtle rounded-md shadow-lg",
+					"bg-bg-elevated text-text-primary border border-border-default rounded-md shadow-lg",
 					// Motion tokens per motion.md §3 Popover.
 					"data-[state=open]:animate-in data-[state=closed]:animate-out",
 					"data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",

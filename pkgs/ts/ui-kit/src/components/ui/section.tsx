@@ -3,7 +3,7 @@
 //   primitives.md    §Section (semantic <section>, title + description + actions)
 //   typography.md    §Headings (h3 = 2xl / semibold), §Body prose secondary text
 //   space-radius.md  §Density Section (24 gap at md, 32 at lg)
-//   palette.md       §2.3 border-subtle for the bordered separator
+//   palette.md       border-subtle for the bordered separator
 //
 // Heading + Text primitives are not shipped yet (later phase), so title uses
 // a semantic <h2> with the typography scale directly and description uses <p>.

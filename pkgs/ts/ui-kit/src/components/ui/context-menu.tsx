@@ -23,7 +23,7 @@ import {
 
 const contextMenuContentClasses = [
 	"z-50 min-w-[10rem] overflow-hidden p-1",
-	"bg-bg-elevated text-text-primary border border-border-subtle rounded-md shadow-lg",
+	"bg-bg-elevated text-text-primary border border-border-default rounded-md shadow-lg",
 	"data-[state=open]:animate-in data-[state=closed]:animate-out",
 	"data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
 	"data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
@@ -129,7 +129,7 @@ function ContextMenuCheckboxItem({
 		>
 			<span className="absolute left-2 flex size-4 items-center justify-center">
 				<ContextMenuPrimitive.ItemIndicator>
-					<Check className="size-3.5! text-accent!" />
+					<Check className="size-3.5! text-accent-text!" />
 				</ContextMenuPrimitive.ItemIndicator>
 			</span>
 			{children}
@@ -150,7 +150,7 @@ function ContextMenuRadioItem({
 		>
 			<span className="absolute left-2 flex size-4 items-center justify-center">
 				<ContextMenuPrimitive.ItemIndicator>
-					<Circle className="size-2! fill-accent text-accent!" />
+					<Circle className="size-2! fill-accent-text text-accent-text!" />
 				</ContextMenuPrimitive.ItemIndicator>
 			</span>
 			{children}
@@ -210,7 +210,7 @@ function ContextMenuSubTrigger({
 			data-slot="context-menu-sub-trigger"
 			className={cn(
 				menuItemClasses,
-				"data-[state=open]:bg-accent-wash",
+				"data-[state=open]:bg-bg-hover",
 				inset && "pl-8",
 				className,
 			)}

@@ -123,7 +123,7 @@ export function valueTone(vtype: string): string {
 		case "float":
 			return "text-accent-2 tabular-nums";
 		case "bool":
-			return "text-accent";
+			return "text-accent-text";
 		case "str":
 			return "text-text-secondary";
 		case "error":

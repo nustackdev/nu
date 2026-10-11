@@ -12,7 +12,7 @@ const switchVariants = cva(
 		"transition-colors duration-fast ease-out",
 		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas",
 		"disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none",
-		"data-[state=unchecked]:bg-bg-sunken data-[state=unchecked]:border-border-default",
+		"data-[state=unchecked]:bg-bg-press data-[state=unchecked]:border-border-default",
 		"data-[state=checked]:bg-accent data-[state=checked]:border-accent",
 		"hover:data-[state=unchecked]:border-border-strong",
 	].join(" "),

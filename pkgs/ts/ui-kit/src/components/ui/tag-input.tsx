@@ -19,8 +19,8 @@ const tagInputVariants = cva(
 		variants: {
 			variant: {
 				default: "bg-bg-surface text-text-primary border-border-default hover:border-border-strong focus-within:border-border-strong",
-				ghost: "bg-transparent text-text-primary border-transparent hover:bg-bg-elevated",
-				filled: "bg-bg-elevated text-text-primary border-transparent hover:bg-bg-sunken",
+				ghost: "bg-transparent text-text-primary border-transparent hover:bg-bg-hover",
+				filled: "bg-bg-hover text-text-primary border-transparent hover:bg-bg-press",
 			},
 			size: {
 				sm: "min-h-6 px-1.5 py-0.5 text-sm",
@@ -143,7 +143,7 @@ function TagInput({
 					key={`${tag}-${index}`}
 					data-slot="tag-input-chip"
 					className={cn(
-						"inline-flex items-center gap-1 rounded-sm bg-accent-wash text-text-primary border border-accent-line font-medium",
+						"inline-flex items-center gap-1 rounded-sm bg-bg-press text-text-primary border border-transparent font-medium",
 						chipSize[size],
 					)}
 				>
@@ -154,7 +154,7 @@ function TagInput({
 						disabled={disabled}
 						className={cn(
 							"inline-flex items-center justify-center rounded-sm text-text-secondary hover:text-text-primary",
-							"focus:outline-hidden focus-visible:ring-1 focus-visible:ring-ring",
+							"focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
 							"disabled:pointer-events-none",
 						)}
 						onClick={(event) => {

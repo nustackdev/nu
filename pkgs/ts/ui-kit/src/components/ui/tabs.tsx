@@ -1,19 +1,20 @@
 // Tabs primitive. Wraps @radix-ui/react-tabs.
 // Design refs:
 //   primitives.md    §Tabs (variants pill / underline / segmented, compound parts)
-//   palette.md       §2.4 accent for indicators, §2.3 borders
+//   palette.md       accent for indicators, borders
 //   space-radius.md  §Density Tabs (32 row default, pad-y 6 pad-x 12)
 //   motion.md        §3 Tabs indicator (base + ease-in-out for the moving line)
 //   a11y.md          §3 Tabs (Radix wires roving tabindex, arrows, Home/End)
 //
 // TabsList variants:
 //   line       underline under active trigger. Fleet-flavored default.
-//   pill       accent-wash chip behind active. Reads as segmented navigation.
+//   pill       press wash chip behind active. Reads as segmented navigation.
 //   segmented  unified sunken bg with a raised surface pill on active.
 
 import { cva, type VariantProps } from "class-variance-authority";
 import { Tabs as TabsPrimitive } from "radix-ui";
 import type * as React from "react";
+import { createContext, useContext } from "react";
 
 import { cn } from "../../lib/utils";
 
@@ -76,7 +77,7 @@ const triggerVariantClass = {
 	].join(" "),
 	pill: [
 		"rounded-md",
-		"data-[state=active]:bg-accent-wash data-[state=active]:text-text-primary",
+		"data-[state=active]:bg-bg-press data-[state=active]:text-text-primary",
 	].join(" "),
 	segmented: [
 		"rounded-sm",
@@ -84,6 +85,11 @@ const triggerVariantClass = {
 		"data-[state=active]:shadow-sm",
 	].join(" "),
 } as const;
+
+type TabsVariant = "line" | "pill" | "segmented";
+
+// The list's flavor, read by its triggers so they match without repeating it.
+const TabsVariantContext = createContext<TabsVariant>("line");
 
 export function Tabs({
 	className,
@@ -108,36 +114,39 @@ export function TabsList({
 	...props
 }: TabsListProps) {
 	return (
-		<TabsPrimitive.List
-			data-slot="tabs-list"
-			data-variant={variant ?? "line"}
-			className={cn(tabsListVariants({ variant }), className)}
-			{...props}
-		/>
+		<TabsVariantContext.Provider value={variant ?? "line"}>
+			<TabsPrimitive.List
+				data-slot="tabs-list"
+				data-variant={variant ?? "line"}
+				className={cn(tabsListVariants({ variant }), className)}
+				{...props}
+			/>
+		</TabsVariantContext.Provider>
 	);
 }
 
 export interface TabsTriggerProps
 	extends React.ComponentProps<typeof TabsPrimitive.Trigger>,
 		VariantProps<typeof tabsTriggerVariants> {
-	variant?: "line" | "pill" | "segmented";
+	variant?: TabsVariant;
 }
 
 // Trigger takes an explicit `variant` too so consumers can render one trigger
 // with a different active treatment, but the common case leaves it undefined
-// and reads the parent list flavor via the class map below.
+// and reads the parent list flavor from context.
 export function TabsTrigger({
 	className,
 	size,
-	variant = "line",
+	variant,
 	...props
 }: TabsTriggerProps) {
+	const listVariant = useContext(TabsVariantContext);
 	return (
 		<TabsPrimitive.Trigger
 			data-slot="tabs-trigger"
 			className={cn(
 				tabsTriggerVariants({ size }),
-				triggerVariantClass[variant],
+				triggerVariantClass[variant ?? listVariant],
 				className,
 			)}
 			{...props}

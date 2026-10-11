@@ -19,9 +19,9 @@ const badgeVariants = cva(
 	{
 		variants: {
 			variant: {
-				// Accent purple wash. Default identity chip.
-				default: "bg-accent-wash text-accent border-accent-line",
-				// Blue secondary wash.
+				// Afterglow soft fill. Default identity chip.
+				default: "bg-accent-soft text-accent-text border-accent-line",
+				// Starlight soft fill.
 				secondary: "bg-accent-2-wash text-accent-2 border-accent-2-line",
 				// Transparent bg with muted border for neutral labels.
 				outline: "bg-transparent text-text-secondary border-border-default",

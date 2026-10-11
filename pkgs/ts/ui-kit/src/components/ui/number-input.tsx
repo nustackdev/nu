@@ -26,8 +26,8 @@ const numberInputVariants = cva(
 			},
 			variant: {
 				default: "",
-				ghost: "bg-transparent border-transparent hover:bg-bg-sunken",
-				filled: "bg-bg-sunken border-transparent",
+				ghost: "bg-transparent border-transparent hover:bg-bg-hover",
+				filled: "bg-bg-hover border-transparent hover:bg-bg-press",
 			},
 		},
 		defaultVariants: {
@@ -186,7 +186,7 @@ export function NumberInput({
 						className={cn(
 							"inline-flex items-center justify-center rounded-sm text-text-secondary",
 							"transition-colors duration-fast ease-out",
-							"hover:bg-bg-elevated hover:text-text-primary",
+							"hover:bg-bg-hover hover:text-text-primary",
 							"disabled:pointer-events-none disabled:opacity-50",
 							stepperSizes[size ?? "md"],
 						)}
@@ -202,7 +202,7 @@ export function NumberInput({
 						className={cn(
 							"inline-flex items-center justify-center rounded-sm text-text-secondary",
 							"transition-colors duration-fast ease-out",
-							"hover:bg-bg-elevated hover:text-text-primary",
+							"hover:bg-bg-hover hover:text-text-primary",
 							"disabled:pointer-events-none disabled:opacity-50",
 							stepperSizes[size ?? "md"],
 						)}

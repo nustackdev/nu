@@ -16,7 +16,7 @@ const kbdVariants = cva(
 	{
 		variants: {
 			variant: {
-				default: "bg-text-primary/10 text-text-secondary",
+				default: "bg-bg-press text-text-secondary",
 				ghost: "bg-transparent text-text-muted",
 			},
 			size: {

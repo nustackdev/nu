@@ -238,9 +238,9 @@ function ComboboxItem({
 			className={cn(
 				"relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-base outline-hidden",
 				"text-text-primary",
-				"data-[selected=true]:bg-accent-wash",
-				"data-[highlighted=true]:bg-bg-elevated",
-				"aria-selected:bg-bg-elevated",
+				"data-[selected=true]:bg-bg-hover",
+				"data-[highlighted=true]:bg-bg-hover",
+				"aria-selected:bg-bg-hover",
 				"data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
 				"[&>svg]:pointer-events-none [&>svg]:size-4 [&>svg]:shrink-0",
 				className,
@@ -248,7 +248,7 @@ function ComboboxItem({
 			{...props}
 		>
 			{children}
-			{selected && <Check className="ml-auto size-4 text-accent" />}
+			{selected && <Check className="ml-auto size-4 text-accent-text" />}
 		</CommandPrimitive.Item>
 	);
 }

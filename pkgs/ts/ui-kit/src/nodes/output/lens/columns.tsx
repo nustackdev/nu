@@ -84,9 +84,9 @@ const rowClass = (cursor: boolean, trail: boolean) =>
 		"group/row relative flex w-full items-center gap-1.5 pr-2 pl-2",
 		ROW,
 		"text-left font-mono text-sm outline-none transition-colors",
-		!cursor && !trail && "text-text-secondary hover:bg-bg-sunken",
-		trail && "bg-bg-sunken text-text-primary",
-		cursor && "bg-accent-soft text-text-primary",
+		!cursor && !trail && "text-text-secondary hover:bg-bg-hover",
+		trail && "bg-bg-hover text-text-primary",
+		cursor && "bg-bg-press text-text-primary",
 	);
 
 const railClass = (cursor: boolean, trail: boolean) =>
@@ -267,7 +267,7 @@ function ColumnPanel({
 		<div className={columnClass(leaf)}>
 			<div className={headClass(active)}>
 				<Glyph
-					className={cn("size-3 shrink-0", active ? "text-accent" : "text-text-muted")}
+					className={cn("size-3 shrink-0", active ? "text-accent-text" : "text-text-muted")}
 					aria-hidden="true"
 				/>
 				<span className="font-medium tracking-[0.02em] uppercase">

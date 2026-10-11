@@ -53,7 +53,7 @@ export function ChartTooltipContent({
 	return (
 		<div
 			data-slot="chart-tooltip"
-			className="rounded-md border border-border-subtle bg-bg-elevated px-2.5 py-1.5 text-xs text-text-primary shadow-sm"
+			className="rounded-md border border-border-default bg-bg-elevated px-2.5 py-1.5 text-xs text-text-primary shadow-sm"
 		>
 			{label !== undefined && (
 				<div className="text-text-muted font-mono mb-1">{String(label)}</div>

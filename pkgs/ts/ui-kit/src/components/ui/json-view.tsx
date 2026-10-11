@@ -23,7 +23,7 @@ const jsonViewStyle: Record<string, string> = {
 	"--w-rjv-arrow-color": "var(--text-secondary)",
 	"--w-rjv-edit-color": "var(--text-secondary)",
 	"--w-rjv-info-color": "var(--text-muted)",
-	"--w-rjv-update-color": "var(--accent)",
+	"--w-rjv-update-color": "var(--accent-text)",
 	"--w-rjv-copied-color": "var(--text-secondary)",
 	"--w-rjv-copied-success-color": "var(--status-ok)",
 	"--w-rjv-quotes-color": "var(--text-muted)",

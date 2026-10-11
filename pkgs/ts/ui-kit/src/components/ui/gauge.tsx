@@ -22,7 +22,7 @@ const gaugeVariants = cva("inline-flex flex-col items-center justify-center", {
 });
 
 const ARC_TONE_CLASS = {
-	accent: "text-accent",
+	accent: "text-accent-text",
 	info: "text-status-info",
 	danger: "text-status-danger",
 	warn: "text-status-warn",

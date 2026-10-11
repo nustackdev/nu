@@ -20,6 +20,9 @@
 	--color-bg-elevated:          var(--bg-elevated);
 	--color-bg-sunken:            var(--bg-sunken);
 	--color-bg-overlay:           var(--bg-overlay);
+	--color-bg-hover:             var(--bg-hover);
+	--color-bg-press:             var(--bg-press);
+	--color-bg-selection:         var(--bg-selection);
 
 	/* text */
 	--color-text-primary:         var(--text-primary);
@@ -32,15 +35,16 @@
 	--color-border-default:       var(--border-default);
 	--color-border-strong:        var(--border-strong);
 
-	/* accent (purple primary) */
+	/* accent (Afterglow Violet): fills on accent, text and icons on accent-text */
 	--color-accent:               var(--accent);
 	--color-accent-fg:            var(--accent-fg);
-	--color-accent-wash:          var(--accent-wash);
+	--color-accent-text:          var(--accent-text);
 	--color-accent-soft:          var(--accent-soft);
 	--color-accent-line:          var(--accent-line);
 	--color-accent-hover:         var(--accent-hover);
+	--color-accent-pressed:       var(--accent-pressed);
 
-	/* accent-2 (blue secondary) */
+	/* accent-2 (Starlight Blue) */
 	--color-accent-2:             var(--accent-2);
 	--color-accent-2-fg:          var(--accent-2-fg);
 	--color-accent-2-wash:        var(--accent-2-wash);
@@ -53,6 +57,9 @@
 	--color-status-danger-fg:     var(--status-danger-fg);
 	--color-status-danger-wash:   var(--status-danger-wash);
 	--color-status-danger-line:   var(--status-danger-line);
+	--color-status-danger-solid:         var(--status-danger-solid);
+	--color-status-danger-solid-hover:   var(--status-danger-solid-hover);
+	--color-status-danger-solid-pressed: var(--status-danger-solid-pressed);
 
 	--color-status-warn:          var(--status-warn);
 	--color-status-warn-fg:       var(--status-warn-fg);
@@ -81,6 +88,23 @@
 	--color-chart-6: var(--chart-6);
 	--color-chart-7: var(--chart-7);
 	--color-chart-8: var(--chart-8);
+
+	/* chart sequential (Tide) and diverging ramps */
+	--color-chart-seq-1: var(--chart-seq-1);
+	--color-chart-seq-2: var(--chart-seq-2);
+	--color-chart-seq-3: var(--chart-seq-3);
+	--color-chart-seq-4: var(--chart-seq-4);
+	--color-chart-seq-5: var(--chart-seq-5);
+	--color-chart-seq-6: var(--chart-seq-6);
+	--color-chart-seq-7: var(--chart-seq-7);
+
+	--color-chart-div-1: var(--chart-div-1);
+	--color-chart-div-2: var(--chart-div-2);
+	--color-chart-div-3: var(--chart-div-3);
+	--color-chart-div-4: var(--chart-div-4);
+	--color-chart-div-5: var(--chart-div-5);
+	--color-chart-div-6: var(--chart-div-6);
+	--color-chart-div-7: var(--chart-div-7);
 
 	/* font stacks */
 	--font-display:
@@ -140,7 +164,6 @@
 	--radius-md:   0.375rem;
 	--radius-lg:   0.5rem;
 	--radius-xl:   0.75rem;
-	--radius-2xl:  1rem;
 	--radius-full: 9999px;
 
 	/* container widths */

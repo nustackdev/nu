@@ -1,6 +1,6 @@
 // Avatar primitive.
 //
-// Radix Avatar. Fallback paints over bg-bg-sunken with text-text-secondary
+// Radix Avatar. Fallback paints over bg-bg-press with text-text-secondary
 // initials or a lucide User glyph if consumer opts in.
 
 import { cva, type VariantProps } from "class-variance-authority";
@@ -10,7 +10,7 @@ import type * as React from "react";
 import { cn } from "../../lib/utils";
 
 const avatarVariants = cva(
-	"relative inline-flex shrink-0 overflow-hidden rounded-full bg-bg-sunken",
+	"relative inline-flex shrink-0 overflow-hidden rounded-full bg-bg-press",
 	{
 		variants: {
 			size: {
@@ -61,7 +61,7 @@ function AvatarFallback({
 		<AvatarPrimitive.Fallback
 			data-slot="avatar-fallback"
 			className={cn(
-				"flex size-full items-center justify-center bg-bg-sunken",
+				"flex size-full items-center justify-center bg-bg-press",
 				"font-display text-xs font-medium text-text-secondary uppercase tracking-[0.02em]",
 				className,
 			)}

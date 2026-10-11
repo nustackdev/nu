@@ -1,7 +1,7 @@
 // DropdownMenu primitive: vertical command menu anchored to a trigger.
 // Design refs:
 //   primitives.md    §DropdownMenu (parts, item variants, motion)
-//   palette.md       §2.1 backgrounds, §2.4 accent (accent-wash for hover)
+//   palette.md       backgrounds, bg-hover for hover
 //   space-radius.md  item row 28
 //   motion.md        §3 DropdownMenu (`duration-base` fade + y-shift)
 //   a11y.md          §3 DropdownMenu (arrows, submenu, typeahead)
@@ -21,7 +21,7 @@ const menuItemClasses = [
 	"relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5",
 	"text-sm text-text-primary outline-hidden",
 	"transition-colors duration-fast ease-out",
-	"data-[highlighted]:bg-accent-wash",
+	"data-[highlighted]:bg-bg-hover",
 	"data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
 	"[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg]:size-4 [&_svg]:text-text-secondary",
 	"data-[highlighted]:[&_svg]:text-text-primary",
@@ -35,14 +35,14 @@ const menuItemDangerClasses = [
 ].join(" ");
 
 // Divider between item groups, flush to the content's edges through its p-1.
-const menuSeparatorClasses = "-mx-1 my-1 h-px bg-border-subtle";
+const menuSeparatorClasses = "-mx-1 my-1 h-px bg-border-default";
 
 // The trailing shortcut: muted, in the text face, a step down from the label.
 const menuShortcutClasses = "ml-auto pl-4 text-xs tracking-wide text-text-muted";
 
 const menuContentClasses = [
 	"z-50 min-w-[10rem] overflow-hidden p-1",
-	"bg-bg-elevated text-text-primary border border-border-subtle rounded-md shadow-lg",
+	"bg-bg-elevated text-text-primary border border-border-default rounded-md shadow-lg",
 	"data-[state=open]:animate-in data-[state=closed]:animate-out",
 	"data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
 	"data-[state=open]:duration-base data-[state=closed]:duration-base",
@@ -156,7 +156,7 @@ function DropdownMenuCheckboxItem({
 		>
 			<span className="absolute left-2 flex size-4 items-center justify-center">
 				<DropdownMenuPrimitive.ItemIndicator>
-					<Check className="size-3.5! text-accent!" />
+					<Check className="size-3.5! text-accent-text!" />
 				</DropdownMenuPrimitive.ItemIndicator>
 			</span>
 			{children}
@@ -177,7 +177,7 @@ function DropdownMenuRadioItem({
 		>
 			<span className="absolute left-2 flex size-4 items-center justify-center">
 				<DropdownMenuPrimitive.ItemIndicator>
-					<Circle className="size-2! fill-accent text-accent!" />
+					<Circle className="size-2! fill-accent-text text-accent-text!" />
 				</DropdownMenuPrimitive.ItemIndicator>
 			</span>
 			{children}
@@ -237,7 +237,7 @@ function DropdownMenuSubTrigger({
 			data-slot="dropdown-menu-sub-trigger"
 			className={cn(
 				menuItemClasses,
-				"data-[state=open]:bg-accent-wash",
+				"data-[state=open]:bg-bg-hover",
 				inset && "pl-8",
 				className,
 			)}

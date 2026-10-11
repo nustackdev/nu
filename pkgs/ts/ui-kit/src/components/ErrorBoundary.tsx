@@ -22,7 +22,7 @@ export class ErrorBoundary extends Component<Props, State> {
 	render(): ReactNode {
 		if (this.state.message !== null) {
 			return (
-				<div className="rounded border border-destructive/50 bg-destructive/10 p-3 text-sm font-mono text-destructive">
+				<div className="rounded border border-status-danger-line bg-status-danger-wash p-3 text-sm font-mono text-status-danger">
 					{this.props.label}: {this.state.message}
 				</div>
 			);

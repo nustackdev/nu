@@ -46,7 +46,7 @@ const proseSelectors = [
 	// blockquote
 	"[&_blockquote]:my-3 [&_blockquote]:pl-3 [&_blockquote]:border-l-2 [&_blockquote]:border-accent-line [&_blockquote]:text-text-secondary [&_blockquote]:italic",
 	// inline code and pre
-	"[&_code]:font-mono [&_code]:text-base [&_code]:bg-bg-sunken [&_code]:text-text-primary [&_code]:rounded-sm [&_code]:px-1 [&_code]:py-0.5",
+	"[&_code]:font-mono [&_code]:text-base [&_code]:bg-bg-hover [&_code]:text-text-primary [&_code]:rounded-sm [&_code]:px-1 [&_code]:py-0.5",
 	"[&_pre]:my-3 [&_pre]:font-mono [&_pre]:text-base [&_pre]:bg-bg-sunken [&_pre]:text-text-primary [&_pre]:border [&_pre]:border-border-subtle [&_pre]:rounded-md [&_pre]:p-3 [&_pre]:overflow-x-auto",
 	// nested pre>code cancels the inline chip look
 	"[&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:border-0",

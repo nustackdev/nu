@@ -7,7 +7,7 @@ import { cn } from "../../lib/utils";
 
 // Radix Select wrapped with kit tokens. Trigger reads like the Input primitive
 // (design/primitives.md §Select) so form rows stay flush. Content is a
-// portal-mounted popover styled per design/palette.md §accent-wash for
+// portal-mounted popover styled per design/palette.md (bg-hover highlight) for
 // highlighted rows.
 
 const selectTriggerVariants = cva(
@@ -25,8 +25,8 @@ const selectTriggerVariants = cva(
 		variants: {
 			variant: {
 				default: "bg-bg-surface text-text-primary border-border-default hover:border-border-strong",
-				ghost: "bg-transparent text-text-primary border-transparent hover:bg-bg-elevated",
-				filled: "bg-bg-elevated text-text-primary border-transparent hover:bg-bg-sunken",
+				ghost: "bg-transparent text-text-primary border-transparent hover:bg-bg-hover",
+				filled: "bg-bg-hover text-text-primary border-transparent hover:bg-bg-press",
 			},
 			size: {
 				sm: "h-6 px-2 text-sm [&>svg]:size-3.5",
@@ -186,8 +186,8 @@ function SelectItem({
 			className={cn(
 				"relative flex w-full cursor-default select-none items-center gap-2 rounded-sm py-1.5 pl-2 pr-8 text-base outline-hidden",
 				"text-text-primary",
-				"focus:bg-accent-wash focus:text-text-primary",
-				"data-[highlighted]:bg-accent-wash data-[highlighted]:text-text-primary",
+				"focus:bg-bg-hover focus:text-text-primary",
+				"data-[highlighted]:bg-bg-hover data-[highlighted]:text-text-primary",
 				"data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
 				"[&>svg]:pointer-events-none [&>svg]:size-4 [&>svg]:shrink-0",
 				className,
@@ -196,7 +196,7 @@ function SelectItem({
 		>
 			<span className="absolute right-2 flex size-3.5 items-center justify-center">
 				<SelectPrimitive.ItemIndicator>
-					<Check className="size-4 text-accent" />
+					<Check className="size-4 text-accent-text" />
 				</SelectPrimitive.ItemIndicator>
 			</span>
 			<SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
@@ -211,7 +211,7 @@ function SelectSeparator({
 	return (
 		<SelectPrimitive.Separator
 			data-slot="select-separator"
-			className={cn("-mx-1 my-1 h-px bg-border-subtle", className)}
+			className={cn("-mx-1 my-1 h-px bg-border-default", className)}
 			{...props}
 		/>
 	);

@@ -16,7 +16,7 @@ const dirname = path.dirname(fileURLToPath(import.meta.url));
 const config: StorybookConfig = {
 	stories: [
 		"../src/stories/*.mdx",
-		"../src/stories/*.stories.@(ts|tsx)",
+		"../src/stories/**/*.stories.@(ts|tsx)",
 		"../src/components/ui/*.stories.@(ts|tsx)",
 	],
 	addons: ["@storybook/addon-docs", "@storybook/addon-a11y", "@storybook/addon-themes"],

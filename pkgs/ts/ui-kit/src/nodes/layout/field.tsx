@@ -42,7 +42,7 @@ function FieldView({ path }: NodeProps) {
 				<Text as="span" size="sm" tone={hasError ? "danger" : "secondary"} weight="medium">
 					{label}
 					{required ? (
-						<span className="text-accent ml-0.5" aria-hidden>
+						<span className="text-accent-text ml-0.5" aria-hidden>
 							*
 						</span>
 					) : null}

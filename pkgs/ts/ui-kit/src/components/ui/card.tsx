@@ -1,7 +1,7 @@
 // Card primitive. Bounded content surface with optional header/footer/action.
 // Design refs:
 //   primitives.md    §Card (compound parts, variants, sizes, states)
-//   palette.md       §2.1 backgrounds, §2.3 borders
+//   palette.md       backgrounds, borders
 //   space-radius.md  §Density Card (pad 12 / 16 / 24, gap 8 / 12 / 16)
 //   motion.md        §3 Button hover row (interactive borrows the same fast+ease-out)
 //   a11y.md          §1 focus-ring for interactive variant
@@ -25,7 +25,7 @@ const cardVariants = cva(
 				default: "bg-bg-surface border border-border-default",
 				elevated:
 					"bg-bg-elevated border border-border-default shadow-sm",
-				sunken: "bg-bg-sunken border border-transparent",
+				sunken: "bg-bg-hover border border-transparent",
 				outline: "bg-transparent border border-border-default",
 			},
 			size: {

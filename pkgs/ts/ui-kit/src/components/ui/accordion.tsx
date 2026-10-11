@@ -1,7 +1,7 @@
 // Accordion primitive. Wraps @radix-ui/react-accordion.
 // Design refs:
 //   primitives.md    §Accordion (compound parts, chevron auto-rotate)
-//   palette.md       §2.1 backgrounds, §2.2 text tiers, §2.3 borders
+//   palette.md       backgrounds, text tiers, borders
 //   space-radius.md  §Density Accordion (header pad-y 12, content pad-top 8)
 //   motion.md        §3 Accordion (content height base + ease-in-out, chevron
 //                     rotate fast + ease-out)
@@ -59,7 +59,7 @@ export function AccordionTrigger({
 					"py-3 text-left text-base font-medium text-text-primary",
 					"cursor-default",
 					"transition-colors duration-fast ease-out",
-					"hover:bg-bg-elevated",
+					"hover:bg-bg-hover",
 					"disabled:pointer-events-none disabled:opacity-50",
 					"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas",
 					"[&_svg]:pointer-events-none [&_svg]:shrink-0",

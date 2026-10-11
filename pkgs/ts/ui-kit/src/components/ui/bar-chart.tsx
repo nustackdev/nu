@@ -81,7 +81,7 @@ export function BarChart({
 					{showTooltip && (
 						<Tooltip
 							content={<ChartTooltipContent />}
-							cursor={{ fill: "var(--accent-wash)" }}
+							cursor={{ fill: "var(--bg-hover)" }}
 						/>
 					)}
 					{showLegend && (

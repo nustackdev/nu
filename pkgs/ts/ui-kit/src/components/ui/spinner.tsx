@@ -17,7 +17,7 @@ const spinnerVariants = cva("inline-block shrink-0 animate-spin", {
 			xl: "size-6", // 24px
 		},
 		tone: {
-			default: "text-accent",
+			default: "text-accent-text",
 			neutral: "text-text-secondary",
 			onSolid: "text-accent-fg",
 			info: "text-status-info",

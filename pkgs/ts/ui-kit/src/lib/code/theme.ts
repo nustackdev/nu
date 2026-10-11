@@ -27,12 +27,12 @@ export const kitTheme = EditorView.theme({
 	},
 	".cm-content": {
 		padding: "12px 0",
-		caretColor: "var(--accent)",
+		caretColor: "var(--accent-text)",
 	},
 	".cm-line": { padding: "0 12px" },
-	".cm-cursor, .cm-dropCursor": { borderLeftColor: "var(--accent)" },
+	".cm-cursor, .cm-dropCursor": { borderLeftColor: "var(--accent-text)" },
 	"&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection":
-		{ backgroundColor: "var(--accent-soft)" },
+		{ backgroundColor: "var(--bg-selection)" },
 	".cm-gutters": {
 		backgroundColor: "transparent",
 		color: "var(--text-muted)",
@@ -41,8 +41,8 @@ export const kitTheme = EditorView.theme({
 	".cm-lineNumbers .cm-gutterElement": { padding: "0 4px 0 12px", minWidth: "28px" },
 	".cm-activeLineGutter": { backgroundColor: "transparent", color: "var(--text-secondary)" },
 	".cm-matchingBracket, &.cm-focused .cm-matchingBracket": {
-		backgroundColor: "var(--accent-wash)",
-		outline: "1px solid var(--accent-line)",
+		backgroundColor: "var(--bg-press)",
+		outline: "1px solid var(--border-strong)",
 	},
 	".cm-nonmatchingBracket": { backgroundColor: "var(--status-danger-wash)" },
 	".cm-searchMatch": {
@@ -50,8 +50,8 @@ export const kitTheme = EditorView.theme({
 		outline: "1px solid var(--status-warn-line)",
 	},
 	".cm-searchMatch.cm-searchMatch-selected": {
-		backgroundColor: "var(--accent-soft)",
-		outline: "1px solid var(--accent-line)",
+		backgroundColor: "var(--bg-selection)",
+		outline: "1px solid var(--status-warn-line)",
 	},
 	".cm-panels": {
 		backgroundColor: "var(--bg-elevated)",
@@ -70,11 +70,11 @@ export const kitTheme = EditorView.theme({
 		fontSize: "var(--text-sm)",
 	},
 	".cm-tooltip-autocomplete ul li[aria-selected]": {
-		backgroundColor: "var(--accent-soft)",
+		backgroundColor: "var(--bg-hover)",
 		color: "var(--text-primary)",
 	},
 	".cm-completionDetail": { color: "var(--text-muted)" },
-	".cm-completionMatchedText": { textDecoration: "none", color: "var(--accent)" },
+	".cm-completionMatchedText": { textDecoration: "none", color: "var(--accent-text)" },
 });
 
 export const kitHighlight = HighlightStyle.define([

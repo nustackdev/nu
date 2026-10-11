@@ -21,6 +21,8 @@ const preview: Preview = {
 					"Docs",
 					["Home", "Tokens", "Typography", "Space", "Motion"],
 					"UI",
+					"Kitchen Sink",
+					["About", "Controls", "Surfaces", "Feedback", "Navigation", "Overlays", "Charts"],
 					"*",
 				],
 			},

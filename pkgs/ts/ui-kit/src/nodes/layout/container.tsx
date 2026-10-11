@@ -25,12 +25,12 @@ const GAP_CLASSES: Record<string, string> = {
 	lg: "gap-6",
 };
 
-// background maps: `accent` (previously a solid) reads better as the accent
-// wash, per palette.md §2.4; solid accents belong on interactive surfaces.
+// background maps: `accent` is a quiet tinted box (the hover wash). Afterglow
+// is never a background; solid accents belong on interactive surfaces.
 const BACKGROUND_CLASSES: Record<string, string> = {
 	none: "",
-	muted: "bg-bg-sunken",
-	accent: "bg-accent-wash",
+	muted: "bg-bg-hover",
+	accent: "bg-bg-hover",
 };
 
 const SHADOW_CLASSES: Record<string, string> = {

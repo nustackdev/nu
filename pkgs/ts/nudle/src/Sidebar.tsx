@@ -6,8 +6,8 @@
 // emits a notify so `App.nav.on_change()` subscribers on the server see it.
 // Same two steps the old mount-payload version did, minus the payload.
 
-import type { ReactNode } from "react";
-import { NavLink, tree, useStringProp } from "@nustackdev/ui-kit";
+import { type ReactNode, useMemo, useRef } from "react";
+import { Tree, TreeItem, type TreeItemState, type TreeSource, tree, useStringProp } from "@nustackdev/ui-kit";
 import { OPS } from "@nustackdev/ui-core";
 import { useNavSegment } from "./router";
 
@@ -18,35 +18,25 @@ type Props = {
 	footer?: ReactNode;
 };
 
-function PageLink({
-	segment,
-	active,
-	onGo,
-}: {
-	segment: string;
-	active: boolean;
-	onGo: (route: string) => void;
-}) {
+// The pages are a flat tree: every page is a root, nothing folds. The kit's
+// Tree gives the rows, the keyboard and the selected wash the same as
+// nuspace's sidebar.
+const NOTHING_OPEN: ReadonlySet<string> = new Set();
+const noFold = () => {};
+
+function PageItem({ item, routes }: { item: TreeItemState; routes: Map<string, string> }) {
+	const segment = item.row.key;
 	const route = useStringProp([segment], "route", `/${segment}`);
 	const label = useStringProp([segment], "label", segment);
-	return (
-		<NavLink
-			size="sm"
-			active={active}
-			onClick={(e) => {
-				e.preventDefault();
-				onGo(route);
-			}}
-			href={route}
-			className="justify-start w-full"
-		>
-			{label}
-		</NavLink>
-	);
+	routes.set(segment, route);
+	return <TreeItem item={item} title={label} />;
 }
 
 export function Sidebar({ appName, pages, active, footer }: Props) {
 	const nav = useNavSegment();
+
+	const routes = useRef(new Map<string, string>()).current;
+	const source = useMemo<TreeSource>(() => ({ roots: pages, childrenOf: () => [] }), [pages]);
 
 	const go = (route: string) => {
 		if (!nav) return;
@@ -58,18 +48,25 @@ export function Sidebar({ appName, pages, active, footer }: Props) {
 	};
 
 	return (
-		<aside className="w-52 shrink-0 border-r border-border-default bg-bg-sunken flex flex-col">
-			<div className="px-4 py-4 border-b border-border-default">
-				<span className="text-xs text-text-muted font-mono uppercase tracking-wider">
+		<aside className="w-60 shrink-0 border-r border-border-subtle bg-bg-sunken flex flex-col">
+			<div className="px-4 pt-4 pb-2">
+				<span className="text-sm font-semibold text-text-primary">
 					{appName}
 				</span>
 			</div>
-			<nav className="flex-1 overflow-y-auto p-2 flex flex-col gap-0.5">
-				{pages.map((segment) => (
-					<PageLink key={segment} segment={segment} active={segment === active} onGo={go} />
-				))}
+			<nav className="flex-1 overflow-y-auto p-2">
+				<Tree
+					aria-label="Pages"
+					source={source}
+					expanded={NOTHING_OPEN}
+					onToggle={noFold}
+					selectedKey={active}
+					onSelect={(key) => go(routes.get(key) ?? `/${key}`)}
+					selectionFollowsFocus={false}
+					renderItem={(item) => <PageItem item={item} routes={routes} />}
+				/>
 			</nav>
-			{footer ? <div className="px-4 py-3 border-t border-border-default">{footer}</div> : null}
+			{footer ? <div className="px-4 py-3">{footer}</div> : null}
 		</aside>
 	);
 }

@@ -2,7 +2,7 @@
 //
 // Design refs:
 //   primitives.md    §StatusPill (variants danger/warn/ok/info/neutral)
-//   palette.md       §2.6 status wash/line/fg
+//   palette.md       status wash/line/fg
 //   space-radius.md  §Density StatusPill (radius full, pad tight)
 //   a11y.md          §7 icon paired with color for color-blind safety
 //

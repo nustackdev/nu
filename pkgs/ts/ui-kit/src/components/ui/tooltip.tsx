@@ -1,7 +1,7 @@
 // Tooltip primitive: hover/focus hint anchored to a trigger.
 // Design refs:
 //   primitives.md    §Tooltip (parts, sizes, motion)
-//   palette.md       §2.1 backgrounds (bg-bg-elevated)
+//   palette.md       backgrounds (bg-bg-elevated)
 //   space-radius.md  §Density Tooltip (pad 4x8, radius `sm`, text-xs)
 //   motion.md        §3 Tooltip (`duration-base` fade+scale-96)
 //   a11y.md          §3 Tooltip (trigger-focus opens, Esc dismisses)
@@ -109,7 +109,7 @@ function TooltipContent({
 				sideOffset={sideOffset}
 				className={cn(
 					"z-50 max-w-xs px-2 py-1 rounded-sm",
-					"bg-bg-elevated text-text-primary border border-border-subtle shadow-sm",
+					"bg-bg-elevated text-text-primary border border-border-default shadow-sm",
 					"text-xs leading-tight",
 					"data-[state=delayed-open]:animate-in data-[state=closed]:animate-out",
 					"data-[state=delayed-open]:fade-in-0 data-[state=closed]:fade-out-0",

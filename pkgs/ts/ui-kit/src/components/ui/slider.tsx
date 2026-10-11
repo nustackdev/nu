@@ -66,7 +66,7 @@ export function Slider({
 			<SliderPrimitive.Track
 				data-slot="slider-track"
 				className={cn(
-					"relative grow overflow-hidden rounded-full bg-bg-sunken",
+					"relative grow overflow-hidden rounded-full bg-bg-press",
 					sliderTrackSizes[size ?? "md"],
 				)}
 			>

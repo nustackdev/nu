@@ -46,7 +46,7 @@ function Image({
 			data-slot="image"
 			alt={alt}
 			className={cn(
-				"block max-w-full bg-bg-sunken",
+				"block max-w-full bg-bg-hover",
 				RADIUS_CLASS[radius],
 				FIT_CLASS[fit],
 				className,

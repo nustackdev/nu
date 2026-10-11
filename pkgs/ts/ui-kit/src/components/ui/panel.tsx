@@ -1,7 +1,7 @@
 // Panel primitive. Toolbar-flavored container, denser than Card.
 // Design refs:
 //   primitives.md    §Panel (compound parts, variants)
-//   palette.md       §2.1 backgrounds, §2.3 borders
+//   palette.md       backgrounds, borders
 //   space-radius.md  §Density Panel (denser than Card: pad 8 / 12 / 16)
 //
 // Typical hosts: nudle right-side inspector, sidebar filters, toolbars. Cards
@@ -18,7 +18,7 @@ const panelVariants = cva("flex flex-col rounded-lg", {
 	variants: {
 		variant: {
 			default: "bg-bg-surface border border-border-default",
-			sunken: "bg-bg-sunken border border-transparent",
+			sunken: "bg-bg-hover border border-transparent",
 			elevated:
 				"bg-bg-elevated border border-border-default shadow-sm",
 		},

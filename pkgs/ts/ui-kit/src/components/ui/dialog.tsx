@@ -1,7 +1,7 @@
 // Dialog primitive: modal surface with backdrop scrim, focus-trap, Esc-to-close.
 // Design refs:
 //   primitives.md    §Dialog (parts, sizes, states)
-//   palette.md       §2.1 backgrounds (`bg-bg-elevated`, `bg-bg-overlay`)
+//   palette.md       backgrounds (`bg-bg-elevated`, `bg-bg-overlay`)
 //   space-radius.md  §Density Dialog (pad 24, radius `lg`)
 //   motion.md        §3 Dialog (overlay + content: `duration-slow` fade+scale)
 //   a11y.md          §3 Dialog (focus trap, Esc, focus restore)

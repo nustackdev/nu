@@ -1,10 +1,12 @@
 /* =============================================================================
  * Nustack UI kit tokens.
  *
- * Layer 1  primitives         raw 12-step hex scales (purple, blue, red,
- *                             yellow, green, blue-info, gray)
- * Layer 2  semantic (:root)   role tokens for LIGHT theme
- * Layer 2  semantic (.dark)   same names remapped for DARK theme
+ * Layer 1  language tokens    the nustack color language: ground, line, ink,
+ *                             Afterglow, Starlight, aurora / sunset / ember /
+ *                             moonlight, chart slots and ramps. Paper
+ *                             (light) on :root, Dusk (dark) on .dark
+ * Layer 2  kit roles          role names components use, same names in both
+ *                             themes, mapped onto layer 1
  * Layer 3  @theme inline      exposes semantic + typography + spacing +
  *                             radius + motion tokens as Tailwind v4 utility
  *                             names (bg-canvas, text-primary, ring, ...).
@@ -13,12 +15,13 @@
  * Rule: every primitive imports via the Tailwind utility name generated from
  * layer 3. Layer 1 hexes live here and nowhere else.
  *
- * Source docs (do not paraphrase without re-reading):
- *   progress/tasks/task-123-nu-ui-reorg/design/palette.md
- *   progress/tasks/task-123-nu-ui-reorg/design/typography.md
- *   progress/tasks/task-123-nu-ui-reorg/design/space-radius.md
- *   progress/tasks/task-123-nu-ui-reorg/design/motion.md
- *   progress/tasks/task-123-nu-ui-reorg/design/a11y.md
+ * Source docs, in Go (do not paraphrase without re-reading):
+ *   projects/nustackdev/design/language/color.md     values, both themes
+ *   projects/nustackdev/design/systems/kit/palette.md role to token map
+ *   projects/nustackdev/design/systems/kit/typography.md
+ *   projects/nustackdev/design/systems/kit/space-radius.md
+ *   projects/nustackdev/design/systems/kit/motion.md
+ *   projects/nustackdev/design/systems/kit/a11y.md
  *
  * No `@import "tailwindcss"` here: the host brings it. dist/styles.css is
  * built from ./styles.entry.css, Storybook from .storybook/preview.css.
@@ -89,188 +92,260 @@
 	src: url("../fonts/JetBrainsMono-Bold.woff2") format("woff2");
 }
 
-/* ============================== L1: primitives ============================
- * 12-step scales. Anchor at step 500. Step 25 is included per palette.md but
- * rarely referenced by hand (color-mix produces most washes).
+/* ============================== L1: language tokens =======================
+ * The nustack color language, both themes. Names and values come from the
+ * Go design docs (language/color.md) and only live here. Paper (light)
+ * on :root, Dusk (dark) on .dark: same names, tuned per theme.
+ * Components never reach for these; they go through the L2 roles below.
  * ==========================================================================*/
 :root {
-	/* purple: primary identity, anchor #7a4ce0 */
-	--purple-25:  #faf7ff;
-	--purple-50:  #f4efff;
-	--purple-100: #e6dbff;
-	--purple-200: #cdb6ff;
-	--purple-300: #b490ff;
-	--purple-400: #9a6dff;
-	--purple-500: #7a4ce0;
-	--purple-600: #6a3fc7;
-	--purple-700: #5732a3;
-	--purple-800: #43277f;
-	--purple-900: #2b1857;
-	--purple-950: #180a3a;
+	/* ground: Paper, white with the faintest cool lean (hue 264, chroma
+	 * 0.003). The document, cards and menus are pure white. */
+	--ground-deep:            #f7f8fa;
+	--ground:                 #f9fafc;
+	--ground-raised:          #ffffff;
+	--ground-card:            #ffffff;
+	--ground-overlay:         #ffffff;
+	--ground-hover:           #f1f2f4;
 
-	/* blue: secondary identity, anchor #3e72e7 */
-	--blue-25:  #f7faff;
-	--blue-50:  #eaf1fe;
-	--blue-100: #d0defc;
-	--blue-200: #a3befa;
-	--blue-300: #769df3;
-	--blue-400: #557fed;
-	--blue-500: #3e72e7;
-	--blue-600: #3260c8;
-	--blue-700: #294fa4;
-	--blue-800: #1f3d80;
-	--blue-900: #142857;
-	--blue-950: #0a1735;
+	/* lines */
+	--line-subtle:            #e5e6e8;
+	--line:                   #d9dadc;
+	--line-strong:            #b3b4b6;
 
-	/* red: status danger, anchor #e5484d */
-	--red-25:  #fef7f7;
-	--red-50:  #fdecec;
-	--red-100: #fbd7d8;
-	--red-200: #f7a8a9;
-	--red-300: #f0797b;
-	--red-400: #e95d5f;
-	--red-500: #e5484d;
-	--red-600: #cf3438;
-	--red-700: #a82a2e;
-	--red-800: #7f2124;
-	--red-900: #4d1315;
-	--red-950: #2a090a;
+	/* ink: near black, the same faint cool lean */
+	--ink-1:                  #1a1d24;
+	--ink-2:                  #4e5158;
+	--ink-3:                  #6a6d74;
+	--ink-4:                  #8a8e94;
+	--ink-twilight:           #5758af;
 
-	/* yellow: status warning, anchor #f5b125 */
-	--yellow-25:  #fefaf0;
-	--yellow-50:  #fdf3d9;
-	--yellow-100: #fce4a6;
-	--yellow-200: #f9d072;
-	--yellow-300: #f7c04c;
-	--yellow-400: #f6b736;
-	--yellow-500: #f5b125;
-	--yellow-600: #d99716;
-	--yellow-700: #a97613;
-	--yellow-800: #7d5610;
-	--yellow-900: #4b3308;
-	--yellow-950: #291b04;
+	/* Afterglow Violet: the primary. Hover and pressed go darker in light. */
+	--afterglow:              #8946db;
+	--afterglow-hover:        #7f3ccd;
+	--afterglow-pressed:      #7335bc;
+	--afterglow-ring:         #6e34b3;
+	--afterglow-text:         #7638c0;
+	--afterglow-soft:         #ede5fe;
 
-	/* green: status ok, anchor #21d08b */
-	--green-25:  #f0fbf6;
-	--green-50:  #d3f5e5;
-	--green-100: #a3ecc9;
-	--green-200: #6fdead;
-	--green-300: #45d095;
-	--green-400: #2ac788;
-	--green-500: #21d08b;
-	--green-600: #1baa73;
-	--green-700: #17845c;
-	--green-800: #106044;
-	--green-900: #093a29;
-	--green-950: #051f16;
+	/* Starlight Blue: the accent */
+	--starlight:              #1e63b8;
+	--starlight-soft:         #ddebfe;
 
-	/* blue-info: status info, anchor #3b82f6 (split from accent-2) */
-	--blue-info-25:  #f5f9ff;
-	--blue-info-50:  #e7f0ff;
-	--blue-info-100: #cddffe;
-	--blue-info-200: #a4c2fd;
-	--blue-info-300: #7ba3fb;
-	--blue-info-400: #588cf7;
-	--blue-info-500: #3b82f6;
-	--blue-info-600: #2a6ee0;
-	--blue-info-700: #1f57b5;
-	--blue-info-800: #17418a;
-	--blue-info-900: #0f2b5a;
-	--blue-info-950: #071630;
+	/* secondary states: color, soft, soft-hover, line */
+	--aurora:                 #00713f;
+	--aurora-soft:            #ddf6e4;
+	--aurora-soft-hover:      #cff0d9;
+	--aurora-line:            #a4dab5;
 
-	/* gray: cool neutral, no single anchor */
-	--gray-0:    #ffffff;
-	--gray-50:   #f7f7f9;
-	--gray-100:  #eeeef2;
-	--gray-200:  #d9d9e0;
-	--gray-300:  #b3b3bf;
-	--gray-400:  #8c8c99;
-	--gray-500:  #666672;
-	--gray-600:  #47474f;
-	--gray-700:  #2d2d33;
-	--gray-800:  #1c1c20;
-	--gray-900:  #121216;
-	--gray-1000: #0a0a0d;
+	--sunset:                 #8d5401;
+	--sunset-soft:            #ffeed4;
+	--sunset-soft-hover:      #fbe4c2;
+	--sunset-line:            #efc68f;
+	--sunset-solid:           #f5a939;
+
+	--ember:                  #bb262c;
+	--ember-soft:             #fee9e7;
+	--ember-soft-hover:       #fededb;
+	--ember-line:             #f5b9b4;
+
+	--moonlight:              #03698e;
+	--moonlight-soft:         #ddf2fe;
+	--moonlight-soft-hover:   #cfebfb;
+	--moonlight-line:         #a4d2eb;
+
+	/* destructive fill, white label */
+	--ember-solid:            #bb262c;
+	--ember-solid-hover:      #ae1b24;
+	--ember-solid-pressed:    #a0171f;
+	--ember-solid-ring:       #94151d;
+
+	/* chart slots, use in order */
+	--cobalt:                 #0268a7;
+	--saffron:                #a67e1b;
+	--orchid:                 #973069;
+	--glacier:                #2692b3;
+	--terracotta:             #ae391b;
+	--lagoon:                 #1c9480;
+	--iris:                   #5d43ac;
+	--apricot:                #cb6f1d;
+
+	/* sequential ramp, Tide, low to high */
+	--tide-1:                 #acedf5;
+	--tide-2:                 #68d6ea;
+	--tide-3:                 #24bbdb;
+	--tide-4:                 #1d9cc0;
+	--tide-5:                 #157fa4;
+	--tide-6:                 #146387;
+	--tide-7:                 #29475c;
+
+	/* diverging ramp, cobalt to apricot, never red and green */
+	--diverging-1:            #1666aa;
+	--diverging-2:            #5e97cd;
+	--diverging-3:            #a2c6e6;
+	--diverging-4:            #dde0e5;
+	--diverging-5:            #e2b793;
+	--diverging-6:            #ca7d44;
+	--diverging-7:            #9c470e;
 }
 
-/* ============================== L2: semantic (light) ======================
- * Role tokens. VSCode-shaped: role names describe intent, hex is per theme.
+.dark {
+	/* ground: Dusk, hue 264 at half the brand's chroma (0.014 to 0.018).
+	 * Lightness climbs in even steps. */
+	--ground-deep:            #13161d;
+	--ground:                 #15181f;
+	--ground-raised:          #191c24;
+	--ground-card:            #1e222a;
+	--ground-overlay:         #232730;
+	--ground-hover:           #282d36;
+
+	/* lines */
+	--line-subtle:            #232831;
+	--line:                   #2d323d;
+	--line-strong:            #444a57;
+
+	/* ink: a faint tint of the ground */
+	--ink-1:                  #eceef4;
+	--ink-2:                  #bcc1cc;
+	--ink-3:                  #9ba2ae;
+	--ink-4:                  #777d8a;
+	--ink-twilight:           #abb2e3;
+
+	/* Afterglow Violet: the fill is the same in both themes */
+	--afterglow:              #8946db;
+	--afterglow-hover:        #9256e2;
+	--afterglow-pressed:      #7a3dc5;
+	--afterglow-ring:         #6d37ae;
+	--afterglow-text:         #cbaeff;
+	--afterglow-soft:         #3e2a5d;
+
+	/* Starlight Blue */
+	--starlight:              #8cbcff;
+	--starlight-soft:         #1e3457;
+
+	/* secondary states */
+	--aurora:                 #65d391;
+	--aurora-soft:            #153522;
+	--aurora-soft-hover:      #194029;
+	--aurora-line:            #1f613c;
+
+	--sunset:                 #f4b353;
+	--sunset-soft:            #3f2b0d;
+	--sunset-soft-hover:      #4a330f;
+	--sunset-line:            #714d14;
+	--sunset-solid:           #f4b353;
+
+	--ember:                  #ff8781;
+	--ember-soft:             #47201f;
+	--ember-soft-hover:       #542725;
+	--ember-line:             #813937;
+
+	--moonlight:              #6fc7f2;
+	--moonlight-soft:         #0b3345;
+	--moonlight-soft-hover:   #0c3d52;
+	--moonlight-line:         #185b78;
+
+	/* destructive fill: hover goes lighter in dark */
+	--ember-solid:            #c72c34;
+	--ember-solid-hover:      #d2383d;
+	--ember-solid-pressed:    #b71f2a;
+	--ember-solid-ring:       #a01722;
+
+	/* chart slots */
+	--cobalt:                 #3392db;
+	--saffron:                #efc558;
+	--orchid:                 #d36c9d;
+	--glacier:                #76e4f7;
+	--terracotta:             #de6f53;
+	--lagoon:                 #58dec1;
+	--iris:                   #9887e8;
+	--apricot:                #faba80;
+
+	/* sequential ramp, Tide */
+	--tide-1:                 #193a48;
+	--tide-2:                 #1e5668;
+	--tide-3:                 #1d7588;
+	--tide-4:                 #1b95a7;
+	--tide-5:                 #24b6c4;
+	--tide-6:                 #4fd6dc;
+	--tide-7:                 #74f6f4;
+
+	/* diverging ramp */
+	--diverging-1:            #60b1fb;
+	--diverging-2:            #4a8bc5;
+	--diverging-3:            #3d678c;
+	--diverging-4:            #3e4044;
+	--diverging-5:            #825934;
+	--diverging-6:            #b97340;
+	--diverging-7:            #e89265;
+}
+
+/* ============================== L2: kit roles =============================
+ * Role tokens, mapped per Go design/systems/kit/palette.md. Declared on both
+ * :root and .dark so a .dark subtree resolves them against its own L1 values.
+ * The few roles that point at different language tokens per theme follow in
+ * the per-theme blocks below.
  * ==========================================================================*/
-:root {
-	/* What the browser paints for itself: scrollbars, form controls, the
-	 * caret, the canvas behind an overscroll. Those are chrome, not tokens,
-	 * so no variable below reaches them and they stay light until this says
-	 * otherwise. Declared per theme beside the tokens rather than once at the
-	 * top, because it flips with them and is the same kind of fact. */
-	color-scheme: light;
-
+:root,
+.dark {
 	/* backgrounds */
-	--bg-canvas:              var(--gray-50);
-	--bg-surface:             var(--gray-0);
-	--bg-elevated:            var(--gray-0);
-	--bg-sunken:              var(--gray-100);
-	--bg-overlay:             rgba(15, 15, 20, 0.55);
+	--bg-canvas:              var(--ground);
+	--bg-surface:             var(--ground-card);
+	--bg-elevated:            var(--ground-overlay);
+	--bg-sunken:              var(--ground-deep);
 
-	/* text; text-primary bumped brighter per palette.md §3 */
-	--text-primary:           var(--gray-900);
-	--text-secondary:         var(--gray-600);
-	--text-muted:             var(--gray-500);
-	--text-inverse:           var(--gray-0);
+	/* text */
+	--text-primary:           var(--ink-1);
+	--text-secondary:         var(--ink-2);
+	--text-muted:             var(--ink-3);
+	--text-inverse:           #ffffff;
 
-	/* borders */
-	--border-subtle:          var(--gray-100);
-	--border-default:         var(--gray-200);
-	--border-strong:          var(--gray-300);
+	/* borders: solid tinted lines in both themes */
+	--border-subtle:          var(--line-subtle);
+	--border-default:         var(--line);
+	--border-strong:          var(--line-strong);
 
-	/* accent (purple primary) */
-	--accent:                 var(--purple-500);
-	--accent-fg:              var(--gray-0);
-	--accent-wash:            color-mix(in oklab, var(--purple-500) 8%,  transparent);
-	--accent-soft:            color-mix(in oklab, var(--purple-500) 18%, transparent);
-	--accent-line:            color-mix(in oklab, var(--purple-500) 42%, transparent);
-	--accent-hover:           var(--purple-600);
+	/* accent: Afterglow Violet. Fill as text fails on dark, so text and
+	 * icons use accent-text. */
+	--accent:                 var(--afterglow);
+	--accent-hover:           var(--afterglow-hover);
+	--accent-pressed:         var(--afterglow-pressed);
+	--accent-fg:              #ffffff;
+	--accent-text:            var(--afterglow-text);
+	--accent-soft:            var(--afterglow-soft);
+	--accent-line:            color-mix(in oklab, var(--afterglow) 44%, transparent);
 
-	/* accent-2 (blue secondary) */
-	--accent-2:               var(--blue-500);
-	--accent-2-fg:            var(--gray-0);
-	--accent-2-wash:          color-mix(in oklab, var(--blue-500) 8%,  transparent);
-	--accent-2-soft:          color-mix(in oklab, var(--blue-500) 18%, transparent);
-	--accent-2-line:          color-mix(in oklab, var(--blue-500) 42%, transparent);
-	--accent-2-hover:         var(--blue-600);
+	/* accent-2: Starlight Blue */
+	--accent-2:               var(--starlight);
+	--accent-2-soft:          var(--starlight-soft);
+	--accent-2-wash:          var(--starlight-soft);
+	--accent-2-line:          color-mix(in oklab, var(--starlight) 44%, transparent);
+	--accent-2-hover:         color-mix(in oklab, var(--starlight) 70%, var(--ink-1));
 
-	/* status danger */
-	--status-danger:          var(--red-500);
-	--status-danger-fg:       var(--gray-0);
-	--status-danger-wash:     color-mix(in oklab, var(--red-500) 10%, transparent);
-	--status-danger-line:     color-mix(in oklab, var(--red-500) 40%, transparent);
+	/* status: color is text and icons, wash is the soft fill, line borders it */
+	--status-ok:              var(--aurora);
+	--status-ok-wash:         var(--aurora-soft);
+	--status-ok-line:         var(--aurora-line);
 
-	/* status warn; dark ink on fill because yellow can't hold white text */
-	--status-warn:            var(--yellow-500);
-	--status-warn-fg:         var(--yellow-950);
-	--status-warn-wash:       color-mix(in oklab, var(--yellow-500) 10%, transparent);
-	--status-warn-line:       color-mix(in oklab, var(--yellow-500) 40%, transparent);
+	--status-warn:            var(--sunset);
+	--status-warn-wash:       var(--sunset-soft);
+	--status-warn-line:       var(--sunset-line);
 
-	/* status ok; dark ink on fill for the same reason as warn */
-	--status-ok:              var(--green-500);
-	--status-ok-fg:           var(--green-950);
-	--status-ok-wash:         color-mix(in oklab, var(--green-500) 10%, transparent);
-	--status-ok-line:         color-mix(in oklab, var(--green-500) 40%, transparent);
+	--status-danger:          var(--ember);
+	--status-danger-wash:     var(--ember-soft);
+	--status-danger-line:     var(--ember-line);
 
-	/* status info */
-	--status-info:            var(--blue-info-500);
-	--status-info-fg:         var(--gray-0);
-	--status-info-wash:       color-mix(in oklab, var(--blue-info-500) 10%, transparent);
-	--status-info-line:       color-mix(in oklab, var(--blue-info-500) 40%, transparent);
+	--status-info:            var(--moonlight);
+	--status-info-wash:       var(--moonlight-soft);
+	--status-info-line:       var(--moonlight-line);
+
+	/* destructive fill, white label (text-inverse) */
+	--status-danger-solid:         var(--ember-solid);
+	--status-danger-solid-hover:   var(--ember-solid-hover);
+	--status-danger-solid-pressed: var(--ember-solid-pressed);
 
 	/* focus ring */
-	--ring:                   var(--purple-500);
-
-	/* tree rows (components/ui/tree.tsx): neutral washes mixed from the text
-	 * color, so a tree reads on any surface. Hover, a highlighted row (eg
-	 * open elsewhere), the selected row, strongest. */
-	--tree-hover:             color-mix(in oklab, var(--text-primary) 5%, transparent);
-	--tree-highlight:         color-mix(in oklab, var(--text-primary) 3%, transparent);
-	--tree-selected:          color-mix(in oklab, var(--text-primary) 7%, transparent);
+	--ring:                   var(--afterglow-text);
 
 	/* tree geometry. One left edge per depth: pad + depth * indent, then the
 	 * icon lane, then the title. An app retunes a tree by overriding these. */
@@ -282,123 +357,100 @@
 	--tree-gap:               0.375rem;  /* 6   lane to title */
 	--tree-indent:            1rem;      /* 16  per level */
 
-	/* chart categorical palette (8 slots) picks from the anchors + tuned
-	 * extras. Ordered so the first 4 read as accent, accent-2, ok, warn for
-	 * the common up-to-4-series case. */
-	--chart-1: var(--purple-500);
-	--chart-2: var(--blue-500);
-	--chart-3: var(--green-500);
-	--chart-4: var(--yellow-500);
-	--chart-5: var(--red-500);
-	--chart-6: var(--blue-info-500);
-	--chart-7: #d946ef;
-	--chart-8: #14b8a6;
+	/* chart categorical: the language slots, in order. Their own set, a blue
+	 * in a chart is not Starlight. */
+	--chart-1:                var(--cobalt);
+	--chart-2:                var(--saffron);
+	--chart-3:                var(--orchid);
+	--chart-4:                var(--glacier);
+	--chart-5:                var(--terracotta);
+	--chart-6:                var(--lagoon);
+	--chart-7:                var(--iris);
+	--chart-8:                var(--apricot);
+
+	/* chart sequential (Tide) and diverging ramps, low to high */
+	--chart-seq-1:            var(--tide-1);
+	--chart-seq-2:            var(--tide-2);
+	--chart-seq-3:            var(--tide-3);
+	--chart-seq-4:            var(--tide-4);
+	--chart-seq-5:            var(--tide-5);
+	--chart-seq-6:            var(--tide-6);
+	--chart-seq-7:            var(--tide-7);
+
+	--chart-div-1:            var(--diverging-1);
+	--chart-div-2:            var(--diverging-2);
+	--chart-div-3:            var(--diverging-3);
+	--chart-div-4:            var(--diverging-4);
+	--chart-div-5:            var(--diverging-5);
+	--chart-div-6:            var(--diverging-6);
+	--chart-div-7:            var(--diverging-7);
 
 	/* syntax: what a code view colors by role. Eight roles and no more, so
-	 * code reads as text with a few accents rather than a fruit salad. Ink
-	 * steps sit one or two darker than the anchors to hold contrast on a
-	 * sunken surface. */
-	--syntax-keyword:         var(--purple-600);
-	--syntax-string:          var(--green-700);
-	--syntax-constant:        var(--blue-600);
-	--syntax-function:        var(--blue-700);
-	--syntax-type:            var(--yellow-800);
-	--syntax-meta:            var(--yellow-700);
-	--syntax-comment:         var(--text-muted);
-	--syntax-punct:           var(--text-secondary);
+	 * code reads as text with a few accents rather than a fruit salad. */
+	--syntax-keyword:         var(--afterglow-text);
+	--syntax-string:          var(--aurora);
+	--syntax-constant:        var(--starlight);
+	--syntax-function:        var(--starlight);
+	--syntax-type:            var(--sunset);
+	--syntax-meta:            var(--sunset);
+	--syntax-comment:         var(--ink-3);
+	--syntax-punct:           var(--ink-2);
 }
 
-/* ============================== L2: semantic (dark) =======================
- * Same role names, per-theme hex. Alpha whites on borders so they compose
- * over any elevated surface (Linear technique).
- * ==========================================================================*/
+/* ============================== L2: light (Paper) ========================= */
+:root {
+	/* What the browser paints for itself: scrollbars, form controls, the
+	 * caret, the canvas behind an overscroll. Those are chrome, not tokens,
+	 * so no variable reaches them. Declared per theme because it flips with
+	 * the tokens. */
+	color-scheme: light;
+
+	--bg-overlay:             color-mix(in oklab, var(--ink-1) 24%, transparent);
+
+	/* one hover and one press for every surface: a wash of ink, so it shares
+	 * the ground's tint, reads on any surface and stacks (a chevron hovered
+	 * on a hovered row still shows). Never a hue. */
+	--bg-hover:               color-mix(in oklab, var(--ink-1) 5%, transparent);
+	--bg-press:               color-mix(in oklab, var(--ink-1) 9%, transparent);
+	/* selected text and cells: a Starlight tint, the one hue a selection may carry */
+	--bg-selection:           color-mix(in oklab, var(--starlight) 18%, transparent);
+
+	/* labels on solid fills */
+	--accent-2-fg:            #ffffff;
+	--status-ok-fg:           var(--ground-overlay);
+	--status-warn-fg:         var(--ink-1);
+	--status-danger-fg:       var(--ground-overlay);
+	--status-info-fg:         var(--ground-overlay);
+
+	/* tree rows (components/ui/tree.tsx): ground steps like every other
+	 * hover. Hover, a highlighted row (eg open elsewhere), the selected row. */
+	--tree-hover:             var(--bg-hover);
+	--tree-highlight:         color-mix(in oklab, var(--bg-hover) 50%, transparent);
+	--tree-selected:          var(--bg-press);
+}
+
+/* ============================== L2: dark (Dusk) =========================== */
 .dark {
-	/* See :root. This is the half that was missing: a dark page with a white
-	 * scrollbar down the side of it. */
+	/* See :root. Without it a dark page gets a white scrollbar. */
 	color-scheme: dark;
 
-	/* backgrounds */
-	--bg-canvas:              var(--gray-1000);
-	--bg-surface:             var(--gray-800);
-	--bg-elevated:            var(--gray-700);
-	--bg-sunken:              #06060a;
-	--bg-overlay:             rgba(0, 0, 0, 0.65);
+	--bg-overlay:             color-mix(in oklab, var(--ground-deep) 65%, transparent);
 
-	/* text; primary bumped from #f5f5f9 to #f9fafc (18.85:1 on canvas) */
-	--text-primary:           #f9fafc;
-	--text-secondary:         #c2c4cd;
-	--text-muted:             #85878f;
-	--text-inverse:           var(--gray-900);
+	/* hover and press washes, a little stronger on a dark ground */
+	--bg-hover:               color-mix(in oklab, var(--ink-1) 7%, transparent);
+	--bg-press:               color-mix(in oklab, var(--ink-1) 11%, transparent);
+	--bg-selection:           color-mix(in oklab, var(--starlight) 24%, transparent);
 
-	/* borders */
-	--border-subtle:          rgba(255, 255, 255, 0.06);
-	--border-default:         rgba(255, 255, 255, 0.10);
-	--border-strong:          rgba(255, 255, 255, 0.18);
+	/* labels on solid fills */
+	--accent-2-fg:            var(--ground);
+	--status-ok-fg:           var(--ground-deep);
+	--status-warn-fg:         var(--ground-deep);
+	--status-danger-fg:       var(--ground-deep);
+	--status-info-fg:         var(--ground-deep);
 
-	/* accent lifts to a tuned purple-400 sibling on dark canvas */
-	--accent:                 #a684ff;
-	--accent-fg:              var(--gray-1000);
-	--accent-wash:            color-mix(in oklab, #a684ff 12%, transparent);
-	--accent-soft:            color-mix(in oklab, #a684ff 22%, transparent);
-	--accent-line:            color-mix(in oklab, #a684ff 44%, transparent);
-	--accent-hover:           #b89bff;
-
-	/* accent-2 lifts by the same amount */
-	--accent-2:               #6b96f2;
-	--accent-2-fg:            var(--gray-1000);
-	--accent-2-wash:          color-mix(in oklab, #6b96f2 12%, transparent);
-	--accent-2-soft:          color-mix(in oklab, #6b96f2 22%, transparent);
-	--accent-2-line:          color-mix(in oklab, #6b96f2 44%, transparent);
-	--accent-2-hover:         #85a8f5;
-
-	/* status: one step lighter for lift-on-canvas */
-	--status-danger:          var(--red-300);
-	--status-danger-fg:       var(--red-950);
-	--status-danger-wash:     color-mix(in oklab, var(--red-300) 12%, transparent);
-	--status-danger-line:     color-mix(in oklab, var(--red-300) 40%, transparent);
-
-	--status-warn:            var(--yellow-300);
-	--status-warn-fg:         var(--yellow-950);
-	--status-warn-wash:       color-mix(in oklab, var(--yellow-300) 12%, transparent);
-	--status-warn-line:       color-mix(in oklab, var(--yellow-300) 40%, transparent);
-
-	--status-ok:              var(--green-300);
-	--status-ok-fg:           var(--green-950);
-	--status-ok-wash:         color-mix(in oklab, var(--green-300) 12%, transparent);
-	--status-ok-line:         color-mix(in oklab, var(--green-300) 40%, transparent);
-
-	--status-info:            var(--blue-info-300);
-	--status-info-fg:         var(--blue-info-950);
-	--status-info-wash:       color-mix(in oklab, var(--blue-info-300) 12%, transparent);
-	--status-info-line:       color-mix(in oklab, var(--blue-info-300) 40%, transparent);
-
-	/* focus ring lifts with accent */
-	--ring:                   #a684ff;
-
-	/* tree washes step up a little to read on a dark canvas */
-	--tree-hover:             color-mix(in oklab, var(--text-primary) 6%, transparent);
-	--tree-highlight:         color-mix(in oklab, var(--text-primary) 4%, transparent);
-	--tree-selected:          color-mix(in oklab, var(--text-primary) 9%, transparent);
-
-	/* chart palette: lift each slot one step for dark canvas legibility */
-	--chart-1: #a684ff;
-	--chart-2: #6b96f2;
-	--chart-3: var(--green-300);
-	--chart-4: var(--yellow-300);
-	--chart-5: var(--red-300);
-	--chart-6: var(--blue-info-300);
-	--chart-7: #e879f9;
-	--chart-8: #2dd4bf;
-
-	/* syntax: the light steps would sink into a dark canvas, so each lifts */
-	--syntax-keyword:         #a684ff;
-	--syntax-string:          var(--green-300);
-	--syntax-constant:        var(--blue-300);
-	--syntax-function:        var(--blue-200);
-	--syntax-type:            var(--yellow-200);
-	--syntax-meta:            var(--yellow-300);
-	--syntax-comment:         var(--text-muted);
-	--syntax-punct:           var(--text-secondary);
+	--tree-hover:             var(--bg-hover);
+	--tree-highlight:         color-mix(in oklab, var(--bg-hover) 50%, transparent);
+	--tree-selected:          var(--bg-press);
 }
 
 /* ============================== base ====================================== */
@@ -485,7 +537,7 @@ body {
  * are tinted as a block; the text selection inside them would only be noise,
  * so ProseMirror hides it and this draws the cells instead. */
 .nu-prose-editor .selectedCell {
-	background-color: var(--accent-soft);
+	background-color: var(--bg-selection);
 }
 .nu-prose-editor.ProseMirror-hideselection *::selection {
 	background: transparent;

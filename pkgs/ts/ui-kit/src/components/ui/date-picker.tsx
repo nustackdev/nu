@@ -55,25 +55,25 @@ const dayPickerClassNames = {
 	caption_label: "text-base font-medium text-text-primary",
 	nav: "flex items-center gap-1 absolute inset-x-0 top-1 justify-between px-1",
 	button_previous:
-		"inline-flex items-center justify-center size-7 rounded-sm text-text-secondary cursor-default hover:bg-bg-elevated hover:text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+		"inline-flex items-center justify-center size-7 rounded-sm text-text-secondary cursor-default hover:bg-bg-hover hover:text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
 	button_next:
-		"inline-flex items-center justify-center size-7 rounded-sm text-text-secondary cursor-default hover:bg-bg-elevated hover:text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
+		"inline-flex items-center justify-center size-7 rounded-sm text-text-secondary cursor-default hover:bg-bg-hover hover:text-text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
 	month_grid: "w-full border-collapse",
 	weekdays: "flex",
 	weekday: "text-text-muted w-8 font-normal text-xs uppercase tracking-wider",
 	week: "flex w-full mt-1",
 	day: "size-8 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
 	day_button:
-		"inline-flex items-center justify-center size-8 rounded-sm text-text-primary cursor-default hover:bg-bg-elevated focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring aria-selected:opacity-100",
+		"inline-flex items-center justify-center size-8 rounded-sm text-text-primary cursor-default hover:bg-bg-hover focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset aria-selected:opacity-100",
 	selected:
 		"[&>button]:bg-accent [&>button]:text-accent-fg [&>button]:hover:bg-accent-hover",
 	today: "[&>button]:border [&>button]:border-accent-line",
 	outside: "[&>button]:text-text-muted",
-	disabled: "[&>button]:opacity-40 [&>button]:pointer-events-none",
+	disabled: "[&>button]:opacity-50 [&>button]:pointer-events-none",
 	range_start: "[&>button]:bg-accent [&>button]:text-accent-fg [&>button]:rounded-r-none",
 	range_end: "[&>button]:bg-accent [&>button]:text-accent-fg [&>button]:rounded-l-none",
 	range_middle:
-		"bg-accent-wash [&>button]:bg-transparent [&>button]:text-text-primary [&>button]:rounded-none [&>button]:hover:bg-accent-soft",
+		"bg-bg-press [&>button]:bg-transparent [&>button]:text-text-primary [&>button]:rounded-none [&>button]:hover:bg-bg-hover",
 	hidden: "invisible",
 } as const;
 

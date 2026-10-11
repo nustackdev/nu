@@ -1,231 +1,220 @@
-// Token pages: L1 raw scales + L2 semantic role tokens.
-// Swatches resolve computed color via getComputedStyle so both themes render
-// their real hex under the current theme toggle.
+/// <reference types="vite/client" />
+// Token pages: every color token, light and dark side by side.
+//
+// The list is parsed from index.css itself, so a token added there shows up
+// here with no edit, grouped by the comment above it. Values resolve in two
+// hidden frames that carry this page's stylesheets, one plain (light) and one
+// with `.dark` on <html>, so both themes render at once whatever the toolbar
+// says. Washes (alpha colors) are drawn over that theme's document ground.
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Heading } from "../components/ui/heading";
 import { Text } from "../components/ui/text";
+import css from "../index.css?raw";
 
-const PRIMITIVES: Array<{ hue: string; steps: (string | number)[] }> = [
-	{
-		hue: "purple",
-		steps: [25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950],
-	},
-	{
-		hue: "blue",
-		steps: [25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950],
-	},
-	{
-		hue: "red",
-		steps: [25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950],
-	},
-	{
-		hue: "yellow",
-		steps: [25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950],
-	},
-	{
-		hue: "green",
-		steps: [25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950],
-	},
-	{
-		hue: "blue-info",
-		steps: [25, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950],
-	},
-	{
-		hue: "gray",
-		steps: [0, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
-	},
-];
+type Group = { title: string; vars: string[] };
 
-const SEMANTIC: Array<{ group: string; vars: string[] }> = [
-	{
-		group: "surface",
-		vars: ["--bg-canvas", "--bg-surface", "--bg-elevated", "--bg-sunken", "--bg-overlay"],
-	},
-	{
-		group: "text",
-		vars: ["--text-primary", "--text-secondary", "--text-muted", "--text-inverse"],
-	},
-	{
-		group: "border",
-		vars: ["--border-subtle", "--border-default", "--border-strong"],
-	},
-	{
-		group: "accent (purple)",
-		vars: ["--accent", "--accent-fg", "--accent-wash", "--accent-soft", "--accent-line", "--accent-hover"],
-	},
-	{
-		group: "accent-2 (blue)",
-		vars: [
-			"--accent-2",
-			"--accent-2-fg",
-			"--accent-2-wash",
-			"--accent-2-soft",
-			"--accent-2-line",
-			"--accent-2-hover",
-		],
-	},
-	{
-		group: "status danger",
-		vars: ["--status-danger", "--status-danger-fg", "--status-danger-wash", "--status-danger-line"],
-	},
-	{
-		group: "status warn",
-		vars: ["--status-warn", "--status-warn-fg", "--status-warn-wash", "--status-warn-line"],
-	},
-	{
-		group: "status ok",
-		vars: ["--status-ok", "--status-ok-fg", "--status-ok-wash", "--status-ok-line"],
-	},
-	{
-		group: "status info",
-		vars: ["--status-info", "--status-info-fg", "--status-info-wash", "--status-info-line"],
-	},
-	{
-		group: "chart categorical",
-		vars: [
-			"--chart-1",
-			"--chart-2",
-			"--chart-3",
-			"--chart-4",
-			"--chart-5",
-			"--chart-6",
-			"--chart-7",
-			"--chart-8",
-		],
-	},
-	{
-		group: "focus",
-		vars: ["--ring"],
-	},
-];
-
-function useCssVarValue(name: string) {
-	const [value, setValue] = useState("");
-	useEffect(() => {
-		function resolve() {
-			try {
-				setValue(getComputedStyle(document.documentElement).getPropertyValue(name).trim());
-			} catch {
-				setValue("");
-			}
+/** Tokens in `block`, grouped by the comment line above each run. */
+function parseGroups(block: string, fallback: string): Group[] {
+	const groups: Group[] = [];
+	let current: Group = { title: fallback, vars: [] };
+	for (const raw of block.split("\n")) {
+		const line = raw.trim();
+		const comment = line.match(/^\/\*\s*(.*?)(?:\*\/)?$/);
+		if (comment && !line.startsWith("/* ===")) {
+			if (current.vars.length) groups.push(current);
+			const title = comment[1].split(/[:.(]/)[0].trim();
+			current = { title: title || fallback, vars: [] };
+			continue;
 		}
-		resolve();
-		// Re-resolve when the theme toggles.
-		const observer = new MutationObserver(resolve);
-		observer.observe(document.documentElement, {
-			attributes: true,
-			attributeFilter: ["class"],
-		});
-		return () => observer.disconnect();
-	}, [name]);
-	return value;
+		const decl = line.match(/^--([a-z0-9-]+):\s*(.+);/);
+		// colors only: skip geometry (rem, px) tokens
+		if (decl && !/\d(rem|px)\b/.test(decl[2]) && !current.vars.includes(decl[1])) {
+			current.vars.push(decl[1]);
+		}
+	}
+	if (current.vars.length) groups.push(current);
+	return groups;
 }
 
-function Swatch({ name, varName }: { name: string; varName: string }) {
-	const value = useCssVarValue(varName);
+function section(start: string, end: string) {
+	const a = css.indexOf(start);
+	const b = css.indexOf(end, a + start.length);
+	return css.slice(a, b);
+}
+
+const LANGUAGE = parseGroups(section(":root {", ".dark {"), "language");
+
+// L2: the shared role block, then the per-theme roles folded into one group.
+const ROLES = (() => {
+	const shared = parseGroups(section(":root,\n.dark {", "/* ===="), "roles");
+	const perTheme = parseGroups(section("L2: light", "L2: dark"), "per theme");
+	const seen = new Set(shared.flatMap((g) => g.vars));
+	const extra = perTheme.flatMap((g) => g.vars).filter((v) => !seen.has(v));
+	return [...shared, { title: "per theme (scrim, hover washes, labels on fills, tree rows)", vars: extra }];
+})();
+
+type Resolved = Record<string, { light: string; dark: string; lightGround: string; darkGround: string }>;
+
+/** Resolve every token to rgb(a) in a light and a dark frame. */
+function useResolved(key: string) {
+	const [values, setValues] = useState<Resolved>({});
+	useEffect(() => {
+		const names = key.split(" ");
+		const frames = ["light", "dark"].map((theme) => {
+			const f = document.createElement("iframe");
+			f.style.cssText = "position:absolute;width:0;height:0;border:0;visibility:hidden";
+			document.body.appendChild(f);
+			const doc = f.contentDocument as Document;
+			for (const node of document.head.querySelectorAll("style, link[rel=stylesheet]")) {
+				doc.head.appendChild(node.cloneNode(true));
+			}
+			if (theme === "dark") doc.documentElement.classList.add("dark");
+			return f;
+		});
+		const timer = setTimeout(() => {
+			const read = (f: HTMLIFrameElement, name: string) => {
+				const doc = f.contentDocument as Document;
+				const probe = doc.createElement("div");
+				probe.style.background = `var(--${name})`;
+				doc.body.appendChild(probe);
+				const v = getComputedStyle(probe).backgroundColor;
+				probe.remove();
+				return v;
+			};
+			const out: Resolved = {};
+			for (const n of names) {
+				out[n] = {
+					light: read(frames[0], n),
+					dark: read(frames[1], n),
+					lightGround: read(frames[0], "ground-raised"),
+					darkGround: read(frames[1], "ground-raised"),
+				};
+			}
+			setValues(out);
+		}, 300);
+		return () => {
+			clearTimeout(timer);
+			for (const f of frames) f.remove();
+		};
+	}, [key]);
+	return values;
+}
+
+/** oklab(L a b / alpha), what a color-mix computes to, as 0-255 sRGB. */
+function oklabToRgb(L: number, a: number, b: number) {
+	const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+	const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+	const s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3;
+	const lin = [
+		4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+		-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+		-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+	];
+	return lin.map((x) => {
+		const c = Math.min(1, Math.max(0, x));
+		return String(Math.round(255 * (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055)));
+	});
+}
+
+/** rgb()/rgba()/color()/oklab() to #rrggbb, plus alpha % when not opaque. */
+function toHex(value: string) {
+	if (!value) return "";
+	const ok = value.match(/oklab\(([-\d.e]+) ([-\d.e]+) ([-\d.e]+)(?: \/ ([\d.]+))?\)/);
+	if (ok) {
+		const [r, g, b] = oklabToRgb(Number(ok[1]), Number(ok[2]), Number(ok[3]));
+		return toHex(`rgba(${r}, ${g}, ${b}, ${ok[4] ?? 1})`);
+	}
+	const c = document.createElement("canvas").getContext("2d");
+	if (!c) return value;
+	c.fillStyle = "#000";
+	c.fillStyle = value;
+	const s = String(c.fillStyle);
+	if (s.startsWith("#")) return s;
+	const srgb = s.match(/color\(srgb ([\d.]+) ([\d.]+) ([\d.]+)(?: \/ ([\d.]+))?\)/);
+	const m = srgb
+		? ["", ...srgb.slice(1, 4).map((x) => String(Math.round(Number(x) * 255))), srgb[4]]
+		: s.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+	if (!m) return s;
+	const hex = `#${[m[1], m[2], m[3]].map((x) => Number(x).toString(16).padStart(2, "0")).join("")}`;
+	return m[4] !== undefined && Number(m[4]) < 1 ? `${hex} ${Math.round(Number(m[4]) * 100)}%` : hex;
+}
+
+function Chip({ value, ground }: { value: string; ground: string }) {
 	return (
-		<div className="flex flex-col gap-1.5">
-			<div
-				className="h-14 rounded-md border border-border-subtle"
-				style={{ background: `var(${varName})` }}
-			/>
-			<div className="space-y-0.5">
-				<div className="text-xs font-medium text-text-primary">{name}</div>
-				<div className="text-[10.5px] text-text-muted font-mono truncate" title={value}>
-					{value || varName}
-				</div>
+		<div className="flex items-center gap-2.5">
+			<div className="size-8 shrink-0 rounded-md ring-1 ring-border-subtle ring-inset" style={{ background: ground }}>
+				<div className="size-full rounded-md" style={{ background: value }} />
 			</div>
+			<span className="font-mono text-[11px] text-text-secondary">{toHex(value)}</span>
 		</div>
 	);
 }
 
-function Section({
-	title,
-	description,
-	children,
-}: {
-	title: string;
-	description?: string;
-	children: React.ReactNode;
-}) {
+function Table({ groups }: { groups: Group[] }) {
+	const key = useMemo(() => groups.flatMap((g) => g.vars).join(" "), [groups]);
+	const values = useResolved(key);
 	return (
-		<section className="border-t border-border-subtle py-10">
-			<div className="mb-5 space-y-1">
-				<Heading as="h2" size="xl">
-					{title}
-				</Heading>
-				{description && (
-					<Text size="sm" tone="secondary">
-						{description}
-					</Text>
-				)}
-			</div>
-			{children}
-		</section>
+		<div className="space-y-8">
+			{groups.map((g) => (
+				<section key={g.title}>
+					<Heading as="h2" size="lg" className="mb-2">
+						{g.title}
+					</Heading>
+					<div className="overflow-hidden rounded-lg border border-border-subtle">
+						<div className="grid grid-cols-[1.3fr_1fr_1fr] bg-bg-sunken px-4 py-2 text-xs font-medium text-text-muted">
+							<span>token</span>
+							<span>light</span>
+							<span>dark</span>
+						</div>
+						{g.vars.map((v) => {
+							const r = values[v];
+							return (
+								<div
+									key={v}
+									className="grid grid-cols-[1.3fr_1fr_1fr] items-center border-t border-border-subtle px-4 py-2"
+								>
+									<span className="font-mono text-xs text-text-primary">{v}</span>
+									{r ? <Chip value={r.light} ground={r.lightGround} /> : <span />}
+									{r ? <Chip value={r.dark} ground={r.darkGround} /> : <span />}
+								</div>
+							);
+						})}
+					</div>
+				</section>
+			))}
+		</div>
 	);
 }
 
-export const Primitives: StoryObj = {
+export const Language: StoryObj = {
 	render: () => (
-		<div className="mx-auto max-w-6xl px-8 py-12">
-				<div className="mb-10">
-					<Heading as="h1" size="3xl" className="mb-2">
-						L1 primitives
-					</Heading>
-					<Text size="sm" tone="secondary">
-						Raw scales. Components must never reference these directly; they compose
-						through L2 semantic roles.
-					</Text>
-				</div>
-				<div className="space-y-10">
-					{PRIMITIVES.map(({ hue, steps }) => (
-						<div key={hue}>
-							<div className="mb-3 flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-text-muted">
-								<span>{hue}</span>
-								<span className="text-text-muted">{steps.length} steps</span>
-							</div>
-							<div className="grid grid-cols-4 gap-3 md:grid-cols-6 lg:grid-cols-12">
-								{steps.map((step) => (
-									<Swatch
-										key={step}
-										name={`${hue}-${step}`}
-										varName={`--${hue}-${step}`}
-									/>
-								))}
-							</div>
-						</div>
-					))}
-				</div>
-			</div>
+		<div className="mx-auto max-w-5xl px-8 py-12">
+			<Heading as="h1" size="3xl" className="mb-2">
+				L1 language tokens
+			</Heading>
+			<Text size="sm" tone="secondary" className="mb-10">
+				Every value in the color language, Paper (light) and Dusk (dark) side by side. Components
+				never use these directly; they go through the L2 roles.
+			</Text>
+			<Table groups={LANGUAGE} />
+		</div>
 	),
 };
 
-export const Semantic: StoryObj = {
+export const Roles: StoryObj = {
 	render: () => (
-		<div className="mx-auto max-w-6xl px-8 py-12">
-				<div className="mb-10">
-					<Heading as="h1" size="3xl" className="mb-2">
-						L2 semantic tokens
-					</Heading>
-					<Text size="sm" tone="secondary">
-						Role-named tokens. This is the API components consume. Theme toggle in
-						the toolbar switches every value in one shot.
-					</Text>
-				</div>
-				<div className="space-y-4">
-					{SEMANTIC.map(({ group, vars }) => (
-						<Section key={group} title={group}>
-							<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-								{vars.map((v) => (
-									<Swatch key={v} name={v.replace(/^--/, "")} varName={v} />
-								))}
-							</div>
-						</Section>
-					))}
-				</div>
-			</div>
+		<div className="mx-auto max-w-5xl px-8 py-12">
+			<Heading as="h1" size="3xl" className="mb-2">
+				L2 kit roles
+			</Heading>
+			<Text size="sm" tone="secondary" className="mb-10">
+				The names components use, resolved in both themes. Washes are drawn over the document
+				ground.
+			</Text>
+			<Table groups={ROLES} />
+		</div>
 	),
 };
 

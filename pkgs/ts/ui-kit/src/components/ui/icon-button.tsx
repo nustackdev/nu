@@ -20,24 +20,23 @@ const iconButtonVariants = cva(
 		variants: {
 			variant: {
 				default:
-					"bg-accent text-accent-fg border border-transparent hover:bg-accent-hover active:bg-accent-soft",
+					"bg-accent text-accent-fg border border-transparent hover:bg-accent-hover active:bg-accent-pressed",
 				secondary:
-					"bg-bg-elevated text-text-primary border border-border-default hover:bg-bg-sunken hover:border-border-strong",
-				// Hover wash mixed from the text color, so it reads on any surface
-				// in both themes (bg-elevated is white on a white surface in light).
+					"bg-bg-elevated text-text-primary border border-border-default hover:bg-bg-hover hover:border-border-strong",
+				// Hover is the one ground step every surface shares (bg-hover).
 				// Rests muted: a lone glyph needs less weight than a text label.
 				ghost:
-					"bg-transparent text-text-muted border border-transparent hover:bg-text-primary/8 hover:text-text-primary active:bg-text-primary/12",
+					"bg-transparent text-text-muted border border-transparent hover:bg-bg-hover hover:text-text-primary active:bg-bg-press",
 				outline:
-					"bg-transparent text-text-primary border border-border-default hover:bg-bg-elevated hover:border-border-strong",
-				// Ghost's wash held at rest, no border: a tile on a surface that
+					"bg-transparent text-text-primary border border-border-default hover:bg-bg-hover hover:border-border-strong",
+				// Ghost's hover step held at rest, no border: a tile on a surface that
 				// groups by fill rather than by line.
-				soft: "bg-text-primary/6 text-text-muted border border-transparent hover:bg-text-primary/10 hover:text-text-primary active:bg-text-primary/14",
+				soft: "bg-bg-hover text-text-muted border border-transparent hover:bg-bg-press hover:text-text-primary active:bg-bg-press",
 				destructive:
-					"bg-status-danger text-status-danger-fg border border-transparent hover:bg-status-danger/90",
+					"bg-status-danger-solid text-text-inverse border border-transparent hover:bg-status-danger-solid-hover active:bg-status-danger-solid-pressed",
 				// kept for parity with Button; primitives.md discourages link
 				// styling on icon-only surfaces (no text to underline).
-				link: "bg-transparent text-accent border border-transparent hover:opacity-80",
+				link: "bg-transparent text-accent-text border border-transparent hover:opacity-80",
 			},
 			size: {
 				xs: "size-5 rounded-sm [&_svg]:size-3",

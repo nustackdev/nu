@@ -22,7 +22,7 @@ function Skeleton({ className, shape = "rect", ...props }: SkeletonProps) {
 		<div
 			data-slot="skeleton"
 			aria-hidden="true"
-			className={cn("animate-pulse bg-bg-sunken", shapeClass, className)}
+			className={cn("animate-pulse bg-bg-press", shapeClass, className)}
 			{...props}
 		/>
 	);

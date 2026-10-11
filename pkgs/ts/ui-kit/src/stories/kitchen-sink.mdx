@@ -1,0 +1,20 @@
+import { Meta } from "@storybook/addon-docs/blocks";
+
+<Meta title="Kitchen Sink/About" />
+
+# Kitchen Sink
+
+A kitchen sink page shows every component in every state on one page, light and dark side by side. It is not documentation: open a component's own story for its API. It is for eyeballing consistency, after a token change or a component restyle, so a hover tone, a surface fill or a border that drifts from its siblings shows up next to them.
+
+## Pages
+
+- **Controls**: buttons, icon buttons, fields, choices, keys.
+- **Surfaces**: cards, panels, type, markdown, code, tables, stats.
+- **Feedback**: alerts, badges, status pills and dots, progress, spinners, empty states.
+- **Navigation**: tabs, nav links, breadcrumbs, accordion, collapsible, tree.
+- **Overlays**: menus, palette, popover, select, combobox, date picker, tooltip, dialog, sheet, all open.
+- **Charts**: every chart with all 8 categorical slots.
+
+## How the two themes render
+
+The page's `<html>` is pinned to light, and the right column carries the `.dark` class, which re-resolves every token for its subtree. Overlays portal to `<body>` and would escape that column, so the Overlays page frames each one twice, a whole document per theme.

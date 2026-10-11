@@ -9,7 +9,7 @@ import type * as React from "react";
 
 import { cn } from "../../lib/utils";
 
-const progressVariants = cva("relative w-full overflow-hidden rounded-full bg-bg-sunken", {
+const progressVariants = cva("relative w-full overflow-hidden rounded-full bg-bg-press", {
 	variants: {
 		size: {
 			sm: "h-1",

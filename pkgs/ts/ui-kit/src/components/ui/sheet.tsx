@@ -1,7 +1,7 @@
 // Sheet primitive: edge-anchored slide-in drawer built on Radix Dialog.
 // Design refs:
 //   primitives.md    §Sheet (parts, sides, sizes)
-//   palette.md       §2.1 backgrounds, §2.3 borders
+//   palette.md       backgrounds, borders
 //   space-radius.md  §Density Sheet (pad 20, radius `xl`)
 //   motion.md        §3 Sheet (`duration-slow` slide, no content fade)
 //   a11y.md          §3 Sheet (same focus trap as Dialog)

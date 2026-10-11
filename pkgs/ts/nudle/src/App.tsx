@@ -11,6 +11,7 @@ import "./nodes";
 import { useNudleConnection } from "./connect";
 import { useActivePage, usePageSegments, useRootSegments } from "./router";
 import { Sidebar } from "./Sidebar";
+import { ThemeToggle } from "./theme";
 
 const ROOT: Path = [];
 
@@ -30,7 +31,12 @@ function App() {
 	const active = useActivePage();
 
 	const { label, variant } = statusConfig[status];
-	const statusBadge = <Badge variant={variant}>{label}</Badge>;
+	const statusBadge = (
+		<div className="flex items-center gap-2">
+			<Badge variant={variant}>{label}</Badge>
+			<ThemeToggle />
+		</div>
+	);
 	const booted = rootSegments.length > 0;
 
 	// With pages, the body is the active one and everything else at the root
@@ -44,11 +50,11 @@ function App() {
 			<NodeChildren path={ROOT} />
 		</div>
 	);
-	const waiting = <p className="text-sm text-muted-foreground font-mono">waiting for the tree...</p>;
+	const waiting = <p className="text-sm text-text-muted font-mono">waiting for the tree...</p>;
 
 	if (sidebarOn && pages.length > 1) {
 		return (
-			<div className="h-screen flex overflow-hidden">
+			<div className="h-screen flex overflow-hidden bg-[var(--ground-raised)]">
 				{chromeNodes}
 				<Sidebar appName={appName} pages={pages} active={active} footer={statusBadge} />
 				<main className="flex-1 min-w-0 h-full overflow-y-auto overflow-x-auto">
@@ -59,10 +65,10 @@ function App() {
 	}
 
 	return (
-		<div className="min-h-screen p-6">
+		<div className="min-h-screen p-6 bg-[var(--ground-raised)]">
 			<div className="mx-auto max-w-3xl">
 				<div className="mb-4 flex items-center justify-between">
-					<span className="text-sm text-muted-foreground font-mono">nudle</span>
+					<span className="text-sm text-text-muted font-mono">nudle</span>
 					{statusBadge}
 				</div>
 				{chromeNodes}
