@@ -72,6 +72,7 @@ function TextAreaView({ path }: NodeProps) {
 
 export const TextAreaRef: NodeEntry = {
 	component: TextAreaView,
+	fill: true,
 	handlers: {
 		write: (ctx, payload) =>
 			ctx.update((props) => {

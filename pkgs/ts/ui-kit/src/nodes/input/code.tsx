@@ -67,6 +67,7 @@ function CodeView({ path }: NodeProps) {
 
 export const CodeRef: NodeEntry = {
 	component: CodeView,
+	fill: true,
 	handlers: {
 		write: (ctx, payload) =>
 			ctx.update((props) => {

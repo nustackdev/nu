@@ -12,16 +12,29 @@
 // discrete step ladder (0/1/2/3/4/5/6/8/10/12) statically here so every
 // possible class name is present in the compiled bundle. A proper `Stack`
 // primitive with named tokens (`gap="md"`) is the follow-up; the wire
-// contract stays numeric until then.
+// contract stays numeric until then. A value off the ladder snaps to the
+// nearest step.
+//
+// In the default stretch alignment each child sits in a cell that tells the
+// two kinds apart (see Row for the `fill` classification): a fill child
+// (a chart, an input, a card) stretches to the column's width, a content
+// child (a button, a badge, a line of text) keeps its own width at the start
+// edge instead of being pulled into a full width bar. A type the registry
+// does not know stretches, as it always did. Any other alignment applies to
+// every child alike.
 
 import {
+	type CellProps,
 	FlowProvider,
 	NodeChildren,
 	type NodeEntry,
 	type NodeProps,
+	registry,
+	useNode,
 	useNumberProp,
 	useStringProp,
 } from "../../tree";
+import { stepClass } from "./row";
 
 const GAP_CLASSES: Record<number, string> = {
 	0: "gap-0",
@@ -34,6 +47,7 @@ const GAP_CLASSES: Record<number, string> = {
 	8: "gap-8",
 	10: "gap-10",
 	12: "gap-12",
+	16: "gap-16",
 };
 
 const PADDING_CLASSES: Record<number, string> = {
@@ -47,6 +61,7 @@ const PADDING_CLASSES: Record<number, string> = {
 	8: "p-8",
 	10: "p-10",
 	12: "p-12",
+	16: "p-16",
 };
 
 const ALIGN_CLASSES: Record<string, string> = {
@@ -64,24 +79,40 @@ const JUSTIFY_CLASSES: Record<string, string> = {
 	around: "justify-around",
 };
 
+// A content child keeps its width; a fill child, or one of a type nobody
+// registered, is drawn bare and stretches like before.
+function StretchCell({ path, children }: CellProps) {
+	const { type } = useNode(path);
+	const entry = type ? registry[type] : undefined;
+	if (!entry || entry.fill) return <>{children}</>;
+	return (
+		<div data-slot="column-cell" className="flex min-w-0 flex-col items-start">
+			{children}
+		</div>
+	);
+}
+
 function ColumnView({ path }: NodeProps) {
 	const gap = useNumberProp(path, "gap", 4);
 	const align = useStringProp(path, "align", "stretch");
 	const justify = useStringProp(path, "justify", "start");
 	const padding = useNumberProp(path, "padding", 0);
 
-	const gapCls = GAP_CLASSES[gap] ?? GAP_CLASSES[4];
-	const padCls = PADDING_CLASSES[padding] ?? PADDING_CLASSES[0];
+	const gapCls = stepClass(GAP_CLASSES, gap);
+	const padCls = stepClass(PADDING_CLASSES, padding);
 	const alignCls = ALIGN_CLASSES[align] ?? ALIGN_CLASSES.stretch;
 	const justifyCls = JUSTIFY_CLASSES[justify] ?? JUSTIFY_CLASSES.start;
 
 	return (
-		<div className={`flex flex-col ${gapCls} ${padCls} ${alignCls} ${justifyCls}`}>
+		<div className={`flex min-w-0 flex-col ${gapCls} ${padCls} ${alignCls} ${justifyCls}`}>
 			<FlowProvider flow="block">
-				<NodeChildren path={path} />
+				<NodeChildren
+					path={path}
+					cell={alignCls === ALIGN_CLASSES.stretch ? StretchCell : undefined}
+				/>
 			</FlowProvider>
 		</div>
 	);
 }
 
-export const Column: NodeEntry = { component: ColumnView };
+export const Column: NodeEntry = { component: ColumnView, fill: true };

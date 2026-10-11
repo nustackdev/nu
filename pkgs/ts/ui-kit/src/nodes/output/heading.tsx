@@ -51,6 +51,7 @@ function HeadingView({ path }: NodeProps) {
 
 export const HeadingRef: NodeEntry = {
 	component: HeadingView,
+	fill: true,
 	handlers: {
 		write: (ctx, payload) =>
 			ctx.update((props) => {

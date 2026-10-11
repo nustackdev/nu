@@ -304,6 +304,38 @@ describe("dispatch", () => {
 		expect(store.getState().getIn(["t"])?.props.rows).toEqual([{ id: 1 }, { id: 2 }]);
 	});
 
+	it("creates the node from a custom op's chain, then runs its handler", () => {
+		const behaviours: Record<string, Behaviour> = {
+			Card: {
+				handlers: {
+					set_title: (ctx, payload) =>
+						ctx.update((props) => {
+							props.title = String(payload);
+						}),
+				},
+			},
+		};
+		const store = createTreeStore({ resolve: (t) => behaviours[t] });
+		store
+			.getState()
+			.dispatch(
+				frame("set_title", ["col", "card"], "Hi", [
+					step("col", "Column"),
+					step("card", "Card", { title: "", footer: "" }),
+				]),
+			);
+		expect(store.getState().getIn(["col"])?.type).toBe("Column");
+		expect(store.getState().getIn(["col", "card"])?.props).toEqual({ title: "Hi", footer: "" });
+	});
+
+	it("still reports a custom op with no chain on a missing node", () => {
+		const onError = vi.fn();
+		const store = createTreeStore({ onError });
+		store.getState().dispatch(frame("set_title", ["nope"], "Hi"));
+		expect(onError).toHaveBeenCalledOnce();
+		expect(store.getState().getIn(["nope"])).toBeNull();
+	});
+
 	it("gives a type's own write handler the raw payload", () => {
 		const behaviours: Record<string, Behaviour> = {
 			InputRef: {

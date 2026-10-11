@@ -64,7 +64,8 @@ class Send(Command):
     ``_payload_fields`` and the payload is the mapping of those names to the
     arguments, eg ``class SetRow(Send): _payload_fields = ("key", "row")`` for
     ``SetRow(table, key, row)`` -> ``{"key": ..., "row": ...}``. Override
-    ``_frame_payload`` for any other shape.
+    ``_frame_payload`` for any other shape, and ``_frame_op`` for a class
+    that ships more than one op (a Card's three chrome strings).
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -72,6 +73,10 @@ class Send(Command):
 
     #: The payload's field names, one per argument after the Ref.
     _payload_fields: tuple[str, ...] = ()
+
+    def _frame_op(self) -> object:
+        """What the frame ships as its op: this interaction, named by its class."""
+        return self
 
     def _frame_payload(self, values: list[object]) -> object:
         if len(values) != len(self._payload_fields):
@@ -102,7 +107,7 @@ class Send(Command):
             if any(v is EMPTY for v in values):
                 raise ValueError(f"{name}: cannot send EMPTY")
             await session.send(
-                Frame(self, ref=path, payload=self._frame_payload(values), chain=chain)
+                Frame(self._frame_op(), ref=path, payload=self._frame_payload(values), chain=chain)
             )
 
         return athunk

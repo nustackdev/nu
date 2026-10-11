@@ -339,6 +339,12 @@ class PieChart(LeafRef):
         )
 
     def set_slices(self, slices: ListArg[Any]) -> Nu:
+        """Replace the slices.
+
+        Each slice is a ``{"label": ..., "value": ...}`` map or a
+        ``[label, value]`` pair; a list of bare numbers draws one slice per
+        number, labelled by position. Negative or non-numeric values draw as 0.
+        """
         return Write(self, Dict.of(slices=slices))
 
     def set_colors(self, colors: ListArg[Any]) -> Nu:

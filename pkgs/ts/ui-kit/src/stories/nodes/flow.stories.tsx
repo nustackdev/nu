@@ -1,0 +1,137 @@
+// Nodes/Flow: Row and Column as a program draws them. In a Row each child
+// sizes by its kind: fill children (charts, cards, inputs) share the free
+// width and wrap at the row's `min_width`, content children (buttons,
+// badges, text) keep their size. A Divider stands vertical in a Row. In a
+// stretch Column fill children span the width and content children keep it.
+
+import type { Meta, StoryObj } from "@storybook/react-vite";
+import { NodeStage, sinkParameters, step } from "./harness";
+
+const meta: Meta = {
+	title: "Nodes/Flow",
+	parameters: sinkParameters,
+};
+
+export default meta;
+
+type Story = StoryObj;
+
+const points = Array.from({ length: 16 }, (_, i) => [i, ((i * 37) % 11) + i]);
+const bars = [
+	["Mammals", 52],
+	["Birds", 31],
+	["Reptiles", 18],
+	["Fish", 29],
+];
+
+function card(segment: string, title: string, label: string, value: string, note: string) {
+	return [
+		[step(segment, "Card", { title, subtitle: "", footer: "" })],
+		[step(segment, "Card"), step("stat", "StatRef", { label, value })],
+		[step(segment, "Card"), step("note", "TextRef", { value: note })],
+	];
+}
+
+export const WrappingCards: Story = {
+	render: () => {
+		const row = step("flow-cards", "Row", { gap: 4, wrap: true, align: "stretch", min_width: 200 });
+		const under = (chains: ReturnType<typeof step>[][]) => chains.map((c) => [row, ...c]);
+		return (
+			<NodeStage
+				root="flow-cards"
+				label="Row(wrap=True, align='stretch') of four cards: several per line, equal heights"
+				chains={[
+					[row],
+					...under(
+						card("a", "Serengeti", "Lions", "1,240", "Counted across the plains this season."),
+					),
+					...under(card("b", "Yellowstone", "Elk", "7,020", "Herd after the wolves came back.")),
+					...under(card("c", "Manchester", "Moths", "62%", "Dark morphs on sooty bark.")),
+					...under(card("d", "Galapagos", "Finches", "18", "Species across the islands.")),
+				]}
+			/>
+		);
+	},
+};
+
+export const ChartBesideCard: Story = {
+	render: () => {
+		const row = step("flow-chart", "Row", { gap: 4 });
+		return (
+			<NodeStage
+				root="flow-chart"
+				label="a LineChart and a Card share the width, neither collapses"
+				chains={[
+					[row, step("trend", "LineChart", { value: { points } })],
+					[row, step("side", "Card", { title: "Yellowstone" })],
+					[
+						row,
+						step("side", "Card"),
+						step("t", "TextRef", { value: "Wolves off: elk climb to about 18k." }),
+					],
+				]}
+			/>
+		);
+	},
+};
+
+export const PieAndBars: Story = {
+	render: () => {
+		const row = step("flow-pie", "Row", { gap: 4 });
+		return (
+			<NodeStage
+				root="flow-pie"
+				label="a PieChart (slices as maps) beside a horizontal BarChart"
+				chains={[
+					[row, step("pie", "PieChart", { show_legend: true })],
+					[row, step("bars", "BarChart", { orientation: "horizontal" })],
+				]}
+				frames={[
+					{
+						op: "write",
+						ref: ["flow-pie", "pie"],
+						payload: { slices: bars.map(([label, value]) => ({ label, value })) },
+					},
+					{ op: "write", ref: ["flow-pie", "bars"], payload: { bars } },
+				]}
+			/>
+		);
+	},
+};
+
+export const Toolbar: Story = {
+	render: () => {
+		const row = step("flow-toolbar", "Row", { gap: 2 });
+		return (
+			<NodeStage
+				root="flow-toolbar"
+				label="buttons keep their size, a Divider stands vertical, an input fills the rest"
+				chains={[
+					[row, step("run", "ButtonRef", { label: "Run" })],
+					[row, step("stop", "ButtonRef", { label: "Stop", variant: "secondary" })],
+					[row, step("sep", "DividerRef")],
+					[row, step("q", "InputRef", { placeholder: "Filter species" })],
+					[row, step("live", "BadgeRef", { label: "live", variant: "ok" })],
+				]}
+			/>
+		);
+	},
+};
+
+export const StretchColumn: Story = {
+	render: () => {
+		const col = step("flow-column", "Column", { gap: 3 });
+		return (
+			<NodeStage
+				root="flow-column"
+				label="a stretch Column: the input spans, the button and badge keep their width"
+				chains={[
+					[col, step("h", "HeadingRef", { label: "Log a sighting", level: 4 })],
+					[col, step("q", "InputRef", { placeholder: "Species" })],
+					[col, step("go", "ButtonRef", { label: "Log it" })],
+					[col, step("b", "BadgeRef", { label: "synced", variant: "info" })],
+				]}
+			/>
+		);
+	},
+};

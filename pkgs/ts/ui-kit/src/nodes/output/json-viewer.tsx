@@ -62,4 +62,4 @@ function JsonViewerView({ path }: NodeProps) {
 	);
 }
 
-export const JsonViewerRef: NodeEntry = { component: JsonViewerView };
+export const JsonViewerRef: NodeEntry = { component: JsonViewerView, fill: true };

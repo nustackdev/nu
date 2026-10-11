@@ -220,6 +220,7 @@ function LineChartView({ path }: NodeProps) {
 
 export const LineChart: NodeEntry = {
 	component: LineChartView,
+	fill: true,
 	handlers: {
 		write: (ctx, payload) =>
 			ctx.update((props) => {

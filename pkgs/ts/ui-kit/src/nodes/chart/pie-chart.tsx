@@ -5,7 +5,8 @@
 // read. The slices live on `value` as {slices: [{label, value}, ...]}.
 //
 // Two handlers. `write` carries a partial map whose `slices` needs shape
-// coercion (pairs or bare values on the same key) before it can be drawn,
+// coercion ({label, value} maps, [label, value] pairs or bare values, all on
+// the same key, like BarChart's bars) before it can be drawn,
 // which the default merge does not do. `append` pushes one slice, which is
 // not a write at all. Composes the kit PieChart primitive; center label /
 // total renders as an overlay on top of the primitive for donut mode.
@@ -70,6 +71,15 @@ function _toSlices(v: unknown): Slice[] {
 	}
 	if (!Array.isArray(v)) return [];
 	if (v.length === 0) return [];
+	const maps = v.every(
+		(e) => e && typeof e === "object" && !Array.isArray(e) && "label" in (e as object),
+	);
+	if (maps) {
+		return (v as Array<{ label: unknown; value: unknown }>).map((e, i) => ({
+			label: e.label == null ? String(i) : String(e.label),
+			value: _v(e.value),
+		}));
+	}
 	const pairs = v.every((e) => Array.isArray(e) && (e as unknown[]).length === 2);
 	if (pairs) {
 		return (v as unknown[][]).map((p) => ({
@@ -119,6 +129,7 @@ function PieChartView({ path }: NodeProps) {
 
 export const PieChart: NodeEntry = {
 	component: PieChartView,
+	fill: true,
 	handlers: {
 		write: (ctx, payload) =>
 			ctx.update((props) => {

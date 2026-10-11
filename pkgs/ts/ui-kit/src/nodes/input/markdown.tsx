@@ -51,6 +51,7 @@ function MarkdownView({ path }: NodeProps) {
 
 export const MarkdownRef: NodeEntry = {
 	component: MarkdownView,
+	fill: true,
 	handlers: {
 		write: (ctx, payload) =>
 			ctx.update((props) => {

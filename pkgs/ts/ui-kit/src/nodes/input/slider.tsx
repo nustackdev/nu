@@ -71,6 +71,7 @@ function SliderView({ path }: NodeProps) {
 
 export const SliderRef: NodeEntry = {
 	component: SliderView,
+	fill: true,
 	handlers: {
 		write: (ctx, payload) =>
 			ctx.update((props) => {

@@ -34,6 +34,8 @@ export interface BarChartProps extends React.HTMLAttributes<HTMLDivElement> {
 	showTooltip?: boolean;
 	showLegend?: boolean;
 	stacked?: boolean;
+	/** "horizontal" lays the bars out sideways: categories down the left, values along the bottom. */
+	orientation?: "vertical" | "horizontal";
 }
 
 export function BarChart({
@@ -46,11 +48,14 @@ export function BarChart({
 	showTooltip = true,
 	showLegend = false,
 	stacked = false,
+	orientation = "vertical",
 	...props
 }: BarChartProps) {
+	const horizontal = orientation === "horizontal";
 	return (
 		<div
 			data-slot="bar-chart"
+			data-orientation={orientation}
 			className={cn("w-full", className)}
 			style={{ height }}
 			{...props}
@@ -58,26 +63,48 @@ export function BarChart({
 			<ResponsiveContainer width="100%" height="100%">
 				<RechartsBarChart
 					data={data}
+					layout={horizontal ? "vertical" : "horizontal"}
 					margin={{ top: 8, right: 12, left: 0, bottom: 0 }}
 				>
 					{showGrid && (
 						<CartesianGrid
 							stroke={chartGridStroke}
 							strokeDasharray="3 3"
-							vertical={false}
+							vertical={horizontal}
+							horizontal={!horizontal}
 						/>
 					)}
-					<XAxis
-						dataKey={xKey}
-						tick={chartAxisTick}
-						tickLine={false}
-						axisLine={{ stroke: chartGridStroke }}
-					/>
-					<YAxis
-						tick={chartAxisTick}
-						tickLine={false}
-						axisLine={{ stroke: chartGridStroke }}
-					/>
+					{horizontal ? (
+						<XAxis
+							type="number"
+							tick={chartAxisTick}
+							tickLine={false}
+							axisLine={{ stroke: chartGridStroke }}
+						/>
+					) : (
+						<XAxis
+							dataKey={xKey}
+							tick={chartAxisTick}
+							tickLine={false}
+							axisLine={{ stroke: chartGridStroke }}
+						/>
+					)}
+					{horizontal ? (
+						<YAxis
+							type="category"
+							dataKey={xKey}
+							width={80}
+							tick={chartAxisTick}
+							tickLine={false}
+							axisLine={{ stroke: chartGridStroke }}
+						/>
+					) : (
+						<YAxis
+							tick={chartAxisTick}
+							tickLine={false}
+							axisLine={{ stroke: chartGridStroke }}
+						/>
+					)}
 					{showTooltip && (
 						<Tooltip
 							content={<ChartTooltipContent />}
@@ -96,7 +123,7 @@ export function BarChart({
 							name={s.name ?? s.dataKey}
 							fill={s.color ?? chartColor(i)}
 							stackId={stacked ? "stack" : undefined}
-							radius={[2, 2, 0, 0]}
+							radius={horizontal ? [0, 2, 2, 0] : [2, 2, 0, 0]}
 							isAnimationActive={false}
 						/>
 					))}

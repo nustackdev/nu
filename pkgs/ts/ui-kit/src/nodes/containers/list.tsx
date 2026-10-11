@@ -60,6 +60,7 @@ function ListView({ path }: NodeProps) {
 
 export const ListRef: NodeEntry = {
 	component: ListView,
+	fill: true,
 	handlers: {
 		write: (ctx, payload) =>
 			ctx.update((props) => {

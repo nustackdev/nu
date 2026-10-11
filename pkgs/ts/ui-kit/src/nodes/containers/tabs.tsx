@@ -105,6 +105,7 @@ function TabsView({ path }: NodeProps) {
 
 export const Tabs: NodeEntry = {
 	component: TabsView,
+	fill: true,
 	handlers: {
 		set_tabs: (ctx, payload) =>
 			ctx.update((props) => {

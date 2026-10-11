@@ -80,6 +80,7 @@ function NumberInputView({ path }: NodeProps) {
 
 export const NumberInputRef: NodeEntry = {
 	component: NumberInputView,
+	fill: true,
 	handlers: {
 		write: (ctx, payload) =>
 			ctx.update((props) => {

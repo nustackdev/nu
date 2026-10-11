@@ -79,4 +79,4 @@ function ContainerView({ path }: NodeProps) {
 	);
 }
 
-export const Container: NodeEntry = { component: ContainerView };
+export const Container: NodeEntry = { component: ContainerView, fill: true };

@@ -167,6 +167,7 @@ function AreaChartView({ path }: NodeProps) {
 
 export const AreaChart: NodeEntry = {
 	component: AreaChartView,
+	fill: true,
 	handlers: {
 		write: (ctx, payload) =>
 			ctx.update((props) => {

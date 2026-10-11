@@ -6,9 +6,10 @@ the box carries of its own (a Card's title, a Tabs' active tab, a Field's
 label) is props seeded by ``slot()`` and driven by ``set_*``. The Shapes over
 them live in ``nustd.ui.shapes.chrome``.
 
-The chrome commands (`_SetSectionStr`, `_SetTabs`, `_SetActive`) target the
-abstract ``Session`` from core, so this module is host-agnostic; any host
-that implements ``Session`` runs it. Chrome is driven off the bound Ref --
+The chrome commands (`_SetSectionStr`, `_SetTabs`, `_SetActive`) are
+``Send`` subclasses, so they target the abstract ``Session`` from core like
+every other interaction and carry the Ref's chain: a Card or Tabs that does
+not exist in the browser yet is created by the frame that sets its chrome. Chrome is driven off the bound Ref --
 ``page.card.set_title(...)`` or ``CardRef("c", parent_ref=col).set_title(...)``
 -- and the address comes from that Ref's chain. There is no way to drive a
 container off a Shape class: a class has no mount point.
@@ -20,22 +21,17 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from typing_extensions import Self
 
-from nu.engine.structure import Declared
 from nu.forms import Dict
-from nu.lang import Command
-from nu.lang.sentinels import EMPTY, UNSET
-from nustd.ui.core import Frame, Ref, Session
-from nustd.ui.core.interactions import Changed, Write
+from nu.lang.sentinels import UNSET
+from nustd.ui.core.interactions import Changed, Send, Write
 
 from .base import ContainerRef
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from nu.lang import Nu
     from nu.lang.args import Arg, BoolArg, ListArg, StrArg
-    from nu.lang.runtime import Runtime
+    from nustd.ui.core import Ref
 
 
 __all__ = [
@@ -106,45 +102,24 @@ class AccordionRef(ContainerRef):
         return Changed(self)
 
 
-class _SetSectionStr(Command):
-    """Send a string-payload Frame to a Section by mount path.
+class _SetSectionStr(Send):
+    """Send a string to a container's chrome, under an op named at construction.
 
-    Slot 0 holds the section's own bound SectionRef so this is a well-formed
-    ``mutates={0}`` Command; the wire op is supplied at construction (e.g.
-    "set_title") so one class serves all three card chrome ops.
+    One class serves the three card chrome ops ("set_title", "set_subtitle",
+    "set_footer"): the op rides in the payload and the frame ships under it.
+    The frame carries the chain like every other send, so a Card nobody booted
+    (a nested Section, a nuspace cell) comes into being and then takes it.
     """
-
-    _mutates = Declared(value=frozenset({0}), name="mutates")
-    _requires_async = Declared(value=True, name="requires_async")
 
     def __init__(self, ref: Ref, op: str, value: Arg[Any]) -> None:
         super().__init__(ref, value)
         self._payload["op"] = op
 
-    @property
-    def _op(self) -> str:
-        return self._payload["op"]  # type: ignore[return-value]
+    def _frame_op(self) -> object:
+        return self._payload["op"]
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        def thunk(rt: Runtime) -> None:
-            raise RuntimeError("nustd.ui is async-only; use nu.arun")
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref: Ref = self._children[0]
-        value_thunk = children[1]
-
-        async def athunk(rt: Runtime) -> None:
-            session = rt.ctx.fabrics.get(Session)
-            ref_nid = rt.program.children[nid][0]
-            path = await ref._aresolve_address(rt, ref_nid)
-            value = await value_thunk(rt)
-            if value is EMPTY:
-                raise ValueError("cannot write EMPTY")
-            await session.send(Frame(self._op, ref=path, payload=value))
-
-        return athunk
+    def _frame_payload(self, values: list[object]) -> object:
+        return values[0]
 
 
 class CardRef(ContainerRef):
@@ -328,65 +303,26 @@ def _normalize_tabs(raw: object) -> list[dict[str, str]]:
     return out
 
 
-class _SetTabs(Command):
-    _mutates = Declared(value=frozenset({0}), name="mutates")
-    _requires_async = Declared(value=True, name="requires_async")
+class _SetTabs(Send):
+    """Replace a Tabs' strip, ``set_tabs`` on the wire. A list is normalized first."""
 
-    def __init__(self, ref: Ref, value: Arg[Any]) -> None:
-        super().__init__(ref, value)
+    def _frame_op(self) -> object:
+        return "set_tabs"
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        def thunk(rt: Runtime) -> None:
-            raise RuntimeError("nustd.ui is async-only; use nu.arun")
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref: Ref = self._children[0]
-        value_thunk = children[1]
-
-        async def athunk(rt: Runtime) -> None:
-            session = rt.ctx.fabrics.get(Session)
-            ref_nid = rt.program.children[nid][0]
-            path = await ref._aresolve_address(rt, ref_nid)
-            value = await value_thunk(rt)
-            if value is EMPTY:
-                raise ValueError("cannot write EMPTY")
-            if isinstance(value, list):
-                value = _normalize_tabs(value)
-            await session.send(Frame("set_tabs", ref=path, payload=value))
-
-        return athunk
+    def _frame_payload(self, values: list[object]) -> object:
+        value = values[0]
+        return _normalize_tabs(value) if isinstance(value, list) else value
 
 
-class _SetActive(Command):
-    _mutates = Declared(value=frozenset({0}), name="mutates")
-    _requires_async = Declared(value=True, name="requires_async")
+class _SetActive(Send):
+    """Pick a Tabs' active tab by id, ``set_active`` on the wire. Nil is no tab."""
 
-    def __init__(self, ref: Ref, value: Arg[Any]) -> None:
-        super().__init__(ref, value)
+    def _frame_op(self) -> object:
+        return "set_active"
 
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        def thunk(rt: Runtime) -> None:
-            raise RuntimeError("nustd.ui is async-only; use nu.arun")
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref: Ref = self._children[0]
-        value_thunk = children[1]
-
-        async def athunk(rt: Runtime) -> None:
-            session = rt.ctx.fabrics.get(Session)
-            ref_nid = rt.program.children[nid][0]
-            path = await ref._aresolve_address(rt, ref_nid)
-            value = await value_thunk(rt)
-            if value is EMPTY:
-                raise ValueError("cannot write EMPTY")
-            payload = "" if value is None else str(value)
-            await session.send(Frame("set_active", ref=path, payload=payload))
-
-        return athunk
+    def _frame_payload(self, values: list[object]) -> object:
+        value = values[0]
+        return "" if value is None else str(value)
 
 
 class TabsRef(ContainerRef):

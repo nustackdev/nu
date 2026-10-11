@@ -45,4 +45,4 @@ function AlertView({ path }: NodeProps) {
 	);
 }
 
-export const AlertRef: NodeEntry = { component: AlertView };
+export const AlertRef: NodeEntry = { component: AlertView, fill: true };
