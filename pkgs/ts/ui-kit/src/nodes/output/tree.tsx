@@ -177,4 +177,4 @@ function TreeView({ path }: NodeProps) {
 	);
 }
 
-export const TreeRef: NodeEntry = { component: TreeView };
+export const TreeRef: NodeEntry = { component: TreeView, fill: true };

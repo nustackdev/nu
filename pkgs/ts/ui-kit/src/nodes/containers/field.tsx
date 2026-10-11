@@ -74,4 +74,4 @@ function FieldView({ path }: NodeProps) {
 	);
 }
 
-export const Field: NodeEntry = { component: FieldView };
+export const Field: NodeEntry = { component: FieldView, fill: true };

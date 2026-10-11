@@ -58,6 +58,7 @@ function CardView({ path }: NodeProps) {
 
 export const Card: NodeEntry = {
 	component: CardView,
+	fill: true,
 	handlers: {
 		set_title: (ctx, payload) =>
 			ctx.update((props) => {

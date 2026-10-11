@@ -44,7 +44,16 @@ RowJustify = Literal["start", "center", "end", "between", "around", "evenly"]
 
 
 class RowRef(ContainerRef):
-    """Horizontal flex layout. Pin chrome on slot()."""
+    """Horizontal flex layout. Pin chrome on slot().
+
+    How a child sizes comes from its kind, not from a prop on it. A child with
+    no width of its own (a chart, a table, an input, a card) fills: the fill
+    children share the free width equally. Everything else (text, a button, a
+    badge) keeps its own size. ``min_width`` (px, on the 4px grid) is the
+    width a fill child asks for before it grows: a wrapping Row wraps fill
+    children at it, several per line rather than one per line, and a Row that
+    does not wrap shrinks them below it only once the line is full.
+    """
 
     _wire_type = "Row"
 
@@ -57,5 +66,13 @@ class RowRef(ContainerRef):
         justify: RowJustify = "start",
         wrap: bool = False,
         padding: int = 0,
+        min_width: int = 240,
     ) -> Self:
-        return super().slot(gap=gap, align=align, justify=justify, wrap=wrap, padding=padding)
+        return super().slot(
+            gap=gap,
+            align=align,
+            justify=justify,
+            wrap=wrap,
+            padding=padding,
+            min_width=min_width,
+        )

@@ -9,7 +9,8 @@
 // trim against the current window, neither of which the default write does.
 // `append` upserts a single bar by category, which is not a write at all.
 // Composes the kit BarChart primitive; the primitive owns chrome via
-// chart-shared tokens.
+// chart-shared tokens. `orientation` is read at render time, so the slot's
+// declared value draws as soon as the node exists.
 
 import { BarChart as KitBarChart } from "../../components/ui/bar-chart";
 import { type NodeEntry, type NodeProps, useStringProp, useValue } from "../../tree";
@@ -102,6 +103,9 @@ function _trim(bars: Bar2[], cap: number): Bar2[] {
 function BarChartView({ path }: NodeProps) {
 	const value = useValue<unknown>(path, null);
 	const color = useStringProp(path, "color", DEFAULTS.color);
+	// Declared at the slot or written later, either way a prop read here, so a
+	// slot's `orientation="horizontal"` draws sideways before anything writes.
+	const orientation = _orient(useStringProp(path, "orientation", DEFAULTS.orientation));
 	const bars = _bars(value);
 	const data = bars.map((b) => ({
 		x: Array.isArray(b) ? _cat(b[0], 0) : "",
@@ -110,11 +114,21 @@ function BarChartView({ path }: NodeProps) {
 	const series = color
 		? [{ dataKey: "y", name: "value", color }]
 		: [{ dataKey: "y", name: "value" }];
-	return <KitBarChart data={data} series={series} xKey="x" height={256} showLegend={false} />;
+	return (
+		<KitBarChart
+			data={data}
+			series={series}
+			xKey="x"
+			height={256}
+			showLegend={false}
+			orientation={orientation}
+		/>
+	);
 }
 
 export const BarChart: NodeEntry = {
 	component: BarChartView,
+	fill: true,
 	handlers: {
 		write: (ctx, payload) =>
 			ctx.update((props) => {

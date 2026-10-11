@@ -63,6 +63,7 @@ function InputView({ path }: NodeProps) {
 
 export const InputRef: NodeEntry = {
 	component: InputView,
+	fill: true,
 	handlers: {
 		write: (ctx, payload) =>
 			ctx.update((props) => {

@@ -576,6 +576,11 @@ def test_tabs_set_active_emits_frame():
     assert sess.frames[0].ref == ("tab", "tabs")
     assert sess.frames[0].op == "set_active"
     assert sess.frames[0].payload == "t1"
+    # The chain rides along, so a Tabs nobody booted is created by this frame.
+    assert [(seg, typ) for seg, typ, _ in sess.frames[0].chain] == [
+        ("tab", "Page"),
+        ("tabs", "Tabs"),
+    ]
 
 
 def test_card_set_title_emits_frame():
@@ -596,6 +601,12 @@ def test_card_set_title_emits_frame():
     assert sess.frames[0].ref == ("card", "card")
     assert sess.frames[0].op == "set_title"
     assert sess.frames[0].payload == "hello"
+    # The chain rides along, so a Card nobody booted is created by this frame.
+    assert [(seg, typ) for seg, typ, _ in sess.frames[0].chain] == [
+        ("card", "Page"),
+        ("card", "Card"),
+    ]
+    assert sess.frames[0].chain[-1][2] == {"title": "", "subtitle": "", "footer": ""}
 
 
 def test_table_append_emits_frame():

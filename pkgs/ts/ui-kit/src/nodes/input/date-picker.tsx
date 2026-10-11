@@ -65,6 +65,7 @@ function DatePickerView({ path }: NodeProps) {
 
 export const DatePickerRef: NodeEntry = {
 	component: DatePickerView,
+	fill: true,
 	handlers: {
 		write: (ctx, payload) =>
 			ctx.update((props) => {

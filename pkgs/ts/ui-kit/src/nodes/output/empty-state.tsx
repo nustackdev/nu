@@ -18,4 +18,4 @@ function EmptyStateView({ path }: NodeProps) {
 	);
 }
 
-export const EmptyStateRef: NodeEntry = { component: EmptyStateView };
+export const EmptyStateRef: NodeEntry = { component: EmptyStateView, fill: true };

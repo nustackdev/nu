@@ -67,6 +67,7 @@ function TagInputView({ path }: NodeProps) {
 
 export const TagInputRef: NodeEntry = {
 	component: TagInputView,
+	fill: true,
 	handlers: {
 		write: (ctx, payload) =>
 			ctx.update((props) => {

@@ -49,4 +49,4 @@ function FieldsetView({ path }: NodeProps) {
 	);
 }
 
-export const Fieldset: NodeEntry = { component: FieldsetView };
+export const Fieldset: NodeEntry = { component: FieldsetView, fill: true };

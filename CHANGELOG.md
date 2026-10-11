@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Row children share width instead of collapsing, and wrapping rows fit several per line
 - Draw avatars, breadcrumbs, loading skeletons, spinners and status pills from Python programs
 - Selects can offer a search field for long option lists, nothing else changes
 - Programs can slide an edge drawer over the page and hear its dismiss

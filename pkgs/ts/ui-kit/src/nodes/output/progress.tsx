@@ -39,4 +39,4 @@ function ProgressView({ path }: NodeProps) {
 	);
 }
 
-export const ProgressRef: NodeEntry = { component: ProgressView };
+export const ProgressRef: NodeEntry = { component: ProgressView, fill: true };

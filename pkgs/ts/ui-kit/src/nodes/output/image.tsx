@@ -43,4 +43,4 @@ function ImageView({ path }: NodeProps) {
 	);
 }
 
-export const ImageRef: NodeEntry = { component: ImageView };
+export const ImageRef: NodeEntry = { component: ImageView, fill: true };

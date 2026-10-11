@@ -41,4 +41,4 @@ function LensView({ path }: NodeProps) {
 	return <LensColumns columns={columns} cursor={cursor} onNavigate={navigate} height={height} />;
 }
 
-export const LensRef: NodeEntry = { component: LensView };
+export const LensRef: NodeEntry = { component: LensView, fill: true };

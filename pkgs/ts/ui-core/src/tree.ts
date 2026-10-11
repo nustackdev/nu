@@ -312,6 +312,11 @@ export function createTreeStore(options: TreeStoreOptions = {}): TreeStore {
 					}
 					return;
 				}
+				// Any other op that carries a chain brings its node into being
+				// first, the same way a write does: a Card's `set_title` may be
+				// the first frame that ever names that Card. A frame with no
+				// chain is addressed at a node that should already be there.
+				if (frame.chain) api.write(chain);
 				const node = api.getIn(frame.ref);
 				if (!node) {
 					onError(`no node for op "${frame.op}"`, frame.ref);

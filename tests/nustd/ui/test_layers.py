@@ -227,6 +227,7 @@ def test_row_alone_under_card_alone():
         "justify": "start",
         "wrap": True,
         "padding": 0,
+        "min_width": 240,
     }
 
 

@@ -475,6 +475,7 @@ function TableView({ path }: NodeProps) {
 
 export const TableRef: NodeEntry = {
 	component: TableView,
+	fill: true,
 	handlers: {
 		write: (ctx, payload) =>
 			ctx.update((props) => {

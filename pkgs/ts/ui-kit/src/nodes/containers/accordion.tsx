@@ -116,6 +116,7 @@ function AccordionView({ path }: NodeProps) {
 
 export const Accordion: NodeEntry = {
 	component: AccordionView,
+	fill: true,
 	handlers: {
 		write: (ctx, payload) => {
 			if (!payload || typeof payload !== "object" || Array.isArray(payload)) return;

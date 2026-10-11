@@ -84,6 +84,7 @@ function SparklineView({ path }: NodeProps) {
 
 export const Sparkline: NodeEntry = {
 	component: SparklineView,
+	fill: true,
 	handlers: {
 		write: (ctx, payload) =>
 			ctx.update((props) => {

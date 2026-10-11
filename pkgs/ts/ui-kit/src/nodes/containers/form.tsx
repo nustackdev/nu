@@ -82,4 +82,4 @@ function FormView({ path }: NodeProps) {
 	);
 }
 
-export const Form: NodeEntry = { component: FormView };
+export const Form: NodeEntry = { component: FormView, fill: true };
