@@ -235,7 +235,7 @@ def test_every_former_bare_section_has_its_own_ref():
     from nustd.ui.core.base import _level_type
     from nustd.ui.refs import BoxRef, ColumnRef, FormRef, RowRef
 
-    for ref_cls, wire in ((ColumnRef, "Column"), (RowRef, "Row"), (BoxRef, "Container")):
+    for ref_cls, wire in ((ColumnRef, "Column"), (RowRef, "Row"), (BoxRef, "Box")):
         assert _level_type(ref_cls("x")) == wire
     assert _level_type(FormRef("x")) == "Form"
 
@@ -268,7 +268,7 @@ def test_shape_slot_props_equal_the_refs():
 
 
 def test_kit_wire_types_of_shapes():
-    from nustd.ui import Card, Container, Form, List, Row
+    from nustd.ui import Box, Card, Form, List, Row
 
     class Toolbar(Row):
         pass
@@ -276,7 +276,7 @@ def test_kit_wire_types_of_shapes():
     assert _wire_type_of(Row) == "Row"
     assert _wire_type_of(Toolbar) == "Row"
     assert _wire_type_of(Card) == "Card"
-    assert _wire_type_of(Container) == "Container"
+    assert _wire_type_of(Box) == "Box"
     assert _wire_type_of(Form) == "Form"
     assert _wire_type_of(List) == "ListRef"
 
@@ -392,7 +392,7 @@ def test_structural_and_lens_refs_are_leaves():
 
 _UI_ALL_ON_MAIN = (
     "Accordion AccordionRef AlertRef Append AreaChart BadgeRef BarChart Boot ButtonRef Card "
-    "CardRef Changed CheckboxRef CodeRef Column Container DatePickerRef DividerRef "
+    "CardRef Changed CheckboxRef CodeRef Box Column DatePickerRef DividerRef "
     "EmptyStateRef Field FieldRef Fieldset FieldsetRef Form Frame GaugeRef HeadingRef "
     "ImageRef Index InputRef InsertRow JsonViewerRef KbdRef LineChart LinkRef ListRef "
     "MarkdownRef Modal ModalRef NavRef NumberInputRef Page PageRef PieChart ProgressRef "
@@ -404,7 +404,7 @@ _UI_ALL_ON_MAIN = (
 
 _REFS_ALL_ON_MAIN = (
     "Accordion AccordionRef AlertRef AreaChart BadgeRef BarChart ButtonRef Card CardRef "
-    "CheckboxRef CodeRef Column Container DatePickerRef DividerRef EmptyStateRef Field "
+    "CheckboxRef CodeRef Box Column DatePickerRef DividerRef EmptyStateRef Field "
     "FieldRef Fieldset FieldsetRef Form GaugeRef HeadingRef ImageRef InputRef InsertRow "
     "JsonViewerRef KbdRef LineChart LinkRef ListRef MarkdownRef Modal ModalRef NavRef "
     "NumberInputRef PieChart ProgressRef RadioGroupRef Ref RemoveRows Row Section SectionRef "

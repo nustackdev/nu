@@ -15,7 +15,7 @@ Layout under ``refs/``:
 
 - containers/: open-ended children, optional chrome. ``ContainerRef``
   (base); flow (``ColumnRef``, ``RowRef``, ``GridRef``, ``LineRef``);
-  chrome (``CardRef``, ``BoxRef`` behind the Container box, ``TabsRef``,
+  chrome (``CardRef``, ``BoxRef`` behind the Box, ``TabsRef``,
   ``ModalRef``, ``AccordionRef``, ``FormRef``, ``FieldsetRef``,
   ``FieldRef``); disclosure (``CollapsibleRef``, ``SheetRef``); and
   ``ListRef``, whose items are its plain strings and then any child node.
@@ -144,10 +144,10 @@ from .structural import NavRef, TitleRef
 # Layer 2 last, after every Ref it builds on (see the module docstring).
 from nustd.ui.shapes import (
     Accordion,
+    Box,
     Card,
     Collapsible,
     Column,
-    Container,
     Field,
     Fieldset,
     Form,
@@ -169,6 +169,7 @@ __all__ = [
     "AvatarRef",
     "BadgeRef",
     "BarChart",
+    "Box",
     "BoxRef",
     "BreadcrumbRef",
     "ButtonRef",
@@ -180,7 +181,6 @@ __all__ = [
     "CollapsibleRef",
     "Column",
     "ColumnRef",
-    "Container",
     "ContainerRef",
     "DatePickerRef",
     "DividerRef",
