@@ -1,12 +1,11 @@
 // Tabs -- tab strip plus active body.
 //
-// Pairing: the old module took a `children` path list and lined it up with
-// `tabs[i]` by index. Tree children keep exactly that rule -- `useChildren`
-// gives the segments in insertion order (order of first write) and child `i`
-// is the body of `tabs[i]`. So the server still has to write the bodies in
-// tab order; nothing keys a body to a tab id. We render each body ourselves
-// instead of via `NodeChildren` because every one has to sit in its own
-// `TabsContent` panel.
+// Pairing: a tab's body is the child whose segment is the tab's id, so
+// `tabs["overview"]` on the server is the overview panel whatever order the
+// bodies were written in, and reordering the tabs list moves the bodies with
+// it. A tab with no such child shows an empty panel; a child no tab names is
+// not drawn. We render each body ourselves instead of via `NodeChildren`
+// because every one has to sit in its own `TabsContent` panel.
 //
 // Server-owned tabs / active (with optimistic local active on click). Two
 // inbound ops the default `write` cannot express:
@@ -61,7 +60,7 @@ function TabsView({ path }: NodeProps) {
 
 	const tabs = normalizeTabs(rawTabs);
 	const activeId = active && tabs.some((t) => t.id === active) ? active : (tabs[0]?.id ?? "");
-	const n = Math.min(tabs.length, children.length);
+	const bodies = new Set(children);
 
 	const onValueChange = (next: string) => {
 		// optimistic: pin locally first, then tell the server.
@@ -69,36 +68,34 @@ function TabsView({ path }: NodeProps) {
 		send(OPS.notify, next);
 	};
 
-	if (n === 0) return null;
+	if (tabs.length === 0) return null;
 
 	return (
 		<TabsPrimitive value={activeId} onValueChange={onValueChange}>
 			<TabsList variant="line">
-				{tabs.slice(0, n).map((t) => (
+				{tabs.map((t) => (
 					<TabsTrigger key={t.id} value={t.id} variant="line">
 						{t.label}
 					</TabsTrigger>
 				))}
 			</TabsList>
-			{Array.from({ length: n }).map((_, i) => {
-				const segment = children[i];
-				const tab = tabs[i];
-				return (
-					<TabsContent
-						// forceMount keeps inactive bodies rendered so leaf component
-						// state survives across tab switches; Radix hides the panel via
-						// `data-state="inactive"` when it is not the current tab.
-						forceMount
-						key={segment}
-						value={tab.id}
-						hidden={tab.id !== activeId}
-					>
+			{tabs.map((tab) => (
+				<TabsContent
+					// forceMount keeps inactive bodies rendered so leaf component
+					// state survives across tab switches; Radix hides the panel via
+					// `data-state="inactive"` when it is not the current tab.
+					forceMount
+					key={tab.id}
+					value={tab.id}
+					hidden={tab.id !== activeId}
+				>
+					{bodies.has(tab.id) ? (
 						<FlowProvider flow="block">
-							<NodeView path={[...path, segment]} />
+							<NodeView path={[...path, tab.id]} />
 						</FlowProvider>
-					</TabsContent>
-				);
-			})}
+					) : null}
+				</TabsContent>
+			))}
 		</TabsPrimitive>
 	);
 }

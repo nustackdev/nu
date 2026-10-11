@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Tab and accordion bodies pair by id, so write order no longer matters
 - Shapes repeat a template per key or index, like kv dicts and lists
 - Field station example confirms clearing the trap log in a modal
 - Sheets and modals close on the close button, backdrop or Escape, then tell the program
