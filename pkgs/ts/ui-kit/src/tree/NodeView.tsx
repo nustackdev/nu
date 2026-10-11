@@ -55,20 +55,37 @@ export function BareCell({ children }: CellProps) {
 }
 
 /**
+ * Children in index order, for a container that takes children by position
+ * (List, Line). Segments that are indices ("0", "1", ...) sort by number
+ * among the places indexed children hold; named segments keep their place in
+ * write order. So `[2]` written before `[0]` still draws 0 before 2.
+ */
+export function indexedOrder(segments: readonly string[]): string[] {
+	const isIndex = (s: string) => /^\d+$/.test(s);
+	const indexed = segments.filter(isIndex).sort((a, b) => Number(a) - Number(b));
+	let next = 0;
+	return segments.map((s) => (isIndex(s) ? indexed[next++] : s));
+}
+
+/**
  * Every child of a node, in insertion order. What a container type renders.
  *
  * `cell` wraps each child, for a container that needs a box per child (a
  * list item, a grid cell, a row slot that fills). Without it a block flow
  * wraps each child in `BlockCell`, and any other flow draws them bare.
+ * `indexed` puts indexed children in index order (see `indexedOrder`).
  */
 export function NodeChildren({
 	path,
 	cell,
+	indexed = false,
 }: {
 	path: Path;
 	cell?: ComponentType<CellProps>;
+	indexed?: boolean;
 }) {
-	const children = useChildren(path);
+	const written = useChildren(path);
+	const children = indexed ? indexedOrder(written) : written;
 	const flow = useFlow();
 	const Cell = cell ?? (flow === "block" ? BlockCell : undefined);
 	return (

@@ -2,8 +2,10 @@
 //
 // A container. Plain string items come first: they live on the node as
 // `items: string[]`, one string per item, drawn as given. Then every child
-// node is one more item after them, each in its own `ListItem`, in insertion
-// order, so numbering runs on from the strings. There is no item type: any
+// node is one more item after them, each in its own `ListItem`, so numbering
+// runs on from the strings. Indexed children (`list[0]`, `list[1]` on the
+// server) draw in index order whatever order they were written in; named
+// ones keep their place in write order. There is no item type: any
 // child is an item. Children see a block flow, the same as in a Column.
 //
 // Composes the kit List primitive. Its box carries the same 4px of vertical
@@ -52,7 +54,7 @@ function ListView({ path }: NodeProps) {
 				<ListItem key={i}>{item}</ListItem>
 			))}
 			<FlowProvider flow="block">
-				<NodeChildren path={path} cell={ItemCell} />
+				<NodeChildren path={path} cell={ItemCell} indexed />
 			</FlowProvider>
 		</List>
 	);
