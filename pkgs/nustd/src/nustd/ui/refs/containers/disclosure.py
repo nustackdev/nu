@@ -1,34 +1,73 @@
 """Disclosure containers -- a region that opens and closes over its children.
 
-STUBS, wired end to end so the disclosure unit only fills them in.
-
 - ``CollapsibleRef``: one titled region that folds, simpler than Accordion.
-- ``SheetRef``: an edge drawer, Modal's sibling for inspectors and side panels.
+  The tab owns open state while the user clicks (like Accordion) and sends a
+  notify on each toggle; the server can still open or close it.
+- ``SheetRef``: an edge drawer, Modal's sibling for inspectors and side
+  panels. STUB, the disclosure unit fills it in.
 
-Open vs closed is the thing each one carries, so each will get a ``set()``
-for it, the way Modal has one; that and the notify wiring are the unit's.
+Open vs closed is the thing each one carries, so each has a ``set()`` for
+it, the way Modal does. Every other child is open-ended composition: build
+it as a slot on the Shape or as a Ref with ``parent_ref=`` this one.
 """
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from typing_extensions import Self
 
+from nu.forms import Dict
+from nu.lang.sentinels import UNSET
+from nustd.ui.core.interactions import Changed, Write
+
 from .base import ContainerRef
+
+
+if TYPE_CHECKING:
+    from nu.lang import Nu
+    from nu.lang.args import BoolArg, StrArg
 
 
 __all__ = ["CollapsibleRef", "SheetRef"]
 
 
+def _open_title(open: object, title: object) -> dict[str, object]:
+    """The partial chrome payload ``set()`` writes: only what was passed."""
+    payload: dict[str, object] = {}
+    if open is not UNSET:
+        payload["open"] = open
+    if title is not UNSET:
+        payload["title"] = title
+    return payload
+
+
 class CollapsibleRef(ContainerRef):
-    """One titled region whose children fold away."""
+    """One titled region whose children fold away.
+
+    A trigger row (chevron + title) over a body of open-ended children. The
+    user toggles it in the tab, which sends ``{open: bool}`` as a notify;
+    ``on_change()`` takes those. ``set(open=...)`` opens or closes it from
+    the server.
+    """
 
     _wire_type = "Collapsible"
 
     @classmethod
     def slot(cls, *, title: str = "", open: bool = False) -> Self:
         return super().slot(title=title, open=bool(open))
+
+    def set_open(self, flag: BoolArg) -> Nu:
+        return Write(self, Dict.of(open=flag))
+
+    def set_title(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(title=text))
+
+    def set(self, open: BoolArg = UNSET, title: StrArg = UNSET) -> Nu:
+        return Write(self, Dict.of(**_open_title(open, title)))
+
+    def on_change(self) -> Changed:
+        return Changed(self)
 
 
 Side = Literal["left", "right", "top", "bottom"]
