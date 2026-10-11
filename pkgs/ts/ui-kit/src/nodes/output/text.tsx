@@ -7,12 +7,18 @@
 //
 // Its box carries the same 4px of vertical padding as Prose, so every text
 // output has one edge: padding, never margin, so it cannot collapse or leak.
+//
+// In a Line (inline flow) it is one run of the sentence: a span with no
+// padding of its own, taking the Line's type and white-space, so it wraps
+// mid-run beside the badges and links around it and its newlines fold into
+// word spaces like any paragraph's.
 
 import { Text } from "../../components/ui/text";
-import { type NodeEntry, type NodeProps, useStringProp } from "../../tree";
+import { type NodeEntry, type NodeProps, useFlow, useStringProp } from "../../tree";
 
 function TextView({ path }: NodeProps) {
 	const value = useStringProp(path, "value");
+	if (useFlow() === "inline") return <span data-slot="text">{value}</span>;
 	return (
 		<Text as="p" size="base" tone="primary" className="whitespace-pre-wrap py-1">
 			{value}

@@ -5,9 +5,12 @@
 // component and nothing else. Composes the kit Shortcut primitive, which
 // spells the keys for the reader's platform (`mod` is command on a Mac,
 // control elsewhere), so the server names keys and never platforms.
+//
+// In a Line (inline flow) it is a chip on the text's baseline.
 
+import { lineChip } from "../../components/ui/line";
 import { Shortcut } from "../../components/ui/shortcut";
-import { type NodeEntry, type NodeProps, useListProp, useStringProp } from "../../tree";
+import { type NodeEntry, type NodeProps, useFlow, useListProp, useStringProp } from "../../tree";
 
 type Variant = "default" | "ghost";
 type Size = "sm" | "md";
@@ -19,8 +22,10 @@ function ShortcutView({ path }: NodeProps) {
 	const keys = useListProp<string>(path, "keys");
 	const variant = useStringProp(path, "variant", "default") as Variant;
 	const size = useStringProp(path, "size", "md") as Size;
+	const inline = useFlow() === "inline";
 	return (
 		<Shortcut
+			className={inline ? lineChip : undefined}
 			keys={keys.map(String)}
 			variant={VARIANTS.has(variant) ? variant : "default"}
 			size={SIZES.has(size) ? size : "md"}
