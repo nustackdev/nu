@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Kit gains an inline layout where text, links, badges and keys wrap together
 - Lay out cards and charts in equal cells, from Python or the browser
 - Buttons can carry an icon and a hover hint, drawing as icon-only squares
 - Add a grid layout to the kit: equal cells that step down and stack
