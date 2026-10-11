@@ -1,24 +1,27 @@
 """Section -- shape-based container primitive for the UI kit.
 
 A Section is a Shape (not a Ref) that groups other Refs and Sections as
-declared slots. Concrete layout primitives (Row, Column, Card, Tabs, ...)
-subclass Section and pin chrome defaults; user code subclasses those.
+declared slots. It is layer 2, a declarative DSL over the container Refs:
+the shipped Shapes (Row, Column, Card, Tabs, ...) each point ``_ref_cls``
+at their container Ref, take their wire type from it, and forward slot
+props to it. User code subclasses those.
 
 A Section carries no mount point. It is a blueprint: the same subclass can
 sit under as many parents as you like, and where it lands is decided by the
 Ref chain that reaches it.
 
-SectionRef is the substrate Ref that backs a Section slot. Attribute
-access on a bound SectionRef (e.g. `page.toolbar.text`) walks into the
-section's child slots. A Section whose own chrome is drivable (Card's
-title, Tabs' active tab, ...) points `_ref_cls` at a SectionRef subclass
-carrying those methods, so the write targets the bound Ref and resolves
-through the chain like everything else.
+SectionRef is the substrate Ref under every container. Attribute access on
+a bound SectionRef that carries a Section (e.g. ``page.toolbar.text``) walks
+into the section's child slots. One built alone, with no Section, is still
+a whole container: its children are Refs built with ``parent_ref=`` it.
+Chrome a container can drive (Card's title, Tabs' active tab, ...) lives on
+its Ref, so the write targets the bound Ref and resolves through the chain
+like everything else.
 """
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 from typing_extensions import Self
 
@@ -27,26 +30,32 @@ from nu.domains.shape import Shape, Slot
 from .base import Ref
 
 
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
 __all__ = ["Section", "SectionRef"]
 
 
 class SectionRef(Ref):
-    """Substrate Ref backing a Section slot.
+    """Substrate Ref under every container.
 
-    Instances are created by `Section.slot()` and exposed at the parent
-    (Page or another Section) level. Carries `section_cls`; attribute
-    access returns a child Ref whose `parent` is this SectionRef.
+    Created by ``Section.slot()`` and exposed at the parent (Page or another
+    Section) level, it carries ``section_cls`` and attribute access returns
+    a child Ref whose ``parent`` is this SectionRef. ``section_cls`` is
+    optional: a container Ref built alone has no Shape to navigate, and its
+    children are built as Refs with ``parent_ref=`` it.
     """
 
     def __init__(
         self,
         address: object,
         *,
-        section_cls: type[Section],
+        section_cls: type[Section] | None = None,
         parent_ref: Ref | None = None,
         owner_shape: type[Section] | None = None,
+        props: Mapping[str, object] | None = None,
     ) -> None:
-        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
+        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape, props=props)
         self._payload["section_cls"] = section_cls
 
     def __getattr__(self, name: str) -> object:
@@ -56,7 +65,13 @@ class SectionRef(Ref):
         payload = self.__dict__.get("_payload") or {}
         section_cls = payload.get("section_cls")
         if section_cls is None:
-            raise AttributeError(name)
+            if name.startswith("_"):
+                raise AttributeError(name)
+            raise AttributeError(
+                f"'{type(self).__name__}' object has no attribute '{name}'"
+                " (it carries no Shape, so it has no slots to navigate; build"
+                f" its children as Refs with parent_ref=)"
+            )
         slots = getattr(section_cls, "_slots", {})
         if name in slots:
             slot = slots[name]
@@ -73,23 +88,33 @@ class Section(Shape):
     Subclass to declare child slots and pin chrome defaults:
 
         class Toolbar(Row):
-            gap = 3
             text = TextRef.slot()
             btn = ButtonRef.slot()
+
+        bar = Toolbar.slot(gap=3)
 
     A Section subclass holds no mount point, so the same one can be
     declared on several pages at once.
     """
 
-    # SectionRef subclass backing this section's slot. Override to hand the
-    # bound Ref section-specific chrome methods (see ModalRef, CardRef).
+    # Container Ref backing this section's slot. Every shipped Shape points it
+    # at its own (RowRef, CardRef, ...), which is where its chrome methods,
+    # its slot defaults and its wire type live.
     _ref_cls: ClassVar[type[SectionRef]] = SectionRef
 
-    # Browser component this Section renders as, same rule as `Ref._wire_type`:
-    # every shipped layout primitive declares its own, `class Toolbar(Row)`
-    # inherits "Row". Empty means "fall back to the class name".
+    # Browser component this Section renders as. Empty, the default, means
+    # "whatever `_ref_cls` draws as", and failing that the class name; see
+    # `_wire_type_of`. A Section that draws as its own browser node (nudle's
+    # Page) declares it.
     _wire_type: ClassVar[str] = ""
 
     @classmethod
     def slot(cls, **props: object) -> Self:
-        return Slot(cls._ref_cls, props=props, section_cls=cls)  # type: ignore[return-value]
+        """Declare this Section as a slot. Props go to the Ref as they are.
+
+        The Ref's own ``slot()`` normalizes them and fills its defaults, so a
+        Shape and the Ref built alone (``RowRef("r", props=...)``) carry the
+        same props.
+        """
+        declared = cls._ref_cls.slot(**props)
+        return Slot(cls._ref_cls, props=dict(declared.props), section_cls=cls)  # type: ignore[return-value]

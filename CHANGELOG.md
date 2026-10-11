@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Containers work as plain Refs without Shapes, and leaves refuse children clearly
 - Boxed accordion rows run flush to the border, content aligned with titles
 - UI kit gets elevation levels, clearer press states, a brand focus ring
 - nudle sidebar resizes like nuspace's, and pages can carry an icon

@@ -47,6 +47,7 @@ from __future__ import annotations
 from nustd.ui.core import Ref, Section, SectionRef
 
 from .chart import AreaChart, BarChart, LineChart, PieChart, Sparkline
+from .containers import ContainerRef
 from .input import (
     ButtonRef,
     CheckboxRef,
@@ -80,6 +81,7 @@ from .layout import (
     Tabs,
     TabsRef,
 )
+from .leaves import LeafRef
 from .output import (
     AlertRef,
     BadgeRef,
@@ -121,6 +123,7 @@ __all__ = [
     "CodeRef",
     "Column",
     "Container",
+    "ContainerRef",
     "DatePickerRef",
     "DividerRef",
     "EmptyStateRef",
@@ -136,6 +139,7 @@ __all__ = [
     "InsertRow",
     "JsonViewerRef",
     "KbdRef",
+    "LeafRef",
     "LineChart",
     "LinkRef",
     "ListRef",

@@ -26,7 +26,7 @@ from nu.engine.structure import Declared
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Mapping
 
     from nu.domains.shape.dsl import Shape
     from nu.lang import Nu
@@ -39,15 +39,27 @@ __all__ = ["Ref"]
 def _wire_type_of(ref_or_section_cls: type) -> str:
     """Browser component a Ref or Section class renders as.
 
-    A plain attribute read, no search. Every Ref and Section the kit ships
-    declares its own ``_wire_type``, and a user subclass (``class MyForm(Row)``)
-    inherits it the ordinary Python way, so it reports ``Row`` and the browser
-    registry resolves it. Out-of-tree Refs that register their own component
-    declare the ClassVar too; that is the whole mechanism, there is no
-    separate escape hatch. Anything that declares nothing falls back to its
-    own class name.
+    A plain attribute read, no search. Every Ref the kit ships declares its
+    own ``_wire_type``, and a user subclass (``class Label(TextRef)``)
+    inherits it the ordinary Python way, so it reports ``TextRef`` and the
+    browser registry resolves it. Out-of-tree Refs that register their own
+    component declare the ClassVar too; that is the whole mechanism, there is
+    no separate escape hatch.
+
+    A Section draws as the container Ref behind it, so one that declares no
+    wire type of its own reports its ``_ref_cls``'s: shipped Shapes declare
+    nothing and ``class Toolbar(Row)`` reports ``Row`` by way of ``RowRef``.
+    The attribute is read with ``getattr`` because this module sits under
+    ``section.py`` and cannot import it. Anything that still has nothing to
+    report (a user ``class Fancy(Section)`` on bare ``SectionRef``) falls back
+    to its own class name.
     """
-    return getattr(ref_or_section_cls, "_wire_type", "") or ref_or_section_cls.__name__
+    declared = getattr(ref_or_section_cls, "_wire_type", "")
+    if declared:
+        return declared
+    ref_cls = getattr(ref_or_section_cls, "_ref_cls", None)
+    from_ref = getattr(ref_cls, "_wire_type", "") if ref_cls is not None else ""
+    return from_ref or ref_or_section_cls.__name__
 
 
 def _level_type(term: object) -> str:
@@ -77,17 +89,36 @@ class Ref(StructuredRef):
     # its nearest shipped ancestor. Empty means "fall back to the class name".
     _wire_type: ClassVar[str] = ""
 
+    # A leaf draws one thing from its own props and never has children. Only
+    # the kit's leaves (``LeafRef``) set it: a plain Ref, a SectionRef and a
+    # host's own Refs keep taking children, since a host may hang a channel
+    # or a region off anything it mounts.
+    _leaf: ClassVar[bool] = False
+
     def __init__(
         self,
         address: object,
         *,
         parent_ref: Ref | None = None,
         owner_shape: type[Shape] | None = None,
+        props: Mapping[str, object] | None = None,
     ) -> None:
+        if isinstance(parent_ref, Ref) and type(parent_ref)._leaf:
+            leaf = type(parent_ref).__name__
+            msg = (
+                f"{leaf} is a leaf and holds no children; put {address!r} in a "
+                "container (Column, Row, Card, ...)"
+            )
+            raise TypeError(msg)
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
         # State lives in ``payload`` (part of the Term identity) so the base
         # ``Term._with_children`` carries it across a tree rewrite -- no override.
         self._payload["segment"] = address
+        if props is not None:
+            # A Ref built alone carries what its slot would have declared: the
+            # same normalizer and the same defaults, so the browser cannot tell
+            # ``RowRef("r", parent_ref=card, props=...)`` from a declared slot.
+            self._payload["props"] = dict(type(self).slot(**props).props)
 
     # --- wire-path resolution ------------------------------------------------
 

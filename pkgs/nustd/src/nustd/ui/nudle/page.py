@@ -213,7 +213,7 @@ class Index(Shape):
     def _page_slot_name(cls, page_cls: type[Page]) -> str | None:
         """Slot ``page_cls`` is declared at here, or None if it isn't."""
         for name, slot in cls._page_slots():
-            if slot.kwargs["section_cls"] is page_cls:
+            if slot.kwargs.get("section_cls") is page_cls:
                 return name
         return None
 
