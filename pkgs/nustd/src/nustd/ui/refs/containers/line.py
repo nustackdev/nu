@@ -28,11 +28,15 @@ As Refs alone, no Shape:
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from typing_extensions import Self
 
-from .base import ContainerRef
+from .base import ListContainerRef
+
+
+if TYPE_CHECKING:
+    from nustd.ui.core import Ref, Section
 
 
 __all__ = ["LineRef"]
@@ -41,11 +45,18 @@ __all__ = ["LineRef"]
 LineAlign = Literal["start", "center", "end"]
 
 
-class LineRef(ContainerRef):
+class LineRef(ListContainerRef):
     """Children inline, wrapping at the container's width. Pin chrome on slot()."""
 
     _wire_type = "Line"
 
     @classmethod
-    def slot(cls, *, align: LineAlign = "start", wrap: bool = True) -> Self:
-        return super().slot(align=align, wrap=bool(wrap))
+    def slot(
+        cls,
+        item: type[Section] | type[Ref] | None = None,
+        /,
+        *,
+        align: LineAlign = "start",
+        wrap: bool = True,
+    ) -> Self:
+        return super().slot(item, align=align, wrap=bool(wrap))

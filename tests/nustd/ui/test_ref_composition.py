@@ -474,14 +474,22 @@ def _shipped_ref_classes():
     import inspect
 
     from nustd.ui.core import Ref
-    from nustd.ui.refs import ContainerRef, LeafRef
+    from nustd.ui.refs import (
+        ContainerRef,
+        DictContainerRef,
+        LeafRef,
+        ListContainerRef,
+        ShapeContainerRef,
+    )
+
+    abstract = (ContainerRef, DictContainerRef, ListContainerRef, ShapeContainerRef, LeafRef)
 
     out = []
     for mod in _ref_modules():
         for name, cls in inspect.getmembers(mod, inspect.isclass):
             if (
                 issubclass(cls, Ref)
-                and cls not in (ContainerRef, LeafRef)
+                and cls not in abstract
                 and cls.__module__ == mod.__name__
                 and not name.startswith("_")
             ):

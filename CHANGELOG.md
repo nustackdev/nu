@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Shapes repeat a template per key or index, like kv dicts and lists
 - Field station example confirms clearing the trap log in a modal
 - Sheets and modals close on the close button, backdrop or Escape, then tell the program
 - Add a field station example that tours the whole UI kit

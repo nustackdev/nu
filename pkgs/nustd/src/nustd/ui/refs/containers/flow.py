@@ -8,11 +8,15 @@ you write to is the children. The Shapes over them live in
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from typing_extensions import Self
 
-from .base import ContainerRef
+from .base import DictContainerRef
+
+
+if TYPE_CHECKING:
+    from nustd.ui.core import Ref, Section
 
 
 __all__ = ["ColumnRef", "RowRef"]
@@ -22,7 +26,7 @@ Align = Literal["start", "center", "end", "stretch"]
 Justify = Literal["start", "center", "end", "between", "around"]
 
 
-class ColumnRef(ContainerRef):
+class ColumnRef(DictContainerRef):
     """Vertical flex layout. Pin chrome on the slot()."""
 
     _wire_type = "Column"
@@ -30,20 +34,22 @@ class ColumnRef(ContainerRef):
     @classmethod
     def slot(
         cls,
+        item: type[Section] | type[Ref] | None = None,
+        /,
         *,
         gap: int = 4,
         align: Align = "stretch",
         justify: Justify = "start",
         padding: int = 0,
     ) -> Self:
-        return super().slot(gap=gap, align=align, justify=justify, padding=padding)
+        return super().slot(item, gap=gap, align=align, justify=justify, padding=padding)
 
 
 RowAlign = Literal["start", "center", "end", "stretch", "baseline"]
 RowJustify = Literal["start", "center", "end", "between", "around", "evenly"]
 
 
-class RowRef(ContainerRef):
+class RowRef(DictContainerRef):
     """Horizontal flex layout. Pin chrome on slot().
 
     How a child sizes comes from its kind, not from a prop on it. A child with
@@ -60,6 +66,8 @@ class RowRef(ContainerRef):
     @classmethod
     def slot(
         cls,
+        item: type[Section] | type[Ref] | None = None,
+        /,
         *,
         gap: int = 4,
         align: RowAlign = "center",
@@ -69,6 +77,7 @@ class RowRef(ContainerRef):
         min_width: int = 240,
     ) -> Self:
         return super().slot(
+            item,
             gap=gap,
             align=align,
             justify=justify,
