@@ -1,5 +1,5 @@
-"""Input leaves: icon and tooltip on a button, the toolbar toggle. Wire
-only, through a fake session, no browser."""
+"""Input leaves: icon and tooltip on a button, the toolbar toggle, the
+searchable select. Wire only, through a fake session, no browser."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from nu import Context
 from nustd.ui import Session
 from nustd.ui.core import Changed
 from nustd.ui.nudle import Index, Page
-from nustd.ui.refs import ButtonRef, Row, ToggleRef
+from nustd.ui.refs import ButtonRef, Row, SelectRef, ToggleRef
 
 
 class _RecordingSession:
@@ -137,3 +137,27 @@ def test_toggle_reads_the_live_pressed_state():
 
 def test_toggle_on_change_returns_a_subscription():
     assert isinstance(_mount(ToggleRef.slot()).on_change(), Changed)
+
+
+# --- SelectRef: searchable ----------------------------------------------------
+
+
+def test_select_searchable_defaults_off():
+    props = SelectRef.slot(options=["a", "b"]).props
+    assert props["searchable"] is False
+    assert props["options"] == [{"value": "a", "label": "a"}, {"value": "b", "label": "b"}]
+
+
+def test_select_searchable_seeds_and_flips():
+    handle = _mount(SelectRef.slot(options=["a"], searchable=True))
+    [frame] = _frames(handle.set_searchable(False))
+    assert frame.payload == {"searchable": False}
+    assert _seeded(frame)[1]["searchable"] is True
+
+
+def test_select_value_contract_unchanged_when_searchable():
+    handle = _mount(SelectRef.slot(options=["a", "b"], searchable=True))
+    assert _frames(handle.set("b"))[0].payload == "b"
+    sess = _RecordingSession(value="a")
+    result = asyncio.run(nu.arun(handle, Context().bind(Session, sess)))
+    assert result[0] == "a"
