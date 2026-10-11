@@ -208,3 +208,232 @@ def test_boot_chains_emit_a_direct_container_ref_without_descending():
         [("inner", "Box"), ("note", "Note")],
         [("bare", "Box")],
     ]
+
+
+# --- the kit: container Refs built alone ------------------------------------
+
+
+def test_row_alone_under_card_alone():
+    from nustd.ui.refs import CardRef, RowRef, TextRef
+
+    card = CardRef("card", props={"title": "Hosts"})
+    row = RowRef("r", parent_ref=card, props={"wrap": True})
+    [frame] = _frames(TextRef("t", parent_ref=row).set("hi"))
+    assert _chain(frame) == [("card", "Card"), ("r", "Row"), ("t", "TextRef")]
+    assert frame.chain[0][2] == {"title": "Hosts", "subtitle": "", "footer": ""}
+    assert frame.chain[1][2] == {
+        "gap": 4,
+        "align": "center",
+        "justify": "start",
+        "wrap": True,
+        "padding": 0,
+    }
+
+
+def test_every_former_bare_section_has_its_own_ref():
+    from nustd.ui.core.base import _level_type
+    from nustd.ui.refs import BoxRef, ColumnRef, FormRef, RowRef
+
+    for ref_cls, wire in ((ColumnRef, "Column"), (RowRef, "Row"), (BoxRef, "Container")):
+        assert _level_type(ref_cls("x")) == wire
+    assert _level_type(FormRef("x")) == "Form"
+
+
+def test_kit_leaf_as_parent_raises():
+    from nustd.ui.refs import ButtonRef, TableRef, TextRef
+
+    with pytest.raises(TypeError, match=r"TextRef is a leaf and holds no children; put 'x'"):
+        TextRef("x", parent_ref=TextRef("t"))
+    with pytest.raises(TypeError, match="TableRef is a leaf"):
+        ButtonRef("b", parent_ref=TableRef("tbl"))
+
+
+def test_kit_container_with_no_shape_has_no_slots():
+    from nustd.ui.refs import RowRef
+
+    with pytest.raises(AttributeError, match="carries no Shape"):
+        _ = RowRef("r").label
+
+
+def test_shape_slot_props_equal_the_refs():
+    from nustd.ui import Accordion, AccordionRef, Card, CardRef, Row, RowRef
+
+    assert Row.slot().props == RowRef.slot().props
+    assert Row.slot(wrap=True).props == RowRef.slot(wrap=True).props
+    assert Card.slot(title="t").props == CardRef.slot(title="t").props
+    sections = [{"id": 1, "label": None}]
+    assert Accordion.slot(sections=sections).props == AccordionRef.slot(sections=sections).props
+    assert Accordion.slot(sections=sections).props["sections"] == [{"id": "1", "label": ""}]
+
+
+def test_kit_wire_types_of_shapes():
+    from nustd.ui import Card, Container, Form, Row
+
+    class Toolbar(Row):
+        pass
+
+    assert _wire_type_of(Row) == "Row"
+    assert _wire_type_of(Toolbar) == "Row"
+    assert _wire_type_of(Card) == "Card"
+    assert _wire_type_of(Container) == "Container"
+    assert _wire_type_of(Form) == "Form"
+
+
+def test_kit_computed_keys_resolve_distinct_paths():
+    from nustd.ui.refs import ColumnRef, RowRef, TextRef
+
+    col = ColumnRef("col")
+    writes = [
+        TextRef("t", parent_ref=RowRef(nu.Str("r") + nu.str(i), parent_ref=col)).set("x")
+        for i in range(3)
+    ]
+    frames = _frames(writes[0] >> writes[1] >> writes[2])
+    assert [f.ref for f in frames] == [("col", f"r{i}", "t") for i in range(3)]
+    assert {tuple(_chain(f)[1]) for f in frames} == {("r0", "Row"), ("r1", "Row"), ("r2", "Row")}
+
+
+def test_kit_boot_chains_of_a_page():
+    from nustd.ui import Card, Row, RowRef, TextRef
+    from nustd.ui.nudle import Page
+
+    class Bar(Row):
+        a = TextRef.slot()
+
+    class Box(Card):
+        b = TextRef.slot()
+
+    class Home(Page):
+        bar = Bar.slot()
+        box = Box.slot(title="T")
+        free = RowRef.slot(wrap=True)
+
+    chains = Home._boot_chains()
+    assert [[lvl[:2] for lvl in c] for c in chains] == [
+        [("bar", "Row")],
+        [("bar", "Row"), ("a", "TextRef")],
+        [("box", "Card")],
+        [("box", "Card"), ("b", "TextRef")],
+        [("free", "Row")],
+    ]
+    assert chains[2][0][2]["title"] == "T"
+    assert chains[4][0][2]["wrap"] is True
+
+
+# --- every Ref sits under the right base ------------------------------------
+
+
+def _ref_classes_under(package: str) -> list[type]:
+    import importlib
+    import inspect
+    import pkgutil
+
+    pkg = importlib.import_module(package)
+    out = []
+    for info in pkgutil.walk_packages(pkg.__path__, package + "."):
+        mod = importlib.import_module(info.name)
+        out.extend(
+            cls
+            for _, cls in inspect.getmembers(mod, inspect.isclass)
+            if issubclass(cls, Ref) and cls.__module__ == mod.__name__
+        )
+    return out
+
+
+def test_every_ref_under_leaves_is_a_leaf():
+    leaves = _ref_classes_under("nustd.ui.refs.leaves")
+    assert len(leaves) >= 35
+    assert [c.__name__ for c in leaves if not issubclass(c, LeafRef)] == []
+
+
+def test_every_ref_under_containers_is_a_container():
+    containers = _ref_classes_under("nustd.ui.refs.containers")
+    assert len(containers) >= 9
+    assert [c.__name__ for c in containers if not issubclass(c, ContainerRef)] == []
+
+
+def test_structural_and_lens_refs_are_leaves():
+    from nustd.ui.lens import LensRef
+    from nustd.ui.refs import NavRef, TitleRef
+
+    assert issubclass(NavRef, LeafRef)
+    assert issubclass(TitleRef, LeafRef)
+    assert issubclass(LensRef, LeafRef)
+
+
+# --- back-compat: every name importable on main still is ---------------------
+
+_UI_ALL_ON_MAIN = (
+    "Accordion AccordionRef AlertRef Append AreaChart BadgeRef BarChart Boot ButtonRef Card "
+    "CardRef Changed CheckboxRef CodeRef Column Container DatePickerRef DividerRef "
+    "EmptyStateRef Field FieldRef Fieldset FieldsetRef Form Frame GaugeRef HeadingRef "
+    "ImageRef Index InputRef InsertRow JsonViewerRef KbdRef LineChart LinkRef ListRef "
+    "MarkdownRef Modal ModalRef NavRef NumberInputRef Page PageRef PieChart ProgressRef "
+    "RadioGroupRef Ref Remove RemoveRows Row Section SectionRef SelectRef Send Session "
+    "SetOrder SetRow ShortcutRef SliderRef Sparkline StatRef StatusDotRef Subscription "
+    "SwitchRef TableRef Tabs TabsRef TagInputRef TextAreaRef TextRef TitleRef TreeRef Write "
+    "WsSession core lens nudle refs serve table"
+).split()
+
+_REFS_ALL_ON_MAIN = (
+    "Accordion AccordionRef AlertRef AreaChart BadgeRef BarChart ButtonRef Card CardRef "
+    "CheckboxRef CodeRef Column Container DatePickerRef DividerRef EmptyStateRef Field "
+    "FieldRef Fieldset FieldsetRef Form GaugeRef HeadingRef ImageRef InputRef InsertRow "
+    "JsonViewerRef KbdRef LineChart LinkRef ListRef MarkdownRef Modal ModalRef NavRef "
+    "NumberInputRef PieChart ProgressRef RadioGroupRef Ref RemoveRows Row Section SectionRef "
+    "SelectRef SetOrder SetRow ShortcutRef SliderRef Sparkline StatRef StatusDotRef SwitchRef "
+    "TableRef Tabs TabsRef TagInputRef TextAreaRef TextRef TitleRef TreeRef"
+).split()
+
+_CORE_ALL_ON_MAIN = (
+    "EVENT OP_ERROR OP_INIT OP_NOTIFY OP_READ OP_REMOVE OP_WRITE Append Chain Changed Frame "
+    "Ref Remove Section SectionRef Send Session Subscription Write WsSession WsSubscription "
+    "boot_chains decode encode"
+).split()
+
+
+@pytest.mark.parametrize(
+    ("module", "names"),
+    [
+        ("nustd.ui", _UI_ALL_ON_MAIN),
+        ("nustd.ui.refs", _REFS_ALL_ON_MAIN),
+        ("nustd.ui.core", _CORE_ALL_ON_MAIN),
+    ],
+)
+def test_every_name_on_main_still_imports(module, names):
+    import importlib
+
+    mod = importlib.import_module(module)
+    assert [n for n in names if not hasattr(mod, n)] == []
+    assert [n for n in names if n not in mod.__all__] == []
+    # Sorted the way ruff sorts it: CONSTANTS, then Classes, then modules.
+    order = sorted(mod.__all__, key=lambda n: (0 if n.isupper() else 1 if n[0].isupper() else 2, n))
+    assert mod.__all__ == order
+
+
+def test_core_all_is_unchanged():
+    import nustd.ui.core
+
+    assert sorted(nustd.ui.core.__all__) == sorted(_CORE_ALL_ON_MAIN)
+
+
+def test_old_submodule_paths_still_import():
+    import nustd.ui
+    from nustd.ui.refs.chart import LineChart
+    from nustd.ui.refs.input import ButtonRef
+    from nustd.ui.refs.layout import AccordionRef, Row
+    from nustd.ui.refs.output import ListRef, TableRef
+    from nustd.ui.refs.tree import TreeRef
+
+    assert Row is nustd.ui.Row
+    assert AccordionRef is nustd.ui.AccordionRef
+    for cls in (LineChart, ButtonRef, ListRef, TableRef, TreeRef):
+        assert getattr(nustd.ui, cls.__name__) is cls
+
+
+def test_section_ref_with_a_shape_keeps_its_shapes_wire_type():
+    import nustd.ui
+    from nustd.ui.core.base import _level_type
+    from nustd.ui.refs.layout import AccordionRef
+
+    assert _level_type(AccordionRef("o", section_cls=nustd.ui.Accordion)) == "Accordion"
+    assert _level_type(SectionRef("c", section_cls=nustd.ui.Column)) == "Column"

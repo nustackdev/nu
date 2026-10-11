@@ -388,32 +388,36 @@ def test_code_round_trips_both_ways():
 # --- widget interaction sweep (auto-covers every leaf widget) ----------------
 
 
+def _ref_modules():
+    """Every module under nustd.ui.refs, subpackages included, in name order."""
+    import importlib
+    import pkgutil
+
+    pkg = importlib.import_module("nustd.ui.refs")
+    names = sorted(m.name for m in pkgutil.walk_packages(pkg.__path__, pkg.__name__ + "."))
+    return [importlib.import_module(name) for name in names]
+
+
 def _leaf_widgets(*, needs_on_change: bool = False):
     """(ref_cls, module_name) for every Ref leaf widget with set()
     (optionally: only those exposing on_change())."""
-    import importlib
     import inspect
-    from pathlib import Path
 
     from nustd.ui.core import Ref, SectionRef
 
-    root = Path(importlib.import_module("nustd.ui.refs").__file__).parent
     out = []
-    for entry in sorted(root.iterdir()):
-        fname = entry.name
-        if not fname.endswith(".py") or fname.startswith("_"):
-            continue
-        mod = importlib.import_module("nustd.ui.refs." + fname[:-3])
+    for mod in _ref_modules():
+        short = mod.__name__.rsplit(".", 1)[-1]
         for name, cls in inspect.getmembers(mod, inspect.isclass):
             if (
                 issubclass(cls, Ref)
                 and not issubclass(cls, SectionRef)  # SectionRef-backed = container, not a leaf
-                and cls.__module__ == mod.__name__
+                and cls.__module__ == mod.__name__  # defined here, not a shim's re-export
                 and not name.startswith("_")
                 and callable(getattr(cls, "set", None))
                 and (not needs_on_change or callable(getattr(cls, "on_change", None)))
             ):
-                out.append((cls, fname[:-3]))
+                out.append((cls, short))
     return out
 
 
@@ -462,23 +466,22 @@ def test_widget_sweep_is_non_empty():
 
 
 def _shipped_ref_classes():
-    """Every Ref and Section class the kit defines under nustd.ui.refs."""
-    import importlib
+    """Every concrete Ref class the kit defines under nustd.ui.refs.
+
+    The two abstract bases are skipped: they declare an empty wire type on
+    purpose and never reach the wire.
+    """
     import inspect
-    from pathlib import Path
 
-    from nustd.ui.core import Ref, Section
+    from nustd.ui.core import Ref
+    from nustd.ui.refs import ContainerRef, LeafRef
 
-    root = Path(importlib.import_module("nustd.ui.refs").__file__).parent
     out = []
-    for entry in sorted(root.iterdir()):
-        fname = entry.name
-        if not fname.endswith(".py") or fname.startswith("_"):
-            continue
-        mod = importlib.import_module("nustd.ui.refs." + fname[:-3])
+    for mod in _ref_modules():
         for name, cls in inspect.getmembers(mod, inspect.isclass):
             if (
-                issubclass(cls, (Ref, Section))
+                issubclass(cls, Ref)
+                and cls not in (ContainerRef, LeafRef)
                 and cls.__module__ == mod.__name__
                 and not name.startswith("_")
             ):
@@ -490,7 +493,7 @@ _SHIPPED = _shipped_ref_classes()
 
 
 def test_shipped_ref_sweep_is_non_empty():
-    assert len(_SHIPPED) >= 40
+    assert len(_SHIPPED) >= 45
 
 
 @pytest.mark.parametrize("cls", _SHIPPED, ids=[c.__name__ for c in _SHIPPED])
@@ -500,6 +503,41 @@ def test_shipped_ref_declares_its_own_wire_type(cls):
     # whatever its parent renders as. This sweep is what catches that.
     assert "_wire_type" in cls.__dict__, f"{cls.__name__} declares no _wire_type"
     assert cls.__dict__["_wire_type"], f"{cls.__name__} declares an empty _wire_type"
+
+
+def _shipped_shapes():
+    """Every Shape the kit defines under nustd.ui.shapes."""
+    import importlib
+    import inspect
+    import pkgutil
+
+    from nustd.ui.core import Section
+
+    pkg = importlib.import_module("nustd.ui.shapes")
+    out = []
+    for info in sorted(pkgutil.walk_packages(pkg.__path__, pkg.__name__ + "."), key=str):
+        mod = importlib.import_module(info.name)
+        for name, cls in inspect.getmembers(mod, inspect.isclass):
+            if issubclass(cls, Section) and cls.__module__ == mod.__name__ and name[0] != "_":
+                out.append(cls)
+    return out
+
+
+_SHAPES = _shipped_shapes()
+
+
+def test_shape_sweep_is_non_empty():
+    assert len(_SHAPES) >= 10
+
+
+@pytest.mark.parametrize("cls", _SHAPES, ids=[c.__name__ for c in _SHAPES])
+def test_shape_draws_as_its_ref(cls):
+    # A Shape declares no wire type of its own; it draws as its container Ref.
+    from nustd.ui.core.base import _wire_type_of
+
+    assert "_wire_type" not in cls.__dict__, f"{cls.__name__} declares its own _wire_type"
+    assert cls._ref_cls._wire_type, f"{cls.__name__}'s Ref declares no _wire_type"
+    assert _wire_type_of(cls) == cls._ref_cls._wire_type
 
 
 def test_user_subclass_inherits_its_parents_wire_type():
