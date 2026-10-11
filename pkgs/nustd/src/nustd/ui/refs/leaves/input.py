@@ -471,7 +471,11 @@ OptionInput = "list[str] | list[dict[str, str]]"
 
 
 class SelectRef(LeafRef):
-    """Dropdown single-select whose value lives in the browser."""
+    """Dropdown single-select whose value lives in the browser.
+
+    `searchable=True` swaps the picker for one with a filter field, for long
+    option lists. Options, value, reads and notifies stay the same.
+    """
 
     _wire_type = "SelectRef"
 
@@ -482,11 +486,13 @@ class SelectRef(LeafRef):
         options: list[str] | list[dict[str, str]] | None = None,
         selected: str = "",
         placeholder: str = "",
+        searchable: bool = False,
     ) -> Self:
         return super().slot(
             options=_normalize_options(options or []),
             selected=selected,
             placeholder=placeholder,
+            searchable=searchable,
         )
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -504,6 +510,9 @@ class SelectRef(LeafRef):
         else:
             payload = {"options": opts}
         return Write(self, Dict.of(**payload))
+
+    def set_searchable(self, flag: BoolArg) -> Nu:
+        return Write(self, Dict.of(searchable=flag))
 
     def on_change(self) -> Changed:
         return Changed(self)

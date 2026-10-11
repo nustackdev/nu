@@ -1,11 +1,11 @@
-// Input nodes over the real tree store: ButtonRef's icon and tooltip, and
-// ToggleRef's press, write and read.
+// Input nodes over the real tree store: ButtonRef's icon and tooltip,
+// ToggleRef's press, write and read, and SelectRef's searchable picker.
 
 import { OPS, type TreeFrame } from "@nustackdev/ui-core";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { NodeView, tree } from "../../tree";
+import { NodeView, registry, tree } from "../../tree";
 import "..";
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -116,5 +116,46 @@ describe("ToggleRef", () => {
 		mount("ToggleRef", { label: "Pin", pressed: true });
 		dispatch(OPS.read, null, "r1");
 		expect(sent).toEqual([expect.objectContaining({ op: OPS.read, payload: true, id: "r1" })]);
+	});
+});
+
+describe("SelectRef", () => {
+	const options = [
+		{ value: "nu", label: "Nu" },
+		{ value: "nulog", label: "nulog" },
+	];
+
+	it("renders the Combobox trigger when searchable", () => {
+		mount("SelectRef", { options, selected: "nu", searchable: true });
+		const trigger = slot("combobox-trigger");
+		expect(trigger).not.toBeNull();
+		expect(trigger?.getAttribute("role")).toBe("combobox");
+		expect(trigger?.textContent).toBe("Nu");
+		expect(slot("select-trigger")).toBeNull();
+	});
+
+	it("shows the placeholder, muted, with nothing picked", () => {
+		mount("SelectRef", { options, selected: "", placeholder: "Pick one", searchable: true });
+		const trigger = slot("combobox-trigger");
+		expect(trigger?.textContent).toBe("Pick one");
+		expect(trigger?.hasAttribute("data-placeholder")).toBe(true);
+	});
+
+	it("keeps the plain Select by default", () => {
+		mount("SelectRef", { options, selected: "nu" });
+		expect(slot("select-trigger")).not.toBeNull();
+		expect(slot("combobox-trigger")).toBeNull();
+	});
+
+	it("keeps the read contract when searchable", () => {
+		mount("SelectRef", { options, selected: "", searchable: true });
+		dispatch(OPS.write, "nulog");
+		expect(slot("combobox-trigger")?.textContent).toBe("nulog");
+		dispatch(OPS.read, null, "r2");
+		expect(sent).toEqual([expect.objectContaining({ op: OPS.read, payload: "nulog", id: "r2" })]);
+	});
+
+	it("fills a Row's free width", () => {
+		expect(registry.SelectRef.fill).toBe(true);
 	});
 });
