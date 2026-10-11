@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add a field station example that tours the whole UI kit
 - Charts draw the design language palette unless a program picks its own colors
 - Sentences no longer get a stray space before punctuation that opens a text run
 - A circle skeleton keeps its size in a row instead of claiming free width
