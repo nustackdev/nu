@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Every layout container gets its own Ref, so any UI builds without Shapes
 - Containers work as plain Refs without Shapes, and leaves refuse children clearly
 - Boxed accordion rows run flush to the border, content aligned with titles
 - UI kit gets elevation levels, clearer press states, a brand focus ring

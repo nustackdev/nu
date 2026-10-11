@@ -1,7 +1,8 @@
 """Structural Refs -- bound to non-render browser APIs.
 
 Index-level Refs whose side effects live on the platform (window.history,
-document.title), not the visible body tree.
+document.title), not the visible body tree. Leaves: neither draws anything
+in the body, and neither holds children.
 """
 
 from __future__ import annotations
@@ -11,7 +12,9 @@ from typing import TYPE_CHECKING, Any
 from typing_extensions import Self
 
 from nu.forms import Dict
-from nustd.ui.core import Changed, Ref, Write
+from nustd.ui.core import Changed, Write
+
+from .leaves.base import LeafRef
 
 
 if TYPE_CHECKING:
@@ -25,7 +28,7 @@ if TYPE_CHECKING:
 __all__ = ["NavRef", "TitleRef"]
 
 
-class NavRef(Ref):
+class NavRef(LeafRef):
     """Bound to window.history + window.location. Index-level structural Ref.
 
     Bidirectional: host writes manipulate window.history; user navigation
@@ -68,7 +71,7 @@ class NavRef(Ref):
         return Changed(self)
 
 
-class TitleRef(Ref):
+class TitleRef(LeafRef):
     """Bound to document.title. Index-level structural Ref.
 
     Write-only from host. The browser-side slice writes assignments

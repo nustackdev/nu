@@ -1,4 +1,8 @@
-// Layout node types: Sections that wrap other nodes.
+// Container node types: open-ended children, optional chrome of their own.
+//
+// The Python side mirrors it: one container Ref per type here (RowRef,
+// CardRef, ...), with a Shape over each. Everything else the kit draws is a
+// leaf and lives in the other groups.
 
 import type { NodeEntry } from "../../tree";
 import { Accordion } from "./accordion";
@@ -12,7 +16,7 @@ import { Modal } from "./modal";
 import { Row } from "./row";
 import { Tabs } from "./tabs";
 
-export const layoutEntries: Record<string, NodeEntry> = {
+export const containerEntries: Record<string, NodeEntry> = {
 	Column,
 	Row,
 	Container,

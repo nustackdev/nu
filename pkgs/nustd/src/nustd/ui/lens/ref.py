@@ -6,10 +6,10 @@ primary value spells it ``set``. The cascade is not a single value -- it is a
 cursor and the columns that cursor produced, always together -- so there is
 ``set_columns`` and no bare ``set``.
 
-By the kit's grouping it is an output Ref: a server-owned sink the browser
-renders and the server never reads back. It lives here rather than in
-``refs/output.py`` because it comes with two modules of machinery beside it,
-and that machinery is not a widget.
+By the kit's grouping it is a content leaf: a server-owned sink the browser
+renders and the server never reads back, with no children. It lives here
+rather than in ``refs/leaves/output.py`` because it comes with two modules
+of machinery beside it, and that machinery is not a widget.
 """
 
 from __future__ import annotations
@@ -19,7 +19,8 @@ from typing import TYPE_CHECKING
 from typing_extensions import Self
 
 from nu.forms import Dict
-from nustd.ui.core import Changed, Ref, Write
+from nustd.ui.core import Changed, Write
+from nustd.ui.refs.leaves.base import LeafRef
 
 from .columns import DEFAULT_MAX_ROWS
 
@@ -32,7 +33,7 @@ if TYPE_CHECKING:
 __all__ = ["LensRef"]
 
 
-class LensRef(Ref):
+class LensRef(LeafRef):
     """A Shape, browsable as cascading columns. The server reads, the browser walks.
 
     Both directions carry something, and which half owns what is the whole
