@@ -144,3 +144,99 @@ def test_collapsible_refuses_unknown_props():
 
     with pytest.raises(TypeError):
         CollapsibleRef("c", props={"side": "left"})
+
+
+# --- Sheet -------------------------------------------------------------------
+
+
+def test_sheet_wire_type_and_slot_defaults():
+    from nustd.ui import Sheet, SheetRef
+
+    assert SheetRef._wire_type == "Sheet"
+    assert _wire_type_of(Sheet) == "Sheet"
+    assert SheetRef.slot().props == {
+        "open": False,
+        "title": "",
+        "side": "right",
+        "size": "md",
+        "dismissible": True,
+    }
+
+
+def test_sheet_shape_slot_forwards_to_the_ref():
+    from nustd.ui import Sheet, SheetRef
+
+    props = {"title": "Edit", "side": "left", "size": "lg", "dismissible": False}
+    assert Sheet.slot(**props).props == SheetRef.slot(**props).props
+    assert Sheet.slot(**props).props["side"] == "left"
+    assert "_wire_type" not in vars(Sheet)
+    assert "slot" not in vars(Sheet)
+
+
+def test_sheet_set_writes_only_what_it_is_given():
+    from nustd.ui import SheetRef
+
+    ref = SheetRef("s")
+    frames = _frames(
+        ref.set(open=True)
+        >> ref.set(title="Edit host")
+        >> ref.set(open=False, title="Closed")
+        >> ref.set_open(False)
+        >> ref.set_title("T"),
+    )
+    assert [f.payload for f in frames] == [
+        {"open": True},
+        {"title": "Edit host"},
+        {"open": False, "title": "Closed"},
+        {"open": False},
+        {"title": "T"},
+    ]
+
+
+def test_sheet_on_change_is_a_changed():
+    from nustd.ui import SheetRef
+
+    assert isinstance(SheetRef("s").on_change(), Changed)
+
+
+def test_sheet_alone_under_a_column():
+    from nustd.ui import ColumnRef, SheetRef, TextRef
+
+    col = ColumnRef("col")
+    sheet = SheetRef("inspector", parent_ref=col, props={"title": "Edit", "side": "left"})
+    [opened, wrote] = _frames(sheet.set(open=True) >> TextRef("t", parent_ref=sheet).set("hi"))
+    assert opened.ref == ("col", "inspector")
+    assert opened.payload == {"open": True}
+    assert _chain(wrote) == [("col", "Column"), ("inspector", "Sheet"), ("t", "TextRef")]
+    assert wrote.chain[1][2] == {
+        "open": False,
+        "title": "Edit",
+        "side": "left",
+        "size": "md",
+        "dismissible": True,
+    }
+
+
+def test_sheet_boot_chain_on_a_page():
+    from nustd.ui import ButtonRef, Form, InputRef, Sheet
+    from nustd.ui.nudle import Page
+
+    class EditForm(Form):
+        name = InputRef.slot()
+        save = ButtonRef.slot(label="Save")
+
+    class Inspector(Sheet):
+        form = EditForm.slot()
+
+    class Home(Page):
+        inspector = Inspector.slot(title="Edit host", open=True)
+
+    chains = [c for c in Home._boot_chains() if c[0][0] == "inspector"]
+    assert [[lvl[:2] for lvl in c] for c in chains] == [
+        [("inspector", "Sheet")],
+        [("inspector", "Sheet"), ("form", "Form")],
+        [("inspector", "Sheet"), ("form", "Form"), ("name", "InputRef")],
+        [("inspector", "Sheet"), ("form", "Form"), ("save", "ButtonRef")],
+    ]
+    assert chains[0][0][2]["open"] is True
+    assert chains[0][0][2]["title"] == "Edit host"

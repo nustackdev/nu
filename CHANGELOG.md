@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Programs can slide an edge drawer over the page and hear its dismiss
 - Programs can compose one sentence from text, links, badges, keys and dots
 - Toolbars get a two-state pressed button the program can set, read and hear
 - Text, links, badges, keys and dots read as words inside a sentence

@@ -4,7 +4,8 @@
   The tab owns open state while the user clicks (like Accordion) and sends a
   notify on each toggle; the server can still open or close it.
 - ``SheetRef``: an edge drawer, Modal's sibling for inspectors and side
-  panels. STUB, the disclosure unit fills it in.
+  panels. The server owns open state; the tab sends ``{open: false}`` when
+  the user dismisses it.
 
 Open vs closed is the thing each one carries, so each has a ``set()`` for
 it, the way Modal does. Every other child is open-ended composition: build
@@ -71,13 +72,48 @@ class CollapsibleRef(ContainerRef):
 
 
 Side = Literal["left", "right", "top", "bottom"]
+SheetSize = Literal["sm", "md", "lg"]
 
 
 class SheetRef(ContainerRef):
-    """Drawer that slides in from an edge over the page, children as its body."""
+    """Drawer that slides in from an edge over the page, children as its body.
+
+    Server-owned ``open`` and ``title``. When ``dismissible`` is true the user
+    can close it (backdrop, Esc, the close button) and the tab sends
+    ``{open: false}``, which ``on_change()`` takes. Like Modal, the sheet
+    stays open until the program writes ``open=False`` back, so a program
+    can hold it open (unsaved edits). ``size`` is the width of a left or
+    right sheet and the height of a top or bottom one.
+    """
 
     _wire_type = "Sheet"
 
     @classmethod
-    def slot(cls, *, open: bool = False, title: str = "", side: Side = "right") -> Self:
-        return super().slot(open=bool(open), title=title, side=side)
+    def slot(
+        cls,
+        *,
+        open: bool = False,
+        title: str = "",
+        side: Side = "right",
+        size: SheetSize = "md",
+        dismissible: bool = True,
+    ) -> Self:
+        return super().slot(
+            open=bool(open),
+            title=title,
+            side=side,
+            size=size,
+            dismissible=bool(dismissible),
+        )
+
+    def set_open(self, flag: BoolArg) -> Nu:
+        return Write(self, Dict.of(open=flag))
+
+    def set_title(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(title=text))
+
+    def set(self, open: BoolArg = UNSET, title: StrArg = UNSET) -> Nu:
+        return Write(self, Dict.of(**_open_title(open, title)))
+
+    def on_change(self) -> Changed:
+        return Changed(self)

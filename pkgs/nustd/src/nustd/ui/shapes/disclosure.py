@@ -36,6 +36,22 @@ class Collapsible(Section):
 
 
 class Sheet(Section):
-    """Edge drawer with its slots as the body. Props as ``SheetRef.slot``. STUB."""
+    """Edge drawer with its slots as the body. Props as ``SheetRef.slot``.
+
+    As a Shape::
+
+        class Inspector(nustd.ui.Sheet):
+            form = EditForm.slot()
+
+        class Home(nustd.ui.Page):
+            inspector = Inspector.slot(title="Edit host", side="right")
+
+        Home.inspector.set(open=True)
+
+    Refs alone, no Shape::
+
+        sheet = SheetRef("inspector", parent_ref=col, props={"title": "Edit host"})
+        TextRef("note", parent_ref=sheet).set("hello") >> sheet.set(open=True)
+    """
 
     _ref_cls = SheetRef
