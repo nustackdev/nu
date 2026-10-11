@@ -26,6 +26,10 @@ if TYPE_CHECKING:
 XFormat = Literal["number", "time", "datetime_us", "datetime_ms", "datetime_s"]
 
 
+# An empty `color` or `colors` draws the kit chart palette, slot by slot, in
+# order (design language chart-1..8). Pass colors only to override it.
+
+
 class AreaChart(LeafRef):
     """Display-only area chart. `write` (partial) and `append` (one row)."""
 
@@ -47,7 +51,7 @@ class AreaChart(LeafRef):
             x_label=x_label,
             y_label=y_label,
             series=list(series or ["value"]),
-            colors=list(colors or ["#2563eb"]),
+            colors=list(colors or []),
             stacked=stacked,
             max_points=max_points,
             x_format=x_format,
@@ -128,7 +132,7 @@ class BarChart(LeafRef):
         *,
         x_label: str = "",
         y_label: str = "",
-        color: str = "#2563eb",
+        color: str = "",
         orientation: Orientation = "vertical",
         max_bars: int = 200,
     ) -> Self:
@@ -203,7 +207,7 @@ class LineChart(LeafRef):
         *,
         x_label: str = "",
         y_label: str = "",
-        color: str = "#2563eb",
+        color: str = "",
         max_points: int = 500,
         x_format: XFormat = "number",
         show_legend: bool = False,
@@ -301,18 +305,6 @@ class LineChart(LeafRef):
         return Append(self, Dict.of(name=name, x=x, y=y))
 
 
-DEFAULT_COLORS: list[str] = [
-    "#2563eb",
-    "#16a34a",
-    "#f59e0b",
-    "#dc2626",
-    "#7c3aed",
-    "#0891b2",
-    "#db2777",
-    "#65a30d",
-]
-
-
 class PieChart(LeafRef):
     """Display-only pie chart ref. `write` (partial) and `append` (one slice)."""
 
@@ -331,7 +323,7 @@ class PieChart(LeafRef):
     ) -> Self:
         return super().slot(
             slices=list(slices or []),
-            colors=list(colors or DEFAULT_COLORS),
+            colors=list(colors or []),
             inner_radius=inner_radius,
             show_labels=show_labels,
             show_legend=show_legend,
@@ -405,7 +397,7 @@ class Sparkline(LeafRef):
     def slot(
         cls,
         *,
-        color: str = "#2563eb",
+        color: str = "",
         height: int = 32,
         max_points: int = 100,
     ) -> Self:
