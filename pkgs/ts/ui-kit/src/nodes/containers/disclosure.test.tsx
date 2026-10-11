@@ -111,14 +111,20 @@ describe("Sheet", () => {
 		expect(el?.className).toContain("w-[35rem]");
 	});
 
-	it("notifies {open: false} on Escape and the close button, and stays open", () => {
+	it("closes on Escape and notifies {open: false}", () => {
 		mount("s", "Sheet", { open: true, title: "Edit host" });
 		pressEscape();
 		expect(sent).toEqual([{ op: OPS.notify, ref: ["s"], payload: { open: false }, id: undefined }]);
-		expect(content()).not.toBeNull();
+		expect(tree.getState().getIn(["s"])?.props.open).toBe(false);
+	});
+
+	it("closes on the close button, and a server write opens it again", () => {
+		mount("s", "Sheet", { open: true, title: "Edit host" });
 		act(() => (document.querySelector("[data-slot=sheet-close-icon]") as HTMLElement).click());
-		expect(sent).toHaveLength(2);
-		expect(sent[1].payload).toEqual({ open: false });
+		expect(sent.at(-1)?.payload).toEqual({ open: false });
+		expect(tree.getState().getIn(["s"])?.props.open).toBe(false);
+		write("s", { open: true });
+		expect(tree.getState().getIn(["s"])?.props.open).toBe(true);
 	});
 
 	it("never notifies when not dismissible, and draws no close button", () => {

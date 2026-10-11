@@ -4,8 +4,8 @@
 // Server-owned `open` / `title`, plus `side`, `size` and `dismissible`, all
 // plain props merged by the default `write`, so there is no handler here.
 // When the user dismisses (backdrop, Escape, the close button) and
-// `dismissible` is true, the tab sends `notify` with {open: false}; like
-// Modal it does not close itself, the program writes `open` back.
+// `dismissible` is true, the sheet closes in this tab and sends `notify`
+// with {open: false}, the same as Modal.
 //
 // Composes the kit Sheet primitive (Radix Dialog under the hood): portal,
 // scrim, focus trap, Esc and focus restore come from it, and so do the slide
@@ -29,6 +29,7 @@ import {
 	type NodeProps,
 	useBoolProp,
 	useSend,
+	useSetProps,
 	useStringProp,
 } from "../../tree";
 
@@ -49,14 +50,18 @@ function SheetView({ path }: NodeProps) {
 	const size = pick(useStringProp(path, "size"), SIZES, "md");
 	const dismissible = useBoolProp(path, "dismissible", true);
 	const send = useSend(path);
+	const setProps = useSetProps(path);
 
+	// A dismiss closes in this tab and tells the program, like a Collapsible
+	// toggle. A later write of `open: true` opens it again.
 	const onOpenChange = useCallback(
 		(next: boolean) => {
 			if (next) return;
 			if (!dismissible) return;
+			setProps({ open: false });
 			send(OPS.notify, { open: false });
 		},
-		[dismissible, send],
+		[dismissible, send, setProps],
 	);
 
 	return (
