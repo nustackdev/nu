@@ -1,4 +1,5 @@
-// Input nodes over the real tree store: ButtonRef's icon and tooltip.
+// Input nodes over the real tree store: ButtonRef's icon and tooltip, and
+// ToggleRef's press, write and read.
 
 import { OPS, type TreeFrame } from "@nustackdev/ui-core";
 import { act } from "react";
@@ -38,6 +39,7 @@ function dispatch(op: string, payload: unknown, id?: string) {
 	act(() => tree.getState().dispatch({ op, ref: ["n"], payload, id }));
 }
 
+const props = () => tree.getState().getIn(["n"])?.props ?? {};
 const slot = (name: string) => host.querySelector<HTMLElement>(`[data-slot=${name}]`);
 // A tooltip's trigger takes over the button's data-slot, so an icon button
 // under one is found by its square size class instead.
@@ -84,5 +86,35 @@ describe("ButtonRef", () => {
 		expect(sent.map((f) => f.op)).toEqual([OPS.notify]);
 		dispatch(OPS.write, { label: "", icon: "play", tooltip: "Run" });
 		expect(iconButton()?.getAttribute("aria-label")).toBe("Run");
+	});
+});
+
+describe("ToggleRef", () => {
+	it("flips pressed and notifies on press", () => {
+		mount("ToggleRef", { label: "", icon: "bold", pressed: false });
+		const t = slot("toggle");
+		expect(t?.getAttribute("aria-label")).toBe("bold");
+		expect(t?.getAttribute("aria-pressed")).toBe("false");
+		act(() => t?.click());
+		expect(props().pressed).toBe(true);
+		expect(slot("toggle")?.getAttribute("aria-pressed")).toBe("true");
+		expect(sent.map((f) => f.op)).toEqual([OPS.notify]);
+	});
+
+	it("lands a bare write on pressed and merges a map", () => {
+		mount("ToggleRef", { label: "Wrap", icon: "", pressed: false });
+		dispatch(OPS.write, true);
+		expect(props().pressed).toBe(true);
+		dispatch(OPS.write, { label: "Pin", icon: "pin" });
+		expect(props()).toMatchObject({ label: "Pin", icon: "pin", pressed: true });
+		expect(slot("toggle")?.querySelector("svg")).not.toBeNull();
+		dispatch(OPS.write, null);
+		expect(props().pressed).toBe(false);
+	});
+
+	it("answers a read with the pressed state", () => {
+		mount("ToggleRef", { label: "Pin", pressed: true });
+		dispatch(OPS.read, null, "r1");
+		expect(sent).toEqual([expect.objectContaining({ op: OPS.read, payload: true, id: "r1" })]);
 	});
 });

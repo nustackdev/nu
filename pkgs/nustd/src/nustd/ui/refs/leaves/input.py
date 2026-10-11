@@ -689,18 +689,37 @@ class TextAreaRef(LeafRef):
 
 
 class ToggleRef(LeafRef):
-    """Two-state toolbar button. STUB: wired end to end, the inputs unit fills it in.
+    """Two-state toolbar button whose pressed state lives in the browser.
 
-    Pressed or not is the value, read live like ``SwitchRef``'s. ``SwitchRef``
+    Pressed or not is the value, read live like `SwitchRef`'s. `SwitchRef`
     stays the control for a setting; this is for a toolbar (bold, wrap, pin).
-    No ``set()`` or ``on_change()`` yet; the inputs unit adds them.
+    `icon` takes the same lucide names as `ButtonRef.icon`, drawn before the
+    label; with an empty label the icon name is the accessible name.
     """
 
     _wire_type = "ToggleRef"
 
     @classmethod
-    def slot(cls, *, label: str = "", pressed: bool = False) -> Self:
-        return super().slot(label=label, pressed=bool(pressed))
+    def slot(cls, *, label: str = "", icon: str = "", pressed: bool = False) -> Self:
+        return super().slot(label=label, icon=icon, pressed=bool(pressed))
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        async def athunk(rt: Runtime) -> Any:
+            return await self._aread(rt, nid)
+
+        return athunk
+
+    def set(self, pressed: BoolArg) -> Nu:
+        return Write(self, pressed)
+
+    def set_label(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(label=text))
+
+    def set_icon(self, name: StrArg) -> Nu:
+        return Write(self, Dict.of(icon=name))
+
+    def on_change(self) -> Changed:
+        return Changed(self)
 
 
 __all__ = [
