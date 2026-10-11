@@ -13,6 +13,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Toolbars get a two-state pressed button the program can set, read and hear
+- Text, links, badges, keys and dots read as words inside a sentence
 - Kit gains an inline layout where text, links, badges and keys wrap together
 - Lay out cards and charts in equal cells, from Python or the browser
 - Buttons can carry an icon and a hover hint, drawing as icon-only squares
