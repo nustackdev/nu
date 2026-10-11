@@ -1,8 +1,8 @@
-"""Field station: a rich nudle page over the whole UI kit, Shapes and Refs side by side.
+"""Field station: a rich nudle page over the whole UI kit.
 
 Breadcrumb and header, a sentence built from runs, a toolbar, a grid of live
 stat cards, charts beside cards, a list whose items are sentences, a gallery
-built from Refs alone with computed keys, a folded table, a sheet the
+of keyed cards, one per species, a folded table, a sheet the
 toolbar opens, and a modal that confirms clearing the log.
 """
 
@@ -81,19 +81,17 @@ class Stats(ui.Grid):
 # --- charts beside cards ------------------------------------------------------
 
 
+class Tags(ui.Line):
+    migration = ui.BadgeRef.slot(label="migration", variant="info")
+    predators = ui.BadgeRef.slot(label="predators", variant="warn")
+    rains = ui.BadgeRef.slot(label="rains", variant="ok")
+
+
 class Note(ui.Card):
     body = ui.TextRef.slot(
         value="Wildebeest move north after the short rains. Lion counts follow with a lag of a few weeks."
     )
-    tags = type(
-        "Tags",
-        (ui.Line,),
-        {
-            "a": ui.BadgeRef.slot(label="migration", variant="info"),
-            "b": ui.BadgeRef.slot(label="predators", variant="warn"),
-            "c": ui.BadgeRef.slot(label="rains", variant="ok"),
-        },
-    ).slot()
+    tags = Tags.slot()
 
 
 class Trend(ui.Row):
@@ -106,21 +104,27 @@ class Mix(ui.Row):
     bars = ui.BarChart.slot()
 
 
-# --- list of sentences --------------------------------------------------------
+# --- keyed children: one per species -----------------------------------------
 
 
-class Item(ui.Line):
+class Entry(ui.Line):
     name = ui.LinkRef.slot()
     status = ui.BadgeRef.slot()
     rest = ui.TextRef.slot()
 
 
 class Watch(ui.Card):
-    entries = type(
-        "Items",
-        (ui.List,),
-        {f"i{i}": Item.slot() for i in range(4)},
-    ).slot()
+    entries = ui.List.slot(Entry)
+
+
+class Meta(ui.Line):
+    iucn = ui.BadgeRef.slot()
+    note = ui.TextRef.slot()
+
+
+class SpeciesCard(ui.Card):
+    count = ui.StatRef.slot(label="counted")
+    meta = Meta.slot()
 
 
 # --- folded table and sheet ---------------------------------------------------
@@ -176,7 +180,7 @@ class Home(ui.Page):
     h_watch = ui.HeadingRef.slot(label="Watch list")
     watch = Watch.slot(title="Species to watch", subtitle="IUCN status from the atlas")
     h_gallery = ui.HeadingRef.slot(label="Atlas")
-    atlas = ui.Column.slot()
+    atlas = ui.Grid.slot(SpeciesCard, min_width=220, gap=3)
     log = Log.slot(title="Trap log")
     sheet = LogSheet.slot(title="Log a sighting", side="right")
     confirm = ConfirmClear.slot(title="Clear the trap log?")
@@ -196,30 +200,28 @@ def chain(*steps: nu.Nu) -> nu.Nu:
     return out
 
 
-# Layer 1 alone: a grid and one card per species under computed keys, no Shape.
-# It mounts under a declared Column so it lands in place on the page.
-gallery = ui.GridRef("gallery", parent_ref=h.atlas, props={"min_width": 220, "gap": 3})
+def slug(name: str) -> str:
+    return name.lower().replace(" ", "_")
+
+
 atlas = []
-for i, (name, latin, status, count) in enumerate(SPECIES):
-    card = ui.CardRef(
-        nu.Str("sp") + nu.str(i), parent_ref=gallery, props={"title": name, "subtitle": latin}
-    )
-    line = ui.LineRef("meta", parent_ref=card)
+for name, latin, status, count in SPECIES:
+    card = h.atlas[slug(name)]
     atlas += [
-        ui.StatRef("n", parent_ref=card).set(f"{count:,}", label="counted"),
-        ui.BadgeRef("iucn", parent_ref=line).set(status, variant=TONE[status]),
-        ui.TextRef("note", parent_ref=line).set(
-            "on the IUCN red list" if status != "LC" else "least concern"
-        ),
+        card.set_title(name),
+        card.set_subtitle(latin),
+        card.count.set(f"{count:,}", label="counted"),
+        card.meta.iucn.set(status, variant=TONE[status]),
+        card.meta.note.set("on the IUCN red list" if status != "LC" else "least concern"),
     ]
 
 watch = []
 for i, (name, _, status, count) in enumerate([s for s in SPECIES if s[2] != "LC"][:4]):
-    item = getattr(h.watch.entries, f"i{i}")
+    entry = h.watch.entries[i]
     watch += [
-        item.name.set(href="https://www.iucnredlist.org", label=name),
-        item.status.set(status, variant=TONE[status]),
-        item.rest.set(f"{count:,} counted this season, down from last year."),
+        entry.name.set(href="https://www.iucnredlist.org", label=name),
+        entry.status.set(status, variant=TONE[status]),
+        entry.rest.set(f"{count:,} counted this season, down from last year."),
     ]
 
 days = list(range(1, 31))
