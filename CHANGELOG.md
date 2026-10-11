@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Needs virtuals 0.1.10, whose fixes nested counts and parallel writes rely on
 - Web apps start faster, install lighter: plain Starlette and uvicorn, no FastAPI or pydantic
 - Field station example builds its atlas and watch list from templates
 - Lists and sentences draw indexed children in index order

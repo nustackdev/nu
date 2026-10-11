@@ -189,7 +189,7 @@ def test_page_class_handle_resolves_bare():
     ctx = Context().bind(Session, sess)
     asyncio.run(nu.arun(Solo.panel.label.set("x"), ctx))
     assert sess.frames[0].ref == ("panel", "label")
-    assert [chain[-1][0] for chain in Solo._boot_chains()] == ["panel", "label"]
+    assert [chain[-1][0] for chain in Solo._boot_chains()] == ["panel", "label", "title"]
 
 
 def test_kv_slot_on_a_page_stays_a_kv_path():
@@ -223,11 +223,14 @@ def test_write_carries_the_annotated_chain():
     asyncio.run(nu.arun(ChainApp.page.fields.label.set("x"), ctx))
     chain = sess.frames[0].chain
     assert [(seg, typ) for seg, typ, _ in chain] == [
-        ("page", "ChainPage"),
+        ("page", "Page"),
         ("fields", "Row"),
         ("label", "TextRef"),
     ]
-    assert chain[0][2] == {}  # page slot declared no props
+    assert chain[0][2] == {
+        "route": "/",
+        "label": "home",
+    }  # the route and label a page slot declares
     assert chain[1][2]["gap"] == 4  # Row.slot() pins its chrome defaults
     assert chain[2][2] == {"value": "hi"}
     assert sess.frames[0].ref == tuple(seg for seg, _, _ in chain)
@@ -248,7 +251,7 @@ def test_append_carries_the_annotated_chain():
     sess = _RecordingSession()
     ctx = Context().bind(Session, sess)
     asyncio.run(nu.arun(TApp2.table.sec.t.append(["a", "b"]), ctx))
-    assert [lvl[1] for lvl in sess.frames[0].chain] == ["TPage2", "Row", "TableRef"]
+    assert [lvl[1] for lvl in sess.frames[0].chain] == ["Page", "Row", "TableRef"]
 
 
 def test_deep_nested_page_path():
