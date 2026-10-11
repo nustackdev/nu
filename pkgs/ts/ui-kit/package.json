@@ -1,6 +1,11 @@
 {
 	"name": "@nustackdev/ui-kit",
 	"description": "Nu design kit: tokens, primitives, node types, and the tree store bindings for the UI fabric.",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nustackdev/nu.git",
+		"directory": "pkgs/ts/ui-kit"
+	},
 	"version": "0.3.2",
 	"type": "module",
 	"main": "./src/index.ts",

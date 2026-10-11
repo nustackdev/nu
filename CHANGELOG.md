@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- UI kit packages name their source repo, as signed provenance requires
 - UI kit packages publish from CI with no stored token, signed with provenance
 
 ## 0.6.2 — 2026-10-12

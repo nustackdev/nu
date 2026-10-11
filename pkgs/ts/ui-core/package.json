@@ -1,6 +1,11 @@
 {
 	"name": "@nustackdev/ui-core",
 	"description": "Wire protocol for the Nu.",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/nustackdev/nu.git",
+		"directory": "pkgs/ts/ui-core"
+	},
 	"version": "0.2.1",
 	"type": "module",
 	"main": "./src/index.ts",
