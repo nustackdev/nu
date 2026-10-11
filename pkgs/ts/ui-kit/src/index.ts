@@ -57,6 +57,7 @@ export {
 export { Checkbox, checkboxVariants } from "./components/ui/checkbox";
 export { IconButton, iconButtonVariants } from "./components/ui/icon-button";
 export { Input, inputVariants } from "./components/ui/input";
+export { Grid, type GridProps } from "./components/ui/grid";
 export { InlineEdit, type InlineEditProps } from "./components/ui/inline-edit";
 export { Kbd, type KbdProps, kbdVariants } from "./components/ui/kbd";
 export {
@@ -66,6 +67,7 @@ export {
 	type ListVariant,
 	listVariants,
 } from "./components/ui/list";
+export { Line, type LineProps } from "./components/ui/line";
 export { Shortcut, type ShortcutProps } from "./components/ui/shortcut";
 export { NumberInput, numberInputVariants } from "./components/ui/number-input";
 export {

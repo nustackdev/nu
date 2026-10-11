@@ -464,3 +464,37 @@ def test_section_ref_with_a_shape_keeps_its_shapes_wire_type():
 
     assert _level_type(AccordionRef("o", section_cls=nustd.ui.Accordion)) == "Accordion"
     assert _level_type(SectionRef("c", section_cls=nustd.ui.Column)) == "Column"
+
+
+_NEW_NAMES = (
+    "ContainerRef LeafRef ColumnRef RowRef BoxRef FormRef List GridRef Grid LineRef Line "
+    "CollapsibleRef Collapsible SheetRef Sheet AvatarRef BreadcrumbRef SkeletonRef SpinnerRef "
+    "StatusPillRef ToggleRef"
+).split()
+
+
+@pytest.mark.parametrize("module", ["nustd.ui", "nustd.ui.refs"])
+def test_new_names_are_exported(module):
+    import importlib
+
+    mod = importlib.import_module(module)
+    assert [n for n in _NEW_NAMES if n not in mod.__all__ or not hasattr(mod, n)] == []
+
+
+def test_new_containers_and_shapes_draw_as_their_refs():
+    import nustd.ui as ui
+
+    pairs = {
+        ui.Grid: "Grid",
+        ui.Line: "Line",
+        ui.Collapsible: "Collapsible",
+        ui.Sheet: "Sheet",
+    }
+    for shape, wire in pairs.items():
+        assert issubclass(shape._ref_cls, ContainerRef)
+        assert _wire_type_of(shape) == wire
+    for leaf in (ui.AvatarRef, ui.BreadcrumbRef, ui.SkeletonRef, ui.SpinnerRef, ui.StatusPillRef):
+        assert issubclass(leaf, LeafRef)
+        assert _wire_type_of(leaf) == leaf.__name__
+    assert issubclass(ui.ToggleRef, LeafRef)
+    assert ui.shapes.Grid is ui.Grid

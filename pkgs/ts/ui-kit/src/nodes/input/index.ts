@@ -14,6 +14,7 @@ import { SliderRef } from "./slider";
 import { SwitchRef } from "./switch";
 import { TagInputRef } from "./tag-input";
 import { TextAreaRef } from "./text-area";
+import { ToggleRef } from "./toggle";
 
 export const inputEntries: Record<string, NodeEntry> = {
 	InputRef,
@@ -29,4 +30,5 @@ export const inputEntries: Record<string, NodeEntry> = {
 	TagInputRef,
 	MarkdownRef,
 	CodeRef,
+	ToggleRef,
 };

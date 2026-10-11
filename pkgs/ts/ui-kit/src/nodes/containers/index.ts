@@ -7,14 +7,18 @@
 import type { NodeEntry } from "../../tree";
 import { Accordion } from "./accordion";
 import { Card } from "./card";
+import { Collapsible } from "./collapsible";
 import { Column } from "./column";
 import { Container } from "./container";
 import { Field } from "./field";
 import { Fieldset } from "./fieldset";
 import { Form } from "./form";
+import { Grid } from "./grid";
+import { Line } from "./line";
 import { ListRef } from "./list";
 import { Modal } from "./modal";
 import { Row } from "./row";
+import { Sheet } from "./sheet";
 import { Tabs } from "./tabs";
 
 export const containerEntries: Record<string, NodeEntry> = {
@@ -29,4 +33,8 @@ export const containerEntries: Record<string, NodeEntry> = {
 	Accordion,
 	Modal,
 	ListRef,
+	Grid,
+	Line,
+	Collapsible,
+	Sheet,
 };

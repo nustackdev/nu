@@ -6,12 +6,14 @@
           JsonViewer).
 - table:  TableRef and its row ops.
 - tree:   TreeRef.
-- input:  tab-owned inputs, plus MarkdownRef and CodeRef.
+- display: Avatar, Breadcrumb, Skeleton, Spinner, StatusPill.
+- input:  tab-owned inputs (Toggle among them), plus MarkdownRef and CodeRef.
 - chart:  LineChart, BarChart, AreaChart, PieChart, Sparkline.
 """
 
 from .base import LeafRef
 from .chart import AreaChart, BarChart, LineChart, PieChart, Sparkline
+from .display import AvatarRef, BreadcrumbRef, SkeletonRef, SpinnerRef, StatusPillRef
 from .input import (
     ButtonRef,
     CheckboxRef,
@@ -26,6 +28,7 @@ from .input import (
     SwitchRef,
     TagInputRef,
     TextAreaRef,
+    ToggleRef,
 )
 from .output import (
     AlertRef,
@@ -51,8 +54,10 @@ from .tree import TreeRef
 __all__ = [
     "AlertRef",
     "AreaChart",
+    "AvatarRef",
     "BadgeRef",
     "BarChart",
+    "BreadcrumbRef",
     "ButtonRef",
     "CheckboxRef",
     "CodeRef",
@@ -79,14 +84,18 @@ __all__ = [
     "SetOrder",
     "SetRow",
     "ShortcutRef",
+    "SkeletonRef",
     "SliderRef",
     "Sparkline",
+    "SpinnerRef",
     "StatRef",
     "StatusDotRef",
+    "StatusPillRef",
     "SwitchRef",
     "TableRef",
     "TagInputRef",
     "TextAreaRef",
     "TextRef",
+    "ToggleRef",
     "TreeRef",
 ]
