@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Sentences no longer get a stray space before punctuation that opens a text run
 - A circle skeleton keeps its size in a row instead of claiming free width
 - Cards in a row share one height and top edge, keys stop stretching full width
 - The styled box is now Box, matching its Ref; the old Container name is gone

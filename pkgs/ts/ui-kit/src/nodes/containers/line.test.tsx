@@ -86,7 +86,7 @@ describe("Line", () => {
 		expect(a.className).not.toContain("inline-flex");
 	});
 
-	it("keeps its children in insertion order, a word space after each", () => {
+	it("keeps its children in insertion order, a word space before each", () => {
 		draw("l", [
 			[
 				["l", "Line"],
@@ -113,7 +113,25 @@ describe("Line", () => {
 			.filter((el) => el.parentElement === line())
 			.map((el) => el.getAttribute("data-slot"));
 		expect(slots).toEqual(["text", "link", "badge", "kbd", "status-dot"]);
-		expect(line().textContent).toBe("Built with Nu 0.6 K  ");
+		expect(line().textContent).toBe(" Built with Nu 0.6 K ");
+	});
+
+	it("puts no space before a text run that opens with punctuation", () => {
+		draw("l", [
+			[
+				["l", "Line"],
+				["a", "TextRef", { value: "press" }],
+			],
+			[
+				["l", "Line"],
+				["k", "KbdRef", { label: "Esc" }],
+			],
+			[
+				["l", "Line"],
+				["b", "TextRef", { value: ", then go." }],
+			],
+		]);
+		expect(line().textContent).toBe(" press Esc, then go.");
 	});
 
 	it("reads align and wrap off its props", () => {
