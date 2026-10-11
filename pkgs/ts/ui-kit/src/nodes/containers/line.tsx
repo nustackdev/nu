@@ -1,6 +1,9 @@
 // Line -- children inline, wrapping like a paragraph. Draws its children in
-// the kit Line primitive, each one followed by a word space (`LineRun` as
-// the child cell), and hands them an "inline" flow.
+// the kit Line primitive and hands them an "inline" flow. Each child is led
+// by one word space (`LineCell`), which collapses at the start of a line, so
+// runs break between items and a wrapped line never starts indented. A text
+// run that opens with punctuation or a space gets none, so ", press" sits
+// right after the run before it.
 //
 // The content leaves read that flow and draw as runs of the sentence: a
 // TextRef is a span with no block padding, a LinkRef an inline anchor, a
@@ -16,15 +19,31 @@
 // `fill`: a Line is a paragraph, it takes the width it is given and wraps
 // in it, so in a Row it shares the free width instead of sizing to its runs.
 
-import { Line as LinePrimitive, LineRun } from "../../components/ui/line";
+import { Line as LinePrimitive } from "../../components/ui/line";
 import {
+	type CellProps,
 	FlowProvider,
 	NodeChildren,
 	type NodeEntry,
 	type NodeProps,
+	useNode,
 	useProp,
 	useStringProp,
 } from "../../tree";
+
+// Starts with a space or closing punctuation: no word space before it.
+const NO_SPACE_BEFORE = /^[\s.,;:!?)\]}%'"’”…]/;
+
+function LineCell({ path, children }: CellProps) {
+	const { type, props } = useNode(path);
+	const value = type === "TextRef" && typeof props.value === "string" ? props.value : "";
+	return (
+		<>
+			{NO_SPACE_BEFORE.test(value) ? null : " "}
+			{children}
+		</>
+	);
+}
 
 const ALIGNS = new Set(["start", "center", "end"] as const);
 type Align = "start" | "center" | "end";
@@ -37,7 +56,7 @@ function LineView({ path }: NodeProps) {
 	return (
 		<LinePrimitive align={align} wrap={wrap}>
 			<FlowProvider flow="inline">
-				<NodeChildren path={path} cell={LineRun} />
+				<NodeChildren path={path} cell={LineCell} />
 			</FlowProvider>
 		</LinePrimitive>
 	);
