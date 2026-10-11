@@ -5,8 +5,9 @@
 // is a component and nothing else. Composes the kit Skeleton primitive:
 // `text` stacks `lines` text bars with the last one shorter, the way a
 // paragraph ends; `rect` is one block `height` px tall (96 when 0); `circle`
-// is a disc `height` px across (40 when 0). The entry is `fill`: text and
-// rect take the width they are given, a circle keeps its size inside it.
+// is a disc `height` px across (40 when 0). Text and rect fill: they take
+// the width they are given. A circle sizes to itself, so in a Row it keeps
+// its disc instead of claiming a share of the free width.
 // The shapes are aria-hidden; the region around them owns any live status.
 
 import type { CSSProperties } from "react";
@@ -58,4 +59,7 @@ function SkeletonView({ path }: NodeProps) {
 	);
 }
 
-export const SkeletonRef: NodeEntry = { component: SkeletonView, fill: true };
+export const SkeletonRef: NodeEntry = {
+	component: SkeletonView,
+	fill: (props) => props.shape !== "circle",
+};

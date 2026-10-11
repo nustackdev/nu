@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- A circle skeleton keeps its size in a row instead of claiming free width
 - Cards in a row share one height and top edge, keys stop stretching full width
 - The styled box is now Box, matching its Ref; the old Container name is gone
 - Row children share width instead of collapsing, and wrapping rows fit several per line

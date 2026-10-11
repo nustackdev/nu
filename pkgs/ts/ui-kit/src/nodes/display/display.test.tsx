@@ -6,7 +6,7 @@ import { OPS } from "@nustackdev/ui-core";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { NodeView, registry, tree } from "../../tree";
+import { isFill, NodeView, tree } from "../../tree";
 import { initials } from "./avatar";
 import "..";
 
@@ -117,8 +117,10 @@ describe("BreadcrumbRef", () => {
 });
 
 describe("SkeletonRef", () => {
-	it("fills a row", () => {
-		expect(registry.SkeletonRef.fill).toBe(true);
+	it("fills a row as text or rect, keeps its size as a circle", () => {
+		expect(isFill("SkeletonRef", { shape: "text" })).toBe(true);
+		expect(isFill("SkeletonRef", { shape: "rect" })).toBe(true);
+		expect(isFill("SkeletonRef", { shape: "circle" })).toBe(false);
 	});
 
 	it("stacks text lines, the last one shorter", () => {
