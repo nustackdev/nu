@@ -13,6 +13,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Buttons can carry an icon and a hover hint, drawing as icon-only squares
 - Add a grid layout to the kit: equal cells that step down and stack
 - Programs can fold a titled region open and closed, and hear the user's toggles
 - New layout, disclosure, status and toggle widgets land as wired placeholders for upcoming work
