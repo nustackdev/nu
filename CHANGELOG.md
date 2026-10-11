@@ -2,17 +2,18 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.6.1
-- **nustd** (fabrics) — 0.6.1
-- **nucli** (the `nu` command) — 0.6.1
-- **nudle** — 0.1.6
-- **ui-core** — 0.2.0
-- **ui-kit** — 0.3.1
+- **nucore** (kernel) — 0.6.2
+- **nustd** (fabrics) — 0.6.2
+- **nucli** (the `nu` command) — 0.6.2
+- **nudle** — 0.1.7
+- **ui-core** — 0.2.1
+- **ui-kit** — 0.3.2
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.6.2 — 2026-10-12
 
+- Release nu 0.6.2, UI kit 0.3.2, UI core 0.2.1 and nudle 0.1.7
 - Needs virtuals 0.1.10, whose fixes nested counts and parallel writes rely on
 - Web apps start faster, install lighter: plain Starlette and uvicorn, no FastAPI or pydantic
 - Field station example builds its atlas and watch list from templates
