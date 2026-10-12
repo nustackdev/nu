@@ -5,16 +5,24 @@
 // NavRef node, which is what drives pushState and mirrors the new uri, then
 // emits a notify so `App.nav.on_change()` subscribers on the server see it.
 // Same two steps the old mount-payload version did, minus the payload.
+//
+// The rail fills the split panel App puts it in: the panel owns the width
+// and the fold. The header's button hides it, as nuspace's does, and
+// `SidebarToggle` is the same button over the page to bring it back.
 
 import { type ReactNode, useMemo, useRef } from "react";
 import {
-	ResizeHandle,
+	IconButton,
+	Shortcut,
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
 	Tree,
 	TreeItem,
 	type TreeItemState,
 	type TreeSource,
 	tree,
-	useResizableWidth,
 	useStringProp,
 } from "@nustackdev/ui-kit";
 import { OPS } from "@nustackdev/ui-core";
@@ -25,7 +33,51 @@ type Props = {
 	pages: string[];
 	active: string | null;
 	footer?: ReactNode;
+	/** Fold the sidebar away. */
+	onHide: () => void;
 };
+
+/** The hide / show shortcut, as kit `Shortcut` key names: cmd/ctrl+\. */
+export const SIDEBAR_KEYS = ["mod", "\\"] as const;
+
+/** lucide panel-left, inline like the page glyph. */
+function PanelGlyph() {
+	return (
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+			<rect width="18" height="18" x="3" y="3" rx="2" />
+			<path d="M9 3v18" />
+		</svg>
+	);
+}
+
+/**
+ * The panel-left button: in the sidebar's header, and over the page while the
+ * sidebar is folded. `data-sidebar-toggle` is how App finds the one to focus
+ * after a flip.
+ */
+export function SidebarToggle({ label, onClick }: { label: string; onClick: () => void }) {
+	return (
+		<TooltipProvider>
+			<Tooltip>
+				<TooltipTrigger asChild>
+					<IconButton
+						variant="ghost"
+						size="sm"
+						aria-label={label}
+						data-sidebar-toggle=""
+						onClick={onClick}
+					>
+						<PanelGlyph />
+					</IconButton>
+				</TooltipTrigger>
+				<TooltipContent side="bottom">
+					{label}
+					<Shortcut keys={SIDEBAR_KEYS} size="sm" />
+				</TooltipContent>
+			</Tooltip>
+		</TooltipProvider>
+	);
+}
 
 // The pages are a flat tree: every page is a root, nothing folds. The kit's
 // Tree gives the rows, the keyboard and the selected wash the same as
@@ -62,10 +114,8 @@ function PageItem({ item, routes }: { item: TreeItemState; routes: Map<string, s
 	);
 }
 
-export function Sidebar({ appName, pages, active, footer }: Props) {
+export function Sidebar({ appName, pages, active, footer, onHide }: Props) {
 	const nav = useNavSegment();
-	// Drag the edge to resize, click it to snap back. Same bounds as nuspace.
-	const { width, onResizeStart, onResizeReset } = useResizableWidth("nudle.sidebar.width");
 
 	const routes = useRef(new Map<string, string>()).current;
 	const source = useMemo<TreeSource>(() => ({ roots: pages, childrenOf: () => [] }), [pages]);
@@ -80,12 +130,10 @@ export function Sidebar({ appName, pages, active, footer }: Props) {
 	};
 
 	return (
-		<aside
-			className="relative shrink-0 border-r border-border-subtle bg-bg-sunken flex flex-col"
-			style={{ width }}
-		>
-			<div className="px-4 pt-4 pb-2">
-				<span className="text-sm font-semibold text-text-primary">
+		<aside className="relative flex min-w-0 flex-1 flex-col bg-bg-sunken">
+			<div className="flex items-center gap-1 px-2 pt-3 pb-2">
+				<SidebarToggle label="Hide sidebar" onClick={onHide} />
+				<span className="truncate text-sm font-semibold text-text-primary">
 					{appName}
 				</span>
 			</div>
@@ -102,7 +150,6 @@ export function Sidebar({ appName, pages, active, footer }: Props) {
 				/>
 			</nav>
 			{footer ? <div className="px-4 py-3">{footer}</div> : null}
-			<ResizeHandle onPointerDown={onResizeStart} onDoubleClick={onResizeReset} />
 		</aside>
 	);
 }

@@ -23,11 +23,16 @@ export {
 export { formatShortcut, isMac, keyLabel, keySpoken, type Platform } from "./lib/shortcut";
 export {
 	CLICK_SLOP,
+	type DragAxis,
+	readStored,
 	resizeHandleClasses,
 	SIDEBAR_WIDTH,
+	splitHandleClasses,
 	trackColDrag,
+	trackDrag,
 	useResizableWidth,
 	type WidthBounds,
+	writeStored,
 } from "./lib/resize";
 export type { KeyBindings, KeyScope } from "./lib/keyboard";
 export { ErrorBoundary } from "./components/ErrorBoundary";
@@ -129,6 +134,18 @@ export { Progress, progressVariants } from "./components/ui/progress";
 export { Spinner, spinnerVariants } from "./components/ui/spinner";
 export { Skeleton } from "./components/ui/skeleton";
 export { Avatar, AvatarImage, AvatarFallback } from "./components/ui/avatar";
+export {
+	ResizableHandle,
+	type ResizableHandleProps,
+	type ResizableOrientation,
+	type ResizableOverflow,
+	ResizablePanel,
+	ResizablePanelGroup,
+	type ResizablePanelGroupHandle,
+	type ResizablePanelGroupProps,
+	type ResizablePanelProps,
+	type ResizableSize,
+} from "./components/ui/resizable";
 export { ResizeHandle, type ResizeHandleProps } from "./components/ui/resize-handle";
 export { Separator } from "./components/ui/separator";
 export { Heading, headingVariants } from "./components/ui/heading";
