@@ -11,7 +11,7 @@ import { nodeEntries } from ".";
 
 describe("node registry", () => {
 	it("ships every type", () => {
-		expect(Object.keys(nodeEntries)).toHaveLength(59);
+		expect(Object.keys(nodeEntries)).toHaveLength(55);
 	});
 
 	it("gives every type a component", () => {

@@ -13,6 +13,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Charts move to ECharts: one Chart node, sixteen typed Python builders, streaming appends
+- Every chart now takes set, merge, append and clear; per-chart setters are gone
 - UI kit packages name their source repo, as signed provenance requires
 - UI kit packages publish from CI with no stored token, signed with provenance
 

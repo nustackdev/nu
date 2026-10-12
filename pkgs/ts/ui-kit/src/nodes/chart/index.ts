@@ -1,16 +1,9 @@
-// Chart node types: output sinks with chart-shaped payloads.
+// Chart node types. One: `Chart`, an ECharts option. The typed charts
+// (line, bar, pie, ...) are Python builders over it, not node types.
 
 import type { NodeEntry } from "../../tree";
-import { AreaChart } from "./area-chart";
-import { BarChart } from "./bar-chart";
-import { LineChart } from "./line-chart";
-import { PieChart } from "./pie-chart";
-import { Sparkline } from "./sparkline";
+import { ChartNode } from "./chart";
 
 export const chartEntries: Record<string, NodeEntry> = {
-	LineChart,
-	AreaChart,
-	BarChart,
-	PieChart,
-	Sparkline,
+	Chart: ChartNode,
 };

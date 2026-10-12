@@ -5,6 +5,7 @@
 // stretch Column fill children span the width and content children keep it.
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { chartSet, chartStep } from "./chart-samples";
 import { NodeStage, sinkParameters, step } from "./harness";
 
 const meta: Meta = {
@@ -15,14 +16,6 @@ const meta: Meta = {
 export default meta;
 
 type Story = StoryObj;
-
-const points = Array.from({ length: 16 }, (_, i) => [i, ((i * 37) % 11) + i]);
-const bars = [
-	["Mammals", 52],
-	["Birds", 31],
-	["Reptiles", 18],
-	["Fish", 29],
-];
 
 function card(segment: string, title: string, label: string, value: string, note: string) {
 	return [
@@ -61,8 +54,9 @@ export const ChartBesideCard: Story = {
 			<NodeStage
 				root="flow-chart"
 				label="a LineChart and a Card share the width, neither collapses"
+				frames={[chartSet(["flow-chart", "trend"], "line-time")]}
 				chains={[
-					[row, step("trend", "LineChart", { value: { points } })],
+					[row, chartStep("trend", "line-time")],
 					[row, step("side", "Card", { title: "Yellowstone" })],
 					[
 						row,
@@ -81,18 +75,14 @@ export const PieAndBars: Story = {
 		return (
 			<NodeStage
 				root="flow-pie"
-				label="a PieChart (slices as maps) beside a horizontal BarChart"
+				label="a donut PieChart beside a horizontal BarChart"
 				chains={[
-					[row, step("pie", "PieChart", { show_legend: true })],
-					[row, step("bars", "BarChart", { orientation: "horizontal" })],
+					[row, chartStep("pie", "donut")],
+					[row, chartStep("bars", "bar-horizontal")],
 				]}
 				frames={[
-					{
-						op: "write",
-						ref: ["flow-pie", "pie"],
-						payload: { slices: bars.map(([label, value]) => ({ label, value })) },
-					},
-					{ op: "write", ref: ["flow-pie", "bars"], payload: { bars } },
+					chartSet(["flow-pie", "pie"], "donut"),
+					chartSet(["flow-pie", "bars"], "bar-horizontal"),
 				]}
 			/>
 		);

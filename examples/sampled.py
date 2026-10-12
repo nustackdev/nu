@@ -20,7 +20,7 @@ class App(nustd.ui.Index):
 # reactive wire: repaint the chart on every write to `nums`
 ui = nu.ReactForever(
     State.nums.on_change(),
-    App.home.chart.set_points(
+    App.home.chart.set(
         nu.sorted(State.nums.sample(200, 0, State.cursor)),
     ),
 )

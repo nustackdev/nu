@@ -4,6 +4,7 @@
 
 import type { ChainStep, TreeFrame } from "@nustackdev/ui-core";
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { chartSet, chartStep } from "./chart-samples";
 import { NodeStage, sinkParameters, step } from "./harness";
 
 const meta: Meta = {
@@ -73,11 +74,11 @@ export const StatCards: Story = {
 				card,
 				step("stat", "StatRef", { label: "today", value: s.value, delta: s.delta, trend: s.trend }),
 			]);
-			chains.push([grid, card, step("spark", "Sparkline", { height: 32 })]);
+			chains.push([grid, card, chartStep("spark", "sparkline")]);
 			frames.push({
-				op: "write",
+				op: "merge",
 				ref: [root, `c${i}`, "spark"],
-				payload: { points: [...s.points] },
+				payload: { series: [{ data: [...s.points] }] },
 			});
 		});
 		return (
@@ -121,39 +122,17 @@ export const Charts: Story = {
 		return (
 			<NodeStage
 				root={root}
-				label="columns 2: a PieChart and a LineChart, each its cell's width"
+				label="columns 2: a donut PieChart and a tall Sparkline, each its cell's width"
 				chains={[
-					[
-						grid,
-						pie,
-						step("chart", "PieChart", {
-							slices: [
-								["done", 62],
-								["running", 21],
-								["queued", 12],
-								["failed", 5],
-							],
-							inner_radius: 0.6,
-							show_labels: false,
-						}),
-					],
-					[grid, line, step("chart", "LineChart", { show_tooltip: false })],
+					[grid, pie, chartStep("chart", "donut")],
+					[grid, line, chartStep("chart", "sparkline", { height: 160 })],
 				]}
 				frames={[
+					chartSet([root, "pie", "chart"], "donut"),
 					{
-						op: "write",
+						op: "merge",
 						ref: [root, "line", "chart"],
-						payload: {
-							points: [
-								[1, 12],
-								[2, 18],
-								[3, 15],
-								[4, 24],
-								[5, 22],
-								[6, 30],
-								[7, 27],
-							],
-						},
+						payload: { series: [{ data: [12, 18, 15, 24, 22, 30, 27] }] },
 					},
 				]}
 			/>

@@ -134,9 +134,11 @@ def test_tabs_set_active_ships_the_chain():
 # --- chart payloads ----------------------------------------------------------
 
 
-def test_pie_set_slices_ships_maps_as_given():
-    slices = [{"label": "Birds", "value": 3}, {"label": "Fish", "value": 2}]
+def test_pie_set_takes_label_value_maps():
+    slices = [{"label": "Birds", "value": 3}, {"name": "Fish", "value": 2}]
     pie = PieChart("pie", parent_ref=ColumnRef("c"))
-    (frame,) = _run(pie.set_slices(slices))
-    assert frame.op == "write"
-    assert frame.payload == {"slices": slices}
+    (frame,) = _run(pie.set(slices))
+    assert frame.op == "merge"
+    assert frame.payload == {
+        "series": [{"data": [{"name": "Birds", "value": 3}, {"name": "Fish", "value": 2}]}]
+    }

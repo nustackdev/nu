@@ -447,7 +447,11 @@ def test_widget_set_emits_write_frame(widget_cls, mod):
     asyncio.run(nu.arun(handle.set("v"), ctx))
     assert len(sess.frames) == 1
     assert sess.frames[0].ref == ("page", "sec", "w")
-    assert sess.frames[0].op == "write"
+    # A chart's set(data) is a partial option, so it merges; set(option=...)
+    # is its write.
+    from nustd.ui.refs.leaves.chart import Chart
+
+    assert sess.frames[0].op == ("merge" if issubclass(widget_cls, Chart) else "write")
 
 
 @pytest.mark.parametrize("widget_cls,mod", _CHANGED_WIDGETS, ids=[m for _, m in _CHANGED_WIDGETS])
@@ -512,6 +516,12 @@ def test_shipped_ref_declares_its_own_wire_type(cls):
     # The wire type is inherited like any class attribute now, so a ref that
     # forgets to declare one does not fail loudly — it silently renders as
     # whatever its parent renders as. This sweep is what catches that.
+    from nustd.ui.refs.leaves.chart import Chart
+
+    if issubclass(cls, Chart):
+        # Every typed chart is a builder over the one Chart node, on purpose.
+        assert cls._wire_type == "Chart"
+        return
     assert "_wire_type" in cls.__dict__, f"{cls.__name__} declares no _wire_type"
     assert cls.__dict__["_wire_type"], f"{cls.__name__} declares an empty _wire_type"
 

@@ -55,6 +55,7 @@
 		"clsx": "^2.1.1",
 		"cmdk": "^1.1.1",
 		"date-fns": "^4.4.0",
+		"echarts": "^6.1.0",
 		"immer": "^11.1.8",
 		"lucide-react": "^0.564.0",
 		"prosemirror-commands": "^1.7.2",
@@ -72,7 +73,6 @@
 		"react": "^19.2.0",
 		"react-day-picker": "^10.0.1",
 		"react-dom": "^19.2.0",
-		"recharts": "^3.8.1",
 		"tailwind-merge": "^3.4.0",
 		"tailwindcss": "^4.1.18",
 		"zustand": "^5.0.13"

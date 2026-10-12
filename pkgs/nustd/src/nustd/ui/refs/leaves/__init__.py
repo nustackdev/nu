@@ -8,11 +8,30 @@
 - tree:   TreeRef.
 - display: Avatar, Breadcrumb, Skeleton, Spinner, StatusPill.
 - input:  tab-owned inputs (Toggle among them), plus MarkdownRef and CodeRef.
-- chart:  LineChart, BarChart, AreaChart, PieChart, Sparkline.
+- chart:  Chart, an ECharts option, and the typed builders over it
+          (LineChart, BarChart, PieChart, HeatmapChart, ...).
 """
 
 from .base import LeafRef
-from .chart import AreaChart, BarChart, LineChart, PieChart, Sparkline
+from .chart import (
+    AreaChart,
+    BarChart,
+    BoxplotChart,
+    CandlestickChart,
+    Chart,
+    FunnelChart,
+    GaugeChart,
+    HeatmapChart,
+    Histogram,
+    LineChart,
+    PieChart,
+    RadarChart,
+    SankeyChart,
+    ScatterChart,
+    Sparkline,
+    SunburstChart,
+    TreemapChart,
+)
 from .display import AvatarRef, BreadcrumbRef, SkeletonRef, SpinnerRef, StatusPillRef
 from .input import (
     ButtonRef,
@@ -57,15 +76,22 @@ __all__ = [
     "AvatarRef",
     "BadgeRef",
     "BarChart",
+    "BoxplotChart",
     "BreadcrumbRef",
     "ButtonRef",
+    "CandlestickChart",
+    "Chart",
     "CheckboxRef",
     "CodeRef",
     "DatePickerRef",
     "DividerRef",
     "EmptyStateRef",
+    "FunnelChart",
+    "GaugeChart",
     "GaugeRef",
     "HeadingRef",
+    "HeatmapChart",
+    "Histogram",
     "ImageRef",
     "InputRef",
     "InsertRow",
@@ -78,8 +104,11 @@ __all__ = [
     "NumberInputRef",
     "PieChart",
     "ProgressRef",
+    "RadarChart",
     "RadioGroupRef",
     "RemoveRows",
+    "SankeyChart",
+    "ScatterChart",
     "SelectRef",
     "SetOrder",
     "SetRow",
@@ -91,6 +120,7 @@ __all__ = [
     "StatRef",
     "StatusDotRef",
     "StatusPillRef",
+    "SunburstChart",
     "SwitchRef",
     "TableRef",
     "TagInputRef",
@@ -98,4 +128,5 @@ __all__ = [
     "TextRef",
     "ToggleRef",
     "TreeRef",
+    "TreemapChart",
 ]

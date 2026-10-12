@@ -20,7 +20,7 @@ const ITEMS = [
 	{
 		value: "three",
 		q: "Which libraries under the hood?",
-		a: "Radix for a11y-heavy primitives, cmdk for command surfaces, recharts for charts, react-day-picker for dates.",
+		a: "Radix for a11y-heavy primitives, cmdk for command surfaces, ECharts for charts, react-day-picker for dates.",
 	},
 ];
 

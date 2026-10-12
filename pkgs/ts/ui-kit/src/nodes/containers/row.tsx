@@ -20,7 +20,7 @@
 //            longest word, so long text wraps instead of pushing the row
 //            wider; a button or badge never shrinks below its label.
 //
-// Fill: LineChart, AreaChart, BarChart, PieChart, TableRef, TreeRef,
+// Fill: Chart (every chart type), TableRef, TreeRef,
 // JsonViewerRef, LensRef, CodeRef, MarkdownRef, InputRef, NumberInputRef,
 // TextAreaRef, TagInputRef, DatePickerRef, SliderRef, ProgressRef, AlertRef,
 // EmptyStateRef, ImageRef, HeadingRef, and the containers Card, Box,

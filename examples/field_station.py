@@ -95,12 +95,12 @@ class Note(ui.Card):
 
 
 class Trend(ui.Row):
-    chart = ui.LineChart.slot(show_legend=True)
+    chart = ui.LineChart.slot(["Lion", "Zebra / 2"], x_label="day")
     note = Note.slot(title="Field note", subtitle="week 41")
 
 
 class Mix(ui.Row):
-    pie = ui.PieChart.slot(inner_radius=0.55)
+    pie = ui.PieChart.slot(donut=True, total_label="sightings", labels=False, legend=True)
     bars = ui.BarChart.slot()
 
 
@@ -231,14 +231,9 @@ zebra = [[d, round(2900 + 260 * math.cos(d / 6) + d * 6)] for d in days]
 seed = chain(
     *atlas,
     *watch,
-    h.trend.chart.set_series(
-        [
-            {"name": "Lion", "points": lions},
-            {"name": "Zebra / 2", "points": [[x, y // 2] for x, y in zebra]},
-        ]
-    ),
-    h.mix.pie.set_slices([["Mammals", 62], ["Birds", 24], ["Reptiles", 9], ["Insects", 5]]),
-    h.mix.bars.set_bars([["Trap A", 41], ["Trap B", 28], ["Trap C", 35], ["Trap D", 17]]),
+    h.trend.chart.set({"Lion": lions, "Zebra / 2": [[x, y // 2] for x, y in zebra]}),
+    h.mix.pie.set([["Mammals", 62], ["Birds", 24], ["Reptiles", 9], ["Insects", 5]]),
+    h.mix.bars.set([["Trap A", 41], ["Trap B", 28], ["Trap C", 35], ["Trap D", 17]]),
     h.log.runs.set_rows(
         [
             {"time": "06:12", "trap": "A", "species": "Lion", "count": 3},
@@ -254,15 +249,15 @@ for t in range(24):
     seen = 400 + t * 17 + (t % 5) * 9
     ticks += [
         h.stats.sightings.stat.set(f"{seen:,}", label="today", delta=f"+ {9 + t % 7}%", trend="up"),
-        h.stats.sightings.spark.set_points([420 + k * 17 + (k % 5) * 9 for k in range(t + 2)]),
+        h.stats.sightings.spark.set([420 + k * 17 + (k % 5) * 9 for k in range(t + 2)]),
         h.stats.species.stat.set(str(31 + t // 4), label="seen", delta=f"+ {t // 4}", trend="up"),
-        h.stats.species.spark.set_points([31 + k // 4 for k in range(t + 2)]),
+        h.stats.species.spark.set([31 + k // 4 for k in range(t + 2)]),
         h.stats.traps.stat.set("4 / 4" if t % 9 else "3 / 4", label="online", trend="flat"),
-        h.stats.traps.spark.set_points([4 if k % 9 else 3 for k in range(t + 2)]),
+        h.stats.traps.spark.set([4 if k % 9 else 3 for k in range(t + 2)]),
         h.stats.rain.stat.set(
             f"{t * 0.4:.1f} mm", label="since dawn", delta="- 2 mm", trend="down"
         ),
-        h.stats.rain.spark.set_points([round(k * 0.4, 1) for k in range(t + 2)]),
+        h.stats.rain.spark.set([round(k * 0.4, 1) for k in range(t + 2)]),
         h.header.state.set("Live" if t > 2 else "Syncing", tone="ok" if t > 2 else "info"),
         h.header.busy.set("Refreshing" if t > 2 else "Pulling sightings"),
         nu.Delay(1.5),

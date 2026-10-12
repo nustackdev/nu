@@ -41,7 +41,7 @@ describe("Row", () => {
 		write([["r", "Row", { gap: 4, wrap: true }]]);
 		write([
 			["r", "Row"],
-			["chart", "LineChart"],
+			["chart", "Chart"],
 		]);
 		write([
 			["r", "Row"],
@@ -125,43 +125,6 @@ describe("Column", () => {
 		]);
 		draw(["c"]);
 		expect(host.querySelector("[data-slot=block-cell]")).toBeNull();
-	});
-});
-
-describe("charts", () => {
-	it("draws PieChart slices written as maps", () => {
-		tree.getState().write([["p", "PieChart"]]);
-		dispatch({
-			op: "write",
-			ref: ["p"],
-			payload: {
-				slices: [
-					{ label: "Birds", value: 3 },
-					{ label: "Fish", value: "2" },
-				],
-			},
-		});
-		expect(tree.getState().getIn(["p"])?.props.value).toEqual({
-			slices: [
-				{ label: "Birds", value: 3 },
-				{ label: "Fish", value: 2 },
-			],
-		});
-	});
-
-	it("still takes PieChart pairs", () => {
-		tree.getState().write([["p", "PieChart"]]);
-		dispatch({ op: "write", ref: ["p"], payload: { slices: [["a", 1]] } });
-		expect(tree.getState().getIn(["p"])?.props.value).toEqual({
-			slices: [{ label: "a", value: 1 }],
-		});
-	});
-
-	it("takes BarChart orientation from the declared props, before any write", () => {
-		tree.getState().write([["b", "BarChart", { orientation: "horizontal" }]]);
-		draw(["b"]);
-		const chart = host.querySelector("[data-slot=bar-chart]");
-		expect(chart?.getAttribute("data-orientation")).toBe("horizontal");
 	});
 });
 

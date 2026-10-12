@@ -1,0 +1,1785 @@
+{
+	"line": {
+		"props": {
+			"option": {
+				"tooltip": {
+					"show": true,
+					"trigger": "axis",
+					"confine": true,
+					"axisPointer": {
+						"type": "line"
+					}
+				},
+				"title": [
+					{
+						"id": "title",
+						"text": "Requests"
+					}
+				],
+				"legend": {
+					"type": "scroll",
+					"top": 30,
+					"left": 0
+				},
+				"grid": {
+					"left": 4,
+					"right": 16,
+					"top": 78,
+					"bottom": 4
+				},
+				"xAxis": {
+					"type": "category",
+					"boundaryGap": false
+				},
+				"yAxis": {
+					"type": "value",
+					"scale": true,
+					"name": "req/s"
+				},
+				"series": [
+					{
+						"type": "line",
+						"showSymbol": false,
+						"smooth": false,
+						"name": "Series 1",
+						"data": []
+					},
+					{
+						"type": "line",
+						"showSymbol": false,
+						"smooth": false,
+						"name": "Series 2",
+						"data": []
+					},
+					{
+						"type": "line",
+						"showSymbol": false,
+						"smooth": false,
+						"name": "Series 3",
+						"data": []
+					},
+					{
+						"type": "line",
+						"showSymbol": false,
+						"smooth": false,
+						"name": "Series 4",
+						"data": []
+					},
+					{
+						"type": "line",
+						"showSymbol": false,
+						"smooth": false,
+						"name": "Series 5",
+						"data": []
+					},
+					{
+						"type": "line",
+						"showSymbol": false,
+						"smooth": false,
+						"name": "Series 6",
+						"data": []
+					},
+					{
+						"type": "line",
+						"showSymbol": false,
+						"smooth": false,
+						"name": "Series 7",
+						"data": []
+					},
+					{
+						"type": "line",
+						"showSymbol": false,
+						"smooth": false,
+						"name": "Series 8",
+						"data": []
+					}
+				]
+			},
+			"height": 256,
+			"max_points": 500
+		},
+		"patch": {
+			"series": [
+				{
+					"name": "Series 1",
+					"data": [
+						["Jan", 10],
+						["Feb", 13],
+						["Mar", 16],
+						["Apr", 10],
+						["May", 13],
+						["Jun", 16],
+						["Jul", 10],
+						["Aug", 13]
+					]
+				},
+				{
+					"name": "Series 2",
+					"data": [
+						["Jan", 14],
+						["Feb", 18],
+						["Mar", 22],
+						["Apr", 17],
+						["May", 21],
+						["Jun", 16],
+						["Jul", 20],
+						["Aug", 15]
+					]
+				},
+				{
+					"name": "Series 3",
+					"data": [
+						["Jan", 18],
+						["Feb", 23],
+						["Mar", 19],
+						["Apr", 24],
+						["May", 20],
+						["Jun", 25],
+						["Jul", 21],
+						["Aug", 26]
+					]
+				},
+				{
+					"name": "Series 4",
+					"data": [
+						["Jan", 22],
+						["Feb", 28],
+						["Mar", 25],
+						["Apr", 22],
+						["May", 28],
+						["Jun", 25],
+						["Jul", 22],
+						["Aug", 28]
+					]
+				},
+				{
+					"name": "Series 5",
+					"data": [
+						["Jan", 26],
+						["Feb", 33],
+						["Mar", 31],
+						["Apr", 29],
+						["May", 27],
+						["Jun", 34],
+						["Jul", 32],
+						["Aug", 30]
+					]
+				},
+				{
+					"name": "Series 6",
+					"data": [
+						["Jan", 30],
+						["Feb", 38],
+						["Mar", 37],
+						["Apr", 36],
+						["May", 35],
+						["Jun", 34],
+						["Jul", 33],
+						["Aug", 32]
+					]
+				},
+				{
+					"name": "Series 7",
+					"data": [
+						["Jan", 34],
+						["Feb", 34],
+						["Mar", 34],
+						["Apr", 34],
+						["May", 34],
+						["Jun", 34],
+						["Jul", 34],
+						["Aug", 34]
+					]
+				},
+				{
+					"name": "Series 8",
+					"data": [
+						["Jan", 38],
+						["Feb", 39],
+						["Mar", 40],
+						["Apr", 41],
+						["May", 42],
+						["Jun", 43],
+						["Jul", 44],
+						["Aug", 45]
+					]
+				}
+			]
+		}
+	},
+	"line-time": {
+		"props": {
+			"option": {
+				"tooltip": {
+					"show": true,
+					"trigger": "axis",
+					"confine": true,
+					"axisPointer": {
+						"type": "line"
+					}
+				},
+				"legend": {
+					"type": "scroll",
+					"top": 0,
+					"left": 0
+				},
+				"grid": {
+					"left": 4,
+					"right": 16,
+					"top": 36,
+					"bottom": 4
+				},
+				"xAxis": {
+					"type": "time",
+					"scale": true,
+					"axisLabel": {
+						"formatter": "{HH}:{mm}"
+					}
+				},
+				"yAxis": {
+					"type": "value",
+					"scale": true,
+					"axisLabel": {
+						"formatter": "{value}%"
+					},
+					"min": 0,
+					"max": 100
+				},
+				"series": [
+					{
+						"type": "line",
+						"showSymbol": false,
+						"smooth": true,
+						"name": "cpu",
+						"data": []
+					},
+					{
+						"type": "line",
+						"showSymbol": false,
+						"smooth": true,
+						"name": "mem",
+						"data": []
+					}
+				]
+			},
+			"height": 256,
+			"max_points": 500
+		},
+		"patch": {
+			"series": [
+				{
+					"name": "cpu",
+					"data": [
+						[1700000000000, 40.0],
+						[1700000060000, 46.54],
+						[1700000120000, 52.37],
+						[1700000180000, 56.83],
+						[1700000240000, 59.44],
+						[1700000300000, 59.91],
+						[1700000360000, 58.19],
+						[1700000420000, 54.46],
+						[1700000480000, 49.15],
+						[1700000540000, 42.82],
+						[1700000600000, 36.19],
+						[1700000660000, 29.97],
+						[1700000720000, 24.86],
+						[1700000780000, 21.42],
+						[1700000840000, 20.02],
+						[1700000900000, 20.82],
+						[1700000960000, 23.73],
+						[1700001020000, 28.44],
+						[1700001080000, 34.41],
+						[1700001140000, 41.0],
+						[1700001200000, 47.48],
+						[1700001260000, 53.14],
+						[1700001320000, 57.35],
+						[1700001380000, 59.65],
+						[1700001440000, 59.79],
+						[1700001500000, 57.75],
+						[1700001560000, 53.75],
+						[1700001620000, 48.24],
+						[1700001680000, 41.83],
+						[1700001740000, 35.21],
+						[1700001800000, 29.12],
+						[1700001860000, 24.23],
+						[1700001920000, 21.07],
+						[1700001980000, 20.0],
+						[1700002040000, 21.13],
+						[1700002100000, 24.34],
+						[1700002160000, 29.27],
+						[1700002220000, 35.38],
+						[1700002280000, 42.0],
+						[1700002340000, 48.4]
+					]
+				},
+				{
+					"name": "mem",
+					"data": [
+						[1700000000000, 70.0],
+						[1700000060000, 69.69],
+						[1700000120000, 68.78],
+						[1700000180000, 67.32],
+						[1700000240000, 65.4],
+						[1700000300000, 63.15],
+						[1700000360000, 60.71],
+						[1700000420000, 58.22],
+						[1700000480000, 55.84],
+						[1700000540000, 53.72],
+						[1700000600000, 51.99],
+						[1700000660000, 50.76],
+						[1700000720000, 50.1],
+						[1700000780000, 50.06],
+						[1700000840000, 50.64],
+						[1700000900000, 51.79],
+						[1700000960000, 53.46],
+						[1700001020000, 55.54],
+						[1700001080000, 57.89],
+						[1700001140000, 60.38],
+						[1700001200000, 62.84],
+						[1700001260000, 65.12],
+						[1700001320000, 67.09],
+						[1700001380000, 68.61],
+						[1700001440000, 69.6],
+						[1700001500000, 69.99],
+						[1700001560000, 69.77],
+						[1700001620000, 68.93],
+						[1700001680000, 67.54],
+						[1700001740000, 65.68],
+						[1700001800000, 63.47],
+						[1700001860000, 61.04],
+						[1700001920000, 58.54],
+						[1700001980000, 56.14],
+						[1700002040000, 53.98],
+						[1700002100000, 52.19],
+						[1700002160000, 50.89],
+						[1700002220000, 50.15],
+						[1700002280000, 50.03],
+						[1700002340000, 50.52]
+					]
+				}
+			]
+		}
+	},
+	"area-stacked": {
+		"props": {
+			"option": {
+				"tooltip": {
+					"show": true,
+					"trigger": "axis",
+					"confine": true,
+					"axisPointer": {
+						"type": "line"
+					}
+				},
+				"legend": {
+					"type": "scroll",
+					"top": 0,
+					"left": 0
+				},
+				"grid": {
+					"left": 4,
+					"right": 16,
+					"top": 36,
+					"bottom": 4
+				},
+				"xAxis": {
+					"type": "category",
+					"boundaryGap": false
+				},
+				"yAxis": {
+					"type": "value",
+					"scale": true
+				},
+				"series": [
+					{
+						"type": "line",
+						"showSymbol": false,
+						"smooth": false,
+						"areaStyle": {
+							"opacity": 0.6
+						},
+						"stack": "total",
+						"name": "a",
+						"data": []
+					},
+					{
+						"type": "line",
+						"showSymbol": false,
+						"smooth": false,
+						"areaStyle": {
+							"opacity": 0.6
+						},
+						"stack": "total",
+						"name": "b",
+						"data": []
+					},
+					{
+						"type": "line",
+						"showSymbol": false,
+						"smooth": false,
+						"areaStyle": {
+							"opacity": 0.6
+						},
+						"stack": "total",
+						"name": "c",
+						"data": []
+					}
+				]
+			},
+			"height": 256,
+			"max_points": 500
+		},
+		"patch": {
+			"series": [
+				{
+					"data": [
+						["Jan", 10],
+						["Feb", 13],
+						["Mar", 16],
+						["Apr", 10],
+						["May", 13],
+						["Jun", 16],
+						["Jul", 10],
+						["Aug", 13]
+					]
+				},
+				{
+					"data": [
+						["Jan", 14],
+						["Feb", 18],
+						["Mar", 22],
+						["Apr", 17],
+						["May", 21],
+						["Jun", 16],
+						["Jul", 20],
+						["Aug", 15]
+					]
+				},
+				{
+					"data": [
+						["Jan", 18],
+						["Feb", 23],
+						["Mar", 19],
+						["Apr", 24],
+						["May", 20],
+						["Jun", 25],
+						["Jul", 21],
+						["Aug", 26]
+					]
+				}
+			]
+		}
+	},
+	"bar": {
+		"props": {
+			"option": {
+				"tooltip": {
+					"show": true,
+					"trigger": "axis",
+					"confine": true,
+					"axisPointer": {
+						"type": "shadow"
+					}
+				},
+				"title": [
+					{
+						"id": "title",
+						"text": "Sightings"
+					}
+				],
+				"legend": {
+					"type": "scroll",
+					"top": 30,
+					"left": 0
+				},
+				"grid": {
+					"left": 4,
+					"right": 16,
+					"top": 66,
+					"bottom": 4
+				},
+				"xAxis": {
+					"type": "category"
+				},
+				"yAxis": {
+					"type": "value"
+				},
+				"series": [
+					{
+						"type": "bar",
+						"itemStyle": {
+							"borderRadius": [2, 2, 0, 0]
+						},
+						"name": "Series 1",
+						"data": []
+					},
+					{
+						"type": "bar",
+						"itemStyle": {
+							"borderRadius": [2, 2, 0, 0]
+						},
+						"name": "Series 2",
+						"data": []
+					},
+					{
+						"type": "bar",
+						"itemStyle": {
+							"borderRadius": [2, 2, 0, 0]
+						},
+						"name": "Series 3",
+						"data": []
+					},
+					{
+						"type": "bar",
+						"itemStyle": {
+							"borderRadius": [2, 2, 0, 0]
+						},
+						"name": "Series 4",
+						"data": []
+					}
+				]
+			},
+			"height": 256,
+			"max_points": 500
+		},
+		"patch": {
+			"series": [
+				{
+					"name": "Series 1",
+					"data": [["Jan", 10], ["Feb", 13], ["Mar", 16], ["Apr", 10], ["May", 13], ["Jun", 16]]
+				},
+				{
+					"name": "Series 2",
+					"data": [["Jan", 14], ["Feb", 18], ["Mar", 22], ["Apr", 17], ["May", 21], ["Jun", 16]]
+				},
+				{
+					"name": "Series 3",
+					"data": [["Jan", 18], ["Feb", 23], ["Mar", 19], ["Apr", 24], ["May", 20], ["Jun", 25]]
+				},
+				{
+					"name": "Series 4",
+					"data": [["Jan", 22], ["Feb", 28], ["Mar", 25], ["Apr", 22], ["May", 28], ["Jun", 25]]
+				}
+			]
+		}
+	},
+	"bar-stacked": {
+		"props": {
+			"option": {
+				"tooltip": {
+					"show": true,
+					"trigger": "axis",
+					"confine": true,
+					"axisPointer": {
+						"type": "shadow"
+					}
+				},
+				"legend": {
+					"type": "scroll",
+					"top": 0,
+					"left": 0
+				},
+				"grid": {
+					"left": 4,
+					"right": 16,
+					"top": 36,
+					"bottom": 4
+				},
+				"xAxis": {
+					"type": "category"
+				},
+				"yAxis": {
+					"type": "value"
+				},
+				"series": [
+					{
+						"type": "bar",
+						"stack": "total",
+						"name": "ok",
+						"data": []
+					},
+					{
+						"type": "bar",
+						"stack": "total",
+						"name": "warn",
+						"data": []
+					},
+					{
+						"type": "bar",
+						"stack": "total",
+						"name": "fail",
+						"data": []
+					}
+				]
+			},
+			"height": 256,
+			"max_points": 500
+		},
+		"patch": {
+			"series": [
+				{
+					"name": "ok",
+					"data": [["Jan", 10], ["Feb", 13], ["Mar", 16], ["Apr", 10], ["May", 13], ["Jun", 16]]
+				},
+				{
+					"name": "warn",
+					"data": [["Jan", 14], ["Feb", 18], ["Mar", 22], ["Apr", 17], ["May", 21], ["Jun", 16]]
+				},
+				{
+					"name": "fail",
+					"data": [["Jan", 18], ["Feb", 23], ["Mar", 19], ["Apr", 24], ["May", 20], ["Jun", 25]]
+				}
+			]
+		}
+	},
+	"bar-horizontal": {
+		"props": {
+			"option": {
+				"tooltip": {
+					"show": true,
+					"trigger": "axis",
+					"confine": true,
+					"axisPointer": {
+						"type": "shadow"
+					}
+				},
+				"grid": {
+					"left": 4,
+					"right": 16,
+					"top": 12,
+					"bottom": 4
+				},
+				"xAxis": {
+					"type": "value"
+				},
+				"yAxis": {
+					"type": "category",
+					"inverse": true
+				},
+				"series": [
+					{
+						"type": "bar",
+						"label": {
+							"show": true,
+							"position": "right"
+						},
+						"encode": {
+							"x": 1,
+							"y": 0
+						},
+						"itemStyle": {
+							"borderRadius": [0, 2, 2, 0]
+						},
+						"name": "value",
+						"data": []
+					}
+				]
+			},
+			"height": 256,
+			"max_points": 500
+		},
+		"patch": {
+			"series": [
+				{
+					"data": [["Trap A", 41], ["Trap B", 28], ["Trap C", 35], ["Trap D", 17]]
+				}
+			]
+		}
+	},
+	"scatter": {
+		"props": {
+			"option": {
+				"tooltip": {
+					"show": true,
+					"trigger": "item",
+					"confine": true
+				},
+				"legend": {
+					"type": "scroll",
+					"top": 0,
+					"left": 0
+				},
+				"grid": {
+					"left": 4,
+					"right": 16,
+					"top": 48,
+					"bottom": 8
+				},
+				"xAxis": {
+					"type": "value",
+					"scale": true,
+					"name": "weight",
+					"nameLocation": "middle",
+					"nameGap": 28
+				},
+				"yAxis": {
+					"type": "value",
+					"scale": true,
+					"name": "length"
+				},
+				"series": [
+					{
+						"type": "scatter",
+						"symbolSize": 8,
+						"name": "north",
+						"data": []
+					},
+					{
+						"type": "scatter",
+						"symbolSize": 8,
+						"name": "south",
+						"data": []
+					},
+					{
+						"type": "scatter",
+						"symbolSize": 8,
+						"name": "east",
+						"data": []
+					}
+				]
+			},
+			"height": 256,
+			"max_points": 500,
+			"spec": {
+				"sized": false
+			}
+		},
+		"patch": {
+			"series": [
+				{
+					"name": "north",
+					"data": [
+						[20, 5],
+						[33, 12],
+						[29, 8],
+						[25, 15],
+						[21, 11],
+						[34, 7],
+						[30, 14],
+						[26, 10],
+						[22, 6],
+						[35, 13],
+						[31, 9],
+						[27, 5],
+						[23, 12],
+						[36, 8],
+						[32, 15],
+						[28, 11],
+						[24, 7],
+						[20, 14],
+						[33, 10],
+						[29, 6],
+						[25, 13],
+						[21, 9],
+						[34, 5],
+						[30, 12]
+					]
+				},
+				{
+					"name": "south",
+					"data": [
+						[27, 8],
+						[40, 15],
+						[36, 11],
+						[32, 18],
+						[28, 14],
+						[41, 10],
+						[37, 17],
+						[33, 13],
+						[29, 9],
+						[42, 16],
+						[38, 12],
+						[34, 8],
+						[30, 15],
+						[43, 11],
+						[39, 18],
+						[35, 14],
+						[31, 10],
+						[27, 17],
+						[40, 13],
+						[36, 9],
+						[32, 16],
+						[28, 12],
+						[41, 8],
+						[37, 15]
+					]
+				},
+				{
+					"name": "east",
+					"data": [
+						[34, 11],
+						[47, 18],
+						[43, 14],
+						[39, 21],
+						[35, 17],
+						[48, 13],
+						[44, 20],
+						[40, 16],
+						[36, 12],
+						[49, 19],
+						[45, 15],
+						[41, 11],
+						[37, 18],
+						[50, 14],
+						[46, 21],
+						[42, 17],
+						[38, 13],
+						[34, 20],
+						[47, 16],
+						[43, 12],
+						[39, 19],
+						[35, 15],
+						[48, 11],
+						[44, 18]
+					]
+				}
+			]
+		}
+	},
+	"histogram": {
+		"props": {
+			"option": {
+				"tooltip": {
+					"show": true,
+					"trigger": "axis",
+					"confine": true,
+					"axisPointer": {
+						"type": "shadow"
+					}
+				},
+				"grid": {
+					"left": 4,
+					"right": 16,
+					"top": 12,
+					"bottom": 8
+				},
+				"xAxis": {
+					"type": "category",
+					"name": "latency ms",
+					"data": [],
+					"nameLocation": "middle",
+					"nameGap": 28
+				},
+				"yAxis": {
+					"type": "value"
+				},
+				"series": [
+					{
+						"type": "bar",
+						"name": "count",
+						"barCategoryGap": "4%",
+						"data": []
+					}
+				]
+			},
+			"height": 256,
+			"max_points": 500,
+			"spec": {
+				"bins": 12,
+				"range": null
+			}
+		},
+		"patch": {
+			"xAxis": {
+				"data": [
+					"0.0\u20138.2",
+					"8.2\u201316.3",
+					"16.3\u201324.5",
+					"24.5\u201332.6",
+					"32.6\u201340.8",
+					"40.8\u201348.9",
+					"48.9\u201357.1",
+					"57.1\u201365.2",
+					"65.2\u201373.4",
+					"73.4\u201381.5",
+					"81.5\u201389.7",
+					"89.7\u201397.8"
+				]
+			},
+			"series": [
+				{
+					"data": [41, 36, 36, 27, 31, 32, 24, 18, 18, 15, 12, 10]
+				}
+			]
+		}
+	},
+	"pie": {
+		"props": {
+			"option": {
+				"tooltip": {
+					"show": true,
+					"trigger": "item",
+					"confine": true,
+					"formatter": "{b}: {c} ({d}%)"
+				},
+				"series": [
+					{
+						"type": "pie",
+						"name": "share",
+						"radius": [0, "78%"],
+						"center": ["50%", "50%"],
+						"avoidLabelOverlap": true,
+						"label": {
+							"show": true,
+							"formatter": "{b}: {d}%"
+						},
+						"data": []
+					}
+				]
+			},
+			"height": 256,
+			"max_points": 500,
+			"spec": {
+				"total": false
+			}
+		},
+		"patch": {
+			"series": [
+				{
+					"data": [
+						{
+							"name": "Slot 1",
+							"value": 8
+						},
+						{
+							"name": "Slot 2",
+							"value": 13
+						},
+						{
+							"name": "Slot 3",
+							"value": 18
+						},
+						{
+							"name": "Slot 4",
+							"value": 12
+						},
+						{
+							"name": "Slot 5",
+							"value": 17
+						},
+						{
+							"name": "Slot 6",
+							"value": 11
+						},
+						{
+							"name": "Slot 7",
+							"value": 16
+						},
+						{
+							"name": "Slot 8",
+							"value": 10
+						}
+					]
+				}
+			]
+		}
+	},
+	"donut": {
+		"props": {
+			"option": {
+				"tooltip": {
+					"show": true,
+					"trigger": "item",
+					"confine": true,
+					"formatter": "{b}: {c} ({d}%)"
+				},
+				"legend": {
+					"type": "scroll",
+					"bottom": 0,
+					"left": "center"
+				},
+				"series": [
+					{
+						"type": "pie",
+						"name": "share",
+						"radius": ["52%", "72%"],
+						"center": ["50%", "44%"],
+						"avoidLabelOverlap": true,
+						"label": {
+							"show": false,
+							"formatter": "{b}"
+						},
+						"data": []
+					}
+				],
+				"title": [
+					{
+						"id": "total",
+						"text": "",
+						"subtext": "animals",
+						"left": "center",
+						"top": "37%",
+						"itemGap": 2,
+						"textStyle": {
+							"fontSize": 18
+						},
+						"textAlign": "center"
+					}
+				]
+			},
+			"height": 256,
+			"max_points": 500,
+			"spec": {
+				"total": true
+			}
+		},
+		"patch": {
+			"series": [
+				{
+					"data": [
+						{
+							"name": "Mammals",
+							"value": 62
+						},
+						{
+							"name": "Birds",
+							"value": 24
+						},
+						{
+							"name": "Reptiles",
+							"value": 9
+						},
+						{
+							"name": "Insects",
+							"value": 5
+						}
+					]
+				}
+			],
+			"title": [
+				{
+					"id": "total",
+					"text": "100"
+				}
+			]
+		}
+	},
+	"funnel": {
+		"props": {
+			"option": {
+				"tooltip": {
+					"show": true,
+					"trigger": "item",
+					"confine": true,
+					"formatter": "{b}: {c}"
+				},
+				"series": [
+					{
+						"type": "funnel",
+						"name": "stages",
+						"sort": "descending",
+						"top": 8,
+						"bottom": 8,
+						"left": "10%",
+						"width": "80%",
+						"gap": 2,
+						"label": {
+							"show": true,
+							"position": "inside",
+							"formatter": "{b}: {c}"
+						},
+						"data": []
+					}
+				]
+			},
+			"height": 256,
+			"max_points": 500
+		},
+		"patch": {
+			"series": [
+				{
+					"data": [
+						{
+							"name": "Visited",
+							"value": 1000
+						},
+						{
+							"name": "Signed up",
+							"value": 420
+						},
+						{
+							"name": "Activated",
+							"value": 260
+						},
+						{
+							"name": "Paid",
+							"value": 90
+						}
+					]
+				}
+			]
+		}
+	},
+	"heatmap": {
+		"props": {
+			"option": {
+				"tooltip": {
+					"show": true,
+					"trigger": "item",
+					"confine": true
+				},
+				"grid": {
+					"left": 4,
+					"right": 16,
+					"top": 12,
+					"bottom": 44
+				},
+				"xAxis": {
+					"type": "category",
+					"data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+					"splitArea": {
+						"show": false
+					}
+				},
+				"yAxis": {
+					"type": "category",
+					"data": ["0h", "3h", "6h", "9h", "12h", "15h", "18h", "21h"]
+				},
+				"visualMap": {
+					"show": true,
+					"min": 0,
+					"max": 1,
+					"calculable": false,
+					"orient": "horizontal",
+					"left": "center",
+					"bottom": 0,
+					"itemHeight": 120,
+					"itemWidth": 10
+				},
+				"series": [
+					{
+						"type": "heatmap",
+						"name": "value",
+						"data": []
+					}
+				]
+			},
+			"height": 256,
+			"max_points": 500
+		},
+		"patch": {
+			"xAxis": {
+				"data": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+			},
+			"yAxis": {
+				"data": ["0h", "3h", "6h", "9h", "12h", "15h", "18h", "21h"]
+			},
+			"visualMap": {
+				"min": 0.0,
+				"max": 22.0
+			},
+			"series": [
+				{
+					"data": [
+						[0, 0, 0],
+						[0, 1, 3],
+						[0, 2, 6],
+						[0, 3, 9],
+						[0, 4, 12],
+						[0, 5, 15],
+						[0, 6, 18],
+						[0, 7, 21],
+						[1, 0, 7],
+						[1, 1, 10],
+						[1, 2, 13],
+						[1, 3, 16],
+						[1, 4, 19],
+						[1, 5, 22],
+						[1, 6, 2],
+						[1, 7, 5],
+						[2, 0, 14],
+						[2, 1, 17],
+						[2, 2, 20],
+						[2, 3, 0],
+						[2, 4, 3],
+						[2, 5, 6],
+						[2, 6, 9],
+						[2, 7, 12],
+						[3, 0, 21],
+						[3, 1, 1],
+						[3, 2, 4],
+						[3, 3, 7],
+						[3, 4, 10],
+						[3, 5, 13],
+						[3, 6, 16],
+						[3, 7, 19],
+						[4, 0, 5],
+						[4, 1, 8],
+						[4, 2, 11],
+						[4, 3, 14],
+						[4, 4, 17],
+						[4, 5, 20],
+						[4, 6, 0],
+						[4, 7, 3],
+						[5, 0, 12],
+						[5, 1, 15],
+						[5, 2, 18],
+						[5, 3, 21],
+						[5, 4, 1],
+						[5, 5, 4],
+						[5, 6, 7],
+						[5, 7, 10],
+						[6, 0, 19],
+						[6, 1, 22],
+						[6, 2, 2],
+						[6, 3, 5],
+						[6, 4, 8],
+						[6, 5, 11],
+						[6, 6, 14],
+						[6, 7, 17]
+					]
+				}
+			]
+		}
+	},
+	"radar": {
+		"props": {
+			"option": {
+				"tooltip": {
+					"show": true,
+					"trigger": "item",
+					"confine": true
+				},
+				"legend": {
+					"type": "scroll",
+					"bottom": 0,
+					"left": "center"
+				},
+				"radar": {
+					"indicator": [
+						{
+							"name": "speed",
+							"max": 100
+						},
+						{
+							"name": "power",
+							"max": 100
+						},
+						{
+							"name": "range",
+							"max": 100
+						},
+						{
+							"name": "cost",
+							"max": 100
+						},
+						{
+							"name": "comfort",
+							"max": 100
+						}
+					],
+					"shape": "polygon",
+					"radius": "66%",
+					"center": ["50%", "50%"]
+				},
+				"series": [
+					{
+						"type": "radar",
+						"name": "measures",
+						"symbolSize": 4,
+						"data": [],
+						"areaStyle": {
+							"opacity": 0.15
+						}
+					}
+				]
+			},
+			"height": 256,
+			"max_points": 500
+		},
+		"patch": {
+			"series": [
+				{
+					"data": [
+						{
+							"name": "Model A",
+							"value": [80, 60, 70, 40, 90]
+						},
+						{
+							"name": "Model B",
+							"value": [50, 90, 60, 80, 40]
+						}
+					]
+				}
+			]
+		}
+	},
+	"treemap": {
+		"props": {
+			"option": {
+				"tooltip": {
+					"show": true,
+					"trigger": "item",
+					"confine": true,
+					"formatter": "{b}: {c}"
+				},
+				"series": [
+					{
+						"type": "treemap",
+						"name": "all",
+						"top": 0,
+						"left": 0,
+						"right": 0,
+						"bottom": 0,
+						"roam": false,
+						"nodeClick": false,
+						"breadcrumb": {
+							"show": false
+						},
+						"label": {
+							"show": true
+						},
+						"data": []
+					}
+				]
+			},
+			"height": 256,
+			"max_points": 500
+		},
+		"patch": {
+			"series": [
+				{
+					"data": [
+						{
+							"name": "src",
+							"children": [
+								{
+									"name": "nu",
+									"value": 120
+								},
+								{
+									"name": "nustd",
+									"children": [
+										{
+											"name": "ui",
+											"value": 80
+										},
+										{
+											"name": "kv",
+											"value": 40
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "tests",
+							"value": 60
+						},
+						{
+							"name": "docs",
+							"value": 30
+						}
+					]
+				}
+			]
+		}
+	},
+	"sunburst": {
+		"props": {
+			"option": {
+				"tooltip": {
+					"show": true,
+					"trigger": "item",
+					"confine": true,
+					"formatter": "{b}: {c}"
+				},
+				"series": [
+					{
+						"type": "sunburst",
+						"name": "all",
+						"radius": ["14%", "92%"],
+						"center": ["50%", "50%"],
+						"label": {
+							"show": true,
+							"rotate": "radial",
+							"minAngle": 12
+						},
+						"data": []
+					}
+				]
+			},
+			"height": 256,
+			"max_points": 500
+		},
+		"patch": {
+			"series": [
+				{
+					"data": [
+						{
+							"name": "src",
+							"children": [
+								{
+									"name": "nu",
+									"value": 120
+								},
+								{
+									"name": "nustd",
+									"children": [
+										{
+											"name": "ui",
+											"value": 80
+										},
+										{
+											"name": "kv",
+											"value": 40
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "tests",
+							"value": 60
+						},
+						{
+							"name": "docs",
+							"value": 30
+						}
+					]
+				}
+			]
+		}
+	},
+	"sankey": {
+		"props": {
+			"option": {
+				"tooltip": {
+					"show": true,
+					"trigger": "item",
+					"confine": true
+				},
+				"series": [
+					{
+						"type": "sankey",
+						"name": "flow",
+						"orient": "horizontal",
+						"top": 8,
+						"bottom": 8,
+						"left": 8,
+						"right": 80,
+						"nodeGap": 10,
+						"nodeWidth": 12,
+						"emphasis": {
+							"focus": "adjacency"
+						},
+						"label": {
+							"show": true
+						},
+						"data": [],
+						"links": []
+					}
+				]
+			},
+			"height": 256,
+			"max_points": 500
+		},
+		"patch": {
+			"series": [
+				{
+					"data": [
+						{
+							"name": "visit"
+						},
+						{
+							"name": "signup"
+						},
+						{
+							"name": "bounce"
+						},
+						{
+							"name": "active"
+						},
+						{
+							"name": "churn"
+						},
+						{
+							"name": "paid"
+						}
+					],
+					"links": [
+						{
+							"source": "visit",
+							"target": "signup",
+							"value": 420
+						},
+						{
+							"source": "visit",
+							"target": "bounce",
+							"value": 580
+						},
+						{
+							"source": "signup",
+							"target": "active",
+							"value": 260
+						},
+						{
+							"source": "signup",
+							"target": "churn",
+							"value": 160
+						},
+						{
+							"source": "active",
+							"target": "paid",
+							"value": 90
+						}
+					]
+				}
+			]
+		}
+	},
+	"gauge": {
+		"props": {
+			"option": {
+				"tooltip": {
+					"show": false,
+					"trigger": "item",
+					"confine": true
+				},
+				"series": [
+					{
+						"type": "gauge",
+						"name": "CPU",
+						"min": 0,
+						"max": 100,
+						"center": ["50%", "60%"],
+						"radius": "90%",
+						"startAngle": 210,
+						"endAngle": -30,
+						"progress": {
+							"show": true,
+							"width": 10,
+							"roundCap": true
+						},
+						"axisLine": {
+							"roundCap": true,
+							"lineStyle": {
+								"width": 10
+							}
+						},
+						"pointer": {
+							"show": false
+						},
+						"axisTick": {
+							"show": false
+						},
+						"splitLine": {
+							"show": false
+						},
+						"axisLabel": {
+							"show": false
+						},
+						"anchor": {
+							"show": false
+						},
+						"title": {
+							"show": true,
+							"offsetCenter": [0, "32%"]
+						},
+						"detail": {
+							"valueAnimation": true,
+							"offsetCenter": [0, 0],
+							"fontSize": 24,
+							"formatter": "{value}%"
+						},
+						"data": [
+							{
+								"value": 0,
+								"name": "CPU"
+							}
+						]
+					}
+				]
+			},
+			"height": 256,
+			"max_points": 500,
+			"spec": {
+				"name": "CPU"
+			}
+		},
+		"patch": {
+			"series": [
+				{
+					"data": [
+						{
+							"name": "CPU",
+							"value": 72
+						}
+					]
+				}
+			]
+		}
+	},
+	"boxplot": {
+		"props": {
+			"option": {
+				"tooltip": {
+					"show": true,
+					"trigger": "item",
+					"confine": true
+				},
+				"grid": {
+					"left": 4,
+					"right": 16,
+					"top": 12,
+					"bottom": 4
+				},
+				"xAxis": {
+					"type": "category",
+					"data": []
+				},
+				"yAxis": {
+					"type": "value",
+					"scale": true
+				},
+				"series": [
+					{
+						"type": "boxplot",
+						"name": "spread",
+						"data": []
+					}
+				]
+			},
+			"height": 256,
+			"max_points": 500,
+			"spec": {
+				"horizontal": false
+			}
+		},
+		"patch": {
+			"xAxis": {
+				"data": ["G0", "G1", "G2", "G3", "G4"]
+			},
+			"series": [
+				{
+					"data": [
+						[10.0, 14.0, 18.0, 21.75, 26.0],
+						[13.0, 16.25, 20.5, 25.0, 29.0],
+						[16.0, 20.0, 24.0, 28.0, 32.0],
+						[19.0, 23.25, 27.0, 31.75, 35.0],
+						[22.0, 25.25, 29.5, 33.75, 38.0]
+					]
+				}
+			]
+		}
+	},
+	"candlestick": {
+		"props": {
+			"option": {
+				"tooltip": {
+					"show": true,
+					"trigger": "axis",
+					"confine": true,
+					"axisPointer": {
+						"type": "line"
+					}
+				},
+				"grid": {
+					"left": 4,
+					"right": 16,
+					"top": 12,
+					"bottom": 4
+				},
+				"xAxis": {
+					"type": "category"
+				},
+				"yAxis": {
+					"type": "value",
+					"scale": true
+				},
+				"series": [
+					{
+						"type": "candlestick",
+						"name": "price",
+						"encode": {
+							"x": 0,
+							"y": [1, 2, 3, 4]
+						},
+						"data": []
+					}
+				]
+			},
+			"height": 256,
+			"max_points": 500
+		},
+		"patch": {
+			"series": [
+				{
+					"data": [
+						["D0", 20, 22, 18, 26],
+						["D1", 21, 25, 19, 27],
+						["D2", 22, 22, 20, 28],
+						["D3", 23, 25, 21, 29],
+						["D4", 24, 22, 18, 30],
+						["D5", 20, 25, 19, 26],
+						["D6", 21, 22, 20, 27],
+						["D7", 22, 25, 21, 28],
+						["D8", 23, 22, 18, 29],
+						["D9", 24, 25, 19, 30],
+						["D10", 20, 22, 20, 26],
+						["D11", 21, 25, 21, 27],
+						["D12", 22, 22, 18, 28],
+						["D13", 23, 25, 19, 29],
+						["D14", 24, 22, 20, 30],
+						["D15", 20, 25, 21, 26],
+						["D16", 21, 22, 18, 27],
+						["D17", 22, 25, 19, 28],
+						["D18", 23, 22, 20, 29],
+						["D19", 24, 25, 21, 30]
+					]
+				}
+			]
+		}
+	},
+	"sparkline": {
+		"props": {
+			"option": {
+				"animation": false,
+				"tooltip": {
+					"show": false
+				},
+				"grid": {
+					"left": 1,
+					"right": 1,
+					"top": 2,
+					"bottom": 2,
+					"outerBoundsMode": "none"
+				},
+				"xAxis": {
+					"type": "category",
+					"show": false,
+					"boundaryGap": false
+				},
+				"yAxis": {
+					"type": "value",
+					"show": false,
+					"scale": true
+				},
+				"series": [
+					{
+						"type": "line",
+						"name": "value",
+						"showSymbol": false,
+						"smooth": false,
+						"lineStyle": {
+							"width": 1.5
+						},
+						"data": [],
+						"areaStyle": {
+							"opacity": 0.15
+						}
+					}
+				]
+			},
+			"height": 32,
+			"max_points": 100
+		},
+		"patch": {
+			"series": [
+				{
+					"data": [4, 7, 5, 9, 6, 11, 8, 12, 10, 14]
+				}
+			]
+		}
+	}
+}
