@@ -1,14 +1,11 @@
-// Drag-to-resize: the gesture, a width hook that remembers itself, and the
-// look of the handle. Lifted from nuspace's sidebar so every app's resizable
-// edge looks and behaves the same. The split panels (`Resizable`) ride the
-// same gesture and the same accent line, on either axis.
+// Drag-to-resize for the split panels (`Resizable`): the gesture on either
+// axis, the storage the layout survives a reload in, and the look of the
+// handle, so every app's resizable edge looks and behaves the same.
 //
 // A press that never travels past a few pixels is a click, not a drag: it
-// moves nothing and fires `onClick` instead, which the width hook uses to snap
-// back to its default.
+// moves nothing and fires `onClick` instead.
 
 import type * as React from "react";
-import { useCallback, useState } from "react";
 import { cn } from "./utils";
 
 /** How far a press travels before it is a drag rather than a click. */
@@ -63,16 +60,6 @@ export function trackDrag(
 	return true;
 }
 
-/** `trackDrag` on the x axis: one horizontal drag, for a column's edge. */
-export function trackColDrag(
-	e: React.PointerEvent,
-	onMove: (dx: number) => void,
-	onEnd?: () => void,
-	onClick?: () => void,
-): boolean {
-	return trackDrag(e, "x", onMove, onEnd, onClick);
-}
-
 /**
  * Read `key` from localStorage. Storage can be missing or throw (private
  * window, blocked site data), so this answers null instead.
@@ -97,57 +84,6 @@ export function writeStored(key: string, value: string): void {
 /** Sidebar width bounds, px, the same in every app. */
 export const SIDEBAR_WIDTH = { MIN: 200, DEFAULT: 260, MAX: 540 } as const;
 
-export type WidthBounds = { MIN: number; DEFAULT: number; MAX: number };
-
-/**
- * A drag-resized width, kept in localStorage under `key` so a reload keeps it.
- * A width that is missing or unreadable falls back to the default.
- * `side` is which edge the handle rides: dragging a left edge leftwards widens.
- */
-export function useResizableWidth(
-	key: string,
-	bounds: WidthBounds = SIDEBAR_WIDTH,
-	side: "left" | "right" = "right",
-): {
-	width: number;
-	onResizeStart: (e: React.PointerEvent) => void;
-	onResizeReset: () => void;
-} {
-	const { MIN, DEFAULT, MAX } = bounds;
-	const clamp = useCallback((w: number) => Math.min(MAX, Math.max(MIN, Math.round(w))), [MIN, MAX]);
-	const [width, setWidth] = useState(() => {
-		const raw = readStored(key);
-		const n = raw === null ? Number.NaN : Number(raw);
-		return Number.isFinite(n) ? clamp(n) : DEFAULT;
-	});
-
-	const save = useCallback((w: number) => writeStored(key, String(w)), [key]);
-
-	const onResizeReset = useCallback(() => {
-		setWidth(DEFAULT);
-		save(DEFAULT);
-	}, [DEFAULT, save]);
-
-	const onResizeStart = useCallback(
-		(e: React.PointerEvent) => {
-			const startW = width;
-			let last = startW;
-			trackColDrag(
-				e,
-				(dx) => {
-					last = clamp(startW + (side === "right" ? dx : -dx));
-					setWidth(last);
-				},
-				() => save(last),
-				onResizeReset,
-			);
-		},
-		[width, side, clamp, save, onResizeReset],
-	);
-
-	return { width, onResizeStart, onResizeReset };
-}
-
 /**
  * The accent line every resize handle draws in its `after` box: hidden at
  * rest, fading in on hover, full while pressed or while a drag is live
@@ -159,22 +95,7 @@ const resizeLine = [
 ].join(" ");
 
 /**
- * The handle's look: an 8px drag strip centred on the hairline, easy to hit
- * without eating content on either side. A 2px accent line fades in on hover
- * and while dragging. `side` is which edge of the positioned parent it rides.
- */
-export function resizeHandleClasses(side: "left" | "right"): string {
-	return cn(
-		"group/resize absolute inset-y-0 z-30 w-2 cursor-col-resize touch-none",
-		side === "left" ? "-left-1" : "-right-1",
-		"after:inset-y-0 after:left-1/2 after:w-0.5 after:-translate-x-1/2",
-		resizeLine,
-	);
-}
-
-/**
- * The look of a handle between two split panels. Unlike the edge handle it
- * sits in the flow, as the 1px hairline that divides them, and its `before`
+ * The look of a handle between two split panels. It sits in the flow, as the 1px hairline that divides them, and its `before`
  * box widens the hit area to 8px over both neighbours. `orientation` is the
  * group's: a horizontal group puts its panels side by side, so the handle is
  * a vertical line with a col-resize cursor, and the other way round.

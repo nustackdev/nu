@@ -205,7 +205,6 @@ export {
 	type ResizablePanelProps,
 	type ResizableSize,
 } from "./components/ui/resizable";
-export { ResizeHandle, type ResizeHandleProps } from "./components/ui/resize-handle";
 export { Section, sectionVariants } from "./components/ui/section";
 export {
 	Select,
@@ -314,13 +313,9 @@ export {
 	CLICK_SLOP,
 	type DragAxis,
 	readStored,
-	resizeHandleClasses,
 	SIDEBAR_WIDTH,
 	splitHandleClasses,
-	trackColDrag,
 	trackDrag,
-	useResizableWidth,
-	type WidthBounds,
 	writeStored,
 } from "./lib/resize";
 export {

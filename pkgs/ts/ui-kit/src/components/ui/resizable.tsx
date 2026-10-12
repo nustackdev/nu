@@ -60,14 +60,14 @@
 //
 // ## Memory
 //
-// `storageKey` keeps the layout in localStorage the way `useResizableWidth`
-// keeps a width: read once on mount, written when a change lands (end of a
-// drag, a key, a reset), every access guarded. A stored layout that no longer
-// fits the panels (count changed, garbage) is ignored. What is kept is the
-// sizes, the length they were laid out on (so a px-held panel comes back at
-// the same px in a different window) and the size each folded panel will
-// unfold to, so a panel folded before a reload still opens to its width.
-// Double-clicking a handle puts the whole group back to its default sizes.
+// `storageKey` keeps the layout in localStorage: read once on mount, written
+// when a change lands (end of a drag, a key, a reset), every access guarded.
+// A stored layout that no longer fits the panels (count changed, garbage) is
+// ignored. What is kept is the sizes, the length they were laid out on (so a
+// px-held panel comes back at the same px in a different window) and the size
+// each folded panel will unfold to, so a panel folded before a reload still
+// opens to its width. Double-clicking a handle puts the whole group back to
+// its default sizes.
 //
 // A panel folded to nothing is `inert`: nothing in it takes focus or a click
 // while it cannot be seen, and it stays mounted.
