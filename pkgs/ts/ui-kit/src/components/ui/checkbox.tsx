@@ -14,8 +14,17 @@ const checkboxVariants = cva(
 		"hover:border-border-strong",
 		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas",
 		"disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none",
+		// unticked press: the press wash laid over the box's own fill, so it
+		// stacks like every other surface's
+		"data-[state=unchecked]:active:border-border-strong",
+		"data-[state=unchecked]:active:bg-[linear-gradient(var(--bg-press),var(--bg-press))]",
+		// ticked: the accent, a step deeper on hover and press, like a primary button
 		"data-[state=checked]:bg-accent data-[state=checked]:border-accent",
+		"data-[state=checked]:hover:bg-accent-hover data-[state=checked]:hover:border-accent-hover",
+		"data-[state=checked]:active:bg-accent-pressed data-[state=checked]:active:border-accent-pressed",
 		"data-[state=indeterminate]:bg-accent data-[state=indeterminate]:border-accent",
+		"data-[state=indeterminate]:hover:bg-accent-hover data-[state=indeterminate]:hover:border-accent-hover",
+		"data-[state=indeterminate]:active:bg-accent-pressed data-[state=indeterminate]:active:border-accent-pressed",
 		"aria-invalid:border-status-danger",
 	].join(" "),
 	{
@@ -70,11 +79,14 @@ export function Checkbox({ className, size, invalid, ...props }: CheckboxProps) 
 				className="flex items-center justify-center"
 			>
 				{/* group-data on the Root reads Radix's data-state so the correct
-				    glyph shows for checked vs indeterminate without extra state. */}
-				<Tick className="size-full group-data-[state=indeterminate]:hidden" />
+				    glyph shows for checked vs indeterminate without extra state.
+				    The glyphs paint with their own stroke, not currentColor: a
+				    row that recolors its svgs (a command item) must not reach
+				    the tick. */}
+				<Tick className="size-full stroke-accent-fg group-data-[state=indeterminate]:hidden" />
 				<Minus
 					strokeWidth={3}
-					className="hidden size-full group-data-[state=indeterminate]:block"
+					className="hidden size-full stroke-accent-fg group-data-[state=indeterminate]:block"
 				/>
 			</CheckboxPrimitive.Indicator>
 		</CheckboxPrimitive.Root>
