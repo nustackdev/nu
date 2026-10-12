@@ -1,4 +1,4 @@
-// Nodes/Line: the Line node as a program draws it. One sentence mixing a
+// Refs/Line: the Line node as a program draws it. One sentence mixing a
 // text run, a link, a badge, a shortcut and a status dot, wrapping like a
 // paragraph; then the same Badge in a Column, a Row and a Line, where the
 // parent's flow decides how it draws.
@@ -7,7 +7,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { NodeStage, sinkParameters, step } from "./harness";
 
 const meta: Meta = {
-	title: "Nodes/Line",
+	title: "Refs/Line",
 	parameters: sinkParameters,
 };
 

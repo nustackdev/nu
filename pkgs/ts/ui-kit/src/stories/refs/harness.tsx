@@ -1,6 +1,7 @@
-// Node story harness: draw a registered node type the way a program would.
+// Ref story harness: draw a ref through its registered node, the way a
+// program would.
 //
-// A node story does not render a component with props. It writes chains into
+// A ref story does not render a component with props. It writes chains into
 // the real tree store, the same `write` a frame from Python lands as, then
 // draws the root with `NodeView`, so what is on screen is what nudle shows:
 // the registry lookup, the flow each container hands down, the handlers.

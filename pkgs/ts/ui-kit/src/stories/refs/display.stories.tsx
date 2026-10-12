@@ -1,4 +1,4 @@
-// Nodes/Display: the display leaves as a program draws them. Avatar,
+// Refs/Display: the display leaves as a program draws them. Avatar,
 // Breadcrumb, Skeleton, Spinner and StatusPill in every size and tone,
 // inside a Column, a Row and a Card, so the parent's flow is what places
 // each one.
@@ -8,7 +8,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { NodeStage, sinkParameters, step } from "./harness";
 
 const meta: Meta = {
-	title: "Nodes/Display",
+	title: "Refs/Display",
 	parameters: sinkParameters,
 };
 

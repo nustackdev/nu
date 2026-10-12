@@ -1,4 +1,4 @@
-// Nodes/Flow: Row and Column as a program draws them. In a Row each child
+// Refs/Flow: Row and Column as a program draws them. In a Row each child
 // sizes by its kind: fill children (charts, cards, inputs) share the free
 // width and wrap at the row's `min_width`, content children (buttons,
 // badges, text) keep their size. A Divider stands vertical in a Row. In a
@@ -8,7 +8,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { NodeStage, sinkParameters, step } from "./harness";
 
 const meta: Meta = {
-	title: "Nodes/Flow",
+	title: "Refs/Flow",
 	parameters: sinkParameters,
 };
 

@@ -1,4 +1,4 @@
-// Nodes/Grid: the Grid node as a program draws it. Cards of stats and
+// Refs/Grid: the Grid node as a program draws it. Cards of stats and
 // sparklines in equal cells, a gallery that fits as many as the width
 // allows, and charts that take their cell's width.
 
@@ -7,7 +7,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { NodeStage, sinkParameters, step } from "./harness";
 
 const meta: Meta = {
-	title: "Nodes/Grid",
+	title: "Refs/Grid",
 	parameters: sinkParameters,
 };
 

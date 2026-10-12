@@ -1,11 +1,11 @@
-// Nodes/List: the ListRef node as a program draws it. Plain string items
+// Refs/List: the ListRef node as a program draws it. Plain string items
 // first, then any child node as one more item, bulleted and numbered.
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { NodeStage, sinkParameters, step } from "./harness";
 
 const meta: Meta = {
-	title: "Nodes/List",
+	title: "Refs/List",
 	parameters: sinkParameters,
 };
 

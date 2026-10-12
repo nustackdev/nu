@@ -1,4 +1,4 @@
-// Nodes/Disclosure: the containers that open and close over their children,
+// Refs/Disclosure: the containers that open and close over their children,
 // as a program draws them. A Collapsible folds a region in place, open and
 // closed, with a Card as its body. A Sheet slides in from the right over the
 // page with a Form as its body; it portals to <body>, so it renders alone in
@@ -10,7 +10,7 @@ import { FramePair, NodeSolo, NodeStage, SinkPage, sinkParameters, step } from "
 // The light pin rides each visible story, not the meta, so the hidden pane
 // takes the theme its frame asks for.
 const meta: Meta = {
-	title: "Nodes/Disclosure",
+	title: "Refs/Disclosure",
 	parameters: { layout: "fullscreen" },
 };
 

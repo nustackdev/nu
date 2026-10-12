@@ -13,6 +13,7 @@ A kitchen sink page shows every component in every state on one page, light and 
 - **Feedback**: alerts, badges, status pills and dots, progress, spinners, empty states.
 - **Navigation**: tabs, nav links, breadcrumbs, accordion, collapsible, tree.
 - **Overlays**: menus, palette, popover, select, combobox, date picker, tooltip, dialog, sheet, all open.
+- **Tables**: the display table, the data table and the markdown table, every variant and density, data tables live.
 - **Charts**: every chart with all 8 categorical slots.
 - **Layout: Grid, Line**: grids at every column count, inline runs of text, links, badges and keys wrapping like a paragraph.
 
@@ -20,6 +21,6 @@ A kitchen sink page shows every component in every state on one page, light and 
 
 The page's `<html>` is pinned to light, and the right column carries the `.dark` class, which re-resolves every token for its subtree. Overlays portal to `<body>` and would escape that column, so the Overlays page frames each one twice, a whole document per theme.
 
-## Nodes
+## Refs
 
-The **Nodes** stories are the other half: each draws a registered node type (ListRef, Row, Grid, ...) the way a program does, by writing chains into the real tree store and rendering the root with `NodeView`, light and dark side by side. They use the harness in `stories/nodes/harness.tsx`, one story file per node type and one root segment per story.
+The **Refs** stories are the other half: each draws a ref (ListRef, Row, Grid, ...) the way a program does, by writing chains into the real tree store and rendering the root with `NodeView`, light and dark side by side. In the browser a ref is drawn by its registered node, so the kitchen sink checks the looks and the refs check the wiring. They use the harness in `stories/refs/harness.tsx`, one story file per ref and one root segment per story.

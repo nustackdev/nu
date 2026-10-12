@@ -1,4 +1,4 @@
-// Nodes/Inputs: the input leaves as a program draws them. A toolbar Row of
+// Refs/Inputs: the input leaves as a program draws them. A toolbar Row of
 // icon buttons and toggles (one height, so they line up), buttons with an
 // icon before the label in every variant, and a searchable select next to a
 // plain one over the same options.
@@ -7,7 +7,7 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 import { NodeStage, sinkParameters, step } from "./harness";
 
 const meta: Meta = {
-	title: "Nodes/Inputs",
+	title: "Refs/Inputs",
 	parameters: sinkParameters,
 };
 
