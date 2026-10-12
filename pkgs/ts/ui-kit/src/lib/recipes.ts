@@ -50,15 +50,26 @@ const table = {
 	].join(" "),
 	/**
 	 * A row. Markdown has no `<thead>`: its header row is the first body row,
-	 * so the row stays neutral and the header tint lives on the header cell.
+	 * so the row stays neutral and the header tint lives on the header cell
+	 * (opaque, so a header row never shows the hover).
+	 *
+	 * The kit's one ladder, as on tree rows: stripe half the hover, then hover,
+	 * then selected as the press wash. Ink washes, never an opaque fill, so
+	 * they read on any ground in both themes. A selected row holds its wash
+	 * under the pointer (`hover:` sorts before `data-*`, so selected wins).
 	 */
 	row: [
 		"transition-colors duration-fast ease-out",
-		"hover:bg-bg-elevated",
+		"hover:bg-bg-hover",
 		"data-[state=selected]:bg-bg-press",
 	].join(" "),
-	/** Alternate rows get a sunken tint for scan density. */
-	striped: "even:bg-bg-hover",
+	/** Alternate rows: half the hover, so a hovered stripe still steps up. */
+	striped: "even:bg-bg-hover/50",
+	/**
+	 * A grid row (`DataTable`): the row holding the keyboard focus takes the
+	 * hover wash, so the arrows show the row as well as the ringed cell.
+	 */
+	gridRow: "has-focus-visible:bg-bg-hover",
 	/** Row height per density: 24 / 28 / 32. */
 	rowHeight: {
 		compact: "h-6",

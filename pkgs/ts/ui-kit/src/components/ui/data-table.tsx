@@ -1091,7 +1091,7 @@ export function DataTable({
 						aria-rowindex={r + 2}
 						aria-selected={selection !== "none" ? isSelected : undefined}
 						selected={isSelected}
-						className={cn(drag === row.key && "opacity-50")}
+						className={cn(table.gridRow, drag === row.key && "opacity-50")}
 						{...dragProps(row.key)}
 					>
 						{cols.map((col, c) => {
@@ -1176,7 +1176,7 @@ export function DataTable({
 					: undefined
 			}
 		>
-			<TableRow role="row" aria-rowindex={1} className="hover:bg-transparent">
+			<TableRow role="row" aria-rowindex={1}>
 				{cols.map((col, c) => {
 					const active = sort?.column === col.key ? sort.direction : null;
 					const key = cellKey(null, col.key);
