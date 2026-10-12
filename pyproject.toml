@@ -7,7 +7,6 @@ build-backend = "hatchling.build"
 #
 #   src/nu           -> nucore   (the kernel)        import nu
 #   pkgs/nustd       -> nustd    (the fabrics)       import nustd
-#   pkgs/nucli       -> nucli    (the `nu` command)  import nucli
 #   pkgs/nudle       -> nudle    (the compiled SPA)  import nudle
 #   pkgs/ts/ui-core  -> @nustackdev/ui-core
 #   pkgs/ts/ui-kit   -> @nustackdev/ui-kit
@@ -26,8 +25,7 @@ authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
 requires-python = ">=3.10"
 # The kernel: language, engine, core/flows/spans/forms, tree, prog, info,
 # inspect. No fabric backend ever lands here -- those live in the `nustd`
-# distribution and merge into the same `nu.` namespace. The `nu` command lives
-# in `nucli`.
+# distribution. No telemetry either: the kernel sends nothing.
 dependencies = [
     "typing-extensions>=4.7.0",
     "cloudpickle>=3.0",
@@ -59,9 +57,9 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 
-# No extras here on purpose. Fabric backends live on `nustd`'s extras and the
-# `nu` command lives in `nucli`; the kernel never reaches up into its own
-# dependents. Install everything with `pip install "nustd[all]" nucli`.
+# No extras here on purpose. Fabric backends live on `nustd`'s extras; the
+# kernel never reaches up into its own dependents. Install everything with
+# `pip install "nustd[all]"`.
 
 [project.urls]
 Repository = "https://github.com/nustackdev/nu"
@@ -85,14 +83,14 @@ only-include = [
 # Dev-time wiring only. `[tool.uv.workspace]` and `[tool.uv.sources]` never
 # reach published metadata, so every member stays a self-sufficient
 # distribution with its own pyproject, version and dependencies. What the
-# workspace buys: `uv sync` installs all four editable against each other
+# workspace buys: `uv sync` installs all three editable against each other
 # instead of pulling the kernel from PyPI, and `uv build --package <name>`
 # (what the Makefile and CI release on) works from the root.
 #
 # `pkgs/ts` is the npm workspace and holds no pyproject, so the members are
 # listed rather than globbed.
 [tool.uv.workspace]
-members = ["pkgs/nustd", "pkgs/nucli", "pkgs/nudle"]
+members = ["pkgs/nustd", "pkgs/nudle"]
 
 [tool.uv.sources]
 # The root project is a member too: without this entry `nustd`'s `nucore`
@@ -100,7 +98,6 @@ members = ["pkgs/nustd", "pkgs/nucli", "pkgs/nudle"]
 # the published kernel while editing the local one.
 nucore = { workspace = true }
 nustd = { workspace = true }
-nucli = { workspace = true }
 nudle = { workspace = true }
 
 [tool.uv]
@@ -112,7 +109,6 @@ dev = [
     # workspace, editable, with every fabric backend -- so a bare `uv sync`
     # gives you the full dev environment and the whole suite.
     "nustd[all]",
-    "nucli",
     "ruff>=0.8.0",
     "pre-commit>=3.0.0",
     "pytest>=7.0.0",
@@ -161,7 +157,6 @@ markers = [
 source = [
     "src",
     "pkgs/nustd/src",
-    "pkgs/nucli/src",
 ]
 omit = ["*/tests/*", "*/__pycache__/*"]
 branch = true
@@ -193,7 +188,6 @@ target-version = "py310"
 src = [
     "src",
     "pkgs/nustd/src",
-    "pkgs/nucli/src",
     "pkgs/nudle/src",
 ]
 extend-exclude = [".venv", "build", "dist", "*.egg-info", "node_modules"]
@@ -236,11 +230,6 @@ convention = "google"
 "examples/**/*.py" = [
     "S101", "T20", "D", "ANN",
 ]
-# The demos the `nu` command ships are examples that happen to live in a
-# package, so they get the same rules as examples/.
-"**/src/nucli/demos/**/*.py" = [
-    "S101", "T20", "D", "ANN",
-]
 "benchmarks/**/*.py" = [
     "S101", "T20", "D", "ANN", "B007",
 ]
@@ -273,7 +262,7 @@ convention = "google"
 
 [tool.ruff.lint.isort]
 known-first-party = [
-    "nu", "nustd", "nucli",
+    "nu", "nustd",
     "virtuals", "invisibles",
     ]
 force-single-line = false

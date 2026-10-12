@@ -1,4 +1,4 @@
-"""Nu brand kit: palette + logo + shared header. Consumed by nudle and nucli.
+"""Nu brand kit: palette + logo + shared header. Consumed by the ws server banner and nuspace.
 
 Stdlib only -- it renders straight to ANSI escapes (see :mod:`.ansi`), so it
 sits in the kernel without pulling a terminal library in behind it.

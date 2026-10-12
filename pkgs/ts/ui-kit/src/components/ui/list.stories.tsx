@@ -83,7 +83,7 @@ export const Matrix: StoryObj = {
 					</ListItem>
 					<ListItem>
 						<code className="rounded-sm bg-bg-sunken px-1 py-0.5 font-mono text-sm">
-							nu demo movies
+							python examples/movies.py
 						</code>
 					</ListItem>
 				</List>

@@ -3,7 +3,8 @@
 The ws server carrying the ui wire protocol, and a fold that runs one arm of
 the ui program per connection the server holds open. Each layer is public on
 its own for a hand-assembled tree; this is the arrangement that covers the
-normal case.
+normal case. nudle adds its own telemetry route to the server and fires its
+first-run ping when the tree is entered (see ``telemetry``).
 """
 
 from __future__ import annotations
@@ -14,8 +15,14 @@ import nu
 from nustd.ui.core.session import WsSession
 from nustd.ws_server import SID_ATTR, listen, run_once, session_for, sessions_fold
 
+from . import telemetry
+
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from starlette.routing import BaseRoute
+
     from nu.lang import Nu
 
     from .page import Index, Page
@@ -29,6 +36,7 @@ def serve(
     program: Nu,
     *,
     static: str | None = "nudle",
+    routes: Sequence[BaseRoute] = (),
     host: str = "127.0.0.1",
     port: int = 8080,
     log_level: str = "warning",
@@ -51,6 +59,8 @@ def serve(
             reported on stdout.
         static: the wheel shipping the compiled SPA. None serves ``/ws``
             alone, for a headless run or a separate vite dev server.
+        routes: extra Starlette routes for the server, served after nudle's
+            own ``/api/telemetry-config`` and before the SPA mount.
         host: uvicorn bind host.
         port: uvicorn bind port.
         log_level: uvicorn log level. The default silences uvicorn's own
@@ -69,9 +79,11 @@ def serve(
         )
     """
     return nu.With(
+        nu.Provide(telemetry.FirstRun),
         listen(
             session_cls=WsSession,
             static=static,
+            routes=(telemetry.route(), *routes),
             host=host,
             port=port,
             log_level=log_level,

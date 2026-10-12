@@ -9,7 +9,7 @@ YELLOW := \033[1;33m
 NC := \033[0m
 
 # The kernel is the repo root; everything else is a directory under pkgs/.
-PY_PKGS := . pkgs/nustd pkgs/nucli pkgs/nudle
+PY_PKGS := . pkgs/nustd pkgs/nudle
 
 TS_ROOT := pkgs/ts
 NUDLE_APP := pkgs/ts/nudle
@@ -41,7 +41,7 @@ help:
 	@echo "$(GREEN)Packages:$(NC)"
 	@echo "  make list            List workspace packages"
 	@echo "  make build PKG=x     Build specific package"
-	@echo "  make build-nu        Build the three nu wheels (kernel, nustd, nucli)"
+	@echo "  make build-nu        Build the two nu wheels (kernel, nustd)"
 	@echo "  make build-nudle     Build the nudle web-bundle wheel"
 	@echo "  make build-all       Build both wheels"
 	@echo ""
@@ -164,10 +164,9 @@ web-build:
 	@echo "$(GREEN)Built: $(NUDLE_APP)/dist/$(NC)"
 
 build-nu:
-	@echo "$(BLUE)Building nu wheels (kernel + nustd + nucli)...$(NC)"
+	@echo "$(BLUE)Building nu wheels (kernel + nustd)...$(NC)"
 	uv build --wheel --package nucore
 	uv build --wheel --package nustd
-	uv build --wheel --package nucli
 	@echo "$(GREEN)Built: dist/$(NC)"
 
 build-nudle: web-build

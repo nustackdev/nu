@@ -189,18 +189,18 @@ Install, run a demo, start hacking.
 Python 3.10+ &middot; everything ships in the wheel.
 
 ```bash
-pip install nucore "nustd[all]" nucli
+pip install "nustd[all]"
 ```
 
 ### 02 · Run a demo
 
-Each one boots a live browser dashboard and picks up where it left off on restart. `nu demo` lists them all.
+Each one boots a live browser dashboard and picks up where it left off on restart. The source sits in [`examples/`](https://github.com/nustackdev/nu/tree/main/examples); run one with `python examples/<name>.py`.
 
 | counter | sampled |
 | :--- | :--- |
-| ![counter demo](https://github.com/user-attachments/assets/fbeb4ea6-a2cc-4bb8-8bd6-35d05ec3fcc9) A live counter, persistent across restarts. <br> `nu demo counter` | ![sampled demo](https://github.com/user-attachments/assets/22e0ce72-47a2-47dd-9d2a-701645f10eea) An infinite series, live-sampled into a line-chart. <br> `nu demo sampled` |
+| ![counter demo](https://github.com/user-attachments/assets/fbeb4ea6-a2cc-4bb8-8bd6-35d05ec3fcc9) A live counter, persistent across restarts. <br> `python examples/counter.py` | ![sampled demo](https://github.com/user-attachments/assets/22e0ce72-47a2-47dd-9d2a-701645f10eea) An infinite series, live-sampled into a line-chart. <br> `python examples/sampled.py` |
 | **movies** |   |
-| ![movies demo](https://github.com/user-attachments/assets/8c67838d-d327-4866-996f-65999e3a05be) A movie tracker: form, filterable table, detail pages. <br> `nu demo movies` |   |
+| ![movies demo](https://github.com/user-attachments/assets/8c67838d-d327-4866-996f-65999e3a05be) A movie tracker: form, filterable table, detail pages. <br> `python examples/movies.py` |   |
 
 ### 03 · Start hacking
 

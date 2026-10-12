@@ -20,7 +20,7 @@ import nu
 import nustd
 
 
-PACKAGES = ("nu", "nustd", "nucli")
+PACKAGES = ("nu", "nustd")
 
 
 def _modules() -> list[str]:

@@ -10,8 +10,9 @@ from .fabric import SessionProtocol, WebServer
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
 
+    from starlette.routing import BaseRoute
     from starlette.websockets import WebSocket
 
 
@@ -22,6 +23,7 @@ def listen(
     *,
     session_cls: Callable[[WebSocket], SessionProtocol],
     static: str | None = None,
+    routes: Sequence[BaseRoute] = (),
     host: str = "127.0.0.1",
     port: int = 8080,
     log_level: str = "warning",
@@ -42,6 +44,8 @@ def listen(
             its only argument. Owns the wire format end to end.
         static: the wheel shipping the compiled SPA. None serves ``/ws``
             alone, for a headless run or a separate vite dev server.
+        routes: extra Starlette routes, served after ``/ws`` and before the
+            SPA mount. Opaque to the server.
         host: uvicorn bind host.
         port: uvicorn bind port.
         log_level: uvicorn log level. Default silences uvicorn's info chatter
@@ -63,6 +67,7 @@ def listen(
         {
             "session_cls": session_cls,
             "static": static,
+            "routes": tuple(routes),
             "host": host,
             "port": port,
             "log_level": log_level,

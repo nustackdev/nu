@@ -1,6 +1,6 @@
 """Shared Nu header: logo on the left, tagline + version + urls on the right.
 
-Used by the CLI (`nu` with no args) and the nudle server banner -- one
+Used by the ws server banner and the nuspace command -- one
 shared visual identity across every user-facing entrypoint.
 
 The two columns are laid out by hand (a fixed-width left cell, four spaces

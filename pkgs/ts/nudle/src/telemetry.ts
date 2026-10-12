@@ -1,6 +1,6 @@
 // Anonymous nudle launch ping. Fetches `/api/telemetry-config` from the
-// Python backend (source of truth for the ~/.nu/config.json opt-out flag
-// and the PostHog token/host), then POSTs one `nudle_opened` event to
+// Python backend (source of truth for the ~/.nudle/config.json opt-out flag,
+// the NUDLE_TELEMETRY env override and the PostHog token/host), then POSTs one `nudle_opened` event to
 // PostHog's capture endpoint directly -- no SDK, no autocapture, no
 // background machinery. Skipped in vite dev mode. Never throws.
 
@@ -9,6 +9,8 @@ type TelemetryConfig = {
 	distinct_id: string;
 	posthog_token: string;
 	posthog_host: string;
+	product?: string;
+	nudle_version?: string | null;
 	nu_version?: string;
 	python_version?: string;
 	platform?: string;
@@ -27,6 +29,8 @@ export async function initTelemetry(): Promise<void> {
 			event: "nudle_opened",
 			distinct_id: cfg.distinct_id,
 			properties: {
+				product: cfg.product,
+				nudle_version: cfg.nudle_version,
 				nu_version: cfg.nu_version,
 				python_version: cfg.python_version,
 				platform: cfg.platform,

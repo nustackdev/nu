@@ -239,7 +239,7 @@ const MD_WIDE = `Planes resume after a restart. The runs from the last hour:
 
 | Plane | Owner | Started | Retries | Note |
 | --- | --- | --- | --: | --- |
-| ingest | gor | 09:12 | 0 | \`nu demo\` source |
+| ingest | gor | 09:12 | 0 | \`examples/\` source |
 | train | david | 09:40 | 2 | **slow** on blue |
 | report | gor | 10:05 | 1 | see the [log](#) |
 `;

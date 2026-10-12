@@ -55,7 +55,7 @@ const MARKDOWN = `## Release notes
 Planes now **resume** after a restart. See the [changelog](#) for details.
 
 - Faster cold start
-- \`nu demo\` ships two new apps
+- \`examples/\` ships two new apps
 
 > Quoted: a calm line of context.
 
@@ -214,7 +214,7 @@ function Type() {
 			</Row>
 			<Row label="Code inline">
 				<Text as="span" size="sm">
-					Run <Code>nu demo movies</Code> to start.
+					Run <Code>python examples/movies.py</Code> to start.
 				</Text>
 			</Row>
 			<Row label="Code block">

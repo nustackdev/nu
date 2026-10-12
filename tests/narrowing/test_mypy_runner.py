@@ -32,7 +32,6 @@ REPO = NARROWING_DIR.parent.parent
 SRC_DIRS = [
     REPO / "src",
     REPO / "pkgs" / "nustd" / "src",
-    REPO / "pkgs" / "nucli" / "src",
 ]
 
 

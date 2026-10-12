@@ -1,37 +1,34 @@
-# Publishes the three `nu` distributions to PyPI on a tag push like `nu@0.2.0`.
+# Publishes the two `nu` distributions to PyPI on a tag push like `nu@0.2.0`.
 # Manual "Run workflow" dispatch builds only, unless you tick `publish`; the
-# `package` input then selects one distribution or all three.
+# `package` input then selects one distribution or both.
 #
 # `nu` tags own release semantics for the whole stack -- this workflow also
 # creates a GitHub Release attached to the tag. Sibling wheels (nudle) and
 # npm packages (ui-core, ui-kit) have their own tags but do not cut releases.
 #
-# Setup once (PyPI trusted publisher / OIDC, no secrets). Do this three times,
+# Setup once (PyPI trusted publisher / OIDC, no secrets). Do this twice,
 # once per project -- a trusted publisher is registered per PyPI project:
 #   pypi.org -> account -> Publishing -> Add pending publisher
-#     PyPI project name: nucore   (and again for: nustd, nucli)
+#     PyPI project name: nucore   (and again for: nustd)
 #     Owner: nustackdev
 #     Repository name: nu
 #     Workflow name: publish-nu.yml
 #     Environment name: (leave blank)
 #
-# Three distributions ship from one tag, in lockstep:
+# Two distributions ship from one tag, in lockstep:
 #   src/nu      -> nucore  (kernel)
 #   pkgs/nustd  -> nustd   (fabrics)
-#   pkgs/nucli  -> nucli   (the `nu` command)
-# All three must carry the same version.
+# Both must carry the same version.
 #
 # Each distribution builds into its own `dist/<name>/` and gets its own
 # publish step. That is not cosmetic: the OIDC exchange mints a token scoped
-# to a single PyPI project, so one upload call carrying three project names
-# would 403 on the two that are out of scope. The steps run in dependency
-# order -- nucore -> nustd -> nucli -- so each package resolves the moment it
-# lands.
+# to a single PyPI project, so one upload call carrying both project names
+# would 403 on the one that is out of scope. The steps run in dependency
+# order -- nucore -> nustd -- so each package resolves the moment it lands.
 #
 # Release flow:
-#   1. Bump `version` in `./pyproject.toml`,
-#      `pkgs/nustd/pyproject.toml` AND `pkgs/nucli/pyproject.toml`
-#      (keep all three equal).
+#   1. Bump `version` in `./pyproject.toml` AND `pkgs/nustd/pyproject.toml`
+#      (keep both equal).
 #   2. Commit and push to main.
 #   3. `git tag nu@X.Y.Z && git push origin nu@X.Y.Z`.
 name: Publish nu to PyPI
@@ -49,7 +46,7 @@ on:
         description: "Which distribution to publish"
         type: choice
         default: all
-        options: [all, nucore, nustd, nucli]
+        options: [all, nucore, nustd]
 
 permissions:
   contents: write   # needed to create the GitHub Release on tag push
@@ -79,7 +76,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/nu@')
         run: |
           TAG_VERSION="${GITHUB_REF#refs/tags/nu@}"
-          for PKG in . pkgs/nustd pkgs/nucli; do
+          for PKG in . pkgs/nustd; do
             PKG_VERSION=$(python -c "import tomllib,sys; print(tomllib.load(open(sys.argv[1],'rb'))['project']['version'])" "$PKG/pyproject.toml")
             if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
               echo "tag nu@$TAG_VERSION does not match $PKG/pyproject.toml version $PKG_VERSION"
@@ -91,14 +88,13 @@ jobs:
         run: |
           uv build --package nucore --out-dir dist/nucore
           uv build --package nustd --out-dir dist/nustd
-          uv build --package nucli --out-dir dist/nucli
 
       # One publish step per project: trusted publishing mints a token scoped
       # to a single PyPI project, so each upload must carry only that project's
-      # artifacts. Ordered nucore -> nustd -> nucli so every dependency is on
-      # the index before its dependent lands.
+      # artifacts. Ordered nucore -> nustd so the kernel is on the index
+      # before its dependent lands.
       #
-      # A tag push publishes all three. Manual dispatch can do one at a time,
+      # A tag push publishes both. Manual dispatch can do one at a time,
       # which is what bootstrapping needed: PyPI would not register several
       # pending publishers against the same workflow file at once, so each
       # project was registered and published before moving to the next.
@@ -122,15 +118,6 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/nustd
-          skip-existing: true
-
-      - name: publish nucli
-        if: >-
-          startsWith(github.ref, 'refs/tags/nu@') ||
-          (inputs.publish && contains(fromJSON('["all","nucli"]'), inputs.package))
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: dist/nucli
           skip-existing: true
 
       - name: build release notes from CHANGELOG

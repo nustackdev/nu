@@ -36,11 +36,6 @@ except PackageNotFoundError:
     __version__ = "0.0.0+dev"
 del _version, PackageNotFoundError
 
-from ._config import bootstrap as _bootstrap
-
-_bootstrap()
-del _bootstrap
-
 # Subpackage namespaces for dot-access.
 # Early group: pure layers with no dependency on the flat root surface.
 from . import context, core, engine, factory, forms, inspect, lang, prog, tree

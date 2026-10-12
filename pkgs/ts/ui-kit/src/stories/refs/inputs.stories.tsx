@@ -89,7 +89,7 @@ export const Variants: Story = {
 const PACKAGES = [
 	"nu",
 	"nustd",
-	"nucli",
+	"nudle",
 	"nulog",
 	"nuspace",
 	"nuagent",

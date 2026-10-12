@@ -4,8 +4,7 @@ Batteries for [Nu](https://github.com/nustackdev/nu).
 
 `nucore` is the kernel: the language, the engine, the core atoms, flows,
 spans, forms, the tree rewrites, `nu.prog`, `nu.inspect`, and `nu.mem`, the
-in-memory fabric over plain dicts. No other fabric lives in it. The `nu`
-command lives in `nucli`.
+in-memory fabric over plain dicts. No other fabric lives in it.
 
 `nustd` is everything that talks to the outside world. One import, then
 dot-access: `import nustd`, then `nustd.kv`, `nustd.ui`, `nustd.uuid`.
@@ -39,8 +38,7 @@ pip install nustd[all]      # everything
 pip install nustd[kv,ui]    # just what you need
 ```
 
-`nucore` comes along as a dependency. Add `nucli` for the `nu` command:
-`pip install "nustd[all]" nucli`.
+`nucore` comes along as a dependency.
 
-Released in lockstep with `nucore` and `nucli`. Docs at
+Released in lockstep with `nucore`. Docs at
 [nustack.dev](https://nustack.dev).

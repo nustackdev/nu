@@ -1,7 +1,8 @@
 """``WebServer`` -- the uvicorn lifecycle and the registry of live connections.
 
-Boots uvicorn behind a Starlette app with a ``/ws`` endpoint and a static mount,
-binds itself to the Context, and stops uvicorn on the way out. It never sees
+Boots uvicorn behind a Starlette app with a ``/ws`` endpoint, any extra routes
+the caller hands in, and a static mount, binds itself to the Context, and
+stops uvicorn on the way out. It never sees
 the program a connection runs: that is a child of the tree, one arm per live
 connection, and the protocol on the wire is the session class's business.
 
@@ -28,17 +29,16 @@ from typing import TYPE_CHECKING, Protocol
 import uvicorn
 from starlette.applications import Starlette
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from starlette.responses import JSONResponse
-from starlette.routing import Mount, Route, WebSocketRoute
+from starlette.routing import Mount, WebSocketRoute
 from starlette.staticfiles import StaticFiles
 
-from nu._config.branding import BLUE, PURPLE, color_enabled, paint, render_header
+from nu._branding import BLUE, PURPLE, color_enabled, paint, render_header
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
 
-    from starlette.requests import Request
+    from starlette.routing import BaseRoute
     from starlette.websockets import WebSocket
 
     from nu.lang.runtime import Context
@@ -217,6 +217,9 @@ class WebServer:
             open, and its ``_nu_bind_as`` is what an arm binds it under.
         static: the importable wheel that ships a compiled SPA under
             ``build/``. None mounts nothing and exposes ``/ws`` alone.
+        routes: extra Starlette routes, mounted after ``/ws`` and before the
+            SPA mount so they win over its index.html fallback. The server
+            serves them as given and knows nothing about what they do.
         log_level: uvicorn log level. Defaults to ``"warning"`` -- we print
             our own ready/stopped banner.
         banner: what the ready and stopped lines call this server.
@@ -240,6 +243,7 @@ class WebServer:
         *,
         session_cls: Callable[[WebSocket], SessionProtocol],
         static: str | None = None,
+        routes: Sequence[BaseRoute] = (),
         host: str = "127.0.0.1",
         port: int = 8080,
         log_level: str = "warning",
@@ -250,6 +254,7 @@ class WebServer:
     ) -> None:
         self._session_cls = session_cls
         self._static = static
+        self._routes = tuple(routes)
         self._host = host
         self._port = port
         self._log_level = log_level
@@ -352,7 +357,7 @@ class WebServer:
     # ---- the http surface ---------------------------------------------------
 
     def _build_app(self) -> Starlette:
-        """The Starlette app: ``/ws``, the telemetry config, and the SPA mount."""
+        """The Starlette app: ``/ws``, the caller's routes, then the SPA mount."""
 
         async def ws_endpoint(ws: WebSocket) -> None:
             # A session lives exactly as long as this coroutine: uvicorn closes
@@ -369,16 +374,7 @@ class WebServer:
                 self._connections.pop(sid, None)
                 self._channel.emit(sid)
 
-        async def telemetry_config(request: Request) -> JSONResponse:
-            del request
-            from nu._config.telemetry import config_for_browser
-
-            return JSONResponse(config_for_browser())
-
-        routes: list[Route | WebSocketRoute | Mount] = [
-            WebSocketRoute("/ws", ws_endpoint),
-            Route("/api/telemetry-config", telemetry_config, methods=["GET"]),
-        ]
+        routes: list[BaseRoute] = [WebSocketRoute("/ws", ws_endpoint), *self._routes]
         if self._static is not None:
             static_dir = _bundled_static(self._static)
             if static_dir is not None and static_dir.exists():

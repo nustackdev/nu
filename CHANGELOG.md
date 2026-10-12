@@ -4,7 +4,6 @@
 
 - **nucore** (kernel) — 0.6.2
 - **nustd** (fabrics) — 0.6.2
-- **nucli** (the `nu` command) — 0.6.2
 - **nudle** — 0.1.7
 - **ui-core** — 0.2.1
 - **ui-kit** — 0.3.2
@@ -13,6 +12,9 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Drop the nucli package; nuspace is the command line now
+- The web server accepts extra routes from its caller and stays unaware of them
+- nudle owns its anonymous usage ping, switched off by env var or config file
 - Charts move to ECharts: one Chart node, sixteen typed Python builders, streaming appends
 - Every chart now takes set, merge, append and clear; per-chart setters are gone
 - UI kit packages name their source repo, as signed provenance requires

@@ -40,8 +40,8 @@ ORDER BY year DESC
 LIMIT 10;
 `,
 	shell: `#!/usr/bin/env bash
-uv venv --python 3.10 && uv pip install "nucli==0.5.5"
-nu demo movies --port 8080  # serves the demo
+uv venv --python 3.10 && uv pip install "nustd[all]==0.5.5"
+python examples/movies.py  # serves the demo
 `,
 	markdown: `# Notes
 

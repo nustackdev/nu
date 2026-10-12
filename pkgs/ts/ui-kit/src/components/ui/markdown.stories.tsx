@@ -96,7 +96,7 @@ SELECT name, count(*) FROM refs WHERE kind = 'code' GROUP BY name;
 \`\`\`
 
 \`\`\`shell
-uv venv --python 3.10 && uv pip install nucli
+uv venv --python 3.10 && uv pip install "nustd[all]"
 \`\`\`
 
 \`\`\`nulang

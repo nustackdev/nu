@@ -42,8 +42,6 @@ Concretely:
         |-- conftest.py        <- integration fixtures (real Nu schema, ...)
         `-- ...
 
-``nucli`` has no tests yet; it gets a directory when it does.
-
 Conventions:
 
 - **No ``__init__.py`` under ``tests/`` (except in ``_lib/_support/``).** With
