@@ -414,8 +414,8 @@
 	 * Soft, tinted by the ink. Each level: a tight contact shadow plus an
 	 * ambient one, both growing with height. */
 	--elevation-raised:       0 1px 1px rgb(26 29 36 / 0.04), 0 1px 3px rgb(26 29 36 / 0.06);
-	--elevation-floating:     0 2px 4px rgb(26 29 36 / 0.05), 0 6px 16px rgb(26 29 36 / 0.09);
-	--elevation-modal:        0 4px 8px rgb(26 29 36 / 0.06), 0 20px 48px rgb(26 29 36 / 0.16);
+	--elevation-floating:     0 2px 4px rgb(26 29 36 / 0.05), 0 6px 16px rgb(26 29 36 / 0.08);
+	--elevation-modal:        0 4px 8px rgb(26 29 36 / 0.05), 0 20px 48px rgb(26 29 36 / 0.12);
 
 	/* one hover and one press for every surface: a wash of ink, so it shares
 	 * the ground's tint, reads on any surface and stacks (a chevron hovered
@@ -454,9 +454,9 @@
 
 	/* elevation in dark: the same three levels, shadows far heavier to read
 	 * on a dark ground, plus a faint top highlight that catches the edge */
-	--elevation-raised:       inset 0 1px 0 rgb(255 255 255 / 0.03), 0 1px 2px rgb(0 0 0 / 0.35);
-	--elevation-floating:     inset 0 1px 0 rgb(255 255 255 / 0.05), 0 2px 4px rgb(0 0 0 / 0.3), 0 8px 20px rgb(0 0 0 / 0.4);
-	--elevation-modal:        inset 0 1px 0 rgb(255 255 255 / 0.05), 0 8px 16px rgb(0 0 0 / 0.35), 0 24px 56px rgb(0 0 0 / 0.5);
+	--elevation-raised:       inset 0 1px 0 rgb(255 255 255 / 0.03), 0 1px 2px rgb(0 0 0 / 0.3);
+	--elevation-floating:     inset 0 1px 0 rgb(255 255 255 / 0.05), 0 2px 4px rgb(0 0 0 / 0.24), 0 8px 20px rgb(0 0 0 / 0.3);
+	--elevation-modal:        inset 0 1px 0 rgb(255 255 255 / 0.05), 0 8px 16px rgb(0 0 0 / 0.26), 0 24px 56px rgb(0 0 0 / 0.34);
 
 	/* hover and press washes, a little stronger on a dark ground */
 	--bg-hover:               color-mix(in oklab, var(--ink-1) 7%, transparent);
