@@ -230,6 +230,21 @@ export {
 } from "./components/ui/sheet";
 export { Shortcut, type ShortcutProps } from "./components/ui/shortcut";
 export { Skeleton } from "./components/ui/skeleton";
+export { SketchBoard, type SketchBoardProps } from "./components/ui/sketch-board";
+export {
+	normalizeElements as normalizeSketchElements,
+	SKETCH_CONTROLS,
+	SKETCH_FILLS,
+	SKETCH_SIZES,
+	SKETCH_STROKES,
+	SKETCH_TOOLS,
+	type SketchControl,
+	type SketchDefaults,
+	type SketchElement,
+	type SketchPoint,
+	type SketchTool,
+	sketchColor,
+} from "./components/ui/sketch-board-model";
 export { Slider, sliderVariants } from "./components/ui/slider";
 export { Spinner, spinnerVariants } from "./components/ui/spinner";
 export { Stat, StatDelta, StatLabel, StatValue } from "./components/ui/stat";

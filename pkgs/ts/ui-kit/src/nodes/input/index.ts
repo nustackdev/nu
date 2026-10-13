@@ -10,6 +10,7 @@ import { MarkdownRef } from "./markdown";
 import { NumberInputRef } from "./number-input";
 import { RadioGroupRef } from "./radio-group";
 import { SelectRef } from "./select";
+import { SketchRef } from "./sketch";
 import { SliderRef } from "./slider";
 import { SwitchRef } from "./switch";
 import { TagInputRef } from "./tag-input";
@@ -31,4 +32,5 @@ export const inputEntries: Record<string, NodeEntry> = {
 	MarkdownRef,
 	CodeRef,
 	ToggleRef,
+	SketchRef,
 };

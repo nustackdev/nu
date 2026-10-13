@@ -470,7 +470,7 @@ def test_section_ref_with_a_shape_keeps_its_shapes_wire_type():
 _NEW_NAMES = (
     "ContainerRef LeafRef ColumnRef RowRef BoxRef FormRef List GridRef Grid LineRef Line "
     "CollapsibleRef Collapsible SheetRef Sheet AvatarRef BreadcrumbRef SkeletonRef SpinnerRef "
-    "StatusPillRef ToggleRef"
+    "StatusPillRef ToggleRef SketchRef"
 ).split()
 
 

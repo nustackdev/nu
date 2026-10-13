@@ -58,6 +58,7 @@
 		"echarts": "^6.1.0",
 		"immer": "^11.1.8",
 		"lucide-react": "^0.564.0",
+		"perfect-freehand": "^1.2.3",
 		"prosemirror-commands": "^1.7.2",
 		"prosemirror-gapcursor": "^1.4.1",
 		"prosemirror-history": "^1.5.0",

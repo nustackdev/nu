@@ -1,5 +1,6 @@
 """Input leaves: icon and tooltip on a button, the toolbar toggle, the
-searchable select. Wire only, through a fake session, no browser."""
+searchable select, the sketch pad. Wire only, through a fake session, no
+browser."""
 
 from __future__ import annotations
 
@@ -10,7 +11,7 @@ from nu import Context
 from nustd.ui import Session
 from nustd.ui.core import Changed
 from nustd.ui.nudle import Index, Page
-from nustd.ui.refs import ButtonRef, Row, SelectRef, ToggleRef
+from nustd.ui.refs import ButtonRef, Row, SelectRef, SketchRef, TextRef, ToggleRef
 
 
 class _RecordingSession:
@@ -161,3 +162,192 @@ def test_select_value_contract_unchanged_when_searchable():
     sess = _RecordingSession(value="a")
     result = asyncio.run(nu.arun(handle, Context().bind(Session, sess)))
     assert result[0] == "a"
+
+
+# --- SketchRef -----------------------------------------------------------------
+
+_ELEMENTS = [
+    {"type": "path", "points": [[0.1, 0.2], [0.3, 0.4, 0.6]], "stroke": "ink", "width": 0.012},
+    {
+        "type": "rect",
+        "x": 0.1,
+        "y": 0.1,
+        "w": 0.3,
+        "h": 0.2,
+        "stroke": "red",
+        "fill": "red-soft",
+        "width": 0.006,
+    },
+    {"type": "arrow", "points": [[0.2, 0.8], [0.7, 0.5]], "stroke": "#e11d48", "width": 0.024},
+]
+
+
+def test_sketch_wire_type_and_slot_defaults():
+    assert SketchRef._wire_type == "SketchRef"
+    assert SketchRef.slot().props == {
+        "width": 280,
+        "height": None,
+        "tools": ["pen", "rect", "ellipse", "line", "arrow"],
+        "controls": ["tools", "stroke", "fill", "size", "undo", "redo", "clear"],
+        "defaults": {},
+        "readonly": False,
+        "label": "",
+        "value": [],
+    }
+
+
+def test_sketch_mnist_config():
+    props = SketchRef.slot(tools=["pen"], controls=["clear"], defaults={"size": 0.07}).props
+    assert props["tools"] == ["pen"]
+    assert props["controls"] == ["clear"]
+    assert props["defaults"] == {"size": 0.07}
+
+
+def test_sketch_config_keeps_toolbar_order_and_empty_controls():
+    props = SketchRef.slot(tools=["arrow", "pen"], controls=[], width=480.0, height=270).props
+    assert props["tools"] == ["pen", "arrow"]
+    assert props["controls"] == []
+    assert (props["width"], props["height"]) == (480, 270)
+
+
+def test_sketch_config_refuses_unknown_names():
+    for bad in (
+        {"tools": ["brush"]},
+        {"tools": []},
+        {"controls": ["zoom"]},
+        {"defaults": {"colour": "red"}},
+        {"defaults": {"tool": "rect"}, "tools": ["pen"]},
+        {"defaults": {"size": 0}},
+    ):
+        try:
+            SketchRef.slot(**bad)
+        except ValueError:
+            continue
+        raise AssertionError(f"accepted {bad}")
+
+
+def test_sketch_slot_normalizes_seed_elements():
+    seed = [
+        [(0.1, 0.2), (2, -1)],
+        {"type": "rect", "x": 0.5, "y": 0.5, "w": -0.2, "h": 0.9, "stroke": " blue ", "width": "x"},
+        {"type": "line", "points": [[0, 0]]},
+        {"type": "blob"},
+        "junk",
+        {"type": "ellipse", "x": 0.1, "y": 0.1, "w": 0.2, "h": 0.2, "fill": "none"},
+    ]
+    assert SketchRef.slot(value=seed).props["value"] == [
+        {"type": "path", "points": [[0.1, 0.2], [1.0, 0.0]]},
+        {"type": "rect", "x": 0.3, "y": 0.5, "w": 0.2, "h": 0.5, "stroke": "blue"},
+        {"type": "ellipse", "x": 0.1, "y": 0.1, "w": 0.2, "h": 0.2, "fill": "none"},
+    ]
+
+
+def test_sketch_standalone_carries_slot_props():
+    pad = SketchRef("pad", props={"width": 140, "controls": []})
+    assert pad._payload["props"]["width"] == 140
+    assert pad._payload["props"]["controls"] == []
+    assert pad._payload["props"]["value"] == []
+
+
+def test_sketch_set_writes_the_elements():
+    handle = _mount(SketchRef.slot(label="Board"))
+    [frame] = _frames(handle.set(_ELEMENTS))
+    assert frame.ref == ("page", "sec", "w")
+    assert frame.op == "write"
+    assert frame.payload == _ELEMENTS
+    assert _seeded(frame)[0] == "SketchRef"
+    assert _seeded(frame)[1]["label"] == "Board"
+
+
+def test_sketch_set_empty_and_clear_both_wipe():
+    handle = _mount(SketchRef.slot())
+    assert _frames(handle.set([]))[0].payload == []
+    assert _frames(handle.clear())[0].payload == []
+
+
+def test_sketch_set_keeps_pressure_on_paths_only():
+    handle = _mount(SketchRef.slot())
+    [frame] = _frames(
+        handle.set([{"type": "line", "points": [(0, 0, 0.5), (1.5, 1, 0.5)]}, [(0.5, 0.5, 2)]])
+    )
+    assert frame.payload == [
+        {"type": "line", "points": [[0.0, 0.0], [1.0, 1.0]]},
+        {"type": "path", "points": [[0.5, 0.5, 1.0]]},
+    ]
+
+
+def test_sketch_chrome_setters_merge_one_key():
+    handle = _mount(SketchRef.slot())
+    assert _frames(handle.set_label("Draw a digit"))[0].payload == {"label": "Draw a digit"}
+    assert _frames(handle.set_readonly(True))[0].payload == {"readonly": True}
+
+
+def test_sketch_reads_the_live_elements():
+    handle = _mount(SketchRef.slot())
+    sess = _RecordingSession(value=_ELEMENTS)
+    result = asyncio.run(nu.arun(handle, Context().bind(Session, sess)))
+    assert sess.reads == [("page", "sec", "w")]
+    assert result[0] == _ELEMENTS
+
+
+def test_sketch_read_of_nothing_is_a_blank_board():
+    handle = _mount(SketchRef.slot())
+    result = asyncio.run(nu.arun(handle, Context().bind(Session, _RecordingSession(value=None))))
+    assert result[0] == []
+
+
+class _Notifies:
+    def __init__(self) -> None:
+        self.callbacks: list = []
+
+    def bind(self, cb):
+        self.callbacks.append(cb)
+
+    def unbind(self, cb):
+        self.callbacks = [c for c in self.callbacks if c is not cb]
+
+    def close(self):
+        self.callbacks = []
+
+
+class _Tab(_RecordingSession):
+    """A tab that also takes subscriptions, so a test can fire its notifies."""
+
+    def __init__(self, value: object = None) -> None:
+        super().__init__(value)
+        self.subs: dict = {}
+
+    def subscribe(self, path):
+        return self.subs.setdefault(path, _Notifies())
+
+    def notify(self, path):
+        for cb in tuple(self.subs[path].callbacks):
+            cb(None)
+
+
+def test_sketch_on_change_reacts_to_an_element():
+    """An element landing in the browser is one notify; the reaction reads the board back."""
+    sec = type("PadSec", (Row,), {"pad": SketchRef.slot(), "count": TextRef.slot()})
+    page = type("PadPage", (Page,), {"sec": sec.slot()})
+    app = type("PadApp", (Index,), {"page": page.slot("/")})
+    pad, count = app.page.sec.pad, app.page.sec.count
+    tab = _Tab(value=_ELEMENTS)
+
+    async def run():
+        react = nu.ReactForever(pad.on_change(), count.set(nu.str(nu.Len(pad))))
+        task = asyncio.create_task(nu.arun(react, Context().bind(Session, tab)))
+        path = ("page", "sec", "pad")
+        for _ in range(100):
+            if path in tab.subs and tab.subs[path].callbacks:
+                break
+            await asyncio.sleep(0.01)
+        tab.notify(path)
+        for _ in range(100):
+            if tab.frames:
+                break
+            await asyncio.sleep(0.01)
+        task.cancel()
+
+    asyncio.run(run())
+    assert ("page", "sec", "pad") in tab.reads
+    assert [f.payload for f in tab.frames] == ["3"]

@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add a sketch board input: pen, shapes, colors, undo, programs draw by writing elements
 - Drop the nucli package; nuspace is the command line now
 - The web server accepts extra routes from its caller and stays unaware of them
 - nudle owns its anonymous usage ping, switched off by env var or config file

@@ -1,7 +1,8 @@
 // Refs/Inputs: the input leaves as a program draws them. A toolbar Row of
 // icon buttons and toggles (one height, so they line up), buttons with an
-// icon before the label in every variant, and a searchable select next to a
-// plain one over the same options.
+// icon before the label in every variant, a searchable select next to a
+// plain one over the same options, and a sketch board: a digit pad beside a
+// board a program drew on.
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { NodeStage, sinkParameters, step } from "./harness";
@@ -119,6 +120,66 @@ export const Selects: Story = {
 							selected: "",
 							placeholder: "Pick a package",
 							searchable: true,
+						}),
+					],
+				]}
+			/>
+		);
+	},
+};
+
+export const Sketch: Story = {
+	render: () => {
+		const row = step("inputs-sketch", "Row", { gap: 4, align: "start", wrap: true });
+		return (
+			<NodeStage
+				root="inputs-sketch"
+				label="a pen-only digit pad, and a board a program drew on"
+				chains={[
+					[
+						row,
+						step("digit", "SketchRef", {
+							label: "Draw a digit",
+							width: 200,
+							tools: ["pen"],
+							controls: ["clear"],
+							defaults: { size: 0.07 },
+							value: [],
+						}),
+					],
+					[
+						row,
+						step("drawn", "SketchRef", {
+							label: "Written by the server",
+							width: 320,
+							height: 220,
+							value: [
+								{
+									type: "rect",
+									x: 0.08,
+									y: 0.3,
+									w: 0.3,
+									h: 0.3,
+									stroke: "blue",
+									fill: "blue-soft",
+								},
+								{
+									type: "arrow",
+									points: [
+										[0.42, 0.45],
+										[0.58, 0.45],
+									],
+								},
+								{
+									type: "ellipse",
+									x: 0.62,
+									y: 0.28,
+									w: 0.3,
+									h: 0.34,
+									stroke: "violet",
+									fill: "violet-soft",
+								},
+							],
 						}),
 					],
 				]}

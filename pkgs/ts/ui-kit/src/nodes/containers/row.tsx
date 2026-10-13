@@ -22,7 +22,7 @@
 //
 // Fill: Chart (every chart type), TableRef, TreeRef,
 // JsonViewerRef, LensRef, CodeRef, MarkdownRef, InputRef, NumberInputRef,
-// TextAreaRef, TagInputRef, DatePickerRef, SliderRef, ProgressRef, AlertRef,
+// TextAreaRef, TagInputRef, DatePickerRef, SliderRef, SketchRef, ProgressRef, AlertRef,
 // EmptyStateRef, ImageRef, HeadingRef, and the containers Card, Box,
 // Form, Fieldset, Field, Tabs, Accordion, Column, Row, ListRef (Grid, Line,
 // Select, Skeleton, Collapsible set their own). Content: everything else,
