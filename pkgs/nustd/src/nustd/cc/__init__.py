@@ -4,6 +4,9 @@ Surface:
     - CCFabric: holds a ClaudeAgentOptions template + makes the calls into the SDK.
     - PromptRef: MethodRef for a Claude Code prompt endpoint on a Service.
     - CCPrompt: the interaction produced when a PromptRef is called.
+    - StreamRef: a PromptRef whose calls stream the turn as it happens.
+    - CCStream: the interaction produced when a StreamRef is called: one event
+      per text block, tool call and tool result, then the result.
     - bind(service_cls, **options): Provide the CCFabric tagged by the Service class.
     - NewSession: mints the id of a conversation that has not begun yet.
     - Session(*body, sid=None): brace that makes every prompt inside it one
@@ -32,18 +35,20 @@ Example::
 from __future__ import annotations
 
 from .fabric import CCFabric
-from .interactions import CCPrompt, NewSession
+from .interactions import CCPrompt, CCStream, NewSession
 from .presets import bind
-from .refs import PromptRef
+from .refs import PromptRef, StreamRef
 from .session import Session, SessionHandle
 
 
 __all__ = [
     "CCFabric",
     "CCPrompt",
+    "CCStream",
     "NewSession",
     "PromptRef",
     "Session",
     "SessionHandle",
+    "StreamRef",
     "bind",
 ]

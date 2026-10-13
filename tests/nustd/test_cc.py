@@ -13,7 +13,16 @@ import asyncio
 import uuid
 
 import pytest
-from claude_agent_sdk import AssistantMessage, ResultMessage, TextBlock
+from claude_agent_sdk import (
+    AssistantMessage,
+    ResultMessage,
+    StreamEvent,
+    SystemMessage,
+    TextBlock,
+    ToolResultBlock,
+    ToolUseBlock,
+    UserMessage,
+)
 
 import nu
 import nustd.cc
@@ -22,6 +31,7 @@ from nustd.cc import fabric
 
 class Agent(nu.Service):
     ask = nustd.cc.PromptRef.method()
+    say = nustd.cc.StreamRef.method()
 
 
 class Claude:
@@ -31,6 +41,10 @@ class Claude:
         self.transcripts: dict[str, list[str]] = {}
         self.clients: list[FakeClient] = []
         self.oneshots: list[object] = []
+        #: Set by a test to let a reply past its first message (prompts starting with ``gate``).
+        self.gate = asyncio.Event()
+        #: Whether a stream's messages were drained to the end, by prompt.
+        self.drained: dict[str, bool] = {}
 
     def open(self, options: object) -> str:
         """The id a process started with ``options`` runs under, refused as the CLI would."""
@@ -50,7 +64,23 @@ class Claude:
         said = self.transcripts.setdefault(sid, [])
         said.append(prompt)
         text = f"{len(said)}:{prompt}"
+        work: list[object] = []
+        if prompt.startswith("tool"):
+            work = [
+                SystemMessage(
+                    subtype="init", data={"session_id": sid, "model": "fake", "cwd": "/w"}
+                ),
+                AssistantMessage(
+                    content=[
+                        TextBlock(text="looking"),
+                        ToolUseBlock(id="t1", name="Bash", input={"command": "ls"}),
+                    ],
+                    model="fake",
+                ),
+                UserMessage(content=[ToolResultBlock(tool_use_id="t1", content="x" * 5000)]),
+            ]
         return [
+            *work,
             AssistantMessage(content=[TextBlock(text=text)], model="fake"),
             ResultMessage(
                 subtype="success",
@@ -60,6 +90,8 @@ class Claude:
                 num_turns=1,
                 session_id=sid,
                 result=text,
+                total_cost_usd=0.01,
+                usage={"input_tokens": 3, "output_tokens": 4},
             ),
         ]
 
@@ -95,11 +127,23 @@ class FakeClient:
     async def receive_response(self):
         if self.prompts[-1] == "hang":
             await asyncio.sleep(60)
-        for msg in self.pending:
+        async for msg in _paced(self.claude, self.prompts[-1], self.pending):
             yield msg
 
     async def disconnect(self) -> None:
         self.disconnected = True
+
+
+async def _paced(claude: Claude, prompt: str, messages: list[object]):
+    """``messages`` in order; a ``gate`` prompt waits for the test after the first, ``slow`` forever."""
+    claude.drained[prompt] = False
+    for i, msg in enumerate(messages):
+        if i == 1 and prompt.startswith("gate"):
+            await claude.gate.wait()
+        if i == 1 and prompt.startswith("slow"):
+            await asyncio.sleep(60)
+        yield msg
+    claude.drained[prompt] = True
 
 
 @pytest.fixture
@@ -109,7 +153,7 @@ def claude(monkeypatch: pytest.MonkeyPatch) -> Claude:
     async def query(*, prompt: str, options: object):
         world.oneshots.append(options)
         sid = world.open(options)
-        for msg in world.reply(sid, prompt):
+        async for msg in _paced(world, prompt, world.reply(sid, prompt)):
             yield msg
 
     monkeypatch.setattr(fabric, "query", query)
@@ -261,3 +305,126 @@ def test_the_sync_path_outside_a_session_is_one_shot(claude: Claude) -> None:
     got, _ = nu.run(_app(Agent.ask("a")))
     assert got["text"] == "1:a"
     assert len(claude.oneshots) == 1
+
+
+# --- streaming -------------------------------------------------------------------------------
+
+
+def _types(events: list[dict]) -> list[str]:
+    return [one["type"] for one in events]
+
+
+async def test_a_stream_hands_over_the_turn_then_its_result(claude: Claude) -> None:
+    got = await _arun(nu.Collect(Agent.say("a")))
+    assert _types(got) == ["text", "result"]
+    text, result = got
+    assert text["text"] == "1:a"
+    assert result["text"] == "1:a"
+    assert result["total_cost_usd"] == 0.01
+    assert result["usage"] == {"input_tokens": 3, "output_tokens": 4}
+    assert result["is_error"] is False
+    assert len(claude.oneshots) == 1
+
+
+async def test_a_stream_says_its_tool_calls_and_what_they_gave_back(claude: Claude) -> None:
+    got = await _arun(nu.Collect(Agent.say("tool")))
+    assert _types(got) == ["init", "text", "tool_use", "tool_result", "text", "result"]
+    init, _, use, back, _, _ = got
+    assert init["session_id"] == got[-1]["session_id"]
+    assert (use["id"], use["name"], use["input"]) == ("t1", "Bash", {"command": "ls"})
+    assert back["id"] == "t1"
+    assert back["is_error"] is False
+    assert back["content"].startswith("x" * fabric.TRIM)
+    assert back["content"].endswith("3,000 more characters")
+
+
+async def test_events_arrive_while_the_turn_is_still_going(
+    claude: Claude, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The first event is out before the fake lets the rest of the reply through."""
+    run = asyncio.create_task(
+        _arun(nu.ForEachDo(Agent.say("gate"), lambda ev: nu.print(ev["type"])))
+    )
+    seen = ""
+    for _ in range(100):
+        seen += capsys.readouterr().out
+        if seen:
+            break
+        await asyncio.sleep(0.01)
+    assert seen.split() == ["text"]
+    assert not run.done()
+    claude.gate.set()
+    await asyncio.wait_for(run, 5)
+    assert (seen + capsys.readouterr().out).split() == ["text", "result"]
+
+
+async def test_a_stream_in_a_session_is_a_turn_of_its_conversation(claude: Claude) -> None:
+    body = nustd.cc.Session(nu.List.of(Agent.ask("a"), nu.Collect(Agent.say("b")), Agent.ask("c")))
+    first, streamed, last = await _arun(body)
+    assert (first["text"], streamed[-1]["text"], last["text"]) == ("1:a", "2:b", "3:c")
+    (client,) = claude.clients
+    assert client.prompts == ["a", "b", "c"]
+
+
+async def test_a_stream_read_to_its_result_keeps_the_process(claude: Claude) -> None:
+    body = nustd.cc.Session(nu.List.of(nu.Collect(Agent.say("a")), nu.Collect(Agent.say("b"))))
+    a, b = await _arun(body)
+    assert (a[-1]["text"], b[-1]["text"]) == ("1:a", "2:b")
+    assert len(claude.clients) == 1
+
+
+async def test_letting_go_of_a_stream_early_closes_the_process(claude: Claude) -> None:
+    """The rest of the reply is left on the stream, so the next prompt opens a new process."""
+    body = nustd.cc.Session(nu.List.of(nu.First(Agent.say("tool")), Agent.ask("b")))
+    first, after = await _arun(body)
+    assert first["type"] == "init"
+    assert claude.drained["tool"] is False
+    broken, reopened = claude.clients
+    assert broken.disconnected
+    assert reopened.options.resume == after["session_id"]
+    assert after["text"] == "2:b"
+
+
+async def test_a_cancelled_stream_closes_the_process(claude: Claude) -> None:
+    body = nu.Timeout(0.05, nustd.cc.Session(nu.Collect(Agent.say("slow"))))
+    with pytest.raises(TimeoutError):
+        await _arun(body)
+    (client,) = claude.clients
+    assert client.disconnected
+
+
+def test_the_sync_path_streams_too(claude: Claude) -> None:
+    got, _ = nu.run(_app(nu.Collect(Agent.say("tool"))))
+    assert _types(got) == ["init", "text", "tool_use", "tool_result", "text", "result"]
+    assert len(claude.oneshots) == 1
+
+
+def test_the_sync_path_streams_a_sessions_turns_on_its_id(claude: Claude) -> None:
+    sid = str(uuid.uuid4())
+    body = nustd.cc.Session(nu.List.of(nu.Collect(Agent.say("a")), Agent.ask("b")), sid=sid)
+    (streamed, asked), _ = nu.run(_app(body))
+    assert (streamed[-1]["session_id"], asked["session_id"]) == (sid, sid)
+    assert asked["text"] == "2:b"
+
+
+def test_the_sync_path_stops_the_stream_it_lets_go_of(claude: Claude) -> None:
+    got, _ = nu.run(_app(nu.First(Agent.say("slow"))))
+    assert got["type"] == "text"
+    assert claude.drained["slow"] is False
+
+
+def test_partial_messages_become_deltas() -> None:
+    piece = {"type": "content_block_delta", "delta": {"type": "text_delta", "text": "he"}}
+    other = {"type": "message_start"}
+    assert fabric.events_of(StreamEvent(uuid="u", session_id="s", event=piece)) == [
+        {"type": "delta", "text": "he"}
+    ]
+    assert fabric.events_of(StreamEvent(uuid="u", session_id="s", event=other)) == []
+
+
+def test_a_tool_result_in_parts_reads_as_text() -> None:
+    parts = [{"type": "text", "text": "one"}, {"type": "image", "source": {}}]
+    msg = UserMessage(content=[ToolResultBlock(tool_use_id="t", content=parts, is_error=True)])
+    assert fabric.events_of(msg) == [
+        {"type": "tool_result", "id": "t", "content": "one\n[image]", "is_error": True}
+    ]

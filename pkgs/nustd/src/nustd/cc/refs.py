@@ -1,8 +1,8 @@
-"""PromptRef: Ref addressing a Claude Code prompt endpoint on a Service.
+"""PromptRef and StreamRef: Refs addressing a Claude Code prompt endpoint on a Service.
 
 Mirrors nustd.http verb refs: `.method(**defaults)` returns a Method declaration
 that the ServiceMeta descriptor unwraps at class access; calling the Ref with
-kwargs produces a CCPrompt interaction.
+kwargs produces a CCPrompt interaction, or a CCStream for a StreamRef.
 """
 
 from __future__ import annotations
@@ -12,14 +12,14 @@ from typing import TYPE_CHECKING
 from nu.domains.service import Method, MethodRef
 from nu.forms import Dict
 
-from .interactions import CCPrompt
+from .interactions import CCPrompt, CCStream
 
 
 if TYPE_CHECKING:
     from nu.lang import Nu
 
 
-__all__ = ["PromptRef"]
+__all__ = ["PromptRef", "StreamRef"]
 
 
 class PromptRef(MethodRef):
@@ -87,3 +87,36 @@ class PromptRef(MethodRef):
               both are resolved at evaluation.
         """
         return CCPrompt(self, Dict.of(prompt=prompt, **overrides))
+
+
+class StreamRef(PromptRef):
+    """A PromptRef whose calls stream the reply as it happens.
+
+    The same agent, the same fabric and the same Session rules as PromptRef;
+    a call builds a ``CCStream``, which yields the turn event by event, where
+    a PromptRef call yields only its end. A Service may declare both over one
+    bind, one for when only the answer matters and one for watching it come.
+
+    Example:
+        class Agent(nu.Service):
+            ask = nustd.cc.PromptRef.method()
+            say = nustd.cc.StreamRef.method()
+        app = nu.With(
+            nustd.cc.bind(Agent, model="claude-sonnet-5"),
+            body=nu.ForEachDo(Agent.say("fix the failing test"), lambda ev: nu.print(ev)),
+        )
+        asyncio.run(nu.arun(app))
+    """
+
+    @classmethod
+    def method(cls, **defaults: object) -> StreamRef:  # type: ignore[override]
+        """Declare a streamed prompt endpoint whose defaults every call through it inherits.
+
+        Args:
+            **defaults: ``ClaudeAgentOptions`` fields, as for ``PromptRef.method``.
+        """
+        return Method(cls, defaults=defaults)  # type: ignore[return-value]
+
+    def __call__(self, prompt: object, **overrides: object) -> Nu:
+        """Build a CCStream over one turn's prompt and options. Arguments as ``PromptRef``."""
+        return CCStream(self, Dict.of(prompt=prompt, **overrides))

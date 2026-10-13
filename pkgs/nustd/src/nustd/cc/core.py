@@ -6,7 +6,7 @@ import asyncio
 import uuid
 from typing import TYPE_CHECKING
 
-from .fabric import CCFabric
+from .fabric import CCFabric, bridged
 from .session import SessionHandle
 
 
@@ -16,7 +16,14 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 
-__all__ = ["acompile_call", "acompile_new_session", "compile_call", "compile_new_session"]
+__all__ = [
+    "acompile_call",
+    "acompile_new_session",
+    "acompile_stream",
+    "compile_call",
+    "compile_new_session",
+    "compile_stream",
+]
 
 
 def _split(payload: dict, args: dict) -> tuple[str, dict]:
@@ -59,6 +66,38 @@ def acompile_call(children: tuple[Callable, ...]) -> Callable:
         if handle is None:
             return await fabric.aprompt(prompt, **overrides)
         return await handle.aprompt(fabric, prompt, overrides)
+
+    return athunk
+
+
+def compile_stream(children: tuple[Callable, ...]) -> Callable:
+    """Sync compile: the reply as it comes, its async stream pulled through a thread."""
+    ref_thunk, args_thunk = children
+
+    def thunk(rt: Runtime) -> object:
+        payload = ref_thunk(rt)
+        prompt, overrides = _split(payload, args_thunk(rt))
+        fabric = rt.ctx.fabrics.get(CCFabric, payload["owner_service"])
+        handle = _session(rt)
+        if handle is None:
+            return bridged(lambda: fabric.astream(prompt, **overrides))
+        return handle.stream(fabric, prompt, overrides)
+
+    return thunk
+
+
+def acompile_stream(children: tuple[Callable, ...]) -> Callable:
+    """Async compile: the reply as it comes, one-shot outside a Session, a turn inside one."""
+    ref_thunk, args_thunk = children
+
+    async def athunk(rt: Runtime) -> object:
+        payload = await ref_thunk(rt)
+        prompt, overrides = _split(payload, await args_thunk(rt))
+        fabric = rt.ctx.fabrics.get(CCFabric, payload["owner_service"])
+        handle = _session(rt)
+        if handle is None:
+            return fabric.astream(prompt, **overrides)
+        return handle.astream(fabric, prompt, overrides)
 
     return athunk
 

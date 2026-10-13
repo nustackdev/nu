@@ -1,20 +1,27 @@
-"""CCPrompt runs one Claude Code prompt turn; NewSession mints the id of a conversation."""
+"""CCPrompt runs one Claude Code prompt turn, CCStream streams one; NewSession mints the id of a conversation."""
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
-from nu.lang import ScalarAction, ScalarQuery
+from nu.lang import ScalarAction, ScalarQuery, StreamAction
 
-from .core import acompile_call, acompile_new_session, compile_call, compile_new_session
+from .core import (
+    acompile_call,
+    acompile_new_session,
+    acompile_stream,
+    compile_call,
+    compile_new_session,
+    compile_stream,
+)
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-__all__ = ["CCPrompt", "NewSession"]
+__all__ = ["CCPrompt", "CCStream", "NewSession"]
 
 
 class CCPrompt(ScalarAction):
@@ -69,6 +76,64 @@ class CCPrompt(ScalarAction):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return acompile_call(children)
+
+
+class CCStream(StreamAction):
+    """One prompt turn against a Claude Code agent, its reply streamed as it happens.
+
+    Built by calling a StreamRef rather than written by hand. It runs the
+    turn a ``CCPrompt`` runs, through the same fabric and the same Session,
+    but where that one hands back only the end, this one yields each thing
+    the agent does the moment it lands: its text, its tool calls and what
+    they gave back, then the result with the run's accounting.
+
+    Args:
+        ref: the StreamRef naming the agent.
+        args: a Dict carrying ``prompt`` plus this call's option overrides.
+
+    Notes:
+        - Lazy, as every stream is: nothing starts until something pulls the
+          first event, and a reader that stops early stops the run. Inside a
+          Session that also closes the brace's process, since the rest of the
+          reply is left unread on it; the next prompt opens a new one on the
+          same conversation.
+        - Inside a Session the turn holds the brace's process until its
+          result is out, so other prompts in the brace wait for it.
+        - Text arrives a block at a time. Bind ``include_partial_messages=True``
+          to also get ``delta`` events, pieces of a block as it is written.
+        - The sync path pulls the async SDK through a thread of its own, so
+          events still arrive as they happen under ``nu.run``.
+
+    Yields:
+        One dict per event, keyed by ``type``:
+
+        - ``init``: ``session_id``, ``model``, ``cwd``, ``tools``.
+        - ``text`` / ``thinking``: ``text``, a whole block.
+        - ``delta``: ``text``, a piece of a block (partial messages only).
+        - ``tool_use``: ``id``, ``name``, ``input``.
+        - ``tool_result``: ``id`` (the tool_use's), ``content`` as text cut to
+          ``nustd.cc.fabric.TRIM`` characters, ``is_error``.
+        - ``result``, always last: ``text``, ``session_id``,
+          ``total_cost_usd``, ``duration_ms``, ``num_turns``, ``usage``,
+          ``is_error``. A stream that ends without one carries no result.
+
+    Example:
+        class Agent(nu.Service):
+            say = nustd.cc.StreamRef.method()
+        app = nu.With(
+            nustd.cc.bind(Agent, model="claude-sonnet-5"),
+            body=nu.ForEachDo(Agent.say("list this directory"), lambda ev: nu.print(ev["type"])),
+        )
+        asyncio.run(nu.arun(app))
+    """
+
+    _mutates = Declared(value=frozenset({0}), name="mutates")
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        return compile_stream(children)
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        return acompile_stream(children)
 
 
 class NewSession(ScalarQuery):

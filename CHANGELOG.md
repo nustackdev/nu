@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add streaming to Claude Code turns: text, tool calls, results and cost as they happen
 - Add a sketch board input: pen, shapes, colors, undo, programs draw by writing elements
 - Drop the nucli package; nuspace is the command line now
 - The web server accepts extra routes from its caller and stays unaware of them

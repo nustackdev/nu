@@ -10,13 +10,15 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from contextlib import asynccontextmanager, contextmanager
+from contextlib import aclosing, asynccontextmanager, contextmanager
 from typing import TYPE_CHECKING, Any
 
 from nu.core.flows import Noop
 from nu.core.flows.strategy import Sequential
 from nu.core.spans.bracket import _aguard, _guard
 from nu.lang import Attr, Bracket, Cardinality
+
+from .fabric import bridged
 
 
 if TYPE_CHECKING:
@@ -58,6 +60,15 @@ class SessionHandle:
         self.sid = result.get("session_id") or self.sid
         return result
 
+    def stream(
+        self, fabric: CCFabric, prompt: str, overrides: dict[str, object]
+    ) -> Iterator[dict[str, Any]]:
+        """One streamed prompt on the sync path: a process of its own, on this conversation's id."""
+        sid = self.sid
+        for event in bridged(lambda: fabric.astream(prompt, sid=sid, **overrides)):
+            self.sid = _sid_in(event) or self.sid
+            yield event
+
     async def aprompt(
         self, fabric: CCFabric, prompt: str, overrides: dict[str, object]
     ) -> dict[str, Any]:
@@ -68,28 +79,66 @@ class SessionHandle:
         """
         options = fabric.options_for(overrides)
         async with self.lock:
-            if self.client is None:
-                self.client = await fabric.aconnect(options, self.sid)
-                self.options = options
-            elif options != self.options:
-                msg = (
-                    "a Session runs one claude process, opened with the options of its first "
-                    "prompt; this prompt asks for different ones"
-                )
-                raise ValueError(msg)
+            client = await self._client(fabric, options)
             try:
-                result = await fabric.aturn(self.client, prompt)
+                result = await fabric.aturn(client, prompt)
             except BaseException:
                 await self.aclose()
                 raise
             self.sid = result.get("session_id") or self.sid
             return result
 
+    async def astream(
+        self, fabric: CCFabric, prompt: str, overrides: dict[str, object]
+    ) -> AsyncIterator[dict[str, Any]]:
+        """One streamed prompt on the async path: a turn on the brace's one open process.
+
+        The turn holds the lock until its result is out, so a prompt asked
+        meanwhile waits for it. A reader that lets go before the result
+        leaves the rest of the reply on the stream, so the process goes, as
+        it does for a turn that fails. The id is learnt as the process
+        starts, so even then the next prompt continues the conversation.
+        """
+        options = fabric.options_for(overrides)
+        async with self.lock:
+            client = await self._client(fabric, options)
+            finished = False
+            try:
+                async with aclosing(fabric.aturn_stream(client, prompt)) as stream:
+                    async for event in stream:
+                        self.sid = _sid_in(event) or self.sid
+                        finished = event["type"] == "result"
+                        yield event
+            except BaseException:
+                if not finished:
+                    await self.aclose()
+                raise
+
+    async def _client(self, fabric: CCFabric, options: ClaudeAgentOptions) -> ClaudeSDKClient:
+        """The brace's process, opened on the first turn with that turn's options."""
+        if self.client is None:
+            self.client = await fabric.aconnect(options, self.sid)
+            self.options = options
+        elif options != self.options:
+            msg = (
+                "a Session runs one claude process, opened with the options of its first "
+                "prompt; this prompt asks for different ones"
+            )
+            raise ValueError(msg)
+        return self.client
+
     async def aclose(self) -> None:
         """Close the process if one is open. Safe to call twice."""
         client, self.client = self.client, None
         if client is not None:
             await client.disconnect()
+
+
+def _sid_in(event: dict[str, Any]) -> str | None:
+    """The conversation id an event names: the process says it as it starts, the result again."""
+    if event["type"] in ("init", "result"):
+        return event.get("session_id")
+    return None
 
 
 def _wrap_body(children: tuple[Nu, ...]) -> Nu:
@@ -132,7 +181,9 @@ class Session(Bracket):
           prompt. A later prompt asking for different options raises,
           including one through a Service bound differently.
         - Prompts inside run one at a time even if the body runs them in
-          parallel, because one process answers one prompt at a time.
+          parallel, because one process answers one prompt at a time. A
+          streamed prompt is a turn like any other: it holds the process
+          until its result is out.
         - The sync path cannot keep a process open between prompts, since
           each one is its own ``asyncio.run``. There every prompt is a
           process of its own, run on the brace's id, so the conversation is
