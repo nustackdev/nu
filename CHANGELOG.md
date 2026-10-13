@@ -2,16 +2,17 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.6.2
-- **nustd** (fabrics) — 0.6.2
-- **nudle** — 0.1.7
+- **nucore** (kernel) — 0.6.3
+- **nustd** (fabrics) — 0.6.3
+- **nudle** — 0.1.8
 - **ui-core** — 0.2.1
-- **ui-kit** — 0.3.2
+- **ui-kit** — 0.3.3
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.6.3 — 2026-10-14
 
+- Release nu 0.6.3, UI kit 0.3.3 and nudle 0.1.8
 - Add streaming to Claude Code turns: text, tool calls, results and cost as they happen
 - Add a sketch board input: pen, shapes, colors, undo, programs draw by writing elements
 - Drop the nucli package; nuspace is the command line now
