@@ -27,13 +27,13 @@
 
 <h3 align="center">
   <a href="#ℹ️-about"><b>About</b></a> &bull;
-  <a href="#-build-with-nu"><b>Build</b></a> &bull;
-  <a href="#-quickstart"><b>Quickstart</b></a> &bull;
-  <a href="#-nu-std"><b>Nu STD</b></a> &bull;
-  <a href="#-spec"><b>Spec</b></a> &bull;
+  <a href="#build-with-nu"><b>Build</b></a> &bull;
+  <a href="#quickstart"><b>Quickstart</b></a> &bull;
+  <a href="#nu-std"><b>Nu STD</b></a> &bull;
+  <a href="#spec"><b>Spec</b></a> &bull;
   <a href="https://github.com/nustackdev/nu/tree/main/examples"><b>Examples</b></a> &bull;
   <a href="https://nustack.dev/docs"><b>Docs</b></a> &bull;
-  <a href="#-community"><b>Community</b></a>
+  <a href="#community"><b>Community</b></a>
 </h3>
 
 ---
