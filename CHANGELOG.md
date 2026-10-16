@@ -10,6 +10,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Swap the README banner for the square logo, tighten the header copy
+
 ## 0.6.3 — 2026-10-14
 
 - Release nu 0.6.3, UI kit 0.3.3 and nudle 0.1.8

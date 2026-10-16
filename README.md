@@ -1,9 +1,9 @@
 <div align="center">
-  <img width="1600" alt="Nu" src="https://github.com/user-attachments/assets/a98f0916-8867-4824-9459-bb70f16a85b6" />
+  <img width="128" alt="Nu" src="https://nustack.dev/brand/logo-square-512@2x.png" />
   <h3>
-    Nu – the interaction primitive
+    nu – the interaction primitive
   </h3>
-  Build apps in one primitive that spans your whole stack — databases, UIs, AI agents, and services. No glue. 50x less code.
+  Build apps in one primitive that spans your whole stack — databases, UIs, AI agents, and services.
 </div>
 
 <br/>
