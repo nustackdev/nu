@@ -252,3 +252,11 @@ def test_an_unknown_initial_key_raises_at_construction() -> None:
 def test_an_empty_initial_value_raises_on_entry(run: Callable) -> None:
     with pytest.raises(ValueError, match="EMPTY"):
         run(nm.Frame(S, S.a, a=nu.context.Attr("missing")))
+
+
+def test_extract_on_a_mem_list_is_the_plain_list():
+    class Box(nu.Shape):
+        rows = nu.ListRef.slot(dict)
+
+    rows = [{"role": "user", "content": "a"}]
+    assert nu.run(nu.Frame(Box, Box.rows.extract(), rows=rows))[0] == rows

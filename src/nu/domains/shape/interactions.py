@@ -120,7 +120,9 @@ class Extract(ScalarQuery):
     Distinct from ``Load``: Load yields the value at the Ref's
     address; Extract recursively materialises the subtree into a plain
     Python value (dict / list / nested mix). The view may be lazy; ``.eager``
-    is unwrapped when present, matching ``CollectionExtract`` mechanics.
+    is unwrapped when present, matching ``CollectionExtract`` mechanics. A
+    mem Ref already reads plain data, which has nothing to materialise and
+    passes through as it is.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -132,7 +134,7 @@ class Extract(ScalarQuery):
                 return EMPTY
             if hasattr(view, "eager"):
                 view = view.eager
-            return view.extract()
+            return view.extract() if hasattr(view, "extract") else view
 
         return thunk
 
@@ -145,7 +147,7 @@ class Extract(ScalarQuery):
                 return EMPTY
             if hasattr(view, "eager"):
                 view = view.eager
-            return view.extract()
+            return view.extract() if hasattr(view, "extract") else view
 
         return athunk
 

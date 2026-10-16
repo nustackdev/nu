@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Let plain in-memory lists and dicts extract to plain data like stored ones
 - Let self-description teach Ref declarations and keep variadic arguments in every call form
 - Add the logo header to the nustd README
 - Trim the README header spacing above the navbar
