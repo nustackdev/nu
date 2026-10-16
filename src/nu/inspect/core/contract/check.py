@@ -73,7 +73,7 @@ def check_args(subject: str, blocks: Blocks, expected: int | None) -> list[Viola
     checked here.
     """
     documented = parse_args(blocks.text_of(*ARGS))
-    if not documented or any(arg.variadic for arg in documented):
+    if not documented or any(arg.variadic or arg.keyword_variadic for arg in documented):
         return []
     if expected is not None and expected != len(documented):
         return [

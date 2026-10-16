@@ -37,11 +37,20 @@ class Param:
 
 @dataclass(frozen=True)
 class Signature:
-    """A callable's parameters, flattened."""
+    """A callable's parameters, flattened.
+
+    ``params`` holds the named parameters only. The variadic tails are not
+    params, since nothing binds to them by name, but they are part of how the
+    callable is written, so their names are kept beside the flags:
+    ``variadic_name`` is ``args`` for ``*args`` and ``keyword_variadic_name``
+    is ``kw`` for ``**kw``, empty when the tail is absent.
+    """
 
     params: tuple[Param, ...] = ()
     variadic: bool = False
     keyword_variadic: bool = False
+    variadic_name: str = ""
+    keyword_variadic_name: str = ""
     is_classmethod: bool = False
     is_staticmethod: bool = False
 
@@ -81,15 +90,15 @@ def read_signature(target: object, *, receiver: bool = False) -> Signature | Non
     except (TypeError, ValueError):
         return None
     params: list[Param] = []
-    variadic = keyword_variadic = False
+    variadic_name = keyword_variadic_name = ""
     for index, param in enumerate(raw.parameters.values()):
         if index == 0 and (owner is not None or receiver) and param.name in ("self", "cls"):
             continue
         if param.kind is inspect.Parameter.VAR_POSITIONAL:
-            variadic = True
+            variadic_name = param.name
             continue
         if param.kind is inspect.Parameter.VAR_KEYWORD:
-            keyword_variadic = True
+            keyword_variadic_name = param.name
             continue
         params.append(
             Param(
@@ -104,8 +113,10 @@ def read_signature(target: object, *, receiver: bool = False) -> Signature | Non
         )
     return Signature(
         params=tuple(params),
-        variadic=variadic,
-        keyword_variadic=keyword_variadic,
+        variadic=bool(variadic_name),
+        keyword_variadic=bool(keyword_variadic_name),
+        variadic_name=variadic_name,
+        keyword_variadic_name=keyword_variadic_name,
         is_classmethod=_is_bound_classmethod(target),
         is_staticmethod=isinstance(target, staticmethod),
     )

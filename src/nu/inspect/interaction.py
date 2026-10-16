@@ -68,12 +68,16 @@ class InteractionRecord(Record):
         """The exact child count, or None when it is not known."""
         if not self.args or any(arg.variadic for arg in self.args):
             return None
-        return len(self.args)
+        return sum(1 for arg in self.args if not arg.keyword_variadic)
 
     @property
     def required(self) -> int:
         """How many children carry no default."""
-        return sum(1 for arg in self.args if not arg.variadic and not arg.has_default)
+        return sum(
+            1
+            for arg in self.args
+            if not arg.variadic and not arg.keyword_variadic and not arg.has_default
+        )
 
 
 def parse_interaction(

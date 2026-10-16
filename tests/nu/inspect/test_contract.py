@@ -69,6 +69,58 @@ def test_a_variadic_documented_arg_survives_the_merge() -> None:
     assert (arg.name, arg.variadic) == ("children", True)
 
 
+def test_the_variadic_tails_are_kept_in_written_order() -> None:
+    def target(a: int, *rest: int, flag: bool = False, **kw: int) -> None:
+        """Summary.
+
+        Args:
+            a: first.
+            *rest: the rest.
+            flag: a switch.
+            **kw: passed through.
+        """
+
+    args = call_form(target, split_docstring(target.__doc__))
+    assert [(a.name, a.variadic, a.keyword_variadic) for a in args] == [
+        ("a", False, False),
+        ("rest", True, False),
+        ("flag", False, False),
+        ("kw", False, True),
+    ]
+    assert [a.text for a in args] == ["first.", "the rest.", "a switch.", "passed through."]
+    assert render_args("target", args) == "target(a, *rest, flag=False, **kw)"
+
+
+def test_a_keyword_tail_alone_is_still_the_signature() -> None:
+    class Target:
+        @classmethod
+        def method(cls, **defaults: object) -> None:
+            """Summary.
+
+            Args:
+                **defaults: inherited by every call.
+            """
+
+    (arg,) = call_form(Target.method, split_docstring(Target.method.__doc__))
+    assert (arg.name, arg.keyword_variadic, arg.text) == (
+        "defaults",
+        True,
+        "inherited by every call.",
+    )
+
+
+def test_a_pass_through_tail_defers_to_the_docstring() -> None:
+    def target(*args: object, **kwargs: object) -> None:
+        """Summary.
+
+        Args:
+            left: one.
+        """
+
+    args = call_form(target, split_docstring(target.__doc__))
+    assert [a.name for a in args] == ["left"]
+
+
 def test_no_source_at_all_is_absence_not_zero() -> None:
     assert call_form(object(), split_docstring("Summary.")) == ()
 
@@ -116,6 +168,7 @@ def test_a_call_form_renders_defaults_and_the_variadic_tail() -> None:
     )
     assert render_args("Filter", args) == "Filter(source, key='item')"
     assert render_args("Add", (Arg(name="children", variadic=True),)) == "Add(*children)"
+    assert render_args("bind", (Arg(name="defaults", keyword_variadic=True),)) == "bind(**defaults)"
     assert render_args("Now", ()) == "Now()"
 
 

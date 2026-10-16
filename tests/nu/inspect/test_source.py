@@ -25,6 +25,7 @@ def test_signature_of_a_plain_function() -> None:
     assert [p.name for p in sig.keyword] == ["flag"]
     assert sig.required == 1
     assert sig.variadic and sig.keyword_variadic
+    assert (sig.variadic_name, sig.keyword_variadic_name) == ("rest", "kw")
 
 
 def test_signature_of_a_class_reads_init_and_drops_self() -> None:

@@ -357,7 +357,8 @@ def _common_body(record: Record) -> list[str]:
         lines.extend(["", "  args"])
         for arg in args:
             default = f" = {arg.default}" if arg.has_default else ""
-            lines.append(f"    {arg.name}{default}: {arg.text or '-'}")
+            stars = "**" if arg.keyword_variadic else "*" if arg.variadic else ""
+            lines.append(f"    {stars}{arg.name}{default}: {arg.text or '-'}")
     if record.notes:
         lines.extend(["", "  notes"])
         for note in record.notes:

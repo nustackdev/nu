@@ -21,11 +21,16 @@ _ITEM = re.compile(r"^(?P<name>\*{0,2}\w+)(?:\s*\([^)]*\))?:\s*(?P<text>.*)$")
 
 @dataclass(frozen=True)
 class DocArg:
-    """One argument as the docstring describes it."""
+    """One argument as the docstring describes it.
+
+    ``*name`` is ``variadic`` and ``**name`` is ``keyword_variadic``; the
+    stars are stripped from ``name`` either way.
+    """
 
     name: str
     text: str = ""
     variadic: bool = False
+    keyword_variadic: bool = False
 
 
 def parse_args(text: str) -> tuple[DocArg, ...]:
@@ -49,9 +54,15 @@ def parse_args(text: str) -> tuple[DocArg, ...]:
                 parts[-1].append(line.strip())
             continue
         name = item.group("name")
-        args.append(DocArg(name=name.lstrip("*"), variadic=name.startswith("*")))
+        stars = len(name) - len(name.lstrip("*"))
+        args.append(DocArg(name=name.lstrip("*"), variadic=stars == 1, keyword_variadic=stars == 2))
         parts.append([item.group("text")])
     return tuple(
-        DocArg(name=arg.name, text=" ".join(p for p in bits if p), variadic=arg.variadic)
+        DocArg(
+            name=arg.name,
+            text=" ".join(p for p in bits if p),
+            variadic=arg.variadic,
+            keyword_variadic=arg.keyword_variadic,
+        )
         for arg, bits in zip(args, parts, strict=True)
     )

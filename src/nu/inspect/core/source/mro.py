@@ -50,9 +50,7 @@ def walk_bindings(
         cls: the class to walk.
         stop: the horizon; a class at or above ``stop`` in the MRO is skipped.
         include_dunders: whether to include the operator dunders we recognise.
-        skip: names to leave out. Used for the declaration-time DSL entries
-            (``slot``, ``method``) that belong to the shape and service kinds
-            rather than to the form/ref surface.
+        skip: names to leave out.
 
     Returns:
         One Binding per resolved name, in MRO order (most specific first).

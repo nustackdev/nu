@@ -84,6 +84,11 @@ def test_a_variadic_arg_is_marked_and_unstarred() -> None:
     assert (arg.name, arg.variadic) == ("children", True)
 
 
+def test_a_keyword_variadic_arg_is_marked_apart_and_unstarred() -> None:
+    (arg,) = parse_args("**defaults: inherited by every call")
+    assert (arg.name, arg.variadic, arg.keyword_variadic) == ("defaults", False, True)
+
+
 def test_a_type_in_parentheses_is_ignored() -> None:
     (arg,) = parse_args("value (int): the value to hold")
     assert (arg.name, arg.text) == ("value", "the value to hold")

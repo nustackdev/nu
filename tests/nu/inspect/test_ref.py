@@ -2,8 +2,15 @@
 
 from __future__ import annotations
 
-from nu.inspect import BuilderRecord, RefRecord, parse_ref, verify_ref
+from nu.inspect import BuilderRecord, CallRecord, RefRecord, parse_ref, verify_ref
 from nu.mem.refs.items import IntRef, ItemRef, StrRef
+from nustd.cc.refs import PromptRef, StreamRef
+from nustd.llm.refs import ChatRef
+
+
+def _declaration(cls: type, name: str) -> CallRecord:
+    (record,) = [m for m in parse_ref(cls).methods if m.name == name]
+    return record
 
 
 def test_a_ref_is_a_builder_record_dispatch_tagged() -> None:
@@ -45,3 +52,33 @@ def test_a_ref_knows_the_module_it_is_defined_in() -> None:
 def test_ref_docstrings_are_clean_by_the_shared_laws() -> None:
     assert verify_ref(IntRef) == []
     assert verify_ref(ItemRef) == []
+
+
+# --- declaration classmethods ---------------------------------------------
+
+
+def test_a_shape_slot_declaration_is_on_the_ref_record() -> None:
+    record = _declaration(StrRef, "slot")
+    assert record.binding == "classmethod"
+    assert record.call == "StrRef.slot()"
+    assert record.summary
+
+
+def test_a_service_endpoint_declaration_is_on_the_ref_record() -> None:
+    for cls in (ChatRef, PromptRef, StreamRef):
+        record = _declaration(cls, "method")
+        assert record.binding == "classmethod"
+        assert record.spelling == f"{cls.__name__}.method(...)"
+        assert record.call == f"{cls.__name__}.method(**defaults)"
+        assert record.returns == cls.__name__
+        assert record.summary
+
+
+def test_declarations_sit_beside_the_term_builders() -> None:
+    names = [m.name for m in parse_ref(ChatRef).methods]
+    assert names == ["method", "__call__"]
+
+
+def test_declaration_docstrings_are_clean_by_the_shared_laws() -> None:
+    for cls in (StrRef, ChatRef, PromptRef, StreamRef):
+        assert verify_ref(cls) == []

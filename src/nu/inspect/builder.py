@@ -37,12 +37,6 @@ __all__ = [
 ]
 
 
-# Declaration-time DSL entries a Ref or Service class exposes as classmethods.
-# They build descriptors at class-body time, not Nu terms, and are captured
-# separately by the ref/service records (or deferred to the DSL kinds later).
-DSL_SKIP = frozenset({"slot", "method"})
-
-
 @dataclass(frozen=True)
 class BuilderRecord(Record):
     """One builder class: what it is, where it sits, and every call it exposes.
@@ -72,11 +66,19 @@ def parse_builder(cls: type, path: str = "", *, aliases: tuple[str, ...] = ()) -
     )
 
 
-def resolve_methods(cls: type, *, skip: frozenset[str] = DSL_SKIP) -> tuple[CallRecord, ...]:
+def resolve_methods(cls: type, *, skip: frozenset[str] = frozenset()) -> tuple[CallRecord, ...]:
     """MRO-resolved call records for ``cls``, below ``Nu``.
 
     Shared by ``parse_builder`` and by the ref/form parsers so a specialised
     record still describes exactly the calls a person writes.
+
+    That includes a Ref's declaration classmethods, ``slot`` and ``method``.
+    They build a descriptor in a Shape or Service class body rather than a Nu
+    term, but they are still written by hand, and the Ref's record is the only
+    place that says how: the Shape and Service records describe what was
+    declared, not how to declare it. They come out as ``classmethod`` calls,
+    ``ChatRef.method(**defaults)``, so a reader can tell them from the term
+    builders.
     """
     bindings = walk_bindings(cls, stop=Nu, skip=skip)
     return tuple(parse_binding(binding, host=cls) for binding in bindings)
@@ -112,7 +114,7 @@ def verify_builder(cls: type) -> list[Violation]:
     blocks = split_docstring(cls.__doc__)
     violations = check_summary(name, blocks)
     violations.extend(check_example(name, blocks))
-    for binding in walk_bindings(cls, stop=Nu, skip=DSL_SKIP):
+    for binding in walk_bindings(cls, stop=Nu):
         subject = f"{name}.{binding.name}"
         violations.extend(verify_call(binding.target, subject=subject))
     return violations
