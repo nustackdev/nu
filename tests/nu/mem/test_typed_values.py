@@ -161,6 +161,24 @@ def test_stream_ops_keep_the_element_type_while_the_items_are_the_sources(ctx):
     assert type(Bag.tags.iter().map(nu.context.Attr("item")).first()) is Object
 
 
+def test_folds_and_stream_ops_keep_the_element_type(ctx):
+    run(Bag.tags.set(["y", "x", "y"]), ctx)
+    stream = Bag.tags.iter()
+    for item in (stream.min(), stream.max(), stream.last()):
+        assert type(item) is Str
+    assert run(stream.min().upper(), ctx)[0] == "X"
+    assert run(stream.last().upper(), ctx)[0] == "Y"
+    assert type(stream.unique().first()) is Str
+    assert type(stream.reversed().first()) is Str
+    assert type(stream.sort_by(nu.context.Attr("item")).first()) is Str
+    assert type(stream.sorted().first_elem()) is Str
+    assert run(stream.unique().sorted(), ctx)[0] == ["x", "y"]
+    assert type(stream.count()) is Int
+    assert type(Bag.counts.iter().sum()) is Int
+    assert type(stream.enumerate().first()) is Object
+    assert type(stream.sum()) is Object
+
+
 def test_undeclared_results_are_object():
     assert type(Bag.meta.get_item("a")) is Object
     assert type(Bag.rows.get_item("a")) is Object

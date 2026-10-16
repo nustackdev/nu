@@ -84,6 +84,25 @@ assert_type(Store.tags.iter().to_set(), Set[str])
 assert_type(Store.blobs.iter().first(), Object)
 
 
+# --- A fold keeps the element type and keeps chaining ------------------
+
+
+assert_type(Store.tags.iter().count(), Int)
+assert_type(Store.flags.iter().sum(), Int)
+assert_type(Store.flags.iter().sum() > 3, Bool)
+assert_type(Store.blobs.iter().sum(), Object)
+assert_type(Store.tags.iter().min(), Str)
+assert_type(Store.tags.iter().max(), Str)
+assert_type(Store.tags.iter().last(), Str)
+assert_type(Store.blobs.iter().last(), Object)
+assert_type(Store.tags.iter().any(), Bool)
+assert_type(Store.tags.iter().all(), Bool)
+assert_type(Store.tags.iter().unique(), Iterator[str])
+assert_type(Store.tags.iter().reversed().first(), Str)
+assert_type(Store.tags.iter().sort_by(nu.context.Attr("item")).first(), Str)
+assert_type(Store.tags.iter().sorted(), List[str])
+
+
 # --- The slot spelling types the same ----------------------------------
 
 
