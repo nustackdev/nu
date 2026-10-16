@@ -2,8 +2,8 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.6.3
-- **nustd** (fabrics) — 0.6.3
+- **nucore** (kernel) — 0.6.4
+- **nustd** (fabrics) — 0.6.4
 - **nudle** — 0.1.8
 - **ui-core** — 0.2.1
 - **ui-kit** — 0.3.3
@@ -12,6 +12,9 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+## 0.6.4 — 2026-10-17
+
+- Release nu 0.6.4
 - Let stream chains sort, dedupe, zip and end in folds like sum or count
 - Let plain in-memory lists and dicts extract to plain data like stored ones
 - Let self-description teach Ref declarations and keep variadic arguments in every call form
