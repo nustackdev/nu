@@ -1,6 +1,38 @@
-# nustd
+<div align="center">
+  <img width="128" alt="nustd" src="https://nustack.dev/brand/logo-square-512@2x.png" />
+  <h3>
+    nustd – the Nu standard library
+  </h3>
+  Batteries for <a href="https://github.com/nustackdev/nu">Nu</a>: the fabrics that reach the outside world, and Python's stdlib as Nu.
+</div>
 
-Batteries for [Nu](https://github.com/nustackdev/nu).
+<br/>
+
+<div align="center">
+
+  [![Discord](https://img.shields.io/badge/discord-join-5865F2?logo=discord&logoColor=white)](https://discord.gg/tCa8YE7XVr)
+  [![Twitter Follow](https://img.shields.io/twitter/follow/nustackdev?style=social)](https://twitter.com/nustackdev)
+
+  [![Platform Support](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-blue)]()
+  [![PyPI - Python Version](https://img.shields.io/badge/python-%3E%3D%203.10-blue)](https://pypi.org/project/nustd/)
+  [![PyPI Package](https://img.shields.io/pypi/v/nustd?color=yellow)](https://pypi.org/project/nustd/)
+  [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://opensource.org/licenses/Apache-2.0)
+  [![PyPI Downloads](https://img.shields.io/pypi/dw/nustd?color=green)](https://pypi.org/project/nustd/)
+
+</div>
+
+---
+
+<h3 align="center">
+  <a href="#ℹ️-about"><b>About</b></a> &bull;
+  <a href="#install"><b>Install</b></a> &bull;
+  <a href="https://nustack.dev/docs/nustd"><b>Reference</b></a> &bull;
+  <a href="https://github.com/nustackdev/nu"><b>nu</b></a>
+</h3>
+
+---
+
+# ℹ️ About
 
 `nucore` is the kernel: the language, the engine, the core atoms, flows,
 spans, forms, the tree rewrites, `nu.prog`, `nu.inspect`, and `nu.mem`, the

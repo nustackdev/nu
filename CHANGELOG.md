@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add the logo header to the nustd README
 - Trim the README header spacing above the navbar
 - Swap the README banner for the square logo, tighten the header copy
 
