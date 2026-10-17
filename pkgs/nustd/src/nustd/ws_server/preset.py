@@ -27,7 +27,7 @@ def listen(
     host: str = "127.0.0.1",
     port: int = 8080,
     log_level: str = "warning",
-    banner: str = "Nu ws server",
+    banner: str = "ws server",
     open_browser: bool = True,
     ready_timeout: float = 10.0,
     shutdown_timeout: float = 5.0,

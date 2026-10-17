@@ -12,6 +12,9 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Serve websockets on uvicorn's sans-I/O protocol, ending a deprecation warning on every start
+- Move the brand kit out of nu, so servers start with a plain ready line
+
 ## 0.6.4 — 2026-10-17
 
 - Release nu 0.6.4

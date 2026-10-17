@@ -32,8 +32,6 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.routing import Mount, WebSocketRoute
 from starlette.staticfiles import StaticFiles
 
-from nu._branding import BLUE, PURPLE, color_enabled, paint, render_header
-
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -247,7 +245,7 @@ class WebServer:
         host: str = "127.0.0.1",
         port: int = 8080,
         log_level: str = "warning",
-        banner: str = "Nu ws server",
+        banner: str = "ws server",
         open_browser: bool = True,
         ready_timeout: float = 10.0,
         shutdown_timeout: float = 5.0,
@@ -286,7 +284,7 @@ class WebServer:
             # else happens to be installed (uvloop, httptools, wsproto).
             loop="asyncio",
             http="h11",
-            ws="websockets",
+            ws="websockets-sansio",
         )
         server = uvicorn.Server(config)
         task = asyncio.create_task(server.serve())
@@ -390,21 +388,12 @@ class WebServer:
         return f"http://{host}:{self._port}"
 
     def _print_ready(self) -> None:
-        render_header()
-        color = color_enabled()
-        ready = (
-            paint("● ", fg=PURPLE, bold=True, enabled=color)
-            + paint(f"{self._banner} running at ", bold=True, enabled=color)
-            + paint(self._url(), fg=BLUE, underline=True, enabled=color)
-        )
-        print(ready, file=sys.stdout)  # noqa: T201
-        print(paint("Ctrl+C to stop", dim=True, enabled=color), file=sys.stdout, flush=True)  # noqa: T201
+        print(f"{self._banner} running at {self._url()}", file=sys.stdout)  # noqa: T201
+        print("Ctrl+C to stop", file=sys.stdout, flush=True)  # noqa: T201
 
     def _print_stopped(self) -> None:
-        color = color_enabled()
         print(file=sys.stdout)  # noqa: T201
-        stopped = paint(f"{self._banner} stopped", bold=True, enabled=color)
-        print(stopped, file=sys.stdout, flush=True)  # noqa: T201
+        print(f"{self._banner} stopped", file=sys.stdout, flush=True)  # noqa: T201
 
     def __repr__(self) -> str:
         return f"WebServer(host={self._host!r}, port={self._port!r})"
