@@ -149,6 +149,7 @@ export { EmptyState, emptyStateVariants } from "./components/ui/empty-state";
 export { Gauge, gaugeVariants } from "./components/ui/gauge";
 export { Grid, type GridProps } from "./components/ui/grid";
 export { Heading, headingVariants } from "./components/ui/heading";
+export { Html, type HtmlProps } from "./components/ui/html";
 export { IconButton, iconButtonVariants } from "./components/ui/icon-button";
 export { Image } from "./components/ui/image";
 export { InlineEdit, type InlineEditProps } from "./components/ui/inline-edit";

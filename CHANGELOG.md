@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add an html leaf that draws any document in a sandboxed frame
 - Serve websockets on uvicorn's sans-I/O protocol, ending a deprecation warning on every start
 - Move the brand kit out of nu, so servers start with a plain ready line
 

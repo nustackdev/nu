@@ -7,6 +7,7 @@ import { DividerRef } from "./divider";
 import { EmptyStateRef } from "./empty-state";
 import { GaugeRef } from "./gauge";
 import { HeadingRef } from "./heading";
+import { HtmlRef } from "./html";
 import { ImageRef } from "./image";
 import { JsonViewerRef } from "./json-viewer";
 import { KbdRef } from "./kbd";
@@ -32,6 +33,7 @@ export const outputEntries: Record<string, NodeEntry> = {
 	DividerRef,
 	EmptyStateRef,
 	ImageRef,
+	HtmlRef,
 	LinkRef,
 	ProgressRef,
 	GaugeRef,

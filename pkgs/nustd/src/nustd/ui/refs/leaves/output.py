@@ -259,6 +259,55 @@ class HeadingRef(LeafRef):
         return Write(self, Dict.of(**payload))
 
 
+class HtmlRef(LeafRef):
+    """Display-only html document, drawn in a sandboxed frame. One `write` op carries every mutation.
+
+    Scripts in the document run, but the frame is its own origin: it cannot
+    reach the page around it. With no ``height`` the frame follows its content.
+    """
+
+    _wire_type = "HtmlRef"
+
+    @classmethod
+    def slot(
+        cls,
+        *,
+        html: str = "",
+        title: str = "",
+        height: int | None = None,
+        bordered: bool = True,
+    ) -> Self:
+        return super().slot(html=html, title=title, height=height, bordered=bordered)
+
+    def set_html(self, doc: StrArg) -> Nu:
+        return Write(self, Dict.of(html=doc))
+
+    def set_title(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(title=text))
+
+    def set_height(self, px: IntArg | None) -> Nu:
+        return Write(self, Dict.of(height=px))
+
+    def set_bordered(self, flag: BoolArg) -> Nu:
+        return Write(self, Dict.of(bordered=flag))
+
+    def set(
+        self,
+        html: StrArg,
+        title: StrArg = UNSET,
+        height: IntArg = UNSET,
+        bordered: BoolArg = UNSET,
+    ) -> Nu:
+        payload: dict[str, object] = {"html": html}
+        if title is not UNSET:
+            payload["title"] = title
+        if height is not UNSET:
+            payload["height"] = height
+        if bordered is not UNSET:
+            payload["bordered"] = bordered
+        return Write(self, Dict.of(**payload))
+
+
 Fit = Literal["contain", "cover", "fill"]
 
 
