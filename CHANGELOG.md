@@ -2,16 +2,19 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.6.4
-- **nustd** (fabrics) — 0.6.4
-- **nudle** — 0.1.8
+- **nucore** (kernel) — 0.6.5
+- **nustd** (fabrics) — 0.6.5
+- **nudle** — 0.1.9
 - **ui-core** — 0.2.1
-- **ui-kit** — 0.3.3
+- **ui-kit** — 0.3.4
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+## 0.6.5 — 2026-10-20
+
+- Release nu 0.6.5, UI kit 0.3.4 and nudle 0.1.9
 - Add an html leaf that draws any document in a sandboxed frame
 - Serve websockets on uvicorn's sans-I/O protocol, ending a deprecation warning on every start
 - Move the brand kit out of nu, so servers start with a plain ready line
