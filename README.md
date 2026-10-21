@@ -1,44 +1,20 @@
 <div align="center">
   <img width="128" alt="Nu" src="https://nustack.dev/brand/logo-square-512@2x.png" />
-  <h3>
+  <h1>
     nu – the interaction primitive
-  </h3>
-  Build apps in one primitive that spans your whole stack — databases, UIs, AI agents, and services.
-</div>
+  </h1>
+  <p></p>Build apps in one primitive that spans your whole stack — databases, UIs, AI agents, and services.</p>
 
-<br/>
-
-<div align="center">
-
-  [![Discord](https://img.shields.io/badge/discord-join-5865F2?logo=discord&logoColor=white)](https://discord.gg/tCa8YE7XVr)
-  [![Twitter Follow](https://img.shields.io/twitter/follow/nustackdev?style=social)](https://twitter.com/nustackdev)
-
-  [![Platform Support](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-blue)]()
   [![PyPI - Python Version](https://img.shields.io/badge/python-%3E%3D%203.10-blue)](https://pypi.org/project/nucore/)
   [![PyPI Package](https://img.shields.io/pypi/v/nucore?color=yellow)](https://pypi.org/project/nucore/)
-  [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://opensource.org/licenses/Apache-2.0)
   [![PyPI Downloads](https://img.shields.io/pypi/dw/nucore?color=green)](https://pypi.org/project/nucore/)
-
+  [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://opensource.org/licenses/Apache-2.0)
+  
+  [![Discord](https://img.shields.io/badge/discord-join-5865F2?logo=discord&logoColor=white)](https://discord.gg/tCa8YE7XVr)
+  [![Twitter Follow](https://img.shields.io/twitter/follow/nustackdev?style=social)](https://twitter.com/nustackdev)
 </div>
 
----
-
-<h3 align="center">
-  <a href="#ℹ️-about"><b>About</b></a> &bull;
-  <a href="#build-with-nu"><b>Build</b></a> &bull;
-  <a href="#quickstart"><b>Quickstart</b></a> &bull;
-  <a href="#nu-std"><b>Nu STD</b></a> &bull;
-  <a href="#spec"><b>Spec</b></a> &bull;
-  <a href="https://github.com/nustackdev/nu/tree/main/examples"><b>Examples</b></a> &bull;
-  <a href="https://nustack.dev/docs"><b>Docs</b></a> &bull;
-  <a href="#community"><b>Community</b></a>
-</h3>
-
----
-
-# ℹ️ About
-
-The primitive Nu is built on, in three words.
+## About
 
 A tiny script keeps its values in memory and calls functions on them. Real apps don't stay there. Values live in a database, arrive from a browser form, render into a dashboard, get recomputed by a background job. Almost none of the code is about the values anymore — it's all interaction between systems.
 
@@ -243,7 +219,9 @@ Nu implements the [interaction model](https://github.com/nustackdev/interaction-
 
 ## Community
 
-### Badge
+- [Discord](https://discord.gg/tCa8YE7XVr) for questions and what you build
+- [X @nustackdev](https://x.com/nustackdev) for releases and demos
+- [Issues](https://github.com/nustackdev/nuspace/issues) for bugs and feature requests
 
 Building on Nu? Add the badge to your README:
 
@@ -252,16 +230,6 @@ Building on Nu? Add the badge to your README:
 ```
 [![Nu](https://img.shields.io/badge/built%20with-Nu-%237A4CE0)](https://github.com/nustackdev/nu)
 ```
-
-### Contributing
-
-Open an issue or a PR. The codebase is small and readable, and the model is stable enough to build on.
-
-### Questions
-
-1. [Read the docs](https://nustack.dev/docs)
-2. [Open a feature request or report a bug](https://github.com/nustackdev/nu/issues)
-3. [Join the Discord](https://discord.gg/tCa8YE7XVr)
 
 ## License
 
