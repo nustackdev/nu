@@ -221,7 +221,7 @@ Nu implements the [interaction model](https://github.com/nustackdev/interaction-
 
 - [Discord](https://discord.gg/tCa8YE7XVr) for questions and what you build
 - [X @nustackdev](https://x.com/nustackdev) for releases and demos
-- [Issues](https://github.com/nustackdev/nuspace/issues) for bugs and feature requests
+- [Issues](https://github.com/nustackdev/nu/issues) for bugs and feature requests
 
 Building on Nu? Add the badge to your README:
 
