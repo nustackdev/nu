@@ -13,6 +13,7 @@ from a Ref present somewhere beneath it.
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from weakref import WeakKeyDictionary
 
 from nu.engine import Law, predicate
 from nu.lang.attributes import Attr, Cardinality, Sort
@@ -53,13 +54,37 @@ def ref_slot_detail(program: Program, path: Path) -> str:
 # --- effects originate at refs ------------------------------------------
 
 
-def _subtree_ref_classes(program: Program, path: Path) -> set[type]:
+# Program -> nid -> the Ref classes in that node's subtree. Built once per
+# Program, bottom-up, so the law costs one pass instead of a walk per node.
+_REF_CLASSES: WeakKeyDictionary[Program, list[frozenset[type]]] = WeakKeyDictionary()
+
+
+def _ref_classes_by_nid(program: Program) -> list[frozenset[type]]:
+    """Every node's subtree Ref classes, indexed by nid."""
+    cached = _REF_CLASSES.get(program)
+    if cached is not None:
+        return cached
+    empty: frozenset[type] = frozenset()
+    by_nid: list[frozenset[type]] = [empty] * len(program.terms)
+    # Preorder nids: every child's nid is above its parent's, so a reverse
+    # sweep sees each child before the node that unions it.
+    for nid in range(len(program.terms) - 1, -1, -1):
+        below = [by_nid[c] for c in program.children[nid] if by_nid[c]]
+        if program.attr(program.path_of[nid], Attr.SORT) is Sort.REF:
+            below.append(frozenset((type(program.terms[nid]),)))
+        if len(below) == 1:
+            by_nid[nid] = below[0]
+        elif below:
+            merged = frozenset().union(*below)
+            # Reuse a child's set when it already covers the union.
+            by_nid[nid] = next((b for b in below if len(b) == len(merged)), merged)
+    _REF_CLASSES[program] = by_nid
+    return by_nid
+
+
+def _subtree_ref_classes(program: Program, path: Path) -> frozenset[type]:
     """Every Ref class found in the subtree rooted at ``path``."""
-    classes: set[type] = set()
-    for descendant in program.walk(path):
-        if program.attr(descendant, Attr.SORT) is Sort.REF:
-            classes.add(type(program.terms[program.id_of[descendant]]))
-    return classes
+    return _ref_classes_by_nid(program)[program.id_of[path]]
 
 
 def _orphan_effect_class(program: Program, path: Path) -> type | None:

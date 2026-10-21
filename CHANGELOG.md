@@ -12,6 +12,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Speed up validation so large programs and browser tabs boot faster
+
 ## 0.6.5 — 2026-10-20
 
 - Release nu 0.6.5, UI kit 0.3.4 and nudle 0.1.9
