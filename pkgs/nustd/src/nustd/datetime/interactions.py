@@ -20,6 +20,7 @@ from datetime import timedelta as _timedelta
 from datetime import timezone as _timezone
 
 from nu.factory import host
+from nustd.datetime._iso import datetime_from_iso, time_from_iso
 
 
 UTC = _timezone.utc
@@ -83,7 +84,7 @@ DateReplace = host(_date.replace, name="DateReplace")
 # --- time -------------------------------------------------------------------
 
 TimeOf = host(_time, name="TimeOf")
-TimeFromIso = host(_time.fromisoformat, name="TimeFromIso")
+TimeFromIso = host(time_from_iso, name="TimeFromIso")
 TimeIsoformat = host(_time.isoformat, name="TimeIsoformat")
 TimeStrftime = host(_time.strftime, name="TimeStrftime")
 TimeReplace = host(_time.replace, name="TimeReplace")
@@ -92,7 +93,7 @@ TimeReplace = host(_time.replace, name="TimeReplace")
 
 DatetimeOf = host(_datetime, name="DatetimeOf")
 DatetimeNow = host(_datetime.now, name="DatetimeNow")
-DatetimeFromIso = host(_datetime.fromisoformat, name="DatetimeFromIso")
+DatetimeFromIso = host(datetime_from_iso, name="DatetimeFromIso")
 DatetimeFromTimestamp = host(_datetime.fromtimestamp, name="DatetimeFromTimestamp")
 DatetimeCombine = host(_datetime.combine, name="DatetimeCombine")
 DatetimeWeekday = host(_datetime.weekday, name="DatetimeWeekday")

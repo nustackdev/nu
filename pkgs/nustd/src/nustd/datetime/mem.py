@@ -17,6 +17,7 @@ from nu.core import ToStr
 from nu.domains.shape import SetCmd
 from nu.lang import Nu
 from nu.mem.refs import ItemRef
+from nustd.datetime._iso import datetime_from_iso, time_from_iso
 from nustd.datetime._offset import UTC, parse_timezone
 from nustd.datetime.forms import date as DateForm
 from nustd.datetime.forms import datetime as DatetimeForm
@@ -117,7 +118,7 @@ class DatetimeRef(ItemRef, DatetimeForm):
             return raw
         if isinstance(raw, (int, float)):
             return datetime.fromtimestamp(raw, tz=UTC)
-        return datetime.fromisoformat(str(raw))
+        return datetime_from_iso(str(raw))
 
     def set(self, value: Arg[datetime | str]) -> SetCmd:
         """Write a datetime into the slot as an ISO string.
@@ -162,7 +163,7 @@ class TimeRef(ItemRef, TimeForm):
 
     def _lift(self, raw: object) -> time:
         """Parse the stored ISO str back to a time."""
-        return raw if isinstance(raw, time) else time.fromisoformat(str(raw))
+        return raw if isinstance(raw, time) else time_from_iso(str(raw))
 
     def set(self, value: Arg[time | str]) -> SetCmd:
         """Write a time into the slot as an ISO string.

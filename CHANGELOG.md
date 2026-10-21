@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Fix Python 3.10 gaps: clean Ctrl+C exits, caught timeouts, ISO dates with Z
 - Speed up validation so large programs and browser tabs boot faster
 
 ## 0.6.5 — 2026-10-20

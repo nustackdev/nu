@@ -318,7 +318,7 @@ class WebServer:
         if not task.done():
             try:
                 await asyncio.wait_for(task, timeout=self._shutdown_timeout)
-            except TimeoutError:
+            except (TimeoutError, asyncio.TimeoutError):
                 task.cancel()
                 await _adrain(task)
         self._server = None

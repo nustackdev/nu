@@ -16,8 +16,17 @@ pool instead of a module-global one.
 from __future__ import annotations
 
 import asyncio
+import sys
 from contextlib import asynccontextmanager, contextmanager
 from typing import TYPE_CHECKING, TypeVar
+
+
+# 3.11's Runner turns Ctrl+C into a cancel of the main task; 3.10's asyncio.run
+# lets the KeyboardInterrupt land in whatever task is running (uvicorn's, say).
+if sys.version_info >= (3, 11):
+    from asyncio import Runner
+else:
+    from backports.asyncio.runner import Runner
 
 
 if TYPE_CHECKING:
@@ -40,20 +49,21 @@ T = TypeVar("T")
 def into_loop(coro: Awaitable[T] | Coroutine[object, object, T]) -> T:
     """Run a coroutine to completion from sync code.
 
-    Spins a fresh loop with ``asyncio.run`` when no loop is running. Raises
+    Spins a fresh loop with a ``Runner`` when no loop is running. Raises
     if called while a loop is already running - the caller should be using
     ``aeval`` directly in that case.
     """
     try:
         asyncio.get_running_loop()
     except RuntimeError:
-        return asyncio.run(_as_coro(coro))
+        with Runner() as runner:
+            return runner.run(_as_coro(coro))
     msg = "into_loop called while a loop is running; call aeval, not eval"
     raise RuntimeError(msg)
 
 
 async def _as_coro(awaitable: Awaitable[T]) -> T:
-    """Adapt a bare Awaitable to a Coroutine for ``asyncio.run``."""
+    """Adapt a bare Awaitable to a Coroutine for ``Runner.run``."""
     return await awaitable
 
 

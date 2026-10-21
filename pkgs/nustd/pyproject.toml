@@ -81,7 +81,7 @@ llm = [
     "httpx>=0.27",
 ]
 cc = [
-    "claude-agent-sdk>=0.1.0",
+    "claude-agent-sdk>=0.1.50",
 ]
 mp = []
 # `nustd.mp_pool` is stdlib multiprocessing too; the extra exists for symmetry.

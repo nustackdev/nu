@@ -41,6 +41,13 @@ def test_datetime_replace_kwargs() -> None:
     assert value == "2026-06-30T09:30:00"
 
 
+def test_from_iso_reads_z_as_utc() -> None:
+    assert run(datetime.from_iso("2026-06-30T14:30:00Z"))[0] == pydt.datetime(
+        2026, 6, 30, 14, 30, tzinfo=pydt.timezone.utc
+    )
+    assert run(time.from_iso("14:30:00Z"))[0] == pydt.time(14, 30, tzinfo=pydt.timezone.utc)
+
+
 def test_datetime_date_part() -> None:
     assert run(datetime.of(2026, 6, 30, 14, 30).date().year())[0] == 2026
 
