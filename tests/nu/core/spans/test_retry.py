@@ -11,6 +11,7 @@ from __future__ import annotations
 import pytest
 from _support.policy_atoms import FlakyAction, FlakyStream, RecordAction
 
+from nu.core.flows import Noop
 from nu.core.spans import Retry
 from nu.lang import Attr, Cardinality, Literal, Policy, Span
 from nu.lang.helpers import acollect, arun, collect, compile, run
@@ -79,6 +80,11 @@ async def test_async_attempt_fail_and_fail_hooks_fire() -> None:
     tags = [entry[0] for entry in log]
     assert tags == ["af", "fail"]
     assert log[-1][2] is not None  # error string was set for the fail hook
+
+
+async def test_async_a_noop_on_fail_still_swallows() -> None:
+    value, _ = await arun(Retry(FlakyAction(5), max_attempts=2, on_fail=Noop()))
+    assert value is None
 
 
 async def test_async_exhausts_without_on_fail_raises() -> None:

@@ -139,6 +139,24 @@ def test_failure_without_a_catch_propagates() -> None:
         run(TryCatch(BoomAction("boom")))
 
 
+def test_a_noop_catch_still_catches() -> None:
+    """``except: pass``: a catch given is a catch, whatever it is."""
+    value, _ = run(TryCatch(BoomAction("boom"), catch=lambda err: nu.Noop()))
+    assert value is None
+    value, _ = run(TryCatch(BoomAction("boom"), catch=nu.Noop()))
+    assert value is None
+
+
+def test_a_noop_finally_alone_still_propagates() -> None:
+    with pytest.raises(ValueError, match="boom"):
+        run(TryCatch(BoomAction("boom"), finally_=nu.Noop()))
+
+
+def test_errors_without_a_catch_is_refused() -> None:
+    with pytest.raises(TypeError, match="catch="):
+        TryCatch(BoomAction("boom"), errors=ValueError)
+
+
 # --- typed errors filter --------------------------------------------------
 
 

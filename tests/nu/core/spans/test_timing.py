@@ -60,6 +60,11 @@ async def test_timeout_exceeded_without_handler_raises() -> None:
         await arun(Timeout(0.01, SlowAction(1.0)))
 
 
+async def test_a_noop_on_timeout_still_stops_the_raise() -> None:
+    value, _ = await arun(Timeout(0.01, SlowAction(1.0), on_timeout=nu.Noop()))
+    assert value is None
+
+
 async def test_timeout_exceeded_runs_on_timeout_on_the_live_ctx() -> None:
     data: dict = {}
     value, _ = await arun(
