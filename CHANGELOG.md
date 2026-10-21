@@ -2,8 +2,8 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.6.5
-- **nustd** (fabrics) — 0.6.5
+- **nucore** (kernel) — 0.6.6
+- **nustd** (fabrics) — 0.6.6
 - **nudle** — 0.1.9
 - **ui-core** — 0.2.1
 - **ui-kit** — 0.3.4
@@ -12,6 +12,9 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+## 0.6.6 — 2026-10-22
+
+- Release nu 0.6.6
 - Fix error handlers that do nothing being ignored, so catching and moving on works
 - Fix Python 3.10 gaps: clean Ctrl+C exits, caught timeouts, ISO dates with Z
 - Speed up validation so large programs and browser tabs boot faster
