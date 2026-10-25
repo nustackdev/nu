@@ -9,23 +9,23 @@
 // node's props, which is the default store behaviour, so there is no handler.
 // Nil reads back as the class default at render time. Composes the kit
 // Separator primitive, which owns the labeled layout when `label` is set.
-//
-// TODO(retune): Separator primitive centers the label; `align` (left/right)
-// asymmetric side widths from the old Ref are not yet supported by the
-// primitive. Left as-is until the primitive grows an align slot.
+// `align` places the label: start / center / end, with left / right read as
+// the older spelling of start / end.
 
 import { Separator } from "../../components/ui/separator";
-import { type NodeEntry, type NodeProps, useFlow, useStringProp } from "../../tree";
+import { normAlign } from "../../lib/align";
+import { type NodeEntry, type NodeProps, useFlow, useProp, useStringProp } from "../../tree";
 
 function DividerView({ path }: NodeProps) {
 	const label = useStringProp(path, "label");
+	const align = normAlign(useProp<unknown>(path, "align", "center"), "center");
 	const flow = useFlow();
 	if (flow === "row") {
 		return <Separator orientation="vertical" className="mx-1 h-5 self-center" />;
 	}
 	return (
 		<div className="my-4 w-full">
-			<Separator label={label || undefined} />
+			<Separator label={label || undefined} labelAlign={align} />
 		</div>
 	);
 }

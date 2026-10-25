@@ -1077,7 +1077,9 @@ class PieChart(Chart):
                     "id": "total",
                     "text": "",
                     "subtext": total_label,
-                    "left": "center",
+                    # The anchor, not "center": a centered box whose text is
+                    # centered on its left edge again lands half a width left.
+                    "left": "50%",
                     "top": f"{cy - 7}%",
                     "itemGap": 2,
                     "textStyle": {"fontSize": 18},

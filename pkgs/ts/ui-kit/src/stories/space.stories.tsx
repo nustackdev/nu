@@ -37,6 +37,7 @@ const CONTAINERS: Array<{ name: string; value: string; twClass: string }> = [
 	{ name: "form", value: "480px", twClass: "container-form" },
 	{ name: "prose", value: "640px", twClass: "container-prose" },
 	{ name: "panel", value: "960px", twClass: "container-panel" },
+	{ name: "main", value: "1200px", twClass: "container-main" },
 	{ name: "dashboard", value: "1400px", twClass: "container-dashboard" },
 ];
 

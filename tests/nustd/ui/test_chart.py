@@ -12,10 +12,9 @@ from __future__ import annotations
 import asyncio
 import json
 import math
-import os
-from pathlib import Path
 
 import pytest
+from _support.stories import STORIES, check_fixture
 
 import nu
 import nustd.ui as ui
@@ -399,9 +398,7 @@ def _samples() -> dict:
     }
 
 
-_FIXTURE = (
-    Path(__file__).resolve().parents[3] / "pkgs/ts/ui-kit/src/stories/refs/chart-samples.json"
-)
+_FIXTURE = STORIES / "refs/chart-samples.json"
 
 
 def _rendered() -> dict:
@@ -413,9 +410,6 @@ def _rendered() -> dict:
 
 def test_story_samples_match_the_builders():
     current = json.loads(json.dumps(_rendered()))
-    if os.environ.get("UPDATE_CHART_SAMPLES"):
-        _FIXTURE.write_text(json.dumps(current, indent="\t") + "\n")
-    assert _FIXTURE.exists(), "run with UPDATE_CHART_SAMPLES=1 to write the story samples"
-    assert json.loads(_FIXTURE.read_text()) == current, (
-        "chart builders changed: UPDATE_CHART_SAMPLES=1 pytest tests/nustd/ui/test_chart.py"
+    check_fixture(
+        _FIXTURE, current, test="tests/nustd/ui/test_chart.py", flags=("UPDATE_CHART_SAMPLES",)
     )

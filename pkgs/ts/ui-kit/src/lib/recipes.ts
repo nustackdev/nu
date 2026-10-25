@@ -193,10 +193,33 @@ const headingLevel: Record<number, string> = {
 
 const heading = { base: headingBase, size: headingSize, level: headingLevel };
 
+/* ================================= tone ================================== */
+
+/**
+ * Text tones, the one ink ladder every tone prop reads: the three text tiers,
+ * the accent ink and the status hues. `Text`, `Icon` (plus `inherit`) and the
+ * heading node build their tone variants from this, and a node reading a
+ * `tone` prop off the wire checks it against the key list.
+ */
+const TONES = ["primary", "secondary", "muted", "accent", "ok", "warn", "danger", "info"] as const;
+
+type Tone = (typeof TONES)[number];
+
+const tone: Record<Tone, string> = {
+	primary: "text-text-primary",
+	secondary: "text-text-secondary",
+	muted: "text-text-muted",
+	accent: "text-accent-text",
+	ok: "text-status-ok",
+	warn: "text-status-warn",
+	danger: "text-status-danger",
+	info: "text-status-info",
+};
+
 /* ================================= code ================================== */
 
 /** The box a code block sits in: a `Code` block and a markdown fence alike. */
 const codeBox =
 	"relative w-full overflow-hidden rounded-md bg-bg-sunken border border-border-subtle";
 
-export { codeBox, heading, list, type TableDensity, table, tableHandle };
+export { codeBox, heading, list, type TableDensity, TONES, type Tone, table, tableHandle, tone };

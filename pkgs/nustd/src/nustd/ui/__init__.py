@@ -9,7 +9,8 @@ Layout under ``src/nustd/ui/``:
 - ``core/``   -- host-independent UI fabric: ``Ref``, ``Section`` /
                  ``SectionRef``, abstract ``Session`` / ``Subscription``,
                  wire ``Frame`` + interactions (``Send`` / ``Write`` /
-                 ``Append`` / ``Remove`` / ``Changed``). Reusable by any host.
+                 ``Append`` / ``Remove`` / ``Init`` / ``Hide`` / ``Display`` /
+                 ``Changed``). Reusable by any host.
 - ``refs/``   -- layer 1, the widget kit as Refs: ``containers/`` (Column,
                  Row, Card, ...: open-ended children) and ``leaves/`` (Text,
                  Button, Table, charts, ...: drawn from props, no children).
@@ -52,7 +53,7 @@ from typing import TYPE_CHECKING
 
 from . import core, lens, refs, shapes, table
 from .core import Frame, Ref, Section, SectionRef, Session, Subscription, WsSession
-from .core.interactions import Append, Changed, Remove, Send, Write
+from .core.interactions import Append, Changed, Display, Hide, Init, Remove, Send, Write
 from .refs import (
     Accordion,
     AccordionRef,
@@ -96,6 +97,7 @@ from .refs import (
     HeatmapChart,
     Histogram,
     HtmlRef,
+    IconRef,
     ImageRef,
     InputRef,
     InsertRow,
@@ -112,8 +114,14 @@ from .refs import (
     MarkdownRef,
     Modal,
     ModalRef,
+    NavItemRef,
+    NavList,
+    NavListRef,
     NavRef,
     NumberInputRef,
+    PageLinkRef,
+    PageSection,
+    PageSectionRef,
     PieChart,
     ProgressRef,
     RadarChart,
@@ -133,6 +141,7 @@ from .refs import (
     SkeletonRef,
     SketchRef,
     SliderRef,
+    SpacerRef,
     Sparkline,
     SpinnerRef,
     StatRef,
@@ -225,6 +234,7 @@ __all__ = [
     "ContainerRef",
     "DatePickerRef",
     "DictContainerRef",
+    "Display",
     "DividerRef",
     "EmptyStateRef",
     "Field",
@@ -241,10 +251,13 @@ __all__ = [
     "GridRef",
     "HeadingRef",
     "HeatmapChart",
+    "Hide",
     "Histogram",
     "HtmlRef",
+    "IconRef",
     "ImageRef",
     "Index",
+    "Init",
     "InputRef",
     "InsertRow",
     "JsonViewerRef",
@@ -260,10 +273,16 @@ __all__ = [
     "MarkdownRef",
     "Modal",
     "ModalRef",
+    "NavItemRef",
+    "NavList",
+    "NavListRef",
     "NavRef",
     "NumberInputRef",
     "Page",
+    "PageLinkRef",
     "PageRef",
+    "PageSection",
+    "PageSectionRef",
     "PieChart",
     "ProgressRef",
     "RadarChart",
@@ -289,6 +308,7 @@ __all__ = [
     "SkeletonRef",
     "SketchRef",
     "SliderRef",
+    "SpacerRef",
     "Sparkline",
     "SpinnerRef",
     "StatRef",

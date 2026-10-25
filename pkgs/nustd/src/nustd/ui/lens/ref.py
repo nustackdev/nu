@@ -56,7 +56,7 @@ class LensRef(LeafRef):
     ``set_columns`` with the cursor it wants.
 
     Args:
-        max_rows: the per-column cap. Rides in mount props so the browser's
+        max_rows: the per-column cap. Rides in init props so the browser's
             ``n/total`` note agrees with what was actually clipped.
         height: pixels. A column browser scrolls in both directions, so it
             needs a height rather than growing to fit its deepest column.
@@ -66,7 +66,7 @@ class LensRef(LeafRef):
 
     @classmethod
     def slot(cls, *, max_rows: int = DEFAULT_MAX_ROWS, height: int = 420) -> Self:
-        """Mount the surface, telling the browser what one column holds."""
+        """Declare the surface, telling the browser what one column holds."""
         return super().slot(max_rows=int(max_rows), height=int(height))
 
     def set_columns(self, cursor: ListArg[str], columns: ListArg[dict]) -> Nu:

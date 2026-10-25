@@ -11,10 +11,13 @@ Anything a Shape declares can also be built from Refs alone; see
 ``nustd.ui.refs``. Modules here import from ``nustd.ui.refs.containers`` and
 ``nustd.ui.core`` only, never from the ``nustd.ui.refs`` package root.
 
-- flow:   Column, Row, Grid, Line.
+- flow:   Column, Row.
+- grid:   Grid, equal cells.
+- line:   Line, slots that run inline.
 - chrome: Card, Box, Tabs, Modal, Accordion, Form, Fieldset, Field.
 - disclosure: Collapsible, Sheet.
 - list:   List, one item per slot.
+- page:   PageSection, NavList.
 """
 
 from __future__ import annotations
@@ -25,6 +28,7 @@ from .flow import Column, Row
 from .grid import Grid
 from .line import Line
 from .list import List
+from .page import NavList, PageSection
 
 
 __all__ = [
@@ -40,6 +44,8 @@ __all__ = [
     "Line",
     "List",
     "Modal",
+    "NavList",
+    "PageSection",
     "Row",
     "Sheet",
     "Tabs",

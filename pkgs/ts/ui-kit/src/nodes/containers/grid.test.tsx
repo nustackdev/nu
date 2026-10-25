@@ -1,12 +1,14 @@
 // Grid over the real tree store: one cell per child in insertion order, the
-// track list off columns and min_width, and a "grid" flow for each child.
+// track list off columns and min_width, a "grid" flow for each child, and
+// the spans the grid keeps for its cells.
 
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { gridTemplate } from "../../components/ui/grid";
+import { gridSpan, gridTemplate, trackCount } from "../../components/ui/grid";
 import { NodeView, register, tree, useFlow } from "../../tree";
 import "..";
+import { readSpans } from "./grid";
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -103,5 +105,73 @@ describe("Grid", () => {
 	it("hands a card's children a block flow again", () => {
 		write(["g", "Grid"], ["card", "Card"], ["p", "GridTestProbe"]);
 		expect(host.querySelector("[data-probe]")?.textContent).toBe("block");
+	});
+});
+
+describe("Grid spans", () => {
+	it("places a spanning cell over its tracks and leaves the rest plain", () => {
+		act(() =>
+			tree.getState().dispatch({
+				op: "write",
+				ref: ["g"],
+				payload: { columns: 3, spans: { hero: { cols: 2, rows: 2 } } },
+			}),
+		);
+		write(["g", "Grid"], ["hero", "Card"]);
+		write(["g", "Grid"], ["a", "Card"]);
+		const [hero, a] = cells();
+		expect(hero.style.gridColumn).toBe("span 2 / span 2");
+		expect(hero.style.gridRow).toBe("span 2 / span 2");
+		expect(a.style.gridColumn).toBe("");
+	});
+
+	it("merges one set_span into the map and drops a span back to 1 by 1", () => {
+		write(["g", "Grid"], ["a", "Card"]);
+		write(["g", "Grid"], ["b", "Card"]);
+		const span = (key: string, cols: number, rows = 1) =>
+			act(() =>
+				tree.getState().dispatch({ op: "set_span", ref: ["g"], payload: { key, cols, rows } }),
+			);
+		span("a", 2);
+		span("b", 1, 3);
+		expect(tree.getState().getIn(["g"])?.props.spans).toEqual({
+			a: { cols: 2, rows: 1 },
+			b: { cols: 1, rows: 3 },
+		});
+		span("a", 1);
+		expect(tree.getState().getIn(["g"])?.props.spans).toEqual({ b: { cols: 1, rows: 3 } });
+		expect(cells()[0].style.gridColumn).toBe("");
+		expect(cells()[1].style.gridRow).toBe("span 3 / span 3");
+	});
+
+	it("turns on dense backfill", () => {
+		act(() => tree.getState().dispatch({ op: "write", ref: ["g"], payload: { dense: true } }));
+		expect(grid().className).toContain("grid-flow-row-dense");
+	});
+
+	it("ignores malformed spans", () => {
+		expect(readSpans({ a: { cols: 0 }, b: "2", c: { cols: 2.7 }, d: null })).toEqual({
+			c: { cols: 2, rows: 1 },
+		});
+		expect(readSpans([1, 2])).toEqual({});
+	});
+
+	it("counts the tracks auto-fill lays out at a width", () => {
+		// columns 4, min 140, 12px gaps: four at 800, two at 336, one at 200.
+		expect(trackCount(800, 4, 140, 12)).toBe(4);
+		expect(trackCount(336, 4, 140, 12)).toBe(2);
+		expect(trackCount(200, 4, 140, 12)).toBe(1);
+		// columns 0: as many as fit at min width.
+		expect(trackCount(1000, 0, 240, 16)).toBe(3);
+		expect(trackCount(0, 3, 240, 16)).toBe(1);
+	});
+
+	it("clamps a span to the tracks there are, and stacks it flat in one", () => {
+		expect(gridSpan(3, 2, 2)).toEqual({
+			gridColumn: "span 2 / span 2",
+			gridRow: "span 2 / span 2",
+		});
+		expect(gridSpan(2, 2, 1)).toEqual({ gridColumn: undefined, gridRow: undefined });
+		expect(gridSpan(2, 1, Number.POSITIVE_INFINITY).gridColumn).toBe("span 2 / span 2");
 	});
 });

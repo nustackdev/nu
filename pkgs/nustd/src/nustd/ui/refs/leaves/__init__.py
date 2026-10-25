@@ -4,6 +4,7 @@
 - output: content sinks (Heading, Text, Image, Link, Badge, StatusDot, Kbd,
           Shortcut, Alert, Divider, EmptyState, Stat, Progress, Gauge,
           JsonViewer).
+- page:   page furniture (Icon, Spacer, PageLink, NavItem).
 - table:  TableRef and its row ops.
 - tree:   TreeRef.
 - display: Avatar, Breadcrumb, Skeleton, Spinner, StatusPill.
@@ -68,6 +69,7 @@ from .output import (
     StatusDotRef,
     TextRef,
 )
+from .page import IconRef, NavItemRef, PageLinkRef, SpacerRef
 from .table import InsertRow, RemoveRows, SetOrder, SetRow, TableRef
 from .tree import TreeRef
 
@@ -95,6 +97,7 @@ __all__ = [
     "HeatmapChart",
     "Histogram",
     "HtmlRef",
+    "IconRef",
     "ImageRef",
     "InputRef",
     "InsertRow",
@@ -104,7 +107,9 @@ __all__ = [
     "LineChart",
     "LinkRef",
     "MarkdownRef",
+    "NavItemRef",
     "NumberInputRef",
+    "PageLinkRef",
     "PieChart",
     "ProgressRef",
     "RadarChart",
@@ -119,6 +124,7 @@ __all__ = [
     "SkeletonRef",
     "SketchRef",
     "SliderRef",
+    "SpacerRef",
     "Sparkline",
     "SpinnerRef",
     "StatRef",

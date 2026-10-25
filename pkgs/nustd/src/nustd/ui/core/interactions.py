@@ -9,6 +9,10 @@ Changed, HeadingRef.set -> Write).
 - Write   -- server -> client, replace a Ref's value
 - Append  -- server -> client, append to a sequence-typed Ref
 - Remove  -- server -> client, drop a Ref's node and everything under it
+- Init    -- server -> client, bring a Ref's node into being as declared,
+             with every slot its Shape declares under it
+- Hide    -- server -> client, take a Ref's node off screen, subtree and all
+- Display -- server -> client, put a hidden node back on screen
 - Changed -- subscribe to client-side notifications on a Ref, all of them
              or only one event's
 
@@ -27,7 +31,8 @@ from typing import TYPE_CHECKING
 from nu.engine.structure import Declared
 from nu.lang import EMPTY, Command, ScalarQuery
 
-from .protocol import Frame
+from .chains import boot_chains
+from .protocol import OP_INIT, Frame
 from .session import Session
 
 
@@ -38,10 +43,11 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
     from .base import Ref
+    from .chains import Chain
     from .session import Subscription
 
 
-__all__ = ["EVENT", "Append", "Changed", "Remove", "Send", "Write"]
+__all__ = ["EVENT", "Append", "Changed", "Display", "Hide", "Init", "Remove", "Send", "Write"]
 
 
 #: The payload field a notify names its event in, for a Ref that sends more
@@ -159,6 +165,80 @@ class Remove(Command):
             await session.send(Frame(self, ref=path))
 
         return athunk
+
+
+class _ChainCommand(Command):
+    """A payload-free frame on a Ref that carries the Ref's chain. Abstract.
+
+    The chain lets the browser bring the node (and every node on the way
+    down) into being before it applies the op, so the op works on a node
+    nothing has written yet. The op is the class name in snake_case.
+    """
+
+    _mutates = Declared(value=frozenset({0}), name="mutates")
+    _requires_async = Declared(value=True, name="requires_async")
+
+    def _frames(self, chain: Chain) -> list[Frame]:
+        return [Frame(self, ref=[seg for seg, _, _ in chain], chain=chain)]
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> None:
+            raise RuntimeError("nustd.ui is async-only; use nu.arun")
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref: Ref = self._children[0]
+
+        async def athunk(rt: Runtime) -> None:
+            session = rt.ctx.fabrics.get(Session)
+            ref_nid = rt.program.children[nid][0]
+            chain = await ref._aresolve_chain(rt, ref_nid)
+            for frame in self._frames(chain):
+                await session.send(frame)
+
+        return athunk
+
+
+class Init(_ChainCommand):
+    """Bring a Ref's node on screen as declared: its chain's props, no value.
+
+    What a host's boot batch does for its own slots, for any Ref a program
+    builds: one ``init`` frame per node, so a heading or a card whose look
+    and content are all props shows without a write that would restate
+    them. A Ref carrying a Shape brings every slot that Shape declares too,
+    depth first in declaration order. An init never touches what the
+    browser already holds (a value, a hidden flag), so a second one changes
+    nothing.
+    """
+
+    def _frames(self, chain: Chain) -> list[Frame]:
+        section_cls = self._children[0]._payload.get("section_cls")
+        chains = [chain, *(boot_chains(chain, section_cls) if section_cls else ())]
+        return [Frame(OP_INIT, ref=[seg for seg, _, _ in c], chain=c) for c in chains]
+
+
+class Hide(_ChainCommand):
+    """Take a Ref's node off screen, and everything under it, keeping it all.
+
+    The node stays in the browser's tree with its value and its children, so
+    ``Display`` brings it back as it was, and writes that land while it is
+    hidden show then. Hidden is the node's own flag: a child of a hidden node
+    is off screen with it whatever its own flag says, and displaying the
+    child alone does not show it. A node hidden before anything wrote it is
+    created hidden. ``Remove`` drops the node instead; one that comes back
+    after a remove is visible.
+    """
+
+
+class Display(_ChainCommand):
+    """Put a node ``Hide`` took off screen back on, subtree and all.
+
+    Clears the node's own hidden flag only: a descendant hidden on its own
+    stays hidden, and a node under a hidden ancestor stays off screen until
+    that ancestor is displayed. On a node that is not hidden it does nothing
+    but bring the node into being if it is not there yet.
+    """
 
 
 class Changed(ScalarQuery):

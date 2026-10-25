@@ -1,5 +1,10 @@
 import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+
+// The kit's type scale has a `display` step past 3xl. Unregistered, the merge
+// reads `text-display` as a color, so a tone class (`text-text-muted`) after
+// it would drop the size.
+const twMerge = extendTailwindMerge({ extend: { theme: { text: ["display"] } } });
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));

@@ -17,6 +17,8 @@ import { Grid } from "./grid";
 import { Line } from "./line";
 import { ListRef } from "./list";
 import { Modal } from "./modal";
+import { NavList } from "./nav-list";
+import { PageSection } from "./page-section";
 import { Row } from "./row";
 import { Sheet } from "./sheet";
 import { Tabs } from "./tabs";
@@ -37,4 +39,6 @@ export const containerEntries: Record<string, NodeEntry> = {
 	Line,
 	Collapsible,
 	Sheet,
+	PageSection,
+	NavList,
 };

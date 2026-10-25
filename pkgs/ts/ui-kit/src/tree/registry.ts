@@ -19,6 +19,9 @@ export type NodeEntry = Behaviour & {
 	// function decides per node from its props (a circle skeleton keeps its
 	// size, a text skeleton fills).
 	fill?: boolean | ((props: Record<string, unknown>) => boolean);
+	// The node is empty room (a Spacer): a row grows its cell from nothing,
+	// so it takes whatever the line has left. Read through `isGrow`.
+	grow?: boolean;
 };
 
 export type { DisposeCtx, NodeHandler };
@@ -39,6 +42,11 @@ export function resolve(type: string): NodeEntry | undefined {
 export function isFill(type: string | null, props: Record<string, unknown>): boolean {
 	const fill = type ? registry[type]?.fill : undefined;
 	return typeof fill === "function" ? fill(props) : fill === true;
+}
+
+/** Whether a node of `type` takes the room its row has left. */
+export function isGrow(type: string | null): boolean {
+	return type ? registry[type]?.grow === true : false;
 }
 
 export function componentFor(type: string | null): ComponentType<NodeProps> | undefined {

@@ -24,3 +24,7 @@ The page's `<html>` is pinned to light, and the right column carries the `.dark`
 ## Refs
 
 The **Refs** stories are the other half: each draws a ref (ListRef, Row, Grid, ...) the way a program does, by writing chains into the real tree store and rendering the root with `NodeView`, light and dark side by side. In the browser a ref is drawn by its registered node, so the kitchen sink checks the looks and the refs check the wiring. They use the harness in `stories/refs/harness.tsx`, one story file per ref and one root segment per story.
+
+## Pages
+
+The **Pages** stories are whole pages (dashboard, detail, catalog, settings, landing) as a Python program draws them: a recorded run replayed through the same store and registry, one page per story at window width, in the toolbar's theme. They show what the kit composes into, not every state.

@@ -4,18 +4,22 @@
 // boundary so one throwing renderer cannot blank the page. A node with no
 // type (autovivified on the way to something below it) or a type nobody
 // registered renders its children instead, so a subtree stays visible even
-// when a level in the middle means nothing to the browser.
+// when a level in the middle means nothing to the browser. A hidden node
+// (`Ref.hide()`) renders nothing at all, and containers leave it out of
+// their children (see `useChildren`), so it takes no cell either.
 
 import type { Path } from "@nustackdev/ui-core";
 import type { ComponentType, ReactNode } from "react";
 import { ErrorBoundary } from "../components/ErrorBoundary";
-import { useFlow } from "./flow";
-import { pathKey, useChildren, useNode } from "./hooks";
+import { type Flow, FlowProvider, useFlow } from "./flow";
+import { pathKey, useChildren, useHidden, useNode } from "./hooks";
 import { componentFor, isFill, registry } from "./registry";
 
 export function NodeView({ path }: { path: Path }) {
 	const { type } = useNode(path);
+	const hidden = useHidden(path);
 	const Comp = componentFor(type);
+	if (hidden) return null;
 	if (!Comp) {
 		if (type) {
 			return <div className="text-xs text-status-danger font-mono">no component for {type}</div>;
@@ -74,18 +78,23 @@ export function indexedOrder(segments: readonly string[]): string[] {
  * list item, a grid cell, a row slot that fills). Without it a block flow
  * wraps each child in `BlockCell`, and any other flow draws them bare.
  * `indexed` puts indexed children in index order (see `indexedOrder`).
+ * `skip` leaves out the segments a type places itself (a card's `media`,
+ * a section's `actions`), so what is left is the body.
  */
 export function NodeChildren({
 	path,
 	cell,
 	indexed = false,
+	skip,
 }: {
 	path: Path;
 	cell?: ComponentType<CellProps>;
 	indexed?: boolean;
+	skip?: ReadonlySet<string>;
 }) {
 	const written = useChildren(path);
-	const children = indexed ? indexedOrder(written) : written;
+	const kept = skip ? written.filter((s) => !skip.has(s)) : written;
+	const children = indexed ? indexedOrder(kept) : kept;
 	const flow = useFlow();
 	const Cell = cell ?? (flow === "block" ? BlockCell : undefined);
 	return (
@@ -106,4 +115,38 @@ export function NodeChildren({
 /** One named child, when a type places its slots itself. */
 export function ChildView({ path, segment }: { path: Path; segment: string }) {
 	return <NodeView key={pathKey([...path, segment])} path={[...path, segment]} />;
+}
+
+/** The segment a Card's or a Section's header actions sit at. */
+export const ACTIONS_SLOT = "actions";
+
+/**
+ * One named child placed by its parent (a card's media or footer, a
+ * section's actions), in the flow it is handed. A block flow puts it in a
+ * `BlockCell`, the same cell a body child gets; a row flow draws it bare, at
+ * its own size. A hidden child draws nothing, cell included.
+ */
+export function SlotView({
+	path,
+	segment,
+	flow = "block",
+}: {
+	path: Path;
+	segment: string;
+	flow?: Flow;
+}) {
+	const child = [...path, segment];
+	const hidden = useHidden(child);
+	if (hidden) return null;
+	return (
+		<FlowProvider flow={flow}>
+			{flow === "block" ? (
+				<BlockCell path={child}>
+					<NodeView path={child} />
+				</BlockCell>
+			) : (
+				<NodeView path={child} />
+			)}
+		</FlowProvider>
+	);
 }

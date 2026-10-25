@@ -9,6 +9,7 @@
 // classes.
 
 import { Panel, PanelContent, PanelHeader, PanelTitle } from "../../components/ui/panel";
+import { cn } from "../../lib/utils";
 import {
 	FlowProvider,
 	NodeChildren,
@@ -17,6 +18,8 @@ import {
 	useStringProp,
 } from "../../tree";
 
+// `none` rides the sm Panel (its gap ladder) with the pad zeroed: Panel has
+// no size without a pad of its own.
 const PADDING_TO_SIZE: Record<string, "sm" | "md" | "lg"> = {
 	none: "sm",
 	sm: "sm",
@@ -31,12 +34,17 @@ const GAP_CLASSES: Record<string, string> = {
 	lg: "gap-6",
 };
 
-// background maps: `accent` is a quiet tinted box (the hover wash). Afterglow
-// is never a background; solid accents belong on interactive surfaces.
+// background maps, each a distinct ground. `muted` is the hover wash,
+// `sunken` the well a code block sits in, `accent` the Starlight wash (a
+// callout, a tip) and `brand` the Afterglow soft fill (a highlighted plan, a
+// hero aside), each with its own line. Soft fills only: solid accents
+// belong on interactive surfaces.
 const BACKGROUND_CLASSES: Record<string, string> = {
 	none: "",
 	muted: "bg-bg-hover",
-	accent: "bg-bg-hover",
+	sunken: "bg-bg-sunken",
+	accent: "bg-accent-2-wash border-accent-2-line",
+	brand: "bg-accent-soft border-accent-line",
 };
 
 const SHADOW_CLASSES: Record<string, string> = {
@@ -60,15 +68,18 @@ function BoxView({ path }: NodeProps) {
 	const effectiveShadow = border === "card" && shadow === "none" ? "sm" : shadow;
 	const shadowCls = SHADOW_CLASSES[effectiveShadow] ?? "";
 	const borderCls = border === "none" ? "border-none" : "";
+	const padCls = padding === "none" ? "[--panel-pad:0px]" : "";
 
 	return (
-		<Panel size={size} className={`${bgCls} ${shadowCls} ${borderCls}`.trim()}>
+		<Panel size={size} className={cn(bgCls, shadowCls, borderCls, padCls)}>
 			{title ? (
 				<PanelHeader>
 					<PanelTitle>{title}</PanelTitle>
 				</PanelHeader>
 			) : null}
-			<PanelContent>
+			{/* PanelContent pads only the sides; the box pads its ends too, the
+			    top under a title being the header's. */}
+			<PanelContent className={title ? "pb-[var(--panel-pad)]" : "py-[var(--panel-pad)]"}>
 				<div className={`flex flex-col ${gapCls}`}>
 					<FlowProvider flow="block">
 						<NodeChildren path={path} />

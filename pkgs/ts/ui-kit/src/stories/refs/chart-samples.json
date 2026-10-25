@@ -1007,7 +1007,7 @@
 						"id": "total",
 						"text": "",
 						"subtext": "animals",
-						"left": "center",
+						"left": "50%",
 						"top": "37%",
 						"itemGap": 2,
 						"textStyle": {

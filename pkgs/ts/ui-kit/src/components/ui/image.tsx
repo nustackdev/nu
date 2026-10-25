@@ -12,6 +12,7 @@ const RADIUS_CLASS = {
 	sm: "rounded-sm",
 	md: "rounded-md",
 	lg: "rounded-lg",
+	full: "rounded-full",
 } as const;
 
 const FIT_CLASS = {

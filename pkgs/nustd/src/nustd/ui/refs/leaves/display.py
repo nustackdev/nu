@@ -28,6 +28,8 @@ if TYPE_CHECKING:
     from nu.lang import Nu
     from nu.lang.args import IntArg, ListArg, StrArg
 
+    from .._vocab import StatusTone
+
 
 __all__ = ["AvatarRef", "BreadcrumbRef", "SkeletonRef", "SpinnerRef", "StatusPillRef"]
 
@@ -157,9 +159,6 @@ class SpinnerRef(LeafRef):
         return Write(self, Dict.of(label=label))
 
 
-Tone = Literal["danger", "warn", "ok", "info", "neutral"]
-
-
 class StatusPillRef(LeafRef):
     """A state as icon + label, so it reads without color.
 
@@ -172,16 +171,16 @@ class StatusPillRef(LeafRef):
     _wire_type = "StatusPillRef"
 
     @classmethod
-    def slot(cls, *, tone: Tone = "neutral", label: str = "") -> Self:
+    def slot(cls, *, tone: StatusTone = "neutral", label: str = "") -> Self:
         return super().slot(tone=tone, label=label)
 
     def set_label(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(label=text))
 
-    def set_tone(self, name: Tone | StrArg) -> Nu:
+    def set_tone(self, name: StatusTone | StrArg) -> Nu:
         return Write(self, Dict.of(tone=name))
 
-    def set(self, label: StrArg, *, tone: Tone | StrArg = UNSET) -> Nu:
+    def set(self, label: StrArg, *, tone: StatusTone | StrArg = UNSET) -> Nu:
         # Tone first in the payload when given, as `StatusDotRef` ships it.
         payload: dict[str, object] = {}
         if tone is not UNSET:

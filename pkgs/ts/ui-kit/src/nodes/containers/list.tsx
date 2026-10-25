@@ -24,12 +24,12 @@ import {
 	NodeChildren,
 	type NodeEntry,
 	type NodeProps,
+	useEnumProp,
 	useListProp,
 	useProp,
-	useStringProp,
 } from "../../tree";
 
-const VARIANTS = new Set<ListVariant>(["bullet", "number"]);
+const VARIANTS: readonly ListVariant[] = ["bullet", "number"];
 
 function normalizeItems(raw: unknown): string[] {
 	if (!Array.isArray(raw)) return [];
@@ -43,11 +43,11 @@ function ItemCell({ children }: CellProps) {
 
 function ListView({ path }: NodeProps) {
 	const items = useListProp<unknown>(path, "items");
-	const variant = useStringProp(path, "variant", "bullet") as ListVariant;
+	const variant = useEnumProp(path, "variant", VARIANTS, "bullet");
 	const rawStart = useProp<unknown>(path, "start", 1);
 	const start = typeof rawStart === "number" ? rawStart : 1;
 	return (
-		<List variant={VARIANTS.has(variant) ? variant : "bullet"} start={start} className="py-1">
+		<List variant={variant} start={start} className="py-1">
 			{normalizeItems(items).map((item, i) => (
 				// Items are plain strings with no id of their own; position is the identity.
 				// biome-ignore lint/suspicious/noArrayIndexKey: see above

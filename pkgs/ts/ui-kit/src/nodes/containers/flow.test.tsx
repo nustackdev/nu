@@ -136,7 +136,7 @@ describe("Card chrome on a fresh store", () => {
 			payload: "Hello",
 			chain: [
 				["outer", "Column", { gap: 4 }],
-				["card", "Card", { title: "", subtitle: "", footer: "" }],
+				["card", "Card", { title: "", subtitle: "", caption: "" }],
 			],
 		});
 		draw(["outer"]);

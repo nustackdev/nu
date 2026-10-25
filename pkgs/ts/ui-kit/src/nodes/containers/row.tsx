@@ -23,13 +23,19 @@
 // Fill: Chart (every chart type), TableRef, TreeRef,
 // JsonViewerRef, LensRef, CodeRef, MarkdownRef, InputRef, NumberInputRef,
 // TextAreaRef, TagInputRef, DatePickerRef, SliderRef, SketchRef, ProgressRef, AlertRef,
-// EmptyStateRef, ImageRef, HeadingRef, and the containers Card, Box,
-// Form, Fieldset, Field, Tabs, Accordion, Column, Row, ListRef (Grid, Line,
-// Select, Skeleton, Collapsible set their own). Content: everything else,
-// including TextRef, LinkRef, BadgeRef, KbdRef, ShortcutRef, StatusDotRef,
+// EmptyStateRef, ImageRef, HeadingRef, PageLinkRef (but an inline one), and
+// the containers Card, Box, Form, Fieldset, Field, Tabs, Accordion, Column,
+// Row, ListRef, PageSection, NavList (Grid, Line, Select, Skeleton,
+// Collapsible set their own). Content:
+// everything else, including TextRef, LinkRef, BadgeRef, KbdRef, ShortcutRef,
+// StatusDotRef, IconRef, NavItemRef,
 // ButtonRef, CheckboxRef, SwitchRef, RadioGroupRef, StatRef, GaugeRef,
 // DividerRef (drawn vertical here, it reads the row flow) and any type the
 // registry does not know.
+//
+// A `grow` type (SpacerRef) is the one child that grows from nothing (flex
+// 1 1 0): it takes whatever the line has left, so the children after it sit
+// at the end. Two spacers split the rest between them.
 //
 // TODO(retune): same dynamic-class concern as Column -- numeric `gap` /
 // `padding` template raw Tailwind class names, so we map the discrete step
@@ -37,46 +43,21 @@
 // off the ladder snaps to the nearest step rather than to a fixed fallback.
 
 import { createContext, useContext } from "react";
+import { GAP_CLASSES, PADDING_CLASSES, stepClass } from "../../lib/steps";
 import { cn } from "../../lib/utils";
 import {
 	type CellProps,
 	FlowProvider,
+	isGrow,
 	NodeChildren,
 	type NodeEntry,
 	type NodeProps,
 	useBoolProp,
 	useFill,
+	useNode,
 	useNumberProp,
 	useStringProp,
 } from "../../tree";
-
-const GAP_CLASSES: Record<number, string> = {
-	0: "gap-0",
-	1: "gap-1",
-	2: "gap-2",
-	3: "gap-3",
-	4: "gap-4",
-	5: "gap-5",
-	6: "gap-6",
-	8: "gap-8",
-	10: "gap-10",
-	12: "gap-12",
-	16: "gap-16",
-};
-
-const PADDING_CLASSES: Record<number, string> = {
-	0: "p-0",
-	1: "p-1",
-	2: "p-2",
-	3: "p-3",
-	4: "p-4",
-	5: "p-5",
-	6: "p-6",
-	8: "p-8",
-	10: "p-10",
-	12: "p-12",
-	16: "p-16",
-};
 
 const ALIGN_CLASSES: Record<string, string> = {
 	start: "items-start",
@@ -97,15 +78,6 @@ const JUSTIFY_CLASSES: Record<string, string> = {
 
 const MIN_WIDTH = 240;
 
-/** The class for the ladder step nearest `n` (ties go to the smaller step). */
-export function stepClass(ladder: Record<number, string>, n: number): string {
-	let best = 0;
-	for (const key of Object.keys(ladder).map(Number)) {
-		if (Math.abs(key - n) < Math.abs(best - n)) best = key;
-	}
-	return ladder[best];
-}
-
 type Sizing = { minWidth: number; stretch: boolean };
 
 const SizingContext = createContext<Sizing>({ minWidth: MIN_WIDTH, stretch: false });
@@ -118,13 +90,15 @@ const SizingContext = createContext<Sizing>({ minWidth: MIN_WIDTH, stretch: fals
 // children grow too.
 function RowCell({ path, children }: CellProps) {
 	const fill = useFill(path);
+	const grow = isGrow(useNode(path).type);
 	const { minWidth, stretch } = useContext(SizingContext);
+	const flex = grow ? "1 1 0px" : fill ? `1 1 ${minWidth}px` : "0 1 auto";
 	return (
 		<div
 			data-slot="row-cell"
 			data-fill={fill ? "" : undefined}
 			className={cn("flex flex-col", fill && "min-w-0 self-stretch *:grow", stretch && "*:grow")}
-			style={{ flex: fill ? `1 1 ${minWidth}px` : "0 1 auto" }}
+			style={{ flex }}
 		>
 			{children}
 		</div>

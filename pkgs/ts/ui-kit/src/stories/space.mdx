@@ -61,11 +61,12 @@ Default per family:
 
 ## Container widths
 
-Named max-widths for common page layouts. Reach for `max-w-container-*` utilities from the `@theme` block; do not eyeball `max-w-[720px]` in a component.
+Named max-widths for common page layouts, the `--container-*` tokens of the `@theme` block. Reach for their utilities, `max-w-form`, `max-w-panel`, `max-w-main`, `max-w-dashboard`, and `max-w-(--container-prose)` for prose (`max-w-prose` is Tailwind's own 65ch); do not eyeball `max-w-[720px]` in a component.
 
 - `container-form` (480px): matches Fleet's settings pane width.
 - `container-prose` (640px): standard readable line length (60-80 chars at 14px).
 - `container-panel` (960px): side sheets, detail views, two-column controls.
+- `container-main` (1200px): a site's main column, a centered page.
 - `container-dashboard` (1400px): wide tools, multi-column dashboards, tables.
 
 <Canvas of={SpaceStories.Containers} />

@@ -18,6 +18,7 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "../../components/ui/breadcrumb";
+import { crossHost } from "../../lib/anchor";
 import { type NodeEntry, type NodeProps, useListProp } from "../../tree";
 
 type Crumb = { label: string; href: string };
@@ -27,16 +28,6 @@ function toCrumb(raw: unknown): Crumb | null {
 	if (raw == null || typeof raw !== "object") return null;
 	const { label, href } = raw as { label?: unknown; href?: unknown };
 	return { label: label == null ? "" : String(label), href: href == null ? "" : String(href) };
-}
-
-function isCrossHost(href: string): boolean {
-	if (href === "") return false;
-	try {
-		const url = new URL(href, window.location.href);
-		return url.host !== "" && url.host !== window.location.host;
-	} catch {
-		return false;
-	}
 }
 
 function BreadcrumbView({ path }: NodeProps) {
@@ -57,7 +48,7 @@ function BreadcrumbView({ path }: NodeProps) {
 								) : crumb.href ? (
 									<BreadcrumbLink href={crumb.href} className="inline-flex items-center gap-1">
 										{crumb.label}
-										{isCrossHost(crumb.href) ? (
+										{crossHost(crumb.href) ? (
 											<ExternalLink aria-hidden="true" className="size-3 shrink-0" />
 										) : null}
 									</BreadcrumbLink>

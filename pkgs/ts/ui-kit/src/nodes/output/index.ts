@@ -8,13 +8,16 @@ import { EmptyStateRef } from "./empty-state";
 import { GaugeRef } from "./gauge";
 import { HeadingRef } from "./heading";
 import { HtmlRef } from "./html";
+import { IconRef } from "./icon";
 import { ImageRef } from "./image";
 import { JsonViewerRef } from "./json-viewer";
 import { KbdRef } from "./kbd";
 import { LensRef } from "./lens";
 import { LinkRef } from "./link";
+import { PageLinkRef } from "./page-link";
 import { ProgressRef } from "./progress";
 import { ShortcutRef } from "./shortcut";
+import { SpacerRef } from "./spacer";
 import { StatRef } from "./stat";
 import { StatusDotRef } from "./status-dot";
 import { TableRef } from "./table";
@@ -41,4 +44,7 @@ export const outputEntries: Record<string, NodeEntry> = {
 	JsonViewerRef,
 	LensRef,
 	TreeRef,
+	IconRef,
+	PageLinkRef,
+	SpacerRef,
 };

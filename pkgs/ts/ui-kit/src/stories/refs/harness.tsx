@@ -98,3 +98,37 @@ function Stage({ label, children }: { label?: string; children: React.ReactNode 
 		</div>
 	);
 }
+
+/** Frames as Python sent them, recorded from a program's run. */
+export type FrameSeed = {
+	/** The root segment every frame lands under. Unique per story. */
+	root: string;
+	/** The frames, in the order they were sent. */
+	frames: TreeFrame[];
+};
+
+/** Clear `root` and dispatch the frames, the way a live tab takes them. */
+export function seedFrames({ root, frames }: FrameSeed): void {
+	const store = tree.getState();
+	store.remove([root]);
+	for (const frame of frames) store.dispatch(frame);
+}
+
+/**
+ * A whole page as a program sent it, alone, in the story's theme.
+ *
+ * Unlike NodeStage there is no light and dark pair: a page is drawn at the
+ * width of the window, so the toolbar's theme (or `globals=theme:light` on
+ * the iframe URL) picks the theme and the viewport the width.
+ */
+export function PageStage(s: FrameSeed) {
+	useState(() => {
+		seedFrames(s);
+		return true;
+	});
+	return (
+		<div className="min-h-screen bg-bg-canvas text-text-primary">
+			<NodeView path={[s.root]} />
+		</div>
+	);
+}

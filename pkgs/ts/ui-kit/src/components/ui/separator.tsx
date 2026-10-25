@@ -1,8 +1,9 @@
 // Separator primitive.
 //
 // Radix Separator + optional label slot for horizontal dividers (per refs.md
-// DividerRef gap). Labeled variant renders text centered with lines on both
-// sides.
+// DividerRef gap). Labeled variant renders text with lines on both sides,
+// centered by default; `labelAlign` start / end pulls it to one edge, a short
+// lead line before it so the rule still reads as one.
 
 import { Separator as SeparatorPrimitive } from "radix-ui";
 import type * as React from "react";
@@ -13,6 +14,7 @@ type SeparatorPrimitiveProps = React.ComponentProps<typeof SeparatorPrimitive.Ro
 
 export interface SeparatorProps extends SeparatorPrimitiveProps {
 	label?: React.ReactNode;
+	labelAlign?: "start" | "center" | "end";
 }
 
 function Separator({
@@ -20,6 +22,7 @@ function Separator({
 	orientation = "horizontal",
 	decorative = true,
 	label,
+	labelAlign = "center",
 	...props
 }: SeparatorProps) {
 	if (label && orientation === "horizontal") {
@@ -31,11 +34,17 @@ function Separator({
 				className={cn("flex items-center gap-3 w-full", className)}
 				role={decorative ? "none" : undefined}
 			>
-				<div aria-hidden="true" className="flex-1 h-px bg-border-subtle" />
+				<div
+					aria-hidden="true"
+					className={cn("h-px bg-border-subtle", labelAlign === "start" ? "w-4 shrink-0" : "flex-1")}
+				/>
 				<span className="text-xs text-text-secondary font-display shrink-0">
 					{label}
 				</span>
-				<div aria-hidden="true" className="flex-1 h-px bg-border-subtle" />
+				<div
+					aria-hidden="true"
+					className={cn("h-px bg-border-subtle", labelAlign === "end" ? "w-4 shrink-0" : "flex-1")}
+				/>
 			</div>
 		);
 	}

@@ -202,10 +202,43 @@ class Ref(StructuredRef):
         Nothing has to be put back by hand -- the next write carries the chain,
         so the node comes back with its declared type and props the moment
         anything is written to it again.
+
+        ``erase``, ``init``, ``hide`` and ``display`` are methods on every
+        Ref, so each hides a Shape slot of the same name: name no slot after
+        them.
         """
         from .interactions import Remove
 
         return Remove(self)
+
+    def init(self) -> Nu:
+        """Put this Ref's node on screen as declared, and every slot its Shape declares.
+
+        For a node whose look and content are all props (a heading, a card,
+        a page built from Refs): it shows without a write restating them.
+        Writes that come later land on it as usual.
+        """
+        from .interactions import Init
+
+        return Init(self)
+
+    def hide(self) -> Nu:
+        """Take this Ref's node off screen, and its whole subtree, keeping their state.
+
+        ``display`` brings them back as they were. A node hidden before
+        anything wrote it is created hidden, so a panel can start out of
+        sight. A child under a hidden node stays off screen whatever is sent
+        to the child itself.
+        """
+        from .interactions import Hide
+
+        return Hide(self)
+
+    def display(self) -> Nu:
+        """Put this Ref's node back on screen after ``hide``, with its subtree."""
+        from .interactions import Display
+
+        return Display(self)
 
     # --- declaration ---------------------------------------------------------
 

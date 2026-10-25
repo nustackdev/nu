@@ -18,16 +18,28 @@ from .base import DictContainerRef
 if TYPE_CHECKING:
     from nustd.ui.core import Ref, Section
 
+    from .._vocab import Align
+
 
 __all__ = ["ColumnRef", "RowRef"]
 
 
-Align = Literal["start", "center", "end", "stretch"]
-Justify = Literal["start", "center", "end", "between", "around"]
+Justify = Literal["start", "center", "end", "between", "around", "evenly"]
+
+#: Named page widths, the kit's container widths in px: a form 480, reading
+#: prose 640, a panel or detail view 960, a site main column 1200, a wide
+#: dashboard 1400. "full" is no cap.
+MaxWidth = Literal["form", "prose", "panel", "main", "wide", "full"]
 
 
 class ColumnRef(DictContainerRef):
-    """Vertical flex layout. Pin chrome on the slot()."""
+    """Vertical flex layout. Pin chrome on the slot().
+
+    `max_width` caps the column at a named page width, and `center` puts the
+    capped column in the middle of what holds it, so a page reads as one
+    column down the middle of a wide window. Under the cap it takes the
+    whole width it is given, the way an uncapped one does.
+    """
 
     _wire_type = "Column"
 
@@ -41,8 +53,18 @@ class ColumnRef(DictContainerRef):
         align: Align = "stretch",
         justify: Justify = "start",
         padding: int = 0,
+        max_width: MaxWidth = "full",
+        center: bool = True,
     ) -> Self:
-        return super().slot(item, gap=gap, align=align, justify=justify, padding=padding)
+        return super().slot(
+            item,
+            gap=int(gap),
+            align=align,
+            justify=justify,
+            padding=int(padding),
+            max_width=max_width,
+            center=bool(center),
+        )
 
 
 RowAlign = Literal["start", "center", "end", "stretch", "baseline"]
@@ -78,10 +100,10 @@ class RowRef(DictContainerRef):
     ) -> Self:
         return super().slot(
             item,
-            gap=gap,
+            gap=int(gap),
             align=align,
             justify=justify,
-            wrap=wrap,
-            padding=padding,
-            min_width=min_width,
+            wrap=bool(wrap),
+            padding=int(padding),
+            min_width=int(min_width),
         )

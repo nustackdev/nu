@@ -7,6 +7,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
 
+import { tone } from "../../lib/recipes";
 import { cn } from "../../lib/utils";
 
 const textVariants = cva("", {
@@ -18,16 +19,8 @@ const textVariants = cva("", {
 			lg: "text-lg",
 			xl: "text-xl",
 		},
-		tone: {
-			primary: "text-text-primary",
-			secondary: "text-text-secondary",
-			muted: "text-text-muted",
-			danger: "text-status-danger",
-			warn: "text-status-warn",
-			ok: "text-status-ok",
-			info: "text-status-info",
-			accent: "text-accent-text",
-		},
+		// The kit's one tone ladder (lib/recipes.ts).
+		tone,
 		weight: {
 			regular: "font-normal",
 			medium: "font-medium",

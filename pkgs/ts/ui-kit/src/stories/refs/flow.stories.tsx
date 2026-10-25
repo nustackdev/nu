@@ -19,7 +19,7 @@ type Story = StoryObj;
 
 function card(segment: string, title: string, label: string, value: string, note: string) {
 	return [
-		[step(segment, "Card", { title, subtitle: "", footer: "" })],
+		[step(segment, "Card", { title, subtitle: "", caption: "" })],
 		[step(segment, "Card"), step("stat", "StatRef", { label, value })],
 		[step(segment, "Card"), step("note", "TextRef", { value: note })],
 	];

@@ -1,9 +1,10 @@
 // The browser store, as a tree.
 //
-// One node is exactly three things: a `type`, a bag of `props`, and `children`
-// keyed by segment. `type` is null for a node that exists only because
-// something below it was written. `value` is just a prop, not a field of its
-// own -- a node's current value lives at `props.value` like everything else.
+// One node is three things: a `type`, a bag of `props`, and `children`
+// keyed by segment (plus the `hidden` flag the visibility ops set). `type` is
+// null for a node that exists only because something below it was written.
+// `value` is just a prop, not a field of its own -- a node's current value
+// lives at `props.value` like everything else.
 //
 // Writes autovivify. A frame carries a `chain`, root-first, one triple per
 // level, so a write to `a.b.c` creates `a` and `b` with the type and props
@@ -31,10 +32,14 @@ export type Props = Record<string, unknown>;
 // A Map and not a plain object: render order is insertion order, and an
 // object hoists integer-like keys to the front, so a segment like "0" or an
 // index from a dynamic ref would silently jump the queue.
+//
+// `hidden` lives on the node and not in its props, so no prop merge and no
+// type's own write handler can clobber it. Unset means shown.
 export type Node = {
 	type: string | null;
 	props: Props;
 	children: Map<string, Node>;
+	hidden?: boolean;
 };
 
 /** Alias for consumers where the DOM's `Node` is also in scope. */
@@ -63,6 +68,11 @@ export const OPS = {
 	// write to it. What a boot batch is made of.
 	init: "init",
 	remove: "remove",
+	// Chain only, no payload, like init. Hide keeps the node, its props and
+	// its children (state survives, the browser just draws nothing); display
+	// shows it again. Every type takes them, none handles them.
+	hide: "hide",
+	display: "display",
 	read: "read",
 	notify: "notify",
 } as const;
@@ -101,6 +111,8 @@ export type TreeActions = {
 	getIn: (path: Path) => Node | null;
 	/** Merge props into an existing node. No-op when the node is not there. */
 	setProps: (path: Path, props: Props) => void;
+	/** Hide or show an existing node. No-op when the node is not there. */
+	setHidden: (path: Path, hidden: boolean) => void;
 	/** Route an inbound frame to its node, by node type and frame op. */
 	dispatch: (frame: TreeFrame) => void;
 	/** Outbound. No-op until a sender is set. */
@@ -266,6 +278,17 @@ export function createTreeStore(options: TreeStoreOptions = {}): TreeStore {
 					Object.assign(node.props, props);
 				}),
 
+			setHidden: (path, hidden) => {
+				const node = getNode(get().root, path);
+				if (!node || Boolean(node.hidden) === hidden) return;
+				set((draft) => {
+					const target = getNode(draft.root as Node, path);
+					if (!target) return;
+					if (hidden) target.hidden = true;
+					else delete target.hidden;
+				});
+			},
+
 			send: (frame) => {
 				if (outbound) outbound(frame);
 			},
@@ -289,6 +312,13 @@ export function createTreeStore(options: TreeStoreOptions = {}): TreeStore {
 					// Structure and nothing else. An init carries no payload, so
 					// it never touches a value the program already set.
 					api.write(chain);
+					return;
+				}
+				if (frame.op === OPS.hide || frame.op === OPS.display) {
+					// Structure first (the node may not exist yet), then the
+					// flag. Generic for every type, never a handler's call.
+					api.write(chain);
+					api.setHidden(frame.ref, frame.op === OPS.hide);
 					return;
 				}
 				const handlerFor = (node: Node | null) => {

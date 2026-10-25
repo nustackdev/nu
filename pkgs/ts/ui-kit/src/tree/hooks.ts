@@ -51,6 +51,20 @@ export function useStringProp(path: Path, key: string, fallback = ""): string {
 	return v == null ? fallback : String(v);
 }
 
+/**
+ * A prop as one of `allowed`, or the fallback. What every variant, size and
+ * tone prop reads through, so an unknown value off the wire draws the default.
+ */
+export function useEnumProp<T extends string>(
+	path: Path,
+	key: string,
+	allowed: readonly T[],
+	fallback: T,
+): T {
+	const v = useProps(path)[key];
+	return typeof v === "string" && (allowed as readonly string[]).includes(v) ? (v as T) : fallback;
+}
+
 /** A prop as a finite number, or the fallback. */
 export function useNumberProp(path: Path, key: string, fallback: number): number {
 	const n = Number(useProps(path)[key]);
@@ -79,14 +93,25 @@ export function useExists(path: Path): boolean {
 	return useTree((s) => getNode(s.root, path) !== null);
 }
 
-/** Child segments in insertion order, shallow compared. */
+/** Whether the node is hidden (`Ref.hide()`): it keeps its state and draws nothing. */
+export function useHidden(path: Path): boolean {
+	return useTree((s) => getNode(s.root, path)?.hidden === true);
+}
+
+/**
+ * The children a container draws: segments in insertion order, shallow
+ * compared. A hidden child is left out, so it takes no cell and leaves no
+ * gap; it comes back in its place when shown.
+ */
 export function useChildren(path: Path): string[] {
 	return useTree(
 		useShallow((s) => {
 			const node = getNode(s.root, path);
 			if (!node) return NO_CHILDREN;
 			if (!node.children.size) return NO_CHILDREN;
-			return [...node.children.keys()];
+			const out: string[] = [];
+			for (const [segment, child] of node.children) if (!child.hidden) out.push(segment);
+			return out.length ? out : NO_CHILDREN;
 		}),
 	);
 }

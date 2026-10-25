@@ -82,6 +82,8 @@ KIND = {
     "Line": ListContainerRef,
     "List": ListContainerRef,
     "Modal": DictContainerRef,
+    "NavList": DictContainerRef,
+    "PageSection": DictContainerRef,
     "Row": DictContainerRef,
     "Sheet": DictContainerRef,
     "Tabs": DictContainerRef,
@@ -92,6 +94,33 @@ def test_every_container_shape_has_one_kind():
     assert set(KIND) == set(shapes.__all__)
     for name, kind in KIND.items():
         assert issubclass(getattr(shapes, name)._ref_cls, kind), name
+
+
+def test_every_container_ref_has_exactly_one_shape_named_after_it():
+    """Shape, Ref and wire type line up 1:1: ``XRef`` has one Shape, ``X``,
+    drawn as ``X``, and both are exported from shapes, refs and the root."""
+    from nustd.ui import refs
+    from nustd.ui.core.base import _wire_type_of
+    from nustd.ui.refs import containers
+
+    # ListRef kept its old wire type so bundles from before it took children
+    # still draw the strings; see ListRef.
+    wire_exceptions = {"List": "ListRef"}
+    abstract = {"ContainerRef", "DictContainerRef", "ListContainerRef", "ShapeContainerRef"}
+    concrete = sorted(set(containers.__all__) - abstract)
+    shape_classes = [getattr(shapes, n) for n in shapes.__all__]
+    assert len(shape_classes) == len(concrete)
+    for ref_name in concrete:
+        ref_cls = getattr(containers, ref_name)
+        owners = [s for s in shape_classes if s._ref_cls is ref_cls]
+        assert len(owners) == 1, (ref_name, owners)
+        name = ref_name.removesuffix("Ref")
+        assert owners[0].__name__ == name, ref_name
+        assert _wire_type_of(owners[0]) == wire_exceptions.get(name, name)
+        for module in (shapes, refs, ui):
+            assert name in module.__all__ and getattr(module, name) is owners[0], (module, name)
+        for module in (refs, ui):
+            assert ref_name in module.__all__ and getattr(module, ref_name) is ref_cls
 
 
 @pytest.mark.parametrize("name", sorted(n for n, k in KIND.items() if k is DictContainerRef))

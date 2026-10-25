@@ -15,6 +15,10 @@
 // server may mirror it back via set_active. Inactive bodies stay mounted
 // (via forceMount + `hidden`) so leaf components keep their local state.
 // Composes the kit Tabs primitive family (Radix Tabs under the hood).
+// `variant` is the strip's look, a plain prop the default `write` merges:
+// `line` (underline, the default), `pill` (a wash chip behind the active
+// tab) or `segmented` (one sunken track with a raised thumb). An unknown
+// value reads as `line`.
 
 import { OPS } from "@nustackdev/ui-core";
 import {
@@ -29,6 +33,7 @@ import {
 	type NodeProps,
 	NodeView,
 	useChildren,
+	useEnumProp,
 	useListProp,
 	useSend,
 	useSetProps,
@@ -36,6 +41,7 @@ import {
 } from "../../tree";
 
 type Tab = { id: string; label: string };
+const VARIANTS = ["line", "pill", "segmented"] as const;
 
 function normalizeTabs(raw: unknown): Tab[] {
 	if (!Array.isArray(raw)) return [];
@@ -54,6 +60,7 @@ function normalizeTabs(raw: unknown): Tab[] {
 function TabsView({ path }: NodeProps) {
 	const rawTabs = useListProp<unknown>(path, "tabs");
 	const active = useStringProp(path, "active");
+	const variant = useEnumProp(path, "variant", VARIANTS, "line");
 	const children = useChildren(path);
 	const setProps = useSetProps(path);
 	const send = useSend(path);
@@ -72,9 +79,11 @@ function TabsView({ path }: NodeProps) {
 
 	return (
 		<TabsPrimitive value={activeId} onValueChange={onValueChange}>
-			<TabsList variant="line">
+			{/* A line strip rules the full width; a pill or segmented one is a
+			    control and keeps its own. */}
+			<TabsList variant={variant} className={variant === "line" ? undefined : "self-start"}>
 				{tabs.map((t) => (
-					<TabsTrigger key={t.id} value={t.id} variant="line">
+					<TabsTrigger key={t.id} value={t.id}>
 						{t.label}
 					</TabsTrigger>
 				))}

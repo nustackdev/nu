@@ -62,7 +62,7 @@ class ListRef(ListContainerRef):
         variant: ListVariant = "bullet",
         start: int = 1,
     ) -> Self:
-        return super().slot(item, items=list(items or []), variant=variant, start=start)
+        return super().slot(item, items=list(items or []), variant=variant, start=int(start))
 
     def set(
         self,

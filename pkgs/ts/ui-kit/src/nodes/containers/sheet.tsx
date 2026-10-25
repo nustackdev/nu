@@ -28,26 +28,20 @@ import {
 	type NodeEntry,
 	type NodeProps,
 	useBoolProp,
+	useEnumProp,
 	useSend,
 	useSetProps,
 	useStringProp,
 } from "../../tree";
 
-type Side = "left" | "right" | "top" | "bottom";
-type Size = "sm" | "md" | "lg";
-
-const SIDES: readonly Side[] = ["left", "right", "top", "bottom"];
-const SIZES: readonly Size[] = ["sm", "md", "lg"];
-
-function pick<T extends string>(value: string, allowed: readonly T[], fallback: T): T {
-	return (allowed as readonly string[]).includes(value) ? (value as T) : fallback;
-}
+const SIDES = ["left", "right", "top", "bottom"] as const;
+const SIZES = ["sm", "md", "lg"] as const;
 
 function SheetView({ path }: NodeProps) {
 	const open = useBoolProp(path, "open");
 	const title = useStringProp(path, "title");
-	const side = pick(useStringProp(path, "side"), SIDES, "right");
-	const size = pick(useStringProp(path, "size"), SIZES, "md");
+	const side = useEnumProp(path, "side", SIDES, "right");
+	const size = useEnumProp(path, "size", SIZES, "md");
 	const dismissible = useBoolProp(path, "dismissible", true);
 	const send = useSend(path);
 	const setProps = useSetProps(path);

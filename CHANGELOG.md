@@ -12,6 +12,9 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add page building blocks, richer looks and hide/display so programs build neat pages
+- Rename the card's footer text to caption; older programs still draw theirs
+
 ## 0.6.6 — 2026-10-22
 
 - Release nu 0.6.6

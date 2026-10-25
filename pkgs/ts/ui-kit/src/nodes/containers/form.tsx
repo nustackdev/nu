@@ -13,6 +13,7 @@
 // A `Form` primitive with named tokens is the follow-up.
 
 import { Heading } from "../../components/ui/heading";
+import { GAP_CLASSES, PADDING_CLASSES, stepClass } from "../../lib/steps";
 import {
 	FlowProvider,
 	NodeChildren,
@@ -21,32 +22,6 @@ import {
 	useNumberProp,
 	useStringProp,
 } from "../../tree";
-
-const GAP_CLASSES: Record<number, string> = {
-	0: "gap-0",
-	1: "gap-1",
-	2: "gap-2",
-	3: "gap-3",
-	4: "gap-4",
-	5: "gap-5",
-	6: "gap-6",
-	8: "gap-8",
-	10: "gap-10",
-	12: "gap-12",
-};
-
-const PADDING_CLASSES: Record<number, string> = {
-	0: "p-0",
-	1: "p-1",
-	2: "p-2",
-	3: "p-3",
-	4: "p-4",
-	5: "p-5",
-	6: "p-6",
-	8: "p-8",
-	10: "p-10",
-	12: "p-12",
-};
 
 const ALIGN_CLASSES: Record<string, string> = {
 	start: "items-start",
@@ -61,8 +36,8 @@ function FormView({ path }: NodeProps) {
 	const padding = useNumberProp(path, "padding", 0);
 	const align = useStringProp(path, "align", "stretch");
 
-	const gapCls = GAP_CLASSES[gap] ?? GAP_CLASSES[4];
-	const padCls = PADDING_CLASSES[padding] ?? PADDING_CLASSES[0];
+	const gapCls = stepClass(GAP_CLASSES, gap);
+	const padCls = stepClass(PADDING_CLASSES, padding);
 	const alignCls = ALIGN_CLASSES[align] ?? ALIGN_CLASSES.stretch;
 
 	return (

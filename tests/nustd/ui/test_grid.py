@@ -1,8 +1,9 @@
 """Grid: equal cells, as a Shape and as Refs alone.
 
 A Grid holds open-ended children, one per cell. Its props are its own
-(columns, min_width, gap, align, padding); a child carries none. Runs
-against a recording session, same harness as test_layers.
+(columns, min_width, gap, align, padding, dense, spans); a child carries
+none, not even its span. Runs against a recording session, same harness as
+test_layers.
 """
 
 from __future__ import annotations
@@ -35,7 +36,15 @@ def _chain(frame):
     return [(seg, typ) for seg, typ, _ in frame.chain]
 
 
-DEFAULTS = {"columns": 0, "min_width": 240, "gap": 4, "align": "stretch", "padding": 0}
+DEFAULTS = {
+    "columns": 0,
+    "min_width": 240,
+    "gap": 4,
+    "align": "stretch",
+    "padding": 0,
+    "dense": False,
+    "spans": {},
+}
 
 
 def test_grid_is_a_container_with_its_own_wire_type():
@@ -150,3 +159,60 @@ def test_a_leaf_under_a_grid_still_refuses_children():
     cell = TextRef("caption", parent_ref=GridRef("g"))
     with pytest.raises(TypeError, match="TextRef is a leaf"):
         GridRef("inner", parent_ref=cell)
+
+
+# --- spans -------------------------------------------------------------------
+
+
+def test_spans_normalize_to_cols_and_rows():
+    from nustd.ui import GridRef
+
+    props = GridRef.slot(columns=3, spans={"hero": (2, 2), "wide": 3, "plain": 1}).props
+    assert props["spans"] == {"hero": {"cols": 2, "rows": 2}, "wide": {"cols": 3, "rows": 1}}
+
+
+def test_a_span_under_one_raises():
+    from nustd.ui import GridRef
+
+    with pytest.raises(ValueError, match="at least 1 by 1"):
+        GridRef.slot(spans={"x": (0, 1)})
+
+
+def test_a_bento_shape_spans_by_slot_name():
+    from nustd.ui import CardRef, Grid
+    from nustd.ui.nudle import Page
+
+    class Bento(Grid):
+        revenue = CardRef.slot(title="Revenue")
+        users = CardRef.slot(title="Users")
+        jobs = CardRef.slot(title="Jobs")
+
+    class Home(Page):
+        bento = Bento.slot(columns=3, dense=True, spans={"revenue": (2, 2)})
+
+    [grid, *cells] = [c for c in Home._boot_chains() if c[0][0] == "bento"]
+    assert grid[0][2]["spans"] == {"revenue": {"cols": 2, "rows": 2}}
+    assert grid[0][2]["dense"] is True
+    # The cell itself carries nothing about its span.
+    assert "span" not in cells[0][1][2]
+    assert "spans" not in cells[0][1][2]
+
+
+def test_set_span_by_key_ships_its_own_op():
+    from nustd.ui.refs import GridRef
+
+    [frame] = _frames(GridRef("g").set_span("hero", 2, 2))
+    assert frame.op == "set_span"
+    assert frame.ref == ("g",)
+    assert frame.payload == {"key": "hero", "cols": 2, "rows": 2}
+    assert _chain(frame) == [("g", "Grid")]
+
+
+def test_set_span_takes_a_child_ref_and_a_computed_key():
+    from nustd.ui.refs import CardRef, GridRef
+
+    grid = GridRef("g")
+    card = CardRef(nu.Str("c") + nu.str(2), parent_ref=grid)
+    [by_ref, by_term] = _frames(grid.set_span(card, 3) >> grid.set_span(nu.Str("c") + nu.str(1), 2))
+    assert by_ref.payload == {"key": "c2", "cols": 3, "rows": 1}
+    assert by_term.payload == {"key": "c1", "cols": 2, "rows": 1}

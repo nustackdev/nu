@@ -220,7 +220,15 @@ def test_row_alone_under_card_alone():
     row = RowRef("r", parent_ref=card, props={"wrap": True})
     [frame] = _frames(TextRef("t", parent_ref=row).set("hi"))
     assert _chain(frame) == [("card", "Card"), ("r", "Row"), ("t", "TextRef")]
-    assert frame.chain[0][2] == {"title": "Hosts", "subtitle": "", "footer": ""}
+    assert frame.chain[0][2] == {
+        "title": "Hosts",
+        "subtitle": "",
+        "caption": "",
+        "variant": "default",
+        "size": "md",
+        "href": "",
+        "target": "_self",
+    }
     assert frame.chain[1][2] == {
         "gap": 4,
         "align": "center",
@@ -438,10 +446,14 @@ def test_every_name_on_main_still_imports(module, names):
     assert mod.__all__ == order
 
 
-def test_core_all_is_unchanged():
+# Added since main: the node lifecycle ops on every Ref (init, hide, display).
+_CORE_ADDED = "OP_DISPLAY OP_HIDE Display Hide Init".split()
+
+
+def test_core_all_is_main_plus_the_lifecycle_ops():
     import nustd.ui.core
 
-    assert sorted(nustd.ui.core.__all__) == sorted(_CORE_ALL_ON_MAIN)
+    assert sorted(nustd.ui.core.__all__) == sorted(_CORE_ALL_ON_MAIN + _CORE_ADDED)
 
 
 def test_old_submodule_paths_still_import():

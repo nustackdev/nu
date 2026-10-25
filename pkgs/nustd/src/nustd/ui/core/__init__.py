@@ -2,7 +2,7 @@
 
 The reusable seam under nustd.ui:
 
-- ``Ref``              -- generic UI Ref base (mount protocol, wire-path resolution)
+- ``Ref``              -- generic UI Ref base (wire-path resolution, node lifecycle)
 - ``Section`` /
   ``SectionRef``       -- shape-based container primitive + substrate ref
 - ``Session`` /
@@ -17,6 +17,9 @@ The reusable seam under nustd.ui:
   ``Write`` /
   ``Append`` /
   ``Remove`` /
+  ``Init`` /
+  ``Hide`` /
+  ``Display`` /
   ``Changed``          -- interactions that flow over a Session on a Ref
 
 A host builds on this core: it binds a ``Session``, declares a page/routing
@@ -26,9 +29,11 @@ targets this core, not any specific host.
 
 from .base import Ref
 from .chains import Chain, boot_chains
-from .interactions import EVENT, Append, Changed, Remove, Send, Write
+from .interactions import EVENT, Append, Changed, Display, Hide, Init, Remove, Send, Write
 from .protocol import (
+    OP_DISPLAY,
     OP_ERROR,
+    OP_HIDE,
     OP_INIT,
     OP_NOTIFY,
     OP_READ,
@@ -44,7 +49,9 @@ from .session import Session, Subscription, WsSession, WsSubscription
 
 __all__ = [
     "EVENT",
+    "OP_DISPLAY",
     "OP_ERROR",
+    "OP_HIDE",
     "OP_INIT",
     "OP_NOTIFY",
     "OP_READ",
@@ -53,7 +60,10 @@ __all__ = [
     "Append",
     "Chain",
     "Changed",
+    "Display",
     "Frame",
+    "Hide",
+    "Init",
     "Ref",
     "Remove",
     "Section",

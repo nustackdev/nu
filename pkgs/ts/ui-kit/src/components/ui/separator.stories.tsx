@@ -42,7 +42,11 @@ export const Matrix: StoryObj = {
 					<div className="mb-3 font-mono text-xs uppercase tracking-widest text-text-muted">
 						labeled
 					</div>
-					<Separator label="or continue with" />
+					<div className="flex flex-col gap-4">
+						<Separator label="or continue with" />
+						<Separator label="labelAlign start" labelAlign="start" />
+						<Separator label="labelAlign end" labelAlign="end" />
+					</div>
 				</div>
 			</div>
 	),

@@ -59,6 +59,9 @@ def test_button_slot_defaults_carry_empty_icon_and_tooltip():
         "disabled": False,
         "icon": "",
         "tooltip": "",
+        "size": "md",
+        "href": "",
+        "target": "_self",
     }
 
 
@@ -74,7 +77,16 @@ def test_button_seeds_its_icon_and_tooltip_on_the_wire():
     [frame] = _frames(handle.set_label("Add"))
     assert _seeded(frame) == (
         "ButtonRef",
-        {"label": "", "variant": "primary", "disabled": False, "icon": "plus", "tooltip": "Add"},
+        {
+            "label": "",
+            "variant": "primary",
+            "disabled": False,
+            "icon": "plus",
+            "tooltip": "Add",
+            "size": "md",
+            "href": "",
+            "target": "_self",
+        },
     )
 
 

@@ -37,7 +37,9 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "OP_DISPLAY",
     "OP_ERROR",
+    "OP_HIDE",
     "OP_INIT",
     "OP_NOTIFY",
     "OP_READ",
@@ -57,6 +59,10 @@ OP_REMOVE = "remove"
 # Chain, no payload: brings a node into being ahead of the first write to
 # it. A boot batch is a run of these.
 OP_INIT = "init"
+# Chain, no payload: take a node off screen with its subtree, and put it
+# back. The chain lets a node nothing wrote yet be created hidden.
+OP_HIDE = "hide"
+OP_DISPLAY = "display"
 
 
 def _op_of(op_or_interaction: object) -> str:

@@ -408,6 +408,90 @@ describe("dispatch", () => {
 	});
 });
 
+describe("visibility", () => {
+	it("hides a node and keeps its props and children", () => {
+		const store = createTreeStore();
+		store.getState().write([step("a", "Card", { title: "T" }), step("b", "TextRef")], { value: "x" });
+		store.getState().dispatch(frame(OPS.hide, ["a"], null, [step("a", "Card", { title: "T" })]));
+		const a = store.getState().getIn(["a"]);
+		expect(a?.hidden).toBe(true);
+		expect(a?.props).toEqual({ title: "T" });
+		expect(store.getState().getIn(["a", "b"])?.props).toEqual({ value: "x" });
+	});
+
+	it("shows it again on display", () => {
+		const store = createTreeStore();
+		store.getState().write([step("a", "TextRef")]);
+		store.getState().dispatch(frame(OPS.hide, ["a"], null, [step("a", "TextRef")]));
+		store.getState().dispatch(frame(OPS.display, ["a"], null, [step("a", "TextRef")]));
+		expect(store.getState().getIn(["a"])?.hidden).toBeUndefined();
+	});
+
+	it("brings a node into being hidden when the hide is the first frame", () => {
+		const store = createTreeStore();
+		store.getState().dispatch(
+			frame(OPS.hide, ["a", "b"], null, [step("a", "Column"), step("b", "TextRef", { value: "seed" })]),
+		);
+		const b = store.getState().getIn(["a", "b"]);
+		expect(b?.type).toBe("TextRef");
+		expect(b?.props).toEqual({ value: "seed" });
+		expect(b?.hidden).toBe(true);
+		expect(store.getState().getIn(["a"])?.hidden).toBeUndefined();
+	});
+
+	it("keeps the flag through prop merges and a type's own write handler", () => {
+		const behaviours: Record<string, Behaviour> = {
+			HeadingRef: {
+				handlers: {
+					write: (ctx, payload) =>
+						ctx.update((props) => {
+							props.label = String(payload);
+						}),
+				},
+			},
+		};
+		const store = createTreeStore({ resolve: (t) => behaviours[t] });
+		store.getState().write([step("h", "HeadingRef"), step("t", "TextRef")]);
+		store.getState().dispatch(frame(OPS.hide, ["h"], null, [step("h", "HeadingRef")]));
+		store.getState().dispatch(frame(OPS.hide, ["h", "t"], null, [step("h", "HeadingRef"), step("t", "TextRef")]));
+		store.getState().dispatch(frame(OPS.write, ["h"], "hello", [step("h", "HeadingRef")]));
+		store.getState().dispatch(
+			frame(OPS.write, ["h", "t"], { value: 1, hidden: false }, [step("h", "HeadingRef"), step("t", "TextRef")]),
+		);
+		expect(store.getState().getIn(["h"])?.hidden).toBe(true);
+		expect(store.getState().getIn(["h"])?.props.label).toBe("hello");
+		expect(store.getState().getIn(["h", "t"])?.hidden).toBe(true);
+	});
+
+	it("never asks a type's handlers", () => {
+		const errors: string[] = [];
+		const hide = vi.fn();
+		const behaviours: Record<string, Behaviour> = { TextRef: { handlers: { hide } } };
+		const store = createTreeStore({ resolve: (t) => behaviours[t], onError: (m) => errors.push(m) });
+		store.getState().write([step("a", "TextRef")]);
+		store.getState().dispatch(frame(OPS.hide, ["a"], null, [step("a", "TextRef")]));
+		expect(hide).not.toHaveBeenCalled();
+		expect(errors).toEqual([]);
+	});
+
+	it("leaves an untouched node's identity alone on a repeat", () => {
+		const store = createTreeStore();
+		store.getState().write([step("a", "TextRef")]);
+		store.getState().dispatch(frame(OPS.hide, ["a"], null, [step("a", "TextRef")]));
+		const root = store.getState().root;
+		store.getState().dispatch(frame(OPS.hide, ["a"], null, [step("a", "TextRef")]));
+		expect(store.getState().root).toBe(root);
+	});
+
+	it("still removes a hidden node", () => {
+		const store = createTreeStore();
+		store.getState().write([step("a", "TextRef")]);
+		store.getState().dispatch(frame(OPS.hide, ["a"], null, [step("a", "TextRef")]));
+		store.getState().dispatch(frame(OPS.remove, ["a"]));
+		expect(store.getState().getIn(["a"])).toBeNull();
+	});
+});
+
 describe("send", () => {
 	it("drops frames until a sender is set, then delivers", () => {
 		const sent: TreeFrame[] = [];

@@ -1,6 +1,7 @@
 // Refs/Grid: the Grid node as a program draws it. Cards of stats and
 // sparklines in equal cells, a gallery that fits as many as the width
-// allows, and charts that take their cell's width.
+// allows, charts that take their cell's width, and a bento of spanning
+// cells that collapses to a stack when the grid narrows.
 
 import type { ChainStep, TreeFrame } from "@nustackdev/ui-core";
 import type { Meta, StoryObj } from "@storybook/react-vite";
@@ -133,6 +134,61 @@ export const Charts: Story = {
 						op: "merge",
 						ref: [root, "line", "chart"],
 						payload: { series: [{ data: [12, 18, 15, 24, 22, 30, 27] }] },
+					},
+				]}
+			/>
+		);
+	},
+};
+
+export const Bento: Story = {
+	render: () => {
+		const root = "grid-bento";
+		const grid = step(root, "Grid", {
+			columns: 4,
+			min_width: 140,
+			gap: 3,
+			align: "stretch",
+			padding: 0,
+			dense: true,
+			spans: {
+				trend: { cols: 2, rows: 2 },
+				split: { cols: 3, rows: 1 },
+				side: { cols: 1, rows: 2 },
+			},
+		});
+		const small = (seg: string, title: string, value: string): ChainStep[][] => [
+			[grid, step(seg, "Card", { title })],
+			[grid, step(seg, "Card"), step("stat", "StatRef", { label: "today", value })],
+		];
+		const trend = step("trend", "Card", { title: "Throughput", subtitle: "2 by 2" });
+		const split = step("split", "Card", { title: "Two thirds", subtitle: "3 wide" });
+		const side = step("side", "Card", { title: "Side", subtitle: "2 tall" });
+		return (
+			<NodeStage
+				root={root}
+				label="columns 4, dense, spans {trend: 2x2, split: 3x1, side: 1x2}; narrow it and the spans clamp, then stack"
+				chains={[
+					[grid, trend, chartStep("chart", "sparkline", { height: 180 })],
+					...small("runs", "Runs", "1,284"),
+					...small("tokens", "Tokens", "842k"),
+					...small("errors", "Errors", "0.9%"),
+					...small("queue", "Queue", "37"),
+					[
+						grid,
+						split,
+						step("note", "TextRef", {
+							value: "A 2/3 + 1/3 split is a 3 wide cell beside a plain one in a 4 column grid.",
+						}),
+					],
+					[grid, side, step("note", "TextRef", { value: "Two rows tall." })],
+					...small("p95", "p95", "182 ms"),
+				]}
+				frames={[
+					{
+						op: "merge",
+						ref: [root, "trend", "chart"],
+						payload: { series: [{ data: [12, 18, 15, 24, 22, 30, 27, 33, 31] }] },
 					},
 				]}
 			/>

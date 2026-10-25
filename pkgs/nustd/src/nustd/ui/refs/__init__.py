@@ -14,10 +14,11 @@ container Refs, and draw nothing a Ref could not.
 Layout under ``refs/``:
 
 - containers/: open-ended children, optional chrome. ``ContainerRef``
-  (base); flow (``ColumnRef``, ``RowRef``, ``GridRef``, ``LineRef``);
-  chrome (``CardRef``, ``BoxRef`` behind the Box, ``TabsRef``,
-  ``ModalRef``, ``AccordionRef``, ``FormRef``, ``FieldsetRef``,
-  ``FieldRef``); disclosure (``CollapsibleRef``, ``SheetRef``); and
+  (base); flow (``ColumnRef``, ``RowRef``); grid (``GridRef``); line
+  (``LineRef``); chrome (``CardRef``, ``BoxRef`` behind the Box,
+  ``TabsRef``, ``ModalRef``, ``AccordionRef``, ``FormRef``,
+  ``FieldsetRef``, ``FieldRef``); disclosure (``CollapsibleRef``,
+  ``SheetRef``); page (``PageSectionRef``, ``NavListRef``); and
   ``ListRef``, whose items are its plain strings and then any child node.
 - leaves/: one thing drawn from props, never children. ``LeafRef`` (base);
   output (``HeadingRef``, ``TextRef``, ``ImageRef``, ``LinkRef``,
@@ -25,6 +26,7 @@ Layout under ``refs/``:
   ``DividerRef``, ``EmptyStateRef``, ``StatRef``, ``ProgressRef``,
   ``GaugeRef``, ``JsonViewerRef``); display (``AvatarRef``,
   ``BreadcrumbRef``, ``SkeletonRef``, ``SpinnerRef``, ``StatusPillRef``);
+  page (``IconRef``, ``SpacerRef``, ``PageLinkRef``, ``NavItemRef``);
   table (``TableRef`` and its row ops); tree (``TreeRef``); input (tab-owned:
   ``ButtonRef``, ``InputRef``, ``ToggleRef``, ..., plus ``MarkdownRef`` and
   ``CodeRef``, read-only by default and editable on request); and chart
@@ -88,6 +90,8 @@ from .containers import (
     ListContainerRef,
     ListRef,
     ModalRef,
+    NavListRef,
+    PageSectionRef,
     RowRef,
     ShapeContainerRef,
     SheetRef,
@@ -116,6 +120,7 @@ from .leaves import (
     HeatmapChart,
     Histogram,
     HtmlRef,
+    IconRef,
     ImageRef,
     InputRef,
     InsertRow,
@@ -125,7 +130,9 @@ from .leaves import (
     LineChart,
     LinkRef,
     MarkdownRef,
+    NavItemRef,
     NumberInputRef,
+    PageLinkRef,
     PieChart,
     ProgressRef,
     RadarChart,
@@ -140,6 +147,7 @@ from .leaves import (
     SkeletonRef,
     SketchRef,
     SliderRef,
+    SpacerRef,
     Sparkline,
     SpinnerRef,
     StatRef,
@@ -173,6 +181,8 @@ from nustd.ui.shapes import (
     Line,
     List,
     Modal,
+    NavList,
+    PageSection,
     Row,
     Sheet,
     Tabs,
@@ -222,6 +232,7 @@ __all__ = [
     "HeatmapChart",
     "Histogram",
     "HtmlRef",
+    "IconRef",
     "ImageRef",
     "InputRef",
     "InsertRow",
@@ -238,8 +249,14 @@ __all__ = [
     "MarkdownRef",
     "Modal",
     "ModalRef",
+    "NavItemRef",
+    "NavList",
+    "NavListRef",
     "NavRef",
     "NumberInputRef",
+    "PageLinkRef",
+    "PageSection",
+    "PageSectionRef",
     "PieChart",
     "ProgressRef",
     "RadarChart",
@@ -262,6 +279,7 @@ __all__ = [
     "SkeletonRef",
     "SketchRef",
     "SliderRef",
+    "SpacerRef",
     "Sparkline",
     "SpinnerRef",
     "StatRef",

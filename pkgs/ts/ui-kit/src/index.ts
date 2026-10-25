@@ -147,9 +147,21 @@ export {
 } from "./components/ui/dropdown-menu";
 export { EmptyState, emptyStateVariants } from "./components/ui/empty-state";
 export { Gauge, gaugeVariants } from "./components/ui/gauge";
-export { Grid, type GridProps } from "./components/ui/grid";
+export {
+	Grid,
+	type GridProps,
+	gridSpan,
+	trackCount,
+	useTrackCount,
+} from "./components/ui/grid";
 export { Heading, headingVariants } from "./components/ui/heading";
 export { Html, type HtmlProps } from "./components/ui/html";
+export {
+	frameVariants as iconFrameVariants,
+	Icon,
+	type IconProps,
+	iconVariants,
+} from "./components/ui/icon";
 export { IconButton, iconButtonVariants } from "./components/ui/icon-button";
 export { Image } from "./components/ui/image";
 export { InlineEdit, type InlineEditProps } from "./components/ui/inline-edit";
@@ -170,6 +182,7 @@ export { NavLink, navLinkVariants } from "./components/ui/nav-link";
 export { NumberInput, numberInputVariants } from "./components/ui/number-input";
 export type { OverflowTooltipProps } from "./components/ui/overflow-tooltip";
 export { OverflowTooltip } from "./components/ui/overflow-tooltip";
+export { PageLink, type PageLinkProps, pageLinkVariants } from "./components/ui/page-link";
 export {
 	Panel,
 	PanelContent,
@@ -311,6 +324,15 @@ export {
 	type TreeProps,
 } from "./components/ui/tree";
 export type { TreeMove, TreeRow, TreeSource } from "./components/ui/tree-model";
+export {
+	type AnchorProps,
+	type AnchorTarget,
+	anchorProps,
+	crossHost,
+	normTarget,
+	resolveHref,
+	sameOrigin,
+} from "./lib/anchor";
 export { registerChartMap } from "./lib/chart/load";
 export { mergeOption } from "./lib/chart/option";
 export { type ChartTokens, chartTheme, readChartTokens } from "./lib/chart/theme";

@@ -15,6 +15,8 @@ from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Changed, Write
 
+from .._vocab import ControlSize, HeadingTone, StatusTone, Target, TextAlign, Tone
+from .._vocab import set_href as _set_href
 from .base import LeafRef
 
 
@@ -80,7 +82,8 @@ class AlertRef(LeafRef):
         return Changed(self)
 
 
-BadgeVariant = Literal["info", "warn", "ok", "danger", "neutral", "dashed"]
+BadgeVariant = Literal["info", "warn", "ok", "danger", "neutral", "dashed", "brand", "secondary"]
+BadgeSize = Literal["sm", "md", "lg"]
 
 
 class BadgeRef(LeafRef):
@@ -88,20 +91,27 @@ class BadgeRef(LeafRef):
 
     Variant maps to the Badge primitive's status tones; `neutral` becomes the
     kit `outline` (transparent bg, muted border). `dashed` is the unfilled
-    chip for a value that is not there, like "empty" or "none".
+    chip for a value that is not there, like "empty" or "none". `brand` is
+    the Afterglow identity chip and `secondary` the Starlight one, for a
+    label that is not a status ("New", "Beta", a plan name).
     """
 
     _wire_type = "BadgeRef"
 
     @classmethod
-    def slot(cls, *, label: str = "", variant: BadgeVariant = "neutral") -> Self:
-        return super().slot(label=label, variant=variant)
+    def slot(
+        cls, *, label: str = "", variant: BadgeVariant = "neutral", size: BadgeSize = "md"
+    ) -> Self:
+        return super().slot(label=label, variant=variant, size=size)
 
     def set_label(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(label=text))
 
     def set_variant(self, name: BadgeVariant | StrArg) -> Nu:
         return Write(self, Dict.of(variant=name))
+
+    def set_size(self, name: BadgeSize | StrArg) -> Nu:
+        return Write(self, Dict.of(size=name))
 
     def set(
         self,
@@ -114,28 +124,28 @@ class BadgeRef(LeafRef):
         return Write(self, Dict.of(**payload))
 
 
-Align = Literal["left", "center", "right"]
-
-
 class DividerRef(LeafRef):
-    """Display-only divider ref. One `write` op carries every mutation."""
+    """Display-only divider ref. One `write` op carries every mutation.
+
+    `align` places the label along the rule.
+    """
 
     _wire_type = "DividerRef"
 
     @classmethod
-    def slot(cls, *, label: str = "", align: Align = "center") -> Self:
+    def slot(cls, *, label: str = "", align: TextAlign = "center") -> Self:
         return super().slot(label=label, align=align)
 
     def set_label(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(label=text))
 
-    def set_align(self, side: Align | StrArg) -> Nu:
+    def set_align(self, side: TextAlign | StrArg) -> Nu:
         return Write(self, Dict.of(align=side))
 
     def set(
         self,
         label: StrArg,
-        align: Align | StrArg = UNSET,
+        align: TextAlign | StrArg = UNSET,
     ) -> Nu:
         payload: dict[str, object] = {"label": label}
         if align is not UNSET:
@@ -150,14 +160,36 @@ class EmptyStateRef(LeafRef):
     """What a region says while it has nothing to show.
 
     `label` is the one line that says what is missing, `description` a smaller
-    line under it. `sm` fits a sidebar, `md` a page section.
+    line under it. `sm` fits a sidebar, `md` a page section. `icon` is a
+    curated lucide name (see `ButtonRef`) drawn above. `action` labels the way
+    out, a small button under the text that `.on_action()` hears; with
+    `action_href` it is a link that looks like that button, and still notifies;
+    `action_target` opens it in this tab or a new one.
     """
 
     _wire_type = "EmptyStateRef"
 
     @classmethod
-    def slot(cls, *, label: str = "", description: str = "", size: EmptySize = "md") -> Self:
-        return super().slot(label=label, description=description, size=size)
+    def slot(
+        cls,
+        *,
+        label: str = "",
+        description: str = "",
+        size: EmptySize = "md",
+        icon: str = "",
+        action: str = "",
+        action_href: str = "",
+        action_target: Target = "_self",
+    ) -> Self:
+        return super().slot(
+            label=label,
+            description=description,
+            size=size,
+            icon=icon,
+            action=action,
+            action_href=action_href,
+            action_target=action_target,
+        )
 
     def set_label(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(label=text))
@@ -168,6 +200,18 @@ class EmptyStateRef(LeafRef):
     def set_size(self, name: EmptySize | StrArg) -> Nu:
         return Write(self, Dict.of(size=name))
 
+    def set_icon(self, name: StrArg) -> Nu:
+        return Write(self, Dict.of(icon=name))
+
+    def set_action(self, label: StrArg, href: StrArg = UNSET, target: StrArg = UNSET) -> Nu:
+        """Relabel the way out; an empty label hides it."""
+        payload: dict[str, object] = {"action": label}
+        if href is not UNSET:
+            payload["action_href"] = href
+        if target is not UNSET:
+            payload["action_target"] = target
+        return Write(self, Dict.of(**payload))
+
     def set(
         self,
         label: StrArg,
@@ -177,6 +221,9 @@ class EmptyStateRef(LeafRef):
         if description is not UNSET:
             payload["description"] = description
         return Write(self, Dict.of(**payload))
+
+    def on_action(self) -> Changed:
+        return Changed(self)
 
 
 GaugeVariant = Literal["neutral", "ok", "warn", "danger"]
@@ -224,17 +271,42 @@ class GaugeRef(LeafRef):
         return Write(self, Dict.of(**payload))
 
 
-Align = Literal["left", "center", "right"]
+HeadingSize = Literal["display", "3xl", "2xl", "xl", "lg"]
 
 
 class HeadingRef(LeafRef):
-    """Display-only heading ref. One `write` op carries every mutation."""
+    """Display-only heading ref. One `write` op carries every mutation.
+
+    `level` is the tag (h1..h4) and, by default, the size. `size` sets the
+    look apart from the tag: `display` is the hero step past h1, so a landing
+    title stays an h1 for the outline while it reads larger. None follows the
+    level. `eyebrow` is a small accent label above, `subtitle` a secondary
+    line under; both take the heading's align.
+    """
 
     _wire_type = "HeadingRef"
 
     @classmethod
-    def slot(cls, *, label: str = "", level: int = 1, align: Align = "left") -> Self:
-        return super().slot(label=label, level=level, align=align)
+    def slot(
+        cls,
+        *,
+        label: str = "",
+        level: int = 1,
+        align: TextAlign = "start",
+        size: HeadingSize | None = None,
+        tone: HeadingTone = "primary",
+        eyebrow: str = "",
+        subtitle: str = "",
+    ) -> Self:
+        return super().slot(
+            label=label,
+            level=level,
+            align=align,
+            size=size,
+            tone=tone,
+            eyebrow=eyebrow,
+            subtitle=subtitle,
+        )
 
     def set_label(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(label=text))
@@ -242,14 +314,26 @@ class HeadingRef(LeafRef):
     def set_level(self, n: IntArg) -> Nu:
         return Write(self, Dict.of(level=n))
 
-    def set_align(self, side: Align | StrArg) -> Nu:
+    def set_align(self, side: TextAlign | StrArg) -> Nu:
         return Write(self, Dict.of(align=side))
+
+    def set_size(self, name: HeadingSize | StrArg | None) -> Nu:
+        return Write(self, Dict.of(size=name))
+
+    def set_tone(self, name: HeadingTone | StrArg) -> Nu:
+        return Write(self, Dict.of(tone=name))
+
+    def set_eyebrow(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(eyebrow=text))
+
+    def set_subtitle(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(subtitle=text))
 
     def set(
         self,
         label: StrArg,
         level: IntArg = UNSET,
-        align: Align | StrArg = UNSET,
+        align: TextAlign | StrArg = UNSET,
     ) -> Nu:
         payload: dict[str, object] = {"label": label}
         if level is not UNSET:
@@ -308,11 +392,18 @@ class HtmlRef(LeafRef):
         return Write(self, Dict.of(**payload))
 
 
-Fit = Literal["contain", "cover", "fill"]
+Fit = Literal["contain", "cover", "fill", "none", "scale-down"]
+Radius = Literal["none", "sm", "md", "lg", "full"]
 
 
 class ImageRef(LeafRef):
-    """Display-only image ref. One `write` op carries every mutation."""
+    """Display-only image ref. One `write` op carries every mutation.
+
+    `radius` is the corner scale; None leaves it to the older bool `rounded`
+    (md when set). `aspect` holds the box to a ratio, spelled "16/9", "1:1"
+    or a bare number like "1.5"; with one the image takes its container's
+    width unless `width` says otherwise.
+    """
 
     _wire_type = "ImageRef"
 
@@ -326,6 +417,8 @@ class ImageRef(LeafRef):
         width: int | None = None,
         height: int | None = None,
         rounded: bool = False,
+        radius: Radius | None = None,
+        aspect: str = "",
     ) -> Self:
         return super().slot(
             src=src,
@@ -334,6 +427,8 @@ class ImageRef(LeafRef):
             width=width,
             height=height,
             rounded=rounded,
+            radius=radius,
+            aspect=aspect,
         )
 
     def set_src(self, url: StrArg) -> Nu:
@@ -354,6 +449,12 @@ class ImageRef(LeafRef):
 
     def set_rounded(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(rounded=flag))
+
+    def set_radius(self, name: Radius | StrArg | None) -> Nu:
+        return Write(self, Dict.of(radius=name))
+
+    def set_aspect(self, ratio: StrArg) -> Nu:
+        return Write(self, Dict.of(aspect=ratio))
 
     def set(
         self,
@@ -447,11 +548,19 @@ class JsonViewerRef(LeafRef):
         return Write(self, Dict.of(**payload))
 
 
-Target = Literal["_self", "_blank"]
+LinkVariant = Literal["text", "muted", "button", "primary", "secondary", "outline", "ghost"]
 
 
 class LinkRef(LeafRef):
-    """Display-only link ref. One `write` op carries every mutation."""
+    """Display-only link ref. One `write` op carries every mutation.
+
+    `variant` is the look. `text` is a link in prose and `muted` the same in
+    the secondary ink; both run inline in a Line. `button` (the primary look),
+    `primary`, `secondary`, `outline` and `ghost` draw it as a button that is
+    still a real anchor, sized by `size`: a call to action that navigates.
+    `icon` is a curated lucide name (see `ButtonRef`) drawn before the label,
+    `arrow` a trailing arrow; the arrow replaces the external glyph.
+    """
 
     _wire_type = "LinkRef"
 
@@ -463,11 +572,25 @@ class LinkRef(LeafRef):
         label: str = "",
         target: Target = "_self",
         external: bool | None = None,
+        variant: LinkVariant = "text",
+        icon: str = "",
+        arrow: bool = False,
+        size: ControlSize = "md",
     ) -> Self:
-        return super().slot(href=href, label=label, target=target, external=external)
+        return super().slot(
+            href=href,
+            label=label,
+            target=target,
+            external=external,
+            variant=variant,
+            icon=icon,
+            arrow=arrow,
+            size=size,
+        )
 
-    def set_href(self, url: StrArg) -> Nu:
-        return Write(self, Dict.of(href=url))
+    def set_href(self, url: StrArg, target: Target | StrArg = UNSET) -> Nu:
+        """Point the link at ``url``; ``target`` too when given, else it keeps its own."""
+        return _set_href(self, url, target)
 
     def set_label(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(label=text))
@@ -477,6 +600,18 @@ class LinkRef(LeafRef):
 
     def set_external(self, flag: BoolArg | None) -> Nu:
         return Write(self, Dict.of(external=flag))
+
+    def set_variant(self, name: LinkVariant | StrArg) -> Nu:
+        return Write(self, Dict.of(variant=name))
+
+    def set_icon(self, name: StrArg) -> Nu:
+        return Write(self, Dict.of(icon=name))
+
+    def set_arrow(self, flag: BoolArg) -> Nu:
+        return Write(self, Dict.of(arrow=flag))
+
+    def set_size(self, name: ControlSize | StrArg) -> Nu:
+        return Write(self, Dict.of(size=name))
 
     def set(
         self,
@@ -585,9 +720,6 @@ class StatRef(LeafRef):
         return Write(self, Dict.of(**payload))
 
 
-Tone = Literal["neutral", "info", "ok", "warn", "danger"]
-
-
 class StatusDotRef(LeafRef):
     """A tone dot for a live state (connected, running, failing).
 
@@ -599,7 +731,7 @@ class StatusDotRef(LeafRef):
     _wire_type = "StatusDotRef"
 
     @classmethod
-    def slot(cls, *, tone: Tone = "neutral", label: str = "", pulse: bool = False) -> Self:
+    def slot(cls, *, tone: StatusTone = "neutral", label: str = "", pulse: bool = False) -> Self:
         return super().slot(tone=tone, label=label, pulse=pulse)
 
     def set_label(self, text: StrArg) -> Nu:
@@ -610,7 +742,7 @@ class StatusDotRef(LeafRef):
 
     def set(
         self,
-        tone: Tone | StrArg,
+        tone: StatusTone | StrArg,
         label: StrArg = UNSET,
         pulse: BoolArg = UNSET,
     ) -> Nu:
@@ -705,17 +837,69 @@ class ShortcutRef(LeafRef):
         return Write(self, Dict.of(**payload))
 
 
+TextSize = Literal["xs", "sm", "base", "lg", "xl"]
+TextWeight = Literal["regular", "medium", "semibold", "bold"]
+
+
 class TextRef(LeafRef):
-    """Display-only string ref. Body copy."""
+    """Display-only string ref. Body copy.
+
+    `tone` is the ink: `secondary` and `muted` step back for a caption or a
+    hint, `accent` and the status tones call a line out. `lines` clamps the
+    paragraph: 0 wraps freely, 1 is one line cut with an ellipsis, n stops
+    after n lines. In a Line the text is a run that keeps the Line's type
+    where it sets nothing of its own.
+
+    Only the style props that differ from the default are seeded, so the
+    chain of a plain body text, the most common node on a page, stays
+    ``{value}``. The browser reads a missing one as its default.
+    """
 
     _wire_type = "TextRef"
 
     @classmethod
-    def slot(cls, *, value: str = "") -> Self:
-        return super().slot(value=value)
+    def slot(
+        cls,
+        *,
+        value: str = "",
+        tone: Tone = "primary",
+        size: TextSize = "base",
+        weight: TextWeight = "regular",
+        align: TextAlign = "start",
+        mono: bool = False,
+        lines: int = 0,
+    ) -> Self:
+        style = {
+            "tone": (tone, "primary"),
+            "size": (size, "base"),
+            "weight": (weight, "regular"),
+            "align": (align, "start"),
+            "mono": (mono, False),
+            "lines": (lines, 0),
+        }
+        props = {k: v for k, (v, default) in style.items() if v != default}
+        return super().slot(value=value, **props)
 
     def set(self, value: StrArg) -> Nu:
         return Write(self, value)
+
+    def set_tone(self, name: Tone | StrArg) -> Nu:
+        return Write(self, Dict.of(tone=name))
+
+    def set_size(self, name: TextSize | StrArg) -> Nu:
+        return Write(self, Dict.of(size=name))
+
+    def set_weight(self, name: TextWeight | StrArg) -> Nu:
+        return Write(self, Dict.of(weight=name))
+
+    def set_align(self, side: TextAlign | StrArg) -> Nu:
+        return Write(self, Dict.of(align=side))
+
+    def set_mono(self, flag: BoolArg) -> Nu:
+        return Write(self, Dict.of(mono=flag))
+
+    def set_lines(self, n: IntArg) -> Nu:
+        return Write(self, Dict.of(lines=n))
 
 
 __all__ = [

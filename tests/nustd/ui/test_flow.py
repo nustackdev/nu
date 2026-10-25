@@ -98,7 +98,7 @@ def _deep_card() -> CardRef:
     return CardRef("card", parent_ref=inner, props={"title": "declared"})
 
 
-@pytest.mark.parametrize("op", ["set_title", "set_subtitle", "set_footer"])
+@pytest.mark.parametrize("op", ["set_title", "set_subtitle", "set_caption"])
 def test_card_chrome_ships_the_chain(op):
     (frame,) = _run(getattr(_deep_card(), op)("hello"))
     assert frame.op == op
@@ -109,7 +109,15 @@ def test_card_chrome_ships_the_chain(op):
         ("inner", "Column"),
         ("card", "Card"),
     ]
-    assert frame.chain[-1][2] == {"title": "declared", "subtitle": "", "footer": ""}
+    assert frame.chain[-1][2] == {
+        "title": "declared",
+        "subtitle": "",
+        "caption": "",
+        "variant": "default",
+        "size": "md",
+        "href": "",
+        "target": "_self",
+    }
 
 
 def _deep_tabs() -> TabsRef:

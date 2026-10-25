@@ -19,7 +19,7 @@ export const Matrix: StoryObj = {
 						radius
 					</div>
 					<div className="grid grid-cols-4 gap-3">
-						{(["none", "sm", "md", "lg"] as const).map((r) => (
+						{(["none", "sm", "md", "lg", "full"] as const).map((r) => (
 							<div key={r}>
 								<Image
 									src={SRC}

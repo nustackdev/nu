@@ -1,4 +1,4 @@
-"""Structural + wire tests for nudle Refs — no browser required.
+"""Structural + wire tests for nudle Refs, no browser required.
 
 nudle renders in a browser, but its Ref layer is browser-independent and IS
 testable here:
@@ -7,7 +7,7 @@ testable here:
   pure structure;
 - ``with_children`` survival (metadata riding a tree rewrite) is pure structure;
 - wire-path resolution + frame emission run through ``nu.arun`` against a *fake*
-  ``WsSession`` that just records the ``Frame`` it is handed — no websocket,
+  ``WsSession`` that just records the ``Frame`` it is handed, no websocket,
   no browser.
 
 Only the browser-side rendering is out of reach, and the Ref layer never touches
@@ -439,7 +439,7 @@ def _mount(widget_cls):
 @pytest.mark.parametrize("widget_cls,mod", _SET_WIDGETS, ids=[m for _, m in _SET_WIDGETS])
 def test_widget_set_emits_write_frame(widget_cls, mod):
     # Widgets differ in payload shape (bare value vs a props dict), but every
-    # one must resolve the same wire path and emit exactly one write frame —
+    # one must resolve the same wire path and emit exactly one write frame:
     # that is the ref-layer contract this sweep pins.
     handle = _mount(widget_cls)
     sess = _RecordingSession()
@@ -464,7 +464,7 @@ def test_input_widget_on_change_returns_subscription(widget_cls, mod):
 
 def test_widget_sweep_is_non_empty():
     # guard: if discovery silently returns nothing, the parametrized tests
-    # would vacuously pass — pin that we actually cover a fleet of widgets.
+    # would vacuously pass; pin that we actually cover a fleet of widgets.
     assert len(_SET_WIDGETS) >= 25
     assert len(_CHANGED_WIDGETS) >= 8
 
@@ -514,7 +514,7 @@ def test_shipped_ref_sweep_is_non_empty():
 @pytest.mark.parametrize("cls", _SHIPPED, ids=[c.__name__ for c in _SHIPPED])
 def test_shipped_ref_declares_its_own_wire_type(cls):
     # The wire type is inherited like any class attribute now, so a ref that
-    # forgets to declare one does not fail loudly — it silently renders as
+    # forgets to declare one does not fail loudly, it silently renders as
     # whatever its parent renders as. This sweep is what catches that.
     from nustd.ui.refs.leaves.chart import Chart
 
@@ -627,7 +627,15 @@ def test_card_set_title_emits_frame():
         ("card", "Page"),
         ("card", "Card"),
     ]
-    assert sess.frames[0].chain[-1][2] == {"title": "", "subtitle": "", "footer": ""}
+    assert sess.frames[0].chain[-1][2] == {
+        "title": "",
+        "subtitle": "",
+        "caption": "",
+        "variant": "default",
+        "size": "md",
+        "href": "",
+        "target": "_self",
+    }
 
 
 def test_table_append_emits_frame():
@@ -664,7 +672,15 @@ def test_empty_state_seeds_chrome_and_merges_writes():
     [frame] = _frames(handle.set("No planes yet", description="Create one to start"))
     assert frame.chain[-1][1:] == (
         "EmptyStateRef",
-        {"label": "", "description": "", "size": "md"},
+        {
+            "label": "",
+            "description": "",
+            "size": "md",
+            "icon": "",
+            "action": "",
+            "action_href": "",
+            "action_target": "_self",
+        },
     )
     assert frame.payload == {"label": "No planes yet", "description": "Create one to start"}
     assert _frames(handle.set_size("sm"))[0].payload == {"size": "sm"}

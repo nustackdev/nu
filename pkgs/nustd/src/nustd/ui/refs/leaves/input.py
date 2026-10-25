@@ -18,6 +18,8 @@ from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Changed, Write
 
+from .._vocab import ControlSize, Target
+from .._vocab import set_href as _set_href
 from .base import LeafRef
 
 
@@ -29,27 +31,40 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 
-Variant = Literal["primary", "secondary", "ghost", "soft", "danger"]
+Variant = Literal["primary", "secondary", "outline", "ghost", "soft", "danger", "link"]
 
 
 class ButtonRef(LeafRef):
     """Click trigger; subscribe via `.on_click()`.
+
+    `size` runs 20, 24, 32 and 40 px tall, the icon-only square too. `link`
+    is the text-link look on a button. With `href` the button is a real
+    anchor wearing the button look, so cmd-click opens a tab and a host that
+    routes its own links routes this one; a click still reaches `.on_click()`.
+    For a link that should read as one, `LinkRef` takes button looks too.
 
     `icon` names a lucide icon in kebab case, drawn before the label. With an
     empty label the button draws as a square icon button, named for screen
     readers by `tooltip` (or the icon name when there is none). `tooltip` is
     the hover hint, shown whenever it is set.
 
-    The kit ships a curated set, not all of lucide: plus, minus, x, check,
-    play, pause, square, skip-forward, refresh-cw, rotate-ccw, undo-2, redo-2,
-    search, filter, settings, sliders-horizontal, more-horizontal,
-    more-vertical, trash-2, pencil, copy, save, download, upload, send, share-2,
-    external-link, link, chevron-left, chevron-right, chevron-up, chevron-down,
-    arrow-left, arrow-right, arrow-up, arrow-down, maximize-2, minimize-2,
-    info, circle-help, triangle-alert, bell, star, heart, bookmark, pin, eye,
-    eye-off, lock, unlock, sun, moon, sparkles, zap, bold, italic, underline,
-    code, terminal, wrap-text, list, layout-grid, file, file-text, folder,
-    home. An unknown name draws the label alone.
+    The kit ships a curated set, not all of lucide (the same names every Ref
+    with an `icon` takes): plus, minus, x, check, play, pause, square,
+    skip-forward, refresh-cw, rotate-ccw, undo-2, redo-2, search, filter,
+    settings, sliders-horizontal, more-horizontal, more-vertical, trash-2,
+    pencil, copy, save, download, upload, send, share-2, external-link, link,
+    chevron-left, chevron-right, chevron-up, chevron-down, arrow-left,
+    arrow-right, arrow-up, arrow-down, maximize-2, minimize-2, info,
+    circle-help, triangle-alert, bell, star, heart, bookmark, pin, eye, eye-off,
+    lock, unlock, sun, moon, sparkles, zap, bold, italic, underline, code,
+    terminal, wrap-text, list, layout-grid, file, file-text, folder, home,
+    users, user, calendar, clock, chart-column, chart-line, chart-pie, activity,
+    gauge, database, server, cpu, cloud, globe, mail, message-square, book-open,
+    rocket, shield, shield-check, package, layers, puzzle, wrench, workflow,
+    git-branch, inbox, tag, flag, target, trending-up, trending-down,
+    circle-check, circle-x, circle-alert, lightbulb, compass, image, archive,
+    bot, brain, layout-dashboard, folder-open, panel-left, menu. An unknown name
+    draws the label alone.
     """
 
     _wire_type = "ButtonRef"
@@ -63,6 +78,9 @@ class ButtonRef(LeafRef):
         disabled: bool = False,
         icon: str = "",
         tooltip: str = "",
+        size: ControlSize = "md",
+        href: str = "",
+        target: Target = "_self",
     ) -> Self:
         return super().slot(
             label=label,
@@ -70,6 +88,9 @@ class ButtonRef(LeafRef):
             disabled=disabled,
             icon=icon,
             tooltip=tooltip,
+            size=size,
+            href=href,
+            target=target,
         )
 
     def on_click(self) -> Changed:
@@ -89,6 +110,13 @@ class ButtonRef(LeafRef):
 
     def set_tooltip(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(tooltip=text))
+
+    def set_size(self, name: ControlSize | StrArg) -> Nu:
+        return Write(self, Dict.of(size=name))
+
+    def set_href(self, url: StrArg, target: Target | StrArg = UNSET) -> Nu:
+        """Point the button somewhere; an empty url makes it a plain trigger again."""
+        return _set_href(self, url, target)
 
     def set(
         self,

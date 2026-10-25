@@ -29,10 +29,15 @@ __all__ = ["NavRef", "TitleRef"]
 
 
 class NavRef(LeafRef):
-    """Bound to window.history + window.location. Index-level structural Ref.
+    """Bound to the page's location. Index-level structural Ref.
 
-    Bidirectional: host writes manipulate window.history; user navigation
-    (link clicks, back/forward) ships a `notify` whose payload is the new URI.
+    Bidirectional: host writes move the page; a move the host did not ask
+    for (back/forward, or a route change under a host router) ships a
+    `notify` whose payload is the new URI.
+
+    The browser moves through its active navigator: plain window.history by
+    default, or the router of a host that installed its own (the kit's
+    ``setNavigator``), so a write moves whatever that host draws.
 
     API for host code:
         nav.set(uri)            -- push a new URI onto history
@@ -77,7 +82,7 @@ class TitleRef(LeafRef):
     Write-only from host. The browser-side slice writes assignments
     directly to document.title; it is not a body slot and is not
     rendered into the visible tree. Slot-level `default` and `suffix`
-    seed the browser on mount.
+    seed the browser on init.
     """
 
     _wire_type = "TitleRef"

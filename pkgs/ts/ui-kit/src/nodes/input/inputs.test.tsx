@@ -88,6 +88,48 @@ describe("ButtonRef", () => {
 		dispatch(OPS.write, { label: "", icon: "play", tooltip: "Run" });
 		expect(iconButton()?.getAttribute("aria-label")).toBe("Run");
 	});
+
+	it("takes the outline and link looks and a size", () => {
+		mount("ButtonRef", { label: "More", variant: "outline", size: "lg" });
+		expect(slot("button")?.className).toContain("border-border-default");
+		expect(slot("button")?.className).toContain("h-10");
+		dispatch(OPS.write, { variant: "link" });
+		expect(slot("button")?.className).toContain("hover:underline");
+	});
+
+	it("sizes an icon-only button", () => {
+		mount("ButtonRef", { label: "", icon: "x", size: "sm" });
+		expect(slot("icon-button")?.className).toContain("size-6");
+	});
+
+	it("is a real anchor with an href, and a click still notifies", () => {
+		mount("ButtonRef", { label: "Docs", href: "/docs", target: "_blank", variant: "secondary" });
+		const a = slot("button");
+		expect(a?.tagName).toBe("A");
+		expect(a?.getAttribute("href")).toBe("/docs");
+		expect(a?.getAttribute("rel")).toBe("noopener noreferrer");
+		expect(a?.className).toContain("bg-bg-elevated");
+		// jsdom cannot navigate; the notify is what is under test.
+		host.addEventListener("click", (e) => e.preventDefault());
+		act(() => a?.click());
+		expect(sent.map((f) => f.op)).toEqual([OPS.notify]);
+	});
+
+	it("drops the href of a disabled link and sends nothing", () => {
+		mount("ButtonRef", { label: "Docs", href: "/docs", disabled: true });
+		const a = slot("button");
+		expect(a?.hasAttribute("href")).toBe(false);
+		expect(a?.getAttribute("aria-disabled")).toBe("true");
+		act(() => a?.click());
+		expect(sent).toEqual([]);
+	});
+
+	it("makes an icon-only link an anchor too", () => {
+		mount("ButtonRef", { label: "", icon: "external-link", href: "/x" });
+		const a = slot("icon-button");
+		expect(a?.tagName).toBe("A");
+		expect(a?.getAttribute("aria-label")).toBe("external-link");
+	});
 });
 
 describe("ToggleRef", () => {
