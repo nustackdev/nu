@@ -6,7 +6,7 @@
 - **nustd** (fabrics) — 0.6.7
 - **nudle** — 0.1.10
 - **ui-core** — 0.2.2
-- **ui-kit** — 0.3.5
+- **ui-kit** — 0.3.6
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
