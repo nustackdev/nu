@@ -1,6 +1,6 @@
 """Disclosure Shapes -- Collapsible and Sheet.
 
-Each is a Section over its container Ref (``nustd.ui.refs.containers.disclosure``):
+Each is a Section over its container Ref (``nustd.ui.refs.collections.disclosure``):
 the Ref carries ``set()``, ``on_change()``, the slot defaults and the wire
 type, and ``slot(**props)`` forwards to it. Declare the body as slots on a
 subclass and drive open state off the bound Ref (``page.details.set(open=True)``).
@@ -9,7 +9,7 @@ subclass and drive open state off the bound Ref (``page.details.set(open=True)``
 from __future__ import annotations
 
 from nustd.ui.core import Section
-from nustd.ui.refs.containers.disclosure import CollapsibleRef, SheetRef
+from nustd.ui.refs.collections.disclosure import CollapsibleRef, SheetRef
 
 
 __all__ = ["Collapsible", "Sheet"]
@@ -23,7 +23,7 @@ class Collapsible(Section):
         class Details(nustd.ui.Collapsible):
             hosts = HostsCard.slot()
 
-        class Home(nustd.ui.Page):
+        class Home(nustd.ui.Column):
             details = Details.slot(title="Details", open=True)
 
     Refs alone, no Shape::
@@ -43,7 +43,7 @@ class Sheet(Section):
         class Inspector(nustd.ui.Sheet):
             form = EditForm.slot()
 
-        class Home(nustd.ui.Page):
+        class Home(nustd.ui.Column):
             inspector = Inspector.slot(title="Edit host", side="right")
 
         Home.inspector.set(open=True)

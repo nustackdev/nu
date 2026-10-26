@@ -1,6 +1,6 @@
-"""Kept for old import paths: the layout names, now in ``containers`` and ``nustd.ui.shapes``."""
+"""Kept for old import paths: the layout names, now in ``collections`` and ``nustd.ui.shapes``."""
 
-from nustd.ui.refs.containers.chrome import (
+from nustd.ui.refs.collections.chrome import (
     AccordionRef,
     CardRef,
     FieldRef,

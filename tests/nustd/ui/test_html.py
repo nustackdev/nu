@@ -12,8 +12,8 @@ import asyncio
 import pytest
 
 import nu
-from nu import Context
-from nustd.ui import HtmlRef, Index, Page, Row, Session
+from nu import Context, Shape
+from nustd.ui import Column, HtmlRef, Row, Session
 from nustd.ui.refs import LeafRef, TextRef
 
 
@@ -29,10 +29,10 @@ class _RecordingSession:
 
 
 def _mount(**props):
-    """A fresh Index -> Page with an HtmlRef at `.page.sec.w`; returns the handle."""
+    """A fresh Shape -> Column with an HtmlRef at `.page.sec.w`; returns the handle."""
     sec = type("HSec", (Row,), {"w": HtmlRef.slot(**props)})
-    page = type("HPage", (Page,), {"sec": sec.slot()})
-    app = type("HApp", (Index,), {"page": page.slot("/")})
+    page = type("HPage", (Column,), {"sec": sec.slot()})
+    app = type("HApp", (Shape,), {"page": page.slot()})
     return app.page.sec.w
 
 

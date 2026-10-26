@@ -8,12 +8,12 @@ class Counter(nu.Shape):
     value = nustd.kv.IntRef.slot()
 
 
-class Dashboard(nustd.ui.Page):
+class Dashboard(nustd.ui.Container):
     count = nustd.ui.StatRef.slot(label="Count")
 
 
-class App(nustd.ui.Index):
-    home = Dashboard.slot("/")
+class App(nu.Shape):
+    home = Dashboard.slot(size="panel")
 
 
 # reactive wire: whenever `value` changes, mirror it into `count`
@@ -29,7 +29,7 @@ tick = Counter.value.init(0) >> nu.ForeverDo(Counter.value.inc() >> nu.Delay(1.0
 app = nu.With(
     nustd.kv.rocksdb_navigator(".dbcounter"),
     body=nu.ParallelAsync(
-        nustd.ui.serve(App, nustd.kv.auto_flow_atomic(ui)),
+        nustd.ui.serve(nustd.ui.boot(App.home) >> nustd.kv.auto_flow_atomic(ui)),
         nustd.kv.auto_flow_atomic(tick),
     ),
 )

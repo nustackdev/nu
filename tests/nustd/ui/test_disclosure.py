@@ -18,6 +18,7 @@ import nu
 from nu import Context
 from nustd.ui import Session
 from nustd.ui.core.base import _wire_type_of
+from nustd.ui.core.chains import boot_chains
 from nustd.ui.core.interactions import Changed
 
 
@@ -92,16 +93,15 @@ def test_collapsible_on_change_is_a_changed():
 
 
 def test_collapsible_boot_chain_on_a_page():
-    from nustd.ui import Collapsible, TextRef
-    from nustd.ui.nudle import Page
+    from nustd.ui import Collapsible, Column, TextRef
 
     class Details(Collapsible):
         note = TextRef.slot(value="inside")
 
-    class Home(Page):
+    class Home(Column):
         details = Details.slot(title="Details", open=True)
 
-    chains = Home._boot_chains()
+    chains = boot_chains((), Home)
     assert [[lvl[:2] for lvl in c] for c in chains if c[0][0] == "details"] == [
         [("details", "Collapsible")],
         [("details", "Collapsible"), ("note", "TextRef")],
@@ -111,22 +111,22 @@ def test_collapsible_boot_chain_on_a_page():
 
 
 def test_collapsible_shape_handle_drives_open_state():
-    from nustd.ui import Collapsible, TextRef
-    from nustd.ui.nudle import Index, Page
+    from nu import Shape
+    from nustd.ui import Collapsible, Column, TextRef
 
     class Details(Collapsible):
         note = TextRef.slot()
 
-    class Home(Page):
+    class Home(Column):
         details = Details.slot(title="Details")
 
-    class App(Index):
-        home = Home.slot("/")
+    class App(Shape):
+        home = Home.slot()
 
     [opened, wrote] = _frames(App.home.details.set(open=True) >> App.home.details.note.set("x"))
     assert opened.ref == ("home", "details")
     assert opened.payload == {"open": True}
-    assert _chain(wrote) == [("home", "Page"), ("details", "Collapsible"), ("note", "TextRef")]
+    assert _chain(wrote) == [("home", "Column"), ("details", "Collapsible"), ("note", "TextRef")]
 
 
 def test_collapsible_alone_holds_children():
@@ -218,8 +218,7 @@ def test_sheet_alone_under_a_column():
 
 
 def test_sheet_boot_chain_on_a_page():
-    from nustd.ui import ButtonRef, Form, InputRef, Sheet
-    from nustd.ui.nudle import Page
+    from nustd.ui import ButtonRef, Column, Form, InputRef, Sheet
 
     class EditForm(Form):
         name = InputRef.slot()
@@ -228,10 +227,10 @@ def test_sheet_boot_chain_on_a_page():
     class Inspector(Sheet):
         form = EditForm.slot()
 
-    class Home(Page):
+    class Home(Column):
         inspector = Inspector.slot(title="Edit host", open=True)
 
-    chains = [c for c in Home._boot_chains() if c[0][0] == "inspector"]
+    chains = [c for c in boot_chains((), Home) if c[0][0] == "inspector"]
     assert [[lvl[:2] for lvl in c] for c in chains] == [
         [("inspector", "Sheet")],
         [("inspector", "Sheet"), ("form", "Form")],

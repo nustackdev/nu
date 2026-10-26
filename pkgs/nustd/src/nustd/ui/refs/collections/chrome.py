@@ -1,7 +1,7 @@
 """Chrome containers -- Refs for the boxes that frame their children.
 
 Card, Box (``BoxRef``), Tabs, Modal, Accordion, Form, Fieldset and
-Field. Each is a ``ContainerRef``: children are open-ended, and the chrome
+Field. Each is a ``CollectionRef``: children are open-ended, and the chrome
 the box carries of its own (a Card's title, a Tabs' active tab, a Field's
 label) is props seeded by ``slot()`` and driven by ``set_*``. The Shapes over
 them live in ``nustd.ui.shapes.chrome``.
@@ -28,7 +28,7 @@ from nustd.ui.core.interactions import Changed, Send, Write
 
 from ..vocab import Align, Target
 from ..vocab import set_href as _set_href
-from .base import DictContainerRef, ShapeContainerRef
+from .base import DictCollectionRef, ShapeCollectionRef
 from .named import actions_ref, footer_ref, media_ref
 
 
@@ -75,7 +75,7 @@ def _normalize_open(ids: object) -> list[str]:
     return [str(x) for x in ids if x is not None]
 
 
-class AccordionRef(DictContainerRef):
+class AccordionRef(DictCollectionRef):
     """Stack of collapsible sections, each body the child at the section's id.
 
     The tab owns open state, the server owns the section list.
@@ -136,7 +136,7 @@ CardVariant = Literal["default", "elevated", "sunken", "outline"]
 CardSize = Literal["sm", "md", "lg"]
 
 
-class CardRef(DictContainerRef):
+class CardRef(DictCollectionRef):
     """Card-styled container: media, a header with actions, the body, a footer.
 
     Three child keys are the card's own places, not body: ``media`` draws
@@ -223,9 +223,9 @@ Gap = Literal["none", "sm", "md", "lg"]
 
 
 # Backs the ``Box`` Shape and draws as the browser's "Box" node.
-# It cannot be called ContainerRef: that name is the base every container
+# It cannot be called CollectionRef: that name is the base every container
 # Ref subclasses, so the Ref behind this one box is BoxRef.
-class BoxRef(DictContainerRef):
+class BoxRef(DictCollectionRef):
     """Styled card-like box with an optional title. Pin chrome on slot().
 
     ``background`` is the ground: ``muted`` the hover wash, ``sunken`` a well,
@@ -262,7 +262,7 @@ class BoxRef(DictContainerRef):
         return Write(self, Dict.of(title=text))
 
 
-class FieldRef(ShapeContainerRef):
+class FieldRef(ShapeCollectionRef):
     """Label + one child input + help / error text."""
 
     _wire_type = "Field"
@@ -294,7 +294,7 @@ class FieldRef(ShapeContainerRef):
 FieldsetGap = Literal["sm", "md", "lg"]
 
 
-class FieldsetRef(DictContainerRef):
+class FieldsetRef(DictCollectionRef):
     """Grouped fields with a legend. Display-only, server-owned."""
 
     _wire_type = "Fieldset"
@@ -321,7 +321,7 @@ class FieldsetRef(DictContainerRef):
         return Write(self, Dict.of(disabled=flag))
 
 
-class FormRef(DictContainerRef):
+class FormRef(DictCollectionRef):
     """Semantic form wrapper. Pin chrome on slot(); submit lives on a child ButtonRef."""
 
     _wire_type = "Form"
@@ -343,7 +343,7 @@ class FormRef(DictContainerRef):
         return Write(self, Dict.of(title=text))
 
 
-class ModalRef(DictContainerRef):
+class ModalRef(DictCollectionRef):
     """Dialog overlay. Open vs closed is the thing it carries, so it has a `set()`."""
 
     _wire_type = "Modal"
@@ -419,7 +419,7 @@ class _SetActive(Send):
 TabsVariant = Literal["line", "pill", "segmented"]
 
 
-class TabsRef(DictContainerRef):
+class TabsRef(DictCollectionRef):
     """Tab strip plus active body. A tab's body is the child at the tab's id.
 
     ``variant`` is the strip: ``line`` underlines the active tab across a full

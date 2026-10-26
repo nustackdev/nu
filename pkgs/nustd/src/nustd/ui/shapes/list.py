@@ -13,7 +13,7 @@ chrome and the wire type come from ``ListRef``.
 from __future__ import annotations
 
 from nustd.ui.core import Section
-from nustd.ui.refs.containers.list import ListRef
+from nustd.ui.refs.collections.list import ListRef
 
 
 __all__ = ["List"]

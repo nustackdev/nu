@@ -16,6 +16,7 @@ import nu
 from nu import Context
 from nustd.ui import Session
 from nustd.ui.core.base import _wire_type_of
+from nustd.ui.core.chains import boot_chains
 
 
 class _RecordingSession:
@@ -49,9 +50,9 @@ DEFAULTS = {
 
 def test_grid_is_a_container_with_its_own_wire_type():
     from nustd.ui import Grid, GridRef
-    from nustd.ui.refs import ContainerRef
+    from nustd.ui.refs import CollectionRef
 
-    assert issubclass(GridRef, ContainerRef)
+    assert issubclass(GridRef, CollectionRef)
     assert GridRef._wire_type == "Grid"
     assert Grid._ref_cls is GridRef
     assert "_wire_type" not in vars(Grid)
@@ -94,18 +95,17 @@ def test_shape_slot_forwards_to_the_ref():
 
 
 def test_boot_chains_of_a_page_with_a_grid_of_cards():
-    from nustd.ui import CardRef, Grid
-    from nustd.ui.nudle import Page
+    from nustd.ui import CardRef, Column, Grid
 
     class Stats(Grid):
         users = CardRef.slot(title="Users")
         jobs = CardRef.slot(title="Jobs")
         errors = CardRef.slot(title="Errors")
 
-    class Home(Page):
+    class Home(Column):
         stats = Stats.slot(columns=3, gap=3)
 
-    chains = Home._boot_chains()
+    chains = boot_chains((), Home)
     stats = [c for c in chains if c[0][0] == "stats"]
     assert [[lvl[:2] for lvl in c] for c in stats] == [
         [("stats", "Grid")],
@@ -179,18 +179,17 @@ def test_a_span_under_one_raises():
 
 
 def test_a_bento_shape_spans_by_slot_name():
-    from nustd.ui import CardRef, Grid
-    from nustd.ui.nudle import Page
+    from nustd.ui import CardRef, Column, Grid
 
     class Bento(Grid):
         revenue = CardRef.slot(title="Revenue")
         users = CardRef.slot(title="Users")
         jobs = CardRef.slot(title="Jobs")
 
-    class Home(Page):
+    class Home(Column):
         bento = Bento.slot(columns=3, dense=True, spans={"revenue": (2, 2)})
 
-    [grid, *cells] = [c for c in Home._boot_chains() if c[0][0] == "bento"]
+    [grid, *cells] = [c for c in boot_chains((), Home) if c[0][0] == "bento"]
     assert grid[0][2]["spans"] == {"revenue": {"cols": 2, "rows": 2}}
     assert grid[0][2]["dense"] is True
     # The cell itself carries nothing about its span.

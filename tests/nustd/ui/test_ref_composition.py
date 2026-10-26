@@ -22,10 +22,10 @@ import pytest
 
 import nu
 import nustd
-from nu import Context
-from nustd.ui import Session
+from nu import Context, Shape
+from nustd.ui import Column, Session
 from nustd.ui.core import SectionRef
-from nustd.ui.nudle import Index, Page
+from nustd.ui.core.chains import boot_chains
 from nustd.ui.refs import Row, TextRef
 
 
@@ -34,12 +34,12 @@ class Panel(Row):
     title = TextRef.slot()
 
 
-class HomePage(Page):
+class HomePage(Column):
     panel = Panel.slot()
 
 
-class HomeApp(Index):
-    home = HomePage.slot("/")
+class HomeApp(Shape):
+    home = HomePage.slot()
 
 
 class _RecordingSession:
@@ -113,12 +113,12 @@ class Toolbar(Row):
     text = TextRef.slot()
 
 
-class NestedPage(Page):
+class NestedPage(Column):
     panel = type("PanelWithToolbar", (Row,), {"toolbar": Toolbar.slot()}).slot()
 
 
-class NestedApp(Index):
-    nested = NestedPage.slot("/")
+class NestedApp(Shape):
+    nested = NestedPage.slot()
 
 
 def test_section_class_handle_resolves_bare():
@@ -137,15 +137,15 @@ def test_one_section_mounts_under_many_parents():
     class Shared(Row):
         text = TextRef.slot()
 
-    class LeftPage(Page):
+    class LeftPage(Column):
         panel = Shared.slot()
 
-    class RightPage(Page):
+    class RightPage(Column):
         other = Shared.slot()
 
-    class TwoApp(Index):
-        left = LeftPage.slot("/")
-        right = RightPage.slot("/right")
+    class TwoApp(Shape):
+        left = LeftPage.slot()
+        right = RightPage.slot()
 
     sess = _RecordingSession()
     ctx = Context().bind(Session, sess)
@@ -159,15 +159,15 @@ def test_same_slot_name_on_two_pages_does_not_collide():
     """Two pages both declaring `panel`: the page slot in front keeps them
     apart, which is the whole reason a page contributes a segment."""
 
-    class Left(Page):
+    class Left(Column):
         panel = Panel.slot()
 
-    class Right(Page):
+    class Right(Column):
         panel = Panel.slot()
 
-    class TwinApp(Index):
-        left = Left.slot("/")
-        right = Right.slot("/right")
+    class TwinApp(Shape):
+        left = Left.slot()
+        right = Right.slot()
 
     sess = _RecordingSession()
     ctx = Context().bind(Session, sess)
@@ -177,26 +177,26 @@ def test_same_slot_name_on_two_pages_does_not_collide():
     assert sess.frames[1].ref == ("right", "panel", "label")
 
 
-def test_page_class_handle_resolves_bare():
-    """A Page is a Section with a route: no Index navigated to it, so there
-    is no page segment to add. That is the single-page shorthand -- the
-    address matches what `Page.boot()` seeds the browser with."""
+def test_section_class_handle_boots_bare():
+    """A Section taken off its class was never navigated to, so there is no
+    segment to add in front: its slots start at their own names, which is
+    what the boot chains of the class say too."""
 
-    class Solo(Page):
+    class Solo(Column):
         panel = Panel.slot()
 
     sess = _RecordingSession()
     ctx = Context().bind(Session, sess)
     asyncio.run(nu.arun(Solo.panel.label.set("x"), ctx))
     assert sess.frames[0].ref == ("panel", "label")
-    assert [chain[-1][0] for chain in Solo._boot_chains()] == ["panel", "label", "title"]
+    assert [chain[-1][0] for chain in boot_chains((), Solo)] == ["panel", "label", "title"]
 
 
 def test_kv_slot_on_a_page_stays_a_kv_path():
-    """A Page is not special to the shape DSL, so a kv slot declared on one
+    """A ui Section is not special to the shape DSL, so a kv slot declared on one
     resolves as a plain kv path -- no ui Ref wedged under it."""
 
-    class Mixed(Page):
+    class Mixed(Column):
         label = TextRef.slot()
         count = nustd.kv.IntRef.slot()
 
@@ -212,25 +212,22 @@ def test_write_carries_the_annotated_chain():
     class Fields(Row):
         label = TextRef.slot(value="hi")
 
-    class ChainPage(Page):
+    class ChainPage(Column):
         fields = Fields.slot()
 
-    class ChainApp(Index):
-        page = ChainPage.slot("/")
+    class ChainApp(Shape):
+        page = ChainPage.slot(gap=6)
 
     sess = _RecordingSession()
     ctx = Context().bind(Session, sess)
     asyncio.run(nu.arun(ChainApp.page.fields.label.set("x"), ctx))
     chain = sess.frames[0].chain
     assert [(seg, typ) for seg, typ, _ in chain] == [
-        ("page", "Page"),
+        ("page", "Column"),
         ("fields", "Row"),
         ("label", "TextRef"),
     ]
-    assert chain[0][2] == {
-        "route": "/",
-        "label": "home",
-    }  # the route and label a page slot declares
+    assert chain[0][2]["gap"] == 6  # what the page slot declares
     assert chain[1][2]["gap"] == 4  # Row.slot() pins its chrome defaults
     assert chain[2][2] == {"value": "hi"}
     assert sess.frames[0].ref == tuple(seg for seg, _, _ in chain)
@@ -242,20 +239,20 @@ def test_append_carries_the_annotated_chain():
     class TSec2(Row):
         t = TableRef.slot()
 
-    class TPage2(Page):
+    class TPage2(Column):
         sec = TSec2.slot()
 
-    class TApp2(Index):
-        table = TPage2.slot("/")
+    class TApp2(Shape):
+        table = TPage2.slot()
 
     sess = _RecordingSession()
     ctx = Context().bind(Session, sess)
     asyncio.run(nu.arun(TApp2.table.sec.t.append(["a", "b"]), ctx))
-    assert [lvl[1] for lvl in sess.frames[0].chain] == ["Page", "Row", "TableRef"]
+    assert [lvl[1] for lvl in sess.frames[0].chain] == ["Column", "Row", "TableRef"]
 
 
 def test_deep_nested_page_path():
-    """Page -> section -> nested section -> widget resolves the full chain."""
+    """Column -> section -> nested section -> widget resolves the full chain."""
     sess = _RecordingSession()
     ctx = Context().bind(Session, sess)
     asyncio.run(nu.arun(NestedApp.nested.panel.toolbar.text.set("y"), ctx))
@@ -273,11 +270,11 @@ def test_input_read_resolves_path_and_reads_session():
     class Form(Row):
         name = InputRef.slot()
 
-    class FormPage(Page):
+    class FormPage(Column):
         form = Form.slot()
 
-    class FormApp(Index):
-        form = FormPage.slot("/")
+    class FormApp(Shape):
+        form = FormPage.slot()
 
     class ReadSession(_RecordingSession):
         def __init__(self) -> None:
@@ -303,11 +300,11 @@ def test_markdown_round_trips_both_ways():
     class Doc(Row):
         body = MarkdownRef.slot(placeholder="Write something", editable=True)
 
-    class DocPage(Page):
+    class DocPage(Column):
         doc = Doc.slot()
 
-    class DocApp(Index):
-        doc = DocPage.slot("/")
+    class DocApp(Shape):
+        doc = DocPage.slot()
 
     class ReadSession(_RecordingSession):
         async def aread(self, path: tuple[str, ...]) -> object:
@@ -333,11 +330,11 @@ def test_markdown_partial_write_carries_a_dict():
     class Doc2(Row):
         body = MarkdownRef.slot()
 
-    class DocPage2(Page):
+    class DocPage2(Column):
         doc = Doc2.slot()
 
-    class DocApp2(Index):
-        doc = DocPage2.slot("/")
+    class DocApp2(Shape):
+        doc = DocPage2.slot()
 
     sess = _RecordingSession()
     ctx = Context().bind(Session, sess)
@@ -361,11 +358,11 @@ def test_code_round_trips_both_ways():
     class Src(Row):
         code = CodeRef.slot(language="python", editable=True)
 
-    class SrcPage(Page):
+    class SrcPage(Column):
         src = Src.slot()
 
-    class SrcApp(Index):
-        src = SrcPage.slot("/")
+    class SrcApp(Shape):
+        src = SrcPage.slot()
 
     class ReadSession(_RecordingSession):
         async def aread(self, path: tuple[str, ...]) -> object:
@@ -429,10 +426,10 @@ _CHANGED_WIDGETS = _leaf_widgets(needs_on_change=True)
 
 
 def _mount(widget_cls):
-    """A fresh Index -> Page with `widget_cls` at `.page.sec.w`; returns the handle."""
+    """A fresh Shape -> Column with `widget_cls` at `.page.sec.w`; returns the handle."""
     sec = type("WSec", (Row,), {"w": widget_cls.slot()})
-    page = type("WPage", (Page,), {"sec": sec.slot()})
-    app = type("WApp", (Index,), {"page": page.slot("/")})
+    page = type("WPage", (Column,), {"sec": sec.slot()})
+    app = type("WApp", (Shape,), {"page": page.slot()})
     return app.page.sec.w
 
 
@@ -482,14 +479,14 @@ def _shipped_ref_classes():
 
     from nustd.ui.core import Ref
     from nustd.ui.refs import (
-        ContainerRef,
-        DictContainerRef,
+        CollectionRef,
+        DictCollectionRef,
         LeafRef,
-        ListContainerRef,
-        ShapeContainerRef,
+        ListCollectionRef,
+        ShapeCollectionRef,
     )
 
-    abstract = (ContainerRef, DictContainerRef, ListContainerRef, ShapeContainerRef, LeafRef)
+    abstract = (CollectionRef, DictCollectionRef, ListCollectionRef, ShapeCollectionRef, LeafRef)
 
     out = []
     for mod in _ref_modules():
@@ -585,11 +582,11 @@ def test_tabs_set_active_emits_frame():
     class MyTabs(Tabs):
         pass
 
-    class TabPage(Page):
+    class TabPage(Column):
         tabs = MyTabs.slot()
 
-    class TabApp(Index):
-        tab = TabPage.slot("/")
+    class TabApp(Shape):
+        tab = TabPage.slot()
 
     sess = _RecordingSession()
     ctx = Context().bind(Session, sess)
@@ -599,7 +596,7 @@ def test_tabs_set_active_emits_frame():
     assert sess.frames[0].payload == "t1"
     # The chain rides along, so a Tabs nobody booted is created by this frame.
     assert [(seg, typ) for seg, typ, _ in sess.frames[0].chain] == [
-        ("tab", "Page"),
+        ("tab", "Column"),
         ("tabs", "Tabs"),
     ]
 
@@ -610,11 +607,11 @@ def test_card_set_title_emits_frame():
     class MyCard(Card):
         pass
 
-    class CardPage(Page):
+    class CardPage(Column):
         card = MyCard.slot()
 
-    class CardApp(Index):
-        card = CardPage.slot("/")
+    class CardApp(Shape):
+        card = CardPage.slot()
 
     sess = _RecordingSession()
     ctx = Context().bind(Session, sess)
@@ -624,7 +621,7 @@ def test_card_set_title_emits_frame():
     assert sess.frames[0].payload == "hello"
     # The chain rides along, so a Card nobody booted is created by this frame.
     assert [(seg, typ) for seg, typ, _ in sess.frames[0].chain] == [
-        ("card", "Page"),
+        ("card", "Column"),
         ("card", "Card"),
     ]
     assert sess.frames[0].chain[-1][2] == {
@@ -644,11 +641,11 @@ def test_table_append_emits_frame():
     class TSec(Row):
         t = TableRef.slot()
 
-    class TablePage(Page):
+    class TablePage(Column):
         sec = TSec.slot()
 
-    class TableApp(Index):
-        table = TablePage.slot("/")
+    class TableApp(Shape):
+        table = TablePage.slot()
 
     sess = _RecordingSession()
     ctx = Context().bind(Session, sess)

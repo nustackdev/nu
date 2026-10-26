@@ -15,7 +15,7 @@ as they are. Each slot is one cell, in the order declared.
 from __future__ import annotations
 
 from nustd.ui.core import Section
-from nustd.ui.refs.containers.grid import GridRef
+from nustd.ui.refs.collections.grid import GridRef
 
 
 __all__ = ["Grid"]

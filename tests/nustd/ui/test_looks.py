@@ -8,9 +8,10 @@ from __future__ import annotations
 import asyncio
 
 import nu
-from nu import Context
-from nustd.ui import Card, Index, Page, Row, Session
+from nu import Context, Shape
+from nustd.ui import Card, Column, Row, Session
 from nustd.ui.core import Changed
+from nustd.ui.core.chains import boot_chains
 from nustd.ui.refs import (
     BadgeRef,
     BoxRef,
@@ -35,10 +36,10 @@ class _RecordingSession:
 
 
 def _mount(widget_slot):
-    """A fresh Index -> Page with `widget_slot` at `.page.sec.w`; returns the handle."""
+    """A fresh Shape -> Column with `widget_slot` at `.page.sec.w`; returns the handle."""
     sec = type("LSec", (Row,), {"w": widget_slot})
-    page = type("LPage", (Page,), {"sec": sec.slot()})
-    app = type("LApp", (Index,), {"page": page.slot("/")})
+    page = type("LPage", (Column,), {"sec": sec.slot()})
+    app = type("LApp", (Shape,), {"page": page.slot()})
     return app.page.sec.w
 
 
@@ -208,10 +209,10 @@ def test_card_named_slots_boot_as_children_at_their_keys():
         price = TextRef.slot(value="$9")
         footer = ButtonRef.slot(label="Choose", href="/buy")
 
-    class Plans(Page):
+    class Plans(Column):
         pro = Plan.slot(title="Pro")
 
-    chains = [c for c in Plans._boot_chains() if c[0][0] == "pro"]
+    chains = [c for c in boot_chains((), Plans) if c[0][0] == "pro"]
     assert [[lvl[:2] for lvl in c] for c in chains] == [
         [("pro", "Card")],
         [("pro", "Card"), ("media", "ImageRef")],

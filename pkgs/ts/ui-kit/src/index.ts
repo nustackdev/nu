@@ -178,6 +178,13 @@ export {
 } from "./components/ui/list";
 export type { MarkdownProps } from "./components/ui/markdown";
 export { Markdown } from "./components/ui/markdown";
+export {
+	Container,
+	type ContainerPadding,
+	type ContainerProps,
+	PAGE_WIDTH_CLASSES,
+	type PageWidth,
+} from "./components/ui/container";
 export { NavLink, navLinkVariants } from "./components/ui/nav-link";
 export { NumberInput, numberInputVariants } from "./components/ui/number-input";
 export type { OverflowTooltipProps } from "./components/ui/overflow-tooltip";

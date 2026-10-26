@@ -1,7 +1,8 @@
-"""Container Refs: layer 1 layout. Flat re-exports of every container Ref.
+"""Collection Refs: layer 1 layout. Flat re-exports of every Ref that holds children.
 
-- base:   ContainerRef, the abstract base, and the kinds: DictContainerRef,
-          ListContainerRef, ShapeContainerRef.
+- base:   CollectionRef, the abstract base (the counterpart of LeafRef), and
+          the kinds: DictCollectionRef, ListCollectionRef, ShapeCollectionRef.
+- container: ContainerRef, the page frame.
 - flow:   ColumnRef, RowRef.
 - grid:   GridRef, equal cells row after row.
 - line:   LineRef, children that run inline like a paragraph.
@@ -13,8 +14,9 @@
           list or a top bar).
 """
 
-from .base import ContainerRef, DictContainerRef, ListContainerRef, ShapeContainerRef
+from .base import CollectionRef, DictCollectionRef, ListCollectionRef, ShapeCollectionRef
 from .chrome import AccordionRef, BoxRef, CardRef, FieldRef, FieldsetRef, FormRef, ModalRef, TabsRef
+from .container import ContainerRef
 from .disclosure import CollapsibleRef, SheetRef
 from .flow import ColumnRef, RowRef
 from .grid import GridRef
@@ -28,21 +30,22 @@ __all__ = [
     "BoxRef",
     "CardRef",
     "CollapsibleRef",
+    "CollectionRef",
     "ColumnRef",
     "ContainerRef",
-    "DictContainerRef",
+    "DictCollectionRef",
     "FieldRef",
     "FieldsetRef",
     "FormRef",
     "GridRef",
     "LineRef",
-    "ListContainerRef",
+    "ListCollectionRef",
     "ListRef",
     "ModalRef",
     "NavListRef",
     "PageSectionRef",
     "RowRef",
-    "ShapeContainerRef",
+    "ShapeCollectionRef",
     "SheetRef",
     "TabsRef",
 ]

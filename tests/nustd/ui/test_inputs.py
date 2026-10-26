@@ -7,10 +7,9 @@ from __future__ import annotations
 import asyncio
 
 import nu
-from nu import Context
-from nustd.ui import Session
+from nu import Context, Shape
+from nustd.ui import Column, Session
 from nustd.ui.core import Changed
-from nustd.ui.nudle import Index, Page
 from nustd.ui.refs import ButtonRef, Row, SelectRef, SketchRef, TextRef, ToggleRef
 
 
@@ -31,10 +30,10 @@ class _RecordingSession:
 
 
 def _mount(widget_slot):
-    """A fresh Index -> Page with `widget_slot` at `.page.sec.w`; returns the handle."""
+    """A fresh Shape -> Column with `widget_slot` at `.page.sec.w`; returns the handle."""
     sec = type("WSec", (Row,), {"w": widget_slot})
-    page = type("WPage", (Page,), {"sec": sec.slot()})
-    app = type("WApp", (Index,), {"page": page.slot("/")})
+    page = type("WPage", (Column,), {"sec": sec.slot()})
+    app = type("WApp", (Shape,), {"page": page.slot()})
     return app.page.sec.w
 
 
@@ -340,8 +339,8 @@ class _Tab(_RecordingSession):
 def test_sketch_on_change_reacts_to_an_element():
     """An element landing in the browser is one notify; the reaction reads the board back."""
     sec = type("PadSec", (Row,), {"pad": SketchRef.slot(), "count": TextRef.slot()})
-    page = type("PadPage", (Page,), {"sec": sec.slot()})
-    app = type("PadApp", (Index,), {"page": page.slot("/")})
+    page = type("PadPage", (Column,), {"sec": sec.slot()})
+    app = type("PadApp", (Shape,), {"page": page.slot()})
     pad, count = app.page.sec.pad, app.page.sec.count
     tab = _Tab(value=_ELEMENTS)
 

@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING, Literal
 
 from typing_extensions import Self
 
-from .base import ListContainerRef
+from .base import ListCollectionRef
 
 
 if TYPE_CHECKING:
@@ -45,7 +45,7 @@ __all__ = ["LineRef"]
 LineAlign = Literal["start", "center", "end"]
 
 
-class LineRef(ListContainerRef):
+class LineRef(ListCollectionRef):
     """Children inline, wrapping at the container's width. Pin chrome on slot()."""
 
     _wire_type = "Line"

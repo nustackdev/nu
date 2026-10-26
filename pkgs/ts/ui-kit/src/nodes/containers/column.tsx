@@ -23,8 +23,10 @@
 // `max_width` caps the column at one of the kit's container widths
 // (theme.css), and `center` (on by default) gives the capped column auto
 // inline margins, which center it in a block or a flex column parent alike.
-// "full", the default, caps nothing. A page is a Column with a max width.
+// "full", the default, caps nothing. The names are the Container's page
+// widths; a page's frame, with its gutter, is a Container.
 
+import { PAGE_WIDTH_CLASSES, type PageWidth } from "../../components/ui/container";
 import { GAP_CLASSES, PADDING_CLASSES, stepClass } from "../../lib/steps";
 import { cn } from "../../lib/utils";
 import {
@@ -55,16 +57,6 @@ const JUSTIFY_CLASSES: Record<string, string> = {
 	evenly: "justify-evenly",
 };
 
-// Container widths from theme.css, spelled out so Tailwind sees every class.
-// Prose reads the theme token by name: `max-w-prose` is Tailwind's own 65ch
-// utility, which wins over the theme's.
-const MAX_WIDTH_CLASSES: Record<string, string> = {
-	form: "max-w-form",
-	prose: "max-w-(--container-prose)",
-	panel: "max-w-panel",
-	main: "max-w-main",
-	wide: "max-w-dashboard",
-};
 
 function ColumnView({ path }: NodeProps) {
 	const gap = useNumberProp(path, "gap", 4);
@@ -78,7 +70,8 @@ function ColumnView({ path }: NodeProps) {
 	const padCls = stepClass(PADDING_CLASSES, padding);
 	const alignCls = ALIGN_CLASSES[align] ?? ALIGN_CLASSES.stretch;
 	const justifyCls = JUSTIFY_CLASSES[justify] ?? JUSTIFY_CLASSES.start;
-	const maxCls = MAX_WIDTH_CLASSES[maxWidth];
+	// The page widths the Container takes too; "full" caps nothing here.
+	const maxCls = maxWidth === "full" ? undefined : PAGE_WIDTH_CLASSES[maxWidth as PageWidth];
 
 	return (
 		<div

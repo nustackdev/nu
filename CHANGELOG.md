@@ -12,6 +12,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Route nudle pages in Python; Page, Index and the built-in sidebar are gone
+- Add a Container page frame with fixed widths, so pages size and center cleanly
 - Make shared ui ref helper modules public, in line with the rest of nu
 - Route in-app links without reloads, and let programs read history state and query
 - Add page building blocks, richer looks and hide/display so programs build neat pages

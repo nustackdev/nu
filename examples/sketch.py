@@ -65,13 +65,13 @@ class Board(nustd.ui.Row):
     side = Side.slot(align="start")
 
 
-class Home(nustd.ui.Page):
+class Home(nustd.ui.Container):
     main = Board.slot(gap=6, align="start", wrap=True, min_width=200)
 
 
-class App(nustd.ui.Index):
+class App(nu.Shape):
     title = nustd.ui.TitleRef.slot(default="Sketch")
-    home = Home.slot("/")
+    home = Home.slot(size="dashboard")
 
 
 board = App.home.main.board
@@ -84,7 +84,7 @@ count = side.elements.set_value(nu.str(nu.Len(board)))
 on_draw = nu.ReactForever(board.on_change(), count)
 on_diagram = nu.ReactForever(side.diagram.on_click(), board.set(DIAGRAM) >> count)
 
-app = nustd.ui.serve(App, on_draw | on_diagram, port=8093)
+app = nustd.ui.serve(nustd.ui.boot(App.title, App.home) >> (on_draw | on_diagram), port=8093)
 
 
 if __name__ == "__main__":

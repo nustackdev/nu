@@ -14,9 +14,10 @@ from pathlib import Path
 import pytest
 
 import nu
-from nu import Context
+from nu import Context, Shape
 from nustd.ui import (
     BreadcrumbRef,
+    Column,
     HistoryRef,
     NavItemRef,
     NavRef,
@@ -26,7 +27,6 @@ from nustd.ui import (
     encode_query,
 )
 from nustd.ui.core import Changed
-from nustd.ui.nudle import Index, Page
 from nustd.ui.refs import EmptyStateRef, Row
 
 
@@ -49,9 +49,9 @@ class _Session:
         return self.value
 
 
-class App(Index):
+class App(Shape):
     nav = HistoryRef.slot()
-    home = type("HomePage", (Page,), {}).slot("/")
+    home = type("HomePage", (Column,), {}).slot()
 
 
 def _run(term, sess: _Session | None = None):
@@ -180,8 +180,8 @@ def test_encode_spells_floats_as_js_does_when_whole():
 
 def _mount(slot):
     sec = type("LSec", (Row,), {"w": slot})
-    page = type("LPage", (Page,), {"sec": sec.slot()})
-    app = type("LApp", (Index,), {"page": page.slot("/")})
+    page = type("LPage", (Column,), {"sec": sec.slot()})
+    app = type("LApp", (Shape,), {"page": page.slot()})
     return app.page.sec.w
 
 

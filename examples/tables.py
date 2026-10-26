@@ -112,16 +112,16 @@ class MarkdownCard(nustd.ui.Card):
     body = MarkdownBody.slot(gap=3)
 
 
-class Home(nustd.ui.Page):
+class Home(nustd.ui.Container):
     heading = nustd.ui.HeadingRef.slot(label="Tables")
     simple = SimpleCard.slot(title="Simple: read-only, sorted by the server")
     data = DataCard.slot(title="Data: editable, stored, live across tabs")
     markdown = MarkdownCard.slot(title="Markdown: a table inside a document")
 
 
-class App(nustd.ui.Index):
+class App(nu.Shape):
     title: nustd.ui.TitleRef
-    home = Home.slot("/")
+    home = Home.slot(size="dashboard")
 
 
 SIMPLE = App.home.simple.body.table
@@ -217,7 +217,7 @@ ui = App.title.set("Tables") >> init >> (simple | data | markdown)
 
 app = nu.With(
     nustd.kv.rocksdb_navigator(".dbtables"),
-    body=nustd.ui.serve(App, ui, port=8096),
+    body=nustd.ui.serve(nustd.ui.boot(App.title, App.home) >> ui, port=8096),
 )
 
 

@@ -4,3 +4,9 @@
 @import "@nustackdev/ui-kit/styles";
 @import "tailwindcss";
 @import "tw-animate-css";
+
+/* The page always keeps room for its scrollbar, so moving between a page that
+ * scrolls and one that doesn't never shifts the layout sideways. */
+html {
+	scrollbar-gutter: stable;
+}

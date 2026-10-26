@@ -14,11 +14,14 @@
 // A push or replace with no `state` leaves none.
 //
 // Reporting, one rule: every move the page makes reaches the server as a
-// notify whose payload is the new uri (path, query and hash), except a move
-// this ref's own write caused, whichever of the ops above it was. The server
-// asked for that one. A move another HistoryRef made, the user's back button,
-// a link the AnchorCatcher routed: all reported. The current uri is mirrored
-// into `value` on every move, so a renderer can follow it like any prop.
+// notify whose payload is the new uri (path, query and hash), this ref's own
+// moves included. A router on the server listens to one stream and never has
+// to guess which moves it was told about. A move this ref's write caused, one
+// another HistoryRef made, the user's back button, a link the AnchorCatcher
+// routed: all reported alike. The ref's own moves still carry its origin tag
+// in History, for anything in the browser that wants to tell them apart. The
+// current uri is mirrored into `value` on every move, so a renderer can follow
+// it like any prop.
 //
 // `read` answers with the whole entry, {uri, path, query, hash, state}, live:
 // the page can move outside anything this node saw. The Python ref reads the
@@ -53,7 +56,7 @@ type WritePayload =
 			query?: Record<string, unknown> | null;
 	  };
 
-/** The tag this ref's own moves carry, so it can tell them from the rest. */
+/** The tag this ref's own moves carry in History. */
 function originOf(key: string): string {
 	return `HistoryRef:${key}`;
 }
@@ -84,7 +87,6 @@ function HistoryView({ path }: NodeProps) {
 	const send = useSend(path);
 	const key = pathKey(path);
 	useEffect(() => {
-		const own = originOf(key);
 		// Mirror where the page is. A write that landed before this mounted
 		// already moved it, so the live uri is what it mirrors.
 		setValue(History.current().url);
@@ -92,7 +94,7 @@ function HistoryView({ path }: NodeProps) {
 			// Only while this node is still there to mirror it.
 			if (!nodeAt(path)) return;
 			setValue(move.entry.url);
-			if (move.origin !== own) send(OPS.notify, move.entry.url);
+			send(OPS.notify, move.entry.url);
 		});
 		// `key` is the path by value: a node moving means a fresh listener.
 	}, [key, setValue, send]);
@@ -127,7 +129,7 @@ export const HistoryRef: NodeEntry = {
 				return;
 			}
 			if (action === "back" || action === "forward") {
-				// The move lands later, as a popstate, still tagged as ours.
+				// The move lands later, as a popstate, tagged as ours.
 				History[action](opts);
 				return;
 			}

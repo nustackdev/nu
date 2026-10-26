@@ -9,6 +9,7 @@ Changed, HeadingRef.set -> Write).
 - Write   -- server -> client, replace a Ref's value
 - Append  -- server -> client, append to a sequence-typed Ref
 - Remove  -- server -> client, drop a Ref's node and everything under it
+- Clear   -- server -> client, drop the whole tree: a tab starting over
 - Init    -- server -> client, bring a Ref's node into being as declared,
              with every slot its Shape declares under it
 - Hide    -- server -> client, take a Ref's node off screen, subtree and all
@@ -32,7 +33,7 @@ from nu.engine.structure import Declared
 from nu.lang import EMPTY, Command, ScalarQuery
 
 from .chains import boot_chains
-from .protocol import OP_INIT, Frame
+from .protocol import OP_INIT, OP_REMOVE, Frame
 from .session import Session
 
 
@@ -47,7 +48,18 @@ if TYPE_CHECKING:
     from .session import Subscription
 
 
-__all__ = ["EVENT", "Append", "Changed", "Display", "Hide", "Init", "Remove", "Send", "Write"]
+__all__ = [
+    "EVENT",
+    "Append",
+    "Changed",
+    "Clear",
+    "Display",
+    "Hide",
+    "Init",
+    "Remove",
+    "Send",
+    "Write",
+]
 
 
 #: The payload field a notify names its event in, for a Ref that sends more
@@ -167,6 +179,35 @@ class Remove(Command):
         return athunk
 
 
+class Clear(Command):
+    """Send a ``remove`` frame on the root: the tab's whole tree goes.
+
+    Down the bound Session's socket and no other, so it wipes the tab that
+    runs it, never a sibling's. What ``nustd.ui.boot`` starts with: a
+    reconnect gets a fresh session with none of the old one's nodes, and
+    whatever the browser still drew from before would otherwise stay.
+
+    ``_mutates`` is declared and empty: the root is not something any Ref
+    names, and a mutation with no address is a local change rather than an
+    effect.
+    """
+
+    _mutates = Declared(value=frozenset({0}), name="mutates")
+    _requires_async = Declared(value=True, name="requires_async")
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> None:
+            raise RuntimeError("nustd.ui is async-only; use nu.arun")
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        async def athunk(rt: Runtime) -> None:
+            await rt.ctx.fabrics.get(Session).send(Frame(OP_REMOVE))
+
+        return athunk
+
+
 class _ChainCommand(Command):
     """A payload-free frame on a Ref that carries the Ref's chain. Abstract.
 
@@ -203,8 +244,8 @@ class _ChainCommand(Command):
 class Init(_ChainCommand):
     """Bring a Ref's node on screen as declared: its chain's props, no value.
 
-    What a host's boot batch does for its own slots, for any Ref a program
-    builds: one ``init`` frame per node, so a heading or a card whose look
+    One ``init`` frame per node, for any Ref a program builds
+    (``nustd.ui.boot`` is a run of these), so a heading or a card whose look
     and content are all props shows without a write that would restate
     them. A Ref carrying a Shape brings every slot that Shape declares too,
     depth first in declaration order. An init never touches what the

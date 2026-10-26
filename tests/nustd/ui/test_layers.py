@@ -26,7 +26,7 @@ from nustd.ui import Session
 from nustd.ui.core import Ref, Section, SectionRef
 from nustd.ui.core.base import _wire_type_of
 from nustd.ui.core.chains import boot_chains
-from nustd.ui.refs import ContainerRef, LeafRef
+from nustd.ui.refs import CollectionRef, LeafRef
 
 
 class _RecordingSession:
@@ -50,7 +50,7 @@ def _chain(frame):
 # --- local stand-ins, so the core rules are pinned apart from the kit -------
 
 
-class _BoxRef(ContainerRef):
+class _BoxRef(CollectionRef):
     _wire_type: ClassVar[str] = "Box"
 
     @classmethod
@@ -160,16 +160,6 @@ def test_wire_type_of_a_shape_comes_from_its_ref():
     assert _wire_type_of(_Box) == "Box"
     assert _wire_type_of(MyBox) == "Box"
     assert _wire_type_of(Fancy) == "Fancy"
-
-
-def test_wire_type_of_page_is_page():
-    from nustd.ui.nudle import Page
-
-    class Home(Page):
-        pass
-
-    assert _wire_type_of(Page) == "Page"
-    assert _wire_type_of(Home) == "Page"
 
 
 # --- computed keys -----------------------------------------------------------
@@ -303,8 +293,7 @@ def test_kit_computed_keys_resolve_distinct_paths():
 
 
 def test_kit_boot_chains_of_a_page():
-    from nustd.ui import BadgeRef, Card, List, ListRef, Row, RowRef, TextRef
-    from nustd.ui.nudle import Page
+    from nustd.ui import BadgeRef, Card, Column, List, ListRef, Row, RowRef, TextRef
 
     class Bar(Row):
         a = TextRef.slot()
@@ -315,14 +304,14 @@ def test_kit_boot_chains_of_a_page():
     class Tags(List):
         c = BadgeRef.slot(label="x")
 
-    class Home(Page):
+    class Home(Column):
         bar = Bar.slot()
         box = Box.slot(title="T")
         tags = Tags.slot(items=["s"])
         names = ListRef.slot(items=["n"])
         free = RowRef.slot(wrap=True)
 
-    chains = Home._boot_chains()
+    chains = boot_chains((), Home)
     assert [[lvl[:2] for lvl in c] for c in chains] == [
         [("bar", "Row")],
         [("bar", "Row"), ("a", "TextRef")],
@@ -382,9 +371,9 @@ def test_every_ref_under_leaves_is_a_leaf():
 
 
 def test_every_ref_under_containers_is_a_container():
-    containers = _ref_classes_under("nustd.ui.refs.containers")
+    containers = _ref_classes_under("nustd.ui.refs.collections")
     assert len(containers) >= 9
-    assert [c.__name__ for c in containers if not issubclass(c, ContainerRef)] == []
+    assert [c.__name__ for c in containers if not issubclass(c, CollectionRef)] == []
 
 
 def test_structural_and_lens_refs_are_leaves():
@@ -399,11 +388,11 @@ def test_structural_and_lens_refs_are_leaves():
 # --- back-compat: every name importable on main still is ---------------------
 
 _UI_ALL_ON_MAIN = (
-    "Accordion AccordionRef AlertRef Append AreaChart BadgeRef BarChart Boot ButtonRef Card "
+    "Accordion AccordionRef AlertRef Append AreaChart BadgeRef BarChart ButtonRef Card "
     "CardRef Changed CheckboxRef CodeRef Box Column DatePickerRef DividerRef "
     "EmptyStateRef Field FieldRef Fieldset FieldsetRef Form Frame GaugeRef HeadingRef "
-    "ImageRef Index InputRef InsertRow JsonViewerRef KbdRef LineChart LinkRef ListRef "
-    "MarkdownRef Modal ModalRef NavRef NumberInputRef Page PageRef PieChart ProgressRef "
+    "ImageRef InputRef InsertRow JsonViewerRef KbdRef LineChart LinkRef ListRef "
+    "MarkdownRef Modal ModalRef NavRef NumberInputRef PieChart ProgressRef "
     "RadioGroupRef Ref Remove RemoveRows Row Section SectionRef SelectRef Send Session "
     "SetOrder SetRow ShortcutRef SliderRef Sparkline StatRef StatusDotRef Subscription "
     "SwitchRef TableRef Tabs TabsRef TagInputRef TextAreaRef TextRef TitleRef TreeRef Write "
@@ -446,8 +435,9 @@ def test_every_name_on_main_still_imports(module, names):
     assert mod.__all__ == order
 
 
-# Added since main: the node lifecycle ops on every Ref (init, hide, display).
-_CORE_ADDED = "OP_DISPLAY OP_HIDE Display Hide Init".split()
+# Added since main: the node lifecycle ops on every Ref (init, hide, display),
+# and the clear a tab's boot starts with.
+_CORE_ADDED = "OP_DISPLAY OP_HIDE Clear Display Hide Init".split()
 
 
 def test_core_all_is_main_plus_the_lifecycle_ops():
@@ -480,7 +470,7 @@ def test_section_ref_with_a_shape_keeps_its_shapes_wire_type():
 
 
 _NEW_NAMES = (
-    "ContainerRef LeafRef ColumnRef RowRef BoxRef FormRef List GridRef Grid LineRef Line "
+    "CollectionRef LeafRef ColumnRef RowRef BoxRef FormRef List GridRef Grid LineRef Line "
     "CollapsibleRef Collapsible SheetRef Sheet AvatarRef BreadcrumbRef SkeletonRef SpinnerRef "
     "StatusPillRef ToggleRef SketchRef"
 ).split()
@@ -504,7 +494,7 @@ def test_new_containers_and_shapes_draw_as_their_refs():
         ui.Sheet: "Sheet",
     }
     for shape, wire in pairs.items():
-        assert issubclass(shape._ref_cls, ContainerRef)
+        assert issubclass(shape._ref_cls, CollectionRef)
         assert _wire_type_of(shape) == wire
     for leaf in (ui.AvatarRef, ui.BreadcrumbRef, ui.SkeletonRef, ui.SpinnerRef, ui.StatusPillRef):
         assert issubclass(leaf, LeafRef)

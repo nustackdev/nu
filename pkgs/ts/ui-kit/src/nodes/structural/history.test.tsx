@@ -1,6 +1,5 @@
 // HistoryRef over the real tree store: a write moves the page through
-// History, and every move but the ones this ref's own writes caused comes
-// back as a notify.
+// History, and every move, its own writes' included, comes back as a notify.
 
 import { OPS, type TreeFrame } from "@nustackdev/ui-core";
 import { act } from "react";
@@ -83,15 +82,15 @@ describe("HistoryRef", () => {
 		write({ action: "push", uri: "/third", state: { a: 1 } });
 		expect(window.history.length).toBe(depth + 1);
 		expect(History.current().state).toEqual({ a: 1 });
-		// None of those were echoed: the server asked for each.
-		expect(notifies()).toEqual([]);
+		// Its own moves are reported like any other: a router hears them all.
+		expect(notifies()).toEqual(["/feed", "/other?x=1", "/third"]);
 	});
 
 	it("still draws under the old NavRef name", () => {
 		mount("NavRef");
 		write("/old");
 		expect(window.location.pathname).toBe("/old");
-		expect(notifies()).toEqual([]);
+		expect(notifies()).toEqual(["/old"]);
 	});
 
 	it("reports a move it did not make", () => {
@@ -104,7 +103,7 @@ describe("HistoryRef", () => {
 		expect(notifies()).toEqual(["/elsewhere", "/routed"]);
 	});
 
-	it("does not echo its own back and forward, but does the user's", async () => {
+	it("reports its own back and forward, and the user's", async () => {
 		mount();
 		write("/a");
 		await traversal(() => dispatch({ action: "back" }));
@@ -112,10 +111,10 @@ describe("HistoryRef", () => {
 		expect(value()).toBe("/start");
 		await traversal(() => dispatch({ action: "forward" }));
 		expect(value()).toBe("/a");
-		expect(notifies()).toEqual([]);
+		expect(notifies()).toEqual(["/a", "/start", "/a"]);
 		// The user's back button: the same traversal, nobody's write.
 		await traversal(() => window.history.back());
-		expect(notifies()).toEqual(["/start"]);
+		expect(notifies()).toEqual(["/a", "/start", "/a", "/start"]);
 	});
 
 	it("reports another HistoryRef's moves", () => {
@@ -135,7 +134,7 @@ describe("HistoryRef", () => {
 		expect(History.current().query).toEqual({ q: "new term", sort: "true" });
 		expect(History.current().state).toEqual({ k: 1 });
 		expect(window.history.length).toBe(depth);
-		expect(notifies()).toEqual([]);
+		expect(notifies()).toEqual(["/list?q=old&page=2#top", "/list?q=new+term&sort=true#top"]);
 	});
 
 	it("skips a push to the entry it is on", () => {
@@ -146,6 +145,8 @@ describe("HistoryRef", () => {
 		expect(window.history.length).toBe(depth);
 		write({ action: "push", uri: "/same", state: { x: 1 } });
 		expect(window.history.length).toBe(depth + 1);
+		// The skipped one is no move, so nothing is reported for it.
+		expect(notifies()).toEqual(["/same", "/same"]);
 	});
 
 	it("reads the live entry", () => {

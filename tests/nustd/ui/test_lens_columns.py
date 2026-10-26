@@ -293,12 +293,12 @@ class Panel(nustd.ui.Card):
     lens = nustd.ui.lens.LensRef.slot()
 
 
-class Home(nustd.ui.Page):
+class Home(nustd.ui.Column):
     panel = Panel.slot()
 
 
-class App(nustd.ui.Index):
-    home = Home.slot("/")
+class App(nu.Shape):
+    home = Home.slot()
 
 
 LENS = App.home.panel.lens
@@ -452,12 +452,12 @@ async def test_browse_repaints_where_the_browser_is_when_the_store_is_written():
 async def test_two_lenses_on_one_page_do_not_share_a_cursor():
     """The arm's attrs key comes off the slot chain, so two lenses are two keys."""
 
-    class Pair(nustd.ui.Page):
+    class Pair(nustd.ui.Column):
         left = Panel.slot()
         right = Panel.slot()
 
-    class Two(nustd.ui.Index):
-        pair = Pair.slot("/")
+    class Two(nu.Shape):
+        pair = Pair.slot()
 
     assert _nav_key(Two.pair.left.lens) != _nav_key(Two.pair.right.lens)
     assert _nav_key(Two.pair.left.lens) == _nav_key(Two.pair.left.lens)

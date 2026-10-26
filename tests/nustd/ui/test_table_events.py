@@ -11,19 +11,18 @@ import asyncio
 import pytest
 
 import nu
-from nu import Context
-from nustd.ui import Session, TableRef
-from nustd.ui.nudle import Index, Page
+from nu import Context, Shape
+from nustd.ui import Column, Session, TableRef
 from nustd.ui.refs import TextRef
 
 
-class ShelfPage(Page):
+class ShelfPage(Column):
     table = TableRef.slot(columns=["title"], clickable_rows=True)
     out = TextRef.slot()
 
 
-class ShelfApp(Index):
-    shelf = ShelfPage.slot("/")
+class ShelfApp(Shape):
+    shelf = ShelfPage.slot()
 
 
 class _Sub:
@@ -87,7 +86,7 @@ def test_sort_skips_a_row_click():
 # --- the editable table -------------------------------------------------------
 
 
-class GridPage(Page):
+class GridPage(Column):
     table = TableRef.slot(
         columns=["id", {"key": "title", "label": "Title", "kind": "text"}],
         row_key="id",
@@ -100,8 +99,8 @@ class GridPage(Page):
     out = TextRef.slot()
 
 
-class GridApp(Index):
-    grid = GridPage.slot("/")
+class GridApp(Shape):
+    grid = GridPage.slot()
 
 
 _KINDS = (
@@ -151,7 +150,7 @@ def test_slot_defaults_keep_the_old_props():
 def test_slot_takes_mapping_columns_and_copies_them():
     column = {"key": "year", "kind": "number"}
 
-    class Mixed(Page):
+    class Mixed(Column):
         table = TableRef.slot(columns=["title", column])
 
     column["kind"] = "text"
@@ -297,7 +296,7 @@ def test_a_table_interaction_is_named_in_snake_case():
 
 
 def test_columns_editable_is_a_slot_flag():
-    class Columns(Page):
+    class Columns(Column):
         table = TableRef.slot(columns=["a"], columns_editable=True)
 
     assert nu.tree.payload(Columns.table)["props"]["columns_editable"] is True

@@ -6,7 +6,7 @@ One import, then dot-access::
     import nustd
 
     nustd.kv.presets.memory_storage    nustd.decimal.mem.DecimalRef
-    nustd.ui.Page                      nustd.service.Method
+    nustd.ui.Section                   nustd.service.Method
     nustd.uuid.UUID                    nustd.datetime.Now
 
 Two kinds of thing live here, side by side.

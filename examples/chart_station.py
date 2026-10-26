@@ -304,7 +304,7 @@ class Raw(ui.Grid):
 # --- page ---------------------------------------------------------------------
 
 
-class Home(ui.Page):
+class Home(ui.Container):
     header = Header.slot(gap=3)
     toolbar = Toolbar.slot(gap=2)
     stats = Stats.slot(columns=3, min_width=180, gap=3)
@@ -323,8 +323,8 @@ class Home(ui.Page):
     calendar = CalendarCard.slot(title="A year of yield", subtitle="calendar heatmap")
 
 
-class App(ui.Index):
-    home = Home.slot("/")
+class App(nu.Shape):
+    home = Home.slot(size="dashboard")
 
 
 h = App.home
@@ -502,7 +502,7 @@ program = seed >> nu.ParallelAsync(
     ),
 )
 
-app = ui.serve(App, program)
+app = ui.serve(ui.boot(App.home) >> program)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,9 @@
-"""``ContainerRef`` -- the base every layout container Ref builds on.
+"""``CollectionRef`` -- the base every Ref that holds children builds on.
 
-Layer 1. A container Ref is a whole container on its own: it needs no Shape
-to draw, to carry chrome or to hold children.
+The counterpart of ``LeafRef``: a leaf draws from its props and never holds
+children, a collection holds open-ended ones. Layer 1. A collection Ref is a
+whole container on its own: it needs no Shape to draw, to carry chrome or to
+hold children. (``ContainerRef`` is one of them, the page frame.)
 
 - **Children** come from ``parent_ref=``: ``TextRef("t", parent_ref=row)``
   puts a text in ``row``. Navigating a Shape whose ``_ref_cls`` is this Ref
@@ -16,9 +18,9 @@ to draw, to carry chrome or to hold children.
   carries (Modal: open). The rest of its chrome is ``set_*``. ``ListRef``
   keeps its old string ``set(items)`` for compatibility.
 - **How it holds children** is the container's kind, one per class, the way
-  kv has ``ShapeRef``, ``DictRef`` and ``ListRef``. A ``DictContainerRef``
-  takes children by key, a ``ListContainerRef`` by index, and a
-  ``ShapeContainerRef`` only the ones its Shape declares. The first two may
+  kv has ``ShapeRef``, ``DictRef`` and ``ListRef``. A ``DictCollectionRef``
+  takes children by key, a ``ListCollectionRef`` by index, and a
+  ``ShapeCollectionRef`` only the ones its Shape declares. The first two may
   carry an item template, ``slot(Item)`` or ``item=Item``, and ``ref[key]``
   answers with an ``Item`` there, the way ``DictRef.slot(Order)`` answers
   ``desks["d1"]`` with an Order. Declared slots are keys too, so named and
@@ -43,11 +45,11 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
 
 
-__all__ = ["ContainerRef", "DictContainerRef", "ListContainerRef", "ShapeContainerRef"]
+__all__ = ["CollectionRef", "DictCollectionRef", "ListCollectionRef", "ShapeCollectionRef"]
 
 
-class ContainerRef(SectionRef):
-    """Base for container Refs: open-ended children, optional chrome. Abstract.
+class CollectionRef(SectionRef):
+    """Base for collection Refs: open-ended children, optional chrome. Abstract.
 
     Something is a container only when its children are open-ended user
     composition. Fixed known parts (a button's label and icon) are props on
@@ -58,7 +60,7 @@ class ContainerRef(SectionRef):
     _wire_type: ClassVar[str] = ""
 
 
-class _ItemContainerRef(ContainerRef):
+class _ItemCollectionRef(CollectionRef):
     """A container whose children may come from one item template. Abstract.
 
     The template is a Section class or a Ref class. It rides the payload, as
@@ -112,7 +114,7 @@ class _ItemContainerRef(ContainerRef):
         return ref
 
 
-class DictContainerRef(_ItemContainerRef):
+class DictCollectionRef(_ItemCollectionRef):
     """A container that takes its children by key. Abstract.
 
     ``ref[key]`` is the item template's child at ``key``. The key is a term
@@ -123,7 +125,7 @@ class DictContainerRef(_ItemContainerRef):
         return self._item_child(key)
 
 
-class ListContainerRef(_ItemContainerRef):
+class ListCollectionRef(_ItemCollectionRef):
     """A container that takes its children by position. Abstract.
 
     ``ref[i]`` is the item template's child at index ``i``, an int or an
@@ -140,7 +142,7 @@ class ListContainerRef(_ItemContainerRef):
         return self._item_child(index)
 
 
-class ShapeContainerRef(ContainerRef):
+class ShapeCollectionRef(CollectionRef):
     """A container whose children are only the ones its Shape declares. Abstract.
 
     It takes no item template and cannot be subscripted.

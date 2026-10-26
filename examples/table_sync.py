@@ -27,7 +27,7 @@ class Sheet(nu.Shape):
     sort = nustd.kv.ObjectRef.slot()
 
 
-class Home(nustd.ui.Page):
+class Home(nustd.ui.Container):
     heading = nustd.ui.HeadingRef.slot(label="Sheet")
     table = nustd.ui.TableRef.slot(
         columns=[
@@ -45,9 +45,9 @@ class Home(nustd.ui.Page):
     )
 
 
-class App(nustd.ui.Index):
+class App(nu.Shape):
     title: nustd.ui.TitleRef
-    home = Home.slot("/")
+    home = Home.slot(size="main")
 
 
 ui = App.title.set("Sheet") >> nustd.ui.table.sync(
@@ -56,7 +56,7 @@ ui = App.title.set("Sheet") >> nustd.ui.table.sync(
 
 app = nu.With(
     nustd.kv.rocksdb_navigator(".dbtable_sync"),
-    body=nustd.ui.serve(App, ui, port=8093),
+    body=nustd.ui.serve(nustd.ui.boot(App.title, App.home) >> ui, port=8093),
 )
 
 

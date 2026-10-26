@@ -15,6 +15,7 @@ import nu
 from nu import Context
 from nustd.ui import Session
 from nustd.ui.core.base import _wire_type_of
+from nustd.ui.core.chains import boot_chains
 
 
 class _RecordingSession:
@@ -67,10 +68,10 @@ def test_containers_and_leaves():
         PageSectionRef,
         SpacerRef,
     )
-    from nustd.ui.refs import ContainerRef
+    from nustd.ui.refs import CollectionRef
 
     for ref_cls in (PageSectionRef, NavListRef):
-        assert issubclass(ref_cls, ContainerRef)
+        assert issubclass(ref_cls, CollectionRef)
     for ref_cls in (IconRef, SpacerRef, PageLinkRef, NavItemRef):
         assert issubclass(ref_cls, LeafRef)
     assert PageSection._ref_cls is PageSectionRef
@@ -112,17 +113,16 @@ def test_section_actions_is_a_row_in_the_header_key():
 
 
 def test_a_shape_actions_slot_wins_over_the_default_row():
-    from nustd.ui import ButtonRef, PageSection, TextRef
-    from nustd.ui.nudle import Page
+    from nustd.ui import ButtonRef, Column, PageSection, TextRef
 
     class Usage(PageSection):
         actions = ButtonRef.slot(label="Export")
         note = TextRef.slot(value="body")
 
-    class Home(Page):
+    class Home(Column):
         usage = Usage.slot(title="Usage")
 
-    chains = [c for c in Home._boot_chains() if c[0][0] == "usage"]
+    chains = [c for c in boot_chains((), Home) if c[0][0] == "usage"]
     assert [[lvl[:2] for lvl in c] for c in chains] == [
         [("usage", "PageSection")],
         [("usage", "PageSection"), ("actions", "ButtonRef")],
@@ -146,8 +146,7 @@ def test_section_setters_write_their_key():
 
 
 def test_nav_list_and_items():
-    from nustd.ui import NavItemRef, NavList, NavListRef
-    from nustd.ui.nudle import Page
+    from nustd.ui import Column, NavItemRef, NavList, NavListRef
 
     assert NavListRef.slot().props == {"variant": "vertical", "label": ""}
 
@@ -155,10 +154,10 @@ def test_nav_list_and_items():
         home = NavItemRef.slot(label="Home", href="/", icon="home")
         docs = NavItemRef.slot(label="Docs", href="/docs", icon="book-open", meta="12")
 
-    class Home(Page):
+    class Home(Column):
         sidebar = Sidebar.slot(label="Workspace")
 
-    chains = [c for c in Home._boot_chains() if c[0][0] == "sidebar"]
+    chains = [c for c in boot_chains((), Home) if c[0][0] == "sidebar"]
     assert chains[0][0][1:] == ("NavList", {"variant": "vertical", "label": "Workspace"})
     assert chains[2][1] == (
         "docs",
@@ -383,7 +382,7 @@ def test_hide_then_display_reach_a_slot_through_its_page():
 
 def test_card_named_children_land_at_their_keys():
     from nustd.ui.refs import ButtonRef, CardRef, ImageRef
-    from nustd.ui.refs.containers.named import ACTIONS, FOOTER, MEDIA
+    from nustd.ui.refs.collections.named import ACTIONS, FOOTER, MEDIA
 
     card = CardRef("c", props={"caption": "note"})
     frames = _frames(

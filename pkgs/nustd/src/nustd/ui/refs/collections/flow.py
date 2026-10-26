@@ -12,13 +12,13 @@ from typing import TYPE_CHECKING, Literal
 
 from typing_extensions import Self
 
-from .base import DictContainerRef
+from .base import DictCollectionRef
 
 
 if TYPE_CHECKING:
     from nustd.ui.core import Ref, Section
 
-    from ..vocab import Align
+    from ..vocab import Align, PageWidth
 
 
 __all__ = ["ColumnRef", "RowRef"]
@@ -26,19 +26,14 @@ __all__ = ["ColumnRef", "RowRef"]
 
 Justify = Literal["start", "center", "end", "between", "around", "evenly"]
 
-#: Named page widths, the kit's container widths in px: a form 480, reading
-#: prose 640, a panel or detail view 960, a site main column 1200, a wide
-#: dashboard 1400. "full" is no cap.
-MaxWidth = Literal["form", "prose", "panel", "main", "wide", "full"]
 
-
-class ColumnRef(DictContainerRef):
+class ColumnRef(DictCollectionRef):
     """Vertical flex layout. Pin chrome on the slot().
 
-    `max_width` caps the column at a named page width, and `center` puts the
-    capped column in the middle of what holds it, so a page reads as one
-    column down the middle of a wide window. Under the cap it takes the
-    whole width it is given, the way an uncapped one does.
+    `max_width` caps the column at a named page width (``PageWidth``), and
+    `center` puts the capped column in the middle of what holds it. Under the
+    cap it takes the whole width it is given, the way an uncapped one does.
+    For a page's frame, with its side gutter, reach for ``ContainerRef``.
     """
 
     _wire_type = "Column"
@@ -53,7 +48,7 @@ class ColumnRef(DictContainerRef):
         align: Align = "stretch",
         justify: Justify = "start",
         padding: int = 0,
-        max_width: MaxWidth = "full",
+        max_width: PageWidth = "full",
         center: bool = True,
     ) -> Self:
         return super().slot(
@@ -71,7 +66,7 @@ RowAlign = Literal["start", "center", "end", "stretch", "baseline"]
 RowJustify = Literal["start", "center", "end", "between", "around", "evenly"]
 
 
-class RowRef(DictContainerRef):
+class RowRef(DictCollectionRef):
     """Horizontal flex layout. Pin chrome on slot().
 
     How a child sizes comes from its kind, not from a prop on it. A child with

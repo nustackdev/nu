@@ -71,7 +71,7 @@ class TableRef(LeafRef):
     arrives as one notify on the table, its kind named in the payload's
     ``event`` field, and each ``on_*`` takes only its own kind::
 
-        class Shelf(nustd.ui.Page):
+        class Shelf(nustd.ui.Column):
             table = nustd.ui.TableRef.slot(
                 columns=["id", {"key": "title", "label": "Title"}],
                 row_key="id",

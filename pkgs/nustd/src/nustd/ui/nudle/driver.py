@@ -25,14 +25,11 @@ if TYPE_CHECKING:
 
     from nu.lang import Nu
 
-    from .page import Index, Page
-
 
 __all__ = ["serve"]
 
 
 def serve(
-    index: type[Index] | type[Page],
     program: Nu,
     *,
     static: str | None = "nudle",
@@ -51,9 +48,12 @@ def serve(
     ``body=`` slot and never in a ``nu.With`` spec slot, which would discard
     everything under it.
 
+    The program draws the whole tab, so it starts with ``nustd.ui.boot``,
+    which clears what the browser held from an earlier connection and brings
+    up what is always there. Until something lands, the browser shows
+    "waiting for the tree...".
+
     Args:
-        index: the Index, or the lone Page, whose slots seed the browser's
-            tree.
         program: the ui program. Runs once per connection, with that tab's
             Session bound. Returning or raising stops that tab; a raise is
             reported on stdout.
@@ -73,7 +73,7 @@ def serve(
         app = nu.With(
             nustd.kv.rocksdb_navigator(".db"),
             body=nu.ParallelAsync(
-                nustd.ui.serve(App, ui),
+                nustd.ui.serve(nustd.ui.boot(App.home) >> ui),
                 nustd.kv.auto_flow_atomic(tick),
             ),
         )
@@ -95,7 +95,7 @@ def serve(
         body=sessions_fold(
             session_for(
                 SID_ATTR,
-                run_once(index.boot() >> program),
+                run_once(program),
             ),
         ),
     )

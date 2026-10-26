@@ -57,13 +57,13 @@ class Split(nustd.ui.Column):
     mirror = Mirror.slot()
 
 
-class Home(nustd.ui.Page):
+class Home(nustd.ui.Container):
     split = Split.slot()
 
 
-class App(nustd.ui.Index):
+class App(nu.Shape):
     title = nustd.ui.TitleRef.slot(default="Code")
-    home = Home.slot("/")
+    home = Home.slot(size="main")
 
 
 source = App.home.split.editor.source
@@ -92,7 +92,7 @@ ui = mirror.chars.set_value(str(len(SEED))) >> (on_edit | on_language | on_mode)
 
 # No navigator anywhere in this tree: the round trip is browser-only, and the
 # sessions registry stands up its own in-memory store when it finds no kv stack.
-app = nustd.ui.serve(App, ui, port=8090)
+app = nustd.ui.serve(nustd.ui.boot(App.title, App.home) >> ui, port=8090)
 
 
 if __name__ == "__main__":

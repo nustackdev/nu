@@ -9,9 +9,9 @@ Built on `StructuredRef` (parent chain, `_root_shape`). Address
 resolution walks the on-tree parent chain and returns the segments as a
 tuple, same as `nustd.kv` does. Nothing outside the chain gets a say: a
 segment is in the address because something navigated through it, never
-because a class named itself. A nudle Page contributes its segment the
-same way a Section does, by being reached through the slot that declares
-it. Async-only: nustd.ui is a browser fabric.
+because a class named itself. A Section contributes its segment by being
+reached through the slot that declares it. Async-only: nustd.ui is a
+browser fabric.
 """
 
 from __future__ import annotations
@@ -203,9 +203,9 @@ class Ref(StructuredRef):
         so the node comes back with its declared type and props the moment
         anything is written to it again.
 
-        ``erase``, ``init``, ``hide`` and ``display`` are methods on every
-        Ref, so each hides a Shape slot of the same name: name no slot after
-        them.
+        ``erase``, ``init``, ``hide``, ``display`` and ``showing`` are
+        methods on every Ref, so each hides a Shape slot of the same name:
+        name no slot after them.
         """
         from .interactions import Remove
 
@@ -239,6 +239,35 @@ class Ref(StructuredRef):
         from .interactions import Display
 
         return Display(self)
+
+    def showing(self, body: Nu | None = None, *, keep: bool = False) -> Nu:
+        """This Ref on screen for as long as the term runs, and ``body`` with it.
+
+        On enter the node comes up as declared (``init``), then ``body`` runs.
+        A body that ends, or none at all, leaves the term parked, so the node
+        stays up until whatever runs it is cancelled. On the way out, however
+        it goes (a cancel, a raise), the node is erased, subtree and all. That
+        is what a ``route`` branch is: entering the branch draws the page,
+        leaving it takes the page away::
+
+            nustd.ui.route(App.history, {"/": App.movies.showing(movies_work)})
+
+        ``keep=True`` hides it on the way out instead and displays it on the
+        way back, so the tree and its state (a typed filter, a scroll) stay
+        in the browser between visits. The first enter still brings the node
+        into being, since an init on a node that is there changes nothing.
+
+        A leave that cannot reach the tab (it closed, which is what cancelled
+        the term) has nothing left to clean, so a failed erase or hide is not
+        an error.
+        """
+        import nu
+
+        enter = (self.init() >> self.display()) if keep else self.init()
+        leave = self.hide() if keep else self.erase()
+        park = nu.ForeverDo(nu.Delay(3600.0))
+        run = enter >> (park if body is None else body >> park)
+        return nu.TryCatch(run, finally_=nu.TryCatch(leave, catch=lambda err: nu.Noop()))
 
     # --- declaration ---------------------------------------------------------
 

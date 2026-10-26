@@ -22,7 +22,7 @@ from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Append, Write
 
-from .base import ListContainerRef
+from .base import ListCollectionRef
 
 
 if TYPE_CHECKING:
@@ -37,7 +37,7 @@ __all__ = ["ListRef"]
 ListVariant = Literal["bullet", "number"]
 
 
-class ListRef(ListContainerRef):
+class ListRef(ListCollectionRef):
     """A bulleted or numbered list: string items first, then each child node.
 
     One string per item, drawn as given. `set` replaces the strings whole,

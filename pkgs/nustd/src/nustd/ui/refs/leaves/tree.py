@@ -6,7 +6,7 @@ the browser keeps as you click, and the server can set either. Everything
 the user does arrives as one notify on the tree, its kind named in the
 payload's ``event`` field, and each ``on_*`` takes only its own kind::
 
-    class Files(nustd.ui.Page):
+    class Files(nustd.ui.Column):
         tree = nustd.ui.TreeRef.slot(label="Files", editable=True, draggable=True)
 
     nu.ReactForever(Files.tree.on_open(), lambda ev: open_file(ev["key"]))

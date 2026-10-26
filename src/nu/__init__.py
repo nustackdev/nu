@@ -21,7 +21,7 @@ and interactions flat at the root too. The other fabrics and the standard
 library live one import away, in `nustd`::
 
     import nustd
-    nustd.kv.presets.memory_storage    nustd.ui.Page
+    nustd.kv.presets.memory_storage    nustd.ui.Section
     nustd.decimal.mem.DecimalRef       nustd.uuid.UUID
 """
 

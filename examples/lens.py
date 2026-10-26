@@ -158,15 +158,15 @@ class Anchored(nustd.ui.Card):
     lens = nustd.ui.lens.LensRef.slot(height=360)
 
 
-class Home(nustd.ui.Page):
+class Home(nustd.ui.Container):
     heading = nustd.ui.HeadingRef.slot(label="What is in the store")
     whole = Whole.slot(title="the cluster, from the top")
     anchored = Anchored.slot(title="red, and only ever red")
 
 
-class App(nustd.ui.Index):
+class App(nu.Shape):
     title = nustd.ui.TitleRef.slot(default="Lens")
-    home = Home.slot("/")
+    home = Home.slot(size="dashboard")
 
 
 # ---- the wiring -------------------------------------------------------------
@@ -221,7 +221,10 @@ ui = (
 
 # In memory: the store is a fixture, and a restart is meant to hand back the
 # same three machines rather than whatever the last run left behind.
-app = nu.With(nustd.kv.memory_navigator(), body=nustd.ui.serve(App, ui, port=8091))
+app = nu.With(
+    nustd.kv.memory_navigator(),
+    body=nustd.ui.serve(nustd.ui.boot(App.title, App.home) >> ui, port=8091),
+)
 
 
 if __name__ == "__main__":

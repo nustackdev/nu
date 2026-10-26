@@ -119,7 +119,7 @@ def test_serve_mounts_the_route_and_the_first_run_hook():
     import nustd
 
     extra = Route("/api/extra", lambda request: None)
-    tree = nustd.ui.serve(nustd.ui.Index, nu.Int(0), routes=[extra])
+    tree = nustd.ui.serve(nu.Int(0), routes=[extra])
     first_run, server = tree._payload["brackets"]
     assert first_run._payload["cls"] is telemetry.FirstRun
     paths = [r.path for r in server._payload["kwargs"]["routes"]]

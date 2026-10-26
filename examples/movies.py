@@ -1,8 +1,16 @@
 """Movies - personal movie tracker.
 
 Flow: log a movie via the form; the row lands in the table and stats update.
-Click a row to open its detail page; delete from there. Filters redraw the
-visible rows.
+Click a row to open its movie at `/movie?id=<n>`; delete from there. The
+movie is in the URL, not in the store, so a movie's page can be reloaded,
+copied or opened in another tab. Filters redraw the visible rows.
+
+Two pages, routed in Python: `nustd.ui.route` follows the History and shows
+the page the pathname names. The nav bar on top is drawn by the program like
+everything else. Everything visible sits in one Container, the page frame;
+the title and the History stay at the root. The movies page is kept between
+visits (`keep=True`), so a half-typed form and the filters are still there
+when you come back.
 """
 
 import nu
@@ -115,6 +123,7 @@ class StatsCard(nustd.ui.Card):
 class TableBody(nustd.ui.Column):
     table = nustd.ui.TableRef.slot(
         columns=["title", "year", "genre", "rating", "watched", "notes"],
+        row_key="id",
         striped=True,
         dense=True,
         clickable_rows=True,
@@ -134,7 +143,7 @@ class TableCard(nustd.ui.Card):
 # ---- Pages ------------------------------------------------------------------
 
 
-class Movies(nustd.ui.Page):
+class Movies(nustd.ui.Column):
     heading = nustd.ui.HeadingRef.slot(label="Your movies")
     intro = nustd.ui.TextRef.slot(
         value="Log what you watch. New entries land at the top of the table.",
@@ -166,18 +175,29 @@ class DetailActions(nustd.ui.Row):
     remove = nustd.ui.ButtonRef.slot(label="Delete", variant="danger")
 
 
-class MovieDetail(nustd.ui.Page):
+class MovieDetail(nustd.ui.Column):
     heading = nustd.ui.HeadingRef.slot()
     meta = MetaCard.slot(title="Details")
     notes = NotesCard.slot(title="Notes")
     actions = DetailActions.slot(gap=3, align="center")
 
 
-class App(nustd.ui.Index):
-    title: nustd.ui.TitleRef
-    nav: nustd.ui.NavRef
-    movies = Movies.slot("/")
-    detail = MovieDetail.slot("/detail")
+class Nav(nustd.ui.NavList):
+    movies = nustd.ui.NavItemRef.slot(label="Movies", href="/")
+
+
+class Page(nustd.ui.Container):
+    """The frame every page sits in, under the nav bar."""
+
+    nav = Nav.slot(variant="horizontal", label="Movies")
+    movies = Movies.slot(gap=6)
+    detail = MovieDetail.slot(gap=6)
+
+
+class App(nu.Shape):
+    title = nustd.ui.TitleRef.slot()
+    history = nustd.ui.HistoryRef.slot()
+    page = Page.slot(size="main")
 
 
 # ---- State ------------------------------------------------------------------
@@ -197,7 +217,6 @@ class State(nu.Shape):
     total = nustd.kv.IntRef.slot()
     watched = nustd.kv.IntRef.slot()
     latest_title = nustd.kv.StrRef.slot()
-    selected = nustd.kv.IntRef.slot()  # index of the movie open in MovieDetail
 
 
 # ---- Seed ------------------------------------------------------------------
@@ -241,34 +260,41 @@ _SEED_MOVIES: list[dict] = [
 # ---- Wire -------------------------------------------------------------------
 
 
-def _row(movie: nu.Attr) -> nu.Nu:
-    """One stored movie dict as the positional row TableRef expects."""
-    return nu.List.of(
-        movie["title"],
-        movie["year"],
-        movie["genre"],
-        movie["rating"],
-        nu.If(movie["watched"], "yes", "no"),
-        movie["notes"],
+def _row(entry: nu.Attr) -> nu.Nu:
+    """One ``(index, movie)`` pair as a table row, keyed by the movie's index."""
+    movie = entry[1]
+    return nu.Dict.of(
+        id=entry[0],
+        title=movie["title"],
+        year=movie["year"],
+        genre=movie["genre"],
+        rating=movie["rating"],
+        watched=nu.If(movie["watched"], "yes", "no"),
+        notes=movie["notes"],
     )
 
 
 def _rows_form() -> nu.Nu:
-    """Map each stored movie dict into a positional row TableRef expects."""
-    return nu.Dict.of(rows=nu.Collect(nu.Map(nu.Iter(State.movies), _row)))
+    """Every stored movie as a table row."""
+    return nu.Dict.of(rows=nu.Collect(nu.Map(nu.Enumerate(nu.Iter(State.movies)), _row)))
 
 
 def _rows_filtered() -> nu.Nu:
-    """Same shape as _rows_form, but honors the current FilterRow inputs."""
-    min_r = nu.Float(App.movies.filters.body.min_rating.input)
-    genre = nu.Str(App.movies.filters.body.genre.input)
-    watched_only = nu.Bool(App.movies.filters.body.watched_only.input)
+    """Same shape as _rows_form, but honors the current FilterRow inputs.
+
+    An input nobody has touched yet reads None: that filter is not set. Rows
+    keep the movie's index as their key, so a click on a filtered table still
+    opens the right movie.
+    """
+    min_r = nu.Float(App.page.movies.filters.body.min_rating.input)
+    genre = nu.Str(App.page.movies.filters.body.genre.input)
+    watched_only = nu.Bool(App.page.movies.filters.body.watched_only.input)
     shown = nu.Filter(
-        nu.Iter(State.movies),
-        lambda movie: nu.And(
-            nu.Ge(movie["rating"], min_r),
-            nu.Or(nu.Eq(genre, ""), nu.Eq(movie["genre"], genre)),
-            nu.Or(nu.Not(watched_only), movie["watched"]),
+        nu.Enumerate(nu.Iter(State.movies)),
+        lambda entry: nu.And(
+            nu.Or(nu.Eq(min_r, None), nu.Ge(entry[1]["rating"], min_r)),
+            nu.Or(nu.Eq(genre, None), nu.Eq(genre, ""), nu.Eq(entry[1]["genre"], genre)),
+            nu.Or(nu.Not(watched_only), entry[1]["watched"]),
         ),
     )
     return nu.Dict.of(
@@ -278,7 +304,6 @@ def _rows_filtered() -> nu.Nu:
 
 # Seed once, on a store that has never been written. A restart then keeps what
 # the user logged instead of replacing the shelf with the samples again.
-# `selected` stays unconditional: it is a cursor into the detail page, not data.
 init = nustd.kv.Transaction(
     nu.IfDo(
         State.total.missing(),
@@ -286,117 +311,140 @@ init = nustd.kv.Transaction(
         | State.watched.set(sum(1 for m in _SEED_MOVIES if m["watched"]))
         | State.latest_title.set(_SEED_MOVIES[-1]["title"])
         | State.movies.set(_SEED_MOVIES),
-    )
-    | State.selected.set(0),
+    ),
 )
 
 
+# Every visit to the movies page redraws what the store says, through the
+# filters as they stand: a movie deleted on the detail page is gone from the
+# table and the stats when you come back.
 hydrate = nustd.kv.Snapshot(
-    App.movies.stats.body.total.set_value(nu.str(State.total))
-    | App.movies.stats.body.watched.set_value(nu.str(State.watched))
-    | App.movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
-    | App.movies.stats.body.latest.set(State.latest_title)
-    | App.movies.shelf.body.table.set(_rows_form())
+    App.page.movies.stats.body.total.set_value(nu.str(State.total))
+    | App.page.movies.stats.body.watched.set_value(nu.str(State.watched))
+    | App.page.movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
+    | App.page.movies.stats.body.latest.set(State.latest_title)
+    | App.page.movies.shelf.body.table.set(_rows_filtered())
 )
 
 
 on_add = nu.ReactForever(
-    App.movies.form.submit.on_click(),
+    App.page.movies.form.submit.on_click(),
     nustd.kv.Transaction(
         State.movies.append(
             nu.Dict.of(
-                title=nu.Str(App.movies.form.details.title.input),
-                year=nu.Int(App.movies.form.details.year.input),
-                genre=nu.Str(App.movies.form.details.genre.input),
-                rating=nu.Float(App.movies.form.score.rating.input),
-                watched=nu.Bool(App.movies.form.score.watched.input),
-                notes=nu.Str(App.movies.form.score.notes.input),
+                title=nu.Str(App.page.movies.form.details.title.input),
+                year=nu.Int(App.page.movies.form.details.year.input),
+                genre=nu.Str(App.page.movies.form.details.genre.input),
+                rating=nu.Float(App.page.movies.form.score.rating.input),
+                watched=nu.Bool(App.page.movies.form.score.watched.input),
+                notes=nu.Str(App.page.movies.form.score.notes.input),
             ),
         )
         | State.total.set(State.total + 1)
         | State.watched.set(
-            State.watched + nu.If(nu.Bool(App.movies.form.score.watched.input), 1, 0),
+            State.watched + nu.If(nu.Bool(App.page.movies.form.score.watched.input), 1, 0),
         )
-        | State.latest_title.set(nu.Str(App.movies.form.details.title.input)),
+        | State.latest_title.set(nu.Str(App.page.movies.form.details.title.input)),
     )
     >> nustd.kv.Snapshot(
-        App.movies.shelf.body.table.set(_rows_form())
-        | App.movies.stats.body.total.set_value(nu.str(State.total))
-        | App.movies.stats.body.watched.set_value(nu.str(State.watched))
-        | App.movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
-        | App.movies.stats.body.latest.set(State.latest_title)
-        | App.movies.form.feedback.set(
+        App.page.movies.shelf.body.table.set(_rows_form())
+        | App.page.movies.stats.body.total.set_value(nu.str(State.total))
+        | App.page.movies.stats.body.watched.set_value(nu.str(State.watched))
+        | App.page.movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
+        | App.page.movies.stats.body.latest.set(State.latest_title)
+        | App.page.movies.form.feedback.set(
             title="Logged",
-            body="Added " + nu.Str(App.movies.form.details.title.input),
+            body="Added " + nu.Str(App.page.movies.form.details.title.input),
         )
     ),
 )
 
 
+# A row opens its movie's page. The movie is in the URL, so the page is a
+# place: reload it, copy it, open it in another tab.
 on_row_click = nu.ReactForever(
-    App.movies.shelf.body.table.on_row_click(),
-    lambda click: (
-        nustd.kv.Transaction(State.selected.set(click["row_index"]))
-        >> nustd.kv.Snapshot(
-            App.detail.heading.set(State.movies[State.selected].title)
-            | App.detail.meta.meta.year.set_value(nu.str(State.movies[State.selected].year))
-            | App.detail.meta.meta.genre.set_value(State.movies[State.selected].genre)
-            | App.detail.meta.meta.rating.set_value(nu.str(State.movies[State.selected].rating))
-            | App.detail.meta.meta.watched.set(
-                label=nu.If(State.movies[State.selected].watched, "Watched", "Unseen"),
-            )
-            | App.detail.notes.body.set(State.movies[State.selected].notes)
-        )
-        >> App.nav.set("/detail")
-    ),
+    App.page.movies.shelf.body.table.on_row_click(),
+    lambda click: App.history.push(nu.Str("/movie?id=") + nu.str(click["key"])),
 )
 
 
-on_delete = nu.ReactForever(
-    App.detail.actions.remove.on_click(),
-    nustd.kv.Transaction(
-        State.movies.del_at(State.selected) >> State.total.set(nu.Len(State.movies)),
-    )
-    >> nustd.kv.Snapshot(
-        App.movies.shelf.body.table.set(_rows_form())
-        | App.movies.stats.body.total.set_value(nu.str(State.total))
-        | App.movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
-    )
-    >> App.nav.set("/"),
-)
+@nu.host
+def _index(query: object, count: int) -> int:
+    """The movie ``?id=`` names, as an index into the shelf. -1 for none."""
+    raw = query.get("id", "") if isinstance(query, dict) else ""
+    return int(raw) if raw.isdigit() and int(raw) < count else -1
 
 
-on_back = nu.ReactForever(App.detail.actions.back.on_click(), App.nav.set("/"))
+def _draw_detail(i: nu.Int) -> nu.Nu:
+    movie = State.movies[i]
+    return nustd.kv.Snapshot(
+        App.page.detail.heading.set(movie.title)
+        | App.page.detail.meta.meta.year.set_value(nu.str(movie.year))
+        | App.page.detail.meta.meta.genre.set_value(movie.genre)
+        | App.page.detail.meta.meta.rating.set_value(nu.str(movie.rating))
+        | App.page.detail.meta.meta.watched.set(label=nu.If(movie.watched, "Watched", "Unseen"))
+        | App.page.detail.notes.body.set(movie.notes)
+    )
+
+
+def _detail_actions(i: nu.Int) -> nu.Nu:
+    on_delete = nu.ReactForever(
+        App.page.detail.actions.remove.on_click(),
+        nustd.kv.Transaction(State.movies.del_at(i) >> State.total.set(nu.Len(State.movies)))
+        >> App.history.push("/"),
+    )
+    return on_delete | on_back
+
+
+def _detail(held: nu.ObjectRef) -> nu.Nu:
+    """The movie page for the index read off the URL; an unknown id draws a note."""
+    i = nu.Int(held)
+    missing = App.page.detail.heading.set("No such movie") >> on_back
+    return nu.IfDo(i >= 0, _draw_detail(i) >> _detail_actions(i), missing)
+
+
+on_back = nu.ReactForever(App.page.detail.actions.back.on_click(), App.history.push("/"))
 
 
 on_filter_apply = nu.ReactForever(
-    App.movies.filters.body.apply.on_click(),
-    nustd.kv.Snapshot(App.movies.shelf.body.table.set(_rows_filtered())),
+    App.page.movies.filters.body.apply.on_click(),
+    nustd.kv.Snapshot(App.page.movies.shelf.body.table.set(_rows_filtered())),
 )
 
 
 on_filter_clear = nu.ReactForever(
-    App.movies.filters.body.reset.on_click(),
+    App.page.movies.filters.body.reset.on_click(),
     nustd.kv.Snapshot(
-        App.movies.filters.body.min_rating.input.set(1.0)
-        | App.movies.filters.body.genre.input.set("")
-        | App.movies.filters.body.watched_only.input.set(False)
-        | App.movies.shelf.body.table.set(_rows_form())
+        App.page.movies.filters.body.min_rating.input.set(1.0)
+        | App.page.movies.filters.body.genre.input.set("")
+        | App.page.movies.filters.body.watched_only.input.set(False)
+        | App.page.movies.shelf.body.table.set(_rows_form())
     ),
 )
 
 
-ui = (
-    App.title.set("Movies")
-    >> hydrate
-    >> (on_add | on_row_click | on_delete | on_back | on_filter_apply | on_filter_clear)
+movies_page = hydrate >> (on_add | on_row_click | on_filter_apply | on_filter_clear)
+
+detail_page = nu.let(
+    nustd.kv.Snapshot(_index(App.history.query(), nu.Len(State.movies))),
+    _detail,
+)
+
+ui = App.title.set("Movies") >> nustd.ui.route(
+    App.history,
+    {
+        "/": App.page.movies.showing(movies_page, keep=True),
+        "/movie": App.page.detail.showing(detail_page),
+    },
 )
 
 
 app = nu.With(
     nustd.kv.rocksdb_navigator(".dbmovies"),
     body=nu.ParallelAsync(
-        nustd.ui.serve(App, nustd.kv.auto_flow_atomic(ui)),
+        nustd.ui.serve(
+            nustd.ui.boot(App.title, App.history, App.page.nav) >> nustd.kv.auto_flow_atomic(ui)
+        ),
         nustd.kv.auto_flow_atomic(init),
     ),
 )

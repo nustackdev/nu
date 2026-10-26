@@ -13,9 +13,8 @@ from typing import TYPE_CHECKING
 import pytest
 
 import nu
-from nu import Context
-from nustd.ui import Session, TreeRef
-from nustd.ui.nudle import Index, Page
+from nu import Context, Shape
+from nustd.ui import Column, Session, TreeRef
 from nustd.ui.refs import TextRef
 
 
@@ -23,13 +22,13 @@ if TYPE_CHECKING:
     from nustd.ui.core import Changed
 
 
-class FilesPage(Page):
+class FilesPage(Column):
     tree = TreeRef.slot(label="Files", editable=True, draggable=True)
     out = TextRef.slot()
 
 
-class FilesApp(Index):
-    files = FilesPage.slot("/")
+class FilesApp(Shape):
+    files = FilesPage.slot()
 
 
 class _Sub:

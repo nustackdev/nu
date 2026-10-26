@@ -1,6 +1,6 @@
 """Chrome Shapes -- Card, Box, Tabs, Modal, Accordion, Form, Fieldset, Field.
 
-Each is a Section over its container Ref (``nustd.ui.refs.containers.chrome``):
+Each is a Section over its container Ref (``nustd.ui.refs.collections.chrome``):
 the Ref carries the chrome methods, the slot defaults and the wire type, and
 ``slot(**props)`` forwards to it. Declare the body as slots on a subclass and
 drive the chrome off the bound Ref (``page.card.set_title(...)``).
@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from typing_extensions import Self
 
 from nustd.ui.core import Section
-from nustd.ui.refs.containers.chrome import (
+from nustd.ui.refs.collections.chrome import (
     AccordionRef,
     BoxRef,
     CardRef,

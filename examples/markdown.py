@@ -44,13 +44,13 @@ class Split(nustd.ui.Row):
     mirror = Mirror.slot()
 
 
-class Home(nustd.ui.Page):
+class Home(nustd.ui.Container):
     split = Split.slot()
 
 
-class App(nustd.ui.Index):
+class App(nu.Shape):
     title = nustd.ui.TitleRef.slot(default="Markdown")
-    home = Home.slot("/")
+    home = Home.slot(size="main")
 
 
 # Every commit from the browser lands here. `nu.Str(App.home.split.editor.body)` is the read
@@ -65,7 +65,7 @@ ui = App.home.split.mirror.chars.set_value(str(len(SEED))) >> on_edit
 
 # No navigator anywhere in this tree: the round trip is browser-only, and the
 # sessions registry stands up its own in-memory store when it finds no kv stack.
-app = nustd.ui.serve(App, ui)
+app = nustd.ui.serve(nustd.ui.boot(App.title, App.home) >> ui)
 
 
 if __name__ == "__main__":

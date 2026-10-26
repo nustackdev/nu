@@ -15,8 +15,8 @@
 // (push, replace, or a popstate a back / forward / go of ours caused) and
 // "browser" for the rest. A caller can tag its move with an `origin`, any
 // value, and the move announces it, so a listener can tell its own moves
-// from everyone else's (the HistoryRef node does exactly that, to never echo
-// a move the server asked for). A popstate is matched to the traversal that
+// from everyone else's (the HistoryRef node tags its writes, but reports
+// every move, its own included). A popstate is matched to the traversal that
 // caused it in call order; a traversal that leads nowhere (forward at the
 // end of the stack) fires no popstate, so its tag expires after
 // TRAVERSE_WINDOW_MS rather than tagging some later move of the user's.

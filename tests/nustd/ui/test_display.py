@@ -13,8 +13,8 @@ import asyncio
 import pytest
 
 import nu
-from nu import Context
-from nustd.ui import Index, Page, Row, Session
+from nu import Context, Shape
+from nustd.ui import Column, Row, Session
 from nustd.ui.refs import (
     AvatarRef,
     BreadcrumbRef,
@@ -35,10 +35,10 @@ class _RecordingSession:
 
 
 def _mount(widget_cls, **props):
-    """A fresh Index -> Page with `widget_cls` at `.page.sec.w`; returns the handle."""
+    """A fresh Shape -> Column with `widget_cls` at `.page.sec.w`; returns the handle."""
     sec = type("DSec", (Row,), {"w": widget_cls.slot(**props)})
-    page = type("DPage", (Page,), {"sec": sec.slot()})
-    app = type("DApp", (Index,), {"page": page.slot("/")})
+    page = type("DPage", (Column,), {"sec": sec.slot()})
+    app = type("DApp", (Shape,), {"page": page.slot()})
     return app.page.sec.w
 
 

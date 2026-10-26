@@ -11,16 +11,20 @@ Layout under ``src/nustd/ui/``:
                  wire ``Frame`` + interactions (``Send`` / ``Write`` /
                  ``Append`` / ``Remove`` / ``Init`` / ``Hide`` / ``Display`` /
                  ``Changed``). Reusable by any host.
-- ``refs/``   -- layer 1, the widget kit as Refs: ``containers/`` (Column,
+- ``refs/``   -- layer 1, the widget kit as Refs: ``collections/`` (Column,
                  Row, Card, ...: open-ended children) and ``leaves/`` (Text,
                  Button, Table, charts, ...: drawn from props, no children).
                  Any UI can be built from these alone. Depends only on core.
 - ``shapes/`` -- layer 2, a declarative DSL over the container Refs: one
                  ``Section`` per container (``Row``, ``Card``, ...) that points
                  ``_ref_cls`` at its Ref and adds named child slots.
-- ``nudle/``  -- Page-based host: ``Index`` / ``Page`` / ``PageRef``, the
-                 ``Boot`` term, and the ``serve`` preset that assembles a
-                 whole tree.
+- ``flows.py`` -- the terms a program is framed by: ``boot`` (start the
+                 tab's tree over, bring the given Refs up in order) and
+                 ``route`` (run the branch the page's pathname names).
+- ``nudle/``  -- the browser host: the ``serve`` preset that assembles a
+                 whole tree, and nudle's telemetry. It decides nothing about
+                 what shows: the program draws everything, pages and navs
+                 included.
 
 The uvicorn lifecycle, the book of live connections and the per-connection
 fold live in ``nustd.ws_server``, which knows nothing about ui.
@@ -30,7 +34,7 @@ at ``pkgs/ts`` (``ui-core``, ``ui-kit``, and the ``nudle`` Vite app), and its
 compiled bundle ships as the separate ``nudle`` wheel.
 
 The public entry is ``nustd.ui`` itself: the core fabric, the widget kit, the
-Shapes and the nudle host names are re-exported flat, so one ``import nustd.ui`` reaches
+Shapes, the program flows and the nudle host names are re-exported flat, so one ``import nustd.ui`` reaches
 everything a UI program spells. The lens is the exception and stays whole
 behind ``nustd.ui.lens``, ``LensRef`` included: it is a subsystem rather than
 a widget, and a surface split between two names is worse than one more dot.
@@ -41,9 +45,9 @@ different jobs and only one of them needs a web server: ``nudle`` reaches
 what ``import nustd.ui`` cost. Plenty of processes only ever build Refs. The
 case that made this worth doing is a worker drawing on a connection it holds
 a proxy to: it pays the import on every launch and serves nothing, ever. So
-``nudle``, ``serve`` and the four page names come through ``__getattr__``
-below, and naming any of them loads the host with its server, which is what
-somebody naming them is asking for.
+``nudle`` and ``serve`` come through ``__getattr__`` below, and naming either
+loads the host with its server, which is what somebody naming them is asking
+for.
 """
 
 from __future__ import annotations
@@ -51,9 +55,20 @@ from __future__ import annotations
 import importlib
 from typing import TYPE_CHECKING
 
-from . import core, lens, refs, shapes, table
+from . import core, flows, lens, refs, shapes, table
 from .core import Frame, Ref, Section, SectionRef, Session, Subscription, WsSession
-from .core.interactions import Append, Changed, Display, Hide, Init, Remove, Send, Write
+from .core.interactions import (
+    Append,
+    Changed,
+    Clear,
+    Display,
+    Hide,
+    Init,
+    Remove,
+    Send,
+    Write,
+)
+from .flows import boot, route
 from .refs import (
     Accordion,
     AccordionRef,
@@ -75,11 +90,13 @@ from .refs import (
     CodeRef,
     Collapsible,
     CollapsibleRef,
+    CollectionRef,
     Column,
     ColumnRef,
+    Container,
     ContainerRef,
     DatePickerRef,
-    DictContainerRef,
+    DictCollectionRef,
     DividerRef,
     EmptyStateRef,
     Field,
@@ -110,7 +127,7 @@ from .refs import (
     LineRef,
     LinkRef,
     List,
-    ListContainerRef,
+    ListCollectionRef,
     ListRef,
     MarkdownRef,
     Modal,
@@ -135,7 +152,7 @@ from .refs import (
     SelectRef,
     SetOrder,
     SetRow,
-    ShapeContainerRef,
+    ShapeCollectionRef,
     Sheet,
     SheetRef,
     ShortcutRef,
@@ -166,21 +183,16 @@ from .refs import (
 
 
 # The host half, handed to IDEs and type-checkers as the real thing, so
-# ``nustd.ui.Page`` resolves statically with completion and go-to-definition
+# ``nustd.ui.serve`` resolves statically with completion and go-to-definition
 # despite never being bound at import time.
 if TYPE_CHECKING:
     from . import nudle
     from .nudle import serve
-    from .nudle.page import Boot, Index, Page, PageRef
 
 
 #: Every name the host half contributes, and the module each one is in.
 #: ``nudle`` maps to itself: the package is one of the names.
 _LAZY = {
-    "Boot": ".nudle.page",
-    "Index": ".nudle.page",
-    "Page": ".nudle.page",
-    "PageRef": ".nudle.page",
     "nudle": ".nudle",
     "serve": ".nudle",
 }
@@ -217,7 +229,6 @@ __all__ = [
     "AvatarRef",
     "BadgeRef",
     "BarChart",
-    "Boot",
     "Box",
     "BoxRef",
     "BoxplotChart",
@@ -229,14 +240,17 @@ __all__ = [
     "Changed",
     "Chart",
     "CheckboxRef",
+    "Clear",
     "CodeRef",
     "Collapsible",
     "CollapsibleRef",
+    "CollectionRef",
     "Column",
     "ColumnRef",
+    "Container",
     "ContainerRef",
     "DatePickerRef",
-    "DictContainerRef",
+    "DictCollectionRef",
     "Display",
     "DividerRef",
     "EmptyStateRef",
@@ -260,7 +274,6 @@ __all__ = [
     "HtmlRef",
     "IconRef",
     "ImageRef",
-    "Index",
     "Init",
     "InputRef",
     "InsertRow",
@@ -272,7 +285,7 @@ __all__ = [
     "LineRef",
     "LinkRef",
     "List",
-    "ListContainerRef",
+    "ListCollectionRef",
     "ListRef",
     "MarkdownRef",
     "Modal",
@@ -282,9 +295,7 @@ __all__ = [
     "NavListRef",
     "NavRef",
     "NumberInputRef",
-    "Page",
     "PageLinkRef",
-    "PageRef",
     "PageSection",
     "PageSectionRef",
     "PieChart",
@@ -305,7 +316,7 @@ __all__ = [
     "Session",
     "SetOrder",
     "SetRow",
-    "ShapeContainerRef",
+    "ShapeCollectionRef",
     "Sheet",
     "SheetRef",
     "ShortcutRef",
@@ -333,12 +344,15 @@ __all__ = [
     "TreemapChart",
     "Write",
     "WsSession",
+    "boot",
     "core",
     "decode_query",
     "encode_query",
+    "flows",
     "lens",
     "nudle",
     "refs",
+    "route",
     "serve",
     "shapes",
     "table",

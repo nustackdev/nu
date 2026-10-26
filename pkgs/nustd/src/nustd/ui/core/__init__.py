@@ -17,19 +17,32 @@ The reusable seam under nustd.ui:
   ``Write`` /
   ``Append`` /
   ``Remove`` /
+  ``Clear`` /
   ``Init`` /
   ``Hide`` /
   ``Display`` /
   ``Changed``          -- interactions that flow over a Session on a Ref
 
-A host builds on this core: it binds a ``Session``, declares a page/routing
-model, and adds its own Ref subclasses. The widget kit under ``nustd.ui.refs``
-targets this core, not any specific host.
+A host builds on this core: it binds a ``Session`` and may add its own Ref
+subclasses. What is on screen and which part of it shows is the program's,
+drawn with ``nustd.ui.boot`` / ``route`` / ``Ref.showing``. The widget kit
+under ``nustd.ui.refs`` targets this core, not any specific host.
 """
 
 from .base import Ref
 from .chains import Chain, boot_chains
-from .interactions import EVENT, Append, Changed, Display, Hide, Init, Remove, Send, Write
+from .interactions import (
+    EVENT,
+    Append,
+    Changed,
+    Clear,
+    Display,
+    Hide,
+    Init,
+    Remove,
+    Send,
+    Write,
+)
 from .protocol import (
     OP_DISPLAY,
     OP_ERROR,
@@ -60,6 +73,7 @@ __all__ = [
     "Append",
     "Chain",
     "Changed",
+    "Clear",
     "Display",
     "Frame",
     "Hide",

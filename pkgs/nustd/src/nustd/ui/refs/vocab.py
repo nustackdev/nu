@@ -24,6 +24,7 @@ __all__ = [
     "ControlSize",
     "HeadingTone",
     "IconTone",
+    "PageWidth",
     "StatusTone",
     "Target",
     "TextAlign",
@@ -49,6 +50,12 @@ HeadingTone = Literal["primary", "secondary", "accent"]
 
 #: A live state's tone (a status dot, a status pill): neutral, or a status.
 StatusTone = Literal["neutral", "info", "ok", "warn", "danger"]
+
+#: A named page width, the kit's ``--container-*`` tokens: a form 480, reading
+#: prose 640, a panel or detail view 960, a site's main column 1200, a wide
+#: dashboard 1400. "full" is no cap. Column's ``max_width`` and Container's
+#: ``size`` both take it.
+PageWidth = Literal["form", "prose", "panel", "main", "dashboard", "full"]
 
 #: Where a flex container places its children across its main axis.
 Align = Literal["start", "center", "end", "stretch"]

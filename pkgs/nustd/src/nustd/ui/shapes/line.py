@@ -15,7 +15,7 @@ as they are.
 from __future__ import annotations
 
 from nustd.ui.core import Section
-from nustd.ui.refs.containers.line import LineRef
+from nustd.ui.refs.collections.line import LineRef
 
 
 __all__ = ["Line"]

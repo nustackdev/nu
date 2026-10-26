@@ -1,12 +1,12 @@
 """Boot chains: what a Shape's slots look like as init frames.
 
 A chain is one root-first walk of ``(segment, type, props)`` per level -- the
-same shape a write carries, minus the payload. Shipped at boot as ``init``
-frames so a slot is on screen before anything writes to it, and dropped into
-the browser's tree by the same autovivify walk a write takes.
+same shape a write carries, minus the payload. Shipped as ``init`` frames
+(``Ref.init``, and so ``nustd.ui.boot`` and ``Ref.showing``) so a slot is on
+screen before anything writes to it, and dropped into the browser's tree by
+the same autovivify walk a write takes.
 
-Host-independent: nothing in the walk knows whether it is looking at nudle's
-Index / Page or nuspace's Shell / Screen.
+Host-independent: nothing in the walk knows which host it is drawing for.
 """
 
 from __future__ import annotations

@@ -118,7 +118,7 @@ _COLUMNS = [
 ]
 
 
-class SheetPage(nustd.ui.Page):
+class SheetPage(nustd.ui.Column):
     table = nustd.ui.TableRef.slot(
         columns=_COLUMNS,
         row_key="id",
@@ -130,8 +130,8 @@ class SheetPage(nustd.ui.Page):
     )
 
 
-class SheetApp(nustd.ui.Index):
-    sheet = SheetPage.slot("/")
+class SheetApp(nu.Shape):
+    sheet = SheetPage.slot()
 
 
 TABLE = SheetApp.sheet.table

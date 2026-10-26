@@ -22,7 +22,7 @@ from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core.interactions import Changed, Write
 
-from .base import DictContainerRef
+from .base import DictCollectionRef
 
 
 if TYPE_CHECKING:
@@ -44,7 +44,7 @@ def _open_title(open: object, title: object) -> dict[str, object]:
     return payload
 
 
-class CollapsibleRef(DictContainerRef):
+class CollapsibleRef(DictCollectionRef):
     """One titled region whose children fold away.
 
     A trigger row (chevron + title) over a body of open-ended children. The
@@ -83,7 +83,7 @@ Side = Literal["left", "right", "top", "bottom"]
 SheetSize = Literal["sm", "md", "lg"]
 
 
-class SheetRef(DictContainerRef):
+class SheetRef(DictCollectionRef):
     """Drawer that slides in from an edge over the page, children as its body.
 
     Server-owned ``open`` and ``title``. When ``dismissible`` is true the user

@@ -54,7 +54,7 @@ from typing_extensions import Self
 from nu.forms import Dict
 from nustd.ui.core import Ref, Send, Write
 
-from .base import DictContainerRef
+from .base import DictCollectionRef
 
 
 if TYPE_CHECKING:
@@ -97,7 +97,7 @@ def _normalize_spans(spans: Mapping[str, Span] | None) -> dict[str, dict[str, in
     return out
 
 
-class GridRef(DictContainerRef):
+class GridRef(DictCollectionRef):
     """Equal cells, one child per cell, as many per row as the width allows.
 
     `columns` caps the cells on a row (0: no cap, the width decides),

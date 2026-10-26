@@ -56,7 +56,7 @@ class WatchCard(nustd.ui.Card):
     body = WatchColumn.slot(gap=3)
 
 
-class Watchlist(nustd.ui.Page):
+class Watchlist(nustd.ui.Container):
     heading = nustd.ui.HeadingRef.slot(label="Watchlist")
     intro = nustd.ui.TextRef.slot(
         value="Double click to edit, Delete to remove, Alt + arrows to move, a header to sort.",
@@ -64,9 +64,9 @@ class Watchlist(nustd.ui.Page):
     card = WatchCard.slot(title="Movies")
 
 
-class App(nustd.ui.Index):
+class App(nu.Shape):
     title: nustd.ui.TitleRef
-    watchlist = Watchlist.slot("/")
+    watchlist = Watchlist.slot(size="dashboard")
 
 
 TABLE = App.watchlist.card.body.table
@@ -285,7 +285,9 @@ ui = (
 
 app = nu.With(
     nustd.kv.memory_navigator(),
-    body=nustd.ui.serve(App, nustd.kv.auto_flow_atomic(ui), port=8092),
+    body=nustd.ui.serve(
+        nustd.ui.boot(App.title, App.watchlist) >> nustd.kv.auto_flow_atomic(ui), port=8092
+    ),
 )
 
 

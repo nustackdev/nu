@@ -9,12 +9,12 @@ class State(nu.Shape):
     cursor = nustd.kv.IntRef.slot()
 
 
-class Dashboard(nustd.ui.Page):
+class Dashboard(nustd.ui.Container):
     chart = nustd.ui.LineChart.slot()
 
 
-class App(nustd.ui.Index):
-    home = Dashboard.slot("/")
+class App(nu.Shape):
+    home = Dashboard.slot(size="dashboard")
 
 
 # reactive wire: repaint the chart on every write to `nums`
@@ -34,7 +34,7 @@ feed = State.cursor.init(0) >> nu.ForeverDo(
 app = nu.With(
     nustd.kv.rocksdb_navigator(".dbsampled"),
     body=nu.ParallelAsync(
-        nustd.ui.serve(App, nustd.kv.auto_flow_atomic(ui)),
+        nustd.ui.serve(nustd.ui.boot(App.home) >> nustd.kv.auto_flow_atomic(ui)),
         nustd.kv.auto_flow_atomic(feed),
     ),
 )

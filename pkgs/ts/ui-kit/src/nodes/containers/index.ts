@@ -9,6 +9,7 @@ import { Accordion } from "./accordion";
 import { Card } from "./card";
 import { Collapsible } from "./collapsible";
 import { Column } from "./column";
+import { Container } from "./container";
 import { Box } from "./box";
 import { Field } from "./field";
 import { Fieldset } from "./fieldset";
@@ -25,6 +26,7 @@ import { Tabs } from "./tabs";
 
 export const containerEntries: Record<string, NodeEntry> = {
 	Column,
+	Container,
 	Row,
 	Box,
 	Form,

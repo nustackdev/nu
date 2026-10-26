@@ -36,7 +36,7 @@ class Panes(nustd.ui.Row):
     activity = ActivityCard.slot(title="Activity")
 
 
-class Files(nustd.ui.Page):
+class Files(nustd.ui.Container):
     heading = nustd.ui.HeadingRef.slot(label="Files")
     intro = nustd.ui.TextRef.slot(
         value="Click to select, Enter to open, F2 to rename, drag to move.",
@@ -44,9 +44,9 @@ class Files(nustd.ui.Page):
     panes = Panes.slot(gap=4, align="start")
 
 
-class App(nustd.ui.Index):
+class App(nu.Shape):
     title: nustd.ui.TitleRef
-    files = Files.slot("/")
+    files = Files.slot(size="main")
 
 
 TREE = App.files.panes.files.tree
@@ -163,7 +163,9 @@ ui = App.title.set("Files") >> init >> ship >> (on_select | on_open | on_rename 
 
 app = nu.With(
     nustd.kv.memory_navigator(),
-    body=nustd.ui.serve(App, nustd.kv.auto_flow_atomic(ui), port=8081),
+    body=nustd.ui.serve(
+        nustd.ui.boot(App.title, App.files) >> nustd.kv.auto_flow_atomic(ui), port=8081
+    ),
 )
 
 

@@ -1,6 +1,6 @@
 """Structural Refs -- bound to non-render browser APIs.
 
-Index-level Refs whose side effects live on the platform (the page's
+Top-level Refs whose side effects live on the platform (the page's
 History, document.title), not the visible body tree. Leaves: neither draws
 anything in the body, and neither holds children. ``NavRef`` is
 ``HistoryRef``'s old name.
@@ -28,9 +28,25 @@ if TYPE_CHECKING:
     from nu.lang import Nu
     from nu.lang.args import StrArg
     from nu.lang.runtime import Runtime
+    from nustd.ui.core import Subscription
 
 
-__all__ = ["HistoryRef", "NavRef", "TitleRef"]
+__all__ = ["HistoryRef", "NavRef", "PathChanged", "RoutePath", "TitleRef", "trim_slash"]
+
+
+def trim_slash(path: str) -> str:
+    """A pathname without its trailing slash, "/" kept as is.
+
+    The kit's ``trimSlash``, so a route matches here exactly as a link is lit
+    in the browser: "/feed/" is "/feed", and "/" stays "/".
+    """
+    return path[:-1] if len(path) > 1 and path.endswith("/") else path
+
+
+def _path_of(uri: object) -> str:
+    """The trimmed pathname of a notify's uri: no query, no hash."""
+    raw = "/" if uri is None else str(uri)
+    return trim_slash(raw.split("#", 1)[0].split("?", 1)[0] or "/")
 
 
 def _entry_of(raw: object) -> dict[str, Any]:
@@ -99,10 +115,115 @@ class ReadEntry(ScalarQuery):
         return athunk
 
 
+class PathChanged(ScalarQuery):
+    """Subscribe to the moves of a HistoryRef that change the pathname.
+
+    ``Changed`` with one filter: a move that only touches the query, the hash
+    or the state never arrives, and neither does a push to the path the page
+    is already on. The pathname is compared trimmed (``trim_slash``), so
+    "/feed" to "/feed/" is no change. Subscribes first and reads where the
+    page is second, one round trip, so a move between the two is not missed
+    and the first move heard is measured against the page as it was.
+    """
+
+    _requires_async = Declared(value=True, name="requires_async")
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> Any:
+            raise RuntimeError("nustd.ui is async-only; use nu.arun")
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref: HistoryRef = self._children[0]
+
+        async def athunk(rt: Runtime) -> Subscription:
+            session = rt.ctx.fabrics.get(Session)
+            ref_nid = rt.program.children[nid][0]
+            path = await ref._aresolve_address(rt, ref_nid)
+            sub = session.subscribe(path)
+            here = _entry_of(await session.aread(path))["path"]
+            return _PathMoves(sub, trim_slash(here))
+
+        return athunk
+
+
+class RoutePath(ScalarQuery):
+    """The page's pathname through a HistoryRef, trimmed the way routes are.
+
+    One round trip, like ``HistoryRef.path()``, with the trailing slash
+    dropped (``trim_slash``), so "/feed/" selects the "/feed" branch.
+    """
+
+    _requires_async = Declared(value=True, name="requires_async")
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> Any:
+            raise RuntimeError("nustd.ui is async-only; use nu.arun")
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref: HistoryRef = self._children[0]
+
+        async def athunk(rt: Runtime) -> str:
+            session = rt.ctx.fabrics.get(Session)
+            ref_nid = rt.program.children[nid][0]
+            path = await ref._aresolve_address(rt, ref_nid)
+            return trim_slash(_entry_of(await session.aread(path))["path"])
+
+        return athunk
+
+
+class _PathMoves:
+    """A subscription passing on only the notifies that move the pathname.
+
+    Listens to the inner subscription once and fans out to its own
+    callbacks, so the last path is one per subscription however many bind.
+    A callback that raises is dropped, as the session drops one, and the
+    rest still hear the move. Callbacks are matched by identity, never
+    hashed.
+    """
+
+    __slots__ = ("_callbacks", "_last", "_sub")
+
+    def __init__(self, sub: Subscription, here: str) -> None:
+        self._sub = sub
+        self._last = here
+        self._callbacks: list[Callable[[object], None]] = []
+        sub.bind(self._on)
+
+    def _on(self, payload: object) -> None:
+        path = _path_of(payload)
+        if path == self._last:
+            return
+        self._last = path
+        dead = []
+        for cb in tuple(self._callbacks):
+            try:
+                cb(payload)
+            except Exception:  # a dead far end, as the session treats it
+                dead.append(cb)
+        if dead:
+            self._callbacks = [cb for cb in self._callbacks if not any(cb is d for d in dead)]
+
+    def bind(self, cb: Callable[[object], None]) -> None:
+        if not any(bound is cb for bound in self._callbacks):
+            self._callbacks.append(cb)
+
+    def unbind(self, cb: Callable[[object], None]) -> None:
+        self._callbacks = [bound for bound in self._callbacks if bound is not cb]
+
+    def close(self) -> None:
+        self._callbacks = []
+        self._sub.unbind(self._on)
+        self._sub.close()
+
+
 class HistoryRef(LeafRef):
     """The page's History: where it is, and the server's way to move it.
 
-    Index-level structural Ref, drawn as nothing. The browser keeps one stack
+    Structural Ref, drawn as nothing. The browser keeps one stack
     of entries, each a URL plus state, a data value that rides with the entry
     and is not in the URL. Every move goes through the kit's History.
 
@@ -121,9 +242,13 @@ class HistoryRef(LeafRef):
         nav.state()             -- the entry's state, None for none
         nav.path()              -- the pathname alone
 
-    ``nav.on_change()`` hears every move the page makes except the ones this
-    ref's own moves caused: the user's back button, a link the host routed,
+    ``nav.on_change()`` hears every move the page makes, this ref's own
+    included: its push, the user's back button, a link the host routed,
     another HistoryRef's push. The payload is the new uri.
+    ``nav.on_path_change()`` is the same stream with only the moves that
+    change the pathname, which is what ``nustd.ui.route`` listens to: a
+    branch that moves the page is heard like anybody else, and a query move
+    is the branch's own business.
 
     State must be what the browser can structured-clone: dicts, lists,
     strings, numbers, booleans and None. The query encoding is the one
@@ -197,7 +322,12 @@ class HistoryRef(LeafRef):
         return ReadEntry(self, "path")
 
     def on_change(self) -> Changed:
+        """Every move the page makes, this ref's own included. The payload is the new uri."""
         return Changed(self)
+
+    def on_path_change(self) -> PathChanged:
+        """The moves that change the pathname; query, hash and state moves stay out."""
+        return PathChanged(self)
 
 
 #: The old name of ``HistoryRef``, kept so programs written against it run as
@@ -206,7 +336,7 @@ NavRef = HistoryRef
 
 
 class TitleRef(LeafRef):
-    """Bound to document.title. Index-level structural Ref.
+    """Bound to document.title. Structural Ref.
 
     Write-only from host. The browser-side slice writes assignments
     directly to document.title; it is not a body slot and is not

@@ -21,7 +21,7 @@ like everything else.
 Children by key or index: ``Grid.slot(SpeciesCard)`` declares an item
 template on the slot, and ``ref["lion"]`` is a SpeciesCard there. The
 template rides the Ref's payload; whether a container takes one is its kind
-(see ``refs.containers.base``).
+(see ``refs.collections.base``).
 """
 
 from __future__ import annotations
@@ -44,8 +44,8 @@ __all__ = ["Section", "SectionRef"]
 class SectionRef(Ref):
     """Substrate Ref under every container.
 
-    Created by ``Section.slot()`` and exposed at the parent (Page or another
-    Section) level, it carries ``section_cls`` and attribute access returns
+    Created by ``Section.slot()`` and exposed at the parent (a Shape or
+    another Section) level, it carries ``section_cls`` and attribute access returns
     a child Ref whose ``parent`` is this SectionRef. ``section_cls`` is
     optional: a container Ref built alone has no Shape to navigate, and its
     children are built as Refs with ``parent_ref=`` it.
@@ -103,7 +103,7 @@ class Section(Shape):
         bar = Toolbar.slot(gap=3)
 
     A Section subclass holds no mount point, so the same one can be
-    declared on several pages at once.
+    declared in several places at once.
     """
 
     # Container Ref backing this section's slot. Every shipped Shape points it
@@ -113,8 +113,8 @@ class Section(Shape):
 
     # Browser component this Section renders as. Empty, the default, means
     # "whatever `_ref_cls` draws as", and failing that the class name; see
-    # `_wire_type_of`. A Section that draws as its own browser node (nudle's
-    # Page) declares it.
+    # `_wire_type_of`. A Section that draws as a browser node of its own
+    # declares it.
     _wire_type: ClassVar[str] = ""
 
     @classmethod

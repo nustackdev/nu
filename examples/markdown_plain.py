@@ -38,16 +38,16 @@ A last paragraph, so the bottom edge has something to sit on.
 """
 
 
-class Home(nustd.ui.Page):
+class Home(nustd.ui.Container):
     body = nustd.ui.MarkdownRef.slot(value=SEED)
 
 
-class App(nustd.ui.Index):
+class App(nu.Shape):
     title = nustd.ui.TitleRef.slot(default="Markdown, plain")
-    home = Home.slot("/")
+    home = Home.slot(size="prose")
 
 
-app = nustd.ui.serve(App, nu.Noop())
+app = nustd.ui.serve(nustd.ui.boot(App.title, App.home))
 
 
 if __name__ == "__main__":

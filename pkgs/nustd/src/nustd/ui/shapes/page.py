@@ -1,6 +1,6 @@
 """Page Shapes -- PageSection and NavList, declared.
 
-Each is a Section over its container Ref (``nustd.ui.refs.containers.page``):
+Each is a Section over its container Ref (``nustd.ui.refs.collections.page``):
 the Ref carries the chrome methods, the slot defaults and the wire type, and
 ``slot(**props)`` forwards to it.
 
@@ -21,7 +21,7 @@ A slot named ``actions`` draws on the section header's right, not the body.
 from __future__ import annotations
 
 from nustd.ui.core import Section
-from nustd.ui.refs.containers.page import NavListRef, PageSectionRef
+from nustd.ui.refs.collections.page import NavListRef, PageSectionRef
 
 
 __all__ = ["NavList", "PageSection"]

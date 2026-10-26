@@ -165,7 +165,7 @@ class LogSheet(ui.Sheet):
 # --- page ---------------------------------------------------------------------
 
 
-class Home(ui.Page):
+class Home(ui.Container):
     trail = ui.BreadcrumbRef.slot(
         items=[{"label": "Stations", "href": "/"}, {"label": "Tanzania", "href": "/"}, "Serengeti"]
     )
@@ -186,8 +186,8 @@ class Home(ui.Page):
     confirm = ConfirmClear.slot(title="Clear the trap log?")
 
 
-class App(ui.Index):
-    home = Home.slot("/")
+class App(nu.Shape):
+    home = Home.slot(size="dashboard")
 
 
 h = App.home
@@ -275,7 +275,7 @@ program = seed >> nu.ParallelAsync(
     ),
 )
 
-app = ui.serve(App, program)
+app = ui.serve(ui.boot(App.home) >> program)
 
 
 if __name__ == "__main__":

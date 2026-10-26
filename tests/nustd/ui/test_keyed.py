@@ -18,10 +18,10 @@ import nu
 from nu import Context
 from nustd import ui
 from nustd.ui import Session, shapes
-from nustd.ui.refs.containers import (
-    DictContainerRef,
-    ListContainerRef,
-    ShapeContainerRef,
+from nustd.ui.refs.collections import (
+    DictCollectionRef,
+    ListCollectionRef,
+    ShapeCollectionRef,
 )
 
 
@@ -70,23 +70,24 @@ class Home(ui.Column):
 
 
 KIND = {
-    "Accordion": DictContainerRef,
-    "Box": DictContainerRef,
-    "Card": DictContainerRef,
-    "Collapsible": DictContainerRef,
-    "Column": DictContainerRef,
-    "Field": ShapeContainerRef,
-    "Fieldset": DictContainerRef,
-    "Form": DictContainerRef,
-    "Grid": DictContainerRef,
-    "Line": ListContainerRef,
-    "List": ListContainerRef,
-    "Modal": DictContainerRef,
-    "NavList": DictContainerRef,
-    "PageSection": DictContainerRef,
-    "Row": DictContainerRef,
-    "Sheet": DictContainerRef,
-    "Tabs": DictContainerRef,
+    "Accordion": DictCollectionRef,
+    "Box": DictCollectionRef,
+    "Card": DictCollectionRef,
+    "Collapsible": DictCollectionRef,
+    "Column": DictCollectionRef,
+    "Container": DictCollectionRef,
+    "Field": ShapeCollectionRef,
+    "Fieldset": DictCollectionRef,
+    "Form": DictCollectionRef,
+    "Grid": DictCollectionRef,
+    "Line": ListCollectionRef,
+    "List": ListCollectionRef,
+    "Modal": DictCollectionRef,
+    "NavList": DictCollectionRef,
+    "PageSection": DictCollectionRef,
+    "Row": DictCollectionRef,
+    "Sheet": DictCollectionRef,
+    "Tabs": DictCollectionRef,
 }
 
 
@@ -101,17 +102,17 @@ def test_every_container_ref_has_exactly_one_shape_named_after_it():
     drawn as ``X``, and both are exported from shapes, refs and the root."""
     from nustd.ui import refs
     from nustd.ui.core.base import _wire_type_of
-    from nustd.ui.refs import containers
+    from nustd.ui.refs import collections
 
     # ListRef kept its old wire type so bundles from before it took children
     # still draw the strings; see ListRef.
     wire_exceptions = {"List": "ListRef"}
-    abstract = {"ContainerRef", "DictContainerRef", "ListContainerRef", "ShapeContainerRef"}
-    concrete = sorted(set(containers.__all__) - abstract)
+    abstract = {"CollectionRef", "DictCollectionRef", "ListCollectionRef", "ShapeCollectionRef"}
+    concrete = sorted(set(collections.__all__) - abstract)
     shape_classes = [getattr(shapes, n) for n in shapes.__all__]
     assert len(shape_classes) == len(concrete)
     for ref_name in concrete:
-        ref_cls = getattr(containers, ref_name)
+        ref_cls = getattr(collections, ref_name)
         owners = [s for s in shape_classes if s._ref_cls is ref_cls]
         assert len(owners) == 1, (ref_name, owners)
         name = ref_name.removesuffix("Ref")
@@ -123,7 +124,7 @@ def test_every_container_ref_has_exactly_one_shape_named_after_it():
             assert ref_name in module.__all__ and getattr(module, ref_name) is ref_cls
 
 
-@pytest.mark.parametrize("name", sorted(n for n, k in KIND.items() if k is DictContainerRef))
+@pytest.mark.parametrize("name", sorted(n for n, k in KIND.items() if k is DictCollectionRef))
 def test_every_dict_container_takes_children_by_key(name):
     page = type("Page", (ui.Column,), {"c": getattr(shapes, name).slot(ui.TextRef)})
     frames = _frames(page.c["k"].set("hi"))
@@ -131,7 +132,7 @@ def test_every_dict_container_takes_children_by_key(name):
     assert frames[0].chain[1][1] == "TextRef"
 
 
-@pytest.mark.parametrize("name", sorted(n for n, k in KIND.items() if k is ListContainerRef))
+@pytest.mark.parametrize("name", sorted(n for n, k in KIND.items() if k is ListCollectionRef))
 def test_every_list_container_takes_children_by_index(name):
     page = type("Page", (ui.Column,), {"c": getattr(shapes, name).slot(ui.TextRef)})
     frames = _frames(page.c[2].set("hi"))

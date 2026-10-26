@@ -248,7 +248,7 @@ def auto_flow_atomic(tree: Nu, scope: Hashable | None = None) -> Nu:
         app = nu.With(
             nustd.kv.rocksdb_navigator(".dbcounter"),
             body=nu.ParallelAsync(
-                nustd.ui.serve(App, nustd.kv.auto_flow_atomic(ui)),
+                nustd.ui.serve(nustd.ui.boot(App.home) >> nustd.kv.auto_flow_atomic(ui)),
                 nustd.kv.auto_flow_atomic(tick),
             ),
         )

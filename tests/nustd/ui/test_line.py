@@ -15,6 +15,7 @@ import nu
 from nu import Context
 from nustd.ui import Session
 from nustd.ui.core.base import _wire_type_of
+from nustd.ui.core.chains import boot_chains
 
 
 class _RecordingSession:
@@ -37,9 +38,9 @@ def _chain(frame):
 
 def test_line_is_a_container_with_its_own_wire_type():
     from nustd.ui import Line, LineRef
-    from nustd.ui.refs import ContainerRef
+    from nustd.ui.refs import CollectionRef
 
-    assert issubclass(LineRef, ContainerRef)
+    assert issubclass(LineRef, CollectionRef)
     assert LineRef._wire_type == "Line"
     assert Line._ref_cls is LineRef
     assert "_wire_type" not in vars(Line)
@@ -72,8 +73,7 @@ def test_shape_slot_forwards_to_the_ref():
 
 
 def test_boot_chains_of_a_page_with_a_line():
-    from nustd.ui import BadgeRef, Line, LinkRef, ShortcutRef, TextRef
-    from nustd.ui.nudle import Page
+    from nustd.ui import BadgeRef, Column, Line, LinkRef, ShortcutRef, TextRef
 
     class Status(Line):
         lead = TextRef.slot(value="Built with")
@@ -81,10 +81,10 @@ def test_boot_chains_of_a_page_with_a_line():
         tag = BadgeRef.slot(label="0.6", variant="info")
         combo = ShortcutRef.slot(keys=["mod", "K"])
 
-    class Home(Page):
+    class Home(Column):
         status = Status.slot(align="center")
 
-    chains = Home._boot_chains()
+    chains = boot_chains((), Home)
     status = [c for c in chains if c[0][0] == "status"]
     assert [[lvl[:2] for lvl in c] for c in status] == [
         [("status", "Line")],

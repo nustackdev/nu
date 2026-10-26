@@ -9,7 +9,7 @@
   [![PyPI Package](https://img.shields.io/pypi/v/nucore?color=yellow)](https://pypi.org/project/nucore/)
   [![PyPI Downloads](https://img.shields.io/pypi/dw/nucore?color=green)](https://pypi.org/project/nucore/)
   [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](https://opensource.org/licenses/Apache-2.0)
-  
+
   [![Discord](https://img.shields.io/badge/discord-join-5865F2?logo=discord&logoColor=white)](https://discord.gg/tCa8YE7XVr)
   [![Twitter Follow](https://img.shields.io/twitter/follow/nustackdev?style=social)](https://twitter.com/nustackdev)
 </div>
@@ -79,14 +79,14 @@ import nu
 import nustd
 
 
-class Home(nustd.ui.Page):
+class Home(nustd.ui.Column):
     hello = nustd.ui.TextRef.slot()
 
 
 # renders live in the browser
-op = Home.hello.set("Hello, browser.")
+op = nustd.ui.boot(Home.hello) >> Home.hello.set("Hello, browser.")
 
-asyncio.run(nu.arun(nustd.ui.serve(Home, op)))
+asyncio.run(nu.arun(nustd.ui.serve(op)))
 ```
 
 Powered by [`React`](https://react.dev) · [`Zustand`](https://github.com/pmndrs/zustand).

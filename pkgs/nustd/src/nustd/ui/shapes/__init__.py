@@ -8,9 +8,10 @@ because ``RowRef`` does). A Shape adds one thing, named child slots, so a
 subclass reads as the tree it draws.
 
 Anything a Shape declares can also be built from Refs alone; see
-``nustd.ui.refs``. Modules here import from ``nustd.ui.refs.containers`` and
+``nustd.ui.refs``. Modules here import from ``nustd.ui.refs.collections`` and
 ``nustd.ui.core`` only, never from the ``nustd.ui.refs`` package root.
 
+- container: Container, the page frame.
 - flow:   Column, Row.
 - grid:   Grid, equal cells.
 - line:   Line, slots that run inline.
@@ -23,6 +24,7 @@ Anything a Shape declares can also be built from Refs alone; see
 from __future__ import annotations
 
 from .chrome import Accordion, Box, Card, Field, Fieldset, Form, Modal, Tabs
+from .container import Container
 from .disclosure import Collapsible, Sheet
 from .flow import Column, Row
 from .grid import Grid
@@ -37,6 +39,7 @@ __all__ = [
     "Card",
     "Collapsible",
     "Column",
+    "Container",
     "Field",
     "Fieldset",
     "Form",

@@ -2,8 +2,9 @@
 //
 // A router only listens. It never writes history, never remembers what it
 // showed and never mounts anything: it says which branch the entry is on,
-// and the host draws that branch. nudle's page router and nuspace's pane
-// router are hosts of this kind, built on it.
+// and the host draws that branch. nuspace's pane router is a host of this
+// kind, built on it. nudle routes in Python (`nustd.ui.route`), with the
+// same pathname rule.
 //
 // A branch is one of:
 //   - a pathname, "/feed": the entry's path is that, exactly (a trailing

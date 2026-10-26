@@ -3,13 +3,13 @@
 ``PageSectionRef`` is a titled part of a page, a heading and a line under
 it with actions on the right and a body of children. ``NavListRef`` is a
 run of nav items, a sidebar's list or a top bar's links. Both are
-``ContainerRef``s with open-ended children; their chrome is props seeded by
+``CollectionRef``s with open-ended children; their chrome is props seeded by
 ``slot()`` and driven by ``set_*``. The Shapes over them live in
 ``nustd.ui.shapes.page``.
 
 A page, end to end, from Refs alone:
 
-    page = ColumnRef("page", props={"max_width": "main", "padding": 6})
+    page = ContainerRef("page", props={"size": "main"})
     usage = PageSectionRef("usage", parent_ref=page, props={"title": "Usage"})
     ButtonRef("export", parent_ref=usage.actions, props={"label": "Export"})
     GridRef("stats", parent_ref=usage, props={"columns": 3})
@@ -28,7 +28,7 @@ from typing_extensions import Self
 from nu.forms import Dict
 from nustd.ui.core import Write
 
-from .base import DictContainerRef
+from .base import DictCollectionRef
 from .named import actions_ref
 
 
@@ -45,7 +45,7 @@ SectionSize = Literal["md", "lg"]
 NavVariant = Literal["vertical", "horizontal"]
 
 
-class PageSectionRef(DictContainerRef):
+class PageSectionRef(DictCollectionRef):
     """A titled part of a page: heading, description, actions, then the body.
 
     The child at key ``"actions"`` draws on the header's right, at its own
@@ -101,7 +101,7 @@ class PageSectionRef(DictContainerRef):
         return Write(self, Dict.of(gap=step))
 
 
-class NavListRef(DictContainerRef):
+class NavListRef(DictCollectionRef):
     """A run of nav items: a sidebar's list, or a top bar's links.
 
     "vertical" stacks the items as full width rows, under `label` as a small

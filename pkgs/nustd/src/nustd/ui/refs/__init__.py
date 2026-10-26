@@ -13,8 +13,8 @@ container Refs, and draw nothing a Ref could not.
 
 Layout under ``refs/``:
 
-- containers/: open-ended children, optional chrome. ``ContainerRef``
-  (base); flow (``ColumnRef``, ``RowRef``); grid (``GridRef``); line
+- collections/: open-ended children, optional chrome. ``CollectionRef``
+  (base, the counterpart of ``LeafRef``); container (``ContainerRef``, the page frame); flow (``ColumnRef``, ``RowRef``); grid (``GridRef``); line
   (``LineRef``); chrome (``CardRef``, ``BoxRef`` behind the Box,
   ``TabsRef``, ``ModalRef``, ``AccordionRef``, ``FormRef``,
   ``FieldsetRef``, ``FieldRef``); disclosure (``CollapsibleRef``,
@@ -32,7 +32,7 @@ Layout under ``refs/``:
   ``CodeRef``, read-only by default and editable on request); and chart
   (``Chart``, one ECharts option, and typed builders over it: ``LineChart``,
   ``BarChart``, ``PieChart``, ``HeatmapChart``, ``Sparkline``, ...).
-- structural.py: Index-level leaves bound to non-render browser APIs (the
+- structural.py: top-level leaves bound to non-render browser APIs (the
   page's History, ``document.title``). ``HistoryRef`` (``NavRef`` is its old
   name), ``TitleRef``. ``encode_query`` / ``decode_query`` spell a query
   string the way the browser does.
@@ -47,7 +47,7 @@ raises ``TypeError``.
 All names are re-exported flat here, so ``nustd.ui.refs.TextRef`` works
 whichever module a widget actually lives in. The Shapes are re-exported too
 (``nustd.ui.refs.Row`` has always worked). That is the one layering
-exception, and it is why this module imports ``containers`` and ``leaves``
+exception, and it is why this module imports ``collections`` and ``leaves``
 before ``nustd.ui.shapes``: the Shapes build on the container Refs, and
 nothing under ``refs/`` imports a Shape.
 
@@ -76,26 +76,27 @@ from __future__ import annotations
 
 from nustd.ui.core import Ref, Section, SectionRef
 
-from .containers import (
+from .collections import (
     AccordionRef,
     BoxRef,
     CardRef,
     CollapsibleRef,
+    CollectionRef,
     ColumnRef,
     ContainerRef,
-    DictContainerRef,
+    DictCollectionRef,
     FieldRef,
     FieldsetRef,
     FormRef,
     GridRef,
     LineRef,
-    ListContainerRef,
+    ListCollectionRef,
     ListRef,
     ModalRef,
     NavListRef,
     PageSectionRef,
     RowRef,
-    ShapeContainerRef,
+    ShapeCollectionRef,
     SheetRef,
     TabsRef,
 )
@@ -166,7 +167,15 @@ from .leaves import (
     TreeRef,
 )
 from .query import decode_query, encode_query
-from .structural import HistoryRef, NavRef, ReadEntry, TitleRef
+from .structural import (
+    HistoryRef,
+    NavRef,
+    PathChanged,
+    ReadEntry,
+    RoutePath,
+    TitleRef,
+    trim_slash,
+)
 
 
 # isort: split
@@ -177,6 +186,7 @@ from nustd.ui.shapes import (
     Card,
     Collapsible,
     Column,
+    Container,
     Field,
     Fieldset,
     Form,
@@ -213,11 +223,13 @@ __all__ = [
     "CodeRef",
     "Collapsible",
     "CollapsibleRef",
+    "CollectionRef",
     "Column",
     "ColumnRef",
+    "Container",
     "ContainerRef",
     "DatePickerRef",
-    "DictContainerRef",
+    "DictCollectionRef",
     "DividerRef",
     "EmptyStateRef",
     "Field",
@@ -248,7 +260,7 @@ __all__ = [
     "LineRef",
     "LinkRef",
     "List",
-    "ListContainerRef",
+    "ListCollectionRef",
     "ListRef",
     "MarkdownRef",
     "Modal",
@@ -261,6 +273,7 @@ __all__ = [
     "PageLinkRef",
     "PageSection",
     "PageSectionRef",
+    "PathChanged",
     "PieChart",
     "ProgressRef",
     "RadarChart",
@@ -268,6 +281,7 @@ __all__ = [
     "ReadEntry",
     "Ref",
     "RemoveRows",
+    "RoutePath",
     "Row",
     "RowRef",
     "SankeyChart",
@@ -277,7 +291,7 @@ __all__ = [
     "SelectRef",
     "SetOrder",
     "SetRow",
-    "ShapeContainerRef",
+    "ShapeCollectionRef",
     "Sheet",
     "SheetRef",
     "ShortcutRef",
@@ -304,4 +318,5 @@ __all__ = [
     "TreemapChart",
     "decode_query",
     "encode_query",
+    "trim_slash",
 ]

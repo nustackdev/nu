@@ -14,7 +14,7 @@ the props over as they are.
 from __future__ import annotations
 
 from nustd.ui.core import Section
-from nustd.ui.refs.containers.flow import ColumnRef, RowRef
+from nustd.ui.refs.collections.flow import ColumnRef, RowRef
 
 
 __all__ = ["Column", "Row"]

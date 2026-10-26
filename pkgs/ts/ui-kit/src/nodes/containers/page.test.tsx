@@ -1,6 +1,6 @@
 // Page parts over the real tree store: a PageSection's header and body, the
-// two NavList variants, a Column capped at a page width, and a Spacer that
-// pushes the rest of a Row to its end.
+// two NavList variants, a Column capped at a page width, the Container page
+// frame, and a Spacer that pushes the rest of a Row to its end.
 
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -134,10 +134,60 @@ describe("Column page width", () => {
 		expect(q("[data-max-width]")).toBeNull();
 	});
 
+	it("takes the dashboard width by its token name", () => {
+		write(["c", "Column", { max_width: "dashboard" }], ["t", "TextRef"]);
+		draw(["c"]);
+		expect(q("[data-max-width]")?.className).toContain("max-w-dashboard");
+	});
+
 	it("justifies evenly", () => {
 		write(["c", "Column", { justify: "evenly" }], ["t", "TextRef"]);
 		draw(["c"]);
 		expect(host.firstElementChild?.className).toContain("justify-evenly");
+	});
+});
+
+describe("Container", () => {
+	it("frames at main by default: full width to the cap, centred, gutter, gap", () => {
+		write(["p", "Container", {}], ["a", "PageTestProbe"]);
+		write(["p", "Container", {}], ["b", "TextRef", { value: "b" }]);
+		draw(["p"]);
+		const frame = q("[data-slot=container]");
+		expect(frame?.dataset.size).toBe("main");
+		const cls = frame?.className ?? "";
+		for (const c of ["w-full", "mx-auto", "max-w-main", "flex-col", "gap-6"]) {
+			expect(cls).toContain(c);
+		}
+		// The gutter follows the window, nothing else does.
+		for (const c of ["px-4", "md:px-8", "lg:px-12"]) expect(cls).toContain(c);
+		expect(cls).not.toMatch(/(sm|md|lg|xl):max-w/);
+		// Children stack as blocks, in the order they landed.
+		expect(q("[data-probe]")?.textContent).toBe("block");
+		expect(frame?.textContent).toBe("blockb");
+	});
+
+	it("takes every page width, and prose by its token", () => {
+		const want: Record<string, string> = {
+			form: "max-w-form",
+			prose: "max-w-(--container-prose)",
+			panel: "max-w-panel",
+			dashboard: "max-w-dashboard",
+			full: "max-w-full",
+		};
+		for (const [size, cls] of Object.entries(want)) {
+			write(["p", "Container", { size }]);
+			draw(["p"]);
+			act(() => tree.getState().dispatch({ op: "write", ref: ["p"], payload: { size } }));
+			expect(q("[data-slot=container]")?.className).toContain(cls);
+		}
+	});
+
+	it("drops the gutter edge to edge, and takes its gap", () => {
+		write(["p", "Container", { padding: "none", gap: 2 }], ["t", "TextRef"]);
+		draw(["p"]);
+		const cls = q("[data-slot=container]")?.className ?? "";
+		expect(cls).not.toContain("px-4");
+		expect(cls).toContain("gap-2");
 	});
 });
 
