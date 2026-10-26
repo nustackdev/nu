@@ -2,16 +2,17 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.6.6
-- **nustd** (fabrics) — 0.6.6
-- **nudle** — 0.1.9
-- **ui-core** — 0.2.1
-- **ui-kit** — 0.3.4
+- **nucore** (kernel) — 0.6.7
+- **nustd** (fabrics) — 0.6.7
+- **nudle** — 0.1.10
+- **ui-core** — 0.2.2
+- **ui-kit** — 0.3.5
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.6.7 — 2026-10-26
 
+- Release nu 0.6.7 with nudle 0.1.10, ui-core 0.2.2 and ui-kit 0.3.5
 - Route nudle pages in Python; Page, Index and the built-in sidebar are gone
 - Add a Container page frame with fixed widths, so pages size and center cleanly
 - Make shared ui ref helper modules public, in line with the rest of nu
