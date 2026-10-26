@@ -76,7 +76,11 @@ class AvatarRef(LeafRef):
 
 
 def _normalize_crumbs(items: object) -> list[dict[str, str]]:
-    """Accept ["Home", "Docs"] or [{"label": "Home", "href": "/"}] and return the dict form."""
+    """Accept ["Home", "Docs"] or [{"label": "Home", "href": "/"}] and return the dict form.
+
+    A crumb's ``target`` rides along only when it names one, so a trail with
+    none keeps its two-key crumbs.
+    """
     if not isinstance(items, (list, tuple)):
         return []
     out: list[dict[str, str]] = []
@@ -86,16 +90,20 @@ def _normalize_crumbs(items: object) -> list[dict[str, str]]:
         elif isinstance(item, dict):
             label = "" if item.get("label") is None else str(item["label"])
             href = "" if item.get("href") is None else str(item["href"])
-            out.append({"label": label, "href": href})
+            crumb = {"label": label, "href": href}
+            if item.get("target") is not None:
+                crumb["target"] = str(item["target"])
+            out.append(crumb)
     return out
 
 
 class BreadcrumbRef(LeafRef):
-    """The trail to here, as crumbs of `{label, href}`.
+    """The trail to here, as crumbs of `{label, href}`, and `target` per crumb.
 
     The last crumb is the current page and is not a link; a crumb with no
     `href` reads as plain text. A plain string is a crumb with that label and
     no link. An href on another host gets the external mark, like `LinkRef`.
+    A crumb opens in this tab unless its `target` is "_blank".
     """
 
     _wire_type = "BreadcrumbRef"

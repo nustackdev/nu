@@ -32,8 +32,10 @@ Layout under ``refs/``:
   ``CodeRef``, read-only by default and editable on request); and chart
   (``Chart``, one ECharts option, and typed builders over it: ``LineChart``,
   ``BarChart``, ``PieChart``, ``HeatmapChart``, ``Sparkline``, ...).
-- structural.py: Index-level leaves bound to non-render browser APIs
-  (``window.history``, ``document.title``). ``NavRef``, ``TitleRef``.
+- structural.py: Index-level leaves bound to non-render browser APIs (the
+  page's History, ``document.title``). ``HistoryRef`` (``NavRef`` is its old
+  name), ``TitleRef``. ``encode_query`` / ``decode_query`` spell a query
+  string the way the browser does.
 - layout.py, output.py, input.py, chart.py, tree.py: kept for old import
   paths, re-exports only.
 
@@ -74,6 +76,7 @@ from __future__ import annotations
 
 from nustd.ui.core import Ref, Section, SectionRef
 
+from ._query import decode_query, encode_query
 from .containers import (
     AccordionRef,
     BoxRef,
@@ -163,7 +166,7 @@ from .leaves import (
     TreemapChart,
     TreeRef,
 )
-from .structural import NavRef, TitleRef
+from .structural import HistoryRef, NavRef, ReadEntry, TitleRef
 
 
 # isort: split
@@ -231,6 +234,7 @@ __all__ = [
     "HeadingRef",
     "HeatmapChart",
     "Histogram",
+    "HistoryRef",
     "HtmlRef",
     "IconRef",
     "ImageRef",
@@ -261,6 +265,7 @@ __all__ = [
     "ProgressRef",
     "RadarChart",
     "RadioGroupRef",
+    "ReadEntry",
     "Ref",
     "RemoveRows",
     "Row",
@@ -297,4 +302,6 @@ __all__ = [
     "ToggleRef",
     "TreeRef",
     "TreemapChart",
+    "decode_query",
+    "encode_query",
 ]

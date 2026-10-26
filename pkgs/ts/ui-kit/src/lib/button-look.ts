@@ -1,8 +1,8 @@
 // Button looks off the wire: how a node's `variant` and `size` props name a
 // kit Button.
 //
-// ButtonRef, a LinkRef drawn as a button and an EmptyState's way out all
-// draw the Button primitive, so they all read its look the same way: the
+// ButtonRef (with or without an href) and an EmptyState's way out both
+// draw the Button primitive, so they read its look the same way: the
 // wire's `primary` is the kit's `default`, `danger` its `destructive`, and an
 // unknown variant or size falls back to the default rather than to no look.
 

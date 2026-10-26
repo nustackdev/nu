@@ -1,0 +1,122 @@
+{
+	"_about": "One query encoding for nu, held by both sides: nustd.ui encode_query / decode_query (tests/nustd/ui/test_history.py) and the ui-kit query helpers (pkgs/ts/ui-kit/src/tree/history.test.tsx). The bytes are URLSearchParams: space is +, letters, digits and *-._ stay, every other UTF-8 byte is %XX. true/false spell true/false, numbers as JS prints them, null drops the key. Decoding keeps the last value of a repeated key.",
+	"encode": [
+		{
+			"query": {
+				"q": "hello world"
+			},
+			"string": "q=hello+world"
+		},
+		{
+			"query": {
+				"name": "Ünïcødé ✓",
+				"emoji": "😀"
+			},
+			"string": "name=%C3%9Cn%C3%AFc%C3%B8d%C3%A9+%E2%9C%93&emoji=%F0%9F%98%80"
+		},
+		{
+			"query": {
+				"plus": "a+b"
+			},
+			"string": "plus=a%2Bb"
+		},
+		{
+			"query": {
+				"amp": "a&b=c"
+			},
+			"string": "amp=a%26b%3Dc"
+		},
+		{
+			"query": {
+				"marks": "!*'()~"
+			},
+			"string": "marks=%21*%27%28%29%7E"
+		},
+		{
+			"query": {
+				"safe": "a-b_c.d*e"
+			},
+			"string": "safe=a-b_c.d*e"
+		},
+		{
+			"query": {
+				"empty": ""
+			},
+			"string": "empty="
+		},
+		{
+			"query": {
+				"slash": "/a/b?c#d",
+				"pct": "100%"
+			},
+			"string": "slash=%2Fa%2Fb%3Fc%23d&pct=100%25"
+		},
+		{
+			"query": {
+				"a key": "v",
+				"k=y": "&"
+			},
+			"string": "a+key=v&k%3Dy=%26"
+		},
+		{
+			"query": {
+				"flag": true,
+				"off": false,
+				"n": 42,
+				"f": 1.5,
+				"neg": -3,
+				"drop": null
+			},
+			"string": "flag=true&off=false&n=42&f=1.5&neg=-3"
+		}
+	],
+	"decode": [
+		{
+			"string": "a=1&a=2",
+			"query": {
+				"a": "2"
+			}
+		},
+		{
+			"string": "?x=%20y+z",
+			"query": {
+				"x": " y z"
+			}
+		},
+		{
+			"string": "flag",
+			"query": {
+				"flag": ""
+			}
+		},
+		{
+			"string": "",
+			"query": {}
+		},
+		{
+			"string": "k=a%2Bb",
+			"query": {
+				"k": "a+b"
+			}
+		},
+		{
+			"string": "u=%C3%9C%E2%9C%93",
+			"query": {
+				"u": "Ü✓"
+			}
+		},
+		{
+			"string": "e=&f=1",
+			"query": {
+				"e": "",
+				"f": "1"
+			}
+		},
+		{
+			"string": "sp=a%20b+c",
+			"query": {
+				"sp": "a b c"
+			}
+		}
+	]
+}

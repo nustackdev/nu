@@ -23,7 +23,7 @@
 //
 // `href` makes the whole card one link: the primitive's `interactive` look
 // (hover border, focus ring) `asChild` around a real <a>, so cmd-click and a
-// host shell's anchor routing both work. A link card should hold no controls
+// host's AnchorCatcher both work. A link card should hold no controls
 // of its own, since a button inside an anchor is two targets in one.
 
 import {

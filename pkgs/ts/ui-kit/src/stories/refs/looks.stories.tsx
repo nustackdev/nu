@@ -90,7 +90,7 @@ export const Actions: Story = {
 		return (
 			<NodeStage
 				root="looks-actions"
-				label="ButtonRef variants and sizes, href buttons; LinkRef text / muted / button looks"
+				label="ButtonRef variants and sizes, href buttons (the button-look link); LinkRef text / muted"
 				chains={[
 					col,
 					...under(
@@ -112,6 +112,11 @@ export const Actions: Story = {
 					),
 					...under(row("hrefs"), [
 						step("start", "ButtonRef", { label: "Get started", href: "#start", icon: "sparkles" }),
+						step("plans", "ButtonRef", {
+							label: "See plans",
+							href: "#plans",
+							variant: "secondary",
+						}),
 						step("docs", "ButtonRef", {
 							label: "Docs",
 							href: "https://nustack.dev",
@@ -120,29 +125,7 @@ export const Actions: Story = {
 						}),
 					]),
 					...under(row("links"), [
-						step("l-button", "LinkRef", {
-							href: "#plans",
-							label: "See plans",
-							variant: "button",
-							arrow: true,
-						}),
-						step("l-secondary", "LinkRef", {
-							href: "#a",
-							label: "Secondary",
-							variant: "secondary",
-						}),
-						step("l-outline", "LinkRef", {
-							href: "#b",
-							label: "Outline",
-							variant: "outline",
-							icon: "file-text",
-						}),
-						step("l-ghost", "LinkRef", {
-							href: "#c",
-							label: "Ghost",
-							variant: "ghost",
-							size: "sm",
-						}),
+						step("l-icon", "LinkRef", { href: "#c", label: "Notes", icon: "file-text" }),
 						step("l-text", "LinkRef", { href: "#d", label: "Read more", arrow: true }),
 						step("l-muted", "LinkRef", { href: "#e", label: "Changelog", variant: "muted" }),
 					]),

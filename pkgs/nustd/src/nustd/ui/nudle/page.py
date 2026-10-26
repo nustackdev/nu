@@ -180,12 +180,19 @@ class Index(Shape):
     Page slot per route::
 
         class App(nudle.Index):
-            title = nudle.TitleRef.slot()
+            title = nustd.ui.TitleRef.slot()
+            nav = nustd.ui.HistoryRef.slot()
             home = HomePage.slot("/")
             feed = FeedPage.slot("/feed")
 
     Refs rooted on an Index resolve from their slot down, so a structural
     Ref is one segment and a page's Refs carry the page slot in front.
+
+    The browser routes on its own: the page shown is the one whose route the
+    pathname names exactly (the query is the page's), the sidebar and every
+    same-origin link move it without a reload, and a path no page claims
+    shows not-found. A ``HistoryRef`` is only for a program that wants to
+    move the page or hear it move; nudle needs none.
     """
 
     # Opt-out for the built-in left sidebar. Off automatically when there

@@ -133,6 +133,7 @@ class PageLinkRef(LeafRef):
         icon: StrArg = UNSET,
         description: StrArg = UNSET,
         meta: StrArg = UNSET,
+        target: Target | StrArg = UNSET,
     ) -> Nu:
         """Point it at a page; only the fields passed change."""
         fields = {
@@ -141,6 +142,7 @@ class PageLinkRef(LeafRef):
             "icon": icon,
             "description": description,
             "meta": meta,
+            "target": target,
         }
         return Write(self, Dict.of(**{k: v for k, v in fields.items() if v is not UNSET}))
 
@@ -163,6 +165,7 @@ class NavItemRef(LeafRef):
     when `exact`. "/" matches only itself. True or False pins it. `meta`
     trails the label: a count, a shortcut. In a vertical NavList (or any
     Column) it is a full width row; in a horizontal one, its own width.
+    `target` "_blank" opens it in a new tab, like every kit link.
     """
 
     _wire_type = "NavItemRef"
@@ -177,6 +180,7 @@ class NavItemRef(LeafRef):
         meta: str = "",
         active: bool | None = None,
         exact: bool = False,
+        target: Target = "_self",
     ) -> Self:
         return super().slot(
             label=label,
@@ -185,7 +189,12 @@ class NavItemRef(LeafRef):
             meta=meta,
             active=None if active is None else bool(active),
             exact=bool(exact),
+            target=target,
         )
+
+    def set_href(self, url: StrArg, target: Target | StrArg = UNSET) -> Nu:
+        """Point it at another page; ``target`` too when given, else it keeps its own."""
+        return _set_href(self, url, target)
 
     def set_active(self, flag: BoolArg | None) -> Nu:
         """Pin it active or not; None goes back to following the tab."""

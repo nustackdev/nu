@@ -1,10 +1,10 @@
 // Built-in left rail for multi-page nudle apps.
 //
 // The page list and every label come off the tree: each page node carries
-// its route and label as props. A click dispatches a local write to the
-// NavRef node, which is what drives pushState and mirrors the new uri, then
-// emits a notify so `App.nav.on_change()` subscribers on the server see it.
-// Same two steps the old mount-payload version did, minus the payload.
+// its route and label as props. Picking a page is a push through the kit's
+// History, the one writer of browser history. The router hears it and shows
+// the page; a HistoryRef the app mounts hears it too and tells the server.
+// The sidebar needs neither: it works the same with no HistoryRef at all.
 //
 // The rail fills the split panel App puts it in: the panel owns the width
 // and the fold. The header's button hides it, as nuspace's does, and
@@ -12,6 +12,7 @@
 
 import { type ReactNode, useMemo, useRef } from "react";
 import {
+	History,
 	IconButton,
 	Shortcut,
 	Tooltip,
@@ -22,11 +23,9 @@ import {
 	TreeItem,
 	type TreeItemState,
 	type TreeSource,
-	tree,
 	useStringProp,
 } from "@nustackdev/ui-kit";
-import { OPS } from "@nustackdev/ui-core";
-import { useNavSegment } from "./router";
+import { routeOf } from "./router";
 
 type Props = {
 	appName: string;
@@ -101,7 +100,7 @@ function PageGlyph() {
 
 function PageItem({ item, routes }: { item: TreeItemState; routes: Map<string, string> }) {
 	const segment = item.row.key;
-	const route = useStringProp([segment], "route", `/${segment}`);
+	const route = routeOf(segment, useStringProp([segment], "route"));
 	const label = useStringProp([segment], "label", segment);
 	const icon = useStringProp([segment], "icon", "");
 	routes.set(segment, route);
@@ -115,18 +114,11 @@ function PageItem({ item, routes }: { item: TreeItemState; routes: Map<string, s
 }
 
 export function Sidebar({ appName, pages, active, footer, onHide }: Props) {
-	const nav = useNavSegment();
-
 	const routes = useRef(new Map<string, string>()).current;
 	const source = useMemo<TreeSource>(() => ({ roots: pages, childrenOf: () => [] }), [pages]);
 
 	const go = (route: string) => {
-		if (!nav) return;
-		const ref = [nav];
-		// Straight into dispatch so NavRef's own write handler runs: it owns
-		// pushState, and the mirrored value is what picks the active page.
-		tree.getState().dispatch({ op: OPS.write, ref, payload: route });
-		tree.getState().send({ op: OPS.notify, ref, payload: route });
+		History.push(route);
 	};
 
 	return (
@@ -144,7 +136,7 @@ export function Sidebar({ appName, pages, active, footer, onHide }: Props) {
 					expanded={NOTHING_OPEN}
 					onToggle={noFold}
 					selectedKey={active}
-					onSelect={(key) => go(routes.get(key) ?? `/${key}`)}
+					onSelect={(key) => go(routes.get(key) ?? routeOf(key, null))}
 					selectionFollowsFocus={false}
 					renderItem={(item) => <PageItem item={item} routes={routes} />}
 				/>

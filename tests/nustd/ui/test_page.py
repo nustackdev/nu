@@ -170,6 +170,7 @@ def test_nav_list_and_items():
             "meta": "12",
             "active": None,
             "exact": False,
+            "target": "_self",
         },
     )
 

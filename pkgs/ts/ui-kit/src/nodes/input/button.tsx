@@ -6,8 +6,9 @@
 // Button primitive; variant maps to a Button variant, size to its size.
 //
 // `href` makes it a link that looks like a button: the primitive renders
-// `asChild` around a real <a>, so cmd-click opens a tab and a host shell that
-// routes same-origin anchor clicks routes this one too. A click still sends
+// `asChild` around a real <a>, so cmd-click opens a tab and a host's
+// AnchorCatcher routes a same-origin one without a reload. This is the
+// button-look link: LinkRef has no button looks. A click still sends
 // the notify, so `on_click` hears it either way. A disabled link drops its
 // href, since an anchor has no disabled state of its own.
 //

@@ -1,10 +1,10 @@
 // NavItemRef over the real tree store: a real link, active when pinned, and
-// following the tab when not, through pushState and back.
+// following the tab when not, through History moves and back.
 
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { matchesPath, NodeView, tree } from "../../tree";
+import { History, matchesPath, NodeView, tree } from "../../tree";
 import "..";
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -52,9 +52,7 @@ describe("NavItemRef", () => {
 		act(() => root.render(<NodeView path={["n"]} />));
 		expect(link()?.getAttribute("aria-current")).toBeNull();
 		act(() => {
-			window.history.pushState({}, "", "/docs/intro");
-			// pushState fires nothing; the next tree change re-reads the tab.
-			tree.getState().write([["other", "TextRef"]], { value: "x" });
+			History.push("/docs/intro");
 		});
 		expect(link()?.getAttribute("aria-current")).toBe("page");
 		act(() => {
@@ -62,6 +60,17 @@ describe("NavItemRef", () => {
 			window.dispatchEvent(new PopStateEvent("popstate"));
 		});
 		expect(link()?.getAttribute("aria-current")).toBeNull();
+	});
+
+	it("takes a target like every kit link", () => {
+		write({ label: "Docs", href: "https://example.com/docs", target: "_blank" });
+		act(() => root.render(<NodeView path={["n"]} />));
+		expect(link()?.getAttribute("target")).toBe("_blank");
+		expect(link()?.getAttribute("rel")).toBe("noopener noreferrer");
+		act(() =>
+			tree.getState().dispatch({ op: "write", ref: ["n", "i"], payload: { target: "_self" } }),
+		);
+		expect(link()?.getAttribute("target")).toBeNull();
 	});
 
 	it("is pinned by active true or false", () => {

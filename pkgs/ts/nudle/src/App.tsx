@@ -2,8 +2,15 @@
 //
 // Everything on screen is a node in the tree. The shell picks the active
 // page and renders it; the rest is chrome. Structural nodes (TitleRef,
-// NavRef) render null but have to mount, because their effects are the
+// HistoryRef) render null but have to mount, because their effects are the
 // whole point of them, so they stay in the tree outside the body flow.
+//
+// Navigation is the kit's (see ./router): the active page is the one whose
+// route the pathname names, a URL no page claims draws not-found, and the
+// whole shell sits in the kit's AnchorCatcher with its default rule, so a
+// plain click on any same-origin link (a LinkRef, a ButtonRef with an href,
+// a page link, a markdown link) is a History push, not a page load that
+// drops the socket. Cmd-click and the rest stay the browser's.
 //
 // With a sidebar the page sits in the kit's split (`ResizablePanelGroup`):
 // the sidebar is a collapsible panel with the kit's sidebar bounds and a px
@@ -13,8 +20,11 @@
 // it too. The split keeps the layout across reloads, as nuspace's does.
 
 import {
+	AnchorCatcher,
 	Badge,
+	Button,
 	cn,
+	EmptyState,
 	NodeChildren,
 	NodeView,
 	ResizableHandle,
@@ -29,7 +39,7 @@ import type { Path } from "@nustackdev/ui-core";
 import { type RefObject, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import "./nodes";
 import { useNudleConnection } from "./connect";
-import { useActivePage, usePageSegments, useRootSegments } from "./router";
+import { NOT_FOUND, routeOf, useActivePage, usePageSegments, useRootSegments } from "./router";
 import { Sidebar, SidebarToggle } from "./Sidebar";
 import { ThemeToggle } from "./theme";
 
@@ -86,6 +96,25 @@ function useSidebarFold(split: RefObject<ResizablePanelGroupHandle | null>, show
 	return { folded, flipAndFocus, onLayout };
 }
 
+/** What a URL no page claims draws: a way back to the first page. */
+function NotFound({ first }: { first: string }) {
+	const route = routeOf(first, useStringProp([first], "route"));
+	const label = useStringProp([first], "label", first);
+	return (
+		<EmptyState
+			size="md"
+			description={<span className="font-mono">{window.location.pathname}</span>}
+			action={
+				<Button asChild variant="secondary" size="sm">
+					<a href={route}>Go to {label}</a>
+				</Button>
+			}
+		>
+			No page here
+		</EmptyState>
+	);
+}
+
 const statusConfig = {
 	connecting: { label: "connecting", variant: "outline" as const },
 	connected: { label: "connected", variant: "default" as const },
@@ -99,7 +128,9 @@ function App() {
 	const sidebarOn = useBoolProp(ROOT, "sidebar");
 	const rootSegments = useRootSegments();
 	const pages = usePageSegments();
-	const active = useActivePage();
+	const routed = useActivePage();
+	const notFound = routed === NOT_FOUND;
+	const active = typeof routed === "string" ? routed : null;
 	const withSidebar = sidebarOn && pages.length > 1;
 	const split = useRef<ResizablePanelGroupHandle | null>(null);
 	const { folded, flipAndFocus, onLayout } = useSidebarFold(split, withSidebar);
@@ -115,10 +146,12 @@ function App() {
 
 	// With pages, the body is the active one and everything else at the root
 	// is chrome. Without, the root's children are the whole surface.
-	const chrome = active ? rootSegments.filter((s) => !pages.includes(s)) : [];
+	const chrome = pages.length ? rootSegments.filter((s) => !pages.includes(s)) : [];
 	const chromeNodes = chrome.map((segment) => <NodeView key={segment} path={[segment]} />);
 	const body = active ? (
 		<NodeView path={[active]} />
+	) : notFound ? (
+		<NotFound first={pages[0]} />
 	) : (
 		<div className="flex flex-col gap-6">
 			<NodeChildren path={ROOT} />
@@ -128,56 +161,60 @@ function App() {
 
 	if (withSidebar) {
 		return (
-			<div className="h-screen flex overflow-hidden bg-[var(--ground-raised)]">
-				{chromeNodes}
-				<ResizablePanelGroup ref={split} storageKey={SIDEBAR_LAYOUT_KEY} onLayout={onLayout}>
-					<ResizablePanel
-						id="nudle-sidebar"
-						defaultSize={`${SIDEBAR_WIDTH.DEFAULT}px`}
-						minSize={`${SIDEBAR_WIDTH.MIN}px`}
-						maxSize={`${SIDEBAR_WIDTH.MAX}px`}
-						collapsible
-						className="flex"
-					>
-						<Sidebar
-							appName={appName}
-							pages={pages}
-							active={active}
-							footer={statusBadge}
-							onHide={() => flipAndFocus(true)}
-						/>
-					</ResizablePanel>
-					<ResizableHandle aria-label="Resize sidebar" />
-					<ResizablePanel id="nudle-page" className="flex">
-						{/* Pinned over the page, outside the scroller, so it stays put and never shifts the content. */}
-						{folded ? (
-							<div className="absolute top-3 left-3 z-10">
-								<SidebarToggle label="Show sidebar" onClick={() => flipAndFocus(false)} />
-							</div>
-						) : null}
-						<main className="flex-1 min-w-0 h-full overflow-y-auto overflow-x-auto">
-							{/* Folded, the gutter clears the pinned button on a narrow window. */}
-							<div className={cn("mx-auto max-w-5xl p-6", folded && "px-14")}>
-								{booted ? body : waiting}
-							</div>
-						</main>
-					</ResizablePanel>
-				</ResizablePanelGroup>
-			</div>
+			<AnchorCatcher>
+				<div className="h-screen flex overflow-hidden bg-[var(--ground-raised)]">
+					{chromeNodes}
+					<ResizablePanelGroup ref={split} storageKey={SIDEBAR_LAYOUT_KEY} onLayout={onLayout}>
+						<ResizablePanel
+							id="nudle-sidebar"
+							defaultSize={`${SIDEBAR_WIDTH.DEFAULT}px`}
+							minSize={`${SIDEBAR_WIDTH.MIN}px`}
+							maxSize={`${SIDEBAR_WIDTH.MAX}px`}
+							collapsible
+							className="flex"
+						>
+							<Sidebar
+								appName={appName}
+								pages={pages}
+								active={active}
+								footer={statusBadge}
+								onHide={() => flipAndFocus(true)}
+							/>
+						</ResizablePanel>
+						<ResizableHandle aria-label="Resize sidebar" />
+						<ResizablePanel id="nudle-page" className="flex">
+							{/* Pinned over the page, outside the scroller, so it stays put and never shifts the content. */}
+							{folded ? (
+								<div className="absolute top-3 left-3 z-10">
+									<SidebarToggle label="Show sidebar" onClick={() => flipAndFocus(false)} />
+								</div>
+							) : null}
+							<main className="flex-1 min-w-0 h-full overflow-y-auto overflow-x-auto">
+								{/* Folded, the gutter clears the pinned button on a narrow window. */}
+								<div className={cn("mx-auto max-w-5xl p-6", folded && "px-14")}>
+									{booted ? body : waiting}
+								</div>
+							</main>
+						</ResizablePanel>
+					</ResizablePanelGroup>
+				</div>
+			</AnchorCatcher>
 		);
 	}
 
 	return (
-		<div className="min-h-screen p-6 bg-[var(--ground-raised)]">
-			<div className="mx-auto max-w-3xl">
-				<div className="mb-4 flex items-center justify-between">
-					<span className="text-sm text-text-muted font-mono">nudle</span>
-					{statusBadge}
+		<AnchorCatcher>
+			<div className="min-h-screen p-6 bg-[var(--ground-raised)]">
+				<div className="mx-auto max-w-3xl">
+					<div className="mb-4 flex items-center justify-between">
+						<span className="text-sm text-text-muted font-mono">nudle</span>
+						{statusBadge}
+					</div>
+					{chromeNodes}
+					{booted ? body : waiting}
 				</div>
-				{chromeNodes}
-				{booted ? body : waiting}
 			</div>
-		</div>
+		</AnchorCatcher>
 	);
 }
 

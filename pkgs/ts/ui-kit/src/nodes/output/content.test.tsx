@@ -170,14 +170,14 @@ describe("LinkRef", () => {
 		expect(cls(slot("link"))).toContain("text-text-secondary");
 	});
 
-	it("draws a button look as an anchor with the button's classes and size", () => {
+	it("has no button looks: an old button variant draws as a text link", () => {
 		mount("LinkRef", { href: "/start", label: "Start", variant: "button", size: "lg" });
 		const a = slot("link");
 		expect(a?.tagName).toBe("A");
 		expect(a?.getAttribute("href")).toBe("/start");
-		expect(cls(a)).toEqual(expect.arrayContaining(["bg-accent", "h-10", "cursor-default"]));
-		dispatch(OPS.write, { variant: "outline" });
-		expect(cls(slot("link"))).toContain("border-border-default");
+		expect(a?.getAttribute("data-variant")).toBe("text");
+		expect(cls(a)).toContain("text-accent-2");
+		expect(cls(a)).not.toContain("bg-accent");
 	});
 
 	it("draws a leading icon and a trailing arrow in place of the external glyph", () => {

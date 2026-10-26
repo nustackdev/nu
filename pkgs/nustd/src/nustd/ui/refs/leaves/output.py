@@ -15,7 +15,7 @@ from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Changed, Write
 
-from .._vocab import ControlSize, HeadingTone, StatusTone, Target, TextAlign, Tone
+from .._vocab import HeadingTone, StatusTone, Target, TextAlign, Tone
 from .._vocab import set_href as _set_href
 from .base import LeafRef
 
@@ -203,7 +203,9 @@ class EmptyStateRef(LeafRef):
     def set_icon(self, name: StrArg) -> Nu:
         return Write(self, Dict.of(icon=name))
 
-    def set_action(self, label: StrArg, href: StrArg = UNSET, target: StrArg = UNSET) -> Nu:
+    def set_action(
+        self, label: StrArg, href: StrArg = UNSET, target: Target | StrArg = UNSET
+    ) -> Nu:
         """Relabel the way out; an empty label hides it."""
         payload: dict[str, object] = {"action": label}
         if href is not UNSET:
@@ -548,18 +550,18 @@ class JsonViewerRef(LeafRef):
         return Write(self, Dict.of(**payload))
 
 
-LinkVariant = Literal["text", "muted", "button", "primary", "secondary", "outline", "ghost"]
+LinkVariant = Literal["text", "muted"]
 
 
 class LinkRef(LeafRef):
-    """Display-only link ref. One `write` op carries every mutation.
+    """A text link: a real anchor, href and target. One `write` op carries every mutation.
 
-    `variant` is the look. `text` is a link in prose and `muted` the same in
-    the secondary ink; both run inline in a Line. `button` (the primary look),
-    `primary`, `secondary`, `outline` and `ghost` draw it as a button that is
-    still a real anchor, sized by `size`: a call to action that navigates.
-    `icon` is a curated lucide name (see `ButtonRef`) drawn before the label,
-    `arrow` a trailing arrow; the arrow replaces the external glyph.
+    `variant` is the ink. `text` is a link in prose and `muted` the same in
+    the secondary ink; both run inline in a Line. A link that looks like a
+    button is a `ButtonRef` with an `href`. `icon` is a curated lucide name
+    (see `ButtonRef`) drawn before the label, `arrow` a trailing arrow; the
+    arrow replaces the external glyph. A same-origin link opening in this tab
+    is routed by the host without a page load; the rest are the browser's.
     """
 
     _wire_type = "LinkRef"
@@ -575,7 +577,6 @@ class LinkRef(LeafRef):
         variant: LinkVariant = "text",
         icon: str = "",
         arrow: bool = False,
-        size: ControlSize = "md",
     ) -> Self:
         return super().slot(
             href=href,
@@ -585,7 +586,6 @@ class LinkRef(LeafRef):
             variant=variant,
             icon=icon,
             arrow=arrow,
-            size=size,
         )
 
     def set_href(self, url: StrArg, target: Target | StrArg = UNSET) -> Nu:
@@ -609,9 +609,6 @@ class LinkRef(LeafRef):
 
     def set_arrow(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(arrow=flag))
-
-    def set_size(self, name: ControlSize | StrArg) -> Nu:
-        return Write(self, Dict.of(size=name))
 
     def set(
         self,

@@ -96,6 +96,7 @@ from .refs import (
     HeadingRef,
     HeatmapChart,
     Histogram,
+    HistoryRef,
     HtmlRef,
     IconRef,
     ImageRef,
@@ -159,6 +160,8 @@ from .refs import (
     ToggleRef,
     TreemapChart,
     TreeRef,
+    decode_query,
+    encode_query,
 )
 
 
@@ -253,6 +256,7 @@ __all__ = [
     "HeatmapChart",
     "Hide",
     "Histogram",
+    "HistoryRef",
     "HtmlRef",
     "IconRef",
     "ImageRef",
@@ -330,6 +334,8 @@ __all__ = [
     "Write",
     "WsSession",
     "core",
+    "decode_query",
+    "encode_query",
     "lens",
     "nudle",
     "refs",

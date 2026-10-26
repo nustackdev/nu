@@ -102,6 +102,20 @@ describe("BreadcrumbRef", () => {
 		expect(links[1].querySelector("svg")).not.toBeNull();
 	});
 
+	it("opens a crumb where its target says, this tab by default", () => {
+		mount("BreadcrumbRef", {
+			items: [
+				{ label: "Home", href: "/" },
+				{ label: "Docs", href: "https://example.org/docs", target: "_blank" },
+				{ label: "Here" },
+			],
+		});
+		const links = host.querySelectorAll("[data-slot=breadcrumb-link]");
+		expect(links[0].getAttribute("target")).toBeNull();
+		expect(links[1].getAttribute("target")).toBe("_blank");
+		expect(links[1].getAttribute("rel")).toBe("noopener noreferrer");
+	});
+
 	it("replaces the trail on a write, strings read as crumbs", () => {
 		mount("BreadcrumbRef", { items: trail });
 		write({ items: ["Root", null, { label: "Leaf" }] });

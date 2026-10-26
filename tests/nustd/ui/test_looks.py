@@ -166,20 +166,17 @@ def test_link_defaults_to_a_text_link():
         "variant": "text",
         "icon": "",
         "arrow": False,
-        "size": "md",
     }
 
 
-def test_link_button_look_with_icon_and_arrow():
+def test_link_is_text_or_muted_with_icon_and_arrow():
+    # A link that looks like a button is a ButtonRef with an href.
     props = LinkRef.slot(
-        href="/start", label="Start", variant="primary", icon="sparkles", arrow=True, size="lg"
+        href="/start", label="Start", variant="muted", icon="sparkles", arrow=True
     ).props
-    assert (props["variant"], props["icon"], props["arrow"], props["size"]) == (
-        "primary",
-        "sparkles",
-        True,
-        "lg",
-    )
+    assert (props["variant"], props["icon"], props["arrow"]) == ("muted", "sparkles", True)
+    assert "size" not in props
+    assert not hasattr(LinkRef, "set_size")
 
 
 def test_link_setters_merge_one_key():
@@ -187,7 +184,6 @@ def test_link_setters_merge_one_key():
     assert _payload(handle.set_variant("muted")) == {"variant": "muted"}
     assert _payload(handle.set_icon("book")) == {"icon": "book"}
     assert _payload(handle.set_arrow(True)) == {"arrow": True}
-    assert _payload(handle.set_size("sm")) == {"size": "sm"}
 
 
 # --- CardRef --------------------------------------------------------------------

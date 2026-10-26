@@ -4,8 +4,8 @@
 // Server-owned, plain props merged by the default store `write`: `href`,
 // `title`, `icon`, `description`, `meta`, `variant` ("row", "tile" or
 // "inline") and `target` ("_self" or "_blank"). Composes the kit PageLink primitive, which
-// is a real <a href>, so a host shell that routes same-origin anchor clicks
-// routes these too and the browser's own link handling (open in new tab,
+// is a real <a href>, so a host's AnchorCatcher routes a same-origin one and
+// the browser's own link handling (open in new tab,
 // copy link) is untouched.
 //
 // `icon` is either a name from the curated lucide set or anything else,
