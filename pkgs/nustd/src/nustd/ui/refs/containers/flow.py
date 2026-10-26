@@ -18,7 +18,7 @@ from .base import DictContainerRef
 if TYPE_CHECKING:
     from nustd.ui.core import Ref, Section
 
-    from .._vocab import Align
+    from ..vocab import Align
 
 
 __all__ = ["ColumnRef", "RowRef"]

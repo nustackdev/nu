@@ -25,8 +25,8 @@ from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Write
 
-from .._vocab import IconTone, Target
-from .._vocab import set_href as _set_href
+from ..vocab import IconTone, Target
+from ..vocab import set_href as _set_href
 from .base import LeafRef
 
 

@@ -26,10 +26,10 @@ from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core.interactions import Changed, Send, Write
 
-from .._vocab import Align, Target
-from .._vocab import set_href as _set_href
-from ._named import actions_ref, footer_ref, media_ref
+from ..vocab import Align, Target
+from ..vocab import set_href as _set_href
 from .base import DictContainerRef, ShapeContainerRef
+from .named import actions_ref, footer_ref, media_ref
 
 
 if TYPE_CHECKING:

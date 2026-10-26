@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     from nu.lang import Nu
     from nu.lang.args import IntArg, ListArg, StrArg
 
-    from .._vocab import StatusTone
+    from ..vocab import StatusTone
 
 
 __all__ = ["AvatarRef", "BreadcrumbRef", "SkeletonRef", "SpinnerRef", "StatusPillRef"]

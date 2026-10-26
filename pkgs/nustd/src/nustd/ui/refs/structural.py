@@ -18,8 +18,8 @@ from nu.lang import ScalarQuery
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Changed, Session, Write
 
-from ._query import decode_query
 from .leaves.base import LeafRef
+from .query import decode_query
 
 
 if TYPE_CHECKING:

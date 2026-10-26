@@ -76,7 +76,6 @@ from __future__ import annotations
 
 from nustd.ui.core import Ref, Section, SectionRef
 
-from ._query import decode_query, encode_query
 from .containers import (
     AccordionRef,
     BoxRef,
@@ -166,6 +165,7 @@ from .leaves import (
     TreemapChart,
     TreeRef,
 )
+from .query import decode_query, encode_query
 from .structural import HistoryRef, NavRef, ReadEntry, TitleRef
 
 

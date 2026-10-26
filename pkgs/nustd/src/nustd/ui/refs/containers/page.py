@@ -28,8 +28,8 @@ from typing_extensions import Self
 from nu.forms import Dict
 from nustd.ui.core import Write
 
-from ._named import actions_ref
 from .base import DictContainerRef
+from .named import actions_ref
 
 
 if TYPE_CHECKING:

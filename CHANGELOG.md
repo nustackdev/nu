@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Make shared ui ref helper modules public, in line with the rest of nu
 - Route in-app links without reloads, and let programs read history state and query
 - Add page building blocks, richer looks and hide/display so programs build neat pages
 - Rename the card's footer text to caption; older programs still draw theirs

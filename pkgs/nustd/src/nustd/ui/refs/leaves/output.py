@@ -15,8 +15,8 @@ from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Changed, Write
 
-from .._vocab import HeadingTone, StatusTone, Target, TextAlign, Tone
-from .._vocab import set_href as _set_href
+from ..vocab import HeadingTone, StatusTone, Target, TextAlign, Tone
+from ..vocab import set_href as _set_href
 from .base import LeafRef
 
 

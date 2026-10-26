@@ -383,7 +383,7 @@ def test_hide_then_display_reach_a_slot_through_its_page():
 
 def test_card_named_children_land_at_their_keys():
     from nustd.ui.refs import ButtonRef, CardRef, ImageRef
-    from nustd.ui.refs.containers._named import ACTIONS, FOOTER, MEDIA
+    from nustd.ui.refs.containers.named import ACTIONS, FOOTER, MEDIA
 
     card = CardRef("c", props={"caption": "note"})
     frames = _frames(

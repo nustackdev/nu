@@ -18,8 +18,8 @@ from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Changed, Write
 
-from .._vocab import ControlSize, Target
-from .._vocab import set_href as _set_href
+from ..vocab import ControlSize, Target
+from ..vocab import set_href as _set_href
 from .base import LeafRef
 
 
