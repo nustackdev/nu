@@ -10,9 +10,8 @@ each setter sends just the keys it names. Every Ref here is a ``LeafRef``.
 - ``PageLinkRef``: a link to a page drawn as the page: a row, a tile, or inline.
 - ``NavItemRef``: one link in a sidebar or a top bar, active on its page.
 
-Icon names are lucide's, in kebab case, from the kit's curated set: the
-names listed on ``ButtonRef``, page furniture included. An unknown name
-draws nothing and warns in the browser console.
+Icon names are lucide's, in kebab case, any of them (see ``ButtonRef``). An
+unknown name draws nothing and warns in the browser console.
 """
 
 from __future__ import annotations

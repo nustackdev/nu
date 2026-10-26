@@ -32,7 +32,7 @@ export const Toolbar: Story = {
 					[bar, ghost("search", "search", "Search")],
 					[bar, step("sep", "DividerRef")],
 					[bar, step("bold", "ToggleRef", { icon: "bold", pressed: true })],
-					[bar, step("wrap", "ToggleRef", { icon: "wrap-text", label: "Wrap" })],
+					[bar, step("wrap", "ToggleRef", { icon: "text-wrap", label: "Wrap" })],
 					[bar, step("sep2", "DividerRef")],
 					[bar, ghost("more", "more-horizontal", "More")],
 					[bar, step("run", "ButtonRef", { label: "Run", icon: "play" })],
@@ -55,7 +55,7 @@ export const Variants: Story = {
 						row,
 						step("secondary", "ButtonRef", { label: "Copy", icon: "copy", variant: "secondary" }),
 					],
-					[row, step("ghost", "ButtonRef", { label: "Filter", icon: "filter", variant: "ghost" })],
+					[row, step("ghost", "ButtonRef", { label: "Filter", icon: "funnel", variant: "ghost" })],
 					[
 						row,
 						step("soft", "ButtonRef", { label: "Settings", icon: "settings", variant: "soft" }),
@@ -71,7 +71,7 @@ export const Variants: Story = {
 					],
 					[
 						row,
-						step("g-icon", "ButtonRef", { icon: "filter", tooltip: "Filter", variant: "ghost" }),
+						step("g-icon", "ButtonRef", { icon: "funnel", tooltip: "Filter", variant: "ghost" }),
 					],
 					[
 						row,

@@ -345,6 +345,7 @@ export { mergeOption } from "./lib/chart/option";
 export { type ChartTokens, chartTheme, readChartTokens } from "./lib/chart/theme";
 export { loadLanguage } from "./lib/code/languages";
 export { kitHighlight, kitTheme } from "./lib/code/theme";
+export { ICON_NAMES, iconFor, isIconName } from "./lib/icons";
 export type { KeyBindings, KeyScope } from "./lib/keyboard";
 export { useKeyScope } from "./lib/keyboard";
 export type { ProseEditorProps } from "./lib/markdown/editor";

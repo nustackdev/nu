@@ -12,7 +12,7 @@
 // the notify, so `on_click` hears it either way. A disabled link drops its
 // href, since an anchor has no disabled state of its own.
 //
-// `icon` is a lucide name resolved through the curated map in ./icons. With
+// `icon` is a lucide name, resolved through ../../lib/icons. With
 // a label it draws before the text. With an empty label the node is an
 // IconButton, named by `tooltip` (or the icon name) for screen readers. An
 // unknown icon draws the label alone, and with no label either the path is
@@ -33,6 +33,7 @@ import {
 } from "../../components/ui/tooltip";
 import { anchorProps } from "../../lib/anchor";
 import { BUTTON_SIZES, kitVariant } from "../../lib/button-look";
+import { iconFor } from "../../lib/icons";
 import {
 	type NodeEntry,
 	type NodeProps,
@@ -41,7 +42,6 @@ import {
 	useSend,
 	useStringProp,
 } from "../../tree";
-import { iconFor } from "./icons";
 
 function ButtonView({ path }: NodeProps) {
 	const label = useStringProp(path, "label");

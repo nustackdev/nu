@@ -10,6 +10,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Draw any lucide icon by name, loading each one only when first shown
+
 ## 0.6.7 — 2026-10-26
 
 - Release nu 0.6.7 with nudle 0.1.10, ui-core 0.2.2 and ui-kit 0.3.5

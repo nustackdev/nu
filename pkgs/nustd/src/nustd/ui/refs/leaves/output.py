@@ -161,7 +161,7 @@ class EmptyStateRef(LeafRef):
 
     `label` is the one line that says what is missing, `description` a smaller
     line under it. `sm` fits a sidebar, `md` a page section. `icon` is a
-    curated lucide name (see `ButtonRef`) drawn above. `action` labels the way
+    lucide name (see `ButtonRef`) drawn above. `action` labels the way
     out, a small button under the text that `.on_action()` hears; with
     `action_href` it is a link that looks like that button, and still notifies;
     `action_target` opens it in this tab or a new one.
@@ -558,7 +558,7 @@ class LinkRef(LeafRef):
 
     `variant` is the ink. `text` is a link in prose and `muted` the same in
     the secondary ink; both run inline in a Line. A link that looks like a
-    button is a `ButtonRef` with an `href`. `icon` is a curated lucide name
+    button is a `ButtonRef` with an `href`. `icon` is a lucide name
     (see `ButtonRef`) drawn before the label, `arrow` a trailing arrow; the
     arrow replaces the external glyph. A same-origin link opening in this tab
     is routed by the host without a page load; the rest are the browser's.

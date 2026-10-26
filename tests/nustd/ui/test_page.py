@@ -151,7 +151,7 @@ def test_nav_list_and_items():
     assert NavListRef.slot().props == {"variant": "vertical", "label": ""}
 
     class Sidebar(NavList):
-        home = NavItemRef.slot(label="Home", href="/", icon="home")
+        home = NavItemRef.slot(label="Home", href="/", icon="house")
         docs = NavItemRef.slot(label="Docs", href="/docs", icon="book-open", meta="12")
 
     class Home(Column):
@@ -276,23 +276,6 @@ def test_a_card_shape_actions_slot_wins_over_the_default_row():
 
     card = CardRef("p", section_cls=Plan)
     assert type(card.actions).__name__ == "BadgeRef"
-
-
-# --- icons: the names the docs list are the names the kit ships ---------------
-
-
-def test_the_button_docstring_lists_every_icon_the_kit_ships():
-    import re
-    from pathlib import Path
-
-    from nustd.ui import ButtonRef
-
-    icons = Path(__file__).resolve().parents[3] / "pkgs/ts/ui-kit/src/nodes/input/icons.ts"
-    body = icons.read_text().split("export const ICONS", 1)[1]
-    shipped = re.findall(r'^\s*"?([a-z0-9-]+)"?:\s*[A-Z]', body, re.M)
-    doc = " ".join(ButtonRef.__doc__.split())
-    listed = doc.split("takes):", 1)[1].split(". An unknown", 1)[0]
-    assert [n.strip() for n in listed.split(",")] == shipped
 
 
 # --- init: a node on screen as declared ----------------------------------------

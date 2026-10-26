@@ -4,8 +4,8 @@
 //   palette.md       text tiers, status hues, accent soft fill and washes
 //   space-radius.md  §radius md for the framed tile
 //
-// The glyph is the consumer's: pass any lucide component (or the curated
-// map's, `iconFor` in nodes/input/icons). `tone` "inherit" (the default)
+// The glyph is the consumer's: pass any lucide component (or one by name,
+// `iconFor` in lib/icons). `tone` "inherit" (the default)
 // takes the surrounding text color, so an icon in a sentence or a nav row
 // reads as part of it.
 //

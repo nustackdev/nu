@@ -1,7 +1,7 @@
-// IconRef -- one glyph by name, from the kit's curated lucide set.
+// IconRef -- one lucide glyph by name.
 //
 // Server-owned, plain props merged by the default store `write`: `name` (a
-// lucide name in kebab case, resolved through ./input/icons), `size` (xs, sm,
+// lucide name in kebab case, resolved through ../../lib/icons), `size` (xs, sm,
 // md, lg, xl), `tone` (inherit, the text tiers, accent and the status hues),
 // `framed` (set in a soft tinted square) and `label` (the accessible name;
 // unset, the icon is decorative). Composes the kit Icon primitive. An
@@ -13,6 +13,7 @@
 // its own size.
 
 import { ICON_SIZES, ICON_TONES, Icon } from "../../components/ui/icon";
+import { iconFor } from "../../lib/icons";
 import {
 	type NodeEntry,
 	type NodeProps,
@@ -21,7 +22,6 @@ import {
 	useFlow,
 	useStringProp,
 } from "../../tree";
-import { iconFor } from "../input/icons";
 
 function IconView({ path }: NodeProps) {
 	const name = useStringProp(path, "name");

@@ -1,8 +1,8 @@
 // NavItemRef -- one link in a sidebar or a top bar, aware of where the tab is.
 //
 // Server-owned, plain props merged by the default store `write`: `label`,
-// `href`, `target` ("_self" or "_blank"), `icon` (a curated lucide name, see
-// ../input/icons), `meta` (a trailing note: a count, a shortcut), `active`
+// `href`, `target` ("_self" or "_blank"), `icon` (a lucide name, see
+// ../../lib/icons), `meta` (a trailing note: a count, a shortcut), `active`
 // and `exact`. Composes the kit NavLink primitive, a real <a href> drawn
 // through `anchorProps` like every kit link, so a host's AnchorCatcher routes
 // it and the browser's own link handling is untouched.
@@ -22,6 +22,7 @@
 
 import { NavLink } from "../../components/ui/nav-link";
 import { anchorProps } from "../../lib/anchor";
+import { iconFor } from "../../lib/icons";
 import { cn } from "../../lib/utils";
 import {
 	matchesPath,
@@ -32,7 +33,6 @@ import {
 	useProp,
 	useStringProp,
 } from "../../tree";
-import { iconFor } from "../input/icons";
 
 function NavItemView({ path }: NodeProps) {
 	const label = useStringProp(path, "label");

@@ -9,7 +9,7 @@ the Ref carries the chrome methods, the slot defaults and the wire type, and
         stats = Stats.slot(columns=3)
 
     class Sidebar(NavList):
-        home = NavItemRef.slot(label="Home", href="/", icon="home")
+        home = NavItemRef.slot(label="Home", href="/", icon="house")
         docs = NavItemRef.slot(label="Docs", href="/docs", icon="book-open")
 
     usage = Usage.slot(title="Usage", description="Last 30 days")

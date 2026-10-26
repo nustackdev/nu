@@ -13,7 +13,7 @@
 // prose; `muted` is the same link in the secondary ink, for a footer or a
 // byline. A link that looks like a button is a ButtonRef with an href, not
 // a look of this one; an old `button` / `primary` / ... variant draws as
-// `text`. `icon` is a lucide name from the curated map drawn before the
+// `text`. `icon` is a lucide name (../../lib/icons) drawn before the
 // label; `arrow` draws a trailing arrow, for a "read more". The external
 // glyph and the arrow never both draw: arrow wins.
 //
@@ -26,6 +26,7 @@
 
 import { ArrowRight, ExternalLink } from "lucide-react";
 import { anchorProps, crossHost, normTarget } from "../../lib/anchor";
+import { iconFor } from "../../lib/icons";
 import { cn } from "../../lib/utils";
 import {
 	type NodeEntry,
@@ -35,7 +36,6 @@ import {
 	useProp,
 	useStringProp,
 } from "../../tree";
-import { iconFor } from "../input/icons";
 
 function normalizeExternal(v: unknown): boolean | null {
 	if (v === true) return true;

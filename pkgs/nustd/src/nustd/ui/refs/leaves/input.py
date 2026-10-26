@@ -48,23 +48,8 @@ class ButtonRef(LeafRef):
     readers by `tooltip` (or the icon name when there is none). `tooltip` is
     the hover hint, shown whenever it is set.
 
-    The kit ships a curated set, not all of lucide (the same names every Ref
-    with an `icon` takes): plus, minus, x, check, play, pause, square,
-    skip-forward, refresh-cw, rotate-ccw, undo-2, redo-2, search, filter,
-    settings, sliders-horizontal, more-horizontal, more-vertical, trash-2,
-    pencil, copy, save, download, upload, send, share-2, external-link, link,
-    chevron-left, chevron-right, chevron-up, chevron-down, arrow-left,
-    arrow-right, arrow-up, arrow-down, maximize-2, minimize-2, info,
-    circle-help, triangle-alert, bell, star, heart, bookmark, pin, eye, eye-off,
-    lock, unlock, sun, moon, sparkles, zap, bold, italic, underline, code,
-    terminal, wrap-text, list, layout-grid, file, file-text, folder, home,
-    users, user, calendar, clock, chart-column, chart-line, chart-pie, activity,
-    gauge, database, server, cpu, cloud, globe, mail, message-square, book-open,
-    rocket, shield, shield-check, package, layers, puzzle, wrench, workflow,
-    git-branch, inbox, tag, flag, target, trending-up, trending-down,
-    circle-check, circle-x, circle-alert, lightbulb, compass, image, archive,
-    bot, brain, layout-dashboard, folder-open, panel-left, menu. An unknown name
-    draws the label alone.
+    Any lucide name draws (https://lucide.dev/icons), the same names every
+    Ref with an `icon` takes. An unknown name draws the label alone.
     """
 
     _wire_type = "ButtonRef"

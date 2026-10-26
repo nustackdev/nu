@@ -8,9 +8,9 @@
 // the browser's own link handling (open in new tab,
 // copy link) is untouched.
 //
-// `icon` is either a name from the curated lucide set or anything else,
-// drawn as text: an emoji, a letter. A name is looked up quietly, so an
-// emoji never warns as an unknown icon. With no icon there is no mark.
+// `icon` is either a lucide name or anything else, drawn as text: an emoji,
+// a letter. A name is looked up quietly, so an emoji never warns as an
+// unknown icon. With no icon there is no mark.
 // A title-less link shows its href, so it stays findable.
 //
 // "inline" is a mention, Notion style: the mark and the title on one line,
@@ -22,8 +22,8 @@
 
 import { PageLink } from "../../components/ui/page-link";
 import { anchorProps } from "../../lib/anchor";
+import { iconFor, isIconName } from "../../lib/icons";
 import { type NodeEntry, type NodeProps, useEnumProp, useStringProp } from "../../tree";
-import { ICONS } from "../input/icons";
 
 const VARIANTS = ["row", "tile", "inline"] as const;
 
@@ -35,7 +35,7 @@ function PageLinkView({ path }: NodeProps) {
 	const meta = useStringProp(path, "meta");
 	const variant = useEnumProp(path, "variant", VARIANTS, "row");
 	const target = useStringProp(path, "target", "_self");
-	const glyph = Object.hasOwn(ICONS, icon) ? ICONS[icon] : undefined;
+	const glyph = isIconName(icon) ? (iconFor(icon) ?? undefined) : undefined;
 	return (
 		<PageLink
 			{...anchorProps(href, target)}

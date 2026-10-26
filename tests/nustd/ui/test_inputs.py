@@ -125,12 +125,12 @@ def test_toggle_wire_type_and_slot_defaults():
 
 
 def test_toggle_set_writes_the_bare_pressed_state():
-    handle = _mount(ToggleRef.slot(icon="wrap-text"))
+    handle = _mount(ToggleRef.slot(icon="text-wrap"))
     [frame] = _frames(handle.set(True))
     assert frame.ref == ("page", "sec", "w")
     assert frame.op == "write"
     assert frame.payload is True
-    assert _seeded(frame) == ("ToggleRef", {"label": "", "icon": "wrap-text", "pressed": False})
+    assert _seeded(frame) == ("ToggleRef", {"label": "", "icon": "text-wrap", "pressed": False})
 
 
 def test_toggle_chrome_setters_merge_one_key():

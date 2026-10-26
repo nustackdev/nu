@@ -6,13 +6,14 @@
 // `pressed` (coerced to a real bool, the toggle must never go uncontrolled),
 // a map write merges chrome (label, icon), and a read answers with `pressed`.
 //
-// `icon` resolves through ./icons like ButtonRef's and draws before the
+// `icon` is a lucide name, resolved like ButtonRef's, and draws before the
 // label. Toggle sizes track IconButton, so a toolbar Row of both lines up,
 // and like a button it keeps its size in a Row. With no label the icon name
 // is the accessible name.
 
 import { OPS } from "@nustackdev/ui-core";
 import { Toggle } from "../../components/ui/toggle";
+import { iconFor } from "../../lib/icons";
 import {
 	type NodeEntry,
 	type NodeProps,
@@ -21,7 +22,6 @@ import {
 	useSetProps,
 	useStringProp,
 } from "../../tree";
-import { iconFor } from "./icons";
 
 function ToggleView({ path }: NodeProps) {
 	const label = useStringProp(path, "label");

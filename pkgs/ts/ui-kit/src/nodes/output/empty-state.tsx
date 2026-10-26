@@ -6,7 +6,7 @@
 // handlers. Composes the kit
 // EmptyState primitive.
 //
-// `icon` is a lucide name from the curated map in ../input/icons, drawn
+// `icon` is a lucide name (../../lib/icons), drawn
 // above the label. `action` is the label of the way out, a small secondary
 // button under the text: a click sends a notify (`on_action` on the server).
 // With `action_href` it is a link that looks like that button instead, a
@@ -17,8 +17,8 @@ import { OPS } from "@nustackdev/ui-core";
 import { Button } from "../../components/ui/button";
 import { EmptyState } from "../../components/ui/empty-state";
 import { anchorProps } from "../../lib/anchor";
+import { iconFor } from "../../lib/icons";
 import { type NodeEntry, type NodeProps, useEnumProp, useSend, useStringProp } from "../../tree";
-import { iconFor } from "../input/icons";
 
 const SIZES = ["sm", "md"] as const;
 
