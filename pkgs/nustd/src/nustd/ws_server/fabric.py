@@ -98,22 +98,34 @@ def _bundled_static(package: str) -> Path | None:
     return build
 
 
+#: Vite names everything under ``assets/`` by content hash, so a cached copy is
+#: never stale: a new build is a new name.
+_IMMUTABLE = "public, max-age=31536000, immutable"
+#: Everything else, index.html first, is revalidated on every load (a 304 off
+#: the etag when nothing changed), so a new release shows without a hard reload.
+_REVALIDATE = "no-cache"
+
+
 class _SPAStatic(StaticFiles):
     """StaticFiles that falls back to index.html on 404.
 
     Lets the browser hit deep URLs (/feed, /portfolio/...) directly: the SPA
-    renders the right page from window.location.
+    renders the right page from window.location. Hashed assets are cached for
+    good; index.html and the unhashed files are revalidated every time.
     """
 
     async def get_response(self, path: str, scope: object) -> object:
         try:
             response = await super().get_response(path, scope)
         except StarletteHTTPException as e:
-            if e.status_code == 404:
-                return await super().get_response("index.html", scope)
-            raise
-        if getattr(response, "status_code", 200) == 404:
-            return await super().get_response("index.html", scope)
+            if e.status_code != 404:
+                raise
+            response = None
+        if response is None or getattr(response, "status_code", 200) == 404:
+            path = "index.html"
+            response = await super().get_response(path, scope)
+        hashed = path.startswith("assets/")
+        response.headers["Cache-Control"] = _IMMUTABLE if hashed else _REVALIDATE
         return response
 
 

@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Serve web apps so a new release shows without a hard reload
 - Edit READMEs to match the new identity lines and lowercase naming
 - Draw any lucide icon by name, loading each one only when first shown
 
