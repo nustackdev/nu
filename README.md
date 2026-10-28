@@ -1,9 +1,9 @@
 <div align="center">
-  <img width="128" alt="Nu" src="https://nustack.dev/brand/logo-square-512@2x.png" />
+  <img width="128" alt="nu" src="https://nustack.dev/brand/logo-square-512@2x.png" />
   <h1>
     nu – the interaction primitive
   </h1>
-  <p></p>Build apps in one primitive that spans your whole stack — databases, UIs, AI agents, and services.</p>
+  <p>Build apps in one primitive that spans your whole stack (databases, UIs, AI agents, and services).</p>
 
   [![PyPI - Python Version](https://img.shields.io/badge/python-%3E%3D%203.10-blue)](https://pypi.org/project/nucore/)
   [![PyPI Package](https://img.shields.io/pypi/v/nucore?color=yellow)](https://pypi.org/project/nucore/)
@@ -16,9 +16,9 @@
 
 ## About
 
-A tiny script keeps its values in memory and calls functions on them. Real apps don't stay there. Values live in a database, arrive from a browser form, render into a dashboard, get recomputed by a background job. Almost none of the code is about the values anymore — it's all interaction between systems.
+A tiny script keeps its values in memory and calls functions on them. Real apps don't stay there. Values live in a database, arrive from a browser form, render into a dashboard, get recomputed by a background job. Almost none of the code is about the values anymore: it's all interaction between systems.
 
-Nu makes interaction the primitive.
+nu makes interaction the primitive.
 
 - **Ref**: a name for a value, wherever it lives. A KV slot, a text block in the browser, an LLM endpoint, a remote object.
 - **Interaction**: what you do with a Ref. Read, write, branch, iterate, compose.
@@ -26,9 +26,9 @@ Nu makes interaction the primitive.
 
 > **Same primitive, different system.** One Ref for any resource, one Interaction for any op. Setting a browser text block is the same interaction as setting a KV slot.
 
-Nu is the Python implementation of the [interaction model](https://github.com/nustackdev/interaction-model).
+nu is the Python implementation of the [interaction model](https://github.com/nustackdev/interaction-model).
 
-## Build with Nu
+## Build with nu
 
 Four fabrics from [nustd](pkgs/nustd), the same code shape in each.
 
@@ -67,7 +67,7 @@ Powered by [`virtuals`](https://github.com/nustackdev/virtuals) · [`rdbpy`](htt
 
 *Reactive UIs from Python.* No JS, no build step, no websocket you had to write.
 
-A text block, a chart, a form — set them like variables, they render. Update the value, the browser updates itself.
+A text block, a chart, a form: set them like variables, they render. Update the value, the browser updates itself.
 
 - 50+ components out of the box
 - Live updates for free
@@ -95,7 +95,7 @@ Powered by [`React`](https://react.dev) · [`Zustand`](https://github.com/pmndrs
 
 *Same code runs local or across the cluster.* No worker pool to run.
 
-Teleport any Nu tree to any worker; it runs there and returns the result. Where it runs is a binding, not a rewrite.
+Teleport any nu tree to any worker; it runs there and returns the result. Where it runs is a binding, not a rewrite.
 
 - Same code, local or remote
 - Distribute with a single line
@@ -106,7 +106,7 @@ import asyncio
 import nu
 from nustd.cluster import RayCluster, RayService, Teleport
 
-# any Nu tree
+# any nu tree
 op = nu.print("hello from a worker")
 
 # a local ray instance with two workers; "auto" joins your cluster instead
@@ -126,11 +126,11 @@ Powered by [Ray](https://github.com/ray-project/ray). For local processes, `nust
 
 ### LLM calls
 
-*One wire, N providers.* Ollama, OpenAI, OpenRouter, Groq, xAI — same call.
+*One wire, N providers.* Ollama, OpenAI, OpenRouter, Groq, xAI, same call.
 
 LLM chat as a Ref. Swap the model string, keep the code. Local models and hosted APIs meet at the same interface.
 
-- Add intelligence to any Nu app
+- Add intelligence to any nu app
 - 7 providers out of the box
 
 ```python
@@ -183,7 +183,7 @@ Run one from [`examples/`](examples).
 - [Docs](https://nustack.dev/docs/nu): tutorials, how-tos and the full reference.
 - [Examples](examples): every demo above, plus more programs to take from.
 
-## Nu STD
+## nustd
 
 The kernel, `nucore`, holds the language, the engine and one fabric of its own: `nu.mem`, in-memory state over plain dicts. Everything that talks to the outside world lives in [nustd](pkgs/nustd).
 
@@ -204,7 +204,7 @@ Fabrics. Bind one and every Ref inside the bracket reaches a real system.
 | [`nustd.ws_server`](https://nustack.dev/docs/nustd/reference/ws_server) | A websocket host | `ws_server` |
 | [`nustd.valkey`](https://nustack.dev/docs/nustd/reference/valkey) | A private Valkey server, for change notifications across processes | `valkey` |
 
-The standard library. Python's stdlib, same names and call shape, except a call returns a tree that composes into the rest of the program: `math`, `cmath`, `random`, `time`, `datetime`, `itertools`, `functools`, `asyncio`, `logging`, `pathlib`, `uuid`, `decimal`, `fractions`, plus Nu's own `fin`. No extra needed.
+The standard library. Python's stdlib, same names and call shape, except a call returns a tree that composes into the rest of the program: `math`, `cmath`, `random`, `time`, `datetime`, `itertools`, `functools`, `asyncio`, `logging`, `pathlib`, `uuid`, `decimal`, `fractions`, plus nu's own `fin`. No extra needed.
 
 ```bash
 pip install "nustd[all]"     # everything
@@ -215,7 +215,7 @@ Full list in the [nustd README](pkgs/nustd) and the [reference](https://nustack.
 
 ## Spec
 
-Nu implements the [interaction model](https://github.com/nustackdev/interaction-model), a language-agnostic specification of what an interaction is, how Refs name locations and how Interactions compose into programs.
+nu implements the [interaction model](https://github.com/nustackdev/interaction-model), a language-agnostic specification of what an interaction is, how Refs name locations and how Interactions compose into programs.
 
 ## Community
 
@@ -223,12 +223,12 @@ Nu implements the [interaction model](https://github.com/nustackdev/interaction-
 - [X @nustackdev](https://x.com/nustackdev) for releases and demos
 - [Issues](https://github.com/nustackdev/nu/issues) for bugs and feature requests
 
-Building on Nu? Add the badge to your README:
+Building on nu? Add the badge to your README:
 
-[![Nu](https://img.shields.io/badge/built%20with-Nu-%237A4CE0)](https://github.com/nustackdev/nu)
+[![nu](https://img.shields.io/badge/built%20with-nu-%237A4CE0)](https://github.com/nustackdev/nu)
 
 ```
-[![Nu](https://img.shields.io/badge/built%20with-Nu-%237A4CE0)](https://github.com/nustackdev/nu)
+[![nu](https://img.shields.io/badge/built%20with-nu-%237A4CE0)](https://github.com/nustackdev/nu)
 ```
 
 ## License

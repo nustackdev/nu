@@ -1,9 +1,9 @@
 <div align="center">
   <img width="128" alt="nustd" src="https://nustack.dev/brand/logo-square-512@2x.png" />
   <h3>
-    nustd – the Nu standard library
+    nustd – the nu standard library
   </h3>
-  Batteries for <a href="https://github.com/nustackdev/nu">Nu</a>: the fabrics that reach the outside world, and Python's stdlib as Nu.
+  Batteries for <a href="https://github.com/nustackdev/nu">nu</a>: storage, UI, workers and more, ready to use.
 </div>
 
 <br/>
@@ -57,7 +57,7 @@ dot-access: `import nustd`, then `nustd.kv`, `nustd.ui`, `nustd.uuid`.
 The standard library sits at the same level, one module per Python stdlib
 module it mirrors: `nustd.uuid`, `nustd.datetime`, `nustd.decimal`,
 `nustd.math`, `nustd.pathlib`, `nustd.logging`, `nustd.fin` and the rest. No
-extra needed, they are pure Nu.
+extra needed, they are pure nu.
 
 A library whose values can sit in a slot carries the leaves for them, one
 submodule per fabric: `nustd.decimal.mem.DecimalRef` for `nu.mem`,

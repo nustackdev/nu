@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Edit READMEs to match the new identity lines and lowercase naming
 - Draw any lucide icon by name, loading each one only when first shown
 
 ## 0.6.7 — 2026-10-26
