@@ -2,16 +2,17 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.6.7
-- **nustd** (fabrics) — 0.6.7
+- **nucore** (kernel) — 0.6.8
+- **nustd** (fabrics) — 0.6.8
 - **nudle** — 0.1.10
 - **ui-core** — 0.2.2
 - **ui-kit** — 0.3.6
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.6.8 — 2026-10-30
 
+- Release nu 0.6.8
 - Serve web apps so a new release shows without a hard reload
 - Edit READMEs to match the new identity lines and lowercase naming
 - Draw any lucide icon by name, loading each one only when first shown
