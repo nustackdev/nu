@@ -25,6 +25,7 @@ from nu.mem.refs import (
 )
 from nustd.kv.refs import (
     Kh57Ref,
+    OrderedDictRef,
     PrimitiveDictRef,
     PrimitiveListRef,
 )
@@ -164,6 +165,30 @@ def test_kh57_shapes_ref_stamps_type_info_with_shape_elem() -> None:
     assert info == TypeInfo(Kh57Ref, elem=TypeInfo(LeafShape))
 
 
+class OrderedHolder(nu.Shape):
+    cells: OrderedDictRef[str, bool]
+
+
+def test_ordered_dict_ref_synthesizes_with_no_kwargs() -> None:
+    slot = OrderedHolder._slots["cells"]
+    assert slot.ref_cls is OrderedDictRef
+    assert slot.kwargs == {}
+
+
+def test_ordered_dict_ref_stamps_recursive_type_info() -> None:
+    info = nu.tree.payload(OrderedHolder.cells)["type_info"]
+    assert info == TypeInfo(OrderedDictRef, key=TypeInfo(str), elem=TypeInfo(bool))
+
+
+class OrderedShapesHolder(nu.Shape):
+    rows: OrderedDictRef[int, LeafShape]
+
+
+def test_ordered_dict_shapes_ref_stamps_type_info_with_shape_elem() -> None:
+    info = nu.tree.payload(OrderedShapesHolder.rows)["type_info"]
+    assert info == TypeInfo(OrderedDictRef, key=TypeInfo(int), elem=TypeInfo(LeafShape))
+
+
 # --- bare Shape annotation (must have explicit .slot()) ------------------
 
 
@@ -211,6 +236,8 @@ class Spelled(nu.Shape):
     list_by_annotation: ListRef[str]
     kh57_by_slot = Kh57Ref.slot(LeafShape)
     kh57_by_annotation: Kh57Ref[LeafShape]
+    ordered_by_slot = OrderedDictRef.slot(LeafShape, key=int)
+    ordered_by_annotation: OrderedDictRef[int, LeafShape]
 
 
 @pytest.mark.parametrize(
@@ -219,6 +246,7 @@ class Spelled(nu.Shape):
         ("by_slot", "by_annotation"),
         ("list_by_slot", "list_by_annotation"),
         ("kh57_by_slot", "kh57_by_annotation"),
+        ("ordered_by_slot", "ordered_by_annotation"),
     ],
 )
 def test_slot_and_annotation_declare_the_same_ref(by_slot: str, by_annotation: str) -> None:

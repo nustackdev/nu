@@ -7,10 +7,13 @@ descent and typing included, is a ``DictRef``.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic
+
+from typing_extensions import TypeVar
 
 from nu.domains.shape import Slot
 from nu.forms import Object
+from nu.lang import Nu
 from nu.lang.typeinfo import TypeInfo
 from virtuals.views import FractionalIndexedDictView
 
@@ -29,7 +32,7 @@ __all__ = [
 
 K = TypeVar("K")
 V = TypeVar("V")
-DK = TypeVar("DK")
+DK = TypeVar("DK", default=str)
 DV = TypeVar("DV")
 
 
@@ -87,6 +90,9 @@ class OrderedDictRef(DictRef[K, V], Generic[K, V]):
         Notes:
             - ``cells: OrderedDictRef[str, bool]`` as an annotation declares
               the same slot.
+            - ``insert_before`` and ``insert_after`` store ``True`` when no
+              value is passed, whatever ``value`` declares; pass the value
+              explicitly on a slot that is not ``bool``.
         """
         declared = TypeInfo.from_annotation(cls[key, value])  # type: ignore[index]
         return Slot(cls, type_info=declared, view_type=view)  # type: ignore[return-value]
@@ -101,8 +107,8 @@ class OrderedDictRef(DictRef[K, V], Generic[K, V]):
                 idiom; a plain mapping is decomposed under the id.
 
         Notes:
-            - Raises ValueError when ``id`` is already present and KeyError
-              when ``anchor`` is not.
+            - Raises ValueError when ``id`` is already present or any
+              operand reads EMPTY, and KeyError when ``anchor`` is absent.
             - Each argument is a child, so any of them may be an expression
               or a ref read at run time.
             - One view call, a constant number of storage touches.
@@ -128,8 +134,8 @@ class OrderedDictRef(DictRef[K, V], Generic[K, V]):
                 idiom; a plain mapping is decomposed under the id.
 
         Notes:
-            - Raises ValueError when ``id`` is already present and KeyError
-              when ``anchor`` is not.
+            - Raises ValueError when ``id`` is already present or any
+              operand reads EMPTY, and KeyError when ``anchor`` is absent.
             - Each argument is a child, so any of them may be an expression
               or a ref read at run time.
             - One view call, a constant number of storage touches.
@@ -161,7 +167,9 @@ class OrderedDictRef(DictRef[K, V], Generic[K, V]):
 
         Notes:
             - Exactly one of ``before`` and ``after`` is given; both or
-              neither raises ValueError. An absent id raises KeyError.
+              neither raises ValueError, here when both are plain values and
+              at run time when either is an expression. An absent id raises
+              KeyError, an EMPTY one ValueError.
             - The value under ``id`` is untouched; only its place changes.
               Moving an id to where it already is does nothing.
             - Each argument is a child, so any of them may be an expression
@@ -178,6 +186,9 @@ class OrderedDictRef(DictRef[K, V], Generic[K, V]):
         """
         from nustd.kv.interactions.ordered import OrderedMoveCmd
 
+        plain = not (isinstance(before, Nu) or isinstance(after, Nu))
+        if plain and (before is None) == (after is None):
+            raise ValueError("move takes exactly one of before= or after=")
         return OrderedMoveCmd(self, id, before, after)
 
     def first(self) -> Object:

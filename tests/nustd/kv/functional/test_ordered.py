@@ -18,7 +18,7 @@ from collections.abc import MutableMapping
 import pytest
 
 import nu
-from nu import Literal, Shape, run
+from nu import Literal, Shape, arun, run
 from nu.lang.sentinels import EMPTY
 from nustd.kv import OrderedDictRef, StrRef
 from nustd.kv.paths import ViewPathSer
@@ -179,12 +179,20 @@ def test_move_to_same_place_is_noop(ctx) -> None:
     assert _keys(ctx) == ["a", "b", "c"]
 
 
-def test_move_requires_exactly_one_side(ctx) -> None:
+def test_move_requires_exactly_one_side_at_build_time() -> None:
+    with pytest.raises(ValueError, match="exactly one"):
+        Plane.cells.move("a")
+    with pytest.raises(ValueError, match="exactly one"):
+        Plane.cells.move("a", before="b", after="b")
+
+
+def test_move_requires_exactly_one_side_at_run_time(ctx) -> None:
     _fill(ctx, ["a", "b"])
+    cmd = Plane.cells.move("a", before=Plane.name, after="b")  # builds: one side is an expression
+    run(Plane.name.set("b"), ctx)
     with pytest.raises(ValueError, match="exactly one"):
-        run(Plane.cells.move("a"), ctx)
-    with pytest.raises(ValueError, match="exactly one"):
-        run(Plane.cells.move("a", before="b", after="b"), ctx)
+        run(cmd, ctx)
+    assert _keys(ctx) == ["a", "b"]
 
 
 def test_move_missing_raises(ctx) -> None:
@@ -193,6 +201,48 @@ def test_move_missing_raises(ctx) -> None:
         run(Plane.cells.move("zz", before="a"), ctx)
     with pytest.raises(KeyError):
         run(Plane.cells.move("a", after="zz"), ctx)
+
+
+# ============================================================================
+# EMPTY OPERANDS
+# ============================================================================
+
+
+@pytest.mark.parametrize(
+    "cmd",
+    [
+        Plane.cells.insert_after("a", Plane.name),
+        Plane.cells.insert_before(Plane.name, "x"),
+        Plane.cells.insert_after("a", "x", Plane.name),
+        Plane.cells.move(Plane.name, before="a"),
+        Plane.cells.move("a", before=Plane.name),
+        Plane.cells.move("a", after=Plane.name),
+    ],
+    ids=["insert_id", "insert_anchor", "insert_value", "move_id", "move_before", "move_after"],
+)
+def test_empty_operand_raises_and_leaves_order(ctx, cmd) -> None:
+    _fill(ctx, ["a", "b"])
+    with pytest.raises(ValueError, match="EMPTY"):
+        run(cmd, ctx)
+    assert _keys(ctx) == ["a", "b"]
+
+
+def test_empty_operand_raises_before_creating_container(ctx) -> None:
+    with pytest.raises(ValueError, match="EMPTY"):
+        run(Plane.cells.insert_after(Plane.name, "x"), ctx)
+    with pytest.raises(ValueError, match="EMPTY"):
+        run(Plane.cells.move("x", before=Plane.name), ctx)
+    assert run(Plane.cells.len(), ctx)[0] == 0
+
+
+@pytest.mark.asyncio
+async def test_empty_operand_raises_async(ctx) -> None:
+    _fill(ctx, ["a", "b"])
+    with pytest.raises(ValueError, match="EMPTY"):
+        await arun(Plane.cells.insert_after("a", Plane.name), ctx)
+    with pytest.raises(ValueError, match="EMPTY"):
+        await arun(Plane.cells.move("b", before=Plane.name), ctx)
+    assert _keys(ctx) == ["a", "b"]
 
 
 # ============================================================================

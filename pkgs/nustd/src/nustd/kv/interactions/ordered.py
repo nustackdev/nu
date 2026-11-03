@@ -43,6 +43,13 @@ def _child_nid(rt: Runtime, nid: int, slot: int) -> int:
     return rt.program.children[nid][slot]
 
 
+def _guard_ids(*ids: object) -> None:
+    """Refuse an EMPTY id before the view is touched, as ``SetItem`` does."""
+    for i in ids:
+        if i is EMPTY:
+            raise ValueError("cannot write with an EMPTY operand")
+
+
 class _InsertBase(Command):
     """Shared base: fetch the view, then place ``id`` next to ``anchor``.
 
@@ -59,12 +66,13 @@ class _InsertBase(Command):
         after = self._after
 
         def thunk(rt: Runtime) -> None:
-            view = ref._fetch(rt, _child_nid(rt, nid, 0))
             anchor = anchor_thunk(rt)
             key = id_thunk(rt)
             value = value_thunk(rt)
+            _guard_ids(anchor, key)
             if value is EMPTY:
                 raise ValueError("cannot store EMPTY")
+            view = ref._fetch(rt, _child_nid(rt, nid, 0))
             if after:
                 view.insert_after(anchor, key, value)
             else:
@@ -78,12 +86,13 @@ class _InsertBase(Command):
         after = self._after
 
         async def athunk(rt: Runtime) -> None:
-            view = await ref._afetch(rt, _child_nid(rt, nid, 0))
             anchor = await anchor_thunk(rt)
             key = await id_thunk(rt)
             value = await value_thunk(rt)
+            _guard_ids(anchor, key)
             if value is EMPTY:
                 raise ValueError("cannot store EMPTY")
+            view = await ref._afetch(rt, _child_nid(rt, nid, 0))
             if after:
                 view.insert_after(anchor, key, value)
             else:
@@ -104,12 +113,13 @@ class OrderedInsertBeforeCmd(_InsertBase):
     Notes:
         - ``anchor``, ``id`` and ``value`` are children, so each may be a Ref
           read at run time; a raw value is wrapped as a Literal.
-        - Raises ValueError when ``id`` is already present and KeyError when
-          ``anchor`` is not. Neither is swallowed.
+        - Raises ValueError when ``id`` is already present or any operand
+          reads EMPTY, and KeyError when ``anchor`` is not present. None of
+          these is swallowed.
         - Declares slot 0 as a mutation position, so ``auto_flow_atomic``
           braces the branch in a Transaction.
-        - Creates the container and its ancestors on first write, as any
-          dict write does.
+        - Never creates the container: the anchor has to exist already, so
+          the first id goes in with ``set_item``.
 
     Yields:
         Nothing.
@@ -161,7 +171,8 @@ class OrderedMoveCmd(Command):
         - ``id``, ``before`` and ``after`` are children, so each may be a Ref
           read at run time; a raw value is wrapped as a Literal.
         - Raises ValueError when neither or both of ``before`` and ``after``
-          are given, and KeyError when either id is absent.
+          are given or any operand reads EMPTY (an EMPTY neighbour is a bad
+          id, not an omitted one), and KeyError when either id is absent.
         - Moving an id next to itself, or to where it already is, is a no-op.
         - Declares slot 0 as a mutation position, so ``auto_flow_atomic``
           braces the branch in a Transaction.
@@ -179,9 +190,13 @@ class OrderedMoveCmd(Command):
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
     @staticmethod
-    def _apply(view: object, key: object, before: object, after: object) -> None:
+    def _check(key: object, before: object, after: object) -> None:
+        _guard_ids(key, before, after)
         if (before is None) == (after is None):
             raise ValueError("move takes exactly one of before= or after=")
+
+    @staticmethod
+    def _place(view: object, key: object, before: object, after: object) -> None:
         if before is not None:
             view.move_before(key, before)  # type: ignore[attr-defined]
         else:
@@ -192,8 +207,10 @@ class OrderedMoveCmd(Command):
         _ref_thunk, id_thunk, before_thunk, after_thunk = children
 
         def thunk(rt: Runtime) -> None:
+            key, before, after = id_thunk(rt), before_thunk(rt), after_thunk(rt)
+            self._check(key, before, after)
             view = ref._fetch(rt, _child_nid(rt, nid, 0))
-            self._apply(view, id_thunk(rt), before_thunk(rt), after_thunk(rt))
+            self._place(view, key, before, after)
 
         return thunk
 
@@ -202,8 +219,10 @@ class OrderedMoveCmd(Command):
         _ref_thunk, id_thunk, before_thunk, after_thunk = children
 
         async def athunk(rt: Runtime) -> None:
+            key, before, after = await id_thunk(rt), await before_thunk(rt), await after_thunk(rt)
+            self._check(key, before, after)
             view = await ref._afetch(rt, _child_nid(rt, nid, 0))
-            self._apply(view, await id_thunk(rt), await before_thunk(rt), await after_thunk(rt))
+            self._place(view, key, before, after)
 
         return athunk
 
