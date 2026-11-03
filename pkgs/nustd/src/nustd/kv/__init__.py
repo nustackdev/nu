@@ -27,6 +27,11 @@ from nustd.kv.interactions import (
     ItemPrimitiveSetUnsafeParentSkipCmd,
     Kh57Range,
     Kh57Sample,
+    OrderedFirst,
+    OrderedInsertAfterCmd,
+    OrderedInsertBeforeCmd,
+    OrderedLast,
+    OrderedMoveCmd,
     RetryOnConflict,
     ScanPrimitivesUnsafe,
     Snapshot,
@@ -58,6 +63,7 @@ from nustd.kv.refs import (
     Kh57Ref,
     ListRef,
     ObjectRef,
+    OrderedDictRef,
     PrimitiveDictRef,
     PrimitiveFrozenSetRef,
     PrimitiveListRef,
@@ -93,6 +99,12 @@ __all__ = [  # noqa: RUF022
     # Interactions: kh57
     "Kh57Sample",
     "Kh57Range",
+    # Interactions: ordered
+    "OrderedInsertBeforeCmd",
+    "OrderedInsertAfterCmd",
+    "OrderedMoveCmd",
+    "OrderedFirst",
+    "OrderedLast",
     # Interactions: Atomicity
     "Atomic",
     "Snapshot",
@@ -131,6 +143,7 @@ __all__ = [  # noqa: RUF022
     "DictRef",
     "Kh57Ref",
     "ListRef",
+    "OrderedDictRef",
     "SetRef",
     "ShapeRef",
     # Refs: whole-blob compound (primitives)

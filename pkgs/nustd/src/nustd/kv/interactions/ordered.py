@@ -1,0 +1,284 @@
+"""Ordered dict atoms: place, move and read the ends of an ordered collection.
+
+An ``OrderedDictRef`` names a container whose ids keep the order they were
+placed in. These atoms are the ordering side of it: two put a new id next to
+an existing one, one moves an id next to another, two read the ends. Mapping
+reads and writes go through the ordinary dict ops.
+
+Every atom takes the container Ref at slot 0 and its ids as ordinary children,
+so an id can be another Ref read at run time rather than a value fixed when
+the tree was written. Each one is a single view method call, so it costs one
+round trip when the view is proxied.
+
+None is written directly in normal use. ``OrderedDictRef.insert_before``,
+``insert_after``, ``move``, ``first`` and ``last`` build them, already wrapped
+in the ``Object`` form.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from nu.engine.structure import Declared
+from nu.lang import Command, ScalarQuery
+from nu.lang.sentinels import EMPTY
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from nu.lang.runtime import Runtime
+
+
+__all__ = [
+    "OrderedFirst",
+    "OrderedInsertAfterCmd",
+    "OrderedInsertBeforeCmd",
+    "OrderedLast",
+    "OrderedMoveCmd",
+]
+
+
+def _child_nid(rt: Runtime, nid: int, slot: int) -> int:
+    return rt.program.children[nid][slot]
+
+
+class _InsertBase(Command):
+    """Shared base: fetch the view, then place ``id`` next to ``anchor``.
+
+    Subclasses differ only in ``_after``, which picks the side of the anchor.
+    Children are ``(ref, anchor, id, value)``.
+    """
+
+    _mutates = Declared(value=frozenset({0}), name="mutates")
+    _after: bool = False
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref = self._children[0]
+        _ref_thunk, anchor_thunk, id_thunk, value_thunk = children
+        after = self._after
+
+        def thunk(rt: Runtime) -> None:
+            view = ref._fetch(rt, _child_nid(rt, nid, 0))
+            anchor = anchor_thunk(rt)
+            key = id_thunk(rt)
+            value = value_thunk(rt)
+            if value is EMPTY:
+                raise ValueError("cannot store EMPTY")
+            if after:
+                view.insert_after(anchor, key, value)
+            else:
+                view.insert_before(anchor, key, value)
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref = self._children[0]
+        _ref_thunk, anchor_thunk, id_thunk, value_thunk = children
+        after = self._after
+
+        async def athunk(rt: Runtime) -> None:
+            view = await ref._afetch(rt, _child_nid(rt, nid, 0))
+            anchor = await anchor_thunk(rt)
+            key = await id_thunk(rt)
+            value = await value_thunk(rt)
+            if value is EMPTY:
+                raise ValueError("cannot store EMPTY")
+            if after:
+                view.insert_after(anchor, key, value)
+            else:
+                view.insert_before(anchor, key, value)
+
+        return athunk
+
+
+class OrderedInsertBeforeCmd(_InsertBase):
+    """Adds a new id directly before an id already in the collection.
+
+    Args:
+        ref: the ordered container Ref to write to.
+        anchor: the id to place the new one in front of.
+        id: the id to add.
+        value: what the id holds; a plain mapping is decomposed under it.
+
+    Notes:
+        - ``anchor``, ``id`` and ``value`` are children, so each may be a Ref
+          read at run time; a raw value is wrapped as a Literal.
+        - Raises ValueError when ``id`` is already present and KeyError when
+          ``anchor`` is not. Neither is swallowed.
+        - Declares slot 0 as a mutation position, so ``auto_flow_atomic``
+          braces the branch in a Transaction.
+        - Creates the container and its ancestors on first write, as any
+          dict write does.
+
+    Yields:
+        Nothing.
+
+    Example:
+        app = nu.With(
+            nustd.kv.memory_navigator(),
+            body=nustd.kv.Transaction(
+                OrderedInsertBeforeCmd(Board.cells, "c2", "c1", True)
+            ),
+        )
+    """
+
+    _after = False
+
+
+class OrderedInsertAfterCmd(_InsertBase):
+    """Adds a new id directly after an id already in the collection.
+
+    Same contract as ``OrderedInsertBeforeCmd``, placed on the other side of
+    ``anchor``.
+
+    Args:
+        ref: the ordered container Ref to write to.
+        anchor: the id to place the new one behind.
+        id: the id to add.
+        value: what the id holds; a plain mapping is decomposed under it.
+
+    Yields:
+        Nothing.
+    """
+
+    _after = True
+
+
+class OrderedMoveCmd(Command):
+    """Moves an id already in the collection next to another id.
+
+    The value under the id is untouched; only its place changes. Exactly one
+    of ``before`` and ``after`` names the neighbour.
+
+    Args:
+        ref: the ordered container Ref to write to.
+        id: the id to move.
+        before: the id to land in front of, or None.
+        after: the id to land behind, or None.
+
+    Notes:
+        - ``id``, ``before`` and ``after`` are children, so each may be a Ref
+          read at run time; a raw value is wrapped as a Literal.
+        - Raises ValueError when neither or both of ``before`` and ``after``
+          are given, and KeyError when either id is absent.
+        - Moving an id next to itself, or to where it already is, is a no-op.
+        - Declares slot 0 as a mutation position, so ``auto_flow_atomic``
+          braces the branch in a Transaction.
+
+    Yields:
+        Nothing.
+
+    Example:
+        app = nu.With(
+            nustd.kv.memory_navigator(),
+            body=nustd.kv.Transaction(OrderedMoveCmd(Board.cells, "c3", "c1", None)),
+        )
+    """
+
+    _mutates = Declared(value=frozenset({0}), name="mutates")
+
+    @staticmethod
+    def _apply(view: object, key: object, before: object, after: object) -> None:
+        if (before is None) == (after is None):
+            raise ValueError("move takes exactly one of before= or after=")
+        if before is not None:
+            view.move_before(key, before)  # type: ignore[attr-defined]
+        else:
+            view.move_after(key, after)  # type: ignore[attr-defined]
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref = self._children[0]
+        _ref_thunk, id_thunk, before_thunk, after_thunk = children
+
+        def thunk(rt: Runtime) -> None:
+            view = ref._fetch(rt, _child_nid(rt, nid, 0))
+            self._apply(view, id_thunk(rt), before_thunk(rt), after_thunk(rt))
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref = self._children[0]
+        _ref_thunk, id_thunk, before_thunk, after_thunk = children
+
+        async def athunk(rt: Runtime) -> None:
+            view = await ref._afetch(rt, _child_nid(rt, nid, 0))
+            self._apply(view, await id_thunk(rt), await before_thunk(rt), await after_thunk(rt))
+
+        return athunk
+
+
+class _EdgeBase(ScalarQuery):
+    """Shared base: fetch the view and read one end of the order.
+
+    Subclasses differ only in ``_last``. One seek, whatever the size.
+    """
+
+    _last: bool = False
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref = self._children[0]
+        last = self._last
+
+        def thunk(rt: Runtime) -> object:
+            try:
+                view = ref._fetch(rt, _child_nid(rt, nid, 0))
+                found = view.last() if last else view.first()
+            except (KeyError, IndexError):
+                return EMPTY
+            return EMPTY if found is None else found
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref = self._children[0]
+        last = self._last
+
+        async def athunk(rt: Runtime) -> object:
+            try:
+                view = await ref._afetch(rt, _child_nid(rt, nid, 0))
+                found = view.last() if last else view.first()
+            except (KeyError, IndexError):
+                return EMPTY
+            return EMPTY if found is None else found
+
+        return athunk
+
+
+class OrderedFirst(_EdgeBase):
+    """Reads the first id of an ordered collection, in one seek.
+
+    Args:
+        ref: the ordered container Ref to read.
+
+    Notes:
+        - Cost is one seek, independent of how many ids the collection holds.
+        - Safe on a Snapshot: a missing container reads as EMPTY rather than
+          being created.
+
+    Yields:
+        The first id. EMPTY when the collection is empty or not reachable.
+
+    Example:
+        app = nu.With(
+            nustd.kv.memory_navigator(),
+            body=nustd.kv.Snapshot(OrderedFirst(Board.cells)),
+        )
+    """
+
+    _last = False
+
+
+class OrderedLast(_EdgeBase):
+    """Reads the last id of an ordered collection, in one seek.
+
+    Same contract as ``OrderedFirst``, from the other end.
+
+    Args:
+        ref: the ordered container Ref to read.
+
+    Yields:
+        The last id. EMPTY when the collection is empty or not reachable.
+    """
+
+    _last = True
