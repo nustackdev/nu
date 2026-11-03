@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Event flows ignore the reconnect catch-up wake, so handlers only see real keys
 - Add ordered dict slots whose ids are placed and moved relative to neighbours
 - Remove the textdb storage preset; virtuals no longer ships it
 
