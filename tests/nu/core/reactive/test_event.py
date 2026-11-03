@@ -19,6 +19,7 @@ import nu
 from nu.context import Attr as AttrRef
 from nu.context import With
 from nu.core.flows import ParallelAsync, Race
+from nu.core.reactive import RESYNC
 from nu.core.reactive.event import React, ReactForever, ReactLatest, ReactWhile
 from nu.domains.shape import Shape
 from nu.domains.shape.item import ItemRef
@@ -569,17 +570,40 @@ def _keyed(log: list) -> _Body:
     ],
     ids=["React", "ReactForever", "ReactLatest", "ReactWhile"],
 )
-async def test_event_flows_skip_a_keyless_resync_wake(make: Callable) -> None:
+async def test_event_flows_skip_a_resync_wake(make: Callable) -> None:
     feed, log = _Feed(), []
     task = asyncio.ensure_future(arun(make(log), Context(attrs={"feed": feed, "go": True})))
     await _until(lambda: feed.receivers)
-    feed.fire(None)
-    feed.fire(None)
+    feed.fire(RESYNC)
+    feed.fire(RESYNC)
     feed.fire("a")
     await _until(lambda: log == ["a"])
     await asyncio.sleep(0.01)
     assert log == ["a"]
     if task.done():
         await task  # React stops after its one real change
+    else:
+        await _stop(task)
+
+
+@pytest.mark.parametrize(
+    "make",
+    [
+        lambda log: React(AttrRef("feed"), _keyed(log), changed_key="k"),
+        lambda log: ReactForever(AttrRef("feed"), _keyed(log), changed_key="k"),
+        lambda log: ReactLatest(AttrRef("feed"), _keyed(log), changed_key="k"),
+        lambda log: ReactWhile(AttrRef("feed"), AttrRef("go"), _keyed(log), changed_key="k"),
+    ],
+    ids=["React", "ReactForever", "ReactLatest", "ReactWhile"],
+)
+async def test_event_flows_fire_on_a_notify_without_payload(make: Callable) -> None:
+    """A ``None`` key is a real notification (a ui notify carries no payload)."""
+    feed, log = _Feed(), []
+    task = asyncio.ensure_future(arun(make(log), Context(attrs={"feed": feed, "go": True})))
+    await _until(lambda: feed.receivers)
+    feed.fire(None)
+    await _until(lambda: log == [None])
+    if task.done():
+        await task
     else:
         await _stop(task)

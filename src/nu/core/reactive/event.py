@@ -5,9 +5,9 @@ a real notification and nothing else wakes it. That makes it the right kind
 for reacting to something that happened (a click, a message, a key that was
 written) and the wrong kind for keeping state right, because delivery is best
 effort: a subscription can miss a write made just after it opened, and a
-backend may drop a message. Neither is made up for here. A keyless wake (a
-backend calling the receiver with ``None`` after a reconnect, meaning
-"re-read state") is skipped: it names no change for the body to react to. A body that reads
+backend may drop a message. Neither is made up for here. A ``RESYNC``
+wake (a backend saying "re-read state" after a reconnect) is skipped: it
+names no change for the body to react to. A body that reads
 state and puts it right, whatever changed, belongs in a level flow
 (``ReconcileReactive``, ``WaitReactive``, ``ForEachParReactive``), which can afford
 re-checks precisely because it ignores the key.
@@ -40,6 +40,7 @@ from typing import TYPE_CHECKING
 from nu.context.attrs.binders import bind
 from nu.core._stream import aiter_any
 from nu.core.flows.parallel._scheduling import _settle
+from nu.core.reactive.protocol import RESYNC
 from nu.engine.structure import Declared
 from nu.lang import Control
 
@@ -151,7 +152,7 @@ class React(Control):
             queue: asyncio.Queue[object] = asyncio.Queue()
 
             def on_change(k: object) -> None:
-                if k is not None:  # a keyless resync wake carries no change
+                if k is not RESYNC:  # a resync wake names no change
                     loop.call_soon_threadsafe(queue.put_nowait, k)
 
             sub = await children[0](rt)
@@ -243,7 +244,7 @@ class ReactWhile(Control):
             queue: asyncio.Queue[object] = asyncio.Queue()
 
             def on_change(k: object) -> None:
-                if k is not None:  # a keyless resync wake carries no change
+                if k is not RESYNC:  # a resync wake names no change
                     loop.call_soon_threadsafe(queue.put_nowait, k)
 
             sub = await children[0](rt)
@@ -319,7 +320,7 @@ class ReactForever(Control):
             queue: asyncio.Queue[object] = asyncio.Queue()
 
             def on_change(k: object) -> None:
-                if k is not None:  # a keyless resync wake carries no change
+                if k is not RESYNC:  # a resync wake names no change
                     loop.call_soon_threadsafe(queue.put_nowait, k)
 
             changed_key_name = await children[2](rt) if has_ck else None
@@ -432,7 +433,7 @@ class ReactLatest(Control):
             queue: asyncio.Queue[object] = asyncio.Queue()
 
             def on_change(k: object) -> None:
-                if k is not None:  # a keyless resync wake carries no change
+                if k is not RESYNC:  # a resync wake names no change
                     loop.call_soon_threadsafe(queue.put_nowait, k)
 
             changed_key_name = await children[2](rt) if has_ck else None
