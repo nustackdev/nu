@@ -9,8 +9,9 @@ Publisher backends:
 
 - ``InMemoryPublisher`` -- takes an ``InMemoryTransport`` from ctx and
   publishes onto it.
-- ``RedisPublisher`` -- async-only. Owns the publish pipeline, control-
-  channel listener, and cluster-wide interest cache.
+- ``RedisPublisher`` -- async-only. Owns the publish pipeline. Hands each
+  batch of keys to valkey's server-side notify router, which publishes to
+  every matching subscriber.
 """
 
 from __future__ import annotations

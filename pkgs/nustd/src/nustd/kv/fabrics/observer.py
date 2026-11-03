@@ -13,8 +13,11 @@ Observer backends:
 
 - ``InMemoryObserver`` -- takes an ``InMemoryTransport`` from ctx and
   registers a listener on it.
-- ``RedisObserver`` -- async-only. Owns the registry HASH mutations,
-  cluster control-channel PUBLISH, cleanup sweep, and pubsub listener.
+- ``RedisObserver`` -- async-only. Owns the pubsub listener and registers
+  each filter in valkey's server-side notify router once the subscribe is
+  confirmed, so a subscription is live when ``subscribe`` returns. On
+  reconnect it registers every filter again; writes made while it is down
+  are not delivered.
 """
 
 from __future__ import annotations
