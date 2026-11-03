@@ -5,7 +5,9 @@ a real notification and nothing else wakes it. That makes it the right kind
 for reacting to something that happened (a click, a message, a key that was
 written) and the wrong kind for keeping state right, because delivery is best
 effort: a subscription can miss a write made just after it opened, and a
-backend may drop a message. Neither is made up for here. A body that reads
+backend may drop a message. Neither is made up for here. A keyless wake (a
+backend calling the receiver with ``None`` after a reconnect, meaning
+"re-read state") is skipped: it names no change for the body to react to. A body that reads
 state and puts it right, whatever changed, belongs in a level flow
 (``ReconcileReactive``, ``WaitReactive``, ``ForEachParReactive``), which can afford
 re-checks precisely because it ignores the key.
@@ -149,7 +151,8 @@ class React(Control):
             queue: asyncio.Queue[object] = asyncio.Queue()
 
             def on_change(k: object) -> None:
-                loop.call_soon_threadsafe(queue.put_nowait, k)
+                if k is not None:  # a keyless resync wake carries no change
+                    loop.call_soon_threadsafe(queue.put_nowait, k)
 
             sub = await children[0](rt)
             sub.bind(on_change)
@@ -240,7 +243,8 @@ class ReactWhile(Control):
             queue: asyncio.Queue[object] = asyncio.Queue()
 
             def on_change(k: object) -> None:
-                loop.call_soon_threadsafe(queue.put_nowait, k)
+                if k is not None:  # a keyless resync wake carries no change
+                    loop.call_soon_threadsafe(queue.put_nowait, k)
 
             sub = await children[0](rt)
             sub.bind(on_change)
@@ -315,7 +319,8 @@ class ReactForever(Control):
             queue: asyncio.Queue[object] = asyncio.Queue()
 
             def on_change(k: object) -> None:
-                loop.call_soon_threadsafe(queue.put_nowait, k)
+                if k is not None:  # a keyless resync wake carries no change
+                    loop.call_soon_threadsafe(queue.put_nowait, k)
 
             changed_key_name = await children[2](rt) if has_ck else None
             sub = await children[0](rt)
@@ -427,7 +432,8 @@ class ReactLatest(Control):
             queue: asyncio.Queue[object] = asyncio.Queue()
 
             def on_change(k: object) -> None:
-                loop.call_soon_threadsafe(queue.put_nowait, k)
+                if k is not None:  # a keyless resync wake carries no change
+                    loop.call_soon_threadsafe(queue.put_nowait, k)
 
             changed_key_name = await children[2](rt) if has_ck else None
 

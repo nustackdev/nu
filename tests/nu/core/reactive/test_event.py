@@ -544,3 +544,42 @@ async def test_react_latest_restart_unwinds_nested_parallel_and_kv_boundaries():
 
 def _latest_of(body: object) -> ReactLatest:
     return ReactLatest(AttrRef("feed"), body, changed_key="k")
+
+
+# ---------------------------------------------------------------------------
+# Keyless resync wakes: a backend calls receivers with None after a reconnect
+# to mean "re-read state". Event flows are promised real keys, so they skip it.
+# ---------------------------------------------------------------------------
+
+
+def _keyed(log: list) -> _Body:
+    async def body(rt: Runtime) -> None:
+        log.append(rt.ctx.attrs.get("k"))
+
+    return _Body(body)
+
+
+@pytest.mark.parametrize(
+    "make",
+    [
+        lambda log: React(AttrRef("feed"), _keyed(log), changed_key="k"),
+        lambda log: ReactForever(AttrRef("feed"), _keyed(log), changed_key="k"),
+        lambda log: ReactLatest(AttrRef("feed"), _keyed(log), changed_key="k"),
+        lambda log: ReactWhile(AttrRef("feed"), AttrRef("go"), _keyed(log), changed_key="k"),
+    ],
+    ids=["React", "ReactForever", "ReactLatest", "ReactWhile"],
+)
+async def test_event_flows_skip_a_keyless_resync_wake(make: Callable) -> None:
+    feed, log = _Feed(), []
+    task = asyncio.ensure_future(arun(make(log), Context(attrs={"feed": feed, "go": True})))
+    await _until(lambda: feed.receivers)
+    feed.fire(None)
+    feed.fire(None)
+    feed.fire("a")
+    await _until(lambda: log == ["a"])
+    await asyncio.sleep(0.01)
+    assert log == ["a"]
+    if task.done():
+        await task  # React stops after its one real change
+    else:
+        await _stop(task)
