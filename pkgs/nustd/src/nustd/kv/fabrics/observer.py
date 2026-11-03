@@ -16,8 +16,8 @@ Observer backends:
 - ``RedisObserver`` -- async-only. Owns the pubsub listener and registers
   each filter in valkey's server-side notify router once the subscribe is
   confirmed, so a subscription is live when ``subscribe`` returns. On
-  reconnect it registers every filter again; writes made while it is down
-  are not delivered.
+  reconnect it registers every filter again and sends each subscription one
+  keyless resync wake, so subscribers re-read what changed while it was down.
 """
 
 from __future__ import annotations
