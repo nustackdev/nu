@@ -11,7 +11,7 @@ from virtuals.tkv.storage import SnapshotProtocol, StorageProtocol, TransactionP
 
 def pytest_configure(config: pytest.Config) -> None:
     """Register storage-backend markers (root config uses --strict-markers)."""
-    for backend in ("inmemory", "rocksdb", "text", "lmdb"):
+    for backend in ("inmemory", "rocksdb", "lmdb"):
         config.addinivalue_line("markers", f"{backend}: storage backend parametrization")
 
 

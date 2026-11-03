@@ -6,7 +6,7 @@ ctx. ``acleanup`` runs the storage's ``close``.
 
 Backends: ``InMemoryStorage`` (ephemeral), ``RocksDBStorage`` (persistent,
 transactional), ``LMDBStorage`` (memory-mapped, MVCC), ``SQLiteStorage``
-(one WAL-mode file, stdlib only), ``TextStorage`` (human-readable JSON).
+(one WAL-mode file, stdlib only).
 
 DI convention: each storage looks up ``Codec`` under its type. The
 publisher is looked up by the class passed as ``publisher_type`` (default:
@@ -25,7 +25,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from virtuals.storages.mem import InMemoryStorage as _InMemoryStorage
-from virtuals.storages.textdb import TextStorage as _TextStorage
 
 from .codec import Codec
 from .publisher import InMemoryPublisher
@@ -35,7 +34,7 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Context
 
 
-__all__ = ["InMemoryStorage", "LMDBStorage", "RocksDBStorage", "SQLiteStorage", "TextStorage"]
+__all__ = ["InMemoryStorage", "LMDBStorage", "RocksDBStorage", "SQLiteStorage"]
 
 
 def _resolve_publisher(
@@ -333,53 +332,3 @@ class SQLiteStorage:
             msg = f"SQLiteStorage used before setup: no backing store, cannot read {name!r}"
             raise AttributeError(msg)
         return getattr(self._backing, name)
-
-
-class TextStorage(_TextStorage):
-    """FabricLifecycle wrapper over ``virtuals.TextStorage``.
-
-    Human-readable JSON storage. Same DI shape as the others.
-    """
-
-    def __init__(
-        self,
-        *,
-        path: str,
-        publisher_type: type | None = InMemoryPublisher,
-        codec_tags: tuple[object, ...] = (),
-        publisher_tags: tuple[object, ...] = (),
-        read_only: bool = False,
-        log_operations: bool = False,
-    ) -> None:
-        self._path = path
-        self._publisher_type = publisher_type
-        self._codec_tags = tuple(codec_tags)
-        self._publisher_tags = tuple(publisher_tags)
-        self._read_only = read_only
-        self._log_operations = log_operations
-
-    def setup(self, ctx: Context) -> None:
-        """Read deps from ctx, run the parent constructor, open the store."""
-        codec = ctx.fabrics.get(Codec, *self._codec_tags)
-        publisher = _resolve_publisher(ctx, self._publisher_type, self._publisher_tags)
-        _TextStorage.__init__(
-            self,
-            path=Path(self._path),
-            codec=codec,
-            publisher=publisher,
-            log_operations=self._log_operations,
-            read_only=self._read_only,
-        )
-        self.open()
-
-    def cleanup(self) -> None:
-        """Close the backing store."""
-        self.close()
-
-    async def asetup(self, ctx: Context) -> None:
-        """Async shim: setup is sync work."""
-        self.setup(ctx)
-
-    async def acleanup(self) -> None:
-        """Async shim: cleanup is sync work."""
-        self.cleanup()

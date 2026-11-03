@@ -10,6 +10,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Remove the textdb storage preset; virtuals no longer ships it
+
 ## 0.6.8 — 2026-10-30
 
 - Release nu 0.6.8

@@ -67,8 +67,6 @@ __all__ = [
     "sqlite_navigator",
     "sqlite_navigator_redis",
     "sqlite_storage",
-    "text_navigator",
-    "text_storage",
 ]
 
 
@@ -178,33 +176,6 @@ def sqlite_storage(
             synchronous=synchronous,
             busy_timeout=busy_timeout,
             mmap_size=mmap_size,
-        ) as storage,
-    ):
-        yield storage
-
-
-@contextmanager
-def text_storage(path: str) -> Generator[StorageProtocol, None, None]:
-    """Create text storage with text codec and in-memory publisher.
-
-    Args:
-        path: Path for text storage directory
-
-    Yields:
-        Configured text storage instance
-    """
-    from virtuals.codecs import TextCodec
-    from virtuals.publishers.mem import InMemoryPublisher
-    from virtuals.storages.textdb import TextStorage
-    from virtuals.tkv.transport import InMemoryTransport
-
-    transport = InMemoryTransport()
-    with (
-        InMemoryPublisher(transport=transport) as publisher,
-        TextStorage(
-            path=path,
-            codec=TextCodec(),
-            publisher=publisher,
         ) as storage,
     ):
         yield storage
@@ -545,83 +516,6 @@ def rocksdb_navigator_redis(
         Provide(
             Navigator,
             {"storage_type": RocksDBStorage, "storage_tags": tags},
-            tags=tags,
-        ),
-    )
-
-
-def text_navigator(
-    path: str,
-    *,
-    tags: Sequence[object] = (),
-    read_only: bool = False,
-    log_operations: bool = False,
-) -> With:
-    """Stands up a JSON-on-disk stack you can open in an editor and read.
-
-    The debugging backend. State lands in one human-readable ``state.json``,
-    so the whole tree a program built can be inspected with nothing but a text
-    editor, which is worth a great deal when a shape is not laying out the way
-    it was meant to.
-
-    It is a toy and says so: the entire state is held in memory and rewritten
-    to disk on every commit, commits are fully serialized, there is no conflict
-    detection so the last writer wins, and one process owns it at a time. Fine
-    for a few hundred keys while working something out; wrong for anything
-    real.
-
-    Args:
-        path: the directory holding ``state.json``, and the operation log
-            when it is on.
-        tags: shape tags folded onto every binding this makes, so a sharded
-            program can name this stack.
-        read_only: open without allowing writes.
-        log_operations: append every put, delete, commit and abort to
-            ``operations.jsonl`` beside the state, as a trace to read back.
-
-    Notes:
-        - Binds the full stack: Codec, Transport, Publisher, Observer,
-          Storage and Navigator, in that order, tearing down LIFO.
-        - Values go through JSON, so only JSON-able values round-trip, and
-          they come back as JSON's types rather than the ones written.
-        - No conflict detection means a Transaction here never raises the
-          conflict that ``RetryOnConflict`` is built for. It silently
-          overwrites instead.
-
-    Example:
-        app = nu.With(nustd.kv.text_navigator(".dbtext"), body=program)
-    """
-    from nu.context.fabric import Provide, With
-    from nustd.kv.fabrics import (
-        Codec,
-        InMemoryObserver,
-        InMemoryPublisher,
-        InMemoryTransport,
-        Navigator,
-        TextStorage,
-        text_kwargs,
-    )
-
-    tags = tuple(tags)
-    return With(
-        Provide(Codec, text_kwargs(), tags=tags),
-        Provide(InMemoryTransport, {}, tags=tags),
-        Provide(InMemoryPublisher, {"transport_tags": tags}, tags=tags),
-        Provide(InMemoryObserver, {"transport_tags": tags}, tags=tags),
-        Provide(
-            TextStorage,
-            {
-                "path": path,
-                "codec_tags": tags,
-                "publisher_tags": tags,
-                "read_only": read_only,
-                "log_operations": log_operations,
-            },
-            tags=tags,
-        ),
-        Provide(
-            Navigator,
-            {"storage_type": TextStorage, "storage_tags": tags},
             tags=tags,
         ),
     )
