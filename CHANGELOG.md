@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add ordered dict slots whose ids are placed and moved relative to neighbours
 - Remove the textdb storage preset; virtuals no longer ships it
 
 ## 0.6.8 — 2026-10-30
