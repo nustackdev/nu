@@ -48,8 +48,6 @@ from nustd.kv.presets import (
     served_observer,
     sqlite_navigator,
     sqlite_navigator_redis,
-    text_navigator,
-    text_storage,
 )
 from nustd.kv.refs import (
     BoolRef,
@@ -110,7 +108,6 @@ __all__ = [  # noqa: RUF022
     "memory_storage",
     "rocksdb_storage_redis",
     "rocksdb_storage",
-    "text_storage",
     # Presets - bracket-form (drop into nu.With(...))
     "inmem_observer",
     "lmdb_navigator",
@@ -123,7 +120,6 @@ __all__ = [  # noqa: RUF022
     "served_observer",
     "sqlite_navigator",
     "sqlite_navigator_redis",
-    "text_navigator",
     # Refs: leaves
     "BoolRef",
     "BytesRef",

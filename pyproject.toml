@@ -151,7 +151,6 @@ markers = [
     "inmemory: storage-backend parametrization — in-memory tkv",
     "rocksdb: storage-backend parametrization — rocksdb tkv",
     "lmdb: storage-backend parametrization — lmdb tkv",
-    "text: storage-backend parametrization — text/debug tkv",
 ]
 
 [tool.coverage.run]

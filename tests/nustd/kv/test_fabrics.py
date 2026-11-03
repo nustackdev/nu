@@ -38,9 +38,7 @@ from nustd.kv.fabrics import (
     RedisPublisher,
     RocksDBStorage,
     SQLiteStorage,
-    TextStorage,
     binary_kwargs,
-    text_kwargs,
 )
 
 
@@ -69,11 +67,6 @@ def _pub_ctx(codec_kwargs: dict) -> Context:
 def _mem_ctx() -> Context:
     """Binary Codec + Transport + Publisher (+ Observer). Base for binary storages."""
     return _pub_ctx(binary_kwargs())
-
-
-def _text_ctx() -> Context:
-    """Text Codec + Transport + Publisher (+ Observer). Base for TextStorage."""
-    return _pub_ctx(text_kwargs())
 
 
 # --- InMemoryTransport ---------------------------------------------------
@@ -326,27 +319,6 @@ def test_sqlite_storage_sync_lifecycle(tmp_path: Path):
 async def test_sqlite_storage_async_lifecycle(tmp_path: Path):
     ctx = _mem_ctx()
     storage = SQLiteStorage(path=str(tmp_path / "db.sqlite"))
-    await storage.asetup(ctx)
-    with storage.transaction():
-        pass
-    await storage.acleanup()
-
-
-# --- TextStorage ---------------------------------------------------------
-
-
-def test_text_storage_sync_lifecycle(tmp_path: Path):
-    ctx = _text_ctx()
-    storage = TextStorage(path=str(tmp_path / "db"))
-    storage.setup(ctx)
-    with storage.transaction():
-        pass
-    storage.cleanup()
-
-
-async def test_text_storage_async_lifecycle(tmp_path: Path):
-    ctx = _text_ctx()
-    storage = TextStorage(path=str(tmp_path / "db"))
     await storage.asetup(ctx)
     with storage.transaction():
         pass
