@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Require the virtuals release with ordered dicts and reconnect catch-up wakes
 - Fix event flows on clicks and inputs, which stopped firing on payloadless notifies
 - Event flows ignore the reconnect catch-up wake, so handlers only see real keys
 - Add ordered dict slots whose ids are placed and moved relative to neighbours
