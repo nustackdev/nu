@@ -16,7 +16,7 @@ import pytest
 
 import nu
 from nu.context import Attr as AttrRef
-from nu.core.reactive import ForEachParReactive, ReconcileReactive, WaitReactive
+from nu.core.reactive import RESYNC, ForEachParReactive, ReconcileReactive, WaitReactive
 from nu.core.reactive._wakes import Wakes
 from nu.domains.shape import Shape
 from nu.engine.structure import Declared
@@ -292,13 +292,13 @@ async def test_no_changed_key_reaches_the_body() -> None:
     await _stop(task)
 
 
-async def test_a_keyless_resync_wake_runs_a_pass() -> None:
-    """A backend's resync wake (receiver called with None) re-reads state."""
+async def test_a_resync_wake_runs_a_pass() -> None:
+    """A backend's resync wake (receiver called with RESYNC) re-reads state."""
     feed, state, seen = _Feed(), {"v": 0}, []
     task = _start(ReconcileReactive(AttrRef("feed"), _passes(state, seen), **_QUIET), feed=feed)
     await _until(lambda: seen == [0])
     state["v"] = "missed while disconnected"
-    feed.fire(None)
+    feed.fire(RESYNC)
     await _until(lambda: seen[-1] == "missed while disconnected")
     assert seen == [0, "missed while disconnected"]
     await _stop(task)

@@ -35,11 +35,12 @@ from nu.core.reactive.interactions import (
     OnPrimitiveChange,
 )
 from nu.core.reactive.level import ForEachParReactive, ReconcileReactive, WaitReactive
-from nu.core.reactive.protocol import ObserverProtocol, Subscription
+from nu.core.reactive.protocol import RESYNC, ObserverProtocol, Subscription
 from nu.core.reactive.stream import Stream
 
 
 __all__ = [
+    "RESYNC",
     "ForEachParReactive",
     "ObserverProtocol",
     "OnChange",
