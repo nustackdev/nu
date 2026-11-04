@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import random
 
+import pytest
+
 from nu import Shape, run
 from nustd.kv import FloatRef, IntRef, Kh57Ref, StrRef
 
@@ -131,5 +133,11 @@ def test_range_yields_in_key_order(ctx) -> None:
 
 
 def test_range_empty(ctx) -> None:
+    run(Series.points.init({}), ctx)
     got = list(run(Series.points.range(0, 10), ctx)[0])
     assert got == []
+
+
+def test_range_on_a_never_written_container_raises(ctx) -> None:
+    with pytest.raises(KeyError):
+        list(run(Series.points.range(0, 10), ctx)[0])

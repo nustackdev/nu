@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import random
 
+import pytest
+
 import nu
 from nu import Literal, Shape, run
 from nustd.kv import IntRef, Kh57Ref
@@ -128,8 +130,14 @@ def test_range_yields_in_key_order(ctx) -> None:
 
 
 def test_range_empty(ctx) -> None:
+    run(Ledger.entries.init({}), ctx)
     got = list(run(Ledger.entries.range(0, 10), ctx)[0])
     assert got == []
+
+
+def test_range_on_a_never_written_container_raises(ctx) -> None:
+    with pytest.raises(KeyError):
+        list(run(Ledger.entries.range(0, 10), ctx)[0])
 
 
 # ============================================================================

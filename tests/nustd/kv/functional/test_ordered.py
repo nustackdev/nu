@@ -231,7 +231,7 @@ def test_empty_operand_raises_before_creating_container(ctx) -> None:
         run(Plane.cells.insert_after(Plane.name, "x"), ctx)
     with pytest.raises(ValueError, match="NULL"):
         run(Plane.cells.move("x", before=Plane.name), ctx)
-    assert run(Plane.cells.len(), ctx)[0] == 0
+    assert run(Plane.cells.exists(), ctx)[0] is False
 
 
 @pytest.mark.asyncio

@@ -100,6 +100,8 @@ class DictRef(ReactiveMappingRef, ViewRef[dict[K, V]], Generic[K, V]):
         run(Portfolio.desks["desk-1"].symbol.set("SOL"), ctx)
     """
 
+    extract = ViewRef.extract  # NULL on a never-written container, not core Extract
+
     _default_view = DictView
 
     @classmethod
@@ -182,6 +184,8 @@ class ListRef(ReactiveSequenceRef, ViewRef[list[T]], Generic[T]):
         run(Portfolio.orders[0].symbol, ctx)
     """
 
+    extract = ViewRef.extract  # NULL on a never-written container, not core Extract
+
     _default_view = ListView
 
     @classmethod
@@ -252,6 +256,8 @@ class SetRef(ReactiveSetRef, ViewRef[set[T]], Generic[T]):
         run(Portfolio.members.contains("gor"), ctx)
     """
 
+    extract = ViewRef.extract  # NULL on a never-written container, not core Extract
+
     _default_view = SetView
 
     @classmethod
@@ -297,6 +303,8 @@ class ShapeRef(ReactiveShapeRef, ViewRef[dict[str, object]], Generic[T]):
             latest = ShapeRef.slot(Order)
         run(Portfolio.latest.symbol.set("SOL"), ctx)
     """
+
+    extract = ViewRef.extract  # NULL on a never-written container, not core Extract
 
     _default_view = DictView
 

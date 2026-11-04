@@ -34,6 +34,7 @@ if TYPE_CHECKING:
 
     from nu.domains.shape.dsl import Shape
     from nu.lang.runtime import Runtime
+    from nustd.kv.interactions.extract import ViewExtract
     from virtuals.view import View
 
 
@@ -187,7 +188,9 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
           layout instead of collapsing onto the container layer's default.
         - Erasing a slot that is not there is a no-op, not an error.
         - Yields a lazy handle, never NULL, even where nothing is written:
-          ask ``exists()``, or ``extract()`` the value and test it.
+          ask ``exists()``, or ``extract()`` the value and test it. On a
+          never-written container ``len``, iteration and ``contains`` raise,
+          ``extract()`` gives NULL.
         - The storage context is a transaction when one is bound, otherwise a
           snapshot; a snapshot is read-only, so writes need the transaction.
 
@@ -327,6 +330,23 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
             return self._apply_facet(view)
 
         return athunk
+
+    def extract(self) -> ViewExtract:
+        """Read the whole container as plain Python values.
+
+        Notes:
+            - NULL, hinted with the dotted path, when the container was never
+              written; ``len``, iteration and ``contains`` raise there instead.
+
+        Yields:
+            The extracted value, or NULL.
+
+        Example:
+            run(Portfolio.tags.extract(), ctx)
+        """
+        from nustd.kv.interactions.extract import ViewExtract
+
+        return ViewExtract(self)
 
     def _open(self, rt: Runtime, path: tuple) -> object:
         nav = _resolve_navigator(rt, self._root_shape, path)

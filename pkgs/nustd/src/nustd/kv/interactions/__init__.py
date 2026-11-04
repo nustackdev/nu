@@ -5,6 +5,7 @@
 - ``collections``: container-level unsafe scan / clear.
 - ``kh57``: sampled and whole reads of an int-keyed range.
 - ``ordered``: placement, moves and ends of an ordered dict.
+- ``extract``: whole-container read, NULL where nothing is written.
 - ``atomicity``: snapshot / transaction brackets + conflict-aware retry.
 """
 
@@ -17,6 +18,7 @@ from .atomicity import (
     _has_virtuals_write,
 )
 from .collections import ClearPrimitivesUnsafeCmd, ScanPrimitivesUnsafe
+from .extract import ViewExtract
 from .item import (
     InitItemCmd,
     ItemPrimitiveDeleteUnsafeCmd,
@@ -56,5 +58,6 @@ __all__ = [
     "ScanPrimitivesUnsafe",
     "Snapshot",
     "Transaction",
+    "ViewExtract",
     "_has_virtuals_write",
 ]
