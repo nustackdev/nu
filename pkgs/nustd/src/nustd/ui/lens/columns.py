@@ -211,6 +211,11 @@ def _column(kind: str, entries: nu.Nu, total: nu.Nu) -> nu.Nu:
     return nu.Dict.of(kind=nu.Str(kind), entries=entries, total=total)
 
 
+def _empty_column(kind: str) -> nu.Nu:
+    """The column of a container never written: no rows, and no error either."""
+    return _column(kind, nu.List.of(), nu.Int(0))
+
+
 def _shape_term(shape_cls: type[Shape], at: StructuredRef | None) -> nu.Nu:
     """A Shape's slots, one row each. Leaf slots carry their value.
 
@@ -253,12 +258,13 @@ def _mapping_term(ref: StructuredRef, max_rows: int) -> nu.Nu:
         )
         return cell
 
-    return nu.let(
+    held = nu.let(
         nu.list(ref.keys()),
         lambda keys: _column(
             "mapping", nu.Collect(nu.Map(_capped(keys, max_rows), row)), nu.Len(keys)
         ),
     )
+    return nu.If(ref.exists(), held, _empty_column("mapping"))
 
 
 def _sequence_term(ref: StructuredRef, max_rows: int) -> nu.Nu:
@@ -281,7 +287,7 @@ def _sequence_term(ref: StructuredRef, max_rows: int) -> nu.Nu:
         )
         return cell
 
-    return nu.let(
+    held = nu.let(
         nu.Collect(nu.Iter(ref)),
         lambda items: _column(
             "sequence",
@@ -289,6 +295,7 @@ def _sequence_term(ref: StructuredRef, max_rows: int) -> nu.Nu:
             nu.Len(items),
         ),
     )
+    return nu.If(ref.exists(), held, _empty_column("sequence"))
 
 
 def _leaf_term(ref: StructuredRef) -> nu.Nu:

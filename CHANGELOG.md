@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Table sync and the lens show a never-written container as empty, not an error
 - kv containers never written now raise on len, iteration and contains; extract gives NULL
 - Removals and refused writes on a never-written mem container leave it absent
 - len, iteration and membership on NULL now name the absent path in the error

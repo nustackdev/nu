@@ -166,10 +166,9 @@ def sync(
         columns: a ``ListRef`` of column mappings, which turns column requests
             on: add, delete, rename, move, kind and align are stored, and a
             kind change re-coerces the column's cells. Seeded from the slot's
-            columns while it holds none (the store cannot tell a list never
-            written from an emptied one, which is also why the last column
-            is never deleted). None keeps the slot's columns, fixed, and
-            column requests change nothing.
+            columns while it holds none, never written or emptied (the last
+            column is never deleted). None keeps the slot's columns, fixed,
+            and column requests change nothing.
         sort: an ``ObjectRef`` to store the arrows in, so every tab shows
             them. None keeps them per tab: the order a sort writes is still
             shared, but only the tab that sorted shows why, and edits from
@@ -440,13 +439,17 @@ def sync(
             )
             return nu.ParallelAsync(*reactions, *watched, first)
 
-        seed = (
-            nu.Noop()
-            if columns is None
-            else transaction(
-                nu.IfDo(nu.Eq(nu.Len(nu.ToList(columns)), 0), columns.set(nu.Literal(slot_columns)))
+        # Every read below needs its containers there: a table no one wrote
+        # yet starts empty rather than failing its first paint.
+        seeds = [rows.init(nu.Literal({})), order.init(nu.Literal([]))]
+        if columns is not None:
+            seeds.append(
+                nu.IfDo(
+                    nu.Or(nu.Not(columns.exists()), nu.Eq(nu.Len(nu.ToList(columns)), 0)),
+                    columns.set(nu.Literal(slot_columns)),
+                )
             )
-        )
+        seed = transaction(nu.Sequential(*seeds))
         return seed >> nu.let(
             nu.Literal(CLEAN), lambda dirty: nu.let(None, lambda pending: live(dirty, pending))
         )

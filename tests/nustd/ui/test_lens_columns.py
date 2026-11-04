@@ -148,6 +148,16 @@ async def test_a_mapping_of_values_shows_the_values(store):
 
 
 @pytest.mark.timeout(60)
+async def test_a_container_never_written_is_an_empty_column(store):
+    """``right`` has no counts and no keepers: empty columns, not error columns."""
+    for cursor, kind in ((("counts",), "mapping"), (("shifts",), "sequence")):
+        col = (await _at(store, cursor, prefix=Store.right))[1]
+        assert col["kind"] == kind
+        assert col["entries"] == []
+        assert col["total"] == 0
+
+
+@pytest.mark.timeout(60)
 async def test_a_declared_container_shows_what_a_program_put_in_it(store):
     """The shape supplies the protocol; kv supplies the contents.
 
