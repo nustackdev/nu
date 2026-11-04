@@ -350,6 +350,8 @@ class DeleteItem(Command):
     """Delete entry by key: del mapping[key]. Mutates slot 0; returns nothing."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
+    _creates = Declared(value=frozenset(), name="creates")
+    """Acts on an absent container as on an empty one, and leaves it absent."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, key_t = children
@@ -389,11 +391,12 @@ class Update(Command):
         target_t, other_t = children
 
         def thunk(rt: Runtime) -> None:
-            target = target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             other = other_t(rt)
             if is_null(other):
+                raise ValueError("cannot write with a NULL operand")
+            target = target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target.update(other)
 
@@ -403,11 +406,12 @@ class Update(Command):
         target_t, other_t = children
 
         async def athunk(rt: Runtime) -> None:
-            target = await target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             other = await other_t(rt)
             if is_null(other):
+                raise ValueError("cannot write with a NULL operand")
+            target = await target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target.update(other)
 
@@ -432,11 +436,12 @@ class MergeUpdate(ScalarAction):
         target_t, other_t = children
 
         def thunk(rt: Runtime) -> object:
-            target = target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             other = other_t(rt)
             if is_null(other):
+                raise ValueError("cannot write with a NULL operand")
+            target = target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target |= other
             return target
@@ -447,11 +452,12 @@ class MergeUpdate(ScalarAction):
         target_t, other_t = children
 
         async def athunk(rt: Runtime) -> object:
-            target = await target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             other = await other_t(rt)
             if is_null(other):
+                raise ValueError("cannot write with a NULL operand")
+            target = await target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target |= other
             return target
@@ -466,6 +472,8 @@ class DictPop(ScalarAction):
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
+    _creates = Declared(value=frozenset(), name="creates")
+    """Acts on an absent container as on an empty one, and leaves it absent."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         a_t, b_t, c_t = children
@@ -513,6 +521,8 @@ class PopItem(ScalarAction):
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
+    _creates = Declared(value=frozenset(), name="creates")
+    """Acts on an absent container as on an empty one, and leaves it absent."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (operand,) = children
@@ -550,14 +560,15 @@ class SetDefault(ScalarAction):
         a_t, b_t, c_t = children
 
         def thunk(rt: Runtime) -> object:
-            a = a_t(rt)
-            if is_null(a):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             b = b_t(rt)
             if is_null(b):
                 raise ValueError("cannot write with a NULL operand")
             c = c_t(rt)
             if is_null(c):
+                raise ValueError("cannot write with a NULL operand")
+            a = a_t(rt)
+            if is_null(a):
                 raise ValueError("cannot write with a NULL operand")
             return a.setdefault(b, c)
 
@@ -567,14 +578,15 @@ class SetDefault(ScalarAction):
         a_t, b_t, c_t = children
 
         async def athunk(rt: Runtime) -> object:
-            a = await a_t(rt)
-            if is_null(a):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             b = await b_t(rt)
             if is_null(b):
                 raise ValueError("cannot write with a NULL operand")
             c = await c_t(rt)
             if is_null(c):
+                raise ValueError("cannot write with a NULL operand")
+            a = await a_t(rt)
+            if is_null(a):
                 raise ValueError("cannot write with a NULL operand")
             return a.setdefault(b, c)
 

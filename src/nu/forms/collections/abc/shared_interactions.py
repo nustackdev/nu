@@ -27,6 +27,8 @@ class Clear(Command):
     """Clear all items: collection.clear(); mutates the collection, returns nothing."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
+    _creates = Declared(value=frozenset(), name="creates")
+    """Acts on an absent container as on an empty one, and leaves it absent."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (target_t,) = children

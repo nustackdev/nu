@@ -288,11 +288,12 @@ class AddCmd(Command):
         target_t, value_t = children
 
         def thunk(rt: Runtime) -> None:
-            target = target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             value = value_t(rt)
             if is_null(value):
+                raise ValueError("cannot write with a NULL operand")
+            target = target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target.add(value)
 
@@ -302,11 +303,12 @@ class AddCmd(Command):
         target_t, value_t = children
 
         async def athunk(rt: Runtime) -> None:
-            target = await target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             value = await value_t(rt)
             if is_null(value):
+                raise ValueError("cannot write with a NULL operand")
+            target = await target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target.add(value)
 
@@ -322,6 +324,8 @@ class Remove(Command):
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
+    _creates = Declared(value=frozenset(), name="creates")
+    """Acts on an absent container as on an empty one, and leaves it absent."""
 
     def __init__(self, target: object, value: object, *, missing_ok: bool = False) -> None:
         super().__init__(target, value)
@@ -369,6 +373,8 @@ class Discard(Command):
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
+    _creates = Declared(value=frozenset(), name="creates")
+    """Acts on an absent container as on an empty one, and leaves it absent."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, value_t = children
@@ -408,11 +414,12 @@ class SetUpdate(Command):
         target_t, other_t = children
 
         def thunk(rt: Runtime) -> None:
-            target = target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             other = other_t(rt)
             if is_null(other):
+                raise ValueError("cannot write with a NULL operand")
+            target = target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target |= other
 
@@ -422,11 +429,12 @@ class SetUpdate(Command):
         target_t, other_t = children
 
         async def athunk(rt: Runtime) -> None:
-            target = await target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             other = await other_t(rt)
             if is_null(other):
+                raise ValueError("cannot write with a NULL operand")
+            target = await target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target |= other
 
@@ -440,6 +448,8 @@ class IntersectionUpdate(Command):
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
+    _creates = Declared(value=frozenset(), name="creates")
+    """Acts on an absent container as on an empty one, and leaves it absent."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, other_t = children
@@ -474,6 +484,8 @@ class DifferenceUpdate(Command):
     """Remove elements found in other: s.difference_update(other). Mutates the set; returns nothing."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
+    _creates = Declared(value=frozenset(), name="creates")
+    """Acts on an absent container as on an empty one, and leaves it absent."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, other_t = children
@@ -516,11 +528,12 @@ class SymmetricDifferenceUpdate(Command):
         target_t, other_t = children
 
         def thunk(rt: Runtime) -> None:
-            target = target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             other = other_t(rt)
             if is_null(other):
+                raise ValueError("cannot write with a NULL operand")
+            target = target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target ^= other
 
@@ -530,11 +543,12 @@ class SymmetricDifferenceUpdate(Command):
         target_t, other_t = children
 
         async def athunk(rt: Runtime) -> None:
-            target = await target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             other = await other_t(rt)
             if is_null(other):
+                raise ValueError("cannot write with a NULL operand")
+            target = await target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target ^= other
 
@@ -550,6 +564,8 @@ class SetPop(ScalarAction):
     """Pop arbitrary element: s.pop(). Mutates the set; returns the element."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
+    _creates = Declared(value=frozenset(), name="creates")
+    """Acts on an absent container as on an empty one, and leaves it absent."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (operand,) = children

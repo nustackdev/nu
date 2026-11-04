@@ -316,14 +316,15 @@ class SetItem(Command):
         target, key, value = children
 
         def thunk(rt: Runtime) -> None:
-            x = target(rt)
-            if is_null(x):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             k = key(rt)
             if is_null(k):
                 raise ValueError("cannot write with a NULL operand")
             v = value(rt)
             if is_null(v):
+                raise ValueError("cannot write with a NULL operand")
+            x = target(rt)
+            if is_null(x):
                 raise ValueError("cannot write with a NULL operand")
             x[k] = v
 
@@ -333,14 +334,15 @@ class SetItem(Command):
         target, key, value = children
 
         async def athunk(rt: Runtime) -> None:
-            x = await target(rt)
-            if is_null(x):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             k = await key(rt)
             if is_null(k):
                 raise ValueError("cannot write with a NULL operand")
             v = await value(rt)
             if is_null(v):
+                raise ValueError("cannot write with a NULL operand")
+            x = await target(rt)
+            if is_null(x):
                 raise ValueError("cannot write with a NULL operand")
             x[k] = v
 
@@ -364,6 +366,8 @@ class DelItem(Command):
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
+    _creates = Declared(value=frozenset(), name="creates")
+    """Acts on an absent container as on an empty one, and leaves it absent."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target, key = children
@@ -464,6 +468,8 @@ class DelAttr(Command):
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
+    _creates = Declared(value=frozenset(), name="creates")
+    """Acts on an absent container as on an empty one, and leaves it absent."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         obj_t, name_t = children

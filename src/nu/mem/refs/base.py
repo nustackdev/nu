@@ -57,8 +57,10 @@ class RefBase(StructuredRef, Generic[T]):
           hands back the live container held in the data dict.
         - Writing vivifies: every intermediate level missing on the way down
           is created as an empty dict before the leaf key is assigned. An
-          in-place call (``append``, ``add``, ``update``, ...) on an absent
-          container creates it empty first.
+          adding call (``append``, ``add``, ``update``, ...) on an absent
+          container creates it empty first; a removing one (``discard``,
+          ``pop``, ``clear``, ...) acts as on an empty container and
+          creates nothing.
         - Erasing removes the leaf key when it is there and does nothing when
           it is not; it never creates intermediate levels.
 
@@ -178,26 +180,44 @@ class RefBase(StructuredRef, Generic[T]):
     #: absent; None for a leaf, which a write sets whole instead.
     _empty: ClassVar[type | None] = None
 
-    def _in_write_slot(self, rt: Runtime, nid: int) -> bool:
-        """Whether this ref sits in a slot its parent term declares it mutates."""
+    def _write_slot(self, rt: Runtime, nid: int) -> bool | None:
+        """How the parent term writes this ref: None if it does not, else whether it creates.
+
+        A slot the parent declares in ``mutates`` is a write. It creates an
+        absent container unless the parent also declares ``creates`` and
+        leaves the slot out of it, as removals do.
+        """
         pid = rt.program.parent_id[nid]
         if pid < 0:
-            return False
-        attr = type(rt.program.terms[pid])._attributes.get("mutates")
-        slots: frozenset[int] = getattr(attr, "value", frozenset())
-        return any(rt.program.children[pid][i] == nid for i in slots)
+            return None
+        attrs = type(rt.program.terms[pid])._attributes
+        slots: frozenset[int] = getattr(attrs.get("mutates"), "value", frozenset())
+        kids = rt.program.children[pid]
+        mine = [i for i in slots if kids[i] == nid]
+        if not mine:
+            return None
+        creates = attrs.get("creates")
+        return creates is None or any(i in creates.value for i in mine)  # type: ignore[attr-defined]
 
     def _read_at(self, rt: Runtime, nid: int, path: tuple) -> object:
-        """The stored object at ``path``; NULL when absent, unless a write creates it."""
+        """The stored object at ``path``; NULL when absent, unless a write needs a container.
+
+        An adding write (``append``, ``add``, ``update``, ...) creates the
+        container empty and stores it. A removing write (``discard``,
+        ``pop``, ``clear``, ...) gets an empty container that is never
+        stored, so it acts as on an empty one and leaves the slot absent.
+        """
         cur = self._root_data(rt)
         try:
             for k in path:
                 cur = cur[k]  # type: ignore[index]
         except (KeyError, IndexError, TypeError):
-            if self._empty is None or not self._in_write_slot(rt, nid):
+            how = None if self._empty is None else self._write_slot(rt, nid)
+            if how is None:
                 return Null(self._hint(path))
-            cur = self._empty()
-            self._store(rt, path, cur)
+            cur = self._empty()  # type: ignore[misc]
+            if how:
+                self._store(rt, path, cur)
         return cur
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

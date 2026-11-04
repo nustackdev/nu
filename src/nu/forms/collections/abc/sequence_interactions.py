@@ -213,11 +213,12 @@ class Append(Command):
         target_t, value_t = children
 
         def thunk(rt: Runtime) -> None:
-            target = target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             value = value_t(rt)
             if is_null(value):
+                raise ValueError("cannot write with a NULL operand")
+            target = target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target.append(value)
 
@@ -227,11 +228,12 @@ class Append(Command):
         target_t, value_t = children
 
         async def athunk(rt: Runtime) -> None:
-            target = await target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             value = await value_t(rt)
             if is_null(value):
+                raise ValueError("cannot write with a NULL operand")
+            target = await target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target.append(value)
 
@@ -247,9 +249,7 @@ class Insert(Command):
         target_t, index_t, value_t = children
 
         def thunk(rt: Runtime) -> None:
-            target = target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             index = index_t(rt)
             if is_null(index):
                 raise ValueError("cannot write with a NULL operand")
@@ -258,6 +258,9 @@ class Insert(Command):
                 raise ValueError("cannot write with a NULL operand")
             if not isinstance(index, int):
                 raise TypeError(f"insert() requires int index, got {type(index).__name__}")
+            target = target_t(rt)
+            if is_null(target):
+                raise ValueError("cannot write with a NULL operand")
             target.insert(index, value)
 
         return thunk
@@ -266,9 +269,7 @@ class Insert(Command):
         target_t, index_t, value_t = children
 
         async def athunk(rt: Runtime) -> None:
-            target = await target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             index = await index_t(rt)
             if is_null(index):
                 raise ValueError("cannot write with a NULL operand")
@@ -277,6 +278,9 @@ class Insert(Command):
                 raise ValueError("cannot write with a NULL operand")
             if not isinstance(index, int):
                 raise TypeError(f"insert() requires int index, got {type(index).__name__}")
+            target = await target_t(rt)
+            if is_null(target):
+                raise ValueError("cannot write with a NULL operand")
             target.insert(index, value)
 
         return athunk
@@ -291,11 +295,12 @@ class Extend(Command):
         target_t, other_t = children
 
         def thunk(rt: Runtime) -> None:
-            target = target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             other = other_t(rt)
             if is_null(other):
+                raise ValueError("cannot write with a NULL operand")
+            target = target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target.extend(other)
 
@@ -305,11 +310,12 @@ class Extend(Command):
         target_t, other_t = children
 
         async def athunk(rt: Runtime) -> None:
-            target = await target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             other = await other_t(rt)
             if is_null(other):
+                raise ValueError("cannot write with a NULL operand")
+            target = await target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target.extend(other)
 
@@ -324,6 +330,8 @@ class RemoveValue(Command):
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
+    _creates = Declared(value=frozenset(), name="creates")
+    """Acts on an absent container as on an empty one, and leaves it absent."""
 
     def __init__(self, target: object, value: object, *, missing_ok: bool = False) -> None:
         super().__init__(target, value)
@@ -368,6 +376,8 @@ class Reverse(Command):
     """Reverse sequence in-place: seq.reverse(). Mutates slot 0; returns nothing."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
+    _creates = Declared(value=frozenset(), name="creates")
+    """Acts on an absent container as on an empty one, and leaves it absent."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (target_t,) = children
@@ -399,6 +409,8 @@ class Sort(Command):
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
+    _creates = Declared(value=frozenset(), name="creates")
+    """Acts on an absent container as on an empty one, and leaves it absent."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (target_t,) = children
@@ -427,19 +439,22 @@ class SetIndex(Command):
     """Subscript write: seq[index] = value. Mutates slot 0; returns nothing."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
+    _creates = Declared(value=frozenset(), name="creates")
+    """An index on an absent list is out of range, as on an empty one; nothing is created."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, index_t, value_t = children
 
         def thunk(rt: Runtime) -> None:
-            target = target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             index = index_t(rt)
             if is_null(index):
                 raise ValueError("cannot write with a NULL operand")
             value = value_t(rt)
             if is_null(value):
+                raise ValueError("cannot write with a NULL operand")
+            target = target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target[index] = value
 
@@ -449,14 +464,15 @@ class SetIndex(Command):
         target_t, index_t, value_t = children
 
         async def athunk(rt: Runtime) -> None:
-            target = await target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             index = await index_t(rt)
             if is_null(index):
                 raise ValueError("cannot write with a NULL operand")
             value = await value_t(rt)
             if is_null(value):
+                raise ValueError("cannot write with a NULL operand")
+            target = await target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target[index] = value
 
@@ -467,6 +483,8 @@ class DelIndex(Command):
     """Subscript delete: del seq[index]. Mutates slot 0; returns nothing."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
+    _creates = Declared(value=frozenset(), name="creates")
+    """Acts on an absent container as on an empty one, and leaves it absent."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, index_t = children
@@ -509,6 +527,8 @@ class Pop(ScalarAction):
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
+    _creates = Declared(value=frozenset(), name="creates")
+    """Acts on an absent container as on an empty one, and leaves it absent."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         a_t, b_t = children
@@ -548,11 +568,12 @@ class IAdd(ScalarAction):
         target_t, other_t = children
 
         def thunk(rt: Runtime) -> object:
-            target = target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             other = other_t(rt)
             if is_null(other):
+                raise ValueError("cannot write with a NULL operand")
+            target = target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target += other
             return target
@@ -563,11 +584,12 @@ class IAdd(ScalarAction):
         target_t, other_t = children
 
         async def athunk(rt: Runtime) -> object:
-            target = await target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             other = await other_t(rt)
             if is_null(other):
+                raise ValueError("cannot write with a NULL operand")
+            target = await target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target += other
             return target
@@ -584,11 +606,12 @@ class IMul(ScalarAction):
         target_t, n_t = children
 
         def thunk(rt: Runtime) -> object:
-            target = target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             n = n_t(rt)
             if is_null(n):
+                raise ValueError("cannot write with a NULL operand")
+            target = target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target *= n
             return target
@@ -599,11 +622,12 @@ class IMul(ScalarAction):
         target_t, n_t = children
 
         async def athunk(rt: Runtime) -> object:
-            target = await target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
+            # Operands first: a refused one must not create the target.
             n = await n_t(rt)
             if is_null(n):
+                raise ValueError("cannot write with a NULL operand")
+            target = await target_t(rt)
+            if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
             target *= n
             return target

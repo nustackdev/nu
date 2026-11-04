@@ -65,3 +65,77 @@ def test_an_in_place_write_still_refuses_a_null_operand() -> None:
     data: dict = {}
     with pytest.raises(ValueError, match="NULL"):
         nu.run(Root.tags.append(Root.inner.tags), _ctx(data))
+
+
+@pytest.mark.parametrize(
+    "write",
+    [
+        Root.tags.append(Root.inner.tags),
+        Root.tags.insert(0, Root.inner.tags),
+        Root.names.add(Root.inner.tags),
+        Root.meta.update(Root.inner.tags),
+        Root.meta.set_item("a", Root.inner.tags),
+    ],
+    ids=["append", "insert", "add", "update", "set_item"],
+)
+def test_a_refused_write_leaves_nothing_behind(write) -> None:
+    data: dict = {}
+    with pytest.raises(ValueError, match="NULL"):
+        nu.run(write, _ctx(data))
+    assert data == {}
+
+
+@pytest.mark.parametrize(
+    "write",
+    [
+        Root.tags.clear(),
+        Root.tags.reverse(),
+        Root.names.discard("a"),
+        Root.names.clear(),
+        Root.names.difference_update({"a"}),
+        Root.meta.clear(),
+        Root.inner.tags.clear(),
+    ],
+    ids=[
+        "list_clear",
+        "reverse",
+        "discard",
+        "set_clear",
+        "difference_update",
+        "dict_clear",
+        "nested",
+    ],
+)
+def test_a_removal_on_an_absent_container_is_a_no_op_and_creates_nothing(write) -> None:
+    data: dict = {}
+    nu.run(write, _ctx(data))
+    assert data == {}
+
+
+@pytest.mark.parametrize(
+    ("write", "error"),
+    [
+        (Root.tags.pop(), IndexError),
+        (Root.tags.remove("a"), ValueError),
+        (Root.names.remove("a"), KeyError),
+        (Root.names.pop(), KeyError),
+        (Root.meta.pop("a"), KeyError),
+        (Root.inner.tags.pop(), IndexError),
+    ],
+    ids=["list_pop", "list_remove", "set_remove", "set_pop", "dict_pop", "nested_pop"],
+)
+def test_a_removal_that_needs_an_item_raises_as_on_empty_and_creates_nothing(write, error) -> None:
+    data: dict = {}
+    with pytest.raises(error):
+        nu.run(write, _ctx(data))
+    assert data == {}
+
+
+@pytest.mark.parametrize(
+    "read",
+    [Root.tags.len(), nu.Collect(Root.tags.iter()), Root.names.contains("a")],
+    ids=["len", "iter", "contains"],
+)
+def test_reads_that_need_the_container_raise_naming_the_path(read) -> None:
+    with pytest.raises(TypeError, match="NULL Root"):
+        nu.run(read, _ctx({}))
