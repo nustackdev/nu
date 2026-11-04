@@ -113,7 +113,7 @@ def test_extract_thunk_calls_extract():
 
 
 def test_extract_thunk_returns_empty_for_empty_view():
-    from nu.lang.sentinels import NULL
+    from nu.lang.null import NULL
 
     q = Extract(ItemRef("x"))
     thunk = q._compile(0, (_make_thunk(NULL),))

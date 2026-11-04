@@ -134,14 +134,14 @@ def test_a_null_child_reaches_the_function() -> None:
     assert value is True
 
 
-def test_propagate_off_passes_sentinels_through() -> None:
+def test_null_children_pass_through_to_the_function() -> None:
     seen: list[object] = []
 
     def keep(a: object, b: object) -> object:
         seen.append((a, b))
         return "ok"
 
-    NoProp = InteractionFactory(ScalarQuery, "NoProp", keep, propagate_sentinels=False)
+    NoProp = InteractionFactory(ScalarQuery, "NoProp", keep)
     value, _ = run(NoProp(Literal(NULL), Literal(NULL)))
     assert value == "ok"
     assert seen == [(NULL, NULL)]

@@ -42,7 +42,6 @@ def host(  # type: ignore[misc]
     *,
     name: str | None = None,
     base: type[Nu] | None = None,
-    propagate_sentinels: bool = True,
     **attributes: object,
 ) -> object:
     """Decorator sugar over ``InteractionFactory``: turn a host callable into a Nu atom.
@@ -59,7 +58,6 @@ def host(  # type: ignore[misc]
             atom_base,
             atom_name,
             f,
-            propagate_sentinels=propagate_sentinels,
             **attributes,
         )
 

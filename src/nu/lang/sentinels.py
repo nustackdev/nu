@@ -8,11 +8,8 @@ from __future__ import annotations
 
 from typing import TypeGuard
 
-from .null import NULL, Null
-
 
 __all__ = [
-    "EMPTY",
     "UNSET",
     "Sentinel",
     "Unset",
@@ -37,9 +34,6 @@ class Unset(Sentinel):
 
 
 UNSET: Unset = Unset()
-
-# Temporary alias while nustd moves to NULL. Do not use in new code.
-EMPTY: Null = NULL
 
 
 def is_sentinel(value: object) -> TypeGuard[Sentinel]:

@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Drop the old EMPTY name and the sentinel propagation switch; use NULL
 - Cover absent reads, existence, init and writes on never-written kv and mem containers
 - Standard library fabrics treat absent values as NULL and refuse writing them
 - In-place changes on a never-written mem container now create it first

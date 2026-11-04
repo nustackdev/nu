@@ -81,7 +81,6 @@ from .nu import Nu
 from .null import NULL, Null, is_null
 from .runtime import Context, Runtime
 from .sentinels import (
-    EMPTY,
     UNSET,
     Sentinel,
     Unset,
@@ -94,7 +93,6 @@ if TYPE_CHECKING:
     from nu.engine.structure import Schema
 
 __all__ = [
-    "EMPTY",
     "LAWS",
     "MATRIX",
     "NULL",

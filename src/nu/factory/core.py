@@ -36,8 +36,7 @@ class whose ``compile`` falls back to the base (which raises) and whose
 ``requires_async = True``. A plain ``def`` produces both paths.
 
 NULL: no special handling. A NULL child is passed to the function like any
-value, and the function's own Python decides (``propagate_sentinels`` is a
-temporary no-op kept for old callers).
+value, and the function's own Python decides.
 
 Declared attributes are passed by keyword. Raw values are wrapped in
 ``Declared``; pre-built ``Attribute`` instances (including computed
@@ -94,8 +93,6 @@ def InteractionFactory(  # noqa: N802 -- a class factory; reads as a class at th
     base: type[B],
     name: str,
     fn: Callable[..., object],
-    *,
-    propagate_sentinels: bool = True,
     **attributes: object,
 ) -> type[B]:
     """Build a ``Nu`` subclass bound to a Python callable.
