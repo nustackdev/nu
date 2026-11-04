@@ -322,6 +322,12 @@ class First(Reduction):
         1
     """
 
+    def __init__(self, stream: object, default: object = UNSET) -> None:
+        if default is UNSET:
+            super().__init__(stream)
+        else:
+            super().__init__(stream, default)
+
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         stream = children[0]
         default = children[1] if len(children) > 1 else None
@@ -368,6 +374,12 @@ class Last(Reduction):
         >>> nu.run(nu.Last(nu.Iter([1, 2, 3])))[0]
         3
     """
+
+    def __init__(self, stream: object, default: object = UNSET) -> None:
+        if default is UNSET:
+            super().__init__(stream)
+        else:
+            super().__init__(stream, default)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         stream = children[0]
