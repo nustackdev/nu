@@ -5,7 +5,7 @@ Verifies:
 - Iteration, keys, values, items in collection order (not key order).
 - insert_before / insert_after place next to an anchor, errors on bad ids.
 - move(before=/after=) relocates without touching the value.
-- first / last read the ends, EMPTY when empty or missing.
+- first / last read the ends, raise when empty or missing.
 - Whole-value set and read keep the order; the view is a MutableMapping.
 - Path export/import carries the view class; lazy/eager facets.
 """
@@ -19,7 +19,6 @@ import pytest
 
 import nu
 from nu import Literal, Shape, arun, run
-from nu.lang.sentinels import EMPTY
 from nustd.kv import OrderedDictRef, StrRef
 from nustd.kv.paths import ViewPathSer
 from nustd.kv.refs.base import Facet
@@ -204,7 +203,7 @@ def test_move_missing_raises(ctx) -> None:
 
 
 # ============================================================================
-# EMPTY OPERANDS
+# NULL OPERANDS
 # ============================================================================
 
 
@@ -222,15 +221,15 @@ def test_move_missing_raises(ctx) -> None:
 )
 def test_empty_operand_raises_and_leaves_order(ctx, cmd) -> None:
     _fill(ctx, ["a", "b"])
-    with pytest.raises(ValueError, match="EMPTY"):
+    with pytest.raises(ValueError, match="NULL"):
         run(cmd, ctx)
     assert _keys(ctx) == ["a", "b"]
 
 
 def test_empty_operand_raises_before_creating_container(ctx) -> None:
-    with pytest.raises(ValueError, match="EMPTY"):
+    with pytest.raises(ValueError, match="NULL"):
         run(Plane.cells.insert_after(Plane.name, "x"), ctx)
-    with pytest.raises(ValueError, match="EMPTY"):
+    with pytest.raises(ValueError, match="NULL"):
         run(Plane.cells.move("x", before=Plane.name), ctx)
     assert run(Plane.cells.len(), ctx)[0] == 0
 
@@ -238,9 +237,9 @@ def test_empty_operand_raises_before_creating_container(ctx) -> None:
 @pytest.mark.asyncio
 async def test_empty_operand_raises_async(ctx) -> None:
     _fill(ctx, ["a", "b"])
-    with pytest.raises(ValueError, match="EMPTY"):
+    with pytest.raises(ValueError, match="NULL"):
         await arun(Plane.cells.insert_after("a", Plane.name), ctx)
-    with pytest.raises(ValueError, match="EMPTY"):
+    with pytest.raises(ValueError, match="NULL"):
         await arun(Plane.cells.move("b", before=Plane.name), ctx)
     assert _keys(ctx) == ["a", "b"]
 
@@ -264,13 +263,16 @@ def test_first_last_track_edits(ctx) -> None:
     assert run(Plane.cells.last(), ctx)[0] == "b"
 
 
-def test_first_last_empty_or_missing(ctx) -> None:
-    assert run(Plane.cells.first(), ctx)[0] is EMPTY
-    assert run(Plane.cells.last(), ctx)[0] is EMPTY
+def test_first_last_raise_on_empty_or_missing(ctx) -> None:
+    # like seq[0]: an op over a container, not a read of an address
+    with pytest.raises(Exception):  # noqa: B017 - the backend names the missing case
+        run(Plane.cells.first(), ctx)
     _fill(ctx, ["a"])
     run(Plane.cells.del_item("a"), ctx)
-    assert run(Plane.cells.first(), ctx)[0] is EMPTY
-    assert run(Plane.cells.last(), ctx)[0] is EMPTY
+    with pytest.raises(IndexError):
+        run(Plane.cells.first(), ctx)
+    with pytest.raises(IndexError):
+        run(Plane.cells.last(), ctx)
 
 
 # ============================================================================

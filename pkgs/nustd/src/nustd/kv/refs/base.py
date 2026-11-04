@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
 import nu
 from nu.domains.shape.base import StructuredRef
-from nu.lang import EMPTY
+from nu.lang.null import Null
 from nu.lang.typeinfo import TypeInfo
 from nustd.kv.paths import ViewPathSer
 from virtuals import Empty as StorageEmpty
@@ -158,6 +158,11 @@ class _VirtualsRefBase(StructuredRef, Generic[T]):
         segs.reverse()
         return tuple(segs)
 
+    def _hint(self, path: tuple) -> str:
+        """The dotted path a NULL read names, eg ``Space.state.recents``."""
+        shape = self._root_shape
+        return ".".join([shape.__name__ if shape is not None else "?", *(str(a) for a, _ in path)])
+
 
 class ViewRef(_VirtualsRefBase[T], Generic[T]):
     """A ref to one container slot in KV storage, read as a live virtuals View.
@@ -181,8 +186,8 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
           own declared view class, so a slot declared as Kh57View keeps that
           layout instead of collapsing onto the container layer's default.
         - Erasing a slot that is not there is a no-op, not an error.
-        - Never yields EMPTY: an unwritten path opens as an empty View, which
-          reads as length zero.
+        - Yields a lazy handle, never NULL, even where nothing is written:
+          ask ``exists()``, or ``extract()`` the value and test it.
         - The storage context is a transaction when one is bound, otherwise a
           snapshot; a snapshot is read-only, so writes need the transaction.
 
@@ -264,6 +269,7 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
         """The same ref read eagerly: reads extract to plain Python values.
 
         Notes:
+            - Still a handle, not the value: ``extract()`` is the value read.
             - Nested containers come back extracted rather than as child
               Views, so the whole subtree is read out of storage.
             - The facet rides the ref's payload, so it applies to the ops
@@ -321,6 +327,18 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
             return self._apply_facet(view)
 
         return athunk
+
+    def _open(self, rt: Runtime, path: tuple) -> object:
+        nav = _resolve_navigator(rt, self._root_shape, path)
+        return nav.open_at_path(ViewPathSer(path), _resolve_storage_ctx(rt, self._root_shape, path))
+
+    def _exists(self, rt: Runtime, nid: int) -> bool:
+        """Whether the container is stored: one marker read, nothing extracted."""
+        return bool(self._open(rt, self._resolve_path(rt, nid)).container.exists())  # type: ignore[attr-defined]
+
+    async def _aexists(self, rt: Runtime, nid: int) -> bool:
+        """Async sibling of :meth:`_exists`."""
+        return bool(self._open(rt, await self._aresolve_path(rt, nid)).container.exists())  # type: ignore[attr-defined]
 
     # --- write / erase (whole-view store via parent decomposition) -----------
 
@@ -424,9 +442,9 @@ class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
     is a child on the tree, resolved at run time.
 
     Notes:
-        - Yields EMPTY when the leaf is absent, when the parent has no such
-          key or index, and when storage holds its own empty marker there.
-          Reading a missing leaf is not an error.
+        - Yields NULL, hinted with the dotted path, when the parent has no
+          such key or index, or storage hands back its own empty marker.
+          Nothing else is caught, so real errors stay errors.
         - A write materializes every ancestor along the path first, so a leaf
           can be written into storage that has nothing above it yet.
         - Erasing a leaf that is not there is a no-op.
@@ -452,21 +470,21 @@ class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
         storage_ctx = _resolve_storage_ctx(rt, self._root_shape, path)
         parent_path = path[:-1]
         key = path[-1][0]
-        try:
-            parent_view = (
-                nav.root(storage_ctx)
-                if not parent_path
-                else nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
-            )
-            if isinstance(parent_view, Subscriptable):
-                val = parent_view[key]
-                if isinstance(val, StorageEmpty):
-                    return EMPTY
-                return self._lift(_plain(val))
+        parent_view = (
+            nav.root(storage_ctx)
+            if not parent_path
+            else nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
+        )
+        if not isinstance(parent_view, Subscriptable):
             msg = f"View {parent_view.__class__.__name__} is not subscriptable"
             raise TypeError(msg)
+        try:
+            val = parent_view[key]
         except (KeyError, IndexError):
-            return EMPTY
+            return Null(self._hint(path))
+        if isinstance(val, StorageEmpty):
+            return Null(self._hint(path))
+        return self._lift(_plain(val))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:

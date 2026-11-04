@@ -108,7 +108,7 @@ class OrderedDictRef(DictRef[K, V], Generic[K, V]):
 
         Notes:
             - Raises ValueError when ``id`` is already present or any
-              operand reads EMPTY, and KeyError when ``anchor`` is absent.
+              operand reads NULL, and KeyError when ``anchor`` is absent.
             - Each argument is a child, so any of them may be an expression
               or a ref read at run time.
             - One view call, a constant number of storage touches.
@@ -135,7 +135,7 @@ class OrderedDictRef(DictRef[K, V], Generic[K, V]):
 
         Notes:
             - Raises ValueError when ``id`` is already present or any
-              operand reads EMPTY, and KeyError when ``anchor`` is absent.
+              operand reads NULL, and KeyError when ``anchor`` is absent.
             - Each argument is a child, so any of them may be an expression
               or a ref read at run time.
             - One view call, a constant number of storage touches.
@@ -169,7 +169,7 @@ class OrderedDictRef(DictRef[K, V], Generic[K, V]):
             - Exactly one of ``before`` and ``after`` is given; both or
               neither raises ValueError, here when both are plain values and
               at run time when either is an expression. An absent id raises
-              KeyError, an EMPTY one ValueError.
+              KeyError, a NULL one ValueError.
             - The value under ``id`` is untouched; only its place changes.
               Moving an id to where it already is does nothing.
             - Each argument is a child, so any of them may be an expression
@@ -199,8 +199,7 @@ class OrderedDictRef(DictRef[K, V], Generic[K, V]):
             - Safe under a Snapshot.
 
         Yields:
-            The first id. EMPTY when the collection is empty or not
-            reachable.
+            The first id. IndexError when the collection is empty.
 
         Example:
             run(Plane.cells.first(), ctx)
@@ -217,8 +216,7 @@ class OrderedDictRef(DictRef[K, V], Generic[K, V]):
             - Safe under a Snapshot.
 
         Yields:
-            The last id. EMPTY when the collection is empty or not
-            reachable.
+            The last id. IndexError when the collection is empty.
 
         Example:
             run(Plane.cells.last(), ctx)

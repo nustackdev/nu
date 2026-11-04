@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Command, ScalarQuery
-from nu.lang.sentinels import EMPTY
+from nu.lang.null import is_null
 
 
 if TYPE_CHECKING:
@@ -44,10 +44,10 @@ def _child_nid(rt: Runtime, nid: int, slot: int) -> int:
 
 
 def _guard_ids(*ids: object) -> None:
-    """Refuse an EMPTY id before the view is touched, as ``SetItem`` does."""
+    """Refuse a NULL id before the view is touched, as ``SetItem`` does."""
     for i in ids:
-        if i is EMPTY:
-            raise ValueError("cannot write with an EMPTY operand")
+        if is_null(i):
+            raise ValueError("cannot write with a NULL operand")
 
 
 class _InsertBase(Command):
@@ -70,8 +70,8 @@ class _InsertBase(Command):
             key = id_thunk(rt)
             value = value_thunk(rt)
             _guard_ids(anchor, key)
-            if value is EMPTY:
-                raise ValueError("cannot store EMPTY")
+            if is_null(value):
+                raise ValueError("cannot write with a NULL operand")
             view = ref._fetch(rt, _child_nid(rt, nid, 0))
             if after:
                 view.insert_after(anchor, key, value)
@@ -90,8 +90,8 @@ class _InsertBase(Command):
             key = await id_thunk(rt)
             value = await value_thunk(rt)
             _guard_ids(anchor, key)
-            if value is EMPTY:
-                raise ValueError("cannot store EMPTY")
+            if is_null(value):
+                raise ValueError("cannot write with a NULL operand")
             view = await ref._afetch(rt, _child_nid(rt, nid, 0))
             if after:
                 view.insert_after(anchor, key, value)
@@ -114,7 +114,7 @@ class OrderedInsertBeforeCmd(_InsertBase):
         - ``anchor``, ``id`` and ``value`` are children, so each may be a Ref
           read at run time; a raw value is wrapped as a Literal.
         - Raises ValueError when ``id`` is already present or any operand
-          reads EMPTY, and KeyError when ``anchor`` is not present. None of
+          reads NULL, and KeyError when ``anchor`` is not present. None of
           these is swallowed.
         - Declares slot 0 as a mutation position, so ``auto_flow_atomic``
           braces the branch in a Transaction.
@@ -171,7 +171,7 @@ class OrderedMoveCmd(Command):
         - ``id``, ``before`` and ``after`` are children, so each may be a Ref
           read at run time; a raw value is wrapped as a Literal.
         - Raises ValueError when neither or both of ``before`` and ``after``
-          are given or any operand reads EMPTY (an EMPTY neighbour is a bad
+          are given or any operand reads NULL (a NULL neighbour is a bad
           id, not an omitted one), and KeyError when either id is absent.
         - Moving an id next to itself, or to where it already is, is a no-op.
         - Declares slot 0 as a mutation position, so ``auto_flow_atomic``
@@ -240,12 +240,11 @@ class _EdgeBase(ScalarQuery):
         last = self._last
 
         def thunk(rt: Runtime) -> object:
-            try:
-                view = ref._fetch(rt, _child_nid(rt, nid, 0))
-                found = view.last() if last else view.first()
-            except (KeyError, IndexError):
-                return EMPTY
-            return EMPTY if found is None else found
+            view = ref._fetch(rt, _child_nid(rt, nid, 0))
+            found = view.last() if last else view.first()
+            if found is None:
+                raise IndexError(f"{'last' if last else 'first'}() of an empty ordered collection")
+            return found
 
         return thunk
 
@@ -254,12 +253,11 @@ class _EdgeBase(ScalarQuery):
         last = self._last
 
         async def athunk(rt: Runtime) -> object:
-            try:
-                view = await ref._afetch(rt, _child_nid(rt, nid, 0))
-                found = view.last() if last else view.first()
-            except (KeyError, IndexError):
-                return EMPTY
-            return EMPTY if found is None else found
+            view = await ref._afetch(rt, _child_nid(rt, nid, 0))
+            found = view.last() if last else view.first()
+            if found is None:
+                raise IndexError(f"{'last' if last else 'first'}() of an empty ordered collection")
+            return found
 
         return athunk
 
@@ -272,11 +270,11 @@ class OrderedFirst(_EdgeBase):
 
     Notes:
         - Cost is one seek, independent of how many ids the collection holds.
-        - Safe on a Snapshot: a missing container reads as EMPTY rather than
-          being created.
+        - Raises IndexError on an empty collection, as ``seq[0]`` does.
+        - Safe on a Snapshot: a missing container is never created.
 
     Yields:
-        The first id. EMPTY when the collection is empty or not reachable.
+        The first id.
 
     Example:
         app = nu.With(
@@ -297,7 +295,7 @@ class OrderedLast(_EdgeBase):
         ref: the ordered container Ref to read.
 
     Yields:
-        The last id. EMPTY when the collection is empty or not reachable.
+        The last id.
     """
 
     _last = True

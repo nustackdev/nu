@@ -40,7 +40,7 @@ class ItemRef(ReactiveItemRef, PrimitiveRef):
     plus ``Int``), and that one pairing is the whole of a leaf class.
 
     Notes:
-        - Reads yield EMPTY when the leaf is absent rather than raising.
+        - Reads yield NULL, hinted with the path, when the leaf is absent.
         - ``on_change`` works with no substrate-side wiring, because the leaf
           navigation already exposes the parent view and the address.
     """
@@ -101,9 +101,8 @@ class IntRef(ItemRef, Int):
             - Read-modify-write in one term, not a storage-level atomic
               increment; wrap it in a transaction when concurrent writers
               can touch the same leaf.
-            - An absent leaf reads as EMPTY, so the addition is EMPTY and
-              the write refuses to store it. Set the slot before
-              incrementing it.
+            - An absent leaf reads as NULL and NULL has no ``+``, so this
+              raises TypeError. Set the slot before incrementing it.
 
         Example:
             run(Counter.hits.inc(), ctx)
@@ -162,8 +161,8 @@ class BoolRef(ItemRef, Bool):
 
     Notes:
         - Stored as a plain bool, so nothing is translated on read or write.
-        - An absent leaf reads as EMPTY, which is not False; test with
-          ``exists`` or ``is_empty`` when the difference matters.
+        - An absent leaf reads as NULL, which is falsy but not False; test
+          ``== False`` or ``is_set_falsy()`` when the difference matters.
 
     Example:
         class Flags(Shape):

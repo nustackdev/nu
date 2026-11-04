@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import ClassVar
 
 from nu import Shape, run
-from nu.lang import EMPTY
+from nu.lang import is_null
 from nu.mem import StrRef as MemStrRef
 from nustd.kv import DictRef, IntRef, ListRef, ShapeRef, StrRef
 from virtuals.views import DictView
@@ -80,7 +80,7 @@ def test_leaf_overwrite(ctx):
 def test_leaf_erase(ctx):
     run(VRoot.mids["m1"].note.set("x"), ctx)
     run(VRoot.mids["m1"].note.erase(), ctx)
-    assert run(VRoot.mids["m1"].note, ctx)[0] is EMPTY
+    assert is_null(run(VRoot.mids["m1"].note, ctx)[0])
 
 
 # --- shape-ref navigation ---------------------------------------------------

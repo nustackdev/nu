@@ -106,8 +106,7 @@ class Kh57Ref(DictRef[int, V], Generic[V]):
             - Stable under appends outside the queried range.
 
         Yields:
-            A list of ``(int_key, value)`` pairs, unordered. EMPTY when the
-            container is not reachable.
+            A list of ``(int_key, value)`` pairs, unordered.
 
         Example:
             run(Ledger.entries.sample(100, begin=0, end=10_000), ctx)
@@ -137,8 +136,7 @@ class Kh57Ref(DictRef[int, V], Generic[V]):
               error; bounds outside the key space raise ValueError.
 
         Yields:
-            A list of ``(int_key, value)`` pairs, ascending by key. EMPTY
-            when the container is not reachable.
+            A list of ``(int_key, value)`` pairs, ascending by key.
 
         Example:
             run(Ledger.entries.range(0, 100), ctx)

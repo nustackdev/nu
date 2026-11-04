@@ -8,7 +8,7 @@ side of that: one draws a bounded sample, the other materializes everything.
 Both take the container Ref at slot 0 and their bounds as ordinary children,
 so a bound can be another Ref read at run time rather than a number fixed when
 the tree was written. Both come back as a list of ``(int_key, value)`` pairs
-and both answer EMPTY when the container is not reachable.
+and an absent container is the backend's to answer.
 
 Neither is written directly in normal use. ``Kh57Ref.sample`` and
 ``Kh57Ref.range`` build them, already wrapped in the ``Object`` form.
@@ -19,7 +19,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
-from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -69,8 +68,7 @@ class Kh57Sample(ScalarQuery):
           container short-circuits before they run.
 
     Yields:
-        A list of ``(int_key, value)`` pairs, unordered. EMPTY when the
-        container is not reachable.
+        A list of ``(int_key, value)`` pairs, unordered.
 
     Example:
         class State(nu.Shape):
@@ -104,10 +102,7 @@ class Kh57Sample(ScalarQuery):
         rng = self._payload.get("rng")
 
         def thunk(rt: Runtime) -> object:
-            try:
-                view = ref._fetch(rt, _child_nid(rt, nid, 0))
-            except (KeyError, IndexError):
-                return EMPTY
+            view = ref._fetch(rt, _child_nid(rt, nid, 0))
             n = n_thunk(rt)
             begin = begin_thunk(rt)
             end = end_thunk(rt)
@@ -121,10 +116,7 @@ class Kh57Sample(ScalarQuery):
         rng = self._payload.get("rng")
 
         async def athunk(rt: Runtime) -> object:
-            try:
-                view = await ref._afetch(rt, _child_nid(rt, nid, 0))
-            except (KeyError, IndexError):
-                return EMPTY
+            view = await ref._afetch(rt, _child_nid(rt, nid, 0))
             n = await n_thunk(rt)
             begin = await begin_thunk(rt)
             end = await end_thunk(rt)
@@ -163,7 +155,7 @@ class Kh57Range(ScalarQuery):
 
     Yields:
         A list of ``(int_key, value)`` pairs with ``begin <= int_key < end``,
-        ascending by key. EMPTY when the container is not reachable.
+        ascending by key.
 
     Example:
         app = nu.With(
@@ -177,10 +169,7 @@ class Kh57Range(ScalarQuery):
         _ref_thunk, begin_thunk, end_thunk = children
 
         def thunk(rt: Runtime) -> object:
-            try:
-                view = ref._fetch(rt, _child_nid(rt, nid, 0))
-            except (KeyError, IndexError):
-                return EMPTY
+            view = ref._fetch(rt, _child_nid(rt, nid, 0))
             begin = begin_thunk(rt)
             end = end_thunk(rt)
             return list(view.range(begin, end))
@@ -192,10 +181,7 @@ class Kh57Range(ScalarQuery):
         _ref_thunk, begin_thunk, end_thunk = children
 
         async def athunk(rt: Runtime) -> object:
-            try:
-                view = await ref._afetch(rt, _child_nid(rt, nid, 0))
-            except (KeyError, IndexError):
-                return EMPTY
+            view = await ref._afetch(rt, _child_nid(rt, nid, 0))
             begin = await begin_thunk(rt)
             end = await end_thunk(rt)
             return list(view.range(begin, end))

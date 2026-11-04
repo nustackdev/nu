@@ -85,7 +85,7 @@ class DictRef(ReactiveMappingRef, ViewRef[dict[K, V]], Generic[K, V]):
           declared types on.
         - A key vivifies on write: writing under a key that is not there yet
           creates it and every level above it.
-        - A key that has never been written reads as EMPTY; use ``get_item``
+        - A key that has never been written reads as NULL; use ``get_item``
           with a default when a fallback is wanted.
         - The key may itself be an expression or a ref, including a ref from
           another fabric, so a lookup can be computed at run time.
@@ -168,7 +168,7 @@ class ListRef(ReactiveSequenceRef, ViewRef[list[T]], Generic[T]):
           form; a slice is a value, a List carrying the declared type on.
         - A position does not vivify: writing at an index the list does not
           reach raises IndexError, so append before assigning. Reading an
-          out-of-range index yields EMPTY instead.
+          out-of-range index yields NULL instead.
         - Change observation covers the child, the children and the whole
           subtree, each with its own hook.
         - PrimitiveListRef is the other choice: one opaque blob, no

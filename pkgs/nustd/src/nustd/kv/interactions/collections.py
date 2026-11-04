@@ -19,7 +19,6 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Command, ScalarQuery
-from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -60,9 +59,7 @@ class ScanPrimitivesUnsafe(ScalarQuery):
         - Values arrive in the container's own storage order.
 
     Yields:
-        A generator of the stored values. EMPTY when the container is not
-        reachable - a missing address along the Ref's path is answered as
-        emptiness, not raised.
+        A generator of the stored values.
 
     Example:
         app = nu.With(
@@ -77,10 +74,7 @@ class ScanPrimitivesUnsafe(ScalarQuery):
         ref = self._children[0]
 
         def thunk(rt: Runtime) -> object:
-            try:
-                view = ref._fetch(rt, _child_nid(rt, nid, 0))
-            except (KeyError, IndexError):
-                return EMPTY
+            view = ref._fetch(rt, _child_nid(rt, nid, 0))
             return view._unsafe_primitive_scan_values()
 
         return thunk
@@ -89,10 +83,7 @@ class ScanPrimitivesUnsafe(ScalarQuery):
         ref = self._children[0]
 
         async def athunk(rt: Runtime) -> object:
-            try:
-                view = await ref._afetch(rt, _child_nid(rt, nid, 0))
-            except (KeyError, IndexError):
-                return EMPTY
+            view = await ref._afetch(rt, _child_nid(rt, nid, 0))
             return view._unsafe_primitive_scan_values()
 
         return athunk
