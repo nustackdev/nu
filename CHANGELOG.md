@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- In-place changes on a never-written mem container now create it first
 - kv reads of absent leaves give NULL naming the path, containers answer existence honestly
 - Simpler absent checks: one value test, honest slot existence, a set-but-falsy shorthand
 - Ops run plain Python on absent values, and empty lookups raise or take defaults

@@ -12,7 +12,7 @@ the mem ref for the value the container declared.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
 import nu
 from nu.domains.shape.base import StructuredRef
@@ -56,7 +56,9 @@ class RefBase(StructuredRef, Generic[T]):
         - A read yields the stored object itself, so a list or dict slot
           hands back the live container held in the data dict.
         - Writing vivifies: every intermediate level missing on the way down
-          is created as an empty dict before the leaf key is assigned.
+          is created as an empty dict before the leaf key is assigned. An
+          in-place call (``append``, ``add``, ``update``, ...) on an absent
+          container creates it empty first.
         - Erasing removes the leaf key when it is there and does nothing when
           it is not; it never creates intermediate levels.
 
@@ -172,38 +174,50 @@ class RefBase(StructuredRef, Generic[T]):
 
     # --- read (the dual role) ------------------------------------------------
 
+    #: What a container slot is created as when a write lands on it while
+    #: absent; None for a leaf, which a write sets whole instead.
+    _empty: ClassVar[type | None] = None
+
+    def _in_write_slot(self, rt: Runtime, nid: int) -> bool:
+        """Whether this ref sits in a slot its parent term declares it mutates."""
+        pid = rt.program.parent_id[nid]
+        if pid < 0:
+            return False
+        attr = type(rt.program.terms[pid])._attributes.get("mutates")
+        slots: frozenset[int] = getattr(attr, "value", frozenset())
+        return any(rt.program.children[pid][i] == nid for i in slots)
+
+    def _read_at(self, rt: Runtime, nid: int, path: tuple) -> object:
+        """The stored object at ``path``; NULL when absent, unless a write creates it."""
+        cur = self._root_data(rt)
+        try:
+            for k in path:
+                cur = cur[k]  # type: ignore[index]
+        except (KeyError, IndexError, TypeError):
+            if self._empty is None or not self._in_write_slot(rt, nid):
+                return Null(self._hint(path))
+            cur = self._empty()
+            self._store(rt, path, cur)
+        return cur
+
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
-            cur = self._root_data(rt)
-            path = self._resolve_path(rt, nid)
-            try:
-                for k in path:
-                    cur = cur[k]  # type: ignore[index]
-            except (KeyError, IndexError, TypeError):
-                return Null(self._hint(path))
-            return self._lift(cur)
+            got = self._read_at(rt, nid, self._resolve_path(rt, nid))
+            return got if isinstance(got, Null) else self._lift(got)
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
-            cur = self._root_data(rt)
-            path = await self._aresolve_path(rt, nid)
-            try:
-                for k in path:
-                    cur = cur[k]  # type: ignore[index]
-            except (KeyError, IndexError, TypeError):
-                return Null(self._hint(path))
-            return await self._alift(cur)
+            got = self._read_at(rt, nid, await self._aresolve_path(rt, nid))
+            return got if isinstance(got, Null) else await self._alift(got)
 
         return athunk
 
     # --- write / erase -------------------------------------------------------
 
-    def _write(self, rt: Runtime, value: object, nid: int) -> None:
-        """Write ``value`` through this ref, vivifying intermediate dicts."""
-        value = self._lower(value)
-        path = self._resolve_path(rt, nid)
+    def _store(self, rt: Runtime, path: tuple, value: object) -> None:
+        """Put ``value`` at ``path``, vivifying intermediate dicts."""
         cur = self._root_data(rt)
         for k in path[:-1]:
             if isinstance(cur, dict) and k not in cur:
@@ -211,16 +225,15 @@ class RefBase(StructuredRef, Generic[T]):
             cur = cur[k]  # type: ignore[index]
         cur[path[-1]] = value  # type: ignore[index]
 
+    def _write(self, rt: Runtime, value: object, nid: int) -> None:
+        """Write ``value`` through this ref, vivifying intermediate dicts."""
+        value = self._lower(value)
+        self._store(rt, self._resolve_path(rt, nid), value)
+
     async def _awrite(self, rt: Runtime, value: object, nid: int) -> None:
         """Async sibling of :meth:`write`."""
         value = await self._alower(value)
-        path = await self._aresolve_path(rt, nid)
-        cur = self._root_data(rt)
-        for k in path[:-1]:
-            if isinstance(cur, dict) and k not in cur:
-                cur[k] = {}
-            cur = cur[k]  # type: ignore[index]
-        cur[path[-1]] = value  # type: ignore[index]
+        self._store(rt, await self._aresolve_path(rt, nid), value)
 
     def _erase(self, rt: Runtime, nid: int) -> None:
         """Remove this ref's slot from its parent container, if present."""

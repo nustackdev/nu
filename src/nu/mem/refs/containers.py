@@ -86,9 +86,7 @@ class DictRef(MutableMappingRef, RefBase[dict[K, V]], Generic[K, V]):
           value's form, and ``values``, ``items`` and ``copy`` carry the
           declared types on.
         - Writing through a key creates the dict and every level above it;
-          the in-place calls instead read the container first and do nothing
-          while the slot is absent, so ``set`` an empty dict before the first
-          ``set_item``.
+          an in-place call on an absent slot creates the dict empty first.
         - The declared types shape the refs and forms; nothing coerces or
           rejects what is written.
 
@@ -106,6 +104,8 @@ class DictRef(MutableMappingRef, RefBase[dict[K, V]], Generic[K, V]):
         >>> nu.run(Port.meta.len(), ctx)[0]
         2
     """
+
+    _empty = dict
 
     @classmethod
     def slot(cls, value: type[DV], *, key: type[DK] = str) -> DictRef[DK, DV]:  # type: ignore[assignment]
@@ -167,9 +167,8 @@ class ListRef(MutableSequenceRef, RefBase[list[T]], Generic[T]):
           else holding it.
         - Element reads (``first_elem``, ``pop``) are the declared value's
           form; a slice is a List carrying the declared type on.
-        - In-place calls read the container first and do nothing when the
-          slot is absent, so ``set`` an empty list before the first
-          ``append``.
+        - An in-place call on an absent slot creates the list empty first,
+          so ``append`` needs no ``set`` ahead of it.
         - An index past the end reads NULL rather than raising, like any
           other broken path.
 
@@ -187,6 +186,8 @@ class ListRef(MutableSequenceRef, RefBase[list[T]], Generic[T]):
         >>> data
         {'tags': ['a', 'b']}
     """
+
+    _empty = list
 
     @classmethod
     def slot(cls, value: type[E]) -> ListRef[E]:
@@ -247,8 +248,8 @@ class SetRef(MutableSetRef, RefBase[set[T]], Generic[T]):
           whatever Python gives.
         - The declared value types what comes out: ``pop`` is its form, and
           the set algebra yields a Set carrying it on.
-        - In-place calls read the container first and do nothing when the
-          slot is absent, so ``set`` an empty set before the first ``add``.
+        - An in-place call on an absent slot creates the set empty first,
+          so ``add`` needs no ``set`` ahead of it.
 
     Yields:
         The stored set.
@@ -261,6 +262,8 @@ class SetRef(MutableSetRef, RefBase[set[T]], Generic[T]):
         >>> sorted(nu.run(Port.members, ctx)[0])
         ['a', 'b']
     """
+
+    _empty = set
 
     @classmethod
     def slot(cls, value: type[E]) -> SetRef[E]:
@@ -312,6 +315,8 @@ class ShapeRef(MutableShapeRef, RefBase[dict[str, object]], Generic[T]):
         >>> data
         {'best': {'symbol': 'AAPL'}}
     """
+
+    _empty = dict
 
     @classmethod
     def slot(cls, shape: type[S]) -> S:
