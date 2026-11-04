@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- len, iteration and membership on NULL now name the absent path in the error
 - Let stream first and last take their empty default by keyword too
 - Drop the old EMPTY name and the sentinel propagation switch; use NULL
 - Cover absent reads, existence, init and writes on never-written kv and mem containers

@@ -7,8 +7,9 @@ state. The rules:
   Pure ops never make NULL; they act like Python (raise, or take a default).
 - Ops have no NULL handling. They run the plain Python op and NULL's own
   interface decides: ``==``, ``!=``, ``hash``, ``repr`` and ``bool`` (False)
-  work, anything else (``len``, ``iter``, arithmetic, indexing) raises
-  TypeError, and ``str()`` raises TypeError on purpose.
+  work, anything else (``len``, ``iter``, ``in``, arithmetic, indexing)
+  raises TypeError, and ``str()`` raises TypeError on purpose. ``len``,
+  ``iter`` and ``in`` name the path in their message.
 - All NULLs are equal, whatever their hint. ``NULL == None`` is False: a
   stored None and an absent slot never compare equal.
 - The hint is the dotted path the read came from, for errors and repr only.
@@ -18,7 +19,11 @@ state. The rules:
 
 from __future__ import annotations
 
-from typing import TypeGuard
+from typing import TYPE_CHECKING, TypeGuard
+
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 
 __all__ = [
@@ -45,6 +50,15 @@ class Null:
 
     def __bool__(self) -> bool:
         return False
+
+    def __len__(self) -> int:
+        raise TypeError(f"len() of {self!r}: nothing is stored here")
+
+    def __iter__(self) -> Iterator[object]:
+        raise TypeError(f"iteration over {self!r}: nothing is stored here")
+
+    def __contains__(self, item: object) -> bool:
+        raise TypeError(f"'in' on {self!r}: nothing is stored here")
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Null)

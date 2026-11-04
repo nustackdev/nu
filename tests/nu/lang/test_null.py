@@ -67,6 +67,18 @@ def test_unsupported_ops_raise_type_error(op: object) -> None:
         op(NULL)  # type: ignore[operator]
 
 
+@pytest.mark.parametrize(
+    ("op", "word"),
+    [(len, "len()"), (iter, "iteration"), (lambda n: "x" in n, "'in'")],
+    ids=["len", "iter", "contains"],
+)
+def test_container_ops_name_the_path(op: object, word: str) -> None:
+    with pytest.raises(TypeError) as info:
+        op(Null("Root.inner.tags"))  # type: ignore[operator]
+    assert word in str(info.value)
+    assert "<NULL Root.inner.tags>" in str(info.value)
+
+
 def test_is_null() -> None:
     assert is_null(NULL)
     assert is_null(Null("x"))
