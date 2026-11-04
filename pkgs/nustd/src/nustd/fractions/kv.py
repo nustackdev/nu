@@ -36,7 +36,7 @@ class FractionRef(ItemRef, FractionForm):
           flattened to a float.
         - Reads parse back to a Fraction, already in lowest terms because
           that is what Fraction does with the str.
-        - An absent leaf reads as EMPTY.
+        - An absent leaf reads as NULL.
 
     Example:
         class Split(Shape):

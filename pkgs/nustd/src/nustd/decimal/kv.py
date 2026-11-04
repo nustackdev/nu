@@ -36,7 +36,7 @@ class DecimalRef(ItemRef, DecimalForm):
           the whole reason to pick this over FloatRef for money.
         - Reads parse back to a Decimal, so the arithmetic on the ref is
           decimal arithmetic, not float arithmetic.
-        - An absent leaf reads as EMPTY, not as zero.
+        - An absent leaf reads as NULL, not as zero.
 
     Example:
         class Order(Shape):

@@ -18,7 +18,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.context import FabricRef
-from nu.lang.sentinels import EMPTY, UNSET
+from nu.lang.null import Null
+from nu.lang.sentinels import UNSET
 
 from .resources import RayCluster, RayService
 
@@ -43,7 +44,7 @@ class RayClusterRef(FabricRef):
           provided.
 
     Yields:
-        The bound ``RayCluster``. EMPTY when no cluster is bound.
+        The bound ``RayCluster``. NULL when no cluster is bound.
 
     Example:
         Provide(RayCluster, {"address": "auto"},
@@ -74,7 +75,7 @@ class RayServiceRef(FabricRef):
           Context rather than the driver's.
 
     Yields:
-        The bound ``RayService``. EMPTY when nothing is bound at ``tag``.
+        The bound ``RayService``. NULL when nothing is bound at ``tag``.
 
     Example:
         RayServiceRef()               # the untagged singleton
@@ -96,7 +97,11 @@ class RayServiceRef(FabricRef):
 
         def thunk(rt: Runtime) -> object:
             svc = service(rt)
-            return rt.ctx.fabrics.get(svc, *tag) if rt.ctx.fabrics.has(svc, *tag) else EMPTY
+            return (
+                rt.ctx.fabrics.get(svc, *tag)
+                if rt.ctx.fabrics.has(svc, *tag)
+                else Null(getattr(svc, "__qualname__", None) or repr(svc))
+            )
 
         return thunk
 
@@ -107,6 +112,10 @@ class RayServiceRef(FabricRef):
 
         async def athunk(rt: Runtime) -> object:
             svc = await service(rt)
-            return rt.ctx.fabrics.get(svc, *tag) if rt.ctx.fabrics.has(svc, *tag) else EMPTY
+            return (
+                rt.ctx.fabrics.get(svc, *tag)
+                if rt.ctx.fabrics.has(svc, *tag)
+                else Null(getattr(svc, "__qualname__", None) or repr(svc))
+            )
 
         return athunk

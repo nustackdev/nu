@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING
 from nu.context.attrs.binders import bind
 from nu.core._stream import aiter_any, sync_iter
 from nu.lang import ScalarQuery, StreamQuery
-from nu.lang.sentinels import EMPTY, UNSET
+from nu.lang.sentinels import UNSET
 
 
 if TYPE_CHECKING:
@@ -155,10 +155,7 @@ class Repeat(StreamQuery):
             elem = elem_t(rt)
             if times_t is None:
                 return _it.repeat(elem)
-            times = times_t(rt)
-            if times is EMPTY:
-                return iter(())
-            return _it.repeat(elem, times)
+            return _it.repeat(elem, times_t(rt))
 
         return thunk
 
@@ -171,8 +168,6 @@ class Repeat(StreamQuery):
             times = None
             if times_t is not None:
                 times = await times_t(rt)
-                if times is EMPTY:
-                    times = 0
             src = _it.repeat(elem) if times is None else _it.repeat(elem, times)
 
             async def agen() -> object:
@@ -609,7 +604,7 @@ class TakeWhile(StreamQuery):
 
     Children: ``[source, predicate, key]``. Each item is bound under the name
     ``key`` yields, then ``predicate`` runs; the item is yielded while truthy
-    and iteration stops at the first falsy result. An EMPTY result is falsy.
+    and iteration stops at the first falsy result. A NULL result is falsy.
     ``predicate`` is a lambda over the item, or a tree reading it with
     ``Attr(key)``.
     """
@@ -661,7 +656,7 @@ class DropWhile(StreamQuery):
     """``itertools.dropwhile(predicate, iterable)`` - skip while the predicate holds.
 
     Children: ``[source, predicate, key]``. Skips items while ``predicate`` is
-    truthy; once it is falsy (EMPTY included), yields that item and every item
+    truthy; once it is falsy (NULL included), yields that item and every item
     after it with no further predicate evaluation. ``predicate`` is a lambda
     over the item, or a tree reading it with ``Attr(key)``.
     """
@@ -718,9 +713,8 @@ class DropWhile(StreamQuery):
 class FilterFalse(StreamQuery):
     """``itertools.filterfalse(predicate, iterable)`` - keep items where the predicate is falsy.
 
-    Children: ``[source, predicate, key]``. The complement of ``filter``. An
-    EMPTY predicate is unknown rather than false, so it never passes: the item
-    is skipped, as ``filter`` over ``Not(predicate)`` would. ``predicate`` is a
+    Children: ``[source, predicate, key]``. The complement of ``filter``: a
+    NULL predicate is falsy, so the item passes. ``predicate`` is a
     lambda over the item, or a tree reading it with ``Attr(key)``.
     """
 
@@ -740,8 +734,6 @@ class FilterFalse(StreamQuery):
                 for elem in sync_iter(source(rt)):
                     with rt.ctx.attrs.let(name, elem):
                         keep = predicate(rt)
-                    if keep is EMPTY:
-                        continue
                     if not keep:
                         yield elem
 
@@ -759,8 +751,6 @@ class FilterFalse(StreamQuery):
                 async for elem in aiter_any(await source(rt)):
                     with rt.ctx.attrs.let(name, elem):
                         keep = await predicate(rt)
-                    if keep is EMPTY:
-                        continue
                     if not keep:
                         yield elem
 
@@ -865,8 +855,7 @@ class StarMap(StreamQuery):
 
     Children: ``[source, function, key]``. Each item is a tuple bound under
     ``key``. ``function`` is a lambda over the tuple, or a tree reading its
-    parts via ``Attr(key)[0]``, ``[1]``, ... The result is yielded. An EMPTY
-    result is skipped.
+    parts via ``Attr(key)[0]``, ``[1]``, ... The result is yielded.
     """
 
     def __init__(
@@ -885,8 +874,6 @@ class StarMap(StreamQuery):
                 for elem in sync_iter(source(rt)):
                     with rt.ctx.attrs.let(name, elem):
                         result = function(rt)
-                    if result is EMPTY:
-                        continue
                     yield result
 
             return gen()
@@ -903,8 +890,6 @@ class StarMap(StreamQuery):
                 async for elem in aiter_any(await source(rt)):
                     with rt.ctx.attrs.let(name, elem):
                         result = await function(rt)
-                    if result is EMPTY:
-                        continue
                     yield result
 
             return agen()

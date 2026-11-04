@@ -37,7 +37,7 @@ class ComplexRef(ItemRef, ComplexForm):
           round-trips exactly, parentheses and all.
 
     Yields:
-        A complex, parsed from the stored string. EMPTY when the slot was
+        A complex, parsed from the stored string. NULL when the slot was
         never written.
 
     Example:

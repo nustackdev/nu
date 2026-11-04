@@ -36,7 +36,7 @@ class UUIDRef(ItemRef, UUIDForm):
           readable in a dump and matches what other systems expect.
         - Reads parse back to a UUID, so ``version``, ``int_`` and ``hex``
           are on the ref.
-        - An absent leaf reads as EMPTY.
+        - An absent leaf reads as NULL.
 
     Example:
         class Session(Shape):

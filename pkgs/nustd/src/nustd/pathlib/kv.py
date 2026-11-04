@@ -37,7 +37,7 @@ class PathRef(ItemRef, PathForm):
           filesystem.
         - Stored as written, so a path written on one platform reads back
           with that platform's separators.
-        - An absent leaf reads as EMPTY.
+        - An absent leaf reads as NULL.
 
     Example:
         class Job(Shape):

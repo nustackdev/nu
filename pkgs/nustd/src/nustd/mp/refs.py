@@ -21,7 +21,7 @@ class MpWorkerRef(FabricRef):
           process's own Context rather than the parent's.
 
     Yields:
-        The bound ``MpWorker``. EMPTY when nothing is bound.
+        The bound ``MpWorker``. NULL when nothing is bound.
 
     Example:
         Provide(MpWorker, {"name": "solo"},

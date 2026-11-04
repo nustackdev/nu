@@ -10,7 +10,7 @@ imports.
 
 - ``Spares`` - the shelf, a fabric. It launches into the ``WorkerPool`` bound
   around it and refills itself in the background.
-- ``SparesRef`` - the fabric ref, EMPTY when no shelf is bound.
+- ``SparesRef`` - the fabric ref, NULL when no shelf is bound.
 - ``TakeSpare`` - the interaction: one worker id, off the shelf when there is
   one, a cold ``Launch`` when there is not or no shelf is bound at all.
 - ``spares(size)`` - the ``Provide`` that opens a shelf.
@@ -216,7 +216,7 @@ class Spares:
 
 
 class SparesRef(FabricRef):
-    """The ``Spares`` bound on the Context. EMPTY when nothing is."""
+    """The ``Spares`` bound on the Context. NULL when nothing is."""
 
     fabric = Spares
 

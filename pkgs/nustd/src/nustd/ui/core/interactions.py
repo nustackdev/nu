@@ -30,7 +30,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
-from nu.lang import EMPTY, Command, ScalarQuery
+from nu.lang import Command, ScalarQuery
+from nu.lang.null import is_null
 
 from .chains import boot_chains
 from .protocol import OP_INIT, OP_REMOVE, Frame
@@ -73,7 +74,7 @@ class Send(Command):
 
     The base every outbound interaction with a payload stands on. It resolves
     the Ref's chain (so the browser can bring every node on the way into
-    being), evaluates the arguments in order, refuses EMPTY, and ships one
+    being), evaluates the arguments in order, refuses NULL, and ships one
     frame whose op is the subclass's name in snake_case (``SetRow`` ships
     ``set_row``). The browser hands it to the node's handler of that name.
 
@@ -122,8 +123,8 @@ class Send(Command):
             chain = await ref._aresolve_chain(rt, ref_nid)
             path = tuple(seg for seg, _, _ in chain)
             values = [await t(rt) for t in value_thunks]
-            if any(v is EMPTY for v in values):
-                raise ValueError(f"{name}: cannot send EMPTY")
+            if any(is_null(v) for v in values):
+                raise ValueError(f"{name}: cannot send NULL")
             await session.send(
                 Frame(self._frame_op(), ref=path, payload=self._frame_payload(values), chain=chain)
             )
@@ -132,7 +133,7 @@ class Send(Command):
 
 
 class Write(Send):
-    """Send a `write` frame on a Ref -- replace the value. An EMPTY value raises."""
+    """Send a `write` frame on a Ref -- replace the value. A NULL value raises."""
 
     def _frame_payload(self, values: list[object]) -> object:
         return values[0]

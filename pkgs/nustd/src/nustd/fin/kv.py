@@ -36,7 +36,7 @@ class BasisPointRef(ItemRef, BasisPointForm):
           in between writes and reads.
         - Reads wrap the int back into a BasisPoint, so the conversions
           (``to_pct``, ``to_dec``) and the fee helpers are there on the ref.
-        - An absent leaf reads as EMPTY, not as zero bps.
+        - An absent leaf reads as NULL, not as zero bps.
 
     Example:
         class Fee(Shape):

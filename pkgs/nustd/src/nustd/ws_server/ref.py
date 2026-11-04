@@ -19,7 +19,7 @@ __all__ = ["ServerRef"]
 class ServerRef(FabricRef):
     """The ``WebServer`` bound on the Context, and the registry it holds.
 
-    Reads as the server instance itself, EMPTY when no server bracket is open
+    Reads as the server instance itself, NULL when no server bracket is open
     around this subtree.
     """
 

@@ -42,7 +42,7 @@ class PathRef(ItemRef, PathForm):
           back together, they never touch disk.
 
     Yields:
-        A PurePath built from the stored string. EMPTY when the slot was
+        A PurePath built from the stored string. NULL when the slot was
         never written.
 
     Example:

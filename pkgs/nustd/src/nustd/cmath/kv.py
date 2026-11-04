@@ -34,7 +34,7 @@ class ComplexRef(ItemRef, ComplexForm):
           in the one text rather than in two slots.
         - Reads parse back to a complex, so ``real``, ``imag`` and the
           arithmetic all work on the value.
-        - An absent leaf reads as EMPTY.
+        - An absent leaf reads as NULL.
 
     Example:
         class Wave(Shape):

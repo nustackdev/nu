@@ -47,7 +47,7 @@ class PoolRef(FabricRef):
           matching ``Launch(...)`` / ``Kill(...)`` call would.
 
     Yields:
-        The bound ``WorkerPool``. EMPTY when nothing is bound.
+        The bound ``WorkerPool``. NULL when nothing is bound.
 
     Example:
         pool = PoolRef()

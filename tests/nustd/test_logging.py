@@ -174,14 +174,14 @@ def test_msg_can_be_a_nu_term(caplog: pytest.LogCaptureFixture) -> None:
     assert caplog.records[0].getMessage() == "hi gor"
 
 
-def test_an_empty_arg_raises_and_logs_nothing(caplog: pytest.LogCaptureFixture) -> None:
-    # An unbound attr reads EMPTY, and a log line is a write: it refuses EMPTY
+def test_a_null_arg_raises_and_logs_nothing(caplog: pytest.LogCaptureFixture) -> None:
+    # An unbound attr reads NULL, and a log line is a write: it refuses NULL
     # rather than emitting a partially-formatted string.
     from nu.context import Attr
 
     log = logging.getLogger("nu.test")
     caplog.set_level(pylogging.DEBUG, logger="nu.test")
-    with pytest.raises(ValueError, match="EMPTY"):
+    with pytest.raises(ValueError, match="NULL"):
         run(log.info("hi %s", Attr("missing")))
     assert caplog.records == []
 

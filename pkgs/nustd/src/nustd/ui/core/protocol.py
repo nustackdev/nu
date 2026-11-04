@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING, Any
 
 import msgpack
 
-from nu.lang.sentinels import is_sentinel
+from nu.lang.null import is_null
 
 
 if TYPE_CHECKING:
@@ -112,12 +112,11 @@ class Frame:
 def _msgpack_default(obj: object) -> Any:
     """Coerce values msgpack can't pack on its own.
 
-    EMPTY is a first-class value: a Ref resolves to it when its address is
-    absent, and queries over it carry it on. The wire carries Nu values, so
-    the display layer maps it to msgpack nil (which decodes to None / null on
-    the browser) rather than crashing the connection.
+    A NULL nested in a payload (a Ref read where nothing is stored) goes out
+    as msgpack nil, which the browser decodes to null, rather than crashing
+    the connection. A NULL as a whole argument is refused before send.
     """
-    if is_sentinel(obj):
+    if is_null(obj):
         return None
     raise TypeError(f"Object of type {obj.__class__.__name__} is not msgpack serializable")
 

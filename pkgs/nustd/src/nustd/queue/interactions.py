@@ -18,7 +18,8 @@ from typing import TYPE_CHECKING
 import janus
 
 from nu.engine.structure import Declared
-from nu.lang import EMPTY, Command, ScalarAction, ScalarQuery
+from nu.lang import Command, ScalarAction, ScalarQuery
+from nu.lang.null import is_null
 
 
 if TYPE_CHECKING:
@@ -74,7 +75,7 @@ class Put(Command):
           async run awaits on the event loop - so the same tree works from
           either side.
         - A shut-down queue raises QueueClosed rather than dropping the
-          value. An EMPTY value raises, as any write does.
+          value. A NULL value raises, as any write does.
 
     Yields:
         Nothing.
@@ -99,8 +100,8 @@ class Put(Command):
         def thunk(rt: Runtime) -> None:
             q = children[0](rt)
             value = children[1](rt)
-            if value is EMPTY:
-                raise ValueError("cannot write EMPTY")
+            if is_null(value):
+                raise ValueError("cannot write with a NULL operand")
             try:
                 q.sync_q.put(value)
             except _SHUTDOWN_EXCS as e:
@@ -114,8 +115,8 @@ class Put(Command):
         async def athunk(rt: Runtime) -> None:
             q = await children[0](rt)
             value = await children[1](rt)
-            if value is EMPTY:
-                raise ValueError("cannot write EMPTY")
+            if is_null(value):
+                raise ValueError("cannot write with a NULL operand")
             try:
                 await q.async_q.put(value)
             except _SHUTDOWN_EXCS as e:

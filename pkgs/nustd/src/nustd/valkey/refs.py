@@ -32,7 +32,7 @@ class ValkeyRef(FabricRef):
           the same term the matching ``Url(...)`` / ``Ping(...)`` call would.
 
     Yields:
-        The bound ``ValkeyServer``. EMPTY when nothing is bound.
+        The bound ``ValkeyServer``. NULL when nothing is bound.
 
     Example:
         With(nustd.valkey.server(".vk"), body=ValkeyRef().ping())

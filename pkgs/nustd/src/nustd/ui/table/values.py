@@ -7,8 +7,8 @@ through its atom, and writes or ships the answer, so the rules a table follows
 (how a typed value is stored, where a blank sorts, what a fresh column is
 called) live in one place a test can reach without a store.
 
-Reads hand in kv views and sentinels as well as plain values: a list read back
-from a ListRef holds views, and a slot never written reads as EMPTY. Each atom
+Reads hand in kv views and NULL as well as plain values: a list read back
+from a ListRef holds views, and a slot never written reads as NULL. Each atom
 lowers those first, so nothing that leaves here is tied to a store.
 """
 
@@ -19,7 +19,7 @@ from collections.abc import Callable, Mapping, Sequence
 from typing import Any
 
 import nu
-from nu.lang.sentinels import is_sentinel
+from nu.lang.null import is_null
 
 
 __all__ = [
@@ -55,8 +55,8 @@ TRUE_WORDS = frozenset({"true", "yes", "1", "x"})
 
 
 def plain(value: object) -> object:
-    """``value`` with every view lowered to a dict or a list, and a sentinel to None."""
-    if is_sentinel(value):
+    """``value`` with every view lowered to a dict or a list, and NULL to None."""
+    if is_null(value):
         return None
     if isinstance(value, Mapping):
         return {str(k): plain(v) for k, v in value.items()}
@@ -136,7 +136,7 @@ def wire_row(key: object, cells: object, field: str) -> dict[str, Any]:
 
 
 def columns_of(raw: object, fallback: object = ()) -> list[dict[str, Any]]:
-    """Columns as mappings: a string ``s`` is ``{"key": s}``. EMPTY reads ``fallback``."""
+    """Columns as mappings: a string ``s`` is ``{"key": s}``. NULL reads ``fallback``."""
     value = plain(raw)
     if value is None:
         value = plain(fallback) or []
@@ -360,12 +360,12 @@ def settled(state: object, shipped: object) -> dict[str, Any]:
 # ---- atoms ------------------------------------------------------------------
 #
 # Each function above as a Nu atom, for the preset to call on values it read.
-# Sentinels are handed in rather than short-circuiting, because a slot never
-# written is an answer here (no rows yet, no arrows), not a reason to stop.
+# NULL is handed in like any value, because a slot never written is an
+# answer here (no rows yet, no arrows), not a reason to stop.
 
 
 def _atom(fn: Callable[..., object], name: str) -> type[nu.Nu]:
-    return nu.host(fn, name=name, propagate_sentinels=False)
+    return nu.host(fn, name=name)
 
 
 Coerce = _atom(coerce, "TableCoerce")

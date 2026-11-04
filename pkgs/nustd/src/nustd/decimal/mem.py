@@ -41,7 +41,7 @@ class DecimalRef(ItemRef, DecimalForm):
           dict populated by hand works either way.
 
     Yields:
-        A Decimal, parsed from the stored string. EMPTY when the slot was
+        A Decimal, parsed from the stored string. NULL when the slot was
         never written.
 
     Example:

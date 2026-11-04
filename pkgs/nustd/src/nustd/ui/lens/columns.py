@@ -53,7 +53,8 @@ from typing import TYPE_CHECKING, Any
 
 import nu
 from nu.domains.shape import ItemRef, MappingRef, SequenceRef, ShapeRef
-from nu.lang import EMPTY, Cardinality
+from nu.lang import Cardinality
+from nu.lang.null import is_null
 
 
 if TYPE_CHECKING:
@@ -84,8 +85,8 @@ TEXT = 4000
 
 
 def _vtype(value: object) -> str:
-    """The wire word for a value's type. EMPTY gets its own word."""
-    if value is EMPTY:
+    """The wire word for a value's type. NULL gets its own word."""
+    if is_null(value):
         return "empty"
     if value is None:
         return "none"
@@ -98,7 +99,7 @@ def _vtype(value: object) -> str:
 
 def _text(value: object) -> str:
     """A value as the browser should read it. Strings unquoted, the rest repr'd."""
-    if value is EMPTY or value is None:
+    if is_null(value) or value is None:
         return ""
     return value if isinstance(value, str) else repr(value)
 
@@ -124,9 +125,9 @@ def _cell(key: str, value: object, kind: str, navigable: bool, full: bool) -> di
     return row
 
 
-#: One row, from one value. Sentinels are the answer here rather than a reason
-#: to short-circuit: an unwritten slot renders as ``empty``, visibly.
-LensCell = nu.host(_cell, name="LensCell", propagate_sentinels=False)
+#: One row, from one value. NULL is an answer here, not a reason to stop: an
+#: unwritten slot renders as ``empty``, visibly.
+LensCell = nu.host(_cell, name="LensCell")
 
 
 def _door(key: nu.Nu, kind: str) -> nu.Nu:

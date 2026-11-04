@@ -39,7 +39,7 @@ class BasisPointRef(ItemRef, BasisPointForm):
           rounding creeps in the way a stored float would.
 
     Yields:
-        A BasisPoint wrapping the stored int. EMPTY when the slot was never
+        A BasisPoint wrapping the stored int. NULL when the slot was never
         written.
 
     Example:
@@ -81,7 +81,7 @@ class PercentageRef(ItemRef, PercentageForm):
           0.025 decimal fraction.
 
     Yields:
-        A Percentage wrapping the stored float. EMPTY when the slot was never
+        A Percentage wrapping the stored float. NULL when the slot was never
         written.
 
     Example:

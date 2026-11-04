@@ -23,7 +23,7 @@ from typing import TYPE_CHECKING, cast
 
 from nu.engine.structure import Declared
 from nu.lang import Command, Ref
-from nu.lang.sentinels import EMPTY
+from nu.lang.null import is_null
 
 
 if TYPE_CHECKING:
@@ -114,7 +114,7 @@ class Log(Command):
     values, resolved at eval time. Structured ``extra`` fields ride in
     :attr:`_payload` (static Python values captured at construction).
 
-    A ``msg`` or ``arg`` that reads as EMPTY raises before anything is
+    A ``msg`` or ``arg`` that reads as NULL raises before anything is
     logged, as any write does. Give a value that may be missing a default
     with ``fallback`` to keep the line.
     """
@@ -142,13 +142,13 @@ class Log(Command):
 
         def thunk(rt: Runtime) -> None:
             msg = msg_thunk(rt)
-            if msg is EMPTY:
-                raise ValueError("cannot write EMPTY")
+            if is_null(msg):
+                raise ValueError("cannot write with a NULL operand")
             args: list[object] = []
             for at in arg_thunks:
                 v = at(rt)
-                if v is EMPTY:
-                    raise ValueError("cannot write EMPTY")
+                if is_null(v):
+                    raise ValueError("cannot write with a NULL operand")
                 args.append(v)
             level = _to_level(level_thunk(rt))
             logger_name = str(logger_thunk(rt))
@@ -165,13 +165,13 @@ class Log(Command):
 
         async def athunk(rt: Runtime) -> None:
             msg = await msg_thunk(rt)
-            if msg is EMPTY:
-                raise ValueError("cannot write EMPTY")
+            if is_null(msg):
+                raise ValueError("cannot write with a NULL operand")
             args: list[object] = []
             for at in arg_thunks:
                 v = await at(rt)
-                if v is EMPTY:
-                    raise ValueError("cannot write EMPTY")
+                if is_null(v):
+                    raise ValueError("cannot write with a NULL operand")
                 args.append(v)
             level = _to_level(await level_thunk(rt))
             logger_name = str(await logger_thunk(rt))

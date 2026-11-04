@@ -42,7 +42,7 @@ class DateRef(ItemRef, DateForm):
           order they sort chronologically.
         - Reads parse back to a date, so the field accessors and the
           arithmetic work on the value.
-        - An absent leaf reads as EMPTY.
+        - An absent leaf reads as NULL.
 
     Example:
         class Order(Shape):
@@ -86,7 +86,7 @@ class DatetimeRef(ItemRef, DatetimeForm):
         - A leaf holding a number instead of a str is read as a POSIX
           timestamp and comes back as an aware UTC datetime, which is how a
           slot written by something outside Nu still reads.
-        - An absent leaf reads as EMPTY.
+        - An absent leaf reads as NULL.
 
     Example:
         class Order(Shape):
@@ -131,7 +131,7 @@ class TimeRef(ItemRef, TimeForm):
         - A wall-clock time with no date attached, so nothing about it
           orders across days.
         - Reads parse back to a time, keeping any tz offset the str carried.
-        - An absent leaf reads as EMPTY.
+        - An absent leaf reads as NULL.
 
     Example:
         class Window(Shape):
@@ -171,7 +171,7 @@ class TimedeltaRef(ItemRef, TimedeltaForm):
           numbers without being parsed first.
         - Reads rebuild the timedelta from that count, so ``days``,
           ``seconds`` and the arithmetic are on the value.
-        - An absent leaf reads as EMPTY, not as a zero duration.
+        - An absent leaf reads as NULL, not as a zero duration.
 
     Example:
         class Job(Shape):
@@ -215,7 +215,7 @@ class TimezoneRef(ItemRef, TimezoneForm):
           spells it: ``UTC`` or ``UTC+05:30``.
         - A named zone is not what this slot stores: writing a ZoneInfo
           stores its name, and reading that leaf back raises.
-        - An absent leaf reads as EMPTY.
+        - An absent leaf reads as NULL.
 
     Example:
         class Desk(Shape):

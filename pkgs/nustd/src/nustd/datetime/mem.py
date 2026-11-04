@@ -47,7 +47,7 @@ class DateRef(ItemRef, DateForm):
           as a date then fails on the time part; write ``d.date()``.
 
     Yields:
-        A date, parsed from the stored ISO string. EMPTY when the slot was
+        A date, parsed from the stored ISO string. NULL when the slot was
         never written.
 
     Example:
@@ -96,7 +96,7 @@ class DatetimeRef(ItemRef, DatetimeForm):
           dict filled from a feed that stores epochs still lifts.
 
     Yields:
-        A datetime, parsed from the stored ISO string. EMPTY when the slot
+        A datetime, parsed from the stored ISO string. NULL when the slot
         was never written.
 
     Example:
@@ -145,7 +145,7 @@ class TimeRef(ItemRef, TimeForm):
           only when the value carries them.
 
     Yields:
-        A time, parsed from the stored ISO string. EMPTY when the slot was
+        A time, parsed from the stored ISO string. NULL when the slot was
         never written.
 
     Example:
@@ -192,7 +192,7 @@ class TimedeltaRef(ItemRef, TimedeltaForm):
           ``timedelta.total_seconds()`` loses it.
 
     Yields:
-        A timedelta rebuilt from the stored seconds. EMPTY when the slot was
+        A timedelta rebuilt from the stored seconds. NULL when the slot was
         never written.
 
     Example:
@@ -243,7 +243,7 @@ class TimezoneRef(ItemRef, TimezoneForm):
           ``"UTC"`` alone lifts to UTC.
 
     Yields:
-        A timezone with the stored offset. EMPTY when the slot was never
+        A timezone with the stored offset. NULL when the slot was never
         written.
 
     Example:

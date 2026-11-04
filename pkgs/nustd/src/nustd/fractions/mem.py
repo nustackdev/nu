@@ -39,7 +39,7 @@ class FractionRef(ItemRef, FractionForm):
           so the exact ratio round-trips.
 
     Yields:
-        A Fraction, parsed from the stored string. EMPTY when the slot was
+        A Fraction, parsed from the stored string. NULL when the slot was
         never written.
 
     Example:

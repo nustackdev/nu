@@ -39,7 +39,7 @@ class UUIDRef(ItemRef, UUIDForm):
           form, a bare hex run, or a URN, so a hand-filled dict is forgiving.
 
     Yields:
-        A UUID parsed from the stored string. EMPTY when the slot was never
+        A UUID parsed from the stored string. NULL when the slot was never
         written.
 
     Example:
