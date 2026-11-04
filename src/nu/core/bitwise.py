@@ -13,8 +13,7 @@ their children from the first one with Python's operator (with no children
 they yield the int identity, ``-1`` for AND, ``0`` for OR / XOR); the shifts are
 binary and ``BitNot`` is unary. Each atom defines ``compile`` (sync hot path)
 and ``acompile`` (async hot path), both returning a thunk that captures the
-precompiled child thunks. Sentinel propagation is inlined: an EMPTY operand
-collapses the result to EMPTY.
+precompiled child thunks.
 """
 
 from __future__ import annotations
@@ -22,7 +21,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
-from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -49,11 +47,10 @@ class BitAnd(ScalarQuery):
           children at all yields -1, the int AND identity.
         - Operands are Python ints, two's-complement under the hood, so a
           negative operand ANDs its infinite leading 1s in.
-        - Children are evaluated in order and the fold stops at the first
-          sentinel it meets.
+        - Children are evaluated in order.
 
     Yields:
-        The AND. EMPTY when any child is EMPTY.
+        The AND.
 
     Example:
         >>> nu.run(nu.BitAnd(12, 10))[0]
@@ -65,8 +62,6 @@ class BitAnd(ScalarQuery):
             out: object = _START
             for ct in children:
                 v = ct(rt)
-                if v is EMPTY:
-                    return EMPTY
                 out = v if out is _START else out & v
             return -1 if out is _START else out
 
@@ -77,8 +72,6 @@ class BitAnd(ScalarQuery):
             out: object = _START
             for ct in children:
                 v = await ct(rt)
-                if v is EMPTY:
-                    return EMPTY
                 out = v if out is _START else out & v
             return -1 if out is _START else out
 
@@ -97,11 +90,10 @@ class BitOr(ScalarQuery):
           No children at all yields 0, the int OR identity.
         - Operands are Python ints, two's-complement under the hood, so a
           negative operand carries its infinite leading 1s through.
-        - Children are evaluated in order and the fold stops at the first
-          sentinel it meets.
+        - Children are evaluated in order.
 
     Yields:
-        The OR. EMPTY when any child is EMPTY.
+        The OR.
 
     Example:
         >>> nu.run(nu.BitOr(12, 10))[0]
@@ -113,8 +105,6 @@ class BitOr(ScalarQuery):
             out: object = _START
             for ct in children:
                 v = ct(rt)
-                if v is EMPTY:
-                    return EMPTY
                 out = v if out is _START else out | v
             return 0 if out is _START else out
 
@@ -125,8 +115,6 @@ class BitOr(ScalarQuery):
             out: object = _START
             for ct in children:
                 v = await ct(rt)
-                if v is EMPTY:
-                    return EMPTY
                 out = v if out is _START else out | v
             return 0 if out is _START else out
 
@@ -145,11 +133,10 @@ class BitXor(ScalarQuery):
           difference). No children at all yields 0, the int XOR identity.
         - Operands are Python ints, two's-complement under the hood, so a
           negative operand flips its infinite leading 1s in the fold.
-        - Children are evaluated in order and the fold stops at the first
-          sentinel it meets.
+        - Children are evaluated in order.
 
     Yields:
-        The XOR. EMPTY when any child is EMPTY.
+        The XOR.
 
     Example:
         >>> nu.run(nu.BitXor(12, 10))[0]
@@ -161,8 +148,6 @@ class BitXor(ScalarQuery):
             out: object = _START
             for ct in children:
                 v = ct(rt)
-                if v is EMPTY:
-                    return EMPTY
                 out = v if out is _START else out ^ v
             return 0 if out is _START else out
 
@@ -173,8 +158,6 @@ class BitXor(ScalarQuery):
             out: object = _START
             for ct in children:
                 v = await ct(rt)
-                if v is EMPTY:
-                    return EMPTY
                 out = v if out is _START else out ^ v
             return 0 if out is _START else out
 
@@ -193,7 +176,7 @@ class BitNot(ScalarQuery):
           negates it and subtracts one.
 
     Yields:
-        The inverted value. EMPTY when the child is EMPTY.
+        The inverted value.
 
     Example:
         >>> nu.run(nu.BitNot(5))[0]
@@ -205,8 +188,6 @@ class BitNot(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return ~v
 
         return thunk
@@ -216,8 +197,6 @@ class BitNot(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return ~v
 
         return athunk
@@ -233,13 +212,10 @@ class LShift(ScalarQuery):
     Notes:
         - Equivalent to multiplying by ``2 ** count``; sign is preserved
           since Python ints have no fixed width to overflow out of.
-        - A negative count raises. Only EMPTY collapses to EMPTY; a real
-          error stays a real error.
-        - The count child is evaluated only after the value yields, so a
-          sentinel on the value short-circuits without touching the count.
+        - A negative count raises.
 
     Yields:
-        The shifted value. EMPTY when either child is EMPTY.
+        The shifted value.
 
     Example:
         >>> nu.run(nu.LShift(1, 4))[0]
@@ -251,11 +227,7 @@ class LShift(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             a = left(rt)
-            if a is EMPTY:
-                return EMPTY
             b = right(rt)
-            if b is EMPTY:
-                return EMPTY
             return a << b
 
         return thunk
@@ -265,11 +237,7 @@ class LShift(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await left(rt)
-            if a is EMPTY:
-                return EMPTY
             b = await right(rt)
-            if b is EMPTY:
-                return EMPTY
             return a << b
 
         return athunk
@@ -285,13 +253,10 @@ class RShift(ScalarQuery):
     Notes:
         - Arithmetic shift: floor division by ``2 ** count``, sign extended,
           as Python's ``>>`` does. -16 shifted right by 2 is -4, not -3.
-        - A negative count raises. Only EMPTY collapses to EMPTY; a real
-          error stays a real error.
-        - The count child is evaluated only after the value yields, so a
-          sentinel on the value short-circuits without touching the count.
+        - A negative count raises.
 
     Yields:
-        The shifted value. EMPTY when either child is EMPTY.
+        The shifted value.
 
     Example:
         >>> nu.run(nu.RShift(-16, 2))[0]
@@ -303,11 +268,7 @@ class RShift(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             a = left(rt)
-            if a is EMPTY:
-                return EMPTY
             b = right(rt)
-            if b is EMPTY:
-                return EMPTY
             return a >> b
 
         return thunk
@@ -317,11 +278,7 @@ class RShift(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await left(rt)
-            if a is EMPTY:
-                return EMPTY
             b = await right(rt)
-            if b is EMPTY:
-                return EMPTY
             return a >> b
 
         return athunk

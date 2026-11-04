@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from nu.lang import EMPTY
+from nu.lang import is_null
 from nu.lang.runtime.context.attributes import Attributes
 
 
@@ -49,7 +49,7 @@ def test_get_returns_value() -> None:
 
 def test_get_defaults_to_empty_when_undeclared() -> None:
     attrs = Attributes()
-    assert attrs.get("missing") is EMPTY
+    assert is_null(attrs.get("missing"))
     assert attrs.get("missing", "default") == "default"
 
 

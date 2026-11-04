@@ -28,8 +28,8 @@ class None_(Form, TypedNu[None]):  # noqa: N801
         - `==` / `!=` build an `Eq` / `Ne` term like every other Form, so
           `x == nu.None_()` asks whether x yields None at run time. There is
           no `is_`.
-        - EMPTY is a distinct sentinel from None: an address that resolved
-          to no value at all, not one that resolved to the value `None`.
+        - NULL is not None: NULL is an address that holds nothing, None is a
+          stored value, and ``NULL == None`` is False.
 
     Example:
         >>> nu.run(nu.None_())[0] is None
@@ -64,8 +64,7 @@ class None_(Form, TypedNu[None]):  # noqa: N801
               evaluated when the left does not already decide the result.
 
         Yields:
-            False, since self is always falsy. An EMPTY operand counts as
-            false.
+            False, since self is always falsy.
 
         Example:
             >>> nu.run(nu.None_().and_(nu.None_()))[0]
@@ -90,7 +89,6 @@ class None_(Form, TypedNu[None]):  # noqa: N801
 
         Yields:
             True when other is truthy, False otherwise since self never is.
-            An EMPTY operand counts as false.
 
         Example:
             >>> nu.run(nu.None_().or_(nu.None_()))[0]
@@ -109,7 +107,7 @@ class None_(Form, TypedNu[None]):  # noqa: N801
             - Self is always falsy, so this always yields True.
 
         Yields:
-            True. EMPTY when self is EMPTY.
+            True.
 
         Example:
             >>> nu.run(nu.None_().not_())[0]
@@ -129,7 +127,7 @@ class None_(Form, TypedNu[None]):  # noqa: N801
               always yields False.
 
         Yields:
-            False. EMPTY when self is EMPTY.
+            False.
 
         Example:
             >>> nu.run(nu.None_().bool_())[0]
@@ -153,8 +151,7 @@ class None_(Form, TypedNu[None]):  # noqa: N801
                 raises for mismatched types, it's just False.
 
         Yields:
-            True when other is also None, False otherwise. EMPTY when
-            either operand is EMPTY.
+            True when other is also None, False otherwise.
 
         Example:
             >>> nu.run(nu.None_() == nu.None_())[0]
@@ -173,8 +170,7 @@ class None_(Form, TypedNu[None]):  # noqa: N801
             other: the value to compare against.
 
         Yields:
-            True when other is not None, False otherwise. EMPTY when
-            either operand is EMPTY.
+            True when other is not None, False otherwise.
 
         Example:
             >>> nu.run(nu.None_() != 0)[0]

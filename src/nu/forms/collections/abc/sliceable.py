@@ -55,8 +55,7 @@ class SliceableForm(Form, Generic[ResultT]):
               or stop never raises.
 
         Yields:
-            The sliced value, wrapped by the subclass. EMPTY when self is
-            EMPTY.
+            The sliced value, wrapped by the subclass.
 
         Example:
             >>> nu.run(nu.List([1, 2, 3, 4, 5]).slice(1, 4))[0]

@@ -1,7 +1,7 @@
 """Tests for the Context fabric axis: FabricRef read, FabricExists.
 
 A FabricRef self-yields the fabric bound by type on the Context
-(``ctx.bind`` / ``ctx.get``); unbound, it yields EMPTY. FabricExists
+(``ctx.bind`` / ``ctx.get``); unbound, it yields NULL. FabricExists
 answers whether a binding is present. Fabrics are bound on the Context, never
 written through a Ref, so there is no fabric write op - mirrors v1.
 """
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import nu.mem
 from nu.context import FabricExists, FabricRef
-from nu.core import IsEmpty
+from nu.core import IsNull
 from nu.domains.shape import Shape
 from nu.lang import Attr, Context, Effect
 from nu.lang.helpers import compile, run
@@ -39,7 +39,7 @@ def test_fabricref_yields_a_bound_fabric():
 
 
 def test_fabricref_on_an_unbound_type_is_empty():
-    assert run(IsEmpty(FabricRef(Clock)))[0] is True
+    assert run(IsNull(FabricRef(Clock)))[0] is True
 
 
 # --- FabricExists ---------------------------------------------------

@@ -30,7 +30,7 @@ from nu.core import (
     Zip,
 )
 from nu.forms import Bool, Int, Iterator, List, Object
-from nu.lang import EMPTY
+from nu.lang import NULL
 from nu.lang.helpers import arun, run
 
 
@@ -38,7 +38,7 @@ def _both(term: object) -> object:
     """The value ``term`` yields, asserted equal under sync and async."""
     sync = run(term)[0]
     asynced = asyncio.run(arun(term))[0]
-    assert sync == asynced or (sync is EMPTY and asynced is EMPTY)
+    assert sync == asynced or (sync is NULL and asynced is NULL)
     return sync
 
 
@@ -54,14 +54,14 @@ def _stream(*items: object) -> Iterator:
 # --- folds: stream to one value ---------------------------------------------
 
 FOLDS = [
-    # (method, args, atom, form, items, value, empty value)
+    # (method, args, atom, form, items, value, empty value or the error it raises)
     ("count", (), Count, Int, (1, 2, 3), 3, 0),
     ("sum", (), Sum, Object, (1, 2, 3), 6, 0),
-    ("min", (), Min, Object, (3, 1, 2), 1, EMPTY),
-    ("max", (), Max, Object, (3, 1, 2), 3, EMPTY),
+    ("min", (), Min, Object, (3, 1, 2), 1, ValueError),
+    ("max", (), Max, Object, (3, 1, 2), 3, ValueError),
     ("any", (), AnyOf, Bool, (0, 0, 1), True, False),
     ("all", (), AllOf, Bool, (1, 1, 0), False, True),
-    ("last", (), Last, Object, (1, 2, 3), 3, EMPTY),
+    ("last", (), Last, Object, (1, 2, 3), 3, ValueError),
 ]
 
 
@@ -84,13 +84,21 @@ def test_a_fold_yields_the_atoms_value(method, args, atom, form, items, value, e
 def test_a_fold_over_an_empty_stream_matches_the_atom(
     method, args, atom, form, items, value, empty
 ):
+    if empty is ValueError:
+        with pytest.raises(ValueError):
+            _both(getattr(_stream(), method)(*args))
+        with pytest.raises(ValueError):
+            _both(atom(nu.Iter([])))
+        return
     got = _both(getattr(_stream(), method)(*args))
     bare = _both(atom(nu.Iter([])))
-    if empty is EMPTY:
-        assert got is EMPTY
-        assert bare is EMPTY
-    else:
-        assert got == bare == empty
+    assert got == bare == empty
+
+
+def test_first_and_last_take_a_default_for_an_empty_stream():
+    assert _both(_stream().first(7)) == 7
+    assert _both(_stream().last(None)) is None
+    assert _both(_stream(1, 2).first(7)) == 1
 
 
 def test_a_fold_keeps_chaining():

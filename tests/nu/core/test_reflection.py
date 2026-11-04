@@ -1,13 +1,15 @@
 """Execution tests for the reflection atoms.
 
 Compile and evaluate each atom over Literal operands and check it mirrors the
-Python builtin it maps. EMPTY propagation (EMPTY operand -> EMPTY
+Python builtin it maps. NULL propagation (NULL operand -> NULL
 result) is checked too, matching the arithmetic / comparison fold.
 """
 
 from __future__ import annotations
 
 import asyncio
+
+import pytest
 
 from nu.core.reflection import (
     Callable as Callable,
@@ -33,7 +35,7 @@ from nu.core.reflection import (
 from nu.core.reflection import (
     Vars as Vars,
 )
-from nu.lang import EMPTY
+from nu.lang import NULL
 from nu.lang.helpers import aeval, compile, eval
 from nu.lang.literal import Literal
 
@@ -108,12 +110,14 @@ def test_vars_returns_the_object_dict():
 # --- sentinels -----------------------------------------------------------
 
 
-def test_an_empty_operand_collapses_to_empty():
-    assert _eval(Type(Literal(EMPTY))) is EMPTY
-    assert _eval(Hash(Literal(EMPTY))) is EMPTY
-    assert _eval(IsInstance(Literal(EMPTY), Literal(int))) is EMPTY
-    assert _eval(IsInstance(Literal(5), Literal(EMPTY))) is EMPTY
-    assert _eval(IsSubclass(Literal(bool), Literal(EMPTY))) is EMPTY
+def test_a_null_operand_runs_the_plain_python_op():
+    assert _eval(Type(Literal(NULL))) is type(NULL)
+    assert _eval(Hash(Literal(NULL))) == hash(NULL)
+    assert _eval(IsInstance(Literal(NULL), Literal(int))) is False
+    with pytest.raises(TypeError):
+        _eval(IsInstance(Literal(5), Literal(NULL)))
+    with pytest.raises(TypeError):
+        _eval(IsSubclass(Literal(bool), Literal(NULL)))
 
 
 # --- async mirror --------------------------------------------------------
@@ -124,4 +128,4 @@ def test_aeval_mirrors_eval():
     assert asyncio.run(_aeval(IsInstance(Literal(5), Literal(int)))) is True
     assert asyncio.run(_aeval(Callable(Literal(len)))) is True
     assert asyncio.run(_aeval(Hash(Literal(3)))) == hash(3)
-    assert asyncio.run(_aeval(Type(Literal(EMPTY)))) is EMPTY
+    assert asyncio.run(_aeval(Type(Literal(NULL)))) is type(NULL)

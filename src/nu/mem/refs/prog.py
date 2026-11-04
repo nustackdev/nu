@@ -37,11 +37,11 @@ class ProgramRef(ItemRef, Program):
           machinery stops seeing a fabric touch, silently.
         - Reading the ref yields the source verbatim; the ``Program`` calls
           are what turn it into a tree.
-        - ``run`` on a slot that was never written raises rather than
-          yielding a sentinel: construction gets EMPTY where it wants source.
+        - ``run`` on a slot that was never written raises: construction
+          gets NULL where it wants source.
 
     Yields:
-        The stored source text. EMPTY when the slot was never written.
+        The stored source text.
 
     Example:
         >>> class App(nu.Shape):

@@ -13,8 +13,7 @@ Sorts: all ScalarQuery (Q).
 Each atom defines ``compile`` (sync hot path) and ``acompile`` (async hot
 path). Both return a thunk ``(rt) -> value`` that captures the precompiled
 child thunks, so recursion skips the ``Runtime.eval`` / ``Runtime.aeval``
-dispatch hop per child. Sentinel propagation is inlined: an EMPTY operand
-collapses the result to EMPTY without further compute.
+dispatch hop per child.
 
 Most atoms are unary over one child. ``Format`` mirrors Python's
 ``format(value[, format_spec])`` and branches on child count: one child
@@ -34,7 +33,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
-from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -66,7 +64,7 @@ class Repr(ScalarQuery):
           renders however it chooses.
 
     Yields:
-        The repr string. EMPTY when the child is EMPTY.
+        The repr string.
 
     Example:
         >>> nu.run(nu.Repr("hi"))[0]
@@ -78,8 +76,6 @@ class Repr(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return repr(v)
 
         return thunk
@@ -89,8 +85,6 @@ class Repr(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return repr(v)
 
         return athunk
@@ -108,7 +102,7 @@ class Ascii(ScalarQuery):
           always plain ASCII text.
 
     Yields:
-        The ascii string. EMPTY when the child is EMPTY.
+        The ascii string.
 
     Example:
         >>> nu.run(nu.Ascii("café"))[0]
@@ -120,8 +114,6 @@ class Ascii(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return ascii(v)
 
         return thunk
@@ -131,8 +123,6 @@ class Ascii(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return ascii(v)
 
         return athunk
@@ -154,7 +144,7 @@ class Format(ScalarQuery):
         - What a given spec means is up to the value's own ``__format__``.
 
     Yields:
-        The formatted string. EMPTY when either child is EMPTY.
+        The formatted string.
 
     Example:
         >>> nu.run(nu.Format(3.14159, ".2f"))[0]
@@ -167,8 +157,6 @@ class Format(ScalarQuery):
 
             def thunk(rt: Runtime) -> object:
                 v = only(rt)
-                if v is EMPTY:
-                    return EMPTY
                 return format(v)
 
             return thunk
@@ -177,11 +165,7 @@ class Format(ScalarQuery):
 
         def thunk_spec(rt: Runtime) -> object:
             v = value(rt)
-            if v is EMPTY:
-                return EMPTY
             s = spec(rt)
-            if s is EMPTY:
-                return EMPTY
             return format(v, s)
 
         return thunk_spec
@@ -192,8 +176,6 @@ class Format(ScalarQuery):
 
             async def athunk(rt: Runtime) -> object:
                 v = await only(rt)
-                if v is EMPTY:
-                    return EMPTY
                 return format(v)
 
             return athunk
@@ -202,11 +184,7 @@ class Format(ScalarQuery):
 
         async def athunk_spec(rt: Runtime) -> object:
             v = await value(rt)
-            if v is EMPTY:
-                return EMPTY
             s = await spec(rt)
-            if s is EMPTY:
-                return EMPTY
             return format(v, s)
 
         return athunk_spec
@@ -223,7 +201,7 @@ class Bin(ScalarQuery):
           renders as ``-0b1010``, not a two's-complement bit pattern.
 
     Yields:
-        The binary string. EMPTY when the child is EMPTY.
+        The binary string.
 
     Example:
         >>> nu.run(nu.Bin(10))[0]
@@ -235,8 +213,6 @@ class Bin(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return bin(v)
 
         return thunk
@@ -246,8 +222,6 @@ class Bin(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return bin(v)
 
         return athunk
@@ -264,7 +238,7 @@ class Hex(ScalarQuery):
           renders as ``-0xff``, not a two's-complement bit pattern.
 
     Yields:
-        The hex string. EMPTY when the child is EMPTY.
+        The hex string.
 
     Example:
         >>> nu.run(nu.Hex(255))[0]
@@ -276,8 +250,6 @@ class Hex(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return hex(v)
 
         return thunk
@@ -287,8 +259,6 @@ class Hex(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return hex(v)
 
         return athunk
@@ -305,7 +275,7 @@ class Oct(ScalarQuery):
           renders as ``-0o10``, not a two's-complement bit pattern.
 
     Yields:
-        The octal string. EMPTY when the child is EMPTY.
+        The octal string.
 
     Example:
         >>> nu.run(nu.Oct(8))[0]
@@ -317,8 +287,6 @@ class Oct(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return oct(v)
 
         return thunk
@@ -328,8 +296,6 @@ class Oct(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return oct(v)
 
         return athunk
@@ -345,7 +311,7 @@ class Ord(ScalarQuery):
         - A string of any other length raises: this is not a bulk operation.
 
     Yields:
-        The code point, an int. EMPTY when the child is EMPTY.
+        The code point, an int.
 
     Example:
         >>> nu.run(nu.Ord("A"))[0]
@@ -357,8 +323,6 @@ class Ord(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return ord(v)
 
         return thunk
@@ -368,8 +332,6 @@ class Ord(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return ord(v)
 
         return athunk
@@ -385,7 +347,7 @@ class Chr(ScalarQuery):
         - Always yields a one-character string, never a raw byte or int.
 
     Yields:
-        The character. EMPTY when the child is EMPTY.
+        The character.
 
     Example:
         >>> nu.run(nu.Chr(65))[0]
@@ -397,8 +359,6 @@ class Chr(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return chr(v)
 
         return thunk
@@ -408,8 +368,6 @@ class Chr(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return chr(v)
 
         return athunk

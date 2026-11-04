@@ -35,7 +35,6 @@ from nu.context.attrs.binders import bind
 from nu.engine import Term
 from nu.lang import ScalarQuery, StreamQuery
 from nu.lang.literal import Literal
-from nu.lang.sentinels import EMPTY
 
 from ._stream import aiter_any, sync_iter
 
@@ -72,9 +71,8 @@ class Map(StreamQuery):
         - The binding lasts for that item's ``transform`` and is released
           before the result is yielded, so it never reaches the consumer.
         - Pulled lazily, one item at a time; nothing runs ahead of the pull.
-        - No sentinel check of its own: an EMPTY item, or an EMPTY result
-          from ``transform``, passes straight through as a value rather
-          than collapsing.
+        - No NULL check of its own: a NULL item, or a NULL result from
+          ``transform``, passes straight through as a value.
 
     Yields:
         A stream the same length as ``source`` (stream in, stream out),
@@ -145,8 +143,6 @@ class Filter(StreamQuery):
 
     Notes:
         - The same scoped binding, and the same lambda form, as :class:`Map`.
-        - An EMPTY ``predicate`` result counts as false and drops the item,
-          like any falsy value.
         - Pulled lazily, one item at a time.
 
     Yields:
@@ -182,8 +178,6 @@ class Filter(StreamQuery):
                 for elem in sync_iter(source(rt)):
                     with rt.ctx.attrs.let(name, elem):
                         keep = predicate(rt)
-                    if keep is EMPTY:
-                        continue
                     if keep:
                         yield elem
 
@@ -201,8 +195,6 @@ class Filter(StreamQuery):
                 async for elem in aiter_any(await source(rt)):
                     with rt.ctx.attrs.let(name, elem):
                         keep = await predicate(rt)
-                    if keep is EMPTY:
-                        continue
                     if keep:
                         yield elem
 
@@ -221,12 +213,9 @@ class Sorted(ScalarQuery):
         - Takes an iterable value, like the collection casts. A stream is
           drained into one first with :class:`Collect`.
         - Items must support ordering against each other.
-        - An EMPTY item is compared like any other value and raises if it
-          can't be ordered against the rest.
 
     Yields:
-        A new list holding every item of ``source``, ascending. EMPTY when
-        the child is EMPTY.
+        A new list holding every item of ``source``, ascending.
 
     Example:
         >>> nu.run(nu.Sorted([3, 1, 2]))[0]
@@ -241,8 +230,6 @@ class Sorted(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = source(rt)
-            if v is EMPTY:
-                return EMPTY
             return sorted(v)
 
         return thunk
@@ -252,8 +239,6 @@ class Sorted(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await source(rt)
-            if v is EMPTY:
-                return EMPTY
             return sorted(v)
 
         return athunk
@@ -348,8 +333,7 @@ class Flatten(StreamQuery):
     Notes:
         - Only one level deep - an item that yields more iterables stays
           nested.
-        - No sentinel check of its own: an EMPTY sub-item is treated like
-          any other value and raises since it isn't iterable.
+        - A NULL sub-item raises, since it is not iterable.
 
     Yields:
         A stream of every item from every sub-iterable of ``source``, in
@@ -397,8 +381,8 @@ class Unique(StreamQuery):
         - Keeps every distinct item seen so far to check membership, so
           memory grows with the number of distinct items, not the length
           of ``source``.
-        - No sentinel check of its own: an EMPTY item is kept like any
-          other value and only passes through once.
+        - A NULL item is kept like any other value; all NULLs are equal,
+          so it passes through once.
 
     Yields:
         A stream holding each distinct item of ``source`` once, in

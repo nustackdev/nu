@@ -1,7 +1,7 @@
 """Attrs interactions: ``AttrExists``.
 
 The read itself is the ``Attr`` Ref's dual role. ``AttrExists`` complements
-it: an unbound read yields EMPTY, which a name bound to EMPTY would alias, so
+it: an unbound read yields NULL, which a name bound to NULL would alias, so
 existence needs an explicit query. It holds its Ref in a read slot; effect
 synthesis binds it to a read on the attrs fabric.
 """
@@ -31,11 +31,11 @@ class AttrExists(ScalarQuery):
     Notes:
         - Normally written as ``ref.exists()`` rather than built by hand.
         - Needed because the dual-role read cannot answer the question: an
-          unbound name yields EMPTY, and so does a name bound to EMPTY.
+          unbound name yields NULL, and so does a name bound to NULL.
         - Only the address is resolved; the value is never read.
 
     Yields:
-        True or False, never a sentinel. An address that resolves to EMPTY
+        True or False, never a sentinel. An address that resolves to NULL
         is looked up as a key like any other, and is simply absent.
 
     Example:

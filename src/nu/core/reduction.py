@@ -20,7 +20,7 @@ core stays the 1:1 map of native builtins.
 
 Every atom is EVALUABLE: each ``Reduction`` defines ``compile`` (sync) and
 ``acompile`` (async) returning a thunk that drains its stream child to a scalar,
-with EMPTY propagation.
+with no NULL handling of its own.
 
 Sorts: all ScalarQuery / Reduction (Q-scalar over Q-stream).
 """
@@ -30,7 +30,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import Reduction
-from nu.lang.sentinels import EMPTY
+from nu.lang.sentinels import UNSET
 
 from ._stream import aiter_any, sync_iter
 
@@ -60,12 +60,10 @@ class Sum(Reduction):
         stream: the stream to fold.
 
     Notes:
-        - Folds from 0, the additive identity, so an empty stream yields 0
-          rather than EMPTY.
-        - The fold stops at the first EMPTY item it drains.
+        - Folds from 0, the additive identity, so an empty stream yields 0.
 
     Yields:
-        The sum. EMPTY if any item is EMPTY.
+        The sum.
 
     Example:
         >>> nu.run(nu.Sum(nu.Iter([1, 2, 3])))[0]
@@ -78,8 +76,6 @@ class Sum(Reduction):
         def thunk(rt: Runtime) -> object:
             total: object = 0
             for v in sync_iter(stream(rt)):
-                if v is EMPTY:
-                    return EMPTY
                 total = total + v
             return total
 
@@ -91,8 +87,6 @@ class Sum(Reduction):
         async def athunk(rt: Runtime) -> object:
             total: object = 0
             async for v in aiter_any(await stream(rt)):
-                if v is EMPTY:
-                    return EMPTY
                 total = total + v
             return total
 
@@ -108,12 +102,10 @@ class Min(Reduction):
     Notes:
         - Buffers every item before comparing, since finding a minimum
           needs the whole set; nothing shortcuts.
-        - An empty stream yields EMPTY, not an error, unlike Python's
-          ``min`` which raises.
+        - An empty stream raises ValueError, like Python's ``min``.
 
     Yields:
-        The smallest item. EMPTY if the stream is empty or any item
-        is EMPTY.
+        The smallest item.
 
     Example:
         >>> nu.run(nu.Min(nu.Iter([3, 1, 2])))[0]
@@ -126,10 +118,8 @@ class Min(Reduction):
         def thunk(rt: Runtime) -> object:
             items = []
             for v in sync_iter(stream(rt)):
-                if v is EMPTY:
-                    return EMPTY
                 items.append(v)
-            return min(items) if items else EMPTY
+            return min(items)
 
         return thunk
 
@@ -139,10 +129,8 @@ class Min(Reduction):
         async def athunk(rt: Runtime) -> object:
             items = []
             async for v in aiter_any(await stream(rt)):
-                if v is EMPTY:
-                    return EMPTY
                 items.append(v)
-            return min(items) if items else EMPTY
+            return min(items)
 
         return athunk
 
@@ -156,12 +144,10 @@ class Max(Reduction):
     Notes:
         - Buffers every item before comparing, since finding a maximum
           needs the whole set; nothing shortcuts.
-        - An empty stream yields EMPTY, not an error, unlike Python's
-          ``max`` which raises.
+        - An empty stream raises ValueError, like Python's ``max``.
 
     Yields:
-        The largest item. EMPTY if the stream is empty or any item
-        is EMPTY.
+        The largest item.
 
     Example:
         >>> nu.run(nu.Max(nu.Iter([3, 1, 2])))[0]
@@ -174,10 +160,8 @@ class Max(Reduction):
         def thunk(rt: Runtime) -> object:
             items = []
             for v in sync_iter(stream(rt)):
-                if v is EMPTY:
-                    return EMPTY
                 items.append(v)
-            return max(items) if items else EMPTY
+            return max(items)
 
         return thunk
 
@@ -187,10 +171,8 @@ class Max(Reduction):
         async def athunk(rt: Runtime) -> object:
             items = []
             async for v in aiter_any(await stream(rt)):
-                if v is EMPTY:
-                    return EMPTY
                 items.append(v)
-            return max(items) if items else EMPTY
+            return max(items)
 
         return athunk
 
@@ -207,7 +189,7 @@ class AnyOf(Reduction):
         - An empty stream yields False, Python's ``any`` rule for no items.
 
     Yields:
-        True or False, never EMPTY. An EMPTY item counts as false.
+        True or False.
 
     Example:
         >>> nu.run(nu.AnyOf(nu.Iter([0, 0, 1])))[0]
@@ -249,7 +231,7 @@ class AllOf(Reduction):
         - An empty stream yields True, Python's ``all`` rule for no items.
 
     Yields:
-        True or False, never EMPTY. An EMPTY item counts as false.
+        True or False.
 
     Example:
         >>> nu.run(nu.AllOf(nu.Iter([1, 1, 1])))[0]
@@ -289,8 +271,7 @@ class Count(Reduction):
         - Drains the whole stream to count it; there is no shortcut.
 
     Yields:
-        The count. 0 for an empty stream. EMPTY if any item is
-        EMPTY.
+        The count. 0 for an empty stream.
 
     Example:
         >>> nu.run(nu.Count(nu.Iter([1, 2, 3])))[0]
@@ -302,9 +283,7 @@ class Count(Reduction):
 
         def thunk(rt: Runtime) -> object:
             n = 0
-            for v in sync_iter(stream(rt)):
-                if v is EMPTY:
-                    return EMPTY
+            for _ in sync_iter(stream(rt)):
                 n += 1
             return n
 
@@ -315,9 +294,7 @@ class Count(Reduction):
 
         async def athunk(rt: Runtime) -> object:
             n = 0
-            async for v in aiter_any(await stream(rt)):
-                if v is EMPTY:
-                    return EMPTY
+            async for _ in aiter_any(await stream(rt)):
                 n += 1
             return n
 
@@ -329,14 +306,16 @@ class First(Reduction):
 
     Args:
         stream: the stream to fold.
+        default: yielded when the stream is empty. Optional: leave it out to
+            raise ValueError instead, like ``next()`` without a default.
 
     Notes:
         - Pulls exactly one item and stops; the rest of the stream is
           never touched.
+        - ``default`` is evaluated only when the stream is empty.
 
     Yields:
-        The first item. EMPTY if the stream is empty or that first item is
-        EMPTY.
+        The first item, or ``default`` for an empty stream.
 
     Example:
         >>> nu.run(nu.First(nu.Iter([1, 2, 3])))[0]
@@ -344,22 +323,28 @@ class First(Reduction):
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        (stream,) = children
+        stream = children[0]
+        default = children[1] if len(children) > 1 else None
 
         def thunk(rt: Runtime) -> object:
             for v in sync_iter(stream(rt)):
                 return v
-            return EMPTY
+            if default is None:
+                raise ValueError("First() of an empty stream")
+            return default(rt)
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        (stream,) = children
+        stream = children[0]
+        default = children[1] if len(children) > 1 else None
 
         async def athunk(rt: Runtime) -> object:
             async for v in aiter_any(await stream(rt)):
                 return v
-            return EMPTY
+            if default is None:
+                raise ValueError("First() of an empty stream")
+            return await default(rt)
 
         return athunk
 
@@ -369,13 +354,15 @@ class Last(Reduction):
 
     Args:
         stream: the stream to fold.
+        default: yielded when the stream is empty. Optional: leave it out to
+            raise ValueError instead.
 
     Notes:
         - Drains the whole stream to find the last item; there is no
           shortcut from the tail.
 
     Yields:
-        The last item. EMPTY if the stream is empty or any item is EMPTY.
+        The last item, or ``default`` for an empty stream.
 
     Example:
         >>> nu.run(nu.Last(nu.Iter([1, 2, 3])))[0]
@@ -383,28 +370,34 @@ class Last(Reduction):
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        (stream,) = children
+        stream = children[0]
+        default = children[1] if len(children) > 1 else None
 
         def thunk(rt: Runtime) -> object:
-            last: object = EMPTY
+            last: object = UNSET
             for v in sync_iter(stream(rt)):
-                if v is EMPTY:
-                    return EMPTY
                 last = v
-            return last
+            if last is not UNSET:
+                return last
+            if default is None:
+                raise ValueError("Last() of an empty stream")
+            return default(rt)
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        (stream,) = children
+        stream = children[0]
+        default = children[1] if len(children) > 1 else None
 
         async def athunk(rt: Runtime) -> object:
-            last: object = EMPTY
+            last: object = UNSET
             async for v in aiter_any(await stream(rt)):
-                if v is EMPTY:
-                    return EMPTY
                 last = v
-            return last
+            if last is not UNSET:
+                return last
+            if default is None:
+                raise ValueError("Last() of an empty stream")
+            return await default(rt)
 
         return athunk
 
@@ -421,7 +414,6 @@ class Collect(Reduction):
 
     Yields:
         A list of every item, in order. Empty list for an empty stream.
-        EMPTY if any item is EMPTY.
 
     Example:
         >>> nu.run(nu.Collect(nu.Iter([1, 2, 3])))[0]
@@ -434,8 +426,6 @@ class Collect(Reduction):
         def thunk(rt: Runtime) -> object:
             out: list = []
             for v in sync_iter(stream(rt)):
-                if v is EMPTY:
-                    return EMPTY
                 out.append(v)
             return out
 
@@ -447,8 +437,6 @@ class Collect(Reduction):
         async def athunk(rt: Runtime) -> object:
             out: list = []
             async for v in aiter_any(await stream(rt)):
-                if v is EMPTY:
-                    return EMPTY
                 out.append(v)
             return out
 

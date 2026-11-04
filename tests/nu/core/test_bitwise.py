@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import asyncio
 
+import pytest
+
 from nu.core.bitwise import (
     BitAnd,
     BitNot,
@@ -16,7 +18,7 @@ from nu.core.bitwise import (
     LShift,
     RShift,
 )
-from nu.lang import EMPTY, Attr
+from nu.lang import NULL, Attr
 from nu.lang.helpers import aeval, compile, eval
 from nu.lang.literal import Literal
 
@@ -127,10 +129,17 @@ def test_async_fold_keeps_non_int_operands():
 
 
 def test_an_empty_operand_collapses_to_empty():
-    assert _eval(BitAnd(Literal(EMPTY), Literal(1))) is EMPTY
-    assert _eval(BitOr(Literal(1), Literal(EMPTY))) is EMPTY
-    assert _eval(BitXor(Literal(EMPTY), Literal(1))) is EMPTY
-    assert _eval(BitNot(Literal(EMPTY))) is EMPTY
-    assert _eval(LShift(Literal(EMPTY), Literal(1))) is EMPTY
-    assert _eval(RShift(Literal(1), Literal(EMPTY))) is EMPTY
-    assert asyncio.run(_aeval(BitAnd(Literal(1), Literal(EMPTY)))) is EMPTY
+    with pytest.raises(TypeError):
+        _eval(BitAnd(Literal(NULL), Literal(1)))
+    with pytest.raises(TypeError):
+        _eval(BitOr(Literal(1), Literal(NULL)))
+    with pytest.raises(TypeError):
+        _eval(BitXor(Literal(NULL), Literal(1)))
+    with pytest.raises(TypeError):
+        _eval(BitNot(Literal(NULL)))
+    with pytest.raises(TypeError):
+        _eval(LShift(Literal(NULL), Literal(1)))
+    with pytest.raises(TypeError):
+        _eval(RShift(Literal(1), Literal(NULL)))
+    with pytest.raises(TypeError):
+        asyncio.run(_aeval(BitAnd(Literal(1), Literal(NULL))))

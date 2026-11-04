@@ -15,7 +15,7 @@ import pytest
 
 import nu
 import nu.mem as nm
-from nu.lang import EMPTY
+from nu.lang import is_null
 
 
 if TYPE_CHECKING:
@@ -81,7 +81,7 @@ def _out() -> tuple[dict, nu.Context]:
 
 @RUNNERS
 def test_the_body_starts_on_an_empty_store(run: Callable) -> None:
-    assert run(nm.Frame(S, S.a)) is EMPTY
+    assert is_null(run(nm.Frame(S, S.a)))
 
 
 @RUNNERS
@@ -250,7 +250,7 @@ def test_an_unknown_initial_key_raises_at_construction() -> None:
 
 @RUNNERS
 def test_an_empty_initial_value_raises_on_entry(run: Callable) -> None:
-    with pytest.raises(ValueError, match="EMPTY"):
+    with pytest.raises(ValueError, match="NULL"):
         run(nm.Frame(S, S.a, a=nu.context.Attr("missing")))
 
 

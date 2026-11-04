@@ -15,8 +15,7 @@ Each atom is binary and defines ``compile`` (sync hot path) and ``acompile``
 (async hot path). Both return a thunk ``(rt) -> value`` (sync) or
 ``(rt) -> awaitable`` (async) that captures the precompiled child thunks, so
 recursion skips the ``Runtime.eval`` / ``Runtime.aeval`` dispatch hop per
-child. Sentinel propagation is inlined: an EMPTY operand collapses the result
-to EMPTY without comparing.
+child.
 """
 
 from __future__ import annotations
@@ -24,7 +23,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
-from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -45,11 +43,9 @@ class Eq(ScalarQuery):
     Notes:
         - Delegates to Python's ``==``, so equality is by value, not type:
           ``1 == 1.0`` is True regardless of int vs float.
-        - The right child is evaluated only after the left yields a value, so
-          a sentinel on the left short-circuits without touching the right.
 
     Yields:
-        A bool. EMPTY when either child is EMPTY.
+        A bool.
 
     Example:
         >>> nu.run(nu.Eq(1, 1.0))[0]
@@ -61,11 +57,7 @@ class Eq(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             a = left(rt)
-            if a is EMPTY:
-                return EMPTY
             b = right(rt)
-            if b is EMPTY:
-                return EMPTY
             return a == b
 
         return thunk
@@ -75,11 +67,7 @@ class Eq(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await left(rt)
-            if a is EMPTY:
-                return EMPTY
             b = await right(rt)
-            if b is EMPTY:
-                return EMPTY
             return a == b
 
         return athunk
@@ -95,11 +83,9 @@ class Ne(ScalarQuery):
     Notes:
         - Delegates to Python's ``!=``, so it's the negation of ``Eq``: value
           comparison, not type comparison.
-        - The right child is evaluated only after the left yields a value, so
-          a sentinel on the left short-circuits without touching the right.
 
     Yields:
-        A bool. EMPTY when either child is EMPTY.
+        A bool.
 
     Example:
         >>> nu.run(nu.Ne(1, 2))[0]
@@ -111,11 +97,7 @@ class Ne(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             a = left(rt)
-            if a is EMPTY:
-                return EMPTY
             b = right(rt)
-            if b is EMPTY:
-                return EMPTY
             return a != b
 
         return thunk
@@ -125,11 +107,7 @@ class Ne(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await left(rt)
-            if a is EMPTY:
-                return EMPTY
             b = await right(rt)
-            if b is EMPTY:
-                return EMPTY
             return a != b
 
         return athunk
@@ -144,13 +122,10 @@ class Lt(ScalarQuery):
 
     Notes:
         - Delegates to Python's ``<``. Operands that don't support ordering
-          between their types raise, same as bare Python; only an EMPTY
-          operand collapses to EMPTY.
-        - The right child is evaluated only after the left yields a value, so
-          a sentinel on the left short-circuits without touching the right.
+          between their types raise, same as bare Python.
 
     Yields:
-        A bool. EMPTY when either child is EMPTY.
+        A bool.
 
     Example:
         >>> nu.run(nu.Lt(1, 2))[0]
@@ -162,11 +137,7 @@ class Lt(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             a = left(rt)
-            if a is EMPTY:
-                return EMPTY
             b = right(rt)
-            if b is EMPTY:
-                return EMPTY
             return a < b
 
         return thunk
@@ -176,11 +147,7 @@ class Lt(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await left(rt)
-            if a is EMPTY:
-                return EMPTY
             b = await right(rt)
-            if b is EMPTY:
-                return EMPTY
             return a < b
 
         return athunk
@@ -195,13 +162,10 @@ class Gt(ScalarQuery):
 
     Notes:
         - Delegates to Python's ``>``. Operands that don't support ordering
-          between their types raise, same as bare Python; only an EMPTY
-          operand collapses to EMPTY.
-        - The right child is evaluated only after the left yields a value, so
-          a sentinel on the left short-circuits without touching the right.
+          between their types raise, same as bare Python.
 
     Yields:
-        A bool. EMPTY when either child is EMPTY.
+        A bool.
 
     Example:
         >>> nu.run(nu.Gt(3, 2))[0]
@@ -213,11 +177,7 @@ class Gt(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             a = left(rt)
-            if a is EMPTY:
-                return EMPTY
             b = right(rt)
-            if b is EMPTY:
-                return EMPTY
             return a > b
 
         return thunk
@@ -227,11 +187,7 @@ class Gt(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await left(rt)
-            if a is EMPTY:
-                return EMPTY
             b = await right(rt)
-            if b is EMPTY:
-                return EMPTY
             return a > b
 
         return athunk
@@ -246,13 +202,10 @@ class Le(ScalarQuery):
 
     Notes:
         - Delegates to Python's ``<=``. Operands that don't support ordering
-          between their types raise, same as bare Python; only an EMPTY
-          operand collapses to EMPTY.
-        - The right child is evaluated only after the left yields a value, so
-          a sentinel on the left short-circuits without touching the right.
+          between their types raise, same as bare Python.
 
     Yields:
-        A bool. EMPTY when either child is EMPTY.
+        A bool.
 
     Example:
         >>> nu.run(nu.Le(2, 2))[0]
@@ -264,11 +217,7 @@ class Le(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             a = left(rt)
-            if a is EMPTY:
-                return EMPTY
             b = right(rt)
-            if b is EMPTY:
-                return EMPTY
             return a <= b
 
         return thunk
@@ -278,11 +227,7 @@ class Le(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await left(rt)
-            if a is EMPTY:
-                return EMPTY
             b = await right(rt)
-            if b is EMPTY:
-                return EMPTY
             return a <= b
 
         return athunk
@@ -297,13 +242,10 @@ class Ge(ScalarQuery):
 
     Notes:
         - Delegates to Python's ``>=``. Operands that don't support ordering
-          between their types raise, same as bare Python; only an EMPTY
-          operand collapses to EMPTY.
-        - The right child is evaluated only after the left yields a value, so
-          a sentinel on the left short-circuits without touching the right.
+          between their types raise, same as bare Python.
 
     Yields:
-        A bool. EMPTY when either child is EMPTY.
+        A bool.
 
     Example:
         >>> nu.run(nu.Ge(2, 2))[0]
@@ -315,11 +257,7 @@ class Ge(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             a = left(rt)
-            if a is EMPTY:
-                return EMPTY
             b = right(rt)
-            if b is EMPTY:
-                return EMPTY
             return a >= b
 
         return thunk
@@ -329,11 +267,7 @@ class Ge(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await left(rt)
-            if a is EMPTY:
-                return EMPTY
             b = await right(rt)
-            if b is EMPTY:
-                return EMPTY
             return a >= b
 
         return athunk
@@ -350,11 +284,9 @@ class Is(ScalarQuery):
         - Delegates to Python's ``is``: object identity, not value equality.
           Two distinct objects that compare equal (e.g. two separate lists
           with the same contents) are not the same object.
-        - The right child is evaluated only after the left yields a value, so
-          a sentinel on the left short-circuits without touching the right.
 
     Yields:
-        A bool. EMPTY when either child is EMPTY.
+        A bool.
 
     Example:
         >>> x = object()
@@ -367,11 +299,7 @@ class Is(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             a = left(rt)
-            if a is EMPTY:
-                return EMPTY
             b = right(rt)
-            if b is EMPTY:
-                return EMPTY
             return a is b
 
         return thunk
@@ -381,11 +309,7 @@ class Is(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await left(rt)
-            if a is EMPTY:
-                return EMPTY
             b = await right(rt)
-            if b is EMPTY:
-                return EMPTY
             return a is b
 
         return athunk

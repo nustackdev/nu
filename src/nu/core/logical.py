@@ -14,13 +14,13 @@ And / Or semantics: Python's ``and`` / ``or`` short-circuit and return an
 operand (not a bool). Nu short-circuits the same way but always coerces to
 ``bool``, so a Nu ``And`` / ``Or`` yields a plain boolean while leaving the
 operands past the deciding one unevaluated. That is what makes them usable
-as guards: ``And(not_empty(x), contains(x))`` never runs ``contains`` when
-``x`` is empty. ``And`` yields ``True`` over no operands, ``Or`` yields
+as guards: ``And(x.exists(), Contains(x, k))`` never runs ``Contains`` when
+``x`` holds nothing. ``And`` yields ``True`` over no operands, ``Or`` yields
 ``False``.
 
-Sentinels: ``And`` / ``Or`` decide on truthiness, so an ``EMPTY`` operand is
-just a falsy one (per ``nu.lang.sentinels``) and never poisons the result.
-``Not`` and ``ToBool`` are queries over a value and propagate ``EMPTY``.
+NULL: every atom here uses plain ``bool``, and NULL is falsy, so ``Not(NULL)``
+is True and ``ToBool(NULL)`` is False. To test a stored False, compare with
+``== False``; negation also passes on a slot never written.
 """
 
 from __future__ import annotations
@@ -29,7 +29,6 @@ import builtins
 from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
-from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -51,11 +50,10 @@ class And(ScalarQuery):
           decides the result and the children after it are never
           evaluated. This is what lets ``And`` guard - a guard that still
           runs the thing it is guarding is not a guard.
-        - An EMPTY child counts as false, like any falsy value.
         - No children at all yields True.
 
     Yields:
-        A plain bool, never EMPTY.
+        A plain bool.
 
     Example:
         >>> nu.run(nu.And(True, True))[0]
@@ -96,11 +94,10 @@ class Or(ScalarQuery):
           decides the result and the children after it are never
           evaluated. This is what lets ``Or`` guard - a guard that still
           runs the thing it is guarding is not a guard.
-        - An EMPTY child counts as false, like any falsy value.
         - No children at all yields False.
 
     Yields:
-        A plain bool, never EMPTY.
+        A plain bool.
 
     Example:
         >>> nu.run(nu.Or(False, True))[0]
@@ -137,7 +134,7 @@ class Not(ScalarQuery):
         value: the value to negate.
 
     Yields:
-        A plain bool. EMPTY when the child is EMPTY.
+        A plain bool.
 
     Example:
         >>> nu.run(nu.Not(True))[0]
@@ -149,8 +146,6 @@ class Not(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return not v
 
         return thunk
@@ -160,8 +155,6 @@ class Not(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return not v
 
         return athunk
@@ -174,7 +167,7 @@ class ToBool(ScalarQuery):
         value: the value to coerce.
 
     Yields:
-        A plain bool. EMPTY when the child is EMPTY.
+        A plain bool.
 
     Example:
         >>> nu.run(nu.core.logical.ToBool(0))[0]
@@ -186,8 +179,6 @@ class ToBool(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return builtins.bool(v)
 
         return thunk
@@ -197,8 +188,6 @@ class ToBool(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return builtins.bool(v)
 
         return athunk

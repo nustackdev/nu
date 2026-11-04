@@ -18,7 +18,7 @@ from nu.core import Collect, Filter, Iter, Lt, Map, Mul
 from nu.core.transform import Flatten, Sorted, Unique
 from nu.engine.validation.law import ValidationError
 from nu.forms.collections import List
-from nu.lang import EMPTY, Attr, Cardinality, Literal
+from nu.lang import NULL, Attr, Cardinality, Literal
 from nu.lang.helpers import arun, compile, run, validate
 
 
@@ -50,8 +50,10 @@ def test_sorted_refuses_a_bare_stream():
 
 
 def test_sorted_propagates_empty():
-    assert run(Sorted(Literal(EMPTY)))[0] is EMPTY
-    assert asyncio.run(arun(Sorted(Literal(EMPTY))))[0] is EMPTY
+    with pytest.raises(TypeError):
+        run(Sorted(Literal(NULL)))[0]
+    with pytest.raises(TypeError):
+        asyncio.run(arun(Sorted(Literal(NULL))))[0]
 
 
 def test_sorted_is_a_scalar_and_validates():

@@ -62,7 +62,6 @@ class Int(Form, TypedNu[int]):
 
         Yields:
             The sum. Promoted to Float when either operand is Float.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Int(2) + nu.Int(3))[0]
@@ -97,7 +96,6 @@ class Int(Form, TypedNu[int]):
 
         Yields:
             The sum. Promoted to Float when the left operand is a plain float.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(3 + nu.Int(4))[0]
@@ -124,7 +122,6 @@ class Int(Form, TypedNu[int]):
 
         Yields:
             The difference. Promoted to Float when either operand is Float.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Int(10) - nu.Int(3))[0]
@@ -156,7 +153,7 @@ class Int(Form, TypedNu[int]):
 
         Yields:
             The difference. Promoted to Float when the left operand is a
-            plain float. EMPTY when either operand is EMPTY.
+            plain float.
 
         Example:
             >>> nu.run(10 - nu.Int(3))[0]
@@ -183,7 +180,6 @@ class Int(Form, TypedNu[int]):
 
         Yields:
             The product. Promoted to Float when either operand is Float.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Int(6) * nu.Int(7))[0]
@@ -215,7 +211,7 @@ class Int(Form, TypedNu[int]):
 
         Yields:
             The product. Promoted to Float when the left operand is a plain
-            float. EMPTY when either operand is EMPTY.
+            float.
 
         Example:
             >>> nu.run(3 * nu.Int(4))[0]
@@ -242,7 +238,7 @@ class Int(Form, TypedNu[int]):
               evaluation time.
 
         Yields:
-            The quotient as Float. EMPTY when either operand is EMPTY.
+            The quotient as Float.
             Raises at evaluation time when the divisor is zero.
 
         Example:
@@ -270,7 +266,7 @@ class Int(Form, TypedNu[int]):
               float.
 
         Yields:
-            The quotient as Float. EMPTY when either operand is EMPTY.
+            The quotient as Float.
             Raises at evaluation time when self evaluates to zero.
 
         Example:
@@ -300,7 +296,7 @@ class Int(Form, TypedNu[int]):
 
         Yields:
             The floored quotient. Promoted to Float when either operand is
-            Float. EMPTY when either operand is EMPTY. Raises at
+            Float. Raises at
             evaluation time when the divisor is zero.
 
         Example:
@@ -336,7 +332,7 @@ class Int(Form, TypedNu[int]):
 
         Yields:
             The floored quotient. Promoted to Float when the left operand is
-            a plain float. EMPTY when either operand is EMPTY.
+            a plain float.
 
         Example:
             >>> nu.run(-7 // nu.Int(2))[0]
@@ -367,7 +363,6 @@ class Int(Form, TypedNu[int]):
 
         Yields:
             The remainder. Promoted to Float when either operand is Float.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Int(-7) % nu.Int(3))[0]
@@ -399,7 +394,7 @@ class Int(Form, TypedNu[int]):
 
         Yields:
             The remainder. Promoted to Float when the left operand is a
-            plain float. EMPTY when either operand is EMPTY.
+            plain float.
 
         Example:
             >>> nu.run(-7 % nu.Int(3))[0]
@@ -431,7 +426,6 @@ class Int(Form, TypedNu[int]):
 
         Yields:
             The power. Promoted to Float when either operand is Float.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Int(2) ** nu.Int(10))[0]
@@ -461,7 +455,6 @@ class Int(Form, TypedNu[int]):
 
         Yields:
             The power. Promoted to Float when the base is a plain float.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(2 ** nu.Int(10))[0]
@@ -479,7 +472,7 @@ class Int(Form, TypedNu[int]):
         """Negation of self.
 
         Yields:
-            The negation. EMPTY when self is EMPTY.
+            The negation.
 
         Example:
             >>> nu.run(-nu.Int(4))[0]
@@ -497,7 +490,7 @@ class Int(Form, TypedNu[int]):
               `+x` inside an expression is still a Nu term.
 
         Yields:
-            The value unchanged. EMPTY when self is EMPTY.
+            The value unchanged.
 
         Example:
             >>> nu.run(+nu.Int(-4))[0]
@@ -511,7 +504,7 @@ class Int(Form, TypedNu[int]):
         """Absolute value of self.
 
         Yields:
-            The magnitude. EMPTY when self is EMPTY.
+            The magnitude.
 
         Example:
             >>> nu.run(abs(nu.Int(-4)))[0]
@@ -533,8 +526,7 @@ class Int(Form, TypedNu[int]):
                 number.
 
         Yields:
-            True when self is greater, False otherwise. EMPTY when either
-            operand is EMPTY.
+            True when self is greater, False otherwise.
 
         Example:
             >>> nu.run(nu.Int(5) > nu.Int(3))[0]
@@ -554,8 +546,7 @@ class Int(Form, TypedNu[int]):
                 number.
 
         Yields:
-            True when self is less, False otherwise. EMPTY when either
-            operand is EMPTY.
+            True when self is less, False otherwise.
 
         Example:
             >>> nu.run(nu.Int(5) < nu.Int(3))[0]
@@ -575,8 +566,7 @@ class Int(Form, TypedNu[int]):
                 number.
 
         Yields:
-            True when self is greater or equal, False otherwise. EMPTY when
-            either operand is EMPTY.
+            True when self is greater or equal, False otherwise.
 
         Example:
             >>> nu.run(nu.Int(5) >= nu.Int(5))[0]
@@ -596,8 +586,7 @@ class Int(Form, TypedNu[int]):
                 number.
 
         Yields:
-            True when self is less or equal, False otherwise. EMPTY when
-            either operand is EMPTY.
+            True when self is less or equal, False otherwise.
 
         Example:
             >>> nu.run(nu.Int(3) <= nu.Int(5))[0]
@@ -620,8 +609,7 @@ class Int(Form, TypedNu[int]):
             - Value equality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the values compare equal, False otherwise. EMPTY when
-            either operand is EMPTY.
+            True when the values compare equal, False otherwise.
 
         Example:
             >>> nu.run(nu.Int(1) == 1.0)[0]
@@ -643,8 +631,7 @@ class Int(Form, TypedNu[int]):
             - Value inequality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the values differ, False otherwise. EMPTY when either
-            operand is EMPTY.
+            True when the values differ, False otherwise.
 
         Example:
             >>> nu.run(nu.Int(1) != nu.Int(2))[0]
@@ -701,8 +688,7 @@ class Int(Form, TypedNu[int]):
             - Bitwise AND is `bitand`, not this.
 
         Yields:
-            True when both operands are truthy, False otherwise. An EMPTY operand
-            counts as false.
+            True when both operands are truthy, False otherwise.
 
         Example:
             >>> nu.run(nu.Int(1).and_(nu.Int(0)))[0]
@@ -726,8 +712,7 @@ class Int(Form, TypedNu[int]):
             - Bitwise OR is `bitor`, not this.
 
         Yields:
-            True when either operand is truthy, False otherwise. An EMPTY operand
-            counts as false.
+            True when either operand is truthy, False otherwise.
 
         Example:
             >>> nu.run(nu.Int(0).or_(nu.Int(5)))[0]
@@ -747,8 +732,7 @@ class Int(Form, TypedNu[int]):
             - Bitwise NOT is `bitnot`, not this.
 
         Yields:
-            True when self is zero, False otherwise. EMPTY when self is
-            EMPTY.
+            True when self is zero, False otherwise.
 
         Example:
             >>> nu.run(nu.Int(0).not_())[0]
@@ -768,8 +752,7 @@ class Int(Form, TypedNu[int]):
               Python's truthiness rule.
 
         Yields:
-            True when self is non-zero, False when self is zero. EMPTY when
-            self is EMPTY.
+            True when self is non-zero, False when self is zero.
 
         Example:
             >>> nu.run(nu.Int(5).bool_())[0]
@@ -796,7 +779,7 @@ class Int(Form, TypedNu[int]):
             - A named method because `&` composes flows (Race) on every term.
 
         Yields:
-            The bitwise AND. EMPTY when either operand is EMPTY.
+            The bitwise AND.
 
         Example:
             >>> nu.run(nu.Int(0b1100).bitand(0b1010))[0]
@@ -817,7 +800,7 @@ class Int(Form, TypedNu[int]):
               term.
 
         Yields:
-            The bitwise OR. EMPTY when either operand is EMPTY.
+            The bitwise OR.
 
         Example:
             >>> nu.run(nu.Int(0b1100).bitor(0b1010))[0]
@@ -834,7 +817,7 @@ class Int(Form, TypedNu[int]):
             other: the integer to XOR with self, bit by bit.
 
         Yields:
-            The bitwise XOR. EMPTY when either operand is EMPTY.
+            The bitwise XOR.
 
         Example:
             >>> nu.run(nu.Int(0b1100).bitxor(0b1010))[0]
@@ -851,7 +834,7 @@ class Int(Form, TypedNu[int]):
             - Two's complement, so `bitnot(x)` equals `-x - 1`.
 
         Yields:
-            The bitwise complement. EMPTY when self is EMPTY.
+            The bitwise complement.
 
         Example:
             >>> nu.run(nu.Int(5).bitnot())[0]
@@ -873,7 +856,7 @@ class Int(Form, TypedNu[int]):
               for non-negative shifts.
 
         Yields:
-            The shifted value. EMPTY when either operand is EMPTY.
+            The shifted value.
             Raises at evaluation time when the shift amount is negative.
 
         Example:
@@ -899,7 +882,7 @@ class Int(Form, TypedNu[int]):
             - Equivalent to `self // 2**other` for non-negative shifts.
 
         Yields:
-            The shifted value. EMPTY when either operand is EMPTY.
+            The shifted value.
             Raises at evaluation time when the shift amount is negative.
 
         Example:

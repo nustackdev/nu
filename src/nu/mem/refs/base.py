@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 
 import nu
 from nu.domains.shape.base import StructuredRef
-from nu.lang import EMPTY
+from nu.lang.null import Null
 from nu.lang.typeinfo import TypeInfo
 
 
@@ -51,7 +51,7 @@ class RefBase(StructuredRef, Generic[T]):
           same dict is read and written in place, nothing is copied in or
           out.
         - A read walks the whole path each time. Any missing key, bad index
-          or non-subscriptable level along the way yields EMPTY rather than
+          or non-subscriptable level along the way yields NULL rather than
           raising.
         - A read yields the stored object itself, so a list or dict slot
           hands back the live container held in the data dict.
@@ -125,6 +125,11 @@ class RefBase(StructuredRef, Generic[T]):
         segs.reverse()
         return tuple(segs)
 
+    def _hint(self, path: tuple) -> str:
+        """The dotted path a NULL read names, eg ``User.tags.0``."""
+        shape = self._root_shape
+        return ".".join([shape.__name__ if shape is not None else "?", *map(repr_seg, path)])
+
     def _root_data(self, rt: Runtime) -> object:
         """The root dict bound in the Context, scoped to this ref's root shape."""
         scope = self._root_shape
@@ -170,11 +175,12 @@ class RefBase(StructuredRef, Generic[T]):
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
             cur = self._root_data(rt)
+            path = self._resolve_path(rt, nid)
             try:
-                for k in self._resolve_path(rt, nid):
+                for k in path:
                     cur = cur[k]  # type: ignore[index]
             except (KeyError, IndexError, TypeError):
-                return EMPTY
+                return Null(self._hint(path))
             return self._lift(cur)
 
         return thunk
@@ -182,11 +188,12 @@ class RefBase(StructuredRef, Generic[T]):
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             cur = self._root_data(rt)
+            path = await self._aresolve_path(rt, nid)
             try:
-                for k in await self._aresolve_path(rt, nid):
+                for k in path:
                     cur = cur[k]  # type: ignore[index]
             except (KeyError, IndexError, TypeError):
-                return EMPTY
+                return Null(self._hint(path))
             return await self._alift(cur)
 
         return athunk
@@ -245,3 +252,8 @@ class RefBase(StructuredRef, Generic[T]):
                 cur[k] = {}
             cur = cur[k]  # type: ignore[index]
         return cur
+
+
+def repr_seg(seg: object) -> str:
+    """One path segment as hint text: a str as is, anything else by repr."""
+    return seg if isinstance(seg, str) else repr(seg)

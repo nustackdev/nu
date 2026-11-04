@@ -358,7 +358,7 @@ class ReactLatest(Control):
         initial: run the body once straight away, before any notification.
             That run binds no key, so the body sees whatever the caller
             seeded under ``changed_key``, or an unbound name (a lambda's key
-            reads EMPTY).
+            reads NULL).
 
     Notes:
         - Notifications that pile up while a cancelled run is unwinding are

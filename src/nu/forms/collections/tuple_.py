@@ -78,7 +78,7 @@ class Tuple(
               `List.of` and `Dict.of`.
 
         Yields:
-            The packed tuple. EMPTY when any item is EMPTY.
+            The packed tuple.
 
         Example:
             >>> nu.run(nu.Tuple.of(1, 2, 3))[0]
@@ -113,8 +113,7 @@ class Tuple(
             other: the tuple to append after self.
 
         Yields:
-            A new tuple with self's items followed by other's. EMPTY when
-            either operand is EMPTY.
+            A new tuple with self's items followed by other's.
 
         Example:
             >>> nu.run(nu.Tuple.of(1, 2) + nu.Tuple.of(3, 4))[0]
@@ -136,8 +135,7 @@ class Tuple(
               never lands here.
 
         Yields:
-            A new tuple with other's items followed by self's. EMPTY when
-            either operand is EMPTY.
+            A new tuple with other's items followed by self's.
 
         Example:
             >>> nu.run((1, 2) + nu.Tuple.of(3, 4))[0]
@@ -155,7 +153,6 @@ class Tuple(
 
         Yields:
             A new tuple with self's items repeated n times, in order.
-            EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Tuple.of(1, 2) * 3)[0]
@@ -175,8 +172,7 @@ class Tuple(
             - Reached only when the left operand is a plain Python int.
 
         Yields:
-            A new tuple with self's items repeated n times. EMPTY when
-            self is EMPTY.
+            A new tuple with self's items repeated n times.
 
         Example:
             >>> nu.run(2 * nu.Tuple.of(1, 2))[0]
@@ -201,8 +197,7 @@ class Tuple(
               differing pair decides.
 
         Yields:
-            True when self sorts after other, False otherwise. EMPTY when
-            either operand is EMPTY.
+            True when self sorts after other, False otherwise.
 
         Example:
             >>> nu.run(nu.Tuple.of(1, 3) > nu.Tuple.of(1, 2))[0]
@@ -225,8 +220,7 @@ class Tuple(
               differing pair decides.
 
         Yields:
-            True when self sorts before other, False otherwise. EMPTY
-            when either operand is EMPTY.
+            True when self sorts before other, False otherwise.
 
         Example:
             >>> nu.run(nu.Tuple.of(1, 2) < nu.Tuple.of(1, 3))[0]
@@ -246,7 +240,6 @@ class Tuple(
 
         Yields:
             True when self sorts after or equal to other, False otherwise.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Tuple.of(1, 2) >= nu.Tuple.of(1, 2))[0]
@@ -266,7 +259,6 @@ class Tuple(
 
         Yields:
             True when self sorts before or equal to other, False otherwise.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Tuple.of(1, 2) <= nu.Tuple.of(1, 3))[0]
@@ -289,8 +281,7 @@ class Tuple(
 
         Yields:
             True when the tuples have the same length and equal items in
-            order, False otherwise. EMPTY when either operand is
-            EMPTY.
+            order, False otherwise.
 
         Example:
             >>> nu.run(nu.Tuple.of(1, 2) == nu.Tuple.of(1, 2))[0]
@@ -312,8 +303,7 @@ class Tuple(
             - Value inequality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the tuples differ, False otherwise. EMPTY when
-            either operand is EMPTY.
+            True when the tuples differ, False otherwise.
 
         Example:
             >>> nu.run(nu.Tuple.of(1, 2) != nu.Tuple.of(1, 3))[0]

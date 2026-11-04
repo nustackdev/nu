@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.lang.sentinels import EMPTY
+from nu.lang.null import NULL
 
 
 if TYPE_CHECKING:
@@ -76,12 +76,12 @@ class Attributes:
         self._data[name] = value  # type: ignore[index]
 
     def exists(self, name: object) -> bool:
-        """Whether ``name`` is declared, whatever it holds (EMPTY included)."""
+        """Whether ``name`` is declared, whatever it holds (NULL included)."""
         return name in self._data
 
     # -- reads ---------------------------------------------------------------
 
-    def get(self, name: str, default: object = EMPTY) -> object:
+    def get(self, name: str, default: object = NULL) -> object:
         """The value ``name`` holds, or ``default`` when it is not declared."""
         return self._data.get(name, default)
 

@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import asyncio
 
+import pytest
+
 import nu
 from nu.core.repr import Ascii as Ascii
 from nu.core.repr import Bin as Bin
@@ -18,7 +20,7 @@ from nu.core.repr import Hex as Hex
 from nu.core.repr import Oct as Oct
 from nu.core.repr import Ord as Ord
 from nu.core.repr import Repr as Repr
-from nu.lang import EMPTY
+from nu.lang import NULL
 from nu.lang.helpers import aeval, compile, eval
 from nu.lang.literal import Literal
 
@@ -78,12 +80,16 @@ def test_ord_and_chr_round_trip():
 # --- sentinel propagation ------------------------------------------------
 
 
-def test_an_empty_operand_collapses_to_empty():
-    assert _eval(Repr(Literal(EMPTY))) is EMPTY
-    assert _eval(Hex(Literal(EMPTY))) is EMPTY
-    assert _eval(Format(Literal(EMPTY))) is EMPTY
-    assert _eval(Format(Literal(1), Literal(EMPTY))) is EMPTY
-    assert _eval(Format(Literal(EMPTY), Literal("x"))) is EMPTY
+def test_a_null_operand_runs_the_plain_python_op():
+    assert _eval(Repr(Literal(NULL))) == "<NULL>"
+    with pytest.raises(TypeError):
+        _eval(Hex(Literal(NULL)))
+    with pytest.raises(TypeError):
+        _eval(Format(Literal(NULL)))
+    with pytest.raises(TypeError):
+        _eval(Format(Literal(1), Literal(NULL)))
+    with pytest.raises(TypeError):
+        _eval(Format(Literal(NULL), Literal("x")))
 
 
 # --- async parity --------------------------------------------------------
@@ -93,7 +99,8 @@ def test_aeval_mirrors_eval():
     assert asyncio.run(_aeval(Repr(Literal("hi")))) == "'hi'"
     assert asyncio.run(_aeval(Hex(Literal(255)))) == "0xff"
     assert asyncio.run(_aeval(Format(Literal(255), Literal("x")))) == "ff"
-    assert asyncio.run(_aeval(Format(Literal(EMPTY)))) is EMPTY
+    with pytest.raises(TypeError):
+        asyncio.run(_aeval(Format(Literal(NULL))))
 
 
 # --- nu.format -------------------------------------------------------------

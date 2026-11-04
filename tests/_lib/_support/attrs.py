@@ -2,17 +2,17 @@
 
 ``attrs.set`` only reassigns a declared name. A test atom that writes attrs
 imperatively from its own compile declares the names up front, the way a
-binder would, and the names start out holding EMPTY.
+binder would, and the names start out holding NULL.
 """
 
 from __future__ import annotations
 
-from nu.lang import EMPTY, Context
+from nu.lang import NULL, Context
 
 
 __all__ = ["declared"]
 
 
 def declared(*names: str, **values: object) -> Context:
-    """A Context with ``names`` bound to EMPTY and ``values`` bound as given."""
-    return Context(attrs={**dict.fromkeys(names, EMPTY), **values})
+    """A Context with ``names`` bound to NULL and ``values`` bound as given."""
+    return Context(attrs={**dict.fromkeys(names, NULL), **values})

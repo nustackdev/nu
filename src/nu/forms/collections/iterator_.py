@@ -6,6 +6,7 @@ from collections.abc import Iterator as PyIterator
 from typing import TYPE_CHECKING, Generic, NoReturn, TypeVar, overload
 
 from nu.lang import Form, TypedNuStream
+from nu.lang.sentinels import UNSET
 from nu.lang.typeinfo import TypeInfo
 
 
@@ -101,18 +102,18 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
     # Form to expect based on ``T``, as ``List.__getitem__`` does.
 
     @overload
-    def first(self: Iterator[bool]) -> Bool: ...
+    def first(self: Iterator[bool], default: object = ...) -> Bool: ...
     @overload
-    def first(self: Iterator[int]) -> Int: ...
+    def first(self: Iterator[int], default: object = ...) -> Int: ...
     @overload
-    def first(self: Iterator[float]) -> Float: ...
+    def first(self: Iterator[float], default: object = ...) -> Float: ...
     @overload
-    def first(self: Iterator[str]) -> Str: ...
+    def first(self: Iterator[str], default: object = ...) -> Str: ...
     @overload
-    def first(self: Iterator[bytes]) -> Bytes: ...
+    def first(self: Iterator[bytes], default: object = ...) -> Bytes: ...
     @overload
-    def first(self) -> Object: ...
-    def first(self):  # type: ignore[no-untyped-def]
+    def first(self, default: object = ...) -> Object: ...
+    def first(self, default=UNSET):  # type: ignore[no-untyped-def]
         """The first item this stream yields.
 
         Notes:
@@ -122,8 +123,12 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
             - The item takes the declared element type's form when the
               stream carries one, `Object` otherwise.
 
+        Args:
+            default: yielded for an empty stream. Leave it out to raise
+                ValueError instead.
+
         Yields:
-            The first item. EMPTY when the stream is empty.
+            The first item, or ``default`` when the stream is empty.
 
         Example:
             >>> nu.run(nu.List.of(1, 2).iter().first())[0]
@@ -131,7 +136,7 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
         """
         from nu.core import First
 
-        return self._item(First(self))
+        return self._item(First(self) if default is UNSET else First(self, default))
 
     def map(self, transform: Nu | Callable[[Attr], Nu], key: StrArg | None = None) -> Iterator:
         """Each item replaced by transform's value, still a stream.
@@ -203,8 +208,7 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
         """The number of items this stream yields.
 
         Yields:
-            The count as Int. 0 for an empty stream. EMPTY if any item is
-            EMPTY.
+            The count as Int. 0 for an empty stream.
 
         Example:
             >>> nu.run(nu.List.of(1, 2, 3).iter().filter(lambda x: x > 1).count())[0]
@@ -227,12 +231,12 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
         """The sum of every item this stream yields.
 
         Notes:
-            - Folds from 0, so an empty stream yields 0, not EMPTY.
+            - Folds from 0, so an empty stream yields 0, not NULL.
             - Int over a declared int or bool stream, Float over a float
               one, `Object` otherwise.
 
         Yields:
-            The sum. EMPTY if any item is EMPTY.
+            The sum.
 
         Example:
             >>> nu.run(nu.List.of(1, 2, 3).iter().sum() > 5)[0]
@@ -269,8 +273,7 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
               stream carries one, `Object` otherwise.
 
         Yields:
-            The smallest item. EMPTY when the stream is empty or any item
-            is EMPTY.
+            The smallest item.
 
         Example:
             >>> nu.run(nu.List.of(3, 1, 2).iter().min())[0]
@@ -300,8 +303,7 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
               stream carries one, `Object` otherwise.
 
         Yields:
-            The largest item. EMPTY when the stream is empty or any item
-            is EMPTY.
+            The largest item.
 
         Example:
             >>> nu.run(nu.List.of(3, 1, 2).iter().max())[0]
@@ -319,7 +321,7 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
             - Map first to test a condition: `.map(f).any()`.
 
         Yields:
-            True or False, never EMPTY. False for an empty stream.
+            True or False. False for an empty stream.
 
         Example:
             >>> nu.run(nu.List.of(1, 5).iter().map(lambda x: nu.Int(x) > 4).any())[0]
@@ -338,7 +340,7 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
             - Map first to test a condition: `.map(f).all()`.
 
         Yields:
-            True or False, never EMPTY. True for an empty stream.
+            True or False. True for an empty stream.
 
         Example:
             >>> nu.run(nu.List.of(1, 5).iter().map(lambda x: nu.Int(x) > 0).all())[0]
@@ -350,18 +352,18 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
         return Bool(AllOf(self))
 
     @overload
-    def last(self: Iterator[bool]) -> Bool: ...
+    def last(self: Iterator[bool], default: object = ...) -> Bool: ...
     @overload
-    def last(self: Iterator[int]) -> Int: ...
+    def last(self: Iterator[int], default: object = ...) -> Int: ...
     @overload
-    def last(self: Iterator[float]) -> Float: ...
+    def last(self: Iterator[float], default: object = ...) -> Float: ...
     @overload
-    def last(self: Iterator[str]) -> Str: ...
+    def last(self: Iterator[str], default: object = ...) -> Str: ...
     @overload
-    def last(self: Iterator[bytes]) -> Bytes: ...
+    def last(self: Iterator[bytes], default: object = ...) -> Bytes: ...
     @overload
-    def last(self) -> Object: ...
-    def last(self):  # type: ignore[no-untyped-def]
+    def last(self, default: object = ...) -> Object: ...
+    def last(self, default=UNSET):  # type: ignore[no-untyped-def]
         """The last item this stream yields.
 
         Notes:
@@ -369,9 +371,12 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
             - The item takes the declared element type's form when the
               stream carries one, `Object` otherwise.
 
+        Args:
+            default: yielded for an empty stream. Leave it out to raise
+                ValueError instead.
+
         Yields:
-            The last item. EMPTY when the stream is empty or any item is
-            EMPTY.
+            The last item, or ``default`` when the stream is empty.
 
         Example:
             >>> nu.run(nu.List.of(1, 2, 3).iter().last())[0]
@@ -379,7 +384,7 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
         """
         from nu.core import Last
 
-        return self._item(Last(self))
+        return self._item(Last(self) if default is UNSET else Last(self, default))
 
     # ---- stream to stream ------------------------------------------------
 

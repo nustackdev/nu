@@ -56,7 +56,7 @@ class CollectionForm(
               expression `nu.run` can evaluate on its own.
 
         Yields:
-            The materialised Python value. EMPTY when self is EMPTY.
+            The materialised Python value.
 
         Example:
             nu.List([1, 2, 3]).extract()

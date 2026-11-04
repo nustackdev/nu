@@ -39,8 +39,6 @@ class Globals(ScalarQuery):
         - Bypasses the Context entirely. This is host glue, not a Context
           read, and the result depends on where in the interpreter the
           evaluation happens to run.
-        - No children, so there is nothing for a sentinel to propagate
-          through.
 
     Yields:
         The live result of Python's ``globals()``, called fresh each time.
@@ -70,8 +68,6 @@ class Locals(ScalarQuery):
         - Bypasses the Context entirely. This is host glue, not a Context
           read, and the result depends on the Python call frame the thunk
           happens to run in.
-        - No children, so there is nothing for a sentinel to propagate
-          through.
 
     Yields:
         The live result of Python's ``locals()``, called fresh each time.

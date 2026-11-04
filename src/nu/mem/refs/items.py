@@ -63,8 +63,7 @@ class ObjectRef(ItemRef, Object):
         address: this level's key, a literal or a Nu term yielding one.
 
     Yields:
-        The stored value as it sits in the data dict. EMPTY when the slot was
-        never written or its path is broken.
+        The stored value as it sits in the data dict.
 
     Example:
         >>> class Port(nu.Shape):
@@ -93,8 +92,7 @@ class IntRef(ItemRef, Int):
           JSON-shaped.
 
     Yields:
-        The stored int. EMPTY when the slot was never written or its path is
-        broken.
+        The stored int.
 
     Example:
         >>> class User(nu.Shape):
@@ -111,8 +109,8 @@ class IntRef(ItemRef, Int):
             - Read and write are two touches of the slot, not one atomic
               step; wrap it in a transaction when something else may write
               in between.
-            - On an unwritten slot the read is EMPTY, so the addition is
-              EMPTY and the write raises.
+            - On an unwritten slot the read is NULL, so the addition
+              raises TypeError. ``.init(0)`` the slot first.
 
         Example:
             >>> class User(nu.Shape):
@@ -154,8 +152,7 @@ class StrRef(ItemRef, Str):
           reads the slot and builds the string op over it.
 
     Yields:
-        The stored str. EMPTY when the slot was never written or its path is
-        broken.
+        The stored str.
 
     Example:
         >>> class User(nu.Shape):
@@ -176,8 +173,7 @@ class FloatRef(ItemRef, Float):
         - Nothing coerces on write: an int written here comes back an int.
 
     Yields:
-        The stored float. EMPTY when the slot was never written or its path
-        is broken.
+        The stored float.
 
     Example:
         >>> class User(nu.Shape):
@@ -195,12 +191,11 @@ class BoolRef(ItemRef, Bool):
         address: this level's key, a literal or a Nu term yielding one.
 
     Notes:
-        - An unwritten slot reads EMPTY, which is not False; use
+        - An unwritten slot reads NULL, which is not False; use
           ``.exists()`` when the difference matters.
 
     Yields:
-        The stored bool. EMPTY when the slot was never written or its path is
-        broken.
+        The stored bool.
 
     Example:
         >>> class User(nu.Shape):
@@ -222,8 +217,7 @@ class BytesRef(ItemRef, Bytes):
           JSON-serialisable as it stands.
 
     Yields:
-        The stored bytes. EMPTY when the slot was never written or its path
-        is broken.
+        The stored bytes.
 
     Example:
         >>> class Blob(nu.Shape):

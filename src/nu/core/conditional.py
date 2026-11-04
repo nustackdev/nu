@@ -13,10 +13,8 @@ Short-circuit: only the taken branch is evaluated - matches Python's
 conditional expression, and lets ``If(cond, safe, unsafe)`` guard the
 ``unsafe`` branch from firing when ``cond`` is truthy.
 
-Sentinels: the condition or selector decides, so an ``EMPTY`` one never
-passes (per ``nu.lang.sentinels``): ``If`` takes the else branch and
-``Switch`` matches no key. The taken branch's value, ``EMPTY`` included,
-passes through unchanged.
+NULL: a NULL condition is falsy, so ``If`` takes the else branch, and a NULL
+selector matches no key. The taken branch's value passes through unchanged.
 """
 
 from __future__ import annotations
@@ -24,7 +22,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
-from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -52,8 +49,7 @@ class If(ScalarQuery):
           ``nu.Str(nu.If(c, "Admin", "Member")).upper()``.
 
     Yields:
-        The taken branch's value. An EMPTY ``cond`` counts as false and
-        takes ``else_``.
+        The taken branch's value. A NULL ``cond`` is falsy and takes ``else_``.
 
     Example:
         >>> nu.run(nu.If(True, "yes", "no"))[0]
@@ -88,14 +84,13 @@ class Switch(ScalarQuery):
         selector: the value to match against the case keys.
         cases: a mapping from key to case value.
         default: yielded when no key matches. Optional: leave it out to
-            get EMPTY on no match instead.
+            raise KeyError on no match instead, like a dict lookup.
 
     Notes:
         - The case keys are intrinsic constants, kept in the payload rather
           than as children, so they survive ``with_children`` unchanged.
         - Keys are matched by equality against the selector value, in the
-          mapping's iteration order; the first match wins. An EMPTY
-          selector matches no key.
+          mapping's iteration order; the first match wins.
         - Short-circuits: only the matching case value (or the default) is
           evaluated, not the others.
         - Sibling to the mutating ``nu.core.flows.control.SwitchDo``, which runs
@@ -103,7 +98,8 @@ class Switch(ScalarQuery):
 
     Yields:
         The matching case value, or the default when given and nothing
-        matches. EMPTY when nothing matches and there is no default.
+        matches. Raises KeyError when nothing matches and there is no
+        default.
 
     Example:
         >>> nu.run(nu.Switch(2, {1: "one", 2: "two"}))[0]
@@ -133,13 +129,12 @@ class Switch(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             s = selector(rt)
-            if s is not EMPTY:
-                for i, key in enumerate(keys):
-                    if key == s:
-                        return values[i](rt)
+            for i, key in enumerate(keys):
+                if key == s:
+                    return values[i](rt)
             if has_default:
                 return values[-1](rt)
-            return EMPTY
+            raise KeyError(s)
 
         return thunk
 
@@ -151,12 +146,11 @@ class Switch(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             s = await selector(rt)
-            if s is not EMPTY:
-                for i, key in enumerate(keys):
-                    if key == s:
-                        return await values[i](rt)
+            for i, key in enumerate(keys):
+                if key == s:
+                    return await values[i](rt)
             if has_default:
                 return await values[-1](rt)
-            return EMPTY
+            raise KeyError(s)
 
         return athunk

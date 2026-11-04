@@ -17,11 +17,10 @@ Builtins / operators to cover (Python -> Nu):
 
 Every atom is EVALUABLE: each defines ``compile`` (sync hot path) and
 ``acompile`` (async hot path) returning a thunk that computes from its child
-values, with inlined EMPTY propagation (mirroring ``nu.core.arithmetic``).
+values, with no NULL handling: NULL's own interface decides.
 The writes apply Python's ``x[k]=v`` / ``setattr`` / ``del`` to the object
-value and return that object so they compose; an EMPTY operand to a write
-raises. If a
-remove-and-return variant is wanted (pop-style), that is an Action - note it,
+value and return that object so they compose; a NULL operand to a write
+raises. If a remove-and-return variant is wanted (pop-style), that is an Action - note it,
 but the builtins here are plain get/set/del.
 """
 
@@ -31,7 +30,7 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Command, ScalarQuery
-from nu.lang.sentinels import EMPTY
+from nu.lang.null import is_null
 
 
 if TYPE_CHECKING:
@@ -65,11 +64,10 @@ class GetItem(ScalarQuery):
 
     Notes:
         - A missing key or out-of-range index raises Python's own
-          ``KeyError`` / ``IndexError``, it is not folded into EMPTY.
+          ``KeyError`` / ``IndexError``, as in Python.
 
     Yields:
-        The member at that key. EMPTY when either child is
-        EMPTY.
+        The member at that key.
 
     Example:
         >>> nu.run(nu.GetItem(nu.Literal([10, 20, 30]), nu.Literal(1)))[0]
@@ -81,11 +79,7 @@ class GetItem(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             x = target(rt)
-            if x is EMPTY:
-                return EMPTY
             k = key(rt)
-            if k is EMPTY:
-                return EMPTY
             return x[k]
 
         return thunk
@@ -95,11 +89,7 @@ class GetItem(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             x = await target(rt)
-            if x is EMPTY:
-                return EMPTY
             k = await key(rt)
-            if k is EMPTY:
-                return EMPTY
             return x[k]
 
         return athunk
@@ -112,7 +102,7 @@ class Len(ScalarQuery):
         value: the object to measure.
 
     Yields:
-        The length. EMPTY when the child is EMPTY.
+        The length.
 
     Example:
         >>> nu.run(nu.Len(nu.Literal("abcd")))[0]
@@ -124,8 +114,6 @@ class Len(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return len(v)
 
         return thunk
@@ -135,8 +123,6 @@ class Len(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return len(v)
 
         return athunk
@@ -150,7 +136,7 @@ class Contains(ScalarQuery):
         item: the value to look for.
 
     Yields:
-        True or False. EMPTY when either child is EMPTY.
+        True or False.
 
     Example:
         >>> nu.run(nu.Contains(nu.Literal([1, 2, 3]), nu.Literal(9)))[0]
@@ -162,11 +148,7 @@ class Contains(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             c = container(rt)
-            if c is EMPTY:
-                return EMPTY
             x = item(rt)
-            if x is EMPTY:
-                return EMPTY
             return x in c
 
         return thunk
@@ -176,11 +158,7 @@ class Contains(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             c = await container(rt)
-            if c is EMPTY:
-                return EMPTY
             x = await item(rt)
-            if x is EMPTY:
-                return EMPTY
             return x in c
 
         return athunk
@@ -195,7 +173,7 @@ class Slice(ScalarQuery):
         step: the step, or None for 1.
 
     Yields:
-        A ``slice`` object. EMPTY when any child is EMPTY.
+        A ``slice`` object.
 
     Example:
         >>> nu.run(nu.Slice(nu.Literal(1), nu.Literal(3), nu.Literal(None)))[0]
@@ -207,14 +185,8 @@ class Slice(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             a = start(rt)
-            if a is EMPTY:
-                return EMPTY
             b = stop(rt)
-            if b is EMPTY:
-                return EMPTY
             c = step(rt)
-            if c is EMPTY:
-                return EMPTY
             return slice(a, b, c)
 
         return thunk
@@ -224,14 +196,8 @@ class Slice(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await start(rt)
-            if a is EMPTY:
-                return EMPTY
             b = await stop(rt)
-            if b is EMPTY:
-                return EMPTY
             c = await step(rt)
-            if c is EMPTY:
-                return EMPTY
             return slice(a, b, c)
 
         return athunk
@@ -248,11 +214,10 @@ class GetAttr(ScalarQuery):
 
     Notes:
         - Without a default child, a missing attribute raises Python's own
-          ``AttributeError``, it is not folded into EMPTY.
+          ``AttributeError``, as in Python.
 
     Yields:
-        The attribute value. EMPTY when ``obj``, ``name``, or (if given)
-        ``default`` is EMPTY.
+        The attribute value.
 
     Example:
         >>> nu.run(nu.GetAttr(nu.Literal(1j), nu.Literal("imag")))[0]
@@ -266,15 +231,9 @@ class GetAttr(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             obj = obj_t(rt)
-            if obj is EMPTY:
-                return EMPTY
             name = name_t(rt)
-            if name is EMPTY:
-                return EMPTY
             if default_t is not None:
                 default = default_t(rt)
-                if default is EMPTY:
-                    return EMPTY
                 return getattr(obj, str(name), default)
             return getattr(obj, str(name))
 
@@ -287,15 +246,9 @@ class GetAttr(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await obj_t(rt)
-            if obj is EMPTY:
-                return EMPTY
             name = await name_t(rt)
-            if name is EMPTY:
-                return EMPTY
             if default_t is not None:
                 default = await default_t(rt)
-                if default is EMPTY:
-                    return EMPTY
                 return getattr(obj, str(name), default)
             return getattr(obj, str(name))
 
@@ -310,7 +263,7 @@ class HasAttr(ScalarQuery):
         name: the attribute name.
 
     Yields:
-        True or False. EMPTY when either child is EMPTY.
+        True or False.
 
     Example:
         >>> nu.run(nu.HasAttr(nu.Literal(1j), nu.Literal("imag")))[0]
@@ -322,11 +275,7 @@ class HasAttr(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             obj = obj_t(rt)
-            if obj is EMPTY:
-                return EMPTY
             name = name_t(rt)
-            if name is EMPTY:
-                return EMPTY
             return hasattr(obj, str(name))
 
         return thunk
@@ -336,11 +285,7 @@ class HasAttr(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await obj_t(rt)
-            if obj is EMPTY:
-                return EMPTY
             name = await name_t(rt)
-            if name is EMPTY:
-                return EMPTY
             return hasattr(obj, str(name))
 
         return athunk
@@ -360,8 +305,6 @@ class SetItem(Command):
     Notes:
         - Mutates the container in place and yields nothing, matching
           Python's ``x[k] = v``.
-        - An EMPTY child raises before mutating, as any write does; the
-          container is left untouched.
 
     Yields:
         Nothing.
@@ -374,14 +317,14 @@ class SetItem(Command):
 
         def thunk(rt: Runtime) -> None:
             x = target(rt)
-            if x is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(x):
+                raise ValueError("cannot write with a NULL operand")
             k = key(rt)
-            if k is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(k):
+                raise ValueError("cannot write with a NULL operand")
             v = value(rt)
-            if v is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(v):
+                raise ValueError("cannot write with a NULL operand")
             x[k] = v
 
         return thunk
@@ -391,14 +334,14 @@ class SetItem(Command):
 
         async def athunk(rt: Runtime) -> None:
             x = await target(rt)
-            if x is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(x):
+                raise ValueError("cannot write with a NULL operand")
             k = await key(rt)
-            if k is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(k):
+                raise ValueError("cannot write with a NULL operand")
             v = await value(rt)
-            if v is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(v):
+                raise ValueError("cannot write with a NULL operand")
             x[k] = v
 
         return athunk
@@ -413,8 +356,6 @@ class DelItem(Command):
 
     Notes:
         - Mutates the container in place and yields nothing.
-        - An EMPTY child raises before mutating, as any write does; the
-          container is left untouched.
         - A missing key raises Python's own ``KeyError`` / ``IndexError``,
           it does not bail silently.
 
@@ -429,11 +370,11 @@ class DelItem(Command):
 
         def thunk(rt: Runtime) -> None:
             x = target(rt)
-            if x is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(x):
+                raise ValueError("cannot write with a NULL operand")
             k = key(rt)
-            if k is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(k):
+                raise ValueError("cannot write with a NULL operand")
             del x[k]
 
         return thunk
@@ -443,11 +384,11 @@ class DelItem(Command):
 
         async def athunk(rt: Runtime) -> None:
             x = await target(rt)
-            if x is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(x):
+                raise ValueError("cannot write with a NULL operand")
             k = await key(rt)
-            if k is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(k):
+                raise ValueError("cannot write with a NULL operand")
             del x[k]
 
         return athunk
@@ -464,8 +405,6 @@ class SetAttr(Command):
     Notes:
         - Mutates the object in place and yields nothing, matching Python's
           ``setattr``.
-        - An EMPTY child raises before mutating, as any write does; the
-          object is left untouched.
 
     Yields:
         Nothing.
@@ -478,14 +417,14 @@ class SetAttr(Command):
 
         def thunk(rt: Runtime) -> None:
             obj = obj_t(rt)
-            if obj is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(obj):
+                raise ValueError("cannot write with a NULL operand")
             name = name_t(rt)
-            if name is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(name):
+                raise ValueError("cannot write with a NULL operand")
             value = value_t(rt)
-            if value is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(value):
+                raise ValueError("cannot write with a NULL operand")
             setattr(obj, str(name), value)
 
         return thunk
@@ -495,14 +434,14 @@ class SetAttr(Command):
 
         async def athunk(rt: Runtime) -> None:
             obj = await obj_t(rt)
-            if obj is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(obj):
+                raise ValueError("cannot write with a NULL operand")
             name = await name_t(rt)
-            if name is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(name):
+                raise ValueError("cannot write with a NULL operand")
             value = await value_t(rt)
-            if value is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(value):
+                raise ValueError("cannot write with a NULL operand")
             setattr(obj, str(name), value)
 
         return athunk
@@ -517,8 +456,6 @@ class DelAttr(Command):
 
     Notes:
         - Mutates the object in place and yields nothing.
-        - An EMPTY child raises before mutating, as any write does; the
-          object is left untouched.
         - A missing attribute raises Python's own ``AttributeError``, it
           does not bail silently.
 
@@ -533,11 +470,11 @@ class DelAttr(Command):
 
         def thunk(rt: Runtime) -> None:
             obj = obj_t(rt)
-            if obj is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(obj):
+                raise ValueError("cannot write with a NULL operand")
             name = name_t(rt)
-            if name is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(name):
+                raise ValueError("cannot write with a NULL operand")
             delattr(obj, str(name))
 
         return thunk
@@ -547,11 +484,11 @@ class DelAttr(Command):
 
         async def athunk(rt: Runtime) -> None:
             obj = await obj_t(rt)
-            if obj is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(obj):
+                raise ValueError("cannot write with a NULL operand")
             name = await name_t(rt)
-            if name is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(name):
+                raise ValueError("cannot write with a NULL operand")
             delattr(obj, str(name))
 
         return athunk

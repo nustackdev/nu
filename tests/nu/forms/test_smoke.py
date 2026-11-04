@@ -17,7 +17,7 @@ from nu.forms import (
     Set,
     Str,
 )
-from nu.lang import EMPTY, Literal
+from nu.lang import NULL, Literal
 from nu.lang.helpers import aeval, compile, eval
 from nu.lang.runtime import Context
 
@@ -161,9 +161,9 @@ def test_set_mutation_commands_yield_nothing():
 
 
 def test_sentinel_predicates():
-    assert val(Int(1).is_empty()) is False
-    assert val(Int(1).not_empty()) is True
-    assert val(Int(Literal(EMPTY)).is_empty()) is True
+    assert val(Int(1).is_null()) is False
+    assert val(Int(1).is_null().not_()) is True
+    assert val(Int(Literal(NULL)).is_null()) is True
 
 
 # --- async mirror --------------------------------------------------------

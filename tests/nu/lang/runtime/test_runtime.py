@@ -23,11 +23,10 @@ from nu.core.flows.parallel._scheduling import (
     eval_parallel,
     merge,
 )
-from nu.lang import Literal
+from nu.lang import NULL, Literal
 from nu.lang.attributes import Attr
 from nu.lang.helpers import compile
 from nu.lang.runtime import Budget, Context, Runtime
-from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -121,56 +120,19 @@ async def test_aeval_matches_eval() -> None:
 
 
 def test_empty_operand_collapses_to_empty() -> None:
-    program = compile(Add(Literal(EMPTY), Literal(1)))
+    program = compile(Add(Literal(NULL), Literal(1)))
     with Budget() as budget:
         rt = Runtime(program, Context(), budget=budget)
-        assert rt.eval() is EMPTY
+        with pytest.raises(TypeError):
+            rt.eval()
 
 
 def test_empty_right_operand_collapses_to_empty() -> None:
-    program = compile(Mul(Literal(2), Literal(EMPTY)))
+    program = compile(Mul(Literal(2), Literal(NULL)))
     with Budget() as budget:
         rt = Runtime(program, Context(), budget=budget)
-        assert rt.eval() is EMPTY
-
-
-# --- eval_or_short / aeval_or_short ---------------------------------------
-
-
-def test_eval_or_short_returns_values_when_all_present() -> None:
-    program = _fake_program(thunks=[lambda rt: 1, lambda rt: 2, lambda rt: 3])
-    rt = Runtime(program, Context())
-    assert rt.eval_or_short([0, 1, 2]) == [1, 2, 3]
-
-
-def test_eval_or_short_returns_empty_on_empty() -> None:
-    program = _fake_program(thunks=[lambda rt: 1, lambda rt: EMPTY, lambda rt: 3])
-    rt = Runtime(program, Context())
-    assert rt.eval_or_short([0, 1, 2]) is EMPTY
-
-
-async def test_aeval_or_short_returns_values_when_all_present() -> None:
-    async def t0(rt: Runtime) -> object:
-        return 10
-
-    async def t1(rt: Runtime) -> object:
-        return 20
-
-    program = _fake_program(athunks=[t0, t1])
-    rt = Runtime(program, Context())
-    assert await rt.aeval_or_short([0, 1]) == [10, 20]
-
-
-async def test_aeval_or_short_short_circuits_on_sentinel() -> None:
-    async def t0(rt: Runtime) -> object:
-        return 1
-
-    async def t1(rt: Runtime) -> object:
-        return EMPTY
-
-    program = _fake_program(athunks=[t0, t1])
-    rt = Runtime(program, Context())
-    assert await rt.aeval_or_short([0, 1]) is EMPTY
+        with pytest.raises(TypeError):
+            rt.eval()
 
 
 # --- sequential helpers ----------------------------------------------------

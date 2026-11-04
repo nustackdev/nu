@@ -10,9 +10,8 @@ from __future__ import annotations
 
 import nu
 from nu.core import Add
-from nu.lang import Literal
+from nu.lang import NULL, Literal, is_null
 from nu.lang.helpers import run
-from nu.lang.sentinels import EMPTY
 
 
 def test_int_child_is_wrapped() -> None:
@@ -53,9 +52,9 @@ def test_callable_is_wrapped_as_value() -> None:
 
 
 def test_empty_is_wrapped() -> None:
-    term = Add(EMPTY, 1)
+    term = Add(NULL, 1)
     assert all(isinstance(c, Literal) for c in nu.tree.children(term))
-    assert nu.tree.payload(nu.tree.children(term)[0])["value"] is EMPTY
+    assert is_null(nu.tree.payload(nu.tree.children(term)[0])["value"])
 
 
 def test_mixed_children_are_wrapped_individually() -> None:

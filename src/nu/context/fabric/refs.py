@@ -2,7 +2,7 @@
 
 Every ctx-bound thing is a Fabric (the empty marker Protocol). A ``FabricRef``
 names one by its resolved address (the fabric type). The read is the dual role:
-self-yield the bound fabric (``EMPTY`` when unbound). Fabrics are bound on the
+self-yield the bound fabric (``NULL`` when unbound). Fabrics are bound on the
 Context, not written through a Ref, so ``FabricRef`` is read-only *as a value*.
 """
 
@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from nu.lang.sentinels import EMPTY
+from nu.lang.null import Null
 
 from .._refs import _ContextRef
 
@@ -55,14 +55,14 @@ class FabricRef(_ContextRef):
           bound under ``Provide(..., tag="a")`` is not reachable here. A
           subclass that wants tags stores them itself and forwards them to
           ``ctx.get`` (see ``nustd.cluster.refs.RayServiceRef``).
-        - A binding holding EMPTY and no binding at all read the same, so use
+        - A binding holding NULL and no binding at all read the same, so use
           ``.exists()`` when the difference matters.
         - The fabric axis is for the long-lived, typed things - storage
           handles, cluster handles, clients. What an interaction hands its
           body lives on the attrs axis, read with ``Attr``.
 
     Yields:
-        The bound instance. EMPTY when the type is not bound.
+        The bound instance.
 
     Example:
         >>> class Counter:
@@ -90,7 +90,7 @@ class FabricRef(_ContextRef):
 
         def thunk(rt: Runtime) -> object:
             f = fabric(rt)
-            return rt.ctx.fabrics.get(f) if rt.ctx.fabrics.has(f) else EMPTY
+            return rt.ctx.fabrics.get(f) if rt.ctx.fabrics.has(f) else Null(_name(f))
 
         return thunk
 
@@ -99,7 +99,7 @@ class FabricRef(_ContextRef):
 
         async def athunk(rt: Runtime) -> object:
             f = await fabric(rt)
-            return rt.ctx.fabrics.get(f) if rt.ctx.fabrics.has(f) else EMPTY
+            return rt.ctx.fabrics.get(f) if rt.ctx.fabrics.has(f) else Null(_name(f))
 
         return athunk
 
@@ -107,8 +107,8 @@ class FabricRef(_ContextRef):
         """Whether this Ref's fabric type is bound on the Context, as a ``Bool``.
 
         Notes:
-            - The plain read cannot answer this: an unbound type yields EMPTY
-              and so does a type bound to EMPTY.
+            - The plain read cannot answer this: an unbound type yields NULL
+              and so does a type bound to NULL.
             - Always a bool, so it reads as one: ``.not_()``, ``.and_()``.
 
         Example:
@@ -121,3 +121,8 @@ class FabricRef(_ContextRef):
         from .queries import FabricExists
 
         return Bool(FabricExists(self))
+
+
+def _name(fabric: object) -> str:
+    """The fabric type's name, as a NULL hint."""
+    return getattr(fabric, "__qualname__", None) or repr(fabric)

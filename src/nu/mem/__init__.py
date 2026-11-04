@@ -9,7 +9,7 @@ into one dict you hand in. No storage backend, no views, no reactivity: reads
 walk the dict, writes mutate it in place, and the dict stays yours to print,
 copy or dump.
 
-A missing key on the way down reads EMPTY rather than raising, and a write
+A missing key on the way down reads NULL rather than raising, and a write
 creates whatever levels it needs, so a Shape can be laid over an empty dict
 and filled in as it goes.
 

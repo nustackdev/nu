@@ -81,12 +81,8 @@ class Dict(
                 `{"a": <x>, "b": <y>}`. Values may be Nu expressions or
                 plain literals.
 
-        Notes:
-            - A field that resolves to EMPTY collapses the whole result to
-              EMPTY.
-
         Yields:
-            The assembled dict. EMPTY when any field is EMPTY.
+            The assembled dict.
 
         Example:
             >>> nu.run(nu.Dict.of(a=1, b=2))[0]
@@ -160,7 +156,6 @@ class Dict(
         Yields:
             The value, narrowed to a concrete Form (Bool, Int, Float, Str,
             Bytes) when `V` is a known primitive type, Object otherwise.
-            EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Dict.of(a=1, b=2)["a"])[0]
@@ -179,7 +174,7 @@ class Dict(
             - Insertion order, matching Python's `dict.keys()`.
 
         Yields:
-            The keys, wrapped as DictKeys. EMPTY when self is EMPTY.
+            The keys, wrapped as DictKeys.
 
         Example:
             >>> list(nu.run(nu.Dict.of(a=1, b=2).keys())[0])
@@ -196,8 +191,7 @@ class Dict(
             - Insertion order, matching Python's `dict.values()`.
 
         Yields:
-            The values, wrapped as DictValues. EMPTY when self is
-            EMPTY.
+            The values, wrapped as DictValues.
 
         Example:
             >>> list(nu.run(nu.Dict.of(a=1, b=2).values())[0])
@@ -214,8 +208,7 @@ class Dict(
             - Insertion order, matching Python's `dict.items()`.
 
         Yields:
-            The (key, value) pairs, wrapped as DictItems. EMPTY when self
-            is EMPTY.
+            The (key, value) pairs, wrapped as DictItems.
 
         Example:
             >>> list(nu.run(nu.Dict.of(a=1, b=2).items())[0])
@@ -356,7 +349,7 @@ class Dict(
 
         Yields:
             True when the dicts have the same keys and values, False
-            otherwise. EMPTY when either operand is EMPTY.
+            otherwise.
 
         Example:
             >>> nu.run(nu.Dict.of(a=1) == nu.Dict.of(a=1))[0]
@@ -378,8 +371,7 @@ class Dict(
             - Value inequality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the dicts differ, False otherwise. EMPTY when either
-            operand is EMPTY.
+            True when the dicts differ, False otherwise.
 
         Example:
             >>> nu.run(nu.Dict.of(a=1) != nu.Dict.of(a=2))[0]

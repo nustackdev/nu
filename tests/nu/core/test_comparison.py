@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import asyncio
 
+import pytest
+
 from nu.core.comparison import Eq, Ge, Gt, Is, Le, Lt, Ne
-from nu.lang import EMPTY
+from nu.lang import NULL
 from nu.lang.helpers import aeval, compile, eval
 from nu.lang.literal import Literal
 
@@ -55,7 +57,9 @@ def test_aeval_mirrors_eval():
     assert asyncio.run(_aeval(Ge(Literal(2), Literal(1)))) is True
 
 
-def test_an_empty_operand_collapses_to_empty():
-    assert _eval(Eq(Literal(EMPTY), Literal(1))) is EMPTY
-    assert _eval(Lt(Literal(1), Literal(EMPTY))) is EMPTY
-    assert asyncio.run(_aeval(Gt(Literal(EMPTY), Literal(1)))) is EMPTY
+def test_a_null_operand_runs_the_plain_python_op():
+    assert _eval(Eq(Literal(NULL), Literal(1))) is False
+    with pytest.raises(TypeError):
+        _eval(Lt(Literal(1), Literal(NULL)))
+    with pytest.raises(TypeError):
+        asyncio.run(_aeval(Gt(Literal(NULL), Literal(1))))

@@ -196,8 +196,8 @@ class Print(Command):
         - ``sep`` / ``end`` / ``flush`` are captured at construction and
           ride in :attr:`_payload` as static Python values, never resolved
           as Nu terms.
-        - A debugging tool, so it shows what it gets: an EMPTY value prints
-          as ``<EMPTY>`` rather than raising like other writes.
+        - Prints with Python's ``print``, so a NULL value raises TypeError
+          (NULL has no string form).
 
     Yields:
         Nothing (VOID).

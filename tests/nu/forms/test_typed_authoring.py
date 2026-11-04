@@ -341,23 +341,23 @@ def test_tuple_slice_evaluates():
 
 
 def test_missing_ref_is_empty_narrows_to_bool_form():
-    assert isinstance(Int(Attr("missing")).is_empty(), Bool)
+    assert isinstance(Int(Attr("missing")).is_null(), Bool)
 
 
 def test_missing_ref_is_empty_evaluates_true():
-    assert val(Int(Attr("missing")).is_empty()) is True
+    assert val(Int(Attr("missing")).is_null()) is True
 
 
 def test_missing_ref_not_empty_evaluates_false():
-    assert val(Int(Attr("missing")).not_empty()) is False
+    assert val(Int(Attr("missing")).is_null().not_()) is False
 
 
 def test_bound_ref_is_empty_evaluates_false():
-    assert val(Int(Attr("n")).is_empty(), ctx(n=5)) is False
+    assert val(Int(Attr("n")).is_null(), ctx(n=5)) is False
 
 
 def test_bound_ref_not_empty_evaluates_true():
-    assert val(Int(Attr("n")).not_empty(), ctx(n=5)) is True
+    assert val(Int(Attr("n")).is_null().not_(), ctx(n=5)) is True
 
 
 # ---------------------------------------------------------------------------

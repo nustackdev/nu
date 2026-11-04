@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.forms.primitives import Bool, Object
-from nu.lang.sentinels import EMPTY
+from nu.lang.null import NULL, Null
 
 from .._refs import _ContextRef
 
@@ -44,15 +44,15 @@ class Attr(_ContextRef, Object):
           goes through a fabric (``nu.mem`` for local state).
         - It carries the Object form, the surface every term has. Wrap the
           read in the form it needs: ``nu.Str(nu.Attr("item")).upper()``.
-        - A name nothing bound and a name bound to EMPTY read the same, so
+        - A name nothing bound and a name bound to NULL read the same, so
           reach for ``.exists()`` when the difference matters.
 
     Yields:
-        The value at the resolved key. EMPTY when the key is unbound.
+        The value at the resolved key.
 
     Example:
         >>> nu.run(nu.Attr("missing"))[0]
-        <EMPTY>
+        <NULL Attr.missing>
 
         >>> nu.run(nu.Collect(nu.Map(nu.Iter([1, 2]), nu.Int(nu.Attr("item")) + 1)))[0]
         [2, 3]
@@ -62,7 +62,9 @@ class Attr(_ContextRef, Object):
         address = children[0]
 
         def thunk(rt: Runtime) -> object:
-            return rt.ctx.attrs.get(address(rt), EMPTY)
+            name = address(rt)
+            v = rt.ctx.attrs.get(name, NULL)
+            return Null(f"Attr.{name!s}") if v is NULL else v
 
         return thunk
 
@@ -70,7 +72,9 @@ class Attr(_ContextRef, Object):
         address = children[0]
 
         async def athunk(rt: Runtime) -> object:
-            return rt.ctx.attrs.get(await address(rt), EMPTY)
+            name = await address(rt)
+            v = rt.ctx.attrs.get(name, NULL)
+            return Null(f"Attr.{name!s}") if v is NULL else v
 
         return athunk
 
@@ -78,8 +82,8 @@ class Attr(_ContextRef, Object):
         """Whether this Ref's name is bound in ``ctx.attrs``, as a ``Bool``.
 
         Notes:
-            - The plain read cannot answer this: an unbound name yields EMPTY
-              and so does a name bound to EMPTY.
+            - The plain read cannot answer this: an unbound name yields NULL
+              and so does a name bound to NULL.
             - Only the address is resolved; the value is never read.
             - Always a bool, so it reads as one: ``.not_()``, ``.and_()``.
 

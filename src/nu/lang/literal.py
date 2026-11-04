@@ -44,8 +44,7 @@ class Literal(ScalarQuery):
           expected wraps it in a Literal automatically.
 
     Yields:
-        ``value``, unchanged, every time. Never EMPTY on its own -
-        a Literal has no children to propagate a sentinel from.
+        ``value``, unchanged, every time.
 
     Example:
         >>> nu.run(nu.Literal(42))[0]

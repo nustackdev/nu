@@ -15,6 +15,7 @@ import pytest
 from nu.engine.structure import Declared
 from nu.factory import InteractionFactory, host
 from nu.lang import (
+    NULL,
     Command,
     Literal,
     Reduction,
@@ -23,7 +24,6 @@ from nu.lang import (
     StreamQuery,
 )
 from nu.lang.helpers import arun, run
-from nu.lang.sentinels import EMPTY
 
 
 # --- class shape --------------------------------------------------------
@@ -93,10 +93,10 @@ def test_mixed_positional_and_keyword() -> None:
     assert value == 10
 
 
-def test_keyword_child_sentinel_short_circuits() -> None:
+def test_a_null_keyword_child_reaches_the_function() -> None:
     Sub = InteractionFactory(ScalarQuery, "Sub", lambda a, *, b: a - b)
-    value, _ = run(Sub(10, b=Literal(EMPTY)))
-    assert value is EMPTY
+    with pytest.raises(TypeError):
+        run(Sub(10, b=Literal(NULL)))
 
 
 def test_keyword_args_run_on_async_path() -> None:
@@ -125,12 +125,13 @@ def test_scalar_query_factory_binds_an_unbound_method() -> None:
 # --- sentinel propagation -----------------------------------------------
 
 
-def test_sentinel_short_circuits_by_default() -> None:
+def test_a_null_child_reaches_the_function() -> None:
     Add = InteractionFactory(ScalarQuery, "Add", lambda a, b: a + b)
-    value, _ = run(Add(Literal(EMPTY), 1))
-    assert value is EMPTY
-    value, _ = run(Add(1, Literal(EMPTY)))
-    assert value is EMPTY
+    with pytest.raises(TypeError):
+        run(Add(Literal(NULL), 1))
+    Same = InteractionFactory(ScalarQuery, "Same", lambda a, b: a == b)
+    value, _ = run(Same(Literal(NULL), Literal(NULL)))
+    assert value is True
 
 
 def test_propagate_off_passes_sentinels_through() -> None:
@@ -141,9 +142,9 @@ def test_propagate_off_passes_sentinels_through() -> None:
         return "ok"
 
     NoProp = InteractionFactory(ScalarQuery, "NoProp", keep, propagate_sentinels=False)
-    value, _ = run(NoProp(Literal(EMPTY), Literal(EMPTY)))
+    value, _ = run(NoProp(Literal(NULL), Literal(NULL)))
     assert value == "ok"
-    assert seen == [(EMPTY, EMPTY)]
+    assert seen == [(NULL, NULL)]
 
 
 # --- command shape ------------------------------------------------------
@@ -170,26 +171,6 @@ def test_command_thunk_returns_none_and_calls_fn() -> None:
     thunk = instance._compile(0, ())
     assert thunk(rt=None) is None
     assert calls == [()]
-
-
-def test_command_refuses_an_empty_operand() -> None:
-    calls: list[object] = []
-
-    def fn(x: object) -> object:
-        calls.append(x)
-
-    Touch = InteractionFactory(Command, "Touch", fn, mutates=frozenset({0}))
-    instance = Touch.__new__(Touch)
-    instance._children = ()
-    instance._payload = {}
-
-    def child_thunk(rt: object) -> object:
-        return EMPTY
-
-    thunk = instance._compile(0, (child_thunk,))
-    with pytest.raises(ValueError, match="EMPTY"):
-        thunk(rt=None)
-    assert calls == []  # fn never ran
 
 
 # --- async inference ----------------------------------------------------

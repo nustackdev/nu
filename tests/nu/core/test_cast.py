@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import asyncio
 
+import pytest
+
 from nu.core.cast import (
     ToByteArray,
     ToBytes,
@@ -26,7 +28,7 @@ from nu.core.cast import (
     ToStr,
     ToTuple,
 )
-from nu.lang import EMPTY, Attr, Cardinality, Sort
+from nu.lang import NULL, Attr, Cardinality, Sort
 from nu.lang.helpers import aeval, compile, eval
 from nu.lang.literal import Literal
 
@@ -95,12 +97,18 @@ def test_bytearray_with_encoding():
 
 
 def test_an_empty_operand_collapses_to_empty():
-    assert _eval(ToInt(Literal(EMPTY))) is EMPTY
-    assert _eval(ToFloat(Literal(EMPTY))) is EMPTY
-    assert _eval(ToStr(Literal(EMPTY))) is EMPTY
-    assert _eval(ToInt(Literal("ff"), Literal(EMPTY))) is EMPTY
-    assert _eval(ToComplex(Literal(EMPTY), Literal(1))) is EMPTY
-    assert _eval(ToBytes(Literal("hi"), Literal(EMPTY))) is EMPTY
+    with pytest.raises(TypeError):
+        _eval(ToInt(Literal(NULL)))
+    with pytest.raises(TypeError):
+        _eval(ToFloat(Literal(NULL)))
+    with pytest.raises(TypeError):
+        _eval(ToStr(Literal(NULL)))
+    with pytest.raises(TypeError):
+        _eval(ToInt(Literal("ff"), Literal(NULL)))
+    with pytest.raises(TypeError):
+        _eval(ToComplex(Literal(NULL), Literal(1)))
+    with pytest.raises(TypeError):
+        _eval(ToBytes(Literal("hi"), Literal(NULL)))
 
 
 # --- async mirrors sync --------------------------------------------------
@@ -112,7 +120,8 @@ def test_aeval_mirrors_eval():
     assert asyncio.run(_aeval(ToStr(Literal(7)))) == "7"
     assert asyncio.run(_aeval(ToInt(Literal("ff"), Literal(16)))) == 255
     assert asyncio.run(_aeval(ToComplex(Literal(1), Literal(2)))) == complex(1, 2)
-    assert asyncio.run(_aeval(ToInt(Literal(EMPTY)))) is EMPTY
+    with pytest.raises(TypeError):
+        asyncio.run(_aeval(ToInt(Literal(NULL))))
 
 
 # --- collection constructors ---------------------------------------------
@@ -134,8 +143,10 @@ def test_collection_constructors_build_their_containers():
 
 
 def test_collection_constructor_propagates_a_sentinel():
-    assert _eval(ToList(Literal(EMPTY))) is EMPTY
-    assert _eval(ToDict(Literal(EMPTY))) is EMPTY
+    with pytest.raises(TypeError):
+        _eval(ToList(Literal(NULL)))
+    with pytest.raises(TypeError):
+        _eval(ToDict(Literal(NULL)))
 
 
 def test_collection_aeval_mirrors_eval():

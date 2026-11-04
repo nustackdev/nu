@@ -108,8 +108,8 @@ class Eval(Interaction):
           local to the subtree that ran it.
 
     Yields:
-        Whatever the inner tree yields, unchanged. Eval adds no EMPTY rule of
-        its own, so EMPTY from the inner tree passes straight
+        Whatever the inner tree yields, unchanged. Eval adds no NULL rule of
+        its own, so NULL from the inner tree passes straight
         out.
 
     Example:

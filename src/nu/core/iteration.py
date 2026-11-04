@@ -26,7 +26,6 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import ScalarAction, StreamQuery
-from nu.lang.sentinels import EMPTY
 
 from ._stream import aiter_any, sync_iter
 
@@ -86,10 +85,6 @@ class Enumerate(StreamQuery):
         source: the stream to enumerate.
         start: the first index. Optional: leave the child out to start at 0.
 
-    Notes:
-        - An EMPTY ``start`` collapses the whole result to an empty stream
-          rather than raising or falling back to 0.
-
     Yields:
         ``(index, item)`` tuples, one per item of ``source``, the index
         counting up from ``start`` (Python's ``enumerate``).
@@ -109,10 +104,7 @@ class Enumerate(StreamQuery):
         def thunk(rt: Runtime) -> object:
             if start is None:
                 return enumerate(sync_iter(source(rt)))
-            s = start(rt)
-            if s is EMPTY:
-                return iter(())
-            return enumerate(sync_iter(source(rt)), s)
+            return enumerate(sync_iter(source(rt)), start(rt))
 
         return thunk
 
@@ -123,10 +115,7 @@ class Enumerate(StreamQuery):
         async def athunk(rt: Runtime) -> object:
             begin = 0
             if start is not None:
-                s = await start(rt)
-                if s is EMPTY:
-                    return aiter_any(())
-                begin = s
+                begin = await start(rt)
             src = await source(rt)
 
             async def agen() -> object:

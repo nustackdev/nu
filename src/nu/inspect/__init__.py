@@ -43,8 +43,8 @@ absence is not flagged.
    what short-circuits, what an operator does not reach. A note is not a
    sentence of the description that got moved.
 
-5. Yields. What evaluating the subject produces, including how it behaves on
-   EMPTY when that is not the plain rule. On an atom the return
+5. Yields. What evaluating the subject produces, including what it raises
+   when that is not the plain rule. On an atom the return
    annotation is missing, so this is the only place the yield type lives. On
    a method the annotation carries the type; write Yields when there is
    meaning beyond the type - sentinel behaviour, promotion, edge conditions.

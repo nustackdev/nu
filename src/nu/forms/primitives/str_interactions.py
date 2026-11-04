@@ -21,7 +21,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
-from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -92,8 +91,6 @@ class Upper(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.upper()
 
         return thunk
@@ -103,8 +100,6 @@ class Upper(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.upper()
 
         return athunk
@@ -118,8 +113,6 @@ class Lower(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.lower()
 
         return thunk
@@ -129,8 +122,6 @@ class Lower(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.lower()
 
         return athunk
@@ -144,8 +135,6 @@ class Title(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.title()
 
         return thunk
@@ -155,8 +144,6 @@ class Title(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.title()
 
         return athunk
@@ -170,8 +157,6 @@ class Capitalize(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.capitalize()
 
         return thunk
@@ -181,8 +166,6 @@ class Capitalize(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.capitalize()
 
         return athunk
@@ -196,8 +179,6 @@ class SwapCase(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.swapcase()
 
         return thunk
@@ -207,8 +188,6 @@ class SwapCase(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.swapcase()
 
         return athunk
@@ -227,8 +206,6 @@ class IsDigit(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isdigit()
 
         return thunk
@@ -238,8 +215,6 @@ class IsDigit(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isdigit()
 
         return athunk
@@ -253,8 +228,6 @@ class IsAlpha(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isalpha()
 
         return thunk
@@ -264,8 +237,6 @@ class IsAlpha(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isalpha()
 
         return athunk
@@ -279,8 +250,6 @@ class IsAlnum(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isalnum()
 
         return thunk
@@ -290,8 +259,6 @@ class IsAlnum(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isalnum()
 
         return athunk
@@ -305,8 +272,6 @@ class IsSpace(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isspace()
 
         return thunk
@@ -316,8 +281,6 @@ class IsSpace(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isspace()
 
         return athunk
@@ -336,11 +299,7 @@ class Strip(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.strip(right)
 
         return thunk
@@ -350,11 +309,7 @@ class Strip(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.strip(right)
 
         return athunk
@@ -368,11 +323,7 @@ class LStrip(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.lstrip(right)
 
         return thunk
@@ -382,11 +333,7 @@ class LStrip(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.lstrip(right)
 
         return athunk
@@ -400,11 +347,7 @@ class RStrip(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.rstrip(right)
 
         return thunk
@@ -414,11 +357,7 @@ class RStrip(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.rstrip(right)
 
         return athunk
@@ -437,14 +376,8 @@ class Split(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             first = first_t(rt)
-            if first is EMPTY:
-                return EMPTY
             second = second_t(rt)
-            if second is EMPTY:
-                return EMPTY
             third = third_t(rt)
-            if third is EMPTY:
-                return EMPTY
             return first.split(second, int(third))
 
         return thunk
@@ -454,14 +387,8 @@ class Split(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             first = await first_t(rt)
-            if first is EMPTY:
-                return EMPTY
             second = await second_t(rt)
-            if second is EMPTY:
-                return EMPTY
             third = await third_t(rt)
-            if third is EMPTY:
-                return EMPTY
             return first.split(second, int(third))
 
         return athunk
@@ -475,14 +402,8 @@ class RSplit(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             first = first_t(rt)
-            if first is EMPTY:
-                return EMPTY
             second = second_t(rt)
-            if second is EMPTY:
-                return EMPTY
             third = third_t(rt)
-            if third is EMPTY:
-                return EMPTY
             return first.rsplit(second, int(third))
 
         return thunk
@@ -492,14 +413,8 @@ class RSplit(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             first = await first_t(rt)
-            if first is EMPTY:
-                return EMPTY
             second = await second_t(rt)
-            if second is EMPTY:
-                return EMPTY
             third = await third_t(rt)
-            if third is EMPTY:
-                return EMPTY
             return first.rsplit(second, int(third))
 
         return athunk
@@ -518,17 +433,9 @@ class Find(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY:
-                return EMPTY
             sub = sub_t(rt)
-            if sub is EMPTY:
-                return EMPTY
             start = start_t(rt)
-            if start is EMPTY:
-                return EMPTY
             end = end_t(rt)
-            if end is EMPTY:
-                return EMPTY
             if end is None:
                 return operand.find(sub, int(start))
             return operand.find(sub, int(start), int(end))
@@ -540,17 +447,9 @@ class Find(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY:
-                return EMPTY
             sub = await sub_t(rt)
-            if sub is EMPTY:
-                return EMPTY
             start = await start_t(rt)
-            if start is EMPTY:
-                return EMPTY
             end = await end_t(rt)
-            if end is EMPTY:
-                return EMPTY
             if end is None:
                 return operand.find(sub, int(start))
             return operand.find(sub, int(start), int(end))
@@ -566,17 +465,9 @@ class RFind(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY:
-                return EMPTY
             sub = sub_t(rt)
-            if sub is EMPTY:
-                return EMPTY
             start = start_t(rt)
-            if start is EMPTY:
-                return EMPTY
             end = end_t(rt)
-            if end is EMPTY:
-                return EMPTY
             if end is None:
                 return operand.rfind(sub, int(start))
             return operand.rfind(sub, int(start), int(end))
@@ -588,17 +479,9 @@ class RFind(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY:
-                return EMPTY
             sub = await sub_t(rt)
-            if sub is EMPTY:
-                return EMPTY
             start = await start_t(rt)
-            if start is EMPTY:
-                return EMPTY
             end = await end_t(rt)
-            if end is EMPTY:
-                return EMPTY
             if end is None:
                 return operand.rfind(sub, int(start))
             return operand.rfind(sub, int(start), int(end))
@@ -614,11 +497,7 @@ class CountSubstring(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.count(right)
 
         return thunk
@@ -628,11 +507,7 @@ class CountSubstring(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.count(right)
 
         return athunk
@@ -651,11 +526,7 @@ class StartsWith(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.startswith(right)
 
         return thunk
@@ -665,11 +536,7 @@ class StartsWith(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.startswith(right)
 
         return athunk
@@ -683,11 +550,7 @@ class EndsWith(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.endswith(right)
 
         return thunk
@@ -697,11 +560,7 @@ class EndsWith(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.endswith(right)
 
         return athunk
@@ -720,14 +579,8 @@ class Center(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             first = first_t(rt)
-            if first is EMPTY:
-                return EMPTY
             second = second_t(rt)
-            if second is EMPTY:
-                return EMPTY
             third = third_t(rt)
-            if third is EMPTY:
-                return EMPTY
             return first.center(second, third)
 
         return thunk
@@ -737,14 +590,8 @@ class Center(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             first = await first_t(rt)
-            if first is EMPTY:
-                return EMPTY
             second = await second_t(rt)
-            if second is EMPTY:
-                return EMPTY
             third = await third_t(rt)
-            if third is EMPTY:
-                return EMPTY
             return first.center(second, third)
 
         return athunk
@@ -758,14 +605,8 @@ class LJust(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             first = first_t(rt)
-            if first is EMPTY:
-                return EMPTY
             second = second_t(rt)
-            if second is EMPTY:
-                return EMPTY
             third = third_t(rt)
-            if third is EMPTY:
-                return EMPTY
             return first.ljust(second, third)
 
         return thunk
@@ -775,14 +616,8 @@ class LJust(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             first = await first_t(rt)
-            if first is EMPTY:
-                return EMPTY
             second = await second_t(rt)
-            if second is EMPTY:
-                return EMPTY
             third = await third_t(rt)
-            if third is EMPTY:
-                return EMPTY
             return first.ljust(second, third)
 
         return athunk
@@ -796,14 +631,8 @@ class RJust(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             first = first_t(rt)
-            if first is EMPTY:
-                return EMPTY
             second = second_t(rt)
-            if second is EMPTY:
-                return EMPTY
             third = third_t(rt)
-            if third is EMPTY:
-                return EMPTY
             return first.rjust(second, third)
 
         return thunk
@@ -813,14 +642,8 @@ class RJust(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             first = await first_t(rt)
-            if first is EMPTY:
-                return EMPTY
             second = await second_t(rt)
-            if second is EMPTY:
-                return EMPTY
             third = await third_t(rt)
-            if third is EMPTY:
-                return EMPTY
             return first.rjust(second, third)
 
         return athunk
@@ -834,11 +657,7 @@ class ZFill(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.zfill(right)
 
         return thunk
@@ -848,11 +667,7 @@ class ZFill(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.zfill(right)
 
         return athunk
@@ -871,17 +686,9 @@ class Replace(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY:
-                return EMPTY
             old = old_t(rt)
-            if old is EMPTY:
-                return EMPTY
             new = new_t(rt)
-            if new is EMPTY:
-                return EMPTY
             count = count_t(rt)
-            if count is EMPTY:
-                return EMPTY
             count_int = int(count)
             if count_int == -1:
                 return operand.replace(old, new)
@@ -894,17 +701,9 @@ class Replace(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY:
-                return EMPTY
             old = await old_t(rt)
-            if old is EMPTY:
-                return EMPTY
             new = await new_t(rt)
-            if new is EMPTY:
-                return EMPTY
             count = await count_t(rt)
-            if count is EMPTY:
-                return EMPTY
             count_int = int(count)
             if count_int == -1:
                 return operand.replace(old, new)
@@ -926,11 +725,7 @@ class Encode(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.encode(right)
 
         return thunk
@@ -940,11 +735,7 @@ class Encode(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.encode(right)
 
         return athunk
@@ -963,11 +754,7 @@ class Join(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.join(right)
 
         return thunk
@@ -977,11 +764,7 @@ class Join(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.join(right)
 
         return athunk
@@ -1000,8 +783,6 @@ class Casefold(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.casefold()
 
         return thunk
@@ -1011,8 +792,6 @@ class Casefold(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.casefold()
 
         return athunk
@@ -1031,8 +810,6 @@ class IsNumeric(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isnumeric()
 
         return thunk
@@ -1042,8 +819,6 @@ class IsNumeric(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isnumeric()
 
         return athunk
@@ -1057,8 +832,6 @@ class IsDecimal(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isdecimal()
 
         return thunk
@@ -1068,8 +841,6 @@ class IsDecimal(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isdecimal()
 
         return athunk
@@ -1083,8 +854,6 @@ class IsIdentifier(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isidentifier()
 
         return thunk
@@ -1094,8 +863,6 @@ class IsIdentifier(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isidentifier()
 
         return athunk
@@ -1109,8 +876,6 @@ class IsPrintable(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isprintable()
 
         return thunk
@@ -1120,8 +885,6 @@ class IsPrintable(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isprintable()
 
         return athunk
@@ -1135,8 +898,6 @@ class IsTitle(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.istitle()
 
         return thunk
@@ -1146,8 +907,6 @@ class IsTitle(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.istitle()
 
         return athunk
@@ -1161,8 +920,6 @@ class IsUpper(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isupper()
 
         return thunk
@@ -1172,8 +929,6 @@ class IsUpper(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isupper()
 
         return athunk
@@ -1187,8 +942,6 @@ class IsLower(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.islower()
 
         return thunk
@@ -1198,8 +951,6 @@ class IsLower(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.islower()
 
         return athunk
@@ -1213,8 +964,6 @@ class IsAscii(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isascii()
 
         return thunk
@@ -1224,8 +973,6 @@ class IsAscii(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await operand(rt)
-            if v is EMPTY:
-                return EMPTY
             return v.isascii()
 
         return athunk
@@ -1244,11 +991,7 @@ class ExpandTabs(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.expandtabs(right)
 
         return thunk
@@ -1258,11 +1001,7 @@ class ExpandTabs(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.expandtabs(right)
 
         return athunk
@@ -1281,11 +1020,7 @@ class Partition(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.partition(right)
 
         return thunk
@@ -1295,11 +1030,7 @@ class Partition(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.partition(right)
 
         return athunk
@@ -1313,11 +1044,7 @@ class RPartition(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.rpartition(right)
 
         return thunk
@@ -1327,11 +1054,7 @@ class RPartition(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.rpartition(right)
 
         return athunk
@@ -1350,11 +1073,7 @@ class SplitLines(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.splitlines(bool(right))
 
         return thunk
@@ -1364,11 +1083,7 @@ class SplitLines(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.splitlines(bool(right))
 
         return athunk
@@ -1380,30 +1095,19 @@ class SplitLines(ScalarQuery):
 
 
 class Index(ScalarQuery):
-    """Find substring index, EMPTY if absent: str.index(sub, start, end)."""
+    """Find substring index: str.index(sub, start, end). Raises ValueError if absent."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         operand_t, sub_t, start_t, end_t = children
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY:
-                return EMPTY
             sub = sub_t(rt)
-            if sub is EMPTY:
-                return EMPTY
             start = start_t(rt)
-            if start is EMPTY:
-                return EMPTY
             end = end_t(rt)
-            if end is EMPTY:
-                return EMPTY
-            try:
-                if end is None:
-                    return operand.index(sub, int(start))
-                return operand.index(sub, int(start), int(end))
-            except ValueError:
-                return EMPTY
+            if end is None:
+                return operand.index(sub, int(start))
+            return operand.index(sub, int(start), int(end))
 
         return thunk
 
@@ -1412,52 +1116,30 @@ class Index(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY:
-                return EMPTY
             sub = await sub_t(rt)
-            if sub is EMPTY:
-                return EMPTY
             start = await start_t(rt)
-            if start is EMPTY:
-                return EMPTY
             end = await end_t(rt)
-            if end is EMPTY:
-                return EMPTY
-            try:
-                if end is None:
-                    return operand.index(sub, int(start))
-                return operand.index(sub, int(start), int(end))
-            except ValueError:
-                return EMPTY
+            if end is None:
+                return operand.index(sub, int(start))
+            return operand.index(sub, int(start), int(end))
 
         return athunk
 
 
 class RIndex(ScalarQuery):
-    """Find substring index from right, EMPTY if absent: str.rindex(sub, start, end)."""
+    """Find substring index from right: str.rindex(sub, start, end). ValueError if absent."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         operand_t, sub_t, start_t, end_t = children
 
         def thunk(rt: Runtime) -> object:
             operand = operand_t(rt)
-            if operand is EMPTY:
-                return EMPTY
             sub = sub_t(rt)
-            if sub is EMPTY:
-                return EMPTY
             start = start_t(rt)
-            if start is EMPTY:
-                return EMPTY
             end = end_t(rt)
-            if end is EMPTY:
-                return EMPTY
-            try:
-                if end is None:
-                    return operand.rindex(sub, int(start))
-                return operand.rindex(sub, int(start), int(end))
-            except ValueError:
-                return EMPTY
+            if end is None:
+                return operand.rindex(sub, int(start))
+            return operand.rindex(sub, int(start), int(end))
 
         return thunk
 
@@ -1466,23 +1148,12 @@ class RIndex(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             operand = await operand_t(rt)
-            if operand is EMPTY:
-                return EMPTY
             sub = await sub_t(rt)
-            if sub is EMPTY:
-                return EMPTY
             start = await start_t(rt)
-            if start is EMPTY:
-                return EMPTY
             end = await end_t(rt)
-            if end is EMPTY:
-                return EMPTY
-            try:
-                if end is None:
-                    return operand.rindex(sub, int(start))
-                return operand.rindex(sub, int(start), int(end))
-            except ValueError:
-                return EMPTY
+            if end is None:
+                return operand.rindex(sub, int(start))
+            return operand.rindex(sub, int(start), int(end))
 
         return athunk
 
@@ -1500,11 +1171,7 @@ class RemovePrefix(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.removeprefix(right)
 
         return thunk
@@ -1514,11 +1181,7 @@ class RemovePrefix(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.removeprefix(right)
 
         return athunk
@@ -1532,11 +1195,7 @@ class RemoveSuffix(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.removesuffix(right)
 
         return thunk
@@ -1546,11 +1205,7 @@ class RemoveSuffix(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             right = await right_t(rt)
-            if right is EMPTY:
-                return EMPTY
             return left.removesuffix(right)
 
         return athunk
@@ -1569,11 +1224,7 @@ class Translate(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             table = table_t(rt)
-            if table is EMPTY:
-                return EMPTY
             return left.translate(table)
 
         return thunk
@@ -1583,11 +1234,7 @@ class Translate(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             table = await table_t(rt)
-            if table is EMPTY:
-                return EMPTY
             return left.translate(table)
 
         return athunk
@@ -1606,11 +1253,7 @@ class FormatMap(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             left = left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             mapping = mapping_t(rt)
-            if mapping is EMPTY:
-                return EMPTY
             return left.format_map(mapping)
 
         return thunk
@@ -1620,11 +1263,7 @@ class FormatMap(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             left = await left_t(rt)
-            if left is EMPTY:
-                return EMPTY
             mapping = await mapping_t(rt)
-            if mapping is EMPTY:
-                return EMPTY
             return left.format_map(mapping)
 
         return athunk

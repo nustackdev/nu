@@ -41,8 +41,7 @@ class ContainerForm(Form):
             item: the value to test for membership.
 
         Yields:
-            True when item is in self, False otherwise. EMPTY when self or
-            item is EMPTY.
+            True when item is in self, False otherwise.
 
         Example:
             >>> nu.run(nu.Set({1, 2, 3}).contains(2))[0]

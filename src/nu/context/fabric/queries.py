@@ -1,7 +1,7 @@
 """Fabric existence query.
 
-The dual-role read of a ``FabricRef`` yields the bound fabric or ``EMPTY``.
-That aliases a bound ``EMPTY``, so existence needs an explicit query.
+The dual-role read of a ``FabricRef`` yields the bound fabric or ``NULL``.
+That aliases a bound ``NULL``, so existence needs an explicit query.
 ``FabricExists`` holds a ``FabricRef`` in a read slot and answers
 whether its fabric type is bound on the Context.
 """
@@ -32,7 +32,7 @@ class FabricExists(ScalarQuery):
         - Normally written as ``FabricRef(...).exists()`` rather than built by
           hand.
         - Exists because the dual-role read cannot answer the question: an
-          unbound type yields EMPTY, and so does a type bound to EMPTY.
+          unbound type yields NULL, and so does a type bound to NULL.
         - Answering goes through Context resolution, so a lazily bound
           factory is materialized by the check itself.
 

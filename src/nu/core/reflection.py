@@ -17,9 +17,7 @@ list / dict), not streams.
 Each atom defines ``compile`` (sync hot path) and ``acompile`` (async hot
 path). Both return a thunk ``(rt) -> value`` (sync) or ``(rt) -> awaitable``
 (async) that captures the precompiled child thunks, so recursion skips the
-``Runtime.eval`` / ``Runtime.aeval`` dispatch hop per child. Sentinel
-propagation is inlined: an EMPTY operand collapses the result to EMPTY
-without inspecting.
+``Runtime.eval`` / ``Runtime.aeval`` dispatch hop per child.
 
 OOP descriptors (``super``, ``object``, ``property``, ``classmethod``,
 ``staticmethod``, ``memoryview``) are not in this pass. They go to extensions
@@ -31,7 +29,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
-from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -58,7 +55,7 @@ class Type(ScalarQuery):
         value: the value to inspect.
 
     Yields:
-        The value's type. EMPTY when the child is EMPTY.
+        The value's type.
 
     Example:
         >>> nu.run(nu.Type(5))[0]
@@ -70,8 +67,6 @@ class Type(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return type(v)
 
         return thunk
@@ -81,8 +76,6 @@ class Type(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return type(v)
 
         return athunk
@@ -95,12 +88,8 @@ class IsInstance(ScalarQuery):
         value: the value to check.
         klass: the type, or tuple of types, to check against.
 
-    Notes:
-        - The right child is evaluated only after the left yields a value, so
-          a sentinel on the left short-circuits without touching the right.
-
     Yields:
-        True or False. EMPTY when either child is EMPTY.
+        True or False.
 
     Example:
         >>> nu.run(nu.IsInstance(5, int))[0]
@@ -112,11 +101,7 @@ class IsInstance(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = value(rt)
-            if v is EMPTY:
-                return EMPTY
             k = klass(rt)
-            if k is EMPTY:
-                return EMPTY
             return isinstance(v, k)
 
         return thunk
@@ -126,11 +111,7 @@ class IsInstance(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await value(rt)
-            if v is EMPTY:
-                return EMPTY
             k = await klass(rt)
-            if k is EMPTY:
-                return EMPTY
             return isinstance(v, k)
 
         return athunk
@@ -143,12 +124,8 @@ class IsSubclass(ScalarQuery):
         cls: the class to check.
         klass: the type, or tuple of types, to check against.
 
-    Notes:
-        - The right child is evaluated only after the left yields a value, so
-          a sentinel on the left short-circuits without touching the right.
-
     Yields:
-        True or False. EMPTY when either child is EMPTY.
+        True or False.
 
     Example:
         >>> nu.run(nu.IsSubclass(bool, int))[0]
@@ -160,11 +137,7 @@ class IsSubclass(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             c = cls(rt)
-            if c is EMPTY:
-                return EMPTY
             k = klass(rt)
-            if k is EMPTY:
-                return EMPTY
             return issubclass(c, k)
 
         return thunk
@@ -174,11 +147,7 @@ class IsSubclass(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             c = await cls(rt)
-            if c is EMPTY:
-                return EMPTY
             k = await klass(rt)
-            if k is EMPTY:
-                return EMPTY
             return issubclass(c, k)
 
         return athunk
@@ -195,7 +164,7 @@ class Callable(ScalarQuery):
           and still fail when actually called, same as Python's ``callable``.
 
     Yields:
-        True or False. EMPTY when the child is EMPTY.
+        True or False.
 
     Example:
         >>> nu.run(nu.Callable(len))[0]
@@ -207,8 +176,6 @@ class Callable(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return callable(v)
 
         return thunk
@@ -218,8 +185,6 @@ class Callable(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return callable(v)
 
         return athunk
@@ -236,8 +201,7 @@ class Id(ScalarQuery):
           lifetime, so it's only meaningful while the object stays alive.
 
     Yields:
-        An integer unique to the object for its lifetime. EMPTY when the
-        child is EMPTY.
+        An integer unique to the object for its lifetime.
 
     Example:
         >>> nu.run(nu.Id(5))[0] == id(5)
@@ -249,8 +213,6 @@ class Id(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return id(v)
 
         return thunk
@@ -260,8 +222,6 @@ class Id(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return id(v)
 
         return athunk
@@ -275,10 +235,10 @@ class Hash(ScalarQuery):
 
     Notes:
         - Only hashable values work. An unhashable child raises, same as
-          Python's ``hash``, since that's a real error and not a sentinel.
+          Python's ``hash``.
 
     Yields:
-        An integer. EMPTY when the child is EMPTY.
+        An integer.
 
     Example:
         >>> nu.run(nu.Hash("abc"))[0] == hash("abc")
@@ -290,8 +250,6 @@ class Hash(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return hash(v)
 
         return thunk
@@ -301,8 +259,6 @@ class Hash(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return hash(v)
 
         return athunk
@@ -315,8 +271,7 @@ class Dir(ScalarQuery):
         value: the value to inspect.
 
     Yields:
-        A sorted list of attribute names. EMPTY when the child is
-        EMPTY.
+        A sorted list of attribute names.
 
     Example:
         >>> nu.run(nu.Dir(True))[0][:3]
@@ -328,8 +283,6 @@ class Dir(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return dir(v)
 
         return thunk
@@ -339,8 +292,6 @@ class Dir(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return dir(v)
 
         return athunk
@@ -357,7 +308,7 @@ class Vars(ScalarQuery):
           classes) raise, same as Python's ``vars``.
 
     Yields:
-        A dict. EMPTY when the child is EMPTY.
+        A dict.
 
     Example:
         >>> class Point:
@@ -373,8 +324,6 @@ class Vars(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return vars(v)
 
         return thunk
@@ -384,8 +333,6 @@ class Vars(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return vars(v)
 
         return athunk

@@ -4,9 +4,9 @@
 - ``FabricLifecycle(Fabric)`` - a Fabric with optional setup / cleanup
   (sync + async, all optional). What ``Provide`` installs into ctx.
 - ``FabricRef`` - Ref that self-yields a Fabric bound on the Context, or
-  ``EMPTY`` when nothing is bound. Subclass and set ``fabric = SomeFabric``
+  ``NULL`` when nothing is bound. Subclass and set ``fabric = SomeFabric``
   to name a typed binding.
-- ``FabricExists`` - explicit existence check, since a bound ``EMPTY``
+- ``FabricExists`` - explicit existence check, since a bound ``NULL``
   aliases "unbound" under the dual-role read.
 - ``Provide`` / ``ProvideList`` / ``ProvideDict`` - Brackets that construct
   a fabric on entry, bind it on ctx, and tear down in reverse on exit.

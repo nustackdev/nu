@@ -16,8 +16,8 @@ Wire-up:
 
 - ``exc_cls`` is a plain Python class captured in the atom's payload -- the
   exception type is a structural detail of the tree, not run-time data.
-- ``msg`` is any Nu expression yielding a value (typically a str). An
-  ``EMPTY`` message still raises, with ``<EMPTY>`` as the message.
+- ``msg`` is any Nu expression yielding a value (typically a str). A NULL
+  message still raises, though the exception cannot render it as text.
 """
 
 from __future__ import annotations
@@ -50,8 +50,7 @@ class Raise(Control):
         - ``exc_cls`` is a plain Python class captured in the payload, not a
           child - the exception type is a structural detail of the tree, not
           run-time data.
-        - An EMPTY ``msg`` still raises, with ``<EMPTY>`` as the message, the
-          way ``print`` shows it. A raise is never skipped.
+        - A raise is never skipped.
 
     Yields:
         Never returns normally; raises ``exc_cls(msg)``.

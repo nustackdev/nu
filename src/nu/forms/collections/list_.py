@@ -82,8 +82,7 @@ class List(
               wrapping.
 
         Yields:
-            The list `[<items[0]>, <items[1]>, ...]`. EMPTY when any item
-            is EMPTY.
+            The list `[<items[0]>, <items[1]>, ...]`.
 
         Example:
             >>> nu.run(nu.List.of(1, 2, 3))[0]
@@ -157,8 +156,7 @@ class List(
               else falls back to `Object`.
 
         Yields:
-            The element for an int key, the sublist for a slice. EMPTY
-            when self is EMPTY.
+            The element for an int key, the sublist for a slice.
 
         Example:
             >>> nu.run(nu.List.of(1, 2, 3)[1])[0]
@@ -180,8 +178,7 @@ class List(
             other: the list to append to self.
 
         Yields:
-            The concatenation. EMPTY when either operand is
-            EMPTY.
+            The concatenation.
 
         Example:
             >>> nu.run(nu.List.of(1, 2) + nu.List.of(3, 4))[0]
@@ -203,8 +200,7 @@ class List(
               never lands here.
 
         Yields:
-            The concatenation. EMPTY when either operand is
-            EMPTY.
+            The concatenation.
 
         Example:
             >>> nu.run([1, 2] + nu.List.of(3, 4))[0]
@@ -238,8 +234,7 @@ class List(
             n: the repeat count. `0` or negative yields an empty list.
 
         Yields:
-            The repeated list. EMPTY when self is
-            EMPTY.
+            The repeated list.
 
         Example:
             >>> nu.run(nu.List.of(1, 2) * 3)[0]
@@ -260,8 +255,7 @@ class List(
               Nu Int on the left goes through `__mul__` instead.
 
         Yields:
-            The repeated list. EMPTY when self is
-            EMPTY.
+            The repeated list.
 
         Example:
             >>> nu.run(3 * nu.List.of(1, 2))[0]
@@ -340,8 +334,7 @@ class List(
             other: the list to compare against.
 
         Yields:
-            True when self sorts after other, False otherwise. EMPTY when
-            either operand is EMPTY.
+            True when self sorts after other, False otherwise.
 
         Example:
             >>> nu.run(nu.List.of(1, 3) > nu.List.of(1, 2))[0]
@@ -360,8 +353,7 @@ class List(
             other: the list to compare against.
 
         Yields:
-            True when self sorts before other, False otherwise. EMPTY
-            when either operand is EMPTY.
+            True when self sorts before other, False otherwise.
 
         Example:
             >>> nu.run(nu.List.of(1, 2) < nu.List.of(1, 3))[0]
@@ -381,7 +373,6 @@ class List(
 
         Yields:
             True when self sorts after or equal to other, False otherwise.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.List.of(1, 2) >= nu.List.of(1, 2))[0]
@@ -401,7 +392,6 @@ class List(
 
         Yields:
             True when self sorts before or equal to other, False otherwise.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.List.of(1, 2) <= nu.List.of(1, 3))[0]
@@ -423,8 +413,7 @@ class List(
             - Value equality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the lists compare equal, False otherwise. EMPTY
-            when either operand is EMPTY.
+            True when the lists compare equal, False otherwise.
 
         Example:
             >>> nu.run(nu.List.of(1, 2) == nu.List.of(1, 2))[0]
@@ -446,8 +435,7 @@ class List(
             - Value inequality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the lists differ, False otherwise. EMPTY when
-            either operand is EMPTY.
+            True when the lists differ, False otherwise.
 
         Example:
             >>> nu.run(nu.List.of(1, 2) != nu.List.of(1, 3))[0]

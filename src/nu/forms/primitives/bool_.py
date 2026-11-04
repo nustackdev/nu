@@ -52,8 +52,7 @@ class Bool(Form, TypedNu[bool]):
               evaluated when the left does not already decide the result.
 
         Yields:
-            True when both operands are True, False otherwise. An EMPTY operand
-            counts as false.
+            True when both operands are True, False otherwise.
 
         Example:
             >>> nu.run(nu.Bool(True).and_(nu.Bool(False)))[0]
@@ -74,8 +73,7 @@ class Bool(Form, TypedNu[bool]):
               evaluated when the left does not already decide the result.
 
         Yields:
-            True when either operand is True, False otherwise. An EMPTY operand
-            counts as false.
+            True when either operand is True, False otherwise.
 
         Example:
             >>> nu.run(nu.Bool(False).or_(nu.Bool(True)))[0]
@@ -89,8 +87,7 @@ class Bool(Form, TypedNu[bool]):
         """Logical NOT of self.
 
         Yields:
-            True when self is False, False when self is True. EMPTY when
-            self is EMPTY.
+            True when self is False, False when self is True.
 
         Example:
             >>> nu.run(nu.Bool(True).not_())[0]
@@ -108,7 +105,7 @@ class Bool(Form, TypedNu[bool]):
               consistency with `Int.bool_` and `Float.bool_`.
 
         Yields:
-            self, unchanged. EMPTY when self is EMPTY.
+            self, unchanged.
 
         Example:
             >>> nu.run(nu.Bool(True).bool_())[0]
@@ -131,7 +128,6 @@ class Bool(Form, TypedNu[bool]):
 
         Yields:
             True when self is True and other is False, False otherwise.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Bool(True) > nu.Bool(False))[0]
@@ -150,7 +146,6 @@ class Bool(Form, TypedNu[bool]):
 
         Yields:
             True when self is False and other is True, False otherwise.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Bool(True) < nu.Bool(False))[0]
@@ -168,8 +163,7 @@ class Bool(Form, TypedNu[bool]):
                 with False less than True.
 
         Yields:
-            True when self is at least other, False otherwise. EMPTY when
-            either operand is EMPTY.
+            True when self is at least other, False otherwise.
 
         Example:
             >>> nu.run(nu.Bool(True) >= nu.Bool(True))[0]
@@ -187,8 +181,7 @@ class Bool(Form, TypedNu[bool]):
                 with False less than True.
 
         Yields:
-            True when self is at most other, False otherwise. EMPTY when
-            either operand is EMPTY.
+            True when self is at most other, False otherwise.
 
         Example:
             >>> nu.run(nu.Bool(False) <= nu.Bool(True))[0]
@@ -208,8 +201,7 @@ class Bool(Form, TypedNu[bool]):
             - Value equality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the values compare equal, False otherwise. EMPTY
-            when either operand is EMPTY.
+            True when the values compare equal, False otherwise.
 
         Example:
             >>> nu.run(nu.Bool(True) == True)[0]
@@ -229,8 +221,7 @@ class Bool(Form, TypedNu[bool]):
             - Value inequality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the values differ, False otherwise. EMPTY when
-            either operand is EMPTY.
+            True when the values differ, False otherwise.
 
         Example:
             >>> nu.run(nu.Bool(True) != nu.Bool(False))[0]

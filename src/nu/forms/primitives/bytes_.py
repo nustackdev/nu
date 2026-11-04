@@ -53,7 +53,7 @@ class Bytes(Form, TypedNu[bytes]):
             other: the bytes to append to self.
 
         Yields:
-            The concatenation. EMPTY when either operand is EMPTY.
+            The concatenation.
 
         Example:
             >>> nu.run(nu.Bytes(b"foo") + nu.Bytes(b"bar"))[0]
@@ -75,7 +75,7 @@ class Bytes(Form, TypedNu[bytes]):
               `__add__` first and never lands here.
 
         Yields:
-            The concatenation. EMPTY when either operand is EMPTY.
+            The concatenation.
 
         Example:
             >>> nu.run(b"foo" + nu.Bytes(b"bar"))[0]
@@ -102,7 +102,7 @@ class Bytes(Form, TypedNu[bytes]):
 
         Yields:
             The byte's value 0-255 as Int for a single index. A new Bytes
-            for a slice. EMPTY when self is EMPTY. Raises when the index is
+            for a slice. Raises when the index is
             out of range.
 
         Example:
@@ -128,7 +128,7 @@ class Bytes(Form, TypedNu[bytes]):
         """Length of self in bytes.
 
         Yields:
-            The length as Int. EMPTY when self is EMPTY.
+            The length as Int.
 
         Example:
             >>> nu.run(nu.Bytes(b"abc").len())[0]
@@ -152,8 +152,7 @@ class Bytes(Form, TypedNu[bytes]):
               on bytes.
 
         Yields:
-            True when item occurs in self, False otherwise. EMPTY when
-            either operand is EMPTY.
+            True when item occurs in self, False otherwise.
 
         Example:
             >>> nu.run(nu.Bytes(b"abc").contains(b"b"))[0]
@@ -176,8 +175,7 @@ class Bytes(Form, TypedNu[bytes]):
             other: the bytes to compare against.
 
         Yields:
-            True when self sorts after other, False otherwise. EMPTY when
-            either operand is EMPTY.
+            True when self sorts after other, False otherwise.
 
         Example:
             >>> nu.run(nu.Bytes(b"b") > nu.Bytes(b"a"))[0]
@@ -196,8 +194,7 @@ class Bytes(Form, TypedNu[bytes]):
             other: the bytes to compare against.
 
         Yields:
-            True when self sorts before other, False otherwise. EMPTY
-            when either operand is EMPTY.
+            True when self sorts before other, False otherwise.
 
         Example:
             >>> nu.run(nu.Bytes(b"a") < nu.Bytes(b"b"))[0]
@@ -217,7 +214,6 @@ class Bytes(Form, TypedNu[bytes]):
 
         Yields:
             True when self sorts after or equal to other, False otherwise.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Bytes(b"a") >= nu.Bytes(b"a"))[0]
@@ -237,7 +233,6 @@ class Bytes(Form, TypedNu[bytes]):
 
         Yields:
             True when self sorts before or equal to other, False otherwise.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Bytes(b"a") <= nu.Bytes(b"b"))[0]
@@ -259,8 +254,7 @@ class Bytes(Form, TypedNu[bytes]):
             - Value equality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the byte values are equal, False otherwise. EMPTY
-            when either operand is EMPTY.
+            True when the byte values are equal, False otherwise.
 
         Example:
             >>> nu.run(nu.Bytes(b"abc") == nu.Bytes(b"abc"))[0]
@@ -282,8 +276,7 @@ class Bytes(Form, TypedNu[bytes]):
             - Value inequality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the byte values differ, False otherwise. EMPTY when
-            either operand is EMPTY.
+            True when the byte values differ, False otherwise.
 
         Example:
             >>> nu.run(nu.Bytes(b"abc") != nu.Bytes(b"xyz"))[0]
@@ -335,8 +328,7 @@ class Bytes(Form, TypedNu[bytes]):
               evaluated when the left does not already decide the result.
 
         Yields:
-            True when both operands are truthy, False otherwise. An EMPTY
-            operand counts as false.
+            True when both operands are truthy, False otherwise.
 
         Example:
             >>> nu.run(nu.Bytes(b"").and_(nu.Bytes(b"x")))[0]
@@ -360,8 +352,7 @@ class Bytes(Form, TypedNu[bytes]):
               evaluated when the left does not already decide the result.
 
         Yields:
-            True when either operand is truthy, False otherwise. An EMPTY
-            operand counts as false.
+            True when either operand is truthy, False otherwise.
 
         Example:
             >>> nu.run(nu.Bytes(b"x").or_(nu.Bytes(b"")))[0]
@@ -380,8 +371,7 @@ class Bytes(Form, TypedNu[bytes]):
             - Empty bytes yields True, every other value yields False.
 
         Yields:
-            True when self is empty, False otherwise. EMPTY when self is
-            EMPTY.
+            True when self is empty, False otherwise.
 
         Example:
             >>> nu.run(nu.Bytes(b"").not_())[0]
@@ -401,8 +391,7 @@ class Bytes(Form, TypedNu[bytes]):
               matching Python's truthiness rule.
 
         Yields:
-            True when self is non-empty, False when self is empty. EMPTY
-            when self is EMPTY.
+            True when self is non-empty, False when self is empty.
 
         Example:
             >>> nu.run(nu.Bytes(b"hi").bool_())[0]
@@ -429,7 +418,7 @@ class Bytes(Form, TypedNu[bytes]):
               this class stays in bytes.
 
         Yields:
-            The decoded Str. EMPTY when self is EMPTY. Raises when the bytes
+            The decoded Str. Raises when the bytes
             are not valid under the encoding, or when the encoding name is
             unknown.
 
@@ -450,8 +439,7 @@ class Bytes(Form, TypedNu[bytes]):
               Str.
 
         Yields:
-            The lowercase hex digits, no separators. EMPTY when self is
-            EMPTY.
+            The lowercase hex digits, no separators.
 
         Example:
             >>> nu.run(nu.Bytes(b"\xff\x00").hex_())[0]
@@ -469,7 +457,7 @@ class Bytes(Form, TypedNu[bytes]):
             - ASCII only. Non-ASCII bytes pass through unchanged.
 
         Yields:
-            The uppercased bytes. EMPTY when self is EMPTY.
+            The uppercased bytes.
 
         Example:
             >>> nu.run(nu.Bytes(b"Hi").upper())[0]
@@ -486,7 +474,7 @@ class Bytes(Form, TypedNu[bytes]):
             - ASCII only. Non-ASCII bytes pass through unchanged.
 
         Yields:
-            The lowercased bytes. EMPTY when self is EMPTY.
+            The lowercased bytes.
 
         Example:
             >>> nu.run(nu.Bytes(b"Hi").lower())[0]
@@ -503,7 +491,7 @@ class Bytes(Form, TypedNu[bytes]):
             chars: the bytes to strip. `None` strips ASCII whitespace.
 
         Yields:
-            The stripped bytes. EMPTY when self is EMPTY.
+            The stripped bytes.
 
         Example:
             >>> nu.run(nu.Bytes(b"  hi  ").strip())[0]
@@ -520,7 +508,7 @@ class Bytes(Form, TypedNu[bytes]):
             chars: the bytes to strip. `None` strips ASCII whitespace.
 
         Yields:
-            The stripped bytes. EMPTY when self is EMPTY.
+            The stripped bytes.
 
         Example:
             >>> nu.run(nu.Bytes(b"  hi  ").lstrip())[0]
@@ -537,7 +525,7 @@ class Bytes(Form, TypedNu[bytes]):
             chars: the bytes to strip. `None` strips ASCII whitespace.
 
         Yields:
-            The stripped bytes. EMPTY when self is EMPTY.
+            The stripped bytes.
 
         Example:
             >>> nu.run(nu.Bytes(b"  hi  ").rstrip())[0]
@@ -556,8 +544,7 @@ class Bytes(Form, TypedNu[bytes]):
             maxsplit: the maximum number of splits. `-1` means no limit.
 
         Yields:
-            The pieces as a List of Bytes. EMPTY when self is
-            EMPTY.
+            The pieces as a List of Bytes.
 
         Example:
             >>> nu.run(nu.Bytes(b"a,b,c").split_bytes(b","))[0]
@@ -581,7 +568,6 @@ class Bytes(Form, TypedNu[bytes]):
 
         Yields:
             The index of the first match, or -1 when sub is not found.
-            EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Bytes(b"abcabc").find_bytes(b"bc"))[0]
@@ -599,7 +585,7 @@ class Bytes(Form, TypedNu[bytes]):
             sub: the bytes to count.
 
         Yields:
-            The count. EMPTY when self is EMPTY.
+            The count.
 
         Example:
             >>> nu.run(nu.Bytes(b"abcabc").count_bytes(b"bc"))[0]
@@ -617,8 +603,7 @@ class Bytes(Form, TypedNu[bytes]):
             prefix: the bytes to test for.
 
         Yields:
-            True when self starts with prefix, False otherwise. EMPTY
-            when self is EMPTY.
+            True when self starts with prefix, False otherwise.
 
         Example:
             >>> nu.run(nu.Bytes(b"hello").startswith(b"he"))[0]
@@ -636,8 +621,7 @@ class Bytes(Form, TypedNu[bytes]):
             suffix: the bytes to test for.
 
         Yields:
-            True when self ends with suffix, False otherwise. EMPTY when
-            self is EMPTY.
+            True when self ends with suffix, False otherwise.
 
         Example:
             >>> nu.run(nu.Bytes(b"hello").endswith(b"lo"))[0]
@@ -658,7 +642,7 @@ class Bytes(Form, TypedNu[bytes]):
                 occurrence.
 
         Yields:
-            The replaced bytes. EMPTY when self is EMPTY.
+            The replaced bytes.
 
         Example:
             >>> nu.run(nu.Bytes(b"aXbXc").replace(b"X", b"-"))[0]
@@ -676,7 +660,7 @@ class Bytes(Form, TypedNu[bytes]):
 
         Yields:
             Self without the leading prefix, or self unchanged when the
-            prefix is not present. EMPTY when self is EMPTY.
+            prefix is not present.
 
         Example:
             >>> nu.run(nu.Bytes(b"prefoo").removeprefix(b"pre"))[0]
@@ -694,7 +678,7 @@ class Bytes(Form, TypedNu[bytes]):
 
         Yields:
             Self without the trailing suffix, or self unchanged when the
-            suffix is not present. EMPTY when self is EMPTY.
+            suffix is not present.
 
         Example:
             >>> nu.run(nu.Bytes(b"foobar").removesuffix(b"bar"))[0]
@@ -714,7 +698,7 @@ class Bytes(Form, TypedNu[bytes]):
             delete: bytes to drop from self before translating.
 
         Yields:
-            The translated bytes. EMPTY when self is EMPTY. Raises when
+            The translated bytes. Raises when
             table is not exactly 256 bytes long.
 
         Example:
@@ -733,7 +717,7 @@ class Bytes(Form, TypedNu[bytes]):
         """Self titlecased: each word's first cased byte upper, the rest lower.
 
         Yields:
-            The titlecased bytes. EMPTY when self is EMPTY.
+            The titlecased bytes.
 
         Example:
             >>> nu.run(nu.Bytes(b"hello world").title())[0]
@@ -747,7 +731,7 @@ class Bytes(Form, TypedNu[bytes]):
         """Self with the first byte uppercased and the rest lowercased.
 
         Yields:
-            The capitalized bytes. EMPTY when self is EMPTY.
+            The capitalized bytes.
 
         Example:
             >>> nu.run(nu.Bytes(b"hello world").capitalize())[0]
@@ -761,7 +745,7 @@ class Bytes(Form, TypedNu[bytes]):
         """Self with uppercase and lowercase bytes swapped.
 
         Yields:
-            The case-swapped bytes. EMPTY when self is EMPTY.
+            The case-swapped bytes.
 
         Example:
             >>> nu.run(nu.Bytes(b"Hello").swapcase())[0]
@@ -790,8 +774,7 @@ class Bytes(Form, TypedNu[bytes]):
               way.
 
         Yields:
-            The pieces as a List of Bytes. EMPTY when self is
-            EMPTY.
+            The pieces as a List of Bytes.
 
         Example:
             >>> nu.run(nu.Bytes(b"a,b,c").rsplit_bytes(b",", 1))[0]
@@ -811,7 +794,7 @@ class Bytes(Form, TypedNu[bytes]):
             keepends: when True, keep the line-ending bytes on each piece.
 
         Yields:
-            The lines as a List of Bytes. EMPTY when self is EMPTY.
+            The lines as a List of Bytes.
 
         Example:
             >>> nu.run(nu.Bytes(b"a\nb\nc").splitlines())[0]
@@ -830,7 +813,7 @@ class Bytes(Form, TypedNu[bytes]):
 
         Yields:
             A 3-tuple of (before, sep, after). When sep is not found,
-            (self, b"", b""). EMPTY when self is EMPTY.
+            (self, b"", b"").
 
         Example:
             >>> nu.run(nu.Bytes(b"key=value").partition(b"="))[0]
@@ -849,7 +832,7 @@ class Bytes(Form, TypedNu[bytes]):
 
         Yields:
             A 3-tuple of (before, sep, after). When sep is not found,
-            (b"", b"", self). EMPTY when self is EMPTY.
+            (b"", b"", self).
 
         Example:
             >>> nu.run(nu.Bytes(b"a=b=c").rpartition(b"="))[0]
@@ -875,7 +858,6 @@ class Bytes(Form, TypedNu[bytes]):
 
         Yields:
             The index of the last match, or -1 when sub is not found.
-            EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Bytes(b"abcabc").rfind_bytes(b"bc"))[0]
@@ -896,12 +878,11 @@ class Bytes(Form, TypedNu[bytes]):
                 the end of self.
 
         Notes:
-            - Like `find_bytes` but EMPTY instead of -1 when sub is not
-              found, where Python's `index` raises `ValueError`.
+            - Like `find_bytes`, but raises `ValueError` instead of
+              yielding -1 when sub is not found, as Python's `index` does.
 
         Yields:
-            The index of the first match. EMPTY when self is EMPTY or when
-            sub is not found.
+            The index of the first match.
 
         Example:
             >>> nu.run(nu.Bytes(b"abc").index_bytes(b"b"))[0]
@@ -922,12 +903,11 @@ class Bytes(Form, TypedNu[bytes]):
                 the end of self.
 
         Notes:
-            - Like `rfind_bytes` but EMPTY instead of -1 when sub is not
-              found, where Python's `rindex` raises `ValueError`.
+            - Like `rfind_bytes`, but raises `ValueError` instead of
+              yielding -1 when sub is not found, as Python's `rindex` does.
 
         Yields:
-            The index of the last match. EMPTY when self is EMPTY or when
-            sub is not found.
+            The index of the last match.
 
         Example:
             >>> nu.run(nu.Bytes(b"abcabc").rindex_bytes(b"bc"))[0]
@@ -949,8 +929,7 @@ class Bytes(Form, TypedNu[bytes]):
             - Empty bytes is True.
 
         Yields:
-            True when every byte is ASCII, False otherwise. EMPTY when
-            self is EMPTY.
+            True when every byte is ASCII, False otherwise.
 
         Example:
             >>> nu.run(nu.Bytes(b"hello").isascii())[0]
@@ -966,7 +945,7 @@ class Bytes(Form, TypedNu[bytes]):
 
         Yields:
             True when every byte is an ASCII digit and self is non-empty,
-            False otherwise. EMPTY when self is EMPTY.
+            False otherwise.
 
         Example:
             >>> nu.run(nu.Bytes(b"123").isdigit())[0]
@@ -982,7 +961,7 @@ class Bytes(Form, TypedNu[bytes]):
 
         Yields:
             True when every byte is an ASCII letter and self is non-empty,
-            False otherwise. EMPTY when self is EMPTY.
+            False otherwise.
 
         Example:
             >>> nu.run(nu.Bytes(b"abc").isalpha())[0]
@@ -998,7 +977,7 @@ class Bytes(Form, TypedNu[bytes]):
 
         Yields:
             True when every byte is an ASCII letter or digit and self is
-            non-empty, False otherwise. EMPTY when self is EMPTY.
+            non-empty, False otherwise.
 
         Example:
             >>> nu.run(nu.Bytes(b"abc123").isalnum())[0]
@@ -1014,7 +993,7 @@ class Bytes(Form, TypedNu[bytes]):
 
         Yields:
             True when every byte is ASCII whitespace and self is non-empty,
-            False otherwise. EMPTY when self is EMPTY.
+            False otherwise.
 
         Example:
             >>> nu.run(nu.Bytes(b"  ").isspace())[0]
@@ -1029,8 +1008,7 @@ class Bytes(Form, TypedNu[bytes]):
         """Self is titlecased, with at least one cased byte.
 
         Yields:
-            True when self follows title case, False otherwise. EMPTY
-            when self is EMPTY.
+            True when self follows title case, False otherwise.
 
         Example:
             >>> nu.run(nu.Bytes(b"Hello World").istitle())[0]
@@ -1046,7 +1024,6 @@ class Bytes(Form, TypedNu[bytes]):
 
         Yields:
             True when every cased byte is uppercase, False otherwise.
-            EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Bytes(b"ABC").isupper())[0]
@@ -1062,7 +1039,6 @@ class Bytes(Form, TypedNu[bytes]):
 
         Yields:
             True when every cased byte is lowercase, False otherwise.
-            EMPTY when self is EMPTY.
 
         Example:
             >>> nu.run(nu.Bytes(b"abc").islower())[0]
@@ -1086,7 +1062,7 @@ class Bytes(Form, TypedNu[bytes]):
             fillbyte: the single byte to pad with, `b" "` by default.
 
         Yields:
-            The padded bytes. EMPTY when self is EMPTY. Raises when
+            The padded bytes. Raises when
             fillbyte is not exactly one byte.
 
         Example:
@@ -1106,7 +1082,7 @@ class Bytes(Form, TypedNu[bytes]):
             fillbyte: the single byte to pad with, `b" "` by default.
 
         Yields:
-            The padded bytes. EMPTY when self is EMPTY. Raises when
+            The padded bytes. Raises when
             fillbyte is not exactly one byte.
 
         Example:
@@ -1126,7 +1102,7 @@ class Bytes(Form, TypedNu[bytes]):
             fillbyte: the single byte to pad with, `b" "` by default.
 
         Yields:
-            The padded bytes. EMPTY when self is EMPTY. Raises when
+            The padded bytes. Raises when
             fillbyte is not exactly one byte.
 
         Example:
@@ -1149,7 +1125,7 @@ class Bytes(Form, TypedNu[bytes]):
               the zeros go after it.
 
         Yields:
-            The zero-padded bytes. EMPTY when self is EMPTY.
+            The zero-padded bytes.
 
         Example:
             >>> nu.run(nu.Bytes(b"42").zfill(5))[0]
@@ -1170,7 +1146,7 @@ class Bytes(Form, TypedNu[bytes]):
             tabsize: the number of columns per tab stop, 8 by default.
 
         Yields:
-            The expanded bytes. EMPTY when self is EMPTY.
+            The expanded bytes.
 
         Example:
             >>> nu.run(nu.Bytes(b"a\tb").expandtabs(4))[0]
@@ -1191,7 +1167,7 @@ class Bytes(Form, TypedNu[bytes]):
             iterable: the bytes-like elements to join.
 
         Yields:
-            The joined bytes. EMPTY when self is EMPTY. Raises when any
+            The joined bytes. Raises when any
             element is not bytes.
 
         Example:

@@ -93,7 +93,7 @@ class DictRef(MutableMappingRef, RefBase[dict[K, V]], Generic[K, V]):
           rejects what is written.
 
     Yields:
-        The stored dict. EMPTY when the slot was never written.
+        The stored dict.
 
     Example:
         >>> class Port(nu.Shape):
@@ -170,11 +170,11 @@ class ListRef(MutableSequenceRef, RefBase[list[T]], Generic[T]):
         - In-place calls read the container first and do nothing when the
           slot is absent, so ``set`` an empty list before the first
           ``append``.
-        - An index past the end reads EMPTY rather than raising, like any
+        - An index past the end reads NULL rather than raising, like any
           other broken path.
 
     Yields:
-        The stored list. EMPTY when the slot was never written.
+        The stored list.
 
     Example:
         >>> class Port(nu.Shape):
@@ -251,7 +251,7 @@ class SetRef(MutableSetRef, RefBase[set[T]], Generic[T]):
           slot is absent, so ``set`` an empty set before the first ``add``.
 
     Yields:
-        The stored set. EMPTY when the slot was never written.
+        The stored set.
 
     Example:
         >>> class Port(nu.Shape):
@@ -299,8 +299,7 @@ class ShapeRef(MutableShapeRef, RefBase[dict[str, object]], Generic[T]):
           in the same dict and are read only through the mapping calls.
 
     Yields:
-        The inner dict as stored. EMPTY when nothing was ever written under
-        it.
+        The inner dict as stored.
 
     Example:
         >>> class Order(nu.Shape):

@@ -2,8 +2,7 @@
 
 Implements the engine's :class:`~nu.engine.evaluation.Runtime` Protocol
 and adds the Nu-specific runtime toolkit: a per-drive Budget, sequential
-dispatch helpers, single-stream pumps, sentinel propagation, and the
-thread-boundary primitives.
+dispatch helpers, single-stream pumps, and the thread-boundary primitives.
 
 Hot-path contract: dispatch is one indexed call into the precompiled thunk
 column: ``program.thunks[nid](rt)`` (sync) or ``program.athunks[nid](rt)``
@@ -21,7 +20,6 @@ Layout:
 - sequential:           ``eval_each`` / ``aeval_each``
 - streams:              ``iter`` / ``aiter`` / ``collect`` / ``acollect``
 - boundary:             ``in_thread`` / ``a_in_thread``
-- sentinel propagation: ``*_or_short`` family
 """
 
 from __future__ import annotations
@@ -30,8 +28,6 @@ import asyncio
 import contextvars
 import functools
 from typing import TYPE_CHECKING
-
-from nu.lang.sentinels import EMPTY
 
 from .utils.loop import safely_aclosing, safely_closing
 
@@ -152,33 +148,6 @@ class Runtime:
         return await loop.run_in_executor(
             self.budget.thread_pool, _with_contextvars(functools.partial(fn, *args, **kwargs))
         )
-
-    # --- sentinel-propagating evaluation -----------------------------------
-
-    def eval_or_short(self, nids: Iterable[int]) -> list | object:
-        """Evaluate every nid, short-circuiting on a sentinel.
-
-        Implements the Query propagation rule: if any operand is EMPTY, the
-        result is EMPTY. Otherwise returns the values list.
-        """
-        values: list = []
-        eval_ = self.eval
-        for n in nids:
-            v = eval_(n)
-            if v is EMPTY:
-                return EMPTY
-            values.append(v)
-        return values
-
-    async def aeval_or_short(self, nids: Iterable[int]) -> list | object:
-        """Async variant of ``eval_or_short``."""
-        values: list = []
-        for n in nids:
-            v = await self.aeval(n)
-            if v is EMPTY:
-                return EMPTY
-            values.append(v)
-        return values
 
 
 async def _empty_aiter() -> AsyncIterator:

@@ -7,7 +7,7 @@ of their own.
 The split follows one rule - what the constructor consumes:
 
 - scalar casts take a scalar operand and compute a scalar, so they are pure
-  ScalarQueries with ``compile`` / ``acompile`` thunks (sentinel-aware, like
+  ScalarQueries with ``compile`` / ``acompile`` thunks (like
   ``arithmetic``): ``int`` -> ``ToInt``, ``float`` -> ``ToFloat``,
   ``complex`` -> ``ToComplex``, ``str`` -> ``ToStr``, ``bytes`` -> ``ToBytes``,
   ``bytearray`` -> ``ToByteArray``. ``ToInt``, ``ToBytes`` and ``ToByteArray`` take an
@@ -29,7 +29,6 @@ import builtins
 from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
-from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -70,7 +69,7 @@ class ToInt(ScalarQuery):
           string, and a malformed literal for that base raises.
 
     Yields:
-        The int. EMPTY when either child is EMPTY.
+        The int.
 
     Example:
         >>> nu.run(nu.ToInt("42"))[0]
@@ -86,8 +85,6 @@ class ToInt(ScalarQuery):
 
             def thunk_value(rt: Runtime) -> object:
                 v = only(rt)
-                if v is EMPTY:
-                    return EMPTY
                 return builtins.int(v)
 
             return thunk_value
@@ -96,11 +93,7 @@ class ToInt(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = value(rt)
-            if v is EMPTY:
-                return EMPTY
             b = base(rt)
-            if b is EMPTY:
-                return EMPTY
             return builtins.int(v, b)
 
         return thunk
@@ -111,8 +104,6 @@ class ToInt(ScalarQuery):
 
             async def athunk_value(rt: Runtime) -> object:
                 v = await only(rt)
-                if v is EMPTY:
-                    return EMPTY
                 return builtins.int(v)
 
             return athunk_value
@@ -121,11 +112,7 @@ class ToInt(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await value(rt)
-            if v is EMPTY:
-                return EMPTY
             b = await base(rt)
-            if b is EMPTY:
-                return EMPTY
             return builtins.int(v, b)
 
         return athunk
@@ -138,7 +125,7 @@ class ToFloat(ScalarQuery):
         value: the value to convert.
 
     Yields:
-        The float. EMPTY when the child is EMPTY.
+        The float.
 
     Example:
         >>> nu.run(nu.ToFloat("3.14"))[0]
@@ -150,8 +137,6 @@ class ToFloat(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return builtins.float(v)
 
         return thunk
@@ -161,8 +146,6 @@ class ToFloat(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return builtins.float(v)
 
         return athunk
@@ -180,7 +163,7 @@ class ToComplex(ScalarQuery):
           and complex-literal strings both convert.
 
     Yields:
-        The complex number. EMPTY when either child is EMPTY.
+        The complex number.
 
     Example:
         >>> nu.run(nu.ToComplex(2, 3))[0]
@@ -193,8 +176,6 @@ class ToComplex(ScalarQuery):
 
             def thunk_value(rt: Runtime) -> object:
                 v = only(rt)
-                if v is EMPTY:
-                    return EMPTY
                 return complex(v)
 
             return thunk_value
@@ -203,11 +184,7 @@ class ToComplex(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             a = real(rt)
-            if a is EMPTY:
-                return EMPTY
             b = imag(rt)
-            if b is EMPTY:
-                return EMPTY
             return complex(a, b)
 
         return thunk
@@ -218,8 +195,6 @@ class ToComplex(ScalarQuery):
 
             async def athunk_value(rt: Runtime) -> object:
                 v = await only(rt)
-                if v is EMPTY:
-                    return EMPTY
                 return complex(v)
 
             return athunk_value
@@ -228,11 +203,7 @@ class ToComplex(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             a = await real(rt)
-            if a is EMPTY:
-                return EMPTY
             b = await imag(rt)
-            if b is EMPTY:
-                return EMPTY
             return complex(a, b)
 
         return athunk
@@ -245,7 +216,7 @@ class ToStr(ScalarQuery):
         value: the value to convert.
 
     Yields:
-        The string. EMPTY when the child is EMPTY.
+        The string.
 
     Example:
         >>> nu.run(nu.ToStr(42))[0]
@@ -257,8 +228,6 @@ class ToStr(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return builtins.str(v)
 
         return thunk
@@ -268,8 +237,6 @@ class ToStr(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return builtins.str(v)
 
         return athunk
@@ -286,7 +253,7 @@ class ToBytes(ScalarQuery):
             those bytes.
 
     Yields:
-        The bytes. EMPTY when either child is EMPTY.
+        The bytes.
 
     Example:
         >>> nu.run(nu.ToBytes("hi", "utf-8"))[0]
@@ -299,8 +266,6 @@ class ToBytes(ScalarQuery):
 
             def thunk_value(rt: Runtime) -> object:
                 v = only(rt)
-                if v is EMPTY:
-                    return EMPTY
                 return bytes(v)
 
             return thunk_value
@@ -309,11 +274,7 @@ class ToBytes(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = value(rt)
-            if v is EMPTY:
-                return EMPTY
             e = encoding(rt)
-            if e is EMPTY:
-                return EMPTY
             return bytes(v, e)
 
         return thunk
@@ -324,8 +285,6 @@ class ToBytes(ScalarQuery):
 
             async def athunk_value(rt: Runtime) -> object:
                 v = await only(rt)
-                if v is EMPTY:
-                    return EMPTY
                 return bytes(v)
 
             return athunk_value
@@ -334,11 +293,7 @@ class ToBytes(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await value(rt)
-            if v is EMPTY:
-                return EMPTY
             e = await encoding(rt)
-            if e is EMPTY:
-                return EMPTY
             return bytes(v, e)
 
         return athunk
@@ -355,7 +310,7 @@ class ToByteArray(ScalarQuery):
             of ints yields those bytes.
 
     Yields:
-        The bytearray. EMPTY when either child is EMPTY.
+        The bytearray.
 
     Example:
         >>> nu.run(nu.ToByteArray("hi", "utf-8"))[0]
@@ -368,8 +323,6 @@ class ToByteArray(ScalarQuery):
 
             def thunk_value(rt: Runtime) -> object:
                 v = only(rt)
-                if v is EMPTY:
-                    return EMPTY
                 return bytearray(v)
 
             return thunk_value
@@ -378,11 +331,7 @@ class ToByteArray(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = value(rt)
-            if v is EMPTY:
-                return EMPTY
             e = encoding(rt)
-            if e is EMPTY:
-                return EMPTY
             return bytearray(v, e)
 
         return thunk
@@ -393,8 +342,6 @@ class ToByteArray(ScalarQuery):
 
             async def athunk_value(rt: Runtime) -> object:
                 v = await only(rt)
-                if v is EMPTY:
-                    return EMPTY
                 return bytearray(v)
 
             return athunk_value
@@ -403,11 +350,7 @@ class ToByteArray(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await value(rt)
-            if v is EMPTY:
-                return EMPTY
             e = await encoding(rt)
-            if e is EMPTY:
-                return EMPTY
             return bytearray(v, e)
 
         return athunk
@@ -428,7 +371,7 @@ class ToList(ScalarQuery):
         value: the iterable to collect.
 
     Yields:
-        The list. EMPTY when the child is EMPTY.
+        The list.
 
     Example:
         >>> nu.run(nu.ToList((1, 2, 3)))[0]
@@ -440,8 +383,6 @@ class ToList(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return builtins.list(v)
 
         return thunk
@@ -451,8 +392,6 @@ class ToList(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return builtins.list(v)
 
         return athunk
@@ -465,7 +404,7 @@ class ToTuple(ScalarQuery):
         value: the iterable to collect.
 
     Yields:
-        The tuple. EMPTY when the child is EMPTY.
+        The tuple.
 
     Example:
         >>> nu.run(nu.ToTuple([1, 2, 3]))[0]
@@ -477,8 +416,6 @@ class ToTuple(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return builtins.tuple(v)
 
         return thunk
@@ -488,8 +425,6 @@ class ToTuple(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return builtins.tuple(v)
 
         return athunk
@@ -506,7 +441,7 @@ class ToSet(ScalarQuery):
           Python ``set``.
 
     Yields:
-        The set. EMPTY when the child is EMPTY.
+        The set.
 
     Example:
         >>> nu.run(nu.ToSet([1, 1, 2]))[0]
@@ -518,8 +453,6 @@ class ToSet(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return builtins.set(v)
 
         return thunk
@@ -529,8 +462,6 @@ class ToSet(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return builtins.set(v)
 
         return athunk
@@ -547,7 +478,7 @@ class ToFrozenSet(ScalarQuery):
           Python ``frozenset``.
 
     Yields:
-        The frozenset. EMPTY when the child is EMPTY.
+        The frozenset.
 
     Example:
         >>> nu.run(nu.ToFrozenSet([1, 1, 2]))[0]
@@ -559,8 +490,6 @@ class ToFrozenSet(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return builtins.frozenset(v)
 
         return thunk
@@ -570,8 +499,6 @@ class ToFrozenSet(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return builtins.frozenset(v)
 
         return athunk
@@ -588,7 +515,7 @@ class ToDict(ScalarQuery):
           ``dict``.
 
     Yields:
-        The dict. EMPTY when the child is EMPTY.
+        The dict.
 
     Example:
         >>> nu.run(nu.ToDict([("a", 1), ("b", 2)]))[0]
@@ -600,8 +527,6 @@ class ToDict(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             v = only(rt)
-            if v is EMPTY:
-                return EMPTY
             return builtins.dict(v)
 
         return thunk
@@ -611,8 +536,6 @@ class ToDict(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             v = await only(rt)
-            if v is EMPTY:
-                return EMPTY
             return builtins.dict(v)
 
         return athunk

@@ -26,7 +26,7 @@ from nu.core.access import (
     SetItem,
     Slice,
 )
-from nu.lang import EMPTY
+from nu.lang import NULL
 from nu.lang.helpers import aeval, compile, eval
 from nu.lang.literal import Literal
 
@@ -92,14 +92,19 @@ def test_async_reads_mirror_sync():
 # --- reads: sentinel propagation -----------------------------------------
 
 
-def test_an_empty_operand_collapses_a_read_to_empty():
-    assert _eval(GetItem(Literal(EMPTY), Literal(0))) is EMPTY
-    assert _eval(GetItem(Literal([1, 2]), Literal(EMPTY))) is EMPTY
-    assert _eval(Len(Literal(EMPTY))) is EMPTY
-    assert _eval(Contains(Literal(EMPTY), Literal(1))) is EMPTY
-    assert _eval(GetAttr(Literal(EMPTY), Literal("x"))) is EMPTY
-    assert _eval(HasAttr(Literal(1j), Literal(EMPTY))) is EMPTY
-    assert _eval(Slice(Literal(EMPTY), Literal(1), Literal(1))) is EMPTY
+def test_a_null_operand_runs_the_plain_python_op():
+    with pytest.raises(TypeError):
+        _eval(GetItem(Literal(NULL), Literal(0)))
+    with pytest.raises(TypeError):
+        _eval(GetItem(Literal([1, 2]), Literal(NULL)))
+    with pytest.raises(TypeError):
+        _eval(Len(Literal(NULL)))
+    with pytest.raises(TypeError):
+        _eval(Contains(Literal(NULL), Literal(1)))
+    with pytest.raises(AttributeError):
+        _eval(GetAttr(Literal(NULL), Literal("x")))
+    with pytest.raises(TypeError):
+        _eval(HasAttr(Literal(1j), Literal(NULL)))
 
 
 # --- writes: evaluation --------------------------------------------------
@@ -134,23 +139,23 @@ def test_del_attr_removes_attribute_returns_none():
     assert not hasattr(obj, "y")
 
 
-# --- writes: EMPTY --------------------------------------------------------
-# An EMPTY operand makes the write raise before anything is mutated.
+# --- writes: NULL --------------------------------------------------------
+# An NULL operand makes the write raise before anything is mutated.
 
 
 @pytest.mark.parametrize(
     "write",
     [
-        lambda grid: SetItem(Literal(EMPTY), Literal("k"), Literal(1)),
-        lambda grid: SetItem(Literal(grid), Literal("k"), Literal(EMPTY)),
-        lambda grid: DelItem(Literal(grid), Literal(EMPTY)),
-        lambda grid: SetAttr(Literal(EMPTY), Literal("x"), Literal(1)),
-        lambda grid: DelAttr(Literal(EMPTY), Literal("x")),
+        lambda grid: SetItem(Literal(NULL), Literal("k"), Literal(1)),
+        lambda grid: SetItem(Literal(grid), Literal("k"), Literal(NULL)),
+        lambda grid: DelItem(Literal(grid), Literal(NULL)),
+        lambda grid: SetAttr(Literal(NULL), Literal("x"), Literal(1)),
+        lambda grid: DelAttr(Literal(NULL), Literal("x")),
     ],
 )
 def test_an_empty_operand_makes_a_write_raise(write):
     grid = {"a": 1}
-    with pytest.raises(ValueError, match="EMPTY"):
+    with pytest.raises(ValueError, match="NULL"):
         _eval(write(grid))
     # A refused write leaves the value untouched.
     assert grid == {"a": 1}

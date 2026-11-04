@@ -145,8 +145,7 @@ class WaitReactive(Control):
     Args:
         change: the change subscription that says ``cond`` may have moved.
         cond: what to wait for. It gets no changed key: it reads the state
-            and answers. A tree, or a lambda taking no arguments. EMPTY
-            counts as false.
+            and answers. A tree, or a lambda taking no arguments.
         after: re-check offsets in seconds after binding, for the window a
             fresh subscription may not yet be heard in.
         every: seconds between standing re-checks once ``after`` is spent.

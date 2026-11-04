@@ -76,8 +76,7 @@ class Set(
               same as Python `set` construction.
 
         Yields:
-            A fresh Set holding the evaluated items. EMPTY when any item is
-            EMPTY.
+            A fresh Set holding the evaluated items.
 
         Example:
             >>> nu.run(nu.Set.of(1, 2, 2, 3))[0]
@@ -130,8 +129,7 @@ class Set(
 
         Yields:
             True when self contains every element of other and at least one
-            more, False otherwise. EMPTY when either operand is
-            EMPTY.
+            more, False otherwise.
 
         Example:
             >>> nu.run(nu.Set.of(1, 2, 3) > nu.Set.of(1, 2))[0]
@@ -151,8 +149,7 @@ class Set(
 
         Yields:
             True when every element of self is in other and other has at
-            least one more, False otherwise. EMPTY when either operand is
-            EMPTY.
+            least one more, False otherwise.
 
         Example:
             >>> nu.run(nu.Set.of(1, 2) < nu.Set.of(1, 2, 3))[0]
@@ -172,7 +169,6 @@ class Set(
 
         Yields:
             True when every element of other is in self, False otherwise.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Set.of(1, 2) >= nu.Set.of(1, 2))[0]
@@ -192,7 +188,6 @@ class Set(
 
         Yields:
             True when every element of self is in other, False otherwise.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Set.of(1, 2) <= nu.Set.of(1, 2))[0]
@@ -217,7 +212,6 @@ class Set(
 
         Yields:
             True when the sets hold the same elements, False otherwise.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.Set.of(1, 2) == nu.Set.of(2, 1))[0]
@@ -239,8 +233,7 @@ class Set(
             - Value inequality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the sets differ, False otherwise. EMPTY when either
-            operand is EMPTY.
+            True when the sets differ, False otherwise.
 
         Example:
             >>> nu.run(nu.Set.of(1, 2) != nu.Set.of(1, 3))[0]
@@ -324,8 +317,7 @@ class FrozenSet(
               Python `frozenset` construction.
 
         Yields:
-            A fresh FrozenSet holding the evaluated items. EMPTY when any
-            item is EMPTY.
+            A fresh FrozenSet holding the evaluated items.
 
         Example:
             >>> nu.run(nu.FrozenSet.of(1, 2, 2, 3))[0]
@@ -373,8 +365,7 @@ class FrozenSet(
 
         Yields:
             True when self contains every element of other and at least one
-            more, False otherwise. EMPTY when either operand is
-            EMPTY.
+            more, False otherwise.
 
         Example:
             >>> nu.run(nu.FrozenSet.of(1, 2, 3) > nu.FrozenSet.of(1, 2))[0]
@@ -394,8 +385,7 @@ class FrozenSet(
 
         Yields:
             True when every element of self is in other and other has at
-            least one more, False otherwise. EMPTY when either operand is
-            EMPTY.
+            least one more, False otherwise.
 
         Example:
             >>> nu.run(nu.FrozenSet.of(1, 2) < nu.FrozenSet.of(1, 2, 3))[0]
@@ -415,7 +405,6 @@ class FrozenSet(
 
         Yields:
             True when every element of other is in self, False otherwise.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.FrozenSet.of(1, 2) >= nu.FrozenSet.of(1, 2))[0]
@@ -435,7 +424,6 @@ class FrozenSet(
 
         Yields:
             True when every element of self is in other, False otherwise.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.FrozenSet.of(1, 2) <= nu.FrozenSet.of(1, 2))[0]
@@ -460,7 +448,6 @@ class FrozenSet(
 
         Yields:
             True when the sets hold the same elements, False otherwise.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> nu.run(nu.FrozenSet.of(1, 2) == nu.FrozenSet.of(2, 1))[0]
@@ -482,8 +469,7 @@ class FrozenSet(
             - Value inequality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the sets differ, False otherwise. EMPTY when either
-            operand is EMPTY.
+            True when the sets differ, False otherwise.
 
         Example:
             >>> nu.run(nu.FrozenSet.of(1, 2) != nu.FrozenSet.of(1, 3))[0]

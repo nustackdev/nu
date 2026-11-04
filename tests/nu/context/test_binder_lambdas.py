@@ -19,8 +19,7 @@ import nu
 import nustd
 from nu.core.reactive.stream import Stream
 from nu.engine.structure import Declared
-from nu.lang import Context, ScalarAction, wire
-from nu.lang.sentinels import EMPTY
+from nu.lang import NULL, Context, ScalarAction, wire
 from nustd.functools.interactions import Reduce
 
 
@@ -336,7 +335,7 @@ async def test_react_latest_initial_run_binds_nothing() -> None:
     term = nu.ReactLatest(nu.Attr("feed"), lambda key: Record(key, log), initial=True)
     task = _start(term, feed=feed)
     await _until(lambda: log)
-    assert log == [EMPTY]
+    assert log == [NULL]
     await _cancel(task)
 
 

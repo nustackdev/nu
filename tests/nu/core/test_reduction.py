@@ -87,11 +87,11 @@ def test_min_and_max_fold_the_extremes():
     assert run(Max(Iter(Literal([3, 1, 2]))))[0] == 3
 
 
-def test_min_of_an_empty_stream_is_empty():
-    from nu.lang import EMPTY
+def test_min_of_an_empty_stream_raises():
     from nu.lang.helpers import run
 
-    assert run(Min(Iter(Literal([]))))[0] is EMPTY
+    with pytest.raises(ValueError):
+        run(Min(Iter(Literal([]))))
 
 
 def test_any_and_all_fold_truthiness():
@@ -116,8 +116,10 @@ def test_first_and_last_take_the_ends():
     assert run(Last(Iter(Literal([10, 20, 30]))))[0] == 30
 
 
-def test_first_of_an_empty_stream_is_empty():
-    from nu.lang import EMPTY
+def test_first_of_an_empty_stream_raises_or_takes_a_default():
     from nu.lang.helpers import run
 
-    assert run(First(Iter(Literal([]))))[0] is EMPTY
+    with pytest.raises(ValueError):
+        run(First(Iter(Literal([]))))
+    assert run(First(Iter(Literal([])), Literal("d")))[0] == "d"
+    assert run(Last(Iter(Literal([])), Literal("d")))[0] == "d"

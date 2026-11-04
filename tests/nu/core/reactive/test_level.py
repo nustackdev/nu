@@ -20,9 +20,8 @@ from nu.core.reactive import RESYNC, ForEachParReactive, ReconcileReactive, Wait
 from nu.core.reactive._wakes import Wakes
 from nu.domains.shape import Shape
 from nu.engine.structure import Declared
-from nu.lang import Attr, Context, Control, ScalarAction, ScalarQuery
+from nu.lang import NULL, Attr, Context, Control, ScalarAction, ScalarQuery
 from nu.lang.helpers import arun, compile, validate
-from nu.lang.sentinels import EMPTY
 from nustd.kv import IntRef, Snapshot, Transaction, memory_navigator
 
 
@@ -484,7 +483,7 @@ async def test_until_treats_empty_as_false() -> None:
 
     async def fn(rt: Runtime) -> object:
         reads.append(1)
-        return EMPTY if len(reads) == 1 else True
+        return NULL if len(reads) == 1 else True
 
     task = _start(WaitReactive(AttrRef("feed"), _Read(fn), **_QUIET), feed=feed)
     await _until(lambda: reads == [1])

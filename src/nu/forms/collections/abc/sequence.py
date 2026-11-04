@@ -83,8 +83,7 @@ class SequenceForm(
             - Negative indices and negative slice bounds work as in Python.
 
         Yields:
-            The element for an int key, the subsequence for a slice. EMPTY
-            when self is EMPTY.
+            The element for an int key, the subsequence for a slice.
 
         Example:
             >>> nu.run(nu.List.of(1, 2, 3)[1])[0]
@@ -107,14 +106,12 @@ class SequenceForm(
         """First element of self.
 
         Yields:
-            The first element. EMPTY when self has no elements or is EMPTY.
+            The first element.
 
         Example:
             >>> nu.run(nu.List.of(1, 2, 3).first_elem())[0]
             1
 
-            >>> nu.run(nu.List.of().first_elem())[0]
-            <EMPTY>
         """
         from .sequence_interactions import First
 
@@ -124,7 +121,7 @@ class SequenceForm(
         """Last element of self.
 
         Yields:
-            The last element. EMPTY when self has no elements or is EMPTY.
+            The last element.
 
         Example:
             >>> nu.run(nu.List.of(1, 2, 3).last_elem())[0]
@@ -141,19 +138,15 @@ class SequenceForm(
             value: the element to search for.
 
         Notes:
-            - Unlike Python's `list.index`, a missing value does not raise:
-              it yields EMPTY instead.
+            - A missing value raises `ValueError`, as in Python.
 
         Yields:
-            The lowest matching index. EMPTY when self is EMPTY or value is
-            not found.
+            The lowest matching index.
 
         Example:
             >>> nu.run(nu.List.of(1, 2, 3).index(2))[0]
             1
 
-            >>> nu.run(nu.List.of(1, 2, 3).index(5))[0]
-            <EMPTY>
         """
         from nu.forms.primitives import Int
 
@@ -168,8 +161,7 @@ class SequenceForm(
             value: the element to count.
 
         Yields:
-            The occurrence count, `0` when value is absent. EMPTY when
-            self is EMPTY.
+            The occurrence count, `0` when value is absent.
 
         Example:
             >>> nu.run(nu.List.of(1, 2, 2, 3).count(2))[0]
@@ -281,8 +273,7 @@ class MutableSequenceForm(
               standalone against a plain sequence value.
 
         Yields:
-            The removed element (Action). EMPTY when index is out of range.
-            An EMPTY self or index raises, as any write does.
+            The removed element (Action).
         """
         from .sequence_interactions import Pop
 
@@ -376,7 +367,7 @@ class MutableSequenceForm(
               self and evaluates fine against a plain sequence value.
 
         Yields:
-            The copy. EMPTY when self is EMPTY.
+            The copy.
 
         Example:
             >>> nu.run(nu.List.of(1, 2, 3).copy())[0]

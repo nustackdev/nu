@@ -7,13 +7,15 @@ methods accept any iterable, not just sets).
 
 from __future__ import annotations
 
+import pytest
+
 from nu.forms.collections.abc.set_interactions import (
     Difference,
     Intersection,
     SymmetricDifference,
     Union,
 )
-from nu.lang import EMPTY
+from nu.lang import NULL
 from nu.lang.helpers import compile, eval
 from nu.lang.literal import Literal
 
@@ -79,8 +81,10 @@ def test_symmetric_difference_disjoint_sets():
 
 
 def test_union_propagates_empty_left():
-    assert _eval(Union(Literal(EMPTY), Literal([1, 2]))) is EMPTY
+    with pytest.raises(TypeError):
+        _eval(Union(Literal(NULL), Literal([1, 2])))
 
 
 def test_union_propagates_empty_right():
-    assert _eval(Union(Literal({1, 2}), Literal(EMPTY))) is EMPTY
+    with pytest.raises(TypeError):
+        _eval(Union(Literal({1, 2}), Literal(NULL)))

@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Command
-from nu.lang.sentinels import EMPTY
+from nu.lang.null import is_null
 
 
 if TYPE_CHECKING:
@@ -33,8 +33,8 @@ class Clear(Command):
 
         def thunk(rt: Runtime) -> None:
             target = target_t(rt)
-            if target is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(target):
+                raise ValueError("cannot write with a NULL operand")
             if not hasattr(target, "clear"):
                 raise TypeError(
                     f"clear() requires clearable collection, got {type(target).__name__}"
@@ -48,8 +48,8 @@ class Clear(Command):
 
         async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)
-            if target is EMPTY:
-                raise ValueError("cannot write with an EMPTY operand")
+            if is_null(target):
+                raise ValueError("cannot write with a NULL operand")
             if not hasattr(target, "clear"):
                 raise TypeError(
                     f"clear() requires clearable collection, got {type(target).__name__}"

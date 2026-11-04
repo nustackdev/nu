@@ -1,8 +1,8 @@
 """``InteractionFactory``: the generic mechanism for building atoms from callables.
 
 One mechanism, ``InteractionFactory``: pass a base kind, a name, and a callable,
-get back a real ``Nu`` subclass wired with sync / async thunks, sentinel
-handling, and declared attributes. It collapses the "resolve the children, call
+get back a real ``Nu`` subclass wired with sync / async thunks and
+declared attributes. It collapses the "resolve the children, call
 a Python function, return the result" boilerplate that most non-hot
 interactions are.
 
@@ -35,12 +35,9 @@ class whose ``compile`` falls back to the base (which raises) and whose
 ``acompile`` awaits the function; the class also declares
 ``requires_async = True``. A plain ``def`` produces both paths.
 
-Sentinel handling:
-- ``propagate_sentinels=True`` (default) -- a resolved child that is ``EMPTY``
-  stops the thunk without invoking the function. ``ScalarQuery`` propagates
-  it and yields ``EMPTY``; ``Command`` and ``ScalarAction`` carry an effect,
-  so they refuse it and raise, as any write does.
-- ``propagate_sentinels=False`` -- EMPTY passes through to the function.
+NULL: no special handling. A NULL child is passed to the function like any
+value, and the function's own Python decides (``propagate_sentinels`` is a
+temporary no-op kept for old callers).
 
 Declared attributes are passed by keyword. Raw values are wrapped in
 ``Declared``; pre-built ``Attribute`` instances (including computed
@@ -77,7 +74,6 @@ from nu.lang.kinds import (
     StreamQuery,
 )
 from nu.lang.nu import Nu
-from nu.lang.sentinels import EMPTY
 
 
 if TYPE_CHECKING:
@@ -129,15 +125,7 @@ def InteractionFactory(  # noqa: N802 -- a class factory; reads as a class at th
 
     is_async = inspect.iscoroutinefunction(fn) or inspect.isasyncgenfunction(fn)
     is_command = issubclass(base, Command)
-    is_query = issubclass(base, ScalarQuery)
     void_value: object = None  # commands yield nothing
-
-    def on_empty() -> object:
-        """A query propagates an EMPTY child; an effect refuses it, as any write does."""
-        if is_query:
-            return EMPTY
-        msg = f"{name}: cannot write with an EMPTY operand"
-        raise ValueError(msg)
 
     namespace: dict[str, object] = {}
     for attr_name, value in attributes.items():
@@ -173,14 +161,10 @@ def InteractionFactory(  # noqa: N802 -- a class factory; reads as a class at th
                 args: list[object] = []
                 for ct in pos_ts:
                     v = ct(rt)
-                    if propagate_sentinels and (v is EMPTY):
-                        return on_empty()
                     args.append(v)
                 kwargs: dict[str, object] = {}
                 for k, kt in zip(kwkeys, kw_ts, strict=True):
                     v = kt(rt)
-                    if propagate_sentinels and (v is EMPTY):
-                        return on_empty()
                     kwargs[k] = v
                 result = fn(*args, **kwargs)
                 return void_value if is_command else result
@@ -203,14 +187,10 @@ def InteractionFactory(  # noqa: N802 -- a class factory; reads as a class at th
             args: list[object] = []
             for ct in pos_ts:
                 v = await ct(rt)  # type: ignore[misc]
-                if propagate_sentinels and (v is EMPTY):
-                    return on_empty()
                 args.append(v)
             kwargs: dict[str, object] = {}
             for k, kt in zip(kwkeys, kw_ts, strict=True):
                 v = await kt(rt)  # type: ignore[misc]
-                if propagate_sentinels and (v is EMPTY):
-                    return on_empty()
                 kwargs[k] = v
             result = fn(*args, **kwargs)
             if inspect.isawaitable(result):
