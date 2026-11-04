@@ -2,16 +2,18 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.6.9
-- **nustd** (fabrics) — 0.6.9
+- **nucore** (kernel) — 0.7.0
+- **nustd** (fabrics) — 0.7.0
 - **nudle** — 0.1.10
 - **ui-core** — 0.2.2
 - **ui-kit** — 0.3.6
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.7.0 - 2026-11-05
 
+- Release nu 0.7.0
+- Require the virtuals release where never-written containers raise on reads
 - Table sync and the lens show a never-written container as empty, not an error
 - kv containers never written now raise on len, iteration and contains; extract gives NULL
 - Removals and refused writes on a never-written mem container leave it absent
