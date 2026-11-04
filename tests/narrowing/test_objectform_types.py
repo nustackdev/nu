@@ -62,8 +62,8 @@ assert_type(anyval <= 100, Bool)
 # --- Sentinel checks (inherited from Form) ---------------------------
 
 
-assert_type(anyval.is_empty(), Bool)
-assert_type(anyval.not_empty(), Bool)
+assert_type(anyval.is_null(), Bool)
+assert_type(anyval.is_null().not_(), Bool)
 assert_type(anyval.fallback(0), Object)
 
 

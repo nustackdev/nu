@@ -41,7 +41,7 @@ __all__ = [
 
 
 class SetLikeForm(_SetLikeForm, CollectionForm):
-    """Shape set: unordered-unique-element ops + exists/missing/extract, typed by the declaration."""
+    """Shape set: unordered-unique-element ops + exists/extract, typed by the declaration."""
 
     def _wrap_element_result(self, operand: Nu) -> Form:
         return form_of(self._declared.elem)(operand)  # type: ignore[return-value]
@@ -66,7 +66,7 @@ class SetLikeForm(_SetLikeForm, CollectionForm):
 
 
 class MutableSetForm(_MutableSetForm, MutableCollectionForm):
-    """Mutable shape set: set ops + exists/missing/extract + set/erase."""
+    """Mutable shape set: set ops + exists/extract + set/erase."""
 
 
 class ReactiveSetForm(_ReactiveSetForm, MutableSetForm, ReactiveCollectionForm):

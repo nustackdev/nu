@@ -45,7 +45,7 @@ class Org(nu.Shape):
 assert_type(Team.members, DictRef[int, Profile])
 assert_type(Team.ranks, ListRef[Profile])
 assert_type(Team.ranks.exists(), Bool)
-assert_type(Team.ranks.missing(), Bool)
+assert_type(Team.ranks.exists().not_(), Bool)
 assert_type(Org.teams, DictRef[str, Team])
 
 

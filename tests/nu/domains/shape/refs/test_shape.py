@@ -5,13 +5,13 @@ from __future__ import annotations
 import pytest
 
 import nu
+from nu.core import Not
 from nu.core.reactive import OnChange, OnChildChange
 from nu.domains.shape.base import StructuredRef
 from nu.domains.shape.dsl import Shape, Slot
 from nu.domains.shape.interactions import (
     Erase,
     Exists,
-    Missing,
     SetCmd,
 )
 from nu.domains.shape.item import ItemRef
@@ -108,8 +108,8 @@ def test_shape_ref_exists_returns_exists_query():
 
 def test_shape_ref_missing_returns_missing_query():
     ref = ShapeRef("loc", shape_type=Inner)
-    assert isinstance(ref.missing(), nu.Bool)
-    assert isinstance(ref.missing()._source, Missing)
+    assert isinstance(ref.exists().not_(), nu.Bool)
+    assert isinstance(ref.exists().not_()._source, Not)
 
 
 # ---------------------------------------------------------------------------
@@ -146,8 +146,8 @@ def test_mutable_shape_ref_inherits_exists_missing():
     ref = MutableShapeRef("loc", shape_type=Inner)
     assert isinstance(ref.exists(), nu.Bool)
     assert isinstance(ref.exists()._source, Exists)
-    assert isinstance(ref.missing(), nu.Bool)
-    assert isinstance(ref.missing()._source, Missing)
+    assert isinstance(ref.exists().not_(), nu.Bool)
+    assert isinstance(ref.exists().not_()._source, Not)
 
 
 # ---------------------------------------------------------------------------
@@ -199,7 +199,7 @@ def test_shape_ref_has_mapping_surface():
     assert hasattr(ref, "values")
     assert hasattr(ref, "items")
     assert hasattr(ref, "exists")
-    assert hasattr(ref, "missing")
+    assert hasattr(ref, "is_set_falsy")
     assert hasattr(ref, "extract")
 
 

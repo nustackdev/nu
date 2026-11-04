@@ -1,10 +1,10 @@
 """Argument type aliases for Nu kind class signatures.
 
 A kind that takes a python ``int`` (or a Nu that yields one) declares
-its slot type as ``IntArg`` rather than spelling ``int | Nu | Sentinel``
+its slot type as ``IntArg`` rather than spelling ``int | Nu | Null``
 each time. The aliases keep concrete kind signatures short and readable
 while still admitting the full algebraic surface (a raw python value, a
-Nu sub-tree producing one, or a propagating sentinel).
+Nu sub-tree producing one, or NULL from an absent read).
 
 Each specialized alias also admits ``Object`` explicitly: the honest
 terminal is consumable everywhere. This is redundant with the ``TypedNu
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from nu.forms.primitives.object_ import Object
 
     from .nu import Nu
-    from .sentinels import Sentinel
+    from .null import Null
 
 
 __all__ = [
@@ -58,23 +58,23 @@ _V = TypeVar("_V")
 _Ts = TypeVarTuple("_Ts")
 
 
-Arg = TypeAliasType("Arg", "_T | Nu[_T] | Object | Sentinel", type_params=(_T,))
+Arg = TypeAliasType("Arg", "_T | Nu[_T] | Object | Null", type_params=(_T,))
 
-IntArg: TypeAlias = "int | Nu[int] | Object | Sentinel"
-FloatArg: TypeAlias = "float | Nu[float] | Object | Sentinel"
-StrArg: TypeAlias = "str | Nu[str] | Object | Sentinel"
-BoolArg: TypeAlias = "bool | Nu[bool] | Object | Sentinel"
-BytesArg: TypeAlias = "bytes | Nu[bytes] | Object | Sentinel"
-NoneArg: TypeAlias = "Nu[None] | Object | Sentinel | None"
+IntArg: TypeAlias = "int | Nu[int] | Object | Null"
+FloatArg: TypeAlias = "float | Nu[float] | Object | Null"
+StrArg: TypeAlias = "str | Nu[str] | Object | Null"
+BoolArg: TypeAlias = "bool | Nu[bool] | Object | Null"
+BytesArg: TypeAlias = "bytes | Nu[bytes] | Object | Null"
+NoneArg: TypeAlias = "Nu[None] | Object | Null | None"
 
-ListArg = TypeAliasType("ListArg", "list[_V] | Nu[list[_V]] | Object | Sentinel", type_params=(_V,))
+ListArg = TypeAliasType("ListArg", "list[_V] | Nu[list[_V]] | Object | Null", type_params=(_V,))
 DictArg = TypeAliasType(
-    "DictArg", "dict[_K, _V] | Nu[dict[_K, _V]] | Object | Sentinel", type_params=(_K, _V)
+    "DictArg", "dict[_K, _V] | Nu[dict[_K, _V]] | Object | Null", type_params=(_K, _V)
 )
-SetArg = TypeAliasType("SetArg", "set[_T] | Nu[set[_T]] | Object | Sentinel", type_params=(_T,))
+SetArg = TypeAliasType("SetArg", "set[_T] | Nu[set[_T]] | Object | Null", type_params=(_T,))
 FrozenSetArg = TypeAliasType(
-    "FrozenSetArg", "frozenset[_T] | Nu[frozenset[_T]] | Object | Sentinel", type_params=(_T,)
+    "FrozenSetArg", "frozenset[_T] | Nu[frozenset[_T]] | Object | Null", type_params=(_T,)
 )
 TupleArg = TypeAliasType(
-    "TupleArg", "tuple[*_Ts] | Nu[tuple[*_Ts]] | Object | Sentinel", type_params=(_Ts,)
+    "TupleArg", "tuple[*_Ts] | Nu[tuple[*_Ts]] | Object | Null", type_params=(_Ts,)
 )

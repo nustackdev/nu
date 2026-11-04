@@ -42,7 +42,7 @@ __all__ = [
 
 
 class SequenceForm(_SequenceForm, CollectionForm):
-    """Shape sequence: ordered-element ops + exists/missing/extract, typed by the declaration."""
+    """Shape sequence: ordered-element ops + exists/extract, typed by the declaration."""
 
     def _wrap_element_result(self, operand: Nu) -> Form:
         return form_of(self._declared.elem)(operand)  # type: ignore[return-value]
@@ -67,7 +67,7 @@ class SequenceForm(_SequenceForm, CollectionForm):
 
 
 class MutableSequenceForm(_MutableSequenceForm, MutableCollectionForm):
-    """Mutable shape sequence: ordered-element ops + exists/missing/extract + set/erase."""
+    """Mutable shape sequence: ordered-element ops + exists/extract + set/erase."""
 
 
 class ReactiveSequenceForm(_ReactiveSequenceForm, MutableSequenceForm, ReactiveCollectionForm):

@@ -1,9 +1,8 @@
 """Shape fabric queries and commands: all shape interactions in one place.
 
 Read queries (polymorphic on Ref class):
-- ``Load``: yield the value at the slot-0 Ref (EMPTY if absent).
-- ``Exists``: True if the slot-0 Ref's address is bound.
-- ``Missing``: True if the slot-0 Ref's address is unbound.
+- ``Load``: yield the value at the slot-0 Ref (NULL if absent).
+- ``Exists``: True if the slot-0 Ref's address holds a value.
 - ``Extract``: materialise the full subtree rooted at the Ref.
 - ``AdvanceCursor``: read the next key after the cursor on an ordered view.
 
@@ -25,7 +24,7 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Command, ScalarQuery
-from nu.lang.sentinels import EMPTY
+from nu.lang.null import is_null
 
 
 if TYPE_CHECKING:
@@ -39,7 +38,6 @@ __all__ = [
     "Exists",
     "Extract",
     "Load",
-    "Missing",
     "PrimitiveSet",
     "SetCmd",
 ]
@@ -51,7 +49,7 @@ __all__ = [
 
 
 class Load(ScalarQuery):
-    """Yield the value at the slot-0 Ref; EMPTY if the address is unbound."""
+    """Yield the value at the slot-0 Ref; NULL if the address holds nothing."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref_thunk = children[0]
@@ -71,45 +69,44 @@ class Load(ScalarQuery):
 
 
 class Exists(ScalarQuery):
-    """Yield True if the slot-0 Ref's address is bound (value is not EMPTY). Never EMPTY."""
+    """Yield True if the slot-0 Ref's address holds a value. Always a bool.
+
+    A ref that knows its address answers through its ``_exists`` /
+    ``_aexists`` hook (a lazy view: one marker read). Any other ref answers
+    by its read: the value is not NULL.
+    """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref = self._children[0]
         ref_thunk = children[0]
+        hook = getattr(ref, "_exists", None)
+
+        if hook is not None:
+
+            def hooked(rt: Runtime) -> bool:
+                return bool(hook(rt, rt.program.children[nid][0]))
+
+            return hooked
 
         def thunk(rt: Runtime) -> bool:
-            v = ref_thunk(rt)
-            return v is not EMPTY
+            return not is_null(ref_thunk(rt))
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref = self._children[0]
         ref_thunk = children[0]
+        hook = getattr(ref, "_aexists", None)
+
+        if hook is not None:
+
+            async def hooked(rt: Runtime) -> bool:
+                return bool(await hook(rt, rt.program.children[nid][0]))
+
+            return hooked
 
         async def athunk(rt: Runtime) -> bool:
-            v = await ref_thunk(rt)
-            return v is not EMPTY
-
-        return athunk
-
-
-class Missing(ScalarQuery):
-    """Yield True if the slot-0 Ref's address is unbound (value is EMPTY). Never EMPTY."""
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref_thunk = children[0]
-
-        def thunk(rt: Runtime) -> bool:
-            v = ref_thunk(rt)
-            return v is EMPTY
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref_thunk = children[0]
-
-        async def athunk(rt: Runtime) -> bool:
-            v = await ref_thunk(rt)
-            return v is EMPTY
+            return not is_null(await ref_thunk(rt))
 
         return athunk
 
@@ -130,8 +127,6 @@ class Extract(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             view = ref_thunk(rt)
-            if view is EMPTY:
-                return EMPTY
             if hasattr(view, "eager"):
                 view = view.eager
             return view.extract() if hasattr(view, "extract") else view
@@ -143,8 +138,6 @@ class Extract(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             view = await ref_thunk(rt)
-            if view is EMPTY:
-                return EMPTY
             if hasattr(view, "eager"):
                 view = view.eager
             return view.extract() if hasattr(view, "extract") else view
@@ -166,7 +159,7 @@ class AdvanceCursor(ScalarQuery):
         def thunk(rt: Runtime) -> object:
             view = source_thunk(rt)
             cursor = cursor_thunk(rt)
-            if cursor is EMPTY:
+            if is_null(cursor):
                 cursor = None
             return view.next_key_after(cursor)
 
@@ -178,7 +171,7 @@ class AdvanceCursor(ScalarQuery):
         async def athunk(rt: Runtime) -> object:
             view = await source_thunk(rt)
             cursor = await cursor_thunk(rt)
-            if cursor is EMPTY:
+            if is_null(cursor):
                 cursor = None
             return view.next_key_after(cursor)
 
@@ -201,8 +194,8 @@ class SetCmd(Command):
 
         def thunk(rt: Runtime) -> None:
             v = value(rt)
-            if v is EMPTY:
-                raise ValueError("cannot store EMPTY")
+            if is_null(v):
+                raise ValueError("cannot store NULL")
             ref._write(rt, v, rt.program.children[nid][0])
 
         return thunk
@@ -213,8 +206,8 @@ class SetCmd(Command):
 
         async def athunk(rt: Runtime) -> None:
             v = await value(rt)
-            if v is EMPTY:
-                raise ValueError("cannot store EMPTY")
+            if is_null(v):
+                raise ValueError("cannot store NULL")
             await ref._awrite(rt, v, rt.program.children[nid][0])
 
         return athunk
@@ -250,7 +243,7 @@ class PrimitiveSet(Command):
     single opaque blob (e.g. ``PrimitiveDictRef``, ``PrimitiveListRef``,
     ``PrimitiveSetRef`` substrates).
 
-    Raises ``ValueError`` when the value slot evaluates to a sentinel,
+    Raises ``ValueError`` when the value slot evaluates to NULL,
     matching ``ItemPrimitiveSetCmd`` mechanics.
 
     Requires the parent view to support ``_primitive_write`` /
@@ -265,8 +258,8 @@ class PrimitiveSet(Command):
 
         def thunk(rt: Runtime) -> None:
             v = value(rt)
-            if v is EMPTY:
-                raise ValueError("cannot store EMPTY")
+            if is_null(v):
+                raise ValueError("cannot store NULL")
             ref._primitive_write(rt, v, rt.program.children[nid][0])  # type: ignore[attr-defined]
 
         return thunk
@@ -277,8 +270,8 @@ class PrimitiveSet(Command):
 
         async def athunk(rt: Runtime) -> None:
             v = await value(rt)
-            if v is EMPTY:
-                raise ValueError("cannot store EMPTY")
+            if is_null(v):
+                raise ValueError("cannot store NULL")
             await ref._aprimitive_write(rt, v, rt.program.children[nid][0])  # type: ignore[attr-defined]
 
         return athunk

@@ -134,17 +134,17 @@ assert_type((Profile.age + 1) > Profile.age, Bool)
 # --- Any escape hatch through sentinel checks --------------------------
 
 
-assert_type(Profile.age.is_empty(), Bool)
-assert_type(Profile.age.not_empty(), Bool)
+assert_type(Profile.age.is_null(), Bool)
+assert_type(Profile.age.is_null().not_(), Bool)
 
 
 # --- Presence checks are bools ------------------------------------------
 
 
 assert_type(Profile.age.exists(), Bool)
-assert_type(Profile.age.missing(), Bool)
 assert_type(Profile.age.exists().not_(), Bool)
-assert_type(MemProfile.name.missing().and_(MemProfile.age.exists()), Bool)
+assert_type(Profile.age.exists().not_(), Bool)
+assert_type(MemProfile.name.exists().not_().and_(MemProfile.age.exists()), Bool)
 assert_type(nu.context.Attr("item").exists(), Bool)
 
 

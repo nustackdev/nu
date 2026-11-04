@@ -17,7 +17,7 @@ import pytest
 
 import nu
 import nustd
-from nu.lang import EMPTY, Form
+from nu.lang import Form
 
 
 def _terms() -> list[object]:
@@ -134,7 +134,7 @@ def test_iter_to_list_runs() -> None:
 
 def test_iter_first_runs() -> None:
     assert nu.run(nu.List.of(1, 2).iter().first())[0] == 1
-    assert nu.run(nu.List.of().iter().first())[0] is EMPTY
+    assert nu.run(nu.List.of().iter().first(0))[0] == 0
 
 
 def test_for_each_do_takes_an_iterator() -> None:

@@ -47,8 +47,8 @@ from .bytes_interactions import (
 from .float_ import Float
 from .int_ import Int
 from .none_ import None_
+from .null_ import NullForm
 from .object_ import Object
-from .sentinel_ import EmptyForm, SentinelForm
 from .str_ import Str
 from .str_interactions import (
     Capitalize,
@@ -145,7 +145,6 @@ __all__ = [
     "Center",
     "CountSubstring",
     "Decode",
-    "EmptyForm",
     "Encode",
     "EndsWith",
     "ExpandTabs",
@@ -172,6 +171,7 @@ __all__ = [
     "LStrip",
     "Lower",
     "None_",
+    "NullForm",
     "Object",
     "Partition",
     "RFind",
@@ -183,7 +183,6 @@ __all__ = [
     "RemovePrefix",
     "RemoveSuffix",
     "Replace",
-    "SentinelForm",
     "Split",
     "SplitLines",
     "StartsWith",

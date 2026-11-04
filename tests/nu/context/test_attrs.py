@@ -13,7 +13,7 @@ import pytest
 import nu
 import nu.context.attrs
 from nu.core import Add
-from nu.lang import EMPTY, Attr, Context, Effect, Literal
+from nu.lang import NULL, Attr, Context, Effect, Literal, is_null
 from nu.lang.helpers import arun, compile, run
 
 
@@ -29,9 +29,12 @@ def test_attr_reads_a_seeded_name():
     assert value == 8
 
 
-def test_attr_on_an_unbound_name_is_empty_and_propagates():
-    assert run(nu.context.Attr("missing"))[0] is EMPTY
-    assert run(Add(nu.context.Attr("missing"), Literal(1)))[0] is EMPTY
+def test_attr_on_an_unbound_name_is_null_and_ops_raise():
+    v = run(nu.context.Attr("missing"))[0]
+    assert is_null(v)
+    assert repr(v) == "<NULL Attr.missing>"
+    with pytest.raises(TypeError):
+        run(Add(nu.context.Attr("missing"), Literal(1)))
 
 
 def test_attr_reads_what_map_bound_for_each_item():
@@ -95,9 +98,14 @@ def test_attr_exists_is_false_for_an_unbound_name():
     assert run(nu.context.Attr("missing").exists())[0] is False
 
 
-def test_attr_exists_distinguishes_a_name_bound_to_empty_from_missing():
-    value, _ = run(nu.context.Attr("here").exists(), Context(attrs={"here": EMPTY}))
+def test_attr_exists_distinguishes_a_name_bound_to_null_from_missing():
+    value, _ = run(nu.context.Attr("here").exists(), Context(attrs={"here": NULL}))
     assert value is True
+
+
+@pytest.mark.parametrize(("attrs", "expected"), [({}, False), ({"n": 0}, True), ({"n": 3}, False)])
+def test_attr_is_set_falsy(attrs, expected):
+    assert run(nu.context.Attr("n").is_set_falsy(), Context(attrs=attrs))[0] is expected
 
 
 def test_attr_exists_is_a_bool_form():

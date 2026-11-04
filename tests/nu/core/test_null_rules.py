@@ -1,8 +1,10 @@
-"""EMPTY across every kind of interaction, end to end.
+"""NULL across every kind of interaction, end to end.
 
-EMPTY is the one "no value" sentinel. Queries propagate it, conditions read it
-as false, writes refuse it, ``exists()`` and ``fallback()`` observe it. These
-tests pin each rule through real trees on the mem fabric, on both run paths.
+A read of an unwritten slot gives NULL. Ops run plain Python, so NULL's own
+interface decides: falsy and comparable by ``==``, TypeError for the rest.
+Writes refuse it, ``exists()``, ``is_null()``, ``is_set_falsy()`` and
+``fallback()`` know it. These tests pin each rule through real trees on the
+mem fabric, on both run paths.
 """
 
 from __future__ import annotations
@@ -14,7 +16,7 @@ import pytest
 
 import nu
 from nu.forms import Int, Object, Str
-from nu.lang import EMPTY, ScalarQuery
+from nu.lang import NULL, ScalarQuery, is_null
 
 
 if TYPE_CHECKING:
@@ -69,7 +71,13 @@ def run(request: pytest.FixtureRequest) -> Callable[..., object]:
     return go
 
 
-# --- queries propagate -----------------------------------------------------
+# --- reads make NULL, ops run plain python ---------------------------------
+
+
+def test_an_unwritten_ref_reads_as_null_with_its_path(run):
+    v = run(User.age)
+    assert is_null(v)
+    assert repr(v) == "<NULL User.age>"
 
 
 @pytest.mark.parametrize(
@@ -78,96 +86,117 @@ def run(request: pytest.FixtureRequest) -> Callable[..., object]:
         lambda: User.age + 1,
         lambda: User.age * User.age,
         lambda: User.age > 3,
-        lambda: User.name == "gor",
         lambda: User.name.upper(),
         lambda: User.name + "!",
-        lambda: nu.Not(User.age),
         lambda: nu.ToStr(User.age),
         lambda: nu.Len(User.name),
     ],
 )
-def test_a_query_over_an_unwritten_ref_yields_empty(run, build):
-    assert run(build()) is EMPTY
+def test_an_unsupported_op_on_null_raises_type_error(run, build):
+    with pytest.raises((TypeError, AttributeError)):
+        run(build())
 
 
-def test_an_unwritten_ref_reads_as_empty(run):
-    assert run(User.age) is EMPTY
+def test_supported_ops_on_null_answer(run):
+    assert run(User.name == "gor") is False
+    assert run(User.name != "gor") is True
+    assert run(nu.Not(User.age)) is True
+    assert run(nu.ToBool(User.age)) is False
 
 
-# --- conditions read EMPTY as false ----------------------------------------
+# --- conditions read NULL as false -----------------------------------------
 
 
-def test_if_takes_the_else_branch_on_an_empty_cond(run):
-    assert run(nu.If(User.age > 3, "old", "young")) == "young"
-    assert run(nu.If(nu.Not(User.age > 3), "young", "old")) == "old"
+def test_if_takes_the_else_branch_on_a_null_cond(run):
+    assert run(nu.If(User.age, "set", "unset")) == "unset"
+    assert run(nu.If(nu.Not(User.age), "unset", "set")) == "unset"
 
 
-def test_ifdo_runs_the_else_body_on_an_empty_cond(run):
-    term = nu.IfDo(User.age > 3, User.name.set("then"), User.name.set("else"))
+def test_ifdo_runs_the_else_body_on_a_null_cond(run):
+    term = nu.IfDo(User.age, User.name.set("then"), User.name.set("else"))
     assert run(term, then=User.name) == "else"
 
 
-def test_whiledo_never_enters_on_an_empty_cond(run):
-    assert run(nu.WhileDo(User.age < 3, User.name.set(Boom())), then=User.name) is EMPTY
+def test_whiledo_never_enters_on_a_null_cond(run):
+    assert is_null(run(nu.WhileDo(User.age, User.name.set(Boom())), then=User.name))
 
 
-def test_and_or_read_an_empty_child_as_false_without_poisoning(run):
+def test_and_or_read_a_null_child_as_false(run):
     assert run(nu.And(User.age, Boom())) is False
     assert run(nu.Or(User.age, True)) is True
-    assert run(nu.Or(User.age > 3, User.name)) is False
+    assert run(nu.Or(User.age, User.name)) is False
 
 
-def test_switch_matches_no_key_on_an_empty_selector(run):
+def test_switch_on_a_null_selector_matches_no_key(run):
     assert run(nu.Switch(User.age, {1: "one"}, default="none")) == "none"
-    assert run(nu.Switch(User.age, {1: "one"})) is EMPTY
+    with pytest.raises(KeyError):
+        run(nu.Switch(User.age, {1: "one"}))
 
 
-def test_filter_drops_an_item_whose_predicate_is_empty(run):
-    kept = nu.Collect(nu.Filter(nu.Iter([1, 2, 3]), nu.Gt(nu.Attr("item"), User.age)))
+def test_filter_predicate_null_drops_the_item(run):
+    kept = nu.Collect(nu.Filter(nu.Iter([1, 2, 3]), User.age))
     assert run(kept) == []
 
 
-# --- writes refuse EMPTY ---------------------------------------------------
+# --- writes refuse NULL ----------------------------------------------------
 
 
 @pytest.mark.parametrize(
     "build",
     [
         lambda: User.age.set(User.age),
-        lambda: User.age.inc(),
-        lambda: User.name.set(User.name + "!"),
         lambda: User.tags.append(User.name),
     ],
 )
-def test_a_write_of_empty_raises(run, build):
-    with pytest.raises(ValueError, match="EMPTY"):
+def test_a_write_of_null_raises(run, build):
+    with pytest.raises(ValueError, match="NULL"):
         run(build())
 
 
-def test_print_shows_empty_rather_than_raising(capsys):
-    nu.run(nu.print(User.name), nu.Context().bind(dict, {}, User))
-    assert capsys.readouterr().out == "<EMPTY>\n"
+def test_a_write_built_on_null_raises_from_the_op(run):
+    with pytest.raises(TypeError):
+        run(User.age.inc())
+    with pytest.raises(TypeError):
+        run(User.name.set(User.name + "!"))
 
 
-def test_raise_with_an_empty_message_still_raises(run):
-    with pytest.raises(LookupError, match="<EMPTY>"):
-        run(nu.raise_(LookupError, User.name))
+def test_print_of_null_raises(capsys):
+    with pytest.raises(TypeError):
+        nu.run(nu.print(User.name), nu.Context().bind(dict, {}, User))
 
 
-# --- exists ----------------------------------------------------------------
+# --- checks ----------------------------------------------------------------
 
 
-def test_exists_is_a_plain_bool_never_empty(run):
+def test_exists_is_a_plain_bool(run):
     assert run(User.age.exists()) is False
     assert run(User.age.set(0), then=User.age.exists()) is True
+    assert run(User.tags.exists()) is True
 
 
-def test_exists_and_missing_are_bool_forms(run):
-    for term in (User.age.exists(), User.age.missing(), User.tags.exists(), User.tags.missing()):
+def test_checks_are_bool_forms(run):
+    for term in (User.age.exists(), User.age.is_null(), User.age.is_set_falsy()):
         assert isinstance(term, nu.Bool)
     assert run(User.age.exists().not_()) is True
-    assert run(User.age.missing().and_(User.tags.exists())) is True
-    assert run(User.tags.missing().or_(User.age.exists())) is False
+    assert run(User.age.is_null()) is True
+    assert run(User.tags.is_null()) is False
+
+
+@pytest.mark.parametrize("falsy", [0, False])
+def test_is_set_falsy_is_true_only_for_a_stored_falsy_value(run, falsy):
+    assert run(User.age.is_set_falsy()) is False
+    assert run(User.age.set(falsy), then=User.age.is_set_falsy()) is True
+    assert run(User.age.set(3), then=User.age.is_set_falsy()) is False
+
+
+def test_is_set_falsy_on_a_collection(run):
+    assert run(User.tags.is_set_falsy()) is True
+    assert run(User.tags.append("a"), then=User.tags.is_set_falsy()) is False
+
+
+def test_init_sets_only_when_nothing_is_there(run):
+    assert run(User.age.init(5), then=User.age) == 5
+    assert run(nu.Sequential(User.age.set(0), User.age.init(5)), then=User.age) == 0
 
 
 # --- fallback --------------------------------------------------------------
@@ -189,8 +218,8 @@ def test_fallback_evaluates_only_as_far_as_it_needs(run):
     assert run(User.age.fallback(2, Boom())) == 2
 
 
-def test_fallback_is_empty_only_when_all_are_empty(run):
-    assert run(User.age.fallback(User.age + 1, nu.Literal(EMPTY))) is EMPTY
+def test_fallback_is_null_only_when_all_are_null(run):
+    assert is_null(run(User.age.fallback(User.name, nu.Literal(NULL))))
 
 
 def test_fallback_keeps_the_form_of_its_receiver():

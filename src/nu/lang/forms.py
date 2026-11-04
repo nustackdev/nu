@@ -1,6 +1,6 @@
 """Form and TypedNu - the type-wrapping layer.
 
-``Form`` is a mixin that contributes shared helpers (sentinel checks) to typed
+``Form`` is a mixin that contributes shared helpers (NULL checks) to typed
 interfaces. The collection ABCs (``MappingForm``, ``SequenceForm``, ...) and the
 primitive leaves (``Int``, ``Str``, ...) inherit ``Form`` to get them.
 
@@ -18,13 +18,13 @@ wherever the validator expects a stream.
 
 Hierarchy::
 
-    Form                                    mixin (sentinel checks)
+    Form                                    mixin (NULL checks)
     TypedNu[T]                              ScalarQuery passthrough
     TypedNuStream[T]                        StreamQuery passthrough
     Int(Form, TypedNu[int])            primitive leaf
     Dict(MutableMappingForm, TypedNu[dict])   collection leaf
 
-The sentinel-check helpers and ``Bool`` they return live in ``nu.forms``;
+The NULL-check helpers and ``Bool`` they return live in ``nu.forms``;
 ``Form`` reaches them with a lazy import so this module keeps no import-time
 dependency on the forms package (it would be a cycle: forms imports ``Form``).
 """
@@ -56,7 +56,7 @@ T_co = TypeVar("T_co", covariant=True)
 
 
 class Form:
-    """Mixin for typed interfaces. Contributes sentinel-check helpers and ``==``.
+    """Mixin for typed interfaces. Contributes NULL-check helpers and ``==``.
 
     ``==`` / ``!=`` on a Form build ``Eq`` / ``Ne`` over the values it yields
     (the bare ``Nu`` base raises instead). Concrete Forms narrow the operand
@@ -77,34 +77,30 @@ class Form:
 
         return Bool(Ne(self, other))
 
-    def is_empty(self) -> Bool:
-        """True if this Form yields the EMPTY sentinel."""
-        from nu.core import IsEmpty
+    def is_null(self) -> Bool:
+        """True if this Form's value is NULL. On a container ref ask ``exists()`` instead."""
+        from nu.core import IsNull
         from nu.forms import Bool
 
-        return Bool(IsEmpty(self))
-
-    def not_empty(self) -> Bool:
-        """True if this Form does not yield EMPTY."""
-        return self.is_empty().not_()
+        return Bool(IsNull(self))
 
     def fallback(self, *alternatives: object) -> Self:
-        """The first of this value and ``alternatives`` that is not EMPTY.
+        """The first of this value and ``alternatives`` that is not NULL.
 
         Args:
-            *alternatives: the values to try in order when this one is EMPTY.
+            *alternatives: the values to try in order when this one is NULL.
                 At least one.
 
         Notes:
-            - Checks presence, not truthiness: ``0``, ``""``, ``False`` and
-              ``None`` are present values and are kept.
+            - Checks NULL, not truthiness: ``0``, ``""``, ``False`` and
+              ``None`` are values and are kept.
             - Evaluates only as far as it needs: an alternative after the
-              first present value never runs.
+              first non-NULL value never runs.
             - Reads as this value's Form, so the result keeps its surface
               (a ``Str`` stays a ``Str``, a ``StrRef`` reads as ``Str``).
 
         Yields:
-            The first present value. EMPTY only when all of them are EMPTY.
+            The first non-NULL value. NULL only when all of them are NULL.
 
         Example:
             >>> class User(nu.Shape):
@@ -136,8 +132,8 @@ class Form:
 class TypedNu(ScalarQuery[T_co], Generic[T_co]):  # PEP 695 has no variance markers
     """Transparent ScalarQuery passthrough carrying a python type tag ``T``.
 
-    Wraps a single Nu child and yields its value unchanged - sentinels ride
-    through untouched. The type tag is for the fluent surface only; it has no
+    Wraps a single Nu child and yields its value unchanged, NULL
+    included. The type tag is for the fluent surface only; it has no
     runtime effect.
     """
 

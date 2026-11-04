@@ -6,7 +6,7 @@
 - ``kinds``      - the kind taxonomy (``Ref`` / ``Interaction`` / ``ScalarQuery`` / ...).
 - ``args``       - argument type aliases (``IntArg``, ``StrArg``, ...) for kind signatures.
 - ``null``       - ``NULL``, the value an absent context read gives, and ``is_null``.
-- ``sentinels``  - ``EMPTY`` / ``UNSET`` and their guards.
+- ``sentinels``  - ``UNSET``, the internal argument marker.
 - ``attributes`` - the attribute concerns (sort, cardinality, effects, execution).
 - ``laws``       - ``LAWS`` and the predicate library.
 - ``runtime``    - ``Runtime``, ``Context``, ``Budget``, lifecycle helpers.
@@ -83,10 +83,8 @@ from .runtime import Context, Runtime
 from .sentinels import (
     EMPTY,
     UNSET,
-    Empty,
     Sentinel,
     Unset,
-    is_empty,
     is_sentinel,
 )
 from .typeinfo import TypeInfo, value_type_for
@@ -115,7 +113,6 @@ __all__ = [
     "DictArg",
     "Effect",
     "EffectSet",
-    "Empty",
     "ExecOrder",
     "FloatArg",
     "Flow",
@@ -164,7 +161,6 @@ __all__ = [
     "eval_in_loop",
     "first",
     "gate",
-    "is_empty",
     "is_null",
     "is_sentinel",
     "matrix_sort",

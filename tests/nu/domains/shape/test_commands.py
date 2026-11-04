@@ -11,8 +11,7 @@ import pytest
 import nu
 from nu.domains.shape.interactions import Erase, PrimitiveSet, SetCmd
 from nu.domains.shape.item import ItemRef
-from nu.lang import Command, Literal
-from nu.lang.sentinels import EMPTY
+from nu.lang import NULL, Command, Literal
 
 
 # ---------------------------------------------------------------------------
@@ -92,8 +91,8 @@ def _make_thunk(value):
 def test_set_command_thunk_raises_on_empty():
     ref = ItemRef("slot")
     cmd = SetCmd(ref, Literal(42))
-    thunk = cmd._compile(0, (_make_thunk(None), _make_thunk(EMPTY)))
-    with pytest.raises(ValueError, match="EMPTY"):
+    thunk = cmd._compile(0, (_make_thunk(None), _make_thunk(NULL)))
+    with pytest.raises(ValueError, match="NULL"):
         thunk(None)
 
 
@@ -121,6 +120,6 @@ def test_primitive_set_command_mutates_slot_zero():
 def test_primitive_set_command_thunk_raises_on_empty():
     ref = ItemRef("slot")
     cmd = PrimitiveSet(ref, Literal(42))
-    thunk = cmd._compile(0, (_make_thunk(None), _make_thunk(EMPTY)))
-    with pytest.raises(ValueError, match="EMPTY"):
+    thunk = cmd._compile(0, (_make_thunk(None), _make_thunk(NULL)))
+    with pytest.raises(ValueError, match="NULL"):
         thunk(None)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import nu
+from nu.core import Not
 from nu.core.flows.control import IfDo
 from nu.core.reactive import OnPrimitiveChange
 from nu.domains.shape.base import StructuredRef
@@ -10,7 +11,6 @@ from nu.domains.shape.dsl import Shape
 from nu.domains.shape.interactions import (
     Erase,
     Exists,
-    Missing,
     SetCmd,
 )
 from nu.domains.shape.item import ItemRef, MutableItemRef, ReactiveItemRef
@@ -66,9 +66,9 @@ def test_item_ref_exists_returns_exists_query():
 
 def test_item_ref_missing_returns_missing_query():
     ref = ItemRef("field")
-    result = ref.missing()
+    result = ref.exists().not_()
     assert isinstance(result, nu.Bool)
-    assert isinstance(result._source, Missing)
+    assert isinstance(result._source, Not)
 
 
 # ---------------------------------------------------------------------------
@@ -111,8 +111,8 @@ def test_mutable_item_ref_inherits_exists_missing():
     ref = MutableItemRef("field")
     assert isinstance(ref.exists(), nu.Bool)
     assert isinstance(ref.exists()._source, Exists)
-    assert isinstance(ref.missing(), nu.Bool)
-    assert isinstance(ref.missing()._source, Missing)
+    assert isinstance(ref.exists().not_(), nu.Bool)
+    assert isinstance(ref.exists().not_()._source, Not)
 
 
 def test_mutable_item_ref_init_returns_ifdo_of_missing_and_set():
@@ -121,7 +121,7 @@ def test_mutable_item_ref_init_returns_ifdo_of_missing_and_set():
     assert isinstance(result, IfDo)
     cond, body = nu.tree.children(result)
     assert isinstance(cond, nu.Bool)
-    assert isinstance(cond._source, Missing)
+    assert isinstance(cond._source, Not)
     assert isinstance(body, SetCmd)
 
 

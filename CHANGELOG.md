@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Simpler absent checks: one value test, honest slot existence, a set-but-falsy shorthand
 - Ops run plain Python on absent values, and empty lookups raise or take defaults
 - Add NULL, the value an absent read gives, with a strict minimal interface
 

@@ -5,13 +5,13 @@ from __future__ import annotations
 import pytest
 
 import nu
+from nu.core import Not
 from nu.core.reactive import OnChange, OnChildrenChange
 from nu.domains.shape.base import StructuredRef
 from nu.domains.shape.dsl import Shape
 from nu.domains.shape.interactions import (
     Erase,
     Exists,
-    Missing,
     SetCmd,
 )
 from nu.domains.shape.set_ import MutableSetRef, ReactiveSetRef, SetRef
@@ -60,8 +60,8 @@ def test_set_ref_exists_returns_exists_query():
 
 def test_set_ref_missing_returns_missing_query():
     ref = SetRef("my_set")
-    assert isinstance(ref.missing(), nu.Bool)
-    assert isinstance(ref.missing()._source, Missing)
+    assert isinstance(ref.exists().not_(), nu.Bool)
+    assert isinstance(ref.exists().not_()._source, Not)
 
 
 def test_set_ref_len_returns_int_form():
@@ -102,8 +102,8 @@ def test_mutable_set_ref_inherits_exists_missing():
     ref = MutableSetRef("my_set")
     assert isinstance(ref.exists(), nu.Bool)
     assert isinstance(ref.exists()._source, Exists)
-    assert isinstance(ref.missing(), nu.Bool)
-    assert isinstance(ref.missing()._source, Missing)
+    assert isinstance(ref.exists().not_(), nu.Bool)
+    assert isinstance(ref.exists().not_()._source, Not)
 
 
 def test_mutable_set_ref_has_no_subscript():

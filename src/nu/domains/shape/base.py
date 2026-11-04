@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.engine import Declared
-from nu.lang import EMPTY, Ref
+from nu.lang import NULL, Ref
 
 
 if TYPE_CHECKING:
@@ -36,11 +36,11 @@ class Anchor(Ref):
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        return lambda rt: EMPTY
+        return lambda rt: NULL
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
-            return EMPTY
+            return NULL
 
         return athunk
 

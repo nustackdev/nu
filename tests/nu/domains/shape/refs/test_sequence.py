@@ -5,13 +5,13 @@ from __future__ import annotations
 import pytest
 
 import nu
+from nu.core import Not
 from nu.core.flows.control import IfDo
 from nu.core.reactive import OnChange, OnChildChange, OnChildrenChange
 from nu.domains.shape.dsl import Shape
 from nu.domains.shape.interactions import (
     Erase,
     Exists,
-    Missing,
     SetCmd,
 )
 from nu.domains.shape.item import ItemRef
@@ -128,8 +128,8 @@ def test_sequence_ref_exists_returns_exists_query():
 
 def test_sequence_ref_missing_returns_missing_query():
     s = SequenceRef("my_seq")
-    assert isinstance(s.missing(), nu.Bool)
-    assert isinstance(s.missing()._source, Missing)
+    assert isinstance(s.exists().not_(), nu.Bool)
+    assert isinstance(s.exists().not_()._source, Not)
 
 
 def test_sequence_ref_len_returns_int_form():
@@ -160,8 +160,8 @@ def test_mutable_sequence_ref_inherits_exists_missing():
     s = MutableSequenceRef("my_seq")
     assert isinstance(s.exists(), nu.Bool)
     assert isinstance(s.exists()._source, Exists)
-    assert isinstance(s.missing(), nu.Bool)
-    assert isinstance(s.missing()._source, Missing)
+    assert isinstance(s.exists().not_(), nu.Bool)
+    assert isinstance(s.exists().not_()._source, Not)
 
 
 def test_mutable_sequence_ref_init_returns_ifdo_of_missing_and_set():
@@ -170,7 +170,7 @@ def test_mutable_sequence_ref_init_returns_ifdo_of_missing_and_set():
     assert isinstance(result, IfDo)
     cond, body = nu.tree.children(result)
     assert isinstance(cond, nu.Bool)
-    assert isinstance(cond._source, Missing)
+    assert isinstance(cond._source, Not)
     assert isinstance(body, SetCmd)
 
 

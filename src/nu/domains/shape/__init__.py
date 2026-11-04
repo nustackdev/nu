@@ -21,7 +21,6 @@ from .interactions import (
     Exists,
     Extract,
     Load,
-    Missing,
     PrimitiveSet,
     SetCmd,
 )
@@ -41,7 +40,6 @@ __all__ = [
     "ItemRef",
     "Load",
     "MappingRef",
-    "Missing",
     "MutableItemRef",
     "MutableMappingRef",
     "MutableSequenceRef",

@@ -35,7 +35,7 @@ __all__ = [
 
 
 class ItemForm(Form):
-    """Slot-level read surface for a leaf value. Ops: ``exists()``, ``missing()``."""
+    """Slot-level read surface for a leaf value. Ops: ``exists()``, ``is_set_falsy()``."""
 
     def exists(self) -> Bool:
         """Whether this slot holds a value, as a ``Bool``.
@@ -58,20 +58,18 @@ class ItemForm(Form):
 
         return Bool(Exists(self))
 
-    def missing(self) -> Bool:
-        """Whether this slot holds no value, as a ``Bool``: the negation of ``exists()``.
+    def is_set_falsy(self) -> Bool:
+        """True when this slot holds a falsy value (``False``, ``0``, ``""``, ``None``, empty).
 
-        Example:
-            >>> class User(nu.Shape):
-            ...     name = nu.StrRef.slot()
-            >>> ctx = nu.Context().bind(dict, {"name": "ada"}, User)
-            >>> nu.run(User.name.missing(), ctx)[0]
-            False
+        Notes:
+            - False when the slot holds nothing, and never raises: the value
+              is read only after ``exists()`` says it is there.
+            - Shorthand for ``And(x.exists(), Not(x))``.
         """
-        from nu.domains.shape.interactions import Missing
+        from nu.core import And, Not
         from nu.forms import Bool
 
-        return Bool(Missing(self))
+        return Bool(And(self.exists(), Not(self)))
 
 
 class MutableItemForm(ItemForm):
@@ -90,10 +88,10 @@ class MutableItemForm(ItemForm):
         return Erase(self)
 
     def init(self, value: object) -> IfDo:
-        """Set ``value`` iff the leaf is currently missing."""
+        """Set ``value`` iff the leaf holds nothing yet (``exists()`` is False)."""
         from nu.core.flows.control import IfDo
 
-        return IfDo(self.missing(), self.set(value))
+        return IfDo(self.exists().not_(), self.set(value))
 
 
 class ReactiveItemForm(MutableItemForm):
@@ -118,19 +116,19 @@ class ReactiveItemForm(MutableItemForm):
 class ItemRef(ItemForm, StructuredRef):
     """Leaf Ref: single typed value, no child descent.
 
-    API: exists(), missing() (from ItemForm).
+    API: exists(), is_set_falsy() (from ItemForm).
     """
 
 
 class MutableItemRef(MutableItemForm, ItemRef):
     """Mutable leaf Ref: single typed value with write/erase.
 
-    API: exists(), missing(), set(v), erase() (from MutableItemForm).
+    API: exists(), is_set_falsy(), set(v), erase() (from MutableItemForm).
     """
 
 
 class ReactiveItemRef(ReactiveItemForm, MutableItemRef):
     """Reactive leaf Ref: single typed value with observation.
 
-    API: exists(), missing(), set(v), erase(), on_change() (from ReactiveItemForm).
+    API: exists(), is_set_falsy(), set(v), erase(), on_change() (from ReactiveItemForm).
     """

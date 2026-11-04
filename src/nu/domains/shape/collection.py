@@ -60,7 +60,7 @@ def holding(
 
 
 class CollectionForm(Form):
-    """Shape collection Form. Ops: ``exists()``, ``missing()``, ``extract()``."""
+    """Shape collection Form. Ops: ``exists()``, ``is_set_falsy()``, ``extract()``."""
 
     @property
     def _declared(self) -> TypeInfo:
@@ -88,20 +88,18 @@ class CollectionForm(Form):
 
         return Bool(Exists(self))
 
-    def missing(self) -> Bool:
-        """Whether this slot holds no value, as a ``Bool``: the negation of ``exists()``.
+    def is_set_falsy(self) -> Bool:
+        """True when this slot holds a falsy value (``False``, ``0``, ``""``, ``None``, empty).
 
-        Example:
-            >>> class User(nu.Shape):
-            ...     tags = nu.ListRef.slot(str)
-            >>> ctx = nu.Context().bind(dict, {"tags": ["admin"]}, User)
-            >>> nu.run(User.tags.missing(), ctx)[0]
-            False
+        Notes:
+            - False when the slot holds nothing, and never raises: the value
+              is read only after ``exists()`` says it is there.
+            - Shorthand for ``And(x.exists(), Not(x))``.
         """
-        from nu.domains.shape.interactions import Missing
+        from nu.core import And, Not
         from nu.forms import Bool
 
-        return Bool(Missing(self))
+        return Bool(And(self.exists(), Not(self)))
 
     def extract(self) -> Extract:
         """Build an ``Extract`` query."""
@@ -126,10 +124,10 @@ class MutableCollectionForm(CollectionForm):
         return Erase(self)
 
     def init(self, value: object) -> IfDo:
-        """Set ``value`` iff the collection is currently missing."""
+        """Set ``value`` iff the collection holds nothing yet (``exists()`` is False)."""
         from nu.core.flows.control import IfDo
 
-        return IfDo(self.missing(), self.set(value))
+        return IfDo(self.exists().not_(), self.set(value))
 
 
 class ReactiveCollectionForm(MutableCollectionForm):

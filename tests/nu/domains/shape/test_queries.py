@@ -14,11 +14,9 @@ from nu.domains.shape.interactions import (
     Exists,
     Extract,
     Load,
-    Missing,
 )
 from nu.domains.shape.item import ItemRef
-from nu.lang import ScalarQuery
-from nu.lang.sentinels import EMPTY
+from nu.lang import NULL, ScalarQuery, is_null
 
 
 # ---------------------------------------------------------------------------
@@ -32,10 +30,6 @@ def test_load_query_is_scalar_query():
 
 def test_exists_query_is_scalar_query():
     assert issubclass(Exists, ScalarQuery)
-
-
-def test_missing_query_is_scalar_query():
-    assert issubclass(Missing, ScalarQuery)
 
 
 def test_extract_query_is_scalar_query():
@@ -60,12 +54,6 @@ def test_load_query_constructs_with_ref():
 def test_exists_query_constructs_with_ref():
     ref = ItemRef("slot")
     q = Exists(ref)
-    assert nu.tree.children(q)
-
-
-def test_missing_query_constructs_with_ref():
-    ref = ItemRef("slot")
-    q = Missing(ref)
     assert nu.tree.children(q)
 
 
@@ -104,19 +92,7 @@ def test_exists_thunk_true_for_real_value():
 
 def test_exists_thunk_false_for_empty():
     q = Exists(ItemRef("x"))
-    thunk = q._compile(0, (_make_thunk(EMPTY),))
-    assert thunk(None) is False
-
-
-def test_missing_thunk_true_for_empty():
-    q = Missing(ItemRef("x"))
-    thunk = q._compile(0, (_make_thunk(EMPTY),))
-    assert thunk(None) is True
-
-
-def test_missing_thunk_false_for_real_value():
-    q = Missing(ItemRef("x"))
-    thunk = q._compile(0, (_make_thunk("hello"),))
+    thunk = q._compile(0, (_make_thunk(NULL),))
     assert thunk(None) is False
 
 
@@ -137,14 +113,48 @@ def test_extract_thunk_calls_extract():
 
 
 def test_extract_thunk_returns_empty_for_empty_view():
-    from nu.lang.sentinels import EMPTY
+    from nu.lang.sentinels import NULL
 
     q = Extract(ItemRef("x"))
-    thunk = q._compile(0, (_make_thunk(EMPTY),))
+    thunk = q._compile(0, (_make_thunk(NULL),))
     result = thunk(None)
-    assert result is EMPTY
+    assert is_null(result)
 
 
 @pytest.mark.skip(reason="substrate impl deferred — AdvanceCursor needs view.next_key_after()")
 def test_advance_cursor_thunk_reads_next_key():
     pass
+
+
+class _HookRef(ItemRef):
+    """A ref that answers existence itself, the way a lazy view does."""
+
+    def _exists(self, rt, nid):
+        rt.seen.append(nid)
+        return 1
+
+    async def _aexists(self, rt, nid):
+        rt.seen.append(nid)
+        return 0
+
+
+def _hook_rt():
+    from types import SimpleNamespace
+
+    return SimpleNamespace(program=SimpleNamespace(children={0: (7,)}), seen=[])
+
+
+def test_exists_dispatches_to_the_ref_hook_over_the_read():
+    rt = _hook_rt()
+    thunk = Exists(_HookRef("x"))._compile(0, (_make_thunk(NULL),))
+    assert thunk(rt) is True
+    assert rt.seen == [7]
+
+
+def test_exists_async_dispatches_to_the_async_hook():
+    import asyncio
+
+    rt = _hook_rt()
+    athunk = Exists(_HookRef("x"))._acompile(0, (_make_thunk(42),))
+    assert asyncio.run(athunk(rt)) is False
+    assert rt.seen == [7]

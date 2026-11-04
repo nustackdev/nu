@@ -86,7 +86,7 @@ class Object(Form, TypedNu[Any]):
                 Object regardless.
 
         Yields:
-            The sum. EMPTY when either operand is EMPTY.
+            The sum.
 
         Example:
             >>> nu.run(nu.Object(2) + nu.Object(3))[0]
@@ -107,7 +107,7 @@ class Object(Form, TypedNu[Any]):
               e.g. a plain Python value that doesn't know about Object.
 
         Yields:
-            The sum. EMPTY when either operand is EMPTY.
+            The sum.
 
         Example:
             >>> nu.run(3 + nu.Object(2))[0]
@@ -124,7 +124,7 @@ class Object(Form, TypedNu[Any]):
             other: the value to subtract from self.
 
         Yields:
-            The difference. EMPTY when either operand is EMPTY.
+            The difference.
 
         Example:
             >>> nu.run(nu.Object(10) - nu.Object(3))[0]
@@ -144,7 +144,7 @@ class Object(Form, TypedNu[Any]):
             - Reached only when the left operand's own `__sub__` declines.
 
         Yields:
-            The difference. EMPTY when either operand is EMPTY.
+            The difference.
 
         Example:
             >>> nu.run(10 - nu.Object(3))[0]
@@ -161,7 +161,7 @@ class Object(Form, TypedNu[Any]):
             other: the value to multiply self by.
 
         Yields:
-            The product. EMPTY when either operand is EMPTY.
+            The product.
 
         Example:
             >>> nu.run(nu.Object(6) * nu.Object(7))[0]
@@ -181,7 +181,7 @@ class Object(Form, TypedNu[Any]):
             - Reached only when the left operand's own `__mul__` declines.
 
         Yields:
-            The product. EMPTY when either operand is EMPTY.
+            The product.
 
         Example:
             >>> nu.run(3 * nu.Object(4))[0]
@@ -199,7 +199,7 @@ class Object(Form, TypedNu[Any]):
                 matmul protocol (e.g. a numpy array); plain numbers don't.
 
         Yields:
-            The product. EMPTY when either operand is EMPTY. Raises
+            The product. Raises
             at evaluation time when neither operand supports `@`.
         """
         from nu.core import MatMul
@@ -217,7 +217,7 @@ class Object(Form, TypedNu[Any]):
               declines.
 
         Yields:
-            The product. EMPTY when either operand is EMPTY. Raises
+            The product. Raises
             at evaluation time when neither operand supports `@`.
         """
         from nu.core import MatMul
@@ -235,7 +235,7 @@ class Object(Form, TypedNu[Any]):
               at evaluation time.
 
         Yields:
-            The quotient. EMPTY when either operand is EMPTY.
+            The quotient.
             Raises at evaluation time when the divisor is zero.
 
         Example:
@@ -257,7 +257,7 @@ class Object(Form, TypedNu[Any]):
               declines.
 
         Yields:
-            The quotient. EMPTY when either operand is EMPTY.
+            The quotient.
             Raises at evaluation time when self evaluates to zero.
 
         Example:
@@ -278,8 +278,7 @@ class Object(Form, TypedNu[Any]):
             - Rounds toward negative infinity, as Python's `//` does.
 
         Yields:
-            The floored quotient. EMPTY when either operand is
-            EMPTY. Raises at evaluation time when the divisor is zero.
+            The floored quotient. Raises at evaluation time when the divisor is zero.
 
         Example:
             >>> nu.run(nu.Object(7) // nu.Object(2))[0]
@@ -300,8 +299,7 @@ class Object(Form, TypedNu[Any]):
               declines.
 
         Yields:
-            The floored quotient. EMPTY when either operand is
-            EMPTY.
+            The floored quotient.
 
         Example:
             >>> nu.run(-7 // nu.Object(2))[0]
@@ -321,7 +319,7 @@ class Object(Form, TypedNu[Any]):
             - The result's sign follows the divisor, as Python's `%` does.
 
         Yields:
-            The remainder. EMPTY when either operand is EMPTY.
+            The remainder.
 
         Example:
             >>> nu.run(nu.Object(7) % nu.Object(3))[0]
@@ -342,7 +340,7 @@ class Object(Form, TypedNu[Any]):
             - Reached only when the left operand's own `__mod__` declines.
 
         Yields:
-            The remainder. EMPTY when either operand is EMPTY.
+            The remainder.
 
         Example:
             >>> nu.run(-7 % nu.Object(3))[0]
@@ -359,7 +357,7 @@ class Object(Form, TypedNu[Any]):
             other: the exponent.
 
         Yields:
-            The power. EMPTY when either operand is EMPTY.
+            The power.
 
         Example:
             >>> nu.run(nu.Object(2) ** nu.Object(10))[0]
@@ -379,7 +377,7 @@ class Object(Form, TypedNu[Any]):
             - Reached only when the left operand's own `__pow__` declines.
 
         Yields:
-            The power. EMPTY when either operand is EMPTY.
+            The power.
 
         Example:
             >>> nu.run(2 ** nu.Object(10))[0]
@@ -393,7 +391,7 @@ class Object(Form, TypedNu[Any]):
         """Negation of self.
 
         Yields:
-            The negation. EMPTY when self is EMPTY.
+            The negation.
 
         Example:
             >>> nu.run(-nu.Object(4))[0]
@@ -411,7 +409,7 @@ class Object(Form, TypedNu[Any]):
               `+x` inside an expression is still a Nu term.
 
         Yields:
-            The value unchanged. EMPTY when self is EMPTY.
+            The value unchanged.
 
         Example:
             >>> nu.run(+nu.Object(-4))[0]
@@ -425,7 +423,7 @@ class Object(Form, TypedNu[Any]):
         """Absolute value of self.
 
         Yields:
-            The magnitude. EMPTY when self is EMPTY.
+            The magnitude.
 
         Example:
             >>> nu.run(abs(nu.Object(-4)))[0]
@@ -447,8 +445,7 @@ class Object(Form, TypedNu[Any]):
                 still yields a well-typed Bool.
 
         Yields:
-            True when self is greater, False otherwise. EMPTY when
-            either operand is EMPTY. Raises at evaluation time when
+            True when self is greater, False otherwise. Raises at evaluation time when
             the runtime types aren't comparable.
 
         Example:
@@ -468,8 +465,7 @@ class Object(Form, TypedNu[Any]):
             other: the value to compare against.
 
         Yields:
-            True when self is less, False otherwise. EMPTY when either
-            operand is EMPTY. Raises at evaluation time when the
+            True when self is less, False otherwise. Raises at evaluation time when the
             runtime types aren't comparable.
 
         Example:
@@ -489,8 +485,7 @@ class Object(Form, TypedNu[Any]):
             other: the value to compare against.
 
         Yields:
-            True when self is greater or equal, False otherwise. EMPTY
-            when either operand is EMPTY. Raises at evaluation time
+            True when self is greater or equal, False otherwise. Raises at evaluation time
             when the runtime types aren't comparable.
 
         Example:
@@ -510,8 +505,7 @@ class Object(Form, TypedNu[Any]):
             other: the value to compare against.
 
         Yields:
-            True when self is less or equal, False otherwise. EMPTY when
-            either operand is EMPTY. Raises at evaluation time when
+            True when self is less or equal, False otherwise. Raises at evaluation time when
             the runtime types aren't comparable.
 
         Example:
@@ -535,8 +529,7 @@ class Object(Form, TypedNu[Any]):
             - Value equality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the values compare equal, False otherwise. EMPTY
-            when either operand is EMPTY.
+            True when the values compare equal, False otherwise.
 
         Example:
             >>> nu.run(nu.Object(5) == 5)[0]
@@ -558,8 +551,7 @@ class Object(Form, TypedNu[Any]):
             - Value inequality, not identity. Use `is_` for identity.
 
         Yields:
-            True when the values differ, False otherwise. EMPTY when
-            either operand is EMPTY.
+            True when the values differ, False otherwise.
 
         Example:
             >>> nu.run(nu.Object(5) != 4)[0]
@@ -612,8 +604,7 @@ class Object(Form, TypedNu[Any]):
             - Bitwise AND is `bitand`, not this.
 
         Yields:
-            True when both operands are truthy, False otherwise. An EMPTY
-            operand counts as false.
+            True when both operands are truthy, False otherwise.
 
         Example:
             >>> nu.run(nu.Object(1).and_(nu.Object(0)))[0]
@@ -638,8 +629,7 @@ class Object(Form, TypedNu[Any]):
             - Bitwise OR is `bitor`, not this.
 
         Yields:
-            True when either operand is truthy, False otherwise. An EMPTY
-            operand counts as false.
+            True when either operand is truthy, False otherwise.
 
         Example:
             >>> nu.run(nu.Object(0).or_(nu.Object(5)))[0]
@@ -659,8 +649,7 @@ class Object(Form, TypedNu[Any]):
             - Bitwise NOT is `bitnot`, not this.
 
         Yields:
-            True when self is falsy, False otherwise. EMPTY when self is
-            EMPTY.
+            True when self is falsy, False otherwise.
 
         Example:
             >>> nu.run(nu.Object(0).not_())[0]
@@ -680,8 +669,7 @@ class Object(Form, TypedNu[Any]):
               Python's truthiness rule.
 
         Yields:
-            True when self is truthy, False when self is falsy. EMPTY
-            when self is EMPTY.
+            True when self is truthy, False when self is falsy.
 
         Example:
             >>> nu.run(nu.Object(5).bool_())[0]
@@ -711,7 +699,7 @@ class Object(Form, TypedNu[Any]):
             - A named method because `&` composes flows (Race) on every term.
 
         Yields:
-            The AND. EMPTY when either operand is EMPTY.
+            The AND.
 
         Example:
             >>> nu.run(nu.Object(0b1100).bitand(0b1010))[0]
@@ -732,7 +720,7 @@ class Object(Form, TypedNu[Any]):
               term.
 
         Yields:
-            The OR. EMPTY when either operand is EMPTY.
+            The OR.
 
         Example:
             >>> nu.run(nu.Object(0b1100).bitor(0b1010))[0]
@@ -749,7 +737,7 @@ class Object(Form, TypedNu[Any]):
             other: the value to XOR with self.
 
         Yields:
-            The XOR. EMPTY when either operand is EMPTY.
+            The XOR.
 
         Example:
             >>> nu.run(nu.Object(0b1100).bitxor(0b1010))[0]
@@ -763,7 +751,7 @@ class Object(Form, TypedNu[Any]):
         """Python's `~` on the value.
 
         Yields:
-            The bitwise complement. EMPTY when self is EMPTY.
+            The bitwise complement.
 
         Example:
             >>> nu.run(nu.Object(5).bitnot())[0]
@@ -781,7 +769,7 @@ class Object(Form, TypedNu[Any]):
                 time.
 
         Yields:
-            The shifted value. EMPTY when either operand is EMPTY.
+            The shifted value.
             Raises at evaluation time when the shift amount is negative.
 
         Example:
@@ -804,7 +792,7 @@ class Object(Form, TypedNu[Any]):
               every term.
 
         Yields:
-            The shifted value. EMPTY when either operand is EMPTY.
+            The shifted value.
             Raises at evaluation time when the shift amount is negative.
 
         Example:
@@ -822,8 +810,7 @@ class Object(Form, TypedNu[Any]):
             other: the iterable to union with self.
 
         Yields:
-            A new set with every element of self and other. EMPTY when
-            either operand is EMPTY.
+            A new set with every element of self and other.
 
         Example:
             >>> sorted(nu.run(nu.Object({1, 2}).union({2, 3}))[0])
@@ -840,8 +827,7 @@ class Object(Form, TypedNu[Any]):
             other: the iterable to intersect with self.
 
         Yields:
-            A new set with only the elements found in both. EMPTY when
-            either operand is EMPTY.
+            A new set with only the elements found in both.
 
         Example:
             >>> nu.run(nu.Object({1, 2, 3}).intersection({2, 4}))[0]
@@ -858,7 +844,7 @@ class Object(Form, TypedNu[Any]):
             other: the iterable of elements to leave out.
 
         Yields:
-            A new set. EMPTY when either operand is EMPTY.
+            A new set.
 
         Example:
             >>> nu.run(nu.Object({1, 2, 3}).difference({2}))[0]
@@ -875,7 +861,7 @@ class Object(Form, TypedNu[Any]):
             other: the iterable to compare self against.
 
         Yields:
-            A new set. EMPTY when either operand is EMPTY.
+            A new set.
 
         Example:
             >>> nu.run(nu.Object({1, 2}).symmetric_difference({2, 3}))[0]
@@ -893,7 +879,7 @@ class Object(Form, TypedNu[Any]):
                 overlap.
 
         Yields:
-            A new mapping. EMPTY when either operand is EMPTY.
+            A new mapping.
 
         Example:
             >>> nu.run(nu.Object({"a": 1}).merge({"b": 2}))[0]
@@ -916,7 +902,7 @@ class Object(Form, TypedNu[Any]):
                 symbolic.
 
         Yields:
-            The item at key. EMPTY when self is EMPTY. Raises at
+            The item at key. Raises at
             evaluation time when key doesn't exist on the runtime value.
 
         Example:
@@ -948,14 +934,14 @@ class Object(Form, TypedNu[Any]):
               own methods and reach the method, never the value's attribute:
               `and_`, `bitand`, `bitnot`, `bitor`, `bitxor`, `bool_`,
               `contains`, `difference`, `fallback`, `has_attr`,
-              `intersection`, `is_`, `is_empty`, `iter`, `len`, `lshift`,
-              `merge`, `not_`, `not_empty`, `or_`, `rshift`,
+              `intersection`, `is_`, `is_null`, `iter`, `len`, `lshift`,
+              `merge`, `not_`, `or_`, `rshift`,
               `symmetric_difference`, `union`. To read a value attribute
               with one of those names, build the read directly:
               `nu.Object(nu.GetAttr(o, "len"))`.
 
         Yields:
-            The attribute's value. EMPTY when self is EMPTY. Raises
+            The attribute's value. Raises
             at evaluation time when the attribute doesn't exist on the
             runtime value.
 
@@ -989,7 +975,7 @@ class Object(Form, TypedNu[Any]):
               native int and can't carry a Nu tree node.
 
         Yields:
-            The length as Int. EMPTY when self is EMPTY. Raises at
+            The length as Int. Raises at
             evaluation time when the runtime value has no length.
 
         Example:
@@ -1013,8 +999,7 @@ class Object(Form, TypedNu[Any]):
               return a native bool and can't carry a Nu tree node.
 
         Yields:
-            True when item is found in self, False otherwise. EMPTY
-            when either operand is EMPTY.
+            True when item is found in self, False otherwise.
 
         Example:
             >>> nu.run(nu.Object([1, 2, 3]).contains(2))[0]
@@ -1037,8 +1022,7 @@ class Object(Form, TypedNu[Any]):
               `to_tuple()`, or pull one item with `next()`.
 
         Yields:
-            An Iterator over self's elements. EMPTY when self is
-            EMPTY.
+            An Iterator over self's elements.
         """
         from nu.core import Iter
 
@@ -1058,7 +1042,6 @@ class Object(Form, TypedNu[Any]):
 
         Yields:
             True when self has the named attribute, False otherwise.
-            EMPTY when either operand is EMPTY.
 
         Example:
             >>> class Obj:

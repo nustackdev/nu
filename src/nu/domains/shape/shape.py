@@ -27,7 +27,7 @@ __all__ = [
 class ShapeRef(MappingForm, StructuredRef):
     """Structured container Ref; slot navigation via attribute or bracket access.
 
-    API: full MappingForm surface: exists(), missing(), extract(), keys(),
+    API: full MappingForm surface: exists(), is_set_falsy(), extract(), keys(),
     values(), items(), len(), contains(), [key], .attr from shape MappingForm.
     """
 

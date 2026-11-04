@@ -44,7 +44,7 @@ __all__ = [
 
 
 class MappingForm(_MappingForm, CollectionForm):
-    """Shape mapping: key-value ops + exists/missing/extract, typed by the declaration."""
+    """Shape mapping: key-value ops + exists/extract, typed by the declaration."""
 
     def _wrap_value_result(self, operand: Nu) -> Form:
         return form_of(self._declared.elem)(operand)  # type: ignore[return-value]
@@ -89,7 +89,7 @@ class MappingForm(_MappingForm, CollectionForm):
 
 
 class MutableMappingForm(_MutableMappingForm, MutableCollectionForm):
-    """Mutable shape mapping: key-value ops + exists/missing/extract + set/erase."""
+    """Mutable shape mapping: key-value ops + exists/extract + set/erase."""
 
 
 class ReactiveMappingForm(_ReactiveMappingForm, MutableMappingForm, ReactiveCollectionForm):

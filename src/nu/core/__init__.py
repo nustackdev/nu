@@ -45,7 +45,7 @@ family, crossing Query / Command / Action as the builtins do:
   Sorted yields a list)
 - ``reduction`` - stream-to-scalar folds (Sum, Min, Max, AnyOf, AllOf, Collect)
 - ``reflection`` - introspection (Type, IsInstance, Callable, Id, Hash)
-- ``sentinel`` - the queries that observe EMPTY (IsEmpty, Fallback)
+- ``null``     - the queries that know NULL (IsNull, Fallback)
 - ``io`` - console effects through the stdio fabric (Print, Input).
         Logging lives at ``nustd.logging`` -- a Python ``logging`` module wrap.
 - ``dynamic`` - host-namespace escape hatches (Globals, Locals)
@@ -131,6 +131,7 @@ from nu.core.dynamic import Globals, Locals
 from nu.core.io import STDERR, STDIN, STDOUT, Input, Print, input, print
 from nu.core.iteration import Enumerate, Iter, Next, Reversed, Zip
 from nu.core.logical import And, Not, Or, ToBool, bool
+from nu.core.null import Fallback, IsNull
 from nu.core.reactive import (
     ForEachParReactive,
     OnChange,
@@ -177,7 +178,6 @@ from nu.core.repr import (
     Ord,
     Repr,
 )
-from nu.core.sentinel import Fallback, IsEmpty, NotEmpty
 from nu.core.transform import (
     Filter,
     Flatten,
@@ -234,8 +234,8 @@ __all__ = [
     "If",
     "Input",
     "Is",
-    "IsEmpty",
     "IsInstance",
+    "IsNull",
     "IsSubclass",
     "Iter",
     "LShift",
@@ -254,7 +254,6 @@ __all__ = [
     "Neg",
     "Next",
     "Not",
-    "NotEmpty",
     "Oct",
     "OnChange",
     "OnChildChange",

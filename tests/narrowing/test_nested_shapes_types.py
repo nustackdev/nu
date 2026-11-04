@@ -108,5 +108,5 @@ assert_type(direct, Profile)  # slot returns S (annotation lie)
 # --- Nested-shape existence check -------------------------------------
 
 
-assert_type(User.profile.name.is_empty(), Bool)
-assert_type(User.profile.address.zipcode.code.is_empty(), Bool)
+assert_type(User.profile.name.is_null(), Bool)
+assert_type(User.profile.address.zipcode.code.is_null(), Bool)

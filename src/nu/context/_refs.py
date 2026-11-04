@@ -15,6 +15,7 @@ from nu.lang import Ref
 
 
 if TYPE_CHECKING:
+    from nu.forms import Bool
     from nu.lang.runtime import Runtime
 
 
@@ -44,3 +45,10 @@ class _ContextRef(Ref):
     async def _aaddress(self, rt: Runtime, nid: int) -> object:
         """Async sibling of :meth:`_address`."""
         return await rt.aeval(rt.program.children[nid][0])
+
+    def is_set_falsy(self) -> Bool:
+        """True when the binding holds a falsy value; False when nothing is bound. Never raises."""
+        from nu.core import And, Not
+        from nu.forms import Bool
+
+        return Bool(And(self.exists(), Not(self)))  # type: ignore[attr-defined]
