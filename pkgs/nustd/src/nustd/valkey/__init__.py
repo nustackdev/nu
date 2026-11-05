@@ -8,7 +8,8 @@ wheel, private to one data dir, on a unix socket.
 
 - ``ValkeyServer`` - the resource. Setup reaps a server a crashed owner left
   behind, starts a fresh one and returns once it answers ``PING``. Cleanup
-  stops it. A watchdog stops it too if the owner dies without cleanup.
+  stops it. The keeper the server runs under stops it too if the owner
+  dies without cleanup.
 - ``ValkeyRef`` - the fabric ref, with the fluent ``url()`` / ``ping()``.
 - ``Url`` / ``Ping`` - the interactions, both reads.
 - ``server(data_dir)`` - the preset ``Provide``.

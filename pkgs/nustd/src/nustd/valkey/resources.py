@@ -12,14 +12,19 @@ after a crash, so the parts that matter are done here instead:
   data dir by hash, ``/tmp/nu-vk-<hash>.sock``, so every process can build the
   URL on its own and it stays under macOS's 104 byte socket path limit
   however deep the dir is.
-- **No orphans.** A small ``sh`` watchdog holds the read end of a pipe whose
-  write end only the owner has. When the owner dies by any means, even
-  SIGKILL, the pipe closes and the watchdog sends the server SIGTERM. If the
-  watchdog is gone too, the next start in the same dir reaps the leftover
-  server from its pid file.
+- **No orphans.** The server runs under a keeper (``_keeper.py``), a small
+  stdlib only Python process that is the server's parent. The keeper holds
+  the read end of a pipe whose write end only the owner has. When the owner
+  dies by any means, even SIGKILL, the pipe closes (or the keeper's parent
+  changes, if a forked child kept the write end) and the keeper stops the
+  server and reaps it. Cleanup is one message on that pipe, so an interrupted
+  cleanup can never leave a server without its keeper. Only a SIGKILL of the
+  keeper itself leaves the server behind; the next start in the same dir
+  reaps it from its pid file.
 - **Fast start.** Readiness is a raw RESP ``PING`` polled every millisecond
   or so, not every 100ms, so the bracket opens as soon as the server answers.
-- **Own session.** Server and watchdog run in their own session, so a Ctrl-C
+- **Own session.** Keeper and server run in their own session and process
+  group, so a Ctrl-C
   on the terminal reaches the host, whose bracket then stops the server in
   order, instead of killing the server under whatever still talks to it.
 
@@ -36,6 +41,7 @@ import os
 import signal
 import socket
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -59,9 +65,10 @@ _OWNER_FILE = "valkey.owner"
 _CONF_FILE = "valkey.conf"
 _PING = b"*1\r\n$4\r\nPING\r\n"
 _SHUTDOWN = b"*2\r\n$8\r\nSHUTDOWN\r\n$6\r\nNOSAVE\r\n"
-# The watchdog: block on stdin (a pipe only the owner writes to), and once it
-# reads EOF because the owner is gone, stop the server it was handed.
-_WATCHDOG = 'read _; kill -TERM "$1" 2>/dev/null'
+# The keeper script the server runs under, see its docstring.
+_KEEPER = str(Path(__file__).with_name("_keeper.py"))
+# How long cleanup waits on the keeper beyond its own SIGTERM grace.
+_KEEPER_SLACK = 2.0
 
 
 class ValkeyStartupError(RuntimeError):
@@ -227,8 +234,9 @@ class ValkeyServer:
             the defaults (no RDB, no AOF, no TCP port).
         ready_timeout: how long setup waits for the first ``PONG``.
         grace: how long a SIGTERM is given before SIGKILL, on stop and on reap.
-        watchdog: run the ``sh`` watchdog that stops the server when this
-            process dies. Off leaves only the reap at next start.
+        watchdog: have the keeper stop the server when this process dies.
+            Off, the server outlives its owner until the next start in the
+            same dir reaps it.
 
     Notes:
         - No persistence by default: ``save ""`` and ``appendonly no``. The
@@ -260,9 +268,10 @@ class ValkeyServer:
         self.ready_timeout = ready_timeout
         self.grace = grace
         self.watchdog = watchdog
-        self._proc: subprocess.Popen | None = None
-        self._watchdog: subprocess.Popen | None = None
-        self._watchdog_fd: int | None = None
+        self._keeper: subprocess.Popen | None = None
+        self._keeper_fd: int | None = None
+        self._server_pid: int | None = None
+        self._owner_pid: int | None = None
 
     # --- identity ----------------------------------------------------------
 
@@ -274,8 +283,8 @@ class ValkeyServer:
     @property
     def pid(self) -> int | None:
         """The server's pid while it runs, else None."""
-        proc = self._proc
-        return proc.pid if proc is not None and proc.poll() is None else None
+        keeper = self._keeper
+        return self._server_pid if keeper is not None and keeper.poll() is None else None
 
     def ping(self, timeout: float = 1.0) -> bool:
         """Whether the server answers ``PING`` right now."""
@@ -289,8 +298,8 @@ class ValkeyServer:
 
     def setup(self, ctx: Context | None) -> None:
         """Reap what a dead owner left behind, start the server, wait for PONG."""
-        self._spawn()
         try:
+            self._spawn()
             deadline = time.monotonic() + self.ready_timeout
             delay = 0.001
             while not self._ready_step(deadline):
@@ -301,24 +310,44 @@ class ValkeyServer:
             raise
 
     def cleanup(self) -> None:
-        """Stop the watchdog, then the server, and remove the dir's run files."""
-        self._stop_watchdog()
-        proc, self._proc = self._proc, None
-        if proc is not None:
-            with contextlib.suppress(Exception):
-                if proc.poll() is None:
-                    proc.terminate()
-                    try:
-                        proc.wait(timeout=self.grace)
-                    except subprocess.TimeoutExpired:
-                        proc.kill()
-                        proc.wait(timeout=self.grace)
-            self._remove_run_files(proc.pid)
+        """Tell the keeper to stop the server, wait for it, remove the dir's run files.
+
+        The stop is one write and close on the keeper's pipe, done first, so
+        from then on the server goes down even if this process is interrupted
+        or killed while it waits. A keeper that does not finish in time is
+        killed with its whole process group, server included. A forked copy
+        of the owner does nothing: the server is not its to stop.
+        """
+        if self._owner_pid is not None and self._owner_pid != os.getpid():
+            fd, self._keeper_fd = self._keeper_fd, None
+            if fd is not None:
+                with contextlib.suppress(OSError):
+                    os.close(fd)  # our inherited copy only: the owner's stays open
+            self._keeper = self._server_pid = None
+            return
+        fd, self._keeper_fd = self._keeper_fd, None
+        if fd is not None:
+            with contextlib.suppress(OSError):
+                os.write(fd, b"stop\n")
+            with contextlib.suppress(OSError):
+                os.close(fd)
+        keeper, self._keeper = self._keeper, None
+        server_pid, self._server_pid = self._server_pid, None
+        if keeper is None:
+            return
+        try:
+            keeper.wait(timeout=self.grace + _KEEPER_SLACK)
+        except subprocess.TimeoutExpired:
+            with contextlib.suppress(ProcessLookupError, PermissionError):
+                os.killpg(keeper.pid, signal.SIGKILL)
+            keeper.wait()
+        if server_pid is not None:
+            self._remove_run_files(server_pid)
 
     async def asetup(self, ctx: Context | None) -> None:
         """Async lifecycle: spawn inline, poll readiness without holding the loop."""
-        self._spawn()
         try:
+            self._spawn()
             deadline = time.monotonic() + self.ready_timeout
             delay = 0.001
             while not self._ready_step(deadline):
@@ -348,30 +377,57 @@ class ValkeyServer:
         conf.write_text(self._render_config())
         log_path = self._log_path()
         stderr = open(log_path, "ab") if log_path is not None else subprocess.DEVNULL  # noqa: PTH123
+        read_fd, write_fd = os.pipe()  # both non-inheritable by default
+        self._owner_pid = os.getpid()
         try:
-            self._proc = subprocess.Popen(  # noqa: S603 - our own binary and config
-                [str(binary), str(conf)],
-                stdin=subprocess.DEVNULL,
-                stdout=subprocess.DEVNULL,
+            self._keeper = subprocess.Popen(  # noqa: S603 - our own script, binary and config
+                [
+                    sys.executable,
+                    "-I",
+                    "-S",
+                    _KEEPER,
+                    str(self._owner_pid),
+                    str(self.grace),
+                    "1" if self.watchdog else "0",
+                    self.socket_path,
+                    str(binary),
+                    str(conf),
+                ],
+                stdin=read_fd,
+                stdout=subprocess.PIPE,
                 stderr=stderr,
                 cwd=str(self.data_dir),
                 start_new_session=True,
             )
+        except BaseException:
+            os.close(write_fd)
+            raise
         finally:
+            os.close(read_fd)
             if stderr is not subprocess.DEVNULL:
                 stderr.close()
+        self._keeper_fd = write_fd
+        out = self._keeper.stdout
+        try:
+            line = out.readline() if out is not None else b""
+        finally:
+            if out is not None:
+                out.close()
+        if not line.strip():
+            code = self._keeper.wait()
+            msg = f"valkey keeper exited before starting the server (code {code}){self._log_tail()}"
+            raise ValkeyStartupError(msg)
+        self._server_pid = int(line)
         # The server writes its own pid file once it is up; writing it here as
         # well closes the window where a crash would leave no record at all.
-        (self.data_dir / _PID_FILE).write_text(f"{self._proc.pid}\n")
-        (self.data_dir / _OWNER_FILE).write_text(f"{os.getpid()}\n")
-        if self.watchdog:
-            self._start_watchdog(self._proc.pid)
+        (self.data_dir / _PID_FILE).write_text(f"{self._server_pid}\n")
+        (self.data_dir / _OWNER_FILE).write_text(f"{self._owner_pid}\n")
 
     def _ready_step(self, deadline: float) -> bool:
         """One readiness probe: True once PONG, raise if dead or out of time."""
-        proc = self._proc
-        if proc is None or proc.poll() is not None:
-            code = None if proc is None else proc.returncode
+        keeper = self._keeper
+        if keeper is None or keeper.poll() is not None:
+            code = None if keeper is None else keeper.returncode
             msg = f"valkey-server exited during startup (code {code}){self._log_tail()}"
             raise ValkeyStartupError(msg)
         if ping(self.socket_path, timeout=0.5):
@@ -425,8 +481,8 @@ class ValkeyServer:
     def _reap(self) -> None:
         """Clear the dir for a fresh start: stop a leftover server, drop stale files.
 
-        A server is only left behind when its owner died without the watchdog
-        doing its job (the watchdog was killed too, or turned off). The pid
+        A server is only left behind when its keeper was SIGKILLed, or the
+        watchdog was turned off. The pid
         file names it; it is killed only if it really is a ``valkey-server``.
         A server still answering on the socket with no usable pid file is shut
         down over the socket. Either way, if the recorded owner is a live
@@ -455,35 +511,6 @@ class ValkeyServer:
         for stale in (Path(self.socket_path), pid_file, self.data_dir / _OWNER_FILE):
             with contextlib.suppress(FileNotFoundError):
                 stale.unlink()
-
-    def _start_watchdog(self, server_pid: int) -> None:
-        read_fd, write_fd = os.pipe()  # both non-inheritable by default
-        try:
-            self._watchdog = subprocess.Popen(  # noqa: S603 - fixed script, no user input
-                ["/bin/sh", "-c", _WATCHDOG, "nu-valkey-watchdog", str(server_pid)],
-                stdin=read_fd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                start_new_session=True,
-            )
-        except BaseException:
-            os.close(write_fd)
-            raise
-        finally:
-            os.close(read_fd)
-        self._watchdog_fd = write_fd
-
-    def _stop_watchdog(self) -> None:
-        """Kill the watchdog before the server stops, so it never signals a stale pid."""
-        dog, self._watchdog = self._watchdog, None
-        if dog is not None:
-            with contextlib.suppress(Exception):
-                dog.kill()
-                dog.wait(timeout=self.grace)
-        fd, self._watchdog_fd = self._watchdog_fd, None
-        if fd is not None:
-            with contextlib.suppress(OSError):
-                os.close(fd)
 
     def _remove_run_files(self, pid: int) -> None:
         """Drop the pid, owner and socket files, if they are still ours."""

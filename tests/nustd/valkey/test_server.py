@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 import textwrap
+import threading
 import time
 from pathlib import Path
 
@@ -184,28 +185,77 @@ def test_the_same_dir_restarts_after_a_clean_stop(data_dir):
 
 
 # --- crashes ----------------------------------------------------------------
+#
+# Each test runs the owner as a real process and ends it the way a host ends
+# in the wild, then checks no server outlives it. These are the leak paths
+# found on a dev machine: a server left running with no owner and no keeper.
 
 
 OWNER = textwrap.dedent(
     """
-    import sys, time
-    from nustd.valkey import ValkeyServer
-    s = ValkeyServer(data_dir=sys.argv[1])
+    import os, signal, sys, time
+    import nu
+    from nustd.valkey import ValkeyServer, server
+
+    data_dir, mode = sys.argv[1], sys.argv[2]
+
+    def report(s):
+        print(s._server_pid, s._keeper.pid, flush=True)
+
+    if mode == "bracket":
+        # Ctrl-C reaches the owner while a nu bracket holds the server.
+        import subprocess
+        class Report:
+            def setup(self, ctx):
+                pid = open(os.path.join(data_dir, "valkey.pid")).read().strip()
+                keeper = subprocess.run(
+                    ["ps", "-o", "ppid=", "-p", pid], capture_output=True, text=True
+                ).stdout.strip()
+                print(pid, keeper, flush=True)
+            async def asetup(self, ctx):
+                self.setup(ctx)
+        import asyncio
+        asyncio.run(nu.arun(nu.With(server(data_dir), nu.Provide(Report, {}), body=nu.Park())))
+        sys.exit(0)
+
+    s = ValkeyServer(data_dir=data_dir)
+    if mode == "masked":
+        # spawned from a thread that blocks SIGINT and SIGTERM, as mp_pool's are
+        signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT, signal.SIGTERM})
+    if mode == "interrupted-startup":
+        def interrupted(deadline):
+            report(s)
+            raise KeyboardInterrupt
+        s._ready_step = interrupted
+        try:
+            s.setup(None)
+        except KeyboardInterrupt:
+            pass
+        time.sleep(600)
     s.setup(None)
-    print(s.pid, s._watchdog.pid, flush=True)
+    report(s)
+    if mode == "killed-in-cleanup":
+        # cleanup gets as far as waiting on the keeper, then the owner is killed
+        s._keeper.wait = lambda timeout=None: time.sleep(600)
+        signal.signal(signal.SIGUSR1, lambda *_: s.cleanup())
+    if mode == "forked":
+        # a fork child inherits the keeper pipe's write end and outlives us
+        if os.fork() == 0:
+            time.sleep(600)
+            os._exit(0)
     time.sleep(600)
     """,
 )
 
 
-def _spawn_owner(data_dir: str) -> tuple[subprocess.Popen, int, int]:
+def _spawn_owner(data_dir: str, mode: str = "plain") -> tuple[subprocess.Popen, int, int]:
     owner = subprocess.Popen(  # noqa: S603
-        [sys.executable, "-c", OWNER, data_dir],
+        [sys.executable, "-c", OWNER, data_dir, mode],
         stdout=subprocess.PIPE,
         text=True,
     )
-    server_pid, dog_pid = (int(x) for x in owner.stdout.readline().split())
-    return owner, server_pid, dog_pid
+    server_pid, keeper_pid = (int(x) for x in owner.stdout.readline().split())
+    return owner, server_pid, keeper_pid
 
 
 def _kill(proc: subprocess.Popen) -> None:
@@ -214,18 +264,133 @@ def _kill(proc: subprocess.Popen) -> None:
     proc.stdout.close()
 
 
-def test_the_watchdog_stops_the_server_when_the_owner_is_sigkilled(data_dir):
-    owner, server_pid, dog_pid = _spawn_owner(data_dir)
+def _assert_no_server_left(data_dir: str, server_pid: int, keeper_pid: int) -> None:
+    try:
+        assert _wait_gone(server_pid), "valkey-server outlived its owner"
+        assert _wait_gone(keeper_pid)
+        assert not Path(socket_path_for(data_dir)).exists(), "stale socket left in /tmp"
+    finally:
+        for pid in (server_pid, keeper_pid):
+            if _pid_alive(pid):
+                os.kill(pid, signal.SIGKILL)
+
+
+def test_a_clean_stop_leaves_no_process(data_dir):
+    srv = ValkeyServer(data_dir=data_dir)
+    srv.setup(None)
+    server_pid, keeper_pid = srv.pid, srv._keeper.pid
+    srv.cleanup()
+    _assert_no_server_left(data_dir, server_pid, keeper_pid)
+
+
+def test_the_keeper_stops_the_server_when_the_owner_is_sigkilled(data_dir):
+    owner, server_pid, keeper_pid = _spawn_owner(data_dir)
     _kill(owner)
-    assert _wait_gone(server_pid)
-    assert _wait_gone(dog_pid)
-    assert not Path(socket_path_for(data_dir)).exists()
+    _assert_no_server_left(data_dir, server_pid, keeper_pid)
+
+
+def test_the_server_stops_when_the_owner_is_sigtermed(data_dir):
+    owner, server_pid, keeper_pid = _spawn_owner(data_dir)
+    owner.terminate()
+    owner.wait()
+    owner.stdout.close()
+    _assert_no_server_left(data_dir, server_pid, keeper_pid)
+
+
+def test_ctrl_c_on_the_owner_stops_the_server_through_the_bracket(data_dir):
+    owner, server_pid, keeper_pid = _spawn_owner(data_dir, "bracket")
+    owner.send_signal(signal.SIGINT)
+    try:
+        owner.wait(timeout=10)
+    finally:
+        if owner.poll() is None:
+            owner.kill()
+        owner.stdout.close()
+    _assert_no_server_left(data_dir, server_pid, keeper_pid)
+
+
+def test_an_owner_killed_inside_cleanup_still_stops_the_server(data_dir):
+    owner, server_pid, keeper_pid = _spawn_owner(data_dir, "killed-in-cleanup")
+    owner.send_signal(signal.SIGUSR1)
+    time.sleep(0.3)
+    _kill(owner)
+    _assert_no_server_left(data_dir, server_pid, keeper_pid)
+
+
+def test_an_interrupted_startup_stops_the_server(data_dir):
+    owner, server_pid, keeper_pid = _spawn_owner(data_dir, "interrupted-startup")
+    try:
+        # the owner lives on: the cleanup in setup alone has to stop it
+        _assert_no_server_left(data_dir, server_pid, keeper_pid)
+    finally:
+        _kill(owner)
+
+
+def test_the_server_stops_when_a_forked_child_outlives_the_owner(data_dir):
+    owner, server_pid, keeper_pid = _spawn_owner(data_dir, "forked")
+    children = subprocess.run(  # noqa: S603
+        ["pgrep", "-P", str(owner.pid)],  # noqa: S607
+        capture_output=True,
+        text=True,
+        check=False,
+    ).stdout.split()
+    forks = [int(c) for c in children if int(c) not in (server_pid, keeper_pid)]
+    try:
+        _kill(owner)
+        _assert_no_server_left(data_dir, server_pid, keeper_pid)
+    finally:
+        for pid in forks:
+            if _pid_alive(pid):
+                os.kill(pid, signal.SIGKILL)
+
+
+def test_a_server_spawned_with_stop_signals_blocked_still_dies_with_its_owner(data_dir):
+    """The leak seen in the wild: a blocked mask is inherited, SIGTERM is held forever."""
+    owner, server_pid, keeper_pid = _spawn_owner(data_dir, "masked")
+    _kill(owner)
+    _assert_no_server_left(data_dir, server_pid, keeper_pid)
+
+
+def test_a_server_spawned_with_stop_signals_blocked_stops_on_sigterm(data_dir):
+    def blocked_setup(srv: ValkeyServer) -> None:
+        signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT, signal.SIGTERM})
+        srv.setup(None)
+
+    srv = ValkeyServer(data_dir=data_dir, grace=30.0)
+    thread = threading.Thread(target=blocked_setup, args=(srv,))
+    thread.start()
+    thread.join()
+    server_pid, keeper_pid = srv.pid, srv._keeper.pid
+    t = time.monotonic()
+    srv.cleanup()
+    assert time.monotonic() - t < 5.0, "SIGTERM was ignored, cleanup fell back to SIGKILL"
+    _assert_no_server_left(data_dir, server_pid, keeper_pid)
+
+
+def test_a_sigtermed_keeper_takes_the_server_down(data_dir):
+    owner, server_pid, keeper_pid = _spawn_owner(data_dir)
+    try:
+        os.kill(keeper_pid, signal.SIGTERM)
+        _assert_no_server_left(data_dir, server_pid, keeper_pid)
+    finally:
+        _kill(owner)
+
+
+def test_a_crashed_server_leaves_no_socket(data_dir):
+    srv = ValkeyServer(data_dir=data_dir)
+    srv.setup(None)
+    server_pid, keeper_pid = srv.pid, srv._keeper.pid
+    try:
+        os.kill(server_pid, signal.SIGKILL)
+        _assert_no_server_left(data_dir, server_pid, keeper_pid)
+    finally:
+        srv.cleanup()
 
 
 def test_an_orphan_is_reaped_at_the_next_start(data_dir):
-    """Owner and watchdog both SIGKILLed: the server is left running, then reaped."""
-    owner, server_pid, dog_pid = _spawn_owner(data_dir)
-    os.kill(dog_pid, signal.SIGKILL)
+    """Owner and keeper both SIGKILLed: the server is left running, then reaped."""
+    owner, server_pid, keeper_pid = _spawn_owner(data_dir)
+    os.kill(keeper_pid, signal.SIGKILL)
     _kill(owner)
     time.sleep(0.2)
     assert _pid_alive(server_pid), "the setup under test needs a real orphan"
@@ -244,14 +409,14 @@ def test_an_orphan_is_reaped_at_the_next_start(data_dir):
 
 
 def test_a_server_whose_owner_is_alive_is_not_taken(data_dir):
-    owner, server_pid, _ = _spawn_owner(data_dir)
+    owner, server_pid, keeper_pid = _spawn_owner(data_dir)
     try:
         with pytest.raises(ValkeyInUse):
             ValkeyServer(data_dir=data_dir).setup(None)
         assert _pid_alive(server_pid)
     finally:
         _kill(owner)
-    assert _wait_gone(server_pid)
+    _assert_no_server_left(data_dir, server_pid, keeper_pid)
 
 
 # --- startup time -----------------------------------------------------------

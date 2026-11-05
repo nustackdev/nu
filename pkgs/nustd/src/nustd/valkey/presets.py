@@ -56,7 +56,8 @@ def server(
         config: extra Valkey directives applied over the defaults.
         ready_timeout: how long setup waits for the server to answer.
         grace: SIGTERM to SIGKILL escalation window, on stop and on reap.
-        watchdog: stop the server if this process dies without cleanup.
+        watchdog: have the server's keeper stop it if this process dies
+            without cleanup.
         tags: tags for the binding, so two servers can be told apart.
 
     Notes:
