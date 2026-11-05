@@ -18,7 +18,20 @@ import pytest
 from _support.pool_workers import RESIDENT
 
 import nu
-from nustd.mp_pool import Alive, Dispatch, Kill, Launch, Running, Teleport, WorkerPool, Workers
+from nustd.mp_pool import (
+    Dispatch,
+    Kill,
+    Launch,
+    PoolRef,
+    Status,
+    Teleport,
+    WorkerPool,
+    Workers,
+    WorkerStatus,
+)
+from nustd.mp_pool import (
+    pool as pool_preset,
+)
 
 
 pytestmark = pytest.mark.slow
@@ -139,8 +152,8 @@ def test_worker_id_flows_from_a_ref_into_dispatch_and_kill(ctx, pool):
     nu.run(tree, ctx)
 
     wid = pool.workers()[0]
-    pid = pool._workers[wid].proc.pid
-    assert pool.running(wid) is True
+    pid = pool.status(wid).pid
+    assert pool.status(wid).state == "busy"
 
     nu.run(nu.mem.Frame(Local, Kill(worker=W), w=nu.Literal(wid)), ctx)
     assert pool.workers() == []
@@ -148,9 +161,7 @@ def test_worker_id_flows_from_a_ref_into_dispatch_and_kill(ctx, pool):
 
 
 def test_pool_can_be_addressed_by_an_explicit_ref():
-    """``PoolRef`` is a plain FabricRef: it reads the untagged binding."""
-    from nustd.mp_pool import PoolRef
-
+    """``PoolRef()`` reads the untagged binding."""
     tree = nu.Provide(
         WorkerPool,
         {"name": "nu-test-ref"},
@@ -168,8 +179,6 @@ def test_pool_can_be_addressed_by_an_explicit_ref():
 
 
 def test_the_fluent_form_runs_the_same_as_the_constructors():
-    from nustd.mp_pool import PoolRef
-
     pool = PoolRef()
     tree = nu.Provide(
         WorkerPool,
@@ -181,8 +190,6 @@ def test_the_fluent_form_runs_the_same_as_the_constructors():
 
 
 def test_the_fluent_form_drives_a_whole_lifecycle(ctx, pool):
-    from nustd.mp_pool import PoolRef
-
     ref = PoolRef()
     nu.run(
         nu.mem.Frame(
@@ -193,12 +200,13 @@ def test_the_fluent_form_drives_a_whole_lifecycle(ctx, pool):
         ctx,
     )
     wid = pool.workers()[0]
-    assert nu.run(ref.alive(nu.Literal(wid)), ctx)[0] is True
-    assert nu.run(ref.running(nu.Literal(wid)), ctx)[0] is True
+    status = nu.run(ref.status(nu.Literal(wid)), ctx)[0]
+    assert (status.state, len(status.jobs)) == ("busy", 1)
     assert nu.run(nu.Collect(ref.workers()), ctx)[0] == [wid]
 
     nu.run(ref.kill(nu.Literal(wid)), ctx)
-    assert nu.run(ref.alive(nu.Literal(wid)), ctx)[0] is False
+    status = nu.run(ref.status(nu.Literal(wid)), ctx)[0]
+    assert (status.state, status.cause, status.exitcode) == ("exited", "killed", -9)
     assert pool.workers() == []
 
 
@@ -216,7 +224,7 @@ def test_dispatch_in_a_tree_returns_promptly(ctx, pool):
     start = time.monotonic()
     nu.run(tree, ctx)
     assert time.monotonic() - start < 10.0
-    assert pool.running(pool.workers()[0]) is True
+    assert pool.status(pool.workers()[0]).state == "busy"
 
 
 def test_dispatch_carries_caller_attrs_when_asked(pool):
@@ -230,25 +238,42 @@ def test_dispatch_carries_caller_attrs_when_asked(pool):
     wid = pool.workers()[0]
     # The carried body reads the caller's attr on a copy of the worker Context;
     # what we assert is that it completed rather than failing.
-    assert _await_true(lambda: pool.running(wid) is False)
+    assert _await_true(lambda: pool.status(wid).jobs == ())
+    assert pool.status(wid).errors == ()
 
 
 # --- the reads --------------------------------------------------------------
 
 
-def test_alive_and_running_as_tree_queries(ctx, pool):
-    alive, _ = nu.run(nu.mem.Frame(Local, Alive(worker=W), w=Launch()), ctx)
-    assert alive is True
-    wid = pool.workers()[0]
-    running, _ = nu.run(Running(worker=nu.Literal(wid)), ctx)
-    assert running is False
+def test_status_as_a_tree_query(ctx, pool):
+    status, _ = nu.run(nu.mem.Frame(Local, Status(worker=W), w=Launch()), ctx)
+    assert isinstance(status, WorkerStatus)
+    assert (status.state, status.jobs, status.exitcode, status.cause) == ("idle", (), None, None)
+    assert status.pid == status.pgid
+    assert status.name == f"nu:{pool.name}-{status.wid}"
 
 
-def test_alive_is_false_for_a_killed_id(ctx, pool):
+async def test_status_as_a_tree_query_async(ctx, pool):
+    wid = pool.launch()
+    status, _ = await nu.arun(Status(worker=nu.Literal(wid)), ctx)
+    assert status.state == "idle"
+
+
+def test_status_reads_a_killed_id(ctx, pool):
     wid = pool.launch()
     pool.kill(wid)
-    value, _ = nu.run(Alive(worker=nu.Literal(wid)), ctx)
-    assert value is False
+    value, _ = nu.run(Status(worker=nu.Literal(wid)), ctx)
+    assert (value.state, value.cause) == ("exited", "killed")
+
+
+def test_the_preset_stands_the_pool_up_and_stops_it():
+    ref = PoolRef()
+    tree = pool_preset(
+        name="nu-test-preset",
+        grace=2.0,
+        body=nu.mem.Frame(Local, ref.teleport(nu.Add(1, 1), W), w=ref.launch()),
+    )
+    assert nu.run(tree)[0] == 2
 
 
 def test_workers_streams_the_ids(ctx, pool):

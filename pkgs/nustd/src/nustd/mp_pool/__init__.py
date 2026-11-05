@@ -4,80 +4,114 @@
 ``With`` / ``Provide`` bracket and it stays purely declarative.
 ``nustd.mp_pool`` is the sibling where **the pool itself is the fabric**. One
 ``Provide`` at the top of a tree owns N worker processes, and because the
-fabric now spans many processes it legitimately owns interactions over them -
-launch a worker, kill a worker, run a tree on worker id X. Those are
-statements about the fabric's contents, not imperative escapes.
+fabric spans many processes it legitimately owns interactions over them -
+launch a worker, run a tree on worker id X, interrupt, stop or kill it, read
+its status. Those are statements about the fabric's contents, not
+imperative escapes.
 
-- ``WorkerPool`` - the resource. Owns ``{id -> process}``. Bracket close kills
-  every worker, newest first. No size, no warmth, no scheduling, no
-  acquire/release: that is policy and belongs to callers.
-- ``PoolRef`` - the fabric ref. Reading it is a lookup and nothing else. It
-  also carries the fluent form of every interaction below.
-- ``Launch`` / ``Dispatch`` / ``Teleport`` / ``Kill`` / ``Alive`` /
-  ``Running`` / ``Wait`` / ``Workers`` - the interactions. ``Wait`` awaits a
-  worker's exit and yields its exit code.
-- ``nustd.mp_pool.presets`` - policy built on top, never inside: ``spares``,
-  a shelf of idle workers kept up so a take skips the spawn.
+- ``pool(...)`` - the preset that stands a pool up: every knob keyword-only
+  (``name``, ``init``, ``grace``, ``spares``, ``ready_timeout``,
+  ``ack_timeout``), plus ``tags`` and ``body``.
+- ``WorkerPool`` - the resource. Owns ``{id -> process}``, keeps ``spares``
+  warm, and on close stops every worker at once under one budget,
+  ``grace``. No size, no scheduling, no acquire/release: that is policy and
+  belongs to callers. Its sync and async Python methods are public too.
+- ``PoolRef(tag=)`` - the fabric ref. Reading it is a lookup and nothing
+  else. It also carries the fluent form of every interaction below.
+- the worker toolkit, policy-free, each verb sync and async:
+  ``Launch`` / ``Workers``; ``Teleport`` / ``Dispatch`` / ``Cancel``;
+  ``Interrupt`` / ``Stop`` / ``Kill``; ``Status`` / ``Wait``.
+- ``WorkerStatus`` - what ``Status``, ``Stop`` and ``Wait`` yield: state,
+  pid, pgid, name, started_at, jobs, and once gone exitcode and cause.
+- errors named after the state: ``WorkerGone`` (with ``cause`` and
+  ``exitcode``), ``PoolClosed``, ``Interrupted``, ``UnknownWorker``.
 
-Everything is Nu. Every worker id and the ``init`` override is a **child**,
-never payload, so a target can come from a ``Ref``, a mem slot or any
-query. Here ``nu.let`` holds the launched worker's id for the body::
+The guarantees: nothing outlives the pool or the host (workers lead their own
+process group and watch the parent), Ctrl+C in a terminal reaches only the
+host, the event loop never blocks, every pending request gets an answer, and
+every worker has a pid and a status, readable after it is gone.
 
-    nu.Provide(WorkerPool, {"init": nu.With(nu.Provide(Store, {...})), "name": "nu"},
-        nu.let(Launch(), lambda w: nu.Sequential(
-            Dispatch(body=resident_tree, worker=w),
-            Teleport(body=nu.Add(1, 2), worker=w),
-            Kill(worker=w),
+Everything is Nu. Every worker id, job id and the ``init`` override is a
+**child**, never payload, so a target can come from a ``Ref``, a mem slot or
+any query. Here ``nu.let`` holds the launched worker's id for the body::
+
+    POOL = PoolRef()
+    prog = pool(
+        name="cells",
+        init=nu.Provide(dict, {}, tag=Ticks),
+        spares=2,
+        body=nu.let(POOL.launch(), lambda w: nu.Sequential(
+            POOL.dispatch(ticker, w),
+            nu.Print(nu.STDOUT, POOL.teleport(Ticks.n, w)),
+            nu.Print(nu.STDOUT, POOL.status(w)),
+            POOL.stop(w),
         )),
     )
 
-The interactions are also reachable off the ref, which is the same term by a
-shorter road::
-
-    pool = PoolRef()
-    nu.let(pool.launch(), lambda w: pool.dispatch(resident_tree, w) >> pool.kill(w))
-
 The one exception to "no payload" is a ``Dispatch`` body, which has to be
-payload because a Command cannot hold a Flow in a child slot. The consequence
-is worth knowing before you rely on it: a body in payload is not part of the
-tree, so no walker, rewrite, analysis or render reaches it, and the caller has
-to apply whatever passes it needs (``nustd.kv.auto_flow_atomic`` among them) to
-the body itself before building the ``Dispatch``.
+payload because a Flow does not compose in an Interaction's slots. The
+consequence is worth knowing before you rely on it: a body in payload is not
+part of the tree, so no walker, rewrite, analysis or render reaches it, and
+the caller has to apply whatever passes it needs (``nustd.kv.auto_flow_atomic``
+among them) to the body itself before building the ``Dispatch``.
 
 ``Dispatch`` vs ``Teleport`` is the crux. ``Dispatch`` returns as soon as the
-child acknowledges receipt, so it is the verb for resident, never-terminating
-trees - a ``ReactEvery`` body using it never blocks. ``Teleport`` is
-request/reply, for work that finishes.
+child acknowledges receipt and yields a job id, so it is the verb for
+resident, never-terminating trees - a ``ReactEvery`` body using it never
+blocks. ``Teleport`` is request/reply, for work that finishes.
 
 Worker ids are monotonic ints and are never reused, so a stale id is
-detectably dead rather than silently a different worker.
-
-The default ``start_method`` is ``"spawn"`` - the child gets a clean
-interpreter. The ``init`` bracket and every body go through cloudpickle
-(``nu.lang.wire``), so closures and classes defined inside a function travel
-too.
+detectably gone rather than silently a different worker. Only the
+``"spawn"`` start method is supported - the child gets a clean interpreter.
+The ``init`` bracket and every body go through cloudpickle (``nu.lang.wire``),
+so closures and classes defined inside a function travel too.
 """
 
 from __future__ import annotations
 
 from . import presets
-from .interactions import Alive, Dispatch, Kill, Launch, Running, Teleport, Wait, Workers
+from .interactions import (
+    Cancel,
+    Dispatch,
+    Interrupt,
+    Kill,
+    Launch,
+    Status,
+    Stop,
+    Teleport,
+    Wait,
+    Workers,
+)
+from .presets import pool
 from .refs import PoolRef
-from .resources import UnknownWorker, WorkerGone, WorkerPool
+from .resources import (
+    Interrupted,
+    PoolClosed,
+    UnknownWorker,
+    WorkerGone,
+    WorkerPool,
+    WorkerStatus,
+)
 
 
 __all__ = [
-    "Alive",
+    "Cancel",
     "Dispatch",
+    "Interrupt",
+    "Interrupted",
     "Kill",
     "Launch",
+    "PoolClosed",
     "PoolRef",
-    "Running",
+    "Status",
+    "Stop",
     "Teleport",
     "UnknownWorker",
     "Wait",
     "WorkerGone",
     "WorkerPool",
+    "WorkerStatus",
     "Workers",
+    "pool",
     "presets",
 ]

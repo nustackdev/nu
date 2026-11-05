@@ -10,7 +10,7 @@ import pytest
 from _support.pool_workers import RESIDENT, Marker
 
 import nu
-from nustd.mp_pool import UnknownWorker, WorkerGone, WorkerPool
+from nustd.mp_pool import UnknownWorker, WorkerGone, WorkerPool, WorkerStatus
 
 
 pytestmark = pytest.mark.slow
@@ -20,7 +20,15 @@ pytestmark = pytest.mark.slow
 
 
 def _pid_of(pool: WorkerPool, wid: int) -> int:
-    return pool._workers[wid].proc.pid
+    return pool.status(wid).pid
+
+
+def _alive(pool: WorkerPool, wid: int) -> bool:
+    return pool.status(wid).state != "exited"
+
+
+def _running(pool: WorkerPool, wid: int) -> bool:
+    return bool(pool.status(wid).jobs)
 
 
 def _pid_alive(pid: int) -> bool:
@@ -58,7 +66,7 @@ def test_launch_returns_usable_ids(pool):
     b = pool.launch()
     assert a != b
     assert pool.workers() == [a, b]
-    assert pool.alive(a) and pool.alive(b)
+    assert _alive(pool, a) and _alive(pool, b)
     assert pool.teleport(a, nu.Add(1, 2)) == 3
     assert pool.teleport(b, nu.Add(10, 20)) == 30
 
@@ -71,7 +79,8 @@ def test_ids_are_monotonic_and_never_reused(pool):
     assert second > first
     assert third > second
     assert first not in pool.workers()
-    assert pool.alive(first) is False
+    assert _alive(pool, first) is False
+    assert pool.status(first).cause == "killed"
 
 
 def test_launch_ships_the_init_bracket(pool):
@@ -103,7 +112,7 @@ def test_dispatch_returns_promptly(pool):
 
     # The body never terminates; if Dispatch awaited it this would hang.
     assert elapsed < 1.0
-    assert pool.running(w) is True
+    assert _running(pool, w) is True
 
 
 def test_teleport_still_answers_while_a_resident_body_runs(pool):
@@ -130,10 +139,10 @@ def test_kill_terminates_a_worker_running_a_resident_body_and_is_prompt(pool):
     pool.kill(w)
     elapsed = time.monotonic() - start
 
-    # A cooperative stop sentinel would never be read by a busy worker, so the
-    # join would time out; nustd.mp pays 5s here.
+    # SIGKILL to the group, reaped by the reader: no ladder, no join.
     assert elapsed < 1.0
-    assert pool.alive(w) is False
+    assert pool.status(w).exitcode == -9
+    assert _alive(pool, w) is False
     assert _wait_gone(pid)
 
 
@@ -149,8 +158,11 @@ def test_kill_is_idempotent(pool):
 def test_calls_on_a_killed_id_raise_rather_than_hang(pool):
     w = pool.launch()
     pool.kill(w)
-    with pytest.raises(UnknownWorker):
+    with pytest.raises(WorkerGone) as gone:
         pool.teleport(w, nu.Add(1, 1))
+    assert (gone.value.cause, gone.value.exitcode) == ("killed", -9)
+    with pytest.raises(UnknownWorker):
+        pool.teleport(9999, nu.Add(1, 1))
 
 
 def test_teleport_in_flight_fails_when_the_worker_is_killed(pool):
@@ -172,6 +184,7 @@ def test_teleport_in_flight_fails_when_the_worker_is_killed(pool):
     t.join(timeout=5)
     assert not t.is_alive()
     assert isinstance(result[0], WorkerGone)
+    assert result[0].cause == "killed"
 
 
 # --- teardown ---------------------------------------------------------------
@@ -186,7 +199,8 @@ def test_cleanup_reaps_every_worker():
 
     start = time.monotonic()
     p.cleanup()
-    assert time.monotonic() - start < 3.0
+    assert time.monotonic() - start < 1.0  # all three stop on the frame, in parallel
+    assert [p.status(w).exitcode for w in ids] == [0, 0, 0]
     assert p.workers() == []
     for pid in pids:
         assert _wait_gone(pid)
@@ -236,7 +250,8 @@ async def test_async_lifecycle_round_trip():
         w = await pool.alaunch()
         assert await pool.ateleport(w, nu.Add(2, 3)) == 5
         await pool.akill(w)
-        assert pool.alive(w) is False
+        assert _alive(pool, w) is False
+        assert (await pool.await_exit(w)).exitcode == -9
 
 
 # --- reads ------------------------------------------------------------------
@@ -244,13 +259,13 @@ async def test_async_lifecycle_round_trip():
 
 def test_running_is_false_before_and_after_a_dispatch(pool):
     w = pool.launch()
-    assert pool.running(w) is False
+    assert _running(pool, w) is False
     pool.dispatch(w, nu.DelayedDo(0.3, nu.Noop()))
-    assert pool.running(w) is True
+    assert _running(pool, w) is True
     deadline = time.monotonic() + 10
-    while pool.running(w) and time.monotonic() < deadline:
+    while _running(pool, w) and time.monotonic() < deadline:
         time.sleep(0.01)
-    assert pool.running(w) is False
+    assert _running(pool, w) is False
 
 
 def test_workers_tracks_launches_and_kills(pool):
@@ -312,18 +327,18 @@ async def test_cancelling_one_exec_leaves_its_siblings_alone():
 def test_cancel_ends_a_dispatched_body(pool):
     w = pool.launch()
     token = pool.dispatch(w, RESIDENT)
-    assert pool.running(w) is True
+    assert _running(pool, w) is True
 
     pool.cancel(w, token)
     # The child says cancelled, which closes the token like done.
-    assert _poll(lambda: pool.running(w) is False)
+    assert _poll(lambda: _running(pool, w) is False)
     assert pool.teleport(w, nu.Add(1, 2)) == 3
 
 
 def test_cancel_is_a_no_op_once_finished(pool):
     w = pool.launch()
     token = pool.dispatch(w, nu.Add(1, 1))
-    assert _poll(lambda: pool.running(w) is False)
+    assert _poll(lambda: _running(pool, w) is False)
     pool.cancel(w, token)
     pool.cancel(w, 12345)
     pool.cancel(9999, token)
@@ -340,6 +355,10 @@ async def test_worker_death_raises_on_a_pending_ateleport():
         await asyncio.sleep(0.2)
         # Died by itself: not a pool kill, so the pool learns it from the pipe.
         os.kill(_pid_of(pool, w), 9)
-        with pytest.raises(WorkerGone):
+        with pytest.raises(WorkerGone) as gone:
             await asyncio.wait_for(call, timeout=10)
-        assert await pool.await_exit(w) == -9
+        assert (gone.value.cause, gone.value.exitcode) == ("crashed", -9)
+        status = await pool.await_exit(w)
+        assert isinstance(status, WorkerStatus)
+        assert (status.state, status.exitcode) == ("exited", -9)
+        assert w not in pool.workers()

@@ -12,6 +12,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Rebuild mp_pool so workers never outlive the pool or host, with stop and status
+- Parallel waits for every branch to unwind on cancel or error, none left running
 - Rename reactive flows to one grid and add per-key, per-id and while variants
 - Finished arms stay finished until their id returns; arm errors end the flow
 - Remove the resync wake: a notification always names a change, delivery stays best effort
