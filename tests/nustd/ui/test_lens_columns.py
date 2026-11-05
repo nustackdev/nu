@@ -386,11 +386,16 @@ async def test_the_frame_carries_the_cursor_and_the_columns_and_nothing_else(sto
 
 
 @pytest.mark.timeout(60)
-async def test_browse_paints_the_root_column_then_repaints_on_a_move(store):
+async def test_browse_paints_the_root_column_then_repaints_on_a_move():
     """The preset, end to end: it brackets its own reads and answers a notify."""
     session = _Recorder()
-    ctx = store.bind(nustd.ui.Session, session)
-    arm = asyncio.create_task(nu.arun(nustd.ui.lens.browse(LENS, Zoo, prefix=Store.left), ctx))
+    # The whole stack, Observer included: the live-repaint arms subscribe to
+    # the store, and without one the preset fails before it can answer a move.
+    live = nu.With(
+        nustd.kv.memory_navigator(),
+        body=nustd.kv.Transaction(_seed()) >> nustd.ui.lens.browse(LENS, Zoo, prefix=Store.left),
+    )
+    arm = asyncio.create_task(nu.arun(live, nu.Context().bind(nustd.ui.Session, session)))
     try:
         assert await _settle(lambda: session.writes(LENS_PATH))
         # Painted before the browser said anything: the empty cursor is the one
@@ -405,6 +410,7 @@ async def test_browse_paints_the_root_column_then_repaints_on_a_move(store):
         assert moved["cursor"] == ["counts", "red"]
         assert [c["kind"] for c in moved["columns"]] == ["shape", "mapping", "leaf"]
         assert moved["columns"][-1]["entries"][0]["preview"] == "3"
+        assert not arm.done()
     finally:
         arm.cancel()
 

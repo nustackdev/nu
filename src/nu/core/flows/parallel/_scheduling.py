@@ -136,16 +136,19 @@ async def aeval_parallel(
     per_child: tuple[str | None, ...] | None = None,
     force: str | None = None,
 ) -> list:
-    """Async-parallel join-all: gather every child, placement-aware.
+    """Async-parallel join-all: every child as a task, placement-aware.
 
-    Falls through to a plain on-loop ``gather`` when ``max_parallel == 1``
-    and no forcing/override needs a pool. Otherwise each child is placed
-    per the precedence rule.
+    Falls through to plain on-loop tasks when ``max_parallel == 1`` and no
+    forcing/override needs a pool. Otherwise each child is placed per the
+    precedence rule. Values come back in child order; see ``_join_all`` for
+    what a cancel or an error does to the siblings.
     """
     nids = list(nids)
     if rt.budget.max_parallel == 1 or rt.budget.async_sem is None:
-        return await asyncio.gather(*(rt.branch().aeval(n) for n in nids))
-    return await asyncio.gather(*_drive_async(rt, nids, per_child=per_child, force=force))
+        coros: list = [rt.branch().aeval(n) for n in nids]
+    else:
+        coros = _drive_async(rt, nids, per_child=per_child, force=force)
+    return await _join_all([asyncio.ensure_future(c) for c in coros])
 
 
 async def _settle(tasks: Iterable) -> None:
@@ -174,6 +177,50 @@ async def _settle(tasks: Iterable) -> None:
         for t in tasks:
             if t.done() and not t.cancelled():
                 t.exception()
+
+
+async def _join_all(tasks: list) -> list:
+    """Join on every task: results in task order, nothing left running on exit.
+
+    The first error cancels the siblings, and a cancel of the caller cancels
+    them all; either way every task has finished unwinding before this
+    returns or raises, and each is cancelled once.
+
+    ``gather`` with ``return_exceptions``: it forwards the caller's cancel to
+    the children at the moment of the cancel, so a child that has not
+    started yet never starts (a sync body holding the loop would otherwise
+    let it run first), and it resolves only once every child is done. Plain
+    ``gather`` resolves on the first child to end cancelled or raise, with
+    the siblings still running; the first error is handled here instead.
+
+    A child cancelled from inside, with no error and no cancel of the
+    caller, leaves its siblings to finish and surfaces as a cancel once
+    they have. A thread-offloaded child is drained as far as ``Race``
+    drains it: its task ends on cancel, the worker thread runs to its end.
+    """
+    if not tasks:
+        return []
+    failed: list = []
+
+    def trip(task: asyncio.Future) -> None:
+        if failed or task.cancelled() or task.exception() is None:
+            return
+        failed.append(task)
+        for t in tasks:
+            t.cancel()
+
+    for t in tasks:
+        t.add_done_callback(trip)
+    try:
+        values = await asyncio.gather(*tasks, return_exceptions=True)
+    finally:
+        for t in tasks:
+            t.remove_done_callback(trip)
+    if failed:
+        raise failed[0].exception()
+    if any(t.cancelled() for t in tasks):
+        raise asyncio.CancelledError
+    return values
 
 
 async def aeval_race(
@@ -275,11 +322,7 @@ async def aeval_foreach_par(rt: Runtime, nid: int, elems: Iterable, name: str) -
     if not elems:
         return
 
-    tasks = [_spawn_arm(rt, nid, e, name) for e in elems]
-    try:
-        await asyncio.gather(*tasks)
-    finally:
-        await _settle(tasks)
+    await _join_all([_spawn_arm(rt, nid, e, name) for e in elems])
 
 
 # --- parallel streams -----------------------------------------------------

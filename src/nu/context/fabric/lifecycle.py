@@ -452,6 +452,8 @@ class ProvideDict(_LifecycleBracket):
     async def _aopen(self, ctx: Context) -> AsyncIterator[None]:
         import asyncio
 
+        from nu.core.flows.parallel._scheduling import _join_all
+
         cls = self._payload["cls"]
         specs = self._payload["specs"]
         extra = self._payload["extra_tags"]
@@ -464,8 +466,18 @@ class ProvideDict(_LifecycleBracket):
             with ExitStack() as provided:
                 if parallel:
                     keyed = [(key, _construct(cls, kw)) for key, kw in specs.items()]
-                    await asyncio.gather(*(_asetup(inst, ctx) for _, inst in keyed))
-                    setup_done.extend(inst for _, inst in keyed)
+                    tasks = [asyncio.ensure_future(_asetup(inst, ctx)) for _, inst in keyed]
+                    # Not gather: a failed or cancelled setup must not leave
+                    # its siblings running, and every setup that did finish
+                    # is owed its teardown in the finally below.
+                    try:
+                        await _join_all(tasks)
+                    finally:
+                        setup_done.extend(
+                            inst
+                            for (_, inst), t in zip(keyed, tasks, strict=True)
+                            if t.done() and not t.cancelled() and t.exception() is None
+                        )
                     for key, inst in keyed:
                         provided.enter_context(_bind(ctx, bind_as, inst, (key, *extra), predicate))
                 else:

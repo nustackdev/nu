@@ -8,6 +8,7 @@ shared list; each pass wipes them.
 
 from __future__ import annotations
 
+import asyncio
 from typing import ClassVar
 
 import pytest
@@ -218,6 +219,43 @@ def test_provide_dict_extra_tags_share_across_fleet():
     with bracket._open(ctx):
         assert ctx.fabrics.get(Store, "gpu", "shard").name == "g"
         assert ctx.fabrics.get(Store, "cpu", "shard").name == "c"
+
+
+async def test_provide_dict_parallel_failure_cancels_siblings_and_tears_down_the_done():
+    # One setup fails: the slow sibling is cancelled and finishes unwinding,
+    # and the one whose setup already finished gets its teardown.
+    events: list[str] = []
+
+    class Member:
+        def __init__(self, k: str) -> None:
+            self.k = k
+
+        async def asetup(self, ctx: Context) -> None:
+            if self.k == "fast":
+                events.append("setup:fast")
+                return
+            if self.k == "bad":
+                await asyncio.sleep(0.01)
+                msg = "bad setup"
+                raise RuntimeError(msg)
+            try:
+                await asyncio.Event().wait()
+            finally:
+                await asyncio.sleep(0.02)
+                events.append("unwound:slow")
+
+        async def acleanup(self) -> None:
+            events.append(f"close:{self.k}")
+
+    bracket = ProvideDict(
+        Member,
+        {"fast": {"k": "fast"}, "slow": {"k": "slow"}, "bad": {"k": "bad"}},
+        FabricRef(Member),
+        parallel=True,
+    )
+    with pytest.raises(RuntimeError, match="bad setup"):
+        await arun(bracket)
+    assert events == ["setup:fast", "unwound:slow", "close:fast"]
 
 
 # --- async lifecycle -----------------------------------------------------
