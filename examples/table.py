@@ -187,7 +187,7 @@ sorting = nu.Ne(State.sort_column, "")
 resort = nu.IfDo(sorting, State.order.set(sorted_by(State.sort_column, State.sort_direction)))
 
 
-on_edit = nu.ReactForever(
+on_edit = nu.ReactEvery(
     TABLE.on_edit(),
     lambda ev: nu.IfDo(
         nustd.kv.Snapshot(has(ev["key"])),
@@ -210,7 +210,7 @@ on_edit = nu.ReactForever(
     ),
 )
 
-on_add = nu.ReactForever(
+on_add = nu.ReactEvery(
     TABLE.on_add(),
     lambda ev: nu.let(
         nustd.kv.Snapshot("m" + nu.str(State.next_id)),
@@ -229,7 +229,7 @@ on_add = nu.ReactForever(
     ),
 )
 
-on_delete = nu.ReactForever(
+on_delete = nu.ReactEvery(
     TABLE.on_delete(),
     lambda ev: (
         nustd.kv.Transaction(
@@ -241,7 +241,7 @@ on_delete = nu.ReactForever(
     ),
 )
 
-on_move = nu.ReactForever(
+on_move = nu.ReactEvery(
     TABLE.on_move(),
     lambda ev: nu.IfDo(
         nustd.kv.Snapshot(has(ev["key"])),
@@ -252,7 +252,7 @@ on_move = nu.ReactForever(
     ),
 )
 
-on_select = nu.ReactForever(
+on_select = nu.ReactEvery(
     TABLE.on_select(),
     lambda ev: STATUS.set(
         nu.If(
@@ -263,7 +263,7 @@ on_select = nu.ReactForever(
     ),
 )
 
-on_sort = nu.ReactForever(
+on_sort = nu.ReactEvery(
     TABLE.on_sort(),
     lambda ev: (
         nustd.kv.Transaction(

@@ -130,11 +130,11 @@ def browse(
         )
 
     def live(cursor: nu.Nu, pending: nu.Nu) -> nu.Nu:
-        moved = nu.ReactForever(
+        moved = nu.ReactEvery(
             lens.on_nav(), cursor.set(nu.Attr(key)) >> paint(nu.list(cursor)), changed_key=key
         )
         written = [
-            nu.ReactForever(
+            nu.ReactEvery(
                 nustd.kv.Snapshot(change, scope=scope),
                 nu.Debounce(REPAINT_DELAY, paint(nu.list(cursor)), pending=pending),
             )

@@ -6,7 +6,6 @@ catch-up, live follow, and the transition between them.
 
 from __future__ import annotations
 
-import asyncio
 from contextlib import aclosing
 from typing import TYPE_CHECKING
 
@@ -15,11 +14,13 @@ from nu.core._stream import aiter_any
 from nu.domains.shape.interactions import AdvanceCursor
 from nu.lang import StreamQuery
 
-from .interactions import OnChildrenChange
+from .._body import async_only
+from ..level._wakes import DEFAULT_AFTER, DEFAULT_EVERY, Wakes, read_schedule, schedule_terms
+from ..sources.on import OnChildrenChange
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator, Callable
+    from collections.abc import AsyncGenerator, Callable, Iterable
 
     from nu.lang.runtime import Runtime
 
@@ -38,21 +39,36 @@ class Stream(StreamQuery):
             ``"stream_key"``; a lambda mints its own.
         log_key: the ``ctx.attrs`` name the underlying log cursor is bound
             under.
+        after: re-drain offsets in seconds after subscribing, for the window
+            a fresh subscription may not yet be heard in. A term yielding an
+            iterable of floats, or a literal one.
+        every: seconds between standing re-drains once ``after`` is spent.
+            ``None`` turns them off. A term yielding a float or None, or a
+            literal one.
 
     Notes:
-        - Children are ``[advance, change, body, key, log_key]``: ``advance``
-          is an ``AdvanceCursor`` over ``source``, ``change`` an
-          ``OnChildrenChange`` subscription on ``source``.
-        - Drains existing items first (walks ``advance`` to exhaustion,
-          running ``body`` per item), then subscribes and follows new items
-          as they arrive, draining again on each change notification.
+        - Children are ``[advance, change, body, key, log_key, after,
+          every]``: ``advance`` is an ``AdvanceCursor`` over ``source``,
+          ``change`` an ``OnChildrenChange`` subscription on ``source``.
+        - Subscribes first, then drains: walks ``advance`` to exhaustion,
+          running ``body`` per item. An item appended at any point after the
+          subscribe is either in that first drain or wakes a later one, so
+          none falls between catching up and following.
+        - Drains are driven like a level flow's passes: once right after
+          subscribing, again on each change notification, and on the
+          ``after`` / ``every`` re-checks, so a lost notification is caught
+          late rather than never. Wakes landing while a drain runs merge
+          into one more drain. Re-draining from the cursor is idempotent:
+          a drain that finds nothing new runs no body.
         - ``key`` is bound per item for as long as that item's ``body`` is
           drained, the same scoped binding ``Map`` / ``Filter`` give their
           loop variable. ``log_key`` is the cursor's own position, bound for
           the stream's whole drain (starting from an outer binding when there
           is one) and advanced item by item.
-        - Async-only: ``_compile`` raises ``NotImplementedError``, since
-          following requires an event loop.
+        - Never ends on its own; closing the stream unbinds and closes the
+          subscription.
+        - Async only: the sync path raises ``RuntimeError``, since following
+          requires an event loop.
 
     Yields:
         The body's results, drained then followed, as an async stream.
@@ -71,6 +87,8 @@ class Stream(StreamQuery):
         *,
         key: object = None,
         log_key: object = "stream_log_key",
+        after: Iterable[float] | object = DEFAULT_AFTER,
+        every: float | object | None = DEFAULT_EVERY,
     ) -> None:
         from nu.context import Attr
 
@@ -81,13 +99,16 @@ class Stream(StreamQuery):
         cursor_ref = Attr(log_key)
         advance = AdvanceCursor(source, cursor_ref)
         change = OnChildrenChange(source)
-        super().__init__(advance, change, body, key, log_key)
+        super().__init__(
+            advance, change, body, key, log_key, *schedule_terms("Stream", after, every)
+        )
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        msg = "Stream requires async runtime"
-        raise NotImplementedError(msg)
+        return async_only("Stream")
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        change, after, every = children[1], children[5], children[6]
+
         async def athunk(rt: Runtime) -> object:
             key = await children[3](rt)
             log_key = await children[4](rt)
@@ -95,12 +116,13 @@ class Stream(StreamQuery):
 
             async def agen() -> object:
                 with attrs.let(log_key, attrs.get(log_key)):
-                    async with aclosing(_drain(rt, children, key, log_key)) as drained:
-                        async for v in drained:
-                            yield v
-                    async with aclosing(_react(rt, children, key, log_key)) as followed:
-                        async for v in followed:
-                            yield v
+                    schedule = await read_schedule("Stream", rt, after, every)
+                    async with Wakes(await change(rt), *schedule) as wakes:
+                        while True:
+                            await wakes.wait()
+                            async with aclosing(_drain(rt, children, key, log_key)) as drained:
+                                async for v in drained:
+                                    yield v
 
             return agen()
 
@@ -128,38 +150,3 @@ async def _drain(
             async with aclosing(aiter_any(await children[2](rt))) as items:
                 async for v in items:
                     yield v
-
-
-async def _react(
-    rt: Runtime,
-    children: tuple[Callable, ...],
-    key: str,
-    log_key: str,
-) -> AsyncGenerator:
-    """Subscribe to ``change`` and re-drain on every notification.
-
-    Notes:
-        - Unbinds and closes the subscription on exit, including on
-          cancellation, via ``finally``.
-
-    Yields:
-        Each item a subsequent drain produces, forever.
-    """
-    loop = asyncio.get_running_loop()
-    event = asyncio.Event()
-
-    def on_change(_k: object) -> None:
-        loop.call_soon_threadsafe(event.set)
-
-    sub = await children[1](rt)
-    sub.bind(on_change)
-    try:
-        while True:
-            await event.wait()
-            event.clear()
-            async with aclosing(_drain(rt, children, key, log_key)) as drained:
-                async for v in drained:
-                    yield v
-    finally:
-        sub.unbind(on_change)
-        sub.close()

@@ -8,11 +8,12 @@ Two families:
   for explicit placement (Race / AnyN are async-only, no variants).
 - **Control** - compose bodies under Query parameters: ``IfDo``, ``WhileDo``,
   ``ForeverDo``, ``ForEachDo``, ``ForEachParAsync``, ``ForRangeDo``,
-  ``Delay``, ``DelayedDo``, ``SwitchDo``. ``ForEachParAsync`` is the fan-out
-  ForEach: one arm per element on the loop, all at once, joining on all.
+  ``Delay``, ``DelayedDo``, ``SwitchDo``, ``Park``. ``ForEachParAsync`` is the
+  fan-out ForEach: one arm per element on the loop, all at once, joining on
+  all.
 
-The flows driven by change subscriptions (``React`` and the rest of the event
-kind, ``ReconcileReactive`` and the rest of the level kind, ``Stream``) live in
+The flows driven by change subscriptions (``ReactOnce`` and the rest of the
+event kind, ``Reconcile`` and the rest of the level kind, ``Stream``) live in
 ``nu.core.reactive``, next to the subscriptions they consume.
 """
 
@@ -24,6 +25,7 @@ from .control import (
     ForeverDo,
     ForRangeDo,
     IfDo,
+    Park,
     SwitchDo,
     WhileDo,
 )
@@ -54,6 +56,7 @@ __all__ = [
     "Parallel",
     "ParallelAsync",
     "ParallelThreaded",
+    "Park",
     "Race",
     "Raise",
     "Sequential",

@@ -265,11 +265,11 @@ for t in range(24):
 
 program = seed >> nu.ParallelAsync(
     nu.ForeverDo(chain(*ticks)),
-    nu.ReactForever(h.toolbar.edit.on_click(), h.sheet.set_open(True)),
-    nu.ReactForever(h.sheet.form.save.on_click(), h.sheet.set_open(False)),
-    nu.ReactForever(h.toolbar.wipe.on_click(), h.confirm.set_open(True)),
-    nu.ReactForever(h.confirm.actions.cancel.on_click(), h.confirm.set_open(False)),
-    nu.ReactForever(
+    nu.ReactEvery(h.toolbar.edit.on_click(), h.sheet.set_open(True)),
+    nu.ReactEvery(h.sheet.form.save.on_click(), h.sheet.set_open(False)),
+    nu.ReactEvery(h.toolbar.wipe.on_click(), h.confirm.set_open(True)),
+    nu.ReactEvery(h.confirm.actions.cancel.on_click(), h.confirm.set_open(False)),
+    nu.ReactEvery(
         h.confirm.actions.confirm.on_click(),
         h.log.runs.set_rows([]) >> h.confirm.set_open(False),
     ),

@@ -1,7 +1,7 @@
 """TableRef: frames out, and notifies in where each ``on_*`` takes only its own kind.
 
 A fake subscription fires every payload the moment a reaction binds, so
-``React`` runs its body on the first one its filter lets through.
+``ReactOnce`` runs its body on the first one its filter lets through.
 """
 
 from __future__ import annotations
@@ -64,7 +64,9 @@ def test_row_click_skips_a_sort():
     sess = _Session(_SORT, _ROW)
     out = ShelfApp.shelf.out
     _run(
-        nu.React(ShelfApp.shelf.table.on_row_click(), lambda c: out.set(nu.str(c["row_index"]))),
+        nu.ReactOnce(
+            ShelfApp.shelf.table.on_row_click(), lambda c: out.set(nu.str(c["row_index"]))
+        ),
         sess,
     )
     assert [f.payload for f in sess.frames] == ["3"]
@@ -74,7 +76,7 @@ def test_sort_skips_a_row_click():
     sess = _Session(_ROW, _SORT)
     out = ShelfApp.shelf.out
     _run(
-        nu.React(
+        nu.ReactOnce(
             ShelfApp.shelf.table.on_sort(),
             lambda s: out.set(nu.Str(s["sort_column"]) + " " + nu.Str(s["sort_direction"])),
         ),
@@ -123,7 +125,7 @@ _ON = {"sort": "on_sort", "row": "on_row_click"}
 
 def _echo(change) -> nu.Nu:
     """React once, writing the event's ``event`` field to ``out``."""
-    return nu.React(change, lambda ev: GridApp.grid.out.set(nu.Str(ev["event"])))
+    return nu.ReactOnce(change, lambda ev: GridApp.grid.out.set(nu.Str(ev["event"])))
 
 
 def test_slot_defaults_keep_the_old_props():
@@ -210,7 +212,7 @@ def test_an_edit_reads_its_fields():
         }
     )
     _run(
-        nu.React(
+        nu.ReactOnce(
             GridApp.grid.table.on_edit(),
             lambda ev: GridApp.grid.out.set(
                 nu.Str(ev["key"]) + "." + nu.Str(ev["column"]) + "=" + nu.Str(ev["value"])
@@ -268,7 +270,7 @@ def test_row_ops_take_terms():
     sess = _Session({"event": "delete", "keys": ["m2"], "row_indexes": [1]})
     table = GridApp.grid.table
     _run(
-        nu.React(
+        nu.ReactOnce(
             table.on_delete(),
             lambda ev: table.remove_row(ev["keys"][0]) >> table.set_order(ev["keys"]),
         ),
@@ -314,7 +316,7 @@ def test_a_column_rename_reads_its_fields():
         },
     )
     _run(
-        nu.React(
+        nu.ReactOnce(
             GridApp.grid.table.on_column_rename(),
             lambda ev: GridApp.grid.out.set(
                 nu.Str(ev["column"]) + ": " + nu.Str(ev["previous"]) + " -> " + nu.Str(ev["label"])

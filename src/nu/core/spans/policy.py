@@ -28,6 +28,7 @@ entry refuses the subtree first).
 from __future__ import annotations
 
 import asyncio
+import itertools
 import random
 from contextlib import ExitStack
 from typing import TYPE_CHECKING
@@ -37,14 +38,14 @@ from nu.core._stream import aiter_any, sync_iter
 from nu.core.flows import Noop
 from nu.core.flows.parallel._scheduling import _settle
 from nu.engine.structure import Declared
-from nu.lang import Attr, Cardinality, Policy
+from nu.lang import Attr, Cardinality, Literal, Nu, Policy
 from nu.lang.sentinels import UNSET, Unset
 
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Callable, Iterator
 
-    from nu.lang import Command, FloatArg, Flow, IntArg, Nu, Span, StrArg
+    from nu.lang import Command, FloatArg, Flow, IntArg, Span, StrArg
     from nu.lang.runtime import Runtime
 
 __all__ = ["CaughtError", "Retry", "Timeout", "TryCatch"]
@@ -378,24 +379,28 @@ class Retry(Policy):
 
     Sync runs a bare retry: ``max_attempts`` and ``errors`` only, no delay,
     backoff, jitter or hooks. Async runs the full policy: ``delay`` grows by
-    ``backoff`` each attempt, ``jitter`` decorrelates the wait, and
-    ``on_attempt_fail`` / ``on_success`` / ``on_fail`` fire with the
-    attempt count and error bound. A hook is a lambda over what it can see
-    (``lambda err, attempt: ...`` for a failure, ``lambda attempt: ...`` for
-    success, where there is no error), or a tree reading them under
-    ``error_key`` / ``attempt_key``. A stream body is
-    retried by atomic re-evaluation - drained fresh each attempt, emitted
-    only on success, bounded streams only - and the stream path skips the
-    per-attempt hooks.
+    ``backoff`` each attempt up to ``max_delay``, ``jitter`` decorrelates
+    the wait, and ``on_attempt_fail`` / ``on_success`` / ``on_fail`` fire
+    with the attempt count and error bound. A hook is a lambda over what it
+    can see (``lambda err, attempt: ...`` for a failure, ``lambda attempt:
+    ...`` for success, where there is no error), or a tree reading them
+    under ``error_key`` / ``attempt_key``. A stream body is retried by
+    atomic re-evaluation - drained fresh each attempt, emitted only on
+    success, bounded streams only - and the stream path skips the
+    per-attempt hooks but waits the same delays.
 
     Args:
         body: the Term to re-run.
-        max_attempts: the ceiling on attempts, including the first.
+        max_attempts: the ceiling on attempts, including the first. ``None``
+            retries without end, until the body succeeds, an error outside
+            ``errors`` is raised, or the caller cancels (async only).
         delay: the wait before the first retry, in seconds (async only).
         backoff: the multiplier applied to ``delay`` after each attempt
             (async only).
-        jitter: the fraction of ``delay`` to randomize by, ``0`` to ``1``
+        jitter: the fraction of the wait to randomize by, ``0`` to ``1``
             (async only).
+        max_delay: the ceiling on the grown wait, in seconds. ``None``, the
+            default, leaves it uncapped (async only).
         errors: the exception type(s) that trigger a retry. Left out, any
             exception; an unmatched one propagates unretried.
         on_attempt_fail: runs after a failed attempt that still has retries
@@ -413,6 +418,14 @@ class Retry(Policy):
             fabric for a tree hook to read. Defaults to ``"attempt"``.
 
     Notes:
+        - The wait before retry ``n`` is ``delay * backoff ** (n - 1)``,
+          capped at ``max_delay``; ``jitter`` applies after the cap, so a
+          capped wait still spreads around ``max_delay``.
+        - ``max_attempts=None`` is async only. The sync path has no delay, so
+          an unbounded sync retry would spin a failing body without a pause:
+          it raises ``ValueError`` when run instead. Unbounded with a
+          ``max_delay`` is a supervisor: it backs off to the cap and keeps
+          trying.
         - Each hook binds under names of its own, so lambda hooks and tree
           hooks mix freely. An explicit name next to a lambda hook that
           binds the same value raises.
@@ -434,16 +447,21 @@ class Retry(Policy):
         >>> gave_up = lambda err, attempt: nu.print("gave up after", attempt, "-", err)
         >>> _ = asyncio.run(nu.arun(nu.Retry(nu.Div(1, 0), max_attempts=2, on_fail=gave_up)))
         gave up after 2 - division by zero
+
+        A supervisor that never gives up, backing off to at most a minute::
+
+            nu.Retry(serve, max_attempts=None, delay=1.0, backoff=2.0, max_delay=60.0)
     """
 
     def __init__(
         self,
         body: Nu,
         *,
-        max_attempts: IntArg = 3,
+        max_attempts: IntArg | None = 3,
         delay: FloatArg = 0.0,
         backoff: FloatArg = 1.0,
         jitter: FloatArg = 0.0,
+        max_delay: FloatArg | None = None,
         errors: tuple[type[Exception], ...] | type[Exception] | Unset = UNSET,
         on_attempt_fail: Flow | Command | Span | Unset = UNSET,
         on_success: Flow | Command | Span | Unset = UNSET,
@@ -451,6 +469,11 @@ class Retry(Policy):
         error_key: StrArg | None = None,
         attempt_key: StrArg | None = None,
     ) -> None:
+        # A literal cap is refused now; a computed one is checked when it runs.
+        if isinstance(max_delay, Literal):
+            _max_delay(max_delay._payload["value"])
+        elif not isinstance(max_delay, Nu):
+            _max_delay(max_delay)
         hooks = (
             ("on_attempt_fail", on_attempt_fail),
             ("on_success", on_success),
@@ -481,6 +504,7 @@ class Retry(Policy):
             "attempt" if osc_attempt is None else osc_attempt,
             "error" if ofl_error is None else ofl_error,
             "attempt" if ofl_attempt is None else ofl_attempt,
+            max_delay,
         )
         self._payload["errors"] = _errors(errors)
         self._payload["given"] = given
@@ -501,7 +525,13 @@ class Retry(Policy):
         errors = self._payload["errors"]
 
         def thunk(rt: Runtime) -> object:
-            attempts = max(1, int(max_attempts_q(rt)))
+            attempts = _attempts(max_attempts_q(rt))
+            if attempts is None:
+                msg = (
+                    "Retry: max_attempts=None needs the async runtime, where retries "
+                    "wait between attempts; use arun, or give a ceiling"
+                )
+                raise ValueError(msg)
             stream = rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM
             last: BaseException | None = None
             for _ in range(attempts):
@@ -519,38 +549,39 @@ class Retry(Policy):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body = children[0]
-        max_attempts_q, delay_q, backoff_q, jitter_q = (
-            children[1],
-            children[2],
-            children[3],
-            children[4],
-        )
+        max_attempts_q, delay_q, backoff_q, jitter_q = children[1:5]
+        max_delay_q = children[13]
         oaf, osc, ofl = self._hooks(children)
         oaf_error, oaf_attempt, osc_attempt, ofl_error, ofl_attempt = children[8:13]
         errors = self._payload["errors"]
 
         async def athunk(rt: Runtime) -> object:
-            attempts = max(1, int(await max_attempts_q(rt)))
+            attempts = _attempts(await max_attempts_q(rt))
+            waits = _waits(
+                float(await delay_q(rt)),
+                float(await backoff_q(rt)),
+                float(await jitter_q(rt)),
+                _max_delay(await max_delay_q(rt)),
+            )
+            tries = itertools.count(1) if attempts is None else range(1, attempts + 1)
 
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
-                last: BaseException | None = None
-                for _ in range(attempts):
+                for attempt in tries:
                     try:
                         return aiter_any([v async for v in aiter_any(await body(rt))])
                     except Exception as exc:
                         if errors is not None and not isinstance(exc, errors):
                             raise
-                        last = exc
-                raise last  # type: ignore[misc]
+                        if attempt == attempts:
+                            raise
+                    await asyncio.sleep(next(waits))
+                return None  # unreachable: the last attempt returns or raises
 
-            delay = float(await delay_q(rt))
-            backoff = float(await backoff_q(rt))
-            jitter = float(await jitter_q(rt))
             oaf_ek, oaf_ak = await oaf_error(rt), await oaf_attempt(rt)
             osc_ak = await osc_attempt(rt)
             ofl_ek, ofl_ak = await ofl_error(rt), await ofl_attempt(rt)
 
-            for attempt in range(1, attempts + 1):
+            for attempt in tries:
                 try:
                     result = await body(rt)
                     if osc is not None:
@@ -559,22 +590,54 @@ class Retry(Policy):
                 except Exception as exc:
                     if errors is not None and not isinstance(exc, errors):
                         raise
-                    if attempt >= attempts:
+                    if attempt == attempts:
                         if ofl is not None:
                             await _arun_hook(rt, ofl, {ofl_ek: str(exc), ofl_ak: attempt})
                             return None
                         raise
                     if oaf is not None:
                         await _arun_hook(rt, oaf, {oaf_ek: str(exc), oaf_ak: attempt})
-                    wait = delay
-                    if jitter > 0.0 and wait > 0.0:
-                        spread = max(0.0, min(1.0, jitter))
-                        wait *= 1.0 + random.uniform(-spread, spread)  # noqa: S311
-                    await asyncio.sleep(wait)
-                    delay *= backoff
-            return None
+                await asyncio.sleep(next(waits))
+            return None  # unreachable: the last attempt returns or raises
 
         return athunk
+
+
+def _attempts(value: object) -> int | None:
+    """The attempt ceiling as the thunks read it: at least 1, or None for no ceiling."""
+    return None if value is None else max(1, int(value))
+
+
+def _max_delay(value: object) -> float | None:
+    """The ``max_delay`` cap as the thunks read it.
+
+    Raises:
+        ValueError: a negative cap.
+    """
+    if value is None:
+        return None
+    cap = float(value)
+    if cap < 0:
+        msg = f"Retry: max_delay must not be negative, got {cap}"
+        raise ValueError(msg)
+    return cap
+
+
+def _waits(delay: float, backoff: float, jitter: float, cap: float | None) -> Iterator[float]:
+    """The waits between attempts: grown by ``backoff``, capped, then jittered.
+
+    Jitter comes after the cap, so a wait held at ``cap`` still spreads
+    around it and contending retriers do not fall into step there.
+    """
+    spread = max(0.0, min(1.0, jitter))
+    while True:
+        if cap is not None:
+            delay = min(delay, cap)
+        wait = delay
+        if spread > 0.0 and wait > 0.0:
+            wait *= 1.0 + random.uniform(-spread, spread)  # noqa: S311
+        yield wait
+        delay *= backoff
 
 
 # === timing: async-only ====================================================

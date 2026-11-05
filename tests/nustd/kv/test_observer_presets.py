@@ -195,7 +195,7 @@ def test_local_subscribers_still_hear_everything(head):
 
 
 def test_unbind_drops_one_receiver_and_leaves_the_rest(head):
-    """``React`` unbinds before it closes, so the protocol has to mean it."""
+    """``ReactOnce`` unbinds before it closes, so the protocol has to mean it."""
     kept = []
     dropped = []
 

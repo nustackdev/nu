@@ -46,7 +46,7 @@ the body itself before building the ``Dispatch``.
 
 ``Dispatch`` vs ``Teleport`` is the crux. ``Dispatch`` returns as soon as the
 child acknowledges receipt, so it is the verb for resident, never-terminating
-trees - a ``ReactForever`` body using it never blocks. ``Teleport`` is
+trees - a ``ReactEvery`` body using it never blocks. ``Teleport`` is
 request/reply, for work that finishes.
 
 Worker ids are monotonic ints and are never reused, so a stale id is

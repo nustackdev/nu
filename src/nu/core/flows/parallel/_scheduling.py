@@ -24,7 +24,7 @@ whichever placement (loop, thread, or sequential fallback) runs it.
 runtime-sized list instead of a fixed set of children, each arm a loop task on
 its own branch, off the budget entirely. It backs ``ForEachParAsync``,
 which lives in ``nu.core.flows.control`` next to the ``ForEachDo`` it mirrors.
-``ForEachParReactive`` in ``nu.core.reactive`` spawns its arms with the same
+``ReconcileLatestEach`` in ``nu.core.reactive`` spawns its arms with the same
 ``_spawn_arm`` and keeps its own book of them.
 """
 
@@ -269,7 +269,7 @@ async def aeval_foreach_par(rt: Runtime, nid: int, elems: Iterable, name: str) -
     The task list is held until the join returns, so an arm that finishes early
     stays in it as a done Task. That is the right call for a fan-out that joins
     on all - the list is the join - and the wrong one for a supervisor, which
-    is why ``ForEachParReactive`` keeps its own book instead of reusing this.
+    is why ``ReconcileLatestEach`` keeps its own book (``nu.core.reactive._arms``).
     """
     elems = list(elems)
     if not elems:

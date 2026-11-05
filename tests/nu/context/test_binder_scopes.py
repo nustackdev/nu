@@ -18,8 +18,8 @@ from nu.context import Attr
 from nu.core import Add, Div, Filter, Iter, Map, SortBy
 from nu.core.flows import Noop
 from nu.core.flows.control import ForEachDo, ForEachParAsync, ForRangeDo
-from nu.core.reactive.event import React, ReactForever, ReactLatest, ReactWhile
-from nu.core.reactive.stream import Stream
+from nu.core.reactive.cursor.stream import Stream
+from nu.core.reactive.event import ReactEvery, ReactLatest, ReactOnce, ReactWhile
 from nu.core.spans.policy import Retry, TryCatch
 from nu.engine.structure import Declared
 from nu.forms.collections import List
@@ -299,7 +299,9 @@ async def test_retry_hook_bindings_are_scoped_to_the_hook() -> None:
 async def test_react_changed_key_is_scoped_to_the_body() -> None:
     feed, log = _Feed(), []
     ctx = _outer("k", feed=feed)
-    task = asyncio.ensure_future(arun(React(Attr("feed"), _seen("k", log), changed_key="k"), ctx))
+    task = asyncio.ensure_future(
+        arun(ReactOnce(Attr("feed"), _seen("k", log), changed_key="k"), ctx)
+    )
     await _until(lambda: feed.receivers)
     feed.fire("a")
     await task
@@ -330,7 +332,7 @@ async def test_react_forever_changed_key_is_scoped_to_each_run() -> None:
     feed, log = _Feed(), []
     ctx = _outer("k", feed=feed)
     task = asyncio.ensure_future(
-        arun(ReactForever(Attr("feed"), _seen("k", log), changed_key="k"), ctx)
+        arun(ReactEvery(Attr("feed"), _seen("k", log), changed_key="k"), ctx)
     )
     await _until(lambda: feed.receivers)
     feed.fire("a")
@@ -369,10 +371,18 @@ async def test_stream_key_lives_while_the_item_drains_and_is_released_on_close()
     async def body(rt: Runtime) -> object:
         return [rt.ctx.attrs.get("stream_key")]
 
-    async def name(value: str) -> str:
-        return value
+    async def value(v: object) -> object:
+        return v
 
-    children = (advance, None, body, lambda rt: name("stream_key"), lambda rt: name("log"))
+    children = (
+        advance,
+        lambda rt: value(_Feed()),
+        body,
+        lambda rt: value("stream_key"),
+        lambda rt: value("log"),
+        lambda rt: value(()),
+        lambda rt: value(None),
+    )
     stream = Stream(Literal(None), Literal(None))
     agen = await stream._acompile(0, children)(rt)
     assert await agen.__anext__() == "a"

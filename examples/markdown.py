@@ -55,7 +55,7 @@ class App(nu.Shape):
 
 # Every commit from the browser lands here. `nu.Str(App.home.split.editor.body)` is the read
 # back through the session: same Ref, other direction.
-on_edit = nu.ReactForever(
+on_edit = nu.ReactEvery(
     App.home.split.editor.body.on_change(),
     App.home.split.mirror.source.set(nu.Str(App.home.split.editor.body))
     | App.home.split.mirror.chars.set_value(nu.str(nu.Len(nu.Str(App.home.split.editor.body)))),

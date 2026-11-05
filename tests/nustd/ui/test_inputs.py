@@ -345,7 +345,7 @@ def test_sketch_on_change_reacts_to_an_element():
     tab = _Tab(value=_ELEMENTS)
 
     async def run():
-        react = nu.ReactForever(pad.on_change(), count.set(nu.str(nu.Len(pad))))
+        react = nu.ReactEvery(pad.on_change(), count.set(nu.str(nu.Len(pad))))
         task = asyncio.create_task(nu.arun(react, Context().bind(Session, tab)))
         path = ("page", "sec", "pad")
         for _ in range(100):

@@ -72,7 +72,7 @@ class HostedSubscription:
 
         Compared by identity, the same way ``_fire`` drops a dead one, because
         asking a remote handle whether it equals another is a round trip. Never
-        raises: ``React`` calls this from a ``finally``, and by then the
+        raises: ``ReactOnce`` calls this from a ``finally``, and by then the
         receiver may already be gone because its own process died and ``_fire``
         evicted it. Closing is the caller's next move, not this one's.
         """

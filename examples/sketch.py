@@ -81,8 +81,8 @@ side = App.home.main.side
 # browser holds them now.
 count = side.elements.set_value(nu.str(nu.Len(board)))
 
-on_draw = nu.ReactForever(board.on_change(), count)
-on_diagram = nu.ReactForever(side.diagram.on_click(), board.set(DIAGRAM) >> count)
+on_draw = nu.ReactEvery(board.on_change(), count)
+on_diagram = nu.ReactEvery(side.diagram.on_click(), board.set(DIAGRAM) >> count)
 
 app = nustd.ui.serve(nustd.ui.boot(App.title, App.home) >> (on_draw | on_diagram), port=8093)
 

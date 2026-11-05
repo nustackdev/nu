@@ -10,6 +10,11 @@ rather than never.
 Private on purpose. A wake carries no changed key, so feeding these into an
 event flow, whose body is promised the real key of a real change, would break
 that promise. Only the level flows hold a ``Wakes``.
+
+The schedule itself is two child terms of the flow, ``after`` (an iterable of
+float offsets) and ``every`` (a float or None). ``schedule_terms`` checks and
+normalises literal ones at build time; ``read_schedule`` evaluates them at
+run time and checks computed ones with the same messages.
 """
 
 from __future__ import annotations
@@ -17,14 +22,27 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
+from nu.core._stream import aiter_any
+from nu.lang import Literal, Nu
+
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Iterator
+    from collections.abc import Callable, Iterable, Iterator
     from types import TracebackType
 
     from nu.core.reactive.protocol import Subscription
+    from nu.lang.runtime import Runtime
 
-__all__ = ["DEFAULT_AFTER", "DEFAULT_EVERY", "Wakes", "check_schedule"]
+__all__ = [
+    "DEFAULT_AFTER",
+    "DEFAULT_EVERY",
+    "Wakes",
+    "check_after",
+    "check_every",
+    "check_schedule",
+    "read_schedule",
+    "schedule_terms",
+]
 
 
 #: Early re-checks, in seconds after binding. They cover the window in which
@@ -34,6 +52,31 @@ DEFAULT_AFTER: tuple[float, ...] = (0.1, 0.3, 1.0)
 #: The standing re-check period, in seconds. It bounds how long a dropped
 #: notification can go unnoticed.
 DEFAULT_EVERY: float | None = 30.0
+
+
+def check_after(owner: str, after: Iterable[float]) -> tuple[float, ...]:
+    """The ``after`` offsets as a flow keeps them: a sorted tuple of floats.
+
+    Raises:
+        ValueError: a negative delay.
+    """
+    delays = tuple(sorted(float(d) for d in after))
+    if delays and delays[0] < 0:
+        msg = f"{owner}: after= delays must not be negative, got {delays}"
+        raise ValueError(msg)
+    return delays
+
+
+def check_every(owner: str, every: float | None) -> float | None:
+    """The ``every`` period as a flow keeps it: a float, or None.
+
+    Raises:
+        ValueError: a period that is not positive (it would spin).
+    """
+    if every is not None and every <= 0:
+        msg = f"{owner}: every= must be positive or None, got {every}"
+        raise ValueError(msg)
+    return None if every is None else float(every)
 
 
 def check_schedule(
@@ -48,14 +91,47 @@ def check_schedule(
         ValueError: a negative ``after`` delay, or an ``every`` that is not
             positive (it would spin).
     """
-    delays = tuple(sorted(float(d) for d in after))
-    if delays and delays[0] < 0:
-        msg = f"{owner}: after= delays must not be negative, got {delays}"
-        raise ValueError(msg)
-    if every is not None and every <= 0:
-        msg = f"{owner}: every= must be positive or None, got {every}"
-        raise ValueError(msg)
-    return delays, None if every is None else float(every)
+    return check_after(owner, after), check_every(owner, every)
+
+
+def _literal(term: object) -> tuple[bool, object]:
+    """Whether ``term`` is known at build time, and its value when it is."""
+    if isinstance(term, Literal):
+        return True, term._payload["value"]
+    if isinstance(term, Nu):
+        return False, None
+    return True, term
+
+
+def schedule_terms(owner: str, after: object, every: object) -> tuple[object, object]:
+    """``after`` and ``every`` as the child terms a level flow holds.
+
+    A literal (a raw value or a ``Literal``) is checked now and kept
+    normalised, so a schedule that cannot run is refused at build time. Any
+    other term is kept as given and checked by ``read_schedule`` when it runs.
+
+    Raises:
+        ValueError: a literal schedule that cannot run.
+    """
+    known, value = _literal(after)
+    if known:
+        after = Literal(check_after(owner, value))
+    known, value = _literal(every)
+    if known:
+        every = Literal(check_every(owner, value))
+    return after, every
+
+
+async def read_schedule(
+    owner: str, rt: Runtime, after: Callable, every: Callable
+) -> tuple[tuple[float, ...], float | None]:
+    """Evaluate the ``after`` and ``every`` children and check what they yield.
+
+    Raises:
+        ValueError: a schedule that cannot run, with the build-time messages.
+    """
+    delays = [d async for d in aiter_any(await after(rt))]
+    return check_schedule(owner, delays, await every(rt))
 
 
 def _due(start: float, after: tuple[float, ...], every: float | None) -> Iterator[float]:

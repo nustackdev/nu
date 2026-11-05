@@ -12,6 +12,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Rename reactive flows to one grid and add per-key, per-id and while variants
+- Finished arms stay finished until their id returns; arm errors end the flow
 - Remove the resync wake: a notification always names a change, delivery stays best effort
 
 ## 0.7.0 - 2026-11-05

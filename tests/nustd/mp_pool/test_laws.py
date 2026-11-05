@@ -147,7 +147,7 @@ def test_dispatch_is_a_void_command():
     "body",
     [
         nu.ForeverDo(Scratch.n.set(1)),
-        nu.ReactForever(Scratch.n, Scratch.m.set(1)),
+        nu.ReactEvery(Scratch.n, Scratch.m.set(1)),
         nu.Sequential(Scratch.n.set(1)),
         Scratch.n.set(1),
     ],

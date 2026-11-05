@@ -312,11 +312,11 @@ def sync(
             )
 
         reactions = [
-            nu.ReactForever(table.on_edit(), edit),
-            nu.ReactForever(table.on_add(), add),
-            nu.ReactForever(table.on_delete(), delete),
-            nu.ReactForever(table.on_move(), move),
-            nu.ReactForever(table.on_sort(), sort_rows),
+            nu.ReactEvery(table.on_edit(), edit),
+            nu.ReactEvery(table.on_add(), add),
+            nu.ReactEvery(table.on_delete(), delete),
+            nu.ReactEvery(table.on_move(), move),
+            nu.ReactEvery(table.on_sort(), sort_rows),
         ]
 
         # ---- column requests, when the columns are stored -------------------
@@ -379,12 +379,12 @@ def sync(
                 )
 
             reactions += [
-                nu.ReactForever(table.on_column_add(), column_add),
-                nu.ReactForever(table.on_column_delete(), column_delete),
-                nu.ReactForever(table.on_column_rename(), column_set("label", "label")),
-                nu.ReactForever(table.on_column_move(), column_move),
-                nu.ReactForever(table.on_column_kind(), column_kind),
-                nu.ReactForever(table.on_column_align(), column_set("align", "align")),
+                nu.ReactEvery(table.on_column_add(), column_add),
+                nu.ReactEvery(table.on_column_delete(), column_delete),
+                nu.ReactEvery(table.on_column_rename(), column_set("label", "label")),
+                nu.ReactEvery(table.on_column_move(), column_move),
+                nu.ReactEvery(table.on_column_kind(), column_kind),
+                nu.ReactEvery(table.on_column_align(), column_set("align", "align")),
             ]
 
         # ---- live: what other writers changed -------------------------------
@@ -412,7 +412,7 @@ def sync(
                 return nu.let(dirty, lambda owed: ship(owed) >> dirty.set(Settled(dirty, owed)))
 
             def watch(change: nu.Nu, what: str, depth: int = 0) -> nu.Nu:
-                return nu.ReactForever(
+                return nu.ReactEvery(
                     snapshot(change),
                     lambda address: (
                         dirty.set(Marked(dirty, what, address, depth))

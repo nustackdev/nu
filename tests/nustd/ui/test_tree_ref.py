@@ -2,7 +2,7 @@
 
 Frames go to a recording session. Notifies come from a fake subscription that
 fires a list of payloads the moment a reaction binds to it, which is all
-``React`` needs to run its body once on the first one that gets through.
+``ReactOnce`` needs to run its body once on the first one that gets through.
 """
 
 from __future__ import annotations
@@ -74,7 +74,7 @@ def _run(term: nu.Nu, sess: _Session) -> None:
 
 def _echo(change: Changed) -> nu.Nu:
     """React once, writing the event's ``event`` field to ``out``."""
-    return nu.React(change, lambda ev: FilesApp.files.out.set(nu.Str(ev["event"])))
+    return nu.ReactOnce(change, lambda ev: FilesApp.files.out.set(nu.Str(ev["event"])))
 
 
 # --- frames out ---------------------------------------------------------------
@@ -130,7 +130,7 @@ def test_a_filtered_subscription_skips_what_is_not_an_event():
 def test_a_reaction_reads_the_event_fields():
     sess = _Session({"event": "rename", "key": "a", "title": "B"})
     _run(
-        nu.React(
+        nu.ReactOnce(
             FilesApp.files.tree.on_rename(),
             lambda ev: FilesApp.files.out.set(nu.Str(ev["key"]) + "=" + nu.Str(ev["title"])),
         ),

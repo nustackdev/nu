@@ -31,7 +31,7 @@ class Seen(nu.Shape):
 
 # B: on every change of Store.value, count the wake and keep the value seen.
 B_BODY = nustd.kv.auto_flow_atomic(
-    nu.ReactForever(
+    nu.ReactEvery(
         Store.value.on_change(),
         Seen.wakes.inc() >> Seen.last.set(Store.value),
     ),

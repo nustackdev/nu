@@ -37,7 +37,7 @@ its body as ``children[0]``. The asymmetry is intended:
 - ``Dispatch`` and ``Kill`` are VOID mutators, so ``ref_slots`` requires the
   mutation slot to hold a Ref. The pool ref is slot 0 in both.
 - A Command's composition row holds value-yielding children only, and a
-  resident body is typically a Flow (``ForeverDo``, ``ReactForever``). A Flow
+  resident body is typically a Flow (``ForeverDo``, ``ReactEvery``). A Flow
   in a Command's slot does not compose, so ``Dispatch``'s body cannot be a
   child at all while ``Dispatch`` is a Command - hence the payload.
 - ``Teleport`` is a Span, and Span transparency resolves both sort and
@@ -277,7 +277,7 @@ class Dispatch(Command):
     The verb for resident work - a tree that subscribes, loops, serves, and is
     never expected to produce a value. The parent waits only for the child's
     acknowledgement of receipt, so a ``Dispatch`` sitting inside a
-    ``ReactForever`` body never blocks that loop. Nothing ever awaits the
+    ``ReactEvery`` body never blocks that loop. Nothing ever awaits the
     dispatched body; the only things that end it are ``Kill`` and pool
     teardown.
 

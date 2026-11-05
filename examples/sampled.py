@@ -18,7 +18,7 @@ class App(nu.Shape):
 
 
 # reactive wire: repaint the chart on every write to `nums`
-ui = nu.ReactForever(
+ui = nu.ReactEvery(
     State.nums.on_change(),
     App.home.chart.set(
         nu.sorted(State.nums.sample(200, 0, State.cursor)),

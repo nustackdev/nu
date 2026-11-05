@@ -36,7 +36,7 @@ __all__ = [
 ]
 
 
-#: What the fold binds each session id under. ``ForEachParReactive`` branches
+#: What the fold binds each session id under. ``ReconcileLatestEach`` branches
 #: ``ctx.attrs`` per arm, so an outer binding of the same name is shadowed only
 #: inside an arm, never across arms.
 SID_ATTR = "sid"

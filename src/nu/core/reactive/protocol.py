@@ -7,13 +7,13 @@ concrete implementation.
 
 Two protocols, both structural:
 
-- ``ObserverProtocol`` -- process-scope reactive backend. Fabrics bind
+- ``ObserverProtocol``: the process-scope reactive backend. Fabrics bind
   their observer instance under this type in ctx. Reactive queries
   resolve it via ``rt.ctx.fabrics.get(ObserverProtocol)`` and call
   ``subscribe(options)``.
-- ``Subscription`` -- handle returned by ``subscribe``. The user binds
+- ``Subscription``: the handle returned by ``subscribe``. The user binds
   receiver callbacks, unbinds them, and closes it when done. All three
-  are required: ``React`` unbinds before it closes.
+  are required: ``ReactOnce`` unbinds before it closes.
 
 A receiver is only called for a real notification: the value names what
 changed (``None`` included: a ui notify without payload). Delivery is best
@@ -21,7 +21,7 @@ effort; nothing is sent for changes a backend missed.
 
 ``options`` stays ``Any``: each backend defines its own filter dialect
 and the corresponding view emits it (``view.on_change()`` etc.). Nu is a
-pure conduit -- it never inspects options.
+pure conduit: it never inspects options.
 """
 
 from __future__ import annotations
@@ -48,7 +48,7 @@ class Subscription(Protocol):
         ...
 
     def unbind(self, receiver: Callable[[Any], None]) -> None:
-        """Stop firing ``receiver``. Required, not optional: ``React`` calls it."""
+        """Stop firing ``receiver``. Required, not optional: ``ReactOnce`` calls it."""
         ...
 
     def close(self) -> None:

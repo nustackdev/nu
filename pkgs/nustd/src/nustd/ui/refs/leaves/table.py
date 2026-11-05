@@ -78,7 +78,7 @@ class TableRef(LeafRef):
                 editable=True,
             )
 
-        nu.ReactForever(Shelf.table.on_edit(), lambda ev: save(ev["key"], ev["column"], ev["value"]))
+        nu.ReactEvery(Shelf.table.on_edit(), lambda ev: save(ev["key"], ev["column"], ev["value"]))
 
     The browser never changes the rows itself. An edit, an add, a delete or a
     move is a request: the server applies it to whatever the table stands for
@@ -102,7 +102,7 @@ class TableRef(LeafRef):
     added shows empty until its cells are written). A table always keeps one
     column: delete is not offered on the last one::
 
-        nu.ReactForever(
+        nu.ReactEvery(
             Shelf.table.on_column_rename(),
             lambda ev: Shelf.table.set_columns(renamed(ev["column"], ev["label"])),
         )

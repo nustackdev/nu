@@ -17,7 +17,7 @@ class App(nu.Shape):
 
 
 # reactive wire: whenever `value` changes, mirror it into `count`
-ui = nu.ReactForever(
+ui = nu.ReactEvery(
     Counter.value.on_change(),
     App.home.count.set_value(nu.str(Counter.value)),
 )

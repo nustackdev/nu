@@ -10,7 +10,7 @@ subpackages:
   ``Timeout``, ``TryCatch``, ``Transaction``, ``Snapshot``).
 - ``reactive`` - the reactivity standard: the observer contract, the
   ``On*Change`` atoms fabrics bind against, and the flows that run bodies on
-  change (event: ``React`` and kin; level: ``ReconcileReactive`` and kin; ``Stream``).
+  change (event: ``ReactOnce`` and kin; level: ``Reconcile`` and kin; ``Stream``).
 
 Everything under here is an Interaction. Forms (``nu.forms``), the kind
 taxonomy (``nu.lang``) and the fabric refs (``nu.context``, and the fabrics in
@@ -133,19 +133,25 @@ from nu.core.iteration import Enumerate, Iter, Next, Reversed, Zip
 from nu.core.logical import And, Not, Or, ToBool, bool
 from nu.core.null import Fallback, IsNull
 from nu.core.reactive import (
-    ForEachParReactive,
+    OnAny,
     OnChange,
     OnChildChange,
     OnChildrenChange,
     OnDescendantsChange,
     OnPrimitiveChange,
-    React,
-    ReactForever,
+    ReactEach,
+    ReactEvery,
     ReactLatest,
+    ReactLatestEach,
+    ReactOnce,
     ReactWhile,
-    ReconcileReactive,
+    Reconcile,
+    ReconcileEach,
+    ReconcileLatest,
+    ReconcileLatestEach,
+    ReconcileWhile,
     Stream,
-    WaitReactive,
+    WaitUntil,
 )
 from nu.core.reduction import (
     AllOf,
@@ -220,7 +226,6 @@ __all__ = [
     "First",
     "Flatten",
     "FloorDiv",
-    "ForEachParReactive",
     "Format",
     "Ge",
     "GetAttr",
@@ -255,6 +260,7 @@ __all__ = [
     "Next",
     "Not",
     "Oct",
+    "OnAny",
     "OnChange",
     "OnChildChange",
     "OnChildrenChange",
@@ -266,11 +272,17 @@ __all__ = [
     "Pow",
     "Print",
     "RShift",
-    "React",
-    "ReactForever",
+    "ReactEach",
+    "ReactEvery",
     "ReactLatest",
+    "ReactLatestEach",
+    "ReactOnce",
     "ReactWhile",
-    "ReconcileReactive",
+    "Reconcile",
+    "ReconcileEach",
+    "ReconcileLatest",
+    "ReconcileLatestEach",
+    "ReconcileWhile",
     "Repr",
     "Reversed",
     "Round",
@@ -298,7 +310,7 @@ __all__ = [
     "Type",
     "Unique",
     "Vars",
-    "WaitReactive",
+    "WaitUntil",
     "Zip",
     "bool",
     "dict",

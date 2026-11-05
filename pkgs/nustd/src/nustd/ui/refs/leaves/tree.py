@@ -9,8 +9,8 @@ payload's ``event`` field, and each ``on_*`` takes only its own kind::
     class Files(nustd.ui.Column):
         tree = nustd.ui.TreeRef.slot(label="Files", editable=True, draggable=True)
 
-    nu.ReactForever(Files.tree.on_open(), lambda ev: open_file(ev["key"]))
-    nu.ReactForever(Files.tree.on_rename(), lambda ev: rename(ev["key"], ev["title"]))
+    nu.ReactEvery(Files.tree.on_open(), lambda ev: open_file(ev["key"]))
+    nu.ReactEvery(Files.tree.on_rename(), lambda ev: rename(ev["key"], ev["title"]))
 
 The browser never changes the nodes itself. A rename or a move is a request:
 the server applies it to whatever the tree stands for and ships the nodes

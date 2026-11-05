@@ -17,7 +17,7 @@ import pytest
 
 import nu
 import nustd
-from nu.core.reactive.stream import Stream
+from nu.core.reactive.cursor.stream import Stream
 from nu.engine.structure import Declared
 from nu.lang import NULL, Context, ScalarAction, wire
 from nustd.functools.interactions import Reduce
@@ -215,7 +215,7 @@ async def test_foreach_par_async_takes_a_lambda() -> None:
 
 async def test_foreach_par_reactive_takes_a_lambda() -> None:
     feed, log = _Feed(), []
-    term = nu.ForEachParReactive(nu.Iter([1, 2]), nu.Attr("feed"), lambda x: Record(x, log))
+    term = nu.ReconcileLatestEach(nu.Iter([1, 2]), nu.Attr("feed"), lambda x: Record(x, log))
     task = _start(term, feed=feed)
     await _until(lambda: len(log) == 2)
     assert sorted(log) == [1, 2]
@@ -273,7 +273,7 @@ async def test_retry_mixes_a_lambda_hook_with_a_plain_one() -> None:
 
 async def test_react_takes_a_lambda() -> None:
     feed, log = _Feed(), []
-    task = _start(nu.React(nu.Attr("feed"), lambda key: Record(key, log)), feed=feed)
+    task = _start(nu.ReactOnce(nu.Attr("feed"), lambda key: Record(key, log)), feed=feed)
     await _until(lambda: feed.receivers)
     feed.fire("a")
     await task
@@ -320,7 +320,7 @@ async def test_react_while_condition_reads_a_named_key() -> None:
     assert log == ["a"]
 
 
-@pytest.mark.parametrize("flow", [nu.ReactForever, nu.ReactLatest])
+@pytest.mark.parametrize("flow", [nu.ReactEvery, nu.ReactLatest])
 async def test_react_forever_and_latest_take_a_lambda(flow: type) -> None:
     feed, log = _Feed(), []
     task = _start(flow(nu.Attr("feed"), lambda key: Record(key, log)), feed=feed)
@@ -341,7 +341,7 @@ async def test_react_latest_initial_run_binds_nothing() -> None:
 
 async def test_react_still_takes_a_plain_body_and_binds_nothing() -> None:
     feed, log = _Feed(), []
-    task = _start(nu.React(nu.Attr("feed"), Record("fired", log)), feed=feed)
+    task = _start(nu.ReactOnce(nu.Attr("feed"), Record("fired", log)), feed=feed)
     await _until(lambda: feed.receivers)
     feed.fire("a")
     await task
@@ -350,7 +350,7 @@ async def test_react_still_takes_a_plain_body_and_binds_nothing() -> None:
 
 def test_stream_binds_the_key_its_lambda_reads() -> None:
     stream = Stream(nu.Literal(None), lambda key: nu.Iter(nu.List.of(key)))
-    _advance, _change, body, key, _log_key = stream._children
+    _advance, _change, body, key, _log_key, _after, _every = stream._children
     assert str(nu.tree.payload(key)["value"]).startswith("key@")
     assert nu.tree.equal(body, nu.Iter(nu.List.of(nu.Attr(key))))
 
@@ -443,7 +443,7 @@ def test_explicit_names_still_work() -> None:
         pytest.param(lambda: nu.TryCatch(1, catch=lambda e: e, error_key="e"), id="TryCatch"),
         pytest.param(lambda: nu.Retry(1, on_success=lambda a: a, attempt_key="a"), id="Retry"),
         pytest.param(
-            lambda: nu.ReactForever(nu.Attr("f"), lambda k: k, changed_key="k"), id="ReactForever"
+            lambda: nu.ReactEvery(nu.Attr("f"), lambda k: k, changed_key="k"), id="ReactEvery"
         ),
         pytest.param(lambda: Reduce(nu.Iter([1]), lambda a, b: a, item_key="b"), id="Reduce"),
     ],

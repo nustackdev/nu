@@ -485,18 +485,18 @@ unmark = h.live.lines.chart.merge({"series": [{"name": "cpu", "markLine": {"data
 
 program = seed >> nu.ParallelAsync(
     nu.ForeverDo(chain(*ticks)),
-    nu.ReactForever(h.toolbar.mark.on_click(), mark),
-    nu.ReactForever(h.toolbar.unmark.on_click(), unmark),
-    nu.ReactForever(h.toolbar.wipe.on_click(), h.live.lines.chart.clear()),
-    nu.ReactForever(
+    nu.ReactEvery(h.toolbar.mark.on_click(), mark),
+    nu.ReactEvery(h.toolbar.unmark.on_click(), unmark),
+    nu.ReactEvery(h.toolbar.wipe.on_click(), h.live.lines.chart.clear()),
+    nu.ReactEvery(
         h.energy.split.pie.on_click(),
         lambda ev: h.toolbar.picked.set("Slice: " + nu.Str(ev["name"])),
     ),
-    nu.ReactForever(
+    nu.ReactEvery(
         h.raw.polar.polar.on_click(),
         lambda ev: h.toolbar.picked.set("Wind from " + nu.Str(ev["name"])),
     ),
-    nu.ReactForever(
+    nu.ReactEvery(
         h.sensors.rank.rank.on_click(),
         lambda ev: h.toolbar.picked.set("Bar: " + nu.Str(ev["name"])),
     ),

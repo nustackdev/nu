@@ -18,7 +18,7 @@ can be a Literal or a computed Ref).
 binding, but every element gets its own arm on the loop at once, each on its own
 Context branch so the arms cannot stomp each other's loop variable. It lives
 here, with the ForEach it mirrors, and borrows the scheduling from ``parallel``.
-Its reactive twin, ``ForEachParReactive``, keeps the fan-out open against a
+Its reactive twin, ``ReconcileLatestEach``, keeps the fan-out open against a
 change subscription and lives with the other reactive flows in
 ``nu.core.reactive``.
 
@@ -54,6 +54,7 @@ __all__ = [
     "ForRangeDo",
     "ForeverDo",
     "IfDo",
+    "Park",
     "SwitchDo",
     "WhileDo",
 ]
@@ -543,5 +544,44 @@ class SwitchDo(Control):
                     return
             if has_default:
                 await bodies[-1](rt)
+
+        return athunk
+
+
+class Park(Control):
+    """``Park()`` - never finishes; cancellation ends it.
+
+    The identity of ``Race``: ``Race(x, Park())`` behaves as ``x``, since
+    ``Park`` never wins and is cancelled when ``x`` finishes. Also the way to
+    hold a branch open on purpose, next to work that ends it by cancelling.
+
+    Notes:
+        - No children and no state: it waits on a future nothing resolves.
+        - Cancellation is the only way out, and it propagates as
+          ``CancelledError`` like any cancelled flow.
+        - Async only: the sync path raises ``RuntimeError``, since blocking a
+          thread forever has no caller that could end it.
+
+    Yields:
+        Nothing. It never returns.
+
+    Example:
+        >>> import asyncio
+        >>> _ = asyncio.run(nu.arun(nu.Race(nu.print("done"), nu.Park())))
+        done
+    """
+
+    _requires_async = Declared(value=True, name="requires_async")
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> None:
+            msg = "Park requires an async runtime; use arun"
+            raise RuntimeError(msg)
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        async def athunk(rt: Runtime) -> None:
+            await asyncio.get_running_loop().create_future()
 
         return athunk

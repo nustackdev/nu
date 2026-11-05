@@ -74,19 +74,19 @@ mirror = App.home.split.mirror
 # `nu.Str(source)` is the read back through the session: same Ref, other
 # direction. The count comes off that read rather than off anything the
 # browser sent alongside it.
-on_edit = nu.ReactForever(
+on_edit = nu.ReactEvery(
     source.on_change(),
     mirror.text.set(nu.Str(source)) | mirror.chars.set_value(nu.str(nu.Len(nu.Str(source)))),
 )
 
 # One pick restains both panes, so the display block is always reading the
 # same grammar the editor is.
-on_language = nu.ReactForever(
+on_language = nu.ReactEvery(
     language.on_change(),
     source.set_language(nu.Str(language)) | mirror.text.set_language(nu.Str(language)),
 )
 
-on_mode = nu.ReactForever(editable.on_change(), source.set_editable(nu.Bool(editable)))
+on_mode = nu.ReactEvery(editable.on_change(), source.set_editable(nu.Bool(editable)))
 
 ui = mirror.chars.set_value(str(len(SEED))) >> (on_edit | on_language | on_mode)
 

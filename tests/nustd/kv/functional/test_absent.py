@@ -176,7 +176,7 @@ async def test_a_subscription_on_an_absent_container_hears_the_first_write() -> 
     tree = nu.With(
         memory_navigator(),
         body=nu.Gather(
-            Snapshot(nu.React(Root.inner.tags.on_children_change(), keep(True))),
+            Snapshot(nu.ReactOnce(Root.inner.tags.on_children_change(), keep(True))),
             nu.DelayedDo(0.05, Transaction(Root.inner.tags.append("a"))),
         ),
     )

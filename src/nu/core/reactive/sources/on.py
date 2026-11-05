@@ -1,22 +1,22 @@
-"""Reactive change subscriptions -- unified interaction atoms.
+"""Reactive change subscriptions: the single-view sources.
 
-Five queries, one place. Every reactive subscription in Nu -- generic Form
-observation, tree-aware shape observation, and substrate-leaf observation --
+Five queries, one place. Every reactive subscription in Nu (generic Form
+observation, tree-aware shape observation, and substrate-leaf observation)
 lives here so callers reach for one namespace regardless of what they hold.
 
-- ``OnChange``            -- ``view.on_change()``. Subscribe to any change
+- ``OnChange``:            ``view.on_change()``. Subscribe to any change
                                   on the slot-0 Ref's view (collection- and
                                   view-tier Refs; the Ref must yield an
                                   observable view).
-- ``OnChildChange``       -- ``view.on_child_change(address)``. Subscribe
+- ``OnChildChange``:       ``view.on_child_change(address)``. Subscribe
                                   to changes on one specific child of the
                                   slot-0 Ref's view. Slot 1 is the address.
-- ``OnChildrenChange``    -- ``view.on_children_change()``. Subscribe to
+- ``OnChildrenChange``:    ``view.on_children_change()``. Subscribe to
                                   changes on all immediate children.
-- ``OnDescendantsChange`` -- ``view.on_descendants_change(*pattern)``.
+- ``OnDescendantsChange``: ``view.on_descendants_change(*pattern)``.
                                   Subscribe to descendants matching a pattern.
                                   Slots 1.. are the pattern segments.
-- ``OnPrimitiveChange``   -- leaf variant. A leaf Ref yields a scalar
+- ``OnPrimitiveChange``:   leaf variant. A leaf Ref yields a scalar
                                   value, not a view, so it subscribes on its
                                   *parent* view's child-change channel keyed by
                                   the leaf's own address. Slot 0 is the leaf
@@ -26,10 +26,10 @@ lives here so callers reach for one namespace regardless of what they hold.
                                   ``StructuredRef`` substrate that provides
                                   navigation already does).
 
-View methods return an opaque ``options`` value -- a pure filter descriptor,
+View methods return an opaque ``options`` value, a pure filter descriptor with
 no observer coupling. Each query resolves the ``ObserverProtocol`` from ctx
-under the root Shape of the Ref it was built from -- the same tag that Ref's
-Navigator and storage resolve under -- and calls ``observer.subscribe(options)``.
+under the root Shape of the Ref it was built from (the same tag that Ref's
+Navigator and storage resolve under) and calls ``observer.subscribe(options)``.
 
 NULL: no special handling. A subscription on an address nothing was written to
 yet works; it is the fabric's job.
@@ -99,7 +99,7 @@ class OnChange(ScalarQuery):
           unread - Nu never inspects a backend's filter dialect.
         - Subscribing reads no value off the view, so nothing here recomputes
           on change. The handle only delivers notifications to receivers bound
-          on it; ``React`` / ``ReactWhile`` / ``ReactForever`` /
+          on it; ``ReactOnce`` / ``ReactWhile`` / ``ReactEvery`` /
           ``ReactLatest`` are what bind them and run a body.
         - Fires on any mutation reaching that view, with no distinction of
           which mutation it was.
@@ -110,7 +110,7 @@ class OnChange(ScalarQuery):
         The ``Subscription`` handle from ``observer.subscribe(options)``.
 
     Example:
-        nu.arun(nu.ReactForever(users.on_change(), body))
+        nu.arun(nu.ReactEvery(users.on_change(), body))
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -158,7 +158,7 @@ class OnChildChange(ScalarQuery):
         The ``Subscription`` handle from ``observer.subscribe(options)``.
 
     Example:
-        nu.arun(nu.React(users.on_child_change("alice"), body))
+        nu.arun(nu.ReactOnce(users.on_child_change("alice"), body))
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -207,7 +207,7 @@ class OnChildrenChange(ScalarQuery):
         The ``Subscription`` handle from ``observer.subscribe(options)``.
 
     Example:
-        nu.arun(nu.ReactForever(users.on_children_change(), body))
+        nu.arun(nu.ReactEvery(users.on_children_change(), body))
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -257,7 +257,7 @@ class OnDescendantsChange(ScalarQuery):
         The ``Subscription`` handle from ``observer.subscribe(options)``.
 
     Example:
-        nu.arun(nu.ReactForever(users.on_descendants_change("*", "email"), body))
+        nu.arun(nu.ReactEvery(users.on_descendants_change("*", "email"), body))
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -318,12 +318,12 @@ class OnPrimitiveChange(ScalarQuery):
         The ``Subscription`` handle from ``observer.subscribe(options)``.
 
     Example:
-        nu.arun(nu.React(user["email"].on_change(), body))
+        nu.arun(nu.ReactOnce(user["email"].on_change(), body))
     """
 
     def __init__(self, ref: object) -> None:
         # Slot 0 holds the leaf Ref directly; its own compiled thunk is not
-        # driven -- we read path knowledge off the Ref instance and its child
+        # driven: we read path knowledge off the Ref instance and its child
         # nid.
         super().__init__(ref)
 

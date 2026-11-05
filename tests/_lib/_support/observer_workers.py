@@ -60,7 +60,7 @@ class Rebinder:
 
     The far side of the socket is the whole point. ``unbind`` has to reach the
     subscription in the other process and pick out a receiver that process only
-    ever saw as a remote handle, which is what ``React`` does every time its
+    ever saw as a remote handle, which is what ``ReactOnce`` does every time its
     body restarts.
     """
 

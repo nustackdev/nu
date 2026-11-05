@@ -198,7 +198,7 @@ def by_hand(lens, shape, prefix):
             nustd.ui.lens.columns(shape, nu.List.of(), prefix=prefix),
         )
     )
-    on_nav = nu.ReactForever(
+    on_nav = nu.ReactEvery(
         lens.on_nav(),
         lambda cursor: nustd.kv.Snapshot(
             lens.set_columns(cursor, nustd.ui.lens.columns(shape, cursor, prefix=prefix))

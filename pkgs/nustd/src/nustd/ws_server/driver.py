@@ -39,7 +39,7 @@ def sessions_fold(arm: Nu) -> Nu:
         arm: the body one connection gets. Spawned when the connection
             appears in the server's book, cancelled and drained when it goes.
     """
-    return nu.ForEachParReactive(
+    return nu.ReconcileLatestEach(
         ServerRef().sessions(),
         ServerRef().on_change(),
         arm,

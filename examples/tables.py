@@ -170,14 +170,14 @@ def planets_by(column: nu.Nu, direction: nu.Nu) -> nu.Nu:
 
 
 simple = nustd.kv.Snapshot(SIMPLE.set_rows(Store.planets)) >> (
-    nu.ReactForever(
+    nu.ReactEvery(
         SIMPLE.on_sort(),
         lambda ev: nustd.kv.Snapshot(
             SIMPLE.set_rows(planets_by(ev["sort_column"], ev["sort_direction"]))
             >> SIMPLE.set_sort(ev["sort_column"], ev["sort_direction"])
         ),
     )
-    | nu.ReactForever(
+    | nu.ReactEvery(
         SIMPLE.on_row_click(),
         lambda ev: PICKED.set("Picked " + nu.Str(ev["key"])),
     )
@@ -198,7 +198,7 @@ def show(source: nu.Nu) -> nu.Nu:
     return MD.editor.set(source) | MD.preview.set(source) | MD.source.set(source)
 
 
-markdown = nustd.kv.Snapshot(show(Store.notes)) >> nu.ReactForever(
+markdown = nustd.kv.Snapshot(show(Store.notes)) >> nu.ReactEvery(
     MD.editor.on_change(),
     lambda _: nu.let(
         nu.Str(MD.editor),

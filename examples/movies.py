@@ -327,7 +327,7 @@ hydrate = nustd.kv.Snapshot(
 )
 
 
-on_add = nu.ReactForever(
+on_add = nu.ReactEvery(
     App.page.movies.form.submit.on_click(),
     nustd.kv.Transaction(
         State.movies.append(
@@ -362,7 +362,7 @@ on_add = nu.ReactForever(
 
 # A row opens its movie's page. The movie is in the URL, so the page is a
 # place: reload it, copy it, open it in another tab.
-on_row_click = nu.ReactForever(
+on_row_click = nu.ReactEvery(
     App.page.movies.shelf.body.table.on_row_click(),
     lambda click: App.history.push(nu.Str("/movie?id=") + nu.str(click["key"])),
 )
@@ -388,7 +388,7 @@ def _draw_detail(i: nu.Int) -> nu.Nu:
 
 
 def _detail_actions(i: nu.Int) -> nu.Nu:
-    on_delete = nu.ReactForever(
+    on_delete = nu.ReactEvery(
         App.page.detail.actions.remove.on_click(),
         nustd.kv.Transaction(State.movies.del_at(i) >> State.total.set(nu.Len(State.movies)))
         >> App.history.push("/"),
@@ -403,16 +403,16 @@ def _detail(held: nu.ObjectRef) -> nu.Nu:
     return nu.IfDo(i >= 0, _draw_detail(i) >> _detail_actions(i), missing)
 
 
-on_back = nu.ReactForever(App.page.detail.actions.back.on_click(), App.history.push("/"))
+on_back = nu.ReactEvery(App.page.detail.actions.back.on_click(), App.history.push("/"))
 
 
-on_filter_apply = nu.ReactForever(
+on_filter_apply = nu.ReactEvery(
     App.page.movies.filters.body.apply.on_click(),
     nustd.kv.Snapshot(App.page.movies.shelf.body.table.set(_rows_filtered())),
 )
 
 
-on_filter_clear = nu.ReactForever(
+on_filter_clear = nu.ReactEvery(
     App.page.movies.filters.body.reset.on_click(),
     nustd.kv.Snapshot(
         App.page.movies.filters.body.min_rating.input.set(1.0)

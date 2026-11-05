@@ -286,7 +286,7 @@ class Display(_ChainCommand):
 class Changed(ScalarQuery):
     """Subscribe to client-side change notifications on a Ref.
 
-    Resolves to a `Subscription` handle that ReactForever and friends drive.
+    Resolves to a `Subscription` handle that ReactEvery and friends drive.
     No outbound frame is sent when this evaluates -- the client pushes
     `notify` frames whenever the Ref changes, and the session dispatches
     them to the subscription's callbacks.

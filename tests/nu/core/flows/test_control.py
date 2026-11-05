@@ -1,4 +1,4 @@
-"""Tests for the Control flows: IfDo, WhileDo, ForeverDo, ForEachDo, ForRangeDo, Delay, DelayedDo, SwitchDo.
+"""Tests for the Control flows: IfDo, WhileDo, ForeverDo, ForEachDo, ForRangeDo, Delay, DelayedDo, SwitchDo, Park.
 
 Control flows steer bodies under Query parameters. Coverage builds real
 programs - condition / counter / iterable parameters over ``.set()`` bodies
@@ -6,6 +6,10 @@ that read and write a mem dict - and runs them through ``run`` / ``arun``. Class
 """
 
 from __future__ import annotations
+
+import asyncio
+
+import pytest
 
 import nu
 from nu.context import Attr as AttrRef
@@ -17,11 +21,12 @@ from nu.core.flows.control import (
     ForeverDo,
     ForRangeDo,
     IfDo,
+    Park,
     SwitchDo,
     WhileDo,
 )
 from nu.lang import Attr, Cardinality, Context, Control, Literal
-from nu.lang.helpers import arun, compile, run
+from nu.lang.helpers import arun, compile, run, validate
 
 
 class S(nu.Shape):
@@ -236,3 +241,55 @@ def test_foreverdo_compiles_as_a_void_control():
     program = compile(ForeverDo(_set("a", 1)))
     assert program.attr(program.root, Attr.CARDINALITY) is Cardinality.VOID
     assert program.attr(program.root, Attr.PARAM_SLOTS) == frozenset()
+
+
+# --- Park -----------------------------------------------------------------
+# Never finishes; cancellation ends it. The identity of Race.
+
+
+def test_park_is_a_childless_void_control():
+    assert issubclass(Park, Control)
+    program = compile(Park())
+    assert nu.tree.children(Park()) == ()
+    assert program.attr(program.root, Attr.CARDINALITY) is Cardinality.VOID
+    validate(program)
+
+
+def test_park_refuses_the_sync_runtime():
+    with pytest.raises(RuntimeError, match="async-only atom \\(Park\\)"):
+        run(Park())
+    with pytest.raises(RuntimeError, match="Park requires an async runtime; use arun"):
+        Park()._compile(0, ())(None)
+
+
+async def test_park_never_finishes_until_cancelled():
+    task = asyncio.ensure_future(arun(Park()))
+    await asyncio.sleep(0.02)
+    assert not task.done()
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+
+@pytest.mark.parametrize(
+    "race",
+    [
+        lambda x: nu.Race(x, Park()),
+        lambda x: nu.Race(Park(), x),
+        lambda x: nu.Race(x, Park(), Park()),
+    ],
+    ids=["x-park", "park-x", "x-park-park"],
+)
+async def test_race_with_park_behaves_as_the_other_branch(race):
+    """``Race(x, Park()) = x``: same writes, and it returns when ``x`` does."""
+    x = DelayedDo(Literal(0.01), _set("a", 1))
+    alone, alone_ctx = _seed()
+    await arun(x, alone_ctx)
+    raced, raced_ctx = _seed()
+    await asyncio.wait_for(arun(race(x), raced_ctx), 5.0)
+    assert raced == alone == {"a": 1}
+
+
+async def test_race_with_park_propagates_the_other_branchs_error():
+    with pytest.raises(ZeroDivisionError):
+        await asyncio.wait_for(arun(nu.Race(S.a.set(nu.Div(1, 0)), Park())), 5.0)

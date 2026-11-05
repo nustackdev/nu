@@ -131,28 +131,28 @@ init = nustd.kv.Transaction(nu.IfDo(State.nodes.missing(), State.nodes.set(_SEED
 ship = nustd.kv.Snapshot(TREE.set(State.nodes))
 
 
-on_select = nu.ReactForever(
+on_select = nu.ReactEvery(
     TREE.on_select(),
     lambda ev: STATUS.set("Selected " + nu.Str(ev["key"])),
 )
 
-on_open = nu.ReactForever(
+on_open = nu.ReactEvery(
     TREE.on_open(),
     lambda ev: STATUS.set("Opened " + nu.Str(ev["key"])),
 )
 
-on_rename = nu.ReactForever(
+on_rename = nu.ReactEvery(
     TREE.on_rename(),
     lambda ev: nustd.kv.Transaction(State.nodes.set(renamed(ev["key"], ev["title"]))) >> ship,
 )
 
-on_move = nu.ReactForever(
+on_move = nu.ReactEvery(
     TREE.on_move(),
     lambda ev: nustd.kv.Transaction(moved(ev["key"], ev["parent"], ev["index"])) >> ship,
 )
 
 # The catch-all: every event, whatever it is, into the activity list.
-on_any = nu.ReactForever(
+on_any = nu.ReactEvery(
     TREE.on_change(),
     lambda ev: LOG.append(nu.Str(ev["event"]) + "  " + nu.Str(ev["key"])),
 )
