@@ -16,76 +16,25 @@ Observer backends:
 - ``RedisObserver`` -- async-only. Owns the pubsub listener and registers
   each filter in valkey's server-side notify router once the subscribe is
   confirmed, so a subscription is live when ``subscribe`` returns. On
-  reconnect it registers every filter again and sends each subscription one
-  resync wake, so subscribers re-read what changed while it was down.
-
-virtuals sends that wake as ``None`` in place of a key. Both observers hand
-out subscriptions that turn it into nu's ``RESYNC`` marker, which level flows
-re-read on and event flows skip. A kv key is a tuple, never ``None``, so the
-mapping cannot catch a real change.
+  reconnect it registers every filter again, so notifications flow again.
+  Delivery is best effort: writes made while it was down are not delivered.
 """
 
 from __future__ import annotations
 
-import threading
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from nu.core.reactive import RESYNC, ObserverProtocol
+from nu.core.reactive import ObserverProtocol
 from virtuals._backends.observers.mem import InMemoryObserver as _InMemoryObserver
 
 from .transport import InMemoryTransport
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from nu.lang.runtime import Context
 
 
-__all__ = ["InMemoryObserver", "RedisObserver", "ResyncSubscription"]
-
-
-class ResyncSubscription:
-    """A virtuals subscription whose ``None`` resync wake reaches nu as ``RESYNC``.
-
-    Each bound receiver gets a wrapper; ``unbind`` finds it again by the
-    receiver's identity, the way every subscription in nu compares receivers.
-    Anything else (``filter_hash`` and the like) reads through to the inner one.
-    """
-
-    def __init__(self, inner: Any) -> None:  # noqa: ANN401 -- any virtuals Subscription
-        self._inner = inner
-        self._lock = threading.Lock()
-        self._wrapped: list[tuple[Callable[[Any], None], Callable[[Any], None]]] = []
-
-    def bind(self, receiver: Callable[[Any], None]) -> None:
-        """Bind ``receiver``; a ``None`` wake reaches it as ``RESYNC``."""
-
-        def translated(key: Any) -> None:  # noqa: ANN401 -- the backend's key shape
-            receiver(RESYNC if key is None else key)
-
-        with self._lock:
-            self._wrapped.append((receiver, translated))
-        self._inner.bind(translated)
-
-    def unbind(self, receiver: Callable[[Any], None]) -> None:
-        """Stop firing ``receiver``. A no-op when it is not bound."""
-        with self._lock:
-            gone = [w for r, w in self._wrapped if r is receiver]
-            self._wrapped = [(r, w) for r, w in self._wrapped if r is not receiver]
-        for w in gone:
-            self._inner.unbind(w)
-
-    def close(self) -> None:
-        """Close the inner subscription and forget every receiver."""
-        with self._lock:
-            self._wrapped = []
-        self._inner.close()
-
-    def __getattr__(self, name: str) -> object:
-        if name.startswith("_"):
-            raise AttributeError(name)
-        return getattr(self._inner, name)
+__all__ = ["InMemoryObserver", "RedisObserver"]
 
 
 class InMemoryObserver(_InMemoryObserver):
@@ -107,10 +56,6 @@ class InMemoryObserver(_InMemoryObserver):
         transport = ctx.fabrics.get(InMemoryTransport, *self._transport_tags)
         _InMemoryObserver.__init__(self, transport=transport)
         self.connect()
-
-    def subscribe(self, options: Any) -> ResyncSubscription:  # noqa: ANN401 -- backend-defined
-        """Subscribe, with the resync wake carried as ``RESYNC``."""
-        return ResyncSubscription(_InMemoryObserver.subscribe(self, options))
 
     def cleanup(self) -> None:
         """Disconnect the observer."""
@@ -165,14 +110,6 @@ class RedisObserver:
         if self._backing is not None:
             self._backing.disconnect()
             self._backing = None
-
-    def subscribe(self, options: Any) -> ResyncSubscription:  # noqa: ANN401 -- backend-defined
-        """Subscribe, with the resync wake carried as ``RESYNC``."""
-        backing: Any = self._backing
-        if backing is None:
-            msg = "RedisObserver used before asetup"
-            raise RuntimeError(msg)
-        return ResyncSubscription(backing.subscribe(options))
 
     def __getattr__(self, name: str) -> object:
         # Delegate any observer-protocol access to the backing instance.

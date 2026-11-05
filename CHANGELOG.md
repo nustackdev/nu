@@ -10,6 +10,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Remove the resync wake: a notification always names a change, delivery stays best effort
+
 ## 0.7.0 - 2026-11-05
 
 - Release nu 0.7.0
