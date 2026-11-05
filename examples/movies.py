@@ -306,7 +306,7 @@ def _rows_filtered() -> nu.Nu:
 # the user logged instead of replacing the shelf with the samples again.
 init = nustd.kv.Transaction(
     nu.IfDo(
-        State.total.missing(),
+        State.total.exists().not_(),
         State.total.set(len(_SEED_MOVIES))
         | State.watched.set(sum(1 for m in _SEED_MOVIES if m["watched"]))
         | State.latest_title.set(_SEED_MOVIES[-1]["title"])

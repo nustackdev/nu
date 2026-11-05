@@ -210,7 +210,7 @@ def by_hand(lens, shape, prefix):
 ui = (
     App.title.set("Lens")
     # Seed once. A second tab finds the cluster already there and writes nothing.
-    >> nustd.kv.Transaction(nu.IfDo(Cluster.name.missing(), seed))
+    >> nustd.kv.Transaction(nu.IfDo(Cluster.name.exists().not_(), seed))
     # ParallelAsync and not `|`: each arm builds its term at run time, and the
     # smart Parallel refuses to pick a mode for a branch it cannot see into.
     >> nu.ParallelAsync(

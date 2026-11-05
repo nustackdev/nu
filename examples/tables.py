@@ -149,7 +149,7 @@ class Store(nu.Shape):
 # Seed once per store; every connection runs it, only the first finds it empty.
 init = nustd.kv.Transaction(
     nu.IfDo(
-        Store.seeded.missing(),
+        Store.seeded.exists().not_(),
         Store.planets.set(_PLANETS)
         >> nu.Sequential(*(Store.rows[k].cells.set(cells) for k, cells in _TASKS.items()))
         >> Store.order.set(list(_TASKS))

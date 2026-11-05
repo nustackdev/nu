@@ -126,7 +126,7 @@ def moved(key: nu.Nu, parent: nu.Nu, index: nu.Nu) -> nu.Nu:
 
 # Seed once per store; every connection runs it first, and only the first finds
 # the store empty.
-init = nustd.kv.Transaction(nu.IfDo(State.nodes.missing(), State.nodes.set(_SEED)))
+init = nustd.kv.Transaction(nu.IfDo(State.nodes.exists().not_(), State.nodes.set(_SEED)))
 
 ship = nustd.kv.Snapshot(TREE.set(State.nodes))
 

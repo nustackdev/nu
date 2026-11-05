@@ -164,7 +164,7 @@ def sorted_by(column: nu.Nu, direction: nu.Nu) -> nu.Nu:
 # the store empty.
 init = nustd.kv.Transaction(
     nu.IfDo(
-        State.next_id.missing(),
+        State.next_id.exists().not_(),
         nu.Sequential(*(State.rows[k].cells.set(cells) for k, cells in _SEED.items()))
         >> State.order.set(list(_SEED))
         >> State.next_id.set(len(_SEED) + 1)
