@@ -20,6 +20,16 @@
 // it were content. Nothing commits unless the document actually changed, so
 // untouched values never churn.
 //
+// ## Empty lines
+//
+// An empty line in the editor is an empty paragraph, and plain markdown has
+// no way to say that: any run of blank lines is one paragraph break. So here
+// one blank line between blocks is the break, and each one past it is an
+// empty paragraph; at the start of a document (or a quote) every blank line
+// is one, and at the end every one before the closing newline. A document of
+// nothing but empty lines is still "". List items stay tight: an empty line
+// inside one is dropped, since a blank run is what ends a list.
+//
 // ## Tables
 //
 // GFM pipe tables: a header row, a delimiter row that sets each column's
@@ -438,7 +448,7 @@ export function createMarkdown(s: ProseSchema): Markdown {
 				break;
 			}
 
-			let content = parseBlocks(body, ctx);
+			let content = parseBlocks(body, ctx, false);
 			if (content.length === 0) content = [nodeType.paragraph.create()];
 			// `list_item` is `paragraph block*`, so an item that opens on a nested
 			// list still needs a paragraph to hold the caret.
@@ -506,17 +516,25 @@ export function createMarkdown(s: ProseSchema): Markdown {
 		return { node: nodeType.table.create(null, rows), next: i };
 	}
 
-	function parseBlocks(lines: Line[], ctx: Ctx): PMNode[] {
+	/** `empties`: blank lines past a paragraph break read as empty paragraphs (see "Empty lines"). */
+	function parseBlocks(lines: Line[], ctx: Ctx, empties = true): PMNode[] {
 		const out: PMNode[] = [];
 		let i = 0;
+		let run = 0;
+		const gap = (extra: number) => {
+			if (empties) for (let k = 0; k < extra; k++) out.push(nodeType.paragraph.create());
+			run = 0;
+		};
 
 		while (i < lines.length) {
 			const line = lines[i];
 
 			if (line.text.trim() === "") {
+				run += 1;
 				i += 1;
 				continue;
 			}
+			gap(out.length === 0 ? run : run - 1);
 
 			if (RULE.test(line.text)) {
 				out.push(nodeType.rule.create());
@@ -607,12 +625,16 @@ export function createMarkdown(s: ProseSchema): Markdown {
 			out.push(nodeType.paragraph.create(null, inlineNodes(buf, ctx)));
 		}
 
+		// Nothing but blank lines is nothing, not a stack of empty paragraphs.
+		if (out.length > 0) gap(run);
 		return out;
 	}
 
 	function parseMarkdown(source: string): Parsed {
 		const ctx: Ctx = { anchors: [] };
-		let blocks = parseBlocks(toLines(source), ctx);
+		// The closing newline ends the last line; it is not a blank line of its own.
+		const body = source.endsWith("\n") ? source.slice(0, -1) : source;
+		let blocks = parseBlocks(toLines(body), ctx);
 		if (blocks.length === 0) blocks = [nodeType.paragraph.create()];
 		const doc = schema.node("doc", null, blocks);
 
@@ -834,14 +856,22 @@ export function createMarkdown(s: ProseSchema): Markdown {
 	 * Blocks are separated by a blank line. The exception is inside a list item,
 	 * where a nested list hangs straight off its parent's line: markdown reads
 	 * both forms as the same document, but only the tight one is what anyone
-	 * writes, so it is what we emit.
+	 * writes, so it is what we emit. Outside list items each empty paragraph is
+	 * one more blank line (see "Empty lines").
 	 */
 	function serializeChildren(node: PMNode, tight = false): string {
-		const parts: { text: string; list: boolean }[] = [];
+		const parts: { text: string; list: boolean; empties: number }[] = [];
+		let empties = 0;
 		node.forEach((child) => {
 			const text = serializeBlock(child);
-			if (text !== "") parts.push({ text, list: isList(child) });
+			if (text !== "") {
+				parts.push({ text, list: isList(child), empties });
+				empties = 0;
+			} else if (!tight && child.type === nodeType.paragraph) {
+				empties += 1;
+			}
 		});
+		if (parts.length === 0) return "";
 
 		let out = "";
 		parts.forEach((part, i) => {
@@ -849,9 +879,9 @@ export function createMarkdown(s: ProseSchema): Markdown {
 				const glued = tight && (part.list || parts[i - 1].list);
 				out += glued ? "\n" : "\n\n";
 			}
-			out += part.text;
+			out += "\n".repeat(part.empties) + part.text;
 		});
-		return out;
+		return out + "\n".repeat(empties);
 	}
 
 	function serializeBlock(node: PMNode): string {

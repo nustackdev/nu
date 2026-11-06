@@ -36,6 +36,43 @@ function settles(md: string): string {
 	return once;
 }
 
+describe("empty lines", () => {
+	const { schema, nodeType } = proseSchema;
+	const p = (text?: string) => nodeType.paragraph.create(null, text ? schema.text(text) : undefined);
+	const doc = (...blocks: ReturnType<typeof p>[]) => schema.node("doc", null, blocks);
+	const shape = (md: string) => parseMarkdown(md).doc.toString();
+
+	it("saves empty paragraphs between blocks as extra blank lines", () =>
+		expect(serializeMarkdown(doc(p("one"), p(), p(), p("two")))).toBe("one\n\n\n\ntwo\n"));
+
+	it("reads extra blank lines back as empty paragraphs", () =>
+		expect(shape("one\n\n\n\ntwo\n")).toBe('doc(paragraph("one"), paragraph, paragraph, paragraph("two"))'));
+
+	it("keeps empty lines between paragraphs", () => stable("one\n\n\ntwo\n"));
+
+	it("keeps empty lines at the start", () => {
+		expect(serializeMarkdown(doc(p(), p("two")))).toBe("\ntwo\n");
+		stable("\ntwo\n");
+	});
+
+	it("keeps empty lines at the end", () => {
+		expect(serializeMarkdown(doc(p("one"), p()))).toBe("one\n\n");
+		expect(shape("one\n\n")).toBe('doc(paragraph("one"), paragraph)');
+		stable("one\n\n");
+	});
+
+	it("keeps empty lines around other blocks", () => stable("# title\n\n\n- a\n- b\n\n\n\nbody\n"));
+
+	it("keeps empty lines inside a blockquote", () => stable("> one\n>\n>\n> two\n"));
+
+	it("still saves a document of only empty lines as empty", () => {
+		expect(serializeMarkdown(doc(p(), p(), p()))).toBe("");
+		expect(shape("\n\n\n")).toBe("doc(paragraph)");
+	});
+
+	it("keeps list items tight", () => stable("- a\n\n  b\n- c\n"));
+});
+
 describe("blocks round-trip", () => {
 	it("keeps paragraphs", () => stable("hello world\n"));
 
