@@ -1,7 +1,7 @@
-// The document contract, as transactions.
+// The markdown handle, as transactions.
 //
 // What a host's commands do to the document and what comes back out:
-// markdown, blank, tail, split, append, type, commit. document.browser.test.tsx covers what only a real browser
+// markdown, blank, tail, split, append, type, commit. handle.browser.test.tsx covers what only a real browser
 // can say (keys at edges, landing under an x); here the handle is driven
 // directly and the state read back, which jsdom is enough for.
 
@@ -11,8 +11,8 @@ import type { ReactElement } from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { DocIntent, DocumentHandle } from "./document";
 import { ProseEditor } from "./editor";
+import type { MarkdownHandle, MarkdownIntent } from "./handle";
 import { paragraphFromEmpty } from "./rules";
 import { proseSchema } from "./schema";
 
@@ -38,9 +38,9 @@ afterEach(async () => {
 
 type Host = {
 	view: EditorView;
-	doc: DocumentHandle;
+	doc: MarkdownHandle;
 	commits: string[];
-	intents: DocIntent[];
+	intents: MarkdownIntent[];
 	/** A new inbound value. */
 	set(value: string): void;
 };
@@ -50,9 +50,9 @@ function open(value: string, opts: { listen?: boolean } = {}): Host {
 	document.body.appendChild(host);
 	root = createRoot(host);
 	let view: EditorView | null = null;
-	let doc: DocumentHandle | null = null;
+	let doc: MarkdownHandle | null = null;
 	const commits: string[] = [];
-	const intents: DocIntent[] = [];
+	const intents: MarkdownIntent[] = [];
 	const ui = (v: string): ReactElement => (
 		<ProseEditor
 			value={v}
@@ -60,7 +60,7 @@ function open(value: string, opts: { listen?: boolean } = {}): Host {
 			onView={(x) => {
 				view = x;
 			}}
-			onDocument={(h) => {
+			onHandle={(h) => {
 				doc = h;
 				if (h && opts.listen !== false) {
 					h.onIntent((i) => {
@@ -88,7 +88,7 @@ function caret(h: Host, pos: number): void {
 	);
 }
 
-describe("DocumentHandle", () => {
+describe("MarkdownHandle", () => {
 	it("reads the markdown with unsaved edits, and blank as the placeholder sees it", () => {
 		const h = open("");
 		expect(h.doc.blank()).toBe(true);
@@ -214,7 +214,7 @@ describe("DocumentHandle", () => {
 	});
 
 	it("hands the handle out only while editable: not read-only, then on the flip", async () => {
-		const seen: (DocumentHandle | null)[] = [];
+		const seen: (MarkdownHandle | null)[] = [];
 		host = document.createElement("div");
 		document.body.appendChild(host);
 		root = createRoot(host);
@@ -223,7 +223,7 @@ describe("DocumentHandle", () => {
 				value=""
 				readOnly={readOnly}
 				onCommit={() => {}}
-				onDocument={(h) => seen.push(h)}
+				onHandle={(h) => seen.push(h)}
 			/>
 		);
 		act(() => root?.render(ui(true)));
@@ -253,12 +253,12 @@ describe("DocumentHandle", () => {
 	});
 
 	it("hands the handle out on mount and takes it back on teardown", async () => {
-		const seen: (DocumentHandle | null)[] = [];
+		const seen: (MarkdownHandle | null)[] = [];
 		host = document.createElement("div");
 		document.body.appendChild(host);
 		root = createRoot(host);
 		act(() =>
-			root?.render(<ProseEditor value="" onCommit={() => {}} onDocument={(h) => seen.push(h)} />),
+			root?.render(<ProseEditor value="" onCommit={() => {}} onHandle={(h) => seen.push(h)} />),
 		);
 		expect(seen).toHaveLength(1);
 		expect(seen[0]).not.toBeNull();

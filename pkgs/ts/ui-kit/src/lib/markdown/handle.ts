@@ -1,11 +1,11 @@
-// The document contract: what one editor tells the host that owns a sequence
-// of documents, and what that host tells it back.
+// The markdown handle: what one markdown editor tells the host that owns a
+// sequence of them, and what that host tells it back.
 //
 // The editor owns exactly one markdown value and knows nothing about its
 // neighbours (see ./editor.tsx, "what is deliberately not here"). A host that
-// lays documents out in a sequence, a page of cells, a notebook, does know
+// lays editors out in a sequence, a page of cells, a notebook, does know
 // them, and wants writing to flow across the seams: the caret arrowing out of
-// the last line into the next document, Backspace on a blank one removing
+// the last line into the next editor, Backspace on a blank one removing
 // it, Cmd-Enter opening a new one below. None of that can be decided here,
 // and none of it should be decided above by reading this editor's DOM. So the
 // editor reports intents and takes commands.
@@ -17,7 +17,7 @@
 // sees exactly the keys the document had no use for: an arrow the lists,
 // tables, fences and gap cursor all let through, a Backspace nothing could
 // join, a Cmd-Enter outside a table. It reports those to the host as a
-// `DocIntent`. The host answers true when it acted (the key is consumed) and
+// `MarkdownIntent`. The host answers true when it acted (the key is consumed) and
 // false to let the editor go on as if no host existed. With no host listening
 // the plugin does nothing at all.
 //
@@ -30,14 +30,14 @@
 //
 // ## Commands in
 //
-// A `DocumentHandle` is the whole of what a host can do to a document:
+// A `MarkdownHandle` is the whole of what a host can do to an editor:
 // focus it (at an edge, under an x, or where its caret already is), ask
 // whether it is blank, read its markdown, cut it at the caret, append
 // markdown at its end, type as if at the keyboard, save now. Every command
 // goes through the editor's own transactions and its own focus, so there is
 // nothing for a DOM selection restore to race with.
 //
-// The contract is additive: an editor with no `onDocument` host runs exactly
+// The handle is additive: an editor with no `onHandle` host runs exactly
 // as before.
 
 import { GapCursor } from "prosemirror-gapcursor";
@@ -54,11 +54,11 @@ import type { ProseSchema } from "./schema";
 export type LeaveDir = "up" | "down" | "left" | "right";
 
 /** What the person tried to do that the document could not do alone. */
-export type DocIntent =
+export type MarkdownIntent =
 	/**
 	 * The caret (the selection's head, with `extend`, for Shift+arrow) tried
 	 * to cross the document's edge. `x` is the caret's horizontal position on
-	 * screen, so the next document can land under it.
+	 * screen, so the next editor can land under it.
 	 */
 	| { kind: "leave"; dir: LeaveDir; extend: boolean; x: number }
 	/**
@@ -86,9 +86,9 @@ export type DocIntent =
 export type FocusAt = "start" | "end" | "kept" | { x: number; edge: "first" | "last" };
 
 /** A host's answer to an intent: true when it acted. */
-export type IntentListener = (intent: DocIntent) => boolean;
+export type IntentListener = (intent: MarkdownIntent) => boolean;
 
-export interface DocumentHandle {
+export interface MarkdownHandle {
 	/** Sets the editor's own selection, then focuses it. */
 	focus(at: FocusAt): void;
 	/** One empty paragraph and nothing else: the same check the placeholder uses. */
@@ -99,6 +99,15 @@ export interface DocumentHandle {
 	tail(): string;
 	/** Cuts the document at the caret: keeps the head, returns the tail as markdown. */
 	split(): string;
+	/**
+	 * `split` with its save held, for a host moving the tail into another
+	 * document. The cut shows at once, but this document saves nothing (no
+	 * autosave, no save on blur, `commit` waits) until the host says how the
+	 * move ended: `keep`, and the cut goes out with any edits since; `undo`,
+	 * and the tail comes back, then saves resume. Until then the store still
+	 * has the tail here, so it is never in neither document.
+	 */
+	cut(): Cut;
 	/** Adds blocks at the end, caret at the join. Into a blank document, replaces its empty paragraph. */
 	append(md: string): void;
 	/** Text at the caret as if typed, input rules included. "\n" is Enter. */
@@ -109,30 +118,42 @@ export interface DocumentHandle {
 	 * Calls `fn` once the current text is in the store: at once when nothing
 	 * is unsaved or waiting to be read back, otherwise when the read for the
 	 * latest save is answered (unsaved edits are saved first, at the next
-	 * commit). Returns the unsubscribe. A document with no store behind it
-	 * (a plain editor, no node) counts a commit as the store.
+	 * commit). Returns the unsubscribe. An editor with no store behind it
+	 * (a plain editor, no node) counts a commit as the store. `lost`, when
+	 * the editor or its node goes away first: that text will never be stored.
 	 */
-	saved(fn: () => void): () => void;
+	saved(fn: () => void, lost?: () => void): () => void;
 	/**
 	 * A hint the editor draws for the host, the way it draws its placeholder
 	 * (a decoration, never document content). "blank", the default: on a
-	 * blank document, in place of the document's own placeholder while set.
+	 * blank document, in place of the editor's own placeholder while set.
 	 * "tail": on an empty last line of a document that has text, the line
 	 * Enter leaves you on. Null clears it. Never drawn read-only.
 	 */
 	hint(text: string | null, at?: "blank" | "tail"): void;
-	/** Hear the document's intents. Returns the unsubscribe. The first listener to answer true wins. */
+	/** Hear the editor's intents. Returns the unsubscribe. The first listener to answer true wins. */
 	onIntent(fn: IntentListener): () => void;
 }
 
+/** A held cut (`MarkdownHandle.cut`): the tail it took, and how the move ended. */
+export type Cut = {
+	tail: string;
+	/** The tail is safe elsewhere: the cut is saved, with any edits since. */
+	keep(): void;
+	/** It is not: the tail comes back, then saves resume. */
+	undo(): void;
+};
+
 /** What the editor hands the contract: its codec, its commands, its fences. */
-export type DocumentSeams = {
+export type HandleSeams = {
 	schema: ProseSchema;
 	md: Markdown;
 	/** Save now. */
 	commit: () => void;
-	/** `DocumentHandle.saved`; the editor composes it from its own dirty state and the owner's store. */
-	saved: (fn: () => void) => () => void;
+	/** `MarkdownHandle.saved`; the editor composes it from its own dirty state and the owner's store. */
+	saved: (fn: () => void, lost?: () => void) => () => void;
+	/** Hold the editor's saves until the returned release, when what is unsaved goes out. */
+	hold: () => () => void;
 	/** What the editor binds Enter to, so `type("\n")` is the same key. */
 	enter: Command;
 	/**
@@ -142,14 +163,14 @@ export type DocumentSeams = {
 	fenceAtX: (pos: number, x: number, edge: "first" | "last") => number | null;
 };
 
-export type ProseDocument = {
+export type HandleContract = {
 	/** The intents plugin. Goes last in the editor's plugin list. */
 	plugin: Plugin;
 	/** Offer an intent to the listeners. True when one acted. */
-	report: (intent: DocIntent) => boolean;
+	report: (intent: MarkdownIntent) => boolean;
 	/** The handle over the live view. */
-	handle: (view: EditorView) => DocumentHandle;
-	/** What the host asked drawn (see `DocumentHandle.hint`); the editor's decorations read these. */
+	handle: (view: EditorView) => MarkdownHandle;
+	/** What the host asked drawn (see `MarkdownHandle.hint`); the editor's decorations read these. */
 	hints: { blank: () => string | null; tail: () => string | null };
 };
 
@@ -218,13 +239,23 @@ function nothingAfter(doc: PMNode, pos: number): boolean {
  * Where a cut at the caret starts. Mid-text it is the caret itself. At the
  * start of a block it is the block's boundary, and the boundary of every
  * ancestor it starts, so a cut at the first item of a list takes the whole
- * list and a cut at the start of the document takes everything.
+ * list and a cut at the start of the document takes everything. At the end
+ * of a block it is the boundary after it, and after every ancestor it ends,
+ * so a cut at the end of an item leaves that item whole above and takes no
+ * empty remainder of it (an empty `- `, `#` or `>`) into the tail.
  */
 function cutPoint($head: ResolvedPos): number {
-	if ($head.parentOffset !== 0) return $head.pos;
-	let d = $head.depth;
-	while (d > 1 && $head.index(d - 1) === 0) d--;
-	return $head.before(d);
+	if ($head.parentOffset === 0) {
+		let d = $head.depth;
+		while (d > 1 && $head.index(d - 1) === 0) d--;
+		return $head.before(d);
+	}
+	if ($head.parentOffset === $head.parent.content.size) {
+		let d = $head.depth;
+		while (d > 1 && $head.index(d - 1) === $head.node(d - 1).childCount - 1) d--;
+		return $head.after(d);
+	}
+	return $head.pos;
 }
 
 /** The first (last) textblock's content range inside `block`, which starts at `pos`. */
@@ -251,12 +282,12 @@ function edgeTextblock(
  * The contract for one editor. Build one per view: the plugin reports to
  * the listeners the handle collects.
  */
-export function createDocument(seams: DocumentSeams): ProseDocument {
+export function createHandle(seams: HandleSeams): HandleContract {
 	const { schema: s, md } = seams;
 	const listeners = new Set<IntentListener>();
 	const hints: { blank: string | null; tail: string | null } = { blank: null, tail: null };
 
-	const report = (intent: DocIntent): boolean => {
+	const report = (intent: MarkdownIntent): boolean => {
 		for (const fn of listeners) if (fn(intent)) return true;
 		return false;
 	};
@@ -356,93 +387,133 @@ export function createDocument(seams: DocumentSeams): ProseDocument {
 		);
 	};
 
-	const handle = (view: EditorView): DocumentHandle => ({
-		focus(at) {
-			if (at !== "kept") {
-				const sel = selectionFor(view, at);
-				if (!sel.eq(view.state.selection)) {
-					view.dispatch(view.state.tr.setSelection(sel).scrollIntoView());
+	const handle = (view: EditorView): MarkdownHandle => {
+		const h: MarkdownHandle = {
+			focus(at) {
+				if (at !== "kept") {
+					const sel = selectionFor(view, at);
+					if (!sel.eq(view.state.selection)) {
+						view.dispatch(view.state.tr.setSelection(sel).scrollIntoView());
+					}
 				}
-			}
-			view.focus();
-		},
+				view.focus();
+			},
 
-		blank: () => isBlank(view.state, s),
+			blank: () => isBlank(view.state, s),
 
-		markdown: () => md.serializeMarkdown(view.state.doc),
+			markdown: () => md.serializeMarkdown(view.state.doc),
 
-		tail() {
-			const { doc, selection } = view.state;
-			return md.serializeRange(doc, cutPoint(selection.$head), doc.content.size);
-		},
+			tail() {
+				const { doc, selection } = view.state;
+				return md.serializeRange(doc, cutPoint(selection.$head), doc.content.size);
+			},
 
-		split() {
-			const { state } = view;
-			const from = cutPoint(state.selection.$head);
-			const end = state.doc.content.size;
-			const tail = md.serializeRange(state.doc, from, end);
-			if (view.editable && from < end) {
+			split() {
+				const { state } = view;
+				const from = cutPoint(state.selection.$head);
+				const end = state.doc.content.size;
+				const tail = md.serializeRange(state.doc, from, end);
+				if (view.editable && from < end) {
+					const tr = state.tr.delete(from, end);
+					view.dispatch(tr.setSelection(Selection.atEnd(tr.doc)).scrollIntoView());
+				}
+				return tail;
+			},
+
+			cut() {
+				const { state } = view;
+				const from = cutPoint(state.selection.$head);
+				const end = state.doc.content.size;
+				const tail = md.serializeRange(state.doc, from, end);
+				if (!view.editable || from >= end) return { tail, keep() {}, undo() {} };
+				const release = seams.hold();
+				const whole = state.doc;
 				const tr = state.tr.delete(from, end);
+				const head = tr.doc;
 				view.dispatch(tr.setSelection(Selection.atEnd(tr.doc)).scrollIntoView());
-			}
-			return tail;
-		},
+				let open = true;
+				return {
+					tail,
+					keep() {
+						if (!open) return;
+						open = false;
+						release();
+					},
+					undo() {
+						if (!open) return;
+						open = false;
+						// Torn down meanwhile: nothing here to put back, nor to save.
+						if (view.isDestroyed) return;
+						// Untouched since the cut, it goes back exactly as it was. Written
+						// to since, the tail goes on the end, joined at a paragraph break:
+						// not where it was, but kept.
+						if (view.state.doc.eq(head)) {
+							view.dispatch(view.state.tr.replaceWith(0, head.content.size, whole.content));
+						} else {
+							h.append(tail);
+						}
+						release();
+					},
+				};
+			},
 
-		append(text) {
-			if (!view.editable) return;
-			const { state } = view;
-			const parsed = md.parseMarkdown(text).doc;
-			const blankIn =
-				parsed.childCount === 1 && parsed.firstChild?.type === s.nodeType.paragraph
-					? parsed.firstChild.content.size === 0
-					: false;
-			if (blankIn) return;
-			if (isBlank(state, s)) {
-				const tr = state.tr.replaceWith(0, state.doc.content.size, parsed.content);
-				view.dispatch(tr.setSelection(Selection.atStart(tr.doc)).scrollIntoView());
-				return;
-			}
-			const at = state.doc.content.size;
-			const tr = state.tr.insert(at, parsed.content);
-			view.dispatch(tr.setSelection(Selection.near(tr.doc.resolve(at), 1)).scrollIntoView());
-		},
-
-		type(text) {
-			if (!view.editable) return;
-			for (const ch of text) {
-				if (ch === "\n") {
-					seams.enter(view.state, view.dispatch, view);
-					continue;
+			append(text) {
+				if (!view.editable) return;
+				const { state } = view;
+				const parsed = md.parseMarkdown(text).doc;
+				const blankIn =
+					parsed.childCount === 1 && parsed.firstChild?.type === s.nodeType.paragraph
+						? parsed.firstChild.content.size === 0
+						: false;
+				if (blankIn) return;
+				if (isBlank(state, s)) {
+					const tr = state.tr.replaceWith(0, state.doc.content.size, parsed.content);
+					view.dispatch(tr.setSelection(Selection.atStart(tr.doc)).scrollIntoView());
+					return;
 				}
-				// The view's own text input path: the input rules get the character
-				// first, as they do for a keypress, and the plain insert is the
-				// fallback they decline into.
-				const { from, to } = view.state.selection;
-				const insert = () => view.state.tr.insertText(ch, from, to).scrollIntoView();
-				if (!view.someProp("handleTextInput", (f) => f(view, from, to, ch, insert))) {
-					view.dispatch(insert());
+				const at = state.doc.content.size;
+				const tr = state.tr.insert(at, parsed.content);
+				view.dispatch(tr.setSelection(Selection.near(tr.doc.resolve(at), 1)).scrollIntoView());
+			},
+
+			type(text) {
+				if (!view.editable) return;
+				for (const ch of text) {
+					if (ch === "\n") {
+						seams.enter(view.state, view.dispatch, view);
+						continue;
+					}
+					// The view's own text input path: the input rules get the character
+					// first, as they do for a keypress, and the plain insert is the
+					// fallback they decline into.
+					const { from, to } = view.state.selection;
+					const insert = () => view.state.tr.insertText(ch, from, to).scrollIntoView();
+					if (!view.someProp("handleTextInput", (f) => f(view, from, to, ch, insert))) {
+						view.dispatch(insert());
+					}
 				}
-			}
-		},
+			},
 
-		commit: seams.commit,
+			commit: seams.commit,
 
-		saved: seams.saved,
+			saved: seams.saved,
 
-		hint(text, at = "blank") {
-			if (hints[at] === text) return;
-			hints[at] = text;
-			// Nothing in the document changed; the decorations are read again.
-			view.dispatch(view.state.tr.setMeta(HINT, true));
-		},
+			hint(text, at = "blank") {
+				if (hints[at] === text) return;
+				hints[at] = text;
+				// Nothing in the document changed; the decorations are read again.
+				view.dispatch(view.state.tr.setMeta(HINT, true));
+			},
 
-		onIntent(fn) {
-			listeners.add(fn);
-			return () => {
-				listeners.delete(fn);
-			};
-		},
-	});
+			onIntent(fn) {
+				listeners.add(fn);
+				return () => {
+					listeners.delete(fn);
+				};
+			},
+		};
+		return h;
+	};
 
 	return {
 		plugin,

@@ -260,7 +260,7 @@ export function proseInputRules(s: ProseSchema): Plugin {
 /**
  * A blank document: one empty paragraph and nothing else. The one truth for
  * "there is nothing here": the placeholder shows on it, and a host's
- * `DocumentHandle.blank()` answers with it. An empty table, a lone divider
+ * `MarkdownHandle.blank()` answers with it. An empty table, a lone divider
  * or an empty heading is not blank, since what it holds is structure.
  */
 export function isBlank(state: EditorState, s: ProseSchema): boolean {

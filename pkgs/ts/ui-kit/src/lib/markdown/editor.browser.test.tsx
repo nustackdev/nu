@@ -8,7 +8,7 @@
 // browser drew, not by what the document says.
 //
 // Keys go through `userEvent`, which Playwright delivers as input to the
-// browser, so the browser decides what End means. ProseMirror picks the
+// browser, so the browser decides what line end means. ProseMirror picks the
 // result up from the DOM on its own schedule, hence `expect.poll` rather than
 // reading the state on the next line.
 
@@ -86,8 +86,12 @@ describe("ProseEditor in a real browser", () => {
 		expect(v.endOfTextblock("up")).toBe(true);
 		expect(v.endOfTextblock("down")).toBe(false);
 
-		// End is the browser's: the end of the visual line, not of the paragraph.
-		await userEvent.keyboard("{End}");
+		// The end of the first visual line, not of the paragraph: a real click
+		// at its right edge, which only a laid-out view can resolve. (A native
+		// line-end key is the browser's own move, and headless Firefox under
+		// load sometimes skips one; see ./handle.browser.test.tsx.)
+		const box = editable(el).getBoundingClientRect();
+		await userEvent.click(editable(el), { position: { x: box.width - 2, y: 4 } });
 		await expect.poll(() => v.state.selection.head).toBeGreaterThan(1);
 		const head = v.state.selection.head;
 		expect(head).toBeLessThan(last);

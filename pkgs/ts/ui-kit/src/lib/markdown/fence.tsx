@@ -34,7 +34,7 @@
 //
 // A fence that bounds the document has nothing on that side to hand the
 // caret to. CodeMirror's keys never reach ProseMirror, so the intents plugin
-// (./document.ts) cannot see them: the fence reports `leave` itself from
+// (./handle.ts) cannot see them: the fence reports `leave` itself from
 // that branch, with Shift held as an extending leave, and the host decides
 // whether a neighbour is there.
 //
@@ -78,12 +78,12 @@ import {
 } from "../code/languages";
 import { codeBox } from "../recipes";
 import { cn } from "../utils";
-import type { DocIntent, LeaveDir } from "./document";
+import type { LeaveDir, MarkdownIntent } from "./handle";
 import { fenceInfo } from "./markdown";
 import type { ProseSchema } from "./schema";
 
-/** The host's ear for a fence at the document's edge; see ./document.ts. */
-type Report = (intent: DocIntent) => boolean;
+/** The host's ear for a fence at the document's edge; see ./handle.ts. */
+type Report = (intent: MarkdownIntent) => boolean;
 
 /** The picker's name for no language. Never written to a fence. */
 const PLAIN = "plain";

@@ -348,15 +348,16 @@ export { kitHighlight, kitTheme } from "./lib/code/theme";
 export { ICON_NAMES, iconFor, isIconName } from "./lib/icons";
 export type { KeyBindings, KeyScope } from "./lib/keyboard";
 export { useKeyScope } from "./lib/keyboard";
+export type { ProseEditorProps } from "./lib/markdown/editor";
+export { ProseEditor } from "./lib/markdown/editor";
 export type {
-	DocIntent,
-	DocumentHandle,
+	Cut,
 	FocusAt,
 	IntentListener,
 	LeaveDir,
-} from "./lib/markdown/document";
-export type { ProseEditorProps } from "./lib/markdown/editor";
-export { ProseEditor } from "./lib/markdown/editor";
+	MarkdownHandle,
+	MarkdownIntent,
+} from "./lib/markdown/handle";
 export type { Markdown as MarkdownCodec, Parsed, SourceMap } from "./lib/markdown/markdown";
 export { createMarkdown, markdown } from "./lib/markdown/markdown";
 export { placeholder as prosePlaceholder, proseInputRules } from "./lib/markdown/rules";
@@ -380,6 +381,12 @@ export {
 export { formatShortcut, isMac, keyLabel, keySpoken, type Platform } from "./lib/shortcut";
 export { cn, ringVariants } from "./lib/utils";
 export { nodeEntries } from "./nodes";
+export type {
+	MarkdownEntry,
+	MarkdownListener,
+	MarkdownRegistration,
+} from "./nodes/input/markdown";
+export { markdownAt, registerMarkdown, subscribeMarkdown } from "./nodes/input/markdown";
 export type { LensColumnsProps } from "./nodes/output/lens/columns";
 export { LensColumns } from "./nodes/output/lens/columns";
 export type { Column as LensColumn, Entry as LensEntry } from "./nodes/output/lens/types";

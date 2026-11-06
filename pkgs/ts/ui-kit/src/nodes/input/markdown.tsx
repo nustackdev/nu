@@ -34,32 +34,137 @@
 // held back: a program's write that is not one of these echoes lands at
 // once, so a program that never writes the text back works as it always did.
 //
-// The document registers its handle at the node's path while it is editable
-// (../../tree/documents.ts), so a host that owns a sequence of nodes can
-// find it and talk to it by path, whoever drew the node around it; and it
-// reports its presence from mount to teardown, editable or not, so a host
-// can tell a document that is not yet open for editing from no document. A host
-// that has cut text out of one document and put it in another wants to know
-// when the second holds it for good, which is not the commit (that is the
-// notify going out) but Nu's read coming back: `saved` on the handle waits
-// for exactly that read.
+// ## Markdown editors by path
+//
+// A host that owns a sequence of nodes (a page of cells) finds the markdown
+// editor inside one of them by path and talks to it through its handle
+// (../../lib/markdown/handle.ts), whoever drew the node around it: no DOM
+// queries, no selectors, nothing that depends on how the node was drawn. So
+// this node keeps one table of the editors it has mounted, by path, and
+// what each one takes:
+//
+//   - registerMarkdown: the editor joins on mount and leaves on teardown,
+//     and in between says whether it takes commands (`editable(handle)`)
+//     or is read-only (`editable(null)`).
+//   - markdownAt: null when no markdown editor is mounted at or under a
+//     path; `{ handle: null }` when one is, read-only; `{ handle }` when it
+//     takes commands.
+//   - subscribeMarkdown: hear editors appear, change and leave under a path.
+//
+// A program opens an editor in steps, the text first and editing a frame
+// later, so a fresh one is mounted read-only for a moment: there, and not yet
+// taking commands. A host with a request parked for it must tell that from a
+// node that draws no markdown editor at all, else it gives up on every fresh
+// one; hence the read-only entry. And a handle is only ever handed out while
+// the editor takes commands, so a host that consumes a parked focus request
+// the moment a handle appears can append and type into it.
+//
+// Every change is announced synchronously, inside the call that made it: a
+// request parked for a node created a moment ago is consumed the moment its
+// editor takes commands, not when a timer guesses it might. A plain map, like
+// the type registry (../../tree/registry.ts): nothing here is rendered, so
+// nothing needs a store.
+//
+// A host that has cut text out of one editor and put it in another wants to
+// know when the second holds it for good, which is not the commit (that is
+// the notify going out) but Nu's read coming back: `saved` on the handle
+// waits for exactly that read.
 
 import { OPS, type Path } from "@nustackdev/ui-core";
 import type { EditorView } from "prosemirror-view";
 import { useCallback, useRef } from "react";
 import { Markdown } from "../../components/ui/markdown";
-import type { DocumentHandle } from "../../lib/markdown/document";
+import type { MarkdownHandle } from "../../lib/markdown/handle";
 import {
 	type NodeEntry,
 	type NodeProps,
 	pathKey,
-	registerDocument,
-	registerPresence,
 	useBoolProp,
 	useSend,
 	useSetValue,
 	useStringProp,
 } from "../../tree";
+
+/** A mounted markdown editor: its handle while it takes commands, null while read-only. */
+export type MarkdownEntry = { handle: MarkdownHandle | null };
+
+/** An editor appeared or changed (its entry) or left (null) at `path`. */
+export type MarkdownListener = (path: Path, entry: MarkdownEntry | null) => void;
+
+/** What a mounted editor tells the table until it leaves. */
+export type MarkdownRegistration = {
+	/** Takes commands through `handle`, or is read-only (null). */
+	editable(handle: MarkdownHandle | null): void;
+	/** Torn down. */
+	leave(): void;
+};
+
+type Slot = { path: Path; handle: MarkdownHandle | null };
+
+const editors = new Map<string, Slot>();
+const listeners = new Set<{ under: Path | null; fn: MarkdownListener }>();
+
+/** Whether `path` is `under` or inside it. Null is everywhere. */
+function within(path: Path, under: Path | null): boolean {
+	if (under === null) return true;
+	return under.length <= path.length && under.every((seg, i) => path[i] === seg);
+}
+
+function announce(path: Path, entry: MarkdownEntry | null): void {
+	for (const { under, fn } of listeners) if (within(path, under)) fn(path, entry);
+}
+
+/**
+ * A markdown editor mounted at `path`, read-only until `editable` hands its
+ * handle. A second registration at the same path replaces the first, whose
+ * calls then do nothing, so a remount never removes its successor.
+ */
+export function registerMarkdown(path: Path): MarkdownRegistration {
+	const key = pathKey(path);
+	const slot: Slot = { path, handle: null };
+	editors.set(key, slot);
+	announce(path, { handle: null });
+	const live = () => editors.get(key) === slot;
+	return {
+		editable(handle) {
+			if (!live() || slot.handle === handle) return;
+			slot.handle = handle;
+			announce(path, { handle });
+		},
+		leave() {
+			if (!live()) return;
+			editors.delete(key);
+			announce(path, null);
+		},
+	};
+}
+
+/**
+ * The markdown editor at `path` or inside it: the first one that takes
+ * commands, in registration order, else `{ handle: null }` when one is
+ * mounted read-only, else null.
+ */
+export function markdownAt(path: Path): MarkdownEntry | null {
+	let found: MarkdownEntry | null = null;
+	for (const slot of editors.values()) {
+		if (!within(slot.path, path)) continue;
+		if (slot.handle) return { handle: slot.handle };
+		found ??= { handle: null };
+	}
+	return found;
+}
+
+/**
+ * Hear markdown editors appear, change and leave under `under` (null for all
+ * of them). Returns the unsubscribe.
+ */
+export function subscribeMarkdown(under: Path | null, fn: MarkdownListener): () => void {
+	const sub = { under, fn };
+	listeners.add(sub);
+	return () => {
+		listeners.delete(sub);
+	};
+}
 
 /** How many of its own saves a node keeps, to tell a stale echo from a write. */
 const SAVES_KEPT = 8;
@@ -68,7 +173,12 @@ const SAVES_KEPT = 8;
  * What a node saved, oldest first, whether the latest has been read back,
  * and who is waiting for that read.
  */
-type Saves = { texts: string[]; unread: boolean; waiting: Set<() => void> };
+type Saves = {
+	texts: string[];
+	unread: boolean;
+	/** Each with what to call if the node goes before the read comes. */
+	waiting: Map<() => void, (() => void) | undefined>;
+};
 
 const saves = new Map<string, Saves>();
 
@@ -76,7 +186,7 @@ function savesOf(path: Path): Saves {
 	const key = pathKey(path);
 	let s = saves.get(key);
 	if (!s) {
-		s = { texts: [], unread: false, waiting: new Set() };
+		s = { texts: [], unread: false, waiting: new Map() };
 		saves.set(key, s);
 	}
 	return s;
@@ -93,13 +203,13 @@ function sourceOf(payload: unknown): string | undefined {
 }
 
 /** `fn` once the latest save has been read back: now if it has, else at that read. */
-function whenRead(path: Path, fn: () => void): () => void {
+function whenRead(path: Path, fn: () => void, lost?: () => void): () => void {
 	const s = saves.get(pathKey(path));
 	if (!s?.unread) {
 		fn();
 		return () => {};
 	}
-	s.waiting.add(fn);
+	s.waiting.set(fn, lost);
 	return () => {
 		s.waiting.delete(fn);
 	};
@@ -112,10 +222,8 @@ function MarkdownView({ path }: NodeProps) {
 	const setValue = useSetValue(path);
 	const send = useSend(path);
 	const key = pathKey(path);
-	/** Leaves the registry; set while the document is registered. */
-	const leave = useRef<(() => void) | null>(null);
-	/** Withdraws presence; set while the editor is mounted. */
-	const leavePresence = useRef<(() => void) | null>(null);
+	/** This editor's place in the table; set while it is mounted. */
+	const registration = useRef<MarkdownRegistration | null>(null);
 
 	const commit = useCallback(
 		(source: string) => {
@@ -130,23 +238,22 @@ function MarkdownView({ path }: NodeProps) {
 		[key, setValue, send],
 	);
 
-	const stored = useCallback((fn: () => void) => whenRead(path, fn), [key]);
+	const stored = useCallback(
+		(fn: () => void, lost?: () => void) => whenRead(path, fn, lost),
+		[key],
+	);
 
 	const onView = useCallback(
 		(view: EditorView | null) => {
-			leavePresence.current?.();
-			leavePresence.current = view ? registerPresence(path) : null;
+			registration.current?.leave();
+			registration.current = view ? registerMarkdown(path) : null;
 		},
 		[key],
 	);
 
-	const onDocument = useCallback(
-		(handle: DocumentHandle | null) => {
-			leave.current?.();
-			leave.current = handle ? registerDocument(path, handle) : null;
-		},
-		[key],
-	);
+	const onHandle = useCallback((handle: MarkdownHandle | null) => {
+		registration.current?.editable(handle);
+	}, []);
 
 	return (
 		<Markdown
@@ -155,7 +262,7 @@ function MarkdownView({ path }: NodeProps) {
 			readOnly={!editable}
 			onCommit={commit}
 			onView={onView}
-			onDocument={onDocument}
+			onHandle={onHandle}
 			stored={stored}
 		/>
 	);
@@ -194,12 +301,15 @@ export const MarkdownRef: NodeEntry = {
 			ctx.send(OPS.read, pending ?? ctx.node.props.value ?? null, ctx.frame.id);
 			if (!s?.unread) return;
 			s.unread = false;
-			const waiting = [...s.waiting];
+			const waiting = [...s.waiting.keys()];
 			s.waiting.clear();
 			for (const fn of waiting) fn();
 		},
 	},
 	dispose: ({ path }) => {
+		const s = saves.get(pathKey(path));
 		saves.delete(pathKey(path));
+		// Gone before the read: what was waiting for it never gets stored.
+		for (const lost of s?.waiting.values() ?? []) lost?.();
 	},
 };

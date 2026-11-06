@@ -1,4 +1,4 @@
-// The document contract, under real keys.
+// The markdown handle, under real keys.
 //
 // One test per row of the interaction table (task-162) whose test column is
 // `kit-browser`, named by row number so the mapping can be checked. Each row
@@ -23,8 +23,9 @@ import type { ReactElement } from "react";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
-import type { DocIntent, DocumentHandle } from "./document";
 import { ProseEditor } from "./editor";
+import type { Cut, MarkdownHandle, MarkdownIntent } from "./handle";
+import { MOD_ENTER } from "./keys.testing";
 import "../../index.css";
 
 // React 19 wants this before render or it logs a warning per test.
@@ -43,8 +44,8 @@ afterEach(async () => {
 type Host = {
 	el: HTMLElement;
 	view: EditorView;
-	doc: DocumentHandle;
-	intents: DocIntent[];
+	doc: MarkdownHandle;
+	intents: MarkdownIntent[];
 	commits: string[];
 	/** Every key the editor saw (modifiers left out) and whether it consumed it. */
 	keys: { key: string; consumed: boolean }[];
@@ -60,8 +61,8 @@ function open(value: string, opts: { width?: number; hint?: string } = {}): Host
 	document.body.appendChild(host);
 	root = createRoot(host);
 	let view: EditorView | null = null;
-	let doc: DocumentHandle | null = null;
-	const intents: DocIntent[] = [];
+	let doc: MarkdownHandle | null = null;
+	const intents: MarkdownIntent[] = [];
 	const commits: string[] = [];
 	const keys: { key: string; consumed: boolean }[] = [];
 	const ui = (v: string): ReactElement => (
@@ -72,7 +73,7 @@ function open(value: string, opts: { width?: number; hint?: string } = {}): Host
 			onView={(x) => {
 				view = x;
 			}}
-			onDocument={(h) => {
+			onHandle={(h) => {
 				doc = h;
 				h?.onIntent((i) => {
 					intents.push(i);
@@ -131,8 +132,6 @@ const LEFT = "{ArrowLeft}";
 const RIGHT = "{ArrowRight}";
 const SHIFT_UP = "{Shift>}{ArrowUp}{/Shift}";
 const SHIFT_DOWN = "{Shift>}{ArrowDown}{/Shift}";
-/** Mod-Enter: Ctrl on the Linux box the tests run on. */
-const MOD_ENTER = "{Control>}{Enter}{/Control}";
 
 /**
  * The key was the browser's own: the editor saw it, consumed nothing and
@@ -147,7 +146,7 @@ async function browsersOwn(h: Host, ...keys: string[]): Promise<void> {
 	expect(h.intents).toEqual([]);
 }
 
-async function reported(h: Host, expected: Partial<DocIntent>): Promise<DocIntent> {
+async function reported(h: Host, expected: Partial<MarkdownIntent>): Promise<MarkdownIntent> {
 	await expect.poll(() => h.intents.length).toBe(1);
 	const intent = h.intents[0];
 	expect(intent).toMatchObject(expected);
@@ -155,7 +154,7 @@ async function reported(h: Host, expected: Partial<DocIntent>): Promise<DocInten
 }
 
 /** A leave carries the caret's screen x. */
-function expectX(intent: DocIntent, near: number): void {
+function expectX(intent: MarkdownIntent, near: number): void {
 	if (intent.kind !== "leave") throw new Error("not a leave");
 	expect(Math.abs(intent.x - near)).toBeLessThan(2);
 }
@@ -592,6 +591,29 @@ describe("F. lists", () => {
 		expect(h.doc.markdown()).toBe("- a\n");
 	});
 
+	it("row 116b: split_at_item_end_takes_no_empty_item", async () => {
+		const h = open("- a\n- b\n- c\n");
+		caret(h, 9);
+		expect(h.view.state.doc.textBetween(8, 9)).toBe("b");
+		await press(MOD_ENTER);
+		await reported(h, { kind: "break", at: "mid" });
+		expect(h.doc.tail()).toBe("- c\n");
+		let tail = "";
+		act(() => {
+			tail = h.doc.split();
+		});
+		expect(tail).toBe("- c\n");
+		expect(h.doc.markdown()).toBe("- a\n- b\n");
+	});
+
+	it("row 116c: split_at_heading_end_takes_no_empty_heading", async () => {
+		const h = open("# Title\n\nbody\n");
+		caret(h, 6);
+		await press(MOD_ENTER);
+		await reported(h, { kind: "break", at: "mid" });
+		expect(h.doc.tail().trim()).toBe("body");
+	});
+
 	it("row 117: list_break_at_end", async () => {
 		const h = open("- a\n- b\n");
 		act(() => h.doc.focus("end"));
@@ -851,6 +873,89 @@ describe("K. split", () => {
 		});
 		expect(cut).toBe(tail);
 		expect(h.doc.markdown()).toBe("hello\n");
+	});
+
+	// The held cut: what split's sugar does once the new cell holds the tail.
+	// It shows at once, and this document saves nothing until the host says
+	// how the move ended, so the store keeps the tail here meanwhile.
+	it("row 164b: cut_shows_at_once_commits_nothing", async () => {
+		const h = open("one\n\ntwo\n");
+		caret(h, 6);
+		let cut: Cut | null = null;
+		act(() => {
+			cut = h.doc.cut();
+		});
+		expect((cut as Cut | null)?.tail).toBe("two\n");
+		expect(h.doc.markdown()).toBe("one\n");
+		// Held: neither a commit, nor a blur, nor an edit sends anything.
+		act(() => h.doc.commit());
+		act(() => h.view.dom.blur());
+		act(() => {
+			h.doc.focus("end");
+			h.doc.type("!");
+		});
+		act(() => h.doc.commit());
+		expect(h.commits).toEqual([]);
+		expect(h.doc.markdown()).toBe("one!\n");
+	});
+
+	it("row 164c: cut_keep_commits", async () => {
+		const h = open("one\n\ntwo\n");
+		caret(h, 6);
+		let cut: Cut | null = null;
+		act(() => {
+			cut = h.doc.cut();
+		});
+		act(() => {
+			h.doc.focus("end");
+			h.doc.type("!");
+		});
+		expect(h.commits).toEqual([]);
+		act(() => (cut as Cut | null)?.keep());
+		// Out at once, with the edits since.
+		expect(h.commits).toEqual(["one!\n"]);
+		// Released: saves are the editor's own again, and a second end does nothing.
+		act(() => (cut as Cut | null)?.undo());
+		expect(h.doc.markdown()).toBe("one!\n");
+		act(() => {
+			h.doc.type("?");
+			h.doc.commit();
+		});
+		expect(h.commits).toEqual(["one!\n", "one!?\n"]);
+	});
+
+	it("row 164d: cut_undo_restores_exactly", async () => {
+		const h = open("one\n\ntwo\n");
+		caret(h, 6);
+		const before = h.view.state.doc;
+		let cut: Cut | null = null;
+		act(() => {
+			cut = h.doc.cut();
+		});
+		expect(h.doc.markdown()).toBe("one\n");
+		act(() => (cut as Cut | null)?.undo());
+		expect(h.view.state.doc.eq(before)).toBe(true);
+		expect(h.doc.markdown()).toBe("one\n\ntwo\n");
+		// What the store has already: nothing goes out.
+		expect(h.commits).toEqual([]);
+		act(() => (cut as Cut | null)?.keep());
+		expect(h.commits).toEqual([]);
+	});
+
+	it("row 164e: cut_undo_after_edit_appends_tail", async () => {
+		const h = open("one\n\ntwo\n");
+		caret(h, 6);
+		let cut: Cut | null = null;
+		act(() => {
+			cut = h.doc.cut();
+		});
+		act(() => h.doc.focus("end"));
+		await press("!");
+		await expect.poll(() => text(h)).toBe("one!");
+		act(() => (cut as Cut | null)?.undo());
+		// Not where it was, but kept: on the end, at a paragraph break, saved at once.
+		expect(h.doc.markdown()).toBe("one!\n\ntwo\n");
+		expect(h.commits).toEqual(["one!\n\ntwo\n"]);
 	});
 
 	it("row 168: break_at_end_flag", async () => {

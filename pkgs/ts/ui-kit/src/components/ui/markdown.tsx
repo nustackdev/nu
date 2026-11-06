@@ -29,7 +29,7 @@ function Markdown({
 	onCommit,
 	schema,
 	onView,
-	onDocument,
+	onHandle,
 	stored,
 	className,
 	...props
@@ -43,7 +43,7 @@ function Markdown({
 				onCommit={onCommit ?? noop}
 				schema={schema}
 				onView={onView}
-				onDocument={onDocument}
+				onHandle={onHandle}
 				stored={stored}
 			/>
 		</Prose>

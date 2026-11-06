@@ -41,13 +41,13 @@
 //
 // Nothing about neighbours. No split, no merge-up, no arrow-out, no slash
 // menu. Those only mean something to a host that owns a sequence of blocks,
-// and this editor owns exactly one value. What it does have is a contract
-// for such a host (./document.ts): the keys it has no use for are reported
+// and this editor owns exactly one value. What it does have is a handle
+// for such a host (./handle.ts): the keys it has no use for are reported
 // as intents from a plugin placed last, after lists, tables, fences and the
-// gap cursor have had their say, and a `DocumentHandle` handed out through
-// `onDocument` takes the commands back, for as long as the document is
-// editable: a read-only document is announced to no host, since it would
-// take none of them. With no host the contract is inert.
+// gap cursor have had their say, and a `MarkdownHandle` handed out through
+// `onHandle` takes the commands back, for as long as the editor is
+// editable: a read-only editor hands its handle to no host, since it would
+// take none of them. With no host the handle is inert.
 // (Inside the document the caret does arrow in and out of code fences, and
 // Tab and Enter move through table cells; that is the fences' and the
 // tables' own business, see ./fence.tsx and ./table.tsx.)
@@ -64,8 +64,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { Checkbox } from "../../components/ui/checkbox";
 import { cn } from "../utils";
-import { createDocument, type DocumentHandle } from "./document";
 import { codeFences } from "./fence";
+import { createHandle, type MarkdownHandle } from "./handle";
 import { createMarkdown, type Markdown } from "./markdown";
 import {
 	fenceFromLine,
@@ -160,19 +160,19 @@ export type ProseEditorProps = {
 	 */
 	onView?: (view: EditorView | null) => void;
 	/**
-	 * Handed the document's handle while the document takes commands, that
-	 * is while it is editable: the handle when the view is built editable or
+	 * Handed the editor's handle while the editor takes commands, that is
+	 * while it is editable: the handle when the view is built editable or
 	 * turns editable, null when it turns read-only or is torn down. The
-	 * contract (./document.ts) for a host that owns a sequence of documents.
+	 * handle (./handle.ts) is for a host that owns a sequence of editors.
 	 */
-	onDocument?: (handle: DocumentHandle | null) => void;
+	onHandle?: (handle: MarkdownHandle | null) => void;
 	/**
 	 * How the owner of the value tells when the last committed text is in
 	 * its store: `fn` at once if it already is, else when it lands; returns
 	 * the unsubscribe. Without it a commit is the store (`saved` fires on
-	 * commit).
+	 * commit). `lost`, when the value goes away before it lands.
 	 */
-	stored?: (fn: () => void) => () => void;
+	stored?: (fn: () => void, lost?: () => void) => () => void;
 };
 
 export function ProseEditor({
@@ -183,7 +183,7 @@ export function ProseEditor({
 	schema = proseSchema,
 	className,
 	onView,
-	onDocument,
+	onHandle,
 	stored,
 }: ProseEditorProps) {
 	const hostRef = useRef<HTMLDivElement | null>(null);
@@ -193,13 +193,15 @@ export function ProseEditor({
 	/** Pending autosave. */
 	const saveTimer = useRef<number | null>(null);
 	/** Props change identity every render; the view binds once. */
-	const cb = useRef({ value, onCommit, readOnly, hint, onView, onDocument, stored });
-	cb.current = { value, onCommit, readOnly, hint, onView, onDocument, stored };
-	/** The handle, while the view is up; announced through `onDocument` only while editable. */
-	const handleRef = useRef<DocumentHandle | null>(null);
+	const cb = useRef({ value, onCommit, readOnly, hint, onView, onHandle, stored });
+	cb.current = { value, onCommit, readOnly, hint, onView, onHandle, stored };
+	/** The handle, while the view is up; announced through `onHandle` only while editable. */
+	const handleRef = useRef<MarkdownHandle | null>(null);
 	const announcedRef = useRef(false);
-	/** Hosts waiting for the next commit (see `saved`). */
-	const committedRef = useRef(new Set<() => void>());
+	/** Hosts waiting for the next commit (see `saved`), each with what to call if it never comes. */
+	const committedRef = useRef(new Map<() => void, (() => void) | undefined>());
+	/** Open holds on saving (`MarkdownHandle.cut`): while any is, nothing commits. */
+	const holdsRef = useRef(new Set<object>());
 
 	/** The parser / serializer pair for the live schema. */
 	const mdRef = useRef<{ schema: ProseSchema; md: Markdown } | null>(null);
@@ -213,6 +215,8 @@ export function ProseEditor({
 			window.clearTimeout(saveTimer.current);
 			saveTimer.current = null;
 		}
+		// Held: the edits stay unsaved, and go out when the last hold lets go.
+		if (holdsRef.current.size > 0) return;
 		if (!dirtyRef.current) return;
 		dirtyRef.current = false;
 		if (cb.current.readOnly) return;
@@ -221,32 +225,43 @@ export function ProseEditor({
 		const next = md().serializeMarkdown(view.state.doc);
 		if (next !== cb.current.value) cb.current.onCommit(next);
 		// After the owner heard it, so what it holds unread is this save.
-		const waiting = [...committedRef.current];
+		const waiting = [...committedRef.current.keys()];
 		committedRef.current.clear();
 		for (const fn of waiting) fn();
 	}, []);
 
 	/**
-	 * `DocumentHandle.saved`: `fn` once the current text is in the store. With
+	 * `MarkdownHandle.saved`: `fn` once the current text is in the store. With
 	 * unsaved edits that is after the next commit; then it is the owner's
-	 * call (`stored`), or at once when there is no owner.
+	 * call (`stored`), or at once when there is no owner. `lost` if the editor
+	 * is torn down before the commit, or the owner's value before it lands.
 	 */
-	const saved = useCallback((fn: () => void): (() => void) => {
+	const saved = useCallback((fn: () => void, lost?: () => void): (() => void) => {
 		let stop: (() => void) | null = null;
 		const ask = () => {
-			stop = cb.current.stored ? cb.current.stored(fn) : null;
+			stop = cb.current.stored ? cb.current.stored(fn, lost) : null;
 			if (!cb.current.stored) fn();
 		};
 		if (!dirtyRef.current) {
 			ask();
 			return () => stop?.();
 		}
-		committedRef.current.add(ask);
+		committedRef.current.set(ask, lost);
 		return () => {
 			committedRef.current.delete(ask);
 			stop?.();
 		};
 	}, []);
+
+	/** `HandleSeams.hold`: no commits until the release, then what is unsaved goes out. */
+	const hold = useCallback((): (() => void) => {
+		const token = {};
+		holdsRef.current.add(token);
+		return () => {
+			if (!holdsRef.current.delete(token)) return;
+			if (holdsRef.current.size === 0 && dirtyRef.current) commit();
+		};
+	}, [commit]);
 
 	/** Announce the handle to the host, or take it back, as editable says. */
 	const announce = useCallback(() => {
@@ -254,7 +269,7 @@ export function ProseEditor({
 		const editable = handle !== null && !cb.current.readOnly;
 		if (editable === announcedRef.current) return;
 		announcedRef.current = editable;
-		cb.current.onDocument?.(editable ? handle : null);
+		cb.current.onHandle?.(editable ? handle : null);
 	}, []);
 
 	const queueSave = useCallback(() => {
@@ -323,11 +338,12 @@ export function ProseEditor({
 		// the fences' own layout.
 		const fences = codeFences(schema, (intent) => contract.report(intent));
 		const tables = proseTables(schema);
-		const contract = createDocument({
+		const contract = createHandle({
 			schema,
 			md: md(),
 			commit,
 			saved,
+			hold,
 			enter,
 			fenceAtX: fences.atX,
 		});
@@ -405,14 +421,17 @@ export function ProseEditor({
 			handleRef.current = null;
 			announce();
 			cb.current.onView?.(null);
+			const lost = [...committedRef.current.values()];
 			committedRef.current.clear();
+			holdsRef.current.clear();
+			for (const fn of lost) fn?.();
 			if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
 			saveTimer.current = null;
 			viewRef.current = null;
 			view.destroy();
 		};
 		// The view is built once per schema and driven imperatively from here on.
-	}, [commit, saved, announce, queueSave, schema]);
+	}, [commit, saved, hold, announce, queueSave, schema]);
 
 	// -- inbound value -----------------------------------------------------
 	//
@@ -433,7 +452,7 @@ export function ProseEditor({
 
 	// `editable` and `attributes` read through `cb`, so a read-only flip only
 	// needs a nudge to re-evaluate them and redraw the hint. The host hears
-	// the flip too: a read-only document takes no commands, so it is not one.
+	// the flip too: a read-only editor takes no commands, so it has no handle.
 	useEffect(() => {
 		const view = viewRef.current;
 		if (!view) return;

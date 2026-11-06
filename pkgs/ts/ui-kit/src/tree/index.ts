@@ -10,26 +10,12 @@
 //   query.ts    : the query string encoding, shared with the Python side
 //   router.ts   : matchRoute / useRoute, branch matching on the entry
 //   anchors.tsx : AnchorCatcher, plain in-app <a> clicks into History moves
-//   documents.ts: the markdown documents by path, for a host that owns a
-//                 sequence of nodes (registerDocument, documentUnder,
-//                 subscribeDocuments), and their presence before they take
-//                 commands (registerPresence, documentPresent,
-//                 subscribePresence)
 //
 // Registering a type = drop a module under ../nodes/ and add one line to
 // ../nodes/index.ts.
 
 export type { AnchorRule, Gesture } from "./anchors";
 export { AnchorCatcher, catchAnchors, defaultAnchorRule, useAnchorCatcher } from "./anchors";
-export type { DocumentHandle, DocumentListener, PresenceListener } from "./documents";
-export {
-	documentPresent,
-	documentUnder,
-	registerDocument,
-	registerPresence,
-	subscribeDocuments,
-	subscribePresence,
-} from "./documents";
 export type { Flow } from "./flow";
 export { FlowProvider, useFill, useFlow } from "./flow";
 export type { Entry, Move, MoveKind, MoveOptions } from "./history";
