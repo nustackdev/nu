@@ -15,6 +15,7 @@
 // ```python then a space, or ```python then Enter, which is what anyone who
 // writes markdown by hand reaches for.
 
+import { setBlockType } from "prosemirror-commands";
 import {
 	InputRule,
 	inputRules,
@@ -199,6 +200,28 @@ export function fenceFromLine(s: ProseSchema): Command {
 	};
 }
 
+/**
+ * Backspace in an empty heading (any empty textblock that is not a
+ * paragraph): it was never a heading, make it a paragraph again, the way
+ * Backspace in an empty fence unfences it. Typing `# ` and changing your
+ * mind gets the line back rather than losing it into the block above, and
+ * a document that is one empty heading is one Backspace from blank, so
+ * `isBlank` and the placeholder keep telling one story. A fence keeps its
+ * own Backspace (./fence.tsx), so a code block never gets here.
+ */
+export function paragraphFromEmpty(s: ProseSchema): Command {
+	const { paragraph } = s.nodeType;
+	return (state, dispatch) => {
+		const { $from, empty } = state.selection;
+		const block = $from.parent;
+		if (!empty || !block.isTextblock || block.type === paragraph || block.type.spec.code) {
+			return false;
+		}
+		if (block.content.size !== 0) return false;
+		return setBlockType(paragraph)(state, dispatch);
+	};
+}
+
 export function proseInputRules(s: ProseSchema): Plugin {
 	const { nodeType, markType } = s;
 	return inputRules({
@@ -234,7 +257,13 @@ export function proseInputRules(s: ProseSchema): Plugin {
 
 /* ============================== placeholder ============================== */
 
-function isBlank(state: EditorState, s: ProseSchema): boolean {
+/**
+ * A blank document: one empty paragraph and nothing else. The one truth for
+ * "there is nothing here": the placeholder shows on it, and a host's
+ * `DocumentHandle.blank()` answers with it. An empty table, a lone divider
+ * or an empty heading is not blank, since what it holds is structure.
+ */
+export function isBlank(state: EditorState, s: ProseSchema): boolean {
 	const doc = state.doc;
 	if (doc.childCount !== 1) return false;
 	const first = doc.firstChild;
@@ -260,6 +289,31 @@ export function placeholder(text: string | (() => string), s: ProseSchema): Plug
 					Decoration.node(0, state.doc.firstChild?.nodeSize ?? 2, {
 						"data-nu-placeholder": hint,
 					}),
+				]);
+			},
+		},
+	});
+}
+
+/**
+ * The hint on an empty last line of a document that has text: the line
+ * Enter leaves you on, where a host may say what the way out is ("Cmd+Enter
+ * for a new cell"). The same decoration as the placeholder, drawn the same
+ * way, on the last paragraph when it is empty and not the only block; a
+ * blank document is the placeholder's.
+ */
+export function tailHint(text: () => string, s: ProseSchema): Plugin {
+	return new Plugin({
+		props: {
+			decorations(state) {
+				const hint = text();
+				const { doc } = state;
+				const last = doc.lastChild;
+				if (!hint || doc.childCount < 2 || !last) return null;
+				if (last.type !== s.nodeType.paragraph || last.content.size !== 0) return null;
+				const at = doc.content.size - last.nodeSize;
+				return DecorationSet.create(doc, [
+					Decoration.node(at, at + last.nodeSize, { "data-nu-placeholder": hint }),
 				]);
 			},
 		},

@@ -348,6 +348,13 @@ export { kitHighlight, kitTheme } from "./lib/code/theme";
 export { ICON_NAMES, iconFor, isIconName } from "./lib/icons";
 export type { KeyBindings, KeyScope } from "./lib/keyboard";
 export { useKeyScope } from "./lib/keyboard";
+export type {
+	DocIntent,
+	DocumentHandle,
+	FocusAt,
+	IntentListener,
+	LeaveDir,
+} from "./lib/markdown/document";
 export type { ProseEditorProps } from "./lib/markdown/editor";
 export { ProseEditor } from "./lib/markdown/editor";
 export type { Markdown as MarkdownCodec, Parsed, SourceMap } from "./lib/markdown/markdown";

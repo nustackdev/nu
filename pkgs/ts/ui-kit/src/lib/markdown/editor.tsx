@@ -24,6 +24,12 @@
 // hears a blur that starts there. So the host also watches focus leave it
 // altogether, from wherever inside it focus was.
 //
+// A save goes out and may come back as the next inbound value, more than
+// once and out of order with other saves. Telling such an echo from a real
+// write is the owner's business, not this editor's: the owner sees the value
+// go out and the frames come in (see ../../nodes/input/markdown.tsx). This
+// editor adopts whatever inbound value it is handed while clean.
+//
 // ## Read-only
 //
 // The same view with editing off, which is how a document is displayed: one
@@ -35,11 +41,16 @@
 //
 // Nothing about neighbours. No split, no merge-up, no arrow-out, no slash
 // menu. Those only mean something to a host that owns a sequence of blocks,
-// and this editor owns exactly one value. Keys it does not bind are left to
-// bubble, so such a host can still act on them from above. (Inside the
-// document the caret does arrow in and out of code fences, and Tab and Enter
-// move through table cells; that is the fences' and the tables' own
-// business, see ./fence.tsx and ./table.tsx.)
+// and this editor owns exactly one value. What it does have is a contract
+// for such a host (./document.ts): the keys it has no use for are reported
+// as intents from a plugin placed last, after lists, tables, fences and the
+// gap cursor have had their say, and a `DocumentHandle` handed out through
+// `onDocument` takes the commands back, for as long as the document is
+// editable: a read-only document is announced to no host, since it would
+// take none of them. With no host the contract is inert.
+// (Inside the document the caret does arrow in and out of code fences, and
+// Tab and Enter move through table cells; that is the fences' and the
+// tables' own business, see ./fence.tsx and ./table.tsx.)
 
 import { baseKeymap, chainCommands, toggleMark } from "prosemirror-commands";
 import { gapCursor } from "prosemirror-gapcursor";
@@ -53,9 +64,17 @@ import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { Checkbox } from "../../components/ui/checkbox";
 import { cn } from "../utils";
+import { createDocument, type DocumentHandle } from "./document";
 import { codeFences } from "./fence";
 import { createMarkdown, type Markdown } from "./markdown";
-import { fenceFromLine, placeholder, proseInputRules, tableFromRow } from "./rules";
+import {
+	fenceFromLine,
+	paragraphFromEmpty,
+	placeholder,
+	proseInputRules,
+	tableFromRow,
+	tailHint,
+} from "./rules";
 import { type ProseSchema, proseSchema } from "./schema";
 import { cellBelow, exitTable, leaveTable, nextCell, previousCell, proseTables } from "./table";
 
@@ -140,6 +159,20 @@ export type ProseEditorProps = {
 	 * a host that needs to run a ProseMirror command against this document.
 	 */
 	onView?: (view: EditorView | null) => void;
+	/**
+	 * Handed the document's handle while the document takes commands, that
+	 * is while it is editable: the handle when the view is built editable or
+	 * turns editable, null when it turns read-only or is torn down. The
+	 * contract (./document.ts) for a host that owns a sequence of documents.
+	 */
+	onDocument?: (handle: DocumentHandle | null) => void;
+	/**
+	 * How the owner of the value tells when the last committed text is in
+	 * its store: `fn` at once if it already is, else when it lands; returns
+	 * the unsubscribe. Without it a commit is the store (`saved` fires on
+	 * commit).
+	 */
+	stored?: (fn: () => void) => () => void;
 };
 
 export function ProseEditor({
@@ -150,6 +183,8 @@ export function ProseEditor({
 	schema = proseSchema,
 	className,
 	onView,
+	onDocument,
+	stored,
 }: ProseEditorProps) {
 	const hostRef = useRef<HTMLDivElement | null>(null);
 	const viewRef = useRef<EditorView | null>(null);
@@ -158,8 +193,13 @@ export function ProseEditor({
 	/** Pending autosave. */
 	const saveTimer = useRef<number | null>(null);
 	/** Props change identity every render; the view binds once. */
-	const cb = useRef({ value, onCommit, readOnly, hint, onView });
-	cb.current = { value, onCommit, readOnly, hint, onView };
+	const cb = useRef({ value, onCommit, readOnly, hint, onView, onDocument, stored });
+	cb.current = { value, onCommit, readOnly, hint, onView, onDocument, stored };
+	/** The handle, while the view is up; announced through `onDocument` only while editable. */
+	const handleRef = useRef<DocumentHandle | null>(null);
+	const announcedRef = useRef(false);
+	/** Hosts waiting for the next commit (see `saved`). */
+	const committedRef = useRef(new Set<() => void>());
 
 	/** The parser / serializer pair for the live schema. */
 	const mdRef = useRef<{ schema: ProseSchema; md: Markdown } | null>(null);
@@ -180,6 +220,41 @@ export function ProseEditor({
 		if (!view) return;
 		const next = md().serializeMarkdown(view.state.doc);
 		if (next !== cb.current.value) cb.current.onCommit(next);
+		// After the owner heard it, so what it holds unread is this save.
+		const waiting = [...committedRef.current];
+		committedRef.current.clear();
+		for (const fn of waiting) fn();
+	}, []);
+
+	/**
+	 * `DocumentHandle.saved`: `fn` once the current text is in the store. With
+	 * unsaved edits that is after the next commit; then it is the owner's
+	 * call (`stored`), or at once when there is no owner.
+	 */
+	const saved = useCallback((fn: () => void): (() => void) => {
+		let stop: (() => void) | null = null;
+		const ask = () => {
+			stop = cb.current.stored ? cb.current.stored(fn) : null;
+			if (!cb.current.stored) fn();
+		};
+		if (!dirtyRef.current) {
+			ask();
+			return () => stop?.();
+		}
+		committedRef.current.add(ask);
+		return () => {
+			committedRef.current.delete(ask);
+			stop?.();
+		};
+	}, []);
+
+	/** Announce the handle to the host, or take it back, as editable says. */
+	const announce = useCallback(() => {
+		const handle = handleRef.current;
+		const editable = handle !== null && !cb.current.readOnly;
+		if (editable === announcedRef.current) return;
+		announcedRef.current = editable;
+		cb.current.onDocument?.(editable ? handle : null);
 	}, []);
 
 	const queueSave = useCallback(() => {
@@ -205,18 +280,22 @@ export function ProseEditor({
 			return true;
 		};
 
+		const enter = chainCommands(
+			// `| a | b |` then Enter: that row becomes a table's header.
+			tableFromRow(schema),
+			// ```python then Enter: the line opens a fence.
+			fenceFromLine(schema),
+			cellBelow,
+			splitListItem(nodeType.listItem),
+			// A new checklist item starts undone, whatever the one above says.
+			splitListItem(nodeType.taskItem, { checked: false }),
+			baseKeymap.Enter,
+		);
+
 		const editing = keymap({
-			Enter: chainCommands(
-				// `| a | b |` then Enter: that row becomes a table's header.
-				tableFromRow(schema),
-				// ```python then Enter: the line opens a fence.
-				fenceFromLine(schema),
-				cellBelow,
-				splitListItem(nodeType.listItem),
-				// A new checklist item starts undone, whatever the one above says.
-				splitListItem(nodeType.taskItem, { checked: false }),
-				baseKeymap.Enter,
-			),
+			Enter: enter,
+			// An empty heading goes back to a paragraph before anything joins.
+			Backspace: paragraphFromEmpty(schema),
 			Tab: chainCommands(
 				nextCell,
 				sinkListItem(nodeType.listItem),
@@ -239,8 +318,19 @@ export function ProseEditor({
 			"Shift-Mod-z": redo,
 		});
 
-		const fences = codeFences(schema);
+		// The fences report a leave from the document's edge to the same host
+		// the intents plugin does; the document lands a caret in a fence through
+		// the fences' own layout.
+		const fences = codeFences(schema, (intent) => contract.report(intent));
 		const tables = proseTables(schema);
+		const contract = createDocument({
+			schema,
+			md: md(),
+			commit,
+			saved,
+			enter,
+			fenceAtX: fences.atX,
+		});
 
 		const state = EditorState.create({
 			doc: md().parseMarkdown(cb.current.value).doc,
@@ -250,13 +340,21 @@ export function ProseEditor({
 				editing,
 				keymap(baseKeymap),
 				history(),
-				placeholder(() => (cb.current.readOnly ? "" : cb.current.hint), schema),
+				// The document's own hint on a blank document, or the host's while it
+				// has set one; and the host's hint on an empty last line.
+				placeholder(
+					() => (cb.current.readOnly ? "" : (contract.hints.blank() ?? cb.current.hint)),
+					schema,
+				),
+				tailHint(() => (cb.current.readOnly ? "" : (contract.hints.tail() ?? "")), schema),
 				// The caret in the gap before or after a block it cannot enter, like a
 				// table that ends the document. Ahead of the tables, which would
 				// otherwise take the arrow.
 				gapCursor(),
-				// Last: it handles arrows and clicks in tables broadly, after everyone else.
+				// It handles arrows and clicks in tables broadly, after everyone else.
 				...tables.plugins,
+				// Last of all: what nobody above wanted is the host's to hear.
+				contract.plugin,
 			],
 		});
 
@@ -292,6 +390,8 @@ export function ProseEditor({
 		});
 		viewRef.current = view;
 		cb.current.onView?.(view);
+		handleRef.current = contract.handle(view);
+		announce();
 
 		// ProseMirror's blur covers its own element. This covers focus leaving
 		// from inside a fence, which ProseMirror's element never sees.
@@ -302,14 +402,17 @@ export function ProseEditor({
 
 		return () => {
 			host.removeEventListener("focusout", leave);
+			handleRef.current = null;
+			announce();
 			cb.current.onView?.(null);
+			committedRef.current.clear();
 			if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
 			saveTimer.current = null;
 			viewRef.current = null;
 			view.destroy();
 		};
 		// The view is built once per schema and driven imperatively from here on.
-	}, [commit, queueSave, schema]);
+	}, [commit, saved, announce, queueSave, schema]);
 
 	// -- inbound value -----------------------------------------------------
 	//
@@ -329,13 +432,15 @@ export function ProseEditor({
 	}, [value]);
 
 	// `editable` and `attributes` read through `cb`, so a read-only flip only
-	// needs a nudge to re-evaluate them and redraw the hint.
+	// needs a nudge to re-evaluate them and redraw the hint. The host hears
+	// the flip too: a read-only document takes no commands, so it is not one.
 	useEffect(() => {
 		const view = viewRef.current;
 		if (!view) return;
 		view.setProps({ editable: () => !readOnly });
 		view.dispatch(view.state.tr.setMeta(INBOUND, true));
-	}, [readOnly]);
+		announce();
+	}, [readOnly, announce]);
 
 	return <div ref={hostRef} className={cn("nu-prose-host", className)} />;
 }

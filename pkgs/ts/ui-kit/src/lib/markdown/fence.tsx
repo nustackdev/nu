@@ -32,6 +32,12 @@
 // keys). Backspace in an empty fence turns it back into a paragraph, which
 // undoes a ``` typed by mistake the way you would expect.
 //
+// A fence that bounds the document has nothing on that side to hand the
+// caret to. CodeMirror's keys never reach ProseMirror, so the intents plugin
+// (./document.ts) cannot see them: the fence reports `leave` itself from
+// that branch, with Shift held as an extending leave, and the host decides
+// whether a neighbour is there.
+//
 // ## Read-only
 //
 // The editor flips read-only without rebuilding, so a fence reads
@@ -72,8 +78,12 @@ import {
 } from "../code/languages";
 import { codeBox } from "../recipes";
 import { cn } from "../utils";
+import type { DocIntent, LeaveDir } from "./document";
 import { fenceInfo } from "./markdown";
 import type { ProseSchema } from "./schema";
+
+/** The host's ear for a fence at the document's edge; see ./document.ts. */
+type Report = (intent: DocIntent) => boolean;
 
 /** The picker's name for no language. Never written to a fence. */
 const PLAIN = "plain";
@@ -160,6 +170,7 @@ class FenceView implements NodeView {
 	private readonly getPos: () => number | undefined;
 	private readonly schema: ProseSchema;
 	private readonly forget: () => void;
+	private readonly report: Report;
 	/** Set while a ProseMirror change is being applied to CodeMirror, so it is not sent back. */
 	private updating = false;
 	private editable: boolean;
@@ -178,12 +189,14 @@ class FenceView implements NodeView {
 		getPos: () => number | undefined,
 		schema: ProseSchema,
 		forget: () => void,
+		report: Report,
 	) {
 		this.node = node;
 		this.view = view;
 		this.getPos = getPos;
 		this.schema = schema;
 		this.forget = forget;
+		this.report = report;
 		this.editable = view.editable;
 
 		this.dom = document.createElement("div");
@@ -318,6 +331,29 @@ class FenceView implements NodeView {
 		if (this.editable) this.cm.focus();
 	}
 
+	/** The document position of this fence, as the view knows it. */
+	pos(): number | undefined {
+		return this.getPos();
+	}
+
+	/**
+	 * The document position on the first (last) line of the code nearest
+	 * screen x, for a host landing the caret under where it left the
+	 * document above or below. Null when the code is not laid out.
+	 */
+	atX(x: number, edge: "first" | "last"): number | null {
+		const pos = this.getPos();
+		if (pos === undefined) return null;
+		const { doc } = this.cm.state;
+		const line = edge === "first" ? doc.line(1) : doc.line(doc.lines);
+		const anchor = this.cm.coordsAtPos(edge === "first" ? line.from : line.to);
+		if (!anchor) return null;
+		const at = { x, y: (anchor.top + anchor.bottom) / 2 };
+		// The measured position; the estimate only when the line is not drawn.
+		const hit = this.cm.posAtCoords(at) ?? this.cm.posAtCoords(at, false);
+		return pos + 1 + Math.min(Math.max(hit, line.from), line.to);
+	}
+
 	/** Everything inside the fence is the fence's: CodeMirror's keys, the picker's clicks. */
 	stopEvent(): boolean {
 		return true;
@@ -412,6 +448,10 @@ class FenceView implements NodeView {
 			{ key: "ArrowLeft", run: () => this.maybeEscape("char", -1) },
 			{ key: "ArrowDown", run: () => this.maybeEscape("line", 1) },
 			{ key: "ArrowRight", run: () => this.maybeEscape("char", 1) },
+			{ key: "Shift-ArrowUp", run: () => this.maybeEscape("line", -1, true) },
+			{ key: "Shift-ArrowLeft", run: () => this.maybeEscape("char", -1, true) },
+			{ key: "Shift-ArrowDown", run: () => this.maybeEscape("line", 1, true) },
+			{ key: "Shift-ArrowRight", run: () => this.maybeEscape("char", 1, true) },
 			{ key: "Mod-Enter", run: exit },
 			{ key: "Ctrl-Enter", run: exit },
 			{ key: "Mod-z", run: () => this.history(undo) },
@@ -434,19 +474,32 @@ class FenceView implements NodeView {
 		return true;
 	}
 
-	/** Off the edge of the code, into the document. Anywhere else CodeMirror moves the caret. */
-	private maybeEscape(unit: "line" | "char", dir: 1 | -1): boolean {
+	/**
+	 * Off the edge of the code, into the document. Anywhere else CodeMirror
+	 * moves the caret. With `extend` (Shift held) a selection never spans the
+	 * fence's edge, so the only thing to do is tell the host when the head
+	 * is at the document's own edge.
+	 */
+	private maybeEscape(unit: "line" | "char", dir: 1 | -1, extend = false): boolean {
 		const { state } = this.cm;
 		const main = state.selection.main;
-		if (!main.empty) return false;
-		const range = unit === "line" ? state.doc.lineAt(main.head) : main;
+		if (!extend && !main.empty) return false;
+		const head = main.head;
+		const range = unit === "line" ? state.doc.lineAt(head) : { from: head, to: head };
 		if (dir < 0 ? range.from > 0 : range.to < state.doc.length) return false;
 		const pos = this.getPos();
 		if (pos === undefined) return false;
 		const target = pos + (dir < 0 ? 0 : this.node.nodeSize);
 		const selection = Selection.near(this.view.state.doc.resolve(target), dir);
-		// Nothing on that side to land on (the fence ends the document): stay.
-		if (selection.from > pos && selection.to < pos + this.node.nodeSize) return false;
+		// Nothing on that side to land on (the fence bounds the document): the
+		// host may have a neighbour there; without one, stay.
+		if (selection.from > pos && selection.to < pos + this.node.nodeSize) {
+			const leaveDir: LeaveDir =
+				unit === "line" ? (dir < 0 ? "up" : "down") : dir < 0 ? "left" : "right";
+			const x = this.cm.coordsAtPos(head)?.left ?? 0;
+			return this.report({ kind: "leave", dir: leaveDir, extend, x });
+		}
+		if (extend) return false;
 		this.view.dispatch(this.view.state.tr.setSelection(selection).scrollIntoView());
 		this.view.focus();
 		return true;
@@ -492,10 +545,15 @@ export type CodeFences = {
 	/** The arrow keys into a fence, and the read-only flip reaching every fence. */
 	plugins: Plugin[];
 	nodeViews: Record<string, NodeViewConstructor>;
+	/** `FenceView.atX` for the fence at `pos`, or null when none is drawn there. */
+	atX: (pos: number, x: number, edge: "first" | "last") => number | null;
 };
 
-/** Code fences for one editor. Build one per view: it tracks that view's fences. */
-export function codeFences(s: ProseSchema): CodeFences {
+/**
+ * Code fences for one editor. Build one per view: it tracks that view's
+ * fences. `report` is where a fence at the document's edge sends `leave`.
+ */
+export function codeFences(s: ProseSchema, report: Report = () => false): CodeFences {
 	const live = new Set<FenceView>();
 
 	const sync = new Plugin({
@@ -517,10 +575,21 @@ export function codeFences(s: ProseSchema): CodeFences {
 		plugins: [arrows, sync],
 		nodeViews: {
 			[s.nodeType.codeBlock.name]: (node, view, getPos) => {
-				const fence: FenceView = new FenceView(node, view, getPos, s, () => live.delete(fence));
+				const fence: FenceView = new FenceView(
+					node,
+					view,
+					getPos,
+					s,
+					() => live.delete(fence),
+					report,
+				);
 				live.add(fence);
 				return fence;
 			},
+		},
+		atX: (pos, x, edge) => {
+			for (const fence of live) if (fence.pos() === pos) return fence.atX(x, edge);
+			return null;
 		},
 	};
 }
