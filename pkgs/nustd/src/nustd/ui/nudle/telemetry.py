@@ -1,15 +1,12 @@
-"""Anonymous nudle usage telemetry: one config file, one fire-and-forget POST.
+"""Anonymous nudle usage telemetry: one config file, one route, nothing sent from here.
 
-The kernel sends nothing. nudle, the browser host, owns this: a first-run
-event when the server first starts, and the ``/api/telemetry-config`` route
-the SPA reads before it sends its own ``nudle_opened`` ping.
+The kernel sends nothing, and neither does this module. nudle, the browser
+host, owns telemetry: the SPA sends one ``nudle_opened`` event per page load,
+and the ``/api/telemetry-config`` route here tells it whether it may and what
+to send with.
 
-State lives in ``~/.nudle/``:
-
-- ``config.json`` -- the ``telemetry`` flag (default on) and a stable
-  anonymous ``distinct_id``.
-- ``first_run.sent`` -- dropped after PostHog acks the first-run event, so
-  it is retried on every start until then.
+State lives in ``~/.nudle/config.json``: the ``telemetry`` flag (default on)
+and a stable anonymous ``distinct_id``.
 
 Opt-out: ``NUDLE_TELEMETRY=0`` (or ``false`` / ``off`` / ``no``) wins over
 the config flag; ``1`` / ``true`` / ``on`` forces it on over the flag.
@@ -18,9 +15,8 @@ major CIs set of their own turn it off whatever else says, so nobody's
 pipeline is counted as use. Nothing is sent from an editable install or a
 source tree without an install record (``NUDLE_DEV=1`` / ``0`` overrides
 that guess). The browser sends only what this side allows: the config
-route hands it no token while telemetry is off here.
+route hands it no token and no id while telemetry is off here.
 
-Only the events in :data:`EVENTS` ever leave; anything else is dropped.
 Every failure is swallowed: telemetry never blocks or breaks a program.
 """
 
@@ -29,30 +25,20 @@ from __future__ import annotations
 import json
 import os
 import platform
-import ssl
 import sys
-import threading
-import urllib.request
 import uuid
-from datetime import datetime, timezone
-from functools import cache
 from importlib import metadata
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from starlette.requests import Request
     from starlette.responses import JSONResponse
     from starlette.routing import Route
 
 
 __all__ = [
-    "EVENTS",
-    "capture",
-    "capture_first_run",
     "config_for_browser",
     "is_dev_install",
     "posthog_host",
@@ -68,15 +54,6 @@ __all__ = [
 # from ``/api/telemetry-config``. Env vars point a local run elsewhere.
 POSTHOG_TOKEN = "phc_yRpWfpoMeeRM8sKMPGPEsGy8ygNHJTpsGwrsikfpRfFz"  # noqa: S105 -- public by design
 POSTHOG_HOST = "https://t.nustack.dev"
-POSTHOG_BATCH_PATH = "/batch/"
-
-FIRST_RUN_EVENT = "nudle_first_run"
-OPENED_EVENT = "nudle_opened"
-
-#: Every event nudle sends, from here or from the browser. Nothing else leaves.
-EVENTS = frozenset({FIRST_RUN_EVENT, OPENED_EVENT})
-
-HTTP_TIMEOUT_SECONDS = 3
 
 _ENV_FLAG = "NUDLE_TELEMETRY"
 _OFF = frozenset({"0", "false", "off", "no"})
@@ -121,10 +98,6 @@ def config_path() -> Path:
     return home() / "config.json"
 
 
-def first_run_marker() -> Path:
-    return home() / "first_run.sent"
-
-
 def load() -> dict[str, Any]:
     """The config file as a dict; ``{}`` when missing or unreadable."""
     try:
@@ -151,11 +124,6 @@ def ensure_config() -> dict[str, Any]:
     cfg = {"telemetry": True, **cfg, "distinct_id": str(uuid.uuid4())}
     save(cfg)
     return cfg
-
-
-def distinct_id() -> str:
-    did = load().get("distinct_id")
-    return did if isinstance(did, str) and did else "unknown"
 
 
 def env_override() -> str | None:
@@ -212,7 +180,7 @@ def _active() -> bool:
     return bool(posthog_token()) and not is_dev_install() and telemetry_enabled()
 
 
-# ---- sending ----------------------------------------------------------------
+# ---- the browser side -------------------------------------------------------
 
 
 def _version(dist: str) -> str | None:
@@ -236,130 +204,28 @@ def _base_properties() -> dict[str, Any]:
     }
 
 
-@cache
-def _ssl_context() -> ssl.SSLContext:
-    """The platform's CAs and certifi's together, made once per process.
-
-    python.org's macOS builds ship no system CA bundle, so the platform
-    alone trusts nothing there. certifi alone misses the roots a company
-    network adds to the system store. Both, so either one is enough.
-    """
-    context = ssl.create_default_context()
-    try:
-        import certifi
-
-        context.load_verify_locations(cafile=certifi.where())
-    except Exception:
-        pass
-    return context
-
-
-def _post(payload: dict[str, Any], on_success: Callable[[], None] | None = None) -> None:
-    req = urllib.request.Request(  # noqa: S310
-        f"{posthog_host()}{POSTHOG_BATCH_PATH}",
-        data=json.dumps(payload).encode(),
-        # Explicit User-Agent: Cloudflare's default bot rules block
-        # ``Python-urllib/x.y`` with error 1010, dropping every POST.
-        headers={
-            "Content-Type": "application/json",
-            "User-Agent": f"nudle-py/{_version('nudle') or '0.0.0+dev'}",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(  # noqa: S310
-            req, timeout=HTTP_TIMEOUT_SECONDS, context=_ssl_context()
-        ) as resp:
-            resp.read()
-            status = getattr(resp, "status", 200)
-    except Exception:
-        return
-    if 200 <= status < 300 and on_success is not None:
-        try:
-            on_success()
-        except Exception:
-            pass
-
-
-def _fire(
-    event: str,
-    did: str,
-    properties: dict[str, Any] | None = None,
-    on_success: Callable[[], None] | None = None,
-) -> None:
-    if event not in EVENTS:
-        return
-    payload = {
-        "api_key": posthog_token(),
-        "batch": [
-            {
-                "event": event,
-                "distinct_id": did,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "properties": {**_base_properties(), **(properties or {})},
-            }
-        ],
-    }
-    threading.Thread(
-        target=_post, args=(payload, on_success), name="nudle-telemetry", daemon=True
-    ).start()
-
-
-def capture(event: str, properties: dict[str, Any] | None = None) -> None:
-    """Queue one of :data:`EVENTS` on a daemon thread, unless opted out. Never raises.
-
-    Any other name is dropped silently.
-    """
-    try:
-        if event in EVENTS and _active():
-            _fire(event, ensure_config()["distinct_id"], properties)
-    except Exception:
-        pass
-
-
-def _mark_first_run_sent() -> None:
-    try:
-        marker = first_run_marker()
-        marker.parent.mkdir(parents=True, exist_ok=True)
-        marker.touch()
-    except Exception:
-        pass
-
-
-def capture_first_run() -> None:
-    """Send the first-run event, retried on every start until PostHog acks.
-
-    The marker is only written after a 2xx, so a start that is killed before
-    the daemon thread lands simply tries again next time. Never raises.
-    """
-    try:
-        if first_run_marker().exists() or not _active():
-            return
-        _fire(FIRST_RUN_EVENT, ensure_config()["distinct_id"], on_success=_mark_first_run_sent)
-    except Exception:
-        pass
-
-
-# ---- the browser side -------------------------------------------------------
+_OFF_PAYLOAD: dict[str, Any] = {"enabled": False}
 
 
 def config_for_browser() -> dict[str, Any]:
     """What ``/api/telemetry-config`` returns; the SPA sends only when ``enabled``.
 
-    Off here means off there: no token, no id, so the browser has nothing to
-    send with. Never raises; a failure reads as off.
+    Off here means off there: just ``{"enabled": false}``, no token, no host,
+    no id, so the browser has nothing to send with. Never raises; a failure
+    reads as off.
     """
     try:
-        enabled = _active()
+        if not _active():
+            return dict(_OFF_PAYLOAD)
         return {
-            "enabled": enabled,
-            "distinct_id": ensure_config()["distinct_id"] if enabled else "",
-            "posthog_token": posthog_token() if enabled else "",
+            "enabled": True,
+            "distinct_id": ensure_config()["distinct_id"],
+            "posthog_token": posthog_token(),
             "posthog_host": posthog_host(),
             **_base_properties(),
         }
     except Exception:
-        return {"enabled": False, "distinct_id": "", "posthog_token": "", "posthog_host": ""}
+        return dict(_OFF_PAYLOAD)
 
 
 async def _telemetry_config(request: Request) -> JSONResponse:
@@ -374,15 +240,3 @@ def route() -> Route:
     from starlette.routing import Route
 
     return Route("/api/telemetry-config", _telemetry_config, methods=["GET"])
-
-
-class FirstRun:
-    """Fires :func:`capture_first_run` when the serve tree is entered.
-
-    A setup-only fabric, so the ping goes out when the server actually
-    starts rather than when a module is imported or a term is built.
-    """
-
-    def setup(self, ctx: object) -> None:
-        del ctx
-        capture_first_run()

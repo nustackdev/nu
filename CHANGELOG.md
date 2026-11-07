@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Nudle telemetry is lighter and simpler, with no extra dependencies
 - Anonymous nudle telemetry respects Do Not Track and CI, and sends only known events
 - Private Valkey servers die with their owner, even when cleanup is interrupted
 - Examples check existence with exists(), so every example imports again

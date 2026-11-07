@@ -3,8 +3,8 @@
 The ws server carrying the ui wire protocol, and a fold that runs one arm of
 the ui program per connection the server holds open. Each layer is public on
 its own for a hand-assembled tree; this is the arrangement that covers the
-normal case. nudle adds its own telemetry route to the server and fires its
-first-run ping when the tree is entered (see ``telemetry``).
+normal case. nudle adds its own telemetry config route to the server, which
+the SPA reads before its one launch ping (see ``telemetry``).
 """
 
 from __future__ import annotations
@@ -79,7 +79,6 @@ def serve(
         )
     """
     return nu.With(
-        nu.Provide(telemetry.FirstRun),
         listen(
             session_cls=WsSession,
             static=static,

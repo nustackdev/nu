@@ -22,9 +22,9 @@ Layout under ``src/nustd/ui/``:
                  tab's tree over, bring the given Refs up in order) and
                  ``route`` (run the branch the page's pathname names).
 - ``nudle/``  -- the browser host: the ``serve`` preset that assembles a
-                 whole tree, and nudle's telemetry. It decides nothing about
-                 what shows: the program draws everything, pages and navs
-                 included.
+                 whole tree, and the config route for the browser's launch
+                 ping. It decides nothing about what shows: the program
+                 draws everything, pages and navs included.
 
 The uvicorn lifecycle, the book of live connections and the per-connection
 fold live in ``nustd.ws_server``, which knows nothing about ui.
