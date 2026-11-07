@@ -2,16 +2,18 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.7.0
-- **nustd** (fabrics) — 0.7.0
+- **nucore** (kernel) — 0.7.1
+- **nustd** (fabrics) — 0.7.1
 - **nudle** — 0.1.10
 - **ui-core** — 0.2.2
 - **ui-kit** — 0.3.6
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.7.1 - 2026-11-07
 
+- Release nu 0.7.1
+- Require the virtuals release that drops the resync wake
 - Nudle telemetry is lighter and simpler, with no extra dependencies
 - Anonymous nudle telemetry respects Do Not Track and CI, and sends only known events
 - Private Valkey servers die with their owner, even when cleanup is interrupted
