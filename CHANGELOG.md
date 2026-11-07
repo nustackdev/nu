@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Anonymous nudle telemetry respects Do Not Track and CI, and sends only known events
 - Private Valkey servers die with their owner, even when cleanup is interrupted
 - Examples check existence with exists(), so every example imports again
 - Rebuild mp_pool so workers never outlive the pool or host, with stop and status

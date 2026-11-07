@@ -1,8 +1,12 @@
 // Anonymous nudle launch ping. Fetches `/api/telemetry-config` from the
-// Python backend (source of truth for the ~/.nudle/config.json opt-out flag,
-// the NUDLE_TELEMETRY env override and the PostHog token/host), then POSTs one `nudle_opened` event to
+// Python backend, the one source of truth for the opt-out (the
+// ~/.nudle/config.json flag, NUDLE_TELEMETRY, DO_NOT_TRACK, CI) and the only
+// holder of the PostHog token, then POSTs one `nudle_opened` event to
 // PostHog's capture endpoint directly -- no SDK, no autocapture, no
-// background machinery. Skipped in vite dev mode. Never throws.
+// background machinery. The backend hands no token while telemetry is off,
+// so there is nothing to send with. Skipped in vite dev mode. Never throws.
+
+const OPENED_EVENT = "nudle_opened";
 
 type TelemetryConfig = {
 	enabled: boolean;
@@ -23,10 +27,11 @@ export async function initTelemetry(): Promise<void> {
 		const res = await fetch("/api/telemetry-config");
 		if (!res.ok) return;
 		const cfg = (await res.json()) as TelemetryConfig;
-		if (!cfg.enabled || !cfg.posthog_token) return;
+		if (cfg.enabled !== true || !cfg.posthog_token) return;
+		if (!cfg.posthog_host || !cfg.distinct_id) return;
 		const payload = {
 			api_key: cfg.posthog_token,
-			event: "nudle_opened",
+			event: OPENED_EVENT,
 			distinct_id: cfg.distinct_id,
 			properties: {
 				product: cfg.product,
@@ -41,7 +46,7 @@ export async function initTelemetry(): Promise<void> {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(payload),
-			keepalive: true,
+			credentials: "omit",
 		});
 	} catch {
 		// swallow: telemetry never breaks the app

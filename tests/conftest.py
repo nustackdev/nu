@@ -63,3 +63,12 @@ Conventions:
 """
 
 from __future__ import annotations
+
+import os
+
+
+# No test ever sends telemetry. Set at import, before any test module loads,
+# so subprocesses inherit it too. The tests of the send path itself clear
+# these and stub the network.
+os.environ["DO_NOT_TRACK"] = "1"
+os.environ["NUDLE_TELEMETRY"] = "0"
