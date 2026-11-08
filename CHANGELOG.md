@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- The ui kit gains a toast, so apps can say briefly what just failed
 - Capped logs keep the newest entries, drop the oldest, and page by sequence number
 - Bracket a term once with atomic: it finds its stores, refuses two-store writes
 - A key that finds nothing makes reads give NULL and writes raise a named error
