@@ -12,13 +12,17 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Docs say when streams re-drain and what deleting a NULL key raises
 - Writing a whole row keeps its ordered, log and ring slots in their layouts
 - Plain mappings read their first and last key in one seek, like logs
 - The ui kit gains a toast, so apps can say briefly what just failed
 - Capped logs keep the newest entries, drop the oldest, and page by sequence number
-- Bracket a term once with atomic: it finds its stores, refuses two-store writes
+- One store-aware bracket wraps a whole term and refuses writes spanning two stores
 - A key that finds nothing makes reads give NULL and writes raise a named error
 - Mappings read keys a page at a time, and logs list ids in the order added
+- Deleting a missing key raises unless allowed, and empty first or last reads NULL
+- Redis notify channels default to nu, so upgrade publishers and observers together
+- A container declared to hold another container is refused; hold a Shape instead
 - Level flows re-check only when asked, so each driver picks its own schedule
 - Place a shape's refs under another ref to read and write them there
 

@@ -74,11 +74,12 @@ class Stream(StreamQuery):
           subscribe is either in that first drain or wakes a later one, so
           none falls between catching up and following.
         - Drains are driven like a level flow's passes: once right after
-          subscribing, again on each change notification, and on the
-          ``after`` / ``every`` re-checks, so a lost notification is caught
-          late rather than never. Wakes landing while a drain runs merge
-          into one more drain. Re-draining from the cursor is idempotent:
-          a drain that finds nothing new runs no body.
+          subscribing and again on each change notification. Without
+          re-checks a lost notification waits for the next one; with
+          ``after`` / ``every`` set it is caught late rather than never.
+          Wakes landing while a drain runs merge into one more drain.
+          Re-draining from the cursor is idempotent: a drain that finds
+          nothing new runs no body.
         - ``key`` is bound per item for as long as that item's ``body`` is
           drained, the same scoped binding ``Map`` / ``Filter`` give their
           loop variable. ``log_key`` is the cursor's own position, bound for

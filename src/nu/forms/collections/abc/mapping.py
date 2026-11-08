@@ -334,6 +334,10 @@ class MutableMappingForm(
             - By default an absent key raises KeyError at evaluation time,
               matching Python's ``del``, whatever the mapping's layout. A
               mapping that was never written holds no key.
+            - A key or a target that reads NULL raises ValueError, even
+              with ``missing_ok``: a NULL id addresses nothing to delete.
+              This is not the ``NullAddressError`` a kv write under a NULL
+              path segment raises.
             - Checks the key before deleting it: one extra point read.
 
         Example:
