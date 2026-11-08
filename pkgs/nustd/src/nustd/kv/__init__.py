@@ -80,7 +80,7 @@ from nustd.kv.refs import (
     ShapeRef,
     StrRef,
 )
-from nustd.kv.tree import auto_flow_atomic
+from nustd.kv.tree import atomic, auto_flow_atomic
 
 
 __all__ = [  # noqa: RUF022
@@ -124,6 +124,7 @@ __all__ = [  # noqa: RUF022
     "RetryOnConflict",
     "CONFLICT_ERRORS",
     # Tree
+    "atomic",
     "auto_flow_atomic",
     # Errors
     "BracketError",
