@@ -23,14 +23,14 @@ from nu.domains.shape import (
 from nu.lang.typeinfo import TypeInfo
 from virtuals.views import DictView, ListView, SetView
 
-from .base import ViewRef
+from .base import ViewRef, _refuse_container_value
 from .items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, ObjectRef, StrRef
 
 
 if TYPE_CHECKING:
     from nu.domains.shape import StructuredRef
     from nu.forms import Iterator, List
-    from nu.lang import IntArg
+    from nu.lang import Arg, IntArg
     from virtuals.collections import MutableMappingBase, MutableSequenceBase, MutableSetBase
 
 
@@ -121,16 +121,107 @@ class DictRef(ReactiveMappingRef, ViewRef[dict[K, V]], Generic[K, V]):
             view: the View class laying the mapping out. Defaults to
                 ``DictView``.
 
+        Raises:
+            TypeError: ``value`` is a container ref (``OrderedDictRef[...]``,
+                ``SetRef[...]``, ...), which would be stored as one opaque
+                value. Hold a Shape with that container as a slot instead.
+                Every container slot refuses one, annotations too.
+
         Notes:
             - ``owners: DictRef[str, str]`` as an annotation declares the same
               slot.
         """
+        _refuse_container_value(cls, value)
         declared = TypeInfo.from_annotation(cls[key, value])  # type: ignore[index]
         return Slot(cls, type_info=declared, view_type=view)  # type: ignore[return-value]
 
     def iter(self) -> Iterator[K]:
         """A lazy stream over the keys, each the declared key's form."""
         return super().iter()
+
+    def keys(  # type: ignore[override]
+        self, *, after: Arg[K] | None = None, limit: IntArg | None = None
+    ) -> object:
+        """The keys, or one page of them: those past ``after``, at most ``limit``.
+
+        Args:
+            after: the key to start past. None (or a NULL read) starts at
+                the first key.
+            limit: the most keys to read. None reads to the end.
+
+        Notes:
+            - With neither argument: every key, as a live keys view, the way
+              ``dict.keys()`` reads.
+            - With either: a page, read in one seek plus one row per key, so
+              its cost tracks ``limit`` and not the size of the mapping.
+              Pass the last key of a page as ``after`` to read the next one.
+            - The order is the view's: key order on a dict, placed order on
+              an ordered dict, oldest first on a log.
+            - On a dict the cursor need not be there, so paging resumes past
+              a key deleted since. On an ordered dict or a log it is an id
+              the collection holds, and KeyError when it is gone.
+            - A page of a never-written mapping is empty.
+            - Only views that seek can page (dict, ordered and log views);
+              any other raises TypeError here.
+
+        Yields:
+            Without arguments, the keys view. With either, a list of keys.
+
+        Example:
+            run(Space.planes.keys(limit=50), ctx)
+            run(Space.planes.keys(after="p50", limit=50), ctx)
+        """
+        if after is None and limit is None:
+            return super().keys()
+        from nustd.kv.interactions.paging import KeysPage
+
+        return self._page_result(KeysPage(self._paged(), after, limit))
+
+    def reversed_keys(  # type: ignore[override]
+        self, *, before: Arg[K] | None = None, limit: IntArg | None = None
+    ) -> object:
+        """The keys last first, or one page of them: those before ``before``, at most ``limit``.
+
+        Args:
+            before: the key to start before. None (or a NULL read) starts at
+                the last key.
+            limit: the most keys to read. None reads to the start.
+
+        Notes:
+            - With neither argument: every key, last first, as an iterator.
+            - With either: a page, same cost and cursor rules as
+              ``keys(after=, limit=)``. On a log this is newest first, the
+              read a history or a trash list shows.
+
+        Yields:
+            Without arguments, an iterator over the keys. With either, a list
+            of keys.
+
+        Example:
+            run(Indexes.removed.reversed_keys(limit=20), ctx)
+        """
+        if before is None and limit is None:
+            return super().reversed_keys()
+        from nustd.kv.interactions.paging import ReversedKeysPage
+
+        return self._page_result(ReversedKeysPage(self._paged(), before, limit))
+
+    def _paged(self) -> DictRef[K, V]:
+        """This ref, refused at build when its view cannot page."""
+        from nustd.kv.interactions.paging import _pages
+
+        view = self._payload.get("type_marker")
+        if view is not None and not _pages(view):
+            msg = f"{view.__name__} does not page its keys; use a Dict, ordered or log view"
+            raise TypeError(msg)
+        return self
+
+    def _page_result(self, page: object) -> List[K]:
+        """A page read, as a list typed by the declared key."""
+        from nu.domains.shape.collection import holding
+        from nu.forms import List
+
+        return holding(List(page), list, elem=self._declared.key)
 
     @overload
     def __getitem__(self: DictRef[K, bool], key: object) -> BoolRef: ...
@@ -201,6 +292,7 @@ class ListRef(ReactiveSequenceRef, ViewRef[list[T]], Generic[T]):
         Notes:
             - ``tags: ListRef[str]`` as an annotation declares the same slot.
         """
+        _refuse_container_value(cls, value)
         declared = TypeInfo.from_annotation(cls[value])  # type: ignore[index]
         return Slot(cls, type_info=declared, view_type=view)  # type: ignore[return-value]
 
@@ -271,6 +363,7 @@ class SetRef(ReactiveSetRef, ViewRef[set[T]], Generic[T]):
         Notes:
             - ``members: SetRef[str]`` as an annotation declares the same slot.
         """
+        _refuse_container_value(cls, value)
         declared = TypeInfo.from_annotation(cls[value])  # type: ignore[index]
         return Slot(cls, type_info=declared, view_type=view)  # type: ignore[return-value]
 

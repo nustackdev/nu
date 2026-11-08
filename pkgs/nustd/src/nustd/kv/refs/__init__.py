@@ -15,6 +15,7 @@ from .base import Facet, PrimitiveRef, ViewRef
 from .containers import DictRef, ListRef, SetRef, ShapeRef
 from .items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, ObjectRef, StrRef
 from .kh57 import Kh57Ref
+from .log import LogDictRef
 from .ordered import OrderedDictRef
 from .primitives import (
     PrimitiveDictRef,
@@ -36,6 +37,7 @@ __all__ = [
     "ItemRef",
     "Kh57Ref",
     "ListRef",
+    "LogDictRef",
     "ObjectRef",
     "OrderedDictRef",
     "PrimitiveDictRef",

@@ -17,6 +17,7 @@ from nu.lang import Nu
 from nu.lang.typeinfo import TypeInfo
 from virtuals.views import FractionalIndexedDictView
 
+from .base import _refuse_container_value
 from .containers import DictRef
 
 
@@ -94,6 +95,7 @@ class OrderedDictRef(DictRef[K, V], Generic[K, V]):
               value is passed, whatever ``value`` declares; pass the value
               explicitly on a slot that is not ``bool``.
         """
+        _refuse_container_value(cls, value)
         declared = TypeInfo.from_annotation(cls[key, value])  # type: ignore[index]
         return Slot(cls, type_info=declared, view_type=view)  # type: ignore[return-value]
 
@@ -199,7 +201,8 @@ class OrderedDictRef(DictRef[K, V], Generic[K, V]):
             - Safe under a Snapshot.
 
         Yields:
-            The first id. IndexError when the collection is empty.
+            The first id. NULL when the collection is empty or was never
+            written.
 
         Example:
             run(Plane.cells.first(), ctx)
@@ -216,7 +219,8 @@ class OrderedDictRef(DictRef[K, V], Generic[K, V]):
             - Safe under a Snapshot.
 
         Yields:
-            The last id. IndexError when the collection is empty.
+            The last id. NULL when the collection is empty or was never
+            written.
 
         Example:
             run(Plane.cells.last(), ctx)

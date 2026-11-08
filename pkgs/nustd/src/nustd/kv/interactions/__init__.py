@@ -5,6 +5,7 @@
 - ``collections``: container-level unsafe scan / clear.
 - ``kh57``: sampled and whole reads of an int-keyed range.
 - ``ordered``: placement, moves and ends of an ordered dict.
+- ``paging``: a page of a mapping's keys from a cursor, and its two ends.
 - ``extract``: whole-container read, NULL where nothing is written.
 - ``atomicity``: snapshot / transaction brackets + conflict-aware retry.
 """
@@ -35,26 +36,31 @@ from .ordered import (
     OrderedLast,
     OrderedMoveCmd,
 )
+from .paging import FirstKey, KeysPage, LastKey, ReversedKeysPage
 
 
 __all__ = [
     "CONFLICT_ERRORS",
     "Atomic",
     "ClearPrimitivesUnsafeCmd",
+    "FirstKey",
     "InitItemCmd",
     "ItemPrimitiveDeleteUnsafeCmd",
     "ItemPrimitiveGetUnsafe",
     "ItemPrimitiveSetCmd",
     "ItemPrimitiveSetUnsafeCmd",
     "ItemPrimitiveSetUnsafeParentSkipCmd",
+    "KeysPage",
     "Kh57Range",
     "Kh57Sample",
+    "LastKey",
     "OrderedFirst",
     "OrderedInsertAfterCmd",
     "OrderedInsertBeforeCmd",
     "OrderedLast",
     "OrderedMoveCmd",
     "RetryOnConflict",
+    "ReversedKeysPage",
     "ScanPrimitivesUnsafe",
     "Snapshot",
     "Transaction",

@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING
 from nu.engine.structure import Declared
 from nu.lang import Command, ScalarQuery
 from nu.lang.null import Null, is_null
+from nustd.kv.refs.base import _null_at
 from virtuals import Empty as StorageEmpty
 
 
@@ -112,7 +113,8 @@ class ItemPrimitiveGetUnsafe(ScalarQuery):
         - Does not create anything. A missing parent chain stays missing.
 
     Yields:
-        The stored value. NULL when nothing is stored at the address.
+        The stored value. NULL when nothing is stored at the address, or a
+        key in the path read NULL.
 
     Example:
         app = nu.With(
@@ -127,6 +129,8 @@ class ItemPrimitiveGetUnsafe(ScalarQuery):
         def thunk(rt: Runtime) -> object:
             cnid = _child_nid(rt, nid, 0)
             path = ref._resolve_path(rt, cnid)
+            if _null_at(path):
+                return Null(ref._hint(path))
             parent = ref._fetch_parent_view(rt, path)
             value = parent._unsafe_primitive_read(ref._address(rt, cnid))
             return Null(ref._hint(path)) if isinstance(value, StorageEmpty) else value
@@ -139,6 +143,8 @@ class ItemPrimitiveGetUnsafe(ScalarQuery):
         async def athunk(rt: Runtime) -> object:
             cnid = _child_nid(rt, nid, 0)
             path = await ref._aresolve_path(rt, cnid)
+            if _null_at(path):
+                return Null(ref._hint(path))
             parent = ref._fetch_parent_view(rt, path)
             value = parent._unsafe_primitive_read(await ref._aaddress(rt, cnid))
             return Null(ref._hint(path)) if isinstance(value, StorageEmpty) else value

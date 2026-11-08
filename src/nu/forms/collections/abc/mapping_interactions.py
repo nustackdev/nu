@@ -5,6 +5,10 @@ Reads (Query): Keys, Values, Items, Get, ContainsKey,
 Mutate, yield nothing (Command): DeleteItem, Update (SetItem lives in nu.core.access)
 Mutate and yield a value (Action): DictPop, PopItem, SetDefault,
     MergeUpdate
+
+A read of a mapping that read NULL (a slot never written, a path under a key
+that found nothing) finds nothing: it reads NULL, ``get_item`` its default.
+A membership test raises there, as ``in`` on NULL does.
 """
 
 from __future__ import annotations
@@ -70,6 +74,8 @@ class Keys(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             obj = operand(rt)
+            if is_null(obj):
+                return obj
             return obj.keys()
 
         return thunk
@@ -79,6 +85,8 @@ class Keys(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
+            if is_null(obj):
+                return obj
             return obj.keys()
 
         return athunk
@@ -92,6 +100,8 @@ class Values(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             obj = operand(rt)
+            if is_null(obj):
+                return obj
             return obj.values()
 
         return thunk
@@ -101,6 +111,8 @@ class Values(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
+            if is_null(obj):
+                return obj
             return obj.values()
 
         return athunk
@@ -114,6 +126,8 @@ class Items(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             obj = operand(rt)
+            if is_null(obj):
+                return obj
             return obj.items()
 
         return thunk
@@ -123,6 +137,8 @@ class Items(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
+            if is_null(obj):
+                return obj
             return obj.items()
 
         return athunk
@@ -138,6 +154,8 @@ class Get(ScalarQuery):
             a = a_t(rt)
             b = b_t(rt)
             c = c_t(rt)
+            if is_null(a):
+                return a if c is None else c
             if c is None:
                 return a[b]
             return a.get(b, c)
@@ -151,6 +169,8 @@ class Get(ScalarQuery):
             a = await a_t(rt)
             b = await b_t(rt)
             c = await c_t(rt)
+            if is_null(a):
+                return a if c is None else c
             if c is None:
                 return a[b]
             return a.get(b, c)
@@ -190,6 +210,8 @@ class Copy(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             obj = operand(rt)
+            if is_null(obj):
+                return obj
             return obj.copy()
 
         return thunk
@@ -199,6 +221,8 @@ class Copy(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
+            if is_null(obj):
+                return obj
             return obj.copy()
 
         return athunk
@@ -218,6 +242,8 @@ class ReversedKeys(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             obj = operand(rt)
+            if is_null(obj):
+                return obj
             return reversed(obj)
 
         return thunk
@@ -227,6 +253,8 @@ class ReversedKeys(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
+            if is_null(obj):
+                return obj
 
             async def agen() -> object:
                 for k in reversed(obj):
@@ -257,6 +285,8 @@ class ReversedValues(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             obj = operand(rt)
+            if is_null(obj):
+                return obj
             fast = getattr(obj, "values_reverse", None)
             return fast() if fast is not None else reversed(obj.values())
 
@@ -267,6 +297,8 @@ class ReversedValues(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
+            if is_null(obj):
+                return obj
             fast = getattr(obj, "values_reverse", None)
             if fast is not None:
                 return fast()
@@ -294,6 +326,8 @@ class ReversedItems(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             obj = operand(rt)
+            if is_null(obj):
+                return obj
             fast = getattr(obj, "items_reverse", None)
             return fast() if fast is not None else reversed(obj.items())
 
@@ -304,6 +338,8 @@ class ReversedItems(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
+            if is_null(obj):
+                return obj
             fast = getattr(obj, "items_reverse", None)
             if fast is not None:
                 return fast()
@@ -346,15 +382,37 @@ class Merge(ScalarQuery):
 # =============================================================================
 
 
+def _holds(target: object, key: object) -> bool:
+    """Whether ``target`` holds ``key``. A container that was never written holds none.
+
+    A fabric's container that is not there yet answers ``in`` with a KeyError
+    naming itself; that is read as holding nothing.
+    """
+    try:
+        return key in target  # type: ignore[operator]
+    except KeyError:
+        return False
+
+
 class DeleteItem(Command):
-    """Delete entry by key: del mapping[key]. Mutates slot 0; returns nothing."""
+    """Delete entry by key: del mapping[key]. Mutates slot 0; returns nothing.
+
+    The key is checked first, so every layout answers the same way: an absent
+    key raises ``KeyError``, or is a no-op when the construction-time
+    ``missing_ok`` flag (carried in the payload) is set.
+    """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
     _creates = Declared(value=frozenset(), name="creates")
     """Acts on an absent container as on an empty one, and leaves it absent."""
 
+    def __init__(self, target: object, key: object, *, missing_ok: bool = False) -> None:
+        super().__init__(target, key)
+        self._payload = {**self._payload, "missing_ok": missing_ok}
+
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, key_t = children
+        missing_ok = bool(self._payload["missing_ok"])
 
         def thunk(rt: Runtime) -> None:
             target = target_t(rt)
@@ -363,12 +421,17 @@ class DeleteItem(Command):
             key = key_t(rt)
             if is_null(key):
                 raise ValueError("cannot write with a NULL operand")
+            if not _holds(target, key):
+                if missing_ok:
+                    return
+                raise KeyError(key)
             del target[key]
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, key_t = children
+        missing_ok = bool(self._payload["missing_ok"])
 
         async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)
@@ -377,6 +440,10 @@ class DeleteItem(Command):
             key = await key_t(rt)
             if is_null(key):
                 raise ValueError("cannot write with a NULL operand")
+            if not _holds(target, key):
+                if missing_ok:
+                    return
+                raise KeyError(key)
             del target[key]
 
         return athunk

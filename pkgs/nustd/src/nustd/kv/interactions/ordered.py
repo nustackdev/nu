@@ -21,7 +21,9 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Command, ScalarQuery
-from nu.lang.null import is_null
+from nu.lang.null import Null, is_null
+from nustd.kv.refs.base import _null_at
+from virtuals.container import ContainerNotFoundError
 
 
 if TYPE_CHECKING:
@@ -227,10 +229,25 @@ class OrderedMoveCmd(Command):
         return athunk
 
 
-class _EdgeBase(ScalarQuery):
-    """Shared base: fetch the view and read one end of the order.
+def _edge(ref: object, rt: Runtime, path: tuple, last: bool) -> object:
+    """One end of the order at ``path``; NULL when nothing is there, written or not."""
+    if not _null_at(path):
+        try:
+            view = ref._open(rt, path)  # type: ignore[attr-defined]
+            found = view.last() if last else view.first()
+        except ContainerNotFoundError:
+            found = None
+        if found is not None:
+            return found
+    return Null(ref._hint(path))  # type: ignore[attr-defined]
 
-    Subclasses differ only in ``_last``. One seek, whatever the size.
+
+class _EdgeBase(ScalarQuery):
+    """Shared base: open the view and read one end of the order.
+
+    Subclasses differ only in ``_last``. One seek, whatever the size. An empty
+    collection, one never written, and one under a key that read NULL all
+    read NULL, hinted with the ref's dotted path.
     """
 
     _last: bool = False
@@ -240,11 +257,7 @@ class _EdgeBase(ScalarQuery):
         last = self._last
 
         def thunk(rt: Runtime) -> object:
-            view = ref._fetch(rt, _child_nid(rt, nid, 0))
-            found = view.last() if last else view.first()
-            if found is None:
-                raise IndexError(f"{'last' if last else 'first'}() of an empty ordered collection")
-            return found
+            return _edge(ref, rt, ref._resolve_path(rt, _child_nid(rt, nid, 0)), last)
 
         return thunk
 
@@ -253,11 +266,7 @@ class _EdgeBase(ScalarQuery):
         last = self._last
 
         async def athunk(rt: Runtime) -> object:
-            view = await ref._afetch(rt, _child_nid(rt, nid, 0))
-            found = view.last() if last else view.first()
-            if found is None:
-                raise IndexError(f"{'last' if last else 'first'}() of an empty ordered collection")
-            return found
+            return _edge(ref, rt, await ref._aresolve_path(rt, _child_nid(rt, nid, 0)), last)
 
         return athunk
 
@@ -270,11 +279,12 @@ class OrderedFirst(_EdgeBase):
 
     Notes:
         - Cost is one seek, independent of how many ids the collection holds.
-        - Raises IndexError on an empty collection, as ``seq[0]`` does.
+        - NULL on an empty collection, one never written, or one under a key
+          that read NULL: a read that finds nothing gives NULL.
         - Safe on a Snapshot: a missing container is never created.
 
     Yields:
-        The first id.
+        The first id, or NULL.
 
     Example:
         app = nu.With(
@@ -295,7 +305,7 @@ class OrderedLast(_EdgeBase):
         ref: the ordered container Ref to read.
 
     Yields:
-        The last id.
+        The last id, or NULL.
     """
 
     _last = True

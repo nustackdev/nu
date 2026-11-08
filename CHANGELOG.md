@@ -12,6 +12,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- A key that finds nothing makes reads give NULL and writes raise a named error
+- Mappings read keys a page at a time, and logs list ids in the order added
 - Level flows re-check only when asked, so each driver picks its own schedule
 - Place a shape's refs under another ref to read and write them there
 

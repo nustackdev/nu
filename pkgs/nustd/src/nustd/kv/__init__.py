@@ -14,25 +14,30 @@ Usage::
 """
 
 import nustd.kv._compat  # noqa: F401  (register virtuals view ABCs)
-from nustd.kv import fabrics, interactions, paths, presets, refs, tree, views
+from nustd.kv import errors, fabrics, interactions, paths, presets, refs, tree, views
+from nustd.kv.errors import BracketError, NullAddressError
 from nustd.kv.interactions import (
     CONFLICT_ERRORS,
     Atomic,
     ClearPrimitivesUnsafeCmd,
+    FirstKey,
     InitItemCmd,
     ItemPrimitiveDeleteUnsafeCmd,
     ItemPrimitiveGetUnsafe,
     ItemPrimitiveSetCmd,
     ItemPrimitiveSetUnsafeCmd,
     ItemPrimitiveSetUnsafeParentSkipCmd,
+    KeysPage,
     Kh57Range,
     Kh57Sample,
+    LastKey,
     OrderedFirst,
     OrderedInsertAfterCmd,
     OrderedInsertBeforeCmd,
     OrderedLast,
     OrderedMoveCmd,
     RetryOnConflict,
+    ReversedKeysPage,
     ScanPrimitivesUnsafe,
     Snapshot,
     Transaction,
@@ -62,6 +67,7 @@ from nustd.kv.refs import (
     IntRef,
     Kh57Ref,
     ListRef,
+    LogDictRef,
     ObjectRef,
     OrderedDictRef,
     PrimitiveDictRef,
@@ -79,6 +85,7 @@ from nustd.kv.tree import auto_flow_atomic
 
 __all__ = [  # noqa: RUF022
     # Submodules
+    "errors",
     "fabrics",
     "interactions",
     "paths",
@@ -105,6 +112,11 @@ __all__ = [  # noqa: RUF022
     "OrderedMoveCmd",
     "OrderedFirst",
     "OrderedLast",
+    # Interactions: paging
+    "KeysPage",
+    "ReversedKeysPage",
+    "FirstKey",
+    "LastKey",
     # Interactions: Atomicity
     "Atomic",
     "Snapshot",
@@ -113,6 +125,9 @@ __all__ = [  # noqa: RUF022
     "CONFLICT_ERRORS",
     # Tree
     "auto_flow_atomic",
+    # Errors
+    "BracketError",
+    "NullAddressError",
     # Paths
     "ValuePathSer",
     "ViewPathSer",
@@ -143,6 +158,7 @@ __all__ = [  # noqa: RUF022
     "DictRef",
     "Kh57Ref",
     "ListRef",
+    "LogDictRef",
     "OrderedDictRef",
     "SetRef",
     "ShapeRef",

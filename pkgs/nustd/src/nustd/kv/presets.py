@@ -227,7 +227,7 @@ def rocksdb_storage_redis(
     secondary_path: str | None = None,
     secondary_refresh_interval: float | None = 0.01,
     redis_url: str = "redis://localhost:6379",
-    channel_prefix: str = "__every__",
+    channel_prefix: str = "nu",
 ) -> Generator[StorageProtocol, None, None]:
     """Create RocksDB storage with binary codec and Redis publisher.
 
@@ -431,7 +431,7 @@ def rocksdb_navigator_redis(
     disable_wal: bool = False,
     options: dict | None = None,
     redis_url: str = "redis://localhost:6379",
-    channel_prefix: str = "__every__",
+    channel_prefix: str = "nu",
 ) -> With:
     """Stands up a persistent RocksDB stack whose changes reach other processes.
 
@@ -637,9 +637,8 @@ def lmdb_navigator_redis(
         - Binds Codec, Publisher, Observer, Storage and Navigator. No
           Transport: the Redis pair does not need one.
         - Redis has to be reachable when the bracket sets up.
-        - Defaults to the ``"nu"`` channel prefix, where the RocksDB Redis
-          preset defaults to ``"__every__"``. Two stacks meant to hear each
-          other must be given the same one explicitly.
+        - Defaults to the ``"nu"`` channel prefix, like every Redis preset.
+          Two stacks meant to stay apart on one Redis need their own.
 
     Example:
         app = nu.With(
@@ -825,8 +824,7 @@ def sqlite_navigator_redis(
         - Binds Codec, Publisher, Observer, Storage and Navigator. No
           Transport: the Redis pair does not need one.
         - Redis has to be reachable when the bracket sets up.
-        - Defaults to the ``"nu"`` channel prefix, like the LMDB Redis
-          preset.
+        - Defaults to the ``"nu"`` channel prefix, like every Redis preset.
 
     Example:
         app = nu.With(
@@ -935,8 +933,7 @@ def redis_observer(
     Args:
         redis_url: where the Redis carrying the notifications lives.
         channel_prefix: must match the publishing side's, or nothing
-            arrives. Note the RocksDB Redis preset defaults to
-            ``"__every__"`` rather than this one's ``"nu"``.
+            arrives. Every Redis preset defaults to ``"nu"``.
         tags: shape tags folded onto the binding, so a sharded program
             reaches this observer under the same tag as its storage.
 

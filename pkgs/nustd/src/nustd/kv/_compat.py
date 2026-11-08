@@ -16,6 +16,7 @@ from virtuals.views import (
     Kh57ViewBase,
     LightDictView,
     ListViewBase,
+    LogIndexedDictViewBase,
     SetView,
 )
 
@@ -34,6 +35,10 @@ MutableMapping.register(Kh57ViewBase)
 # FractionalIndexedDictViewBase covers both facets of the ordered dict view
 # (ids kept in collection order, placed and moved relative to each other)
 MutableMapping.register(FractionalIndexedDictViewBase)
+
+# LogIndexedDictViewBase covers both facets of the log dict view
+# (ids listed in the order they were first set, append-only)
+MutableMapping.register(LogIndexedDictViewBase)
 
 # Flat/Light dict views (primitives-only, no nesting)
 MutableMapping.register(FlatDictView)

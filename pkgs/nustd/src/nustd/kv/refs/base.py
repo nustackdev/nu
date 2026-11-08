@@ -9,18 +9,24 @@ expression, or a ref from another fabric. The Navigator and the storage context
 
 A container also decides what its children are: the ref at ``ref[key]`` is
 the kv ref for the value the container declared.
+
+A key that reads NULL (an id looked up in an index with no entry for it)
+leaves the path addressing nothing. A read there gives NULL, as an empty slot
+does; a write raises ``NullAddressError`` and nothing lands.
 """
 
 from __future__ import annotations
 
+import typing
 from enum import Enum
 from logging import getLogger
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
 import nu
 from nu.domains.shape.base import StructuredRef
-from nu.lang.null import Null
+from nu.lang.null import Null, is_null
 from nu.lang.typeinfo import TypeInfo
+from nustd.kv.errors import NullAddressError
 from nustd.kv.paths import ViewPathSer
 from virtuals import Empty as StorageEmpty
 from virtuals import Navigator
@@ -33,6 +39,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from nu.domains.shape.dsl import Shape
+    from nu.lang import Nu
     from nu.lang.runtime import Runtime
     from nustd.kv.interactions.extract import ViewExtract
     from virtuals.view import View
@@ -63,8 +70,54 @@ class Facet(Enum):
     EAGER = "eager"
 
 
+def _null_at(path: tuple) -> bool:
+    """Whether a segment of ``path`` read NULL, so the path addresses nothing."""
+    return any(is_null(addr) for addr, _ in path)
+
+
+def _dotted(shape: type | None, path: tuple) -> str:
+    """The dotted path a ref names, eg ``Space.state.recents``; a NULL segment as ``<NULL ...>``."""
+    segs = (repr(addr) if is_null(addr) else str(addr) for addr, _ in path)
+    return ".".join([shape.__name__ if shape is not None else "?", *segs])
+
+
+def _addressed(rt: Runtime, nid: int) -> bool:
+    """Whether the node holding ``nid`` writes or watches that slot, rather than reads it.
+
+    A write is a slot the node declares it mutates. A watch is the ref slot of
+    a subscription source (``on_change()`` and its siblings). Both need the
+    address itself, so under a NULL segment they raise where a read gives NULL.
+    """
+    from nu.core.reactive.sources.on import (
+        OnChange,
+        OnChildChange,
+        OnChildrenChange,
+        OnDescendantsChange,
+    )
+
+    pid = rt.program.parent_id[nid]
+    if pid < 0:
+        return False
+    term = rt.program.terms[pid]
+    kids = rt.program.children[pid]
+    watches = (OnChange, OnChildChange, OnChildrenChange, OnDescendantsChange)
+    if isinstance(term, watches):
+        return bool(kids) and kids[0] == nid
+    slots: frozenset[int] = getattr(type(term)._attributes.get("mutates"), "value", frozenset())
+    return any(i < len(kids) and kids[i] == nid for i in slots)
+
+
 def _resolve_navigator(rt: Runtime, scope: type | None, resolved_path: tuple) -> Navigator:
-    """Resolve Navigator from the runtime ctx, passing site and path for routing."""
+    """Resolve Navigator from the runtime ctx, passing site and path for routing.
+
+    Every storage access on a ref passes through here, so this is where a path
+    with a NULL segment stops: reads turn it into NULL before they get here,
+    anything else (a write, a watch) raises ``NullAddressError``.
+    """
+    if _null_at(resolved_path):
+        where = _dotted(scope, resolved_path)
+        msg = f"cannot write or watch at {where}: a key in the path read NULL"
+        raise NullAddressError(msg)
     if not resolved_path:
         return (
             rt.ctx.fabrics.get(Navigator, scope)
@@ -97,6 +150,23 @@ def _plain(value: object) -> object:
     if isinstance(value, ViewBase):
         return (value.eager if hasattr(value, "eager") else value).extract()
     return value
+
+
+def _refuse_container_value(owner: type, value: object) -> None:
+    """Raise when a container slot is declared to hold a container ref.
+
+    Only a Shape gives a container's value a layout of its own. A container
+    ref there would be stored as one opaque value, with no keys, order or
+    watch, so it is refused where it is declared.
+    """
+    held = typing.get_origin(value) or value
+    if isinstance(held, type) and issubclass(held, ViewRef):
+        msg = (
+            f"{owner.__name__}.slot({held.__name__}): a container cannot hold a container ref, "
+            f"it would be stored as one opaque value. Use a Shape: declare one with a "
+            f"{held.__name__} slot and hold that Shape"
+        )
+        raise TypeError(msg)
 
 
 class _VirtualsRefBase(StructuredRef, Generic[T]):
@@ -161,8 +231,7 @@ class _VirtualsRefBase(StructuredRef, Generic[T]):
 
     def _hint(self, path: tuple) -> str:
         """The dotted path a NULL read names, eg ``Space.state.recents``."""
-        shape = self._root_shape
-        return ".".join([shape.__name__ if shape is not None else "?", *(str(a) for a, _ in path)])
+        return _dotted(self._root_shape, path)
 
 
 class ViewRef(_VirtualsRefBase[T], Generic[T]):
@@ -191,6 +260,10 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
           ask ``exists()``, or ``extract()`` the value and test it. On a
           never-written container ``len``, iteration and ``contains`` raise,
           ``extract()`` gives NULL.
+        - The one exception is a path with a key that read NULL: it
+          addresses nothing, so the ref reads NULL, ``exists()`` is False,
+          reads through it (``keys``, ``get_item``) find nothing, and a write
+          or a watch raises ``NullAddressError``.
         - The storage context is a transaction when one is bound, otherwise a
           snapshot; a snapshot is read-only, so writes need the transaction.
 
@@ -215,6 +288,17 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape, **kwargs)
         self._payload["type_marker"] = view_type or self._default_view
+
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """What an annotation slot (``ids: DictRef[str, bool]``) passes on: nothing.
+
+        Its last type argument is the value the container holds, refused here
+        when it is a container ref, as ``slot()`` refuses it.
+        """
+        if args:
+            _refuse_container_value(cls, args[-1])
+        return {}
 
     def _wrap_item_ref(self, address: object) -> StructuredRef:
         """The child at ``address``: the kv ref for the value this container declared.
@@ -312,6 +396,8 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
 
         def thunk(rt: Runtime) -> object:
             path = self._resolve_path(rt, nid)
+            if _null_at(path) and not _addressed(rt, nid):
+                return Null(self._hint(path))
             nav = _resolve_navigator(rt, scope, path)
             storage_ctx = _resolve_storage_ctx(rt, scope, path)
             view = nav.open_at_path(ViewPathSer(path), storage_ctx)
@@ -324,12 +410,44 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
 
         async def athunk(rt: Runtime) -> object:
             path = await self._aresolve_path(rt, nid)
+            if _null_at(path) and not _addressed(rt, nid):
+                return Null(self._hint(path))
             nav = _resolve_navigator(rt, scope, path)
             storage_ctx = _resolve_storage_ctx(rt, scope, path)
             view = nav.open_at_path(ViewPathSer(path), storage_ctx)
             return self._apply_facet(view)
 
         return athunk
+
+    def _stream_reads(self, cursor: object) -> tuple[Nu, Nu]:
+        """The two reads ``nu.Stream`` makes of this collection, each on a snapshot of its own.
+
+        A stream reads its source per drain step: the item past its cursor,
+        and the watch it subscribes with. One bracket held around the whole
+        stream would freeze it where it opened, since later items land in
+        later commits an open snapshot never sees. So each read opens its own
+        snapshot on this ref's store, and the stream follows whatever brackets
+        sit around it.
+
+        Notes:
+            - The body is not bracketed here. A body that reads or writes kv
+              brackets itself (``nustd.kv.atomic``).
+            - The source's view must keep a cursor: a log (``LogDictRef``)
+              or an ordered dict (``OrderedDictRef``). On a log the cursor is
+              the log key, on an ordered dict the order key; both resume past
+              an id deleted under the cursor and see every id added at the
+              end once. Ids placed or moved in the middle of an ordered dict
+              are not covered (``FractionalIndexedDictView.next_key_after``).
+        """
+        from nu.core.reactive.sources.on import OnChildrenChange
+        from nu.domains.shape.interactions import AdvanceCursor
+        from nustd.kv.interactions.atomicity import Snapshot
+
+        scope = self._root_shape
+        return (
+            Snapshot(AdvanceCursor(self, cursor), scope=scope),
+            Snapshot(OnChildrenChange(self), scope=scope),
+        )
 
     def extract(self) -> ViewExtract:
         """Read the whole container as plain Python values.
@@ -354,11 +472,13 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
 
     def _exists(self, rt: Runtime, nid: int) -> bool:
         """Whether the container is stored: one marker read, nothing extracted."""
-        return bool(self._open(rt, self._resolve_path(rt, nid)).container.exists())  # type: ignore[attr-defined]
+        path = self._resolve_path(rt, nid)
+        return not _null_at(path) and bool(self._open(rt, path).container.exists())  # type: ignore[attr-defined]
 
     async def _aexists(self, rt: Runtime, nid: int) -> bool:
         """Async sibling of :meth:`_exists`."""
-        return bool(self._open(rt, await self._aresolve_path(rt, nid)).container.exists())  # type: ignore[attr-defined]
+        path = await self._aresolve_path(rt, nid)
+        return not _null_at(path) and bool(self._open(rt, path).container.exists())  # type: ignore[attr-defined]
 
     # --- write / erase (whole-view store via parent decomposition) -----------
 
@@ -465,6 +585,8 @@ class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
         - Yields NULL, hinted with the dotted path, when the parent has no
           such key or index, or storage hands back its own empty marker.
           Nothing else is caught, so real errors stay errors.
+        - Yields NULL too when a key in the path read NULL; a write there
+          raises ``NullAddressError``.
         - A write materializes every ancestor along the path first, so a leaf
           can be written into storage that has nothing above it yet.
         - Erasing a leaf that is not there is a no-op.
@@ -486,6 +608,8 @@ class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
     # --- read (the dual role) ------------------------------------------------
 
     def _read(self, rt: Runtime, path: tuple) -> object:
+        if _null_at(path):
+            return Null(self._hint(path))
         nav = _resolve_navigator(rt, self._root_shape, path)
         storage_ctx = _resolve_storage_ctx(rt, self._root_shape, path)
         parent_path = path[:-1]

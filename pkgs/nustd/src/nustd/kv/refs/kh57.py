@@ -14,6 +14,7 @@ from nu.forms import Object
 from nu.lang.typeinfo import TypeInfo
 from virtuals.views import Kh57View
 
+from .base import _refuse_container_value
 from .containers import DictRef
 
 
@@ -76,6 +77,7 @@ class Kh57Ref(DictRef[int, V], Generic[V]):
             - ``points: Kh57Ref[Point]`` as an annotation declares the same
               slot.
         """
+        _refuse_container_value(cls, value)
         declared = TypeInfo.from_annotation(cls[value])  # type: ignore[index]
         return Slot(cls, type_info=declared, view_type=view)  # type: ignore[return-value]
 

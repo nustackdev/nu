@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
-from nu.lang.null import Null
+from nu.lang.null import Null, is_null
 from virtuals.container import ContainerNotFoundError
 
 
@@ -47,7 +47,8 @@ class ViewExtract(ScalarQuery):
 
     Notes:
         - NULL, hinted with the dotted path, when the container was never
-          written. A container written empty reads as its empty value.
+          written, or a key in its path read NULL. A container written empty
+          reads as its empty value.
         - Nested containers come back extracted, whatever the ref's facet.
         - Any other storage error is let out.
 
@@ -64,6 +65,8 @@ class ViewExtract(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             view = ref_thunk(rt)
+            if is_null(view):
+                return view
             try:
                 return _extract(view)
             except ContainerNotFoundError as err:
@@ -80,6 +83,8 @@ class ViewExtract(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             view = await ref_thunk(rt)
+            if is_null(view):
+                return view
             try:
                 return _extract(view)
             except ContainerNotFoundError as err:

@@ -319,23 +319,36 @@ class MutableMappingForm(
 
         return SetItem(self, key, value)
 
-    def del_item(self, key: Arg[KeyT]) -> Any:  # noqa: ANN401
+    def del_item(self, key: Arg[KeyT], *, missing_ok: bool = False) -> Any:  # noqa: ANN401
         """Delete the entry at key: del mapping[key].
 
         Args:
             key: the key to delete.
+            missing_ok: when ``True``, an absent key is a no-op. A plain
+                Python bool fixed at construction, not a Nu value.
 
         Notes:
             - Mutating Command: mutates slot 0 in place, yields nothing.
               Needs a Ref in slot 0 to run; a plain literal mapping fails
               evaluation.
+            - By default an absent key raises KeyError at evaluation time,
+              matching Python's ``del``, whatever the mapping's layout. A
+              mapping that was never written holds no key.
+            - Checks the key before deleting it: one extra point read.
 
         Example:
-            d.del_item("a")
+            >>> class Port(nu.Shape):
+            ...     owners = nu.DictRef.slot(str)
+            >>> data = {"owners": {"core": "gor"}}
+            >>> ctx = nu.Context().bind(dict, data, Port)
+            >>> _ = nu.run(Port.owners.del_item("core"), ctx)
+            >>> _ = nu.run(Port.owners.del_item("core", missing_ok=True), ctx)
+            >>> data
+            {'owners': {}}
         """
         from .mapping_interactions import DeleteItem
 
-        return DeleteItem(self, key)
+        return DeleteItem(self, key, missing_ok=missing_ok)
 
     def update(self, other: Arg[Mapping[KeyT, ValueT]]) -> Any:  # noqa: ANN401
         """Write other's entries into self, in place: mapping.update(other).

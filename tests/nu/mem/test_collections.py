@@ -89,6 +89,39 @@ class TestDictRefExecution:
         run(PortfolioShape.metadata.set_item("key", "value"), portfolio_ctx)
         assert data["metadata"]["key"] == "value"
 
+    def test_del_item_drops_the_key(self, data, portfolio_ctx):
+        data["metadata"] = {"a": "1", "b": "2"}
+        run(PortfolioShape.metadata.del_item("a"), portfolio_ctx)
+        assert data["metadata"] == {"b": "2"}
+
+    def test_del_item_absent_raises_by_default(self, data, portfolio_ctx):
+        data["metadata"] = {"a": "1"}
+        with pytest.raises(KeyError):
+            run(PortfolioShape.metadata.del_item("z"), portfolio_ctx)
+
+    @pytest.mark.asyncio
+    async def test_del_item_missing_ok_absent_is_a_noop(self, data, portfolio_ctx):
+        data["metadata"] = {"a": "1"}
+        run(PortfolioShape.metadata.del_item("z", missing_ok=True), portfolio_ctx)
+        await arun(PortfolioShape.metadata.del_item("z", missing_ok=True), portfolio_ctx)
+        assert data["metadata"] == {"a": "1"}
+
+    def test_del_item_on_a_never_written_dict(self, data, portfolio_ctx):
+        # holds no key: strict raises, missing_ok leaves the slot absent
+        with pytest.raises(KeyError):
+            run(PortfolioShape.metadata.del_item("z"), portfolio_ctx)
+        run(PortfolioShape.metadata.del_item("z", missing_ok=True), portfolio_ctx)
+        assert "metadata" not in data
+
+    def test_reads_of_a_never_written_dict_find_nothing(self, data, portfolio_ctx):
+        from nu.lang import is_null
+
+        assert run(PortfolioShape.metadata.get_item("k", "d"), portfolio_ctx)[0] == "d"
+        assert is_null(run(PortfolioShape.metadata.get_item("k"), portfolio_ctx)[0])
+        assert is_null(run(PortfolioShape.metadata.keys(), portfolio_ctx)[0])
+        assert is_null(run(PortfolioShape.metadata.values(), portfolio_ctx)[0])
+        assert is_null(run(PortfolioShape.metadata.items(), portfolio_ctx)[0])
+
 
 class TestDictRefViewOperations:
     """DictKeys supports set-like operations, DictValues supports materialization."""
