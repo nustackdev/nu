@@ -38,6 +38,7 @@ from nustd.kv.interactions import (
     OrderedMoveCmd,
     RetryOnConflict,
     ReversedKeysPage,
+    RingEntries,
     ScanPrimitivesUnsafe,
     Snapshot,
     Transaction,
@@ -76,6 +77,7 @@ from nustd.kv.refs import (
     PrimitiveSetRef,
     PrimitiveTupleRef,
     ProgramRef,
+    RingRef,
     SetRef,
     ShapeRef,
     StrRef,
@@ -117,6 +119,8 @@ __all__ = [  # noqa: RUF022
     "ReversedKeysPage",
     "FirstKey",
     "LastKey",
+    # Interactions: ring
+    "RingEntries",
     # Interactions: Atomicity
     "Atomic",
     "Snapshot",
@@ -160,6 +164,7 @@ __all__ = [  # noqa: RUF022
     "Kh57Ref",
     "ListRef",
     "LogDictRef",
+    "RingRef",
     "OrderedDictRef",
     "SetRef",
     "ShapeRef",

@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Capped logs keep the newest entries, drop the oldest, and page by sequence number
 - Bracket a term once with atomic: it finds its stores, refuses two-store writes
 - A key that finds nothing makes reads give NULL and writes raise a named error
 - Mappings read keys a page at a time, and logs list ids in the order added

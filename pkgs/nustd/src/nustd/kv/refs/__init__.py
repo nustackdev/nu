@@ -25,6 +25,7 @@ from .primitives import (
     PrimitiveTupleRef,
 )
 from .prog import ProgramRef
+from .ring import RingRef
 
 
 __all__ = [
@@ -47,6 +48,7 @@ __all__ = [
     "PrimitiveSetRef",
     "PrimitiveTupleRef",
     "ProgramRef",
+    "RingRef",
     "SetRef",
     "ShapeRef",
     "StrRef",

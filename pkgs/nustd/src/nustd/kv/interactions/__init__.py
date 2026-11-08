@@ -6,6 +6,7 @@
 - ``kh57``: sampled and whole reads of an int-keyed range.
 - ``ordered``: placement, moves and ends of an ordered dict.
 - ``paging``: a page of a mapping's keys from a cursor, and its two ends.
+- ``ring``: a page of a ring's entries past a sequence number.
 - ``extract``: whole-container read, NULL where nothing is written.
 - ``atomicity``: snapshot / transaction brackets + conflict-aware retry.
 """
@@ -37,6 +38,7 @@ from .ordered import (
     OrderedMoveCmd,
 )
 from .paging import FirstKey, KeysPage, LastKey, ReversedKeysPage
+from .ring import RingEntries
 
 
 __all__ = [
@@ -61,6 +63,7 @@ __all__ = [
     "OrderedMoveCmd",
     "RetryOnConflict",
     "ReversedKeysPage",
+    "RingEntries",
     "ScanPrimitivesUnsafe",
     "Snapshot",
     "Transaction",
