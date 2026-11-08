@@ -20,6 +20,7 @@ from nu.domains.shape import (
     Shape,
     Slot,
 )
+from nu.forms import Object
 from nu.lang.typeinfo import TypeInfo
 from virtuals.views import DictView, ListView, SetView
 
@@ -205,6 +206,42 @@ class DictRef(ReactiveMappingRef, ViewRef[dict[K, V]], Generic[K, V]):
         from nustd.kv.interactions.paging import ReversedKeysPage
 
         return self._page_result(ReversedKeysPage(self._paged(), before, limit))
+
+    def first(self) -> Object:
+        """Read the first key in the view's order.
+
+        Notes:
+            - One seek, whatever the size of the mapping.
+            - Key order on a dict, oldest first on a log; an ordered dict
+              reads its placed order with its own ``first``.
+            - Safe under a Snapshot. Only views that page have one: any
+              other raises TypeError here.
+
+        Yields:
+            The first key. NULL when the mapping is empty, never written, or
+            under a key that read NULL.
+
+        Example:
+            run(Cell.ids.first().fallback(""), ctx)
+        """
+        from nustd.kv.interactions.paging import FirstKey
+
+        return Object(FirstKey(self._paged()))
+
+    def last(self) -> Object:
+        """Read the last key in the view's order.
+
+        Same contract as ``first``, from the other end.
+
+        Yields:
+            The last key, or NULL.
+
+        Example:
+            run(Cell.ids.last(), ctx)
+        """
+        from nustd.kv.interactions.paging import LastKey
+
+        return Object(LastKey(self._paged()))
 
     def _paged(self) -> DictRef[K, V]:
         """This ref, refused at build when its view cannot page."""

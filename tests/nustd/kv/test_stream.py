@@ -16,8 +16,10 @@ import pytest
 import nu
 from nu import Shape, arun
 from nustd.kv import (
+    DictRef,
     LogDictRef,
     OrderedDictRef,
+    RingRef,
     Snapshot,
     Transaction,
     auto_flow_atomic,
@@ -122,3 +124,17 @@ async def test_resumes_past_the_last_id_deleted_under_its_cursor(name, attempt) 
     later = Transaction(source.del_item("a")) >> _adds(source, "b", "c")  # type: ignore[attr-defined]
     await _run(source, _follow(source, heard), heard, later, 3)
     assert heard == ["a", "b", "c"]
+
+
+class Plain(Shape):
+    ids = DictRef.slot(bool)
+    out = RingRef.slot(list, capacity=3)
+
+
+@pytest.mark.parametrize(
+    ("source", "hint"),
+    [(Plain.ids, "LogDictRef or an OrderedDictRef"), (Plain.out, r"entries\(after=seq\)")],
+)
+def test_a_source_without_a_cursor_is_refused_at_build(source, hint) -> None:
+    with pytest.raises(TypeError, match=hint):
+        nu.Stream(source, lambda key: nu.Iter(nu.List.of(key)))

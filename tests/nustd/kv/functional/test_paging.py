@@ -216,3 +216,23 @@ async def test_pages_read_under_arun(ctx) -> None:
     run(Board.cursor.set("c"), ctx)
     got, _ = await arun(Board.log.reversed_keys(before=Board.cursor, limit=1), ctx)
     assert got == ["b"]
+
+
+# --- first and last on a dict ------------------------------------------------------
+
+
+def test_a_dict_reads_its_first_and_last_key_in_key_order(ctx) -> None:
+    _fill(ctx, Board.scores, ["c", "a", "d", "b"])
+    assert run(Board.scores.first(), ctx)[0] == "a"
+    assert run(Board.scores.last(), ctx)[0] == "d"
+
+
+def test_a_dict_first_is_null_when_nothing_is_there(ctx) -> None:
+    assert is_null(run(Board.scores.first(), ctx)[0])
+    assert run(Board.scores.first().fallback(""), ctx)[0] == ""
+    assert is_null(run(Board.groups[Board.by_key["gone"]].ids.last(), ctx)[0])
+
+
+def test_first_on_a_view_that_cannot_page_is_refused_at_build() -> None:
+    with pytest.raises(TypeError, match="does not page"):
+        Board.points.first()

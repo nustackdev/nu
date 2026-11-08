@@ -12,6 +12,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Writing a whole row keeps its ordered, log and ring slots in their layouts
+- Plain mappings read their first and last key in one seek, like logs
 - The ui kit gains a toast, so apps can say briefly what just failed
 - Capped logs keep the newest entries, drop the oldest, and page by sequence number
 - Bracket a term once with atomic: it finds its stores, refuses two-store writes

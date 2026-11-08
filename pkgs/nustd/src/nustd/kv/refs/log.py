@@ -49,7 +49,9 @@ class LogDictRef(DictRef[K, V], Generic[K, V]):
           number of writers append without contending on a shared key.
           Setting an existing id keeps its place.
         - Deleting an id is a point op. Nothing moves: there is no insert or
-          move, and ``len`` counts the whole log.
+          move.
+        - ``len`` scans the whole log, O(n). For the newest ids read
+          ``last()`` or ``reversed_keys(limit=)``, one seek each.
         - ``first`` and ``last`` are one seek each: the oldest and the newest
           id.
         - The order is wall-clock time across processes, so two writers in

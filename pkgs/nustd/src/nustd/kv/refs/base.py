@@ -28,6 +28,7 @@ from nu.lang.null import Null, is_null
 from nu.lang.typeinfo import TypeInfo
 from nustd.kv.errors import NullAddressError
 from nustd.kv.paths import ViewPathSer
+from nustd.kv.refs.layout import store_whole
 from virtuals import Empty as StorageEmpty
 from virtuals import Navigator
 from virtuals.collections import Subscriptable
@@ -438,11 +439,26 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
               an id deleted under the cursor and see every id added at the
               end once. Ids placed or moved in the middle of an ordered dict
               are not covered (``FractionalIndexedDictView.next_key_after``).
+
+        Raises:
+            TypeError: the source's view keeps no cursor (a plain dict, a
+                list, a ring), checked when the stream is built.
         """
         from nu.core.reactive.sources.on import OnChildrenChange
         from nu.domains.shape.interactions import AdvanceCursor
         from nustd.kv.interactions.atomicity import Snapshot
+        from virtuals.views import RingView
 
+        view = self._payload.get("type_marker")
+        if not hasattr(view, "next_key_after"):
+            follow = (
+                "follow a ring with entries(after=seq)"
+                if isinstance(view, type) and issubclass(view, RingView)
+                else "stream a LogDictRef or an OrderedDictRef"
+            )
+            name = getattr(view, "__name__", repr(view))
+            msg = f"Stream needs a source that keeps a cursor, {name} keeps none: {follow}"
+            raise TypeError(msg)
         scope = self._root_shape
         return (
             Snapshot(AdvanceCursor(self, cursor), scope=scope),
@@ -522,25 +538,24 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
     def _write(self, rt: Runtime, value: object, nid: int) -> None:
         """Store a whole container value through the parent View (decomposed).
 
-        Uses ``set_child_container_as`` so the ref's declared view class
-        (``path[-1][1]``) drives the child layout, rather than the parent's
-        default type→view registry lookup, which would collapse every
-        ``dict``-valued ref onto ``DictView`` regardless of what the slot
-        declared (``Kh57View``, ``IndexedDictView``, …).
+        The ref's declared view class drives the child layout, rather than
+        the parent's type to view lookup, which would collapse every
+        ``dict``-valued ref onto ``DictView`` whatever the slot declared
+        (``Kh57View``, ``IndexedDictView``, ...). The same holds below it:
+        a Shape row holding an ordered, log or ring slot lays each of them
+        out in its declared view (``layout.store_whole``).
         """
         value = self._lower(value)
         path = self._resolve_path(rt, nid)
         parent = self._fetch_and_ensure_parent_view(rt, path)
-        key, view_class = path[-1]
-        parent.set_child_container_as(key, value, view_class)  # type: ignore[attr-defined]
+        store_whole(parent, path[-1][0], value, self)
 
     async def _awrite(self, rt: Runtime, value: object, nid: int) -> None:
         """Async sibling of :meth:`_write`."""
         value = await self._alower(value)
         path = await self._aresolve_path(rt, nid)
         parent = self._fetch_and_ensure_parent_view(rt, path)
-        key, view_class = path[-1]
-        parent.set_child_container_as(key, value, view_class)  # type: ignore[attr-defined]
+        store_whole(parent, path[-1][0], value, self)
 
     def _erase(self, rt: Runtime, nid: int) -> None:
         """Remove this ref's slot from its parent View, if present."""
