@@ -210,6 +210,24 @@ def test_a_view_that_cannot_seek_is_refused_at_build() -> None:
         Flat.rows.reversed_keys(limit=3)
 
 
+@pytest.mark.parametrize("name", list(COLLECTIONS))
+def test_reversed_keys_without_arguments_reads_every_key_last_first(ctx, name) -> None:
+    ref = COLLECTIONS[name]
+    _fill(ctx, ref, ["c", "a", "b"])
+    want = list(reversed(run(nu.list(ref.keys()), ctx)[0]))
+    assert run(nu.list(ref.reversed_keys()), ctx)[0] == want
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("name", list(COLLECTIONS))
+async def test_reversed_keys_without_arguments_casts_under_arun(ctx, name) -> None:
+    ref = COLLECTIONS[name]
+    _fill(ctx, ref, ["c", "a", "b"])
+    want = list(reversed(run(nu.list(ref.keys()), ctx)[0]))
+    got, _ = await arun(nu.list(ref.reversed_keys()), ctx)
+    assert got == want
+
+
 @pytest.mark.asyncio
 async def test_pages_read_under_arun(ctx) -> None:
     _fill(ctx, Board.log, ["a", "b", "c"])

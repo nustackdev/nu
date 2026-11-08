@@ -232,9 +232,14 @@ class ReversedKeys(ScalarQuery):
     """Reverse-order keys: reversed(mapping). Yields keys in reverse insertion order.
 
     Scalar-shaped like :class:`Keys` -- the thunk returns one iterator
-    handle (Python's ``reversed(obj)`` object). Downstream ``Iter``
-    opens that handle into a stream lazily, so ``islice(m.reversed_keys(),
-    n)`` reads only ``n`` items regardless of stream size.
+    handle. Downstream ``Iter`` opens that handle into a stream lazily, so
+    ``islice(m.reversed_keys(), n)`` reads only ``n`` items regardless of
+    stream size.
+
+    Backend contract, as for :class:`ReversedValues`: prefers an explicit
+    ``keys_reverse()`` method on the runtime mapping (a store view reads
+    its keys last first in one scan); falls back to ``reversed(obj)``,
+    native on Python ``dict``.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -244,7 +249,8 @@ class ReversedKeys(ScalarQuery):
             obj = operand(rt)
             if is_null(obj):
                 return obj
-            return reversed(obj)
+            fast = getattr(obj, "keys_reverse", None)
+            return fast() if fast is not None else reversed(obj)
 
         return thunk
 
@@ -255,6 +261,9 @@ class ReversedKeys(ScalarQuery):
             obj = await operand(rt)
             if is_null(obj):
                 return obj
+            fast = getattr(obj, "keys_reverse", None)
+            if fast is not None:
+                return fast()
 
             async def agen() -> object:
                 for k in reversed(obj):

@@ -30,6 +30,8 @@ from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
 
+from ._stream import aiter_any
+
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -364,6 +366,20 @@ class ToByteArray(ScalarQuery):
 # scalar/stream law is satisfied.
 
 
+async def _drained(value: object) -> object:
+    """An async iterable drained into a list, any other value as it is.
+
+    Under ``arun`` a read may hand back an async iterable where a sync run
+    hands back a sync one (``reversed_keys()`` on a dict, for one). Casting
+    it to a container drains it, so ``list(...)`` reads the same in both
+    modes. A mapping or any sync value is passed through untouched, so
+    ``dict(mapping)`` keeps its mapping meaning.
+    """
+    if hasattr(value.__class__, "__aiter__"):
+        return [x async for x in aiter_any(value)]
+    return value
+
+
 class ToList(ScalarQuery):
     """The iterable child collected into a ``list``.
 
@@ -391,7 +407,7 @@ class ToList(ScalarQuery):
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
-            v = await only(rt)
+            v = await _drained(await only(rt))
             return builtins.list(v)
 
         return athunk
@@ -424,7 +440,7 @@ class ToTuple(ScalarQuery):
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
-            v = await only(rt)
+            v = await _drained(await only(rt))
             return builtins.tuple(v)
 
         return athunk
@@ -461,7 +477,7 @@ class ToSet(ScalarQuery):
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
-            v = await only(rt)
+            v = await _drained(await only(rt))
             return builtins.set(v)
 
         return athunk
@@ -498,7 +514,7 @@ class ToFrozenSet(ScalarQuery):
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
-            v = await only(rt)
+            v = await _drained(await only(rt))
             return builtins.frozenset(v)
 
         return athunk
@@ -535,7 +551,7 @@ class ToDict(ScalarQuery):
         (only,) = children
 
         async def athunk(rt: Runtime) -> object:
-            v = await only(rt)
+            v = await _drained(await only(rt))
             return builtins.dict(v)
 
         return athunk

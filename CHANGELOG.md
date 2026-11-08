@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Reading a mapping's keys last first works on stores, sync or async alike
 - The host-kill containment test no longer fails when the machine is busy
 - Closing toasts finish fading before they leave, so bursts no longer flicker
 - Docs say when streams re-drain and what deleting a NULL key raises
