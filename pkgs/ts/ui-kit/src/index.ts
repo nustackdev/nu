@@ -319,6 +319,7 @@ export {
 	dismissToast,
 	TOAST_DANGER_DURATION,
 	TOAST_DURATION,
+	TOAST_EXIT,
 	TOAST_LIMIT,
 	Toast,
 	type ToastEntry,

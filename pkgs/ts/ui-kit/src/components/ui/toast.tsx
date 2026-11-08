@@ -45,6 +45,8 @@ export const TOAST_DURATION = 5000;
 export const TOAST_DANGER_DURATION = 8000;
 /** Toasts kept on screen at once; the oldest goes first. */
 export const TOAST_LIMIT = 4;
+/** How long a closed toast stays drawn, in ms: past its fade out (`duration-fast`, 120 ms). */
+export const TOAST_EXIT = 200;
 
 // -- The store: module level, so toast() works from anywhere ------------------
 
@@ -65,6 +67,16 @@ function snapshot(): ToastEntry[] {
 	return entries;
 }
 
+// A closed toast stays in the stack, drawn closed, until its fade out is over,
+// then leaves it: closing never cuts the animation short.
+function close(ids: Set<number>): void {
+	entries = entries.map((e) => (ids.has(e.id) ? { ...e, open: false } : e));
+	setTimeout(() => {
+		entries = entries.filter((e) => !ids.has(e.id));
+		emit();
+	}, TOAST_EXIT);
+}
+
 /** Show a toast. Returns its id, for `dismissToast`. */
 export function toast(options: ToastOptions): number {
 	const tone = options.tone ?? "neutral";
@@ -76,16 +88,18 @@ export function toast(options: ToastOptions): number {
 		duration: options.duration ?? (tone === "danger" ? TOAST_DANGER_DURATION : TOAST_DURATION),
 		open: true,
 	};
-	// Closed ones are done animating by the next toast: drop them here.
-	entries = [...entries.filter((e) => e.open), entry].slice(-TOAST_LIMIT);
+	entries = [...entries, entry];
+	// Past the limit the oldest open ones close, and fade out like any other.
+	const open = entries.filter((e) => e.open);
+	if (open.length > TOAST_LIMIT) close(new Set(open.slice(0, -TOAST_LIMIT).map((e) => e.id)));
 	emit();
 	return entry.id;
 }
 
-/** Take a toast down before its time. A no-op for one already gone. */
+/** Take a toast down before its time. A no-op for one already closed or gone. */
 export function dismissToast(id: number): void {
 	if (!entries.some((e) => e.id === id && e.open)) return;
-	entries = entries.map((e) => (e.id === id ? { ...e, open: false } : e));
+	close(new Set([id]));
 	emit();
 }
 

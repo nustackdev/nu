@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Closing toasts finish fading before they leave, so bursts no longer flicker
 - Docs say when streams re-drain and what deleting a NULL key raises
 - Writing a whole row keeps its ordered, log and ring slots in their layouts
 - Plain mappings read their first and last key in one seek, like logs
