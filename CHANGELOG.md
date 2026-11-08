@@ -10,6 +10,11 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Level flows re-check only when asked, so each driver picks its own schedule
+- Place a shape's refs under another ref to read and write them there
+
 ## 0.7.1 - 2026-11-07
 
 - Release nu 0.7.1

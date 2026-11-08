@@ -2,19 +2,21 @@
 
 A level body reads current state and makes it right, so it does not care why
 it runs. That is what lets this helper add wakes no subscription delivered:
-one right after binding, so the first read always follows the subscribe, and
-re-checks on a schedule, so a notification that never arrived (a writer that
-had not yet learnt of a fresh subscription, a dropped message) is caught late
-rather than never.
+one right after binding, so the first read always follows the subscribe, and,
+when the flow opts in, re-checks on a schedule, so a notification that never
+arrived (a writer that had not yet learnt of a fresh subscription, a dropped
+message) is caught late rather than never.
 
 Private on purpose. A wake carries no changed key, so feeding these into an
 event flow, whose body is promised the real key of a real change, would break
 that promise. Only the level flows hold a ``Wakes``.
 
 The schedule itself is two child terms of the flow, ``after`` (an iterable of
-float offsets) and ``every`` (a float or None). ``schedule_terms`` checks and
-normalises literal ones at build time; ``read_schedule`` evaluates them at
-run time and checks computed ones with the same messages.
+float offsets) and ``every`` (a float or None). Both are off unless the flow
+is given them: ``RECHECK_AFTER`` and ``RECHECK_EVERY`` are the standard
+schedule to opt into. ``schedule_terms`` checks and normalises literal ones
+at build time; ``read_schedule`` evaluates them at run time and checks
+computed ones with the same messages.
 """
 
 from __future__ import annotations
@@ -34,8 +36,8 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 __all__ = [
-    "DEFAULT_AFTER",
-    "DEFAULT_EVERY",
+    "RECHECK_AFTER",
+    "RECHECK_EVERY",
     "Wakes",
     "check_after",
     "check_every",
@@ -45,13 +47,15 @@ __all__ = [
 ]
 
 
-#: Early re-checks, in seconds after binding. They cover the window in which
-#: writers may not yet know about a fresh subscription.
-DEFAULT_AFTER: tuple[float, ...] = (0.1, 0.3, 1.0)
+#: The standard early re-checks to opt into, in seconds after binding. They
+#: cover the window in which writers may not yet know about a fresh
+#: subscription. A level flow takes none unless given ``after=``.
+RECHECK_AFTER: tuple[float, ...] = (0.1, 0.3, 1.0)
 
-#: The standing re-check period, in seconds. It bounds how long a dropped
-#: notification can go unnoticed.
-DEFAULT_EVERY: float | None = 30.0
+#: The standard standing re-check period to opt into, in seconds. It bounds how
+#: long a dropped notification can go unnoticed. A level flow takes none unless
+#: given ``every=``.
+RECHECK_EVERY: float = 30.0
 
 
 def check_after(owner: str, after: Iterable[float]) -> tuple[float, ...]:
@@ -162,7 +166,8 @@ class Wakes:
 
     Re-checks are measured from binding: one at each ``after`` offset, then
     one every ``every`` seconds after the last of them, forever (``None``
-    stops after ``after``). Exiting the block cancels the pending re-check,
+    stops after ``after``). With neither, the bind wake and notifications
+    are all. Exiting the block cancels the pending re-check,
     unbinds and closes the subscription. It is never reopened: reopening
     would open a fresh window for writes to slip through.
     """
@@ -170,8 +175,8 @@ class Wakes:
     def __init__(
         self,
         sub: Subscription,
-        after: tuple[float, ...] = DEFAULT_AFTER,
-        every: float | None = DEFAULT_EVERY,
+        after: tuple[float, ...] = (),
+        every: float | None = None,
     ) -> None:
         self._sub = sub
         self._after = after

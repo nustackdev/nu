@@ -38,6 +38,10 @@ def sessions_fold(arm: Nu) -> Nu:
     Args:
         arm: the body one connection gets. Spawned when the connection
             appears in the server's book, cancelled and drained when it goes.
+
+    Notes:
+        - No re-checks: the server signals opens and closes in process, on
+          one channel that drops nothing, so a notification is never missed.
     """
     return nu.ReconcileLatestEach(
         ServerRef().sessions(),

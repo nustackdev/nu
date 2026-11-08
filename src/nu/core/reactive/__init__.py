@@ -13,8 +13,9 @@ triggers:
 - **level** (``WaitUntil``, ``ReconcileWhile``, ``Reconcile``,
   ``ReconcileEach``, ``ReconcileLatest``, ``ReconcileLatestEach``): the body
   gets no key; it reads the current state and makes it right. Because it
-  ignores what changed, the flow also wakes it right after subscribing and on
-  a re-check schedule, so a missed notification is late, never lost. For
+  ignores what changed, the flow also wakes it right after subscribing, and
+  on a re-check schedule when it opts in (``RECHECK_AFTER``,
+  ``RECHECK_EVERY``), so a missed notification is late, never lost. For
   keeping state in step and waiting for state.
 
 Inside each trigger there are two axes: what a wake does to a running body
@@ -57,6 +58,8 @@ from nu.core.reactive.event import (
     ReactWhile,
 )
 from nu.core.reactive.level import (
+    RECHECK_AFTER,
+    RECHECK_EVERY,
     Reconcile,
     ReconcileEach,
     ReconcileLatest,
@@ -76,6 +79,8 @@ from nu.core.reactive.sources import (
 
 
 __all__ = [
+    "RECHECK_AFTER",
+    "RECHECK_EVERY",
     "ObserverProtocol",
     "OnAny",
     "OnChange",

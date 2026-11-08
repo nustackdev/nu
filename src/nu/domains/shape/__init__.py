@@ -26,7 +26,7 @@ from .interactions import (
 )
 from .item import ItemRef, MutableItemRef, ReactiveItemRef
 from .mapping import MappingRef, MutableMappingRef, ReactiveMappingRef
-from .rewrite import reroot, rerooter
+from .rewrite import reroot, rerooter, with_parent
 from .sequence import MutableSequenceRef, ReactiveSequenceRef, SequenceRef
 from .set_ import MutableSetRef, ReactiveSetRef, SetRef
 from .shape import MutableShapeRef, ReactiveShapeRef, ShapeRef
@@ -63,4 +63,5 @@ __all__ = [
     "reroot",
     "rerooter",
     "root_shape",
+    "with_parent",
 ]

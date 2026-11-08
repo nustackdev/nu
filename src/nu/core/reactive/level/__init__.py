@@ -15,10 +15,13 @@ message. So a level flow wakes:
 - once right after its subscription is bound, so the first read follows the
   subscribe and a write made before it is always seen;
 - on every notification;
-- on re-checks measured from binding: one at each ``after`` offset (default
-  0.1, 0.3 and 1.0 seconds, the window a fresh subscription is blind in),
-  then every ``every`` seconds forever (default 30; ``None`` turns the
-  standing re-check off). A missed notification is caught by the next one.
+- on re-checks, only when the flow opts in. They are measured from binding:
+  one at each ``after`` offset, then every ``every`` seconds forever.
+  ``RECHECK_AFTER`` (0.1, 0.3 and 1.0 seconds, the window a fresh
+  subscription is blind in) and ``RECHECK_EVERY`` (30 seconds) are the
+  standard schedule. With it, a missed notification is caught by the next
+  re-check; without it, by the next notification. A flow whose state is
+  written by other processes, and that must never stay wrong, opts in.
 
 ``after`` and ``every`` are child terms like any other argument: a literal
 schedule is checked when the flow is built, a computed one when it is read.
@@ -52,6 +55,7 @@ One module per flow: ``wait`` (``WaitUntil``), ``while_``
 (``ReconcileLatestEach``), and the private ``_wakes`` they share.
 """
 
+from ._wakes import RECHECK_AFTER, RECHECK_EVERY
 from .each import ReconcileEach
 from .latest import ReconcileLatest
 from .latest_each import ReconcileLatestEach
@@ -61,6 +65,8 @@ from .while_ import ReconcileWhile
 
 
 __all__ = [
+    "RECHECK_AFTER",
+    "RECHECK_EVERY",
     "Reconcile",
     "ReconcileEach",
     "ReconcileLatest",

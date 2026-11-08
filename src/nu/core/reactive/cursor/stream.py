@@ -15,16 +15,30 @@ from nu.domains.shape.interactions import AdvanceCursor
 from nu.lang import StreamQuery
 
 from .._body import async_only
-from ..level._wakes import DEFAULT_AFTER, DEFAULT_EVERY, Wakes, read_schedule, schedule_terms
+from ..level._wakes import Wakes, read_schedule, schedule_terms
 from ..sources.on import OnChildrenChange
 
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, Callable, Iterable
 
+    from nu.lang import Nu
     from nu.lang.runtime import Runtime
 
 __all__ = ["Stream"]
+
+
+def _reads(source: object, cursor: object) -> tuple[Nu, Nu]:
+    """The two reads of ``source``: the item past ``cursor``, and the watch.
+
+    A ref whose fabric needs each read bracketed supplies both itself through
+    ``_stream_reads(cursor)``, so every drain step sees the source as it
+    stands then (kv refs give each read a snapshot of its own).
+    """
+    own = getattr(type(source), "_stream_reads", None)
+    if own is not None:
+        return own(source, cursor)
+    return AdvanceCursor(source, cursor), OnChildrenChange(source)
 
 
 class Stream(StreamQuery):
@@ -41,15 +55,20 @@ class Stream(StreamQuery):
             under.
         after: re-drain offsets in seconds after subscribing, for the window
             a fresh subscription may not yet be heard in. A term yielding an
-            iterable of floats, or a literal one.
+            iterable of floats, or a literal one. Empty by default: re-drains
+            are opt in (``after=nu.RECHECK_AFTER``).
         every: seconds between standing re-drains once ``after`` is spent.
-            ``None`` turns them off. A term yielding a float or None, or a
+            ``None`` (the default) turns them off; opt in with
+            ``every=nu.RECHECK_EVERY``. A term yielding a float or None, or a
             literal one.
 
     Notes:
         - Children are ``[advance, change, body, key, log_key, after,
           every]``: ``advance`` is an ``AdvanceCursor`` over ``source``,
-          ``change`` an ``OnChildrenChange`` subscription on ``source``.
+          ``change`` an ``OnChildrenChange`` subscription on ``source``. A
+          source ref may supply both itself (``_stream_reads``): a kv ref
+          wraps each in a snapshot of its own, so the stream needs no
+          bracket around it and an outer one does not freeze it.
         - Subscribes first, then drains: walks ``advance`` to exhaustion,
           running ``body`` per item. An item appended at any point after the
           subscribe is either in that first drain or wakes a later one, so
@@ -87,8 +106,8 @@ class Stream(StreamQuery):
         *,
         key: object = None,
         log_key: object = "stream_log_key",
-        after: Iterable[float] | object = DEFAULT_AFTER,
-        every: float | object | None = DEFAULT_EVERY,
+        after: Iterable[float] | object = (),
+        every: float | object | None = None,
     ) -> None:
         from nu.context import Attr
 
@@ -96,9 +115,7 @@ class Stream(StreamQuery):
         if key is None:
             key = "stream_key"
 
-        cursor_ref = Attr(log_key)
-        advance = AdvanceCursor(source, cursor_ref)
-        change = OnChildrenChange(source)
+        advance, change = _reads(source, Attr(log_key))
         super().__init__(
             advance, change, body, key, log_key, *schedule_terms("Stream", after, every)
         )

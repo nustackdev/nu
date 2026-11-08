@@ -18,7 +18,7 @@ from nu.lang.attributes.execution import ExecOrder
 
 from .._arms import ArmBook
 from .._body import async_only
-from ._wakes import DEFAULT_AFTER, DEFAULT_EVERY, Wakes, read_schedule, schedule_terms
+from ._wakes import Wakes, read_schedule, schedule_terms
 
 
 if TYPE_CHECKING:
@@ -89,9 +89,11 @@ class ReconcileLatestEach(Control):
             Optional, defaults to ``"item"``; a lambda mints its own.
         after: re-check offsets in seconds after binding, for the window a
             fresh subscription may not yet be heard in. A term yielding an
-            iterable of floats, or a literal one.
+            iterable of floats, or a literal one. Empty by default: re-checks
+            are opt in (``after=nu.RECHECK_AFTER``).
         every: seconds between standing re-checks once ``after`` is spent.
-            ``None`` turns them off. A term yielding a float or None, or a
+            ``None`` (the default) turns them off; opt in with
+            ``every=nu.RECHECK_EVERY``. A term yielding a float or None, or a
             literal one.
 
     Notes:
@@ -149,8 +151,8 @@ class ReconcileLatestEach(Control):
         body: object,
         item: object = None,
         *,
-        after: Iterable[float] | object = DEFAULT_AFTER,
-        every: float | object | None = DEFAULT_EVERY,
+        after: Iterable[float] | object = (),
+        every: float | object | None = None,
     ) -> None:
         body, (item,) = bind("ReconcileLatestEach", body, item=item)
         super().__init__(

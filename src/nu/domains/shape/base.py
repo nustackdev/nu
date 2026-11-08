@@ -99,6 +99,25 @@ class StructuredRef(Ref):
         """Root Shape for this Ref chain (resolved at construction)."""
         return self._payload.get("root_shape")  # type: ignore[return-value]
 
+    # --- placement -------------------------------------------------------------
+
+    def with_parent(self, parent: StructuredRef) -> StructuredRef:
+        """This chain, its head placed under ``parent``, so its slots read typed there.
+
+        ``Counter.value.with_parent(State.cells[cell_id])`` reads and writes
+        ``State.cells[cell_id].value`` as an int, in ``State``'s store. Only the
+        spine moves; a ref used as an index inside the chain stays as it is.
+        The name is reserved: no Shape can declare a slot called
+        ``with_parent``.
+
+        Raises:
+            TypeError: ``parent`` is not a shape ref.
+            ValueError: this chain was already placed.
+        """
+        from .rewrite import with_parent
+
+        return with_parent(self, parent)
+
     # --- address resolution --------------------------------------------------
 
     def _address(self, rt: Runtime, nid: int) -> object:
