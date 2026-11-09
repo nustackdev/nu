@@ -4,6 +4,10 @@ A container slot declares the value it holds, and that declaration types it
 throughout. Descent (``ref[k]``, ``ref[i]``, ``ref.field``) lands on the mem
 ref for the declared value, and every value an op reads is that value's form.
 A container reads as the live object held in the data dict.
+
+Each container sits on the mutable shape cell of its built-in type
+(``MutablePyDictRef``, ``MutablePyListRef``, ``MutablePySetRef``), so it
+carries that type's whole surface, the built-in-only calls included.
 """
 
 from __future__ import annotations
@@ -13,9 +17,9 @@ from typing import TYPE_CHECKING, Generic, overload
 from typing_extensions import TypeVar
 
 from nu.domains.shape import (
-    MutableOrderedMappingRef,
-    MutableSequenceRef,
-    MutableSetRef,
+    MutablePyDictRef,
+    MutablePyListRef,
+    MutablePySetRef,
     MutableShapeRef,
     Shape,
     Slot,
@@ -64,7 +68,7 @@ S = TypeVar("S", bound=Shape)
 L = TypeVar("L", bound=ItemRef)
 
 
-class DictRef(MutableOrderedMappingRef, RefBase[dict[K, V]], Generic[K, V]):
+class DictRef(MutablePyDictRef[K, V], RefBase[dict[K, V]], Generic[K, V]):
     """A mapping slot in the dict substrate, holding one plain dict of values.
 
     Subscripting descends rather than reads: ``ref[k]`` is a ref at that key
@@ -152,7 +156,7 @@ class DictRef(MutableOrderedMappingRef, RefBase[dict[K, V]], Generic[K, V]):
         return super().__getitem__(key)
 
 
-class ListRef(MutableSequenceRef, RefBase[list[T]], Generic[T]):
+class ListRef(MutablePyListRef[T], RefBase[list[T]], Generic[T]):
     """A sequence slot in the dict substrate, holding one plain list of values.
 
     Subscripting with an int descends rather than reads: ``ref[i]`` is the mem
@@ -234,7 +238,7 @@ class ListRef(MutableSequenceRef, RefBase[list[T]], Generic[T]):
         return super().__getitem__(index)
 
 
-class SetRef(MutableSetRef, RefBase[set[T]], Generic[T]):
+class SetRef(MutablePySetRef[T], RefBase[set[T]], Generic[T]):
     """A set slot in the dict substrate, holding one plain set of values.
 
     No descent: a set has no addresses, so there is no child ref to navigate

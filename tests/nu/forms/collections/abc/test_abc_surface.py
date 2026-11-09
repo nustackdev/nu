@@ -3,8 +3,8 @@
 Sequence: ``sort`` and ``copy`` are ``List``'s. Set: the abstract forms carry
 the comparisons, ``isdisjoint``, and the named methods that are Nu's spelling
 of the ABC's ``& | - ^`` and ``|= &= -= ^=``; only ``copy`` is ``Set`` /
-``FrozenSet``'s. The mutable tiers carry every ABC mixin, so a ref on them
-does too.
+``FrozenSet``'s. The mutable tiers carry every ABC mixin. A mem ref sits on
+its built-in type's shape cell, so it carries the built-in-only methods too.
 """
 
 from __future__ import annotations
@@ -49,11 +49,11 @@ def _ctx(data: dict) -> nu.Context:
 
 
 @pytest.mark.parametrize("name", ["sort", "copy"])
-def test_list_only_methods_are_on_list_alone(name: str):
+def test_list_only_methods_skip_the_abstract_forms(name: str):
     assert not hasattr(SequenceForm, name)
     assert not hasattr(MutableSequenceForm, name)
-    assert not hasattr(_Port.xs, name)
     assert hasattr(nu.List, name)
+    assert hasattr(_Port.xs, name)
 
 
 @pytest.mark.parametrize(
@@ -130,9 +130,9 @@ def test_named_set_updates_are_on_the_abstract_mutable_set_form(name: str):
     assert not hasattr(nu.FrozenSet, name)
 
 
-def test_copy_is_on_the_concrete_sets_alone():
+def test_copy_skips_the_abstract_set_form():
     assert not hasattr(SetLikeForm, "copy")
-    assert not hasattr(_Port.st, "copy")
+    assert hasattr(_Port.st, "copy")
     assert nu.run(nu.Set({1, 2}).copy())[0] == {1, 2}
     assert type(nu.FrozenSet(frozenset({1})).copy()) is nu.FrozenSet
 

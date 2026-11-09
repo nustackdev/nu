@@ -269,8 +269,8 @@ def test_container_refs_carry_the_methods(
     ],
     ids=lambda v: v if isinstance(v, str) else "",
 )
-def test_refs_on_an_abstract_form_leave_built_in_methods_out(ref: object, method: str) -> None:
-    assert not hasattr(ref, method)
+def test_mem_refs_carry_their_built_in_types_methods(ref: object, method: str) -> None:
+    assert hasattr(ref, method)
 
 
 def test_mutating_set_methods_run_on_a_ref() -> None:
