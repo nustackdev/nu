@@ -38,9 +38,11 @@ class DictKeys(
     """View of a Dict's keys, produced by `dict.keys()`.
 
     Notes:
-        - Set-like: `union`, `intersection`, `difference`, `issubset`, and
-          the `| & - ^` operators all work on it directly, matching
-          Python's `dict.keys()`.
+        - Set-like, as Python's `KeysView` is: the subset comparisons
+          (`<`, `<=`, `>`, `>=`), `isdisjoint`, and the named algebra
+          (`union`, `intersection`, `difference`, ...) work on it
+          directly. The named methods are Nu's spelling of the `| & - ^`
+          operators, which Nu reserves or leaves undefined.
         - Lazy and live: it holds no keys of its own, it re-reads the
           backing Dict on every evaluation. Mutate the Dict and the view
           reflects it on the next `nu.run`.
@@ -59,12 +61,6 @@ class DictKeys(
         from .set_ import Set
 
         return Set(operand)
-
-    def _wrap_iterable_result(self, operand: Nu) -> List[K]:
-        """Wrap operand as List."""
-        from .list_ import List
-
-        return List(operand)
 
     def _wrap_element_result(self, operand: Nu) -> Object:
         """Wrap operand as Object element."""
@@ -140,12 +136,6 @@ class DictValues(
         True
     """
 
-    def _wrap_iterable_result(self, operand: Nu) -> List[V]:
-        """Wrap operand as List."""
-        from .list_ import List
-
-        return List(operand)
-
     def _wrap_element_result(self, operand: Nu) -> Object:
         """Wrap operand as Object element."""
         from ..primitives import Object
@@ -204,9 +194,10 @@ class DictItems(
     """View of a Dict's `(key, value)` pairs, produced by `dict.items()`.
 
     Notes:
-        - Set-like: `union`, `intersection`, `difference`, `issubset`, and
-          the `| & - ^` operators all work on it directly, matching
-          Python's `dict.items()` when the values are hashable.
+        - Set-like, as Python's `ItemsView` is when the values are
+          hashable: the subset comparisons, `isdisjoint`, and the named
+          algebra (`union`, `intersection`, ...) work on it directly, Nu's
+          spelling of the `| & - ^` operators.
         - Lazy and live: it holds no items of its own, it re-reads the
           backing Dict on every evaluation. Mutate the Dict and the view
           reflects it on the next `nu.run`.
@@ -226,12 +217,6 @@ class DictItems(
         from .set_ import Set
 
         return Set(operand)
-
-    def _wrap_iterable_result(self, operand: Nu) -> List[tuple[K, V]]:
-        """Wrap operand as List."""
-        from .list_ import List
-
-        return List(operand)
 
     def _wrap_element_result(self, operand: Nu) -> Object:
         """Wrap operand as Object element."""

@@ -244,8 +244,6 @@ def test_set_methods_take_plain_sets_and_forms_on_the_right() -> None:
         (_Mem.st, "difference", {1}, Difference),
         (_Mem.st, "symmetric_difference", {1}, SymmetricDifference),
         (_Kv.ps, "union", {1}, Union),
-        (_Kv.d, "merge", {"a": 1}, Merge),
-        (_Mem.d, "merge", {"a": 1}, Merge),
         (_Kv.pd, "merge", {"a": 1}, Merge),
         (_Kv.n, "bitand", 1, BitAnd),
         (_Mem.n, "lshift", 1, LShift),
@@ -259,9 +257,34 @@ def test_container_refs_carry_the_methods(
     assert type(nu.tree.children(term)[0]) is expected
 
 
-def test_mutating_set_and_merge_methods_run_on_a_ref() -> None:
-    ctx = nu.Context().bind(dict, {"st": {1}, "d": {"a": 1}}, _Mem)
+@pytest.mark.parametrize(
+    ("ref", "method"),
+    [
+        (_Mem.st, "copy"),
+        (_Mem.d, "merge"),
+        (_Mem.d, "merge_update"),
+        (_Mem.d, "copy"),
+        (_Mem.xs, "sort"),
+        (_Mem.xs, "copy"),
+    ],
+    ids=lambda v: v if isinstance(v, str) else "",
+)
+def test_mem_refs_carry_their_built_in_types_methods(ref: object, method: str) -> None:
+    assert hasattr(ref, method)
+
+
+def test_mutating_set_methods_run_on_a_ref() -> None:
+    ctx = nu.Context().bind(dict, {"st": {1}}, _Mem)
     _, ctx = nu.run(_Mem.st.update({2}), ctx)
-    assert nu.run(_Mem.d.merge_update({"b": 2}), ctx)[0] == {"a": 1, "b": 2}
     assert nu.run(_Mem.st, ctx)[0] == {1, 2}
-    assert nu.run(_Mem.d, ctx)[0] == {"a": 1, "b": 2}
+
+
+def test_dict_algebra_goes_through_the_concrete_form() -> None:
+    ctx = nu.Context().bind(dict, {"st": {1}, "d": {"a": 1}}, _Mem)
+    assert nu.run(_Mem.st.union({2}), ctx)[0] == {1, 2}
+    assert nu.run(nu.Dict(_Mem.d).merge({"b": 2}), ctx)[0] == {"a": 1, "b": 2}
+    assert nu.run(_Mem.st <= {1, 2}, ctx)[0] is True
+    assert nu.run(_Mem.st.isdisjoint({2}), ctx)[0] is True
+    # the reads left the stored values alone
+    assert nu.run(_Mem.st, ctx)[0] == {1}
+    assert nu.run(_Mem.d, ctx)[0] == {"a": 1}

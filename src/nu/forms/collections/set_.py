@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.lang import TypedNu
 
+from ..constructor import value_constructor
 from .abc import MutableSetForm, SetLikeForm
 from .abc.set_interactions import FrozenSetCreate, FrozenSetOf, SetCreate, SetOf
 
@@ -14,7 +15,6 @@ if TYPE_CHECKING:
     from nu.lang import Arg, FrozenSetArg, Nu, SetArg
 
     from ..primitives import Bool, Object
-    from .list_ import List
 
 
 __all__ = [
@@ -38,19 +38,19 @@ class Set(
           on insertion order surviving a round trip.
         - `>`, `<`, `>=`, `<=` are subset/superset relations, not size
           comparisons: `a > b` means a is a proper superset of b, not that
-          a has more elements. `union`, `intersection`, `difference` and
-          `symmetric_difference` live on the shared set base, not on this
-          class. Set algebra is named only: `&`, `|` and `>>` compose flows
-          on a set like on every term, and `-` / `^` are not defined.
-        - Mutating ops (`add`, `remove`, `discard`, `pop`, `clear`,
-          `update`, ...) live on the shared mutable-set base too.
+          a has more elements. They come from the shared set base.
+        - The named algebra (`union`, `issubset`, ...) and in-place
+          updates (`update`, `*_update`) come from the shared set bases:
+          Nu's spelling of the Set ABC operators, since `&`, `|` and `>>`
+          compose flows on a set like on every term and `-` / `^` are not
+          defined. Only `copy` is set-only and lives here.
 
     Example:
         >>> nu.run(nu.Set.of(1, 2, 3))[0]
         {1, 2, 3}
     """
 
-    @classmethod
+    @value_constructor
     def create(cls) -> Set[T]:
         """Build a fresh empty set.
 
@@ -63,7 +63,7 @@ class Set(
         """
         return cls(SetCreate())
 
-    @classmethod
+    @value_constructor
     def of(cls, *items: Arg) -> Set:
         """Build a set from positional item expressions.
 
@@ -92,16 +92,6 @@ class Set(
         """
         return Set(operand)
 
-    def _wrap_iterable_result(self, operand: Nu) -> List:
-        """Wrap operand as List.
-
-        Yields:
-            The operand wrapped as List.
-        """
-        from .list_ import List
-
-        return List(operand)
-
     def _wrap_element_result(self, operand: Nu) -> Object:
         """Wrap operand as an elem-typed Form when known; Object otherwise.
 
@@ -117,87 +107,26 @@ class Set(
 
         return Object(operand)
 
+    def copy(self) -> Set[T]:
+        """Shallow copy of self.
+
+        Notes:
+            - Built-in only: `collections.abc.Set` has no `copy`.
+
+        Yields:
+            A new set with the same elements as self.
+
+        Example:
+            >>> nu.run(nu.Set({1, 2, 3}).copy())[0]
+            {1, 2, 3}
+        """
+        from .abc.set_interactions import Copy
+
+        return self._wrap_set_result(Copy(self))
+
     # =========================================================================
     # COMPARISON
     # =========================================================================
-
-    def __gt__(self, other: SetArg[T]) -> Bool:
-        """Self is a proper superset of other.
-
-        Args:
-            other: the set to compare against.
-
-        Yields:
-            True when self contains every element of other and at least one
-            more, False otherwise.
-
-        Example:
-            >>> nu.run(nu.Set.of(1, 2, 3) > nu.Set.of(1, 2))[0]
-            True
-        """
-        from nu.core import Gt
-
-        from ..primitives import Bool
-
-        return Bool(Gt(self, other))
-
-    def __lt__(self, other: SetArg[T]) -> Bool:
-        """Self is a proper subset of other.
-
-        Args:
-            other: the set to compare against.
-
-        Yields:
-            True when every element of self is in other and other has at
-            least one more, False otherwise.
-
-        Example:
-            >>> nu.run(nu.Set.of(1, 2) < nu.Set.of(1, 2, 3))[0]
-            True
-        """
-        from nu.core import Lt
-
-        from ..primitives import Bool
-
-        return Bool(Lt(self, other))
-
-    def __ge__(self, other: SetArg[T]) -> Bool:
-        """Self is a superset of other, or equal.
-
-        Args:
-            other: the set to compare against.
-
-        Yields:
-            True when every element of other is in self, False otherwise.
-
-        Example:
-            >>> nu.run(nu.Set.of(1, 2) >= nu.Set.of(1, 2))[0]
-            True
-        """
-        from nu.core import Ge
-
-        from ..primitives import Bool
-
-        return Bool(Ge(self, other))
-
-    def __le__(self, other: SetArg[T]) -> Bool:
-        """Self is a subset of other, or equal.
-
-        Args:
-            other: the set to compare against.
-
-        Yields:
-            True when every element of self is in other, False otherwise.
-
-        Example:
-            >>> nu.run(nu.Set.of(1, 2) <= nu.Set.of(1, 2))[0]
-            True
-        """
-        from nu.core import Le
-
-        from ..primitives import Bool
-
-        return Bool(Le(self, other))
 
     def __eq__(self, other: SetArg[T]) -> Bool:  # type: ignore[override]
         """Self equal to other by value.
@@ -280,9 +209,9 @@ class FrozenSet(
     Notes:
         - Iteration order is arbitrary, matching Python's `frozenset`.
         - `>`, `<`, `>=`, `<=` are subset/superset relations, not size
-          comparisons. `union`, `intersection`, `difference` and
-          `symmetric_difference` live on the shared set base, not on this
-          class. Set algebra is named only: `&`, `|` and `>>` compose flows.
+          comparisons. The named algebra (`union`, `issubset`, ...) comes
+          from the shared set base; only `copy` lives here. Set algebra is
+          named only: `&`, `|` and `>>` compose flows.
         - No `add`/`remove`/`update`/... unlike `Set`: a FrozenSet can't be
           mutated in place.
 
@@ -291,7 +220,7 @@ class FrozenSet(
         frozenset({1, 2, 3})
     """
 
-    @classmethod
+    @value_constructor
     def create(cls) -> FrozenSet[T]:
         """Build an empty frozenset.
 
@@ -304,7 +233,7 @@ class FrozenSet(
         """
         return cls(FrozenSetCreate())
 
-    @classmethod
+    @value_constructor
     def of(cls, *items: Arg) -> FrozenSet:
         """Build a frozenset from positional item expressions.
 
@@ -333,16 +262,6 @@ class FrozenSet(
         """
         return FrozenSet(operand)
 
-    def _wrap_iterable_result(self, operand: Nu) -> List:
-        """Wrap operand as List.
-
-        Yields:
-            The operand wrapped as List.
-        """
-        from .list_ import List
-
-        return List(operand)
-
     def _wrap_element_result(self, operand: Nu) -> Object:
         """Wrap operand as Object element.
 
@@ -353,87 +272,26 @@ class FrozenSet(
 
         return Object(operand)
 
+    def copy(self) -> FrozenSet[T]:
+        """Shallow copy of self.
+
+        Notes:
+            - Built-in only: `collections.abc.Set` has no `copy`.
+
+        Yields:
+            A new frozenset with the same elements as self.
+
+        Example:
+            >>> nu.run(nu.FrozenSet(frozenset({1, 2})).copy())[0]
+            frozenset({1, 2})
+        """
+        from .abc.set_interactions import Copy
+
+        return self._wrap_set_result(Copy(self))
+
     # =========================================================================
     # COMPARISON
     # =========================================================================
-
-    def __gt__(self, other: FrozenSetArg[T]) -> Bool:
-        """Self is a proper superset of other.
-
-        Args:
-            other: the set to compare against.
-
-        Yields:
-            True when self contains every element of other and at least one
-            more, False otherwise.
-
-        Example:
-            >>> nu.run(nu.FrozenSet.of(1, 2, 3) > nu.FrozenSet.of(1, 2))[0]
-            True
-        """
-        from nu.core import Gt
-
-        from ..primitives import Bool
-
-        return Bool(Gt(self, other))
-
-    def __lt__(self, other: FrozenSetArg[T]) -> Bool:
-        """Self is a proper subset of other.
-
-        Args:
-            other: the set to compare against.
-
-        Yields:
-            True when every element of self is in other and other has at
-            least one more, False otherwise.
-
-        Example:
-            >>> nu.run(nu.FrozenSet.of(1, 2) < nu.FrozenSet.of(1, 2, 3))[0]
-            True
-        """
-        from nu.core import Lt
-
-        from ..primitives import Bool
-
-        return Bool(Lt(self, other))
-
-    def __ge__(self, other: FrozenSetArg[T]) -> Bool:
-        """Self is a superset of other, or equal.
-
-        Args:
-            other: the set to compare against.
-
-        Yields:
-            True when every element of other is in self, False otherwise.
-
-        Example:
-            >>> nu.run(nu.FrozenSet.of(1, 2) >= nu.FrozenSet.of(1, 2))[0]
-            True
-        """
-        from nu.core import Ge
-
-        from ..primitives import Bool
-
-        return Bool(Ge(self, other))
-
-    def __le__(self, other: FrozenSetArg[T]) -> Bool:
-        """Self is a subset of other, or equal.
-
-        Args:
-            other: the set to compare against.
-
-        Yields:
-            True when every element of self is in other, False otherwise.
-
-        Example:
-            >>> nu.run(nu.FrozenSet.of(1, 2) <= nu.FrozenSet.of(1, 2))[0]
-            True
-        """
-        from nu.core import Le
-
-        from ..primitives import Bool
-
-        return Bool(Le(self, other))
 
     def __eq__(self, other: FrozenSetArg[T]) -> Bool:  # type: ignore[override]
         """Self equal to other by value.

@@ -5,7 +5,14 @@ from nu.core.access import SetItem
 from .collection import CollectionForm
 from .container import ContainerForm
 from .iterable import IterableForm
-from .mapping import MappingForm, MutableMappingForm, ReactiveMappingForm
+from .mapping import (
+    MappingForm,
+    MutableMappingForm,
+    MutableOrderedMappingForm,
+    OrderedMappingForm,
+    ReactiveMappingForm,
+    ReactiveOrderedMappingForm,
+)
 from .mapping_interactions import (
     ContainsKey,
     DeleteItem,
@@ -13,16 +20,19 @@ from .mapping_interactions import (
     Get,
     Items,
     Keys,
+    KeysPage,
     Merge,
     MergeUpdate,
     PopItem,
     ReversedItems,
     ReversedKeys,
+    ReversedKeysPage,
     ReversedValues,
     SetDefault,
     Update,
     Values,
 )
+from .paged_mapping import PagedMapping
 from .sequence import MutableSequenceForm, ReactiveSequenceForm, SequenceForm
 from .sequence_interactions import (
     Append,
@@ -30,8 +40,6 @@ from .sequence_interactions import (
     DelIndex,
     Extend,
     First,
-    IAdd,
-    IMul,
     IndexOf,
     Insert,
     Last,
@@ -81,8 +89,6 @@ __all__ = [
     "Extend",
     "First",
     "Get",
-    "IAdd",
-    "IMul",
     "IndexOf",
     "Insert",
     "Intersection",
@@ -93,16 +99,21 @@ __all__ = [
     "Items",
     "IterableForm",
     "Keys",
+    "KeysPage",
     "Last",
     "MappingForm",
     "Merge",
     "MergeUpdate",
     "MutableMappingForm",
+    "MutableOrderedMappingForm",
     "MutableSequenceForm",
     "MutableSetForm",
+    "OrderedMappingForm",
+    "PagedMapping",
     "Pop",
     "PopItem",
     "ReactiveMappingForm",
+    "ReactiveOrderedMappingForm",
     "ReactiveSequenceForm",
     "ReactiveSetForm",
     "Remove",
@@ -110,6 +121,7 @@ __all__ = [
     "Reverse",
     "ReversedItems",
     "ReversedKeys",
+    "ReversedKeysPage",
     "ReversedValues",
     "SequenceForm",
     "SetDefault",

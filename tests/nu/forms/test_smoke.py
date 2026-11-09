@@ -8,14 +8,18 @@ construction.
 
 from __future__ import annotations
 
+import pytest
+
 from nu.forms import (
     Bool,
     Bytes,
     Dict,
     Int,
+    Iterator,
     List,
     Set,
     Str,
+    Tuple,
 )
 from nu.lang import NULL, Literal
 from nu.lang.helpers import aeval, compile, eval
@@ -98,6 +102,13 @@ def test_dict_reads():
     assert val(Dict({"a": 1}).setdefault("b", 5)) == 5
 
 
+def test_sequence_reversed_is_a_stream():
+    for seq in (List.of(1, 2, 3), Tuple.of(1, 2, 3)):
+        stream = seq.reversed()
+        assert isinstance(stream, Iterator)
+        assert val(stream.to_list()) == [3, 2, 1]
+
+
 def test_dict_reversed_reads():
     d = Dict({"a": 1, "b": 2, "c": 3})
     assert list(val(d.reversed_keys())) == ["c", "b", "a"]
@@ -117,6 +128,23 @@ async def test_dict_reversed_reads_async():
     assert await collect(d.reversed_keys()) == ["c", "b", "a"]
     assert await collect(d.reversed_values()) == [3, 2, 1]
     assert await collect(d.reversed_items()) == [("c", 3), ("b", 2), ("a", 1)]
+
+
+def test_dict_reversed_reads_are_streams():
+    d = Dict({"a": 1, "b": 2, "c": 3})
+    for term in (d.reversed_keys(), d.reversed_values(), d.reversed_items()):
+        assert isinstance(term, Iterator)
+    assert val(d.reversed_keys().to_list()) == ["c", "b", "a"]
+    assert val(d.reversed_values().to_list()) == [3, 2, 1]
+    assert val(d.reversed_items().to_list()) == [("c", 3), ("b", 2), ("a", 1)]
+
+
+async def test_dict_reversed_reads_drain_under_arun():
+    d = Dict({"a": 1, "b": 2, "c": 3})
+    assert await aval(d.reversed_keys().to_list()) == ["c", "b", "a"]
+    assert await aval(d.reversed_values().to_list()) == [3, 2, 1]
+    assert await aval(d.reversed_items().to_list()) == [("c", 3), ("b", 2), ("a", 1)]
+    assert await aval(d.reversed_keys().first()) == "c"
 
 
 def test_set_reads():
@@ -181,3 +209,25 @@ def test_async_mirrors_sync():
         assert await aval(Set({1, 2}).union(Literal({3}))) == {1, 2, 3}
 
     asyncio.run(go())
+
+
+def test_dict_has_no_ordering_comparisons():
+    """Python's dict has no ``<`` / ``>``: building one raises, as on a plain dict."""
+    for op in ("__gt__", "__lt__", "__ge__", "__le__"):
+        assert getattr(Dict, op) is getattr(object, op)
+    with pytest.raises(TypeError):
+        Dict.of(a=1) > Dict.of(a=2)  # noqa: B015
+    with pytest.raises(TypeError):
+        Dict.of(a=1) <= Dict.of(a=2)  # noqa: B015
+    assert val(Dict.of(a=1) == Dict.of(a=1)) is True
+
+
+def test_clear_calls_the_collection_clear():
+    """Clear calls ``clear()`` as is: a mutable collection empties, anything else raises its own error."""
+    from nu.forms.collections.abc import Clear
+
+    held = {"a": 1}
+    eval(compile(Clear(Literal(held))), Context())
+    assert held == {}
+    with pytest.raises(AttributeError, match="clear"):
+        eval(compile(Clear(Literal((1, 2)))), Context())

@@ -8,6 +8,7 @@ from typing_extensions import TypeVarTuple, Unpack
 
 from nu.lang import TypedNu
 
+from ..constructor import value_constructor
 from .abc import SequenceForm
 from .abc.sequence_interactions import TupleCreate, TupleOf
 
@@ -16,7 +17,6 @@ if TYPE_CHECKING:
     from nu.lang import Arg, IntArg, Nu, TupleArg
 
     from ..primitives import Bool, Object
-    from .list_ import List
 
 
 __all__ = [
@@ -28,7 +28,7 @@ Ts = TypeVarTuple("Ts")
 
 
 class Tuple(
-    SequenceForm[tuple[Unpack[Ts]], object, "List[object]", "Object"],
+    SequenceForm[tuple[Unpack[Ts]], object, "Tuple", "Object"],
     TypedNu[tuple[Unpack[Ts]]],
     Generic[Unpack[Ts]],
 ):
@@ -44,15 +44,14 @@ class Tuple(
           matching Python. Slicing never raises, bounds are clamped.
         - `+` and `*` concatenate and repeat like List's, but always
           produce a new Tuple.
-        - Slicing yields Tuple; iterating or mapping over the whole
-          collection yields List, matching `_wrap_iterable_result`.
+        - Slicing yields Tuple; `iter` and `reversed` yield a stream.
 
     Example:
         >>> nu.run(nu.Tuple.of(1, 2, 3))[0]
         (1, 2, 3)
     """
 
-    @classmethod
+    @value_constructor
     def create(cls) -> Tuple[Unpack[Ts]]:
         """Empty tuple.
 
@@ -65,7 +64,7 @@ class Tuple(
         """
         return cls(TupleCreate())
 
-    @classmethod
+    @value_constructor
     def of(cls, *items: Arg) -> Tuple:
         """Tuple built from positional item expressions.
 
@@ -89,12 +88,6 @@ class Tuple(
     def _wrap_sliceable_result(self, operand: Nu) -> Tuple:
         """Wrap operand as Tuple for slice results."""
         return Tuple(operand)
-
-    def _wrap_iterable_result(self, operand: Nu) -> List:
-        """Wrap operand as List."""
-        from .list_ import List
-
-        return List(operand)
 
     def _wrap_element_result(self, operand: Nu) -> Object:
         """Wrap operand as Object element."""

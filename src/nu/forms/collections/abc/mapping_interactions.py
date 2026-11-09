@@ -1,7 +1,8 @@
 """Mapping interactions.
 
-Reads (Query): Keys, Values, Items, Get, ContainsKey,
-    Copy, ReversedKeys, ReversedValues, ReversedItems, Merge
+Reads (Query): Keys, KeysPage, Values, Items, Get, ContainsKey,
+    Copy, ReversedKeysPage, Merge
+Streams (StreamQuery): ReversedKeys, ReversedValues, ReversedItems
 Mutate, yield nothing (Command): DeleteItem, Update (SetItem lives in nu.core.access)
 Mutate and yield a value (Action): DictPop, PopItem, SetDefault,
     MergeUpdate
@@ -9,16 +10,18 @@ Mutate and yield a value (Action): DictPop, PopItem, SetDefault,
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from nu.engine.structure import Declared
-from nu.factory import host
-from nu.lang import Command, ScalarAction, ScalarQuery
+from nu.factory.host import host
+from nu.lang import Command, ScalarAction, ScalarQuery, StreamQuery
 from nu.lang.null import is_null
+
+from .paged_mapping import PagedMapping
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import AsyncIterator, Callable, Iterator
 
     from nu.lang.runtime import Runtime
 
@@ -33,11 +36,13 @@ __all__ = [
     "Get",
     "Items",
     "Keys",
+    "KeysPage",
     "Merge",
     "MergeUpdate",
     "PopItem",
     "ReversedItems",
     "ReversedKeys",
+    "ReversedKeysPage",
     "ReversedValues",
     "SetDefault",
     "Update",
@@ -80,6 +85,57 @@ class Keys(ScalarQuery):
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
             return obj.keys()
+
+        return athunk
+
+
+def _page_args(op: str, cursor: str, at: object, limit: object) -> tuple[object, int | None]:
+    """Refuse a NULL cursor or limit: a page past nothing is not an empty page."""
+    if is_null(at):
+        raise ValueError(f"{op}({cursor}=) read NULL: branch on it first (IsNull)")
+    if is_null(limit):
+        raise ValueError(f"{op}(limit=) read NULL: branch on it first (IsNull)")
+    return at, cast("int | None", limit)
+
+
+def _paged(obj: object, op: str) -> PagedMapping:
+    """``obj`` as the :class:`PagedMapping` it must be to hand out a page of keys."""
+    if not isinstance(obj, PagedMapping):
+        msg = (
+            f"{op}(...) pages: {type(obj).__name__} is not a PagedMapping. "
+            f"A plain dict has no paged keys; a fabric registers its paging mappings"
+        )
+        raise TypeError(msg)
+    return obj
+
+
+class KeysPage(ScalarQuery):
+    """One page of keys: list(mapping.keys(after=after, limit=limit)).
+
+    Calls the mapping's own paged ``keys`` and collects the page into a list.
+    A mapping that is no :class:`PagedMapping` raises TypeError (Python's
+    ``dict.keys`` takes no arguments). ``after`` and ``limit`` reach it as
+    they read; one that reads NULL raises ValueError before the mapping is
+    called.
+    """
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        operand, after_t, limit_t = children
+
+        def thunk(rt: Runtime) -> object:
+            obj = _paged(operand(rt), "keys")
+            after, limit = _page_args("keys", "after", after_t(rt), limit_t(rt))
+            return list(obj.keys(after=after, limit=limit))
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        operand, after_t, limit_t = children
+
+        async def athunk(rt: Runtime) -> object:
+            obj = _paged(await operand(rt), "keys")
+            after, limit = _page_args("keys", "after", await after_t(rt), await limit_t(rt))
+            return list(obj.keys(after=after, limit=limit))
 
         return athunk
 
@@ -204,21 +260,19 @@ class Copy(ScalarQuery):
         return athunk
 
 
-class ReversedKeys(ScalarQuery):
-    """Reverse-order keys: reversed(mapping). Yields keys in reverse insertion order.
+class ReversedKeys(StreamQuery):
+    """Keys last first, as a stream: reversed(mapping).
 
-    Scalar-shaped like :class:`Keys` -- the thunk returns one iterator
-    handle (Python's ``reversed(obj)`` object). Downstream ``Iter``
-    opens that handle into a stream lazily, so ``islice(m.reversed_keys(),
-    n)`` reads only ``n`` items regardless of stream size.
+    The thunk returns ``reversed(obj)``, the mapping's own reverse walk, so a
+    consumer pulling ``n`` keys reads only ``n``. The async twin yields the
+    same walk as an async stream.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (operand,) = children
 
         def thunk(rt: Runtime) -> object:
-            obj = operand(rt)
-            return reversed(obj)
+            return reversed(operand(rt))
 
         return thunk
 
@@ -226,39 +280,56 @@ class ReversedKeys(ScalarQuery):
         (operand,) = children
 
         async def athunk(rt: Runtime) -> object:
-            obj = await operand(rt)
-
-            async def agen() -> object:
-                for k in reversed(obj):
-                    yield k
-
-            return agen()
+            return _astream(reversed(await operand(rt)))
 
         return athunk
 
 
-class ReversedValues(ScalarQuery):
-    """Values in reverse insertion order: reversed(mapping.values()).
+class ReversedKeysPage(ScalarQuery):
+    """One page of keys, last first: list(mapping.reversed_keys(before=before, limit=limit)).
 
-    Scalar-shaped like :class:`Values` -- the thunk returns one iterator
-    handle. Downstream ``Iter`` opens the handle into a stream lazily,
-    so ``islice(m.reversed_values(), n)`` reads only ``n`` values regardless
-    of stream size.
+    The reverse twin of :class:`KeysPage`: calls the mapping's own paged
+    ``reversed_keys`` and collects the page into a list. A mapping that is no
+    :class:`PagedMapping` raises TypeError, and so does a ``before`` or
+    ``limit`` that reads NULL (ValueError).
+    """
 
-    Backend contract: prefers an explicit ``values_reverse()`` method on
-    the runtime mapping (fast path, one pass); falls back to
-    ``reversed(obj.values())`` when the mapping doesn't provide one --
-    that native path works for Python ``dict`` (3.8+) and any view whose
-    ``.values()`` returns a reversible sequence.
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        operand, before_t, limit_t = children
+
+        def thunk(rt: Runtime) -> object:
+            obj = _paged(operand(rt), "reversed_keys")
+            before, limit = _page_args("reversed_keys", "before", before_t(rt), limit_t(rt))
+            return list(obj.reversed_keys(before=before, limit=limit))
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        operand, before_t, limit_t = children
+
+        async def athunk(rt: Runtime) -> object:
+            obj = _paged(await operand(rt), "reversed_keys")
+            before, limit = _page_args(
+                "reversed_keys", "before", await before_t(rt), await limit_t(rt)
+            )
+            return list(obj.reversed_keys(before=before, limit=limit))
+
+        return athunk
+
+
+class ReversedValues(StreamQuery):
+    """Values last first, as a stream: reversed(mapping.values()).
+
+    Lazy like :class:`ReversedKeys`: the mapping's own reverse walk over its
+    values. Works for Python ``dict`` and any mapping whose ``.values()`` is
+    reversible.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (operand,) = children
 
         def thunk(rt: Runtime) -> object:
-            obj = operand(rt)
-            fast = getattr(obj, "values_reverse", None)
-            return fast() if fast is not None else reversed(obj.values())
+            return reversed(operand(rt).values())
 
         return thunk
 
@@ -266,36 +337,23 @@ class ReversedValues(ScalarQuery):
         (operand,) = children
 
         async def athunk(rt: Runtime) -> object:
-            obj = await operand(rt)
-            fast = getattr(obj, "values_reverse", None)
-            if fast is not None:
-                return fast()
-
-            async def agen() -> object:
-                for v in reversed(obj.values()):
-                    yield v
-
-            return agen()
+            return _astream(reversed((await operand(rt)).values()))
 
         return athunk
 
 
-class ReversedItems(ScalarQuery):
-    """``(key, value)`` pairs in reverse insertion order: reversed(mapping.items()).
+class ReversedItems(StreamQuery):
+    """``(key, value)`` pairs last first, as a stream: reversed(mapping.items()).
 
-    Scalar-shaped like :class:`Items`. Same fast-path/fallback contract as
-    :class:`ReversedValues` -- backends may implement ``items_reverse()``
-    for a single-pass scan; otherwise the runtime uses
-    ``reversed(obj.items())`` (native on ``dict`` 3.8+).
+    Lazy like :class:`ReversedKeys`. Works for Python ``dict`` and any
+    mapping whose ``.items()`` is reversible.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (operand,) = children
 
         def thunk(rt: Runtime) -> object:
-            obj = operand(rt)
-            fast = getattr(obj, "items_reverse", None)
-            return fast() if fast is not None else reversed(obj.items())
+            return reversed(operand(rt).items())
 
         return thunk
 
@@ -303,18 +361,15 @@ class ReversedItems(ScalarQuery):
         (operand,) = children
 
         async def athunk(rt: Runtime) -> object:
-            obj = await operand(rt)
-            fast = getattr(obj, "items_reverse", None)
-            if fast is not None:
-                return fast()
-
-            async def agen() -> object:
-                for kv in reversed(obj.items()):
-                    yield kv
-
-            return agen()
+            return _astream(reversed((await operand(rt)).items()))
 
         return athunk
+
+
+async def _astream(items: Iterator) -> AsyncIterator:
+    """A sync walk as the async stream an async stream thunk returns."""
+    for item in items:
+        yield item
 
 
 class Merge(ScalarQuery):
@@ -347,14 +402,24 @@ class Merge(ScalarQuery):
 
 
 class DeleteItem(Command):
-    """Delete entry by key: del mapping[key]. Mutates slot 0; returns nothing."""
+    """Delete entry by key: del mapping[key]. Mutates slot 0; returns nothing.
+
+    An absent key raises whatever the mapping's own ``del`` raises. With the
+    construction-time ``missing_ok`` flag (carried in the payload) set, a
+    ``KeyError`` from that ``del`` is a no-op.
+    """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
     _creates = Declared(value=frozenset(), name="creates")
     """Acts on an absent container as on an empty one, and leaves it absent."""
 
+    def __init__(self, target: object, key: object, *, missing_ok: bool = False) -> None:
+        super().__init__(target, key)
+        self._payload = {**self._payload, "missing_ok": missing_ok}
+
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, key_t = children
+        missing_ok = bool(self._payload["missing_ok"])
 
         def thunk(rt: Runtime) -> None:
             target = target_t(rt)
@@ -363,12 +428,17 @@ class DeleteItem(Command):
             key = key_t(rt)
             if is_null(key):
                 raise ValueError("cannot write with a NULL operand")
-            del target[key]
+            try:
+                del target[key]
+            except KeyError:
+                if not missing_ok:
+                    raise
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, key_t = children
+        missing_ok = bool(self._payload["missing_ok"])
 
         async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)
@@ -377,7 +447,11 @@ class DeleteItem(Command):
             key = await key_t(rt)
             if is_null(key):
                 raise ValueError("cannot write with a NULL operand")
-            del target[key]
+            try:
+                del target[key]
+            except KeyError:
+                if not missing_ok:
+                    raise
 
         return athunk
 

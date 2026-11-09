@@ -220,6 +220,9 @@ ignore = [
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+[tool.ruff.lint.pep8-naming]
+classmethod-decorators = ["value_constructor"]  # nu.forms: a classmethod refs do not have
+
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**/*.py" = [
     "S101", "S108", "T20", "D", "E711", "E712", "ANN", "N806",

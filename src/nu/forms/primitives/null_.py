@@ -21,3 +21,16 @@ class NullForm(Form, TypedNu[Null]):
     def __init__(self) -> None:
         """Build the node wrapping NULL. Takes no arguments."""
         super().__init__(NULL)
+
+    @classmethod
+    def create(cls) -> NullForm:
+        """A NULL term, so a branch can yield NULL like any other value.
+
+        Yields:
+            NULL. Writes refuse it, reads downstream see an absent value.
+
+        Example:
+            >>> nu.run(nu.If(False, nu.Int(1), nu.NullForm.create()))[0]
+            <NULL>
+        """
+        return cls()

@@ -6,11 +6,14 @@ from typing import TYPE_CHECKING, Generic, TypeVar, overload
 
 from nu.lang import TypedNu
 
-from .abc import MutableMappingForm
+from ..constructor import value_constructor
+from .abc import MutableOrderedMappingForm
 from .abc.mapping_interactions import DictCreate, DictOf
 
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from nu.lang import Arg, DictArg, Nu
 
     from ..primitives import (
@@ -35,21 +38,23 @@ V = TypeVar("V")
 
 
 class Dict(
-    MutableMappingForm[dict[K, V], K, V, "Dict[K, V]", "Object"],
+    MutableOrderedMappingForm[dict[K, V], K, V, "Dict[K, V]", "Object"],
     TypedNu[dict[K, V]],
     Generic[K, V],
 ):
-    """Dict interface. Mutable mapping + comparable.
+    """Dict interface. Mutable ordered mapping, compared by value with `==` only.
 
     Notes:
         - Keys preserve insertion order, matching Python's `dict`.
-        - Ordering comparisons (`>`, `<`, `>=`, `<=`) raise `TypeError` at
-          evaluation time - Python dicts don't support them either. Use
-          `==`/`!=` for content comparison.
+        - No ordering comparisons (`>`, `<`, `>=`, `<=`), as on Python's
+          `dict`: building one raises `TypeError`. Use `==`/`!=` for
+          content comparison.
         - `is_` tests object identity. Each evaluation of a `Dict.of`/
           `Dict.create` expression builds a fresh dict, so comparing two
           separately-built dicts with `is_` is False even when their
           contents match, unlike Python's small-string interning for Str.
+        - `copy`, `merge` and `merge_update` are dict-only; the rest of
+          the surface comes from the shared mutable ordered-mapping base.
         - Merging is named: `merge` and `merge_update`. `&`, `|` and `>>`
           compose flows on a Dict like on every term.
 
@@ -58,7 +63,7 @@ class Dict(
         {'a': 1, 'b': 2}
     """
 
-    @classmethod
+    @value_constructor
     def create(cls) -> Dict[K, V]:
         """Fresh empty dict.
 
@@ -71,7 +76,7 @@ class Dict(
         """
         return cls(DictCreate())
 
-    @classmethod
+    @value_constructor
     def of(cls, **fields: Arg) -> Dict[str, V]:
         """Dict built from named field expressions.
 
@@ -167,22 +172,33 @@ class Dict(
         """Wrap operand as Dict."""
         return Dict(operand)
 
-    def keys(self) -> DictKeys[K]:  # type: ignore[override]
-        """Self's keys as a live view.
+    @overload  # type: ignore[override]
+    def keys(self) -> DictKeys[K]: ...  # type: ignore[overload-overlap]
+    @overload
+    def keys(self, *, after: Arg[K] | None = ..., limit: Arg[int] | None = ...) -> List[K]: ...
+    def keys(
+        self, *, after: Arg[K] | None = None, limit: Arg[int] | None = None
+    ) -> DictKeys[K] | List[K]:
+        """Self's keys as a live view, or one page of them as a List.
+
+        Args:
+            after: the key to start past. Paging only.
+            limit: the most keys to read. Paging only.
 
         Notes:
             - Insertion order, matching Python's `dict.keys()`.
+            - Paging forwards to the runtime mapping's own
+              `keys(after=, limit=)`; it runs on a `PagedMapping` only, a
+              Python `dict` is none and raises TypeError.
 
         Yields:
-            The keys, wrapped as DictKeys.
+            The keys, wrapped as DictKeys; with either argument, a List.
 
         Example:
             >>> list(nu.run(nu.Dict.of(a=1, b=2).keys())[0])
             ['a', 'b']
         """
-        from .abc.mapping_interactions import Keys
-
-        return self._wrap_keys_result(Keys(self))
+        return super().keys(after=after, limit=limit)  # type: ignore[call-overload, no-any-return]
 
     def values(self) -> DictValues[V]:  # type: ignore[override]
         """Self's values as a live view.
@@ -218,11 +234,63 @@ class Dict(
 
         return self._wrap_items_result(Items(self))
 
-    def _wrap_iterable_result(self, operand: Nu) -> List:
-        """Wrap operand as List."""
-        from .list_ import List
+    # =========================================================================
+    # DICT-ONLY (not on collections.abc.MutableMapping)
+    # =========================================================================
 
-        return List(operand)
+    def copy(self) -> Dict[K, V]:
+        """Shallow copy of self: mapping.copy().
+
+        Yields:
+            A new mapping with the same key/value pairs.
+
+        Example:
+            >>> nu.run(nu.Dict({"a": 1}).copy())[0]
+            {'a': 1}
+        """
+        from .abc.mapping_interactions import Copy
+
+        return self._wrap_mapping_result(Copy(self))
+
+    def merge(self, other: Arg[Mapping[K, V]]) -> Dict[K, V]:
+        """Self and other merged into a new mapping, like Python's dict `|`.
+
+        Args:
+            other: the mapping to merge in. Its keys win over self's on
+                overlap.
+
+        Yields:
+            A new mapping holding self's entries overridden by other's.
+
+        Example:
+            >>> nu.run(nu.Dict({"a": 1}).merge({"b": 2}))[0]
+            {'a': 1, 'b': 2}
+        """
+        from .abc.mapping_interactions import Merge
+
+        return self._wrap_mapping_result(Merge(self, other))
+
+    def merge_update(self, other: Arg[Mapping[K, V]]) -> Dict[K, V]:
+        """Merge other into self in place, and yield self, like Python's dict `|=`.
+
+        Args:
+            other: the mapping to merge in. Its values win over self's on
+                shared keys.
+
+        Notes:
+            - Mutates slot 0 in place and yields the mutated mapping: an
+              Action, not a Command, mirroring Python's `dict.__ior__`.
+
+        Yields:
+            Self, updated with other's entries.
+
+        Example:
+            >>> nu.run(nu.Dict({"a": 1}).merge_update({"b": 2}))[0]
+            {'a': 1, 'b': 2}
+        """
+        from .abc.mapping_interactions import MergeUpdate
+
+        return self._wrap_mapping_result(MergeUpdate(self, other))
 
     def _wrap_element_result(self, operand: Nu) -> Object:
         """Wrap operand as Object element."""
@@ -233,110 +301,6 @@ class Dict(
     # =========================================================================
     # COMPARISON
     # =========================================================================
-
-    def __gt__(self, other: DictArg[K, V]) -> Bool:
-        """Self strictly greater than other.
-
-        Args:
-            other: the dict to compare against.
-
-        Notes:
-            - Python dicts don't support ordering, so this raises
-              `TypeError` at evaluation time. Compare with `==`/`!=`
-              instead.
-
-        Yields:
-            Never yields; the comparison always raises.
-
-        Example:
-            >>> nu.run(nu.Dict.of(a=1) > nu.Dict.of(a=2))[0]
-            Traceback (most recent call last):
-                ...
-            TypeError: '>' not supported between instances of 'dict' and 'dict'
-        """
-        from nu.core import Gt
-
-        from ..primitives import Bool
-
-        return Bool(Gt(self, other))
-
-    def __lt__(self, other: DictArg[K, V]) -> Bool:
-        """Self strictly less than other.
-
-        Args:
-            other: the dict to compare against.
-
-        Notes:
-            - Python dicts don't support ordering, so this raises
-              `TypeError` at evaluation time. Compare with `==`/`!=`
-              instead.
-
-        Yields:
-            Never yields; the comparison always raises.
-
-        Example:
-            >>> nu.run(nu.Dict.of(a=1) < nu.Dict.of(a=2))[0]
-            Traceback (most recent call last):
-                ...
-            TypeError: '<' not supported between instances of 'dict' and 'dict'
-        """
-        from nu.core import Lt
-
-        from ..primitives import Bool
-
-        return Bool(Lt(self, other))
-
-    def __ge__(self, other: DictArg[K, V]) -> Bool:
-        """Self greater than or equal to other.
-
-        Args:
-            other: the dict to compare against.
-
-        Notes:
-            - Python dicts don't support ordering, so this raises
-              `TypeError` at evaluation time. Compare with `==`/`!=`
-              instead.
-
-        Yields:
-            Never yields; the comparison always raises.
-
-        Example:
-            >>> nu.run(nu.Dict.of(a=1) >= nu.Dict.of(a=2))[0]
-            Traceback (most recent call last):
-                ...
-            TypeError: '>=' not supported between instances of 'dict' and 'dict'
-        """
-        from nu.core import Ge
-
-        from ..primitives import Bool
-
-        return Bool(Ge(self, other))
-
-    def __le__(self, other: DictArg[K, V]) -> Bool:
-        """Self less than or equal to other.
-
-        Args:
-            other: the dict to compare against.
-
-        Notes:
-            - Python dicts don't support ordering, so this raises
-              `TypeError` at evaluation time. Compare with `==`/`!=`
-              instead.
-
-        Yields:
-            Never yields; the comparison always raises.
-
-        Example:
-            >>> nu.run(nu.Dict.of(a=1) <= nu.Dict.of(a=2))[0]
-            Traceback (most recent call last):
-                ...
-            TypeError: '<=' not supported between instances of 'dict' and 'dict'
-        """
-        from nu.core import Le
-
-        from ..primitives import Bool
-
-        return Bool(Le(self, other))
 
     def __eq__(self, other: DictArg[K, V]) -> Bool:  # type: ignore[override]
         """Self equal to other by value.

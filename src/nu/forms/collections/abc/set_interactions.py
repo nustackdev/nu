@@ -20,7 +20,7 @@ from collections.abc import MutableSet
 from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
-from nu.factory import host
+from nu.factory.host import host
 from nu.lang import Command, ScalarAction, ScalarQuery
 from nu.lang.null import is_null
 

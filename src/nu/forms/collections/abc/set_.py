@@ -1,13 +1,17 @@
 """Set collection: bases + mutations.
 
-SetLikeForm = Collection + union/intersection/difference/symmetric_difference/issubset/issuperset/isdisjoint
-    + copy
-MutableSetForm = SetLike + add/remove/discard/pop/clear/update/*_update
+SetLikeForm = Collection + subset comparisons (< <= > >=) + isdisjoint
+    + union/intersection/difference/symmetric_difference/issubset/issuperset
+MutableSetForm = SetLike + add/remove/discard/pop/clear
+    + update/intersection_update/difference_update/symmetric_difference_update
 
-Set algebra is named methods only. ``&``, ``|`` and ``>>`` compose flows on
-every term (a set form included), and ``-`` / ``^`` are not defined here.
-
-Follows Python's collections.abc.Set / MutableSet pattern.
+Follows Python's collections.abc.Set / MutableSet pattern. Nu reserves ``&``
+and ``|`` (they compose flows on every term) and leaves ``-`` / ``^`` undefined,
+so the ABC's set operators are spelled with Python's named methods: ``union``
+for ``|``, ``intersection`` for ``&``, ``difference`` for ``-``,
+``symmetric_difference`` for ``^``, ``issubset`` / ``issuperset`` beside
+``<=`` / ``>=``, and the ``*update`` methods for ``|= &= -= ^=``. ``copy`` is
+built-in only and lives on ``Set`` / ``FrozenSet``.
 
 Type Parameters:
     CollectionT: Native Python collection type (set[int], frozenset[str], etc.)
@@ -49,11 +53,15 @@ class SetLikeForm(
 ):
     """Base for set values, like collections.abc.Set.
 
-    Ops: union, intersection, difference, symmetric_difference, issubset,
-    issuperset, isdisjoint, copy. Named methods only: `&`, `|` and `>>`
-    compose flows on a set like on every term, and `-` / `^` are not defined.
+    Ops: the subset comparisons (`<`, `<=`, `>`, `>=`), isdisjoint, and
+    union, intersection, difference, symmetric_difference, issubset,
+    issuperset.
 
     Notes:
+        - The named methods are Nu's spelling of the Set ABC operators:
+          `&`, `|` and `>>` compose flows on a set like on every term, and
+          `-` / `^` are not defined.
+        - `copy` is built-in only and lives on `Set` / `FrozenSet`.
         - Subclasses (e.g. `Set`) must implement `_wrap_set_result` to wrap
           a query result in their own concrete set type.
         - Every op accepts a plain Python `set`/`frozenset` or another
@@ -195,6 +203,80 @@ class SetLikeForm(
 
         return Bool(IsSuperset(self, other))
 
+    def __gt__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Bool:
+        """Self is a proper superset of other.
+
+        Args:
+            other: the set to compare against.
+
+        Yields:
+            True when self contains every element of other and at least one
+            more, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Set.of(1, 2, 3) > nu.Set.of(1, 2))[0]
+            True
+        """
+        from nu.core import Gt
+        from nu.forms.primitives import Bool
+
+        return Bool(Gt(self, other))
+
+    def __lt__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Bool:
+        """Self is a proper subset of other.
+
+        Args:
+            other: the set to compare against.
+
+        Yields:
+            True when every element of self is in other and other has at
+            least one more, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Set.of(1, 2) < nu.Set.of(1, 2, 3))[0]
+            True
+        """
+        from nu.core import Lt
+        from nu.forms.primitives import Bool
+
+        return Bool(Lt(self, other))
+
+    def __ge__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Bool:
+        """Self is a superset of other, or equal.
+
+        Args:
+            other: the set to compare against.
+
+        Yields:
+            True when every element of other is in self, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Set.of(1, 2) >= nu.Set.of(1, 2))[0]
+            True
+        """
+        from nu.core import Ge
+        from nu.forms.primitives import Bool
+
+        return Bool(Ge(self, other))
+
+    def __le__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Bool:
+        """Self is a subset of other, or equal.
+
+        Args:
+            other: the set to compare against.
+
+        Yields:
+            True when every element of self is in other, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Set.of(1, 2) <= nu.Set.of(1, 2))[0]
+            True
+        """
+        from nu.core import Le
+        from nu.forms.primitives import Bool
+
+        return Bool(Le(self, other))
+
     def isdisjoint(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Bool:
         """Whether self and other share no elements.
 
@@ -215,20 +297,6 @@ class SetLikeForm(
 
         return Bool(IsDisjoint(self, other))
 
-    def copy(self) -> CollectionResultT:
-        """Shallow copy of self.
-
-        Yields:
-            A new set with the same elements as self.
-
-        Example:
-            >>> nu.run(nu.Set({1, 2, 3}).copy())[0]
-            {1, 2, 3}
-        """
-        from .set_interactions import Copy
-
-        return cast("CollectionResultT", self._wrap_set_result(Copy(self)))
-
 
 class MutableSetForm(
     SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
@@ -236,8 +304,9 @@ class MutableSetForm(
 ):
     """Base for mutable set values, like collections.abc.MutableSet.
 
-    Adds add/remove/discard/pop/clear/update/*_update on top of
-    SetLikeForm. The in-place spellings are the `*_update` methods.
+    Adds add/remove/discard/pop/clear on top of SetLikeForm, and the
+    `update` / `*_update` methods: Nu's spelling of the ABC's in-place
+    operators `|= &= -= ^=`, which Nu reserves or leaves undefined.
 
     Notes:
         - Every mutating method needs self bound to a Ref inside a shape;

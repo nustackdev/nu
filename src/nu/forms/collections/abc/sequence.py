@@ -1,7 +1,13 @@
 """Sequence collection: bases + mutations.
 
 SequenceForm = Collection + Sliceable + first/last/index/count/reversed
-MutableSequenceForm = Sequence + append/insert/pop/extend/remove/reverse
+MutableSequenceForm = Sequence + set_at/del_at/append/insert/pop/extend/remove/reverse/clear
+
+The ABC's ``[i] =``, ``del [i]`` and ``+=`` are statements that drop or rebind
+the term a form builds, so nu forms spell them ``set_at``, ``del_at`` and
+``extend``.
+
+Built-in-only methods (``sort``, ``copy``) live on ``List``.
 
 Sorted/Reversed are standalone core atoms (``nu.Sorted``, ``nu.Reversed``).
 
@@ -27,6 +33,7 @@ from .sliceable import SliceableForm
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from nu.forms.collections.iterator_ import Iterator
     from nu.forms.primitives import Int
     from nu.lang import Arg, IntArg
 
@@ -61,7 +68,7 @@ class SequenceForm(
     Type Parameters:
         CollectionT: Native Python collection type (list[int], tuple[str, ...])
         ElementT: Native Python element type
-        CollectionResultT: Result for collection-level interactions (map_, filter_, reversed_, sorted_)
+        CollectionResultT: Result for collection-level interactions (slices)
         ElementResultT: Result for element-level interactions (first, last, sum_, min_, max_)
     """
 
@@ -173,21 +180,20 @@ class SequenceForm(
 
         return Int(Count(self, value))
 
-    def reversed(self) -> CollectionResultT:
-        """Self walked back to front, as a stream.
+    def reversed(self) -> Iterator[ElementT]:
+        """Self walked back to front, as a stream, like Python's ``reversed``.
 
         Notes:
-            - Yields a stream, not a materialized copy; consume it through
-              a Flow (`ForEachDo`) or a Ref-backed context. It doesn't
-              evaluate standalone as a scalar against a plain sequence
-              value.
+            - Yields a stream, not a materialized copy, like Python's
+              `reversed`; loop it with `nu.ForEachDo` or drain it with
+              `.to_list()`.
 
         Yields:
             The elements of self in reverse order.
         """
         from nu.core import Reversed
 
-        return cast("CollectionResultT", self._wrap_iterable_result(Reversed(self)))
+        return self._wrap_iterable_result(Reversed(self))
 
 
 class MutableSequenceForm(
@@ -279,6 +285,28 @@ class MutableSequenceForm(
 
         return cast("ElementResultT", self._wrap_element_result(Pop(self, index)))
 
+    def set_at(self, index: IntArg, value: Arg[ElementT]) -> Any:  # noqa: ANN401
+        """Write value at index: seq[index] = value.
+
+        Args:
+            index: the position to write to. An out-of-range index raises
+                at evaluation time, matching Python.
+            value: the value to store at index.
+
+        Notes:
+            - Mutates self and needs a Ref on the left; it can't run
+              standalone against a plain sequence value.
+            - Nu's spelling of the ABC's ``__setitem__``: a statement
+              (``seq[i] = v``) drops the term it builds, so no nu form has
+              one. `del_at` is its delete counterpart.
+
+        Yields:
+            Nothing (Command).
+        """
+        from .sequence_interactions import SetIndex
+
+        return SetIndex(self, index, value)
+
     def del_at(self, index: IntArg) -> Any:  # noqa: ANN401
         """Remove the element at index.
 
@@ -291,6 +319,9 @@ class MutableSequenceForm(
               standalone against a plain sequence value.
             - Use this over `pop` when a Command is wanted instead of the
               Action `pop` yields.
+            - Nu's spelling of the ABC's ``__delitem__``: a statement
+              (``del seq[i]``) drops the term it builds, so no nu form has
+              one.
 
         Yields:
             Nothing (Command).
@@ -343,39 +374,6 @@ class MutableSequenceForm(
         from .sequence_interactions import Reverse
 
         return Reverse(self)
-
-    def sort(self) -> Any:  # noqa: ANN401
-        """Sort self in place, ascending, using the elements' natural order.
-
-        Notes:
-            - No `key` support yet; sorting by a derived key is deferred.
-            - Mutates self and needs a Ref on the left; it can't run
-              standalone against a plain sequence value.
-
-        Yields:
-            Nothing (Command).
-        """
-        from .sequence_interactions import Sort
-
-        return Sort(self)
-
-    def copy(self) -> CollectionResultT:
-        """Shallow copy of self: a new sequence with the same elements.
-
-        Notes:
-            - Unlike the mutators above, this is a Query: it doesn't mutate
-              self and evaluates fine against a plain sequence value.
-
-        Yields:
-            The copy.
-
-        Example:
-            >>> nu.run(nu.List.of(1, 2, 3).copy())[0]
-            [1, 2, 3]
-        """
-        from .sequence_interactions import Copy
-
-        return cast("CollectionResultT", self._wrap_sliceable_result(Copy(self)))
 
     def clear(self) -> Any:  # noqa: ANN401
         """Remove every element from self.
