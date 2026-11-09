@@ -42,13 +42,13 @@ class Dict(
     TypedNu[dict[K, V]],
     Generic[K, V],
 ):
-    """Dict interface. Mutable ordered mapping + comparable.
+    """Dict interface. Mutable ordered mapping, compared by value with `==` only.
 
     Notes:
         - Keys preserve insertion order, matching Python's `dict`.
-        - Ordering comparisons (`>`, `<`, `>=`, `<=`) raise `TypeError` at
-          evaluation time - Python dicts don't support them either. Use
-          `==`/`!=` for content comparison.
+        - No ordering comparisons (`>`, `<`, `>=`, `<=`), as on Python's
+          `dict`: building one raises `TypeError`. Use `==`/`!=` for
+          content comparison.
         - `is_` tests object identity. Each evaluation of a `Dict.of`/
           `Dict.create` expression builds a fresh dict, so comparing two
           separately-built dicts with `is_` is False even when their
@@ -301,110 +301,6 @@ class Dict(
     # =========================================================================
     # COMPARISON
     # =========================================================================
-
-    def __gt__(self, other: DictArg[K, V]) -> Bool:
-        """Self strictly greater than other.
-
-        Args:
-            other: the dict to compare against.
-
-        Notes:
-            - Python dicts don't support ordering, so this raises
-              `TypeError` at evaluation time. Compare with `==`/`!=`
-              instead.
-
-        Yields:
-            Never yields; the comparison always raises.
-
-        Example:
-            >>> nu.run(nu.Dict.of(a=1) > nu.Dict.of(a=2))[0]
-            Traceback (most recent call last):
-                ...
-            TypeError: '>' not supported between instances of 'dict' and 'dict'
-        """
-        from nu.core import Gt
-
-        from ..primitives import Bool
-
-        return Bool(Gt(self, other))
-
-    def __lt__(self, other: DictArg[K, V]) -> Bool:
-        """Self strictly less than other.
-
-        Args:
-            other: the dict to compare against.
-
-        Notes:
-            - Python dicts don't support ordering, so this raises
-              `TypeError` at evaluation time. Compare with `==`/`!=`
-              instead.
-
-        Yields:
-            Never yields; the comparison always raises.
-
-        Example:
-            >>> nu.run(nu.Dict.of(a=1) < nu.Dict.of(a=2))[0]
-            Traceback (most recent call last):
-                ...
-            TypeError: '<' not supported between instances of 'dict' and 'dict'
-        """
-        from nu.core import Lt
-
-        from ..primitives import Bool
-
-        return Bool(Lt(self, other))
-
-    def __ge__(self, other: DictArg[K, V]) -> Bool:
-        """Self greater than or equal to other.
-
-        Args:
-            other: the dict to compare against.
-
-        Notes:
-            - Python dicts don't support ordering, so this raises
-              `TypeError` at evaluation time. Compare with `==`/`!=`
-              instead.
-
-        Yields:
-            Never yields; the comparison always raises.
-
-        Example:
-            >>> nu.run(nu.Dict.of(a=1) >= nu.Dict.of(a=2))[0]
-            Traceback (most recent call last):
-                ...
-            TypeError: '>=' not supported between instances of 'dict' and 'dict'
-        """
-        from nu.core import Ge
-
-        from ..primitives import Bool
-
-        return Bool(Ge(self, other))
-
-    def __le__(self, other: DictArg[K, V]) -> Bool:
-        """Self less than or equal to other.
-
-        Args:
-            other: the dict to compare against.
-
-        Notes:
-            - Python dicts don't support ordering, so this raises
-              `TypeError` at evaluation time. Compare with `==`/`!=`
-              instead.
-
-        Yields:
-            Never yields; the comparison always raises.
-
-        Example:
-            >>> nu.run(nu.Dict.of(a=1) <= nu.Dict.of(a=2))[0]
-            Traceback (most recent call last):
-                ...
-            TypeError: '<=' not supported between instances of 'dict' and 'dict'
-        """
-        from nu.core import Le
-
-        from ..primitives import Bool
-
-        return Bool(Le(self, other))
 
     def __eq__(self, other: DictArg[K, V]) -> Bool:  # type: ignore[override]
         """Self equal to other by value.

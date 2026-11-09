@@ -8,6 +8,8 @@ construction.
 
 from __future__ import annotations
 
+import pytest
+
 from nu.forms import (
     Bool,
     Bytes,
@@ -207,3 +209,14 @@ def test_async_mirrors_sync():
         assert await aval(Set({1, 2}).union(Literal({3}))) == {1, 2, 3}
 
     asyncio.run(go())
+
+
+def test_dict_has_no_ordering_comparisons():
+    """Python's dict has no ``<`` / ``>``: building one raises, as on a plain dict."""
+    for op in ("__gt__", "__lt__", "__ge__", "__le__"):
+        assert getattr(Dict, op) is getattr(object, op)
+    with pytest.raises(TypeError):
+        Dict.of(a=1) > Dict.of(a=2)  # noqa: B015
+    with pytest.raises(TypeError):
+        Dict.of(a=1) <= Dict.of(a=2)  # noqa: B015
+    assert val(Dict.of(a=1) == Dict.of(a=1)) is True
