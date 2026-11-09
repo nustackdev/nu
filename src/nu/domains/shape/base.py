@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 
 from nu.engine import Declared
 from nu.lang import NULL, Ref
+from nu.lang.null import is_null
 
 
 if TYPE_CHECKING:
@@ -99,6 +100,36 @@ class StructuredRef(Ref):
         """Root Shape for this Ref chain (resolved at construction)."""
         return self._payload.get("root_shape")  # type: ignore[return-value]
 
+    # --- declaration -----------------------------------------------------------
+
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """What a slot annotated ``RefClass[args]`` passes to its constructor.
+
+        Nothing by default. A ref whose constructor needs one of the type
+        arguments (``ShapeRef[Order]``) or checks them overrides this.
+        """
+        return {}
+
+    # --- placement -------------------------------------------------------------
+
+    def with_parent(self, parent: StructuredRef) -> StructuredRef:
+        """This chain, its head placed under ``parent``, so its slots read typed there.
+
+        ``Counter.value.with_parent(State.cells[cell_id])`` reads and writes
+        ``State.cells[cell_id].value`` as an int, in ``State``'s store. Only the
+        spine moves; a ref used as an index inside the chain stays as it is.
+        The name is reserved: no Shape can declare a slot called
+        ``with_parent``.
+
+        Raises:
+            TypeError: ``parent`` is not a shape ref.
+            ValueError: this chain was already placed.
+        """
+        from .rewrite import with_parent
+
+        return with_parent(self, parent)
+
     # --- address resolution --------------------------------------------------
 
     def _address(self, rt: Runtime, nid: int) -> object:
@@ -145,6 +176,18 @@ class StructuredRef(Ref):
         """Async sibling of :meth:`_primitive_write`."""
         msg = f"{type(self).__name__}._aprimitive_write is not implemented"
         raise NotImplementedError(msg)
+
+    def _exists(self, rt: Runtime, nid: int) -> bool:
+        """Whether this Ref's address holds a value; nid is this node's id.
+
+        By default its read is not NULL. A substrate whose read never is NULL
+        (a lazy container handle) overrides this. Called by ``Exists``.
+        """
+        return not is_null(rt.eval(nid))
+
+    async def _aexists(self, rt: Runtime, nid: int) -> bool:
+        """Async sibling of :meth:`_exists`."""
+        return not is_null(await rt.aeval(nid))
 
     # --- value boundary: lift (storage -> domain) / lower (domain -> storage) -
 

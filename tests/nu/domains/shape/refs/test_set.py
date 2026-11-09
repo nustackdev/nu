@@ -1,4 +1,4 @@
-"""Tests for SetRef / MutableSetRef / ReactiveSetRef hierarchy."""
+"""Tests for the SetLikeRef / MutableSetRef tiers and the set row's ReactiveSetRef on top."""
 
 from __future__ import annotations
 
@@ -8,13 +8,14 @@ import nu
 from nu.core import Not
 from nu.core.reactive import OnChange, OnChildrenChange
 from nu.domains.shape.base import StructuredRef
+from nu.domains.shape.collections import ReactiveSetRef
+from nu.domains.shape.collections.abc.set_ import MutableSetRef, SetLikeRef
 from nu.domains.shape.dsl import Shape
 from nu.domains.shape.interactions import (
     Erase,
     Exists,
     SetCmd,
 )
-from nu.domains.shape.set_ import MutableSetRef, ReactiveSetRef, SetRef
 from nu.forms.primitives import Int
 
 
@@ -22,50 +23,50 @@ class MyShape(Shape):
     pass
 
 
-def test_set_ref_is_structured_ref():
-    assert issubclass(SetRef, StructuredRef)
+def test_set_like_ref_is_structured_ref():
+    assert issubclass(SetLikeRef, StructuredRef)
 
 
-def test_set_ref_constructs_with_address():
-    ref = SetRef("my_set")
+def test_set_like_ref_constructs_with_address():
+    ref = SetLikeRef("my_set")
     assert nu.tree.children(ref)
 
 
-def test_set_ref_parent_ref_none_by_default():
-    ref = SetRef("my_set")
+def test_set_like_ref_parent_ref_none_by_default():
+    ref = SetLikeRef("my_set")
     assert ref._parent is None
 
 
-def test_set_ref_stores_owner_shape():
-    ref = SetRef("my_set", owner_shape=MyShape)
+def test_set_like_ref_stores_owner_shape():
+    ref = SetLikeRef("my_set", owner_shape=MyShape)
     assert ref._owner_shape is MyShape
 
 
-def test_set_ref_has_no_subscript():
-    ref = SetRef("my_set")
+def test_set_like_ref_has_no_subscript():
+    ref = SetLikeRef("my_set")
     with pytest.raises((AttributeError, TypeError)):
         ref["element"]  # type: ignore[index]
 
 
 # ---------------------------------------------------------------------------
-# SetRef Form surface (exists / missing / len)
+# SetLikeRef Form surface (exists / missing / len)
 # ---------------------------------------------------------------------------
 
 
-def test_set_ref_exists_returns_exists_query():
-    ref = SetRef("my_set")
+def test_set_like_ref_exists_returns_exists_query():
+    ref = SetLikeRef("my_set")
     assert isinstance(ref.exists(), nu.Bool)
     assert isinstance(ref.exists()._source, Exists)
 
 
-def test_set_ref_missing_returns_missing_query():
-    ref = SetRef("my_set")
+def test_set_like_ref_missing_returns_missing_query():
+    ref = SetLikeRef("my_set")
     assert isinstance(ref.exists().not_(), nu.Bool)
     assert isinstance(ref.exists().not_()._source, Not)
 
 
-def test_set_ref_len_returns_int_form():
-    ref = SetRef("my_set")
+def test_set_like_ref_len_returns_int_form():
+    ref = SetLikeRef("my_set")
     assert isinstance(ref.len(), Int)
 
 
@@ -75,7 +76,7 @@ def test_set_ref_len_returns_int_form():
 
 
 def test_mutable_set_ref_is_subclass_of_set_ref():
-    assert issubclass(MutableSetRef, SetRef)
+    assert issubclass(MutableSetRef, SetLikeRef)
 
 
 def test_mutable_set_ref_constructs():

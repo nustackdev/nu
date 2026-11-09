@@ -35,14 +35,12 @@ from __future__ import annotations
 
 import typing
 from abc import ABCMeta
-from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
+from typing import Any, ClassVar, Generic, TypeVar
 
+from nu.domains.shape.base import StructuredRef
 from nu.lang import Ref
 from nu.lang.typeinfo import TypeInfo
 
-
-if TYPE_CHECKING:
-    from nu.domains.shape.base import StructuredRef
 
 __all__ = [
     "Shape",
@@ -242,18 +240,24 @@ def _synthesize_slot(ann: object, cls: type, field_name: str) -> Slot | None:
     arguments are the slot's declaration, read back through the annotation. A
     ref whose constructor needs one of them (``ShapeRef[Order]``) takes it from
     its ``_slot_kwargs_from_type_args``. Returns ``None`` when the annotation
-    does not name a ref. Raises ``TypeError`` for a bare Shape annotation, since
-    it cannot name the fabric.
+    does not name a ref. Raises ``TypeError`` for a ref that is not a
+    ``StructuredRef`` (only those take a place in a Shape), and for a bare Shape
+    annotation, since it cannot name the fabric.
     """
     origin = typing.get_origin(ann)
+    ref_cls = ann if origin is None else origin
 
-    if origin is not None and isinstance(origin, type) and issubclass(origin, Ref):
-        deriver = getattr(origin, "_slot_kwargs_from_type_args", None)
-        kwargs = deriver(typing.get_args(ann)) if deriver is not None else {}
-        return Slot(origin, **kwargs)
-
-    if isinstance(ann, type) and issubclass(ann, Ref):
-        return Slot(ann)
+    if isinstance(ref_cls, type) and issubclass(ref_cls, Ref):
+        if not issubclass(ref_cls, StructuredRef):
+            msg = (
+                f"{cls.__name__}.{field_name}: {ref_cls.__name__} is not a structured ref, "
+                f"so it cannot be a Shape slot"
+            )
+            raise TypeError(msg)
+        if origin is None:
+            return Slot(ref_cls)
+        kwargs: dict[str, Any] = ref_cls._slot_kwargs_from_type_args(typing.get_args(ann))
+        return Slot(ref_cls, **kwargs)
 
     if isinstance(ann, type) and hasattr(ann, "_slots") and not issubclass(ann, Ref):
         msg = (

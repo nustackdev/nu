@@ -4,6 +4,10 @@ A container slot declares the value it holds, and that declaration types it
 throughout. Descent (``ref[k]``, ``ref[i]``, ``ref.field``) lands on the mem
 ref for the declared value, and every value an op reads is that value's form.
 A container reads as the live object held in the data dict.
+
+Each container sits on the shape ref of its built-in type (``shape.DictRef``,
+``shape.ListRef``, ``shape.SetRef``), so it carries that type's whole surface,
+the built-in-only calls included.
 """
 
 from __future__ import annotations
@@ -12,14 +16,8 @@ from typing import TYPE_CHECKING, Generic, overload
 
 from typing_extensions import TypeVar
 
-from nu.domains.shape import (
-    MutableMappingRef,
-    MutableSequenceRef,
-    MutableSetRef,
-    MutableShapeRef,
-    Shape,
-    Slot,
-)
+from nu.domains import shape
+from nu.domains.shape import MutableShapeRef, Shape, Slot
 from nu.lang.typeinfo import TypeInfo
 
 from .base import RefBase
@@ -64,7 +62,7 @@ S = TypeVar("S", bound=Shape)
 L = TypeVar("L", bound=ItemRef)
 
 
-class DictRef(MutableMappingRef, RefBase[dict[K, V]], Generic[K, V]):
+class DictRef(shape.DictRef[K, V], RefBase[dict[K, V]], Generic[K, V]):
     """A mapping slot in the dict substrate, holding one plain dict of values.
 
     Subscripting descends rather than reads: ``ref[k]`` is a ref at that key
@@ -83,8 +81,10 @@ class DictRef(MutableMappingRef, RefBase[dict[K, V]], Generic[K, V]):
           live object, so a mutation through the ref is visible to anyone
           else holding it.
         - Value reads (``get_item``, ``pop``, ``setdefault``) are the declared
-          value's form, and ``values``, ``items`` and ``copy`` carry the
-          declared types on.
+          value's form, and ``values`` and ``items`` carry the declared
+          types on.
+        - Ordered like the dict it holds: the reversed reads work, paging
+          raises (a Python dict has no paged keys).
         - Writing through a key creates the dict and every level above it;
           an in-place call on an absent slot creates the dict empty first.
         - The declared types shape the refs and forms; nothing coerces or
@@ -150,7 +150,7 @@ class DictRef(MutableMappingRef, RefBase[dict[K, V]], Generic[K, V]):
         return super().__getitem__(key)
 
 
-class ListRef(MutableSequenceRef, RefBase[list[T]], Generic[T]):
+class ListRef(shape.ListRef[T], RefBase[list[T]], Generic[T]):
     """A sequence slot in the dict substrate, holding one plain list of values.
 
     Subscripting with an int descends rather than reads: ``ref[i]`` is the mem
@@ -207,9 +207,8 @@ class ListRef(MutableSequenceRef, RefBase[list[T]], Generic[T]):
         """A lazy stream over the elements, each the declared value's form."""
         return super().iter()
 
-    @overload
-    def __getitem__(self, index: slice) -> List[T]: ...
-    @overload
+    # a Shape element descends to the Shape's own type, which no value-form overload names
+    @overload  # type: ignore[override]
     def __getitem__(self: ListRef[bool], index: IntArg) -> BoolRef: ...
     @overload
     def __getitem__(self: ListRef[int], index: IntArg) -> IntRef: ...
@@ -227,12 +226,14 @@ class ListRef(MutableSequenceRef, RefBase[list[T]], Generic[T]):
     def __getitem__(self: ListRef[L], index: IntArg) -> L: ...
     @overload
     def __getitem__(self, index: IntArg) -> ObjectRef: ...
-    def __getitem__(self, index: object) -> StructuredRef:
+    @overload
+    def __getitem__(self, index: slice) -> List[T]: ...
+    def __getitem__(self, index: IntArg | slice) -> StructuredRef | List[T]:
         """The mem ref for the declared value at ``index``; a slice is a List."""
-        return super().__getitem__(index)
+        return super().__getitem__(index)  # type: ignore[return-value]
 
 
-class SetRef(MutableSetRef, RefBase[set[T]], Generic[T]):
+class SetRef(shape.SetRef[T], RefBase[set[T]], Generic[T]):
     """A set slot in the dict substrate, holding one plain set of values.
 
     No descent: a set has no addresses, so there is no child ref to navigate

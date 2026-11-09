@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .base import StructuredRef
-from .mapping import MappingForm, MutableMappingForm, ReactiveMappingForm
+from .collections.abc.mapping import MappingForm, MutableMappingForm, ReactiveMappingForm
 
 
 if TYPE_CHECKING:

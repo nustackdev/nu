@@ -3,7 +3,8 @@
 Read queries (polymorphic on Ref class):
 - ``Load``: yield the value at the slot-0 Ref (NULL if absent).
 - ``Exists``: True if the slot-0 Ref's address holds a value.
-- ``Extract``: materialise the full subtree rooted at the Ref.
+- ``Extract``: materialise the full subtree rooted at the Ref, asking an
+  ``Extractable`` read for its ``extract()``.
 - ``AdvanceCursor``: read the next key after the cursor on an ordered view.
 
 Write commands (polymorphic on Ref class):
@@ -20,17 +21,21 @@ interface for all substrates, reached through the shape Form mixins.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from nu.engine.structure import Declared
 from nu.lang import Command, ScalarQuery
 from nu.lang.null import is_null
+
+from .extractable import Extractable
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from nu.lang.runtime import Runtime
+
+    from .base import StructuredRef
 
 __all__ = [
     "AdvanceCursor",
@@ -71,78 +76,59 @@ class Load(ScalarQuery):
 class Exists(ScalarQuery):
     """Yield True if the slot-0 Ref's address holds a value. Always a bool.
 
-    A ref that knows its address answers through its ``_exists`` /
-    ``_aexists`` hook (a lazy view: one marker read). Any other ref answers
-    by its read: the value is not NULL.
+    Asks the ref itself (:meth:`StructuredRef._exists` / ``_aexists``). By
+    default a ref holds a value when its read is not NULL; a fabric whose
+    read never is NULL (a lazy container handle) answers its own way.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref = self._children[0]
-        ref_thunk = children[0]
-        hook = getattr(ref, "_exists", None)
-
-        if hook is not None:
-
-            def hooked(rt: Runtime) -> bool:
-                return bool(hook(rt, rt.program.children[nid][0]))
-
-            return hooked
+        ref = cast("StructuredRef", self._children[0])
 
         def thunk(rt: Runtime) -> bool:
-            return not is_null(ref_thunk(rt))
+            return bool(ref._exists(rt, rt.program.children[nid][0]))
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref = self._children[0]
-        ref_thunk = children[0]
-        hook = getattr(ref, "_aexists", None)
-
-        if hook is not None:
-
-            async def hooked(rt: Runtime) -> bool:
-                return bool(await hook(rt, rt.program.children[nid][0]))
-
-            return hooked
+        ref = cast("StructuredRef", self._children[0])
 
         async def athunk(rt: Runtime) -> bool:
-            return not is_null(await ref_thunk(rt))
+            return bool(await ref._aexists(rt, rt.program.children[nid][0]))
 
         return athunk
 
 
 class Extract(ScalarQuery):
-    """Materialise the full subtree at the slot-0 Ref via ``view.extract()``.
+    """Yield the full subtree at the slot-0 Ref as a plain Python value.
 
-    Distinct from ``Load``: Load yields the value at the Ref's
-    address; Extract recursively materialises the subtree into a plain
-    Python value (dict / list / nested mix). The view may be lazy; ``.eager``
-    is unwrapped when present, matching ``CollectionExtract`` mechanics. A
-    mem Ref already reads plain data, which has nothing to materialise and
-    passes through as it is.
+    Distinct from ``Load`` in intent: Load yields the value at the Ref's
+    address, Extract the whole subtree as plain data. A read that is an
+    :class:`~nu.domains.shape.extractable.Extractable` (a fabric's live
+    handle, registered by its fabric) is asked for its ``extract()``; any
+    other read, a mem Ref's or a plain Form's, already is plain data and is
+    yielded as it is.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref_thunk = children[0]
+        (ref_thunk,) = children
 
         def thunk(rt: Runtime) -> object:
-            view = ref_thunk(rt)
-            if hasattr(view, "eager"):
-                view = view.eager
-            return view.extract() if hasattr(view, "extract") else view
+            return _plain(ref_thunk(rt))
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref_thunk = children[0]
+        (ref_thunk,) = children
 
         async def athunk(rt: Runtime) -> object:
-            view = await ref_thunk(rt)
-            if hasattr(view, "eager"):
-                view = view.eager
-            return view.extract() if hasattr(view, "extract") else view
+            return _plain(await ref_thunk(rt))
 
         return athunk
+
+
+def _plain(value: object) -> object:
+    """``value`` as plain data: an Extractable's ``extract()``, anything else as is."""
+    return value.extract() if isinstance(value, Extractable) else value
 
 
 class AdvanceCursor(ScalarQuery):

@@ -84,16 +84,18 @@ def _make_thunk(value):
     return thunk
 
 
-def test_exists_thunk_true_for_real_value():
-    q = Exists(ItemRef("x"))
-    thunk = q._compile(0, (_make_thunk(42),))
-    assert thunk(None) is True
+class _Slot(nu.Shape):
+    x = nu.IntRef.slot()
 
 
-def test_exists_thunk_false_for_empty():
-    q = Exists(ItemRef("x"))
-    thunk = q._compile(0, (_make_thunk(NULL),))
-    assert thunk(None) is False
+def test_exists_asks_the_ref_true_for_real_value():
+    ctx = nu.Context().bind(dict, {"x": 42}, _Slot)
+    assert nu.run(Exists(_Slot.x), ctx)[0] is True
+
+
+def test_exists_asks_the_ref_false_for_nothing_stored():
+    ctx = nu.Context().bind(dict, {}, _Slot)
+    assert nu.run(Exists(_Slot.x), ctx)[0] is False
 
 
 def test_load_thunk_passes_through_value():
@@ -102,9 +104,10 @@ def test_load_thunk_passes_through_value():
     assert thunk(None) == "result"
 
 
-@pytest.mark.skip(reason="substrate impl deferred — Extract needs view.extract()")
-def test_extract_thunk_calls_extract():
-    pass
+def test_extract_yields_the_read_as_it_is():
+    q = Extract(ItemRef("x"))
+    thunk = q._compile(0, (_make_thunk({"a": [1]}),))
+    assert thunk(None) == {"a": [1]}
 
 
 # ---------------------------------------------------------------------------
@@ -144,14 +147,14 @@ def _hook_rt():
     return SimpleNamespace(program=SimpleNamespace(children={0: (7,)}), seen=[])
 
 
-def test_exists_dispatches_to_the_ref_hook_over_the_read():
+def test_exists_asks_the_refs_own_override():
     rt = _hook_rt()
     thunk = Exists(_HookRef("x"))._compile(0, (_make_thunk(NULL),))
     assert thunk(rt) is True
     assert rt.seen == [7]
 
 
-def test_exists_async_dispatches_to_the_async_hook():
+def test_exists_async_asks_the_refs_own_override():
     import asyncio
 
     rt = _hook_rt()

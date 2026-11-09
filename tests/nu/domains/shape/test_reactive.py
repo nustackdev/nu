@@ -19,10 +19,10 @@ from nu.core.reactive import (
     OnDescendantsChange,
     OnPrimitiveChange,
 )
+from nu.domains.shape.collections import ReactiveSetRef
+from nu.domains.shape.collections.abc.mapping import ReactiveMappingRef
+from nu.domains.shape.collections.abc.sequence import ReactiveSequenceRef
 from nu.domains.shape.item import ItemRef, ReactiveItemRef
-from nu.domains.shape.mapping import ReactiveMappingRef
-from nu.domains.shape.sequence import ReactiveSequenceRef
-from nu.domains.shape.set_ import ReactiveSetRef
 from nu.lang import ScalarQuery
 
 

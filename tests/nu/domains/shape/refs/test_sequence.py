@@ -8,6 +8,11 @@ import nu
 from nu.core import Not
 from nu.core.flows.control import IfDo
 from nu.core.reactive import OnChange, OnChildChange, OnChildrenChange
+from nu.domains.shape.collections.abc.sequence import (
+    MutableSequenceRef,
+    ReactiveSequenceRef,
+    SequenceRef,
+)
 from nu.domains.shape.dsl import Shape
 from nu.domains.shape.interactions import (
     Erase,
@@ -15,7 +20,6 @@ from nu.domains.shape.interactions import (
     SetCmd,
 )
 from nu.domains.shape.item import ItemRef
-from nu.domains.shape.sequence import MutableSequenceRef, ReactiveSequenceRef, SequenceRef
 from nu.forms import Int, List, Object, Str
 from nu.lang import TypeInfo
 

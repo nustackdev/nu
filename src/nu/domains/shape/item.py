@@ -9,9 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.lang import Form
-
 from .base import StructuredRef
+from .form import SlotForm
 
 
 if TYPE_CHECKING:
@@ -34,7 +33,7 @@ __all__ = [
 ]
 
 
-class ItemForm(Form):
+class ItemForm(SlotForm):
     """Slot-level read surface for a leaf value. Ops: ``exists()``, ``is_set_falsy()``."""
 
     def exists(self) -> Bool:

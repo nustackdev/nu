@@ -2,8 +2,9 @@
 
 ``ItemRef`` is the leaf itself (slot-level read, write and erase over one key
 of a nested dict) and declares a slot once for every leaf. Each value leaf
-mixes one value form in beside it, so the ref is an operand of the value it
-names; the form decides the surface, the leaf decides where the value lives.
+mixes in the shape ref of its value (``shape.IntRef`` for an int), so the ref
+is an operand of the value it names; the shape ref decides the surface, the
+leaf decides where the value lives.
 """
 
 from __future__ import annotations
@@ -12,13 +13,14 @@ from typing import TYPE_CHECKING
 
 from typing_extensions import Self
 
+from nu.domains import shape
 from nu.domains.shape import MutableItemRef, Slot
-from nu.forms import Bool, Bytes, Float, Int, None_, Object, Str
 
 from .base import RefBase
 
 
 if TYPE_CHECKING:
+    from nu.forms import None_
     from nu.lang import IntArg
 
 
@@ -37,8 +39,9 @@ class ItemRef(MutableItemRef, RefBase):
     """A single stored value in the dict substrate: read it, set it, erase it.
 
     The base every mem leaf builds on. It carries no value surface of its own;
-    a leaf class mixes in the form of the value it holds (``IntRef`` is this
-    plus ``Int``), and that one pairing is the whole of a leaf class.
+    a leaf class mixes in the shape ref of the value it holds
+    (``IntRef`` is this plus ``shape.IntRef``), and that one pairing is the
+    whole of a leaf class.
 
     Args:
         address: this level's key, a literal or a Nu term yielding one.
@@ -50,7 +53,7 @@ class ItemRef(MutableItemRef, RefBase):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class ObjectRef(ItemRef, Object):
+class ObjectRef(ItemRef, shape.ObjectRef):
     """A single stored value in the dict substrate, of no declared type.
 
     What a container descends to when its value is ``object``, undeclared, or
@@ -79,7 +82,7 @@ class ObjectRef(ItemRef, Object):
 # =============================================================================
 
 
-class IntRef(ItemRef, Int):
+class IntRef(ItemRef, shape.IntRef):
     """An int slot in the dict substrate, carrying the whole Int surface.
 
     Args:
@@ -141,7 +144,7 @@ class IntRef(ItemRef, Int):
         return self.set(self - step)
 
 
-class StrRef(ItemRef, Str):
+class StrRef(ItemRef, shape.StrRef):
     """A str slot in the dict substrate, carrying the whole Str surface.
 
     Args:
@@ -163,7 +166,7 @@ class StrRef(ItemRef, Str):
     """
 
 
-class FloatRef(ItemRef, Float):
+class FloatRef(ItemRef, shape.FloatRef):
     """A float slot in the dict substrate, carrying the whole Float surface.
 
     Args:
@@ -184,7 +187,7 @@ class FloatRef(ItemRef, Float):
     """
 
 
-class BoolRef(ItemRef, Bool):
+class BoolRef(ItemRef, shape.BoolRef):
     """A bool slot in the dict substrate, carrying the whole Bool surface.
 
     Args:
@@ -206,7 +209,7 @@ class BoolRef(ItemRef, Bool):
     """
 
 
-class BytesRef(ItemRef, Bytes):
+class BytesRef(ItemRef, shape.BytesRef):
     """A bytes slot in the dict substrate, carrying the whole Bytes surface.
 
     Args:

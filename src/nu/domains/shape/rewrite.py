@@ -61,7 +61,11 @@ if TYPE_CHECKING:
     from nu.tree import Transform
 
 
-__all__ = ["reroot", "rerooter"]
+__all__ = ["reroot", "rerooter", "with_parent"]
+
+#: Payload mark on every spine node ``with_parent`` placed. A placed chain and a
+#: fresh one both bottom out at ANCHOR, so the mark is the only way to tell.
+_PLACED = "placed"
 
 
 def reroot(
@@ -171,3 +175,62 @@ def rerooter(
         return reroot(root, under, rooted=rooted)
 
     return transform
+
+
+def with_parent(ref: StructuredRef, parent: StructuredRef) -> StructuredRef:
+    """Place one chain's head under ``parent``: ``ref``, one level deeper.
+
+    The single-chain, explicit sibling of :func:`reroot`. A shape declared
+    on its own (``Counter.value``) resolves at its root; placed under a
+    ref, it resolves below it and reads typed::
+
+        Counter.value.with_parent(State.cells[cell_id])
+
+    Only the spine moves: each ref from ``ref`` up to its chain root is
+    rebuilt, and the root's ANCHOR becomes ``parent``. A level's address is
+    kept as it is, so an index that is itself a ref
+    (``Board.entries[Here.cell]``) still resolves where its author meant.
+
+    Args:
+        ref: the chain to place, a shape ref still at its own root.
+        parent: the ref it lands under. Its ``root_shape`` comes along on
+            every spine node, so the placed chain routes to ``parent``'s
+            fabric and store.
+
+    Returns:
+        The placed chain. ``ref`` itself is untouched.
+
+    Raises:
+        TypeError: ``parent`` is not a shape ref.
+        ValueError: ``ref`` was already placed by ``with_parent``.
+
+    Example:
+        >>> class Counter(nu.Shape):
+        ...     value = nu.IntRef.slot()
+        >>> class Cells(nu.Shape):
+        ...     pass
+        >>> class State(nu.Shape):
+        ...     cells = nu.DictRef.slot(Cells)
+        >>> store = {}
+        >>> ctx = nu.Context().bind(dict, store, State)
+        >>> nu.run(Counter.value.with_parent(State.cells["c1"]).set(3), ctx)[0]
+        >>> store
+        {'cells': {'c1': {'value': 3}}}
+    """
+    if not isinstance(parent, StructuredRef):
+        msg = f"with_parent: the parent must be a shape ref, got {type(parent).__name__}"
+        raise TypeError(msg)
+    scope = parent._root_shape
+
+    def spine(node: StructuredRef) -> StructuredRef:
+        if node._payload.get(_PLACED):
+            msg = f"with_parent: {type(node).__name__} chain already has a parent"
+            raise ValueError(msg)
+        kids = children(node)
+        head = kids[0]
+        placed_head = spine(head) if isinstance(head, StructuredRef) else parent
+        variant = node._with_children(placed_head, *kids[1:])
+        variant._payload = {**node._payload, "root_shape": scope, _PLACED: True}
+        return variant  # type: ignore[return-value]
+
+    return spine(ref)

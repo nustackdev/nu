@@ -165,7 +165,7 @@ def test_a_fabric_shape_ref_method_is_reserved_too() -> None:
 
 def test_the_reserved_names_come_from_the_classes() -> None:
     reserved = set().union(*(dsl._public_names(c) for c in dsl._shape_ref_classes()))
-    assert {"iter", "len", "contains", "items", "merge", "on_change"} <= reserved
+    assert {"iter", "len", "contains", "items", "update", "on_change"} <= reserved
     assert {n for n in dir(ShapeRef) if not n.startswith("_")} <= reserved
 
 

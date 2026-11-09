@@ -89,6 +89,41 @@ class TestDictRefExecution:
         run(PortfolioShape.metadata.set_item("key", "value"), portfolio_ctx)
         assert data["metadata"]["key"] == "value"
 
+    def test_del_item_drops_the_key(self, data, portfolio_ctx):
+        data["metadata"] = {"a": "1", "b": "2"}
+        run(PortfolioShape.metadata.del_item("a"), portfolio_ctx)
+        assert data["metadata"] == {"b": "2"}
+
+    def test_del_item_absent_raises_by_default(self, data, portfolio_ctx):
+        data["metadata"] = {"a": "1"}
+        with pytest.raises(KeyError):
+            run(PortfolioShape.metadata.del_item("z"), portfolio_ctx)
+
+    @pytest.mark.asyncio
+    async def test_del_item_missing_ok_absent_is_a_noop(self, data, portfolio_ctx):
+        data["metadata"] = {"a": "1"}
+        run(PortfolioShape.metadata.del_item("z", missing_ok=True), portfolio_ctx)
+        await arun(PortfolioShape.metadata.del_item("z", missing_ok=True), portfolio_ctx)
+        assert data["metadata"] == {"a": "1"}
+
+    def test_del_item_on_a_never_written_dict(self, data, portfolio_ctx):
+        # holds no key: strict raises, missing_ok leaves the slot absent
+        with pytest.raises(KeyError):
+            run(PortfolioShape.metadata.del_item("z"), portfolio_ctx)
+        run(PortfolioShape.metadata.del_item("z", missing_ok=True), portfolio_ctx)
+        assert "metadata" not in data
+
+    def test_reads_of_a_never_written_dict_raise(self, data, portfolio_ctx):
+        # the slot reads NULL, and NULL has no mapping surface: reads raise
+        for read in (
+            PortfolioShape.metadata.get_item("k", "d"),
+            PortfolioShape.metadata.keys(),
+            PortfolioShape.metadata.values(),
+            PortfolioShape.metadata.items(),
+        ):
+            with pytest.raises(AttributeError):
+                run(read, portfolio_ctx)
+
 
 class TestDictRefViewOperations:
     """DictKeys supports set-like operations, DictValues supports materialization."""
