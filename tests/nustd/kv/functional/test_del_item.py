@@ -1,8 +1,6 @@
 """``del_item`` answers the same on every dict layout, with ``missing_ok`` to opt out.
 
-The views disagree on their own: ``DictView``, ``FlatDictView`` and
-``LightDictView`` delete a missing key silently, the indexed ones raise. The
-ref op checks the key first, so every layout:
+The op forwards to the view's own ``del``, so every layout:
 
 - deletes a key that is there,
 - raises KeyError for one that is not, a never-written container included,
