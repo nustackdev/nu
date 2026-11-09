@@ -146,10 +146,18 @@ def test_a_ring_under_a_null_key_raises(ctx) -> None:
         run(gone.exists(), ctx)
 
 
-def test_a_null_cursor_is_refused(ctx) -> None:
+@pytest.mark.parametrize("arg", ["after", "limit"])
+def test_a_null_page_arg_is_refused_before_the_view(ctx, arg) -> None:
     run(OUT.append(["a"]), ctx)
-    with pytest.raises(TypeError, match="sequence number"):
-        run(OUT.entries(after=Exec.by_key["gone"]), ctx)
+    with pytest.raises(ValueError, match=rf"entries\({arg}=\) read NULL"):
+        run(OUT.entries(**{arg: Exec.by_key["gone"]}), ctx)
+
+
+@pytest.mark.asyncio
+async def test_a_null_page_arg_is_refused_before_the_view_async(ctx) -> None:
+    await arun(OUT.append(["a"]), ctx)
+    with pytest.raises(ValueError, match=r"entries\(after=\) read NULL"):
+        await arun(OUT.entries(after=Exec.by_key["gone"]), ctx)
 
 
 # --- watches and stores -------------------------------------------------------

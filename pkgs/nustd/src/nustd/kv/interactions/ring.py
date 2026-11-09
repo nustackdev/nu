@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu.forms.collections.abc.mapping_interactions import _page_args
 from nu.lang import ScalarQuery
 
 
@@ -35,6 +36,8 @@ class RingEntries(ScalarQuery):
         - One seek, then one row per entry: cost tracks ``limit``.
         - ``after`` need not be kept any more: the page starts at the oldest
           entry still there.
+        - ``after`` or ``limit`` reading NULL raises ``ValueError`` before the
+          view is called; None reads from the oldest or to the newest.
         - The ring view checks the args and raises on a never-written ring,
           as ``len`` and iteration do.
         - The page is read whole before it leaves the atom, so it outlives
@@ -49,7 +52,8 @@ class RingEntries(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             view = ref_thunk(rt)
-            return list(view.entries(after=after_thunk(rt), limit=limit_thunk(rt)))
+            after, limit = _page_args("entries", "after", after_thunk(rt), limit_thunk(rt))
+            return list(view.entries(after=after, limit=limit))
 
         return thunk
 
@@ -58,7 +62,9 @@ class RingEntries(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             view = await ref_thunk(rt)
-            after, limit = await after_thunk(rt), await limit_thunk(rt)
+            after, limit = _page_args(
+                "entries", "after", await after_thunk(rt), await limit_thunk(rt)
+            )
             return list(view.entries(after=after, limit=limit))
 
         return athunk

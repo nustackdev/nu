@@ -19,6 +19,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
+from nu.lang.null import is_null
 
 
 if TYPE_CHECKING:
@@ -37,6 +38,13 @@ __all__ = [
 
 def _child_nid(rt: Runtime, nid: int, slot: int) -> int:
     return rt.program.children[nid][slot]
+
+
+def _refuse_null(op: str, **args: object) -> None:
+    """Refuse an arg that read NULL before the view is called: no key or size is NULL."""
+    for name, value in args.items():
+        if is_null(value):
+            raise ValueError(f"{op}({name}=) read NULL: branch on it first (IsNull)")
 
 
 class Kh57Sample(ScalarQuery):
@@ -66,6 +74,8 @@ class Kh57Sample(ScalarQuery):
           landing above ``end`` do not disturb what a fixed window returns.
         - Bounds are evaluated after the container is opened, so a missing
           container short-circuits before they run.
+        - ``n``, ``begin`` or ``end`` reading NULL raises ``ValueError``
+          before the view is called; None is the open bound, NULL is not.
 
     Yields:
         A list of ``(int_key, value)`` pairs, unordered.
@@ -106,6 +116,7 @@ class Kh57Sample(ScalarQuery):
             n = n_thunk(rt)
             begin = begin_thunk(rt)
             end = end_thunk(rt)
+            _refuse_null("sample", n=n, begin=begin, end=end)
             return view.sample(n, begin, end, rng=rng)
 
         return thunk
@@ -120,6 +131,7 @@ class Kh57Sample(ScalarQuery):
             n = await n_thunk(rt)
             begin = await begin_thunk(rt)
             end = await end_thunk(rt)
+            _refuse_null("sample", n=n, begin=begin, end=end)
             return view.sample(n, begin, end, rng=rng)
 
         return athunk
@@ -152,6 +164,8 @@ class Kh57Range(ScalarQuery):
           rather than an error. Out-of-space bounds do raise ``ValueError``.
         - Bounds are evaluated after the container is opened, so a missing
           container short-circuits before they run.
+        - A bound reading NULL raises ``ValueError`` before the view is
+          called.
 
     Yields:
         A list of ``(int_key, value)`` pairs with ``begin <= int_key < end``,
@@ -172,6 +186,7 @@ class Kh57Range(ScalarQuery):
             view = ref._fetch(rt, _child_nid(rt, nid, 0))
             begin = begin_thunk(rt)
             end = end_thunk(rt)
+            _refuse_null("range", begin=begin, end=end)
             return list(view.range(begin, end))
 
         return thunk
@@ -184,6 +199,7 @@ class Kh57Range(ScalarQuery):
             view = await ref._afetch(rt, _child_nid(rt, nid, 0))
             begin = await begin_thunk(rt)
             end = await end_thunk(rt)
+            _refuse_null("range", begin=begin, end=end)
             return list(view.range(begin, end))
 
         return athunk
