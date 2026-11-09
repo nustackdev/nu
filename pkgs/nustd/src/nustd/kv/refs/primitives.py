@@ -4,19 +4,33 @@ A blob is written and read whole, with no per-element addresses, so it holds
 heterogeneous or opaque contents that should round-trip exactly as written.
 Each mixes in its collection form, so the value still carries the full
 collection surface; the decomposed containers are the other choice.
+
+A mutation written on a list, dict or set blob (``rows.append(2)``) persists:
+in a mutation slot the ref evaluates to a write-through value that stores the
+whole blob back after each mutating call. Everywhere else it reads as a plain
+value, so nothing tied to the storage context leaves the read.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
+import nu
 from nu.forms import Dict, FrozenSet, List, Set, Tuple
+from nu.lang import Effect
+from nu.lang.null import is_null
 
+from ..views import PrimitiveDictView, PrimitiveListView, PrimitiveSetView
 from .items import ItemRef
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from nu.lang import Arg
+    from nu.lang.runtime import Runtime
+
+    from ..views.writeback import _WriteThrough
 
 
 __all__ = [
@@ -33,7 +47,49 @@ K = TypeVar("K")
 V = TypeVar("V")
 
 
-class PrimitiveListRef(ItemRef, List[T], Generic[T]):
+def _in_mutation_slot(rt: Runtime, nid: int, term: object) -> bool:
+    """Whether the term at ``nid`` sits in a slot its parent declares it writes."""
+    parent = rt.program.parent_id[nid]
+    if parent < 0:
+        return False
+    return any(
+        child is term and effect is Effect.WRITE
+        for child, effect in nu.tree.node_effects(rt.program.terms[parent])  # type: ignore[arg-type]
+    )
+
+
+class _WriteBackRef(ItemRef):
+    """A mutable blob: in a mutation slot it evaluates to a write-through value.
+
+    A core mutation (``Append``, ``SetItem``, ``AddCmd``, ...) calls the native
+    method on what its target evaluates to. Here that is ``_writeback``: the stored
+    value wrapped so each mutating call stores the whole blob back through the
+    parent view it was read from, under the same storage context.
+    """
+
+    _writeback: ClassVar[type[_WriteThrough]]
+
+    def _read_for(self, rt: Runtime, nid: int, path: tuple) -> object:
+        parent = self._fetch_parent_view(rt, path)
+        value = self._read_from(parent, path)
+        if is_null(value) or not _in_mutation_slot(rt, nid, self):
+            return value
+        return self._writeback(value, parent, path[-1][0])  # type: ignore[call-arg]
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> object:
+            return self._read_for(rt, nid, self._resolve_path(rt, nid))
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        async def athunk(rt: Runtime) -> object:
+            return self._read_for(rt, nid, await self._aresolve_path(rt, nid))
+
+        return athunk
+
+
+class PrimitiveListRef(_WriteBackRef, List[T], Generic[T]):
     """A list leaf in KV storage, written and read back whole as one blob.
 
     Notes:
@@ -41,10 +97,11 @@ class PrimitiveListRef(ItemRef, List[T], Generic[T]):
           their own and cannot be reached or watched individually.
         - Reads come back as a real Python list, so heterogeneous and nested
           contents round-trip as they were written.
-        - The write path is ``set`` with a whole list. The element-level
-          mutations inherited from the List surface (``append``, ``insert``,
-          ``del_at``, ...) do not reach the stored blob and leave it as it
-          was, without raising.
+        - ``set`` writes a whole list. The element-level mutations
+          (``append``, ``insert``, ``del_at``, ...) persist too: each one
+          stores the whole blob back, so it costs one full write.
+        - A nested value mutated in place does not persist; write the
+          element back with ``set_at``.
         - ListRef is the other choice: it decomposes into per-index storage
           and gives per-element navigation.
 
@@ -54,6 +111,8 @@ class PrimitiveListRef(ItemRef, List[T], Generic[T]):
         run(Bag.rows.set([1, "two", {"three": 3}]), ctx)
         run(Bag.rows, ctx)
     """
+
+    _writeback = PrimitiveListView
 
     def _lift(self, raw: object) -> list:
         """Return the stored value as a plain list."""
@@ -82,17 +141,18 @@ class PrimitiveListRef(ItemRef, List[T], Generic[T]):
         return ItemPrimitiveSetCmd(self, value)
 
 
-class PrimitiveDictRef(ItemRef, Dict[K, V], Generic[K, V]):
+class PrimitiveDictRef(_WriteBackRef, Dict[K, V], Generic[K, V]):
     """A dict leaf in KV storage, written and read back whole as one blob.
 
     Notes:
         - Stored as one opaque value, so the keys get no addresses of their
           own and cannot be reached or watched individually.
         - Reads come back as a real Python dict, nested contents included.
-        - The write path is ``set`` with a whole dict. The key-level
-          mutations inherited from the Dict surface (``set_item``, ``pop``,
-          ``update``, ...) do not reach the stored blob and leave it as it
-          was, without raising.
+        - ``set`` writes a whole dict. The key-level mutations
+          (``set_item``, ``pop``, ``update``, ...) persist too: each one
+          stores the whole blob back, so it costs one full write.
+        - A nested value mutated in place does not persist; write the
+          entry back with ``set_item``.
         - DictRef is the other choice: it decomposes into per-key storage
           and gives per-key navigation and change observation.
 
@@ -102,6 +162,8 @@ class PrimitiveDictRef(ItemRef, Dict[K, V], Generic[K, V]):
         run(Bag.meta.set({"a": 1, "b": [2, 3]}), ctx)
         run(Bag.meta, ctx)
     """
+
+    _writeback = PrimitiveDictView
 
     def _lift(self, raw: object) -> dict:
         """Return the stored value as a plain dict."""
@@ -172,16 +234,15 @@ class PrimitiveTupleRef(ItemRef, Tuple):
         return ItemPrimitiveSetCmd(self, value)
 
 
-class PrimitiveSetRef(ItemRef, Set[T], Generic[T]):
+class PrimitiveSetRef(_WriteBackRef, Set[T], Generic[T]):
     """A set leaf in KV storage, written and read back whole as one blob.
 
     Notes:
         - Reads come back as a real Python set, so membership and the set
           operators work on the value as they would in Python.
-        - The write path is ``set`` with a whole set. The element-level
-          mutations inherited from the Set surface (``add``, ``discard``,
-          ``update``, ...) do not reach the stored blob and leave it as it
-          was, without raising.
+        - ``set`` writes a whole set. The element-level mutations (``add``,
+          ``discard``, ``update``, ...) persist too: each one stores the
+          whole blob back, so it costs one full write.
         - SetRef is the other choice: it decomposes into per-element storage
           and gives change observation.
 
@@ -191,6 +252,8 @@ class PrimitiveSetRef(ItemRef, Set[T], Generic[T]):
         run(Bag.members.set({1, 2, 3}), ctx)
         run(Bag.members, ctx)
     """
+
+    _writeback = PrimitiveSetView
 
     def _lift(self, raw: object) -> set:
         """Return the stored value as a plain set."""

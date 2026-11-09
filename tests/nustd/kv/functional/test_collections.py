@@ -41,9 +41,11 @@ from nustd.kv import (
     SetRef,
     StrRef,
 )
-from nustd.kv.refs.base import Facet
+from nustd.kv.refs.base import Facet, _plain
 from virtuals import Navigator
+from virtuals._views import EagerDictView, EagerListView, LazyDictView, LazyListView, SetView
 from virtuals.tkv.storage import TransactionProtocol
+from virtuals.view import Faceted
 
 
 # ============================================================================
@@ -136,6 +138,44 @@ class TestFacets:
     def test_facet_on_set_ref(self):
         assert nu.tree.payload(Portfolio.members).get("facet", Facet.LAZY) is Facet.LAZY
         assert nu.tree.payload(Portfolio.members.eager).get("facet", Facet.LAZY) is Facet.EAGER
+
+
+class TestFacetsOnRead:
+    """A read switches facets only on a view class that declares them."""
+
+    @pytest.mark.parametrize(
+        ("ref", "value", "lazy_cls", "eager_cls"),
+        [
+            (Portfolio.metadata, {"a": "x"}, LazyDictView, EagerDictView),
+            (Portfolio.tags, ["a"], LazyListView, EagerListView),
+        ],
+    )
+    def test_faceted_ref_reads_through_its_facet(
+        self, portfolio_ctx, ref, value, lazy_cls, eager_cls
+    ):
+        set(ref, value, portfolio_ctx)
+        assert type(run(ref, portfolio_ctx)[0]) is lazy_cls
+        assert type(run(ref.eager, portfolio_ctx)[0]) is eager_cls
+        assert run(ref.extract(), portfolio_ctx)[0] == value
+        assert run(ref.eager.extract(), portfolio_ctx)[0] == value
+
+    def test_unfaceted_ref_reads_the_view_as_opened(self, portfolio_ctx):
+        set(Portfolio.members, {"a"}, portfolio_ctx)
+        lazy = run(Portfolio.members, portfolio_ctx)[0]
+        eager = run(Portfolio.members.eager, portfolio_ctx)[0]
+        for view in (lazy, eager):
+            assert type(view) is SetView
+            assert not isinstance(view, Faceted)
+            assert not hasattr(view, "eager")
+        assert run(Portfolio.members.extract(), portfolio_ctx)[0] == {"a"}
+        assert run(Portfolio.members.eager.extract(), portfolio_ctx)[0] == {"a"}
+
+    def test_a_stored_view_reads_out_plain_with_or_without_facets(self, nav, tx):
+        root = nav.root(tx)
+        root.open_child("s", SetView).store({1})
+        root.open_child("d", EagerDictView).store({"a": {"b": 1}})
+        assert _plain(root.open_child("s", SetView)) == {1}
+        assert _plain(root.open_child("d", LazyDictView)) == {"a": {"b": 1}}
 
 
 # ============================================================================

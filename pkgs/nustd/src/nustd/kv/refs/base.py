@@ -9,24 +9,31 @@ expression, or a ref from another fabric. The Navigator and the storage context
 
 A container also decides what its children are: the ref at ``ref[key]`` is
 the kv ref for the value the container declared.
+
+A key that reads NULL (an id looked up in an index with no entry for it)
+leaves the path addressing nothing: a read, a write or a watch through it
+raises ``NullAddressError``. Branch on the key first (``IsNull``).
 """
 
 from __future__ import annotations
 
+import operator
+import typing
 from enum import Enum
 from logging import getLogger
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
 import nu
 from nu.domains.shape.base import StructuredRef
-from nu.lang.null import Null
+from nu.lang.null import Null, is_null
 from nu.lang.typeinfo import TypeInfo
+from nustd.kv.errors import NullAddressError
 from nustd.kv.paths import ViewPathSer
 from virtuals import Empty as StorageEmpty
 from virtuals import Navigator
 from virtuals.collections import Subscriptable
 from virtuals.tkv.storage import SnapshotProtocol, TransactionProtocol
-from virtuals.view import ViewBase
+from virtuals.view import AddressNotFoundError, Faceted, ViewBase
 
 
 if TYPE_CHECKING:
@@ -63,8 +70,23 @@ class Facet(Enum):
     EAGER = "eager"
 
 
+def _dotted(shape: type | None, path: tuple) -> str:
+    """The dotted path a ref names, eg ``Space.state.recents``."""
+    return ".".join([shape.__name__ if shape is not None else "?", *(str(a) for a, _ in path)])
+
+
 def _resolve_navigator(rt: Runtime, scope: type | None, resolved_path: tuple) -> Navigator:
-    """Resolve Navigator from the runtime ctx, passing site and path for routing."""
+    """Resolve Navigator from the runtime ctx, passing site and path for routing.
+
+    Every storage access on a ref passes through here, so this is where a path
+    with a NULL segment stops: a read, a write or a watch through it raises
+    ``NullAddressError``.
+    """
+    for i, (addr, _) in enumerate(resolved_path):
+        if is_null(addr):
+            where = _dotted(scope, resolved_path[:i])
+            msg = f"a key under {where} read NULL, so the path addresses nothing"
+            raise NullAddressError(msg)
     if not resolved_path:
         return (
             rt.ctx.fabrics.get(Navigator, scope)
@@ -94,9 +116,33 @@ def _resolve_storage_ctx(rt: Runtime, scope: type | None, resolved_path: tuple) 
 
 def _plain(value: object) -> object:
     """A stored value as a leaf reads it: a container stored decomposed comes back extracted."""
+    if isinstance(value, Faceted):
+        return value.eager.extract()  # type: ignore[attr-defined]
     if isinstance(value, ViewBase):
-        return (value.eager if hasattr(value, "eager") else value).extract()
+        return value.extract()  # type: ignore[attr-defined]
     return value
+
+
+def _as_opened(view: View) -> View:
+    """A fetched view handed back as the Navigator opened it."""
+    return view
+
+
+def _refuse_container_value(owner: type, value: object) -> None:
+    """Raise when a container slot is declared to hold a container ref.
+
+    Only a Shape gives a container's value a layout of its own. A container
+    ref there would be stored as one opaque value, with no keys, order or
+    watch, so it is refused where it is declared.
+    """
+    held = typing.get_origin(value) or value
+    if isinstance(held, type) and issubclass(held, ViewRef):
+        msg = (
+            f"{owner.__name__}.slot({held.__name__}): a container cannot hold a container ref, "
+            f"it would be stored as one opaque value. Use a Shape: declare one with a "
+            f"{held.__name__} slot and hold that Shape"
+        )
+        raise TypeError(msg)
 
 
 class _VirtualsRefBase(StructuredRef, Generic[T]):
@@ -161,8 +207,7 @@ class _VirtualsRefBase(StructuredRef, Generic[T]):
 
     def _hint(self, path: tuple) -> str:
         """The dotted path a NULL read names, eg ``Space.state.recents``."""
-        shape = self._root_shape
-        return ".".join([shape.__name__ if shape is not None else "?", *(str(a) for a, _ in path)])
+        return _dotted(self._root_shape, path)
 
 
 class ViewRef(_VirtualsRefBase[T], Generic[T]):
@@ -186,11 +231,14 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
         - A whole-container write stores through the parent with the ref's
           own declared view class, so a slot declared as Kh57View keeps that
           layout instead of collapsing onto the container layer's default.
-        - Erasing a slot that is not there is a no-op, not an error.
+        - Erasing a slot that is not there is a no-op, not an error; any
+          other error from the delete is let out.
         - Yields a lazy handle, never NULL, even where nothing is written:
           ask ``exists()``, or ``extract()`` the value and test it. On a
           never-written container ``len``, iteration and ``contains`` raise,
           ``extract()`` gives NULL.
+        - A path with a key that read NULL addresses nothing: a read, a
+          write or a watch through it raises ``NullAddressError``.
         - The storage context is a transaction when one is bound, otherwise a
           snapshot; a snapshot is read-only, so writes need the transaction.
 
@@ -215,6 +263,17 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape, **kwargs)
         self._payload["type_marker"] = view_type or self._default_view
+
+    @classmethod
+    def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
+        """What an annotation slot (``ids: DictRef[str, bool]``) passes on: nothing.
+
+        Its last type argument is the value the container holds, refused here
+        when it is a container ref, as ``slot()`` refuses it.
+        """
+        if args:
+            _refuse_container_value(cls, args[-1])
+        return {}
 
     def _wrap_item_ref(self, address: object) -> StructuredRef:
         """The child at ``address``: the kv ref for the value this container declared.
@@ -278,7 +337,7 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
             - The facet rides the ref's payload, so it applies to the ops
               written on it, not to the refs descended from it.
             - Returns the ref unchanged when it is already eager, and leaves
-              the view alone when its type has no eager facet.
+              the view alone when its view class has no facets.
         """
         return (
             self
@@ -286,48 +345,50 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
             else self._with_facet(Facet.EAGER)
         )
 
-    def _apply_facet(self, view: object) -> object:
-        """Apply the lazy/eager facet to a fetched view, when supported.
+    def _facet_name(self) -> str | None:
+        """The facet a fetched view is switched to: ``"eager"``, ``"lazy"``, or None.
 
-        Support is checked against the ref's declared ``type_marker`` (a View
-        subclass), not the fetched instance. Instance ``hasattr`` on a remote
-        proxy triggers an RPC round-trip per read and logs an AttributeError
-        on the server for every view type without the facet (SetView, etc).
+        Decided from the declared view class, so a view without facets is
+        handed back as opened, with no call on it. None also for Facet.NONE.
         """
+        view_class = self._payload.get("type_marker")
+        if not (isinstance(view_class, type) and issubclass(view_class, Faceted)):
+            return None
         facet = self._payload.get("facet", Facet.LAZY)
-        if facet is Facet.NONE:
-            return view
-        view_type = self._payload.get("type_marker")
-        probe: object = view_type if view_type is not None else view
-        if facet is Facet.EAGER and hasattr(probe, "eager"):
-            return view.eager
-        if facet is Facet.LAZY and hasattr(probe, "lazy"):
-            return view.lazy
-        return view
+        return None if facet is Facet.NONE else facet.value
+
+    def _facet_applier(self) -> Callable[[View], View]:
+        """What a read does to the fetched view, decided once per compiled ref."""
+        name = self._facet_name()
+        if name is None:
+            return _as_opened
+        return operator.attrgetter(name)
 
     # --- read (the dual role) ------------------------------------------------
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         scope = self._root_shape
+        apply_facet = self._facet_applier()
 
         def thunk(rt: Runtime) -> object:
             path = self._resolve_path(rt, nid)
             nav = _resolve_navigator(rt, scope, path)
             storage_ctx = _resolve_storage_ctx(rt, scope, path)
             view = nav.open_at_path(ViewPathSer(path), storage_ctx)
-            return self._apply_facet(view)
+            return apply_facet(view)
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         scope = self._root_shape
+        apply_facet = self._facet_applier()
 
         async def athunk(rt: Runtime) -> object:
             path = await self._aresolve_path(rt, nid)
             nav = _resolve_navigator(rt, scope, path)
             storage_ctx = _resolve_storage_ctx(rt, scope, path)
             view = nav.open_at_path(ViewPathSer(path), storage_ctx)
-            return self._apply_facet(view)
+            return apply_facet(view)
 
         return athunk
 
@@ -348,17 +409,17 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
 
         return ViewExtract(self)
 
-    def _open(self, rt: Runtime, path: tuple) -> object:
+    def _open(self, rt: Runtime, path: tuple) -> View:
         nav = _resolve_navigator(rt, self._root_shape, path)
         return nav.open_at_path(ViewPathSer(path), _resolve_storage_ctx(rt, self._root_shape, path))
 
     def _exists(self, rt: Runtime, nid: int) -> bool:
         """Whether the container is stored: one marker read, nothing extracted."""
-        return bool(self._open(rt, self._resolve_path(rt, nid)).container.exists())  # type: ignore[attr-defined]
+        return self._open(rt, self._resolve_path(rt, nid)).exists()
 
     async def _aexists(self, rt: Runtime, nid: int) -> bool:
         """Async sibling of :meth:`_exists`."""
-        return bool(self._open(rt, await self._aresolve_path(rt, nid)).container.exists())  # type: ignore[attr-defined]
+        return self._open(rt, await self._aresolve_path(rt, nid)).exists()
 
     # --- write / erase (whole-view store via parent decomposition) -----------
 
@@ -429,7 +490,7 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
         key = path[-1][0]
         try:
             del parent[key]  # type: ignore[attr-defined]
-        except (KeyError, IndexError):
+        except AddressNotFoundError:
             pass
 
     async def _aerase(self, rt: Runtime, nid: int) -> None:
@@ -439,7 +500,7 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
         key = path[-1][0]
         try:
             del parent[key]  # type: ignore[attr-defined]
-        except (KeyError, IndexError):
+        except AddressNotFoundError:
             pass
 
     # --- substrate plug-points (for unsafe ops) ------------------------------
@@ -462,12 +523,15 @@ class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
     is a child on the tree, resolved at run time.
 
     Notes:
-        - Yields NULL, hinted with the dotted path, when the parent has no
-          such key or index, or storage hands back its own empty marker.
-          Nothing else is caught, so real errors stay errors.
+        - Yields NULL, hinted with the dotted path, when the parent view
+          says it holds nothing at the key or index, or storage hands back
+          its own empty marker. Nothing else is caught: a storage fault or a
+          container above the parent that is gone stays an error.
+        - Raises ``NullAddressError`` when a key in the path read NULL.
         - A write materializes every ancestor along the path first, so a leaf
           can be written into storage that has nothing above it yet.
-        - Erasing a leaf that is not there is a no-op.
+        - Erasing a leaf that is not there is a no-op; any other error from
+          the delete is let out.
         - A container stored under the leaf reads back extracted, as a plain
           dict or list, never as a live View.
         - A subclass that stores a value in some other form overrides the
@@ -486,21 +550,17 @@ class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
     # --- read (the dual role) ------------------------------------------------
 
     def _read(self, rt: Runtime, path: tuple) -> object:
-        nav = _resolve_navigator(rt, self._root_shape, path)
-        storage_ctx = _resolve_storage_ctx(rt, self._root_shape, path)
-        parent_path = path[:-1]
+        return self._read_from(self._fetch_parent_view(rt, path), path)
+
+    def _read_from(self, parent_view: object, path: tuple) -> object:
+        """The leaf's value read off its open parent view, lifted, or NULL."""
         key = path[-1][0]
-        parent_view = (
-            nav.root(storage_ctx)
-            if not parent_path
-            else nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
-        )
         if not isinstance(parent_view, Subscriptable):
             msg = f"View {parent_view.__class__.__name__} is not subscriptable"
             raise TypeError(msg)
         try:
             val = parent_view[key]
-        except (KeyError, IndexError):
+        except AddressNotFoundError:
             return Null(self._hint(path))
         if isinstance(val, StorageEmpty):
             return Null(self._hint(path))
@@ -568,7 +628,7 @@ class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
         key = path[-1][0]
         try:
             del parent[key]  # type: ignore[attr-defined]
-        except (KeyError, IndexError):
+        except AddressNotFoundError:
             pass
 
     async def _aerase(self, rt: Runtime, nid: int) -> None:
@@ -578,7 +638,7 @@ class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
         key = path[-1][0]
         try:
             del parent[key]  # type: ignore[attr-defined]
-        except (KeyError, IndexError):
+        except AddressNotFoundError:
             pass
 
     # --- _fetch_parent (structured-ref plug-point; consumed by OnPrimitiveChange)

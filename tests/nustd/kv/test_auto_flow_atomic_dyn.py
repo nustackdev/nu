@@ -69,12 +69,12 @@ def test_bracket_over_dyn_is_still_skipped_via_span_lookthrough() -> None:
 
 
 def test_iter_uncovered_stops_at_dyn_boundary() -> None:
-    """Eval opacity: _iter_uncovered must not descend into a Eval carrier.
+    """Eval opacity: iter_uncovered must not descend into a Eval carrier.
 
     Refs sitting inside the carrier subtree are hidden from the wrap
     decision. Sibling branches still see their own refs normally.
     """
-    from nustd.kv.tree.auto_flow_atomic import _iter_uncovered
+    from nustd.kv.tree.coverage import iter_uncovered
 
     ref = Account.balance
     # Bracket(ref) puts the ref in _children so a naive descent would find
@@ -84,7 +84,7 @@ def test_iter_uncovered_stops_at_dyn_boundary() -> None:
     tree = Seq(dyn_branch, sibling)
 
     # Direct check: Eval is opaque, no refs leak out.
-    assert list(_iter_uncovered(dyn_branch, None, ())) == []
+    assert list(iter_uncovered(dyn_branch, None, ())) == []
 
     # Sibling still visible; wrap decision fires only on the sibling branch.
     out = auto_flow_atomic(tree)

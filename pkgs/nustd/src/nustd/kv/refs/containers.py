@@ -4,6 +4,11 @@ A container slot declares the value it holds, and that declaration types it
 throughout. Descent (``ref[k]``, ``ref[i]``, ``ref.field``) lands on the kv ref
 for the declared value, and every value an op reads is that value's form. A
 container reads as a live View, so its collection ops run against storage.
+
+``DictRef``, ``ListRef`` and ``SetRef`` sit on the reactive shape ref of their
+built-in type (``ReactiveDictRef``, ...), so they carry that type's whole
+surface, the built-in-only calls (``copy``, ``merge``, ``sort``, the set
+algebra) included, run against the live View.
 """
 
 from __future__ import annotations
@@ -13,17 +18,26 @@ from typing import TYPE_CHECKING, Generic, overload
 from typing_extensions import TypeVar
 
 from nu.domains.shape import (
-    ReactiveMappingRef,
-    ReactiveSequenceRef,
+    MappingRef,
+    ReactiveDictRef,
+    ReactiveListRef,
     ReactiveSetRef,
     ReactiveShapeRef,
     Shape,
     Slot,
 )
 from nu.lang.typeinfo import TypeInfo
+from virtuals.collections import (
+    DictMethods,
+    ListMethods,
+    ReactiveMappingBase,
+    ReactiveSequenceBase,
+    ReactiveSetBase,
+    SetMethods,
+)
 from virtuals.views import DictView, ListView, SetView
 
-from .base import ViewRef
+from .base import ViewRef, _refuse_container_value
 from .items import BoolRef, BytesRef, FloatRef, IntRef, ItemRef, ObjectRef, StrRef
 
 
@@ -56,6 +70,13 @@ LEAVES: dict[object, type[ItemRef]] = {
 }
 
 
+#: What a slot's view must be, per ref: the bases behind the ref's surface.
+_DICT_VIEW = (ReactiveMappingBase, DictMethods)
+_LIST_VIEW = (ReactiveSequenceBase, ListMethods)
+_SET_VIEW = (ReactiveSetBase, SetMethods)
+_MAPPING_VIEW = (ReactiveMappingBase,)
+
+
 K = TypeVar("K")
 V = TypeVar("V")
 T = TypeVar("T")
@@ -66,7 +87,55 @@ S = TypeVar("S", bound=Shape)
 L = TypeVar("L", bound=ItemRef)
 
 
-class DictRef(ReactiveMappingRef, ViewRef[dict[K, V]], Generic[K, V]):
+def _require_view(owner: type, view: object, bases: tuple[type, ...], what: str) -> None:
+    """Raise when a slot's ``view`` cannot serve the ref's surface.
+
+    A ref carries its shape ref's whole surface (a ``DictRef`` reverses,
+    merges and watches), and every call runs on the view. So a view class
+    that lacks one of the bases behind that surface is refused where the
+    slot is declared, not where a call first fails. No ``view`` is the
+    ref's default, which fits.
+    """
+    if view is None or (isinstance(view, type) and all(issubclass(view, b) for b in bases)):
+        return
+    name = view.__name__ if isinstance(view, type) else repr(view)
+    msg = f"{owner.__name__}.slot(view={name}): the view must be {what}"
+    raise TypeError(msg)
+
+
+class _MappingDescent(MappingRef, Generic[K, V]):
+    """What every kv mapping ref shares: typed descent by key and the NULL-aware extract.
+
+    Mixed in first by ``DictRef`` and ``Kh57Ref``, which sit on different
+    mapping refs (ordered dict, plain mapping) but descend and extract alike.
+    """
+
+    extract = ViewRef.extract  # NULL on a never-written container, not core Extract
+
+    @overload
+    def __getitem__(self: _MappingDescent[K, bool], key: object) -> BoolRef: ...
+    @overload
+    def __getitem__(self: _MappingDescent[K, int], key: object) -> IntRef: ...
+    @overload
+    def __getitem__(self: _MappingDescent[K, float], key: object) -> FloatRef: ...
+    @overload
+    def __getitem__(self: _MappingDescent[K, str], key: object) -> StrRef: ...
+    @overload
+    def __getitem__(self: _MappingDescent[K, bytes], key: object) -> BytesRef: ...
+    @overload
+    def __getitem__(self: _MappingDescent[K, object], key: object) -> ObjectRef: ...
+    @overload
+    def __getitem__(self: _MappingDescent[K, S], key: object) -> S: ...
+    @overload
+    def __getitem__(self: _MappingDescent[K, L], key: object) -> L: ...
+    @overload
+    def __getitem__(self, key: object) -> ObjectRef: ...
+    def __getitem__(self, key: object) -> StructuredRef:
+        """The kv ref for the declared value at ``key``."""
+        return super().__getitem__(key)
+
+
+class DictRef(_MappingDescent[K, V], ReactiveDictRef[K, V], ViewRef[dict[K, V]], Generic[K, V]):
     """A mapping slot in KV storage, decomposed into a child per key.
 
     Every value lives at its own address under the slot, so keys can be read,
@@ -100,8 +169,6 @@ class DictRef(ReactiveMappingRef, ViewRef[dict[K, V]], Generic[K, V]):
         run(Portfolio.desks["desk-1"].symbol.set("SOL"), ctx)
     """
 
-    extract = ViewRef.extract  # NULL on a never-written container, not core Extract
-
     _default_view = DictView
 
     @classmethod
@@ -121,10 +188,20 @@ class DictRef(ReactiveMappingRef, ViewRef[dict[K, V]], Generic[K, V]):
             view: the View class laying the mapping out. Defaults to
                 ``DictView``.
 
+        Raises:
+            TypeError: ``value`` is a container ref (``OrderedDictRef[...]``,
+                ``SetRef[...]``, ...), which would be stored as one opaque
+                value. Hold a Shape with that container as a slot instead.
+                Every container slot refuses one, annotations too. Also a
+                ``view`` that is no reactive dict view (``Kh57View`` is a
+                plain mapping, not a dict).
+
         Notes:
             - ``owners: DictRef[str, str]`` as an annotation declares the same
               slot.
         """
+        _refuse_container_value(cls, value)
+        _require_view(cls, view, _DICT_VIEW, "a reactive dict view, as DictView or FlatDictView")
         declared = TypeInfo.from_annotation(cls[key, value])  # type: ignore[index]
         return Slot(cls, type_info=declared, view_type=view)  # type: ignore[return-value]
 
@@ -132,30 +209,8 @@ class DictRef(ReactiveMappingRef, ViewRef[dict[K, V]], Generic[K, V]):
         """A lazy stream over the keys, each the declared key's form."""
         return super().iter()
 
-    @overload
-    def __getitem__(self: DictRef[K, bool], key: object) -> BoolRef: ...
-    @overload
-    def __getitem__(self: DictRef[K, int], key: object) -> IntRef: ...
-    @overload
-    def __getitem__(self: DictRef[K, float], key: object) -> FloatRef: ...
-    @overload
-    def __getitem__(self: DictRef[K, str], key: object) -> StrRef: ...
-    @overload
-    def __getitem__(self: DictRef[K, bytes], key: object) -> BytesRef: ...
-    @overload
-    def __getitem__(self: DictRef[K, object], key: object) -> ObjectRef: ...
-    @overload
-    def __getitem__(self: DictRef[K, S], key: object) -> S: ...
-    @overload
-    def __getitem__(self: DictRef[K, L], key: object) -> L: ...
-    @overload
-    def __getitem__(self, key: object) -> ObjectRef: ...
-    def __getitem__(self, key: object) -> StructuredRef:
-        """The kv ref for the declared value at ``key``."""
-        return super().__getitem__(key)
 
-
-class ListRef(ReactiveSequenceRef, ViewRef[list[T]], Generic[T]):
+class ListRef(ReactiveListRef[T], ViewRef[list[T]], Generic[T]):
     """An ordered list slot in KV storage, decomposed into per-index children.
 
     Every element lives at its own address under the slot, so the list can be
@@ -198,9 +253,15 @@ class ListRef(ReactiveSequenceRef, ViewRef[list[T]], Generic[T]):
             view: the View class laying the list out. Defaults to
                 ``ListView``.
 
+        Raises:
+            TypeError: ``value`` is a container ref, or ``view`` is no
+                reactive list view.
+
         Notes:
             - ``tags: ListRef[str]`` as an annotation declares the same slot.
         """
+        _refuse_container_value(cls, value)
+        _require_view(cls, view, _LIST_VIEW, "a reactive list view, as ListView or FlatListView")
         declared = TypeInfo.from_annotation(cls[value])  # type: ignore[index]
         return Slot(cls, type_info=declared, view_type=view)  # type: ignore[return-value]
 
@@ -208,9 +269,8 @@ class ListRef(ReactiveSequenceRef, ViewRef[list[T]], Generic[T]):
         """A lazy stream over the elements, each the declared value's form."""
         return super().iter()
 
-    @overload
-    def __getitem__(self, index: slice) -> List[T]: ...
-    @overload
+    # a Shape element descends to the Shape's own type, which no value-form overload names
+    @overload  # type: ignore[override]
     def __getitem__(self: ListRef[bool], index: IntArg) -> BoolRef: ...
     @overload
     def __getitem__(self: ListRef[int], index: IntArg) -> IntRef: ...
@@ -228,12 +288,14 @@ class ListRef(ReactiveSequenceRef, ViewRef[list[T]], Generic[T]):
     def __getitem__(self: ListRef[L], index: IntArg) -> L: ...
     @overload
     def __getitem__(self, index: IntArg) -> ObjectRef: ...
-    def __getitem__(self, index: object) -> StructuredRef:
+    @overload
+    def __getitem__(self, index: slice) -> List[T]: ...
+    def __getitem__(self, index: IntArg | slice) -> StructuredRef | List[T]:
         """The kv ref for the declared value at ``index``; a slice is a List."""
-        return super().__getitem__(index)
+        return super().__getitem__(index)  # type: ignore[return-value]
 
 
-class SetRef(ReactiveSetRef, ViewRef[set[T]], Generic[T]):
+class SetRef(ReactiveSetRef[T], ViewRef[set[T]], Generic[T]):
     """A set slot in KV storage: unordered, unique elements, stored decomposed.
 
     Notes:
@@ -268,9 +330,15 @@ class SetRef(ReactiveSetRef, ViewRef[set[T]], Generic[T]):
             value: the element type.
             view: the View class laying the set out. Defaults to ``SetView``.
 
+        Raises:
+            TypeError: ``value`` is a container ref, or ``view`` is no
+                reactive set view.
+
         Notes:
             - ``members: SetRef[str]`` as an annotation declares the same slot.
         """
+        _refuse_container_value(cls, value)
+        _require_view(cls, view, _SET_VIEW, "a reactive set view, as SetView")
         declared = TypeInfo.from_annotation(cls[value])  # type: ignore[index]
         return Slot(cls, type_info=declared, view_type=view)  # type: ignore[return-value]
 
@@ -323,5 +391,9 @@ class ShapeRef(ReactiveShapeRef, ViewRef[dict[str, object]], Generic[T]):
               navigation autocompletes over ``Order``'s slots.
             - ``latest: ShapeRef[Order]`` as an annotation declares the same
               slot.
+
+        Raises:
+            TypeError: ``view`` is no reactive mapping view.
         """
+        _require_view(cls, view, _MAPPING_VIEW, "a reactive mapping view, as DictView")
         return Slot(cls, shape_type=shape, view_type=view)  # type: ignore[return-value]

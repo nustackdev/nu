@@ -10,15 +10,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import nu
 from nu.lang import ScalarQuery
 from nu.lang.null import Null
 from virtuals.container import ContainerNotFoundError
+from virtuals.view import Faceted
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from nu.lang.runtime import Runtime
+    from nustd.kv.refs.base import ViewRef
+    from virtuals.view import ViewBase
 
 
 __all__ = [
@@ -26,17 +30,21 @@ __all__ = [
 ]
 
 
-def _own_absence(err: ContainerNotFoundError, view: object) -> bool:
-    """Whether ``err`` names the view's own container, not one below it."""
-    site = getattr(err, "site", None)
-    own = getattr(getattr(view, "container", None), "site", None)
-    return site is None or own is None or site == own
+def _own_absence(err: ContainerNotFoundError, view: ViewBase) -> bool:
+    """Whether ``err`` names the view's own container, not one above or below it."""
+    return err.site == view.container.site
 
 
-def _extract(view: object) -> object:
-    if hasattr(view, "eager"):
-        view = view.eager
-    return view.extract()  # type: ignore[attr-defined]
+def _extractor(ref: ViewRef) -> Callable[[ViewBase], object]:
+    """How the fetched view reads out, decided once from the ref's declared view class.
+
+    A view class with facets reads through its eager facet, so nested
+    containers come back extracted; any other view extracts as it is.
+    """
+    view_class = nu.tree.payload(ref).get("type_marker")  # type: ignore[attr-defined]
+    if isinstance(view_class, type) and issubclass(view_class, Faceted):
+        return lambda view: view.eager.extract()  # type: ignore[attr-defined]
+    return lambda view: view.extract()  # type: ignore[attr-defined]
 
 
 class ViewExtract(ScalarQuery):
@@ -61,11 +69,12 @@ class ViewExtract(ScalarQuery):
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
         ref_thunk = children[0]
+        extract = _extractor(ref)
 
         def thunk(rt: Runtime) -> object:
             view = ref_thunk(rt)
             try:
-                return _extract(view)
+                return extract(view)
             except ContainerNotFoundError as err:
                 if not _own_absence(err, view):
                     raise
@@ -77,11 +86,12 @@ class ViewExtract(ScalarQuery):
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
         ref_thunk = children[0]
+        extract = _extractor(ref)
 
         async def athunk(rt: Runtime) -> object:
             view = await ref_thunk(rt)
             try:
-                return _extract(view)
+                return extract(view)
             except ContainerNotFoundError as err:
                 if not _own_absence(err, view):
                     raise

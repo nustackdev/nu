@@ -28,6 +28,7 @@ from __future__ import annotations
 from contextlib import ExitStack, asynccontextmanager, contextmanager
 from typing import TYPE_CHECKING
 
+import nu
 from nu.core.flows.strategy import Sequential
 from nu.core.spans import Retry
 from nu.core.spans import Snapshot as _CoreSnapshot
@@ -38,7 +39,10 @@ from virtuals.tkv.storage import (
     StorageLockTimeoutError,
     StorageTransactionConflictError,
     TransactionProtocol,
+    WriteSlotProtocol,
 )
+
+from ..refs.base import PrimitiveRef, ViewRef
 
 
 if TYPE_CHECKING:
@@ -70,25 +74,13 @@ def _wrap_body(children: tuple[Nu, ...]) -> Nu:
     return Sequential(*children)
 
 
-def _node_write_positions(node: object) -> frozenset[int]:
-    """Declared write positions on a node via its ``mutates`` attribute, or empty."""
-    attrs = getattr(type(node), "_attributes", None)
-    if not attrs or "mutates" not in attrs:
-        return frozenset()
-    value = attrs["mutates"].value
-    return value if isinstance(value, frozenset) else frozenset(value)
+def _has_virtuals_write(node: Nu) -> bool:
+    """Whether the subtree writes a kv ref: one sits in a slot its node declares as mutating.
 
-
-def _has_virtuals_write(node: object) -> bool:
-    """Check if the subtree rooted at ``node`` has any declared write position."""
-    stack = [node]
-    while stack:
-        cur = stack.pop()
-        if _node_write_positions(cur):
-            return True
-        children = getattr(cur, "_children", ())
-        stack.extend(c for c in children if hasattr(c, "_children"))
-    return False
+    The same reading ``atomic`` and ``auto_flow_atomic`` make. A write through
+    anything else (a mem ref, a form wrapping a kv ref) does not count.
+    """
+    return nu.tree.has_write_on_fabric(node, (ViewRef, PrimitiveRef))
 
 
 def _scope_navigators(ctx: Context, scope: Hashable | None) -> list[tuple[dict, Navigator]]:
@@ -125,7 +117,7 @@ def _provide_lazy(
         yield
 
 
-class _HeldWriteSlots(dict):
+class _HeldWriteSlots(dict[int, WriteSlotProtocol]):
     """Writer slots held for the Transaction body in scope, by ``id(storage)``.
 
     Bound on ``ctx.fabrics`` by ``Transaction._aopen`` so a nested
@@ -134,7 +126,7 @@ class _HeldWriteSlots(dict):
     """
 
 
-def _begin_transaction(nav: Navigator, slots: dict[int, object]) -> TransactionProtocol:
+def _begin_transaction(nav: Navigator, slots: dict[int, WriteSlotProtocol]) -> TransactionProtocol:
     """Begin a transaction on ``nav``'s storage, handing it the writer slot if one is held.
 
     ``slots`` maps ``id(storage)`` to a slot reserved up front by
@@ -143,8 +135,8 @@ def _begin_transaction(nav: Navigator, slots: dict[int, object]) -> TransactionP
     """
     storage = nav.storage
     slot = slots.get(id(storage))
-    if slot is not None and slot.held:  # type: ignore[attr-defined]
-        return storage.begin_transaction(write_slot=slot)  # type: ignore[call-arg]
+    if slot is not None and slot.held:
+        return storage.begin_transaction(write_slot=slot)
     return storage.begin_transaction()
 
 
@@ -267,7 +259,9 @@ class Transaction(_CoreTransaction):
         return self._payload["scope"]
 
     @contextmanager
-    def _open(self, ctx: Context, slots: dict[int, object] | None = None) -> Iterator[None]:
+    def _open(
+        self, ctx: Context, slots: dict[int, WriteSlotProtocol] | None = None
+    ) -> Iterator[None]:
         """Provide a transaction, opened on first use, for the body; commit on clean exit, abort on error.
 
         Args:
@@ -298,18 +292,19 @@ class Transaction(_CoreTransaction):
     async def _aopen(self, ctx: Context) -> AsyncIterator[None]:
         """Wait for each storage's writer slot, then run ``_open`` with the slots held.
 
-        A writable storage offering ``areserve_write_slot`` is waited on
-        here, so a coroutine never blocks the loop in the sync begin. The
+        Each writable storage's writer slot is waited on here
+        (``areserve_write_slot``), so a coroutine never blocks the loop in
+        the sync begin. The
         lazy transaction takes the slot over and releases it on commit or
         abort; a slot no transaction took is released on the way out, on
         any BaseException too. A slot an enclosing Transaction holds is
         borrowed, not waited on, and left for that Transaction to release.
-        Storages without it open exactly as ``_open``.
+        A read-only storage reserves nothing.
         """
         fabrics = ctx.fabrics
         enclosing = fabrics.get(_HeldWriteSlots) if fabrics.has(_HeldWriteSlots) else {}
         slots = _HeldWriteSlots()
-        owned: list = []
+        owned: list[WriteSlotProtocol] = []
         try:
             for _, nav in _scope_navigators(ctx, self.scope):
                 storage = nav.storage
@@ -319,10 +314,9 @@ class Transaction(_CoreTransaction):
                 if key in enclosing:
                     slots[key] = enclosing[key]
                     continue
-                reserve = getattr(storage, "areserve_write_slot", None)
-                if reserve is None or getattr(storage, "read_only", False):
+                if storage.read_only:
                     continue
-                slots[key] = await reserve()
+                slots[key] = await storage.areserve_write_slot()
                 owned.append(slots[key])
             with fabrics.bind(_HeldWriteSlots, slots), self._open(ctx, slots):
                 yield
@@ -338,8 +332,8 @@ def Atomic(  # noqa: N802 (factory mimics class spelling)
     """Brackets a body with whichever boundary its own writes call for.
 
     Saves the caller from having to know whether a branch mutates. It scans
-    the body for any node declaring a mutation position and returns a
-    Transaction if it finds one, a Snapshot if it does not.
+    the body for a kv ref in a slot its node declares as mutating and returns
+    a Transaction if it finds one, a Snapshot if it does not.
 
     The decision is made here, while the tree is being built, so what ends up
     in the tree is an ordinary ``Snapshot`` or ``Transaction`` node and every
@@ -354,6 +348,10 @@ def Atomic(  # noqa: N802 (factory mimics class spelling)
           site; it is a function and cannot be subclassed or matched on.
         - The scan reads declared mutation positions off the node classes,
           so it sees only writes already present in the tree at build time.
+        - A write counts only where a kv ref itself sits in the mutating
+          slot, as ``atomic`` and ``auto_flow_atomic`` read it. A mem write
+          (``nu.let``) is no store write, and a form wrapped around a kv ref
+          (``nu.Dict(ref).set_item(...)``) hides the ref: write on the ref.
         - It descends through everything, brackets included, so a write
           already covered by a nested Transaction still counts.
         - For a whole tree rather than one body, ``auto_flow_atomic`` makes

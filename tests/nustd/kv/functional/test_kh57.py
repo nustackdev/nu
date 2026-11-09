@@ -17,7 +17,7 @@ import random
 import pytest
 
 import nu
-from nu import Literal, Shape, run
+from nu import Literal, Shape, arun, run
 from nustd.kv import IntRef, Kh57Ref
 from nustd.kv.refs.base import Facet
 
@@ -138,6 +138,42 @@ def test_range_empty(ctx) -> None:
 def test_range_on_a_never_written_container_raises(ctx) -> None:
     with pytest.raises(KeyError):
         list(run(Ledger.entries.range(0, 10), ctx)[0])
+
+
+# ============================================================================
+# NULL ARGS
+# ============================================================================
+
+
+NULL_ARGS = {
+    "sample_n": (lambda null: Ledger.entries.sample(null), "sample", "n"),
+    "sample_begin": (lambda null: Ledger.entries.sample(5, null), "sample", "begin"),
+    "sample_end": (lambda null: Ledger.entries.sample(5, 0, null), "sample", "end"),
+    "range_begin": (lambda null: Ledger.entries.range(null, 10), "range", "begin"),
+    "range_end": (lambda null: Ledger.entries.range(0, null), "range", "end"),
+}
+
+
+@pytest.mark.parametrize("name", NULL_ARGS)
+def test_a_null_arg_is_refused_before_the_view(ctx, name) -> None:
+    build, op, arg = NULL_ARGS[name]
+    _load_range(ctx, [1, 2, 3])
+    with pytest.raises(ValueError, match=rf"{op}\({arg}=\) read NULL"):
+        run(build(Ledger.height), ctx)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("name", ["sample_begin", "range_end"])
+async def test_a_null_arg_is_refused_before_the_view_async(ctx, name) -> None:
+    build, op, arg = NULL_ARGS[name]
+    _load_range(ctx, [1, 2, 3])
+    with pytest.raises(ValueError, match=rf"{op}\({arg}=\) read NULL"):
+        await arun(build(Ledger.height), ctx)
+
+
+def test_none_bounds_stay_open(ctx) -> None:
+    _load_range(ctx, [1, 2, 3])
+    assert len(run(Ledger.entries.sample(10, None, None), ctx)[0]) == 3
 
 
 # ============================================================================

@@ -13,8 +13,9 @@ Usage::
         age = IntRef.slot()
 """
 
-import nustd.kv._compat  # noqa: F401  (register virtuals view ABCs)
-from nustd.kv import fabrics, interactions, paths, presets, refs, tree, views
+import nustd.kv._compat  # noqa: F401  (register the virtuals views with Extractable)
+from nustd.kv import errors, fabrics, interactions, paths, presets, refs, tree, views
+from nustd.kv.errors import BracketError, NullAddressError
 from nustd.kv.interactions import (
     CONFLICT_ERRORS,
     Atomic,
@@ -62,6 +63,7 @@ from nustd.kv.refs import (
     IntRef,
     Kh57Ref,
     ListRef,
+    LogDictRef,
     ObjectRef,
     OrderedDictRef,
     PrimitiveDictRef,
@@ -70,15 +72,17 @@ from nustd.kv.refs import (
     PrimitiveSetRef,
     PrimitiveTupleRef,
     ProgramRef,
+    RingRef,
     SetRef,
     ShapeRef,
     StrRef,
 )
-from nustd.kv.tree import auto_flow_atomic
+from nustd.kv.tree import atomic, auto_flow_atomic
 
 
 __all__ = [  # noqa: RUF022
     # Submodules
+    "errors",
     "fabrics",
     "interactions",
     "paths",
@@ -105,6 +109,7 @@ __all__ = [  # noqa: RUF022
     "OrderedMoveCmd",
     "OrderedFirst",
     "OrderedLast",
+    # Interactions: ring
     # Interactions: Atomicity
     "Atomic",
     "Snapshot",
@@ -112,7 +117,11 @@ __all__ = [  # noqa: RUF022
     "RetryOnConflict",
     "CONFLICT_ERRORS",
     # Tree
+    "atomic",
     "auto_flow_atomic",
+    # Errors
+    "BracketError",
+    "NullAddressError",
     # Paths
     "ValuePathSer",
     "ViewPathSer",
@@ -143,6 +152,8 @@ __all__ = [  # noqa: RUF022
     "DictRef",
     "Kh57Ref",
     "ListRef",
+    "LogDictRef",
+    "RingRef",
     "OrderedDictRef",
     "SetRef",
     "ShapeRef",
