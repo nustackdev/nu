@@ -31,6 +31,9 @@ from nustd.kv import (
     Transaction,
     memory_navigator,
 )
+from virtuals._views import EagerDictView, LazyDictView
+from virtuals.container import ContainerNotFoundError
+from virtuals.tkv.storage.exceptions import StorageKeyError
 
 
 class Inner(Shape):
@@ -233,6 +236,57 @@ def test_a_point_read_under_a_never_written_container_is_null(ctx) -> None:
     got = run(Root.inner.meta["a"], ctx)[0]
     assert is_null(got)
     assert repr(got) == "<NULL Root.inner.meta.a>"
+
+
+# --- what a leaf read or an erase lets out --------------------------------------
+
+
+def _raising(error: Exception):
+    def method(self, address):
+        raise error
+
+    return method
+
+
+FAULTS = {
+    "storage_fault": StorageKeyError("lost row"),
+    "ancestor_gone": ContainerNotFoundError("gone", ("/", "inner")),
+}
+
+
+@pytest.mark.parametrize("name", FAULTS)
+def test_a_leaf_read_lets_out_what_is_not_the_views_own_absence(ctx, monkeypatch, name) -> None:
+    fault = FAULTS[name]
+    monkeypatch.setattr(LazyDictView, "__getitem__", _raising(fault))
+    with pytest.raises(type(fault)):
+        run(Root.inner.label, ctx)
+
+
+@pytest.mark.parametrize("name", FAULTS)
+@pytest.mark.parametrize("ref", [Root.inner.label, Root.inner.tags], ids=["leaf", "container"])
+def test_an_erase_lets_out_what_is_not_the_views_own_absence(ctx, monkeypatch, name, ref) -> None:
+    fault = FAULTS[name]
+    monkeypatch.setattr(LazyDictView, "__delitem__", _raising(fault))
+    with pytest.raises(type(fault)):
+        run(ref.erase(), ctx)
+
+
+@pytest.mark.parametrize("ref", [Root.count, Root.inner.label, Root.inner.tags])
+def test_an_erase_of_what_is_not_there_is_a_no_op(ctx, ref) -> None:
+    run(ref.erase(), ctx)
+    assert run(ref.exists(), ctx)[0] is False
+
+
+@pytest.mark.parametrize("site", [None, ("/", "elsewhere")], ids=["no_site", "other_site"])
+def test_extract_lets_out_an_absence_that_is_not_its_own(ctx, monkeypatch, site) -> None:
+    other = ContainerNotFoundError("gone", site)
+
+    def extract(self):
+        raise other
+
+    monkeypatch.setattr(EagerDictView, "extract", extract)
+    with pytest.raises(ContainerNotFoundError):
+        run(Root.meta.extract(), ctx)
 
 
 # --- removals on absent containers ---------------------------------------------

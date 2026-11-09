@@ -28,12 +28,8 @@ __all__ = [
 
 
 def _own_absence(err: ContainerNotFoundError, view: View) -> bool:
-    """Whether ``err`` names the view's own container, not one below it.
-
-    An error that names no site comes from a check that had none to give:
-    it is taken as the view's own absence.
-    """
-    return err.site is None or err.site == view.container.site
+    """Whether ``err`` names the view's own container, not one above or below it."""
+    return err.site == view.container.site
 
 
 def _extract(view: View) -> object:

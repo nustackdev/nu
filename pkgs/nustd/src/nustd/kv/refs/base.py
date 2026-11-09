@@ -32,7 +32,7 @@ from virtuals import Empty as StorageEmpty
 from virtuals import Navigator
 from virtuals.collections import Subscriptable
 from virtuals.tkv.storage import SnapshotProtocol, TransactionProtocol
-from virtuals.view import ViewBase
+from virtuals.view import AddressNotFoundError, ViewBase
 
 
 if TYPE_CHECKING:
@@ -223,7 +223,8 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
         - A whole-container write stores through the parent with the ref's
           own declared view class, so a slot declared as Kh57View keeps that
           layout instead of collapsing onto the container layer's default.
-        - Erasing a slot that is not there is a no-op, not an error.
+        - Erasing a slot that is not there is a no-op, not an error; any
+          other error from the delete is let out.
         - Yields a lazy handle, never NULL, even where nothing is written:
           ask ``exists()``, or ``extract()`` the value and test it. On a
           never-written container ``len``, iteration and ``contains`` raise,
@@ -472,7 +473,7 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
         key = path[-1][0]
         try:
             del parent[key]  # type: ignore[attr-defined]
-        except (KeyError, IndexError):
+        except AddressNotFoundError:
             pass
 
     async def _aerase(self, rt: Runtime, nid: int) -> None:
@@ -482,7 +483,7 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
         key = path[-1][0]
         try:
             del parent[key]  # type: ignore[attr-defined]
-        except (KeyError, IndexError):
+        except AddressNotFoundError:
             pass
 
     # --- substrate plug-points (for unsafe ops) ------------------------------
@@ -505,13 +506,15 @@ class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
     is a child on the tree, resolved at run time.
 
     Notes:
-        - Yields NULL, hinted with the dotted path, when the parent has no
-          such key or index, or storage hands back its own empty marker.
-          Nothing else is caught, so real errors stay errors.
+        - Yields NULL, hinted with the dotted path, when the parent view
+          says it holds nothing at the key or index, or storage hands back
+          its own empty marker. Nothing else is caught: a storage fault or a
+          container above the parent that is gone stays an error.
         - Raises ``NullAddressError`` when a key in the path read NULL.
         - A write materializes every ancestor along the path first, so a leaf
           can be written into storage that has nothing above it yet.
-        - Erasing a leaf that is not there is a no-op.
+        - Erasing a leaf that is not there is a no-op; any other error from
+          the delete is let out.
         - A container stored under the leaf reads back extracted, as a plain
           dict or list, never as a live View.
         - A subclass that stores a value in some other form overrides the
@@ -544,7 +547,7 @@ class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
             raise TypeError(msg)
         try:
             val = parent_view[key]
-        except (KeyError, IndexError):
+        except AddressNotFoundError:
             return Null(self._hint(path))
         if isinstance(val, StorageEmpty):
             return Null(self._hint(path))
@@ -612,7 +615,7 @@ class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
         key = path[-1][0]
         try:
             del parent[key]  # type: ignore[attr-defined]
-        except (KeyError, IndexError):
+        except AddressNotFoundError:
             pass
 
     async def _aerase(self, rt: Runtime, nid: int) -> None:
@@ -622,7 +625,7 @@ class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
         key = path[-1][0]
         try:
             del parent[key]  # type: ignore[attr-defined]
-        except (KeyError, IndexError):
+        except AddressNotFoundError:
             pass
 
     # --- _fetch_parent (structured-ref plug-point; consumed by OnPrimitiveChange)
