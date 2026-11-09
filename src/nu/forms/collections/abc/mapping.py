@@ -159,6 +159,8 @@ class MappingForm(
               mapping without paged keys raises at evaluation time; a
               Python ``dict`` has none.
             - Both are ordinary Nu values, so a ref read at run time works.
+              One that reads NULL is passed on as NULL, and the mapping
+              raises on it.
 
         Yields:
             A view over the keys, in the mapping's order; with either

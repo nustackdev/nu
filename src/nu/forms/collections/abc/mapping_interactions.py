@@ -91,7 +91,8 @@ class KeysPage(ScalarQuery):
 
     Calls the mapping's own paged ``keys`` and collects the page into a list.
     A mapping without that contract raises (Python's ``dict.keys`` takes no
-    arguments). ``after`` and ``limit`` reach it as they read, None included.
+    arguments). ``after`` and ``limit`` reach it as they read, None and NULL
+    included.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

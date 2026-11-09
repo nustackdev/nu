@@ -119,3 +119,63 @@ def test_a_kv_dict_pages_through_its_view():
         assert nu.run(Board.rows.reversed_keys(before="d", limit=2), ctx)[0] == ["c", "b"]
         assert nu.run(Board.log.keys(after="d", limit=2), ctx)[0] == ["b", "c"]
         assert nu.run(Board.log.reversed_keys(limit=1), ctx)[0] == ["a"]
+
+
+class _Recording(dict):
+    """Records the paging args it is handed, to show core passes them untouched."""
+
+    seen: list
+
+    def keys(self, *, after=None, limit=None):  # type: ignore[override]
+        type(self).seen.append((after, limit))
+        return iter(())
+
+
+def test_a_null_cursor_or_limit_reaches_the_mapping_untouched():
+    from nu.lang import is_null
+
+    class Cursor(nu.Shape):
+        after = nu.StrRef.slot()
+        limit = nu.IntRef.slot()
+
+    _Recording.seen = []
+    ctx = nu.Context().bind(dict, {}, Cursor)
+    nu.run(Dict(Literal(_Recording())).keys(after=Cursor.after, limit=Cursor.limit), ctx)
+    ((after, limit),) = _Recording.seen
+    assert is_null(after)
+    assert is_null(limit)
+
+
+def test_a_kv_page_raises_on_a_null_cursor_or_limit():
+    pytest.importorskip("nustd.kv")
+    from nustd.kv import DictRef, LogDictRef
+    from virtuals import Navigator
+    from virtuals.codecs import BinaryCodec
+    from virtuals.storages.mem import InMemoryStorage
+    from virtuals.tkv.storage import TransactionProtocol
+
+    class Board(nu.Shape):
+        rows = DictRef.slot(int)
+        log = LogDictRef.slot(int)
+
+    class Cursor(nu.Shape):
+        key = nu.StrRef.slot()
+        limit = nu.IntRef.slot()
+
+    with InMemoryStorage(codec=BinaryCodec()) as storage, storage.transaction() as tx:
+        ctx = (
+            nu.Context()
+            .bind(Navigator, Navigator(storage))
+            .bind(TransactionProtocol, tx)
+            .bind(dict, {}, Cursor)
+        )
+        for ref in (Board.rows, Board.log):
+            nu.run(ref.set_item("a", 1), ctx)
+            for page in (
+                ref.keys(after=Cursor.key),
+                ref.keys(limit=Cursor.limit),
+                ref.reversed_keys(before=Cursor.key),
+                ref.reversed_keys(limit=Cursor.limit),
+            ):
+                with pytest.raises(TypeError):
+                    nu.run(page, ctx)
