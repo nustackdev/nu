@@ -12,21 +12,54 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Changelog lists the revamp lane and drops entries for reversed changes
 - Ref classes drop the value constructors: a ref names a place, not a value
 - Reversing a list or tuple yields a stream, like Python's reversed
 - Shape rows, refs and store steps type-check again after the grid rebuild
-- Reading a mapping's keys last first works on stores, sync or async alike
+- Store refs carry their built-in type's full surface; hashed maps stay plain mappings
+- In-memory refs carry the full built-in surface of the type they hold
+- Shapes offer one cell per Python type and capability, mirroring the built-in types
+- Reactive sources load the shape domain only where they use it
+- Store tests read stored data by extracting it rather than copying it
+- Capped logs read like any sequence plus appends; the separate entries read is gone
+- The store bracket counts a write only where a ref is actually written
+- Store views register as extractable, so extracting any of them gives plain data
+- Sequences lose the unused in-place concatenate and repeat steps
+- Writing a list position is one named call; subscript assignment and in-place operators refuse
+- Union, intersection and the other named set calls work on every set again
+- Extracting from a fabric's live handle always hands out plain data
+- Reversed reads and paging belong to ordered mappings; copy and merge are dict-only
+- Sort, copy and other built-in-only calls live on lists and sets, not every sequence
+- Shape collection helpers import straight from the shape package
+- Checking whether a term is dynamic reads its declared attributes directly
+- Only a missing container itself reads as NULL; anything missing below it raises
+- Hashed maps and capped logs refuse a NULL argument instead of reading nothing
+- Store brackets walk terms through the public tree interface, not private internals
+- The public tree interface tells a term's direct effects and whether it is dynamic
+- Store refs rely on what views declare for facets, existence and error sites
+- Transactions reserve the single writer through the storage contract, never by probing
+- Change watches find their root shape from the ref itself, never by probing
+- A shape slot annotated with a ref that cannot hold a place is refused
+- A capped log refuses a view that is not a ring with a capacity
+- First or last of an empty ordered collection raises instead of reading NULL
+- Paged key reads raise at once when the cursor or limit is NULL
+- Existence checks, extraction and slot annotations rely on declared ref contracts, not probing
+- Cancelling a valkey ping or web server shutdown lands together with its result
+- Delete tests now describe deletes forwarding to the stored view
+- Reads and watches through a key that found nothing raise as writes do
+- Any ordered mapping reads its keys a page at a time, forwards or backwards
+- Mapping reads and deletes ask the mapping itself, with no NULL passthrough or probing
+- Both store brackets find uncovered refs through one shared walk
+- Reading a mapping's keys last first works on stores as well as dicts
 - The host-kill containment test no longer fails when the machine is busy
 - Closing toasts finish fading before they leave, so bursts no longer flicker
 - Docs say when streams re-drain and what deleting a NULL key raises
-- Writing a whole row keeps its ordered, log and ring slots in their layouts
-- Plain mappings read their first and last key in one seek, like logs
 - The ui kit gains a toast, so apps can say briefly what just failed
-- Capped logs keep the newest entries, drop the oldest, and page by sequence number
+- Capped logs keep the newest entries and drop the oldest
 - One store-aware bracket wraps a whole term and refuses writes spanning two stores
-- A key that finds nothing makes reads give NULL and writes raise a named error
-- Mappings read keys a page at a time, and logs list ids in the order added
-- Deleting a missing key raises unless allowed, and empty first or last reads NULL
+- A key that finds nothing makes writes raise a named error
+- Ordered mappings read keys page by page; logs list ids in insertion order
+- Deleting a missing key raises unless the call allows a missing one
 - Redis notify channels default to nu, so upgrade publishers and observers together
 - A container declared to hold another container is refused; hold a Shape instead
 - Level flows re-check only when asked, so each driver picks its own schedule
