@@ -159,8 +159,8 @@ class MappingForm(
               mapping without paged keys raises at evaluation time; a
               Python ``dict`` has none.
             - Both are ordinary Nu values, so a ref read at run time works.
-              One that reads NULL is passed on as NULL, and the mapping
-              raises on it.
+              One that reads NULL raises ValueError before the mapping is
+              called: branch on it first (``IsNull``).
 
         Yields:
             A view over the keys, in the mapping's order; with either
@@ -261,7 +261,8 @@ class MappingForm(
             - With neither argument: ``reversed(mapping)``, an iterator.
             - With either: ``mapping.keys_reverse(before=before,
               limit=limit)``, collected into a list. Same contract as
-              ``keys(after=, limit=)``: a mapping without it raises.
+              ``keys(after=, limit=)``: a mapping without it raises, and so
+              does a ``before`` or ``limit`` that reads NULL.
 
         Yields:
             An iterator over the keys, reversed; with either argument, a

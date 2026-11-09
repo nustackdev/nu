@@ -86,13 +86,22 @@ class Keys(ScalarQuery):
         return athunk
 
 
+def _page_args(op: str, cursor: str, at: object, limit: object) -> tuple[object, object]:
+    """Refuse a NULL cursor or limit: a page past nothing is not an empty page."""
+    if is_null(at):
+        raise ValueError(f"{op}({cursor}=) read NULL: branch on it first (IsNull)")
+    if is_null(limit):
+        raise ValueError(f"{op}(limit=) read NULL: branch on it first (IsNull)")
+    return at, limit
+
+
 class KeysPage(ScalarQuery):
     """One page of keys: list(mapping.keys(after=after, limit=limit)).
 
     Calls the mapping's own paged ``keys`` and collects the page into a list.
     A mapping without that contract raises (Python's ``dict.keys`` takes no
-    arguments). ``after`` and ``limit`` reach it as they read, None and NULL
-    included.
+    arguments). ``after`` and ``limit`` reach it as they read; one that reads
+    NULL raises ValueError before the mapping is called.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -100,7 +109,8 @@ class KeysPage(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             obj = operand(rt)
-            return list(obj.keys(after=after_t(rt), limit=limit_t(rt)))
+            after, limit = _page_args("keys", "after", after_t(rt), limit_t(rt))
+            return list(obj.keys(after=after, limit=limit))
 
         return thunk
 
@@ -109,8 +119,7 @@ class KeysPage(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
-            after = await after_t(rt)
-            limit = await limit_t(rt)
+            after, limit = _page_args("keys", "after", await after_t(rt), await limit_t(rt))
             return list(obj.keys(after=after, limit=limit))
 
         return athunk
@@ -274,7 +283,7 @@ class ReversedKeysPage(ScalarQuery):
 
     The reverse twin of :class:`KeysPage`: calls the mapping's own
     ``keys_reverse`` and collects the page into a list. A mapping without
-    it raises.
+    it raises, and so does a ``before`` or ``limit`` that reads NULL.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -282,7 +291,8 @@ class ReversedKeysPage(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             obj = operand(rt)
-            return list(obj.keys_reverse(before=before_t(rt), limit=limit_t(rt)))
+            before, limit = _page_args("reversed_keys", "before", before_t(rt), limit_t(rt))
+            return list(obj.keys_reverse(before=before, limit=limit))
 
         return thunk
 
@@ -291,8 +301,9 @@ class ReversedKeysPage(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
-            before = await before_t(rt)
-            limit = await limit_t(rt)
+            before, limit = _page_args(
+                "reversed_keys", "before", await before_t(rt), await limit_t(rt)
+            )
             return list(obj.keys_reverse(before=before, limit=limit))
 
         return athunk

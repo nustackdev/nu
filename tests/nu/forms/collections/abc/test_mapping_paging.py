@@ -122,7 +122,7 @@ def test_a_kv_dict_pages_through_its_view():
 
 
 class _Recording(dict):
-    """Records the paging args it is handed, to show core passes them untouched."""
+    """Records every paging call it gets, to show a NULL arg never reaches it."""
 
     seen: list
 
@@ -130,20 +130,41 @@ class _Recording(dict):
         type(self).seen.append((after, limit))
         return iter(())
 
+    def keys_reverse(self, *, before=None, limit=None):
+        type(self).seen.append((before, limit))
+        return iter(())
 
-def test_a_null_cursor_or_limit_reaches_the_mapping_untouched():
-    from nu.lang import is_null
 
-    class Cursor(nu.Shape):
-        after = nu.StrRef.slot()
-        limit = nu.IntRef.slot()
+class _Cursor(nu.Shape):
+    key = nu.StrRef.slot()
+    limit = nu.IntRef.slot()
 
+
+def _null_pages(d):
+    return (
+        d.keys(after=_Cursor.key),
+        d.keys(limit=_Cursor.limit),
+        d.reversed_keys(before=_Cursor.key),
+        d.reversed_keys(limit=_Cursor.limit),
+    )
+
+
+def test_a_null_cursor_or_limit_raises_before_the_mapping_is_called():
     _Recording.seen = []
-    ctx = nu.Context().bind(dict, {}, Cursor)
-    nu.run(Dict(Literal(_Recording())).keys(after=Cursor.after, limit=Cursor.limit), ctx)
-    ((after, limit),) = _Recording.seen
-    assert is_null(after)
-    assert is_null(limit)
+    ctx = nu.Context().bind(dict, {}, _Cursor)
+    for page in _null_pages(Dict(Literal(_Recording()))):
+        with pytest.raises(ValueError, match="read NULL"):
+            nu.run(page, ctx)
+    assert _Recording.seen == []
+
+
+def test_a_null_cursor_or_limit_raises_async():
+    _Recording.seen = []
+    ctx = nu.Context().bind(dict, {}, _Cursor)
+    for page in _null_pages(Dict(Literal(_Recording()))):
+        with pytest.raises(ValueError, match="read NULL"):
+            asyncio.run(nu.arun(page, ctx))
+    assert _Recording.seen == []
 
 
 def test_a_kv_page_raises_on_a_null_cursor_or_limit():
@@ -158,24 +179,15 @@ def test_a_kv_page_raises_on_a_null_cursor_or_limit():
         rows = DictRef.slot(int)
         log = LogDictRef.slot(int)
 
-    class Cursor(nu.Shape):
-        key = nu.StrRef.slot()
-        limit = nu.IntRef.slot()
-
     with InMemoryStorage(codec=BinaryCodec()) as storage, storage.transaction() as tx:
         ctx = (
             nu.Context()
             .bind(Navigator, Navigator(storage))
             .bind(TransactionProtocol, tx)
-            .bind(dict, {}, Cursor)
+            .bind(dict, {}, _Cursor)
         )
         for ref in (Board.rows, Board.log):
             nu.run(ref.set_item("a", 1), ctx)
-            for page in (
-                ref.keys(after=Cursor.key),
-                ref.keys(limit=Cursor.limit),
-                ref.reversed_keys(before=Cursor.key),
-                ref.reversed_keys(limit=Cursor.limit),
-            ):
-                with pytest.raises(TypeError):
+            for page in _null_pages(ref):
+                with pytest.raises(ValueError, match="read NULL"):
                     nu.run(page, ctx)
