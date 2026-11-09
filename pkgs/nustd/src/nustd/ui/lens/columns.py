@@ -52,13 +52,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import nu
-from nu.domains.shape import ItemRef, MappingRef, SequenceRef, ShapeRef
+from nu.domains.shape import ItemRef, MappingRef, SequenceRef, ShapeRef, StructuredRef
 from nu.lang import Cardinality
 from nu.lang.null import is_null
 
 
 if TYPE_CHECKING:
-    from nu.domains.shape import Shape, StructuredRef
+    from nu.domains.shape import Shape
 
 
 __all__ = [
@@ -191,9 +191,11 @@ def _descend(prefix: StructuredRef | None, shape_cls: type[Shape], cursor: tuple
     """
     ref = _slot(shape_cls, cursor[0], prefix)
     for seg in cursor[1:]:
-        if isinstance(ref, ItemRef):
-            # A leaf has nothing under it, and indexing one builds a term that
-            # fails much later, inside the codec, with a much worse message.
+        if isinstance(ref, ItemRef) or not isinstance(ref, StructuredRef):
+            # A leaf has nothing under it, and neither has an entry a ring
+            # reads whole (its position is a read, not a ref). Indexing one
+            # builds a term that fails much later, at run time, with a much
+            # worse message.
             msg = f"{seg!r}: a value has nothing under it"
             raise KeyError(msg)
         if isinstance(ref, ShapeRef):

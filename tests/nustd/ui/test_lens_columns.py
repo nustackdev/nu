@@ -477,3 +477,32 @@ async def test_two_lenses_on_one_page_do_not_share_a_cursor():
 
     assert _nav_key(Two.pair.left.lens) != _nav_key(Two.pair.right.lens)
     assert _nav_key(Two.pair.left.lens) == _nav_key(Two.pair.left.lens)
+
+
+class Run(nu.Shape):
+    """A capped log: a sequence whose entries are read whole, not refs."""
+
+    out = nustd.kv.RingRef.slot(list, capacity=3)
+
+
+@pytest.mark.timeout(60)
+async def test_a_ring_is_a_sequence_column_of_whole_entries():
+    """A ring entry is a leaf: shown, not a door, and nothing under it to follow."""
+    with nustd.kv.memory_storage() as storage:
+        ctx = nu.Context().bind(Navigator, Navigator(storage))
+        await nu.arun(nustd.kv.Transaction(Run.out.append(nu.List.of("12:00", "hi"))), ctx)
+
+        _, ring = await _read(ctx, column_terms(Run, ("out",)))
+        assert ring["kind"] == "sequence"
+        assert ring["total"] == 1
+        assert ring["entries"][0]["navigable"] is False
+        assert ring["entries"][0]["vtype"] == "list"
+
+        *_, entry = await _read(ctx, column_terms(Run, ("out", "0")))
+        assert entry["kind"] == "leaf"
+        assert entry["entries"][0]["text"] == "['12:00', 'hi']"
+
+        # A cursor past an entry is one error column, not a run that raises.
+        *_, below = await _read(ctx, column_terms(Run, ("out", "0", "1")))
+        assert below["entries"][0]["vtype"] == "error"
+        assert "nothing under it" in below["entries"][0]["text"]
