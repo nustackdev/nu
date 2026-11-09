@@ -22,23 +22,9 @@ from ..sources.on import OnChildrenChange
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, Callable, Iterable
 
-    from nu.lang import Nu
     from nu.lang.runtime import Runtime
 
 __all__ = ["Stream"]
-
-
-def _reads(source: object, cursor: object) -> tuple[Nu, Nu]:
-    """The two reads of ``source``: the item past ``cursor``, and the watch.
-
-    A ref whose fabric needs each read bracketed supplies both itself through
-    ``_stream_reads(cursor)``, so every drain step sees the source as it
-    stands then (kv refs give each read a snapshot of its own).
-    """
-    own = getattr(type(source), "_stream_reads", None)
-    if own is not None:
-        return own(source, cursor)
-    return AdvanceCursor(source, cursor), OnChildrenChange(source)
 
 
 class Stream(StreamQuery):
@@ -65,10 +51,10 @@ class Stream(StreamQuery):
     Notes:
         - Children are ``[advance, change, body, key, log_key, after,
           every]``: ``advance`` is an ``AdvanceCursor`` over ``source``,
-          ``change`` an ``OnChildrenChange`` subscription on ``source``. A
-          source ref may supply both itself (``_stream_reads``): a kv ref
-          wraps each in a snapshot of its own, so the stream needs no
-          bracket around it and an outer one does not freeze it.
+          ``change`` an ``OnChildrenChange`` subscription on ``source``.
+        - Brackets nothing itself: each drain step reads ``source`` under
+          whatever bracket the caller puts around the stream. A fabric that
+          needs its reads bracketed is bracketed by the caller.
         - Subscribes first, then drains: walks ``advance`` to exhaustion,
           running ``body`` per item. An item appended at any point after the
           subscribe is either in that first drain or wakes a later one, so
@@ -116,7 +102,9 @@ class Stream(StreamQuery):
         if key is None:
             key = "stream_key"
 
-        advance, change = _reads(source, Attr(log_key))
+        cursor_ref = Attr(log_key)
+        advance = AdvanceCursor(source, cursor_ref)
+        change = OnChildrenChange(source)
         super().__init__(
             advance, change, body, key, log_key, *schedule_terms("Stream", after, every)
         )
