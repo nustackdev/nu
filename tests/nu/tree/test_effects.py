@@ -16,7 +16,6 @@ from nu.tree import (
     is_dynamic,
     is_pure,
     iter_effects,
-    mutated_slots,
     node_effects,
     reads,
     writes,
@@ -84,12 +83,6 @@ def test_node_effects_skips_a_structural_slot():
     leaf = Outer.inner.y
     assert list(node_effects(leaf)) == []  # the parent ref is address, not a read
     assert Outer.inner not in reads(leaf.set(1))
-
-
-def test_mutated_slots():
-    cmd, _target, _source = _write_tree()
-    assert mutated_slots(cmd) == frozenset({0})
-    assert mutated_slots(Literal(1)) == frozenset()
 
 
 def test_is_dynamic():

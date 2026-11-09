@@ -9,8 +9,8 @@ boundaries (Brackets, Policies) run pre-compile and need exactly this.
 Folds on top of the walk: ``is_pure`` / ``reads`` / ``writes`` /
 ``fabrics`` and the fabric predicates ``touches_fabric`` /
 ``has_write_on_fabric``. Its parts are public too, for walks that prune
-on their own terms: ``node_effects`` (one node, no descent),
-``mutated_slots`` and ``is_dynamic``.
+on their own terms: ``node_effects`` (one node, no descent) and
+``is_dynamic``.
 """
 
 from __future__ import annotations
@@ -33,7 +33,6 @@ __all__ = [
     "is_dynamic",
     "is_pure",
     "iter_effects",
-    "mutated_slots",
     "node_effects",
     "reads",
     "touches_fabric",
@@ -41,7 +40,7 @@ __all__ = [
 ]
 
 
-def mutated_slots(node: Nu) -> frozenset[int]:
+def _mutated_slots(node: Nu) -> frozenset[int]:
     """The child slots ``node`` declares it writes (its ``mutates`` attribute), or none."""
     return frozenset(getattr(type(node)._attributes.get("mutates"), "value", ()))
 
@@ -56,7 +55,7 @@ def node_effects(node: Nu) -> Iterator[tuple[Ref, Effect]]:
     for themselves where to descend.
     """
     attrs = type(node)._attributes
-    mutated = mutated_slots(node)
+    mutated = _mutated_slots(node)
     structural: frozenset[int] = getattr(attrs.get("structural"), "value", frozenset())
     for slot, child in enumerate(node._children):
         if isinstance(child, Ref) and slot not in structural:
