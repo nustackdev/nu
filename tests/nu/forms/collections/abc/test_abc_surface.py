@@ -1,8 +1,10 @@
 """Abstract forms carry the collections.abc surface; built-in-only methods sit on the concrete forms.
 
-Sequence: ``sort`` and ``copy`` are ``List``'s. Set: the named algebra is
-``Set`` / ``FrozenSet``'s, the subset comparisons and ``isdisjoint`` are the
-ABC's. The mutable tiers carry every ABC mixin, so a ref on them does too.
+Sequence: ``sort`` and ``copy`` are ``List``'s. Set: the abstract forms carry
+the comparisons, ``isdisjoint``, and the named methods that are Nu's spelling
+of the ABC's ``& | - ^`` and ``|= &= -= ^=``; only ``copy`` is ``Set`` /
+``FrozenSet``'s. The mutable tiers carry every ABC mixin, so a ref on them
+does too.
 """
 
 from __future__ import annotations
@@ -25,7 +27,6 @@ SET_QUERIES = (
     "symmetric_difference",
     "issubset",
     "issuperset",
-    "copy",
 )
 SET_UPDATES = (
     "update",
@@ -100,19 +101,34 @@ def test_list_copy_runs():
 
 
 @pytest.mark.parametrize("name", SET_QUERIES)
-def test_named_set_queries_are_on_the_concrete_sets(name: str):
-    assert not hasattr(SetLikeForm, name)
-    assert not hasattr(_Port.st, name)
-    assert hasattr(nu.Set, name)
+def test_named_set_queries_are_on_the_abstract_set_form(name: str):
+    assert name in vars(SetLikeForm)
+    assert hasattr(_Port.st, name)
     assert hasattr(nu.FrozenSet, name)
+    assert hasattr(nu.Dict({"a": 1}).keys(), name)
 
 
 @pytest.mark.parametrize("name", SET_UPDATES)
-def test_named_set_updates_are_on_set_only(name: str):
-    assert not hasattr(MutableSetForm, name)
-    assert not hasattr(_Port.st, name)
-    assert hasattr(nu.Set, name)
+def test_named_set_updates_are_on_the_abstract_mutable_set_form(name: str):
+    assert name in vars(MutableSetForm)
+    assert hasattr(_Port.st, name)
     assert not hasattr(nu.FrozenSet, name)
+
+
+def test_copy_is_on_the_concrete_sets_alone():
+    assert not hasattr(SetLikeForm, "copy")
+    assert not hasattr(_Port.st, "copy")
+    assert nu.run(nu.Set({1, 2}).copy())[0] == {1, 2}
+    assert type(nu.FrozenSet(frozenset({1})).copy()) is nu.FrozenSet
+
+
+def test_set_algebra_runs_on_a_ref():
+    data = {"st": {1, 2}}
+    ctx = _ctx(data)
+    assert nu.run(_Port.st.union({3}), ctx)[0] == {1, 2, 3}
+    assert nu.run(_Port.st.issubset({1, 2, 3}), ctx)[0] is True
+    _, ctx = nu.run(_Port.st.difference_update({1}), ctx)
+    assert data["st"] == {2}
 
 
 @pytest.mark.parametrize(

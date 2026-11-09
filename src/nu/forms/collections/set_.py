@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
-
-from typing_extensions import Self
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.lang import TypedNu
 
@@ -28,144 +26,7 @@ __all__ = [
 T = TypeVar("T")
 
 
-class _SetMethods(Generic[T]):
-    """The named methods `set` and `frozenset` share, not on collections.abc.Set.
-
-    Private mixin for `Set` and `FrozenSet`: each result is wrapped in the
-    concrete type through its `_wrap_set_result`.
-    """
-
-    def _wrap_set_result(self, operand: Nu) -> Self:
-        """Wrap a set-level result in the concrete set type; each concrete form supplies it."""
-        raise NotImplementedError()
-
-    def union(self, other: Arg[set[T] | frozenset[T]]) -> Self:
-        """Union of self and other.
-
-        Args:
-            other: the set to union with self.
-
-        Yields:
-            A new set with every element from self and other.
-
-        Example:
-            >>> nu.run(nu.Set({1, 2}).union({2, 3}))[0]
-            {1, 2, 3}
-        """
-        from .abc.set_interactions import Union
-
-        return self._wrap_set_result(Union(self, other))
-
-    def intersection(self, other: Arg[set[T] | frozenset[T]]) -> Self:
-        """Intersection of self and other.
-
-        Args:
-            other: the set to intersect with self.
-
-        Yields:
-            A new set with only the elements found in both.
-
-        Example:
-            >>> nu.run(nu.Set({1, 2, 3}).intersection({2, 3, 4}))[0]
-            {2, 3}
-        """
-        from .abc.set_interactions import Intersection
-
-        return self._wrap_set_result(Intersection(self, other))
-
-    def difference(self, other: Arg[set[T] | frozenset[T]]) -> Self:
-        """Elements of self that are not in other.
-
-        Args:
-            other: the set to subtract from self.
-
-        Yields:
-            A new set with the elements of self minus the elements of
-            other.
-
-        Example:
-            >>> nu.run(nu.Set({1, 2, 3}).difference({2, 3}))[0]
-            {1}
-        """
-        from .abc.set_interactions import Difference
-
-        return self._wrap_set_result(Difference(self, other))
-
-    def symmetric_difference(self, other: Arg[set[T] | frozenset[T]]) -> Self:
-        """Elements in exactly one of self and other, not both.
-
-        Args:
-            other: the set to compare against self.
-
-        Yields:
-            A new set with the elements that are in self or other but not
-            in both.
-
-        Example:
-            >>> nu.run(nu.Set({1, 2, 3}).symmetric_difference({2, 3, 4}))[0]
-            {1, 4}
-        """
-        from .abc.set_interactions import SymmetricDifference
-
-        return self._wrap_set_result(SymmetricDifference(self, other))
-
-    def issubset(self, other: Arg[set[T] | frozenset[T]]) -> Bool:
-        """Whether every element of self is in other.
-
-        Args:
-            other: the set to test self against.
-
-        Yields:
-            True when self is a subset of other (equal sets count), False
-            otherwise.
-
-        Example:
-            >>> nu.run(nu.Set({1, 2, 3}).issubset({1, 2, 3, 4}))[0]
-            True
-        """
-        from nu.forms.primitives import Bool
-
-        from .abc.set_interactions import IsSubset
-
-        return Bool(IsSubset(self, other))
-
-    def issuperset(self, other: Arg[set[T] | frozenset[T]]) -> Bool:
-        """Whether every element of other is in self.
-
-        Args:
-            other: the set to test against self.
-
-        Yields:
-            True when self is a superset of other (equal sets count),
-            False otherwise.
-
-        Example:
-            >>> nu.run(nu.Set({1, 2, 3}).issuperset({1, 2}))[0]
-            True
-        """
-        from nu.forms.primitives import Bool
-
-        from .abc.set_interactions import IsSuperset
-
-        return Bool(IsSuperset(self, other))
-
-    def copy(self) -> Self:
-        """Shallow copy of self.
-
-        Yields:
-            A new set with the same elements as self.
-
-        Example:
-            >>> nu.run(nu.Set({1, 2, 3}).copy())[0]
-            {1, 2, 3}
-        """
-        from .abc.set_interactions import Copy
-
-        return self._wrap_set_result(Copy(self))
-
-
 class Set(
-    _SetMethods[T],
     MutableSetForm[set[T], T, "Set[T]", "Object"],
     TypedNu[set[T]],
     Generic[T],
@@ -178,12 +39,11 @@ class Set(
         - `>`, `<`, `>=`, `<=` are subset/superset relations, not size
           comparisons: `a > b` means a is a proper superset of b, not that
           a has more elements. They come from the shared set base.
-        - The named algebra (`union`, `issubset`, `copy`, ...) and the
-          named in-place updates (`update`, `*_update`) are set-only and
-          live here. Set algebra is named only: `&`, `|` and `>>` compose
-          flows on a set like on every term, and `-` / `^` are not defined.
-        - The ABC mutations (`add`, `remove`, `discard`, `pop`, `clear`)
-          live on the shared mutable-set base.
+        - The named algebra (`union`, `issubset`, ...) and in-place
+          updates (`update`, `*_update`) come from the shared set bases:
+          Nu's spelling of the Set ABC operators, since `&`, `|` and `>>`
+          compose flows on a set like on every term and `-` / `^` are not
+          defined. Only `copy` is set-only and lives here.
 
     Example:
         >>> nu.run(nu.Set.of(1, 2, 3))[0]
@@ -246,9 +106,9 @@ class Set(
         """Wrap operand as an elem-typed Form when known; Object otherwise.
 
         Notes:
-            - A Set carrying a `TypeInfo` on its payload (a typed set ref,
-              like `PrimitiveSetRef[str]`) dispatches the element to its
-              concrete Form, as `List` does.
+            - A Set carrying a `TypeInfo` on its payload (a result of a
+              typed set ref, like `SetRef.slot(str).union(...)`) dispatches
+              the element to its concrete Form, as `List` does.
         """
         ti = self._payload.get("type_info")
         if ti is not None and ti.elem is not None:
@@ -257,77 +117,22 @@ class Set(
 
         return Object(operand)
 
-    # =========================================================================
-    # SET-ONLY (not on collections.abc.MutableSet)
-    # =========================================================================
+    def copy(self) -> Set[T]:
+        """Shallow copy of self.
 
-    def update(self, other: Arg[set[T] | frozenset[T]]) -> Any:  # noqa: ANN401
-        """Add every element of other to self.
-
-        Args:
-            other: the set whose elements are added to self.
+        Notes:
+            - Built-in only: `collections.abc.Set` has no `copy`.
 
         Yields:
-            Nothing (Command). Mutates self in place.
+            A new set with the same elements as self.
 
-        Example::
-
-            my_set.update({4, 5})
+        Example:
+            >>> nu.run(nu.Set({1, 2, 3}).copy())[0]
+            {1, 2, 3}
         """
-        from .abc.set_interactions import SetUpdate
+        from .abc.set_interactions import Copy
 
-        return SetUpdate(self, other)
-
-    def intersection_update(self, other: Arg[set[T] | frozenset[T]]) -> Any:  # noqa: ANN401
-        """Keep only the elements of self also found in other.
-
-        Args:
-            other: the set to intersect self with.
-
-        Yields:
-            Nothing (Command). Mutates self in place.
-
-        Example::
-
-            my_set.intersection_update({2, 3})
-        """
-        from .abc.set_interactions import IntersectionUpdate
-
-        return IntersectionUpdate(self, other)
-
-    def difference_update(self, other: Arg[set[T] | frozenset[T]]) -> Any:  # noqa: ANN401
-        """Remove every element of other from self.
-
-        Args:
-            other: the set of elements to remove from self.
-
-        Yields:
-            Nothing (Command). Mutates self in place.
-
-        Example::
-
-            my_set.difference_update({2, 3})
-        """
-        from .abc.set_interactions import DifferenceUpdate
-
-        return DifferenceUpdate(self, other)
-
-    def symmetric_difference_update(self, other: Arg[set[T] | frozenset[T]]) -> Any:  # noqa: ANN401
-        """Keep the elements in exactly one of self and other.
-
-        Args:
-            other: the set to compare self against.
-
-        Yields:
-            Nothing (Command). Mutates self in place.
-
-        Example::
-
-            my_set.symmetric_difference_update({2, 4})
-        """
-        from .abc.set_interactions import SymmetricDifferenceUpdate
-
-        return SymmetricDifferenceUpdate(self, other)
+        return self._wrap_set_result(Copy(self))
 
     # =========================================================================
     # COMPARISON
@@ -405,7 +210,6 @@ class Set(
 
 
 class FrozenSet(
-    _SetMethods[T],
     SetLikeForm[frozenset[T], T, "FrozenSet[T]", "Object"],
     TypedNu[frozenset[T]],
     Generic[T],
@@ -415,9 +219,9 @@ class FrozenSet(
     Notes:
         - Iteration order is arbitrary, matching Python's `frozenset`.
         - `>`, `<`, `>=`, `<=` are subset/superset relations, not size
-          comparisons. The named algebra (`union`, `issubset`, `copy`,
-          ...) is shared with `Set`. Set algebra is named only: `&`, `|`
-          and `>>` compose flows.
+          comparisons. The named algebra (`union`, `issubset`, ...) comes
+          from the shared set base; only `copy` lives here. Set algebra is
+          named only: `&`, `|` and `>>` compose flows.
         - No `add`/`remove`/`update`/... unlike `Set`: a FrozenSet can't be
           mutated in place.
 
@@ -487,6 +291,23 @@ class FrozenSet(
         from ..primitives import Object
 
         return Object(operand)
+
+    def copy(self) -> FrozenSet[T]:
+        """Shallow copy of self.
+
+        Notes:
+            - Built-in only: `collections.abc.Set` has no `copy`.
+
+        Yields:
+            A new frozenset with the same elements as self.
+
+        Example:
+            >>> nu.run(nu.FrozenSet(frozenset({1, 2})).copy())[0]
+            frozenset({1, 2})
+        """
+        from .abc.set_interactions import Copy
+
+        return self._wrap_set_result(Copy(self))
 
     # =========================================================================
     # COMPARISON

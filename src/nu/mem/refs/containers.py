@@ -238,10 +238,8 @@ class SetRef(MutableSetRef, RefBase[set[T]], Generic[T]):
     """A set slot in the dict substrate, holding one plain set of values.
 
     No descent: a set has no addresses, so there is no child ref to navigate
-    to. Everything happens through the set calls - membership, the subset
-    comparisons, ``isdisjoint``, and the in-place mutations. The named
-    algebra (``union``, ``difference``, ...) is the ``Set`` form's:
-    ``nu.Set(ref).union(...)``.
+    to. Everything happens through the set calls - membership, the algebra
+    (``union``, ``difference``, ...), and the in-place mutations.
 
     Args:
         address: this level's key, a literal or a Nu term yielding one.
@@ -250,7 +248,8 @@ class SetRef(MutableSetRef, RefBase[set[T]], Generic[T]):
         - The stored value is an ordinary set and a read hands back that live
           object, so elements must be hashable and iteration order is
           whatever Python gives.
-        - The declared value types what comes out: ``pop`` is its form.
+        - The declared value types what comes out: ``pop`` is its form, and
+          the set algebra yields a Set carrying it on.
         - An in-place call on an absent slot creates the set empty first,
           so ``add`` needs no ``set`` ahead of it.
 

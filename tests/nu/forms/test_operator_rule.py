@@ -180,12 +180,7 @@ METHODS = [
         {1, 3},
     ),
     ("FrozenSet.union", lambda: nu.FrozenSet(frozenset({1})).union({2}), Union, {1, 2}),
-    (
-        "DictKeys.to_set.union",
-        lambda: nu.Dict({"a": 1}).keys().to_set().union({"b"}),
-        Union,
-        {"a", "b"},
-    ),
+    ("DictKeys.union", lambda: nu.Dict({"a": 1}).keys().union({"b"}), Union, {"a", "b"}),
     ("Dict.merge", lambda: nu.Dict({"a": 1}).merge({"b": 2}), Merge, {"a": 1, "b": 2}),
     (
         "Dict.merge_update",
@@ -234,7 +229,7 @@ def test_set_methods_take_plain_sets_and_forms_on_the_right() -> None:
     assert nu.run(s.union(frozenset({3})))[0] == {1, 2, 3}
     assert nu.run(s.union(nu.Set({3})))[0] == {1, 2, 3}
     assert nu.run(s.intersection(nu.Dict({2: "x"}).keys()))[0] == {2}
-    assert nu.run(nu.Dict({"a": 1}).keys().to_set().difference({"a"}))[0] == set()
+    assert nu.run(nu.Dict({"a": 1}).keys().difference({"a"}))[0] == set()
     assert nu.run(s.issubset({1, 2, 3}))[0] is True
     # A plain set on the left: the interaction itself takes either side.
     assert nu.run(Union({1}, s))[0] == {1, 2}
@@ -244,6 +239,10 @@ def test_set_methods_take_plain_sets_and_forms_on_the_right() -> None:
 @pytest.mark.parametrize(
     ("ref", "method", "arg", "expected"),
     [
+        (_Kv.st, "union", {1}, Union),
+        (_Kv.st, "intersection", {1}, Intersection),
+        (_Mem.st, "difference", {1}, Difference),
+        (_Mem.st, "symmetric_difference", {1}, SymmetricDifference),
         (_Kv.ps, "union", {1}, Union),
         (_Kv.pd, "merge", {"a": 1}, Merge),
         (_Kv.n, "bitand", 1, BitAnd),
@@ -251,7 +250,7 @@ def test_set_methods_take_plain_sets_and_forms_on_the_right() -> None:
     ],
     ids=lambda v: v if isinstance(v, str) else "",
 )
-def test_refs_on_a_concrete_form_carry_its_methods(
+def test_container_refs_carry_the_methods(
     ref: object, method: str, arg: object, expected: type
 ) -> None:
     term = getattr(ref, method)(arg)
@@ -261,10 +260,6 @@ def test_refs_on_a_concrete_form_carry_its_methods(
 @pytest.mark.parametrize(
     ("ref", "method"),
     [
-        (_Mem.st, "union"),
-        (_Mem.st, "symmetric_difference"),
-        (_Mem.st, "issubset"),
-        (_Mem.st, "update"),
         (_Mem.st, "copy"),
         (_Mem.d, "merge"),
         (_Mem.d, "merge_update"),
@@ -278,9 +273,15 @@ def test_refs_on_an_abstract_form_leave_built_in_methods_out(ref: object, method
     assert not hasattr(ref, method)
 
 
-def test_ref_algebra_goes_through_the_concrete_form() -> None:
+def test_mutating_set_methods_run_on_a_ref() -> None:
+    ctx = nu.Context().bind(dict, {"st": {1}}, _Mem)
+    _, ctx = nu.run(_Mem.st.update({2}), ctx)
+    assert nu.run(_Mem.st, ctx)[0] == {1, 2}
+
+
+def test_dict_algebra_goes_through_the_concrete_form() -> None:
     ctx = nu.Context().bind(dict, {"st": {1}, "d": {"a": 1}}, _Mem)
-    assert nu.run(nu.Set(_Mem.st).union({2}), ctx)[0] == {1, 2}
+    assert nu.run(_Mem.st.union({2}), ctx)[0] == {1, 2}
     assert nu.run(nu.Dict(_Mem.d).merge({"b": 2}), ctx)[0] == {"a": 1, "b": 2}
     assert nu.run(_Mem.st <= {1, 2}, ctx)[0] is True
     assert nu.run(_Mem.st.isdisjoint({2}), ctx)[0] is True

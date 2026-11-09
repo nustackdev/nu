@@ -39,8 +39,10 @@ class DictKeys(
 
     Notes:
         - Set-like, as Python's `KeysView` is: the subset comparisons
-          (`<`, `<=`, `>`, `>=`) and `isdisjoint` work on it directly.
-          The named algebra is `Set`'s: `keys.to_set().union(other)`.
+          (`<`, `<=`, `>`, `>=`), `isdisjoint`, and the named algebra
+          (`union`, `intersection`, `difference`, ...) work on it
+          directly. The named methods are Nu's spelling of the `| & - ^`
+          operators, which Nu reserves or leaves undefined.
         - Lazy and live: it holds no keys of its own, it re-reads the
           backing Dict on every evaluation. Mutate the Dict and the view
           reflects it on the next `nu.run`.
@@ -53,6 +55,12 @@ class DictKeys(
         >>> nu.run(keys.contains("a"))[0]
         True
     """
+
+    def _wrap_set_result(self, operand: Nu) -> Set[K]:
+        """Wrap operand as Set."""
+        from .set_ import Set
+
+        return Set(operand)
 
     def _wrap_iterable_result(self, operand: Nu) -> List[K]:
         """Wrap operand as List."""
@@ -199,9 +207,9 @@ class DictItems(
 
     Notes:
         - Set-like, as Python's `ItemsView` is when the values are
-          hashable: the subset comparisons (`<`, `<=`, `>`, `>=`) and
-          `isdisjoint` work on it directly. The named algebra is `Set`'s:
-          `items.to_set().union(other)`.
+          hashable: the subset comparisons, `isdisjoint`, and the named
+          algebra (`union`, `intersection`, ...) work on it directly, Nu's
+          spelling of the `| & - ^` operators.
         - Lazy and live: it holds no items of its own, it re-reads the
           backing Dict on every evaluation. Mutate the Dict and the view
           reflects it on the next `nu.run`.
@@ -215,6 +223,12 @@ class DictItems(
         >>> nu.run(items.contains(("a", 1)))[0]
         True
     """
+
+    def _wrap_set_result(self, operand: Nu) -> Set[tuple[K, V]]:
+        """Wrap operand as Set."""
+        from .set_ import Set
+
+        return Set(operand)
 
     def _wrap_iterable_result(self, operand: Nu) -> List[tuple[K, V]]:
         """Wrap operand as List."""
