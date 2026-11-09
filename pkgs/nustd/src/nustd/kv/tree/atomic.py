@@ -22,7 +22,7 @@ import nu
 
 from ..errors import BracketError
 from ..interactions.atomicity import RetryOnConflict, Snapshot, Transaction
-from .auto_flow_atomic import _dominates, _is_dynamic, _iter_uncovered
+from .coverage import dominates, is_dynamic, iter_uncovered
 
 
 if TYPE_CHECKING:
@@ -41,7 +41,7 @@ def _stores(term: Nu) -> dict[Hashable | None, bool]:
     built outside any Shape has no root and counts as the untagged store.
     """
     stores: dict[Hashable | None, bool] = {}
-    for ref, wrote in _iter_uncovered(term, None, ()):
+    for ref, wrote in iter_uncovered(term, None, ()):
         root = ref._root_shape  # type: ignore[attr-defined]
         stores[root] = stores.get(root, False) or wrote
     return stores
@@ -49,7 +49,7 @@ def _stores(term: Nu) -> dict[Hashable | None, bool]:
 
 def _write_brackets(node: object) -> Iterator[Hashable | None]:
     """The scope of every Transaction already in the term, past dynamic subtrees."""
-    if _is_dynamic(node):
+    if is_dynamic(node):
         return
     if isinstance(node, Transaction):
         yield node.scope
@@ -134,7 +134,7 @@ def atomic(term: Nu) -> Nu:
     if not written:
         return body
     (store,) = written
-    if any(_dominates(scope, store) for scope in _write_brackets(term)):
+    if any(dominates(scope, store) for scope in _write_brackets(term)):
         msg = (
             f"atomic: the term already holds a write bracket on {_name(store)} and writes "
             "it outside that bracket too; two transactions on one store never join, so "

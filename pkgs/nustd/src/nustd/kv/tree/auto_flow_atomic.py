@@ -12,9 +12,10 @@ both and places the boundary at the smallest branch that needs it, which is
 the direct child of a Flow rather than the Flow as a whole - sibling branches
 of a Sequential get their own brackets and commit independently.
 
-The rest of the file is the bookkeeping that makes the walk honest: which refs
-an enclosing bracket already covers, which scope dominates which, and where
-the walk must stop because it cannot see through a node.
+The bookkeeping that makes the walk honest (which refs an enclosing bracket
+already covers, which scope dominates which, and where the walk must stop
+because it cannot see through a node) lives in ``coverage``, shared with
+``atomic``.
 """
 
 from __future__ import annotations
@@ -23,14 +24,13 @@ from typing import TYPE_CHECKING
 
 import nu
 from nu.lang import Flow, Span
-from nu.lang.attributes import Sort
 
 from ..interactions.atomicity import Snapshot, Transaction
-from ..refs.base import PrimitiveRef, ViewRef
+from .coverage import dominates, is_dynamic, iter_uncovered
 
 
 if TYPE_CHECKING:
-    from collections.abc import Hashable, Iterator
+    from collections.abc import Hashable
 
     from nu.lang import Nu
 
@@ -38,97 +38,12 @@ if TYPE_CHECKING:
 __all__ = ["auto_flow_atomic"]
 
 
-_VirtualsRef = (ViewRef, PrimitiveRef)
-
-
-def _declared_sort(node: object) -> Sort | None:
-    """Read the node's declared sort off its class (pre-compile access)."""
-    attrs = getattr(type(node), "_attributes", None)
-    if not attrs:
-        return None
-    sort_attr = attrs.get("sort")
-    return getattr(sort_attr, "value", None) if sort_attr is not None else None
-
-
-def _is_dynamic(node: object) -> bool:
-    return _declared_sort(node) is Sort.DYNAMIC
-
-
-def _write_positions(node: object) -> frozenset[int]:
-    attrs = getattr(type(node), "_attributes", None)
-    if not attrs or "mutates" not in attrs:
-        return frozenset()
-    value = attrs["mutates"].value
-    return value if isinstance(value, frozenset) else frozenset(value)
-
-
-def _dominates(broader: Hashable | None, specific: Hashable | None) -> bool:
-    """True iff ``broader`` covers everything ``specific`` refers to.
-
-    ``broader`` is a brace scope or the pass scope; ``specific`` is a
-    ref's root shape or the pass scope.
-
-    A universal scope (``None``) dominates any specific scope; a concrete
-    scope dominates only itself.
-    """
-    return broader is None or broader is specific
-
-
-def _covered_by_enclosing(enclosing: tuple, ref_scope: Hashable) -> bool:
-    return any(_dominates(s, ref_scope) for s in enclosing)
-
-
-def _iter_uncovered(
-    node: object,
-    pass_scope: Hashable | None,
-    enclosing: tuple,
-    _top: bool = True,
-) -> Iterator[tuple[object, bool]]:
-    """Yield ``(ref, is_write)`` for uncovered virtuals refs in a subtree.
-
-    Only refs the pass cares about, that no enclosing brace covers.
-
-    Refs are classified WRITE iff they sit in a mutation slot of an
-    enclosing op. A top-level Ref (a subtree that IS a Ref, e.g. the
-    body of ``Snapshot(view_ref)``) has no enclosing slot context and
-    counts as READ.
-
-    Descends into Snapshot / Transaction bodies with the brace's scope
-    added to ``enclosing``: refs the brace covers are pruned. The
-    body is re-entered as a fresh top-level subtree.
-
-    Dynamic (Sort.DYNAMIC) subtrees are opaque: their effect surface is not
-    visible at compile time, so we don't descend through them. Any refs
-    inside the carrier are hidden from the wrap decision.
-    """
-    if _is_dynamic(node):
-        return
-    if isinstance(node, (Snapshot, Transaction)):
-        inner = (*enclosing, node.scope)
-        for c in nu.tree.children(node):
-            yield from _iter_uncovered(c, pass_scope, inner, _top=True)
-        return
-    if _top and isinstance(node, _VirtualsRef):
-        ref_scope = node._root_shape
-        if _dominates(pass_scope, ref_scope) and not _covered_by_enclosing(enclosing, ref_scope):
-            yield node, False
-    mutates = _write_positions(node)
-    for slot, child in enumerate(nu.tree.children(node)):
-        if isinstance(child, _VirtualsRef):
-            ref_scope = child._root_shape
-            if _dominates(pass_scope, ref_scope) and not _covered_by_enclosing(
-                enclosing, ref_scope
-            ):
-                yield child, slot in mutates
-        yield from _iter_uncovered(child, pass_scope, enclosing, _top=False)
-
-
 def _has_uncovered_ref(node: object, pass_scope: Hashable | None, enclosing: tuple) -> bool:
-    return next(_iter_uncovered(node, pass_scope, enclosing), None) is not None
+    return next(iter_uncovered(node, pass_scope, enclosing), None) is not None
 
 
 def _has_uncovered_write(node: object, pass_scope: Hashable | None, enclosing: tuple) -> bool:
-    return any(is_w for _, is_w in _iter_uncovered(node, pass_scope, enclosing))
+    return any(is_w for _, is_w in iter_uncovered(node, pass_scope, enclosing))
 
 
 def _wrap_kwargs(pass_scope: Hashable | None) -> dict:
@@ -146,7 +61,7 @@ def _effective_root_is_dyn(child: Nu) -> bool:
     node = child
     while isinstance(node, Span) and nu.tree.children(node):
         node = nu.tree.children(node)[0]
-    return _is_dynamic(node)
+    return is_dynamic(node)
 
 
 def _wrap_flow_child(child: Nu, pass_scope: Hashable | None, enclosing: tuple) -> Nu:
@@ -180,7 +95,7 @@ def _wrap_flow_child(child: Nu, pass_scope: Hashable | None, enclosing: tuple) -
 
 def _walk(node: Nu, pass_scope: Hashable | None, enclosing: tuple) -> Nu:
     if isinstance(node, (Snapshot, Transaction)):
-        if _dominates(node.scope, pass_scope):
+        if dominates(node.scope, pass_scope):
             # Brace covers everything the pass cares about, skip descent.
             return node
         inner = (*enclosing, node.scope)
