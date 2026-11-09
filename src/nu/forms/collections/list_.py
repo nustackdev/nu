@@ -47,9 +47,9 @@ class List(
         - Indexing with an out-of-range int raises at evaluation time,
           matching Python. Slicing never raises; out-of-range bounds clamp
           like Python slicing.
-        - Subscript write/delete (`self[i] = v`, `del self[i]`) mutate in
-          place and need a Ref on the left, not a plain List value - they
-          can't run standalone.
+        - `sort` and `copy` are list-only; the rest of the mutable
+          sequence surface (subscript write/delete, `+=`, `append`, ...)
+          comes from the shared mutable-sequence base.
 
     Example:
         >>> nu.run(nu.List.of(1, 2) + nu.List.of(3, 4))[0]
@@ -168,6 +168,43 @@ class List(
         return super().__getitem__(key)
 
     # =========================================================================
+    # LIST-ONLY (not on collections.abc.MutableSequence)
+    # =========================================================================
+
+    def sort(self) -> Any:  # noqa: ANN401
+        """Sort self in place, ascending, using the elements' natural order.
+
+        Notes:
+            - No `key` support yet; sorting by a derived key is deferred.
+            - Mutates self and needs a Ref on the left; it can't run
+              standalone against a plain List value.
+
+        Yields:
+            Nothing (Command).
+        """
+        from .abc.sequence_interactions import Sort
+
+        return Sort(self)
+
+    def copy(self) -> List[T]:
+        """Shallow copy of self: a new list with the same elements.
+
+        Notes:
+            - A Query, not a mutator: it doesn't mutate self and evaluates
+              fine against a plain list value.
+
+        Yields:
+            The copy.
+
+        Example:
+            >>> nu.run(nu.List.of(1, 2, 3).copy())[0]
+            [1, 2, 3]
+        """
+        from .abc.sequence_interactions import Copy
+
+        return self._wrap_sliceable_result(Copy(self))
+
+    # =========================================================================
     # ARITHMETIC (concatenation)
     # =========================================================================
 
@@ -209,23 +246,6 @@ class List(
         from nu.core import Add
 
         return List(Add(other, self))
-
-    def __iadd__(self, other: ListArg[T]) -> List[T]:
-        """In-place concatenation: self += other.
-
-        Args:
-            other: the list to append to self, in place.
-
-        Notes:
-            - Mutates self and needs a Ref on the left; it can't run
-              standalone against a plain List value.
-
-        Yields:
-            self, after the mutation (Action).
-        """
-        from .abc.sequence_interactions import IAdd
-
-        return List(IAdd(self, other))
 
     def __mul__(self, n: IntArg) -> List[T]:
         """Self repeated n times.
@@ -281,47 +301,6 @@ class List(
         from .abc.sequence_interactions import IMul
 
         return List(IMul(self, n))
-
-    # =========================================================================
-    # ITEM ACCESS (mutating)
-    # =========================================================================
-
-    def __setitem__(self, index: IntArg, value: Arg[T]) -> Any:  # noqa: ANN401
-        """Subscript write: self[index] = value.
-
-        Args:
-            index: the position to write to. An out-of-range index raises
-                at evaluation time, matching Python.
-            value: the value to store at index.
-
-        Notes:
-            - Mutates self and needs a Ref on the left; it can't run
-              standalone against a plain List value.
-
-        Yields:
-            Nothing (Command).
-        """
-        from .abc.sequence_interactions import SetIndex
-
-        return SetIndex(self, index, value)
-
-    def __delitem__(self, index: IntArg) -> Any:  # noqa: ANN401
-        """Subscript delete: del self[index].
-
-        Args:
-            index: the position to remove. An out-of-range index raises at
-                evaluation time, matching Python.
-
-        Notes:
-            - Mutates self and needs a Ref on the left; it can't run
-              standalone against a plain List value.
-
-        Yields:
-            Nothing (Command).
-        """
-        from .abc.sequence_interactions import DelIndex
-
-        return DelIndex(self, index)
 
     # =========================================================================
     # COMPARISON

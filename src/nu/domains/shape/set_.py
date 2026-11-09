@@ -2,7 +2,7 @@
 
 Forms weave the Python set surface with the shape collection ops, tier by tier,
 and type every result by what the slot declared: an element reads as the
-declared value's form, and set algebra carries the declared element type on.
+declared value's form.
 
 Refs bind that surface to an address. A set has no keys, so there is no descent.
 """
@@ -26,7 +26,7 @@ from .collection import (
 
 
 if TYPE_CHECKING:
-    from nu.forms import Iterator, Set
+    from nu.forms import Iterator
     from nu.lang import Form, Nu
 
 
@@ -59,11 +59,6 @@ class SetLikeForm(_SetLikeForm, CollectionForm):
 
         return holding(Iterator(operand), PyIterator, elem=self._declared.elem)
 
-    def _wrap_set_result(self, operand: Nu) -> Set:
-        from nu.forms import Set
-
-        return holding(Set(operand), set, elem=self._declared.elem)
-
 
 class MutableSetForm(_MutableSetForm, MutableCollectionForm):
     """Mutable shape set: set ops + exists/extract + set/erase."""
@@ -87,7 +82,7 @@ class SetRef(SetLikeForm, StructuredRef):
 class MutableSetRef(MutableSetForm, SetRef):
     """Mutable unordered unique-element container Ref.
 
-    Adds: add(v), remove(v), discard(v), pop(), update(), ..., store(v), erase().
+    Adds: add(v), remove(v), discard(v), pop(), clear(), set(v), erase().
     """
 
 

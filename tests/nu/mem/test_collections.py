@@ -150,22 +150,28 @@ class TestDictRefViewOperations:
 
     def test_keys_union(self, data, portfolio_ctx):
         data["metadata"] = {"a": 1, "b": 2}
-        result = run(PortfolioShape.metadata.keys().union({"b", "c", "d"}), portfolio_ctx)[0]
+        result = run(PortfolioShape.metadata.keys().to_set().union({"b", "c", "d"}), portfolio_ctx)[
+            0
+        ]
         assert result == {"a", "b", "c", "d"}
 
     def test_keys_intersection(self, data, portfolio_ctx):
         data["metadata"] = {"a": 1, "b": 2, "c": 3}
-        result = run(PortfolioShape.metadata.keys().intersection({"b", "c", "d"}), portfolio_ctx)[0]
+        result = run(
+            PortfolioShape.metadata.keys().to_set().intersection({"b", "c", "d"}), portfolio_ctx
+        )[0]
         assert result == {"b", "c"}
 
     def test_keys_difference(self, data, portfolio_ctx):
         data["metadata"] = {"a": 1, "b": 2, "c": 3}
-        result = run(PortfolioShape.metadata.keys().difference({"b", "c"}), portfolio_ctx)[0]
+        result = run(PortfolioShape.metadata.keys().to_set().difference({"b", "c"}), portfolio_ctx)[
+            0
+        ]
         assert result == {"a"}
 
     def test_items_union(self, data, portfolio_ctx):
         data["metadata"] = {"a": 1}
-        result = run(PortfolioShape.metadata.items().union({("b", 2)}), portfolio_ctx)[0]
+        result = run(PortfolioShape.metadata.items().to_set().union({("b", 2)}), portfolio_ctx)[0]
         assert result == {("a", 1), ("b", 2)}
 
 
@@ -249,10 +255,10 @@ class TestListRefExecution:
 class TestSetRefTypes:
     """SetRef wrapping types are correct."""
 
-    def test_set_result_is_set_value(self):
+    def test_set_algebra_is_the_set_forms(self):
         ref = PortfolioShape.members
-        wrapped = ref._wrap_set_result(Literal("dummy"))
-        assert isinstance(wrapped, Set)
+        assert not hasattr(ref, "union")
+        assert isinstance(Set(ref).union({"x"}), Set)
 
     def test_element_result_is_the_declared_value_form(self):
         ref = PortfolioShape.members
@@ -287,7 +293,7 @@ class TestSetRefExecution:
 
     def test_union(self, data, portfolio_ctx):
         data["members"] = {"alice", "bob"}
-        result = run(PortfolioShape.members.union({"bob", "charlie"}), portfolio_ctx)[0]
+        result = run(Set(PortfolioShape.members).union({"bob", "charlie"}), portfolio_ctx)[0]
         assert result == {"alice", "bob", "charlie"}
 
 
@@ -482,7 +488,9 @@ class TestEndToEnd:
         assert set(keys) == {"strategy", "risk", "horizon"}
 
         # --- keys set operations ---
-        common = run(PortfolioShape.metadata.keys().intersection({"risk", "alpha"}), e2e_ctx)[0]
+        common = run(
+            PortfolioShape.metadata.keys().to_set().intersection({"risk", "alpha"}), e2e_ctx
+        )[0]
         assert common == {"risk"}
 
         # --- keys materialization ---
@@ -622,5 +630,5 @@ class TestEndToEndShapeNavigation:
         assert set(info_keys) == {"name", "age", "score"}
 
         # --- keys set ops on nested shape ---
-        common = run(TeamShape.info.keys().intersection({"name", "foo"}), nav_ctx)[0]
+        common = run(TeamShape.info.keys().to_set().intersection({"name", "foo"}), nav_ctx)[0]
         assert common == {"name"}

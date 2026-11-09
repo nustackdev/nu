@@ -1,21 +1,20 @@
 """Set collection: bases + mutations.
 
-SetLikeForm = Collection + union/intersection/difference/symmetric_difference/issubset/issuperset/isdisjoint
-    + copy
-MutableSetForm = SetLike + add/remove/discard/pop/clear/update/*_update
+SetLikeForm = Collection + subset comparisons (< <= > >=) + isdisjoint
+MutableSetForm = SetLike + add/remove/discard/pop/clear
 
-Set algebra is named methods only. ``&``, ``|`` and ``>>`` compose flows on
-every term (a set form included), and ``-`` / ``^`` are not defined here.
-
-Follows Python's collections.abc.Set / MutableSet pattern.
+Follows Python's collections.abc.Set / MutableSet pattern. The named set
+methods (``union``, ``issubset``, ``update``, ...) are built-in only and live on
+``Set`` / ``FrozenSet``. The ABC's ``& | - ^`` (and in place ``|= &= -= ^=``)
+are not here: ``&``, ``|`` and ``>>`` compose flows on every term, a set form
+included, and ``-`` / ``^`` are left undefined to match.
 
 Type Parameters:
     CollectionT: Native Python collection type (set[int], frozenset[str], etc.)
     ElementT: Native Python element type (int, str, etc.)
     CollectionResultT: Wrapped result for collection-level interactions
-        (union, intersection, difference, symmetric_difference, add, remove, discard)
     ElementResultT: Wrapped result for element-level interactions
-        (sum_, min_, max_)
+        (pop, sum_, min_, max_)
 """
 
 from __future__ import annotations
@@ -27,7 +26,7 @@ from .collection import CollectionForm
 
 if TYPE_CHECKING:
     from nu.forms.primitives import Bool
-    from nu.lang import Arg, Nu
+    from nu.lang import Arg
 
 
 __all__ = [
@@ -49,151 +48,101 @@ class SetLikeForm(
 ):
     """Base for set values, like collections.abc.Set.
 
-    Ops: union, intersection, difference, symmetric_difference, issubset,
-    issuperset, isdisjoint, copy. Named methods only: `&`, `|` and `>>`
-    compose flows on a set like on every term, and `-` / `^` are not defined.
+    Ops: the subset comparisons (`<`, `<=`, `>`, `>=`) and `isdisjoint`.
 
     Notes:
-        - Subclasses (e.g. `Set`) must implement `_wrap_set_result` to wrap
-          a query result in their own concrete set type.
+        - The named algebra (`union`, `intersection`, ...) is built-in only
+          and lives on `Set` / `FrozenSet`; wrap a set ref to reach it,
+          `nu.Set(ref).union(other)`.
+        - `&`, `|` and `>>` compose flows on a set like on every term, and
+          `-` / `^` are not defined.
         - Every op accepts a plain Python `set`/`frozenset` or another
           set-like form as the right operand.
 
     Type Parameters:
         CollectionT: Native Python collection type (set[int], frozenset[str])
         ElementT: Native Python element type
-        CollectionResultT: Result for collection-level interactions (union, intersection, ...)
+        CollectionResultT: Result for collection-level interactions
         ElementResultT: Result for element-level interactions (sum_, min_, max_)
 
     Example:
-        >>> nu.run(nu.Set({1, 2}).union({2, 3}))[0]
-        {1, 2, 3}
+        >>> nu.run(nu.Set({1, 2}) <= {1, 2, 3})[0]
+        True
     """
 
-    def _wrap_set_result(self, operand: Nu) -> CollectionResultT:
-        """Wrap a set-level interaction result in the concrete set type.
-
-        Notes:
-            - Abstract hook. Subclasses (e.g. `Set`) implement this so
-              `union`/`intersection`/etc. know what to wrap into; not
-              meant to be called directly.
-
-        Yields:
-            Raises NotImplementedError when left unoverridden.
-        """
-        raise NotImplementedError()
-
-    def union(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Union of self and other.
+    def __gt__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Bool:
+        """Self is a proper superset of other.
 
         Args:
-            other: the set to union with self.
+            other: the set to compare against.
 
         Yields:
-            A new set with every element from self and other.
+            True when self contains every element of other and at least one
+            more, False otherwise.
 
         Example:
-            >>> nu.run(nu.Set({1, 2}).union({2, 3}))[0]
-            {1, 2, 3}
-        """
-        from .set_interactions import Union
-
-        return cast("CollectionResultT", self._wrap_set_result(Union(self, other)))
-
-    def intersection(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Intersection of self and other.
-
-        Args:
-            other: the set to intersect with self.
-
-        Yields:
-            A new set with only the elements found in both.
-
-        Example:
-            >>> nu.run(nu.Set({1, 2, 3}).intersection({2, 3, 4}))[0]
-            {2, 3}
-        """
-        from .set_interactions import Intersection
-
-        return cast("CollectionResultT", self._wrap_set_result(Intersection(self, other)))
-
-    def difference(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> CollectionResultT:
-        """Elements of self that are not in other.
-
-        Args:
-            other: the set to subtract from self.
-
-        Yields:
-            A new set with the elements of self minus the elements of
-            other.
-
-        Example:
-            >>> nu.run(nu.Set({1, 2, 3}).difference({2, 3}))[0]
-            {1}
-        """
-        from .set_interactions import Difference
-
-        return cast("CollectionResultT", self._wrap_set_result(Difference(self, other)))
-
-    def symmetric_difference(
-        self, other: Arg[set[ElementT] | frozenset[ElementT]]
-    ) -> CollectionResultT:
-        """Elements in exactly one of self and other, not both.
-
-        Args:
-            other: the set to compare against self.
-
-        Yields:
-            A new set with the elements that are in self or other but not
-            in both.
-
-        Example:
-            >>> nu.run(nu.Set({1, 2, 3}).symmetric_difference({2, 3, 4}))[0]
-            {1, 4}
-        """
-        from .set_interactions import SymmetricDifference
-
-        return cast("CollectionResultT", self._wrap_set_result(SymmetricDifference(self, other)))
-
-    def issubset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Bool:
-        """Whether every element of self is in other.
-
-        Args:
-            other: the set to test self against.
-
-        Yields:
-            True when self is a subset of other (equal sets count), False
-            otherwise.
-
-        Example:
-            >>> nu.run(nu.Set({1, 2, 3}).issubset({1, 2, 3, 4}))[0]
+            >>> nu.run(nu.Set.of(1, 2, 3) > nu.Set.of(1, 2))[0]
             True
         """
+        from nu.core import Gt
         from nu.forms.primitives import Bool
 
-        from .set_interactions import IsSubset
+        return Bool(Gt(self, other))
 
-        return Bool(IsSubset(self, other))
-
-    def issuperset(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Bool:
-        """Whether every element of other is in self.
+    def __lt__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Bool:
+        """Self is a proper subset of other.
 
         Args:
-            other: the set to test against self.
+            other: the set to compare against.
 
         Yields:
-            True when self is a superset of other (equal sets count),
-            False otherwise.
+            True when every element of self is in other and other has at
+            least one more, False otherwise.
 
         Example:
-            >>> nu.run(nu.Set({1, 2, 3}).issuperset({1, 2}))[0]
+            >>> nu.run(nu.Set.of(1, 2) < nu.Set.of(1, 2, 3))[0]
             True
         """
+        from nu.core import Lt
         from nu.forms.primitives import Bool
 
-        from .set_interactions import IsSuperset
+        return Bool(Lt(self, other))
 
-        return Bool(IsSuperset(self, other))
+    def __ge__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Bool:
+        """Self is a superset of other, or equal.
+
+        Args:
+            other: the set to compare against.
+
+        Yields:
+            True when every element of other is in self, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Set.of(1, 2) >= nu.Set.of(1, 2))[0]
+            True
+        """
+        from nu.core import Ge
+        from nu.forms.primitives import Bool
+
+        return Bool(Ge(self, other))
+
+    def __le__(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Bool:
+        """Self is a subset of other, or equal.
+
+        Args:
+            other: the set to compare against.
+
+        Yields:
+            True when every element of self is in other, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Set.of(1, 2) <= nu.Set.of(1, 2))[0]
+            True
+        """
+        from nu.core import Le
+        from nu.forms.primitives import Bool
+
+        return Bool(Le(self, other))
 
     def isdisjoint(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Bool:
         """Whether self and other share no elements.
@@ -215,20 +164,6 @@ class SetLikeForm(
 
         return Bool(IsDisjoint(self, other))
 
-    def copy(self) -> CollectionResultT:
-        """Shallow copy of self.
-
-        Yields:
-            A new set with the same elements as self.
-
-        Example:
-            >>> nu.run(nu.Set({1, 2, 3}).copy())[0]
-            {1, 2, 3}
-        """
-        from .set_interactions import Copy
-
-        return cast("CollectionResultT", self._wrap_set_result(Copy(self)))
-
 
 class MutableSetForm(
     SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
@@ -236,8 +171,9 @@ class MutableSetForm(
 ):
     """Base for mutable set values, like collections.abc.MutableSet.
 
-    Adds add/remove/discard/pop/clear/update/*_update on top of
-    SetLikeForm. The in-place spellings are the `*_update` methods.
+    Adds add/remove/discard/pop/clear on top of SetLikeForm. The named
+    in-place updates (`update`, `*_update`) are built-in only and live on
+    `Set`.
 
     Notes:
         - Every mutating method needs self bound to a Ref inside a shape;
@@ -246,8 +182,8 @@ class MutableSetForm(
     Type Parameters:
         CollectionT: Native Python collection type
         ElementT: Native Python element type
-        CollectionResultT: Result for collection-level interactions (add, remove, discard)
-        ElementResultT: Result for element-level interactions (sum_, min_, max_)
+        CollectionResultT: Result for collection-level interactions
+        ElementResultT: Result for element-level interactions (pop, sum_, min_, max_)
     """
 
     def add(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
@@ -353,74 +289,6 @@ class MutableSetForm(
         from .shared_interactions import Clear
 
         return Clear(self)
-
-    def update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Any:  # noqa: ANN401
-        """Add every element of other to self.
-
-        Args:
-            other: the set whose elements are added to self.
-
-        Yields:
-            Nothing (Command). Mutates self in place.
-
-        Example::
-
-            my_set.update({4, 5})
-        """
-        from .set_interactions import SetUpdate
-
-        return SetUpdate(self, other)
-
-    def intersection_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Any:  # noqa: ANN401
-        """Keep only the elements of self also found in other.
-
-        Args:
-            other: the set to intersect self with.
-
-        Yields:
-            Nothing (Command). Mutates self in place.
-
-        Example::
-
-            my_set.intersection_update({2, 3})
-        """
-        from .set_interactions import IntersectionUpdate
-
-        return IntersectionUpdate(self, other)
-
-    def difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Any:  # noqa: ANN401
-        """Remove every element of other from self.
-
-        Args:
-            other: the set of elements to remove from self.
-
-        Yields:
-            Nothing (Command). Mutates self in place.
-
-        Example::
-
-            my_set.difference_update({2, 3})
-        """
-        from .set_interactions import DifferenceUpdate
-
-        return DifferenceUpdate(self, other)
-
-    def symmetric_difference_update(self, other: Arg[set[ElementT] | frozenset[ElementT]]) -> Any:  # noqa: ANN401
-        """Keep the elements in exactly one of self and other.
-
-        Args:
-            other: the set to compare self against.
-
-        Yields:
-            Nothing (Command). Mutates self in place.
-
-        Example::
-
-            my_set.symmetric_difference_update({2, 4})
-        """
-        from .set_interactions import SymmetricDifferenceUpdate
-
-        return SymmetricDifferenceUpdate(self, other)
 
 
 class ReactiveSetForm(

@@ -1,7 +1,9 @@
 """Sequence collection: bases + mutations.
 
 SequenceForm = Collection + Sliceable + first/last/index/count/reversed
-MutableSequenceForm = Sequence + append/insert/pop/extend/remove/reverse
+MutableSequenceForm = Sequence + [i]=/del [i]/+=/append/insert/pop/extend/remove/reverse/clear
+
+Built-in-only methods (``sort``, ``copy``) live on ``List``.
 
 Sorted/Reversed are standalone core atoms (``nu.Sorted``, ``nu.Reversed``).
 
@@ -209,6 +211,66 @@ class MutableSequenceForm(
         ElementResultT: Result for element-level interactions (pop)
     """
 
+    def __setitem__(self, index: IntArg, value: Arg[ElementT]) -> Any:  # noqa: ANN401
+        """Subscript write: self[index] = value.
+
+        Args:
+            index: the position to write to. An out-of-range index raises
+                at evaluation time, matching Python.
+            value: the value to store at index.
+
+        Notes:
+            - Mutates self and needs a Ref on the left; it can't run
+              standalone against a plain sequence value.
+            - Builds a term, so call it where a value is wanted
+              (``seq.__setitem__(i, v)``). The statement ``seq[i] = v``
+              drops the term, as Python discards what ``__setitem__``
+              returns.
+
+        Yields:
+            Nothing (Command).
+        """
+        from .sequence_interactions import SetIndex
+
+        return SetIndex(self, index, value)
+
+    def __delitem__(self, index: IntArg) -> Any:  # noqa: ANN401
+        """Subscript delete: del self[index].
+
+        Args:
+            index: the position to remove. An out-of-range index raises at
+                evaluation time, matching Python.
+
+        Notes:
+            - Mutates self and needs a Ref on the left; it can't run
+              standalone against a plain sequence value.
+            - The statement ``del seq[i]`` drops the term; `del_at` builds
+              the same Command where a value is wanted.
+
+        Yields:
+            Nothing (Command).
+        """
+        from .sequence_interactions import DelIndex
+
+        return DelIndex(self, index)
+
+    def __iadd__(self, other: Arg[Iterable[ElementT]]) -> CollectionResultT:
+        """In-place concatenation: self += other.
+
+        Args:
+            other: the elements to append to self, in place.
+
+        Notes:
+            - Mutates self and needs a Ref on the left; it can't run
+              standalone against a plain sequence value.
+
+        Yields:
+            self, after the mutation (Action).
+        """
+        from .sequence_interactions import IAdd
+
+        return cast("CollectionResultT", self._wrap_sliceable_result(IAdd(self, other)))
+
     def append(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
         """Append value to the end of self.
 
@@ -343,39 +405,6 @@ class MutableSequenceForm(
         from .sequence_interactions import Reverse
 
         return Reverse(self)
-
-    def sort(self) -> Any:  # noqa: ANN401
-        """Sort self in place, ascending, using the elements' natural order.
-
-        Notes:
-            - No `key` support yet; sorting by a derived key is deferred.
-            - Mutates self and needs a Ref on the left; it can't run
-              standalone against a plain sequence value.
-
-        Yields:
-            Nothing (Command).
-        """
-        from .sequence_interactions import Sort
-
-        return Sort(self)
-
-    def copy(self) -> CollectionResultT:
-        """Shallow copy of self: a new sequence with the same elements.
-
-        Notes:
-            - Unlike the mutators above, this is a Query: it doesn't mutate
-              self and evaluates fine against a plain sequence value.
-
-        Yields:
-            The copy.
-
-        Example:
-            >>> nu.run(nu.List.of(1, 2, 3).copy())[0]
-            [1, 2, 3]
-        """
-        from .sequence_interactions import Copy
-
-        return cast("CollectionResultT", self._wrap_sliceable_result(Copy(self)))
 
     def clear(self) -> Any:  # noqa: ANN401
         """Remove every element from self.
