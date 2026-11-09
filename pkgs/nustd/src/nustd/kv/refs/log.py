@@ -106,14 +106,14 @@ class LogDictRef(DictRef[K, V], Generic[K, V]):
             - Safe under a Snapshot.
 
         Yields:
-            The oldest id. NULL when the log is empty or was never written.
+            The oldest id. IndexError when the log is empty.
 
         Example:
             run(Indexes.removed.first(), ctx)
         """
-        from nustd.kv.interactions.paging import FirstKey
+        from nustd.kv.interactions.ordered import OrderedFirst
 
-        return Object(FirstKey(self))
+        return Object(OrderedFirst(self))
 
     def last(self) -> Object:
         """Read the newest id.
@@ -123,11 +123,11 @@ class LogDictRef(DictRef[K, V], Generic[K, V]):
             - Safe under a Snapshot.
 
         Yields:
-            The newest id. NULL when the log is empty or was never written.
+            The newest id. IndexError when the log is empty.
 
         Example:
             run(Indexes.removed.last(), ctx)
         """
-        from nustd.kv.interactions.paging import LastKey
+        from nustd.kv.interactions.ordered import OrderedLast
 
-        return Object(LastKey(self))
+        return Object(OrderedLast(self))

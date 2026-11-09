@@ -5,7 +5,7 @@ Verifies:
   annotation form declares the same slot.
 - Plain dict surface: set, get, contains, delete; descent types the value.
 - Iteration, keys, values and items run oldest first; a re-set keeps its place.
-- ``first`` / ``last`` read the oldest and newest id, NULL when there is none.
+- ``first`` / ``last`` read the oldest and newest id, and raise when there is none.
 - The view is a MutableMapping; a container ref as the value is refused.
 """
 
@@ -15,10 +15,11 @@ from collections.abc import MutableMapping
 
 import pytest
 
-from nu import Literal, Shape, run
+from nu import Shape, run
 from nu.lang import is_null
-from nustd.kv import DictRef, IntRef, LogDictRef, OrderedDictRef, StrRef
+from nustd.kv import DictRef, IntRef, LogDictRef, NullAddressError, OrderedDictRef, StrRef
 from nustd.kv.refs.base import Facet
+from virtuals.container import ContainerNotFoundError
 from virtuals.views import EagerLogIndexedDictView, LogIndexedDictView, LogIndexedDictViewBase
 
 
@@ -94,33 +95,30 @@ def test_first_and_last_are_the_oldest_and_newest(ctx) -> None:
     assert run(History.removed.last(), ctx)[0] == "p1"
 
 
-def test_first_and_last_of_a_never_written_log_read_null(ctx) -> None:
-    first = run(History.removed.first(), ctx)[0]
-    assert is_null(first)
-    assert "History.removed" in repr(first)
-    assert is_null(run(History.removed.last(), ctx)[0])
+def test_first_and_last_of_a_never_written_log_raise(ctx) -> None:
+    with pytest.raises(ContainerNotFoundError):
+        run(History.removed.first(), ctx)
+    with pytest.raises(ContainerNotFoundError):
+        run(History.removed.last(), ctx)
 
 
-def test_first_and_last_of_an_emptied_log_read_null(ctx) -> None:
+def test_first_and_last_of_an_emptied_log_raise(ctx) -> None:
     _add(ctx, History.removed, ["p1"])
     run(History.removed.del_item("p1"), ctx)
-    assert is_null(run(History.removed.first(), ctx)[0])
-    assert is_null(run(History.removed.last(), ctx)[0])
+    with pytest.raises(IndexError):
+        run(History.removed.first(), ctx)
+    with pytest.raises(IndexError):
+        run(History.removed.last(), ctx)
 
 
 def test_last_under_a_named_slot(ctx) -> None:
     _add(ctx, History.spec_planes["nulog"].ids, ["p1", "p2"])
     assert run(History.spec_planes["nulog"].ids.last(), ctx)[0] == "p2"
-    assert is_null(run(History.spec_planes["other"].ids.last(), ctx)[0])
 
 
-def test_last_under_a_null_key_reads_null(ctx) -> None:
-    got = run(History.spec_planes[History.by_key["gone"]].ids.last(), ctx)[0]
-    assert is_null(got)
-
-
-def test_last_falls_back(ctx) -> None:
-    assert run(History.removed.last().fallback(Literal("none")), ctx)[0] == "none"
+def test_last_under_a_null_key_raises(ctx) -> None:
+    with pytest.raises(NullAddressError):
+        run(History.spec_planes[History.by_key["gone"]].ids.last(), ctx)
 
 
 def test_a_container_ref_as_the_value_is_refused() -> None:
