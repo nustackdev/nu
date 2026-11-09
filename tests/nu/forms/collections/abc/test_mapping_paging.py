@@ -1,9 +1,9 @@
 """Paged key reads: ``keys(after=, limit=)`` and ``reversed_keys(before=, limit=)``.
 
 The form forwards the args to the runtime mapping's own ``keys`` /
-``reversed_keys`` and collects the page into a list. The runtime mapping must be
+``reversed_keys`` and collects the page into a List. The runtime mapping must be
 a ``PagedMapping``: core calls that declared contract, it never probes. No args
-reads as before.
+reads as Python does: the keys view, and ``reversed`` as a stream.
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ import asyncio
 import pytest
 
 import nu
-from nu.forms import Dict
+from nu.forms import Dict, Iterator, List
 from nu.forms.collections.abc import PagedMapping
 from nu.forms.collections.abc.mapping_interactions import (
     Keys,
@@ -83,7 +83,15 @@ def test_pages_read_alike_under_arun():
 def test_no_args_reads_as_before():
     d = _paged()
     assert list(nu.run(d.keys())[0]) == ["a", "b", "c", "d"]
-    assert list(nu.run(d.reversed_keys())[0]) == ["d", "c", "b", "a"]
+    assert nu.run(d.reversed_keys().to_list())[0] == ["d", "c", "b", "a"]
+
+
+def test_a_page_is_a_list_and_reversed_a_stream():
+    d = _paged()
+    assert isinstance(d.keys(limit=1), List)
+    assert isinstance(d.reversed_keys(before="b"), List)
+    assert isinstance(d.reversed_keys(), Iterator)
+    assert nu.run(d.keys(limit=3).count("b"))[0] == 1  # a List, with the List surface
 
 
 def test_args_are_read_at_run_time():

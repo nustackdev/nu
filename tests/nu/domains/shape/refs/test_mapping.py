@@ -248,6 +248,11 @@ def test_ordered_mapping_ref_reads_back_to_front_typed_by_the_declaration():
     assert isinstance(nu.tree.children(m.reversed_keys(before="a"))[0], ReversedKeysPage)
     assert nu.tree.payload(m.reversed_keys())["type_info"].elem == TypeInfo(str)
     assert nu.tree.payload(m.reversed_values())["type_info"].elem == TypeInfo(int)
+    assert isinstance(m.reversed_keys(), nu.Iterator)
+    assert isinstance(m.reversed_items(), nu.Iterator)
+    assert isinstance(m.keys(limit=2), nu.List)
+    assert nu.tree.payload(m.keys(limit=2))["type_info"].elem == TypeInfo(str)
+    assert nu.tree.payload(m.reversed_keys(before="a"))["type_info"].elem == TypeInfo(str)
     assert isinstance(m.on_change(), OnChange)
     assert isinstance(m.on_children_change(), OnChildrenChange)
 

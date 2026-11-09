@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar, cast, overload
+from typing import TYPE_CHECKING, Generic, TypeVar, overload
 
 from nu.lang import TypedNu
 
@@ -24,6 +24,7 @@ if TYPE_CHECKING:
         Object,
         Str,
     )
+    from .list_ import List
     from .views import DictItems, DictKeys, DictValues
 
 
@@ -171,10 +172,14 @@ class Dict(
         """Wrap operand as Dict."""
         return Dict(operand)
 
-    def keys(  # type: ignore[override]
+    @overload  # type: ignore[override]
+    def keys(self) -> DictKeys[K]: ...  # type: ignore[overload-overlap]
+    @overload
+    def keys(self, *, after: Arg[K] | None = ..., limit: Arg[int] | None = ...) -> List[K]: ...
+    def keys(
         self, *, after: Arg[K] | None = None, limit: Arg[int] | None = None
-    ) -> DictKeys[K]:
-        """Self's keys as a live view, or one page of them.
+    ) -> DictKeys[K] | List[K]:
+        """Self's keys as a live view, or one page of them as a List.
 
         Args:
             after: the key to start past. Paging only.
@@ -183,17 +188,17 @@ class Dict(
         Notes:
             - Insertion order, matching Python's `dict.keys()`.
             - Paging forwards to the runtime mapping's own
-              `keys(after=, limit=)`; a Python `dict` has none and raises.
+              `keys(after=, limit=)`; it runs on a `PagedMapping` only, a
+              Python `dict` is none and raises TypeError.
 
         Yields:
-            The keys, wrapped as DictKeys.
+            The keys, wrapped as DictKeys; with either argument, a List.
 
         Example:
             >>> list(nu.run(nu.Dict.of(a=1, b=2).keys())[0])
             ['a', 'b']
         """
-        # the base types every view as one collection result; ``_wrap_keys_result`` makes it DictKeys
-        return cast("DictKeys[K]", super().keys(after=after, limit=limit))
+        return super().keys(after=after, limit=limit)  # type: ignore[call-overload, no-any-return]
 
     def values(self) -> DictValues[V]:  # type: ignore[override]
         """Self's values as a live view.

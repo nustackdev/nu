@@ -128,6 +128,23 @@ async def test_dict_reversed_reads_async():
     assert await collect(d.reversed_items()) == [("c", 3), ("b", 2), ("a", 1)]
 
 
+def test_dict_reversed_reads_are_streams():
+    d = Dict({"a": 1, "b": 2, "c": 3})
+    for term in (d.reversed_keys(), d.reversed_values(), d.reversed_items()):
+        assert isinstance(term, Iterator)
+    assert val(d.reversed_keys().to_list()) == ["c", "b", "a"]
+    assert val(d.reversed_values().to_list()) == [3, 2, 1]
+    assert val(d.reversed_items().to_list()) == [("c", 3), ("b", 2), ("a", 1)]
+
+
+async def test_dict_reversed_reads_drain_under_arun():
+    d = Dict({"a": 1, "b": 2, "c": 3})
+    assert await aval(d.reversed_keys().to_list()) == ["c", "b", "a"]
+    assert await aval(d.reversed_values().to_list()) == [3, 2, 1]
+    assert await aval(d.reversed_items().to_list()) == [("c", 3), ("b", 2), ("a", 1)]
+    assert await aval(d.reversed_keys().first()) == "c"
+
+
 def test_set_reads():
     assert val(Set({1, 2}).union(Literal({3}))) == {1, 2, 3}
     assert val(Set({1, 2, 3}).intersection(Literal({2, 3, 4}))) == {2, 3}

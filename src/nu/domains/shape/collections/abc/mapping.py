@@ -38,7 +38,7 @@ from ...collection import (
 
 
 if TYPE_CHECKING:
-    from nu.forms import DictItems, DictKeys, DictValues, Iterator
+    from nu.forms import DictItems, DictKeys, DictValues, Iterator, List
     from nu.forms.primitives import Object
     from nu.lang import Nu
 
@@ -103,6 +103,20 @@ class ReactiveMappingForm(ReactiveCollectionForm, MutableMappingForm, _ReactiveM
 
 class OrderedMappingForm(MappingForm, _OrderedMappingForm):
     """Ordered shape mapping: reversed reads and paging over the mapping surface."""
+
+    def _wrap_values_stream(self, operand: Nu) -> Iterator:
+        """A stream over its values (``reversed_values``), typed by the declaration."""
+        from collections.abc import Iterator as PyIterator
+
+        from nu.forms import Iterator
+
+        return holding(Iterator(operand), PyIterator, elem=self._declared.elem)
+
+    def _wrap_keys_page(self, operand: Nu) -> List:
+        """A page of keys: a List carrying the declared key type on."""
+        from nu.forms import List
+
+        return holding(List(operand), list, elem=self._declared.key)
 
 
 class MutableOrderedMappingForm(MutableMappingForm, OrderedMappingForm, _MutableOrderedMappingForm):

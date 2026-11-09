@@ -1,7 +1,8 @@
 """Mapping interactions.
 
 Reads (Query): Keys, KeysPage, Values, Items, Get, ContainsKey,
-    Copy, ReversedKeys, ReversedKeysPage, ReversedValues, ReversedItems, Merge
+    Copy, ReversedKeysPage, Merge
+Streams (StreamQuery): ReversedKeys, ReversedValues, ReversedItems
 Mutate, yield nothing (Command): DeleteItem, Update (SetItem lives in nu.core.access)
 Mutate and yield a value (Action): DictPop, PopItem, SetDefault,
     MergeUpdate
@@ -13,14 +14,14 @@ from typing import TYPE_CHECKING, cast
 
 from nu.engine.structure import Declared
 from nu.factory.host import host
-from nu.lang import Command, ScalarAction, ScalarQuery
+from nu.lang import Command, ScalarAction, ScalarQuery, StreamQuery
 from nu.lang.null import is_null
 
 from .paged_mapping import PagedMapping
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import AsyncIterator, Callable, Iterator
 
     from nu.lang.runtime import Runtime
 
@@ -259,21 +260,19 @@ class Copy(ScalarQuery):
         return athunk
 
 
-class ReversedKeys(ScalarQuery):
-    """Reverse-order keys: reversed(mapping). Yields keys in reverse insertion order.
+class ReversedKeys(StreamQuery):
+    """Keys last first, as a stream: reversed(mapping).
 
-    Scalar-shaped like :class:`Keys` -- the thunk returns one iterator
-    handle (Python's ``reversed(obj)`` object). Downstream ``Iter``
-    opens that handle into a stream lazily, so ``islice(m.reversed_keys(),
-    n)`` reads only ``n`` items regardless of stream size.
+    The thunk returns ``reversed(obj)``, the mapping's own reverse walk, so a
+    consumer pulling ``n`` keys reads only ``n``. The async twin yields the
+    same walk as an async stream.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (operand,) = children
 
         def thunk(rt: Runtime) -> object:
-            obj = operand(rt)
-            return reversed(obj)
+            return reversed(operand(rt))
 
         return thunk
 
@@ -281,13 +280,7 @@ class ReversedKeys(ScalarQuery):
         (operand,) = children
 
         async def athunk(rt: Runtime) -> object:
-            obj = await operand(rt)
-
-            async def agen() -> object:
-                for k in reversed(obj):
-                    yield k
-
-            return agen()
+            return _astream(reversed(await operand(rt)))
 
         return athunk
 
@@ -324,45 +317,11 @@ class ReversedKeysPage(ScalarQuery):
         return athunk
 
 
-class ReversedValues(ScalarQuery):
-    """Values in reverse insertion order: reversed(mapping.values()).
+class ReversedValues(StreamQuery):
+    """Values last first, as a stream: reversed(mapping.values()).
 
-    Scalar-shaped like :class:`Values` -- the thunk returns one iterator
-    handle. Downstream ``Iter`` opens the handle into a stream lazily,
-    so ``islice(m.reversed_values(), n)`` reads only ``n`` values regardless
-    of stream size. Works for Python ``dict`` and any mapping whose
-    ``.values()`` is reversible.
-    """
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        (operand,) = children
-
-        def thunk(rt: Runtime) -> object:
-            obj = operand(rt)
-            return reversed(obj.values())
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        (operand,) = children
-
-        async def athunk(rt: Runtime) -> object:
-            obj = await operand(rt)
-
-            async def agen() -> object:
-                for v in reversed(obj.values()):
-                    yield v
-
-            return agen()
-
-        return athunk
-
-
-class ReversedItems(ScalarQuery):
-    """``(key, value)`` pairs in reverse insertion order: reversed(mapping.items()).
-
-    Scalar-shaped like :class:`Items`, lazy like :class:`ReversedValues`.
-    Works for Python ``dict`` and any mapping whose ``.items()`` is
+    Lazy like :class:`ReversedKeys`: the mapping's own reverse walk over its
+    values. Works for Python ``dict`` and any mapping whose ``.values()`` is
     reversible.
     """
 
@@ -370,8 +329,7 @@ class ReversedItems(ScalarQuery):
         (operand,) = children
 
         def thunk(rt: Runtime) -> object:
-            obj = operand(rt)
-            return reversed(obj.items())
+            return reversed(operand(rt).values())
 
         return thunk
 
@@ -379,15 +337,39 @@ class ReversedItems(ScalarQuery):
         (operand,) = children
 
         async def athunk(rt: Runtime) -> object:
-            obj = await operand(rt)
-
-            async def agen() -> object:
-                for kv in reversed(obj.items()):
-                    yield kv
-
-            return agen()
+            return _astream(reversed((await operand(rt)).values()))
 
         return athunk
+
+
+class ReversedItems(StreamQuery):
+    """``(key, value)`` pairs last first, as a stream: reversed(mapping.items()).
+
+    Lazy like :class:`ReversedKeys`. Works for Python ``dict`` and any
+    mapping whose ``.items()`` is reversible.
+    """
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        (operand,) = children
+
+        def thunk(rt: Runtime) -> object:
+            return reversed(operand(rt).items())
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        (operand,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            return _astream(reversed((await operand(rt)).items()))
+
+        return athunk
+
+
+async def _astream(items: Iterator) -> AsyncIterator:
+    """A sync walk as the async stream an async stream thunk returns."""
+    for item in items:
+        yield item
 
 
 class Merge(ScalarQuery):
