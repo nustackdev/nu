@@ -3,7 +3,7 @@
 Reads (Query): First, Last, IndexOf, Count, Copy
 Mutators returning nothing (Command): Append, Extend, Insert,
     RemoveValue, Reverse, Sort, SetIndex, DelIndex
-Mutators returning a value (Action): Pop, IAdd, IMul
+Mutators returning a value (Action): Pop
 """
 
 from __future__ import annotations
@@ -30,8 +30,6 @@ __all__ = [
     "DelIndex",
     "Extend",
     "First",
-    "IAdd",
-    "IMul",
     "IndexOf",
     "Insert",
     "Last",
@@ -555,81 +553,5 @@ class Pop(ScalarAction):
             if is_null(b):
                 raise ValueError("cannot write with a NULL operand")
             return a.pop(b)
-
-        return athunk
-
-
-class IAdd(ScalarAction):
-    """In-place concat: seq += other. Mutates slot 0 and returns it (Python __iadd__)."""
-
-    _mutates = Declared(value=frozenset({0}), name="mutates")
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        target_t, other_t = children
-
-        def thunk(rt: Runtime) -> object:
-            # Operands first: a refused one must not create the target.
-            other = other_t(rt)
-            if is_null(other):
-                raise ValueError("cannot write with a NULL operand")
-            target = target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
-            target += other
-            return target
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        target_t, other_t = children
-
-        async def athunk(rt: Runtime) -> object:
-            # Operands first: a refused one must not create the target.
-            other = await other_t(rt)
-            if is_null(other):
-                raise ValueError("cannot write with a NULL operand")
-            target = await target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
-            target += other
-            return target
-
-        return athunk
-
-
-class IMul(ScalarAction):
-    """In-place repeat: seq *= n. Mutates slot 0 and returns it (Python __imul__)."""
-
-    _mutates = Declared(value=frozenset({0}), name="mutates")
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        target_t, n_t = children
-
-        def thunk(rt: Runtime) -> object:
-            # Operands first: a refused one must not create the target.
-            n = n_t(rt)
-            if is_null(n):
-                raise ValueError("cannot write with a NULL operand")
-            target = target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
-            target *= n
-            return target
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        target_t, n_t = children
-
-        async def athunk(rt: Runtime) -> object:
-            # Operands first: a refused one must not create the target.
-            n = await n_t(rt)
-            if is_null(n):
-                raise ValueError("cannot write with a NULL operand")
-            target = await target_t(rt)
-            if is_null(target):
-                raise ValueError("cannot write with a NULL operand")
-            target *= n
-            return target
 
         return athunk
