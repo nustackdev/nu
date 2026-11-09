@@ -14,6 +14,7 @@ from typing_extensions import TypeVar
 from nu.domains.shape import Slot
 from nu.forms import Object
 from nu.lang import Nu
+from nu.lang.sentinels import UNSET
 from nu.lang.typeinfo import TypeInfo
 from virtuals.views import FractionalIndexedDictView, FractionalIndexedDictViewBase
 
@@ -198,36 +199,50 @@ class OrderedDictRef(DictRef[K, V], Generic[K, V]):
             raise ValueError("move takes exactly one of before= or after=")
         return OrderedMoveCmd(self, id, before, after)
 
-    def first(self) -> Object:
+    def first(self, default: object = UNSET) -> Object:
         """Read the first id in collection order.
+
+        Args:
+            default: yielded when there is no first id, the collection being
+                empty or never written, as ``next(iter(d), default)``. Any
+                term, NULL included (``nu.NullForm()``). Leave it out to
+                raise instead.
 
         Notes:
             - One seek, whatever the size of the collection.
             - Safe under a Snapshot.
 
         Yields:
-            The first id. IndexError when the collection is empty.
+            The first id, or ``default``. Without a default, IndexError when
+            the collection is empty and ContainerNotFoundError when it was
+            never written.
 
         Example:
             run(Plane.cells.first(), ctx)
+            run(Plane.cells.first(default=nu.NullForm()), ctx)
         """
         from nustd.kv.interactions.ordered import OrderedFirst
 
-        return Object(OrderedFirst(self))
+        return Object(OrderedFirst(self, default))
 
-    def last(self) -> Object:
+    def last(self, default: object = UNSET) -> Object:
         """Read the last id in collection order.
+
+        Args:
+            default: yielded when there is no last id. Same contract as
+                ``first``.
 
         Notes:
             - One seek, whatever the size of the collection.
             - Safe under a Snapshot.
 
         Yields:
-            The last id. IndexError when the collection is empty.
+            The last id, or ``default``. Without a default, raises as
+            ``first`` does.
 
         Example:
             run(Plane.cells.last(), ctx)
         """
         from nustd.kv.interactions.ordered import OrderedLast
 
-        return Object(OrderedLast(self))
+        return Object(OrderedLast(self, default))

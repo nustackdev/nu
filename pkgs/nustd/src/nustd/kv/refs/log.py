@@ -14,6 +14,7 @@ from typing_extensions import TypeVar
 
 from nu.domains.shape import Slot
 from nu.forms import Object
+from nu.lang.sentinels import UNSET
 from nu.lang.typeinfo import TypeInfo
 from virtuals.views import LogIndexedDictView, LogIndexedDictViewBase
 
@@ -97,36 +98,50 @@ class LogDictRef(DictRef[K, V], Generic[K, V]):
         declared = TypeInfo.from_annotation(cls[key, value])  # type: ignore[index]
         return Slot(cls, type_info=declared, view_type=view)  # type: ignore[return-value]
 
-    def first(self) -> Object:
+    def first(self, default: object = UNSET) -> Object:
         """Read the oldest id.
+
+        Args:
+            default: yielded when there is no oldest id, the log being empty
+                or never written, as ``next(iter(d), default)``. Any term,
+                NULL included (``nu.NullForm()``). Leave it out to raise
+                instead.
 
         Notes:
             - One seek, whatever the size of the log.
             - Safe under a Snapshot.
 
         Yields:
-            The oldest id. IndexError when the log is empty.
+            The oldest id, or ``default``. Without a default, IndexError when
+            the log is empty and ContainerNotFoundError when it was never
+            written.
 
         Example:
             run(Indexes.removed.first(), ctx)
+            run(Indexes.removed.first(default=nu.NullForm()), ctx)
         """
         from nustd.kv.interactions.ordered import OrderedFirst
 
-        return Object(OrderedFirst(self))
+        return Object(OrderedFirst(self, default))
 
-    def last(self) -> Object:
+    def last(self, default: object = UNSET) -> Object:
         """Read the newest id.
+
+        Args:
+            default: yielded when there is no newest id. Same contract as
+                ``first``.
 
         Notes:
             - One seek, whatever the size of the log.
             - Safe under a Snapshot.
 
         Yields:
-            The newest id. IndexError when the log is empty.
+            The newest id, or ``default``. Without a default, raises as
+            ``first`` does.
 
         Example:
             run(Indexes.removed.last(), ctx)
         """
         from nustd.kv.interactions.ordered import OrderedLast
 
-        return Object(OrderedLast(self))
+        return Object(OrderedLast(self, default))

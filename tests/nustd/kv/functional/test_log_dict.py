@@ -5,7 +5,8 @@ Verifies:
   annotation form declares the same slot.
 - Plain dict surface: set, get, contains, delete; descent types the value.
 - Iteration, keys, values and items run oldest first; a re-set keeps its place.
-- ``first`` / ``last`` read the oldest and newest id, and raise when there is none.
+- ``first`` / ``last`` read the oldest and newest id, and raise when there is none
+  unless given an explicit default.
 - The view is a MutableMapping; a container ref as the value is refused.
 """
 
@@ -15,7 +16,8 @@ from collections.abc import MutableMapping
 
 import pytest
 
-from nu import Shape, run
+import nu
+from nu import Shape, arun, run
 from nu.lang import is_null
 from nustd.kv import DictRef, IntRef, LogDictRef, NullAddressError, OrderedDictRef, StrRef
 from nustd.kv.refs.base import Facet
@@ -109,6 +111,39 @@ def test_first_and_last_of_an_emptied_log_raise(ctx) -> None:
         run(History.removed.first(), ctx)
     with pytest.raises(IndexError):
         run(History.removed.last(), ctx)
+
+
+def test_first_and_last_default_on_a_never_written_log(ctx) -> None:
+    assert run(History.removed.first("none"), ctx)[0] == "none"
+    assert run(History.removed.last(default="none"), ctx)[0] == "none"
+    assert run(History.removed.last(None), ctx)[0] is None
+
+
+def test_first_and_last_default_on_an_emptied_log(ctx) -> None:
+    _add(ctx, History.removed, ["p1"])
+    run(History.removed.del_item("p1"), ctx)
+    assert run(History.removed.first("none"), ctx)[0] == "none"
+    assert run(History.removed.last("none"), ctx)[0] == "none"
+
+
+def test_first_and_last_default_null_is_explicit(ctx) -> None:
+    assert is_null(run(History.removed.first(nu.NullForm()), ctx)[0])
+    assert is_null(run(History.removed.last(default=nu.NullForm()), ctx)[0])
+
+
+def test_first_and_last_default_is_not_used_when_present(ctx) -> None:
+    _add(ctx, History.removed, ["p1", "p2"])
+    assert run(History.removed.first("none"), ctx)[0] == "p1"
+    assert run(History.removed.last(nu.NullForm()), ctx)[0] == "p2"
+
+
+async def test_first_and_last_default_async(ctx) -> None:
+    assert (await arun(History.removed.first("none"), ctx))[0] == "none"
+    assert is_null((await arun(History.removed.last(nu.NullForm()), ctx))[0])
+    with pytest.raises(ContainerNotFoundError):
+        await arun(History.removed.last(), ctx)
+    _add(ctx, History.removed, ["p1", "p2"])
+    assert (await arun(History.removed.last("none"), ctx))[0] == "p2"
 
 
 def test_last_under_a_named_slot(ctx) -> None:

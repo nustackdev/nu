@@ -5,7 +5,7 @@ Verifies:
 - Iteration, keys, values, items in collection order (not key order).
 - insert_before / insert_after place next to an anchor, errors on bad ids.
 - move(before=/after=) relocates without touching the value.
-- first / last read the ends, raise when empty or missing.
+- first / last read the ends, raise when empty or missing, or give an explicit default.
 - Whole-value set and read keep the order; the view is a MutableMapping.
 - Path export/import carries the view class; lazy/eager facets.
 """
@@ -19,6 +19,7 @@ import pytest
 
 import nu
 from nu import Literal, Shape, arun, run
+from nu.lang import is_null
 from nustd.kv import OrderedDictRef, StrRef
 from nustd.kv.paths import ViewPathSer
 from nustd.kv.refs.base import Facet
@@ -273,6 +274,42 @@ def test_first_last_raise_on_empty_or_missing(ctx) -> None:
         run(Plane.cells.first(), ctx)
     with pytest.raises(IndexError):
         run(Plane.cells.last(), ctx)
+
+
+def test_first_last_default_on_never_written(ctx) -> None:
+    assert run(Plane.cells.first("none"), ctx)[0] == "none"
+    assert run(Plane.cells.last(default="none"), ctx)[0] == "none"
+    assert run(Plane.cells.first(None), ctx)[0] is None
+
+
+def test_first_last_default_on_empty(ctx) -> None:
+    _fill(ctx, ["a"])
+    run(Plane.cells.del_item("a"), ctx)
+    assert run(Plane.cells.first("none"), ctx)[0] == "none"
+    assert run(Plane.cells.last("none"), ctx)[0] == "none"
+
+
+def test_first_last_default_null_is_explicit(ctx) -> None:
+    assert is_null(run(Plane.cells.first(nu.NullForm()), ctx)[0])
+    assert is_null(run(Plane.cells.last(default=nu.NullForm()), ctx)[0])
+
+
+def test_first_last_default_is_a_term(ctx) -> None:
+    run(Plane.name.set("fallback"), ctx)
+    assert run(Plane.cells.first(Plane.name), ctx)[0] == "fallback"
+    _fill(ctx, ["a", "b"])
+    assert run(Plane.cells.first(Plane.name), ctx)[0] == "a"
+    assert run(Plane.cells.last(Plane.name), ctx)[0] == "b"
+
+
+async def test_first_last_default_async(ctx) -> None:
+    assert (await arun(Plane.cells.first("none"), ctx))[0] == "none"
+    assert is_null((await arun(Plane.cells.last(nu.NullForm()), ctx))[0])
+    with pytest.raises(Exception):  # noqa: B017 - the backend names the missing case
+        await arun(Plane.cells.first(), ctx)
+    _fill(ctx, ["a", "b"])
+    assert (await arun(Plane.cells.first("none"), ctx))[0] == "a"
+    assert (await arun(Plane.cells.last("none"), ctx))[0] == "b"
 
 
 # ============================================================================

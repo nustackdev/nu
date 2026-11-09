@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING, cast
 from nu.engine.structure import Declared
 from nu.lang import Command, ScalarQuery
 from nu.lang.null import is_null
+from nu.lang.sentinels import UNSET
 
 
 if TYPE_CHECKING:
@@ -238,13 +239,21 @@ class _EdgeBase(ScalarQuery):
 
     Subclasses differ only in ``_last``. One seek, whatever the size. The view
     keeps the order and reads its ends (``first()`` / ``last()``): an ordered
-    dict view or a log dict view, which raises IndexError when empty.
+    dict view or a log dict view. Children are ``(ref)`` or ``(ref, default)``;
+    a default is forwarded to the view, which decides when it applies.
     """
 
     _last: bool = False
 
+    def __init__(self, ref: object, default: object = UNSET) -> None:
+        if default is UNSET:
+            super().__init__(ref)
+        else:
+            super().__init__(ref, default)
+
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = cast("ViewRef", self._children[0])
+        default_thunk = children[1] if len(children) > 1 else None
         last = self._last
 
         def thunk(rt: Runtime) -> object:
@@ -252,12 +261,16 @@ class _EdgeBase(ScalarQuery):
                 "FractionalIndexedDictViewBase | LogIndexedDictViewBase",
                 ref._fetch(rt, _child_nid(rt, nid, 0)),
             )
-            return view.last() if last else view.first()
+            end = view.last if last else view.first
+            if default_thunk is None:
+                return end()
+            return end(default_thunk(rt))
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = cast("ViewRef", self._children[0])
+        default_thunk = children[1] if len(children) > 1 else None
         last = self._last
 
         async def athunk(rt: Runtime) -> object:
@@ -265,7 +278,10 @@ class _EdgeBase(ScalarQuery):
                 "FractionalIndexedDictViewBase | LogIndexedDictViewBase",
                 await ref._afetch(rt, _child_nid(rt, nid, 0)),
             )
-            return view.last() if last else view.first()
+            end = view.last if last else view.first
+            if default_thunk is None:
+                return end()
+            return end(await default_thunk(rt))
 
         return athunk
 
@@ -275,14 +291,18 @@ class OrderedFirst(_EdgeBase):
 
     Args:
         ref: the ordered or log container Ref to read.
+        default: yielded when there is no first id: the collection is empty
+            or was never written. Optional; a child, so it may be a Ref or
+            NULL. Leave it out to raise instead.
 
     Notes:
         - Cost is one seek, independent of how many ids the collection holds.
-        - Raises IndexError on an empty collection, as ``seq[0]`` does.
+        - Without a default, raises IndexError on an empty collection, as
+          ``seq[0]`` does, and ContainerNotFoundError on a never-written one.
         - Safe on a Snapshot: a missing container is never created.
 
     Yields:
-        The first id.
+        The first id, or ``default``.
 
     Example:
         app = nu.With(
@@ -301,9 +321,11 @@ class OrderedLast(_EdgeBase):
 
     Args:
         ref: the ordered or log container Ref to read.
+        default: yielded when there is no last id. Optional, as on
+            ``OrderedFirst``.
 
     Yields:
-        The last id.
+        The last id, or ``default``.
     """
 
     _last = True
