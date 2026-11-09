@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar, cast, overload
 
 from nu.lang import TypedNu
 
+from ..constructor import value_constructor
 from .abc import MutableOrderedMappingForm
 from .abc.mapping_interactions import DictCreate, DictOf
 
@@ -61,7 +62,7 @@ class Dict(
         {'a': 1, 'b': 2}
     """
 
-    @classmethod
+    @value_constructor
     def create(cls) -> Dict[K, V]:
         """Fresh empty dict.
 
@@ -74,7 +75,7 @@ class Dict(
         """
         return cls(DictCreate())
 
-    @classmethod
+    @value_constructor
     def of(cls, **fields: Arg) -> Dict[str, V]:
         """Dict built from named field expressions.
 

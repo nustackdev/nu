@@ -8,6 +8,7 @@ from typing_extensions import TypeVarTuple, Unpack
 
 from nu.lang import TypedNu
 
+from ..constructor import value_constructor
 from .abc import SequenceForm
 from .abc.sequence_interactions import TupleCreate, TupleOf
 
@@ -50,7 +51,7 @@ class Tuple(
         (1, 2, 3)
     """
 
-    @classmethod
+    @value_constructor
     def create(cls) -> Tuple[Unpack[Ts]]:
         """Empty tuple.
 
@@ -63,7 +64,7 @@ class Tuple(
         """
         return cls(TupleCreate())
 
-    @classmethod
+    @value_constructor
     def of(cls, *items: Arg) -> Tuple:
         """Tuple built from positional item expressions.
 

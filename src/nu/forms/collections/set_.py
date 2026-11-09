@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.lang import TypedNu
 
+from ..constructor import value_constructor
 from .abc import MutableSetForm, SetLikeForm
 from .abc.set_interactions import FrozenSetCreate, FrozenSetOf, SetCreate, SetOf
 
@@ -49,7 +50,7 @@ class Set(
         {1, 2, 3}
     """
 
-    @classmethod
+    @value_constructor
     def create(cls) -> Set[T]:
         """Build a fresh empty set.
 
@@ -62,7 +63,7 @@ class Set(
         """
         return cls(SetCreate())
 
-    @classmethod
+    @value_constructor
     def of(cls, *items: Arg) -> Set:
         """Build a set from positional item expressions.
 
@@ -219,7 +220,7 @@ class FrozenSet(
         frozenset({1, 2, 3})
     """
 
-    @classmethod
+    @value_constructor
     def create(cls) -> FrozenSet[T]:
         """Build an empty frozenset.
 
@@ -232,7 +233,7 @@ class FrozenSet(
         """
         return cls(FrozenSetCreate())
 
-    @classmethod
+    @value_constructor
     def of(cls, *items: Arg) -> FrozenSet:
         """Build a frozenset from positional item expressions.
 

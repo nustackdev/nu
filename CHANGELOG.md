@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Ref classes drop the value constructors: a ref names a place, not a value
 - Reversing a list or tuple yields a stream, like Python's reversed
 - Shape rows, refs and store steps type-check again after the grid rebuild
 - Reading a mapping's keys last first works on stores, sync or async alike

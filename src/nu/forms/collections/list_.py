@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
 
 from nu.lang import TypedNu
 
+from ..constructor import value_constructor
 from .abc import MutableSequenceForm
 from .abc.sequence_interactions import ListCreate, ListOf
 
@@ -59,7 +60,7 @@ class List(
         [1, 2, 3, 4]
     """
 
-    @classmethod
+    @value_constructor
     def create(cls) -> List[T]:
         """Yield a fresh empty list.
 
@@ -72,7 +73,7 @@ class List(
         """
         return cls(ListCreate())
 
-    @classmethod
+    @value_constructor
     def of(cls, *items: Arg) -> List:
         """Yield a list from positional item expressions.
 
