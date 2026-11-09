@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from nu.lang.runtime import Runtime
+    from virtuals.view import View
 
 
 __all__ = [
@@ -26,17 +27,17 @@ __all__ = [
 ]
 
 
-def _own_absence(err: ContainerNotFoundError, view: object) -> bool:
-    """Whether ``err`` names the view's own container, not one below it."""
-    site = getattr(err, "site", None)
-    own = getattr(getattr(view, "container", None), "site", None)
-    return site is None or own is None or site == own
+def _own_absence(err: ContainerNotFoundError, view: View) -> bool:
+    """Whether ``err`` names the view's own container, not one below it.
+
+    An error that names no site comes from a check that had none to give:
+    it is taken as the view's own absence.
+    """
+    return err.site is None or err.site == view.container.site
 
 
-def _extract(view: object) -> object:
-    if hasattr(view, "eager"):
-        view = view.eager
-    return view.extract()  # type: ignore[attr-defined]
+def _extract(view: View) -> object:
+    return view.eager.extract()  # type: ignore[attr-defined]
 
 
 class ViewExtract(ScalarQuery):

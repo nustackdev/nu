@@ -116,7 +116,7 @@ def _resolve_storage_ctx(rt: Runtime, scope: type | None, resolved_path: tuple) 
 def _plain(value: object) -> object:
     """A stored value as a leaf reads it: a container stored decomposed comes back extracted."""
     if isinstance(value, ViewBase):
-        return (value.eager if hasattr(value, "eager") else value).extract()
+        return value.eager.extract()
     return value
 
 
@@ -336,22 +336,15 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
             else self._with_facet(Facet.EAGER)
         )
 
-    def _apply_facet(self, view: object) -> object:
-        """Apply the lazy/eager facet to a fetched view, when supported.
+    def _apply_facet(self, view: View) -> View:
+        """Apply the lazy/eager facet to a fetched view.
 
-        Support is checked against the ref's declared ``type_marker`` (a View
-        subclass), not the fetched instance. Instance ``hasattr`` on a remote
-        proxy triggers an RPC round-trip per read and logs an AttributeError
-        on the server for every view type without the facet (SetView, etc).
+        Every view declares both facets; one without a twin returns itself.
         """
         facet = self._payload.get("facet", Facet.LAZY)
-        if facet is Facet.NONE:
-            return view
-        view_type = self._payload.get("type_marker")
-        probe: object = view_type if view_type is not None else view
-        if facet is Facet.EAGER and hasattr(probe, "eager"):
+        if facet is Facet.EAGER:
             return view.eager
-        if facet is Facet.LAZY and hasattr(probe, "lazy"):
+        if facet is Facet.LAZY:
             return view.lazy
         return view
 
@@ -398,17 +391,17 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
 
         return ViewExtract(self)
 
-    def _open(self, rt: Runtime, path: tuple) -> object:
+    def _open(self, rt: Runtime, path: tuple) -> View:
         nav = _resolve_navigator(rt, self._root_shape, path)
         return nav.open_at_path(ViewPathSer(path), _resolve_storage_ctx(rt, self._root_shape, path))
 
     def _exists(self, rt: Runtime, nid: int) -> bool:
         """Whether the container is stored: one marker read, nothing extracted."""
-        return bool(self._open(rt, self._resolve_path(rt, nid)).container.exists())  # type: ignore[attr-defined]
+        return self._open(rt, self._resolve_path(rt, nid)).exists()
 
     async def _aexists(self, rt: Runtime, nid: int) -> bool:
         """Async sibling of :meth:`_exists`."""
-        return bool(self._open(rt, await self._aresolve_path(rt, nid)).container.exists())  # type: ignore[attr-defined]
+        return self._open(rt, await self._aresolve_path(rt, nid)).exists()
 
     # --- write / erase (whole-view store via parent decomposition) -----------
 
