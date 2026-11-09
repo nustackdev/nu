@@ -10,7 +10,7 @@ stamp a recursive ``TypeInfo`` onto the created ref's ``_payload``.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 import pytest
 
@@ -208,6 +208,19 @@ def test_bare_shape_annotation_without_slot_raises() -> None:
 
         class BadShape(nu.Shape):
             rel: LeafShape  # no assignment -> fabric can't be inferred
+
+
+_T = TypeVar("_T")
+
+
+class _LooseRef(nu.lang.Ref[_T], Generic[_T]):
+    """A Ref with no place in a Shape: not a StructuredRef."""
+
+
+@pytest.mark.parametrize("ann", [_LooseRef, _LooseRef[int]])
+def test_a_ref_that_is_not_structured_is_refused_as_a_slot(ann: object) -> None:
+    with pytest.raises(TypeError, match=r"not a structured ref"):
+        type("BadShape", (nu.Shape,), {"__annotations__": {"loose": ann}})
 
 
 def test_bare_shape_annotation_with_assignment_stamps_shape_type_info() -> None:
