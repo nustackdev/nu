@@ -148,6 +148,21 @@ def test_no_write_at_a_position(name) -> None:
     assert not hasattr(OUT, name)
 
 
+@pytest.mark.parametrize("name", ["on_child_change", "on_children_change", "on_descendants_change"])
+def test_no_child_watch(name) -> None:
+    """Entries have no addresses, so the ring offers only the watch it can serve."""
+    assert not hasattr(OUT, name)
+
+
+def test_the_ring_is_watched_whole_and_written_whole() -> None:
+    from nu.core.reactive import OnChange
+    from nu.domains.shape import MutableCollectionForm, ReactiveCollectionForm
+
+    assert isinstance(OUT.on_change(), OnChange)
+    assert isinstance(OUT, MutableCollectionForm)
+    assert not isinstance(OUT, ReactiveCollectionForm)
+
+
 def test_a_position_is_a_read_not_a_ref() -> None:
     assert not isinstance(OUT[0], nu.lang.Ref)
 

@@ -35,7 +35,7 @@ shape Form mixins.
 from __future__ import annotations
 
 from .base import StructuredRef, root_shape
-from .collection import ReactiveCollectionForm, holding
+from .collection import MutableCollectionForm, ReactiveCollectionForm, holding
 from .collections import (
     MutablePyDictRef,
     MutablePyFrozenSetRef,
@@ -112,6 +112,7 @@ __all__ = [
     "ItemRef",
     "Load",
     "MappingRef",
+    "MutableCollectionForm",
     "MutableItemRef",
     "MutableMappingRef",
     "MutableOrderedMappingRef",

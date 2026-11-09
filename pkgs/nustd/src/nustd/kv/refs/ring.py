@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Generic, cast, overload
 
 from typing_extensions import TypeVar
 
-from nu.domains.shape import ReactiveCollectionForm, SequenceRef, Slot
+from nu.domains.shape import MutableCollectionForm, SequenceRef, Slot
 from nu.lang.typeinfo import TypeInfo
 from virtuals.views import RingView
 
@@ -37,7 +37,7 @@ T = TypeVar("T")
 E = TypeVar("E")
 
 
-class RingRef(SequenceRef, ReactiveCollectionForm, ViewRef[list[T]], Generic[T]):
+class RingRef(SequenceRef, MutableCollectionForm, ViewRef[list[T]], Generic[T]):
     """A capped log in KV storage: appends land at the end, the oldest drop.
 
     A read-only Python ``Sequence`` plus ``append``, ``extend`` and
@@ -54,6 +54,9 @@ class RingRef(SequenceRef, ReactiveCollectionForm, ViewRef[list[T]], Generic[T])
         - ``ring[i]`` reads the entry, it is not a ref: entries have no
           addresses, so there is no write at a position and no per-entry
           watch. An index past the ends raises IndexError.
+        - Watched whole, with ``on_change``: it sits on the mutable
+          collection cell (``set``, ``erase``, ``init``) and adds that one
+          watch, none of the child watches a ring could not serve.
         - Appending reads the newest row, writes the entry and drops what
           falls past capacity: a constant number of keys, no stored length
           and no key shared with any other container.
