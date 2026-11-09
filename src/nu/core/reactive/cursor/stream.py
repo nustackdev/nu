@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 
 from nu.context.attrs.binders import bind
 from nu.core._stream import aiter_any
-from nu.domains.shape.interactions import AdvanceCursor
 from nu.lang import StreamQuery
 
 from .._body import async_only
@@ -97,6 +96,7 @@ class Stream(StreamQuery):
         every: float | object | None = None,
     ) -> None:
         from nu.context import Attr
+        from nu.domains.shape.interactions import AdvanceCursor
 
         body, (key,) = bind("Stream", body, key=key)
         if key is None:

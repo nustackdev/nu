@@ -45,7 +45,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.core.reactive.protocol import ObserverProtocol
-from nu.domains.shape.base import StructuredRef
 from nu.lang import ScalarQuery
 
 
@@ -73,6 +72,8 @@ _SYNC_UNSUPPORTED = (
 
 def _scope_of(child: object) -> type | None:
     """The root Shape a Ref chain is rooted at; None for anything that is not one."""
+    from nu.domains.shape.base import StructuredRef
+
     return child._root_shape if isinstance(child, StructuredRef) else None
 
 
