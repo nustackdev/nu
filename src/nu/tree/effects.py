@@ -81,10 +81,7 @@ def is_dynamic(node: Nu) -> bool:
 
     A walk cannot see through it: its effects are not on the tree yet.
     """
-    attrs = getattr(type(node), "_attributes", None)
-    if not attrs:
-        return False
-    sort_attr = attrs.get("sort")
+    sort_attr = type(node)._attributes.get("sort")
     return getattr(sort_attr, "value", None) is Sort.DYNAMIC
 
 
