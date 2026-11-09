@@ -53,8 +53,8 @@ class RingRef(ReactiveCollectionForm, ViewRef[list[T]], Generic[T]):
           still kept.
         - Meant for one writer, such as a run writing its own output: two
           writers appending at once can pick the same sequence number.
-        - A never-written ring raises on ``len`` and iteration, as other
-          containers do; ``entries`` reads an empty page there.
+        - A never-written ring raises on ``len``, iteration and
+          ``entries``, as other containers do.
 
     Example:
         class CellRun(Shape):
@@ -85,7 +85,8 @@ class RingRef(ReactiveCollectionForm, ViewRef[list[T]], Generic[T]):
 
         Raises:
             TypeError: neither or both of ``capacity`` and ``view`` given, a
-                ``view`` without a capacity, or ``value`` a container ref.
+                ``view`` that is not a ring or has no capacity, or ``value``
+                a container ref.
             ValueError: ``capacity`` is not an int of at least 1.
         """
         _refuse_container_value(cls, value)
@@ -94,7 +95,10 @@ class RingRef(ReactiveCollectionForm, ViewRef[list[T]], Generic[T]):
             raise TypeError(msg)
         if capacity is not None:
             view = RingView.of(capacity)
-        elif getattr(view, "CAPACITY", None) is None:
+        elif not (isinstance(view, type) and issubclass(view, RingView)):
+            msg = f"RingRef.slot(view={view!r}): the view must be a ring with a capacity, RingView.of(n)"
+            raise TypeError(msg)
+        elif view.CAPACITY is None:
             msg = (
                 f"RingRef.slot(view={view.__name__}): a ring view needs a capacity, RingView.of(n)"
             )
@@ -158,7 +162,7 @@ class RingRef(ReactiveCollectionForm, ViewRef[list[T]], Generic[T]):
 
         Notes:
             - One seek plus one row per entry: cost tracks ``limit``.
-            - A never-written ring reads an empty page.
+            - A never-written ring raises, as ``len`` does.
 
         Yields:
             A list of ``(seq, entry)`` pairs.
