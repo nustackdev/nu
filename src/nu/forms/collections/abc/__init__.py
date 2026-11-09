@@ -5,7 +5,14 @@ from nu.core.access import SetItem
 from .collection import CollectionForm
 from .container import ContainerForm
 from .iterable import IterableForm
-from .mapping import MappingForm, MutableMappingForm, ReactiveMappingForm
+from .mapping import (
+    MappingForm,
+    MutableMappingForm,
+    MutableOrderedMappingForm,
+    OrderedMappingForm,
+    ReactiveMappingForm,
+    ReactiveOrderedMappingForm,
+)
 from .mapping_interactions import (
     ContainsKey,
     DeleteItem,
@@ -101,11 +108,14 @@ __all__ = [
     "Merge",
     "MergeUpdate",
     "MutableMappingForm",
+    "MutableOrderedMappingForm",
     "MutableSequenceForm",
     "MutableSetForm",
+    "OrderedMappingForm",
     "Pop",
     "PopItem",
     "ReactiveMappingForm",
+    "ReactiveOrderedMappingForm",
     "ReactiveSequenceForm",
     "ReactiveSetForm",
     "Remove",

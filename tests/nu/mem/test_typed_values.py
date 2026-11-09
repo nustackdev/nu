@@ -14,7 +14,7 @@ import pytest
 import nu
 from nu import run
 from nu.domains.shape import Shape
-from nu.forms import Dict, DictValues, Int, Iterator, List, Object, Str
+from nu.forms import DictValues, Int, Iterator, List, Object, Str
 from nu.lang import TypeInfo
 from nu.mem import (
     DictRef,
@@ -122,15 +122,14 @@ def test_a_slice_is_a_list_carrying_the_element_type(ctx):
     assert run(sliced.first_elem().upper(), ctx)[0] == "Y"
 
 
-def test_values_and_copy_carry_the_value_type(ctx):
+def test_values_and_items_carry_the_value_type(ctx):
     run(Bag.names["a"].set("gor"), ctx)
     values = Bag.names.values()
     assert type(values) is DictValues
     assert nu.tree.payload(values)["type_info"].elem == TypeInfo(str)
     assert sorted(run(values.to_list(), ctx)[0]) == ["gor"]
-    copied = Bag.names.copy()
-    assert type(copied) is Dict
-    assert type(copied["a"]) is Str
+    items = nu.tree.payload(Bag.names.items())["type_info"]
+    assert items.elem == TypeInfo(str)
 
 
 def test_a_stream_carries_the_declared_element_type(ctx):

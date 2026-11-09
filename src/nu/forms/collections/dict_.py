@@ -6,11 +6,13 @@ from typing import TYPE_CHECKING, Generic, TypeVar, overload
 
 from nu.lang import TypedNu
 
-from .abc import MutableMappingForm
+from .abc import MutableOrderedMappingForm
 from .abc.mapping_interactions import DictCreate, DictOf
 
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from nu.lang import Arg, DictArg, Nu
 
     from ..primitives import (
@@ -35,11 +37,11 @@ V = TypeVar("V")
 
 
 class Dict(
-    MutableMappingForm[dict[K, V], K, V, "Dict[K, V]", "Object"],
+    MutableOrderedMappingForm[dict[K, V], K, V, "Dict[K, V]", "Object"],
     TypedNu[dict[K, V]],
     Generic[K, V],
 ):
-    """Dict interface. Mutable mapping + comparable.
+    """Dict interface. Mutable ordered mapping + comparable.
 
     Notes:
         - Keys preserve insertion order, matching Python's `dict`.
@@ -50,6 +52,8 @@ class Dict(
           `Dict.create` expression builds a fresh dict, so comparing two
           separately-built dicts with `is_` is False even when their
           contents match, unlike Python's small-string interning for Str.
+        - `copy`, `merge` and `merge_update` are dict-only; the rest of
+          the surface comes from the shared mutable ordered-mapping base.
         - Merging is named: `merge` and `merge_update`. `&`, `|` and `>>`
           compose flows on a Dict like on every term.
 
@@ -223,6 +227,64 @@ class Dict(
         from .abc.mapping_interactions import Items
 
         return self._wrap_items_result(Items(self))
+
+    # =========================================================================
+    # DICT-ONLY (not on collections.abc.MutableMapping)
+    # =========================================================================
+
+    def copy(self) -> Dict[K, V]:
+        """Shallow copy of self: mapping.copy().
+
+        Yields:
+            A new mapping with the same key/value pairs.
+
+        Example:
+            >>> nu.run(nu.Dict({"a": 1}).copy())[0]
+            {'a': 1}
+        """
+        from .abc.mapping_interactions import Copy
+
+        return self._wrap_mapping_result(Copy(self))
+
+    def merge(self, other: Arg[Mapping[K, V]]) -> Dict[K, V]:
+        """Self and other merged into a new mapping, like Python's dict `|`.
+
+        Args:
+            other: the mapping to merge in. Its keys win over self's on
+                overlap.
+
+        Yields:
+            A new mapping holding self's entries overridden by other's.
+
+        Example:
+            >>> nu.run(nu.Dict({"a": 1}).merge({"b": 2}))[0]
+            {'a': 1, 'b': 2}
+        """
+        from .abc.mapping_interactions import Merge
+
+        return self._wrap_mapping_result(Merge(self, other))
+
+    def merge_update(self, other: Arg[Mapping[K, V]]) -> Dict[K, V]:
+        """Merge other into self in place, and yield self, like Python's dict `|=`.
+
+        Args:
+            other: the mapping to merge in. Its values win over self's on
+                shared keys.
+
+        Notes:
+            - Mutates slot 0 in place and yields the mutated mapping: an
+              Action, not a Command, mirroring Python's `dict.__ior__`.
+
+        Yields:
+            Self, updated with other's entries.
+
+        Example:
+            >>> nu.run(nu.Dict({"a": 1}).merge_update({"b": 2}))[0]
+            {'a': 1, 'b': 2}
+        """
+        from .abc.mapping_interactions import MergeUpdate
+
+        return self._wrap_mapping_result(MergeUpdate(self, other))
 
     def _wrap_iterable_result(self, operand: Nu) -> List:
         """Wrap operand as List."""

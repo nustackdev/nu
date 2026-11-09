@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Generic, overload
 from typing_extensions import TypeVar
 
 from nu.domains.shape import (
-    MutableMappingRef,
+    MutableOrderedMappingRef,
     MutableSequenceRef,
     MutableSetRef,
     MutableShapeRef,
@@ -64,7 +64,7 @@ S = TypeVar("S", bound=Shape)
 L = TypeVar("L", bound=ItemRef)
 
 
-class DictRef(MutableMappingRef, RefBase[dict[K, V]], Generic[K, V]):
+class DictRef(MutableOrderedMappingRef, RefBase[dict[K, V]], Generic[K, V]):
     """A mapping slot in the dict substrate, holding one plain dict of values.
 
     Subscripting descends rather than reads: ``ref[k]`` is a ref at that key
@@ -83,8 +83,10 @@ class DictRef(MutableMappingRef, RefBase[dict[K, V]], Generic[K, V]):
           live object, so a mutation through the ref is visible to anyone
           else holding it.
         - Value reads (``get_item``, ``pop``, ``setdefault``) are the declared
-          value's form, and ``values``, ``items`` and ``copy`` carry the
-          declared types on.
+          value's form, and ``values`` and ``items`` carry the declared
+          types on.
+        - Ordered like the dict it holds: the reversed reads work, paging
+          raises (a Python dict has no paged keys).
         - Writing through a key creates the dict and every level above it;
           an in-place call on an absent slot creates the dict empty first.
         - The declared types shape the refs and forms; nothing coerces or
@@ -236,8 +238,10 @@ class SetRef(MutableSetRef, RefBase[set[T]], Generic[T]):
     """A set slot in the dict substrate, holding one plain set of values.
 
     No descent: a set has no addresses, so there is no child ref to navigate
-    to. Everything happens through the set calls - membership, the algebra
-    (``union``, ``difference``, ...), and the in-place mutations.
+    to. Everything happens through the set calls - membership, the subset
+    comparisons, ``isdisjoint``, and the in-place mutations. The named
+    algebra (``union``, ``difference``, ...) is the ``Set`` form's:
+    ``nu.Set(ref).union(...)``.
 
     Args:
         address: this level's key, a literal or a Nu term yielding one.
@@ -246,8 +250,7 @@ class SetRef(MutableSetRef, RefBase[set[T]], Generic[T]):
         - The stored value is an ordinary set and a read hands back that live
           object, so elements must be hashable and iteration order is
           whatever Python gives.
-        - The declared value types what comes out: ``pop`` is its form, and
-          the set algebra yields a Set carrying it on.
+        - The declared value types what comes out: ``pop`` is its form.
         - An in-place call on an absent slot creates the set empty first,
           so ``add`` needs no ``set`` ahead of it.
 

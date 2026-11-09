@@ -26,7 +26,14 @@ from .interactions import (
     SetCmd,
 )
 from .item import ItemRef, MutableItemRef, ReactiveItemRef
-from .mapping import MappingRef, MutableMappingRef, ReactiveMappingRef
+from .mapping import (
+    MappingRef,
+    MutableMappingRef,
+    MutableOrderedMappingRef,
+    OrderedMappingRef,
+    ReactiveMappingRef,
+    ReactiveOrderedMappingRef,
+)
 from .rewrite import reroot, rerooter, with_parent
 from .sequence import MutableSequenceRef, ReactiveSequenceRef, SequenceRef
 from .set_ import MutableSetRef, ReactiveSetRef, SetRef
@@ -43,13 +50,16 @@ __all__ = [
     "MappingRef",
     "MutableItemRef",
     "MutableMappingRef",
+    "MutableOrderedMappingRef",
     "MutableSequenceRef",
     "MutableSetRef",
     "MutableShapeRef",
+    "OrderedMappingRef",
     "PrimitiveSet",
     "ReactiveCollectionForm",
     "ReactiveItemRef",
     "ReactiveMappingRef",
+    "ReactiveOrderedMappingRef",
     "ReactiveSequenceRef",
     "ReactiveSetRef",
     "ReactiveShapeRef",

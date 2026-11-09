@@ -20,8 +20,20 @@ from nu.domains.shape.interactions import (
     SetCmd,
 )
 from nu.domains.shape.item import ItemRef
-from nu.domains.shape.mapping import MappingRef, MutableMappingRef, ReactiveMappingRef
-from nu.forms import Dict, DictKeys, DictValues, Int, Object, Str
+from nu.domains.shape.mapping import (
+    MappingRef,
+    MutableMappingRef,
+    MutableOrderedMappingRef,
+    OrderedMappingRef,
+    ReactiveMappingRef,
+    ReactiveOrderedMappingRef,
+)
+from nu.forms import DictKeys, DictValues, Int, Object, Str
+from nu.forms.collections.abc.mapping_interactions import (
+    KeysPage,
+    ReversedKeys,
+    ReversedKeysPage,
+)
 from nu.lang import TypeInfo
 
 
@@ -88,9 +100,10 @@ def test_mapping_ref_undeclared_value_results_are_object():
 
 def test_mapping_ref_collection_results_carry_the_declaration():
     m = _declared(MutableMappingRef("my_map"), str, int)
-    copied = m.copy()
-    assert type(copied) is Dict
-    assert type(copied["a"]) is Int
+    assert type(m.get_item("a")) is Int
+    assert not hasattr(m, "copy")
+    items = nu.tree.payload(m.items())["type_info"]
+    assert (items.key, items.elem) == (TypeInfo(str), TypeInfo(int))
     assert nu.tree.payload(m.keys())["type_info"].elem == TypeInfo(str)
     assert nu.tree.payload(m.values())["type_info"].elem == TypeInfo(int)
     assert isinstance(m.keys(), DictKeys)
@@ -200,3 +213,54 @@ def test_reactive_mapping_ref_inherits_set_erase():
     m = ReactiveMappingRef("my_map")
     assert isinstance(m.set({}), SetCmd)
     assert isinstance(m.erase(), Erase)
+
+
+# ---------------------------------------------------------------------------
+# Ordered tier: OrderedMappingRef -> MutableOrderedMappingRef -> ReactiveOrderedMappingRef
+# ---------------------------------------------------------------------------
+
+
+def test_ordered_mapping_refs_stack_on_the_plain_ones():
+    assert issubclass(OrderedMappingRef, MappingRef)
+    assert issubclass(MutableOrderedMappingRef, OrderedMappingRef)
+    assert issubclass(MutableOrderedMappingRef, MutableMappingRef)
+    assert issubclass(ReactiveOrderedMappingRef, MutableOrderedMappingRef)
+    assert issubclass(ReactiveOrderedMappingRef, ReactiveMappingRef)
+
+
+def test_ordered_mapping_refs_are_exported():
+    assert nu.shape.OrderedMappingRef is OrderedMappingRef
+    assert nu.shape.MutableOrderedMappingRef is MutableOrderedMappingRef
+    assert nu.shape.ReactiveOrderedMappingRef is ReactiveOrderedMappingRef
+
+
+def test_plain_mapping_refs_have_no_reversed_reads():
+    for ref in (MappingRef("m"), MutableMappingRef("m"), ReactiveMappingRef("m")):
+        assert not hasattr(ref, "reversed_keys")
+        with pytest.raises(TypeError, match="after"):
+            ref.keys(after="a")  # type: ignore[call-arg]
+
+
+def test_ordered_mapping_ref_reads_back_to_front_typed_by_the_declaration():
+    m = _declared(ReactiveOrderedMappingRef("m"), str, int)
+    assert isinstance(nu.tree.children(m.reversed_keys())[0], ReversedKeys)
+    assert isinstance(nu.tree.children(m.keys(limit=2))[0], KeysPage)
+    assert isinstance(nu.tree.children(m.reversed_keys(before="a"))[0], ReversedKeysPage)
+    assert nu.tree.payload(m.reversed_keys())["type_info"].elem == TypeInfo(str)
+    assert nu.tree.payload(m.reversed_values())["type_info"].elem == TypeInfo(int)
+    assert isinstance(m.on_change(), OnChange)
+    assert isinstance(m.on_children_change(), OnChildrenChange)
+
+
+def test_shape_ref_stays_on_the_plain_mapping():
+    assert not issubclass(nu.shape.ShapeRef, OrderedMappingRef)
+
+
+def test_mem_dict_ref_is_a_mutable_ordered_mapping():
+    class Port(Shape):
+        meta = nu.DictRef.slot(int)
+
+    assert isinstance(Port.meta, MutableOrderedMappingRef)
+    ctx = nu.Context().bind(dict, {"meta": {"a": 1, "b": 2}}, Port)
+    assert list(nu.run(Port.meta.reversed_keys(), ctx)[0]) == ["b", "a"]
+    assert list(nu.run(Port.meta.reversed_items(), ctx)[0]) == [("b", 2), ("a", 1)]

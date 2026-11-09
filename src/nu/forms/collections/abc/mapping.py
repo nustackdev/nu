@@ -2,8 +2,12 @@
 
 MappingForm = Collection + keys/values/items/get_item
 MutableMappingForm = Mapping + set_item/del_item/update/pop/popitem/setdefault/clear
+OrderedMappingForm = Mapping + Reversible: reversed_keys/values/items + paging
+MutableOrderedMappingForm = OrderedMapping + MutableMapping
+ReactiveOrderedMappingForm = MutableOrderedMapping + ReactiveMapping
 
-Follows Python's collections.abc.Mapping / MutableMapping pattern.
+Follows Python's collections.abc.Mapping / MutableMapping pattern. Built-in-only
+methods (``copy``, ``merge``, ``merge_update``) live on ``Dict``.
 
 Type Parameters:
     CollectionT: Native Python collection type (dict[str, int], etc.)
@@ -31,7 +35,10 @@ if TYPE_CHECKING:
 __all__ = [
     "MappingForm",
     "MutableMappingForm",
+    "MutableOrderedMappingForm",
+    "OrderedMappingForm",
     "ReactiveMappingForm",
+    "ReactiveOrderedMappingForm",
 ]
 
 
@@ -49,11 +56,10 @@ class MappingForm(
     """Base for mapping values: key lookup plus key/value/item views.
 
     Notes:
-        - The five `_wrap_*` methods are the override seam: `_wrap_value_result`
-          covers subscript and `get_item`; the other four cover
-          collection-shaped results (`keys`, `values`, `items`, `copy`,
-          `merge`). A concrete mapping Form overrides all five to pick its
-          own result types.
+        - The four `_wrap_*` methods are the override seam: `_wrap_value_result`
+          covers subscript and `get_item`; the other three cover the
+          views (`keys`, `values`, `items`). A concrete mapping Form
+          overrides all four to pick its own result types.
     """
 
     def _wrap_keys_result(self, operand: Nu) -> CollectionResultT:
@@ -106,19 +112,6 @@ class MappingForm(
         """
         raise NotImplementedError()
 
-    def _wrap_mapping_result(self, operand: Nu) -> CollectionResultT:
-        """Wrap a raw mapping-shaped term as this Form's own type.
-
-        Args:
-            operand: the term producing the raw mapping.
-
-        Notes:
-            - Override point, used by `copy` and `merge` (and by
-              `merge_update` on MutableMappingForm). The base implementation
-              always raises; every concrete mapping Form must supply its own.
-        """
-        raise NotImplementedError()
-
     def __getitem__(self, key: Arg[KeyT]) -> ValueResultT:
         """Value at key: mapping[key].
 
@@ -141,42 +134,23 @@ class MappingForm(
 
         return cast("ValueResultT", self._wrap_value_result(At(self, key)))
 
-    def keys(
-        self, *, after: Arg[KeyT] | None = None, limit: Arg[int] | None = None
-    ) -> CollectionResultT:
-        """All keys of the mapping, or one page of them: mapping.keys().
-
-        Args:
-            after: the key to start past. Paging only.
-            limit: the most keys to read. Paging only.
+    def keys(self) -> CollectionResultT:
+        """All keys of the mapping: mapping.keys().
 
         Notes:
-            - With neither argument: ``mapping.keys()``, a view over every
-              key.
-            - With either: ``mapping.keys(after=after, limit=limit)``,
-              collected into a list. The mapping pages itself: what
-              ``after`` means, and what the page costs, is its own. A
-              mapping without paged keys raises at evaluation time; a
-              Python ``dict`` has none.
-            - Both are ordinary Nu values, so a ref read at run time works.
-              One that reads NULL raises ValueError before the mapping is
-              called: branch on it first (``IsNull``).
+            - Paging (``keys(after=, limit=)``) is on ordered mappings
+              only, `OrderedMappingForm`.
 
         Yields:
-            A view over the keys, in the mapping's order; with either
-            argument, a list of keys.
+            A view over the keys, in the mapping's order.
 
         Example:
             >>> nu.run(nu.Dict({"a": 1, "b": 2}).keys())[0]
             dict_keys(['a', 'b'])
         """
-        if after is None and limit is None:
-            from .mapping_interactions import Keys
+        from .mapping_interactions import Keys
 
-            return cast("CollectionResultT", self._wrap_keys_result(Keys(self)))
-        from .mapping_interactions import KeysPage
-
-        return cast("CollectionResultT", self._wrap_keys_result(KeysPage(self, after, limit)))
+        return cast("CollectionResultT", self._wrap_keys_result(Keys(self)))
 
     def values(self) -> CollectionResultT:
         """All values of the mapping: mapping.values().
@@ -234,99 +208,6 @@ class MappingForm(
 
         return cast("ValueResultT", self._wrap_value_result(Get(self, key, default)))
 
-    def copy(self) -> CollectionResultT:
-        """Shallow copy of self: mapping.copy().
-
-        Yields:
-            A new mapping with the same key/value pairs.
-
-        Example:
-            >>> nu.run(nu.Dict({"a": 1}).copy())[0]
-            {'a': 1}
-        """
-        from .mapping_interactions import Copy
-
-        return cast("CollectionResultT", self._wrap_mapping_result(Copy(self)))
-
-    def reversed_keys(
-        self, *, before: Arg[KeyT] | None = None, limit: Arg[int] | None = None
-    ) -> CollectionResultT:
-        """Keys last first, or one page of them: reversed(mapping).
-
-        Args:
-            before: the key to start before. Paging only.
-            limit: the most keys to read. Paging only.
-
-        Notes:
-            - With neither argument: ``reversed(mapping)``, an iterator.
-            - With either: ``mapping.keys_reverse(before=before,
-              limit=limit)``, collected into a list. Same contract as
-              ``keys(after=, limit=)``: a mapping without it raises, and so
-              does a ``before`` or ``limit`` that reads NULL.
-
-        Yields:
-            An iterator over the keys, reversed; with either argument, a
-            list of keys.
-
-        Example:
-            >>> list(nu.run(nu.Dict({"a": 1, "b": 2}).reversed_keys())[0])
-            ['b', 'a']
-        """
-        if before is None and limit is None:
-            from .mapping_interactions import ReversedKeys
-
-            return cast("CollectionResultT", self._wrap_keys_result(ReversedKeys(self)))
-        from .mapping_interactions import ReversedKeysPage
-
-        page = ReversedKeysPage(self, before, limit)
-        return cast("CollectionResultT", self._wrap_keys_result(page))
-
-    def reversed_values(self) -> CollectionResultT:
-        """Values in reverse insertion order: reversed(mapping.values()).
-
-        Yields:
-            An iterator over the values, reversed.
-
-        Example:
-            >>> list(nu.run(nu.Dict({"a": 1, "b": 2}).reversed_values())[0])
-            [2, 1]
-        """
-        from .mapping_interactions import ReversedValues
-
-        return cast("CollectionResultT", self._wrap_values_result(ReversedValues(self)))
-
-    def reversed_items(self) -> CollectionResultT:
-        """(key, value) pairs in reverse insertion order: reversed(mapping.items()).
-
-        Yields:
-            An iterator over the (key, value) pairs, reversed.
-
-        Example:
-            >>> list(nu.run(nu.Dict({"a": 1, "b": 2}).reversed_items())[0])
-            [('b', 2), ('a', 1)]
-        """
-        from .mapping_interactions import ReversedItems
-
-        return cast("CollectionResultT", self._wrap_items_result(ReversedItems(self)))
-
-    def merge(self, other: Arg[Mapping[KeyT, ValueT]]) -> CollectionResultT:
-        """Self and other merged into a new mapping, like Python's dict `|`.
-
-        Args:
-            other: the mapping to merge in. Its keys win over self's on
-                overlap.
-
-        Yields:
-            A new mapping holding self's entries overridden by other's.
-
-        Example:
-            >>> nu.run(nu.Dict({"a": 1}).merge({"b": 2}))[0]
-            {'a': 1, 'b': 2}
-        """
-        from .mapping_interactions import Merge
-
-        return cast("CollectionResultT", self._wrap_mapping_result(Merge(self, other)))
-
 
 class MutableMappingForm(
     MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
@@ -338,8 +219,8 @@ class MutableMappingForm(
         - `set_item`, `del_item`, `update`, and `clear` are Commands: they
           mutate slot 0 and yield nothing. Running them needs a Ref in slot
           0, not a plain literal mapping.
-        - `pop`, `popitem`, `setdefault`, and `merge_update` are Actions:
-          they mutate and yield a value.
+        - `pop`, `popitem`, and `setdefault` are Actions: they mutate and
+          yield a value.
     """
 
     def set_item(self, key: Arg[KeyT], value: Arg[ValueT]) -> Any:  # noqa: ANN401
@@ -486,28 +367,6 @@ class MutableMappingForm(
 
         return cast("ValueResultT", self._wrap_value_result(SetDefault(self, key, default)))
 
-    def merge_update(self, other: Arg[Mapping[KeyT, ValueT]]) -> CollectionResultT:
-        """Merge other into self in place, and yield self, like Python's dict `|=`.
-
-        Args:
-            other: the mapping to merge in. Its values win over self's on
-                shared keys.
-
-        Notes:
-            - Mutates slot 0 in place and yields the mutated mapping: an
-              Action, not a Command, mirroring Python's `dict.__ior__`.
-
-        Yields:
-            Self, updated with other's entries.
-
-        Example:
-            >>> nu.run(nu.Dict({"a": 1}).merge_update({"b": 2}))[0]
-            {'a': 1, 'b': 2}
-        """
-        from .mapping_interactions import MergeUpdate
-
-        return cast("CollectionResultT", self._wrap_mapping_result(MergeUpdate(self, other)))
-
     def clear(self) -> Any:  # noqa: ANN401
         """Remove all entries: mapping.clear().
 
@@ -542,8 +401,8 @@ class ReactiveMappingForm(
 
         Notes:
             - Fires on any mutation to this slot - set_item, del_item,
-              update, pop, popitem, setdefault, merge_update, clear -
-              without distinguishing which one.
+              update, pop, popitem, setdefault, clear - without
+              distinguishing which one.
 
         Yields:
             A subscription/stream over change events. Needs a live
@@ -555,3 +414,137 @@ class ReactiveMappingForm(
         from nu.core.reactive import OnChange
 
         return OnChange(self)
+
+
+class OrderedMappingForm(
+    MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+    Generic[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+):
+    """Base for ordered mappings: Mapping + Reversible.
+
+    Notes:
+        - Python's ``Mapping`` has no order to walk back or page through;
+          ``dict`` and the ordered fabric mappings do. They sit here, a
+          hashed or unordered mapping stays on `MappingForm`.
+        - Adds the reversed reads (``reversed_keys``, ``reversed_values``,
+          ``reversed_items``) and paging: ``keys(after=, limit=)`` and
+          ``reversed_keys(before=, limit=)``. Without arguments each is
+          the Python call it names.
+    """
+
+    def keys(
+        self, *, after: Arg[KeyT] | None = None, limit: Arg[int] | None = None
+    ) -> CollectionResultT:
+        """All keys of the mapping, or one page of them: mapping.keys().
+
+        Args:
+            after: the key to start past. Paging only.
+            limit: the most keys to read. Paging only.
+
+        Notes:
+            - With neither argument: ``mapping.keys()``, a view over every
+              key.
+            - With either: ``mapping.keys(after=after, limit=limit)``,
+              collected into a list. The mapping pages itself: what
+              ``after`` means, and what the page costs, is its own. A
+              mapping without paged keys raises at evaluation time; a
+              Python ``dict`` has none.
+            - The no-argument call is plain ``MappingForm.keys``; the
+              arguments are an ordered-mapping extension that defaults to
+              Python's behavior.
+            - Both are ordinary Nu values, so a ref read at run time works.
+              One that reads NULL raises ValueError before the mapping is
+              called: branch on it first (``IsNull``).
+
+        Yields:
+            A view over the keys, in the mapping's order; with either
+            argument, a list of keys.
+
+        Example:
+            >>> nu.run(nu.Dict({"a": 1, "b": 2}).keys())[0]
+            dict_keys(['a', 'b'])
+        """
+        if after is None and limit is None:
+            from .mapping_interactions import Keys
+
+            return cast("CollectionResultT", self._wrap_keys_result(Keys(self)))
+        from .mapping_interactions import KeysPage
+
+        return cast("CollectionResultT", self._wrap_keys_result(KeysPage(self, after, limit)))
+
+    def reversed_keys(
+        self, *, before: Arg[KeyT] | None = None, limit: Arg[int] | None = None
+    ) -> CollectionResultT:
+        """Keys last first, or one page of them: reversed(mapping).
+
+        Args:
+            before: the key to start before. Paging only.
+            limit: the most keys to read. Paging only.
+
+        Notes:
+            - With neither argument: ``reversed(mapping)``, an iterator.
+            - With either: ``mapping.keys_reverse(before=before,
+              limit=limit)``, collected into a list. Same contract as
+              ``keys(after=, limit=)``: a mapping without it raises, and so
+              does a ``before`` or ``limit`` that reads NULL.
+
+        Yields:
+            An iterator over the keys, reversed; with either argument, a
+            list of keys.
+
+        Example:
+            >>> list(nu.run(nu.Dict({"a": 1, "b": 2}).reversed_keys())[0])
+            ['b', 'a']
+        """
+        if before is None and limit is None:
+            from .mapping_interactions import ReversedKeys
+
+            return cast("CollectionResultT", self._wrap_keys_result(ReversedKeys(self)))
+        from .mapping_interactions import ReversedKeysPage
+
+        page = ReversedKeysPage(self, before, limit)
+        return cast("CollectionResultT", self._wrap_keys_result(page))
+
+    def reversed_values(self) -> CollectionResultT:
+        """Values in reverse insertion order: reversed(mapping.values()).
+
+        Yields:
+            An iterator over the values, reversed.
+
+        Example:
+            >>> list(nu.run(nu.Dict({"a": 1, "b": 2}).reversed_values())[0])
+            [2, 1]
+        """
+        from .mapping_interactions import ReversedValues
+
+        return cast("CollectionResultT", self._wrap_values_result(ReversedValues(self)))
+
+    def reversed_items(self) -> CollectionResultT:
+        """(key, value) pairs in reverse insertion order: reversed(mapping.items()).
+
+        Yields:
+            An iterator over the (key, value) pairs, reversed.
+
+        Example:
+            >>> list(nu.run(nu.Dict({"a": 1, "b": 2}).reversed_items())[0])
+            [('b', 2), ('a', 1)]
+        """
+        from .mapping_interactions import ReversedItems
+
+        return cast("CollectionResultT", self._wrap_items_result(ReversedItems(self)))
+
+
+class MutableOrderedMappingForm(
+    OrderedMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+    MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+    Generic[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+):
+    """Mutable ordered mapping: the in-place writes of MutableMappingForm over an ordered mapping."""
+
+
+class ReactiveOrderedMappingForm(
+    MutableOrderedMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+    ReactiveMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+    Generic[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+):
+    """Reactive ordered mapping: any-change observation over MutableOrderedMappingForm."""

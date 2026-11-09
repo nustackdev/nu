@@ -16,7 +16,14 @@ from typing import TYPE_CHECKING
 
 from nu.forms.collections.abc.mapping import MappingForm as _MappingForm
 from nu.forms.collections.abc.mapping import MutableMappingForm as _MutableMappingForm
+from nu.forms.collections.abc.mapping import (
+    MutableOrderedMappingForm as _MutableOrderedMappingForm,
+)
+from nu.forms.collections.abc.mapping import OrderedMappingForm as _OrderedMappingForm
 from nu.forms.collections.abc.mapping import ReactiveMappingForm as _ReactiveMappingForm
+from nu.forms.collections.abc.mapping import (
+    ReactiveOrderedMappingForm as _ReactiveOrderedMappingForm,
+)
 
 from .base import StructuredRef
 from .collection import (
@@ -29,7 +36,7 @@ from .collection import (
 
 
 if TYPE_CHECKING:
-    from nu.forms import Dict, DictItems, DictKeys, DictValues, Iterator
+    from nu.forms import DictItems, DictKeys, DictValues, Iterator
     from nu.lang import Form, Nu
 
 
@@ -38,8 +45,14 @@ __all__ = [
     "MappingRef",
     "MutableMappingForm",
     "MutableMappingRef",
+    "MutableOrderedMappingForm",
+    "MutableOrderedMappingRef",
+    "OrderedMappingForm",
+    "OrderedMappingRef",
     "ReactiveMappingForm",
     "ReactiveMappingRef",
+    "ReactiveOrderedMappingForm",
+    "ReactiveOrderedMappingRef",
 ]
 
 
@@ -81,12 +94,6 @@ class MappingForm(_MappingForm, CollectionForm):
         declared = self._declared
         return holding(DictItems(operand), dict, key=declared.key, elem=declared.elem)
 
-    def _wrap_mapping_result(self, operand: Nu) -> Dict:
-        from nu.forms import Dict
-
-        declared = self._declared
-        return holding(Dict(operand), dict, key=declared.key, elem=declared.elem)
-
 
 class MutableMappingForm(_MutableMappingForm, MutableCollectionForm):
     """Mutable shape mapping: key-value ops + exists/extract + set/erase."""
@@ -101,6 +108,20 @@ class ReactiveMappingForm(_ReactiveMappingForm, MutableMappingForm, ReactiveColl
         on_children_change()      from shape ReactiveCollectionForm
         on_descendants_change(*)  from shape ReactiveCollectionForm
     """
+
+
+class OrderedMappingForm(_OrderedMappingForm, CollectionForm):
+    """Ordered shape mapping: reversed reads and paging over the mapping surface."""
+
+
+class MutableOrderedMappingForm(_MutableOrderedMappingForm, MutableCollectionForm):
+    """Mutable ordered shape mapping: ordered reads + in-place writes + set/erase."""
+
+
+class ReactiveOrderedMappingForm(
+    _ReactiveOrderedMappingForm, MutableOrderedMappingForm, ReactiveCollectionForm
+):
+    """Reactive ordered shape mapping. Adds on_change + tree-aware on_child_change* family."""
 
 
 class MappingRef(MappingForm, StructuredRef):
@@ -129,4 +150,29 @@ class ReactiveMappingRef(ReactiveMappingForm, MutableMappingRef):
 
     Adds: on_change() (generic), on_child_change(), on_children_change(),
     on_descendants_change() (shape-domain) on top of MutableMappingRef.
+    """
+
+
+class OrderedMappingRef(OrderedMappingForm, MappingRef):
+    """Ordered key-value container Ref.
+
+    Adds: reversed_keys(), reversed_values(), reversed_items() and paged
+    keys(after=, limit=) / reversed_keys(before=, limit=) on top of MappingRef.
+    """
+
+
+class MutableOrderedMappingRef(MutableOrderedMappingForm, OrderedMappingRef, MutableMappingRef):
+    """Mutable ordered key-value container Ref.
+
+    Adds: the in-place writes of MutableMappingRef on top of OrderedMappingRef.
+    """
+
+
+class ReactiveOrderedMappingRef(
+    ReactiveOrderedMappingForm, MutableOrderedMappingRef, ReactiveMappingRef
+):
+    """Reactive ordered key-value container Ref.
+
+    Adds: on_change(), on_child_change(), on_children_change(),
+    on_descendants_change() on top of MutableOrderedMappingRef.
     """
