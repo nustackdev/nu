@@ -63,7 +63,7 @@ READS = {
     "reversed_keys": lambda: GONE.scores.reversed_keys(),
     "get_item": lambda: GONE.scores.get_item("x"),
     "get_item_default": lambda: GONE.scores.get_item("x", 0),
-    "copy": lambda: GONE.scores.copy(),
+    "extract_through_a_form": lambda: nu.Dict(GONE.scores).extract(),
     "len": lambda: GONE.scores.len(),
     "contains": lambda: GONE.scores.contains("x"),
     "unsafe_get": lambda: ItemPrimitiveGetUnsafe(GONE.count),
