@@ -17,10 +17,13 @@ from typing import TYPE_CHECKING, TypeVar
 from nu.lang import Form
 from nu.lang.typeinfo import TypeInfo
 
+from .form import SlotForm
+
 
 if TYPE_CHECKING:
     from nu.core.flows.control import IfDo
     from nu.core.reactive import (
+        OnChange,
         OnChildChange,
         OnChildrenChange,
         OnDescendantsChange,
@@ -60,7 +63,7 @@ def holding(
     return result
 
 
-class CollectionForm(Form):
+class CollectionForm(SlotForm):
     """Shape collection Form. Ops: ``exists()``, ``is_set_falsy()``, ``extract()``."""
 
     @property
@@ -132,16 +135,24 @@ class MutableCollectionForm(CollectionForm):
 
 
 class ReactiveCollectionForm(MutableCollectionForm):
-    """Reactive shape collection Form. Adds tree-aware observation.
+    """Reactive shape collection Form. Adds observation of the slot and its subtree.
 
     Ops:
+        on_change()                      -> OnChange
         on_child_change(address)         -> OnChildChange
         on_children_change()             -> OnChildrenChange
         on_descendants_change(*pattern)  -> OnDescendantsChange
 
-    ``on_change()`` (observe self) is intentionally absent. It is generic and
-    supplied by the generic ``ReactiveXxxForm`` tier via MRO.
+    Watching is a capability of the slot, not of the value it holds, so it
+    lives here for every row: a tuple or frozenset slot is watched like a
+    list slot, though its value never changes in place.
     """
+
+    def on_change(self) -> OnChange:
+        """Observe any write to this slot, whichever op made it."""
+        from nu.core.reactive import OnChange
+
+        return OnChange(self)
 
     def on_child_change(self, address: object) -> OnChildChange:
         """Observe writes at one child's own address; for its subtree use ``on_descendants_change``."""

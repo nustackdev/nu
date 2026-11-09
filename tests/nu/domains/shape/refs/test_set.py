@@ -8,13 +8,13 @@ import nu
 from nu.core import Not
 from nu.core.reactive import OnChange, OnChildrenChange
 from nu.domains.shape.base import StructuredRef
+from nu.domains.shape.collections.abc.set_ import MutableSetRef, ReactiveSetRef, SetRef
 from nu.domains.shape.dsl import Shape
 from nu.domains.shape.interactions import (
     Erase,
     Exists,
     SetCmd,
 )
-from nu.domains.shape.set_ import MutableSetRef, ReactiveSetRef, SetRef
 from nu.forms.primitives import Int
 
 

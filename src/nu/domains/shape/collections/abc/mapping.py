@@ -1,9 +1,11 @@
-"""Mapping family: a key-value collection in a shape fabric.
+"""Mapping rows: a key-value collection in a shape fabric, at the ABC level.
 
-Forms weave the Python mapping surface with the shape collection ops, tier by
-tier, and type every result by what the slot declared: a value reads as the
-declared value's form, and keys, values, items and whole-mapping results carry
-the declared types on.
+Two rows, ``Mapping`` and ``OrderedMapping`` (Mapping + Reversible), each in
+three tiers. A tier is the capability base first, then the tier below, then the
+``nu.forms`` mapping ABC of that tier, so the shape typing and slot ops win
+over the plain form's. Every result is typed by what the slot declared: a value
+reads as the declared value's form, and keys, values and items carry the
+declared types on.
 
 Refs add descent. ``ref[key]`` is the child ref at that key, built by the
 fabric from the declared value, because only the fabric knows which of its
@@ -25,8 +27,8 @@ from nu.forms.collections.abc.mapping import (
     ReactiveOrderedMappingForm as _ReactiveOrderedMappingForm,
 )
 
-from .base import StructuredRef
-from .collection import (
+from ...base import StructuredRef
+from ...collection import (
     CollectionForm,
     MutableCollectionForm,
     ReactiveCollectionForm,
@@ -56,7 +58,7 @@ __all__ = [
 ]
 
 
-class MappingForm(_MappingForm, CollectionForm):
+class MappingForm(CollectionForm, _MappingForm):
     """Shape mapping: key-value ops + exists/extract, typed by the declaration."""
 
     def _wrap_value_result(self, operand: Nu) -> Form:
@@ -95,33 +97,26 @@ class MappingForm(_MappingForm, CollectionForm):
         return holding(DictItems(operand), dict, key=declared.key, elem=declared.elem)
 
 
-class MutableMappingForm(_MutableMappingForm, MutableCollectionForm):
+class MutableMappingForm(MutableCollectionForm, MappingForm, _MutableMappingForm):
     """Mutable shape mapping: key-value ops + exists/extract + set/erase."""
 
 
-class ReactiveMappingForm(_ReactiveMappingForm, MutableMappingForm, ReactiveCollectionForm):
-    """Reactive shape mapping. Adds on_change + tree-aware on_child_change* family.
-
-    MRO provides:
-        on_change()               from generic ReactiveMappingForm
-        on_child_change(addr)     from shape ReactiveCollectionForm
-        on_children_change()      from shape ReactiveCollectionForm
-        on_descendants_change(*)  from shape ReactiveCollectionForm
-    """
+class ReactiveMappingForm(ReactiveCollectionForm, MutableMappingForm, _ReactiveMappingForm):
+    """Reactive shape mapping: adds on_change and the tree-aware on_child_change family."""
 
 
-class OrderedMappingForm(_OrderedMappingForm, CollectionForm):
+class OrderedMappingForm(MappingForm, _OrderedMappingForm):
     """Ordered shape mapping: reversed reads and paging over the mapping surface."""
 
 
-class MutableOrderedMappingForm(_MutableOrderedMappingForm, MutableCollectionForm):
+class MutableOrderedMappingForm(MutableMappingForm, OrderedMappingForm, _MutableOrderedMappingForm):
     """Mutable ordered shape mapping: ordered reads + in-place writes + set/erase."""
 
 
 class ReactiveOrderedMappingForm(
-    _ReactiveOrderedMappingForm, MutableOrderedMappingForm, ReactiveCollectionForm
+    ReactiveMappingForm, MutableOrderedMappingForm, _ReactiveOrderedMappingForm
 ):
-    """Reactive ordered shape mapping. Adds on_change + tree-aware on_child_change* family."""
+    """Reactive ordered shape mapping: adds on_change and the tree-aware on_child_change family."""
 
 
 class MappingRef(MappingForm, StructuredRef):

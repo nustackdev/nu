@@ -1,8 +1,10 @@
-"""Sequence family: an ordered collection in a shape fabric.
+"""Sequence row: an ordered collection in a shape fabric, at the ABC level.
 
-Forms weave the Python sequence surface with the shape collection ops, tier by
-tier, and type every result by what the slot declared: an element reads as the
-declared value's form, and a slice carries the declared element type on.
+Three tiers. A tier is the capability base first, then the tier below, then
+the ``nu.forms`` sequence ABC of that tier, so the shape typing and slot ops win
+over the plain form's. Every result is typed by what the slot declared: an
+element reads as the declared value's form, and a slice carries the declared
+element type on.
 
 Refs add descent. ``ref[i]`` is the child ref at that position, built by the
 fabric from the declared value; a slice stays a value.
@@ -16,8 +18,8 @@ from nu.forms.collections.abc.sequence import MutableSequenceForm as _MutableSeq
 from nu.forms.collections.abc.sequence import ReactiveSequenceForm as _ReactiveSequenceForm
 from nu.forms.collections.abc.sequence import SequenceForm as _SequenceForm
 
-from .base import StructuredRef
-from .collection import (
+from ...base import StructuredRef
+from ...collection import (
     CollectionForm,
     MutableCollectionForm,
     ReactiveCollectionForm,
@@ -41,7 +43,7 @@ __all__ = [
 ]
 
 
-class SequenceForm(_SequenceForm, CollectionForm):
+class SequenceForm(CollectionForm, _SequenceForm):
     """Shape sequence: ordered-element ops + exists/extract, typed by the declaration."""
 
     def _wrap_element_result(self, operand: Nu) -> Form:
@@ -66,19 +68,12 @@ class SequenceForm(_SequenceForm, CollectionForm):
         return holding(List(operand), list, elem=self._declared.elem)
 
 
-class MutableSequenceForm(_MutableSequenceForm, MutableCollectionForm):
+class MutableSequenceForm(MutableCollectionForm, SequenceForm, _MutableSequenceForm):
     """Mutable shape sequence: ordered-element ops + exists/extract + set/erase."""
 
 
-class ReactiveSequenceForm(_ReactiveSequenceForm, MutableSequenceForm, ReactiveCollectionForm):
-    """Reactive shape sequence. Adds on_change + tree-aware on_child_change* family.
-
-    MRO provides:
-        on_change()               from generic ReactiveSequenceForm
-        on_child_change(addr)     from shape ReactiveCollectionForm
-        on_children_change()      from shape ReactiveCollectionForm
-        on_descendants_change(*)  from shape ReactiveCollectionForm
-    """
+class ReactiveSequenceForm(ReactiveCollectionForm, MutableSequenceForm, _ReactiveSequenceForm):
+    """Reactive shape sequence: adds on_change and the tree-aware on_child_change family."""
 
 
 class SequenceRef(SequenceForm, StructuredRef):

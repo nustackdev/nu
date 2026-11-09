@@ -1,8 +1,10 @@
-"""Set family: an unordered collection of unique elements in a shape fabric.
+"""Set row: an unordered collection of unique elements in a shape fabric, at the ABC level.
 
-Forms weave the Python set surface with the shape collection ops, tier by tier,
-and type every result by what the slot declared: an element reads as the
-declared value's form, and set algebra carries the declared element type on.
+Three tiers over ``SetLikeForm`` (the ``collections.abc.Set`` form). A tier is
+the capability base first, then the tier below, then the ``nu.forms`` set ABC of
+that tier, so the shape typing and slot ops win over the plain form's. Every
+result is typed by what the slot declared: an element reads as the declared
+value's form, and set algebra carries the declared element type on.
 
 Refs bind that surface to an address. A set has no keys, so there is no descent.
 """
@@ -15,8 +17,8 @@ from nu.forms.collections.abc.set_ import MutableSetForm as _MutableSetForm
 from nu.forms.collections.abc.set_ import ReactiveSetForm as _ReactiveSetForm
 from nu.forms.collections.abc.set_ import SetLikeForm as _SetLikeForm
 
-from .base import StructuredRef
-from .collection import (
+from ...base import StructuredRef
+from ...collection import (
     CollectionForm,
     MutableCollectionForm,
     ReactiveCollectionForm,
@@ -40,7 +42,7 @@ __all__ = [
 ]
 
 
-class SetLikeForm(_SetLikeForm, CollectionForm):
+class SetLikeForm(CollectionForm, _SetLikeForm):
     """Shape set: unordered-unique-element ops + exists/extract, typed by the declaration."""
 
     def _wrap_element_result(self, operand: Nu) -> Form:
@@ -65,19 +67,12 @@ class SetLikeForm(_SetLikeForm, CollectionForm):
         return holding(Set(operand), set, elem=self._declared.elem)
 
 
-class MutableSetForm(_MutableSetForm, MutableCollectionForm):
+class MutableSetForm(MutableCollectionForm, SetLikeForm, _MutableSetForm):
     """Mutable shape set: set ops + exists/extract + set/erase."""
 
 
-class ReactiveSetForm(_ReactiveSetForm, MutableSetForm, ReactiveCollectionForm):
-    """Reactive shape set. Adds on_change + tree-aware on_child_change* family.
-
-    MRO provides:
-        on_change()               from generic ReactiveSetForm
-        on_child_change(addr)     from shape ReactiveCollectionForm
-        on_children_change()      from shape ReactiveCollectionForm
-        on_descendants_change(*)  from shape ReactiveCollectionForm
-    """
+class ReactiveSetForm(ReactiveCollectionForm, MutableSetForm, _ReactiveSetForm):
+    """Reactive shape set: adds on_change and the tree-aware on_child_change family."""
 
 
 class SetRef(SetLikeForm, StructuredRef):

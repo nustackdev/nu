@@ -13,14 +13,7 @@ from nu.core.reactive import (
     OnChildrenChange,
     OnDescendantsChange,
 )
-from nu.domains.shape.dsl import Shape
-from nu.domains.shape.interactions import (
-    Erase,
-    Exists,
-    SetCmd,
-)
-from nu.domains.shape.item import ItemRef
-from nu.domains.shape.mapping import (
+from nu.domains.shape.collections.abc.mapping import (
     MappingRef,
     MutableMappingRef,
     MutableOrderedMappingRef,
@@ -28,6 +21,13 @@ from nu.domains.shape.mapping import (
     ReactiveMappingRef,
     ReactiveOrderedMappingRef,
 )
+from nu.domains.shape.dsl import Shape
+from nu.domains.shape.interactions import (
+    Erase,
+    Exists,
+    SetCmd,
+)
+from nu.domains.shape.item import ItemRef
 from nu.forms import DictKeys, DictValues, Int, Object, Str
 from nu.forms.collections.abc.mapping_interactions import (
     KeysPage,
