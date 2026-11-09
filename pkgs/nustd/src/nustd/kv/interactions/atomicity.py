@@ -38,6 +38,7 @@ from virtuals.tkv.storage import (
     StorageLockTimeoutError,
     StorageTransactionConflictError,
     TransactionProtocol,
+    WriteSlotProtocol,
 )
 
 
@@ -125,7 +126,7 @@ def _provide_lazy(
         yield
 
 
-class _HeldWriteSlots(dict):
+class _HeldWriteSlots(dict[int, WriteSlotProtocol]):
     """Writer slots held for the Transaction body in scope, by ``id(storage)``.
 
     Bound on ``ctx.fabrics`` by ``Transaction._aopen`` so a nested
@@ -134,7 +135,7 @@ class _HeldWriteSlots(dict):
     """
 
 
-def _begin_transaction(nav: Navigator, slots: dict[int, object]) -> TransactionProtocol:
+def _begin_transaction(nav: Navigator, slots: dict[int, WriteSlotProtocol]) -> TransactionProtocol:
     """Begin a transaction on ``nav``'s storage, handing it the writer slot if one is held.
 
     ``slots`` maps ``id(storage)`` to a slot reserved up front by
@@ -143,8 +144,8 @@ def _begin_transaction(nav: Navigator, slots: dict[int, object]) -> TransactionP
     """
     storage = nav.storage
     slot = slots.get(id(storage))
-    if slot is not None and slot.held:  # type: ignore[attr-defined]
-        return storage.begin_transaction(write_slot=slot)  # type: ignore[call-arg]
+    if slot is not None and slot.held:
+        return storage.begin_transaction(write_slot=slot)
     return storage.begin_transaction()
 
 
@@ -267,7 +268,9 @@ class Transaction(_CoreTransaction):
         return self._payload["scope"]
 
     @contextmanager
-    def _open(self, ctx: Context, slots: dict[int, object] | None = None) -> Iterator[None]:
+    def _open(
+        self, ctx: Context, slots: dict[int, WriteSlotProtocol] | None = None
+    ) -> Iterator[None]:
         """Provide a transaction, opened on first use, for the body; commit on clean exit, abort on error.
 
         Args:
@@ -298,18 +301,19 @@ class Transaction(_CoreTransaction):
     async def _aopen(self, ctx: Context) -> AsyncIterator[None]:
         """Wait for each storage's writer slot, then run ``_open`` with the slots held.
 
-        A writable storage offering ``areserve_write_slot`` is waited on
-        here, so a coroutine never blocks the loop in the sync begin. The
+        Each writable storage's writer slot is waited on here
+        (``areserve_write_slot``), so a coroutine never blocks the loop in
+        the sync begin. The
         lazy transaction takes the slot over and releases it on commit or
         abort; a slot no transaction took is released on the way out, on
         any BaseException too. A slot an enclosing Transaction holds is
         borrowed, not waited on, and left for that Transaction to release.
-        Storages without it open exactly as ``_open``.
+        A read-only storage reserves nothing.
         """
         fabrics = ctx.fabrics
         enclosing = fabrics.get(_HeldWriteSlots) if fabrics.has(_HeldWriteSlots) else {}
         slots = _HeldWriteSlots()
-        owned: list = []
+        owned: list[WriteSlotProtocol] = []
         try:
             for _, nav in _scope_navigators(ctx, self.scope):
                 storage = nav.storage
@@ -319,10 +323,9 @@ class Transaction(_CoreTransaction):
                 if key in enclosing:
                     slots[key] = enclosing[key]
                     continue
-                reserve = getattr(storage, "areserve_write_slot", None)
-                if reserve is None or getattr(storage, "read_only", False):
+                if storage.read_only:
                     continue
-                slots[key] = await reserve()
+                slots[key] = await storage.areserve_write_slot()
                 owned.append(slots[key])
             with fabrics.bind(_HeldWriteSlots, slots), self._open(ctx, slots):
                 yield
