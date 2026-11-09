@@ -5,10 +5,6 @@ Reads (Query): Keys, Values, Items, Get, ContainsKey,
 Mutate, yield nothing (Command): DeleteItem, Update (SetItem lives in nu.core.access)
 Mutate and yield a value (Action): DictPop, PopItem, SetDefault,
     MergeUpdate
-
-A read of a mapping that read NULL (a slot never written, a path under a key
-that found nothing) finds nothing: it reads NULL, ``get_item`` its default.
-A membership test raises there, as ``in`` on NULL does.
 """
 
 from __future__ import annotations
@@ -74,8 +70,6 @@ class Keys(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             obj = operand(rt)
-            if is_null(obj):
-                return obj
             return obj.keys()
 
         return thunk
@@ -85,8 +79,6 @@ class Keys(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
-            if is_null(obj):
-                return obj
             return obj.keys()
 
         return athunk
@@ -100,8 +92,6 @@ class Values(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             obj = operand(rt)
-            if is_null(obj):
-                return obj
             return obj.values()
 
         return thunk
@@ -111,8 +101,6 @@ class Values(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
-            if is_null(obj):
-                return obj
             return obj.values()
 
         return athunk
@@ -126,8 +114,6 @@ class Items(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             obj = operand(rt)
-            if is_null(obj):
-                return obj
             return obj.items()
 
         return thunk
@@ -137,8 +123,6 @@ class Items(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
-            if is_null(obj):
-                return obj
             return obj.items()
 
         return athunk
@@ -154,8 +138,6 @@ class Get(ScalarQuery):
             a = a_t(rt)
             b = b_t(rt)
             c = c_t(rt)
-            if is_null(a):
-                return a if c is None else c
             if c is None:
                 return a[b]
             return a.get(b, c)
@@ -169,8 +151,6 @@ class Get(ScalarQuery):
             a = await a_t(rt)
             b = await b_t(rt)
             c = await c_t(rt)
-            if is_null(a):
-                return a if c is None else c
             if c is None:
                 return a[b]
             return a.get(b, c)
@@ -210,8 +190,6 @@ class Copy(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             obj = operand(rt)
-            if is_null(obj):
-                return obj
             return obj.copy()
 
         return thunk
@@ -221,8 +199,6 @@ class Copy(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
-            if is_null(obj):
-                return obj
             return obj.copy()
 
         return athunk
@@ -232,14 +208,9 @@ class ReversedKeys(ScalarQuery):
     """Reverse-order keys: reversed(mapping). Yields keys in reverse insertion order.
 
     Scalar-shaped like :class:`Keys` -- the thunk returns one iterator
-    handle. Downstream ``Iter`` opens that handle into a stream lazily, so
-    ``islice(m.reversed_keys(), n)`` reads only ``n`` items regardless of
-    stream size.
-
-    Backend contract, as for :class:`ReversedValues`: prefers an explicit
-    ``keys_reverse()`` method on the runtime mapping (a store view reads
-    its keys last first in one scan); falls back to ``reversed(obj)``,
-    native on Python ``dict``.
+    handle (Python's ``reversed(obj)`` object). Downstream ``Iter``
+    opens that handle into a stream lazily, so ``islice(m.reversed_keys(),
+    n)`` reads only ``n`` items regardless of stream size.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -247,10 +218,7 @@ class ReversedKeys(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             obj = operand(rt)
-            if is_null(obj):
-                return obj
-            fast = getattr(obj, "keys_reverse", None)
-            return fast() if fast is not None else reversed(obj)
+            return reversed(obj)
 
         return thunk
 
@@ -259,11 +227,6 @@ class ReversedKeys(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
-            if is_null(obj):
-                return obj
-            fast = getattr(obj, "keys_reverse", None)
-            if fast is not None:
-                return fast()
 
             async def agen() -> object:
                 for k in reversed(obj):
@@ -280,13 +243,8 @@ class ReversedValues(ScalarQuery):
     Scalar-shaped like :class:`Values` -- the thunk returns one iterator
     handle. Downstream ``Iter`` opens the handle into a stream lazily,
     so ``islice(m.reversed_values(), n)`` reads only ``n`` values regardless
-    of stream size.
-
-    Backend contract: prefers an explicit ``values_reverse()`` method on
-    the runtime mapping (fast path, one pass); falls back to
-    ``reversed(obj.values())`` when the mapping doesn't provide one --
-    that native path works for Python ``dict`` (3.8+) and any view whose
-    ``.values()`` returns a reversible sequence.
+    of stream size. Works for Python ``dict`` and any mapping whose
+    ``.values()`` is reversible.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -294,10 +252,7 @@ class ReversedValues(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             obj = operand(rt)
-            if is_null(obj):
-                return obj
-            fast = getattr(obj, "values_reverse", None)
-            return fast() if fast is not None else reversed(obj.values())
+            return reversed(obj.values())
 
         return thunk
 
@@ -306,11 +261,6 @@ class ReversedValues(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
-            if is_null(obj):
-                return obj
-            fast = getattr(obj, "values_reverse", None)
-            if fast is not None:
-                return fast()
 
             async def agen() -> object:
                 for v in reversed(obj.values()):
@@ -324,10 +274,9 @@ class ReversedValues(ScalarQuery):
 class ReversedItems(ScalarQuery):
     """``(key, value)`` pairs in reverse insertion order: reversed(mapping.items()).
 
-    Scalar-shaped like :class:`Items`. Same fast-path/fallback contract as
-    :class:`ReversedValues` -- backends may implement ``items_reverse()``
-    for a single-pass scan; otherwise the runtime uses
-    ``reversed(obj.items())`` (native on ``dict`` 3.8+).
+    Scalar-shaped like :class:`Items`, lazy like :class:`ReversedValues`.
+    Works for Python ``dict`` and any mapping whose ``.items()`` is
+    reversible.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -335,10 +284,7 @@ class ReversedItems(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             obj = operand(rt)
-            if is_null(obj):
-                return obj
-            fast = getattr(obj, "items_reverse", None)
-            return fast() if fast is not None else reversed(obj.items())
+            return reversed(obj.items())
 
         return thunk
 
@@ -347,11 +293,6 @@ class ReversedItems(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
-            if is_null(obj):
-                return obj
-            fast = getattr(obj, "items_reverse", None)
-            if fast is not None:
-                return fast()
 
             async def agen() -> object:
                 for kv in reversed(obj.items()):
@@ -391,24 +332,12 @@ class Merge(ScalarQuery):
 # =============================================================================
 
 
-def _holds(target: object, key: object) -> bool:
-    """Whether ``target`` holds ``key``. A container that was never written holds none.
-
-    A fabric's container that is not there yet answers ``in`` with a KeyError
-    naming itself; that is read as holding nothing.
-    """
-    try:
-        return key in target  # type: ignore[operator]
-    except KeyError:
-        return False
-
-
 class DeleteItem(Command):
     """Delete entry by key: del mapping[key]. Mutates slot 0; returns nothing.
 
-    The key is checked first, so every layout answers the same way: an absent
-    key raises ``KeyError``, or is a no-op when the construction-time
-    ``missing_ok`` flag (carried in the payload) is set.
+    An absent key raises whatever the mapping's own ``del`` raises. With the
+    construction-time ``missing_ok`` flag (carried in the payload) set, a
+    ``KeyError`` from that ``del`` is a no-op.
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -430,11 +359,11 @@ class DeleteItem(Command):
             key = key_t(rt)
             if is_null(key):
                 raise ValueError("cannot write with a NULL operand")
-            if not _holds(target, key):
-                if missing_ok:
-                    return
-                raise KeyError(key)
-            del target[key]
+            try:
+                del target[key]
+            except KeyError:
+                if not missing_ok:
+                    raise
 
         return thunk
 
@@ -449,11 +378,11 @@ class DeleteItem(Command):
             key = await key_t(rt)
             if is_null(key):
                 raise ValueError("cannot write with a NULL operand")
-            if not _holds(target, key):
-                if missing_ok:
-                    return
-                raise KeyError(key)
-            del target[key]
+            try:
+                del target[key]
+            except KeyError:
+                if not missing_ok:
+                    raise
 
         return athunk
 

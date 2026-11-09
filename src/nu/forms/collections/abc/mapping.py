@@ -331,14 +331,11 @@ class MutableMappingForm(
             - Mutating Command: mutates slot 0 in place, yields nothing.
               Needs a Ref in slot 0 to run; a plain literal mapping fails
               evaluation.
-            - By default an absent key raises KeyError at evaluation time,
-              matching Python's ``del``, whatever the mapping's layout. A
-              mapping that was never written holds no key.
+            - An absent key raises what the mapping's own ``del`` raises,
+              KeyError on a Python dict. ``missing_ok`` turns that KeyError
+              into a no-op.
             - A key or a target that reads NULL raises ValueError, even
               with ``missing_ok``: a NULL id addresses nothing to delete.
-              This is not the ``NullAddressError`` a kv write under a NULL
-              path segment raises.
-            - Checks the key before deleting it: one extra point read.
 
         Example:
             >>> class Port(nu.Shape):

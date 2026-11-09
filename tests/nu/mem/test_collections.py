@@ -113,14 +113,16 @@ class TestDictRefExecution:
         run(PortfolioShape.metadata.del_item("z", missing_ok=True), portfolio_ctx)
         assert "metadata" not in data
 
-    def test_reads_of_a_never_written_dict_find_nothing(self, data, portfolio_ctx):
-        from nu.lang import is_null
-
-        assert run(PortfolioShape.metadata.get_item("k", "d"), portfolio_ctx)[0] == "d"
-        assert is_null(run(PortfolioShape.metadata.get_item("k"), portfolio_ctx)[0])
-        assert is_null(run(PortfolioShape.metadata.keys(), portfolio_ctx)[0])
-        assert is_null(run(PortfolioShape.metadata.values(), portfolio_ctx)[0])
-        assert is_null(run(PortfolioShape.metadata.items(), portfolio_ctx)[0])
+    def test_reads_of_a_never_written_dict_raise(self, data, portfolio_ctx):
+        # the slot reads NULL, and NULL has no mapping surface: reads raise
+        for read in (
+            PortfolioShape.metadata.get_item("k", "d"),
+            PortfolioShape.metadata.keys(),
+            PortfolioShape.metadata.values(),
+            PortfolioShape.metadata.items(),
+        ):
+            with pytest.raises(AttributeError):
+                run(read, portfolio_ctx)
 
 
 class TestDictRefViewOperations:
