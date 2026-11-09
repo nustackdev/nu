@@ -2,16 +2,17 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.7.1
-- **nustd** (fabrics) — 0.7.1
+- **nucore** (kernel) — 0.7.2
+- **nustd** (fabrics) — 0.7.2
 - **nudle** — 0.1.11
 - **ui-core** — 0.2.2
 - **ui-kit** — 0.4.0
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.7.2 - 2026-11-10
 
+- Release nu 0.7.2
 - Mapping get and pop take None or NULL as a real default, like Python
 - Ordered and log collections can read an empty end as an explicit default
 - Shape refs are named after their forms, with two refs per built-in type
