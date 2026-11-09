@@ -248,9 +248,7 @@ def _synthesize_slot(ann: object, cls: type, field_name: str) -> Slot | None:
     origin = typing.get_origin(ann)
 
     if origin is not None and isinstance(origin, type) and issubclass(origin, Ref):
-        deriver = getattr(origin, "_slot_kwargs_from_type_args", None)
-        kwargs = deriver(typing.get_args(ann)) if deriver is not None else {}
-        return Slot(origin, **kwargs)
+        return Slot(origin, **origin._slot_kwargs_from_type_args(typing.get_args(ann)))
 
     if isinstance(ann, type) and issubclass(ann, Ref):
         return Slot(ann)

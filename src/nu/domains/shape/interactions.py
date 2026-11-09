@@ -71,76 +71,50 @@ class Load(ScalarQuery):
 class Exists(ScalarQuery):
     """Yield True if the slot-0 Ref's address holds a value. Always a bool.
 
-    A ref that knows its address answers through its ``_exists`` /
-    ``_aexists`` hook (a lazy view: one marker read). Any other ref answers
-    by its read: the value is not NULL.
+    Asks the ref itself (:meth:`StructuredRef._exists` / ``_aexists``). By
+    default a ref holds a value when its read is not NULL; a fabric whose
+    read never is NULL (a lazy container handle) answers its own way.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
-        ref_thunk = children[0]
-        hook = getattr(ref, "_exists", None)
-
-        if hook is not None:
-
-            def hooked(rt: Runtime) -> bool:
-                return bool(hook(rt, rt.program.children[nid][0]))
-
-            return hooked
 
         def thunk(rt: Runtime) -> bool:
-            return not is_null(ref_thunk(rt))
+            return bool(ref._exists(rt, rt.program.children[nid][0]))
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
-        ref_thunk = children[0]
-        hook = getattr(ref, "_aexists", None)
-
-        if hook is not None:
-
-            async def hooked(rt: Runtime) -> bool:
-                return bool(await hook(rt, rt.program.children[nid][0]))
-
-            return hooked
 
         async def athunk(rt: Runtime) -> bool:
-            return not is_null(await ref_thunk(rt))
+            return bool(await ref._aexists(rt, rt.program.children[nid][0]))
 
         return athunk
 
 
 class Extract(ScalarQuery):
-    """Materialise the full subtree at the slot-0 Ref via ``view.extract()``.
+    """Yield the full subtree at the slot-0 Ref as a plain Python value.
 
-    Distinct from ``Load``: Load yields the value at the Ref's
-    address; Extract recursively materialises the subtree into a plain
-    Python value (dict / list / nested mix). The view may be lazy; ``.eager``
-    is unwrapped when present, matching ``CollectionExtract`` mechanics. A
-    mem Ref already reads plain data, which has nothing to materialise and
-    passes through as it is.
+    Distinct from ``Load`` in intent: Load yields the value at the Ref's
+    address, Extract the whole subtree as plain data. A mem Ref, or any
+    Form, already reads plain data, so the read is yielded as it is. A
+    fabric whose read is a lazy handle gives its refs their own ``extract``.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref_thunk = children[0]
+        (ref_thunk,) = children
 
         def thunk(rt: Runtime) -> object:
-            view = ref_thunk(rt)
-            if hasattr(view, "eager"):
-                view = view.eager
-            return view.extract() if hasattr(view, "extract") else view
+            return ref_thunk(rt)
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref_thunk = children[0]
+        (ref_thunk,) = children
 
         async def athunk(rt: Runtime) -> object:
-            view = await ref_thunk(rt)
-            if hasattr(view, "eager"):
-                view = view.eager
-            return view.extract() if hasattr(view, "extract") else view
+            return await ref_thunk(rt)
 
         return athunk
 
