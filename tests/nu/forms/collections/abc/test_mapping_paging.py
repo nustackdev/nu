@@ -1,7 +1,9 @@
 """Paged key reads: ``keys(after=, limit=)`` and ``reversed_keys(before=, limit=)``.
 
 The form forwards the args to the runtime mapping's own ``keys`` /
-``keys_reverse`` and collects the page into a list. No args reads as before.
+``reversed_keys`` and collects the page into a list. The runtime mapping must be
+a ``PagedMapping``: core calls that declared contract, it never probes. No args
+reads as before.
 """
 
 from __future__ import annotations
@@ -12,6 +14,7 @@ import pytest
 
 import nu
 from nu.forms import Dict
+from nu.forms.collections.abc import PagedMapping
 from nu.forms.collections.abc.mapping_interactions import (
     Keys,
     KeysPage,
@@ -29,7 +32,7 @@ class _Paged(dict):
             return super().keys()
         return self._page(list(self), after, limit)
 
-    def keys_reverse(self, *, before=None, limit=None):
+    def reversed_keys(self, *, before=None, limit=None):
         return self._page(list(reversed(self)), before, limit)
 
     @staticmethod
@@ -37,6 +40,9 @@ class _Paged(dict):
         start = 0 if cursor is None else order.index(cursor) + 1
         stop = None if limit is None else start + limit
         return iter(order[start:stop])
+
+
+PagedMapping.register(_Paged)
 
 
 def _paged() -> Dict:
@@ -90,11 +96,27 @@ def test_args_are_read_at_run_time():
     assert nu.run(term, ctx)[0] == ["b", "c"]
 
 
-def test_a_mapping_without_paged_keys_raises():
-    with pytest.raises(TypeError):
+def test_a_mapping_that_is_no_paged_mapping_raises():
+    with pytest.raises(TypeError, match="PagedMapping"):
         nu.run(Dict({"a": 1}).keys(limit=1))
-    with pytest.raises(AttributeError):
+    with pytest.raises(TypeError, match="PagedMapping"):
         nu.run(Dict({"a": 1}).reversed_keys(limit=1))
+    with pytest.raises(TypeError, match="PagedMapping"):
+        asyncio.run(nu.arun(Dict({"a": 1}).keys(after="a")))
+
+
+def test_a_mapping_with_paged_keys_but_not_registered_raises():
+    """Core calls the declared contract: a matching method alone is not it."""
+
+    class Unregistered(dict):
+        def keys(self, *, after=None, limit=None):  # type: ignore[override]
+            return iter(())
+
+        def reversed_keys(self, *, before=None, limit=None):
+            return iter(())
+
+    with pytest.raises(TypeError, match="PagedMapping"):
+        nu.run(Dict(Literal(Unregistered(a=1))).keys(limit=1))
 
 
 def test_a_kv_dict_pages_through_its_view():
@@ -130,9 +152,12 @@ class _Recording(dict):
         type(self).seen.append((after, limit))
         return iter(())
 
-    def keys_reverse(self, *, before=None, limit=None):
+    def reversed_keys(self, *, before=None, limit=None):
         type(self).seen.append((before, limit))
         return iter(())
+
+
+PagedMapping.register(_Recording)
 
 
 class _Cursor(nu.Shape):

@@ -32,6 +32,7 @@ from .mapping_interactions import (
     Update,
     Values,
 )
+from .paged_mapping import PagedMapping
 from .sequence import MutableSequenceForm, ReactiveSequenceForm, SequenceForm
 from .sequence_interactions import (
     Append,
@@ -108,6 +109,7 @@ __all__ = [
     "MutableSequenceForm",
     "MutableSetForm",
     "OrderedMappingForm",
+    "PagedMapping",
     "Pop",
     "PopItem",
     "ReactiveMappingForm",

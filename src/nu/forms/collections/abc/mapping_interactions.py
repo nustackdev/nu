@@ -9,12 +9,14 @@ Mutate and yield a value (Action): DictPop, PopItem, SetDefault,
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from nu.engine.structure import Declared
 from nu.factory.host import host
 from nu.lang import Command, ScalarAction, ScalarQuery
 from nu.lang.null import is_null
+
+from .paged_mapping import PagedMapping
 
 
 if TYPE_CHECKING:
@@ -86,29 +88,41 @@ class Keys(ScalarQuery):
         return athunk
 
 
-def _page_args(op: str, cursor: str, at: object, limit: object) -> tuple[object, object]:
+def _page_args(op: str, cursor: str, at: object, limit: object) -> tuple[object, int | None]:
     """Refuse a NULL cursor or limit: a page past nothing is not an empty page."""
     if is_null(at):
         raise ValueError(f"{op}({cursor}=) read NULL: branch on it first (IsNull)")
     if is_null(limit):
         raise ValueError(f"{op}(limit=) read NULL: branch on it first (IsNull)")
-    return at, limit
+    return at, cast("int | None", limit)
+
+
+def _paged(obj: object, op: str) -> PagedMapping:
+    """``obj`` as the :class:`PagedMapping` it must be to hand out a page of keys."""
+    if not isinstance(obj, PagedMapping):
+        msg = (
+            f"{op}(...) pages: {type(obj).__name__} is not a PagedMapping. "
+            f"A plain dict has no paged keys; a fabric registers its paging mappings"
+        )
+        raise TypeError(msg)
+    return obj
 
 
 class KeysPage(ScalarQuery):
     """One page of keys: list(mapping.keys(after=after, limit=limit)).
 
     Calls the mapping's own paged ``keys`` and collects the page into a list.
-    A mapping without that contract raises (Python's ``dict.keys`` takes no
-    arguments). ``after`` and ``limit`` reach it as they read; one that reads
-    NULL raises ValueError before the mapping is called.
+    A mapping that is no :class:`PagedMapping` raises TypeError (Python's
+    ``dict.keys`` takes no arguments). ``after`` and ``limit`` reach it as
+    they read; one that reads NULL raises ValueError before the mapping is
+    called.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         operand, after_t, limit_t = children
 
         def thunk(rt: Runtime) -> object:
-            obj = operand(rt)
+            obj = _paged(operand(rt), "keys")
             after, limit = _page_args("keys", "after", after_t(rt), limit_t(rt))
             return list(obj.keys(after=after, limit=limit))
 
@@ -118,7 +132,7 @@ class KeysPage(ScalarQuery):
         operand, after_t, limit_t = children
 
         async def athunk(rt: Runtime) -> object:
-            obj = await operand(rt)
+            obj = _paged(await operand(rt), "keys")
             after, limit = _page_args("keys", "after", await after_t(rt), await limit_t(rt))
             return list(obj.keys(after=after, limit=limit))
 
@@ -279,20 +293,21 @@ class ReversedKeys(ScalarQuery):
 
 
 class ReversedKeysPage(ScalarQuery):
-    """One page of keys, last first: list(mapping.keys_reverse(before=before, limit=limit)).
+    """One page of keys, last first: list(mapping.reversed_keys(before=before, limit=limit)).
 
-    The reverse twin of :class:`KeysPage`: calls the mapping's own
-    ``keys_reverse`` and collects the page into a list. A mapping without
-    it raises, and so does a ``before`` or ``limit`` that reads NULL.
+    The reverse twin of :class:`KeysPage`: calls the mapping's own paged
+    ``reversed_keys`` and collects the page into a list. A mapping that is no
+    :class:`PagedMapping` raises TypeError, and so does a ``before`` or
+    ``limit`` that reads NULL (ValueError).
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         operand, before_t, limit_t = children
 
         def thunk(rt: Runtime) -> object:
-            obj = operand(rt)
+            obj = _paged(operand(rt), "reversed_keys")
             before, limit = _page_args("reversed_keys", "before", before_t(rt), limit_t(rt))
-            return list(obj.keys_reverse(before=before, limit=limit))
+            return list(obj.reversed_keys(before=before, limit=limit))
 
         return thunk
 
@@ -300,11 +315,11 @@ class ReversedKeysPage(ScalarQuery):
         operand, before_t, limit_t = children
 
         async def athunk(rt: Runtime) -> object:
-            obj = await operand(rt)
+            obj = _paged(await operand(rt), "reversed_keys")
             before, limit = _page_args(
                 "reversed_keys", "before", await before_t(rt), await limit_t(rt)
             )
-            return list(obj.keys_reverse(before=before, limit=limit))
+            return list(obj.reversed_keys(before=before, limit=limit))
 
         return athunk
 
