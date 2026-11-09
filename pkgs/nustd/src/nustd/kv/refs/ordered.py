@@ -15,15 +15,14 @@ from nu.domains.shape import Slot
 from nu.forms import Object
 from nu.lang import Nu
 from nu.lang.typeinfo import TypeInfo
-from virtuals.views import FractionalIndexedDictView
+from virtuals.views import FractionalIndexedDictView, FractionalIndexedDictViewBase
 
 from .base import _refuse_container_value
-from .containers import DictRef
+from .containers import DictRef, _require_view
 
 
 if TYPE_CHECKING:
     from nu.lang import Arg
-    from virtuals.views import FractionalIndexedDictViewBase
 
 
 __all__ = [
@@ -96,6 +95,12 @@ class OrderedDictRef(DictRef[K, V], Generic[K, V]):
               explicitly on a slot that is not ``bool``.
         """
         _refuse_container_value(cls, value)
+        _require_view(
+            cls,
+            view,
+            (FractionalIndexedDictViewBase,),
+            "a fractional indexed dict view, as FractionalIndexedDictView",
+        )
         declared = TypeInfo.from_annotation(cls[key, value])  # type: ignore[index]
         return Slot(cls, type_info=declared, view_type=view)  # type: ignore[return-value]
 

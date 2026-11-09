@@ -8,21 +8,17 @@ one spec. Everything else, descent and typing included, is a ``DictRef``.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic
+from typing import Generic
 
 from typing_extensions import TypeVar
 
 from nu.domains.shape import Slot
 from nu.forms import Object
 from nu.lang.typeinfo import TypeInfo
-from virtuals.views import LogIndexedDictView
+from virtuals.views import LogIndexedDictView, LogIndexedDictViewBase
 
 from .base import _refuse_container_value
-from .containers import DictRef
-
-
-if TYPE_CHECKING:
-    from virtuals.views import LogIndexedDictViewBase
+from .containers import DictRef, _require_view
 
 
 __all__ = [
@@ -95,6 +91,9 @@ class LogDictRef(DictRef[K, V], Generic[K, V]):
               same slot.
         """
         _refuse_container_value(cls, value)
+        _require_view(
+            cls, view, (LogIndexedDictViewBase,), "a log indexed dict view, as LogIndexedDictView"
+        )
         declared = TypeInfo.from_annotation(cls[key, value])  # type: ignore[index]
         return Slot(cls, type_info=declared, view_type=view)  # type: ignore[return-value]
 

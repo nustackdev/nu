@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Store slots refuse a view that cannot serve the ref, right where declared
 - Clearing a collection calls its own clear rather than checking for one first
 - Dicts drop ordering comparisons, which Python's dict never had
 - Reversed mapping reads stream in sync and async runs; key pages read as lists

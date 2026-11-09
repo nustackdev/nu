@@ -14,15 +14,14 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 from nu.domains.shape import ReactiveMappingRef, Slot
 from nu.forms import Object
 from nu.lang.typeinfo import TypeInfo
-from virtuals.views import Kh57View
+from virtuals.views import Kh57View, Kh57ViewBase
 
 from .base import ViewRef, _refuse_container_value
-from .containers import _MappingDescent
+from .containers import _MappingDescent, _require_view
 
 
 if TYPE_CHECKING:
     from nu.lang import IntArg
-    from virtuals.views import Kh57ViewBase
 
 
 __all__ = [
@@ -79,6 +78,7 @@ class Kh57Ref(_MappingDescent[int, V], ReactiveMappingRef, ViewRef[dict[int, V]]
               slot.
         """
         _refuse_container_value(cls, value)
+        _require_view(cls, view, (Kh57ViewBase,), "a kh57 view, as Kh57View")
         declared = TypeInfo.from_annotation(cls[value])  # type: ignore[index]
         return Slot(cls, type_info=declared, view_type=view)  # type: ignore[return-value]
 
