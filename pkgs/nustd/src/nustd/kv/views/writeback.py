@@ -1,27 +1,34 @@
-# ruff: noqa
-# Parked: not yet ported to the v2 API (writeback views land with the primitive
-# compound refs in a later phase). Excluded from the package __init__.
-"""Write-back wrappers for primitive compound values.
+"""Write-through values for the blob refs: a list, dict or set that persists its mutations.
 
-Subclass the native Python container (set/dict/list) so the object passes
-every isinstance/duck-typing check and supports the full native interface.
-Mutations mark the view dirty; an explicit ._flush() at scope exit writes
-the current state back to storage via the parent view's _primitive_write.
+A blob ref (``PrimitiveListRef``, ``PrimitiveDictRef``, ``PrimitiveSetRef``)
+stores a whole collection as one leaf value. A mutation written on the ref
+(``rows.append(2)``) runs the native method on whatever the ref evaluates to,
+so in a mutation slot the ref evaluates to one of these: a subclass of the
+native container that writes the whole value back through its parent view
+after every mutating call.
 
-The primitive refs (PrimitiveSetRef, PrimitiveDictRef, PrimitiveListRef)
-override their open() contextmanager to:
-  1. fetch current value (defaulting to empty)
-  2. wrap in the corresponding write-back view
-  3. yield it
-  4. on exit, if dirty, write the whole blob back
+Each one is a real ``list`` / ``dict`` / ``set``: every isinstance check passes
+and the whole native surface works. Nested values stay plain, so mutating an
+element in place does not reach storage.
 
-This makes blob-ref mutation work uniformly with the in-place algebra that
-already works for decomposed view refs. No per-method overrides needed.
+Notes:
+    - Write-through, not buffered: Nu has no scope exit to flush at, so every
+      mutating call stores the whole blob at once.
+    - The write goes through the storage context the value was read under; a
+      read-only one (a Snapshot) raises its read-only error on the first
+      mutation, the in-memory value already changed.
+    - ``setdefault`` on a key that is there changes nothing and writes nothing.
 """
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+from typing_extensions import Self, override
+
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 __all__ = [
@@ -31,210 +38,238 @@ __all__ = [
 ]
 
 
-# --- Set --------------------------------------------------------------------
+class _WriteThrough:
+    """Holds where the blob lives and stores it whole after each mutation."""
+
+    __slots__ = ()
+
+    _parent: Any
+    _address: object
+
+    def _plain(self) -> object:
+        """The value to store: a plain copy of the native type."""
+        raise NotImplementedError
+
+    def _persist(self) -> None:
+        self._parent._primitive_write(self._address, self._plain())
 
 
-class PrimitiveSetView(set):
-    """Set subclass that buffers mutations and flushes back to storage."""
+class PrimitiveListView(_WriteThrough, list):
+    """A list that stores itself whole after every mutating call."""
 
-    __slots__ = ("_address", "_dirty", "_parent")
+    __slots__ = ("_address", "_parent")
 
-    def __init__(self, initial: Any = (), parent: Any = None, address: Any = None) -> None:
+    def __init__(self, initial: Iterable[Any], parent: Any, address: object) -> None:  # noqa: ANN401
         super().__init__(initial)
         self._parent = parent
         self._address = address
-        self._dirty = False
 
-    # --- mutators ---
-    def add(self, value: Any) -> None:
-        super().add(value)
-        self._dirty = True
+    def _plain(self) -> list:
+        return list(self)
 
-    def remove(self, value: Any) -> None:
-        super().remove(value)
-        self._dirty = True
-
-    def discard(self, value: Any) -> None:
-        before = len(self)
-        super().discard(value)
-        if len(self) != before:
-            self._dirty = True
-
-    def pop(self) -> Any:
-        value = super().pop()
-        self._dirty = True
-        return value
-
-    def clear(self) -> None:
-        if len(self):
-            super().clear()
-            self._dirty = True
-
-    def update(self, *others: Any) -> None:
-        super().update(*others)
-        self._dirty = True
-
-    def intersection_update(self, *others: Any) -> None:
-        super().intersection_update(*others)
-        self._dirty = True
-
-    def difference_update(self, *others: Any) -> None:
-        super().difference_update(*others)
-        self._dirty = True
-
-    def symmetric_difference_update(self, other: Any) -> None:
-        super().symmetric_difference_update(other)
-        self._dirty = True
-
-    def __ior__(self, other: Any) -> PrimitiveSetView:
-        super().__ior__(other)
-        self._dirty = True
-        return self
-
-    def __iand__(self, other: Any) -> PrimitiveSetView:
-        super().__iand__(other)
-        self._dirty = True
-        return self
-
-    def __isub__(self, other: Any) -> PrimitiveSetView:
-        super().__isub__(other)
-        self._dirty = True
-        return self
-
-    def __ixor__(self, other: Any) -> PrimitiveSetView:
-        super().__ixor__(other)
-        self._dirty = True
-        return self
-
-    # --- flush ---
-    def _flush(self) -> None:
-        if self._dirty and self._parent is not None:
-            self._parent._primitive_write(self._address, set(self))
-            self._dirty = False
-
-
-# --- Dict -------------------------------------------------------------------
-
-
-class PrimitiveDictView(dict):
-    """Dict subclass that buffers mutations and flushes back to storage."""
-
-    __slots__ = ("_address", "_dirty", "_parent")
-
-    def __init__(self, initial: Any = (), parent: Any = None, address: Any = None) -> None:
-        super().__init__(initial)
-        self._parent = parent
-        self._address = address
-        self._dirty = False
-
-    def __setitem__(self, key: Any, value: Any) -> None:
-        super().__setitem__(key, value)
-        self._dirty = True
-
-    def __delitem__(self, key: Any) -> None:
-        super().__delitem__(key)
-        self._dirty = True
-
-    def pop(self, key: Any, *args: Any) -> Any:
-        existed = key in self
-        value = super().pop(key, *args)
-        if existed:
-            self._dirty = True
-        return value
-
-    def popitem(self) -> Any:
-        item = super().popitem()
-        self._dirty = True
-        return item
-
-    def clear(self) -> None:
-        if len(self):
-            super().clear()
-            self._dirty = True
-
-    def update(self, *args: Any, **kwargs: Any) -> None:
-        super().update(*args, **kwargs)
-        self._dirty = True
-
-    def setdefault(self, key: Any, default: Any = None) -> Any:
-        if key not in self:
-            self._dirty = True
-        return super().setdefault(key, default)
-
-    def _flush(self) -> None:
-        if self._dirty and self._parent is not None:
-            self._parent._primitive_write(self._address, dict(self))
-            self._dirty = False
-
-
-# --- List -------------------------------------------------------------------
-
-
-class PrimitiveListView(list):
-    """List subclass that buffers mutations and flushes back to storage."""
-
-    __slots__ = ("_address", "_dirty", "_parent")
-
-    def __init__(self, initial: Any = (), parent: Any = None, address: Any = None) -> None:
-        super().__init__(initial)
-        self._parent = parent
-        self._address = address
-        self._dirty = False
-
+    @override
     def append(self, value: Any) -> None:
         super().append(value)
-        self._dirty = True
+        self._persist()
 
-    def extend(self, values: Any) -> None:
+    @override
+    def extend(self, values: Iterable[Any]) -> None:
         super().extend(values)
-        self._dirty = True
+        self._persist()
 
-    def insert(self, index: int, value: Any) -> None:
+    @override
+    def insert(self, index: Any, value: Any) -> None:
         super().insert(index, value)
-        self._dirty = True
+        self._persist()
 
+    @override
     def remove(self, value: Any) -> None:
         super().remove(value)
-        self._dirty = True
+        self._persist()
 
-    def pop(self, index: int = -1) -> Any:
+    @override
+    def pop(self, index: Any = -1) -> Any:
         value = super().pop(index)
-        self._dirty = True
+        self._persist()
         return value
 
+    @override
     def clear(self) -> None:
-        if len(self):
-            super().clear()
-            self._dirty = True
+        super().clear()
+        self._persist()
 
+    @override
     def reverse(self) -> None:
-        if len(self) > 1:
-            super().reverse()
-            self._dirty = True
+        super().reverse()
+        self._persist()
 
+    @override
     def sort(self, *args: Any, **kwargs: Any) -> None:
         super().sort(*args, **kwargs)
-        self._dirty = True
+        self._persist()
 
+    @override
     def __setitem__(self, index: Any, value: Any) -> None:
         super().__setitem__(index, value)
-        self._dirty = True
+        self._persist()
 
+    @override
     def __delitem__(self, index: Any) -> None:
         super().__delitem__(index)
-        self._dirty = True
+        self._persist()
 
-    def __iadd__(self, other: Any) -> PrimitiveListView:
+    @override
+    def __iadd__(self, other: Iterable[Any]) -> Self:  # type: ignore[override]
         super().__iadd__(other)
-        self._dirty = True
+        self._persist()
         return self
 
-    def __imul__(self, count: int) -> PrimitiveListView:
+    @override
+    def __imul__(self, count: Any) -> Self:  # type: ignore[override]
         super().__imul__(count)
-        self._dirty = True
+        self._persist()
         return self
 
-    def _flush(self) -> None:
-        if self._dirty and self._parent is not None:
-            self._parent._primitive_write(self._address, list(self))
-            self._dirty = False
+
+class PrimitiveDictView(_WriteThrough, dict):
+    """A dict that stores itself whole after every mutating call."""
+
+    __slots__ = ("_address", "_parent")
+
+    def __init__(self, initial: Any, parent: Any, address: object) -> None:  # noqa: ANN401
+        super().__init__(initial)
+        self._parent = parent
+        self._address = address
+
+    def _plain(self) -> dict:
+        return dict(self)
+
+    @override
+    def __setitem__(self, key: Any, value: Any) -> None:
+        super().__setitem__(key, value)
+        self._persist()
+
+    @override
+    def __delitem__(self, key: Any) -> None:
+        super().__delitem__(key)
+        self._persist()
+
+    @override
+    def pop(self, key: Any, *default: Any) -> Any:
+        value = super().pop(key, *default)
+        self._persist()
+        return value
+
+    @override
+    def popitem(self) -> tuple[Any, Any]:
+        item = super().popitem()
+        self._persist()
+        return item
+
+    @override
+    def clear(self) -> None:
+        super().clear()
+        self._persist()
+
+    @override
+    def update(self, *args: Any, **kwargs: Any) -> None:
+        super().update(*args, **kwargs)
+        self._persist()
+
+    @override
+    def setdefault(self, key: Any, default: Any = None) -> Any:
+        if key in self:
+            return self[key]
+        value = super().setdefault(key, default)
+        self._persist()
+        return value
+
+    @override
+    def __ior__(self, other: Any) -> Self:  # type: ignore[override]
+        super().__ior__(other)
+        self._persist()
+        return self
+
+
+class PrimitiveSetView(_WriteThrough, set):
+    """A set that stores itself whole after every mutating call."""
+
+    __slots__ = ("_address", "_parent")
+
+    def __init__(self, initial: Iterable[Any], parent: Any, address: object) -> None:  # noqa: ANN401
+        super().__init__(initial)
+        self._parent = parent
+        self._address = address
+
+    def _plain(self) -> set:
+        return set(self)
+
+    @override
+    def add(self, value: Any) -> None:
+        super().add(value)
+        self._persist()
+
+    @override
+    def remove(self, value: Any) -> None:
+        super().remove(value)
+        self._persist()
+
+    @override
+    def discard(self, value: Any) -> None:
+        super().discard(value)
+        self._persist()
+
+    @override
+    def pop(self) -> Any:
+        value = super().pop()
+        self._persist()
+        return value
+
+    @override
+    def clear(self) -> None:
+        super().clear()
+        self._persist()
+
+    @override
+    def update(self, *others: Iterable[Any]) -> None:
+        super().update(*others)
+        self._persist()
+
+    @override
+    def intersection_update(self, *others: Iterable[Any]) -> None:
+        super().intersection_update(*others)
+        self._persist()
+
+    @override
+    def difference_update(self, *others: Iterable[Any]) -> None:
+        super().difference_update(*others)
+        self._persist()
+
+    @override
+    def symmetric_difference_update(self, other: Iterable[Any]) -> None:
+        super().symmetric_difference_update(other)
+        self._persist()
+
+    @override
+    def __ior__(self, other: Any) -> Self:  # type: ignore[override]
+        super().__ior__(other)
+        self._persist()
+        return self
+
+    @override
+    def __iand__(self, other: Any) -> Self:  # type: ignore[override]
+        super().__iand__(other)
+        self._persist()
+        return self
+
+    @override
+    def __isub__(self, other: Any) -> Self:  # type: ignore[override]
+        super().__isub__(other)
+        self._persist()
+        return self
+
+    @override
+    def __ixor__(self, other: Any) -> Self:  # type: ignore[override]
+        super().__ixor__(other)
+        self._persist()
+        return self

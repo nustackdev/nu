@@ -533,15 +533,11 @@ class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
     # --- read (the dual role) ------------------------------------------------
 
     def _read(self, rt: Runtime, path: tuple) -> object:
-        nav = _resolve_navigator(rt, self._root_shape, path)
-        storage_ctx = _resolve_storage_ctx(rt, self._root_shape, path)
-        parent_path = path[:-1]
+        return self._read_from(self._fetch_parent_view(rt, path), path)
+
+    def _read_from(self, parent_view: object, path: tuple) -> object:
+        """The leaf's value read off its open parent view, lifted, or NULL."""
         key = path[-1][0]
-        parent_view = (
-            nav.root(storage_ctx)
-            if not parent_path
-            else nav.open_at_path(ViewPathSer(parent_path), storage_ctx)
-        )
         if not isinstance(parent_view, Subscriptable):
             msg = f"View {parent_view.__class__.__name__} is not subscriptable"
             raise TypeError(msg)
