@@ -48,8 +48,11 @@ class List(
           matching Python. Slicing never raises; out-of-range bounds clamp
           like Python slicing.
         - `sort` and `copy` are list-only; the rest of the mutable
-          sequence surface (subscript write/delete, `+=`, `append`, ...)
+          sequence surface (`set_at`, `del_at`, `append`, `extend`, ...)
           comes from the shared mutable-sequence base.
+        - No subscript write/delete and no in-place `+=` / `*=`: as
+          statements they drop or rebind the term. Use `set_at`, `del_at`
+          and `extend`.
 
     Example:
         >>> nu.run(nu.List.of(1, 2) + nu.List.of(3, 4))[0]
@@ -284,23 +287,6 @@ class List(
         from nu.core import Mul
 
         return List(Mul(n, self))
-
-    def __imul__(self, n: IntArg) -> List[T]:
-        """In-place repeat: self *= n.
-
-        Args:
-            n: the repeat count. `0` or negative empties self.
-
-        Notes:
-            - Mutates self and needs a Ref on the left; it can't run
-              standalone against a plain List value.
-
-        Yields:
-            self, after the mutation (Action).
-        """
-        from .abc.sequence_interactions import IMul
-
-        return List(IMul(self, n))
 
     # =========================================================================
     # COMPARISON

@@ -59,9 +59,8 @@ def test_list_only_methods_are_on_list_alone(name: str):
 @pytest.mark.parametrize(
     "name",
     [
-        "__setitem__",
-        "__delitem__",
-        "__iadd__",
+        "set_at",
+        "del_at",
         "insert",
         "append",
         "extend",
@@ -80,16 +79,32 @@ def test_first_and_last_stay_on_the_sequence_form():
     assert "last_elem" in vars(SequenceForm)
 
 
-def test_subscript_write_delete_and_iadd_run_on_a_ref():
+def test_set_at_del_at_and_extend_run_on_a_ref():
     data = {"xs": [1, 2, 3]}
     ctx = _ctx(data)
-    _, ctx = nu.run(_Port.xs.__setitem__(0, 9), ctx)
-    _, ctx = nu.run(_Port.xs.__delitem__(1), ctx)
-    term = _Port.xs
-    term += [4]
-    assert type(term) is nu.List
-    _, ctx = nu.run(term, ctx)
+    _, ctx = nu.run(_Port.xs.set_at(0, 9), ctx)
+    _, ctx = nu.run(_Port.xs.del_at(1), ctx)
+    _, ctx = nu.run(_Port.xs.extend([4]), ctx)
     assert data["xs"] == [9, 3, 4]
+
+
+@pytest.mark.parametrize(
+    "form",
+    [MutableSequenceForm, nu.List, nu.Dict, nu.Set, type(_Port.xs)],
+    ids=lambda f: f.__name__,
+)
+@pytest.mark.parametrize(
+    "name", ["__setitem__", "__delitem__", "__iadd__", "__imul__", "__ior__", "__iand__"]
+)
+def test_forms_have_no_item_assignment_or_in_place_dunders(form: type, name: str):
+    assert not hasattr(form, name)
+
+
+def test_item_assignment_on_a_ref_raises():
+    with pytest.raises(TypeError):
+        _Port.xs[0] = 1  # type: ignore[index]
+    with pytest.raises(TypeError):
+        del _Port.xs[0]  # type: ignore[attr-defined]
 
 
 def test_list_copy_runs():

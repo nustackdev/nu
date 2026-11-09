@@ -1,7 +1,11 @@
 """Sequence collection: bases + mutations.
 
 SequenceForm = Collection + Sliceable + first/last/index/count/reversed
-MutableSequenceForm = Sequence + [i]=/del [i]/+=/append/insert/pop/extend/remove/reverse/clear
+MutableSequenceForm = Sequence + set_at/del_at/append/insert/pop/extend/remove/reverse/clear
+
+The ABC's ``[i] =``, ``del [i]`` and ``+=`` are statements that drop or rebind
+the term a form builds, so nu forms spell them ``set_at``, ``del_at`` and
+``extend``.
 
 Built-in-only methods (``sort``, ``copy``) live on ``List``.
 
@@ -211,66 +215,6 @@ class MutableSequenceForm(
         ElementResultT: Result for element-level interactions (pop)
     """
 
-    def __setitem__(self, index: IntArg, value: Arg[ElementT]) -> Any:  # noqa: ANN401
-        """Subscript write: self[index] = value.
-
-        Args:
-            index: the position to write to. An out-of-range index raises
-                at evaluation time, matching Python.
-            value: the value to store at index.
-
-        Notes:
-            - Mutates self and needs a Ref on the left; it can't run
-              standalone against a plain sequence value.
-            - Builds a term, so call it where a value is wanted
-              (``seq.__setitem__(i, v)``). The statement ``seq[i] = v``
-              drops the term, as Python discards what ``__setitem__``
-              returns.
-
-        Yields:
-            Nothing (Command).
-        """
-        from .sequence_interactions import SetIndex
-
-        return SetIndex(self, index, value)
-
-    def __delitem__(self, index: IntArg) -> Any:  # noqa: ANN401
-        """Subscript delete: del self[index].
-
-        Args:
-            index: the position to remove. An out-of-range index raises at
-                evaluation time, matching Python.
-
-        Notes:
-            - Mutates self and needs a Ref on the left; it can't run
-              standalone against a plain sequence value.
-            - The statement ``del seq[i]`` drops the term; `del_at` builds
-              the same Command where a value is wanted.
-
-        Yields:
-            Nothing (Command).
-        """
-        from .sequence_interactions import DelIndex
-
-        return DelIndex(self, index)
-
-    def __iadd__(self, other: Arg[Iterable[ElementT]]) -> CollectionResultT:
-        """In-place concatenation: self += other.
-
-        Args:
-            other: the elements to append to self, in place.
-
-        Notes:
-            - Mutates self and needs a Ref on the left; it can't run
-              standalone against a plain sequence value.
-
-        Yields:
-            self, after the mutation (Action).
-        """
-        from .sequence_interactions import IAdd
-
-        return cast("CollectionResultT", self._wrap_sliceable_result(IAdd(self, other)))
-
     def append(self, value: Arg[ElementT]) -> Any:  # noqa: ANN401
         """Append value to the end of self.
 
@@ -341,6 +285,28 @@ class MutableSequenceForm(
 
         return cast("ElementResultT", self._wrap_element_result(Pop(self, index)))
 
+    def set_at(self, index: IntArg, value: Arg[ElementT]) -> Any:  # noqa: ANN401
+        """Write value at index: seq[index] = value.
+
+        Args:
+            index: the position to write to. An out-of-range index raises
+                at evaluation time, matching Python.
+            value: the value to store at index.
+
+        Notes:
+            - Mutates self and needs a Ref on the left; it can't run
+              standalone against a plain sequence value.
+            - Nu's spelling of the ABC's ``__setitem__``: a statement
+              (``seq[i] = v``) drops the term it builds, so no nu form has
+              one. `del_at` is its delete counterpart.
+
+        Yields:
+            Nothing (Command).
+        """
+        from .sequence_interactions import SetIndex
+
+        return SetIndex(self, index, value)
+
     def del_at(self, index: IntArg) -> Any:  # noqa: ANN401
         """Remove the element at index.
 
@@ -353,6 +319,9 @@ class MutableSequenceForm(
               standalone against a plain sequence value.
             - Use this over `pop` when a Command is wanted instead of the
               Action `pop` yields.
+            - Nu's spelling of the ABC's ``__delitem__``: a statement
+              (``del seq[i]``) drops the term it builds, so no nu form has
+              one.
 
         Yields:
             Nothing (Command).
