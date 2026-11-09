@@ -39,7 +39,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from nu.domains.shape.dsl import Shape
-    from nu.lang import Nu
     from nu.lang.runtime import Runtime
     from nustd.kv.interactions.extract import ViewExtract
     from virtuals.view import View
@@ -418,51 +417,6 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
             return self._apply_facet(view)
 
         return athunk
-
-    def _stream_reads(self, cursor: object) -> tuple[Nu, Nu]:
-        """The two reads ``nu.Stream`` makes of this collection, each on a snapshot of its own.
-
-        A stream reads its source per drain step: the item past its cursor,
-        and the watch it subscribes with. One bracket held around the whole
-        stream would freeze it where it opened, since later items land in
-        later commits an open snapshot never sees. So each read opens its own
-        snapshot on this ref's store, and the stream follows whatever brackets
-        sit around it.
-
-        Notes:
-            - The body is not bracketed here. A body that reads or writes kv
-              brackets itself (``nustd.kv.atomic``).
-            - The source's view must keep a cursor: a log (``LogDictRef``)
-              or an ordered dict (``OrderedDictRef``). On a log the cursor is
-              the log key, on an ordered dict the order key; both resume past
-              an id deleted under the cursor and see every id added at the
-              end once. Ids placed or moved in the middle of an ordered dict
-              are not covered (``FractionalIndexedDictView.next_key_after``).
-
-        Raises:
-            TypeError: the source's view keeps no cursor (a plain dict, a
-                list, a ring), checked when the stream is built.
-        """
-        from nu.core.reactive.sources.on import OnChildrenChange
-        from nu.domains.shape.interactions import AdvanceCursor
-        from nustd.kv.interactions.atomicity import Snapshot
-        from virtuals.views import RingView
-
-        view = self._payload.get("type_marker")
-        if not hasattr(view, "next_key_after"):
-            follow = (
-                "follow a ring with entries(after=seq)"
-                if isinstance(view, type) and issubclass(view, RingView)
-                else "stream a LogDictRef or an OrderedDictRef"
-            )
-            name = getattr(view, "__name__", repr(view))
-            msg = f"Stream needs a source that keeps a cursor, {name} keeps none: {follow}"
-            raise TypeError(msg)
-        scope = self._root_shape
-        return (
-            Snapshot(AdvanceCursor(self, cursor), scope=scope),
-            Snapshot(OnChildrenChange(self), scope=scope),
-        )
 
     def extract(self) -> ViewExtract:
         """Read the whole container as plain Python values.
