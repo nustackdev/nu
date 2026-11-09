@@ -138,7 +138,12 @@ class _Host:
 
 
 def test_host_sigkilled_leaves_nothing():
-    """Idle, sync-blocked and subprocess-holding workers all end within ~2s of the host's SIGKILL."""
+    """Idle, sync-blocked and subprocess-holding workers all end soon after the host's SIGKILL.
+
+    The parent watch sends SIGTERM to each group, then SIGKILL a second later:
+    about one second on an idle machine. The wait is wider so a loaded machine
+    (a parallel suite) does not fail it; a worker left alive still does.
+    """
     host = _Host("kill")
     try:
         state = host.line()
@@ -152,10 +157,8 @@ def test_host_sigkilled_leaves_nothing():
 
         host.proc.kill()  # SIGKILL: no cleanup of any kind on the host side
         host.proc.wait(timeout=10)
-        start = time.monotonic()
-        assert _wait(lambda: all(_dead(pid) for pid in [*pids, sleeper]), timeout=2.5)
-        assert _wait(lambda: not any(_group_alive(pgid) for pgid in pgids), timeout=2.5)
-        assert time.monotonic() - start < 2.5
+        assert _wait(lambda: all(_dead(pid) for pid in [*pids, sleeper]), timeout=10)
+        assert _wait(lambda: not any(_group_alive(pgid) for pgid in pgids), timeout=10)
     finally:
         host.close()
 

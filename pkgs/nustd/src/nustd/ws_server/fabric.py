@@ -59,16 +59,15 @@ class SessionProtocol(Protocol):
 async def _adrain(task: asyncio.Task) -> None:
     """Await a task we just cancelled, swallowing its outcome and nothing else.
 
-    A ``CancelledError`` is re-raised unless the task itself is the one that
-    was cancelled, so being cancelled while waiting here still ends us.
+    A plain ``asyncio.wait`` keeps a cancel of ours apart from the task's own,
+    so being cancelled while waiting here still ends us.
     """
-    try:
-        await task
-    except asyncio.CancelledError:
-        if not task.cancelled():
-            raise
-    except Exception:  # uvicorn is on its way out either way
-        pass
+    await asyncio.wait({task})
+    if task.cancelled():
+        return
+    exc = task.exception()
+    if exc is not None and not isinstance(exc, Exception):
+        raise exc  # uvicorn is on its way out either way; only a process-level exit goes on
 
 
 def _bundled_static(package: str) -> Path | None:
@@ -328,11 +327,19 @@ class WebServer:
             return
         server.should_exit = True
         if not task.done():
+            # Not ``wait_for``: before 3.12 it hands the result back, and
+            # drops the cancel, when the server stops in the same moment
+            # this cleanup is cancelled.
             try:
-                await asyncio.wait_for(task, timeout=self._shutdown_timeout)
-            except (TimeoutError, asyncio.TimeoutError):
+                done, _ = await asyncio.wait({task}, timeout=self._shutdown_timeout)
+            except BaseException:
+                task.cancel()
+                raise
+            if not done:
                 task.cancel()
                 await _adrain(task)
+            elif not task.cancelled():
+                task.result()  # a server that crashed on the way out says so
         self._server = None
         self._task = None
         self._connections.clear()

@@ -188,9 +188,21 @@ async def aping(path: str, timeout: float = 1.0) -> bool:
             with contextlib.suppress(OSError):
                 await writer.wait_closed()
 
+    # Not ``wait_for``: before 3.12 it hands the reply back, and drops the
+    # cancel, when the two land in the same moment.
+    task = asyncio.ensure_future(exchange())
     try:
-        reply = await asyncio.wait_for(exchange(), timeout)
-    except (OSError, asyncio.TimeoutError):
+        done, _ = await asyncio.wait({task}, timeout=timeout)
+    except BaseException:
+        task.cancel()
+        raise
+    if not done:
+        task.cancel()
+        await asyncio.wait({task})
+        return False
+    try:
+        reply = task.result()
+    except OSError:
         return False
     return reply.startswith(b"+PONG")
 

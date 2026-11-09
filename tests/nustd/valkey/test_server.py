@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 import shutil
 import signal
@@ -27,6 +28,7 @@ from nustd.valkey import (
     socket_path_for,
     url_for,
 )
+from nustd.valkey.resources import aping
 
 
 pytestmark = pytest.mark.slow
@@ -102,6 +104,40 @@ def test_a_very_long_data_dir_starts_a_server(data_dir):
         assert srv.url == url_for(deep)
     finally:
         srv.cleanup()
+
+
+# --- ping -------------------------------------------------------------------
+
+
+async def _silent_server(path: str) -> tuple[asyncio.Server, asyncio.Event]:
+    """A unix socket server that reads and never answers; the event is set when the client hangs up."""
+    hung_up = asyncio.Event()
+
+    async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        while await reader.read(64):
+            pass
+        hung_up.set()
+        writer.close()
+
+    return await asyncio.start_unix_server(handle, path), hung_up
+
+
+async def test_aping_times_out_on_a_silent_server_and_hangs_up(data_dir):
+    srv, hung_up = await _silent_server(socket_path_for(data_dir))
+    async with srv:
+        assert await aping(socket_path_for(data_dir), timeout=0.05) is False
+        await asyncio.wait_for(hung_up.wait(), 1.0)
+
+
+async def test_aping_cancelled_raises_the_cancel_and_hangs_up(data_dir):
+    srv, hung_up = await _silent_server(socket_path_for(data_dir))
+    async with srv:
+        task = asyncio.ensure_future(aping(socket_path_for(data_dir), timeout=5.0))
+        await asyncio.sleep(0.05)
+        task.cancel()
+        await asyncio.wait({task})
+        assert task.cancelled()
+        await asyncio.wait_for(hung_up.wait(), 1.0)
 
 
 # --- lifecycle --------------------------------------------------------------
