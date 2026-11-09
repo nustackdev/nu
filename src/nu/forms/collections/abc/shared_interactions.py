@@ -24,7 +24,11 @@ __all__ = [
 
 
 class Clear(Command):
-    """Clear all items: collection.clear(); mutates the collection, returns nothing."""
+    """Clear all items: collection.clear(); mutates the collection, returns nothing.
+
+    Calls ``clear()`` on the collection directly, as every mutable collection
+    has it; one without it raises its own AttributeError.
+    """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
     _creates = Declared(value=frozenset(), name="creates")
@@ -37,10 +41,6 @@ class Clear(Command):
             target = target_t(rt)
             if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
-            if not hasattr(target, "clear"):
-                raise TypeError(
-                    f"clear() requires clearable collection, got {type(target).__name__}"
-                )
             target.clear()
 
         return thunk
@@ -52,10 +52,6 @@ class Clear(Command):
             target = await target_t(rt)
             if is_null(target):
                 raise ValueError("cannot write with a NULL operand")
-            if not hasattr(target, "clear"):
-                raise TypeError(
-                    f"clear() requires clearable collection, got {type(target).__name__}"
-                )
             target.clear()
 
         return athunk

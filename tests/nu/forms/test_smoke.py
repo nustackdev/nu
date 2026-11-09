@@ -220,3 +220,14 @@ def test_dict_has_no_ordering_comparisons():
     with pytest.raises(TypeError):
         Dict.of(a=1) <= Dict.of(a=2)  # noqa: B015
     assert val(Dict.of(a=1) == Dict.of(a=1)) is True
+
+
+def test_clear_calls_the_collection_clear():
+    """Clear calls ``clear()`` as is: a mutable collection empties, anything else raises its own error."""
+    from nu.forms.collections.abc import Clear
+
+    held = {"a": 1}
+    eval(compile(Clear(Literal(held))), Context())
+    assert held == {}
+    with pytest.raises(AttributeError, match="clear"):
+        eval(compile(Clear(Literal((1, 2)))), Context())
