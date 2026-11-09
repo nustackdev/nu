@@ -6,7 +6,7 @@ Verifies:
 - Append and extend keep the newest ``capacity`` entries, stored whole.
 - iter, reversed, len and a page of entries read them back in order.
 - A whole-ring set and ``init`` go through the parent.
-- A never-written ring pages empty; one under a NULL key reads NULL.
+- A never-written ring pages empty; one under a NULL key raises.
 - A watch hears appends, and a sqlite store keeps compound entries whole.
 """
 
@@ -21,6 +21,7 @@ from nu import Shape, arun, run
 from nu.lang import is_null
 from nustd.kv import (
     DictRef,
+    NullAddressError,
     OrderedDictRef,
     RingRef,
     Snapshot,
@@ -134,10 +135,18 @@ def test_a_never_written_ring(ctx) -> None:
     assert is_null(run(OUT.extract(), ctx)[0])
 
 
-def test_a_ring_under_a_null_key_reads_null(ctx) -> None:
+def test_a_ring_under_a_null_key_raises(ctx) -> None:
     gone = Exec.cell_runs[Exec.by_key["gone"]].out
-    assert is_null(run(gone.entries(), ctx)[0])
-    assert run(gone.exists(), ctx)[0] is False
+    with pytest.raises(NullAddressError):
+        run(gone.entries(), ctx)
+    with pytest.raises(NullAddressError):
+        run(gone.exists(), ctx)
+
+
+def test_a_null_cursor_is_refused(ctx) -> None:
+    run(OUT.append(["a"]), ctx)
+    with pytest.raises(TypeError, match="sequence number"):
+        run(OUT.entries(after=Exec.by_key["gone"]), ctx)
 
 
 # --- watches and stores -------------------------------------------------------

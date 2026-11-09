@@ -9,9 +9,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
-from nu.lang.null import Null, is_null
-from nustd.kv.interactions.paging import _check_limit
-from nustd.kv.refs.base import _null_at
 from virtuals.container import ContainerNotFoundError
 
 
@@ -26,13 +23,17 @@ __all__ = [
 ]
 
 
+def _check_limit(limit: object) -> int | None:
+    if limit is None:
+        return None
+    if isinstance(limit, bool) or not isinstance(limit, int) or limit < 0:
+        raise ValueError(f"limit must be a count of zero or more, got {limit!r}")
+    return limit
+
+
 def _entries(ref: object, rt: Runtime, path: tuple, after: object, limit: object) -> object:
     """``(seq, entry)`` pairs past ``after``, at most ``limit``, as a list."""
     limit = _check_limit(limit)
-    if _null_at(path):
-        return Null(ref._hint(path))  # type: ignore[attr-defined]
-    if is_null(after):
-        after = None
     if after is not None and (isinstance(after, bool) or not isinstance(after, int)):
         raise TypeError(f"a ring cursor is a sequence number, got {after!r}")
     view = ref._open(rt, path)  # type: ignore[attr-defined]
@@ -47,16 +48,15 @@ class RingEntries(ScalarQuery):
 
     Args:
         ref: the ring Ref to read.
-        after: the sequence number to read past, or None (or NULL) for the
-            oldest entry kept.
+        after: the sequence number to read past, or None for the oldest
+            entry kept.
         limit: the most entries to read, or None to read to the newest.
 
     Notes:
         - One seek, then one row per entry: cost tracks ``limit``.
         - ``after`` need not be kept any more: the page starts at the oldest
           entry still there.
-        - A never-written ring reads an empty page. A path with a key that
-          read NULL reads NULL.
+        - A never-written ring reads an empty page.
         - The page is read whole before it leaves the atom, so it outlives
           the bracket it was read in.
 

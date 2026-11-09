@@ -25,7 +25,7 @@ import pytest
 
 import nu
 from nu import Context, Shape, arun, run
-from nu.lang import ScalarQuery, is_null
+from nu.lang import ScalarQuery
 from nustd.kv import (
     BracketError,
     DictRef,
@@ -337,5 +337,6 @@ def test_atomic_over_auto_flow_atomic_adds_nothing() -> None:
     assert atomic(flow) is flow
 
 
-def test_a_read_only_null_check_stays_a_read(ctx) -> None:
-    assert is_null(run(atomic(State.cells[Space.cell_keys["gone"]].value), ctx)[0])
+def test_a_read_under_a_null_key_raises_inside_its_bracket(ctx) -> None:
+    with pytest.raises(NullAddressError):
+        run(atomic(State.cells[Space.cell_keys["gone"]].value), ctx)

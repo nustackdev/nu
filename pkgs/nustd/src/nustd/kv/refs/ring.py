@@ -151,15 +151,14 @@ class RingRef(ReactiveCollectionForm, ViewRef[list[T]], Generic[T]):
         """One page of ``(seq, entry)`` pairs, oldest first, past sequence number ``after``.
 
         Args:
-            after: the sequence number to read past. None (or a NULL read)
-                starts at the oldest entry kept. It need not be kept any
+            after: the sequence number to read past. None starts at the
+                oldest entry kept. It need not be kept any
                 more: the page starts at the oldest entry still there.
             limit: the most entries to read. None reads to the newest.
 
         Notes:
             - One seek plus one row per entry: cost tracks ``limit``.
-            - A never-written ring reads an empty page; a ring under a key
-              that read NULL reads NULL.
+            - A never-written ring reads an empty page.
 
         Yields:
             A list of ``(seq, entry)`` pairs.

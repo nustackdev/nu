@@ -21,7 +21,6 @@ from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
 from nu.lang.null import Null, is_null
-from nustd.kv.refs.base import _null_at
 from virtuals.container import ContainerNotFoundError
 
 
@@ -63,8 +62,6 @@ def _page(
 ) -> object:
     """Keys past ``cursor`` (before it when ``reverse``), at most ``limit``, as a list."""
     limit = _check_limit(limit)
-    if _null_at(path):
-        return Null(ref._hint(path))  # type: ignore[attr-defined]
     if is_null(cursor):
         cursor = None
     view = ref._open(rt, path)  # type: ignore[attr-defined]

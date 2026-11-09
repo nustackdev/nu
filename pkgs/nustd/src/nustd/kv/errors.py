@@ -15,15 +15,15 @@ __all__ = [
 
 
 class NullAddressError(LookupError):
-    """A write or a watch under a ref path with a NULL segment.
+    """A read, a write or a watch under a ref path with a NULL segment.
 
     A segment is NULL when the key it was given read nothing, eg an id looked
-    up in an index that has no entry for it. A read there gives NULL, the way
-    a read of an empty slot does. A write has nowhere to land, so it raises
-    this instead, and nothing is written.
+    up in an index that has no entry for it. The path then addresses nothing,
+    so any access through it raises this, and nothing is read or written.
+    Branch on the key first: ``If(IsNull(key), NullForm.create(), ...)``.
 
     Example:
-        State.rows[Index.by_key["gone"]].count  # reads NULL
+        State.rows[Index.by_key["gone"]].count  # raises this
         State.rows[Index.by_key["gone"]].count.set(1)  # raises this
     """
 

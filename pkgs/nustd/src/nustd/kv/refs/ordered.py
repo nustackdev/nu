@@ -201,8 +201,7 @@ class OrderedDictRef(DictRef[K, V], Generic[K, V]):
             - Safe under a Snapshot.
 
         Yields:
-            The first id. NULL when the collection is empty or was never
-            written.
+            The first id. IndexError when the collection is empty.
 
         Example:
             run(Plane.cells.first(), ctx)
@@ -219,8 +218,7 @@ class OrderedDictRef(DictRef[K, V], Generic[K, V]):
             - Safe under a Snapshot.
 
         Yields:
-            The last id. NULL when the collection is empty or was never
-            written.
+            The last id. IndexError when the collection is empty.
 
         Example:
             run(Plane.cells.last(), ctx)

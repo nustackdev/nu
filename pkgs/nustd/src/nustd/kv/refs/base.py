@@ -11,8 +11,8 @@ A container also decides what its children are: the ref at ``ref[key]`` is
 the kv ref for the value the container declared.
 
 A key that reads NULL (an id looked up in an index with no entry for it)
-leaves the path addressing nothing. A read there gives NULL, as an empty slot
-does; a write raises ``NullAddressError`` and nothing lands.
+leaves the path addressing nothing: a read, a write or a watch through it
+raises ``NullAddressError``. Branch on the key first (``IsNull``).
 """
 
 from __future__ import annotations
@@ -69,54 +69,23 @@ class Facet(Enum):
     EAGER = "eager"
 
 
-def _null_at(path: tuple) -> bool:
-    """Whether a segment of ``path`` read NULL, so the path addresses nothing."""
-    return any(is_null(addr) for addr, _ in path)
-
-
 def _dotted(shape: type | None, path: tuple) -> str:
-    """The dotted path a ref names, eg ``Space.state.recents``; a NULL segment as ``<NULL ...>``."""
-    segs = (repr(addr) if is_null(addr) else str(addr) for addr, _ in path)
-    return ".".join([shape.__name__ if shape is not None else "?", *segs])
-
-
-def _addressed(rt: Runtime, nid: int) -> bool:
-    """Whether the node holding ``nid`` writes or watches that slot, rather than reads it.
-
-    A write is a slot the node declares it mutates. A watch is the ref slot of
-    a subscription source (``on_change()`` and its siblings). Both need the
-    address itself, so under a NULL segment they raise where a read gives NULL.
-    """
-    from nu.core.reactive.sources.on import (
-        OnChange,
-        OnChildChange,
-        OnChildrenChange,
-        OnDescendantsChange,
-    )
-
-    pid = rt.program.parent_id[nid]
-    if pid < 0:
-        return False
-    term = rt.program.terms[pid]
-    kids = rt.program.children[pid]
-    watches = (OnChange, OnChildChange, OnChildrenChange, OnDescendantsChange)
-    if isinstance(term, watches):
-        return bool(kids) and kids[0] == nid
-    slots: frozenset[int] = getattr(type(term)._attributes.get("mutates"), "value", frozenset())
-    return any(i < len(kids) and kids[i] == nid for i in slots)
+    """The dotted path a ref names, eg ``Space.state.recents``."""
+    return ".".join([shape.__name__ if shape is not None else "?", *(str(a) for a, _ in path)])
 
 
 def _resolve_navigator(rt: Runtime, scope: type | None, resolved_path: tuple) -> Navigator:
     """Resolve Navigator from the runtime ctx, passing site and path for routing.
 
     Every storage access on a ref passes through here, so this is where a path
-    with a NULL segment stops: reads turn it into NULL before they get here,
-    anything else (a write, a watch) raises ``NullAddressError``.
+    with a NULL segment stops: a read, a write or a watch through it raises
+    ``NullAddressError``.
     """
-    if _null_at(resolved_path):
-        where = _dotted(scope, resolved_path)
-        msg = f"cannot write or watch at {where}: a key in the path read NULL"
-        raise NullAddressError(msg)
+    for i, (addr, _) in enumerate(resolved_path):
+        if is_null(addr):
+            where = _dotted(scope, resolved_path[:i])
+            msg = f"a key under {where} read NULL, so the path addresses nothing"
+            raise NullAddressError(msg)
     if not resolved_path:
         return (
             rt.ctx.fabrics.get(Navigator, scope)
@@ -259,10 +228,8 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
           ask ``exists()``, or ``extract()`` the value and test it. On a
           never-written container ``len``, iteration and ``contains`` raise,
           ``extract()`` gives NULL.
-        - The one exception is a path with a key that read NULL: it
-          addresses nothing, so the ref reads NULL, ``exists()`` is False,
-          reads through it (``keys``, ``get_item``) find nothing, and a write
-          or a watch raises ``NullAddressError``.
+        - A path with a key that read NULL addresses nothing: a read, a
+          write or a watch through it raises ``NullAddressError``.
         - The storage context is a transaction when one is bound, otherwise a
           snapshot; a snapshot is read-only, so writes need the transaction.
 
@@ -395,8 +362,6 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
 
         def thunk(rt: Runtime) -> object:
             path = self._resolve_path(rt, nid)
-            if _null_at(path) and not _addressed(rt, nid):
-                return Null(self._hint(path))
             nav = _resolve_navigator(rt, scope, path)
             storage_ctx = _resolve_storage_ctx(rt, scope, path)
             view = nav.open_at_path(ViewPathSer(path), storage_ctx)
@@ -409,8 +374,6 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
 
         async def athunk(rt: Runtime) -> object:
             path = await self._aresolve_path(rt, nid)
-            if _null_at(path) and not _addressed(rt, nid):
-                return Null(self._hint(path))
             nav = _resolve_navigator(rt, scope, path)
             storage_ctx = _resolve_storage_ctx(rt, scope, path)
             view = nav.open_at_path(ViewPathSer(path), storage_ctx)
@@ -441,13 +404,11 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
 
     def _exists(self, rt: Runtime, nid: int) -> bool:
         """Whether the container is stored: one marker read, nothing extracted."""
-        path = self._resolve_path(rt, nid)
-        return not _null_at(path) and bool(self._open(rt, path).container.exists())  # type: ignore[attr-defined]
+        return bool(self._open(rt, self._resolve_path(rt, nid)).container.exists())  # type: ignore[attr-defined]
 
     async def _aexists(self, rt: Runtime, nid: int) -> bool:
         """Async sibling of :meth:`_exists`."""
-        path = await self._aresolve_path(rt, nid)
-        return not _null_at(path) and bool(self._open(rt, path).container.exists())  # type: ignore[attr-defined]
+        return bool(self._open(rt, await self._aresolve_path(rt, nid)).container.exists())  # type: ignore[attr-defined]
 
     # --- write / erase (whole-view store via parent decomposition) -----------
 
@@ -554,8 +515,7 @@ class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
         - Yields NULL, hinted with the dotted path, when the parent has no
           such key or index, or storage hands back its own empty marker.
           Nothing else is caught, so real errors stay errors.
-        - Yields NULL too when a key in the path read NULL; a write there
-          raises ``NullAddressError``.
+        - Raises ``NullAddressError`` when a key in the path read NULL.
         - A write materializes every ancestor along the path first, so a leaf
           can be written into storage that has nothing above it yet.
         - Erasing a leaf that is not there is a no-op.
@@ -577,8 +537,6 @@ class PrimitiveRef(_VirtualsRefBase[T], Generic[T]):
     # --- read (the dual role) ------------------------------------------------
 
     def _read(self, rt: Runtime, path: tuple) -> object:
-        if _null_at(path):
-            return Null(self._hint(path))
         nav = _resolve_navigator(rt, self._root_shape, path)
         storage_ctx = _resolve_storage_ctx(rt, self._root_shape, path)
         parent_path = path[:-1]
