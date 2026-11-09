@@ -42,6 +42,8 @@ from virtuals.tkv.storage import (
     WriteSlotProtocol,
 )
 
+from ..refs.base import PrimitiveRef, ViewRef
+
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Callable, Hashable, Iterator
@@ -73,8 +75,12 @@ def _wrap_body(children: tuple[Nu, ...]) -> Nu:
 
 
 def _has_virtuals_write(node: Nu) -> bool:
-    """Check if the subtree rooted at ``node`` has any declared write position."""
-    return any(nu.tree.mutated_slots(n) for n in nu.tree.preorder(node))
+    """Whether the subtree writes a kv ref: one sits in a slot its node declares as mutating.
+
+    The same reading ``atomic`` and ``auto_flow_atomic`` make. A write through
+    anything else (a mem ref, a form wrapping a kv ref) does not count.
+    """
+    return nu.tree.has_write_on_fabric(node, (ViewRef, PrimitiveRef))
 
 
 def _scope_navigators(ctx: Context, scope: Hashable | None) -> list[tuple[dict, Navigator]]:
@@ -326,8 +332,8 @@ def Atomic(  # noqa: N802 (factory mimics class spelling)
     """Brackets a body with whichever boundary its own writes call for.
 
     Saves the caller from having to know whether a branch mutates. It scans
-    the body for any node declaring a mutation position and returns a
-    Transaction if it finds one, a Snapshot if it does not.
+    the body for a kv ref in a slot its node declares as mutating and returns
+    a Transaction if it finds one, a Snapshot if it does not.
 
     The decision is made here, while the tree is being built, so what ends up
     in the tree is an ordinary ``Snapshot`` or ``Transaction`` node and every
@@ -342,6 +348,10 @@ def Atomic(  # noqa: N802 (factory mimics class spelling)
           site; it is a function and cannot be subclassed or matched on.
         - The scan reads declared mutation positions off the node classes,
           so it sees only writes already present in the tree at build time.
+        - A write counts only where a kv ref itself sits in the mutating
+          slot, as ``atomic`` and ``auto_flow_atomic`` read it. A mem write
+          (``nu.let``) is no store write, and a form wrapped around a kv ref
+          (``nu.Dict(ref).set_item(...)``) hides the ref: write on the ref.
         - It descends through everything, brackets included, so a write
           already covered by a nested Transaction still counts.
         - For a whole tree rather than one body, ``auto_flow_atomic`` makes

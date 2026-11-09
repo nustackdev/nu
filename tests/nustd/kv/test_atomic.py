@@ -27,6 +27,7 @@ import nu
 from nu import Context, Shape, arun, run
 from nu.lang import ScalarQuery
 from nustd.kv import (
+    Atomic,
     BracketError,
     DictRef,
     IntRef,
@@ -340,3 +341,34 @@ def test_atomic_over_auto_flow_atomic_adds_nothing() -> None:
 def test_a_read_under_a_null_key_raises_inside_its_bracket(ctx) -> None:
     with pytest.raises(NullAddressError):
         run(atomic(State.cells[Space.cell_keys["gone"]].value), ctx)
+
+
+# --- Atomic agrees -----------------------------------------------------------------
+
+
+AGREE = {
+    "a leaf write": State.m.set(1),
+    "a container write": State.log.set_item("a", 1),
+    "a write keyed from another store": State.cells[Space.cell_keys["k"]].value.set(1),
+    "a leaf read": State.m,
+    "a container read": State.log.len(),
+    "a mem write": nu.let(State.m, lambda v: v.set(1)),
+    "a write through a form around a ref": nu.Dict(State.log).len(),
+}
+
+
+def _writes(term: object) -> bool:
+    return _count(term, Transaction) > 0
+
+
+@pytest.mark.parametrize("name", AGREE)
+def test_atomic_atomic_and_auto_flow_atomic_agree_on_a_write(name) -> None:
+    term = AGREE[name]
+    assert _writes(Atomic(term)) == _writes(atomic(term)) == _writes(auto_flow_atomic(term))
+
+
+def test_a_form_around_a_ref_in_a_write_slot_is_no_store_write() -> None:
+    term = nu.Dict(State.log).set_item("a", 1)
+    assert not _writes(Atomic(term))
+    assert not _writes(atomic(term))
+    assert _writes(Atomic(State.log.set_item("a", 1)))
