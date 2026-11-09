@@ -5,7 +5,6 @@
 - ``collections``: container-level unsafe scan / clear.
 - ``kh57``: sampled and whole reads of an int-keyed range.
 - ``ordered``: placement, moves and ends of an ordered dict.
-- ``ring``: a page of a ring's entries past a sequence number.
 - ``extract``: whole-container read, NULL where nothing is written.
 - ``atomicity``: snapshot / transaction brackets + conflict-aware retry.
 """
@@ -36,7 +35,6 @@ from .ordered import (
     OrderedLast,
     OrderedMoveCmd,
 )
-from .ring import RingEntries
 
 
 __all__ = [
@@ -57,7 +55,6 @@ __all__ = [
     "OrderedLast",
     "OrderedMoveCmd",
     "RetryOnConflict",
-    "RingEntries",
     "ScanPrimitivesUnsafe",
     "Snapshot",
     "Transaction",

@@ -34,7 +34,6 @@ from nustd.kv.interactions import (
     OrderedLast,
     OrderedMoveCmd,
     RetryOnConflict,
-    RingEntries,
     ScanPrimitivesUnsafe,
     Snapshot,
     Transaction,
@@ -111,7 +110,6 @@ __all__ = [  # noqa: RUF022
     "OrderedFirst",
     "OrderedLast",
     # Interactions: ring
-    "RingEntries",
     # Interactions: Atomicity
     "Atomic",
     "Snapshot",

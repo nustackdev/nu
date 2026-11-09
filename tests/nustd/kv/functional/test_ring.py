@@ -3,10 +3,14 @@
 Verifies:
 - The slot needs a capacity (``capacity=`` or ``view=RingView.of(n)``); an
   annotation, a capacity-less view and a container ref value are refused.
-- Append and extend keep the newest ``capacity`` entries, stored whole.
-- iter, reversed, len and a page of entries read them back in order.
+- Append, extend and clear keep the newest ``capacity`` entries, stored whole.
+- The sequence reads (``[i]``, slices, iter, reversed, len, contains, index,
+  count, first/last) read them back oldest first, positions from the oldest
+  kept.
+- Writes at a position are not there: no set_at, del_at, insert, pop,
+  remove or reverse, and ``ring[i]`` is a read, not a ref.
 - A whole-ring set and ``init`` go through the parent.
-- A never-written ring pages empty; one under a NULL key raises.
+- A never-written ring raises on reads; one under a NULL key raises.
 - A watch hears appends, and a sqlite store keeps compound entries whole.
 """
 
@@ -101,24 +105,60 @@ def test_extend_appends_in_order_and_drops_once(ctx) -> None:
     assert run(LINES.reversed().to_list(), ctx)[0] == ["c", "b"]
 
 
-def test_entries_page_by_sequence_number(ctx) -> None:
+def test_reads_by_position_count_from_the_oldest_kept(ctx) -> None:
     run(OUT.extend([["a"], ["b"], ["c"], ["d"]]), ctx)
-    assert run(OUT.entries(), ctx)[0] == [(1, ["b"]), (2, ["c"]), (3, ["d"])]
-    assert run(OUT.entries(after=1, limit=1), ctx)[0] == [(2, ["c"])]
-    assert run(OUT.entries(after=3), ctx)[0] == []
+    assert run(OUT[0], ctx)[0] == ["b"]
+    assert run(OUT[-1], ctx)[0] == ["d"]
+    assert run(OUT[1:], ctx)[0] == [["c"], ["d"]]
+    assert run(OUT[::-1], ctx)[0] == [["d"], ["c"], ["b"]]
+    assert run(OUT.first_elem(), ctx)[0] == ["b"]
+    assert run(OUT.last_elem(), ctx)[0] == ["d"]
+    with pytest.raises(IndexError):
+        run(OUT[3], ctx)
 
 
-def test_a_reader_that_fell_behind_resumes_at_the_oldest_kept(ctx) -> None:
-    run(OUT.extend([["a"], ["b"], ["c"], ["d"], ["e"]]), ctx)
-    assert run(OUT.entries(after=0, limit=2), ctx)[0] == [(2, ["c"]), (3, ["d"])]
+def test_membership_index_and_count(ctx) -> None:
+    run(LINES.extend(["a", "b", "b"]), ctx)
+    assert run(LINES.contains("b"), ctx)[0] is True
+    assert run(LINES.contains("a"), ctx)[0] is False
+    assert run(LINES.index("b"), ctx)[0] == 0
+    assert run(LINES.count("b"), ctx)[0] == 2
+    with pytest.raises(ValueError):
+        run(LINES.index("a"), ctx)
 
 
-def test_a_bad_cursor_is_refused(ctx) -> None:
-    run(OUT.append(["a"]), ctx)
-    with pytest.raises(TypeError, match="sequence number"):
-        run(OUT.entries(after="0"), ctx)
-    with pytest.raises(ValueError, match="limit"):
-        run(OUT.entries(limit=-1), ctx)
+def test_an_entry_read_is_typed_by_the_declared_value(ctx) -> None:
+    run(LINES.append("x"), ctx)
+    assert type(LINES[0]) is nu.Str
+    assert type(LINES[0:1]) is nu.List
+    assert run(LINES[0].upper(), ctx)[0] == "X"
+
+
+def test_clear_empties_the_ring_and_appends_go_on(ctx) -> None:
+    run(LINES.extend(["a", "b"]), ctx)
+    run(LINES.clear(), ctx)
+    assert run(LINES.len(), ctx)[0] == 0
+    assert run(LINES.exists(), ctx)[0] is True
+    run(LINES.append("c"), ctx)
+    assert run(LINES.extract(), ctx)[0] == ["c"]
+
+
+@pytest.mark.parametrize("name", ["set_at", "del_at", "insert", "pop", "remove", "reverse"])
+def test_no_write_at_a_position(name) -> None:
+    assert not hasattr(OUT, name)
+
+
+def test_a_position_is_a_read_not_a_ref() -> None:
+    assert not isinstance(OUT[0], nu.lang.Ref)
+
+
+def test_the_view_refuses_a_write_at_a_position(ctx) -> None:
+    run(LINES.append("a"), ctx)
+    view = run(LINES, ctx)[0]
+    with pytest.raises(TypeError):
+        view[0] = "b"
+    with pytest.raises(TypeError):
+        del view[0]
 
 
 def test_a_whole_ring_set_and_init_go_through_the_parent(ctx) -> None:
@@ -134,30 +174,20 @@ def test_a_whole_ring_set_and_init_go_through_the_parent(ctx) -> None:
 def test_a_never_written_ring(ctx) -> None:
     assert run(OUT.exists(), ctx)[0] is False
     with pytest.raises(ContainerNotFoundError):
-        run(OUT.entries(), ctx)
+        run(OUT.len(), ctx)
+    with pytest.raises(ContainerNotFoundError):
+        run(OUT[0], ctx)
     assert is_null(run(OUT.extract(), ctx)[0])
 
 
 def test_a_ring_under_a_null_key_raises(ctx) -> None:
     gone = Exec.cell_runs[Exec.by_key["gone"]].out
     with pytest.raises(NullAddressError):
-        run(gone.entries(), ctx)
+        run(gone.len(), ctx)
+    with pytest.raises(NullAddressError):
+        run(gone[0], ctx)
     with pytest.raises(NullAddressError):
         run(gone.exists(), ctx)
-
-
-@pytest.mark.parametrize("arg", ["after", "limit"])
-def test_a_null_page_arg_is_refused_before_the_view(ctx, arg) -> None:
-    run(OUT.append(["a"]), ctx)
-    with pytest.raises(ValueError, match=rf"entries\({arg}=\) read NULL"):
-        run(OUT.entries(**{arg: Exec.by_key["gone"]}), ctx)
-
-
-@pytest.mark.asyncio
-async def test_a_null_page_arg_is_refused_before_the_view_async(ctx) -> None:
-    await arun(OUT.append(["a"]), ctx)
-    with pytest.raises(ValueError, match=r"entries\(after=\) read NULL"):
-        await arun(OUT.entries(after=Exec.by_key["gone"]), ctx)
 
 
 # --- watches and stores -------------------------------------------------------
@@ -190,8 +220,5 @@ def test_sqlite_keeps_compound_entries_whole(tmp_path) -> None:
     path = str(tmp_path / "s.db")
     write = Transaction(OUT.extend([[1.5, "stderr", "boom"], [2.5, "stdout", "ok"]]))
     run(nu.With(sqlite_navigator(path), body=write))
-    got = run(nu.With(sqlite_navigator(path), body=Snapshot(OUT.entries())))[0]
-    assert [(seq, list(entry)) for seq, entry in got] == [
-        (0, [1.5, "stderr", "boom"]),
-        (1, [2.5, "stdout", "ok"]),
-    ]
+    got = run(nu.With(sqlite_navigator(path), body=Snapshot(OUT.extract())))[0]
+    assert [list(entry) for entry in got] == [[1.5, "stderr", "boom"], [2.5, "stdout", "ok"]]
