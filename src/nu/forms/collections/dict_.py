@@ -167,11 +167,19 @@ class Dict(
         """Wrap operand as Dict."""
         return Dict(operand)
 
-    def keys(self) -> DictKeys[K]:  # type: ignore[override]
-        """Self's keys as a live view.
+    def keys(  # type: ignore[override]
+        self, *, after: Arg[K] | None = None, limit: Arg[int] | None = None
+    ) -> DictKeys[K]:
+        """Self's keys as a live view, or one page of them.
+
+        Args:
+            after: the key to start past. Paging only.
+            limit: the most keys to read. Paging only.
 
         Notes:
             - Insertion order, matching Python's `dict.keys()`.
+            - Paging forwards to the runtime mapping's own
+              `keys(after=, limit=)`; a Python `dict` has none and raises.
 
         Yields:
             The keys, wrapped as DictKeys.
@@ -180,9 +188,7 @@ class Dict(
             >>> list(nu.run(nu.Dict.of(a=1, b=2).keys())[0])
             ['a', 'b']
         """
-        from .abc.mapping_interactions import Keys
-
-        return self._wrap_keys_result(Keys(self))
+        return super().keys(after=after, limit=limit)
 
     def values(self) -> DictValues[V]:  # type: ignore[override]
         """Self's values as a live view.

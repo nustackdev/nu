@@ -141,19 +141,40 @@ class MappingForm(
 
         return cast("ValueResultT", self._wrap_value_result(At(self, key)))
 
-    def keys(self) -> CollectionResultT:
-        """All keys of the mapping: mapping.keys().
+    def keys(
+        self, *, after: Arg[KeyT] | None = None, limit: Arg[int] | None = None
+    ) -> CollectionResultT:
+        """All keys of the mapping, or one page of them: mapping.keys().
+
+        Args:
+            after: the key to start past. Paging only.
+            limit: the most keys to read. Paging only.
+
+        Notes:
+            - With neither argument: ``mapping.keys()``, a view over every
+              key.
+            - With either: ``mapping.keys(after=after, limit=limit)``,
+              collected into a list. The mapping pages itself: what
+              ``after`` means, and what the page costs, is its own. A
+              mapping without paged keys raises at evaluation time; a
+              Python ``dict`` has none.
+            - Both are ordinary Nu values, so a ref read at run time works.
 
         Yields:
-            A view over the keys, in insertion order.
+            A view over the keys, in the mapping's order; with either
+            argument, a list of keys.
 
         Example:
             >>> nu.run(nu.Dict({"a": 1, "b": 2}).keys())[0]
             dict_keys(['a', 'b'])
         """
-        from .mapping_interactions import Keys
+        if after is None and limit is None:
+            from .mapping_interactions import Keys
 
-        return cast("CollectionResultT", self._wrap_keys_result(Keys(self)))
+            return cast("CollectionResultT", self._wrap_keys_result(Keys(self)))
+        from .mapping_interactions import KeysPage
+
+        return cast("CollectionResultT", self._wrap_keys_result(KeysPage(self, after, limit)))
 
     def values(self) -> CollectionResultT:
         """All values of the mapping: mapping.values().
@@ -225,19 +246,37 @@ class MappingForm(
 
         return cast("CollectionResultT", self._wrap_mapping_result(Copy(self)))
 
-    def reversed_keys(self) -> CollectionResultT:
-        """Keys in reverse insertion order: reversed(mapping).
+    def reversed_keys(
+        self, *, before: Arg[KeyT] | None = None, limit: Arg[int] | None = None
+    ) -> CollectionResultT:
+        """Keys last first, or one page of them: reversed(mapping).
+
+        Args:
+            before: the key to start before. Paging only.
+            limit: the most keys to read. Paging only.
+
+        Notes:
+            - With neither argument: ``reversed(mapping)``, an iterator.
+            - With either: ``mapping.keys_reverse(before=before,
+              limit=limit)``, collected into a list. Same contract as
+              ``keys(after=, limit=)``: a mapping without it raises.
 
         Yields:
-            An iterator over the keys, reversed.
+            An iterator over the keys, reversed; with either argument, a
+            list of keys.
 
         Example:
             >>> list(nu.run(nu.Dict({"a": 1, "b": 2}).reversed_keys())[0])
             ['b', 'a']
         """
-        from .mapping_interactions import ReversedKeys
+        if before is None and limit is None:
+            from .mapping_interactions import ReversedKeys
 
-        return cast("CollectionResultT", self._wrap_keys_result(ReversedKeys(self)))
+            return cast("CollectionResultT", self._wrap_keys_result(ReversedKeys(self)))
+        from .mapping_interactions import ReversedKeysPage
+
+        page = ReversedKeysPage(self, before, limit)
+        return cast("CollectionResultT", self._wrap_keys_result(page))
 
     def reversed_values(self) -> CollectionResultT:
         """Values in reverse insertion order: reversed(mapping.values()).

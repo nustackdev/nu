@@ -1,7 +1,7 @@
 """Mapping interactions.
 
-Reads (Query): Keys, Values, Items, Get, ContainsKey,
-    Copy, ReversedKeys, ReversedValues, ReversedItems, Merge
+Reads (Query): Keys, KeysPage, Values, Items, Get, ContainsKey,
+    Copy, ReversedKeys, ReversedKeysPage, ReversedValues, ReversedItems, Merge
 Mutate, yield nothing (Command): DeleteItem, Update (SetItem lives in nu.core.access)
 Mutate and yield a value (Action): DictPop, PopItem, SetDefault,
     MergeUpdate
@@ -33,11 +33,13 @@ __all__ = [
     "Get",
     "Items",
     "Keys",
+    "KeysPage",
     "Merge",
     "MergeUpdate",
     "PopItem",
     "ReversedItems",
     "ReversedKeys",
+    "ReversedKeysPage",
     "ReversedValues",
     "SetDefault",
     "Update",
@@ -80,6 +82,35 @@ class Keys(ScalarQuery):
         async def athunk(rt: Runtime) -> object:
             obj = await operand(rt)
             return obj.keys()
+
+        return athunk
+
+
+class KeysPage(ScalarQuery):
+    """One page of keys: list(mapping.keys(after=after, limit=limit)).
+
+    Calls the mapping's own paged ``keys`` and collects the page into a list.
+    A mapping without that contract raises (Python's ``dict.keys`` takes no
+    arguments). ``after`` and ``limit`` reach it as they read, None included.
+    """
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        operand, after_t, limit_t = children
+
+        def thunk(rt: Runtime) -> object:
+            obj = operand(rt)
+            return list(obj.keys(after=after_t(rt), limit=limit_t(rt)))
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        operand, after_t, limit_t = children
+
+        async def athunk(rt: Runtime) -> object:
+            obj = await operand(rt)
+            after = await after_t(rt)
+            limit = await limit_t(rt)
+            return list(obj.keys(after=after, limit=limit))
 
         return athunk
 
@@ -233,6 +264,35 @@ class ReversedKeys(ScalarQuery):
                     yield k
 
             return agen()
+
+        return athunk
+
+
+class ReversedKeysPage(ScalarQuery):
+    """One page of keys, last first: list(mapping.keys_reverse(before=before, limit=limit)).
+
+    The reverse twin of :class:`KeysPage`: calls the mapping's own
+    ``keys_reverse`` and collects the page into a list. A mapping without
+    it raises.
+    """
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        operand, before_t, limit_t = children
+
+        def thunk(rt: Runtime) -> object:
+            obj = operand(rt)
+            return list(obj.keys_reverse(before=before_t(rt), limit=limit_t(rt)))
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        operand, before_t, limit_t = children
+
+        async def athunk(rt: Runtime) -> object:
+            obj = await operand(rt)
+            before = await before_t(rt)
+            limit = await limit_t(rt)
+            return list(obj.keys_reverse(before=before, limit=limit))
 
         return athunk
 
