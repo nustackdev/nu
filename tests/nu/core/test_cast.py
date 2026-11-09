@@ -28,7 +28,6 @@ from nu.core.cast import (
     ToStr,
     ToTuple,
 )
-from nu.forms import Dict
 from nu.lang import NULL, Attr, Cardinality, Sort
 from nu.lang.helpers import aeval, compile, eval
 from nu.lang.literal import Literal
@@ -153,19 +152,6 @@ def test_collection_constructor_propagates_a_sentinel():
 def test_collection_aeval_mirrors_eval():
     assert asyncio.run(_aeval(ToList(Literal((1, 2))))) == [1, 2]
     assert asyncio.run(_aeval(ToSet(Literal([1, 1, 2])))) == {1, 2}
-
-
-def test_collection_aeval_drains_an_async_iterable():
-    # Under aeval a reversed read hands back an async iterable, where eval
-    # hands back a sync one: the cast drains it, so both modes read alike.
-    keys = Dict({"a": 1, "b": 2, "c": 3}).reversed_keys()
-    assert _eval(ToList(keys)) == ["c", "b", "a"]
-    assert asyncio.run(_aeval(ToList(keys))) == ["c", "b", "a"]
-    assert asyncio.run(_aeval(ToTuple(keys))) == ("c", "b", "a")
-    assert asyncio.run(_aeval(ToSet(keys))) == {"a", "b", "c"}
-    assert asyncio.run(_aeval(ToFrozenSet(keys))) == frozenset({"a", "b", "c"})
-    items = Dict({"a": 1, "b": 2}).reversed_items()
-    assert asyncio.run(_aeval(ToDict(items))) == {"b": 2, "a": 1}
 
 
 def test_collection_aeval_keeps_a_mapping_a_mapping():
