@@ -37,6 +37,7 @@ __all__ = [
     "CollectionForm",
     "MutableCollectionForm",
     "ReactiveCollectionForm",
+    "holding",
 ]
 
 

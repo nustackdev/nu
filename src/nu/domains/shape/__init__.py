@@ -14,6 +14,7 @@ shape Form mixins.
 from __future__ import annotations
 
 from .base import StructuredRef, root_shape
+from .collection import ReactiveCollectionForm, holding
 from .dsl import Shape, ShapeMeta, Slot, SlotDescriptor
 from .interactions import (
     AdvanceCursor,
@@ -46,6 +47,7 @@ __all__ = [
     "MutableSetRef",
     "MutableShapeRef",
     "PrimitiveSet",
+    "ReactiveCollectionForm",
     "ReactiveItemRef",
     "ReactiveMappingRef",
     "ReactiveSequenceRef",
@@ -60,6 +62,7 @@ __all__ = [
     "Slot",
     "SlotDescriptor",
     "StructuredRef",
+    "holding",
     "reroot",
     "rerooter",
     "root_shape",

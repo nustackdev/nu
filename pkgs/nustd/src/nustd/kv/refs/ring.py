@@ -12,8 +12,7 @@ from typing import TYPE_CHECKING, Generic
 
 from typing_extensions import TypeVar
 
-from nu.domains.shape import Slot
-from nu.domains.shape.collection import ReactiveCollectionForm, holding
+from nu.domains.shape import ReactiveCollectionForm, Slot, holding
 from nu.lang.typeinfo import TypeInfo
 from virtuals.views import RingView
 
