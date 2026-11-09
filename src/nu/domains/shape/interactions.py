@@ -3,7 +3,8 @@
 Read queries (polymorphic on Ref class):
 - ``Load``: yield the value at the slot-0 Ref (NULL if absent).
 - ``Exists``: True if the slot-0 Ref's address holds a value.
-- ``Extract``: materialise the full subtree rooted at the Ref.
+- ``Extract``: materialise the full subtree rooted at the Ref, asking an
+  ``Extractable`` read for its ``extract()``.
 - ``AdvanceCursor``: read the next key after the cursor on an ordered view.
 
 Write commands (polymorphic on Ref class):
@@ -25,6 +26,8 @@ from typing import TYPE_CHECKING
 from nu.engine.structure import Declared
 from nu.lang import Command, ScalarQuery
 from nu.lang.null import is_null
+
+from .extractable import Extractable
 
 
 if TYPE_CHECKING:
@@ -97,16 +100,18 @@ class Extract(ScalarQuery):
     """Yield the full subtree at the slot-0 Ref as a plain Python value.
 
     Distinct from ``Load`` in intent: Load yields the value at the Ref's
-    address, Extract the whole subtree as plain data. A mem Ref, or any
-    Form, already reads plain data, so the read is yielded as it is. A
-    fabric whose read is a lazy handle gives its refs their own ``extract``.
+    address, Extract the whole subtree as plain data. A read that is an
+    :class:`~nu.domains.shape.extractable.Extractable` (a fabric's live
+    handle, registered by its fabric) is asked for its ``extract()``; any
+    other read, a mem Ref's or a plain Form's, already is plain data and is
+    yielded as it is.
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (ref_thunk,) = children
 
         def thunk(rt: Runtime) -> object:
-            return ref_thunk(rt)
+            return _plain(ref_thunk(rt))
 
         return thunk
 
@@ -114,9 +119,14 @@ class Extract(ScalarQuery):
         (ref_thunk,) = children
 
         async def athunk(rt: Runtime) -> object:
-            return await ref_thunk(rt)
+            return _plain(await ref_thunk(rt))
 
         return athunk
+
+
+def _plain(value: object) -> object:
+    """``value`` as plain data: an Extractable's ``extract()``, anything else as is."""
+    return value.extract() if isinstance(value, Extractable) else value
 
 
 class AdvanceCursor(ScalarQuery):

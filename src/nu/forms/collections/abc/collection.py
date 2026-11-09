@@ -49,17 +49,19 @@ class CollectionForm(
         """Materialise the full subtree rooted at self.
 
         Notes:
-            - Recursively pulls the whole subtree out of the fabric into a
-              plain Python value (dict / list / nested mix), unlike a plain
-              read which only yields the value at self's own address.
-            - Needs self bound in a live fabric; it isn't a scalar
-              expression `nu.run` can evaluate on its own.
+            - Pulls the whole subtree out into a plain Python value (dict /
+              list / nested mix), unlike a plain read, which may hand out a
+              fabric's live handle.
+            - A read that is an `nu.shape.Extractable` (a handle its fabric
+              registered) is asked for its `extract()`; any other read is
+              already plain and comes back as it is.
 
         Yields:
             The materialised Python value.
 
         Example:
-            nu.List([1, 2, 3]).extract()
+            >>> nu.run(nu.List([1, 2, 3]).extract())[0]
+            [1, 2, 3]
         """
         from nu.domains.shape.interactions import Extract
 

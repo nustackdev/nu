@@ -16,6 +16,7 @@ from __future__ import annotations
 from .base import StructuredRef, root_shape
 from .collection import ReactiveCollectionForm, holding
 from .dsl import Shape, ShapeMeta, Slot, SlotDescriptor
+from .extractable import Extractable
 from .interactions import (
     AdvanceCursor,
     Erase,
@@ -45,6 +46,7 @@ __all__ = [
     "Erase",
     "Exists",
     "Extract",
+    "Extractable",
     "ItemRef",
     "Load",
     "MappingRef",
