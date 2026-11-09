@@ -1,9 +1,10 @@
 """kv leaves: one value at one address, read and written whole.
 
 ``ItemRef`` is the leaf itself (slot-level read, write, erase and observe over
-a kv leaf) and declares a slot once for every leaf. Each value leaf mixes one
-value form in beside it, so the ref is an operand of the value it names; the
-form decides the surface, the leaf decides where the value lives.
+a kv leaf) and declares a slot once for every leaf. Each value leaf mixes in
+the reactive shape cell of its value (``ReactivePyIntRef`` for an int), so the
+ref is an operand of the value it names; the cell decides the surface, the leaf
+decides where the value lives.
 """
 
 from __future__ import annotations
@@ -12,13 +13,22 @@ from typing import TYPE_CHECKING
 
 from typing_extensions import Self
 
-from nu.domains.shape import ReactiveItemRef, Slot
-from nu.forms import Bool, Bytes, Float, Int, None_, Object, Str
+from nu.domains.shape import (
+    ReactiveItemRef,
+    ReactivePyBoolRef,
+    ReactivePyBytesRef,
+    ReactivePyFloatRef,
+    ReactivePyIntRef,
+    ReactivePyObjectRef,
+    ReactivePyStrRef,
+    Slot,
+)
 
 from .base import PrimitiveRef
 
 
 if TYPE_CHECKING:
+    from nu.forms import None_
     from nu.lang import IntArg
 
 __all__ = [
@@ -36,8 +46,9 @@ class ItemRef(ReactiveItemRef, PrimitiveRef):
     """A leaf slot in KV storage: read it, set it, erase it, watch it.
 
     The base every kv leaf builds on. It carries no value surface of its own;
-    a leaf class mixes in the form of the value it holds (``IntRef`` is this
-    plus ``Int``), and that one pairing is the whole of a leaf class.
+    a leaf class mixes in the reactive shape cell of the value it holds
+    (``IntRef`` is this plus ``ReactivePyIntRef``), and that one pairing is the
+    whole of a leaf class.
 
     Notes:
         - Reads yield NULL, hinted with the path, when the leaf is absent.
@@ -51,7 +62,7 @@ class ItemRef(ReactiveItemRef, PrimitiveRef):
         return Slot(cls)  # type: ignore[return-value]
 
 
-class ObjectRef(ItemRef, Object):
+class ObjectRef(ItemRef, ReactivePyObjectRef):
     """A leaf in KV storage holding a value of no declared type.
 
     What a container descends to when its value is ``object``, undeclared, or
@@ -75,7 +86,7 @@ class ObjectRef(ItemRef, Object):
 # =============================================================================
 
 
-class IntRef(ItemRef, Int):
+class IntRef(ItemRef, ReactivePyIntRef):
     """An int leaf in KV storage, carrying the whole Int operator surface.
 
     Notes:
@@ -125,7 +136,7 @@ class IntRef(ItemRef, Int):
         return self.set(self - step)
 
 
-class StrRef(ItemRef, Str):
+class StrRef(ItemRef, ReactivePyStrRef):
     """A str leaf in KV storage, carrying the whole Str operator surface.
 
     Notes:
@@ -141,7 +152,7 @@ class StrRef(ItemRef, Str):
     """
 
 
-class FloatRef(ItemRef, Float):
+class FloatRef(ItemRef, ReactivePyFloatRef):
     """A float leaf in KV storage, carrying the whole Float operator surface.
 
     Notes:
@@ -156,7 +167,7 @@ class FloatRef(ItemRef, Float):
     """
 
 
-class BoolRef(ItemRef, Bool):
+class BoolRef(ItemRef, ReactivePyBoolRef):
     """A bool leaf in KV storage, carrying the whole Bool logical surface.
 
     Notes:
@@ -172,7 +183,7 @@ class BoolRef(ItemRef, Bool):
     """
 
 
-class BytesRef(ItemRef, Bytes):
+class BytesRef(ItemRef, ReactivePyBytesRef):
     """A bytes leaf in KV storage, carrying the whole Bytes operator surface.
 
     Notes:

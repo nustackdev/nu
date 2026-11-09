@@ -4,6 +4,11 @@ A container slot declares the value it holds, and that declaration types it
 throughout. Descent (``ref[k]``, ``ref[i]``, ``ref.field``) lands on the kv ref
 for the declared value, and every value an op reads is that value's form. A
 container reads as a live View, so its collection ops run against storage.
+
+``DictRef``, ``ListRef`` and ``SetRef`` sit on the reactive shape cell of their
+built-in type (``ReactivePyDictRef``, ...), so they carry that type's whole
+surface, the built-in-only calls (``copy``, ``merge``, ``sort``, the set
+algebra) included, run against the live View.
 """
 
 from __future__ import annotations
@@ -13,9 +18,9 @@ from typing import TYPE_CHECKING, Generic, overload
 from typing_extensions import TypeVar
 
 from nu.domains.shape import (
-    ReactiveMappingRef,
-    ReactiveSequenceRef,
-    ReactiveSetRef,
+    ReactivePyDictRef,
+    ReactivePyListRef,
+    ReactivePySetRef,
     ReactiveShapeRef,
     Shape,
     Slot,
@@ -66,7 +71,39 @@ S = TypeVar("S", bound=Shape)
 L = TypeVar("L", bound=ItemRef)
 
 
-class DictRef(ReactiveMappingRef, ViewRef[dict[K, V]], Generic[K, V]):
+class _MappingDescent(Generic[K, V]):
+    """What every kv mapping ref shares: typed descent by key and the NULL-aware extract.
+
+    Mixed in first by ``DictRef`` and ``Kh57Ref``, which sit on different
+    mapping cells (ordered dict, plain mapping) but descend and extract alike.
+    """
+
+    extract = ViewRef.extract  # NULL on a never-written container, not core Extract
+
+    @overload
+    def __getitem__(self: _MappingDescent[K, bool], key: object) -> BoolRef: ...
+    @overload
+    def __getitem__(self: _MappingDescent[K, int], key: object) -> IntRef: ...
+    @overload
+    def __getitem__(self: _MappingDescent[K, float], key: object) -> FloatRef: ...
+    @overload
+    def __getitem__(self: _MappingDescent[K, str], key: object) -> StrRef: ...
+    @overload
+    def __getitem__(self: _MappingDescent[K, bytes], key: object) -> BytesRef: ...
+    @overload
+    def __getitem__(self: _MappingDescent[K, object], key: object) -> ObjectRef: ...
+    @overload
+    def __getitem__(self: _MappingDescent[K, S], key: object) -> S: ...
+    @overload
+    def __getitem__(self: _MappingDescent[K, L], key: object) -> L: ...
+    @overload
+    def __getitem__(self, key: object) -> ObjectRef: ...
+    def __getitem__(self, key: object) -> StructuredRef:
+        """The kv ref for the declared value at ``key``."""
+        return super().__getitem__(key)
+
+
+class DictRef(_MappingDescent[K, V], ReactivePyDictRef[K, V], ViewRef[dict[K, V]], Generic[K, V]):
     """A mapping slot in KV storage, decomposed into a child per key.
 
     Every value lives at its own address under the slot, so keys can be read,
@@ -99,8 +136,6 @@ class DictRef(ReactiveMappingRef, ViewRef[dict[K, V]], Generic[K, V]):
         run(Portfolio.owners["core"].set("gor"), ctx)
         run(Portfolio.desks["desk-1"].symbol.set("SOL"), ctx)
     """
-
-    extract = ViewRef.extract  # NULL on a never-written container, not core Extract
 
     _default_view = DictView
 
@@ -139,30 +174,8 @@ class DictRef(ReactiveMappingRef, ViewRef[dict[K, V]], Generic[K, V]):
         """A lazy stream over the keys, each the declared key's form."""
         return super().iter()
 
-    @overload
-    def __getitem__(self: DictRef[K, bool], key: object) -> BoolRef: ...
-    @overload
-    def __getitem__(self: DictRef[K, int], key: object) -> IntRef: ...
-    @overload
-    def __getitem__(self: DictRef[K, float], key: object) -> FloatRef: ...
-    @overload
-    def __getitem__(self: DictRef[K, str], key: object) -> StrRef: ...
-    @overload
-    def __getitem__(self: DictRef[K, bytes], key: object) -> BytesRef: ...
-    @overload
-    def __getitem__(self: DictRef[K, object], key: object) -> ObjectRef: ...
-    @overload
-    def __getitem__(self: DictRef[K, S], key: object) -> S: ...
-    @overload
-    def __getitem__(self: DictRef[K, L], key: object) -> L: ...
-    @overload
-    def __getitem__(self, key: object) -> ObjectRef: ...
-    def __getitem__(self, key: object) -> StructuredRef:
-        """The kv ref for the declared value at ``key``."""
-        return super().__getitem__(key)
 
-
-class ListRef(ReactiveSequenceRef, ViewRef[list[T]], Generic[T]):
+class ListRef(ReactivePyListRef[T], ViewRef[list[T]], Generic[T]):
     """An ordered list slot in KV storage, decomposed into per-index children.
 
     Every element lives at its own address under the slot, so the list can be
@@ -241,7 +254,7 @@ class ListRef(ReactiveSequenceRef, ViewRef[list[T]], Generic[T]):
         return super().__getitem__(index)
 
 
-class SetRef(ReactiveSetRef, ViewRef[set[T]], Generic[T]):
+class SetRef(ReactivePySetRef[T], ViewRef[set[T]], Generic[T]):
     """A set slot in KV storage: unordered, unique elements, stored decomposed.
 
     Notes:

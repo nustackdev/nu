@@ -1,21 +1,23 @@
 """kv sampled map: an int-keyed mapping laid out so a key range samples cheaply.
 
-A dict slot whose keys are pinned to non-negative 57-bit ints and whose
+A mapping slot whose keys are pinned to non-negative 57-bit ints and whose
 storage is kh57-encoded, so sampling or scanning a window of keys reads only
-that window. Everything else, descent and typing included, is a ``DictRef``.
+that window. Its order is the hashed layout's, not insertion order, so it is a
+plain ``Mapping`` (no ``reversed``, no paging, no dict-only calls), not a
+``DictRef``; descent and typing are a ``DictRef``'s.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, TypeVar
 
-from nu.domains.shape import Slot
+from nu.domains.shape import ReactiveMappingRef, Slot
 from nu.forms import Object
 from nu.lang.typeinfo import TypeInfo
 from virtuals.views import Kh57View
 
-from .base import _refuse_container_value
-from .containers import DictRef
+from .base import ViewRef, _refuse_container_value
+from .containers import _MappingDescent
 
 
 if TYPE_CHECKING:
@@ -32,10 +34,10 @@ V = TypeVar("V")
 DV = TypeVar("DV")
 
 
-class Kh57Ref(DictRef[int, V], Generic[V]):
+class Kh57Ref(_MappingDescent[int, V], ReactiveMappingRef, ViewRef[dict[int, V]], Generic[V]):
     """A sparse int-keyed mapping in KV storage, laid out for range sampling.
 
-    Same mapping surface as a dict slot, with the keys pinned to non-negative
+    The Python ``MutableMapping`` surface, with the keys pinned to non-negative
     57-bit ints and the physical layout encoded so that a sample or a scan
     over a key range reads only that range. Built for the case where the map
     holds billions of entries and the question is about a window of them.
@@ -45,8 +47,9 @@ class Kh57Ref(DictRef[int, V], Generic[V]):
           of contract.
         - Iteration and ``keys`` come back in ascending key order, whatever
           order the writes happened in.
-        - ``sample`` and ``range`` are what the layout buys; everything else
-          behaves as it does on a plain dict slot.
+        - ``sample`` and ``range`` are what the layout buys. The rest is a
+          ``MutableMapping``: no ``reversed`` reads or paging, and none of
+          the dict-only calls (``copy``, ``merge``); ``extract()`` first.
         - Declare a Shape as the value and each entry is a row with fields
           of its own: ``series[ts].value`` reads one field of one row.
           ``sample`` and ``range`` then yield each row as a view over its
@@ -62,9 +65,7 @@ class Kh57Ref(DictRef[int, V], Generic[V]):
     _default_view = Kh57View
 
     @classmethod
-    def slot(  # type: ignore[override]
-        cls, value: type[DV], *, view: type[Kh57ViewBase] | None = None
-    ) -> Kh57Ref[DV]:
+    def slot(cls, value: type[DV], *, view: type[Kh57ViewBase] | None = None) -> Kh57Ref[DV]:
         """Declare a kh57 mapping slot holding ``value`` under int keys.
 
         Args:

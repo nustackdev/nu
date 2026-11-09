@@ -14,7 +14,7 @@ import pytest
 import nu
 from nu import run
 from nu.domains.shape import Shape
-from nu.forms import Dict, DictValues, Int, Iterator, List, Object, Str
+from nu.forms import DictValues, Int, Iterator, List, Object, Str
 from nu.lang import TypeInfo
 from nustd.decimal.kv import DecimalRef
 from nustd.kv import (
@@ -132,15 +132,6 @@ def test_values_carry_the_value_type(ctx):
     assert type(values) is DictValues
     assert nu.tree.payload(values)["type_info"].elem == TypeInfo(str)
     assert sorted(run(values.to_list(), ctx)[0]) == ["gor"]
-
-
-def test_a_built_in_only_op_is_not_on_a_ref_extract_first(ctx):
-    run(Bag.names["a"].set("gor"), ctx)
-    assert not hasattr(Bag.names, "copy")
-    assert not hasattr(Bag.names, "merge")
-    assert not hasattr(Bag.tags, "sort")
-    plain = Dict(Bag.names.extract())
-    assert run(plain.merge({"b": "x"}), ctx)[0] == {"a": "gor", "b": "x"}
 
 
 def test_a_stream_carries_the_declared_element_type(ctx):
