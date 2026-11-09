@@ -234,7 +234,7 @@ class _EdgeBase(ScalarQuery):
 
     Subclasses differ only in ``_last``. One seek, whatever the size. The view
     keeps the order and reads its ends (``first()`` / ``last()``): an ordered
-    dict view or a log dict view.
+    dict view or a log dict view, which raises IndexError when empty.
     """
 
     _last: bool = False
@@ -245,10 +245,7 @@ class _EdgeBase(ScalarQuery):
 
         def thunk(rt: Runtime) -> object:
             view = ref._fetch(rt, _child_nid(rt, nid, 0))
-            found = view.last() if last else view.first()
-            if found is None:
-                raise IndexError(f"{'last' if last else 'first'}() of an empty collection")
-            return found
+            return view.last() if last else view.first()
 
         return thunk
 
@@ -258,10 +255,7 @@ class _EdgeBase(ScalarQuery):
 
         async def athunk(rt: Runtime) -> object:
             view = await ref._afetch(rt, _child_nid(rt, nid, 0))
-            found = view.last() if last else view.first()
-            if found is None:
-                raise IndexError(f"{'last' if last else 'first'}() of an empty collection")
-            return found
+            return view.last() if last else view.first()
 
         return athunk
 
