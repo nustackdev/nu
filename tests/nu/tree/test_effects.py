@@ -10,8 +10,17 @@ import nu.mem
 from nu.context import Attr
 from nu.core.flows import Sequential
 from nu.domains.shape import Shape
-from nu.lang import Literal
-from nu.tree import fabrics, is_pure, reads, writes
+from nu.lang import Effect, Literal
+from nu.tree import (
+    fabrics,
+    is_dynamic,
+    is_pure,
+    iter_effects,
+    mutated_slots,
+    node_effects,
+    reads,
+    writes,
+)
 
 
 class State(Shape):
@@ -55,3 +64,36 @@ def test_write_ref_is_not_also_a_read():
 def test_fabrics_folds_refs_to_their_types():
     cmd, _target, _source = _write_tree()
     assert {nu.mem.ObjectRef, Attr} <= fabrics(cmd)
+
+
+def test_node_effects_reads_one_level():
+    cmd, target, source = _write_tree()
+    assert list(node_effects(cmd)) == [(target, Effect.WRITE), (source, Effect.READ)]
+    nested = Sequential(cmd)
+    assert list(node_effects(nested)) == []  # the refs sit one level down
+    assert set(iter_effects(nested)) == {(target, Effect.WRITE), (source, Effect.READ)}
+
+
+def test_node_effects_skips_a_structural_slot():
+    class Inner(Shape):
+        y = nu.mem.ObjectRef.slot()
+
+    class Outer(Shape):
+        inner = nu.mem.ShapeRef.slot(Inner)
+
+    leaf = Outer.inner.y
+    assert list(node_effects(leaf)) == []  # the parent ref is address, not a read
+    assert Outer.inner not in reads(leaf.set(1))
+
+
+def test_mutated_slots():
+    cmd, _target, _source = _write_tree()
+    assert mutated_slots(cmd) == frozenset({0})
+    assert mutated_slots(Literal(1)) == frozenset()
+
+
+def test_is_dynamic():
+    from nu.prog import Eval
+
+    assert is_dynamic(Eval(Literal(1)))
+    assert not is_dynamic(Sequential(Literal(1)))
