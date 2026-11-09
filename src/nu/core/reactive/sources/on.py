@@ -72,7 +72,9 @@ _SYNC_UNSUPPORTED = (
 
 def _scope_of(child: object) -> type | None:
     """The root Shape a Ref chain is rooted at; None for anything that is not one."""
-    return getattr(child, "_root_shape", None)
+    from nu.domains.shape.base import StructuredRef
+
+    return child._root_shape if isinstance(child, StructuredRef) else None
 
 
 def _resolve_observer(rt: Runtime, scope: type | None) -> ObserverProtocol:

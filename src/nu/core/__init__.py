@@ -133,6 +133,8 @@ from nu.core.iteration import Enumerate, Iter, Next, Reversed, Zip
 from nu.core.logical import And, Not, Or, ToBool, bool
 from nu.core.null import Fallback, IsNull
 from nu.core.reactive import (
+    RECHECK_AFTER,
+    RECHECK_EVERY,
     OnAny,
     OnChange,
     OnChildChange,
@@ -195,6 +197,8 @@ from nu.core.transform import (
 
 
 __all__ = [
+    "RECHECK_AFTER",
+    "RECHECK_EVERY",
     "STDERR",
     "STDIN",
     "STDOUT",

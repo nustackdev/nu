@@ -11,11 +11,10 @@ from typing import TYPE_CHECKING
 
 from nu.context.attrs.binders import bind
 from nu.core._stream import aiter_any
-from nu.domains.shape.interactions import AdvanceCursor
 from nu.lang import StreamQuery
 
 from .._body import async_only
-from ..level._wakes import DEFAULT_AFTER, DEFAULT_EVERY, Wakes, read_schedule, schedule_terms
+from ..level._wakes import Wakes, read_schedule, schedule_terms
 from ..sources.on import OnChildrenChange
 
 
@@ -41,25 +40,31 @@ class Stream(StreamQuery):
             under.
         after: re-drain offsets in seconds after subscribing, for the window
             a fresh subscription may not yet be heard in. A term yielding an
-            iterable of floats, or a literal one.
+            iterable of floats, or a literal one. Empty by default: re-drains
+            are opt in (``after=nu.RECHECK_AFTER``).
         every: seconds between standing re-drains once ``after`` is spent.
-            ``None`` turns them off. A term yielding a float or None, or a
+            ``None`` (the default) turns them off; opt in with
+            ``every=nu.RECHECK_EVERY``. A term yielding a float or None, or a
             literal one.
 
     Notes:
         - Children are ``[advance, change, body, key, log_key, after,
           every]``: ``advance`` is an ``AdvanceCursor`` over ``source``,
           ``change`` an ``OnChildrenChange`` subscription on ``source``.
+        - Brackets nothing itself: each drain step reads ``source`` under
+          whatever bracket the caller puts around the stream. A fabric that
+          needs its reads bracketed is bracketed by the caller.
         - Subscribes first, then drains: walks ``advance`` to exhaustion,
           running ``body`` per item. An item appended at any point after the
           subscribe is either in that first drain or wakes a later one, so
           none falls between catching up and following.
         - Drains are driven like a level flow's passes: once right after
-          subscribing, again on each change notification, and on the
-          ``after`` / ``every`` re-checks, so a lost notification is caught
-          late rather than never. Wakes landing while a drain runs merge
-          into one more drain. Re-draining from the cursor is idempotent:
-          a drain that finds nothing new runs no body.
+          subscribing and again on each change notification. Without
+          re-checks a lost notification waits for the next one; with
+          ``after`` / ``every`` set it is caught late rather than never.
+          Wakes landing while a drain runs merge into one more drain.
+          Re-draining from the cursor is idempotent: a drain that finds
+          nothing new runs no body.
         - ``key`` is bound per item for as long as that item's ``body`` is
           drained, the same scoped binding ``Map`` / ``Filter`` give their
           loop variable. ``log_key`` is the cursor's own position, bound for
@@ -87,10 +92,11 @@ class Stream(StreamQuery):
         *,
         key: object = None,
         log_key: object = "stream_log_key",
-        after: Iterable[float] | object = DEFAULT_AFTER,
-        every: float | object | None = DEFAULT_EVERY,
+        after: Iterable[float] | object = (),
+        every: float | object | None = None,
     ) -> None:
         from nu.context import Attr
+        from nu.domains.shape.interactions import AdvanceCursor
 
         body, (key,) = bind("Stream", body, key=key)
         if key is None:

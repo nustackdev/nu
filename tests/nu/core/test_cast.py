@@ -152,3 +152,7 @@ def test_collection_constructor_propagates_a_sentinel():
 def test_collection_aeval_mirrors_eval():
     assert asyncio.run(_aeval(ToList(Literal((1, 2))))) == [1, 2]
     assert asyncio.run(_aeval(ToSet(Literal([1, 1, 2])))) == {1, 2}
+
+
+def test_collection_aeval_keeps_a_mapping_a_mapping():
+    assert asyncio.run(_aeval(ToDict(Literal({"a": 1})))) == {"a": 1}

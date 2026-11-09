@@ -9,7 +9,7 @@ from nu.engine.structure import Declared
 from nu.lang import Control
 
 from .._body import async_only, drain_body
-from ._wakes import DEFAULT_AFTER, DEFAULT_EVERY, Wakes, read_schedule, schedule_terms
+from ._wakes import Wakes, read_schedule, schedule_terms
 
 
 if TYPE_CHECKING:
@@ -38,9 +38,11 @@ class ReconcileWhile(Control):
             A tree, or a lambda taking no arguments.
         after: re-check offsets in seconds after binding, for the window a
             fresh subscription may not yet be heard in. A term yielding an
-            iterable of floats, or a literal one.
+            iterable of floats, or a literal one. Empty by default: re-checks
+            are opt in (``after=nu.RECHECK_AFTER``).
         every: seconds between standing re-checks once ``after`` is spent.
-            ``None`` turns them off. A term yielding a float or None, or a
+            ``None`` (the default) turns them off; opt in with
+            ``every=nu.RECHECK_EVERY``. A term yielding a float or None, or a
             literal one.
 
     Notes:
@@ -79,8 +81,8 @@ class ReconcileWhile(Control):
         cond: object,
         body: object,
         *,
-        after: Iterable[float] | object = DEFAULT_AFTER,
-        every: float | object | None = DEFAULT_EVERY,
+        after: Iterable[float] | object = (),
+        every: float | object | None = None,
     ) -> None:
         cond, () = bind("ReconcileWhile", cond)
         body, () = bind("ReconcileWhile", body)

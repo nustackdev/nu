@@ -15,7 +15,7 @@ from _support.reactive import Feed, live_rechecks, until
 
 import nu
 from nu.core.reactive.cursor.stream import Stream
-from nu.domains.shape.sequence import SequenceRef
+from nu.domains.shape.collections.abc.sequence import SequenceRef
 from nu.lang import Context, Literal, StreamQuery
 
 

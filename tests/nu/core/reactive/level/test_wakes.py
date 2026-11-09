@@ -36,11 +36,29 @@ def _schedule(term: object) -> tuple:
 
 
 def test_schedule_defaults_and_normalisation() -> None:
-    assert _schedule(Reconcile(AttrRef("feed"), nu.Noop())) == ((0.1, 0.3, 1.0), 30.0)
+    assert _schedule(Reconcile(AttrRef("feed"), nu.Noop())) == ((), None)
     wait = WaitUntil(AttrRef("feed"), nu.Literal(True), after=[1, 0.5], every=None)
     assert _schedule(wait) == ((0.5, 1.0), None)
     fold = ReconcileLatestEach(nu.Iter([1]), AttrRef("feed"), nu.Noop(), "x", every=2)
-    assert _schedule(fold) == ((0.1, 0.3, 1.0), 2.0)
+    assert _schedule(fold) == ((), 2.0)
+
+
+def test_rechecks_are_opt_in_with_the_standard_schedule() -> None:
+    term = Reconcile(AttrRef("feed"), nu.Noop(), after=nu.RECHECK_AFTER, every=nu.RECHECK_EVERY)
+    assert _schedule(term) == ((0.1, 0.3, 1.0), 30.0)
+
+
+async def test_no_rechecks_run_unless_asked() -> None:
+    feed, state, seen = Feed(), {"v": 0}, []
+    task = start(Reconcile(AttrRef("feed"), _passes(state, seen)), feed=feed)
+    await until(lambda: seen == [0])
+    assert live_rechecks() == []
+    feed.dropping = 1
+    state["v"] = 1
+    feed.fire("v")
+    await asyncio.sleep(0.15)
+    assert seen == [0]  # the dropped notification is not caught: nothing re-checks
+    await stop(task)
 
 
 def test_the_schedule_is_children_not_payload() -> None:

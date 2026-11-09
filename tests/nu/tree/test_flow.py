@@ -7,9 +7,9 @@ All tests work on the Nu-layer tree with no substrate needed.
 from __future__ import annotations
 
 import nu
+from nu.domains.shape.collections.abc.mapping import MappingRef
 from nu.domains.shape.interactions import Load
 from nu.domains.shape.item import ItemRef
-from nu.domains.shape.mapping import MappingRef
 from nu.engine.structure import Declared
 from nu.lang import Control, Literal
 from nu.tree import (
