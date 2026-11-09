@@ -33,6 +33,7 @@ from .sliceable import SliceableForm
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from nu.forms.collections.iterator_ import Iterator
     from nu.forms.primitives import Int
     from nu.lang import Arg, IntArg
 
@@ -67,7 +68,7 @@ class SequenceForm(
     Type Parameters:
         CollectionT: Native Python collection type (list[int], tuple[str, ...])
         ElementT: Native Python element type
-        CollectionResultT: Result for collection-level interactions (map_, filter_, reversed_, sorted_)
+        CollectionResultT: Result for collection-level interactions (slices)
         ElementResultT: Result for element-level interactions (first, last, sum_, min_, max_)
     """
 
@@ -179,21 +180,20 @@ class SequenceForm(
 
         return Int(Count(self, value))
 
-    def reversed(self) -> CollectionResultT:
-        """Self walked back to front, as a stream.
+    def reversed(self) -> Iterator[ElementT]:
+        """Self walked back to front, as a stream, like Python's ``reversed``.
 
         Notes:
-            - Yields a stream, not a materialized copy; consume it through
-              a Flow (`ForEachDo`) or a Ref-backed context. It doesn't
-              evaluate standalone as a scalar against a plain sequence
-              value.
+            - Yields a stream, not a materialized copy, like Python's
+              `reversed`; loop it with `nu.ForEachDo` or drain it with
+              `.to_list()`.
 
         Yields:
             The elements of self in reverse order.
         """
         from nu.core import Reversed
 
-        return cast("CollectionResultT", self._wrap_iterable_result(Reversed(self)))
+        return self._wrap_iterable_result(Reversed(self))
 
 
 class MutableSequenceForm(

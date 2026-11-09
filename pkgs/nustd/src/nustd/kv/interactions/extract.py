@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from nu.lang.runtime import Runtime
-    from virtuals.view import View
+    from virtuals.view import ViewBase
 
 
 __all__ = [
@@ -27,12 +27,12 @@ __all__ = [
 ]
 
 
-def _own_absence(err: ContainerNotFoundError, view: View) -> bool:
+def _own_absence(err: ContainerNotFoundError, view: ViewBase) -> bool:
     """Whether ``err`` names the view's own container, not one above or below it."""
     return err.site == view.container.site
 
 
-def _extract(view: View) -> object:
+def _extract(view: ViewBase) -> object:
     return view.eager.extract()  # type: ignore[attr-defined]
 
 

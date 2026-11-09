@@ -56,6 +56,9 @@ T = TypeVar("T")
 class PySetForm(SetLikeForm, Set[T]):
     """Read tier of a set slot: the set surface plus the set-only calls."""
 
+    def _wrap_set_result(self, operand: Nu) -> Set[T]:
+        return holding(Set(operand), set, elem=self._declared.elem)
+
 
 class MutablePySetForm(MutableSetForm, PySetForm[T]):
     """Mutable tier of a set slot: adds ``set``, ``erase`` and ``init``."""

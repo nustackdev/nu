@@ -12,7 +12,7 @@ fabric from the declared value; a slice stays a value.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 from nu.forms.collections.abc.sequence import MutableSequenceForm as _MutableSequenceForm
 from nu.forms.collections.abc.sequence import ReactiveSequenceForm as _ReactiveSequenceForm
@@ -29,8 +29,9 @@ from ...collection import (
 
 
 if TYPE_CHECKING:
-    from nu.forms import Iterator, List
-    from nu.lang import Form, Nu
+    from nu.forms import Iterator
+    from nu.forms.primitives import Object
+    from nu.lang import IntArg, Nu
 
 
 __all__ = [
@@ -46,23 +47,19 @@ __all__ = [
 class SequenceForm(CollectionForm, _SequenceForm):
     """Shape sequence: ordered-element ops + exists/extract, typed by the declaration."""
 
-    def _wrap_element_result(self, operand: Nu) -> Form:
+    def _wrap_element_result(self, operand: Nu) -> Object:
         return form_of(self._declared.elem)(operand)  # type: ignore[return-value]
 
-    def iter(self) -> Iterator:
-        """A lazy stream over its elements, typed by the declared value."""
-        from nu.core import Iter
-
-        return self._wrap_iterable_result(Iter(self))
-
     def _wrap_iterable_result(self, operand: Nu) -> Iterator:
+        """A stream over its elements (``iter``, ``reversed``), typed by the declaration."""
         from collections.abc import Iterator as PyIterator
 
         from nu.forms import Iterator
 
         return holding(Iterator(operand), PyIterator, elem=self._declared.elem)
 
-    def _wrap_sliceable_result(self, operand: Nu) -> List:
+    def _wrap_sliceable_result(self, operand: Nu) -> Nu:
+        """A slice: a List carrying the declared element type on. A row narrows it to its own type."""
         from nu.forms import List
 
         return holding(List(operand), list, elem=self._declared.elem)
@@ -85,10 +82,14 @@ class SequenceRef(SequenceForm, StructuredRef):
     substrate base supplies it, and a fabric that leaves it out fails loudly.
     """
 
-    def __getitem__(self, index: object) -> StructuredRef:
+    @overload
+    def __getitem__(self, index: IntArg) -> StructuredRef: ...
+    @overload
+    def __getitem__(self, index: slice) -> _SequenceForm: ...
+    def __getitem__(self, index: IntArg | slice) -> StructuredRef | _SequenceForm:
         """Int index navigates to the child Ref; slice routes to the form-level slice op."""
         if isinstance(index, slice):
-            return self.slice(index.start, index.stop, index.step)  # type: ignore[return-value]
+            return self.slice(index.start, index.stop, index.step)  # type: ignore[no-any-return]
         return self._wrap_item_ref(index)
 
 

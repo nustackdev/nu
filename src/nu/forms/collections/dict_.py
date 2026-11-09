@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar, overload
+from typing import TYPE_CHECKING, Generic, TypeVar, cast, overload
 
 from nu.lang import TypedNu
 
@@ -23,7 +23,6 @@ if TYPE_CHECKING:
         Object,
         Str,
     )
-    from .list_ import List
     from .views import DictItems, DictKeys, DictValues
 
 
@@ -192,7 +191,8 @@ class Dict(
             >>> list(nu.run(nu.Dict.of(a=1, b=2).keys())[0])
             ['a', 'b']
         """
-        return super().keys(after=after, limit=limit)
+        # the base types every view as one collection result; ``_wrap_keys_result`` makes it DictKeys
+        return cast("DictKeys[K]", super().keys(after=after, limit=limit))
 
     def values(self) -> DictValues[V]:  # type: ignore[override]
         """Self's values as a live view.
@@ -285,12 +285,6 @@ class Dict(
         from .abc.mapping_interactions import MergeUpdate
 
         return self._wrap_mapping_result(MergeUpdate(self, other))
-
-    def _wrap_iterable_result(self, operand: Nu) -> List:
-        """Wrap operand as List."""
-        from .list_ import List
-
-        return List(operand)
 
     def _wrap_element_result(self, operand: Nu) -> Object:
         """Wrap operand as Object element."""

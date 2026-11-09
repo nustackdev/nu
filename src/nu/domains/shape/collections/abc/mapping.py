@@ -39,7 +39,8 @@ from ...collection import (
 
 if TYPE_CHECKING:
     from nu.forms import DictItems, DictKeys, DictValues, Iterator
-    from nu.lang import Form, Nu
+    from nu.forms.primitives import Object
+    from nu.lang import Nu
 
 
 __all__ = [
@@ -61,19 +62,14 @@ __all__ = [
 class MappingForm(CollectionForm, _MappingForm):
     """Shape mapping: key-value ops + exists/extract, typed by the declaration."""
 
-    def _wrap_value_result(self, operand: Nu) -> Form:
+    def _wrap_value_result(self, operand: Nu) -> Object:
         return form_of(self._declared.elem)(operand)  # type: ignore[return-value]
 
-    def _wrap_element_result(self, operand: Nu) -> Form:
+    def _wrap_element_result(self, operand: Nu) -> Object:
         return form_of(self._declared.key)(operand)  # type: ignore[return-value]
 
-    def iter(self) -> Iterator:
-        """A lazy stream over its keys, typed by the declared key."""
-        from nu.core import Iter
-
-        return self._wrap_iterable_result(Iter(self))
-
     def _wrap_iterable_result(self, operand: Nu) -> Iterator:
+        """A stream over its keys (``iter``), typed by the declaration."""
         from collections.abc import Iterator as PyIterator
 
         from nu.forms import Iterator

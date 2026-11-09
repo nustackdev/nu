@@ -13,9 +13,11 @@ from nu.forms import (
     Bytes,
     Dict,
     Int,
+    Iterator,
     List,
     Set,
     Str,
+    Tuple,
 )
 from nu.lang import NULL, Literal
 from nu.lang.helpers import aeval, compile, eval
@@ -96,6 +98,13 @@ def test_dict_reads():
     assert val(Dict({"a": 1}).get_item("a")) == 1
     assert val(Dict({"a": 1}).get_item("z", 9)) == 9
     assert val(Dict({"a": 1}).setdefault("b", 5)) == 5
+
+
+def test_sequence_reversed_is_a_stream():
+    for seq in (List.of(1, 2, 3), Tuple.of(1, 2, 3)):
+        stream = seq.reversed()
+        assert isinstance(stream, Iterator)
+        assert val(stream.to_list()) == [3, 2, 1]
 
 
 def test_dict_reversed_reads():

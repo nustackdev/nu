@@ -28,8 +28,9 @@ from ...collection import (
 
 
 if TYPE_CHECKING:
-    from nu.forms import Iterator, Set
-    from nu.lang import Form, Nu
+    from nu.forms import Iterator
+    from nu.forms.primitives import Object
+    from nu.lang import Nu
 
 
 __all__ = [
@@ -45,23 +46,19 @@ __all__ = [
 class SetLikeForm(CollectionForm, _SetLikeForm):
     """Shape set: unordered-unique-element ops + exists/extract, typed by the declaration."""
 
-    def _wrap_element_result(self, operand: Nu) -> Form:
+    def _wrap_element_result(self, operand: Nu) -> Object:
         return form_of(self._declared.elem)(operand)  # type: ignore[return-value]
 
-    def iter(self) -> Iterator:
-        """A lazy stream over its elements, typed by the declared value."""
-        from nu.core import Iter
-
-        return self._wrap_iterable_result(Iter(self))
-
     def _wrap_iterable_result(self, operand: Nu) -> Iterator:
+        """A stream over its elements (``iter``), typed by the declaration."""
         from collections.abc import Iterator as PyIterator
 
         from nu.forms import Iterator
 
         return holding(Iterator(operand), PyIterator, elem=self._declared.elem)
 
-    def _wrap_set_result(self, operand: Nu) -> Set:
+    def _wrap_set_result(self, operand: Nu) -> _SetLikeForm:
+        """Set algebra: a Set carrying the declared element type on. A row narrows it to its own type."""
         from nu.forms import Set
 
         return holding(Set(operand), set, elem=self._declared.elem)

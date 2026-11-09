@@ -213,9 +213,8 @@ class ListRef(MutablePyListRef[T], RefBase[list[T]], Generic[T]):
         """A lazy stream over the elements, each the declared value's form."""
         return super().iter()
 
-    @overload
-    def __getitem__(self, index: slice) -> List[T]: ...
-    @overload
+    # a Shape element descends to the Shape's own type, which no value-form overload names
+    @overload  # type: ignore[override]
     def __getitem__(self: ListRef[bool], index: IntArg) -> BoolRef: ...
     @overload
     def __getitem__(self: ListRef[int], index: IntArg) -> IntRef: ...
@@ -233,9 +232,11 @@ class ListRef(MutablePyListRef[T], RefBase[list[T]], Generic[T]):
     def __getitem__(self: ListRef[L], index: IntArg) -> L: ...
     @overload
     def __getitem__(self, index: IntArg) -> ObjectRef: ...
-    def __getitem__(self, index: object) -> StructuredRef:
+    @overload
+    def __getitem__(self, index: slice) -> List[T]: ...
+    def __getitem__(self, index: IntArg | slice) -> StructuredRef | List[T]:
         """The mem ref for the declared value at ``index``; a slice is a List."""
-        return super().__getitem__(index)
+        return super().__getitem__(index)  # type: ignore[return-value]
 
 
 class SetRef(MutablePySetRef[T], RefBase[set[T]], Generic[T]):

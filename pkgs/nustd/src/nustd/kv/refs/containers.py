@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Generic, overload
 from typing_extensions import TypeVar
 
 from nu.domains.shape import (
+    MappingRef,
     ReactivePyDictRef,
     ReactivePyListRef,
     ReactivePySetRef,
@@ -71,7 +72,7 @@ S = TypeVar("S", bound=Shape)
 L = TypeVar("L", bound=ItemRef)
 
 
-class _MappingDescent(Generic[K, V]):
+class _MappingDescent(MappingRef, Generic[K, V]):
     """What every kv mapping ref shares: typed descent by key and the NULL-aware extract.
 
     Mixed in first by ``DictRef`` and ``Kh57Ref``, which sit on different
@@ -229,9 +230,8 @@ class ListRef(ReactivePyListRef[T], ViewRef[list[T]], Generic[T]):
         """A lazy stream over the elements, each the declared value's form."""
         return super().iter()
 
-    @overload
-    def __getitem__(self, index: slice) -> List[T]: ...
-    @overload
+    # a Shape element descends to the Shape's own type, which no value-form overload names
+    @overload  # type: ignore[override]
     def __getitem__(self: ListRef[bool], index: IntArg) -> BoolRef: ...
     @overload
     def __getitem__(self: ListRef[int], index: IntArg) -> IntRef: ...
@@ -249,9 +249,11 @@ class ListRef(ReactivePyListRef[T], ViewRef[list[T]], Generic[T]):
     def __getitem__(self: ListRef[L], index: IntArg) -> L: ...
     @overload
     def __getitem__(self, index: IntArg) -> ObjectRef: ...
-    def __getitem__(self, index: object) -> StructuredRef:
+    @overload
+    def __getitem__(self, index: slice) -> List[T]: ...
+    def __getitem__(self, index: IntArg | slice) -> StructuredRef | List[T]:
         """The kv ref for the declared value at ``index``; a slice is a List."""
-        return super().__getitem__(index)
+        return super().__getitem__(index)  # type: ignore[return-value]
 
 
 class SetRef(ReactivePySetRef[T], ViewRef[set[T]], Generic[T]):

@@ -62,15 +62,21 @@ class ReactivePyDictForm(ReactiveOrderedMappingForm, MutablePyDictForm[K, V]):
     """Reactive tier of a dict slot: adds ``on_change`` and the tree-aware watches."""
 
 
-class PyDictRef(OrderedMappingRef, PyDictForm[K, V]):
+# On the refs ``ref[key]`` is descent to the child ref, which replaces ``Dict``'s
+# value read by design; typing cannot say the child is also the value form.
+
+
+class PyDictRef(OrderedMappingRef, PyDictForm[K, V]):  # type: ignore[misc]
     """Dict slot ref, read tier: ``ref[key]`` descends to the value's child ref."""
 
 
-class MutablePyDictRef(MutableOrderedMappingRef, MutablePyDictForm[K, V], PyDictRef[K, V]):
+class MutablePyDictRef(  # type: ignore[misc]
+    MutableOrderedMappingRef, MutablePyDictForm[K, V], PyDictRef[K, V]
+):
     """Dict slot ref, mutable tier."""
 
 
-class ReactivePyDictRef(
+class ReactivePyDictRef(  # type: ignore[misc]
     ReactiveOrderedMappingRef, ReactivePyDictForm[K, V], MutablePyDictRef[K, V]
 ):
     """Dict slot ref, reactive tier."""

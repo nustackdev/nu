@@ -30,10 +30,10 @@ if TYPE_CHECKING:
     )
     from nu.domains.shape.interactions import (
         Erase,
-        Extract,
         SetCmd,
     )
     from nu.forms import Bool
+    from nu.lang import ScalarQuery
 
 
 __all__ = [
@@ -105,8 +105,8 @@ class CollectionForm(SlotForm):
 
         return Bool(And(self.exists(), Not(self)))
 
-    def extract(self) -> Extract:
-        """Build an ``Extract`` query."""
+    def extract(self) -> ScalarQuery:
+        """Build an ``Extract`` query. A fabric may answer with its own whole-subtree read."""
         from nu.domains.shape.interactions import Extract
 
         return Extract(self)

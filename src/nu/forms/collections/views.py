@@ -62,12 +62,6 @@ class DictKeys(
 
         return Set(operand)
 
-    def _wrap_iterable_result(self, operand: Nu) -> List[K]:
-        """Wrap operand as List."""
-        from .list_ import List
-
-        return List(operand)
-
     def _wrap_element_result(self, operand: Nu) -> Object:
         """Wrap operand as Object element."""
         from ..primitives import Object
@@ -141,12 +135,6 @@ class DictValues(
         >>> nu.run(values.contains(1))[0]
         True
     """
-
-    def _wrap_iterable_result(self, operand: Nu) -> List[V]:
-        """Wrap operand as List."""
-        from .list_ import List
-
-        return List(operand)
 
     def _wrap_element_result(self, operand: Nu) -> Object:
         """Wrap operand as Object element."""
@@ -229,12 +217,6 @@ class DictItems(
         from .set_ import Set
 
         return Set(operand)
-
-    def _wrap_iterable_result(self, operand: Nu) -> List[tuple[K, V]]:
-        """Wrap operand as List."""
-        from .list_ import List
-
-        return List(operand)
 
     def _wrap_element_result(self, operand: Nu) -> Object:
         """Wrap operand as Object element."""

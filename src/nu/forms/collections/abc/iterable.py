@@ -45,8 +45,7 @@ class IterableForm(Form, Generic[ElementT, CollectionResultT, ElementResultT]):
     functions in `abc.fn`, not methods on this class.
 
     Notes:
-        - Subclasses must override `_wrap_iterable_result` and
-          `_wrap_element_result`.
+        - Subclasses must override `_wrap_element_result`.
 
     Example::
 
@@ -72,18 +71,19 @@ class IterableForm(Form, Generic[ElementT, CollectionResultT, ElementResultT]):
             nu.ForEachDo(nu.List.of(1, 2, 3).iter(), body)
         """
         from nu.core import Iter
-        from nu.forms.collections.iterator_ import Iterator
 
-        return Iterator(Iter(self))
+        return self._wrap_iterable_result(Iter(self))
 
-    def _wrap_iterable_result(self, operand: Nu) -> CollectionResultT:
-        """Wrap operand in the subclass's collection type.
+    def _wrap_iterable_result(self, operand: Nu) -> Iterator[ElementT]:
+        """Wrap a stream term over self's elements as an Iterator.
 
         Notes:
-            - Abstract hook. Every concrete subclass must override this;
-              the base raises.
+            - The one hook for streams: `iter` and `reversed` both route
+              through it. Override to type the elements a stream carries.
         """
-        raise NotImplementedError()
+        from nu.forms.collections.iterator_ import Iterator
+
+        return Iterator(operand)
 
     def _wrap_element_result(self, operand: Nu) -> ElementResultT:
         """Wrap operand in the subclass's element type.

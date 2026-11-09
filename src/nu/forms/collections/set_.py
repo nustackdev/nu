@@ -14,7 +14,6 @@ if TYPE_CHECKING:
     from nu.lang import Arg, FrozenSetArg, Nu, SetArg
 
     from ..primitives import Bool, Object
-    from .list_ import List
 
 
 __all__ = [
@@ -91,16 +90,6 @@ class Set(
             The operand wrapped as Set.
         """
         return Set(operand)
-
-    def _wrap_iterable_result(self, operand: Nu) -> List:
-        """Wrap operand as List.
-
-        Yields:
-            The operand wrapped as List.
-        """
-        from .list_ import List
-
-        return List(operand)
 
     def _wrap_element_result(self, operand: Nu) -> Object:
         """Wrap operand as an elem-typed Form when known; Object otherwise.
@@ -271,16 +260,6 @@ class FrozenSet(
             The operand wrapped as FrozenSet.
         """
         return FrozenSet(operand)
-
-    def _wrap_iterable_result(self, operand: Nu) -> List:
-        """Wrap operand as List.
-
-        Yields:
-            The operand wrapped as List.
-        """
-        from .list_ import List
-
-        return List(operand)
 
     def _wrap_element_result(self, operand: Nu) -> Object:
         """Wrap operand as Object element.

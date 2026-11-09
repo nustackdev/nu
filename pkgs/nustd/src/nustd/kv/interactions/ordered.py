@@ -19,7 +19,7 @@ atoms.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from nu.engine.structure import Declared
 from nu.lang import Command, ScalarQuery
@@ -30,6 +30,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from nu.lang.runtime import Runtime
+    from nustd.kv.refs.base import ViewRef
+    from virtuals.views import FractionalIndexedDictViewBase, LogIndexedDictViewBase
 
 
 __all__ = [
@@ -63,7 +65,7 @@ class _InsertBase(Command):
     _after: bool = False
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref = self._children[0]
+        ref = cast("ViewRef", self._children[0])
         _ref_thunk, anchor_thunk, id_thunk, value_thunk = children
         after = self._after
 
@@ -74,7 +76,7 @@ class _InsertBase(Command):
             _guard_ids(anchor, key)
             if is_null(value):
                 raise ValueError("cannot write with a NULL operand")
-            view = ref._fetch(rt, _child_nid(rt, nid, 0))
+            view = cast("FractionalIndexedDictViewBase", ref._fetch(rt, _child_nid(rt, nid, 0)))
             if after:
                 view.insert_after(anchor, key, value)
             else:
@@ -83,7 +85,7 @@ class _InsertBase(Command):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref = self._children[0]
+        ref = cast("ViewRef", self._children[0])
         _ref_thunk, anchor_thunk, id_thunk, value_thunk = children
         after = self._after
 
@@ -94,7 +96,9 @@ class _InsertBase(Command):
             _guard_ids(anchor, key)
             if is_null(value):
                 raise ValueError("cannot write with a NULL operand")
-            view = await ref._afetch(rt, _child_nid(rt, nid, 0))
+            view = cast(
+                "FractionalIndexedDictViewBase", await ref._afetch(rt, _child_nid(rt, nid, 0))
+            )
             if after:
                 view.insert_after(anchor, key, value)
             else:
@@ -205,7 +209,7 @@ class OrderedMoveCmd(Command):
             view.move_after(key, after)  # type: ignore[attr-defined]
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref = self._children[0]
+        ref = cast("ViewRef", self._children[0])
         _ref_thunk, id_thunk, before_thunk, after_thunk = children
 
         def thunk(rt: Runtime) -> None:
@@ -217,7 +221,7 @@ class OrderedMoveCmd(Command):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref = self._children[0]
+        ref = cast("ViewRef", self._children[0])
         _ref_thunk, id_thunk, before_thunk, after_thunk = children
 
         async def athunk(rt: Runtime) -> None:
@@ -240,21 +244,27 @@ class _EdgeBase(ScalarQuery):
     _last: bool = False
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref = self._children[0]
+        ref = cast("ViewRef", self._children[0])
         last = self._last
 
         def thunk(rt: Runtime) -> object:
-            view = ref._fetch(rt, _child_nid(rt, nid, 0))
+            view = cast(
+                "FractionalIndexedDictViewBase | LogIndexedDictViewBase",
+                ref._fetch(rt, _child_nid(rt, nid, 0)),
+            )
             return view.last() if last else view.first()
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref = self._children[0]
+        ref = cast("ViewRef", self._children[0])
         last = self._last
 
         async def athunk(rt: Runtime) -> object:
-            view = await ref._afetch(rt, _child_nid(rt, nid, 0))
+            view = cast(
+                "FractionalIndexedDictViewBase | LogIndexedDictViewBase",
+                await ref._afetch(rt, _child_nid(rt, nid, 0)),
+            )
             return view.last() if last else view.first()
 
         return athunk

@@ -93,10 +93,6 @@ class List(
         """
         return cls(ListOf(*items))
 
-    def _wrap_iterable_result(self, operand: Nu) -> List:
-        """Wrap operand as List."""
-        return List(operand)
-
     def _wrap_sliceable_result(self, operand: Nu) -> List:
         """Wrap operand as List for slice results."""
         return List(operand)
@@ -138,9 +134,9 @@ class List(
     @overload
     def __getitem__(self: List[bytes], key: IntArg) -> Bytes: ...
     @overload
-    def __getitem__(self, key: slice) -> List[T]: ...
-    @overload
     def __getitem__(self, key: IntArg) -> Object: ...
+    @overload
+    def __getitem__(self, key: slice) -> List[T]: ...
     def __getitem__(self, key):  # type: ignore[no-untyped-def]
         """Element at an int index, or subsequence for a slice.
 

@@ -9,7 +9,7 @@ output a run writes as it goes.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic
+from typing import TYPE_CHECKING, Generic, cast, overload
 
 from typing_extensions import TypeVar
 
@@ -24,8 +24,8 @@ if TYPE_CHECKING:
     from collections.abc import Iterable
 
     from nu.core.reactive import OnChange
-    from nu.forms import Iterator
-    from nu.lang import Arg, Form, IntArg, Nu
+    from nu.forms import Iterator, List, Object
+    from nu.lang import Arg, IntArg, Nu
 
 
 __all__ = [
@@ -118,14 +118,20 @@ class RingRef(SequenceRef, ReactiveCollectionForm, ViewRef[list[T]], Generic[T])
         msg = "a ring needs its capacity: declare it with RingRef.slot(value, capacity=n)"
         raise TypeError(msg)
 
-    def __getitem__(self, index: IntArg | slice) -> Form:
+    # an entry has no address of its own, so ``ring[i]`` reads it instead of descending
+    @overload  # type: ignore[override]
+    def __getitem__(self, index: IntArg) -> Object: ...
+    @overload
+    def __getitem__(self, index: slice) -> List[T]: ...
+    def __getitem__(self, index: IntArg | slice) -> Object | List[T]:
         """The entry at ``index``, oldest first, read whole; a slice is a List.
 
         Notes:
             - A read, not a child ref: an entry has no address of its own,
               so this skips the child navigation ``SequenceRef`` gives.
         """
-        return super(SequenceRef, self).__getitem__(index)  # type: ignore[index]
+        # the value form's subscript, past SequenceRef's descent
+        return cast("Object | List[T]", super(SequenceRef, self).__getitem__(index))
 
     def iter(self) -> Iterator[T]:
         """A lazy stream over the entries kept, oldest first."""

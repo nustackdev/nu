@@ -47,7 +47,7 @@ def _stores(term: Nu) -> dict[Hashable | None, bool]:
     return stores
 
 
-def _write_brackets(node: object) -> Iterator[Hashable | None]:
+def _write_brackets(node: Nu) -> Iterator[Hashable | None]:
     """The scope of every Transaction already in the term, past dynamic subtrees."""
     if nu.tree.is_dynamic(node):
         return

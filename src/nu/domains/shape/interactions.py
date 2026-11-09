@@ -21,7 +21,7 @@ interface for all substrates, reached through the shape Form mixins.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from nu.engine.structure import Declared
 from nu.lang import Command, ScalarQuery
@@ -34,6 +34,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from nu.lang.runtime import Runtime
+
+    from .base import StructuredRef
 
 __all__ = [
     "AdvanceCursor",
@@ -80,7 +82,7 @@ class Exists(ScalarQuery):
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref = self._children[0]
+        ref = cast("StructuredRef", self._children[0])
 
         def thunk(rt: Runtime) -> bool:
             return bool(ref._exists(rt, rt.program.children[nid][0]))
@@ -88,7 +90,7 @@ class Exists(ScalarQuery):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref = self._children[0]
+        ref = cast("StructuredRef", self._children[0])
 
         async def athunk(rt: Runtime) -> bool:
             return bool(await ref._aexists(rt, rt.program.children[nid][0]))

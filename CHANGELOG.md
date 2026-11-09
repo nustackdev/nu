@@ -12,6 +12,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Reversing a list or tuple yields a stream, like Python's reversed
+- Shape rows, refs and store steps type-check again after the grid rebuild
 - Reading a mapping's keys last first works on stores, sync or async alike
 - The host-kill containment test no longer fails when the machine is busy
 - Closing toasts finish fading before they leave, so bursts no longer flicker

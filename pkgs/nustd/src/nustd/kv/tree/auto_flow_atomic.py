@@ -38,11 +38,11 @@ if TYPE_CHECKING:
 __all__ = ["auto_flow_atomic"]
 
 
-def _has_uncovered_ref(node: object, pass_scope: Hashable | None, enclosing: tuple) -> bool:
+def _has_uncovered_ref(node: Nu, pass_scope: Hashable | None, enclosing: tuple) -> bool:
     return next(iter_uncovered(node, pass_scope, enclosing), None) is not None
 
 
-def _has_uncovered_write(node: object, pass_scope: Hashable | None, enclosing: tuple) -> bool:
+def _has_uncovered_write(node: Nu, pass_scope: Hashable | None, enclosing: tuple) -> bool:
     return any(is_w for _, is_w in iter_uncovered(node, pass_scope, enclosing))
 
 
