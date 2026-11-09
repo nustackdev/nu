@@ -16,6 +16,7 @@ from nu.engine.structure import Declared
 from nu.factory.host import host
 from nu.lang import Command, ScalarAction, ScalarQuery, StreamQuery
 from nu.lang.null import is_null
+from nu.lang.sentinels import UNSET
 
 from .paged_mapping import PagedMapping
 
@@ -185,31 +186,42 @@ class Items(ScalarQuery):
 
 
 class Get(ScalarQuery):
-    """Get value from mapping with optional default: mapping.get_item(key, default) or mapping[key]."""
+    """Value at a key: ``mapping[key]``, or ``mapping.get(key, default)`` when a default is given.
+
+    Children are ``(mapping, key)`` or ``(mapping, key, default)``. A default,
+    NULL and None included, is forwarded to the mapping's own ``get``, which
+    decides when it applies; with none, a missing key raises as ``[]`` does.
+    """
+
+    def __init__(self, mapping: object, key: object, default: object = UNSET) -> None:
+        if default is UNSET:
+            super().__init__(mapping, key)
+        else:
+            super().__init__(mapping, key, default)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        a_t, b_t, c_t = children
+        a_t, b_t, *rest = children
+        c_t = rest[0] if rest else None
 
         def thunk(rt: Runtime) -> object:
             a = a_t(rt)
             b = b_t(rt)
-            c = c_t(rt)
-            if c is None:
+            if c_t is None:
                 return a[b]
-            return a.get(b, c)
+            return a.get(b, c_t(rt))
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        a_t, b_t, c_t = children
+        a_t, b_t, *rest = children
+        c_t = rest[0] if rest else None
 
         async def athunk(rt: Runtime) -> object:
             a = await a_t(rt)
             b = await b_t(rt)
-            c = await c_t(rt)
-            if c is None:
+            if c_t is None:
                 return a[b]
-            return a.get(b, c)
+            return a.get(b, await c_t(rt))
 
         return athunk
 
@@ -543,14 +555,24 @@ class DictPop(ScalarAction):
     """Pop value by key with optional default: mapping.pop(key, default).
 
     Mutates slot 0 (removes the entry) and yields the value or default.
+    Children are ``(mapping, key)`` or ``(mapping, key, default)``. A default,
+    NULL and None included, is forwarded to the mapping's own ``pop``: it is
+    yielded, never written, so NULL is a valid default.
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
     _creates = Declared(value=frozenset(), name="creates")
     """Acts on an absent container as on an empty one, and leaves it absent."""
 
+    def __init__(self, mapping: object, key: object, default: object = UNSET) -> None:
+        if default is UNSET:
+            super().__init__(mapping, key)
+        else:
+            super().__init__(mapping, key, default)
+
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        a_t, b_t, c_t = children
+        a_t, b_t, *rest = children
+        c_t = rest[0] if rest else None
 
         def thunk(rt: Runtime) -> object:
             a = a_t(rt)
@@ -559,17 +581,15 @@ class DictPop(ScalarAction):
             b = b_t(rt)
             if is_null(b):
                 raise ValueError("cannot write with a NULL operand")
-            c = c_t(rt)
-            if is_null(c):
-                raise ValueError("cannot write with a NULL operand")
-            if c is None:
+            if c_t is None:
                 return a.pop(b)
-            return a.pop(b, c)
+            return a.pop(b, c_t(rt))
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        a_t, b_t, c_t = children
+        a_t, b_t, *rest = children
+        c_t = rest[0] if rest else None
 
         async def athunk(rt: Runtime) -> object:
             a = await a_t(rt)
@@ -578,12 +598,9 @@ class DictPop(ScalarAction):
             b = await b_t(rt)
             if is_null(b):
                 raise ValueError("cannot write with a NULL operand")
-            c = await c_t(rt)
-            if is_null(c):
-                raise ValueError("cannot write with a NULL operand")
-            if c is None:
+            if c_t is None:
                 return a.pop(b)
-            return a.pop(b, c)
+            return a.pop(b, await c_t(rt))
 
         return athunk
 

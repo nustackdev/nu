@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Mapping get and pop take None or NULL as a real default, like Python
 - Ordered and log collections can read an empty end as an explicit default
 - Shape refs are named after their forms, with two refs per built-in type
 - Container reads switch eager or lazy only on views that have both facets

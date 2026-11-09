@@ -7,7 +7,8 @@ work as on present ones.
 
 A never-written container is not an empty one: ``len``, iteration and
 ``contains`` raise, ``extract()`` gives NULL, removals act as on an empty
-container and create nothing.
+container and create nothing. A read given an explicit default (``get_item``,
+``pop``) gives it, as on an empty container.
 """
 
 from __future__ import annotations
@@ -322,3 +323,26 @@ def test_a_removal_that_needs_an_item_raises_and_creates_nothing(ctx, ref, write
     with pytest.raises(error):
         run(write, ctx)
     assert run(ref.exists(), ctx)[0] is False
+
+
+# --- explicit defaults on absent containers ------------------------------------
+
+
+@pytest.mark.parametrize("ref", [Root.meta, Root.inner.meta], ids=["root_dict", "nested_dict"])
+def test_an_explicit_default_reads_an_absent_dict_as_empty(ctx, ref) -> None:
+    assert run(ref.get_item("a", 0), ctx)[0] == 0
+    assert run(ref.get_item("a", None), ctx)[0] is None
+    assert is_null(run(ref.get_item("a", nu.NullForm()), ctx)[0])
+    assert run(ref.eager.pop("a", 0), ctx)[0] == 0
+    assert is_null(run(ref.eager.pop("a", nu.NullForm()), ctx)[0])
+    with pytest.raises(KeyError):
+        run(ref.get_item("a"), ctx)
+    assert run(ref.exists(), ctx)[0] is False
+
+
+async def test_an_explicit_default_reads_an_absent_dict_as_empty_async(ctx) -> None:
+    assert (await arun(Root.meta.get_item("a", 0), ctx))[0] == 0
+    assert is_null((await arun(Root.meta.eager.pop("a", nu.NullForm()), ctx))[0])
+    with pytest.raises(KeyError):
+        await arun(Root.meta.eager.pop("a"), ctx)
+    assert (await arun(Root.meta.exists(), ctx))[0] is False

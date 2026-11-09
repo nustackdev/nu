@@ -23,6 +23,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast, overload
 
+from nu.lang.sentinels import UNSET
+
 from .collection import CollectionForm
 
 
@@ -32,6 +34,7 @@ if TYPE_CHECKING:
     from nu.forms.collections.iterator_ import Iterator
     from nu.forms.collections.list_ import List
     from nu.lang import Arg, Nu
+    from nu.lang.sentinels import Unset
 
 
 __all__ = [
@@ -182,18 +185,21 @@ class MappingForm(
 
         return cast("CollectionResultT", self._wrap_items_result(Items(self)))
 
-    def get_item(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
-        """Value at key, falling back to default: mapping.get_item(key, default).
+    def get_item(self, key: Arg[KeyT], default: Arg[ValueT] | Unset = UNSET) -> ValueResultT:
+        """Value at key, falling back to default: mapping.get(key, default).
 
         Args:
             key: the key to look up.
-            default: the value to yield when key is missing.
+            default: the value to yield when key is missing. Any term, None
+                and NULL (``nu.NullForm()``) included. Optional.
 
         Notes:
             - Omitting default does not make a missing key safe: with no
               default this behaves like `mapping[key]` and raises at
               evaluation time on a missing key. Pass a default to get
-              Python `dict.get`-style fallback behaviour instead.
+              Python `dict.get` behaviour instead.
+            - The default goes to the mapping's own `get`, so a store view
+              gives it for a never-written container too.
 
         Yields:
             The value at key, or default when key is missing and default
@@ -205,6 +211,9 @@ class MappingForm(
 
             >>> nu.run(nu.Dict({"a": 1}).get_item("b", 0))[0]
             0
+
+            >>> nu.run(nu.Dict({"a": 1}).get_item("b", None))[0] is None
+            True
         """
         from .mapping_interactions import Get
 
@@ -295,18 +304,22 @@ class MutableMappingForm(
 
         return Update(self, other)
 
-    def pop(self, key: Arg[KeyT], default: Arg[ValueT] | None = None) -> ValueResultT:
+    def pop(self, key: Arg[KeyT], default: Arg[ValueT] | Unset = UNSET) -> ValueResultT:
         """Remove key and yield its value, or default if key is missing.
 
         Args:
             key: the key to remove.
-            default: the value to yield when key is missing.
+            default: the value to yield when key is missing. Any term, None
+                and NULL (``nu.NullForm()``) included: it is yielded, not
+                written. Optional.
 
         Notes:
             - Mutates slot 0 (removes the entry) and yields a value:
               an Action, not a Command.
             - Without a default, a missing key raises `KeyError`, as in
               Python.
+            - The default goes to the mapping's own `pop`, so a store view
+              gives it for a never-written container too.
             - A NULL self or key raises, as any write does.
 
         Yields:
