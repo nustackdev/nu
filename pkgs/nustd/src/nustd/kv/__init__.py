@@ -13,7 +13,7 @@ Usage::
         age = IntRef.slot()
 """
 
-import nustd.kv._compat  # noqa: F401  (register virtuals view ABCs)
+import nustd.kv._compat  # noqa: F401  (register the virtuals views with Extractable)
 from nustd.kv import errors, fabrics, interactions, paths, presets, refs, tree, views
 from nustd.kv.errors import BracketError, NullAddressError
 from nustd.kv.interactions import (

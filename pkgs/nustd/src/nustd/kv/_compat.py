@@ -1,54 +1,58 @@
-"""Register virtuals view types with Python ABCs.
+"""Register the virtuals views with core ``Extractable``.
 
-This allows Nu core ops (KeysOp, ValuesOp, SetItemCmd, etc.)
-to recognize virtuals views via isinstance() checks against
-collections.abc.Mapping, MutableMapping, etc.
+Every view is already the ``collections.abc`` type its virtuals collection base
+is registered as (a ``Sequence``, ``MutableMapping``, ``Set``, ...), so core ops
+recognize it with no help from here. What core cannot know is that a view is a
+live handle over storage: a kv read hands out the view, not plain data. Each
+view is registered with ``Extractable`` so that core ``Extract`` asks it for
+``extract()`` (``nu.Dict(ref).extract()`` yields a dict, not a live view).
 """
 
-from collections.abc import MutableMapping, MutableSequence, MutableSet
-
+from nu.domains.shape import Extractable
 from virtuals.views import (
-    DictViewBase,
+    ByteArrayView,
+    EagerDictView,
+    EagerFractionalIndexedDictView,
+    EagerIndexedDictView,
+    EagerKh57View,
+    EagerListView,
+    EagerLogIndexedDictView,
     FlatDictView,
     FlatListView,
-    FractionalIndexedDictViewBase,
-    IndexedDictViewBase,
-    Kh57ViewBase,
+    FrozenSetView,
+    LazyDictView,
+    LazyFractionalIndexedDictView,
+    LazyIndexedDictView,
+    LazyKh57View,
+    LazyListView,
+    LazyLogIndexedDictView,
     LightDictView,
-    ListViewBase,
-    LogIndexedDictViewBase,
+    RingView,
     SetView,
+    TupleView,
 )
 
 
-# DictViewBase covers both EagerDictView and LazyDictView
-MutableMapping.register(DictViewBase)
-
-# IndexedDictViewBase covers both EagerIndexedDictView and LazyIndexedDictView
-# (IndexedDictViewBase is a separate hierarchy from DictViewBase)
-MutableMapping.register(IndexedDictViewBase)
-
-# Kh57ViewBase covers both EagerKh57View and LazyKh57View
-# (sparse int-keyed mapping with kh57-encoded layout for range sampling)
-MutableMapping.register(Kh57ViewBase)
-
-# FractionalIndexedDictViewBase covers both facets of the ordered dict view
-# (ids kept in collection order, placed and moved relative to each other)
-MutableMapping.register(FractionalIndexedDictViewBase)
-
-# LogIndexedDictViewBase covers both facets of the log dict view
-# (ids listed in the order they were first set, append-only)
-MutableMapping.register(LogIndexedDictViewBase)
-
-# Flat/Light dict views (primitives-only, no nesting)
-MutableMapping.register(FlatDictView)
-MutableMapping.register(LightDictView)
-
-# ListViewBase covers both EagerListView and LazyListView
-MutableSequence.register(ListViewBase)
-
-# FlatListView (primitives-only, separate hierarchy)
-MutableSequence.register(FlatListView)
-
-# SetView has no lazy/eager facets (primitives only)
-MutableSet.register(SetView)
+for _view in (
+    EagerDictView,
+    LazyDictView,
+    EagerIndexedDictView,
+    LazyIndexedDictView,
+    EagerFractionalIndexedDictView,
+    LazyFractionalIndexedDictView,
+    EagerLogIndexedDictView,
+    LazyLogIndexedDictView,
+    EagerKh57View,
+    LazyKh57View,
+    FlatDictView,
+    LightDictView,
+    EagerListView,
+    LazyListView,
+    FlatListView,
+    TupleView,
+    ByteArrayView,
+    RingView,
+    SetView,
+    FrozenSetView,
+):
+    Extractable.register(_view)
