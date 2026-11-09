@@ -17,6 +17,7 @@ raises ``NullAddressError``. Branch on the key first (``IsNull``).
 
 from __future__ import annotations
 
+import operator
 import typing
 from enum import Enum
 from logging import getLogger
@@ -32,7 +33,7 @@ from virtuals import Empty as StorageEmpty
 from virtuals import Navigator
 from virtuals.collections import Subscriptable
 from virtuals.tkv.storage import SnapshotProtocol, TransactionProtocol
-from virtuals.view import AddressNotFoundError, ViewBase
+from virtuals.view import AddressNotFoundError, Faceted, ViewBase
 
 
 if TYPE_CHECKING:
@@ -115,9 +116,16 @@ def _resolve_storage_ctx(rt: Runtime, scope: type | None, resolved_path: tuple) 
 
 def _plain(value: object) -> object:
     """A stored value as a leaf reads it: a container stored decomposed comes back extracted."""
+    if isinstance(value, Faceted):
+        return value.eager.extract()  # type: ignore[attr-defined]
     if isinstance(value, ViewBase):
-        return value.eager.extract()
+        return value.extract()  # type: ignore[attr-defined]
     return value
+
+
+def _as_opened(view: View) -> View:
+    """A fetched view handed back as the Navigator opened it."""
+    return view
 
 
 def _refuse_container_value(owner: type, value: object) -> None:
@@ -329,7 +337,7 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
             - The facet rides the ref's payload, so it applies to the ops
               written on it, not to the refs descended from it.
             - Returns the ref unchanged when it is already eager, and leaves
-              the view alone when its type has no eager facet.
+              the view alone when its view class has no facets.
         """
         return (
             self
@@ -337,41 +345,50 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
             else self._with_facet(Facet.EAGER)
         )
 
-    def _apply_facet(self, view: View) -> View:
-        """Apply the lazy/eager facet to a fetched view.
+    def _facet_name(self) -> str | None:
+        """The facet a fetched view is switched to: ``"eager"``, ``"lazy"``, or None.
 
-        Every view declares both facets; one without a twin returns itself.
+        Decided from the declared view class, so a view without facets is
+        handed back as opened, with no call on it. None also for Facet.NONE.
         """
+        view_class = self._payload.get("type_marker")
+        if not (isinstance(view_class, type) and issubclass(view_class, Faceted)):
+            return None
         facet = self._payload.get("facet", Facet.LAZY)
-        if facet is Facet.EAGER:
-            return view.eager
-        if facet is Facet.LAZY:
-            return view.lazy
-        return view
+        return None if facet is Facet.NONE else facet.value
+
+    def _facet_applier(self) -> Callable[[View], View]:
+        """What a read does to the fetched view, decided once per compiled ref."""
+        name = self._facet_name()
+        if name is None:
+            return _as_opened
+        return operator.attrgetter(name)
 
     # --- read (the dual role) ------------------------------------------------
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         scope = self._root_shape
+        apply_facet = self._facet_applier()
 
         def thunk(rt: Runtime) -> object:
             path = self._resolve_path(rt, nid)
             nav = _resolve_navigator(rt, scope, path)
             storage_ctx = _resolve_storage_ctx(rt, scope, path)
             view = nav.open_at_path(ViewPathSer(path), storage_ctx)
-            return self._apply_facet(view)
+            return apply_facet(view)
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         scope = self._root_shape
+        apply_facet = self._facet_applier()
 
         async def athunk(rt: Runtime) -> object:
             path = await self._aresolve_path(rt, nid)
             nav = _resolve_navigator(rt, scope, path)
             storage_ctx = _resolve_storage_ctx(rt, scope, path)
             view = nav.open_at_path(ViewPathSer(path), storage_ctx)
-            return self._apply_facet(view)
+            return apply_facet(view)
 
         return athunk
 
