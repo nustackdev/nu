@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Mutations on list, dict and set blob refs now persist instead of being silently dropped
 - The store browser shows a bad cursor below a capped log entry as an error column
 - Capped logs offer only the whole-log watch, not child watches they cannot serve
 - Store slots refuse a view that cannot serve the ref, right where declared
