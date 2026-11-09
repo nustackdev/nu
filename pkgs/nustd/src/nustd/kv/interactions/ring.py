@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
-from virtuals.container import ContainerNotFoundError
 
 
 if TYPE_CHECKING:
@@ -21,26 +20,6 @@ if TYPE_CHECKING:
 __all__ = [
     "RingEntries",
 ]
-
-
-def _check_limit(limit: object) -> int | None:
-    if limit is None:
-        return None
-    if isinstance(limit, bool) or not isinstance(limit, int) or limit < 0:
-        raise ValueError(f"limit must be a count of zero or more, got {limit!r}")
-    return limit
-
-
-def _entries(ref: object, rt: Runtime, path: tuple, after: object, limit: object) -> object:
-    """``(seq, entry)`` pairs past ``after``, at most ``limit``, as a list."""
-    limit = _check_limit(limit)
-    if after is not None and (isinstance(after, bool) or not isinstance(after, int)):
-        raise TypeError(f"a ring cursor is a sequence number, got {after!r}")
-    view = ref._open(rt, path)  # type: ignore[attr-defined]
-    try:
-        return list(view.entries(after=after, limit=limit))
-    except ContainerNotFoundError:
-        return []
 
 
 class RingEntries(ScalarQuery):
@@ -56,7 +35,8 @@ class RingEntries(ScalarQuery):
         - One seek, then one row per entry: cost tracks ``limit``.
         - ``after`` need not be kept any more: the page starts at the oldest
           entry still there.
-        - A never-written ring reads an empty page.
+        - The ring view checks the args and raises on a never-written ring,
+          as ``len`` and iteration do.
         - The page is read whole before it leaves the atom, so it outlives
           the bracket it was read in.
 
@@ -65,22 +45,20 @@ class RingEntries(ScalarQuery):
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref = self._children[0]
-        _ref_thunk, after_thunk, limit_thunk = children
+        ref_thunk, after_thunk, limit_thunk = children
 
         def thunk(rt: Runtime) -> object:
-            path = ref._resolve_path(rt, rt.program.children[nid][0])
-            return _entries(ref, rt, path, after_thunk(rt), limit_thunk(rt))
+            view = ref_thunk(rt)
+            return list(view.entries(after=after_thunk(rt), limit=limit_thunk(rt)))
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        ref = self._children[0]
-        _ref_thunk, after_thunk, limit_thunk = children
+        ref_thunk, after_thunk, limit_thunk = children
 
         async def athunk(rt: Runtime) -> object:
-            path = await ref._aresolve_path(rt, rt.program.children[nid][0])
+            view = await ref_thunk(rt)
             after, limit = await after_thunk(rt), await limit_thunk(rt)
-            return _entries(ref, rt, path, after, limit)
+            return list(view.entries(after=after, limit=limit))
 
         return athunk

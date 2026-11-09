@@ -29,7 +29,8 @@ from nustd.kv import (
     memory_navigator,
     sqlite_navigator,
 )
-from virtuals.views import RingView
+from virtuals.container import ContainerNotFoundError
+from virtuals.views import DictView, RingView
 
 
 class CellRun(Shape):
@@ -55,7 +56,8 @@ def test_the_slot_carries_its_capacity() -> None:
 
 
 @pytest.mark.parametrize(
-    "kwargs", [{}, {"capacity": 3, "view": RingView.of(3)}, {"view": RingView}]
+    "kwargs",
+    [{}, {"capacity": 3, "view": RingView.of(3)}, {"view": RingView}, {"view": DictView}],
 )
 def test_a_slot_without_one_capacity_is_refused(kwargs) -> None:
     with pytest.raises(TypeError, match="capacity"):
@@ -131,7 +133,8 @@ def test_a_whole_ring_set_and_init_go_through_the_parent(ctx) -> None:
 
 def test_a_never_written_ring(ctx) -> None:
     assert run(OUT.exists(), ctx)[0] is False
-    assert run(OUT.entries(), ctx)[0] == []
+    with pytest.raises(ContainerNotFoundError):
+        run(OUT.entries(), ctx)
     assert is_null(run(OUT.extract(), ctx)[0])
 
 
