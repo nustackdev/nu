@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import nu
-from nu.lang.attributes import Sort
+from nu.lang import Effect
 
 from ..interactions.atomicity import Snapshot, Transaction
 from ..refs.base import PrimitiveRef, ViewRef
@@ -20,37 +20,16 @@ from ..refs.base import PrimitiveRef, ViewRef
 if TYPE_CHECKING:
     from collections.abc import Hashable, Iterator
 
+    from nu.lang import Nu
+
 
 __all__ = [
     "dominates",
-    "is_dynamic",
     "iter_uncovered",
 ]
 
 
 _VirtualsRef = (ViewRef, PrimitiveRef)
-
-
-def _declared_sort(node: object) -> Sort | None:
-    """Read the node's declared sort off its class (pre-compile access)."""
-    attrs = getattr(type(node), "_attributes", None)
-    if not attrs:
-        return None
-    sort_attr = attrs.get("sort")
-    return getattr(sort_attr, "value", None) if sort_attr is not None else None
-
-
-def is_dynamic(node: object) -> bool:
-    """Whether the node is dynamic, so a walk cannot see through it."""
-    return _declared_sort(node) is Sort.DYNAMIC
-
-
-def _write_positions(node: object) -> frozenset[int]:
-    attrs = getattr(type(node), "_attributes", None)
-    if not attrs or "mutates" not in attrs:
-        return frozenset()
-    value = attrs["mutates"].value
-    return value if isinstance(value, frozenset) else frozenset(value)
 
 
 def dominates(broader: Hashable | None, specific: Hashable | None) -> bool:
@@ -70,7 +49,7 @@ def _covered_by_enclosing(enclosing: tuple, ref_scope: Hashable) -> bool:
 
 
 def iter_uncovered(
-    node: object,
+    node: Nu,
     pass_scope: Hashable | None,
     enclosing: tuple,
     _top: bool = True,
@@ -79,8 +58,9 @@ def iter_uncovered(
 
     Only refs the pass cares about, that no enclosing brace covers.
 
-    Refs are classified WRITE iff they sit in a mutation slot of an
-    enclosing op. A top-level Ref (a subtree that IS a Ref, e.g. the
+    Refs are classified as ``nu.tree.node_effects`` binds them: WRITE in a
+    mutation slot of an enclosing op, READ elsewhere, and not at all in a
+    structural slot (address structure, never evaluated). A top-level Ref (a subtree that IS a Ref, e.g. the
     body of ``Snapshot(view_ref)``) has no enclosing slot context and
     counts as READ.
 
@@ -92,7 +72,7 @@ def iter_uncovered(
     visible at compile time, so we don't descend through them. Any refs
     inside the carrier are hidden from the wrap decision.
     """
-    if is_dynamic(node):
+    if nu.tree.is_dynamic(node):
         return
     if isinstance(node, (Snapshot, Transaction)):
         inner = (*enclosing, node.scope)
@@ -103,10 +83,10 @@ def iter_uncovered(
         ref_scope = node._root_shape
         if dominates(pass_scope, ref_scope) and not _covered_by_enclosing(enclosing, ref_scope):
             yield node, False
-    mutates = _write_positions(node)
-    for slot, child in enumerate(nu.tree.children(node)):
-        if isinstance(child, _VirtualsRef):
-            ref_scope = child._root_shape
+    for ref, effect in nu.tree.node_effects(node):
+        if isinstance(ref, _VirtualsRef):
+            ref_scope = ref._root_shape
             if dominates(pass_scope, ref_scope) and not _covered_by_enclosing(enclosing, ref_scope):
-                yield child, slot in mutates
+                yield ref, effect is Effect.WRITE
+    for child in nu.tree.children(node):
         yield from iter_uncovered(child, pass_scope, enclosing, _top=False)

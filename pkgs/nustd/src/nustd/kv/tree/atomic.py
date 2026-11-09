@@ -22,7 +22,7 @@ import nu
 
 from ..errors import BracketError
 from ..interactions.atomicity import RetryOnConflict, Snapshot, Transaction
-from .coverage import dominates, is_dynamic, iter_uncovered
+from .coverage import dominates, iter_uncovered
 
 
 if TYPE_CHECKING:
@@ -49,7 +49,7 @@ def _stores(term: Nu) -> dict[Hashable | None, bool]:
 
 def _write_brackets(node: object) -> Iterator[Hashable | None]:
     """The scope of every Transaction already in the term, past dynamic subtrees."""
-    if is_dynamic(node):
+    if nu.tree.is_dynamic(node):
         return
     if isinstance(node, Transaction):
         yield node.scope

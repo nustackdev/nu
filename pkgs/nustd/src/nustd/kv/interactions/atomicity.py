@@ -28,6 +28,7 @@ from __future__ import annotations
 from contextlib import ExitStack, asynccontextmanager, contextmanager
 from typing import TYPE_CHECKING
 
+import nu
 from nu.core.flows.strategy import Sequential
 from nu.core.spans import Retry
 from nu.core.spans import Snapshot as _CoreSnapshot
@@ -71,25 +72,9 @@ def _wrap_body(children: tuple[Nu, ...]) -> Nu:
     return Sequential(*children)
 
 
-def _node_write_positions(node: object) -> frozenset[int]:
-    """Declared write positions on a node via its ``mutates`` attribute, or empty."""
-    attrs = getattr(type(node), "_attributes", None)
-    if not attrs or "mutates" not in attrs:
-        return frozenset()
-    value = attrs["mutates"].value
-    return value if isinstance(value, frozenset) else frozenset(value)
-
-
-def _has_virtuals_write(node: object) -> bool:
+def _has_virtuals_write(node: Nu) -> bool:
     """Check if the subtree rooted at ``node`` has any declared write position."""
-    stack = [node]
-    while stack:
-        cur = stack.pop()
-        if _node_write_positions(cur):
-            return True
-        children = getattr(cur, "_children", ())
-        stack.extend(c for c in children if hasattr(c, "_children"))
-    return False
+    return any(nu.tree.mutated_slots(n) for n in nu.tree.preorder(node))
 
 
 def _scope_navigators(ctx: Context, scope: Hashable | None) -> list[tuple[dict, Navigator]]:

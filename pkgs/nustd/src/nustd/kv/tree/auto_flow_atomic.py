@@ -26,7 +26,7 @@ import nu
 from nu.lang import Flow, Span
 
 from ..interactions.atomicity import Snapshot, Transaction
-from .coverage import dominates, is_dynamic, iter_uncovered
+from .coverage import dominates, iter_uncovered
 
 
 if TYPE_CHECKING:
@@ -61,7 +61,7 @@ def _effective_root_is_dyn(child: Nu) -> bool:
     node = child
     while isinstance(node, Span) and nu.tree.children(node):
         node = nu.tree.children(node)[0]
-    return is_dynamic(node)
+    return nu.tree.is_dynamic(node)
 
 
 def _wrap_flow_child(child: Nu, pass_scope: Hashable | None, enclosing: tuple) -> Nu:

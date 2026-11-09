@@ -271,3 +271,18 @@ def test_bracket_over_bare_ref_matching_scope_left_alone() -> None:
     snaps = _collect(out, Snapshot)
     assert len(snaps) == 1
     assert snaps[0].scope is LedgerShard
+
+
+def test_a_parent_ref_is_address_not_a_read() -> None:
+    """A nested ref's parent sits in a structural slot: the walk sees only the ref itself."""
+    from nustd.kv import DictRef, ShapeRef
+    from nustd.kv.tree.coverage import iter_uncovered
+
+    class Rows(Shape):
+        rows = DictRef.slot(int)
+
+    class Book(Shape):
+        inner = ShapeRef.slot(Rows)
+
+    write = Book.inner.rows.set_item("a", 1)
+    assert [(type(r), w) for r, w in iter_uncovered(write, None, ())] == [(DictRef, True)]
