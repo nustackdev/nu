@@ -390,6 +390,16 @@ export {
 	type TreeProps,
 } from "./components/ui/tree";
 export type { TreeMove, TreeRow, TreeSource } from "./components/ui/tree-model";
+export { Waterfall, type WaterfallProps } from "./components/ui/waterfall";
+export {
+	formatSpanTime,
+	WATERFALL_TONES,
+	type WaterfallSpan,
+	type WaterfallTone,
+	waterfallRows,
+	waterfallTicks,
+	waterfallWindow,
+} from "./components/ui/waterfall-model";
 export {
 	type AnchorProps,
 	type AnchorTarget,

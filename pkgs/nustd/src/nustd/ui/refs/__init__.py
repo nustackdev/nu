@@ -169,6 +169,7 @@ from .leaves import (
     ToggleRef,
     TreemapChart,
     TreeRef,
+    WaterfallRef,
 )
 from .query import decode_query, encode_query
 from .structural import (
@@ -324,6 +325,7 @@ __all__ = [
     "ToggleRef",
     "TreeRef",
     "TreemapChart",
+    "WaterfallRef",
     "decode_query",
     "encode_query",
     "trim_slash",

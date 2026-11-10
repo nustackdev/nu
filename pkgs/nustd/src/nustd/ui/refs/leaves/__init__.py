@@ -7,6 +7,7 @@
 - page:   page furniture (Icon, Spacer, PageLink, NavItem).
 - table:  TableRef and its row ops.
 - tree:   TreeRef.
+- waterfall: WaterfallRef.
 - timeline: TimelineRef.
 - display: Avatar, Breadcrumb, Skeleton, Spinner, StatusPill.
 - input:  tab-owned inputs (Toggle among them), plus MarkdownRef and CodeRef.
@@ -77,6 +78,7 @@ from .page import IconRef, NavItemRef, PageLinkRef, SpacerRef
 from .table import InsertRow, RemoveRows, SetOrder, SetRow, TableRef
 from .timeline import TimelineRef
 from .tree import TreeRef
+from .waterfall import WaterfallRef
 
 
 __all__ = [
@@ -148,4 +150,5 @@ __all__ = [
     "ToggleRef",
     "TreeRef",
     "TreemapChart",
+    "WaterfallRef",
 ]

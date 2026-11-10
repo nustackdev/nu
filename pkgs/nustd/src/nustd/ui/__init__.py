@@ -181,6 +181,7 @@ from .refs import (
     ToggleRef,
     TreemapChart,
     TreeRef,
+    WaterfallRef,
     decode_query,
     encode_query,
 )
@@ -350,6 +351,7 @@ __all__ = [
     "ToggleRef",
     "TreeRef",
     "TreemapChart",
+    "WaterfallRef",
     "Write",
     "WsSession",
     "boot",

@@ -27,6 +27,7 @@ import { TableRef } from "./table";
 import { TextRef } from "./text";
 import { TimelineRef } from "./timeline";
 import { TreeRef } from "./tree";
+import { WaterfallRef } from "./waterfall";
 
 export const outputEntries: Record<string, NodeEntry> = {
 	HeadingRef,
@@ -46,6 +47,7 @@ export const outputEntries: Record<string, NodeEntry> = {
 	LinkRef,
 	ProgressRef,
 	GaugeRef,
+	WaterfallRef,
 	TimelineRef,
 	CalendarHeatmapRef,
 	TableRef,

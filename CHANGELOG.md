@@ -12,10 +12,12 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- The ui kit gains a waterfall for nested spans on a shared time axis
 - The ui kit gains a timeline of lanes with intervals on a shared axis
 - The ui kit gains a calendar heatmap for daily counts across a year
 - The ui kit gains relative time, live ago and duration text ticking in the browser
 - The ui kit gains status squares, a capped strip of many item states
+
 ## 0.7.2 - 2026-11-10
 
 - Release nu 0.7.2
