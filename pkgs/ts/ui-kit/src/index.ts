@@ -271,6 +271,14 @@ export { Spinner, spinnerVariants } from "./components/ui/spinner";
 export { Stat, StatDelta, StatLabel, StatValue } from "./components/ui/stat";
 export { StatusDot, statusDotVariants } from "./components/ui/status-dot";
 export { StatusPill, statusPillVariants } from "./components/ui/status-pill";
+export {
+	STATUS_SQUARE_TONES,
+	type StatusSquareCounts,
+	StatusSquares,
+	type StatusSquaresProps,
+	type StatusSquaresTotal,
+	type StatusSquareTone,
+} from "./components/ui/status-squares";
 export { Switch, switchVariants } from "./components/ui/switch";
 export {
 	Table,
@@ -361,6 +369,7 @@ export { mergeOption } from "./lib/chart/option";
 export { type ChartTokens, chartTheme, readChartTokens } from "./lib/chart/theme";
 export { loadLanguage } from "./lib/code/languages";
 export { kitHighlight, kitTheme } from "./lib/code/theme";
+export { formatCount, formatFullCount } from "./lib/count";
 export { ICON_NAMES, iconFor, isIconName } from "./lib/icons";
 export type { KeyBindings, KeyScope } from "./lib/keyboard";
 export { useKeyScope } from "./lib/keyboard";

@@ -738,3 +738,16 @@ def test_list_set_carries_items_first():
     assert frame.payload == {"items": ["a", "b"], "variant": "number"}
     assert _frames(handle.append("c"))[0].payload == "c"
     assert _frames(handle.clear())[0].payload == {"items": []}
+
+
+def test_status_squares_set_carries_counts_first():
+    from nustd.ui.refs import StatusSquaresRef
+
+    handle = _mount(StatusSquaresRef)
+    [frame] = _frames(handle.set({"ok": 994, "danger": 3}, max_items=5))
+    assert frame.chain[-1][1:] == (
+        "StatusSquaresRef",
+        {"counts": {}, "max_items": 10, "labels": {}, "total": "overflow"},
+    )
+    assert frame.payload == {"counts": {"ok": 994, "danger": 3}, "max_items": 5}
+    assert _frames(handle.set_total("never"))[0].payload == {"total": "never"}

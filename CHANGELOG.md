@@ -10,6 +10,9 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- The ui kit gains status squares, a capped strip of many item states
 ## 0.7.2 - 2026-11-10
 
 - Release nu 0.7.2

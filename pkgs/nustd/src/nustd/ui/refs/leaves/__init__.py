@@ -67,6 +67,7 @@ from .output import (
     ShortcutRef,
     StatRef,
     StatusDotRef,
+    StatusSquaresRef,
     TextRef,
 )
 from .page import IconRef, NavItemRef, PageLinkRef, SpacerRef
@@ -130,6 +131,7 @@ __all__ = [
     "StatRef",
     "StatusDotRef",
     "StatusPillRef",
+    "StatusSquaresRef",
     "SunburstChart",
     "SwitchRef",
     "TableRef",

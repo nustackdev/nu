@@ -22,7 +22,7 @@ from .base import LeafRef
 
 if TYPE_CHECKING:
     from nu.lang import Nu
-    from nu.lang.args import Arg, BoolArg, FloatArg, IntArg, ListArg, StrArg
+    from nu.lang.args import Arg, BoolArg, DictArg, FloatArg, IntArg, ListArg, StrArg
 
 
 Variant = Literal["neutral", "info", "warn", "ok", "danger"]
@@ -751,6 +751,66 @@ class StatusDotRef(LeafRef):
         return Write(self, Dict.of(**payload))
 
 
+SquareTone = Literal["danger", "warn", "info", "ok", "neutral", "empty"]
+SquaresTotal = Literal["overflow", "always", "never"]
+
+
+class StatusSquaresRef(LeafRef):
+    """A strip of status squares, one per item, for many items at a glance.
+
+    `counts` maps a tone to how many items hold it (``{"ok": 994, "danger":
+    3}``), so a thousand items ship as a few numbers. At most `max_items` squares
+    draw, in severity order (danger, warn, info, ok, neutral, then `empty`,
+    an outlined square for an idle item), so a problem never hides past the
+    cap. Past it an ellipsis and the full count follow. `labels` words each
+    tone for screen readers and the hover title (``{"danger": "failed"}``).
+    `total` says when the count shows: past the cap, always, or never (for a
+    caller that puts the count in its own column).
+
+    A write replaces `counts` whole: send every tone each time.
+    """
+
+    _wire_type = "StatusSquaresRef"
+
+    @classmethod
+    def slot(
+        cls,
+        *,
+        counts: dict[str, int] | None = None,
+        max_items: int = 10,
+        labels: dict[str, str] | None = None,
+        total: SquaresTotal = "overflow",
+    ) -> Self:
+        return super().slot(
+            counts=dict(counts or {}),
+            max_items=int(max_items),
+            labels=dict(labels or {}),
+            total=total,
+        )
+
+    def set_max_items(self, n: IntArg) -> Nu:
+        return Write(self, Dict.of(max_items=n))
+
+    def set_labels(self, labels: DictArg[str, str]) -> Nu:
+        return Write(self, Dict.of(labels=labels))
+
+    def set_total(self, when: SquaresTotal | StrArg) -> Nu:
+        return Write(self, Dict.of(total=when))
+
+    def set(
+        self,
+        counts: DictArg[str, int],
+        max_items: IntArg = UNSET,
+        total: SquaresTotal | StrArg = UNSET,
+    ) -> Nu:
+        payload: dict[str, object] = {"counts": counts}
+        if max_items is not UNSET:
+            payload["max_items"] = max_items
+        if total is not UNSET:
+            payload["total"] = total
+        return Write(self, Dict.of(**payload))
+
+
 KbdVariant = Literal["default", "ghost"]
 KbdSize = Literal["sm", "md"]
 
@@ -914,5 +974,6 @@ __all__ = [
     "ShortcutRef",
     "StatRef",
     "StatusDotRef",
+    "StatusSquaresRef",
     "TextRef",
 ]

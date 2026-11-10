@@ -20,6 +20,7 @@ import { ShortcutRef } from "./shortcut";
 import { SpacerRef } from "./spacer";
 import { StatRef } from "./stat";
 import { StatusDotRef } from "./status-dot";
+import { StatusSquaresRef } from "./status-squares";
 import { TableRef } from "./table";
 import { TextRef } from "./text";
 import { TreeRef } from "./tree";
@@ -29,6 +30,7 @@ export const outputEntries: Record<string, NodeEntry> = {
 	TextRef,
 	BadgeRef,
 	StatusDotRef,
+	StatusSquaresRef,
 	KbdRef,
 	ShortcutRef,
 	AlertRef,
