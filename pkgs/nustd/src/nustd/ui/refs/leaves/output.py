@@ -7,6 +7,7 @@ its own props and never has children.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING, Any, Literal
 
 from typing_extensions import Self
@@ -811,6 +812,42 @@ class StatusSquaresRef(LeafRef):
         return Write(self, Dict.of(**payload))
 
 
+RelativeTimeMode = Literal["ago", "duration"]
+
+
+def _epoch_ms(ts: float | datetime | None) -> float | None:
+    if isinstance(ts, datetime):
+        return ts.timestamp() * 1000
+    return None if ts is None else float(ts)
+
+
+class RelativeTimeRef(LeafRef):
+    """A stamp drawn as time from now, kept live in the browser.
+
+    `ts` is the stamp in epoch ms (a ``datetime`` works too); send it once and
+    the browser moves the text with the clock, so the server never writes
+    again for time passing. `mode` ``ago`` reads ``"just now"``, ``"4m ago"``,
+    ``"3d ago"``; ``duration`` reads the time since the stamp in two units
+    (``"3m 12s"``, ``"2h 4m"``), for uptime or a running job. Hovering shows
+    the absolute time. No stamp draws a muted dash.
+    """
+
+    _wire_type = "RelativeTimeRef"
+
+    @classmethod
+    def slot(cls, *, ts: float | datetime | None = None, mode: RelativeTimeMode = "ago") -> Self:
+        return super().slot(ts=_epoch_ms(ts), mode=mode)
+
+    def set_mode(self, mode: RelativeTimeMode | StrArg) -> Nu:
+        return Write(self, Dict.of(mode=mode))
+
+    def set(self, ts: FloatArg, mode: RelativeTimeMode | StrArg = UNSET) -> Nu:
+        payload: dict[str, object] = {"ts": ts}
+        if mode is not UNSET:
+            payload["mode"] = mode
+        return Write(self, Dict.of(**payload))
+
+
 KbdVariant = Literal["default", "ghost"]
 KbdSize = Literal["sm", "md"]
 
@@ -971,6 +1008,7 @@ __all__ = [
     "KbdRef",
     "LinkRef",
     "ProgressRef",
+    "RelativeTimeRef",
     "ShortcutRef",
     "StatRef",
     "StatusDotRef",

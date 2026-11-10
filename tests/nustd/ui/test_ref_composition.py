@@ -751,3 +751,18 @@ def test_status_squares_set_carries_counts_first():
     )
     assert frame.payload == {"counts": {"ok": 994, "danger": 3}, "max_items": 5}
     assert _frames(handle.set_total("never"))[0].payload == {"total": "never"}
+
+
+def test_relative_time_sends_the_stamp_once():
+    from datetime import datetime, timezone
+
+    from nustd.ui.refs import RelativeTimeRef
+
+    handle = _mount(RelativeTimeRef)
+    [frame] = _frames(handle.set(1_762_776_000_000, mode="duration"))
+    assert frame.chain[-1][1:] == ("RelativeTimeRef", {"ts": None, "mode": "ago"})
+    assert frame.payload == {"ts": 1_762_776_000_000, "mode": "duration"}
+    assert _frames(handle.set_mode("ago"))[0].payload == {"mode": "ago"}
+
+    when = datetime(2026, 11, 10, 12, tzinfo=timezone.utc)
+    assert RelativeTimeRef.slot(ts=when).props["ts"] == when.timestamp() * 1000

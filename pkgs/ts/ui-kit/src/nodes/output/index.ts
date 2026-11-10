@@ -16,6 +16,7 @@ import { LensRef } from "./lens";
 import { LinkRef } from "./link";
 import { PageLinkRef } from "./page-link";
 import { ProgressRef } from "./progress";
+import { RelativeTimeRef } from "./relative-time";
 import { ShortcutRef } from "./shortcut";
 import { SpacerRef } from "./spacer";
 import { StatRef } from "./stat";
@@ -35,6 +36,7 @@ export const outputEntries: Record<string, NodeEntry> = {
 	ShortcutRef,
 	AlertRef,
 	StatRef,
+	RelativeTimeRef,
 	DividerRef,
 	EmptyStateRef,
 	ImageRef,

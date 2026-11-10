@@ -215,6 +215,13 @@ export {
 	radioGroupItemVariants,
 } from "./components/ui/radio-group";
 export {
+	formatRelativeTime,
+	RELATIVE_TIME_MODES,
+	RelativeTime,
+	type RelativeTimeMode,
+	type RelativeTimeProps,
+} from "./components/ui/relative-time";
+export {
 	ResizableHandle,
 	type ResizableHandleProps,
 	type ResizableOrientation,
