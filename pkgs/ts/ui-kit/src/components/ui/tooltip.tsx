@@ -110,7 +110,7 @@ function TooltipContent({
 				className={cn(
 					"z-50 max-w-xs px-2 py-1 rounded-sm",
 					"bg-bg-elevated text-text-primary border border-border-default shadow-floating",
-					"text-xs leading-tight",
+					"text-xs leading-tight break-words",
 					"data-[state=delayed-open]:animate-in data-[state=closed]:animate-out",
 					"data-[state=delayed-open]:fade-in-0 data-[state=closed]:fade-out-0",
 					"data-[state=delayed-open]:zoom-in-95 data-[state=closed]:zoom-out-95",
