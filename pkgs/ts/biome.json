@@ -36,6 +36,6 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": ["src/**", "*.ts", "*.json"]
+		"includes": ["*/src/**", "*/*.ts", "*/*.json", "*.json"]
 	}
 }
