@@ -45,12 +45,16 @@ interface CommandPaletteProps
 	onOpenChange: (open: boolean) => void;
 	// Accessible label read by screen readers; not shown visually.
 	label?: string;
+	// Where focus goes on close. The dialog hands it back to whatever held it
+	// before opening; preventDefault keeps it where the pick put it.
+	onCloseAutoFocus?: (e: Event) => void;
 }
 
 function CommandPalette({
 	open,
 	onOpenChange,
 	label = "Command palette",
+	onCloseAutoFocus,
 	className,
 	children,
 	...props
@@ -70,6 +74,7 @@ function CommandPalette({
 				/>
 				<DialogPrimitive.Content
 					data-slot="command-palette-content"
+					onCloseAutoFocus={onCloseAutoFocus}
 					className={cn(
 						"fixed left-1/2 top-[20%] z-50 w-full max-w-lg -translate-x-1/2",
 						commandSurfaceClasses,
