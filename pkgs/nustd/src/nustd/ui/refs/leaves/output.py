@@ -274,6 +274,81 @@ class GaugeRef(LeafRef):
         return Write(self, Dict.of(**payload))
 
 
+CalendarTone = Literal["accent", "accent-2"]
+WeekStart = Literal["mon", "sun"]
+
+
+class CalendarHeatmapRef(LeafRef):
+    """A year of days as a grid of shaded squares, contribution-map style.
+
+    `values` maps a day (``"2026-11-10"``) to a count, or to named counts
+    (``{"jobs": 2, "builds": 7}``): the shade is the sum, the tooltip names
+    each part, and a part key is a plural noun (one of it drops the s). For
+    plain counts `unit` names them (``"commits"``). Shade steps are the
+    quartiles of the window's non-zero days. The grid is `weeks` columns
+    ending with the week of `end` (``""`` is today). `suffix` follows a day's
+    counts (``"finished"``); `peak_label` leads the busiest-day line, empty
+    hides it. `tone` is ``accent`` (Afterglow, people acting) or
+    ``accent-2`` (Starlight, system data).
+
+    A write replaces `values` whole: send the full window each time.
+    """
+
+    _wire_type = "CalendarHeatmapRef"
+
+    @classmethod
+    def slot(
+        cls,
+        *,
+        values: dict[str, Any] | None = None,
+        end: str = "",
+        weeks: int = 53,
+        week_start: WeekStart = "mon",
+        tone: CalendarTone = "accent",
+        title: str = "",
+        unit: str = "",
+        suffix: str = "",
+        peak_label: str = "Busiest",
+        show_totals: bool = True,
+        show_legend: bool = True,
+    ) -> Self:
+        return super().slot(
+            values=dict(values or {}),
+            end=end,
+            weeks=int(weeks),
+            week_start=week_start,
+            tone=tone,
+            title=title,
+            unit=unit,
+            suffix=suffix,
+            peak_label=peak_label,
+            show_totals=show_totals,
+            show_legend=show_legend,
+        )
+
+    def set_end(self, day: StrArg) -> Nu:
+        return Write(self, Dict.of(end=day))
+
+    def set_title(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(title=text))
+
+    def set_tone(self, tone: CalendarTone | StrArg) -> Nu:
+        return Write(self, Dict.of(tone=tone))
+
+    def set(
+        self,
+        values: DictArg[str, Any],
+        end: StrArg = UNSET,
+        title: StrArg = UNSET,
+    ) -> Nu:
+        payload: dict[str, object] = {"values": values}
+        if end is not UNSET:
+            payload["end"] = end
+        if title is not UNSET:
+            payload["title"] = title
+        return Write(self, Dict.of(**payload))
+
+
 HeadingSize = Literal["display", "3xl", "2xl", "xl", "lg"]
 
 
@@ -999,6 +1074,7 @@ class TextRef(LeafRef):
 __all__ = [
     "AlertRef",
     "BadgeRef",
+    "CalendarHeatmapRef",
     "DividerRef",
     "EmptyStateRef",
     "GaugeRef",

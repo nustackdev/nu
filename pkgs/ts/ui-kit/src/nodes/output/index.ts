@@ -3,6 +3,7 @@
 import type { NodeEntry } from "../../tree";
 import { AlertRef } from "./alert";
 import { BadgeRef } from "./badge";
+import { CalendarHeatmapRef } from "./calendar-heatmap";
 import { DividerRef } from "./divider";
 import { EmptyStateRef } from "./empty-state";
 import { GaugeRef } from "./gauge";
@@ -44,6 +45,7 @@ export const outputEntries: Record<string, NodeEntry> = {
 	LinkRef,
 	ProgressRef,
 	GaugeRef,
+	CalendarHeatmapRef,
 	TableRef,
 	JsonViewerRef,
 	LensRef,

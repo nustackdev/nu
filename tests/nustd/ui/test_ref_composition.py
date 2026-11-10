@@ -753,6 +753,19 @@ def test_status_squares_set_carries_counts_first():
     assert _frames(handle.set_total("never"))[0].payload == {"total": "never"}
 
 
+def test_calendar_heatmap_set_carries_values_first():
+    from nustd.ui.refs import CalendarHeatmapRef
+
+    handle = _mount(CalendarHeatmapRef)
+    days = {"2026-11-09": {"jobs": 2, "builds": 7}, "2026-11-10": 3}
+    [frame] = _frames(handle.set(days, end="2026-11-10"))
+    assert frame.chain[-1][1] == "CalendarHeatmapRef"
+    assert frame.chain[-1][2]["values"] == {}
+    assert frame.chain[-1][2]["weeks"] == 53
+    assert frame.payload == {"values": days, "end": "2026-11-10"}
+    assert _frames(handle.set_tone("accent-2"))[0].payload == {"tone": "accent-2"}
+
+
 def test_relative_time_sends_the_stamp_once():
     from datetime import datetime, timezone
 

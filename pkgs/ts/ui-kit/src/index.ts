@@ -36,6 +36,16 @@ export {
 	BreadcrumbSeparator,
 } from "./components/ui/breadcrumb";
 export { Button, buttonVariants } from "./components/ui/button";
+export type {
+	CalendarHeatmapProps,
+	CalendarHeatmapTone,
+} from "./components/ui/calendar-heatmap";
+export { CalendarHeatmap } from "./components/ui/calendar-heatmap";
+export type {
+	CalendarHeatmapValue,
+	CalendarHeatmapValues,
+	CalendarHeatmapWeekStart,
+} from "./components/ui/calendar-heatmap-model";
 export {
 	Card,
 	CardAction,

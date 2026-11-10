@@ -54,6 +54,7 @@ from .input import (
 from .output import (
     AlertRef,
     BadgeRef,
+    CalendarHeatmapRef,
     DividerRef,
     EmptyStateRef,
     GaugeRef,
@@ -85,6 +86,7 @@ __all__ = [
     "BoxplotChart",
     "BreadcrumbRef",
     "ButtonRef",
+    "CalendarHeatmapRef",
     "CandlestickChart",
     "Chart",
     "CheckboxRef",
