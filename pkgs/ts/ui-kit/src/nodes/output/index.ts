@@ -25,6 +25,7 @@ import { StatusDotRef } from "./status-dot";
 import { StatusSquaresRef } from "./status-squares";
 import { TableRef } from "./table";
 import { TextRef } from "./text";
+import { TimelineRef } from "./timeline";
 import { TreeRef } from "./tree";
 
 export const outputEntries: Record<string, NodeEntry> = {
@@ -45,6 +46,7 @@ export const outputEntries: Record<string, NodeEntry> = {
 	LinkRef,
 	ProgressRef,
 	GaugeRef,
+	TimelineRef,
 	CalendarHeatmapRef,
 	TableRef,
 	JsonViewerRef,

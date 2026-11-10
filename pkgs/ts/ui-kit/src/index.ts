@@ -341,6 +341,24 @@ export { TagInput, tagInputVariants } from "./components/ui/tag-input";
 export { Text, textVariants } from "./components/ui/text";
 export { TextArea, textAreaVariants } from "./components/ui/text-area";
 export {
+	capItems,
+	formatDuration,
+	formatLength,
+	layoutItems,
+	TIMELINE_TONES,
+	Timeline,
+	type TimelineAxis,
+	type TimelineItem,
+	type TimelineLane,
+	type TimelineLayout,
+	TimelineLegend,
+	type TimelineLegendProps,
+	type TimelineMark,
+	type TimelineProps,
+	type TimelineTone,
+	timelineTicks,
+} from "./components/ui/timeline";
+export {
 	dismissToast,
 	TOAST_DANGER_DURATION,
 	TOAST_DURATION,

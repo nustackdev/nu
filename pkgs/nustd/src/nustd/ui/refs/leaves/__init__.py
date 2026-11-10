@@ -7,6 +7,7 @@
 - page:   page furniture (Icon, Spacer, PageLink, NavItem).
 - table:  TableRef and its row ops.
 - tree:   TreeRef.
+- timeline: TimelineRef.
 - display: Avatar, Breadcrumb, Skeleton, Spinner, StatusPill.
 - input:  tab-owned inputs (Toggle among them), plus MarkdownRef and CodeRef.
 - chart:  Chart, an ECharts option, and the typed builders over it
@@ -74,6 +75,7 @@ from .output import (
 )
 from .page import IconRef, NavItemRef, PageLinkRef, SpacerRef
 from .table import InsertRow, RemoveRows, SetOrder, SetRow, TableRef
+from .timeline import TimelineRef
 from .tree import TreeRef
 
 
@@ -142,6 +144,7 @@ __all__ = [
     "TagInputRef",
     "TextAreaRef",
     "TextRef",
+    "TimelineRef",
     "ToggleRef",
     "TreeRef",
     "TreemapChart",
