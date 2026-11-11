@@ -2,16 +2,17 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.7.2
-- **nustd** (fabrics) — 0.7.2
+- **nucore** (kernel) — 0.7.3
+- **nustd** (fabrics) — 0.7.3
 - **nudle** — 0.1.11
 - **ui-core** — 0.2.2
-- **ui-kit** — 0.4.1
+- **ui-kit** — 0.4.2
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.7.3 - 2026-11-12
 
+- Release nu 0.7.3
 - Icon buttons take a tooltip directly, no wrapper needed
 - Sideways scroll areas keep their content full height in Firefox
 - The ui kit gains overlay scroll areas and thin themed native scrollbars
