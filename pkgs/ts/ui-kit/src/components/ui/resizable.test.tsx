@@ -281,10 +281,23 @@ describe("Resizable", () => {
 			act(() => resized?.());
 		}
 
-		function Sidebar({ storageKey }: { storageKey?: string }) {
+		function Sidebar({
+			storageKey,
+			collapsedSize,
+		}: {
+			storageKey?: string;
+			collapsedSize?: `${number}px`;
+		}) {
 			return (
 				<ResizablePanelGroup storageKey={storageKey}>
-					<ResizablePanel id="side" defaultSize="250px" minSize="200px" maxSize="500px" collapsible>
+					<ResizablePanel
+						id="side"
+						defaultSize="250px"
+						minSize="200px"
+						maxSize="500px"
+						collapsible
+						collapsedSize={collapsedSize}
+					>
 						side
 					</ResizablePanel>
 					<ResizableHandle />
@@ -321,6 +334,25 @@ describe("Resizable", () => {
 			press(handle(), "Enter");
 			expect(panels()[0].hasAttribute("inert")).toBe(false);
 			expect(grow(panels()[0])).toBeCloseTo(15);
+		});
+
+		it("stays folded to a px rail through a resize and a remount", () => {
+			mount(<Sidebar storageKey="t.rail" collapsedSize="48px" />);
+			press(handle(), "Enter");
+			expect(panels()[0].dataset.state).toBe("collapsed");
+			// A rail is still there to click, not inert.
+			expect(panels()[0].hasAttribute("inert")).toBe(false);
+			expect(grow(panels()[0])).toBeCloseTo(4.8);
+			resize(1337);
+			expect(panels()[0].dataset.state).toBe("collapsed");
+			expect(grow(panels()[0])).toBeCloseTo((48 / 1337) * 100);
+			act(() => root.unmount());
+			root = createRoot(host);
+			width = 1717;
+			mount(<Sidebar storageKey="t.rail" collapsedSize="48px" />);
+			expect(panels()[0].dataset.state).toBe("collapsed");
+			press(handle(), "Enter");
+			expect(panels()[0].dataset.state).toBe("expanded");
 		});
 	});
 });

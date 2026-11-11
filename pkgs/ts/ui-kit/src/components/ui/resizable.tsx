@@ -216,6 +216,17 @@ function fit(want: number, b: Bound): number {
 	return clamp(want, b.min, b.max);
 }
 
+/**
+ * Whether a panel at `size` is folded: at its folded size, or nearer it than
+ * its minimum, the line `fit` folds at. A px folded size comes back a hair
+ * off its bound after a window resize or a reload, so equality would read a
+ * folded panel as open.
+ */
+function isFolded(size: number, b: Bound | undefined): boolean {
+	if (!b?.collapsible) return false;
+	return size <= b.collapsed || size < b.collapsed + (b.min - b.collapsed) / 2;
+}
+
 /** Scale `sizes` so they sum to 100. */
 function normalize(sizes: number[]): number[] {
 	const sum = sizes.reduce((a, b) => a + b, 0);
@@ -466,7 +477,7 @@ export function ResizablePanelGroup({
 	}, [commit, defaultsAt, measure]);
 
 	const isCollapsed = useCallback(
-		(i: number) => !!bounds[i]?.collapsible && sizesRef.current[i] <= bounds[i].collapsed,
+		(i: number) => isFolded(sizesRef.current[i], bounds[i]),
 		[bounds],
 	);
 
@@ -477,7 +488,7 @@ export function ResizablePanelGroup({
 			const b = boundsAt(total);
 			const cur = sizesRef.current;
 			if (!b[i]?.collapsible || count < 2) return;
-			const folded = cur[i] <= b[i].collapsed;
+			const folded = isFolded(cur[i], b[i]);
 			if (fold === folded) return;
 			const id = idsRef.current[i];
 			if (fold) unfolded.current[id] = { size: cur[i], span: total };
@@ -525,9 +536,9 @@ export function ResizablePanelGroup({
 				(d) => {
 					setDragging(before);
 					last = move(start, before, (d / total) * 100, b);
-					if (b[before].collapsible && last[before] <= b[before].collapsed)
+					if (isFolded(last[before], b[before]))
 						unfolded.current[ids[before]] = { size: start[before], span: total };
-					if (b[before + 1].collapsible && last[before + 1] <= b[before + 1].collapsed)
+					if (isFolded(last[before + 1], b[before + 1]))
 						unfolded.current[ids[before + 1]] = { size: start[before + 1], span: total };
 					commit(last, false, total);
 				},
@@ -547,7 +558,7 @@ export function ResizablePanelGroup({
 			const cur = sizesRef.current;
 			if (action === "toggle") {
 				const target = b[before].collapsible ? before : b[before + 1].collapsible ? before + 1 : -1;
-				if (target >= 0) setFolded(target, !(cur[target] <= b[target].collapsed));
+				if (target >= 0) setFolded(target, !isFolded(cur[target], b[target]));
 				return;
 			}
 			// No ceiling (a scrolling group's default) means End has nowhere to go.
@@ -647,7 +658,7 @@ export function ResizablePanel({
 	const group = useGroup("ResizablePanel");
 	const i = useContext(IndexContext);
 	const size = group.sizes[i] ?? 0;
-	const folded = !!collapsible && size <= (group.bounds[i]?.collapsed ?? 0);
+	const folded = !!collapsible && isFolded(size, group.bounds[i]);
 	const horizontal = group.orientation === "horizontal";
 	// px bounds go to CSS too, so the browser holds them while the window
 	// resizes. A folded panel drops its minimum or it could not fold.

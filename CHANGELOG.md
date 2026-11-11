@@ -10,6 +10,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Split panels folded to a fixed width stay folded through resizes and reloads
+
 ## 0.7.3 - 2026-11-12
 
 - Release nu 0.7.3
