@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Icon buttons take a tooltip directly, no wrapper needed
 - Sideways scroll areas keep their content full height in Firefox
 - The ui kit gains overlay scroll areas and thin themed native scrollbars
 - Tooltips wrap long unbroken words instead of running past their box

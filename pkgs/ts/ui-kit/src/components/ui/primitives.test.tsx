@@ -1,5 +1,6 @@
 // The primitives that carry behaviour beyond their classes: which parts an
-// EmptyState draws, how a StatusDot names itself, that a ref reaches the
+// EmptyState draws, how a StatusDot names itself, that an IconButton's tip
+// makes it a tooltip trigger, that a ref reaches the
 // element through Input and TextArea, and that an OverflowTooltip only opens
 // over text that is actually cut off, without breaking the delay of the
 // tooltips around it.
@@ -8,6 +9,7 @@ import { act, createRef } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EmptyState } from "./empty-state";
+import { IconButton } from "./icon-button";
 import { Input } from "./input";
 import { OverflowTooltip } from "./overflow-tooltip";
 import { StatusDot } from "./status-dot";
@@ -87,6 +89,20 @@ describe("StatusDot", () => {
 		expect(dot?.getAttribute("aria-hidden")).toBe("true");
 		expect(dot?.getAttribute("role")).toBeNull();
 		expect(dot?.className).toContain("animate-pulse");
+	});
+});
+
+describe("IconButton", () => {
+	it("is the tooltip's trigger when it has a tip, a plain button without", () => {
+		mount(
+			<TooltipProvider>
+				<IconButton aria-label="Close" tip="Close" />
+				<IconButton aria-label="Open" />
+			</TooltipProvider>,
+		);
+		const [tipped, plain] = host.querySelectorAll("button");
+		expect(tipped.getAttribute("data-state")).toBe("closed");
+		expect(plain.hasAttribute("data-state")).toBe(false);
 	});
 });
 

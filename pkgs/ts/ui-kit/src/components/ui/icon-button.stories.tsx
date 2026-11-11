@@ -8,46 +8,59 @@ const SIZES = ["xs", "sm", "md", "lg"] as const;
 export const Default: StoryObj = {
 	render: () => (
 		<IconButton aria-label="Search">
+			<Search />
+		</IconButton>
+	),
+};
+
+export const WithTip: StoryObj = {
+	render: () => (
+		<div className="flex gap-2 p-8">
+			<IconButton variant="ghost" aria-label="Search" tip="Search">
 				<Search />
 			</IconButton>
+			<IconButton variant="ghost" aria-label="Delete" tip="Delete" tipSide="top">
+				<Trash2 />
+			</IconButton>
+		</div>
 	),
 };
 
 export const Matrix: StoryObj = {
 	render: () => (
 		<div className="p-8 space-y-8">
-				<div>
-					<div className="mb-3 font-mono text-xs uppercase tracking-widest text-text-muted">
-						variants x sizes
-					</div>
-					<div className="space-y-3">
-						{VARIANTS.map((v) => (
-							<div key={v} className="flex items-center gap-3">
-								<div className="w-24 font-mono text-xs text-text-muted">{v}</div>
-								{SIZES.map((s) => (
-									<IconButton key={s} variant={v} size={s} aria-label={`${v} ${s}`}>
-										<Star />
-									</IconButton>
-								))}
-							</div>
-						))}
-					</div>
+			<div>
+				<div className="mb-3 font-mono text-xs uppercase tracking-widest text-text-muted">
+					variants x sizes
 				</div>
-
-				<div>
-					<div className="mb-3 font-mono text-xs uppercase tracking-widest text-text-muted">
-						states
-					</div>
-					<div className="flex gap-3">
-						<IconButton aria-label="Star">
-							<Star />
-						</IconButton>
-						<IconButton disabled aria-label="Trash">
-							<Trash2 />
-						</IconButton>
-					</div>
+				<div className="space-y-3">
+					{VARIANTS.map((v) => (
+						<div key={v} className="flex items-center gap-3">
+							<div className="w-24 font-mono text-xs text-text-muted">{v}</div>
+							{SIZES.map((s) => (
+								<IconButton key={s} variant={v} size={s} aria-label={`${v} ${s}`}>
+									<Star />
+								</IconButton>
+							))}
+						</div>
+					))}
 				</div>
 			</div>
+
+			<div>
+				<div className="mb-3 font-mono text-xs uppercase tracking-widest text-text-muted">
+					states
+				</div>
+				<div className="flex gap-3">
+					<IconButton aria-label="Star">
+						<Star />
+					</IconButton>
+					<IconButton disabled aria-label="Trash">
+						<Trash2 />
+					</IconButton>
+				</div>
+			</div>
+		</div>
 	),
 };
 

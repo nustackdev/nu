@@ -2,11 +2,16 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { Slot as SlotPrimitive } from "radix-ui";
 import type * as React from "react";
 import { cn, ringVariants } from "../../lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 // Square icon-only button. Shares Button's variant map but drops text sizing
 // and locks side = height. See design/primitives.md §IconButton.
 // aria-label is required by the type (§a11y.md §4) so screen readers get a
 // name even when the icon is the only child.
+//
+// `tip` puts the kit Tooltip on it, the usual way to say what a glyph does
+// (`tipSide` places it, bottom by default). It composes with a menu trigger
+// on the outside: `<DropdownMenuTrigger asChild><IconButton tip=... />`.
 const iconButtonVariants = cva(
 	[
 		"inline-flex items-center justify-center rounded-md",
@@ -59,6 +64,9 @@ export interface IconButtonProps
 		VariantProps<typeof iconButtonVariants> {
 	asChild?: boolean;
 	"aria-label": string;
+	/** A tooltip, the kit's, on hover and focus. */
+	tip?: React.ReactNode;
+	tipSide?: React.ComponentProps<typeof TooltipContent>["side"];
 }
 
 export function IconButton({
@@ -67,15 +75,24 @@ export function IconButton({
 	size,
 	ring,
 	asChild = false,
+	tip,
+	tipSide = "bottom",
 	...props
 }: IconButtonProps) {
 	const Comp = asChild ? SlotPrimitive.Root : "button";
-	return (
+	const button = (
 		<Comp
 			data-slot="icon-button"
 			className={cn(iconButtonVariants({ variant, size, ring, className }))}
 			{...props}
 		/>
+	);
+	if (tip === undefined || tip === null) return button;
+	return (
+		<Tooltip>
+			<TooltipTrigger asChild>{button}</TooltipTrigger>
+			<TooltipContent side={tipSide}>{tip}</TooltipContent>
+		</Tooltip>
 	);
 }
 
