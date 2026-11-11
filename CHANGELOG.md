@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- The ui kit gains overlay scroll areas and thin themed native scrollbars
 - Tooltips wrap long unbroken words instead of running past their box
 - The ts lint check now covers every package instead of silently skipping them
 - The ui kit gains a waterfall for nested spans on a shared time axis

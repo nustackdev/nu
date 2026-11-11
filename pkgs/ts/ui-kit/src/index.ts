@@ -6,9 +6,9 @@
 //   - components  : primitives (Badge, Card, Switch, ...) and shared shell bits
 //   - lib/utils   : the `cn()` helper and the shared focus-ring variant map
 //
-// Tokens live in ./index.css, the Tailwind theme and `scrollbar-none` in
-// ./theme.css. Both compile into dist/styles.css, which consumers import
-// separately as `@nustackdev/ui-kit/styles`.
+// Tokens live in ./index.css, the Tailwind theme, `scrollbar-none` and
+// `scrollbar-thin` in ./theme.css. Both compile into dist/styles.css, which
+// consumers import separately as `@nustackdev/ui-kit/styles`.
 
 export { ErrorBoundary } from "./components/ErrorBoundary";
 export {
@@ -243,6 +243,11 @@ export {
 	type ResizablePanelProps,
 	type ResizableSize,
 } from "./components/ui/resizable";
+export {
+	ScrollArea,
+	type ScrollAreaOrientation,
+	type ScrollAreaProps,
+} from "./components/ui/scroll-area";
 export { Section, sectionVariants } from "./components/ui/section";
 export {
 	Select,

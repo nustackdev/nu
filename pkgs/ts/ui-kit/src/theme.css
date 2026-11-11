@@ -207,3 +207,38 @@
 		display: none;
 	}
 }
+
+/* ============================== scrollbar-thin ============================
+ * A native scroller the kit does not own (a table, code, a log inside plane
+ * content) drawn thin and in the theme, close to the ScrollArea's overlay
+ * bars: a border-strong thumb on no track (text-muted under the pointer in
+ * Safari).
+ * Firefox and Blink read the two standard properties; Safari, which lacks
+ * them, reads the pseudo-elements. Blink ignores the pseudo-elements once
+ * the properties are set.
+ * ==========================================================================*/
+@utility scrollbar-thin {
+	scrollbar-width: thin;
+	scrollbar-color: var(--border-strong) transparent;
+
+	&::-webkit-scrollbar {
+		width: 8px;
+		height: 8px;
+	}
+
+	&::-webkit-scrollbar-track,
+	&::-webkit-scrollbar-corner {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background-color: var(--border-strong);
+		background-clip: padding-box;
+		border: 2px solid transparent;
+		border-radius: 9999px;
+	}
+
+	&::-webkit-scrollbar-thumb:hover {
+		background-color: var(--text-muted);
+	}
+}
