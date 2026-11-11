@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Sideways scroll areas keep their content full height in Firefox
 - The ui kit gains overlay scroll areas and thin themed native scrollbars
 - Tooltips wrap long unbroken words instead of running past their box
 - The ts lint check now covers every package instead of silently skipping them

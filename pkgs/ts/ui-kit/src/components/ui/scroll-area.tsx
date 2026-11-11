@@ -66,6 +66,10 @@ function ScrollArea({
 					// push rows past the edge and clip them instead of letting
 					// them truncate, so a vertical only area keeps it a block.
 					!horizontal && "[&>div]:block!",
+					// A horizontal only area keeps the box growing sideways, but as
+					// a block as tall as the viewport: Firefox resolves no percent
+					// height inside a table, so `h-full` content collapsed to 0.
+					orientation === "horizontal" && "[&>div]:block! [&>div]:h-full [&>div]:w-max",
 					viewportClassName,
 				)}
 			>
