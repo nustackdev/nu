@@ -2,16 +2,17 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.7.3
-- **nustd** (fabrics) — 0.7.3
-- **nudle** — 0.1.11
-- **ui-core** — 0.2.2
-- **ui-kit** — 0.4.3
+- **nucore** (kernel) — 0.7.4
+- **nustd** (fabrics) — 0.7.4
+- **nudle** — 0.1.12
+- **ui-core** — 0.2.3
+- **ui-kit** — 0.4.4
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.7.4 - 2026-11-13
 
+- Release nu 0.7.4
 - Charts get ten warmer, easier to tell apart colors; info notes turn softer blue
 - Every ui container speaks one layout vocabulary for size, spacing and alignment
 - Rows, columns and grids reorder children in place instead of erasing and rewriting
