@@ -18,7 +18,8 @@
 // `variant` is the strip's look, a plain prop the default `write` merges:
 // `line` (underline, the default), `pill` (a wash chip behind the active
 // tab) or `segmented` (one sunken track with a raised thumb). An unknown
-// value reads as `line`.
+// value reads as `line`. The size props and `scroll` (`layout.tsx`) sit on the tabs; each
+// body is one child, which carries its own layers.
 
 import { OPS } from "@nustackdev/ui-core";
 import {
@@ -39,10 +40,12 @@ import {
 	useSetProps,
 	useStringProp,
 } from "../../tree";
+import { type LayoutDefaults, useLayout } from "./layout";
 import { Unpaired } from "./unpaired";
 
 type Tab = { id: string; label: string };
 const VARIANTS = ["line", "pill", "segmented"] as const;
+const DEFAULTS: LayoutDefaults = {};
 
 function normalizeTabs(raw: unknown): Tab[] {
 	if (!Array.isArray(raw)) return [];
@@ -65,6 +68,7 @@ function TabsView({ path }: NodeProps) {
 	const children = useChildren(path);
 	const setProps = useSetProps(path);
 	const send = useSend(path);
+	const layout = useLayout(path, DEFAULTS);
 
 	const tabs = normalizeTabs(rawTabs);
 	const activeId = active && tabs.some((t) => t.id === active) ? active : (tabs[0]?.id ?? "");
@@ -81,7 +85,12 @@ function TabsView({ path }: NodeProps) {
 	const stray = children.filter((s) => !ids.has(s));
 
 	return (
-		<TabsPrimitive value={activeId} onValueChange={onValueChange}>
+		<TabsPrimitive
+			value={activeId}
+			onValueChange={onValueChange}
+			className={layout.scroll}
+			style={layout.size}
+		>
 			{/* A line strip rules the full width; a pill or segmented one is a
 			    control and keeps its own. */}
 			<TabsList variant={variant} className={variant === "line" ? undefined : "self-start"}>

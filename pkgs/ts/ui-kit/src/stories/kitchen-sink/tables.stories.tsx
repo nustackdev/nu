@@ -23,7 +23,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "../../components/ui/table";
-import { Block, Row, SinkPage, ThemePair, sinkParameters } from "./frame";
+import { Block, Row, SinkPage, sinkParameters, ThemePair } from "./frame";
 
 const VARIANTS = ["default", "borderless", "striped"] as const;
 const DENSITIES = ["compact", "default", "comfortable"] as const;
@@ -127,14 +127,12 @@ const ROWS: DataTableRow[] = [
 
 /** A DataTable with every request answered in place, so each state is reachable. */
 function LiveDataTable({
-	striped,
 	density,
 	variant,
 	editable = true,
 }: {
-	striped?: boolean;
 	density?: (typeof DENSITIES)[number];
-	variant?: "default" | "borderless";
+	variant?: (typeof VARIANTS)[number];
 	editable?: boolean;
 }) {
 	const [rows, setRows] = useState<DataTableRow[]>(ROWS);
@@ -181,7 +179,6 @@ function LiveDataTable({
 				aria-label="Stages"
 				columns={COLUMNS}
 				rows={rows}
-				striped={striped}
 				density={density}
 				variant={variant}
 				selection="multi"
@@ -208,14 +205,14 @@ function Grid() {
 				<LiveDataTable />
 			</Row>
 			<Row label="striped">
-				<LiveDataTable striped />
+				<LiveDataTable variant="striped" />
 			</Row>
 			<Row label="borderless">
 				<LiveDataTable variant="borderless" />
 			</Row>
 			{DENSITIES.map((density) => (
 				<Row key={density} label={`density ${density}`}>
-					<LiveDataTable density={density} striped />
+					<LiveDataTable density={density} variant="striped" />
 				</Row>
 			))}
 			<Row label="empty">

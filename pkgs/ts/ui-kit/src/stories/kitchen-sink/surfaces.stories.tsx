@@ -42,7 +42,7 @@ import {
 	TableRow,
 } from "../../components/ui/table";
 import { Text } from "../../components/ui/text";
-import { Block, Row, SinkPage, ThemePair, sinkParameters } from "./frame";
+import { Block, Row, SinkPage, sinkParameters, ThemePair } from "./frame";
 
 const CARD_VARIANTS = ["default", "elevated", "sunken", "outline"] as const;
 const PANEL_VARIANTS = ["default", "elevated", "sunken"] as const;
@@ -150,7 +150,6 @@ function Containers() {
 			<Row label="Section">
 				<Section
 					className="w-full"
-					bordered
 					title="Planes"
 					description="Every plane in this space."
 					actions={<Button size="sm">New plane</Button>}
@@ -312,7 +311,13 @@ function Data() {
 			</Row>
 			<Row label="Image">
 				<Image src={IMAGE_SRC} alt="Gradient sample" className="w-40" aspectRatio="16 / 9" />
-				<Image src={IMAGE_SRC} alt="Gradient sample" radius="lg" className="w-24" aspectRatio="1 / 1" />
+				<Image
+					src={IMAGE_SRC}
+					alt="Gradient sample"
+					radius="lg"
+					className="w-24"
+					aspectRatio="1 / 1"
+				/>
 			</Row>
 			<Row label="Avatar">
 				{(["sm", "md", "lg", "xl"] as const).map((size) => (

@@ -4,12 +4,12 @@
 //   language/space-radius.md  §grid (4px), §spacing (gap and padding steps)
 //   space-radius.md           §1 spacing scale (Tailwind step names)
 //
-// `maxColumns` caps the cells on a row (0: no cap), `minWidth` is the narrowest
-// a cell gets. Every track is the same width, so a dashboard of stat cards
+// `maxColumns` caps the cells on a row (0: no cap), `minCellWidth` is the
+// narrowest a cell gets. Every track is the same width, so a dashboard of stat cards
 // or a gallery lines up without per-cell sizing:
 //
-//   maxColumns 0   as many columns as fit at minWidth
-//   maxColumns N   at most N, never narrower than minWidth (a phone stacks)
+//   maxColumns 0   as many columns as fit at minCellWidth
+//   maxColumns N   at most N, never narrower than minCellWidth (a phone stacks)
 //
 // The track list is an inline style, not a class: it is computed from the
 // props, and Tailwind v4 only ships class names it saw written out. Gap and
@@ -34,12 +34,13 @@
 // `templateTracks` counts the column tracks a template names, so a span is
 // clamped to the board, never adding an implicit track.
 //
-// Gap and padding take the same spacing ladder as Row and Column
-// (`lib/steps`), and an off-ladder value snaps to the nearest step.
+// Gap and padding take the space scale every container takes (`lib/steps`,
+// an int step 0..16). `justify` places each cell's content across its
+// track, `align` down it.
 
 import type * as React from "react";
 import { useLayoutEffect, useState } from "react";
-import { GAP_CLASSES, nearestStep, PADDING_CLASSES } from "../../lib/steps";
+import { GAP_CLASSES, PADDING_CLASSES, readStep } from "../../lib/steps";
 import { cn } from "../../lib/utils";
 
 export type GridAlign = "stretch" | "start" | "center" | "end";
@@ -51,15 +52,24 @@ const ALIGN_CLASSES: Record<GridAlign, string> = {
 	end: "items-end",
 };
 
+const JUSTIFY_CLASSES: Record<GridAlign, string> = {
+	stretch: "justify-items-stretch",
+	start: "justify-items-start",
+	center: "justify-items-center",
+	end: "justify-items-end",
+};
+
 export interface GridProps extends React.HTMLAttributes<HTMLDivElement> {
 	/** At most this many cells on a row. 0 (default) lets the width decide. */
 	maxColumns?: number;
 	/** The narrowest a cell gets, in px. Default 240. */
-	minWidth?: number;
-	/** Space between cells, a spacing step (0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16). Default 4. */
+	minCellWidth?: number;
+	/** Space between cells, a step from 0 to 16. Default 4. */
 	gap?: number;
-	/** Where each cell sits along its row. "stretch" (default) evens out the heights. */
+	/** Where each cell sits down its row. "stretch" (default) evens out the heights. */
 	align?: GridAlign;
+	/** Where each cell sits across its track. "stretch" (default) fills it. */
+	justify?: GridAlign;
 	/** Inner padding, a spacing step like `gap`. Default 0. */
 	padding?: number;
 	/** Backfill: a later cell takes an earlier hole a spanning cell left. Default false. */
@@ -71,9 +81,9 @@ export interface GridProps extends React.HTMLAttributes<HTMLDivElement> {
 	ref?: React.Ref<HTMLDivElement>;
 }
 
-/** The track list for `maxColumns` and `minWidth`, with `gap` as a spacing step. */
-export function gridTemplate(maxColumns: number, minWidth: number, gap: number): string {
-	const min = `${Math.max(0, minWidth)}px`;
+/** The track list for `maxColumns` and `minCellWidth`, with `gap` as a spacing step. */
+export function gridTemplate(maxColumns: number, minCellWidth: number, gap: number): string {
+	const min = `${Math.max(0, minCellWidth)}px`;
 	const n = Math.floor(maxColumns);
 	if (n < 1) return `repeat(auto-fill, minmax(min(100%, ${min}), 1fr))`;
 	// One track per column: a share of the width after the gaps between N
@@ -154,20 +164,20 @@ export function gridPlace(
 }
 
 /**
- * How many tracks `gridTemplate(maxColumns, minWidth, ...)` lays out in a grid
+ * How many tracks `gridTemplate(maxColumns, minCellWidth, ...)` lays out in a grid
  * `width` px wide (inside its padding) with `gapPx` between cells: the same
  * auto-fill arithmetic the browser does, at least 1.
  */
 export function trackCount(
 	width: number,
 	maxColumns: number,
-	minWidth: number,
+	minCellWidth: number,
 	gapPx: number,
 ): number {
 	const n = Math.floor(maxColumns);
 	const w = Math.max(0, width);
 	const share = n >= 1 ? (w - (n - 1) * gapPx) / n : 0;
-	const track = Math.min(w, Math.max(Math.max(0, minWidth), share));
+	const track = Math.min(w, Math.max(Math.max(0, minCellWidth), share));
 	// Half a pixel of slack: a share computed from the width fits exactly.
 	const fit = track > 0 ? Math.floor((w + gapPx + 0.5) / (track + gapPx)) : 1;
 	return Math.max(1, n >= 1 ? Math.min(fit, n) : fit);
@@ -184,7 +194,7 @@ export function trackCount(
 export function useTrackCount(
 	el: HTMLElement | null,
 	maxColumns: number,
-	minWidth: number,
+	minCellWidth: number,
 	fallback: number,
 	enabled = true,
 ): number {
@@ -198,21 +208,22 @@ export function useTrackCount(
 				Number.parseFloat(style.paddingLeft) -
 				Number.parseFloat(style.paddingRight);
 			const gap = Number.parseFloat(style.columnGap) || 0;
-			setTracks(trackCount(width, maxColumns, minWidth, gap));
+			setTracks(trackCount(width, maxColumns, minCellWidth, gap));
 		};
 		measure();
 		const observer = new ResizeObserver(measure);
 		observer.observe(el);
 		return () => observer.disconnect();
-	}, [el, maxColumns, minWidth, enabled]);
+	}, [el, maxColumns, minCellWidth, enabled]);
 	return tracks;
 }
 
 export function Grid({
 	maxColumns = 0,
-	minWidth = 240,
+	minCellWidth = 240,
 	gap = 4,
 	align = "stretch",
+	justify = "stretch",
 	padding = 0,
 	dense = false,
 	cols,
@@ -221,7 +232,7 @@ export function Grid({
 	style,
 	...props
 }: GridProps) {
-	const step = nearestStep(GAP_CLASSES, gap);
+	const step = readStep(gap) ?? 4;
 	const placed = cols != null && cols !== "";
 	return (
 		<div
@@ -230,13 +241,14 @@ export function Grid({
 			className={cn(
 				"grid *:min-w-0",
 				GAP_CLASSES[step],
-				PADDING_CLASSES[nearestStep(PADDING_CLASSES, padding)],
+				PADDING_CLASSES[readStep(padding) ?? 0],
 				ALIGN_CLASSES[align] ?? ALIGN_CLASSES.stretch,
+				JUSTIFY_CLASSES[justify] ?? JUSTIFY_CLASSES.stretch,
 				dense && "grid-flow-row-dense",
 				className,
 			)}
 			style={{
-				gridTemplateColumns: placed ? cols : gridTemplate(maxColumns, minWidth, step),
+				gridTemplateColumns: placed ? cols : gridTemplate(maxColumns, minCellWidth, step),
 				gridTemplateRows: placed && rows ? rows : undefined,
 				...style,
 			}}

@@ -252,16 +252,13 @@ export const Chrome: Story = {
 				step("lg", "BadgeRef", { label: "lg", variant: "info", size: "lg" }),
 			]),
 		);
-		const grounds = [...col, step("grounds", "Grid", { max_columns: 5, gap: 3 })];
-		for (const g of ["none", "muted", "sunken", "accent", "brand"]) {
-			const box = [...grounds, step(g, "Box", { background: g, title: g })];
-			chains.push(box, [...box, step("t", "TextRef", { value: "Box ground", size: "sm" })]);
+		const grounds = [...col, step("grounds", "Grid", { max_columns: 3, gap: 3 })];
+		for (const g of ["plain", "accent", "brand"]) {
+			const card = [...grounds, step(g, "Card", { title: g, variant: g })];
+			chains.push(card, [...card, step("t", "TextRef", { value: `${g} card`, size: "sm" })]);
 		}
-		const flush = [...col, step("flush", "Box", { padding: "none", background: "sunken" })];
-		chains.push(flush, [
-			...flush,
-			step("t", "TextRef", { value: "padding none: flush to the edge" }),
-		]);
+		const flush = [...col, step("flush", "Card", { padding: 0, variant: "sunken" })];
+		chains.push(flush, [...flush, step("t", "TextRef", { value: "padding 0: flush to the edge" })]);
 		const empties = [...col, step("empties", "Grid", { max_columns: 2, gap: 3 })];
 		chains.push(
 			...under(empties, [
@@ -287,7 +284,7 @@ export const Chrome: Story = {
 		return (
 			<NodeStage
 				root="looks-chrome"
-				label="Tabs variants, Badge brand tones and sizes, Box grounds, EmptyState icon + action, Divider align"
+				label="Tabs variants, Badge brand tones and sizes, Card plain and tinted surfaces, EmptyState icon + action, Divider align"
 				chains={chains}
 			/>
 		);

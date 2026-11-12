@@ -833,9 +833,9 @@ describe("ProseEditor tables", () => {
 			t.insertColumnRight,
 			t.moveColumnLeft,
 			t.moveColumnRight,
-			t.alignLeft,
+			t.alignStart,
 			t.alignCenter,
-			t.alignRight,
+			t.alignEnd,
 			t.deleteColumn,
 			t.deleteTable,
 		]);

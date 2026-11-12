@@ -20,7 +20,6 @@ from nustd.ui import (
     Column,
     HistoryRef,
     NavItemRef,
-    NavRef,
     PageLinkRef,
     Session,
     decode_query,
@@ -77,8 +76,7 @@ ENTRY = {
 # --- the name ----------------------------------------------------------------
 
 
-def test_navref_is_the_old_name_of_historyref():
-    assert NavRef is HistoryRef
+def test_history_ref_ships_as_its_own_wire_type():
     assert HistoryRef._wire_type == "HistoryRef"
     [frame] = _run(App.nav.push("/a"))[1].frames
     assert frame.chain[-1][1] == "HistoryRef"

@@ -31,7 +31,7 @@ def _run(term: nu.Nu) -> list:
     return sess.frames
 
 
-DEFAULTS = {"size": "main", "gap": 6, "padding": "gutter"}
+DEFAULTS: dict[str, object] = {}
 
 
 def test_page_widths_are_the_tokens():
@@ -47,10 +47,10 @@ def test_is_a_collection_drawn_as_container():
 
 def test_slot_defaults_and_shape_forwarding():
     assert ContainerRef.slot().props == DEFAULTS
-    assert Container.slot(size="form", gap="3", padding="none").props == {
-        "size": "form",
+    assert Container.slot(max_width="form", gap=3, padding=0).props == {
+        "max_width": "form",
         "gap": 3,
-        "padding": "none",
+        "padding": 0,
     }
 
 
@@ -60,8 +60,8 @@ def test_column_shares_the_width_names():
 
 def test_setters_ship_partial_writes_with_the_chain():
     page = ContainerRef("page", props={})
-    frames = _run(page.set_size("prose") >> page.set_gap(4) >> page.set_padding("none"))
-    assert [f.payload for f in frames] == [{"size": "prose"}, {"gap": 4}, {"padding": "none"}]
+    frames = _run(page.set_layout(max_width="prose", gap=4) >> page.set_layout(padding=0))
+    assert [f.payload for f in frames] == [{"max_width": "prose", "gap": 4}, {"padding": 0}]
     assert frames[0].chain[0][:2] == ("page", "Container")
     assert frames[0].chain[0][2] == DEFAULTS
 
@@ -72,9 +72,9 @@ def test_a_shape_boots_its_slots_under_the_frame():
 
     class App(nu.Shape):
         title = TitleRef.slot()
-        home = Home.slot(size="dashboard")
+        home = Home.slot(max_width="dashboard")
 
     frames = _run(App.home.init())
     assert [(f.op, f.ref) for f in frames] == [("init", ("home",)), ("init", ("home", "heading"))]
     assert frames[0].chain[0][:2] == ("home", "Container")
-    assert frames[0].chain[0][2]["size"] == "dashboard"
+    assert frames[0].chain[0][2]["max_width"] == "dashboard"

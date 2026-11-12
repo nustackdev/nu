@@ -2,8 +2,7 @@
 
 Top-level Refs whose side effects live on the platform (the page's
 History, document.title), not the visible body tree. Leaves: neither draws
-anything in the body, and neither holds children. ``NavRef`` is
-``HistoryRef``'s old name.
+anything in the body, and neither holds children.
 """
 
 from __future__ import annotations
@@ -31,7 +30,7 @@ if TYPE_CHECKING:
     from nustd.ui.core import Subscription
 
 
-__all__ = ["HistoryRef", "NavRef", "PathChanged", "RoutePath", "TitleRef", "trim_slash"]
+__all__ = ["HistoryRef", "PathChanged", "RoutePath", "TitleRef", "trim_slash"]
 
 
 def trim_slash(path: str) -> str:
@@ -328,11 +327,6 @@ class HistoryRef(LeafRef):
     def on_path_change(self) -> PathChanged:
         """The moves that change the pathname; query, hash and state moves stay out."""
         return PathChanged(self)
-
-
-#: The old name of ``HistoryRef``, kept so programs written against it run as
-#: they did. Same class, same wire type.
-NavRef = HistoryRef
 
 
 class TitleRef(LeafRef):

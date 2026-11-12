@@ -8,8 +8,8 @@
 // `useChildren` compares the segment list shallowly so a node appearing
 // somewhere else in the tree never re-renders an unrelated parent.
 
-import { useCallback, useMemo } from "react";
 import { getNode, type Path, type Props, type TreeNode } from "@nustackdev/ui-core";
+import { useCallback, useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { tree, useTree } from "./store";
 
@@ -42,8 +42,7 @@ export function useProp<T>(path: Path, key: string, fallback: T): T {
 }
 
 // Props arrive off the wire, so a component reads them the way it wants them
-// rather than trusting the writer. These are the three coercions every ported
-// ref used to do by hand in its factory.
+// rather than trusting the writer. These are the coercions every type needs.
 
 /** A prop as a string. A null or missing value falls back. */
 export function useStringProp(path: Path, key: string, fallback = ""): string {

@@ -134,16 +134,22 @@ describe("Line", () => {
 		expect(line().textContent).toBe(" press Esc, then go.");
 	});
 
-	it("reads align and wrap off its props", () => {
-		draw("l", [[["l", "Line", { align: "center", wrap: false }]]]);
+	it("reads justify and wrap off its props", () => {
+		draw("l", [[["l", "Line", { justify: "center", wrap: false }]]]);
 		expect(line().className).toContain("text-center");
 		expect(line().className).toContain("whitespace-nowrap");
 		expect(line().getAttribute("data-wrap")).toBe("false");
 	});
 
-	it("wraps by default and falls back to start on an unknown align", () => {
-		draw("l", [[["l", "Line", { align: "sideways" }]]]);
+	it("wraps by default and falls back to start on an unknown justify", () => {
+		draw("l", [[["l", "Line", { justify: "sideways" }]]]);
 		expect(line().className).toContain("text-start");
 		expect(line().getAttribute("data-wrap")).toBe("true");
+	});
+
+	it("takes padding and the size props", () => {
+		draw("l", [[["l", "Line", { padding: 2, max_width: 300 }]]]);
+		expect(line().className).toContain("p-2");
+		expect(line().style.maxWidth).toBe("300px");
 	});
 });

@@ -7,7 +7,7 @@ the Ref, and ``slot(**props)`` hands them over as they are.
         heading = HeadingRef.slot(label="Home")
         chart = LineChart.slot()
 
-    home = Home.slot(size="dashboard")
+    home = Home.slot(max_width="dashboard")
 """
 
 from __future__ import annotations

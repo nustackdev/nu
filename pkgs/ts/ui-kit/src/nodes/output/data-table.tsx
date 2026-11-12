@@ -13,15 +13,21 @@
 //
 // ## Props
 //
-//   columns         a list; a string is `{key: s}`, a dict is
-//                   `{key, label?, kind?, options?, editable?, align?, width?, sortable?}`
-//                   with kind "text" | "number" | "bool" | "select". Strings and dicts mix.
+//   columns         a list of column records; a string is `{key: s}`, a dict is
+//                   `{key, label?, width?, min_width?, max_width?, wrap?, hide_below?,
+//                   align?, kind?, options?, editable?, sortable?, cell?}`: the record
+//                   the content Table takes too, plus the data keys. Widths are
+//                   lengths (a number is px), wrap "wrap" | "nowrap" | "truncate",
+//                   hide_below px of the table's width, align "start" | "center" | "end",
+//                   kind "text" | "number" | "bool" | "select". Strings and dicts mix.
 //                   No columns and some rows: positional `col_0..`, or the dict rows' keys.
 //   rows            a list; a list is cells by column position, a dict is cells by column key.
 //   row_key         the field that keys a row: a column key for list rows, any field for
 //                   dict rows, shown or not (see "Row keys").
 //   label           the grid's accessible name, "Table" by default.
-//   striped         true by default; `dense` picks the compact density.
+//   variant         "striped" (the default: framed, alternate rows tinted) | "default"
+//                   (framed) | "borderless", the content Table's looks.
+//   density         "compact" | "default" | "comfortable" row heights.
 //   max_rows        a sliding window on write and append: the oldest rows drop on overflow.
 //   sort_column, sort_direction   the arrows; the server sorts, the browser only shows it.
 //   clickable_rows  rows point and a click (or Enter on a cell that does not edit) notifies.
@@ -89,7 +95,7 @@
 // server sent them (`column` is the column's key, `sort_column` too), and
 // `column_index` is its position among the columns shown. A kind or align
 // `previous` is what the column shows: "text" and its kind's alignment
-// (number right, bool center, else left) when the column dict sets none.
+// (number end, bool center, else start) when the column dict sets none.
 //
 // Rows and column reshapes: list rows hold cells by position, so a server that
 // inserts, deletes or moves columns must ship list rows again with their cells
@@ -126,6 +132,7 @@ import {
 	type DataTableRow,
 } from "../../components/ui/data-table";
 import { defaultAlign } from "../../components/ui/data-table-model";
+import type { ColumnAlign } from "../../components/ui/table";
 import { Text } from "../../components/ui/text";
 import {
 	FlowProvider,
@@ -136,11 +143,13 @@ import {
 	registry,
 	tree,
 	useBoolProp,
+	useEnumProp,
 	useListProp,
 	useSend,
 	useSetProps,
 	useStringProp,
 } from "../../tree";
+import { cssLength } from "../containers/layout";
 
 type WireRow = unknown[] | Record<string, unknown>;
 
@@ -154,7 +163,10 @@ type Column = DataTableColumn & { name: string; cell?: CellSpec };
 const CELLS = "~cells";
 
 const KINDS: readonly DataTableKind[] = ["text", "number", "bool", "select"];
-const ALIGNS = ["left", "center", "right"] as const;
+const ALIGNS: readonly ColumnAlign[] = ["start", "center", "end"];
+const WRAPS = ["wrap", "nowrap", "truncate"] as const;
+const VARIANTS = ["striped", "default", "borderless"] as const;
+const DENSITIES = ["compact", "default", "comfortable"] as const;
 const NO_KEYS: string[] = [];
 
 function str(v: unknown): string {
@@ -297,7 +309,11 @@ function readColumns(
 			options: Array.isArray(d.options) ? d.options.map(str) : undefined,
 			editable: editable && d.editable !== false && (rowKey === "" || name !== rowKey),
 			align,
-			width: d.width == null ? undefined : str(d.width),
+			width: cssLength(d.width),
+			minWidth: cssLength(d.min_width),
+			maxWidth: cssLength(d.max_width),
+			wrap: WRAPS.find((w) => w === d.wrap),
+			hideBelow: typeof d.hide_below === "number" ? d.hide_below : undefined,
 			sortable: d.sortable !== false,
 			cell: readCellSpec(d.cell),
 		};
@@ -408,8 +424,8 @@ function TableView({ path }: NodeProps) {
 	const rawSelected = useListProp<unknown>(path, "selected");
 	const label = useStringProp(path, "label", "Table");
 	const rowKey = useStringProp(path, "row_key");
-	const striped = useBoolProp(path, "striped", true);
-	const dense = useBoolProp(path, "dense");
+	const variant = useEnumProp(path, "variant", VARIANTS, "striped");
+	const density = useEnumProp(path, "density", DENSITIES, "default");
 	const sortColumn = useStringProp(path, "sort_column");
 	const sortDirection = useStringProp(path, "sort_direction", "asc") === "desc" ? "desc" : "asc";
 	const clickableRows = useBoolProp(path, "clickable_rows");
@@ -540,9 +556,9 @@ function TableView({ path }: NodeProps) {
 		[notify, columnAt],
 	);
 	const onColumnAlign = useCallback(
-		(key: string, align: "left" | "center" | "right") => {
+		(key: string, align: ColumnAlign) => {
 			const { col, fields } = columnAt(key);
-			const previous = col ? (col.align ?? defaultAlign(col.kind ?? "text")) : "left";
+			const previous = col ? (col.align ?? defaultAlign(col.kind ?? "text")) : "start";
 			notify("column_align", { ...fields, align, previous });
 		},
 		[notify, columnAt],
@@ -561,8 +577,8 @@ function TableView({ path }: NodeProps) {
 			aria-label={label}
 			columns={cols}
 			rows={rows}
-			density={dense ? "compact" : "default"}
-			striped={striped}
+			variant={variant}
+			density={density}
 			sort={sortKey ? { column: sortKey, direction: sortDirection } : null}
 			onSort={onSort}
 			selection={selection}

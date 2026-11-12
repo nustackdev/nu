@@ -30,9 +30,9 @@ afterEach(() => {
 	tree.getState().setSender(null);
 });
 
-function mount(type = "HistoryRef", segment = "nav") {
+function mount(segment = "nav") {
 	act(() => {
-		tree.getState().write([[segment, type, {}]]);
+		tree.getState().write([[segment, "HistoryRef", {}]]);
 		root.render(<NodeView path={[segment]} />);
 	});
 }
@@ -84,13 +84,6 @@ describe("HistoryRef", () => {
 		expect(History.current().state).toEqual({ a: 1 });
 		// Its own moves are reported like any other: a router hears them all.
 		expect(notifies()).toEqual(["/feed", "/other?x=1", "/third"]);
-	});
-
-	it("still draws under the old NavRef name", () => {
-		mount("NavRef");
-		write("/old");
-		expect(window.location.pathname).toBe("/old");
-		expect(notifies()).toEqual(["/old"]);
 	});
 
 	it("reports a move it did not make", () => {

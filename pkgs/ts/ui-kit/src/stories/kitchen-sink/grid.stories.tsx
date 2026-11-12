@@ -34,18 +34,18 @@ function Grids() {
 			<Block title="Columns">
 				{COUNTS.map((n) => (
 					<Row key={n} label={`max ${n}`}>
-						<Grid className="w-full" maxColumns={n} minWidth={64} gap={3}>
+						<Grid className="w-full" maxColumns={n} minCellWidth={64} gap={3}>
 							{cells(n * 2)}
 						</Grid>
 					</Row>
 				))}
 				<Row label="max 0, 96px">
-					<Grid className="w-full" minWidth={96} gap={3}>
+					<Grid className="w-full" minCellWidth={96} gap={3}>
 						{cells(9)}
 					</Grid>
 				</Row>
 				<Row label="max 3, 240px">
-					<Grid className="w-full" maxColumns={3} minWidth={240} gap={3}>
+					<Grid className="w-full" maxColumns={3} minCellWidth={240} gap={3}>
 						{cells(3)}
 					</Grid>
 				</Row>
@@ -53,7 +53,7 @@ function Grids() {
 			<Block title="Gap">
 				{GAPS.map((gap) => (
 					<Row key={gap} label={`gap ${gap} (${gap * 4}px)`}>
-						<Grid className="w-full" maxColumns={4} minWidth={48} gap={gap}>
+						<Grid className="w-full" maxColumns={4} minCellWidth={48} gap={gap}>
 							{cells(4)}
 						</Grid>
 					</Row>
@@ -62,7 +62,7 @@ function Grids() {
 			<Block title="Align">
 				{ALIGNS.map((align) => (
 					<Row key={align} label={align}>
-						<Grid className="w-full" maxColumns={3} minWidth={96} gap={3} align={align}>
+						<Grid className="w-full" maxColumns={3} minCellWidth={96} gap={3} align={align}>
 							<Cell n={1} />
 							<Card variant="sunken">
 								<CardContent className="py-2">
@@ -82,7 +82,7 @@ function Grids() {
 			</Block>
 			<Block title="Stat cards">
 				<Row label="max 2">
-					<Grid className="w-full" maxColumns={2} minWidth={160} gap={4}>
+					<Grid className="w-full" maxColumns={2} minCellWidth={160} gap={4}>
 						<Card>
 							<CardHeader>
 								<CardTitle>Runs</CardTitle>

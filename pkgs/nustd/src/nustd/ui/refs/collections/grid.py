@@ -1,16 +1,17 @@
-"""``GridRef`` -- children in equal cells, row after row.
+"""``GridRef`` -- children in cells: equal cells that flow, or places on a board.
 
 A flow container, Column and Row's sibling. Every child is one cell, every
 cell has the same width, and the width of the page decides how many fit on
 a row: a dashboard of stat cards, a gallery, a wall of charts. A child says
 nothing about its cell; the grid sizes them all.
 
-- ``max_columns=0`` puts as many columns on a row as fit at ``min_width``.
-- ``max_columns=N`` puts at most N, never narrower than ``min_width``, so the
-  same grid is three wide on a desktop and stacks on a phone.
+- ``max_columns=0`` (the default) puts as many columns on a row as fit at
+  ``min_cell_width`` (240px).
+- ``max_columns=N`` puts at most N, never narrower than ``min_cell_width``,
+  so the same grid is three wide on a desktop and stacks on a phone.
 
 A cell can be wider or taller than the rest, and that is the grid's to say
-too: ``spans`` names the child by its key and how many tracks it covers, so
+too: ``span`` names the child by its key and how many tracks it covers, so
 a bento of one featured card and small ones around it, or a 2/3 + 1/3 split,
 is still a Grid of plain children. A span never exceeds the columns the
 width leaves, so a stacked grid is a stack of plain cells. ``dense`` lets a
@@ -21,31 +22,22 @@ later cell fill a hole a wide one left.
         users = CardRef.slot(title="Users")
         jobs = CardRef.slot(title="Jobs")
 
-    overview = Overview.slot(max_columns=3, spans={"revenue": (2, 2)})
+    overview = Overview.slot(max_columns=3, span={"revenue": {"cols": 2, "rows": 2}})
 
 or at run time, a key computed like any address:
 
-    grid.set_span(nu.Str("c") + nu.str(top), 2)
+    grid.set_child(nu.Str("c") + nu.str(top), span=2)
 
-Declared, as a Shape:
+and the grid's own props the same way, ``grid.set_layout(max_columns=2)``
+(any name ``slot()`` takes: tracks, ``dense``, the layers).
 
-    class Stats(Grid):
-        users = CardRef.slot(title="Users")
-        jobs = CardRef.slot(title="Jobs")
-        errors = CardRef.slot(title="Errors")
-
-    stats = Stats.slot(max_columns=3)
-
-Or as Refs alone, with computed keys for as many cells as there are items:
-
-    grid = GridRef("g", parent_ref=page_column, props={"min_width": 200})
-    card = CardRef(nu.Str("c") + nu.str(i), parent_ref=grid)
-    StatRef("s", parent_ref=card).set(value)
+A flowing grid is an ordered collection: ``insert``, ``move``, ``remove``,
+``truncate``, ``keep`` and ``set_order`` reorder its cells (see ``order``).
 
 Placed: a track template (``cols``) turns the grid into a board of places.
 ``grid[r, c]`` is the cell at row ``r``, column ``c``, the way a content
-table's ``t[r, c]`` is; a cell nobody writes stays empty, and ``spans`` keyed
-``(r, c)`` make a cell cover more tracks:
+table's ``t[r, c]`` is; a cell nobody writes stays empty, and ``span`` keyed
+``(r, c)`` makes a cell cover more tracks:
 
     board = GridRef("board", parent_ref=page, props={"cols": "2fr 1fr", "rows": [64, "1fr"]})
     board[0, 0].to(HeadingRef).set("Overview")
@@ -58,11 +50,11 @@ table's ``t[r, c]`` is; a cell nobody writes stays empty, and ``spans`` keyed
 - ``rows``: the row tracks, the same way. Rows past the template size to
   their content.
 - ``stack_below``: under this width (px) the board stacks to one column,
-  cells in reading order, so a phone gets a column. 0 never stacks.
+  cells in reading order, so a phone gets a column.
 
 A placed grid takes keyed children too (``grid["note"]``, ``grid[0]``): they
-fill the free places, row after row. ``max_columns``, ``min_width`` and the
-width-driven span clamp are the flow grid's: a placed grid refuses them.
+fill the free places, row after row. ``max_columns``, ``min_cell_width``
+and the ordering ops are the flowing grid's: a placed grid refuses them.
 
 Same ``[r, c]`` as a content ``TableRef``, different wire: the grid sits the
 cell at one segment ``"r,c"`` right under itself (no row of its own, so no
@@ -76,33 +68,30 @@ from __future__ import annotations
 
 import re
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, ClassVar
 
-from typing_extensions import Self
+from typing_extensions import Self, Unpack
 
-from nu.forms import Dict
-from nu.lang import Nu
-from nustd.ui.core import ItemRef, Ref, Write, child_at
-from nustd.ui.core.places import SetSpan, Span, normalize_spans, place, place_of, span_key
+from nustd.ui.core import ItemRef, child_at
+from nustd.ui.core.places import place, place_of, plain_place
 
 from .base import DictCollectionRef
-from .sizing import sizing_props
+from .layout import ARRANGE, SIZE, SPACE, ArrangeLayout, ChildLayout, Span, flag, px
+from .order import Ordered
 
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
     from nu.domains.shape import Slot
-    from nu.lang.args import IntArg, StrArg
-    from nustd.ui.core import Section
+    from nu.lang import Nu
+    from nu.lang.args import IntArg
+    from nustd.ui.core import Ref, Section
 
-    from .sizing import Length, Scroll
-
-
-__all__ = ["GridRef", "SetSpan", "Tracks"]
+    from .layout import Check
 
 
-GridAlign = Literal["stretch", "start", "center", "end"]
+__all__ = ["GridRef", "Tracks"]
 
 #: A track template as written: N equal tracks, one entry per track, or CSS text.
 Tracks = int | str | Sequence[int | str]
@@ -113,17 +102,8 @@ _TRACKS = re.compile(r"^[a-z0-9.%(), \-]+$")
 _TRACK_FUNCTIONS = frozenset({"repeat", "minmax", "fit-content", "min", "max", "calc"})
 
 
-def _span_key(key: object) -> str:
-    """A spans key as the wire carries it: a child's key, or ``"r,c"`` for a place."""
-    if isinstance(key, tuple):
-        return span_key("GridRef", key, what="a placed span")
-    return str(key)
-
-
-def _normalize_tracks(name: str, tracks: Tracks | None) -> str | None:
+def _normalize_tracks(_owner: str, name: str, tracks: object) -> str:
     """A track template as CSS text: N equal tracks, one per entry, or the text itself."""
-    if tracks is None:
-        return None
     if isinstance(tracks, bool):
         msg = f"GridRef {name} is a count, a list of tracks or CSS text, not {tracks!r}"
         raise TypeError(msg)
@@ -134,7 +114,7 @@ def _normalize_tracks(name: str, tracks: Tracks | None) -> str | None:
         return f"repeat({tracks}, minmax(0, 1fr))"
     if isinstance(tracks, str):
         text = " ".join(tracks.split())
-    else:
+    elif isinstance(tracks, Sequence):
         parts = []
         for t in tracks:
             if isinstance(t, bool) or not isinstance(t, int | str):
@@ -142,6 +122,9 @@ def _normalize_tracks(name: str, tracks: Tracks | None) -> str | None:
                 raise TypeError(msg)
             parts.append(f"{t}px" if isinstance(t, int) else str(t).strip())
         text = " ".join(parts)
+    else:
+        msg = f"GridRef {name} is a count, a list of tracks or CSS text, not {tracks!r}"
+        raise TypeError(msg)
     if not text:
         msg = f"GridRef {name}: a template has at least one track"
         raise ValueError(msg)
@@ -152,27 +135,38 @@ def _normalize_tracks(name: str, tracks: Tracks | None) -> str | None:
     return text
 
 
-class GridRef(DictCollectionRef):
-    """Equal cells, one child per cell, as many per row as the width allows.
+class GridRef(ChildLayout, Ordered, DictCollectionRef):
+    """Children in cells, one child per cell: flowing equal cells, or a board of places.
 
-    `max_columns` caps the cells on a row (0: no cap, the width decides),
-    `min_width` is the narrowest a cell gets in px, `gap` and `padding` are
-    steps on the spacing ladder. `align` places each child in its cell
-    along the row: "stretch" gives every cell on a row the height of the
-    tallest, so a row of cards lines up. `spans` maps a child's key to its
-    columns, or to (columns, rows); `dense` backfills the holes spans leave.
-    Pin chrome on slot().
+    Layers (``layout``): size, ``padding`` (0), ``gap`` (4), ``justify``
+    (stretch) places each child across its cell, ``align`` (stretch) down
+    it, so a row of cards lines up. Flowing: ``max_columns`` caps the cells
+    on a row (0: the width decides), ``min_cell_width`` (px, 240) is the
+    narrowest a cell gets. ``dense`` backfills the holes spans leave.
 
-    `cols` (and `rows`) make it a placed grid: ``grid[r, c]`` is the cell at
-    a place, spans are keyed ``(r, c)``, `stack_below` stacks it on a narrow
-    screen. A placed grid takes no `max_columns` / `min_width` and ships
-    neither; a flowing one ships no templates. Both a placed grid and a
-    content ``TableRef`` take ``[r, c]``, but the grid places the cell at one
-    segment ``"r,c"`` (there is no ``grid[r]`` row), while the table has a row
-    level on the wire (``t[r]`` is a ``TableRowRef``, the cell sits under it). `height`, `max_height` and `scroll` size it (see ``sizing``).
+    ``cols`` (and ``rows``) make it a placed grid: ``grid[r, c]`` is the cell
+    at a place, ``stack_below`` stacks it on a narrow screen. A placed grid
+    refuses ``max_columns``, ``min_cell_width`` and the ordering ops. Both a
+    placed grid and a content ``TableRef`` take ``[r, c]``, but the grid
+    places the cell at one segment ``"r,c"`` (there is no ``grid[r]`` row),
+    while the table has a row level on the wire.
+
+    Per child: ``span`` (an int is columns, ``{"cols": c, "rows": r}`` both)
+    and ``align_self``, keyed by the child's key, or ``(r, c)`` on a board.
     """
 
     _wire_type = "Grid"
+    _layout: ClassVar[frozenset[str]] = SIZE | SPACE | ARRANGE
+    _children: ClassVar[tuple[str, ...]] = ("span", "align_self")
+    _justifies: ClassVar[tuple[str, ...]] = ("start", "center", "end", "stretch")
+    _family: ClassVar[Mapping[str, Check]] = {
+        "max_columns": lambda _o, name, v: _count(name, v),
+        "min_cell_width": px,
+        "dense": flag,
+        "cols": _normalize_tracks,
+        "rows": _normalize_tracks,
+        "stack_below": px,
+    }
 
     @classmethod
     def slot(
@@ -181,55 +175,66 @@ class GridRef(DictCollectionRef):
         /,
         *,
         max_columns: int | None = None,
-        min_width: int | None = None,
-        gap: int = 4,
-        align: GridAlign = "stretch",
-        padding: int = 0,
-        dense: bool = False,
-        spans: Mapping[object, Span] | None = None,
+        min_cell_width: int | None = None,
+        dense: bool | None = None,
         cols: Tracks | None = None,
         rows: Tracks | None = None,
-        stack_below: int = 0,
-        height: Length | None = None,
-        max_height: Length | None = None,
-        scroll: Scroll = "none",
+        stack_below: int | None = None,
+        span: Mapping[object, Span] | None = None,
+        align_self: Mapping[object, str] | None = None,
+        **layout: Unpack[ArrangeLayout],
     ) -> Self:
-        # Each mode ships its own props only: a flow grid its width-driven
-        # cap and cell width, a placed one its templates.
-        mode: dict[str, object]
-        col_tracks = _normalize_tracks("cols", cols)
-        row_tracks = _normalize_tracks("rows", rows)
-        if col_tracks is not None:
-            if max_columns is not None or min_width is not None:
-                msg = (
-                    "GridRef max_columns= and min_width= size a flowing grid;"
-                    " a placed grid (cols=) sizes its cells by the template"
-                )
-                raise ValueError(msg)
-            mode = {"cols": col_tracks, "stack_below": int(stack_below)}
-            if row_tracks is not None:
-                mode["rows"] = row_tracks
-        elif row_tracks is not None or stack_below:
+        _check_mode(
+            {
+                "max_columns": max_columns,
+                "min_cell_width": min_cell_width,
+                "cols": cols,
+                "rows": rows,
+                "stack_below": stack_below,
+            }
+        )
+        if cols is None and (rows is not None or stack_below is not None):
             msg = "GridRef rows= and stack_below= place cells on a template; give cols= too"
             raise ValueError(msg)
-        elif any(isinstance(k, tuple) for k in spans or {}):
-            msg = "GridRef spans keyed (r, c) are for a placed grid; give cols= too"
-            raise ValueError(msg)
-        else:
-            mode = {
-                "max_columns": int(max_columns or 0),
-                "min_width": int(240 if min_width is None else min_width),
-            }
-        return super().slot(
-            item,
-            **mode,
-            gap=int(gap),
-            align=align,
-            padding=int(padding),
-            dense=bool(dense),
-            spans=normalize_spans(spans, _span_key),
-            **sizing_props("GridRef", height=height, max_height=max_height, scroll=scroll),
+        family = {
+            "max_columns": max_columns,
+            "min_cell_width": min_cell_width,
+            "dense": dense,
+            "cols": cols,
+            "rows": rows,
+            "stack_below": stack_below,
+        }
+        props = cls._laid_out(
+            {**layout, **family, "span": span, "align_self": align_self}, placed=cols is not None
         )
+        return super().slot(item, **props)
+
+    @classmethod
+    def _child_key(cls, key: object, *, placed: bool = False, **_: object) -> str:
+        if isinstance(key, tuple):
+            if not placed:
+                msg = "GridRef per child maps keyed (r, c) are for a placed grid; give cols= too"
+                raise ValueError(msg)
+            return plain_place("GridRef", key, what="a placed cell")
+        if isinstance(key, str) and "," in key:
+            msg = f"GridRef key {key!r} reads as a place; key a placed cell as (r, c)"
+            raise ValueError(msg)
+        return super()._child_key(key)
+
+    def _child_runtime_key(self, key: object) -> object:
+        if isinstance(key, tuple):
+            self._require_placed()
+            return place_of(self._owner_name(), key, what="a placed cell")
+        return super()._child_runtime_key(key)
+
+    def _check_ordered(self, op: str) -> None:
+        if self._placed():
+            owner = self._owner_name()
+            msg = (
+                f"{owner}.{op}: a placed grid (cols=) puts each cell at its place [r, c] and"
+                f" keeps no order; reorder a flowing grid, or write the cell at another place"
+            )
+            raise TypeError(msg)
 
     # --- descent -------------------------------------------------------------
 
@@ -247,50 +252,43 @@ class GridRef(DictCollectionRef):
 
     def cell(self, r: IntArg, c: IntArg) -> ItemRef:
         """The cell at row ``r``, column ``c`` of a placed grid, the same as ``grid[r, c]``."""
+        self._require_placed()
         owner = self._owner_name()
+        return child_at(self, place(owner, r, c), self._payload.get("item"))
+
+    def _require_placed(self) -> None:
         if not self._placed():
+            owner = self._owner_name()
             msg = (
                 f"{owner}[r, c] places a cell on a track template, and this grid has none;"
                 f' declare one with cols= (GridRef.slot(cols="2fr 1fr")), or reach'
                 f" flowing cells as {owner}[i]"
             )
             raise TypeError(msg)
-        return child_at(self, place(owner, r, c), self._payload.get("item"))
 
     def _placed(self) -> bool:
         props = self._payload.get("props") or {}
         return bool(props.get("cols"))
 
-    # --- chrome --------------------------------------------------------------
+    def set_layout(self, **props: object) -> Nu:
+        """Change the grid's props; a flowing grid's and a placed grid's never in one call."""
+        _check_mode(props)
+        return super().set_layout(**props)
 
-    def set_max_columns(self, n: IntArg) -> Nu:
-        """Cap a flowing grid at ``n`` cells a row; 0 lets the width decide."""
-        return Write(self, Dict.of(max_columns=n))
 
-    def set_cols(self, tracks: Tracks) -> Nu:
-        """Replace a placed grid's column tracks (``"2fr 1fr"``, ``[240, "1fr"]``, 3)."""
-        value = tracks if isinstance(tracks, Nu) else _normalize_tracks("cols", tracks)
-        return Write(self, Dict.of(cols=value))
+def _check_mode(given: Mapping[str, object]) -> None:
+    """Refuse the flowing grid's sizing beside a template: they are two kinds of grid."""
+    flowing = [k for k in ("max_columns", "min_cell_width") if given.get(k) is not None]
+    if flowing and given.get("cols") is not None:
+        msg = (
+            f"GridRef {' and '.join(flowing)} size a flowing grid; a placed grid (cols=)"
+            f" sizes its cells by the template"
+        )
+        raise ValueError(msg)
 
-    def set_rows(self, tracks: Tracks) -> Nu:
-        """Replace a placed grid's row tracks, the same way as ``set_cols``."""
-        value = tracks if isinstance(tracks, Nu) else _normalize_tracks("rows", tracks)
-        return Write(self, Dict.of(rows=value))
 
-    def set_span(
-        self, cell: Ref | StrArg | tuple[IntArg, IntArg], cols: IntArg, rows: IntArg = 1
-    ) -> Nu:
-        """Span one cell, leaving the others' spans as they are.
-
-        Args:
-            cell: the child Ref, its key, or ``(r, c)`` for a placed cell. A
-                Ref is read for its key only, so it names the cell whichever
-                grid it was built under.
-            cols: tracks wide, never more than the grid has.
-            rows: tracks tall. 1 by 1 makes the cell plain again.
-        """
-        if isinstance(cell, tuple):
-            key: object = place_of(self._owner_name(), cell, what="a placed cell")
-        else:
-            key = cell._payload["segment"] if isinstance(cell, Ref) else cell
-        return SetSpan(self, key, cols, rows)
+def _count(name: str, value: object) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        msg = f"GridRef {name} is a count >= 0, not {value!r}"
+        raise ValueError(msg)
+    return value

@@ -30,7 +30,7 @@ from nustd import ui
 
 
 class App(nu.Shape):
-    home = ui.ContainerRef.slot(size="dashboard", gap=4)
+    home = ui.ContainerRef.slot(max_width="dashboard", gap=4)
 
 
 class Store(nu.Shape):
@@ -50,14 +50,12 @@ PUMPS = [
 # ---- the board: a placed grid ----------------------------------------------
 
 title = page["title"].to(ui.HeadingRef)
-board = page["board"].to(ui.GridRef.slot(cols="2fr 1fr", gap=4, spans={(1, 0): 2}))
+board = page["board"].to(ui.GridRef.slot(cols="2fr 1fr", gap=4, span={(1, 0): 2}))
 
 
 # (0, 0): a card holding a content table, a row of a button and a badge per cell
 pumps = board[0, 0].to(ui.CardRef.slot(title="Pumps", subtitle="a content table in a card"))
-specs = pumps[0].to(
-    ui.TableRef.slot(header=["Pump", "Role", "State"], align=["left", "left", "right"])
-)
+specs = pumps[0].to(ui.TableRef.slot(columns=["Pump", "Role", {"key": "State", "align": "end"}]))
 refresh = pumps.actions[0].to(ui.ButtonRef.slot(variant="outline", size="sm"))
 refreshed = pumps.actions[1].to(ui.BadgeRef.slot(variant="info"))
 
@@ -86,7 +84,7 @@ log = runs[0].to(
             {"key": "run", "label": "Run"},
             {"key": "pump", "label": "Pump"},
             {"key": "status", "label": "Status", "cell": ui.BadgeRef.slot(variant="info")},
-            {"key": "litres", "label": "Litres", "kind": "number", "align": "right"},
+            {"key": "litres", "label": "Litres", "kind": "number", "align": "end"},
         ],
         row_key="run",
         label="Runs",

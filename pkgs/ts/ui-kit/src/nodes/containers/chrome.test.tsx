@@ -1,6 +1,6 @@
 // Chrome containers over the real tree store: Card's surface, its named
-// slots (media, action, footer) and its whole-card link, Box's pad and
-// grounds, Tabs' strip variant.
+// slots (media, action, footer) and its whole-card link, its variants and
+// size preset, Tabs' strip variant.
 
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -83,14 +83,6 @@ describe("Card", () => {
 		expect(cls(footer)).not.toContain("border-t");
 	});
 
-	it("still reads the old footer prop and set_footer op as the caption", () => {
-		tree.getState().write([["c", "Card", { footer: "old" }]]);
-		draw("c");
-		expect(slot("card-footer")?.textContent).toBe("old");
-		act(() => tree.getState().dispatch({ op: "set_footer", ref: ["c"], payload: "older" }));
-		expect(slot("card-footer")?.textContent).toBe("older");
-	});
-
 	it("draws a header for actions alone", () => {
 		const card: [string, string, Record<string, unknown>] = ["c", "Card", {}];
 		child(card, "actions", "ButtonRef", { label: "", icon: "x" });
@@ -111,32 +103,27 @@ describe("Card", () => {
 	});
 });
 
-describe("Box", () => {
-	it("draws padding none with no pad", () => {
-		tree.getState().write([["b", "Box", { padding: "none" }]]);
-		draw("b");
-		expect(cls(slot("panel"))).toContain("[--panel-pad:0px]");
-		expect(cls(slot("panel"))).not.toContain("[--panel-pad:0.5rem]");
-	});
-
-	it("pads sm as sm", () => {
-		tree.getState().write([["b", "Box", { padding: "sm" }]]);
-		draw("b");
-		expect(cls(slot("panel"))).toContain("[--panel-pad:0.5rem]");
-	});
-
-	it("gives each ground its own fill", () => {
-		const fills: Record<string, string> = {
-			muted: "bg-bg-hover",
+describe("Card surfaces", () => {
+	it("gives each variant its own surface", () => {
+		const looks: Record<string, string> = {
 			sunken: "bg-bg-sunken",
+			elevated: "shadow-raised",
+			outline: "bg-transparent",
+			plain: "border-transparent",
 			accent: "bg-accent-2-wash",
 			brand: "bg-accent-soft",
 		};
-		for (const [ground, fill] of Object.entries(fills)) {
-			tree.getState().write([[ground, "Box", { background: ground }]]);
-			draw(ground);
-			expect(cls(slot("panel"))).toContain(fill);
+		for (const [variant, look] of Object.entries(looks)) {
+			tree.getState().write([[variant, "Card", { variant }]]);
+			draw(variant);
+			expect(cls(slot("card"))).toContain(look);
 		}
+	});
+
+	it("takes the size preset for its pad", () => {
+		tree.getState().write([["c", "Card", { size: "sm" }]]);
+		draw("c");
+		expect(cls(slot("card"))).toContain("[--card-pad:0.75rem]");
 	});
 });
 

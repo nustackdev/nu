@@ -8,8 +8,7 @@
 // applied only on the browser side.
 //
 // `write` is a handler because it has to touch document.title, which no
-// amount of prop merging does. The mount-time seed used to live in the
-// factory; there is no factory now, so it runs in an effect. The component
+// amount of prop merging does. The mount-time seed runs in an effect. The component
 // renders null but still mounts, so the effect fires exactly once per node.
 // Nothing is installed, so there is no teardown and no `dispose`.
 

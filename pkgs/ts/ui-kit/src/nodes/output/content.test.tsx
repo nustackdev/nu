@@ -73,14 +73,14 @@ describe("TextRef", () => {
 		);
 	});
 
-	it("reads an unknown tone as primary and right as end", () => {
-		mount("TextRef", { value: "x", tone: "loud", align: "right" });
+	it("reads an unknown tone as primary and end as end", () => {
+		mount("TextRef", { value: "x", tone: "loud", align: "end" });
 		expect(cls(slot("text"))).toEqual(expect.arrayContaining(["text-text-primary", "text-end"]));
 	});
 
-	it("keeps a bare write on the value and the style it had", () => {
+	it("keeps the style it had through a value write", () => {
 		mount("TextRef", { value: "a", tone: "accent" });
-		dispatch(OPS.write, "b");
+		dispatch(OPS.write, { value: "b" });
 		expect(slot("text")?.textContent).toBe("b");
 		expect(cls(slot("text"))).toContain("text-accent-text");
 		dispatch(OPS.write, { tone: "danger" });
@@ -110,6 +110,16 @@ describe("TextRef", () => {
 		const [muted, plain] = host.querySelectorAll<HTMLElement>("span[data-slot=text]");
 		expect(muted.className).toBe("text-text-muted");
 		expect(plain.className).toBe("");
+	});
+});
+
+describe("TextRef write", () => {
+	it("merges an object and drops a bare value", () => {
+		mount("TextRef", { value: "a" });
+		dispatch(OPS.write, { value: "b", tone: "muted" });
+		expect(slot("text")?.textContent).toBe("b");
+		dispatch(OPS.write, "c");
+		expect(slot("text")?.textContent).toBe("b");
 	});
 });
 
@@ -149,10 +159,12 @@ describe("HeadingRef", () => {
 		expect(slot("heading-subtitle")?.textContent).toBe("Pick one");
 	});
 
-	it("reads left as start and keeps the string shorthand", () => {
-		mount("HeadingRef", { label: "a", align: "left" });
+	it("reads start and takes an object write only", () => {
+		mount("HeadingRef", { label: "a", align: "start" });
 		expect(cls(slot("heading"))).toContain("text-start");
-		dispatch(OPS.write, "b");
+		dispatch(OPS.write, { label: "b" });
+		expect(slot("heading")?.textContent).toBe("b");
+		dispatch(OPS.write, "c");
 		expect(slot("heading")?.textContent).toBe("b");
 	});
 });
@@ -170,7 +182,7 @@ describe("LinkRef", () => {
 		expect(cls(slot("link"))).toContain("text-text-secondary");
 	});
 
-	it("has no button looks: an old button variant draws as a text link", () => {
+	it("has no button looks: a button variant draws as a text link", () => {
 		mount("LinkRef", { href: "/start", label: "Start", variant: "button", size: "lg" });
 		const a = slot("link");
 		expect(a?.tagName).toBe("A");
@@ -195,9 +207,9 @@ describe("LinkRef", () => {
 });
 
 describe("ImageRef", () => {
-	it("maps the old rounded bool when radius is unset", () => {
-		mount("ImageRef", { src: "/a.png", rounded: true });
-		expect(cls(slot("image"))).toContain("rounded-md");
+	it("draws square corners until a radius is set", () => {
+		mount("ImageRef", { src: "/a.png" });
+		expect(cls(slot("image"))).not.toContain("rounded-md");
 		dispatch(OPS.write, { radius: "full" });
 		expect(cls(slot("image"))).toContain("rounded-full");
 	});
@@ -261,8 +273,8 @@ describe("DividerRef", () => {
 		expect(cls(tail)).toContain("flex-1");
 	});
 
-	it("reads right as end and centers by default", () => {
-		mount("DividerRef", { label: "x", align: "right" });
+	it("reads end and centers by default", () => {
+		mount("DividerRef", { label: "x", align: "end" });
 		const [lead, tail] = slot("separator-labeled")?.querySelectorAll("[aria-hidden]") ?? [];
 		expect(cls(lead)).toContain("flex-1");
 		expect(cls(tail)).toContain("w-4");

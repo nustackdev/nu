@@ -97,7 +97,7 @@ function sorted(
 // --- What a host does with each column request -------------------------------
 
 type Table = { columns: readonly DataTableColumn[]; rows: readonly DataTableRow[] };
-type Align = "left" | "center" | "right";
+type Align = "start" | "center" | "end";
 
 let madeColumns = 0;
 
@@ -239,8 +239,7 @@ type Args = {
 	activatable: boolean;
 	columnsEditable: boolean;
 	density: "compact" | "default" | "comfortable";
-	striped: boolean;
-	variant: "default" | "borderless";
+	variant: "default" | "borderless" | "striped";
 };
 
 function PlaygroundHost(args: Args) {
@@ -261,7 +260,6 @@ function PlaygroundHost(args: Args) {
 				columns={columns}
 				rows={rows}
 				density={args.density}
-				striped={args.striped}
 				variant={args.variant}
 				selection={args.selection}
 				selected={selected}
@@ -504,7 +502,7 @@ function Kinds() {
 					columns={KINDS}
 					rows={KIND_ROWS}
 					density="compact"
-					striped
+					variant="striped"
 				/>
 			</div>
 		</div>
@@ -530,13 +528,12 @@ export const Playground: StoryObj<Args> = {
 		activatable: false,
 		columnsEditable: true,
 		density: "default",
-		striped: false,
 		variant: "default",
 	},
 	argTypes: {
 		selection: { control: "inline-radio", options: ["none", "single", "multi"] },
 		density: { control: "inline-radio", options: ["compact", "default", "comfortable"] },
-		variant: { control: "inline-radio", options: ["default", "borderless"] },
+		variant: { control: "inline-radio", options: ["default", "borderless", "striped"] },
 	},
 	render: (args) => <PlaygroundHost {...args} />,
 };
@@ -546,3 +543,23 @@ export const ServerConfirm: StoryObj = {
 };
 
 export const ColumnKinds: StoryObj = { render: () => <Kinds /> };
+
+// --- Column layout -----------------------------------------------------------
+
+/** Each column lays out by its record: a truncated title, a fixed id, and one that hides on a narrow table. */
+function ColumnLayoutHost() {
+	const columns: DataTableColumn[] = [
+		{ key: "id", label: "ID", width: "5rem", wrap: "nowrap" },
+		{ key: "title", label: "Title", maxWidth: "10rem", wrap: "truncate" },
+		{ key: "points", label: "Points", kind: "number", align: "center" },
+		{ key: "done", label: "Done", kind: "bool", hideBelow: 520 },
+		{ key: "state", label: "State", hideBelow: 520 },
+	];
+	return (
+		<div className="max-w-xl resize-x overflow-auto p-8">
+			<DataTable aria-label="Tasks" columns={columns} rows={SEED} />
+		</div>
+	);
+}
+
+export const ColumnLayout: StoryObj = { render: () => <ColumnLayoutHost /> };

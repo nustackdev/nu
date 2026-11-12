@@ -66,7 +66,7 @@ class Watchlist(nustd.ui.Container):
 
 class App(nu.Shape):
     title: nustd.ui.TitleRef
-    watchlist = Watchlist.slot(size="dashboard")
+    watchlist = Watchlist.slot(max_width="dashboard")
 
 
 TABLE = App.watchlist.card.body.table

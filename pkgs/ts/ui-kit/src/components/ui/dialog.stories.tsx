@@ -11,20 +11,20 @@ import {
 	DialogTrigger,
 } from "./dialog";
 
-const SIZES = ["sm", "md", "lg", "xl"] as const;
+const WIDTHS = [384, 512, 672, 896] as const;
 
-function Sample({ size }: { size?: "sm" | "md" | "lg" | "xl" }) {
+function Sample({ width }: { width?: number }) {
 	return (
 		<Dialog>
 			<DialogTrigger asChild>
-				<Button variant="secondary">Open {size ?? "md"}</Button>
+				<Button variant="secondary">Open {width ?? 512}px</Button>
 			</DialogTrigger>
-			<DialogContent size={size}>
+			<DialogContent width={width}>
 				<DialogHeader>
 					<DialogTitle>Delete project</DialogTitle>
 					<DialogDescription>
-						This action cannot be undone. Traces, dashboards, and cached runs
-						under this project will be dropped.
+						This action cannot be undone. Traces, dashboards, and cached runs under this project
+						will be dropped.
 					</DialogDescription>
 				</DialogHeader>
 				<DialogFooter>
@@ -43,23 +43,21 @@ function Sample({ size }: { size?: "sm" | "md" | "lg" | "xl" }) {
 export const Default: StoryObj = {
 	render: () => (
 		<div className="p-8">
-				<Sample />
-			</div>
+			<Sample />
+		</div>
 	),
 };
 
 export const Matrix: StoryObj = {
 	render: () => (
 		<div className="p-8">
-				<div className="mb-3 font-mono text-xs uppercase tracking-widest text-text-muted">
-					sizes
-				</div>
-				<div className="flex flex-wrap gap-3">
-					{SIZES.map((s) => (
-						<Sample key={s} size={s} />
-					))}
-				</div>
+			<div className="mb-3 font-mono text-xs uppercase tracking-widest text-text-muted">widths</div>
+			<div className="flex flex-wrap gap-3">
+				{WIDTHS.map((w) => (
+					<Sample key={w} width={w} />
+				))}
 			</div>
+		</div>
 	),
 };
 

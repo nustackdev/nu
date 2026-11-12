@@ -20,7 +20,6 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "Align",
     "ControlSize",
     "HeadingTone",
     "IconTone",
@@ -54,16 +53,12 @@ StatusTone = Literal["neutral", "info", "ok", "warn", "danger"]
 
 #: A named page width, the kit's ``--container-*`` tokens: a form 480, reading
 #: prose 640, a panel or detail view 960, a site's main column 1200, a wide
-#: dashboard 1400. "full" is no cap. Column's ``max_width`` and Container's
-#: ``size`` both take it.
+#: dashboard 1400. "full" is no cap. Every container size prop takes one
+#: (a ``Length``, see ``collections.layout``).
 PageWidth = Literal["form", "prose", "panel", "main", "dashboard", "full"]
 
-#: Where a flex container places its children across its main axis.
-Align = Literal["start", "center", "end", "stretch"]
-
-#: Where text sits on its line. start / end are canonical, the way a Line
-#: spells it; left / right still read.
-TextAlign = Literal["start", "center", "end", "left", "right"]
+#: Where text sits on its line, logical so it follows the writing direction.
+TextAlign = Literal["start", "center", "end"]
 
 
 def set_href(ref: Ref, url: StrArg, target: Target | StrArg = UNSET) -> Nu:

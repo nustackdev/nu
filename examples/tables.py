@@ -65,8 +65,8 @@ class SimpleBody(nustd.ui.Column):
     table = nustd.ui.DataTableRef.slot(
         columns=[
             {"key": "name", "label": "Planet"},
-            {"key": "moons", "label": "Moons", "kind": "number", "align": "right"},
-            {"key": "radius_km", "label": "Radius (km)", "kind": "number", "align": "right"},
+            {"key": "moons", "label": "Moons", "kind": "number", "align": "end"},
+            {"key": "radius_km", "label": "Radius (km)", "kind": "number", "align": "end"},
             {"key": "rings", "label": "Rings", "kind": "bool"},
         ],
         label="Planets",
@@ -84,7 +84,7 @@ class DataCard(nustd.ui.Card):
     table = nustd.ui.DataTableRef.slot(
         columns=[
             {"key": "task", "label": "Task"},
-            {"key": "hours", "label": "Hours", "kind": "number", "align": "right"},
+            {"key": "hours", "label": "Hours", "kind": "number", "align": "end"},
             {"key": "done", "label": "Done", "kind": "bool"},
             {"key": "owner", "label": "Owner", "kind": "select", "options": ["gor", "sonny"]},
         ],
@@ -121,7 +121,7 @@ class Home(nustd.ui.Container):
 
 class App(nu.Shape):
     title: nustd.ui.TitleRef
-    home = Home.slot(size="dashboard")
+    home = Home.slot(max_width="dashboard")
 
 
 SIMPLE = App.home.simple.body.table

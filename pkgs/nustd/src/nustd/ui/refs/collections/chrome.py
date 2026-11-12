@@ -1,10 +1,13 @@
 """Chrome containers -- Refs for the boxes that frame their children.
 
-Card, Box (``BoxRef``), Tabs, Modal, Accordion, Form, Fieldset and
-Field. Each is a ``CollectionRef``: children are open-ended, and the chrome
-the box carries of its own (a Card's title, a Tabs' active tab, a Field's
-label) is props seeded by ``slot()`` and driven by ``set_*``. The Shapes over
-them live in ``nustd.ui.shapes.chrome``.
+Card, Tabs, Modal, Accordion, Form, Fieldset and Field. Each is a
+``CollectionRef``: children are open-ended, and the chrome the box carries
+of its own (a Card's title, a Tabs' active tab, a Field's label) is props
+seeded by ``slot()`` and driven by ``set_*``. Their layout is the four layers
+of ``layout``: Card, Modal, Form and Fieldset stack a body the way a Column
+does and keep the same per child maps; Field, Tabs and Accordion hold fixed
+parts and take the size layer (Field its ``gap`` too), the parts carry their
+own. The Shapes over them live in ``nustd.ui.shapes.chrome``.
 
 The chrome commands (`_SetSectionStr`, `_SetTabs`, `_SetActive`) are
 ``Send`` subclasses, so they target the abstract ``Session`` from core like
@@ -20,32 +23,34 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
-from typing_extensions import Self
+from typing_extensions import Self, Unpack
 
 from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import child_at
 from nustd.ui.core.interactions import Changed, Send, Write
 
-from ..vocab import Align, Target
+from ..vocab import Target
 from ..vocab import set_href as _set_href
 from .base import DictCollectionRef, ShapeCollectionRef
+from .flow import FLOW_CHILDREN, STACK
+from .layout import SIZE, ChildLayout, SizeLayout, StackLayout, choice
 from .named import ACTIONS, CONTROL, FOOTER, MEDIA, actions_ref, footer_ref, media_ref
-from .sizing import sizing_props
 
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from nu.domains.shape import Slot
     from nu.lang import Nu
     from nu.lang.args import Arg, BoolArg, ListArg, StrArg
     from nustd.ui.core import Ref, Section
 
-    from .sizing import Length, Scroll
+    from .layout import Check
 
 
 __all__ = [
     "AccordionRef",
-    "BoxRef",
     "CardRef",
     "FieldRef",
     "FieldsetRef",
@@ -113,6 +118,7 @@ class AccordionRef(DictCollectionRef):
 
     _wire_type = "Accordion"
     _positions: ClassVar[bool] = False
+    _layout: ClassVar[frozenset[str]] = SIZE
 
     def _admit(self, address: object) -> None:
         super()._admit(address)
@@ -127,12 +133,14 @@ class AccordionRef(DictCollectionRef):
         sections: list[dict[str, str]] | None = None,
         open: list[str] | None = None,
         multi: bool = True,
+        **layout: Unpack[SizeLayout],
     ) -> Self:
         return super().slot(
             item,
             sections=_normalize_sections(sections or []),
             open=_normalize_open(open or []),
             multi=bool(multi),
+            **cls._laid_out(layout),
         )
 
     def set_sections(self, items: ListArg[dict[str, str]]) -> Nu:
@@ -167,12 +175,14 @@ class _SetSectionStr(Send):
         return values[0]
 
 
-CardVariant = Literal["default", "elevated", "sunken", "outline"]
+CardVariant = Literal["default", "elevated", "sunken", "outline", "plain", "accent", "brand"]
 CardSize = Literal["sm", "md", "lg"]
+_CARD_VARIANTS = ("default", "elevated", "sunken", "outline", "plain", "accent", "brand")
+_CARD_SIZES = ("sm", "md", "lg")
 
 
-class CardRef(DictCollectionRef):
-    """Card-styled container: media, a header with actions, the body, a footer.
+class CardRef(ChildLayout, DictCollectionRef):
+    """A surface: media, a header with actions, the body, a footer.
 
     Three child keys are the card's own places, not body: ``media`` draws
     full-bleed on top (an image), ``actions`` on the header's right rail (a
@@ -186,13 +196,31 @@ class CardRef(DictCollectionRef):
     ``caption`` (``set_caption``) is a quiet line of text along the bottom,
     drawn under a footer child when there is one.
 
-    ``variant`` is the surface, ``size`` the pad (12 / 16 / 24 px). With
-    ``href`` the whole card is one link with a hover border; it should then
-    hold no controls of its own, since a button inside a link is two targets.
+    Surface: ``variant`` is the look (``default``, ``elevated``, ``sunken``,
+    ``outline``, ``plain`` with no border and no fill, ``accent`` and
+    ``brand`` tinted washes), ``size`` a preset for the whole look (``sm``,
+    ``md``, ``lg``: pad 12 / 16 / 24 and the space between header, body and
+    footer). Any explicit layer prop wins over the preset. Both change at
+    run time through ``set_layout`` with the layers.
+
+    The body speaks the layers of a Column (``layout``): ``padding``
+    (the size's pad), ``gap`` (3), ``justify``, ``align``, ``divided``, and
+    the per child maps. ``height`` / ``max_height`` with ``scroll`` scroll
+    the body; the header and footer stay put.
+
+    With ``href`` the whole card is one link with a hover border; it should
+    then hold no controls of its own, since a button inside a link is two
+    targets.
     """
 
     _wire_type = "Card"
     _parts: ClassVar[frozenset[str]] = frozenset({MEDIA, ACTIONS, FOOTER})
+    _layout: ClassVar[frozenset[str]] = STACK
+    _children: ClassVar[tuple[str, ...]] = FLOW_CHILDREN
+    _family: ClassVar[Mapping[str, Check]] = {
+        "variant": choice(*_CARD_VARIANTS),
+        "size": choice(*_CARD_SIZES),
+    }
 
     @classmethod
     def slot(
@@ -203,20 +231,20 @@ class CardRef(DictCollectionRef):
         title: str = "",
         subtitle: str = "",
         caption: str = "",
-        variant: CardVariant = "default",
-        size: CardSize = "md",
+        variant: CardVariant | None = None,
+        size: CardSize | None = None,
         href: str = "",
         target: Target = "_self",
+        **layout: Unpack[StackLayout],
     ) -> Self:
         return super().slot(
             item,
             title=title,
             subtitle=subtitle,
             caption=caption,
-            variant=variant,
-            size=size,
             href=href,
             target=target,
+            **cls._laid_out({**layout, "variant": variant, "size": size}),
         )
 
     @property
@@ -243,65 +271,15 @@ class CardRef(DictCollectionRef):
     def set_caption(self, text: StrArg) -> Nu:
         return _SetSectionStr(self, "set_caption", text)
 
-    def set_variant(self, name: CardVariant | StrArg) -> Nu:
-        return Write(self, Dict.of(variant=name))
-
     def set_href(self, url: StrArg, target: Target | StrArg = UNSET) -> Nu:
         """Point the card somewhere; an empty url makes it a plain card again."""
         return _set_href(self, url, target)
 
 
-Padding = Literal["none", "sm", "md", "lg"]
-Border = Literal["none", "hairline", "card"]
-Background = Literal["none", "muted", "sunken", "accent", "brand"]
-Shadow = Literal["none", "sm", "md"]
-Gap = Literal["none", "sm", "md", "lg"]
+class FieldLayout(SizeLayout, total=False):
+    """A Field's layout: the size layer, and the gap between its parts."""
 
-
-# Backs the ``Box`` Shape and draws as the browser's "Box" node.
-# It cannot be called CollectionRef: that name is the base every container
-# Ref subclasses, so the Ref behind this one box is BoxRef.
-class BoxRef(DictCollectionRef):
-    """Styled card-like box with an optional title. Pin chrome on slot().
-
-    ``background`` is the ground: ``muted`` the hover wash, ``sunken`` a well,
-    ``accent`` the Starlight wash (a callout) and ``brand`` the Afterglow soft
-    fill (a highlighted plan); the tinted two bring their own border tint.
-    ``height``, ``max_height`` and ``scroll`` size the box and scroll its
-    body past them (see ``sizing``); the title stays put.
-    """
-
-    _wire_type = "Box"
-
-    @classmethod
-    def slot(
-        cls,
-        item: type[Section] | type[Ref] | Slot | None = None,
-        /,
-        *,
-        title: str = "",
-        padding: Padding = "md",
-        border: Border = "hairline",
-        background: Background = "none",
-        shadow: Shadow = "none",
-        gap: Gap = "md",
-        height: Length | None = None,
-        max_height: Length | None = None,
-        scroll: Scroll = "none",
-    ) -> Self:
-        return super().slot(
-            item,
-            title=title,
-            padding=padding,
-            border=border,
-            background=background,
-            shadow=shadow,
-            gap=gap,
-            **sizing_props("BoxRef", height=height, max_height=max_height, scroll=scroll),
-        )
-
-    def set_title(self, text: StrArg) -> Nu:
-        return Write(self, Dict.of(title=text))
+    gap: int
 
 
 class FieldRef(ShapeCollectionRef):
@@ -315,6 +293,7 @@ class FieldRef(ShapeCollectionRef):
 
     _wire_type = "Field"
     _parts: ClassVar[frozenset[str]] = frozenset({CONTROL})
+    _layout: ClassVar[frozenset[str]] = SIZE | {"gap"}
 
     @property
     def control(self) -> Ref:
@@ -347,8 +326,16 @@ class FieldRef(ShapeCollectionRef):
         help: str = "",
         error: str = "",
         required: bool = False,
+        **layout: Unpack[FieldLayout],
     ) -> Self:
-        return super().slot(label=label, help=help, error=error, required=bool(required))
+        """Declare it as a slot; ``gap`` (1) spaces label, control and help."""
+        return super().slot(
+            label=label,
+            help=help,
+            error=error,
+            required=bool(required),
+            **cls._laid_out(layout),
+        )
 
     def set_label(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(label=text))
@@ -363,13 +350,16 @@ class FieldRef(ShapeCollectionRef):
         return Write(self, Dict.of(required=flag))
 
 
-FieldsetGap = Literal["sm", "md", "lg"]
+class FieldsetRef(ChildLayout, DictCollectionRef):
+    """Grouped fields with a legend. Display-only, server-owned.
 
-
-class FieldsetRef(DictCollectionRef):
-    """Grouped fields with a legend. Display-only, server-owned."""
+    The body speaks the layers of a Column (``layout``): ``padding`` (4),
+    ``gap`` (4), ``justify``, ``align``, ``divided``, and the per child maps.
+    """
 
     _wire_type = "Fieldset"
+    _layout: ClassVar[frozenset[str]] = STACK
+    _children: ClassVar[tuple[str, ...]] = FLOW_CHILDREN
 
     @classmethod
     def slot(
@@ -378,25 +368,29 @@ class FieldsetRef(DictCollectionRef):
         /,
         *,
         legend: str = "",
-        gap: FieldsetGap = "md",
         disabled: bool = False,
+        **layout: Unpack[StackLayout],
     ) -> Self:
-        return super().slot(item, legend=legend, gap=gap, disabled=bool(disabled))
+        return super().slot(item, legend=legend, disabled=bool(disabled), **cls._laid_out(layout))
 
     def set_legend(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(legend=text))
-
-    def set_gap(self, value: FieldsetGap | StrArg) -> Nu:
-        return Write(self, Dict.of(gap=value))
 
     def set_disabled(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(disabled=flag))
 
 
-class FormRef(DictCollectionRef):
-    """Semantic form wrapper. Pin chrome on slot(); submit lives on a child ButtonRef."""
+class FormRef(ChildLayout, DictCollectionRef):
+    """Semantic form wrapper. Pin chrome on slot(); submit lives on a child ButtonRef.
+
+    The body speaks the layers of a Column (``layout``): ``padding`` (0),
+    ``gap`` (4), ``justify``, ``align`` (stretch), ``divided``, and the per
+    child maps.
+    """
 
     _wire_type = "Form"
+    _layout: ClassVar[frozenset[str]] = STACK
+    _children: ClassVar[tuple[str, ...]] = FLOW_CHILDREN
 
     @classmethod
     def slot(
@@ -405,27 +399,27 @@ class FormRef(DictCollectionRef):
         /,
         *,
         title: str = "",
-        gap: int = 4,
-        padding: int = 0,
-        align: Align = "stretch",
+        **layout: Unpack[StackLayout],
     ) -> Self:
-        return super().slot(item, title=title, gap=int(gap), padding=int(padding), align=align)
+        return super().slot(item, title=title, **cls._laid_out(layout))
 
     def set_title(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(title=text))
 
 
-ModalSize = Literal["sm", "md", "lg", "xl"]
-
-
-class ModalRef(DictCollectionRef):
+class ModalRef(ChildLayout, DictCollectionRef):
     """Dialog overlay. Open vs closed is the thing it carries, so it has a `set()`.
 
-    `size` caps its width ("sm", "md", "lg", "xl"). It never grows past the
-    window: a tall body scrolls inside it, the title stays put.
+    The dialog is ``width`` wide (512px unless set; a page width name reads,
+    ``width="prose"``) and never grows past the window: a tall body scrolls
+    inside it, the title stays put. The body speaks the layers of a Column
+    (``layout``): ``gap`` (4), ``padding``, ``justify``, ``align``,
+    ``divided``, and the per child maps.
     """
 
     _wire_type = "Modal"
+    _layout: ClassVar[frozenset[str]] = STACK
+    _children: ClassVar[tuple[str, ...]] = FLOW_CHILDREN
 
     @classmethod
     def slot(
@@ -436,10 +430,14 @@ class ModalRef(DictCollectionRef):
         open: bool = False,
         title: str = "",
         dismissible: bool = True,
-        size: ModalSize = "md",
+        **layout: Unpack[StackLayout],
     ) -> Self:
         return super().slot(
-            item, open=bool(open), title=title, dismissible=bool(dismissible), size=size
+            item,
+            open=bool(open),
+            title=title,
+            dismissible=bool(dismissible),
+            **cls._laid_out(layout),
         )
 
     def set_open(self, flag: BoolArg) -> Nu:
@@ -499,6 +497,7 @@ class _SetActive(Send):
 
 
 TabsVariant = Literal["line", "pill", "segmented"]
+_TABS_VARIANTS = ("line", "pill", "segmented")
 
 
 class TabsRef(DictCollectionRef):
@@ -509,11 +508,14 @@ class TabsRef(DictCollectionRef):
 
     ``variant`` is the strip: ``line`` underlines the active tab across a full
     width rule, ``pill`` puts a chip behind it, ``segmented`` is one track
-    with a raised thumb, for a view switch.
+    with a raised thumb, for a view switch; ``set_layout(variant=)`` changes
+    it at run time.
     """
 
     _wire_type = "Tabs"
     _positions: ClassVar[bool] = False
+    _layout: ClassVar[frozenset[str]] = SIZE
+    _family: ClassVar[Mapping[str, Check]] = {"variant": choice(*_TABS_VARIANTS)}
 
     def _admit(self, address: object) -> None:
         super()._admit(address)
@@ -528,17 +530,20 @@ class TabsRef(DictCollectionRef):
         tabs: list[dict[str, str]] | None = None,
         active: str = "",
         variant: TabsVariant = "line",
+        **layout: Unpack[SizeLayout],
     ) -> Self:
-        return super().slot(item, tabs=_normalize_tabs(tabs or []), active=active, variant=variant)
+        return super().slot(
+            item,
+            tabs=_normalize_tabs(tabs or []),
+            active=active,
+            **cls._laid_out({**layout, "variant": variant}),
+        )
 
     def set_tabs(self, value: ListArg[dict[str, str]]) -> Nu:
         return _SetTabs(self, value)
 
     def set_active(self, value: StrArg) -> Nu:
         return _SetActive(self, value)
-
-    def set_variant(self, name: TabsVariant | StrArg) -> Nu:
-        return Write(self, Dict.of(variant=name))
 
     def on_change(self) -> Changed:
         return Changed(self)

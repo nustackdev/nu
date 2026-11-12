@@ -135,7 +135,7 @@ class ItemRef(ItemForm, StructuredRef):
     def to(self, spec: type[_R] | _R) -> _R:
         """This address as the kind ``spec`` names, so the chain goes on in that kind.
 
-        ``grid[0, 1].to(TableRef.slot(header=cols))[1, 0]``. The
+        ``grid[0, 1].to(TableRef.slot(columns=cols))[1, 0]``. The
         kind is named where the child is used, never declared on the container,
         which is what lets one container hold children of different kinds.
 

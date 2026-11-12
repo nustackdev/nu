@@ -12,8 +12,7 @@
 // Starlight (content, not navigation), with the hand cursor of a link in
 // prose; `muted` is the same link in the secondary ink, for a footer or a
 // byline. A link that looks like a button is a ButtonRef with an href, not
-// a look of this one; an old `button` / `primary` / ... variant draws as
-// `text`. `icon` is a lucide name (../../lib/icons) drawn before the
+// a look of this one; any other variant draws as `text`. `icon` is a lucide name (../../lib/icons) drawn before the
 // label; `arrow` draws a trailing arrow, for a "read more". The external
 // glyph and the arrow never both draw: arrow wins.
 //

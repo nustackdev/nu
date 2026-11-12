@@ -1,15 +1,11 @@
 // HeadingRef -- display-only heading with selectable level (h1..h4) and align.
 //
-// Server-owned. An object write is a partial merge of {label, level, align,
-// size, tone, eyebrow, subtitle} into the node's props, which the default
-// store behaviour already does. What it cannot do is the legacy shorthand: a
-// bare string payload means `{label: <string>}`, not `value`, and a nil write
-// clears the label. That is the one thing this type owns, so it carries a
-// `write` handler for it and leaves the object case to the default merge.
-// Level and align are normalized at read time. Composes the kit Heading
+// Server-owned. A write is an object, a partial merge of {label, level,
+// align, size, tone, eyebrow, subtitle} into the node's props; anything
+// else is dropped, so one write has one form. Level and align are normalized at read time. Composes the kit Heading
 // primitive: level picks the tag, and the size by default; `size` decouples
 // the look from the tag (a `display` hero that is still an h1, a small h2).
-// Align takes start / center / end, and left / right as the older spelling.
+// Align takes start / center / end.
 //
 // `eyebrow` is a small accent label above the heading, `subtitle` a secondary
 // line under it; either one wraps the heading in a group so all three share
@@ -28,6 +24,7 @@ import {
 	useProp,
 	useStringProp,
 } from "../../tree";
+import { writeObject } from "./text";
 
 // Match level to typography ladder from primitives.md §Heading.
 const LEVEL_SIZES = {
@@ -105,15 +102,5 @@ function HeadingView({ path }: NodeProps) {
 export const HeadingRef: NodeEntry = {
 	component: HeadingView,
 	fill: true,
-	handlers: {
-		write: (ctx, payload) =>
-			ctx.update((props) => {
-				// Legacy shorthand: a bare string (or nil) maps to {label: ...}.
-				if (payload == null || typeof payload !== "object") {
-					props.label = payload == null ? "" : String(payload);
-					return;
-				}
-				Object.assign(props, payload as Record<string, unknown>);
-			}),
-	},
+	handlers: { write: writeObject },
 };

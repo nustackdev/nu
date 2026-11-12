@@ -154,7 +154,7 @@ describe("handlers over a store", () => {
 		const disposed: string[] = [];
 		const sent: TreeFrame[] = [];
 		const behaviours: Record<string, Behaviour> = {
-			L: { handlers: orderHandlers },
+			L: { handlers: orderHandlers() },
 			T: { dispose: ({ path }) => disposed.push(path.join("/")) },
 		};
 		const store = createTreeStore({ resolve: (t) => behaviours[t], send: (f) => sent.push(f) });
@@ -205,5 +205,22 @@ describe("handlers over a store", () => {
 		expect(sent).toHaveLength(1);
 		expect(sent[0]).toMatchObject({ op: "error", ref: ["l"], id: "7" });
 		expect((sent[0].payload as { code: string }).code).toBe("payload_invalid");
+	});
+
+	it("turns an op down when the node refuses it, changing nothing", () => {
+		const sent: TreeFrame[] = [];
+		const behaviours: Record<string, Behaviour> = {
+			G: {
+				handlers: orderHandlers((props) =>
+					props.cols ? "a placed grid keeps no order" : undefined,
+				),
+			},
+		};
+		const store = createTreeStore({ resolve: (t) => behaviours[t], send: (f) => sent.push(f) });
+		store.getState().write([["l", "G", { cols: "2fr 1fr" }]]);
+		store.getState().dispatch(frame(ORDER_OPS.remove, { key: "0" }, "9"));
+		expect(store.getState().getIn(["l"])?.props[ORDER_PROP]).toBeUndefined();
+		expect(sent[0]).toMatchObject({ op: "error", ref: ["l"], id: "9" });
+		expect((sent[0].payload as { message: string }).message).toContain("placed grid");
 	});
 });

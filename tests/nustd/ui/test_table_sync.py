@@ -79,7 +79,7 @@ def test_column_ops_on_plain_lists():
     assert added[1] == {"key": "k", "label": "Column 3", "kind": "text"}
     assert [c["key"] for c in values.column_moved(added, "a", 2)] == ["k", "b", "a"]
     assert values.column_removed(added, "k") == [{"key": "a", "label": "Column 2"}, {"key": "b"}]
-    assert values.column_set(cols, "b", "align", "right")[1] == {"key": "b", "align": "right"}
+    assert values.column_set(cols, "b", "align", "end")[1] == {"key": "b", "align": "end"}
     assert values.kind_of([{"key": "n", "kind": "number"}], "n") == "number"
     assert values.kind_of([{"key": "n", "kind": "weird"}], "n") == "text"
 
@@ -513,10 +513,8 @@ async def test_column_add_rename_move_align_are_stored_and_shipped(store):
     assert cols[1] == {"key": key, "label": "Notes", "kind": "text"}
     cols = await step(event="column_move", column=key, column_index=1, index=3)
     assert [c["key"] for c in cols] == ["title", "year", "seen", key]
-    cols = await step(
-        event="column_align", column="year", column_index=1, align="right", previous=""
-    )
-    assert cols[1]["align"] == "right"
+    cols = await step(event="column_align", column="year", column_index=1, align="end", previous="")
+    assert cols[1]["align"] == "end"
     stored = await _read(store.ctx, values.ColumnsOf(nu.ToList(Sheet.columns)))
     assert stored == cols
 

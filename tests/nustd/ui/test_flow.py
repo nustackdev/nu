@@ -1,7 +1,7 @@
 """Flow containers and the frames that build them, with no browser.
 
-Row's slot defaults (sizing comes from the child's kind, so the one knob is
-the row's ``min_width``), and the chrome commands of Card and Tabs: they ship
+Row's slot (sizing comes from the child's kind; nothing unset ships), and
+the chrome commands of Card and Tabs: they ship
 the Ref's chain, so a container nobody booted (built from Refs alone, a
 nested Section, a nuspace cell) is created by the frame that sets its chrome.
 """
@@ -45,47 +45,33 @@ def _run(term: nu.Nu) -> list:
 # --- Row slot ----------------------------------------------------------------
 
 
-ROW_DEFAULTS = {
-    "gap": 4,
-    "align": "center",
-    "justify": "start",
-    "wrap": False,
-    "padding": 0,
-    "min_width": 240,
-}
+def test_row_slot_ships_nothing_unset():
+    assert RowRef.slot().props == {}
 
 
-def test_row_slot_defaults_include_min_width():
-    assert RowRef.slot().props == ROW_DEFAULTS
-
-
-def test_row_slot_takes_min_width():
-    assert RowRef.slot(wrap=True, min_width=320).props == {
-        **ROW_DEFAULTS,
-        "wrap": True,
-        "min_width": 320,
-    }
+def test_row_slot_takes_wrap_and_stack_below():
+    assert RowRef.slot(wrap=True, stack_below=640).props == {"wrap": True, "stack_below": 640}
 
 
 def test_row_shape_forwards_its_props_to_the_ref():
     class Tiles(Row):
         a = TextRef.slot()
 
-    slot = Tiles.slot(wrap=True, min_width=200)
-    assert slot.props == {**ROW_DEFAULTS, "wrap": True, "min_width": 200}
+    slot = Tiles.slot(wrap=True, gap=2)
+    assert slot.props == {"wrap": True, "gap": 2}
     assert slot.ref_cls is RowRef
 
 
-def test_row_built_alone_carries_its_defaults_on_the_chain():
+def test_row_built_alone_carries_its_props_on_the_chain():
     row = RowRef("r", parent_ref=ColumnRef("c"), props={"wrap": True})
     text = TextRef("t", parent_ref=row)
     (frame,) = _run(text.set("hi"))
-    assert frame.chain[1] == ("r", "Row", {**ROW_DEFAULTS, "wrap": True})
+    assert frame.chain[1] == ("r", "Row", {"wrap": True})
 
 
 def test_row_refuses_an_unknown_prop():
     with pytest.raises(TypeError):
-        RowRef.slot(width=100)
+        RowRef.slot(min_cell_width=100)
 
 
 # --- chrome commands carry the chain ----------------------------------------
@@ -113,8 +99,6 @@ def test_card_chrome_ships_the_chain(op):
         "title": "declared",
         "subtitle": "",
         "caption": "",
-        "variant": "default",
-        "size": "md",
         "href": "",
         "target": "_self",
     }

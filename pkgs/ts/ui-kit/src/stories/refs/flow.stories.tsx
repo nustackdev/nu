@@ -1,6 +1,6 @@
 // Refs/Flow: Row and Column as a program draws them. In a Row each child
 // sizes by its kind: fill children (charts, cards, inputs) share the free
-// width and wrap at the row's `min_width`, content children (buttons,
+// width and wrap at 240px, content children (buttons,
 // badges, text) keep their size. A Divider stands vertical in a Row. In a
 // stretch Column fill children span the width and content children keep it.
 
@@ -27,7 +27,7 @@ function card(segment: string, title: string, label: string, value: string, note
 
 export const WrappingCards: Story = {
 	render: () => {
-		const row = step("flow-cards", "Row", { gap: 4, wrap: true, align: "stretch", min_width: 200 });
+		const row = step("flow-cards", "Row", { gap: 4, wrap: true, align: "stretch" });
 		const under = (chains: ReturnType<typeof step>[][]) => chains.map((c) => [row, ...c]);
 		return (
 			<NodeStage

@@ -95,6 +95,7 @@ import {
 	DropdownMenuTrigger,
 } from "./dropdown-menu";
 import { IconButton } from "./icon-button";
+import type { ColumnAlign } from "./table";
 
 /* ================================ model ================================== */
 
@@ -144,9 +145,9 @@ export const tableMenuText = {
 	renameColumn: "Rename column",
 	columnType: "Column type",
 	kinds: { text: "Text", number: "Number", bool: "Checkbox", select: "Select" },
-	alignLeft: "Align left",
+	alignStart: "Align start",
 	alignCenter: "Align center",
-	alignRight: "Align right",
+	alignEnd: "Align end",
 	deleteColumn: "Delete column",
 	deleteTable: "Delete table",
 	/** A row handle's name, by the row's own name. */
@@ -249,7 +250,7 @@ export function rowMenu(a: RowMenuActions): TableMenuItem[] {
 }
 
 export type ColumnKind = keyof typeof tableMenuText.kinds;
-export type ColumnAlign = "left" | "center" | "right";
+export type { ColumnAlign };
 
 export type ColumnMenuActions = {
 	insertLeft?: TableAction;
@@ -316,9 +317,9 @@ export function columnMenu(a: ColumnMenuActions): TableMenuItem[] {
 						id: "align",
 						value: align.value,
 						options: [
-							{ value: "left", label: t.alignLeft },
+							{ value: "start", label: t.alignStart },
 							{ value: "center", label: t.alignCenter },
-							{ value: "right", label: t.alignRight },
+							{ value: "end", label: t.alignEnd },
 						],
 						onValueChange: (v) => align.onValueChange(v as ColumnAlign),
 					}

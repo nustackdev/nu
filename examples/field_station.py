@@ -173,21 +173,21 @@ class Home(ui.Container):
     intro = Intro.slot()
     toolbar = Toolbar.slot(gap=1)
     h_stats = ui.HeadingRef.slot(label="Today")
-    stats = Stats.slot(max_columns=4, min_width=140, gap=3)
+    stats = Stats.slot(max_columns=4, min_cell_width=140, gap=3)
     h_trend = ui.HeadingRef.slot(label="Populations")
-    trend = Trend.slot(wrap=True, min_width=320)
-    mix = Mix.slot(wrap=True, min_width=280)
+    trend = Trend.slot(wrap=True, basis={"chart": 320, "note": 320})
+    mix = Mix.slot(wrap=True, basis={"pie": 280, "bars": 280})
     h_watch = ui.HeadingRef.slot(label="Watch list")
     watch = Watch.slot(title="Species to watch", subtitle="IUCN status from the atlas")
     h_gallery = ui.HeadingRef.slot(label="Atlas")
-    atlas = ui.Grid.slot(SpeciesCard, min_width=220, gap=3)
+    atlas = ui.Grid.slot(SpeciesCard, min_cell_width=220, gap=3)
     log = Log.slot(title="Trap log")
     sheet = LogSheet.slot(title="Log a sighting", side="right")
     confirm = ConfirmClear.slot(title="Clear the trap log?")
 
 
 class App(nu.Shape):
-    home = Home.slot(size="dashboard")
+    home = Home.slot(max_width="dashboard")
 
 
 h = App.home

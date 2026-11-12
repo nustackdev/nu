@@ -14,12 +14,15 @@
 // run: it breaks the line, drawn on its own between the runs before and
 // after it. Put those in a Column next to the Line instead.
 //
-// Chrome is plain props, merged by the default store `write`: `align`
-// (start, center, end) and `wrap` (false keeps one line and clips the end).
+// Layout (`layout.tsx`): `justify` (start, center, end) places the runs
+// along the line, `wrap` (false keeps one line and clips the end), the size
+// props and `padding`. Runs sit on the text's baseline, so there is no
+// `align`.
 // `fill`: a Line is a paragraph, it takes the width it is given and wraps
 // in it, so in a Row it shares the free width instead of sizing to its runs.
 
 import { Line as LinePrimitive } from "../../components/ui/line";
+import { cn } from "../../lib/utils";
 import {
 	type CellProps,
 	FlowProvider,
@@ -28,8 +31,8 @@ import {
 	type NodeProps,
 	useNode,
 	useProp,
-	useStringProp,
 } from "../../tree";
+import { type LayoutDefaults, padClass, useLayout } from "./layout";
 
 // Starts with a space or closing punctuation: no word space before it.
 const NO_SPACE_BEFORE = /^[\s.,;:!?)\]}%'"’”…]/;
@@ -45,16 +48,24 @@ function LineCell({ path, children }: CellProps) {
 	);
 }
 
-const ALIGNS = new Set(["start", "center", "end"] as const);
-type Align = "start" | "center" | "end";
+const JUSTIFIES = new Set(["start", "center", "end"] as const);
+type Justify = "start" | "center" | "end";
+const DEFAULTS: LayoutDefaults = { justify: "start" };
 
 function LineView({ path }: NodeProps) {
-	const raw = useStringProp(path, "align", "start");
-	const align: Align = ALIGNS.has(raw as Align) ? (raw as Align) : "start";
+	const layout = useLayout(path, DEFAULTS);
+	const justify: Justify = JUSTIFIES.has(layout.justify as Justify)
+		? (layout.justify as Justify)
+		: "start";
 	// Nil or missing reads as the class default, wrapping on.
 	const wrap = useProp<unknown>(path, "wrap", true) !== false;
 	return (
-		<LinePrimitive align={align} wrap={wrap}>
+		<LinePrimitive
+			align={justify}
+			wrap={wrap}
+			className={cn(padClass(layout), layout.scroll)}
+			style={layout.size}
+		>
 			<FlowProvider flow="inline">
 				<NodeChildren path={path} cell={LineCell} indexed />
 			</FlowProvider>

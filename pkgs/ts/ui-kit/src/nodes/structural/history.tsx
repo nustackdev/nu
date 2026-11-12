@@ -1,6 +1,4 @@
 // HistoryRef -- the server's handle on the page's History (../../tree/history).
-// `NavRef` is the same type under its old name, so a program built before
-// the rename still draws.
 //
 // write(payload): every shape rides on the one op.
 //   - bare string "/feed"                                  -> push
@@ -140,6 +138,3 @@ export const HistoryRef: NodeEntry = {
 		},
 	},
 };
-
-/** The old name, kept so programs built before the rename still draw. */
-export const NavRef: NodeEntry = HistoryRef;

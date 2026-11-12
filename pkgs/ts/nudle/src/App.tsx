@@ -76,7 +76,7 @@ export function Shell({ status }: { status: Status }) {
 				>
 					{/* The bar runs edge to edge; what is on it stops at the main
 					    width, on the page gutter, so it lines up with a page below. */}
-					<Container size="main" className="h-full flex-row items-center justify-between">
+					<Container maxWidth="main" className="h-full flex-row items-center justify-between">
 						<span className="flex items-center gap-2">
 							<img src={nuMark} alt="" className="size-5" />
 							<span className="text-sm text-text-muted font-mono">nudle</span>

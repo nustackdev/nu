@@ -15,18 +15,19 @@ import type * as React from "react";
 import { cn } from "../../lib/utils";
 
 const cardVariants = cva(
-	[
-		"flex flex-col rounded-lg",
-		"transition-colors duration-fast ease-out",
-	].join(" "),
+	["flex flex-col rounded-lg", "transition-colors duration-fast ease-out"].join(" "),
 	{
 		variants: {
 			variant: {
 				default: "bg-bg-surface border border-border-default",
-				elevated:
-					"bg-bg-elevated border border-border-default shadow-raised",
+				elevated: "bg-bg-elevated border border-border-default shadow-raised",
 				sunken: "bg-bg-sunken border border-transparent",
 				outline: "bg-transparent border border-border-default",
+				// No border and no fill: a group with the card's pad and parts.
+				plain: "bg-transparent border border-transparent",
+				// Soft washes, each with its own line: a callout, a highlight.
+				accent: "bg-accent-2-wash border border-accent-2-line",
+				brand: "bg-accent-soft border border-accent-line",
 			},
 			size: {
 				// gap between children of Card matches space-radius §Density Card.
@@ -35,11 +36,7 @@ const cardVariants = cva(
 				lg: "gap-4",
 			},
 			interactive: {
-				true: [
-					"cursor-default",
-					"hover:border-border-strong",
-					"focus-ring",
-				].join(" "),
+				true: ["cursor-default", "hover:border-border-strong", "focus-ring"].join(" "),
 				false: "",
 			},
 		},
@@ -79,11 +76,7 @@ export function Card({
 		<Comp
 			data-slot="card"
 			data-size={size ?? "md"}
-			className={cn(
-				cardVariants({ variant, size, interactive }),
-				padClass,
-				className,
-			)}
+			className={cn(cardVariants({ variant, size, interactive }), padClass, className)}
 			{...props}
 		/>
 	);
@@ -91,10 +84,7 @@ export function Card({
 
 // Header uses a two-column grid when a `CardAction` sits inside it, so the
 // action rides top-right without extra flex plumbing at the call site.
-export function CardHeader({
-	className,
-	...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
 	return (
 		<div
 			data-slot="card-header"
@@ -109,17 +99,11 @@ export function CardHeader({
 	);
 }
 
-export function CardTitle({
-	className,
-	...props
-}: React.HTMLAttributes<HTMLHeadingElement>) {
+export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
 	return (
 		<h3
 			data-slot="card-title"
-			className={cn(
-				"text-lg font-semibold leading-none text-text-primary",
-				className,
-			)}
+			className={cn("text-lg font-semibold leading-none text-text-primary", className)}
 			{...props}
 		/>
 	);
@@ -140,39 +124,23 @@ export function CardDescription({
 
 // Right-rail slot inside CardHeader. Kept as its own component so the
 // `has-[[data-slot=card-action]]` selector on CardHeader picks it up.
-export function CardAction({
-	className,
-	...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+export function CardAction({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
 	return (
 		<div
 			data-slot="card-action"
-			className={cn(
-				"col-start-2 row-span-2 row-start-1 self-start justify-self-end",
-				className,
-			)}
+			className={cn("col-start-2 row-span-2 row-start-1 self-start justify-self-end", className)}
 			{...props}
 		/>
 	);
 }
 
-export function CardContent({
-	className,
-	...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
 	return (
-		<div
-			data-slot="card-content"
-			className={cn("px-[var(--card-pad)]", className)}
-			{...props}
-		/>
+		<div data-slot="card-content" className={cn("px-[var(--card-pad)]", className)} {...props} />
 	);
 }
 
-export function CardFooter({
-	className,
-	...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+export function CardFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
 	return (
 		<div
 			data-slot="card-footer"

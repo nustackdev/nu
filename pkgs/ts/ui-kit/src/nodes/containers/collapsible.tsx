@@ -10,8 +10,12 @@
 // Composes the kit Collapsible primitive (Radix under the hood), which owns
 // the content height motion (`base`, ease-in-out) and Space/Enter. The
 // chevron points right when closed and turns down when open, like a tree row.
-// Header pad-y 12 and content pad-top 8 per the kit density rules. Children
-// stack under a block flow; the region has no intrinsic width, so it fills.
+// Header pad-y 12 and content pad-top 8 per the kit density rules. The body
+// is a stack (`layout.tsx`: `gap` 3, `padding`, `justify`, `align`,
+// `divided`, the per child maps); the size props sit on the region. Open,
+// the content is a flex column that may shrink, so a region capped by
+// `max_height` / `height` scrolls its body under the trigger. It has no
+// intrinsic width, so it fills.
 
 import { OPS } from "@nustackdev/ui-core";
 import { ChevronRight } from "lucide-react";
@@ -23,8 +27,6 @@ import {
 } from "../../components/ui/collapsible";
 import { cn } from "../../lib/utils";
 import {
-	FlowProvider,
-	NodeChildren,
 	type NodeEntry,
 	type NodeProps,
 	useBoolProp,
@@ -32,12 +34,16 @@ import {
 	useSetProps,
 	useStringProp,
 } from "../../tree";
+import { childHandlers, type LayoutDefaults, Stack, useLayout } from "./layout";
+
+const DEFAULTS: LayoutDefaults = { gap: 3, justify: "start", align: "stretch" };
 
 function CollapsibleView({ path }: NodeProps) {
 	const open = useBoolProp(path, "open");
 	const title = useStringProp(path, "title");
 	const setProps = useSetProps(path);
 	const send = useSend(path);
+	const layout = useLayout(path, DEFAULTS);
 
 	const onOpenChange = useCallback(
 		(next: boolean) => {
@@ -53,6 +59,7 @@ function CollapsibleView({ path }: NodeProps) {
 			open={open}
 			onOpenChange={onOpenChange}
 			className="flex flex-col"
+			style={layout.size}
 		>
 			<CollapsibleTrigger
 				aria-label={title ? undefined : "Toggle section"}
@@ -74,15 +81,15 @@ function CollapsibleView({ path }: NodeProps) {
 				/>
 				<span className="min-w-0 truncate">{title}</span>
 			</CollapsibleTrigger>
-			<CollapsibleContent>
-				<div className="flex flex-col gap-3 pt-2">
-					<FlowProvider flow="block">
-						<NodeChildren path={path} indexed />
-					</FlowProvider>
-				</div>
+			<CollapsibleContent className="data-[state=open]:flex data-[state=open]:min-h-0 data-[state=open]:flex-col">
+				<Stack path={path} layout={{ ...layout, size: undefined }} className="pt-2" />
 			</CollapsibleContent>
 		</CollapsiblePrimitive>
 	);
 }
 
-export const Collapsible: NodeEntry = { component: CollapsibleView, fill: true };
+export const Collapsible: NodeEntry = {
+	component: CollapsibleView,
+	fill: true,
+	handlers: childHandlers,
+};

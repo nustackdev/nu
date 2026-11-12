@@ -15,7 +15,7 @@ Anything a Shape declares can also be built from Refs alone; see
 - flow:   Column, Row.
 - grid:   Grid, equal cells.
 - line:   Line, slots that run inline.
-- chrome: Card, Box, Tabs, Modal, Accordion, Form, Fieldset, Field.
+- chrome: Card, Tabs, Modal, Accordion, Form, Fieldset, Field.
 - disclosure: Collapsible, Sheet.
 - list:   List, one item per slot.
 - page:   PageSection, NavList.
@@ -23,7 +23,7 @@ Anything a Shape declares can also be built from Refs alone; see
 
 from __future__ import annotations
 
-from .chrome import Accordion, Box, Card, Field, Fieldset, Form, Modal, Tabs
+from .chrome import Accordion, Card, Field, Fieldset, Form, Modal, Tabs
 from .container import Container
 from .disclosure import Collapsible, Sheet
 from .flow import Column, Row
@@ -35,7 +35,6 @@ from .page import NavList, PageSection
 
 __all__ = [
     "Accordion",
-    "Box",
     "Card",
     "Collapsible",
     "Column",

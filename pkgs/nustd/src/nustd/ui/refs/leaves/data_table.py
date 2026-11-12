@@ -7,7 +7,6 @@ to them.
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, Literal
 
 from typing_extensions import Self
@@ -17,11 +16,14 @@ from nu.forms import Dict, List
 from nustd.ui.core import Append, Changed, Ref, Send, Write
 from nustd.ui.core.base import _wire_type_of
 
+from ..collections.columns import normalize_columns
+from ..collections.layout import one_of
+from ..collections.table import DENSITIES, VARIANTS, TableDensity, TableVariant
 from .base import LeafRef
 
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
 
     from nu.lang import Nu
     from nu.lang.args import DictArg, IntArg, ListArg, StrArg
@@ -111,21 +113,55 @@ def _cell_spec(column: str, spec: object) -> dict[str, object]:
     return {"kind": kind, "props": props, "prop": CELL_KINDS[kind]}
 
 
-def _column(c: object) -> object:
-    """One column as the wire carries it: strings as they are, mappings copied, ``cell`` lowered."""
-    if not isinstance(c, Mapping):
-        return c
-    out = dict(c)
-    if "cell" in out and out["cell"] is not None:
-        out["cell"] = _cell_spec(str(out.get("key", "")), out["cell"])
-    return out
+_KINDS = ("text", "number", "bool", "select")
+
+
+def _kind(column: object, value: object) -> object:
+    if value not in _KINDS:
+        msg = f"DataTableRef column {column!r} kind is one of {', '.join(_KINDS)}, not {value!r}"
+        raise ValueError(msg)
+    return value
+
+
+def _flag(column: object, value: object) -> object:
+    if not isinstance(value, bool):
+        msg = f"DataTableRef column {column!r} flag is True or False, not {value!r}"
+        raise TypeError(msg)
+    return value
+
+
+def _options(column: object, value: object) -> object:
+    if isinstance(value, (str, bytes)) or not isinstance(value, (list, tuple)):
+        msg = f"DataTableRef column {column!r} options is a list, not {value!r}"
+        raise TypeError(msg)
+    return [str(o) for o in value]
+
+
+#: The data keys a data table column adds to the column record.
+DATA_KEYS = {
+    "kind": _kind,
+    "options": _options,
+    "editable": _flag,
+    "sortable": _flag,
+    "cell": lambda column, spec: _cell_spec(str(column), spec),
+}
 
 
 def _columns(columns: object) -> object:
-    """Columns as the wire carries them, when they are a plain list; a term passes through."""
+    """Column records as the wire carries them (see ``columns``); a term passes through."""
     if isinstance(columns, (list, tuple)):
-        return [_column(c) for c in columns]
+        return normalize_columns("DataTableRef", list(columns), DATA_KEYS)
     return columns
+
+
+def _looks(variant: object, density: object) -> dict[str, object]:
+    """``variant`` and ``density`` as the wire carries them, each only when set."""
+    out: dict[str, object] = {}
+    if variant is not None:
+        out["variant"] = one_of("DataTableRef", "variant", variant, VARIANTS)
+    if density is not None:
+        out["density"] = one_of("DataTableRef", "density", density, DENSITIES)
+    return out
 
 
 class DataTableRef(LeafRef):
@@ -172,11 +208,14 @@ class DataTableRef(LeafRef):
             lambda ev: Shelf.table.set_columns(renamed(ev["column"], ev["label"])),
         )
 
-    **Columns** are strings or mappings, mixed freely. A string ``s`` is
-    ``{"key": s}``; a mapping is ``{key, label?, kind?, options?, editable?,
-    align?, width?, sortable?}`` with ``kind`` one of "text" (the default),
-    "number", "bool" or "select" (picks from ``options``). Every column sorts
-    unless it says ``sortable: False``.
+    **Columns** are column records (``nustd.ui.refs.collections.columns``),
+    the same as a content table's: ``key``, ``label``, ``width``,
+    ``min_width``, ``max_width``, ``wrap``, ``hide_below``, ``align``, plus
+    the data keys ``kind`` (``"text"``, the default, ``"number"``, ``"bool"``
+    or ``"select"``, which picks from ``options``), ``editable``,
+    ``sortable`` and ``cell``. A string ``s`` is ``{"key": s}``. Every column
+    sorts unless it says ``sortable: False``. A key the record does not have
+    fails where it is written.
 
     **Cell specs.** A column mapping's ``cell`` draws every cell of that
     column as a ui kind, from the cell's value: ``{"key": "status", "cell":
@@ -213,8 +252,9 @@ class DataTableRef(LeafRef):
     Args:
         columns: The columns, strings or mappings (see above).
         label: The table's accessible name, eg "Movies".
-        striped: Alternate rows tinted.
-        dense: The compact row height.
+        variant: "striped" (the default, framed with alternate rows tinted),
+            "default" (framed) or "borderless", the content table's looks.
+        density: "compact", "default" or "comfortable" row heights.
         max_rows: Keep only the newest rows on ``set``, ``append``, ``set_row``
             and ``insert_row``; 0 keeps all.
         sort_column: The column the arrows show, by key.
@@ -244,8 +284,8 @@ class DataTableRef(LeafRef):
         *,
         columns: Sequence[str | Mapping[str, object]] | None = None,
         label: str = "Table",
-        striped: bool = True,
-        dense: bool = False,
+        variant: TableVariant | None = None,
+        density: TableDensity | None = None,
         max_rows: int = 0,
         sort_column: str = "",
         sort_direction: SortDirection = "asc",
@@ -261,8 +301,7 @@ class DataTableRef(LeafRef):
         return super().slot(
             columns=_columns(list(columns or ())),
             label=label,
-            striped=striped,
-            dense=dense,
+            **_looks(variant, density),
             max_rows=max_rows,
             sort_column=sort_column,
             sort_direction=sort_direction,
@@ -455,8 +494,8 @@ class DataTableRef(LeafRef):
     def on_column_align(self) -> Changed:
         """``{event, column, column_index, align, previous}``: another alignment. Needs ``columns_editable``.
 
-        ``align`` and ``previous`` are "left", "center" or "right";
+        ``align`` and ``previous`` are "start", "center" or "end";
         ``previous`` is what the column shows, its kind's default (number
-        right, bool center, else left) when it sets none.
+        end, bool center, else start) when it sets none.
         """
         return Changed(self, "column_align")

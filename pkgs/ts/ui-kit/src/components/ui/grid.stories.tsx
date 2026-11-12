@@ -57,7 +57,7 @@ export const Columns: StoryObj = {
 export const AutoFit: StoryObj = {
 	render: () => (
 		<div className="p-8">
-			<Grid minWidth={160} gap={3}>
+			<Grid minCellWidth={160} gap={3}>
 				{Array.from({ length: 10 }, (_, i) => (
 					<Tile key={i} n={i + 1} />
 				))}
@@ -75,7 +75,7 @@ export const Gaps: StoryObj = {
 					<Text size="xs" tone="muted" mono>
 						gap {gap} ({gap * 4}px)
 					</Text>
-					<Grid maxColumns={4} minWidth={120} gap={gap}>
+					<Grid maxColumns={4} minCellWidth={120} gap={gap}>
 						{[1, 2, 3, 4].map((n) => (
 							<Tile key={n} n={n} />
 						))}
@@ -95,7 +95,7 @@ export const Align: StoryObj = {
 					<Text size="xs" tone="muted" mono>
 						align {align}
 					</Text>
-					<Grid maxColumns={3} minWidth={160} align={align}>
+					<Grid maxColumns={3} minCellWidth={160} align={align}>
 						<Card>
 							<CardHeader>
 								<CardTitle>Short</CardTitle>

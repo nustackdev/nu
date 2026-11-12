@@ -33,7 +33,7 @@ function text(parent: string, type: string, seg: string, value: string) {
 }
 
 describe("positions draw in number order", () => {
-	for (const type of ["Row", "Column", "Grid", "Box", "Container", "Form", "Fieldset"]) {
+	for (const type of ["Row", "Column", "Grid", "Card", "Container", "Form", "Fieldset"]) {
 		it(type, () => {
 			act(() => {
 				text("c", type, "2", "two");

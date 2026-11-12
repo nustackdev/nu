@@ -69,7 +69,7 @@ def test_row_click_skips_a_sort():
         ),
         sess,
     )
-    assert [f.payload for f in sess.frames] == ["3"]
+    assert [f.payload for f in sess.frames] == [{"value": "3"}]
 
 
 def test_sort_skips_a_row_click():
@@ -82,7 +82,7 @@ def test_sort_skips_a_row_click():
         ),
         sess,
     )
-    assert [f.payload for f in sess.frames] == ["title desc"]
+    assert [f.payload for f in sess.frames] == [{"value": "title desc"}]
 
 
 # --- the editable table -------------------------------------------------------
@@ -128,13 +128,11 @@ def _echo(change) -> nu.Nu:
     return nu.ReactOnce(change, lambda ev: GridApp.grid.out.set(nu.Str(ev["event"])))
 
 
-def test_slot_defaults_keep_the_old_props():
+def test_slot_defaults():
     props = nu.tree.payload(ShelfPage.table)["props"]
     assert props == {
-        "columns": ["title"],
+        "columns": [{"key": "title"}],
         "label": "Table",
-        "striped": True,
-        "dense": False,
         "max_rows": 0,
         "sort_column": "",
         "sort_direction": "asc",
@@ -157,7 +155,7 @@ def test_slot_takes_mapping_columns_and_copies_them():
 
     column["kind"] = "text"
     props = nu.tree.payload(Mixed.table)["props"]
-    assert props["columns"] == ["title", {"key": "year", "kind": "number"}]
+    assert props["columns"] == [{"key": "title"}, {"key": "year", "kind": "number"}]
 
 
 @pytest.mark.parametrize(
@@ -191,13 +189,13 @@ def test_each_on_takes_only_its_own_event(name):
     others = [{"event": e} for e in _KINDS if e != name]
     sess = _Session(*others, {"event": name, "key": "a"})
     _run(_echo(getattr(GridApp.grid.table, _ON.get(name, f"on_{name}"))()), sess)
-    assert [f.payload for f in sess.frames] == [name]
+    assert [f.payload for f in sess.frames] == [{"value": name}]
 
 
 def test_on_change_takes_every_event():
     sess = _Session({"event": "move", "key": "a", "index": 0})
     _run(_echo(GridApp.grid.table.on_change()), sess)
-    assert [f.payload for f in sess.frames] == ["move"]
+    assert [f.payload for f in sess.frames] == [{"value": "move"}]
 
 
 def test_an_edit_reads_its_fields():
@@ -220,7 +218,7 @@ def test_an_edit_reads_its_fields():
         ),
         sess,
     )
-    assert [f.payload for f in sess.frames] == ["a.title=B"]
+    assert [f.payload for f in sess.frames] == [{"value": "a.title=B"}]
 
 
 # --- row-level ops ------------------------------------------------------------
@@ -262,7 +260,7 @@ def test_set_columns_writes_the_columns():
     (frame,) = sess.frames
     assert (frame.op, frame.payload) == (
         "write",
-        {"columns": ["id", {"key": "year", "kind": "number"}]},
+        {"columns": [{"key": "id"}, {"key": "year", "kind": "number"}]},
     )
 
 
@@ -324,7 +322,7 @@ def test_a_column_rename_reads_its_fields():
         ),
         sess,
     )
-    assert [f.payload for f in sess.frames] == ["title: Title -> Name"]
+    assert [f.payload for f in sess.frames] == [{"value": "title: Title -> Name"}]
 
 
 def test_a_column_reshape_over_list_rows_is_one_frame():
@@ -332,10 +330,13 @@ def test_a_column_reshape_over_list_rows_is_one_frame():
     columns = ["b", {"key": "a", "label": "A", "align": "center"}]
     _run(GridApp.grid.table.set({"columns": columns, "rows": [[2, 1]]}), sess)
     (frame,) = sess.frames
-    assert (frame.op, frame.payload) == ("write", {"columns": columns, "rows": [[2, 1]]})
+    sent = [{"key": "b"}, columns[1]]
+    assert (frame.op, frame.payload) == ("write", {"columns": sent, "rows": [[2, 1]]})
 
 
 def test_set_columns_alone_leaves_the_rows():
     sess = _Session()
     _run(GridApp.grid.table.set_columns(["b", "a"]), sess)
-    assert [(f.op, f.payload) for f in sess.frames] == [("write", {"columns": ["b", "a"]})]
+    assert [(f.op, f.payload) for f in sess.frames] == [
+        ("write", {"columns": [{"key": "b"}, {"key": "a"}]})
+    ]

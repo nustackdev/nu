@@ -14,31 +14,46 @@
 //
 // ## Props
 //
-//   header    the header row's labels, by column. A header cell with content
-//             (`t.header[c]`, the "header" row's child c) draws that instead.
-//             No labels and no header row: no header.
-//   align     each column's alignment, "left" | "center" | "right", by position.
+//   columns   one record per column, the one the DataTable takes too:
+//             {key?, label?, width?, min_width?, max_width?, wrap?,
+//             hide_below?, align?}. The header row draws each `label` (the
+//             key when there is none); a header cell with content
+//             (`t.header[c]`, the "header" row's child c) draws that
+//             instead. No labels and no header row: no header. Widths are
+//             lengths (a number is px), `wrap` "wrap" | "nowrap" |
+//             "truncate", `hide_below` px of the table's width under which
+//             the column is not drawn, `align` "start" | "center" | "end".
 //   variant   "default" (framed) | "borderless" | "striped".
 //   density   "compact" | "default" | "comfortable" (rows 24 / 28 / 32).
 //   label     the table's accessible name, "Table" by default.
-//   spans     {"r,c": {cols, rows}}: the cell at row r, column c covers that
+//   span      {"r,c": {cols, rows}}: the cell at row r, column c covers that
 //             many columns and rows, and the cells under it are not drawn.
-//             "header,c" spans header cells (columns only). `set_span` is its
-//             own op ({key, cols, rows}), merged here, as on a Grid.
+//             "header,c" spans header cells (columns only). `set_child`
+//             ({key, span}) changes one entry, as on a Grid.
+//   width, min_width, max_width, height, min_height, max_height, scroll
+//             the size layer, on the box around the table's frame.
 //
 // A hidden row (`t[r].hide()`) draws nothing and keeps its place number; a
 // hidden cell draws an empty cell.
 
 import { getNode, type Path } from "@nustackdev/ui-core";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import {
+	COLUMN_ALIGN,
+	COLUMN_ITEMS,
+	type ColumnAlign,
+	ColumnBox,
+	type ColumnLayout,
+	columnCellStyle,
+	columnHeadStyle,
 	TableBody,
 	TableCell,
 	TableHead,
 	TableHeader,
 	Table as TablePrimitive,
 	TableRow as TableRowPrimitive,
+	useHiddenColumns,
 } from "../../components/ui/table";
 import { cn } from "../../lib/utils";
 import {
@@ -53,33 +68,54 @@ import {
 	useListProp,
 	useNode,
 	useProp,
+	useProps,
 	useStringProp,
 	useTree,
 } from "../../tree";
-import { readSpans } from "./grid";
+import {
+	childHandlers,
+	cssLength,
+	readSpans,
+	SCROLL_CLASSES,
+	type Scroll,
+	type Span,
+	sizeStyle,
+} from "./layout";
 
 /** The segment the header row sits at; body rows are digits, so it never collides. */
 const HEADER = "header";
 
 const VARIANTS = ["default", "borderless", "striped"] as const;
 const DENSITIES = ["compact", "default", "comfortable"] as const;
-type Align = "left" | "center" | "right";
-const ALIGNS: readonly Align[] = ["left", "center", "right"];
-
-const TEXT_ALIGN: Record<Align, string> = {
-	left: "text-left",
-	center: "text-center",
-	right: "text-right",
-};
-const ITEMS: Record<Align, string> = {
-	left: "items-start",
-	center: "items-center",
-	right: "items-end",
-};
+const ALIGNS: readonly ColumnAlign[] = ["start", "center", "end"];
+const WRAPS = ["wrap", "nowrap", "truncate"] as const;
 
 const isIndex = (s: string) => /^\d+$/.test(s);
 
-type Span = { cols: number; rows: number };
+/** A column as the table draws it: its label, and how it lays out. */
+type Column = ColumnLayout & { label: string; align: ColumnAlign };
+
+/** The `columns` records off the wire; anything that is not a record is skipped. */
+export function readColumns(raw: readonly unknown[]): Column[] {
+	const out: Column[] = [];
+	for (const c of raw) {
+		if (c == null || typeof c !== "object" || Array.isArray(c)) continue;
+		const d = c as Record<string, unknown>;
+		const label = d.label ?? d.key;
+		out.push({
+			label: label == null ? "" : String(label),
+			align: ALIGNS.find((a) => a === d.align) ?? "start",
+			width: cssLength(d.width),
+			minWidth: cssLength(d.min_width),
+			maxWidth: cssLength(d.max_width),
+			wrap: WRAPS.find((w) => w === d.wrap),
+			hideBelow: typeof d.hide_below === "number" ? d.hide_below : undefined,
+		});
+	}
+	return out;
+}
+
+const PLAIN: Column = { label: "", align: "start" };
 
 /**
  * How many body rows and columns there are: one past the largest position
@@ -141,20 +177,26 @@ function layout(
  * input, a card) takes the cell's width; anything else keeps its own width at
  * the column's edge. A hidden child leaves the cell empty.
  */
-function CellContent({ path, align }: { path: Path; align: Align }) {
+function CellContent({ path, col }: { path: Path; col: Column }) {
 	const { type, props } = useNode(path);
 	const hidden = useHidden(path);
 	if (hidden || type === null) return null;
 	const view = <NodeView path={path} />;
+	const title = typeof props.value === "string" ? props.value : undefined;
 	return (
 		<FlowProvider flow="block">
-			{isFill(type, props) ? (
-				view
-			) : (
-				<div data-slot="table-place" className={cn("flex min-w-0 flex-col", ITEMS[align])}>
-					{view}
-				</div>
-			)}
+			<ColumnBox col={col} title={title}>
+				{isFill(type, props) ? (
+					view
+				) : (
+					<div
+						data-slot="table-place"
+						className={cn("flex min-w-0 flex-col", COLUMN_ITEMS[col.align])}
+					>
+						{view}
+					</div>
+				)}
+			</ColumnBox>
 		</FlowProvider>
 	);
 }
@@ -163,12 +205,13 @@ type RowProps = {
 	path: Path;
 	row: string;
 	cols: number;
-	aligns: readonly Align[];
+	columns: readonly Column[];
+	hiddenCols: ReadonlySet<number>;
 	covered: Set<string>;
 	spanAt: Map<string, Span>;
 };
 
-function BodyRow({ path, row, cols, aligns, covered, spanAt }: RowProps) {
+function BodyRow({ path, row, cols, columns, hiddenCols, covered, spanAt }: RowProps) {
 	const rowPath = useMemo(() => [...path, row], [path, row]);
 	const hidden = useHidden(rowPath);
 	if (hidden) return null;
@@ -177,29 +220,23 @@ function BodyRow({ path, row, cols, aligns, covered, spanAt }: RowProps) {
 		const key = `${row},${c}`;
 		if (covered.has(key)) continue;
 		const span = spanAt.get(key);
-		const align = aligns[c] ?? "left";
+		const col = columns[c] ?? PLAIN;
 		cells.push(
 			<TableCell
 				key={c}
 				colSpan={span && span.cols > 1 ? span.cols : undefined}
 				rowSpan={span && span.rows > 1 ? span.rows : undefined}
-				className={TEXT_ALIGN[align]}
+				className={COLUMN_ALIGN[col.align]}
+				style={columnCellStyle(hiddenCols.has(c))}
 			>
-				<CellContent path={[...rowPath, String(c)]} align={align} />
+				<CellContent path={[...rowPath, String(c)]} col={col} />
 			</TableCell>,
 		);
 	}
 	return <TableRowPrimitive data-row={row}>{cells}</TableRowPrimitive>;
 }
 
-function HeaderRow({
-	path,
-	labels,
-	cols,
-	aligns,
-	covered,
-	spanAt,
-}: Omit<RowProps, "row"> & { labels: readonly unknown[] }) {
+function HeaderRow({ path, cols, columns, hiddenCols, covered, spanAt }: Omit<RowProps, "row">) {
 	const rowPath = useMemo(() => [...path, HEADER], [path]);
 	const written = useTree(
 		useShallow((s) => {
@@ -212,20 +249,18 @@ function HeaderRow({
 		const key = `${HEADER},${c}`;
 		if (covered.has(key)) continue;
 		const span = spanAt.get(key);
-		const align = aligns[c] ?? "left";
-		const label = labels[c];
+		const col = columns[c] ?? PLAIN;
 		cells.push(
 			<TableHead
 				key={c}
 				colSpan={span && span.cols > 1 ? span.cols : undefined}
-				className={TEXT_ALIGN[align]}
+				className={COLUMN_ALIGN[col.align]}
+				style={columnHeadStyle(col, hiddenCols.has(c))}
 			>
 				{written.includes(String(c)) ? (
-					<CellContent path={[...rowPath, String(c)]} align={align} />
-				) : label == null ? (
-					""
+					<CellContent path={[...rowPath, String(c)]} col={col} />
 				) : (
-					String(label)
+					col.label
 				)}
 			</TableHead>,
 		);
@@ -237,19 +272,24 @@ function TableView({ path }: NodeProps) {
 	const variant = useEnumProp(path, "variant", VARIANTS, "default");
 	const density = useEnumProp(path, "density", DENSITIES, "default");
 	const label = useStringProp(path, "label", "Table");
-	const labels = useListProp<unknown>(path, "header");
-	const rawAligns = useListProp<unknown>(path, "align");
-	const rawSpans = useProp<unknown>(path, "spans", null);
+	const rawColumns = useListProp<unknown>(path, "columns");
+	const rawSpans = useProp<unknown>(path, "span", null);
+	const props = useProps(path);
+	const { width, min_width, max_width, height, min_height, max_height, scroll } = props;
+	const size = useMemo(
+		() => sizeStyle({ width, min_width, max_width, height, min_height, max_height }),
+		[width, min_width, max_width, height, min_height, max_height],
+	);
+	const [frame, setFrame] = useState<HTMLDivElement | null>(null);
 	const [rows, written] = useExtent(path);
 	const headerShown = useTree((s) => {
 		const node = getNode(s.root, [...path, HEADER]);
 		return node != null && !node.hidden;
 	});
-	const cols = Math.max(written, labels.length);
-	const aligns = useMemo(
-		() => rawAligns.map((a) => (ALIGNS.includes(a as Align) ? (a as Align) : "left")),
-		[rawAligns],
-	);
+	const columns = useMemo(() => readColumns(rawColumns), [rawColumns]);
+	const hiddenCols = useHiddenColumns(frame, columns);
+	const labelled = columns.some((c) => c.label !== "");
+	const cols = Math.max(written, columns.length);
 	// Span hook: the same {cols, rows} map a Grid reads, keyed "r,c".
 	const { covered, spanAt } = useMemo(
 		() => layout(readSpans(rawSpans), rows, cols),
@@ -264,7 +304,8 @@ function TableView({ path }: NodeProps) {
 				path={path}
 				row={String(r)}
 				cols={cols}
-				aligns={aligns}
+				columns={columns}
+				hiddenCols={hiddenCols}
 				covered={covered}
 				spanAt={spanAt}
 			/>,
@@ -272,21 +313,28 @@ function TableView({ path }: NodeProps) {
 	}
 
 	return (
-		<TablePrimitive aria-label={label} variant={variant} density={density}>
-			{labels.length > 0 || headerShown ? (
-				<TableHeader>
-					<HeaderRow
-						path={path}
-						labels={labels}
-						cols={cols}
-						aligns={aligns}
-						covered={covered}
-						spanAt={spanAt}
-					/>
-				</TableHeader>
-			) : null}
-			<TableBody>{body}</TableBody>
-		</TablePrimitive>
+		<div
+			ref={setFrame}
+			data-slot="table-box"
+			className={cn("min-w-0", typeof scroll === "string" && SCROLL_CLASSES[scroll as Scroll])}
+			style={size}
+		>
+			<TablePrimitive aria-label={label} variant={variant} density={density}>
+				{labelled || headerShown ? (
+					<TableHeader>
+						<HeaderRow
+							path={path}
+							cols={cols}
+							columns={columns}
+							hiddenCols={hiddenCols}
+							covered={covered}
+							spanAt={spanAt}
+						/>
+					</TableHeader>
+				) : null}
+				<TableBody>{body}</TableBody>
+			</TablePrimitive>
+		</div>
 	);
 }
 
@@ -298,20 +346,8 @@ function TableRowView({ path }: NodeProps) {
 export const Table: NodeEntry = {
 	component: TableView,
 	fill: true,
-	handlers: {
-		// One cell's span merged into the map, as Grid's set_span: 1 by 1 drops it.
-		set_span: (ctx, payload) =>
-			ctx.update((props) => {
-				const p = (payload ?? {}) as Record<string, unknown>;
-				const key = p.key == null ? "" : String(p.key);
-				if (key === "") return;
-				const spans = { ...readSpans(props.spans) };
-				const next = readSpans({ [key]: { cols: p.cols, rows: p.rows } })[key];
-				if (next) spans[key] = next;
-				else delete spans[key];
-				props.spans = spans;
-			}),
-	},
+	// `set_child` {key, span}: one cell's span merged into the map, 1 by 1 drops it.
+	handlers: { ...childHandlers },
 };
 
 export const TableRow: NodeEntry = { component: TableRowView };

@@ -480,8 +480,7 @@ Radius = Literal["none", "sm", "md", "lg", "full"]
 class ImageRef(LeafRef):
     """Display-only image ref. One `write` op carries every mutation.
 
-    `radius` is the corner scale; None leaves it to the older bool `rounded`
-    (md when set). `aspect` holds the box to a ratio, spelled "16/9", "1:1"
+    `radius` is the corner scale (none unless set). `aspect` holds the box to a ratio, spelled "16/9", "1:1"
     or a bare number like "1.5"; with one the image takes its container's
     width unless `width` says otherwise.
     """
@@ -497,7 +496,6 @@ class ImageRef(LeafRef):
         fit: Fit = "contain",
         width: int | None = None,
         height: int | None = None,
-        rounded: bool = False,
         radius: Radius | None = None,
         aspect: str = "",
     ) -> Self:
@@ -507,7 +505,6 @@ class ImageRef(LeafRef):
             fit=fit,
             width=width,
             height=height,
-            rounded=rounded,
             radius=radius,
             aspect=aspect,
         )
@@ -528,9 +525,6 @@ class ImageRef(LeafRef):
     ) -> Nu:
         return Write(self, Dict.of(width=width, height=height))
 
-    def set_rounded(self, flag: BoolArg) -> Nu:
-        return Write(self, Dict.of(rounded=flag))
-
     def set_radius(self, name: Radius | StrArg | None) -> Nu:
         return Write(self, Dict.of(radius=name))
 
@@ -544,7 +538,6 @@ class ImageRef(LeafRef):
         fit: Fit | StrArg = UNSET,
         width: IntArg = UNSET,
         height: IntArg = UNSET,
-        rounded: BoolArg = UNSET,
     ) -> Nu:
         payload: dict[str, object] = {"src": src}
         if alt is not UNSET:
@@ -555,8 +548,6 @@ class ImageRef(LeafRef):
             payload["width"] = width
         if height is not UNSET:
             payload["height"] = height
-        if rounded is not UNSET:
-            payload["rounded"] = rounded
         return Write(self, Dict.of(**payload))
 
 
@@ -1054,7 +1045,7 @@ class TextRef(LeafRef):
         return super().slot(value=value, **props)
 
     def set(self, value: StrArg) -> Nu:
-        return Write(self, value)
+        return Write(self, Dict.of(value=value))
 
     def set_tone(self, name: Tone | StrArg) -> Nu:
         return Write(self, Dict.of(tone=name))

@@ -14,7 +14,9 @@
 // clamp (several open ids collapse to the first). User toggles update local
 // `open` then ship a `notify` whose payload is the post-toggle id list.
 // Composes the kit Accordion primitive (Radix under the hood); the primitive
-// owns chevron rotate + keyboard model.
+// owns chevron rotate + keyboard model. The size props and `scroll`
+// (`layout.tsx`) sit on the accordion; each body is one child, which carries
+// its own layers. Any other key of a write (a `set_layout`) merges as is.
 
 import { OPS } from "@nustackdev/ui-core";
 import {
@@ -34,9 +36,12 @@ import {
 	useSend,
 	useSetProps,
 } from "../../tree";
+import { type LayoutDefaults, useLayout } from "./layout";
 import { Unpaired } from "./unpaired";
 
 type Section = { id: string; label: string };
+
+const DEFAULTS: LayoutDefaults = {};
 
 function normalizeSections(raw: unknown): Section[] {
 	if (!Array.isArray(raw)) return [];
@@ -64,6 +69,7 @@ function AccordionView({ path }: NodeProps) {
 	const children = useChildren(path);
 	const setProps = useSetProps(path);
 	const send = useSend(path);
+	const layout = useLayout(path, DEFAULTS);
 
 	const sections = normalizeSections(rawSections);
 	const bodies = new Set(children);
@@ -93,7 +99,12 @@ function AccordionView({ path }: NodeProps) {
 
 	return (
 		<>
-			<AccordionPrimitive {...rootProps} variant="boxed">
+			<AccordionPrimitive
+				{...rootProps}
+				variant="boxed"
+				className={layout.scroll}
+				style={layout.size}
+			>
 				{sections.map((s, i) => (
 					<AccordionItem key={`${i}-${s.id}`} value={s.id}>
 						<AccordionTrigger>{s.label}</AccordionTrigger>
@@ -119,12 +130,14 @@ export const Accordion: NodeEntry = {
 		write: (ctx, payload) => {
 			if (!payload || typeof payload !== "object" || Array.isArray(payload)) return;
 			const p = payload as { sections?: unknown; open?: unknown; multi?: unknown };
+			const { sections: _s, open: _o, multi: _m, ...rest } = p as Record<string, unknown>;
 			ctx.update((props) => {
+				Object.assign(props, rest);
 				if ("sections" in p && p.sections != null) {
 					props.sections = normalizeSections(p.sections);
 				}
 				if ("open" in p && p.open != null) {
-					// reads the pre-write `multi`, same order the old write used.
+					// reads the pre-write `multi`: open is clamped before multi changes.
 					const next = normalizeOpen(p.open);
 					const multi = props.multi == null ? true : Boolean(props.multi);
 					props.open = !multi && next.length > 1 ? [next[0]] : next;

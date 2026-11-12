@@ -112,19 +112,19 @@ def test_each_on_takes_only_its_own_event(name):
     sess = _Session(*others, {"event": name, "key": "a"})
     _run(_echo(getattr(FilesApp.files.tree, f"on_{name}")()), sess)
     assert sess.subscribed == [("files", "tree")]
-    assert [f.payload for f in sess.frames] == [name]
+    assert [f.payload for f in sess.frames] == [{"value": name}]
 
 
 def test_on_change_takes_every_event():
     sess = _Session({"event": "move", "key": "a"})
     _run(_echo(FilesApp.files.tree.on_change()), sess)
-    assert sess.frames[0].payload == "move"
+    assert sess.frames[0].payload == {"value": "move"}
 
 
 def test_a_filtered_subscription_skips_what_is_not_an_event():
     sess = _Session("raw", None, ["x"], {"key": "no event"}, {"event": "open", "key": "a"})
     _run(_echo(FilesApp.files.tree.on_open()), sess)
-    assert [f.payload for f in sess.frames] == ["open"]
+    assert [f.payload for f in sess.frames] == [{"value": "open"}]
 
 
 def test_a_reaction_reads_the_event_fields():
@@ -136,7 +136,7 @@ def test_a_reaction_reads_the_event_fields():
         ),
         sess,
     )
-    assert sess.frames[0].payload == "a=B"
+    assert sess.frames[0].payload == {"value": "a=B"}
 
 
 def test_a_filtered_subscription_unbinds_and_closes_through():

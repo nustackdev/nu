@@ -1,6 +1,6 @@
 // Grid over the real tree store: one cell per child in insertion order, the
-// track list off max_columns and min_width, a "grid" flow for each child, and
-// the spans the grid keeps for its cells.
+// track list off max_columns and min_cell_width, a "grid" flow for each
+// child, and the per child maps (span, align_self) the grid keeps.
 
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -14,7 +14,8 @@ import {
 } from "../../components/ui/grid";
 import { NodeView, register, tree, useFlow } from "../../tree";
 import "..";
-import { readingOrder, readPlace, readSpans } from "./grid";
+import { readingOrder, readPlace } from "./grid";
+import { readSpans } from "./layout";
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -42,7 +43,7 @@ beforeEach(() => {
 	host = document.createElement("div");
 	document.body.appendChild(host);
 	root = createRoot(host);
-	write(["g", "Grid", { max_columns: 0, min_width: 240, gap: 4, align: "stretch", padding: 0 }]);
+	write(["g", "Grid", { max_columns: 0, min_cell_width: 240 }]);
 	act(() => root.render(<NodeView path={["g"]} />));
 });
 
@@ -61,7 +62,7 @@ describe("Grid", () => {
 		expect(cells().map((c) => c.textContent)).toEqual(["two", "one", "three"]);
 	});
 
-	it("puts the track list for max_columns and min_width inline", () => {
+	it("puts the track list for max_columns and min_cell_width inline", () => {
 		expect(grid().style.gridTemplateColumns).toBe(gridTemplate(0, 240, 4));
 		expect(grid().style.gridTemplateColumns).toContain("auto-fill");
 		expect(grid().style.gridTemplateColumns).toContain("240px");
@@ -69,7 +70,7 @@ describe("Grid", () => {
 		act(() =>
 			tree
 				.getState()
-				.dispatch({ op: "write", ref: ["g"], payload: { max_columns: 3, min_width: 200 } }),
+				.dispatch({ op: "write", ref: ["g"], payload: { max_columns: 3, min_cell_width: 200 } }),
 		);
 		const tracks = grid().style.gridTemplateColumns;
 		expect(tracks).toBe(gridTemplate(3, 200, 4));
@@ -84,21 +85,23 @@ describe("Grid", () => {
 		expect(gridTemplate(0, 200, 2)).toBe("repeat(auto-fill, minmax(min(100%, 200px), 1fr))");
 	});
 
-	it("maps gap, padding and align to classes, snapping to the ladder Row uses", () => {
+	it("maps gap, padding, justify and align to classes, on the scale Row uses", () => {
 		act(() =>
-			tree
-				.getState()
-				.dispatch({ op: "write", ref: ["g"], payload: { gap: 2, padding: 3, align: "start" } }),
+			tree.getState().dispatch({
+				op: "write",
+				ref: ["g"],
+				payload: { gap: 2, padding: 3, align: "start", justify: "center" },
+			}),
 		);
 		expect(grid().className).toContain("gap-2");
 		expect(grid().className).toContain("p-3");
 		expect(grid().className).toContain("items-start");
+		expect(grid().className).toContain("justify-items-center");
 
 		act(() =>
 			tree.getState().dispatch({ op: "write", ref: ["g"], payload: { gap: 7, align: "sideways" } }),
 		);
-		// Off the ladder snaps to the nearest step (a tie to the smaller), as on Row.
-		expect(grid().className).toContain("gap-6");
+		expect(grid().className).toContain("gap-7");
 		expect(grid().className).toContain("items-stretch");
 
 		act(() => tree.getState().dispatch({ op: "write", ref: ["g"], payload: { gap: 16 } }));
@@ -125,7 +128,7 @@ describe("Grid spans", () => {
 			tree.getState().dispatch({
 				op: "write",
 				ref: ["g"],
-				payload: { max_columns: 3, spans: { hero: { cols: 2, rows: 2 } } },
+				payload: { max_columns: 3, span: { hero: { cols: 2, rows: 2 } } },
 			}),
 		);
 		write(["g", "Grid"], ["hero", "Card"]);
@@ -136,23 +139,35 @@ describe("Grid spans", () => {
 		expect(a.style.gridColumn).toBe("");
 	});
 
-	it("merges one set_span into the map and drops a span back to 1 by 1", () => {
+	it("merges one set_child span into the map and drops a span back to 1 by 1", () => {
 		write(["g", "Grid"], ["a", "Card"]);
 		write(["g", "Grid"], ["b", "Card"]);
 		const span = (key: string, cols: number, rows = 1) =>
 			act(() =>
-				tree.getState().dispatch({ op: "set_span", ref: ["g"], payload: { key, cols, rows } }),
+				tree
+					.getState()
+					.dispatch({ op: "set_child", ref: ["g"], payload: { key, span: { cols, rows } } }),
 			);
 		span("a", 2);
 		span("b", 1, 3);
-		expect(tree.getState().getIn(["g"])?.props.spans).toEqual({
+		expect(tree.getState().getIn(["g"])?.props.span).toEqual({
 			a: { cols: 2, rows: 1 },
 			b: { cols: 1, rows: 3 },
 		});
 		span("a", 1);
-		expect(tree.getState().getIn(["g"])?.props.spans).toEqual({ b: { cols: 1, rows: 3 } });
+		expect(tree.getState().getIn(["g"])?.props.span).toEqual({ b: { cols: 1, rows: 3 } });
 		expect(cells()[0].style.gridColumn).toBe("");
 		expect(cells()[1].style.gridRow).toBe("span 3 / span 3");
+	});
+
+	it("aligns one cell by its key", () => {
+		act(() =>
+			tree
+				.getState()
+				.dispatch({ op: "set_child", ref: ["g"], payload: { key: "a", align_self: "end" } }),
+		);
+		write(["g", "Grid"], ["a", "Card"]);
+		expect(cells()[0].className).toContain("self-end");
 	});
 
 	it("turns on dense backfill", () => {
@@ -219,7 +234,7 @@ describe("Grid placed", () => {
 	});
 
 	it("spans a place, clipped at the board's last column", () => {
-		board({ spans: { "0,0": { cols: 2, rows: 1 }, "1,1": { cols: 3, rows: 2 } } });
+		board({ span: { "0,0": { cols: 2, rows: 1 }, "1,1": { cols: 3, rows: 2 } } });
 		write(["g", "Grid"], ["0,0", "Card"]);
 		write(["g", "Grid"], ["1,1", "Card"]);
 		const [hero, side] = cells();

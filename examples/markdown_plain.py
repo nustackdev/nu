@@ -44,7 +44,7 @@ class Home(nustd.ui.Container):
 
 class App(nu.Shape):
     title = nustd.ui.TitleRef.slot(default="Markdown, plain")
-    home = Home.slot(size="prose")
+    home = Home.slot(max_width="prose")
 
 
 app = nustd.ui.serve(nustd.ui.boot(App.title, App.home))

@@ -96,7 +96,7 @@ def test_set_emits_frame_with_wire_path():
     asyncio.run(nu.arun(HomeApp.home.panel.label.set("hi"), ctx))
     assert len(sess.frames) == 1
     assert sess.frames[0].ref == ("home", "panel", "label")
-    assert sess.frames[0].payload == "hi"
+    assert sess.frames[0].payload == {"value": "hi"}
 
 
 def test_set_wire_path_reflects_sibling_slot():
@@ -228,7 +228,7 @@ def test_write_carries_the_annotated_chain():
         ("label", "TextRef"),
     ]
     assert chain[0][2]["gap"] == 6  # what the page slot declares
-    assert chain[1][2]["gap"] == 4  # Row.slot() pins its chrome defaults
+    assert chain[1][2] == {}  # Row.slot() ships nothing it was not given
     assert chain[2][2] == {"value": "hi"}
     assert sess.frames[0].ref == tuple(seg for seg, _, _ in chain)
 
@@ -630,8 +630,6 @@ def test_card_set_title_emits_frame():
         "title": "",
         "subtitle": "",
         "caption": "",
-        "variant": "default",
-        "size": "md",
         "href": "",
         "target": "_self",
     }
@@ -736,7 +734,7 @@ def test_list_set_carries_items_first():
 
     handle = _mount(ListRef)
     [frame] = _frames(handle.set(["a", "b"], variant="number"))
-    assert frame.chain[-1][1:] == ("ListRef", {"items": [], "variant": "bullet", "start": 1})
+    assert frame.chain[-1][1:] == ("List", {"items": [], "variant": "bullet", "start": 1})
     assert frame.payload == {"items": ["a", "b"], "variant": "number"}
     assert _frames(handle.append("c"))[0].payload == "c"
     assert _frames(handle.clear())[0].payload == {"items": []}

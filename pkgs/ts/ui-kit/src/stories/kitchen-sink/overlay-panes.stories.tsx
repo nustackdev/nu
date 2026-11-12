@@ -388,7 +388,7 @@ export const DialogOpen: StoryObj = {
 	render: () => (
 		<Pane>
 			<Dialog open>
-				<DialogContent size="sm">
+				<DialogContent width={384}>
 					<DialogHeader>
 						<DialogTitle>Delete plane?</DialogTitle>
 						<DialogDescription>
@@ -410,7 +410,7 @@ export const SheetOpen: StoryObj = {
 	render: () => (
 		<Pane>
 			<Sheet open>
-				<SheetContent side="right" size="sm">
+				<SheetContent side="right" width={320}>
 					<SheetHeader>
 						<SheetTitle>Run details</SheetTitle>
 						<SheetDescription>Inspect and edit the selected run.</SheetDescription>

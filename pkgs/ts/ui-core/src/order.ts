@@ -1,4 +1,5 @@
-// Keyed order: where the children of an ordered collection draw.
+// Keyed order: where the children of an ordered collection draw (Row,
+// Column, a flowing Grid, List).
 //
 // A child's segment is its key, its identity; where it draws is a place in
 // the collection's order. The order is the collection's own prop
@@ -182,24 +183,32 @@ export function applyOrderOp(
 	}
 }
 
+/** Why a container takes no order op right now (a placed grid), or undefined when it does. */
+export type OrderRefusal = (props: Record<string, unknown>) => string | undefined;
+
 /**
  * Handlers that make a type an ordered collection: one per op in
  * `ORDER_OPS`, keeping the order in `props.order` and dropping children
- * through the store (so their dispose runs). A payload that cannot apply
- * changes nothing and goes back to the server as a `payload_invalid` error.
+ * through the store (so their dispose runs). A payload that cannot apply,
+ * or an op `refuse` turns down, changes nothing and goes back to the server
+ * as a `payload_invalid` error.
  */
-export const orderHandlers: Record<string, NodeHandler> = Object.fromEntries(
-	Object.values(ORDER_OPS).map((op) => [
-		op,
-		(ctx: NodeCtx, payload: unknown) => applyTo(ctx, op, payload),
-	]),
-);
+export function orderHandlers(refuse?: OrderRefusal): Record<string, NodeHandler> {
+	return Object.fromEntries(
+		Object.values(ORDER_OPS).map((op) => [
+			op,
+			(ctx: NodeCtx, payload: unknown) => applyTo(ctx, op, payload, refuse),
+		]),
+	);
+}
 
-function applyTo(ctx: NodeCtx, op: string, payload: unknown): void {
+function applyTo(ctx: NodeCtx, op: string, payload: unknown, refuse?: OrderRefusal): void {
 	const api = ctx.store.getState();
 	const node = api.getIn(ctx.path) ?? ctx.node;
 	let edit: OrderEdit | null;
 	try {
+		const why = refuse?.(node.props);
+		if (why) throw new OrderError(why);
 		edit = applyOrderOp(op, payload, asOrder(node.props[ORDER_PROP]), [...node.children.keys()]);
 	} catch (err) {
 		if (!(err instanceof OrderError)) throw err;

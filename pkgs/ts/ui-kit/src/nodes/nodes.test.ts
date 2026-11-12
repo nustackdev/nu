@@ -1,9 +1,7 @@
 // The registry, and the registration side effect.
 //
-// This used to check parity against the flat store's `entries`. That list is
-// gone, so the count stands in for it: 70 types shipped (HistoryRef and its
-// old name NavRef are two), and a type that quietly falls out of a barrel
-// takes the count with it.
+// The count pins the shipped types: a type that quietly falls out of a
+// barrel takes the count with it.
 
 import { describe, expect, it } from "vitest";
 import { registry } from "../tree";
@@ -11,16 +9,12 @@ import { nodeEntries } from ".";
 
 describe("node registry", () => {
 	it("ships every type", () => {
-		expect(Object.keys(nodeEntries)).toHaveLength(72);
+		expect(Object.keys(nodeEntries)).toHaveLength(70);
 	});
 
 	it("names the page section by its wire type", () => {
 		expect(nodeEntries.PageSection).toBeDefined();
 		expect(nodeEntries.Section).toBeUndefined();
-	});
-
-	it("keeps the old NavRef name on HistoryRef", () => {
-		expect(nodeEntries.NavRef).toBe(nodeEntries.HistoryRef);
 	});
 
 	it("gives every type a component", () => {

@@ -7,6 +7,8 @@ from __future__ import annotations
 
 import asyncio
 
+import pytest
+
 import nu
 from nu import Context, Shape
 from nustd.ui import Card, Column, Row, Session
@@ -14,7 +16,6 @@ from nustd.ui.core import Changed
 from nustd.ui.core.chains import boot_chains
 from nustd.ui.refs import (
     BadgeRef,
-    BoxRef,
     ButtonRef,
     CardRef,
     DividerRef,
@@ -77,10 +78,10 @@ def test_text_seeds_the_style_props_it_sets():
     }
 
 
-def test_text_set_stays_bare_and_style_setters_merge_one_key():
+def test_text_set_is_an_object_and_style_setters_merge_one_key():
     handle = _mount(TextRef.slot(tone="accent"))
     [frame] = _frames(handle.set("hello"))
-    assert frame.payload == "hello"
+    assert frame.payload == {"value": "hello"}
     assert frame.chain[-1][1:] == ("TextRef", {"value": "", "tone": "accent"})
     assert _payload(handle.set_tone("danger")) == {"tone": "danger"}
     assert _payload(handle.set_size("lg")) == {"size": "lg"}
@@ -115,9 +116,8 @@ def test_heading_takes_a_display_size_eyebrow_and_subtitle():
     assert props["tone"] == "accent"
 
 
-def test_heading_still_takes_left_and_right():
-    assert HeadingRef.slot(align="left").props["align"] == "left"
-    assert DividerRef.slot(align="right").props["align"] == "right"
+def test_heading_and_divider_take_logical_align():
+    assert HeadingRef.slot(align="end").props["align"] == "end"
     assert DividerRef.slot(align="start").props["align"] == "start"
 
 
@@ -224,7 +224,11 @@ def test_card_named_slots_boot_as_children_at_their_keys():
 
 def test_card_variant_and_href_ride_a_write():
     card = CardRef("c")
-    assert _payload(card.set_variant("sunken")) == {"variant": "sunken"}
+    assert _payload(card.set_layout(variant="sunken", size="lg")) == {
+        "variant": "sunken",
+        "size": "lg",
+    }
+    assert not hasattr(CardRef, "set_variant")
     assert _payload(card.set_href("/x", target="_blank")) == {"href": "/x", "target": "_blank"}
     # The chrome ops keep their own names on the wire.
     [frame] = _frames(card.set_caption("note"))
@@ -234,11 +238,10 @@ def test_card_variant_and_href_ride_a_write():
 # --- ImageRef -------------------------------------------------------------------
 
 
-def test_image_radius_and_aspect_keep_rounded():
+def test_image_radius_and_aspect():
     props = ImageRef.slot(src="/a.png", radius="full", aspect="1:1", fit="scale-down").props
     assert (props["radius"], props["aspect"], props["fit"]) == ("full", "1:1", "scale-down")
-    legacy = ImageRef.slot(rounded=True).props
-    assert (legacy["rounded"], legacy["radius"], legacy["aspect"]) == (True, None, "")
+    assert "rounded" not in ImageRef.slot().props
 
 
 def test_image_setters_merge_one_key():
@@ -247,13 +250,15 @@ def test_image_setters_merge_one_key():
     assert _payload(handle.set_aspect("4/3")) == {"aspect": "4/3"}
 
 
-# --- Tabs, EmptyState, Badge, Box ----------------------------------------------
+# --- Tabs, EmptyState, Badge, Card ----------------------------------------------
 
 
 def test_tabs_variant():
     assert TabsRef.slot(tabs=[{"id": "a", "label": "A"}]).props["variant"] == "line"
     assert TabsRef.slot(variant="segmented").props["variant"] == "segmented"
-    assert _payload(TabsRef("t").set_variant("pill")) == {"variant": "pill"}
+    assert _payload(TabsRef("t").set_layout(variant="pill")) == {"variant": "pill"}
+    with pytest.raises(ValueError, match="variant is one of line, pill, segmented"):
+        TabsRef("t").set_layout(variant="tile")
 
 
 def test_empty_state_icon_and_action():
@@ -281,6 +286,6 @@ def test_badge_brand_tones_and_size():
     assert _payload(_mount(BadgeRef.slot()).set_size("sm")) == {"size": "sm"}
 
 
-def test_box_takes_the_new_grounds():
-    for ground in ("sunken", "accent", "brand"):
-        assert BoxRef.slot(background=ground).props["background"] == ground
+def test_card_takes_the_plain_and_tinted_surfaces():
+    for variant in ("plain", "accent", "brand"):
+        assert CardRef.slot(variant=variant).props["variant"] == variant

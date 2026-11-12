@@ -1,4 +1,4 @@
-"""Chrome Shapes -- Card, Box, Tabs, Modal, Accordion, Form, Fieldset, Field.
+"""Chrome Shapes -- Card, Tabs, Modal, Accordion, Form, Fieldset, Field.
 
 Each is a Section over its container Ref (``nustd.ui.refs.collections.chrome``):
 the Ref carries the chrome methods, the slot defaults and the wire type, and
@@ -15,7 +15,6 @@ from typing_extensions import Self
 from nustd.ui.core import Section
 from nustd.ui.refs.collections.chrome import (
     AccordionRef,
-    BoxRef,
     CardRef,
     FieldRef,
     FieldsetRef,
@@ -29,7 +28,7 @@ if TYPE_CHECKING:
     from nustd.ui.core import Ref
 
 
-__all__ = ["Accordion", "Box", "Card", "Field", "Fieldset", "Form", "Modal", "Tabs"]
+__all__ = ["Accordion", "Card", "Field", "Fieldset", "Form", "Modal", "Tabs"]
 
 
 def _strip(shape: type[Section], given: object, prop: str) -> object:
@@ -83,12 +82,6 @@ class Card(Section):
     """
 
     _ref_cls = CardRef
-
-
-class Box(Section):
-    """Styled box around its slots. Props as ``BoxRef.slot``."""
-
-    _ref_cls = BoxRef
 
 
 class Field(Section):

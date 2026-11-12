@@ -2,9 +2,9 @@
 //
 // One entry per Ref type, and it is three separable things: the React
 // component that draws the node, the handlers that answer inbound ops, and
-// an optional dispose for a node that holds a resource. Data and behaviour
-// no longer share an object -- state is the node's props, plain data, and
-// the behaviour is looked up by type when a frame arrives.
+// an optional dispose for a node that holds a resource. State is the node's
+// props, plain data, and the behaviour is looked up by type when a frame
+// arrives.
 
 import type { Behaviour, DisposeCtx, NodeHandler, Path } from "@nustackdev/ui-core";
 import type { ComponentType } from "react";

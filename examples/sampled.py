@@ -14,7 +14,7 @@ class Dashboard(nustd.ui.Container):
 
 
 class App(nu.Shape):
-    home = Dashboard.slot(size="dashboard")
+    home = Dashboard.slot(max_width="dashboard")
 
 
 # reactive wire: repaint the chart on every write to `nums`

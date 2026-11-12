@@ -1,135 +1,50 @@
-// Column -- vertical Section. Stacks its children with gap, alignment,
-// justification, and padding.
+// Column -- children stacked top to bottom.
 //
-// Children are not a prop and not a list of paths: they are the node's own
-// children in the tree. Positions (`col[0]`) draw in number order, names in
-// the order they were first written. `NodeChildren` renders them, so there is nothing to
-// thread through and nothing to keep in sync.
+// Children are its own, in the tree. Positions (`col[0]`)
+// draw in number order, names in the order they were first written, until
+// an order op arrives: from then on the column keeps an order of keys
+// (`props.order`, see ui-core `order.ts`) and draws by it.
 //
-// TODO(retune): the legacy Column Ref accepts numeric `gap` / `padding`
-// (0..12+) and templates raw Tailwind class names. Under Tailwind v4 those
-// arbitrary utilities need the JIT to see them at build time. We map the
-// discrete step ladder (0/1/2/3/4/5/6/8/10/12) statically here so every
-// possible class name is present in the compiled bundle. A proper `Stack`
-// primitive with named tokens (`gap="md"`) is the follow-up; the wire
-// contract stays numeric until then. A value off the ladder snaps to the
-// nearest step.
+// Layout (`layout.tsx`): the size props, `padding` (0), `gap` (4), `justify`
+// (start) down the column, `align` (stretch) across it, `divided`, and the
+// per child maps (`grow`, `basis`, `align_self`, `sticky`) through
+// `StackChildren`. In the stretch alignment a fill child stretches to the
+// column's width and a content child keeps its own width at the start edge
+// (`BlockCell`); any other alignment applies to every child alike.
 //
-// In the default stretch alignment each child sits in a `BlockCell`, the
-// cell every block flow uses (see Row for the `fill` classification): a fill
-// child stretches to the column's width, a content child keeps its own
-// width at the start edge. Any other alignment applies to every child alike.
-//
-// `max_width` caps the column at one of the kit's container widths
-// (theme.css), and `center` (on by default) gives the capped column auto
-// inline margins, which center it in a block or a flex column parent alike.
-// "full", the default, caps nothing. The names are the Container's page
-// widths; a page's frame, with its gutter, is a Container.
-//
-// `height`, `max_height` and `scroll` size the column (see `sizing.ts`).
-// `grow` {seg: weight} hands a child a share of the height left over, so in a
-// column of fixed height a list under a header takes the rest; `basis`
-// {seg: px} is a child's height before growing. A sized child sits in a flex
-// cell of its own; the rest keep the cell above.
+// `max_width` takes the whole width up to it. Where a capped column sits is
+// its parent's to say (`align`, or `align_self` for it alone).
 
-import { type ComponentType, createContext, useContext, useMemo } from "react";
-import { PAGE_WIDTH_CLASSES, type PageWidth } from "../../components/ui/container";
-import { GAP_CLASSES, PADDING_CLASSES, stepClass } from "../../lib/steps";
+import { asOrder, ORDER_PROP, orderHandlers } from "@nustackdev/ui-core";
 import { cn } from "../../lib/utils";
+import { type NodeEntry, type NodeProps, useProp } from "../../tree";
 import {
-	BareCell,
-	BlockCell,
-	type CellProps,
-	FlowProvider,
-	NodeChildren,
-	type NodeEntry,
-	type NodeProps,
-	useBoolProp,
-	useNumberProp,
-	useStringProp,
-} from "../../tree";
-import { useSizing, useWeights, type Weights } from "./sizing";
+	childHandlers,
+	flowClass,
+	flowStyle,
+	type LayoutDefaults,
+	StackChildren,
+	useLayout,
+} from "./layout";
 
-const ALIGN_CLASSES: Record<string, string> = {
-	start: "items-start",
-	center: "items-center",
-	end: "items-end",
-	stretch: "items-stretch",
-};
-
-const JUSTIFY_CLASSES: Record<string, string> = {
-	start: "justify-start",
-	center: "justify-center",
-	end: "justify-end",
-	between: "justify-between",
-	around: "justify-around",
-	evenly: "justify-evenly",
-};
-
-type ChildSizes = { grow: Weights; basis: Weights; Cell: ComponentType<CellProps> };
-
-const ChildSizesContext = createContext<ChildSizes>({ grow: {}, basis: {}, Cell: BlockCell });
-
-// A child the column sizes gets a flex cell along the column; any other
-// child keeps the column's own cell.
-function ColumnCell({ path, children }: CellProps) {
-	const { grow, basis, Cell } = useContext(ChildSizesContext);
-	const segment = String(path[path.length - 1]);
-	const weight = grow[segment];
-	const start = basis[segment];
-	if (weight === undefined && start === undefined) return <Cell path={path}>{children}</Cell>;
-	return (
-		<div
-			data-slot="column-cell"
-			className="flex min-h-0 min-w-0 flex-col *:grow"
-			style={{ flex: `${weight ?? 0} 1 ${start !== undefined ? `${start}px` : "0px"}` }}
-		>
-			{children}
-		</div>
-	);
-}
+const DEFAULTS: LayoutDefaults = { gap: 4, padding: 0, justify: "start", align: "stretch" };
 
 function ColumnView({ path }: NodeProps) {
-	const gap = useNumberProp(path, "gap", 4);
-	const align = useStringProp(path, "align", "stretch");
-	const justify = useStringProp(path, "justify", "start");
-	const padding = useNumberProp(path, "padding", 0);
-	const maxWidth = useStringProp(path, "max_width", "full");
-	const center = useBoolProp(path, "center", true);
-	const { grow, basis } = useWeights(path);
-	const box = useSizing(path);
-
-	const gapCls = stepClass(GAP_CLASSES, gap);
-	const padCls = stepClass(PADDING_CLASSES, padding);
-	const alignCls = ALIGN_CLASSES[align] ?? ALIGN_CLASSES.stretch;
-	const justifyCls = JUSTIFY_CLASSES[justify] ?? JUSTIFY_CLASSES.start;
-	// The page widths the Container takes too; "full" caps nothing here.
-	const maxCls = maxWidth === "full" ? undefined : PAGE_WIDTH_CLASSES[maxWidth as PageWidth];
-	const Cell = alignCls === ALIGN_CLASSES.stretch ? BlockCell : BareCell;
-	const sizes = useMemo(() => ({ grow, basis, Cell }), [grow, basis, Cell]);
-
+	const layout = useLayout(path, DEFAULTS);
+	const order = asOrder(useProp<unknown>(path, ORDER_PROP, undefined));
+	const capped = layout.size?.maxWidth !== undefined;
 	return (
 		<div
-			data-max-width={maxCls ? maxWidth : undefined}
-			className={cn(
-				"flex min-w-0 flex-col",
-				gapCls,
-				padCls,
-				alignCls,
-				justifyCls,
-				maxCls && ["w-full", maxCls],
-				maxCls && center && "mx-auto",
-				box.className,
-			)}
-			style={box.style}
+			className={cn("flex min-w-0 flex-col", flowClass(layout, "column"), capped && "w-full")}
+			style={flowStyle(layout)}
 		>
-			<FlowProvider flow="block">
-				<ChildSizesContext.Provider value={sizes}>
-					<NodeChildren path={path} cell={ColumnCell} indexed />
-				</ChildSizesContext.Provider>
-			</FlowProvider>
+			<StackChildren path={path} layout={layout} order={order} />
 		</div>
 	);
 }
 
-export const Column: NodeEntry = { component: ColumnView, fill: true };
+export const Column: NodeEntry = {
+	component: ColumnView,
+	fill: true,
+	handlers: { ...orderHandlers(), ...childHandlers },
+};

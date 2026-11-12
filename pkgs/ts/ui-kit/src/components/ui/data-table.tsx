@@ -119,7 +119,22 @@ import {
 import { EmptyState } from "./empty-state";
 import { InlineEdit } from "./inline-edit";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./table";
+import {
+	COLUMN_ALIGN,
+	COLUMN_JUSTIFY,
+	type ColumnAlign,
+	ColumnBox,
+	type ColumnLayout,
+	columnCellStyle,
+	columnHeadStyle,
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+	useHiddenColumns,
+} from "./table";
 import {
 	columnMenu,
 	rowMenu,
@@ -135,7 +150,7 @@ import {
 
 export type { DataTableKind } from "./data-table-model";
 
-export type DataTableColumn = {
+export type DataTableColumn = ColumnLayout & {
 	/** Stable id; sort and edit events name it. */
 	key: string;
 	/** Header text, the key when not given. */
@@ -146,10 +161,8 @@ export type DataTableColumn = {
 	options?: readonly string[];
 	/** True by default when the table takes edits (`onEdit`). */
 	editable?: boolean;
-	/** Right for number, center for bool, left otherwise, unless given. */
-	align?: "left" | "center" | "right";
-	/** A CSS width hint, eg "8rem" or "30%". */
-	width?: string;
+	/** End for number, center for bool, start otherwise, unless given. */
+	align?: ColumnAlign;
 	/** True by default when the table sorts (`onSort`). */
 	sortable?: boolean;
 };
@@ -177,8 +190,8 @@ export type DataTableProps = {
 	columns: readonly DataTableColumn[];
 	rows: readonly DataTableRow[];
 	density?: "compact" | "default" | "comfortable";
-	striped?: boolean;
-	variant?: "default" | "borderless";
+	/** "default" framed, "borderless", "striped" framed with alternate rows tinted. */
+	variant?: "default" | "borderless" | "striped";
 	sort?: DataTableSort;
 	onSort?: (column: string, direction: "asc" | "desc") => void;
 	/** "none" by default. */
@@ -203,7 +216,7 @@ export type DataTableProps = {
 	/** Column `key` to `index`, counted among the columns without it. */
 	onColumnMove?: (key: string, index: number) => void;
 	onColumnKind?: (key: string, kind: DataTableKind) => void;
-	onColumnAlign?: (key: string, align: "left" | "center" | "right") => void;
+	onColumnAlign?: (key: string, align: ColumnAlign) => void;
 	/** Draws a cell that is not being edited; return undefined for the default look. */
 	renderCell?: (value: unknown, column: DataTableColumn, row: DataTableRow) => React.ReactNode;
 	/** What the body shows with no rows. */
@@ -218,7 +231,7 @@ type Col = DataTableColumn & {
 	label: string;
 	editable: boolean;
 	sortable: boolean;
-	align: "left" | "center" | "right";
+	align: ColumnAlign;
 };
 
 /** What the focus should land on once the host's rows come back. */
@@ -245,12 +258,8 @@ type ColumnPending = {
 	before: readonly string[];
 };
 
-const ALIGN = { left: "text-left", center: "text-center", right: "text-right" } as const;
-const FLEX_ALIGN = {
-	left: "justify-start",
-	center: "justify-center",
-	right: "justify-end",
-} as const;
+const ALIGN = COLUMN_ALIGN;
+const FLEX_ALIGN = COLUMN_JUSTIFY;
 
 /** A cell by keys, as the handles stand for it: a null row is the header. */
 type Spot = { row: string | null; col: string };
@@ -272,7 +281,6 @@ export function DataTable({
 	columns,
 	rows,
 	density = "default",
-	striped = false,
 	variant = "default",
 	sort = null,
 	onSort,
@@ -362,6 +370,13 @@ export function DataTable({
 	// table, and the cell a handle's menu was opened on (held while it is open,
 	// so the pointer wandering off does not move what the menu acts on).
 	const box = useRef<HTMLDivElement | null>(null);
+	// The same box as state, so the columns that hide below a width can measure it.
+	const [frame, setFrame] = useState<HTMLDivElement | null>(null);
+	const boxRef = useCallback((el: HTMLDivElement | null) => {
+		box.current = el;
+		setFrame(el);
+	}, []);
+	const hidden = useHiddenColumns(frame, cols);
 	const handles = useRef<TableHandlesHandle | null>(null);
 	const [hover, setHover] = useState<Spot | null>(null);
 	// Where the pointer last was over a cell: the handles fade out there, not
@@ -1106,6 +1121,7 @@ export function DataTable({
 									{...{ [ROVING_KEY]: key }}
 									aria-readonly={col.editable ? undefined : true}
 									data-editing={isEditing || undefined}
+									style={columnCellStyle(hidden.has(c))}
 									className={cn(
 										table.gridCell,
 										ALIGN[col.align],
@@ -1136,7 +1152,9 @@ export function DataTable({
 											{editor(value, col, { row: r, col: c }, row.key, `Edit ${col.label}`)}
 										</>
 									) : (
-										display(value, col, row, r)
+										<ColumnBox col={col} title={cellText(value)}>
+											{display(value, col, row, r)}
+										</ColumnBox>
 									)}
 								</TableCell>
 							);
@@ -1184,7 +1202,7 @@ export function DataTable({
 						<TableHead
 							key={col.key}
 							role="columnheader"
-							style={col.width ? { width: col.width } : undefined}
+							style={columnHeadStyle(col, hidden.has(c))}
 							aria-sort={
 								col.sortable
 									? active === "asc"
@@ -1419,7 +1437,7 @@ export function DataTable({
 			className={cn("flex min-w-0 flex-col items-start gap-1.5", className)}
 		>
 			{/* The box the handles sit in: outside the sideways scroll, so they are not clipped. */}
-			<div ref={box} className="relative w-full">
+			<div ref={boxRef} className="relative w-full">
 				<Table
 					role="grid"
 					aria-label={label}
@@ -1427,7 +1445,6 @@ export function DataTable({
 					aria-multiselectable={multi ? true : undefined}
 					variant={variant}
 					density={density}
-					striped={striped}
 				>
 					{hasColumnMenu ? (
 						<ContextMenu

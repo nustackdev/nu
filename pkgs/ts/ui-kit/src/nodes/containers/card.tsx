@@ -12,20 +12,27 @@
 //           lines up whatever each body holds
 // Every other child is the body, in write order. The string `caption` prop
 // is a quiet line along the bottom, under a footer child when there is one.
-// It used to be called `footer`; that prop and its `set_footer` op are still
-// read, so an older program's card keeps its caption.
 //
-// Chrome still comes in over three dedicated ops rather than `write` --
+// Chrome comes in over three dedicated ops rather than `write` --
 // `set_title`, `set_subtitle`, `set_caption`, each taking a string (nil
 // coerces to "") -- and the store only knows `write` by default, so those
-// three stay as handlers. `variant`, `size`, `href` and `target` are plain
-// props the default `write` merges. Composes the kit Card primitive family.
+// three are handlers. `variant`, `size`, `href` and `target` are plain props
+// the default `write` merges. Composes the kit Card primitive family.
+//
+// Surface: `variant` is the look (default, elevated, sunken, outline, plain,
+// accent, brand), `size` the preset for the whole look (pad 12 / 16 / 24 and
+// the space between header, body and footer). The body speaks a stack's
+// layers (`layout.tsx`): `padding` replaces the preset pad (the card's
+// `--card-pad`), `gap` (3), `justify`, `align`, `divided`, the per child
+// maps. The size props sit on the card; with `scroll` the body scrolls and
+// the header and footer stay put.
 //
 // `href` makes the whole card one link: the primitive's `interactive` look
 // (hover border, focus ring) `asChild` around a real <a>, so cmd-click and a
 // host's AnchorCatcher both work. A link card should hold no controls
 // of its own, since a button inside an anchor is two targets in one.
 
+import type { CSSProperties } from "react";
 import {
 	CardAction,
 	CardContent,
@@ -39,8 +46,6 @@ import { anchorProps } from "../../lib/anchor";
 import { cn } from "../../lib/utils";
 import {
 	ACTIONS_SLOT,
-	FlowProvider,
-	NodeChildren,
 	type NodeEntry,
 	type NodeProps,
 	SlotView,
@@ -48,13 +53,22 @@ import {
 	useEnumProp,
 	useStringProp,
 } from "../../tree";
+import {
+	childHandlers,
+	flowClass,
+	type LayoutDefaults,
+	StackChildren,
+	stepLength,
+	useLayout,
+} from "./layout";
 
 const MEDIA = "media";
 const FOOTER = "footer";
 const SLOTS: ReadonlySet<string> = new Set([MEDIA, ACTIONS_SLOT, FOOTER]);
 
-const VARIANTS = ["default", "elevated", "sunken", "outline"] as const;
+const VARIANTS = ["default", "elevated", "sunken", "outline", "plain", "accent", "brand"] as const;
 const SIZES = ["sm", "md", "lg"] as const;
+const DEFAULTS: LayoutDefaults = { gap: 3, justify: "start", align: "stretch" };
 
 function coerceStr(v: unknown): string {
 	return v == null ? "" : String(v);
@@ -63,13 +77,13 @@ function coerceStr(v: unknown): string {
 function CardView({ path }: NodeProps) {
 	const title = useStringProp(path, "title");
 	const subtitle = useStringProp(path, "subtitle");
-	const legacyCaption = useStringProp(path, "footer");
-	const caption = useStringProp(path, "caption") || legacyCaption;
+	const caption = useStringProp(path, "caption");
 	const variant = useEnumProp(path, "variant", VARIANTS, "default");
 	const size = useEnumProp(path, "size", SIZES, "md");
 	const href = useStringProp(path, "href");
 	const target = useStringProp(path, "target", "_self");
 	const children = useChildren(path);
+	const layout = useLayout(path, DEFAULTS);
 
 	const hasMedia = children.includes(MEDIA);
 	const hasActions = children.includes(ACTIONS_SLOT);
@@ -95,10 +109,19 @@ function CardView({ path }: NodeProps) {
 					) : null}
 				</CardHeader>
 			) : null}
-			<CardContent className={cn("flex flex-col gap-3 py-3", showFooter && "flex-1")}>
-				<FlowProvider flow="block">
-					<NodeChildren path={path} skip={SLOTS} indexed />
-				</FlowProvider>
+			<CardContent
+				className={cn(
+					"flex min-w-0 flex-col py-3",
+					flowClass(layout, "column", { padding: false }),
+					(showFooter || layout.scroll) && "flex-1",
+				)}
+				style={
+					layout.divided
+						? ({ "--flow-gap": stepLength(layout.gap ?? 3) } as CSSProperties)
+						: undefined
+				}
+			>
+				<StackChildren path={path} layout={layout} skip={SLOTS} />
 			</CardContent>
 			{hasFooter ? (
 				<CardFooter className="mt-auto flex-col items-stretch">
@@ -115,15 +138,19 @@ function CardView({ path }: NodeProps) {
 
 	// Media bleeds to the card's edge, so the card clips it to its radius.
 	const clip = hasMedia ? "overflow-hidden" : undefined;
+	const style = {
+		...layout.size,
+		...(layout.padSet ? { "--card-pad": stepLength(layout.padding ?? 0) } : {}),
+	} as CSSProperties;
 	if (href === "") {
 		return (
-			<CardPrimitive variant={variant} size={size} className={clip}>
+			<CardPrimitive variant={variant} size={size} className={clip} style={style}>
 				{inner}
 			</CardPrimitive>
 		);
 	}
 	return (
-		<CardPrimitive variant={variant} size={size} interactive asChild className={clip}>
+		<CardPrimitive variant={variant} size={size} interactive asChild className={clip} style={style}>
 			<a {...anchorProps(href, target)}>{inner}</a>
 		</CardPrimitive>
 	);
@@ -145,10 +172,6 @@ export const Card: NodeEntry = {
 			ctx.update((props) => {
 				props.caption = coerceStr(payload);
 			}),
-		// The op's old name, from a program that predates `caption`.
-		set_footer: (ctx, payload) =>
-			ctx.update((props) => {
-				props.caption = coerceStr(payload);
-			}),
+		...childHandlers,
 	},
 };

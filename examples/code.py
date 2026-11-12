@@ -63,7 +63,7 @@ class Home(nustd.ui.Container):
 
 class App(nu.Shape):
     title = nustd.ui.TitleRef.slot(default="Code")
-    home = Home.slot(size="main")
+    home = Home.slot(max_width="main")
 
 
 source = App.home.split.editor.source

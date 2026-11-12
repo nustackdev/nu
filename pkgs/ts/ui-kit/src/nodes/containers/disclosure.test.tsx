@@ -101,14 +101,14 @@ describe("Sheet", () => {
 		expect(content()).toBeNull();
 	});
 
-	it("renders its title and children when open, on its side", () => {
-		mount("s", "Sheet", { open: true, title: "Edit host", side: "left", size: "lg" });
+	it("renders its title and children when open, on its side, at its width", () => {
+		mount("s", "Sheet", { open: true, title: "Edit host", side: "left", width: 560 });
 		const el = content();
 		expect(el).not.toBeNull();
 		expect(el?.querySelector("[data-slot=sheet-title]")?.textContent).toBe("Edit host");
 		expect(el?.textContent).toContain("inside the body");
 		expect(el?.className).toContain("left-0");
-		expect(el?.className).toContain("w-[35rem]");
+		expect(el?.style.width).toBe("560px");
 	});
 
 	it("closes on Escape and notifies {open: false}", () => {

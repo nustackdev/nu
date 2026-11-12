@@ -38,11 +38,11 @@ def _kinds(frame: Frame) -> list[tuple[str, str]]:
 
 
 def test_cell_is_a_place_under_its_row():
-    t = ui.TableRef("t", props={"header": ["Part", "Status"]})
+    t = ui.TableRef("t", props={"columns": ["Part", "Status"]})
     (frame,) = _frames(t[0, 1].to(ui.BadgeRef).set("ok"))
     assert frame.ref == ("t", "0", "1")
     assert _kinds(frame) == [("t", "Table"), ("0", "TableRow"), ("1", "BadgeRef")]
-    assert frame.chain[0][2]["header"] == ["Part", "Status"]
+    assert frame.chain[0][2]["columns"] == [{"key": "Part"}, {"key": "Status"}]
 
 
 def test_header_cell():
@@ -69,7 +69,7 @@ def test_item_is_the_default_cell_kind():
 
 def test_item_on_slot():
     class Page(ui.Column):
-        specs = ui.TableRef.slot(ui.TextRef, header=["a"], density="compact")
+        specs = ui.TableRef.slot(ui.TextRef, columns=["a"], density="compact")
 
     (frame,) = _frames(Page.specs[0, 0].set("hi"))
     assert _kinds(frame) == [("specs", "Table"), ("0", "TableRow"), ("0", "TextRef")]
@@ -118,31 +118,146 @@ def test_header_row_cells_are_positions_too():
 
 def test_slot_props_normalized():
     s = ui.TableRef.slot(
-        header=["a", "b"],
-        align=["left", "right"],
+        columns=["a", {"label": "b", "align": "end"}],
         variant="striped",
-        spans={(0, 0): 2, ("header", 1): (1, 1), (1, 0): (2, 3)},
+        span={(0, 0): 2, ("header", 1): 1, (1, 0): {"cols": 2, "rows": 3}},
     )
-    assert s.props["align"] == ["left", "right"]
-    assert s.props["spans"] == {"0,0": {"cols": 2, "rows": 1}, "1,0": {"cols": 2, "rows": 3}}
-    with pytest.raises(ValueError, match="column align"):
-        ui.TableRef.slot(align=["middle"])
-    with pytest.raises(ValueError, match="at least 1 by 1"):
-        ui.TableRef.slot(spans={(0, 0): 0})
+    assert s.props["columns"] == [{"key": "a"}, {"label": "b", "align": "end"}]
+    assert s.props["variant"] == "striped"
+    assert s.props["span"] == {"0,0": {"cols": 2, "rows": 1}, "1,0": {"cols": 2, "rows": 3}}
 
 
-def test_chrome_writes():
+def test_looks_ship_only_when_set():
+    props = ui.TableRef.slot().props
+    assert "variant" not in props
+    assert "density" not in props
+    with pytest.raises(ValueError, match="variant"):
+        ui.TableRef.slot(variant="zebra")
+    with pytest.raises(ValueError, match="density"):
+        ui.TableRef.slot(density="dense")
+
+
+@pytest.mark.parametrize(
+    ("span", "error"),
+    [(0, ValueError), ((2, 1), TypeError), ({"cols": 2, "wide": 1}, ValueError), (True, TypeError)],
+)
+def test_span_values(span, error):
+    with pytest.raises(error):
+        ui.TableRef.slot(span={(0, 0): span})
+
+
+def test_span_keys_are_places():
+    with pytest.raises(TypeError):
+        ui.TableRef.slot(span={0: 2})
+    with pytest.raises(TypeError):
+        ui.TableRef.slot(span={("x", 0): 2})
+
+
+def test_set_columns_and_set_child():
     t = ui.TableRef("t")
-    frames = _frames(t.set_header(["x", "y"]) >> t.set_align(["right"]) >> t.set_span((1, 0), 2))
-    assert [f.op for f in frames] == ["write", "write", "set_span"]
-    assert frames[0].payload == {"header": ["x", "y"]}
-    assert frames[1].payload == {"align": ["right"]}
-    assert frames[2].payload == {"key": "1,0", "cols": 2, "rows": 1}
+    frames = _frames(
+        t.set_columns(["x", {"key": "y", "align": "end"}])
+        >> t.set_child((1, 0), span=2)
+        >> t.set_child((1, 0), span=1)
+        >> t.set_child(("header", 0), span={"cols": 3})
+    )
+    assert [f.op for f in frames] == ["write", "set_child", "set_child", "set_child"]
+    assert frames[0].payload == {"columns": [{"key": "x"}, {"key": "y", "align": "end"}]}
+    assert frames[1].payload == {"key": "1,0", "span": {"cols": 2, "rows": 1}}
+    assert frames[2].payload == {"key": "1,0", "span": None}
+    assert frames[3].payload == {"key": "header,0", "span": {"cols": 3, "rows": 1}}
 
 
-def test_header_span_key():
-    (frame,) = _frames(ui.TableRef("t").set_span(("header", 0), 3))
-    assert frame.payload["key"] == "header,0"
+def test_set_child_keeps_only_span():
+    with pytest.raises(TypeError, match="grow"):
+        ui.TableRef("t").set_child((0, 0), grow=1)
+
+
+def test_size_layer():
+    s = ui.TableRef.slot(max_height=240, scroll="y")
+    assert (s.props["max_height"], s.props["scroll"]) == (240, "y")
+    with pytest.raises(TypeError, match="gap"):
+        ui.TableRef.slot(gap=2)
+
+
+# --- the column record, both tables ----------------------------------------
+
+
+@pytest.mark.parametrize("table", [ui.TableRef, ui.DataTableRef])
+def test_column_record(table):
+    s = table.slot(
+        columns=[
+            {
+                "key": "a",
+                "label": "A",
+                "width": 120,
+                "min_width": "4rem",
+                "max_width": "prose",
+                "wrap": "truncate",
+                "hide_below": 480,
+                "align": "center",
+            }
+        ]
+    )
+    assert s.props["columns"] == [
+        {
+            "key": "a",
+            "label": "A",
+            "width": 120,
+            "min_width": "4rem",
+            "max_width": "prose",
+            "wrap": "truncate",
+            "hide_below": 480,
+            "align": "center",
+        }
+    ]
+
+
+@pytest.mark.parametrize("table", [ui.TableRef, ui.DataTableRef])
+@pytest.mark.parametrize(
+    ("column", "error", "match"),
+    [
+        ({"key": "a", "titel": "x"}, ValueError, "takes no titel"),
+        ({"key": "a", "wrap": "clip"}, ValueError, "wrap"),
+        ({"key": "a", "align": "right"}, ValueError, "align"),
+        ({"key": "a", "width": "wide"}, ValueError, "width"),
+        ({"key": "a", "width": True}, TypeError, "width"),
+        ({"key": "a", "hide_below": "480px"}, ValueError, "hide_below"),
+        ({"key": "a", "hide_below": -1}, ValueError, "hide_below"),
+        (3, TypeError, "column"),
+    ],
+)
+def test_column_record_refuses(table, column, error, match):
+    with pytest.raises(error, match=match):
+        table.slot(columns=[column])
+
+
+def test_content_table_takes_no_data_keys():
+    with pytest.raises(ValueError, match="kind"):
+        ui.TableRef.slot(columns=[{"key": "a", "kind": "number"}])
+
+
+def test_data_table_data_keys():
+    s = ui.DataTableRef.slot(
+        columns=[{"key": "a", "kind": "select", "options": ["x", 1], "editable": False}]
+    )
+    assert s.props["columns"] == [
+        {"key": "a", "kind": "select", "options": ["x", "1"], "editable": False}
+    ]
+    with pytest.raises(ValueError, match="kind"):
+        ui.DataTableRef.slot(columns=[{"key": "a", "kind": "date"}])
+    with pytest.raises(TypeError, match="flag"):
+        ui.DataTableRef.slot(columns=[{"key": "a", "sortable": "no"}])
+
+
+def test_data_table_looks():
+    props = ui.DataTableRef.slot().props
+    assert "variant" not in props
+    assert "density" not in props
+    s = ui.DataTableRef.slot(variant="borderless", density="compact")
+    assert (s.props["variant"], s.props["density"]) == ("borderless", "compact")
+    with pytest.raises(ValueError, match="variant"):
+        ui.DataTableRef.slot(variant="zebra")
 
 
 def test_row_erase_takes_the_row():
@@ -162,7 +277,7 @@ def test_column_cell_spec_lowers_to_the_wire():
         ],
     )
     name, status, seen = s.props["columns"]
-    assert name == "name"
+    assert name == {"key": "name"}
     assert status["cell"]["kind"] == "BadgeRef"
     assert status["cell"]["props"]["variant"] == "info"
     assert status["cell"]["prop"] == "label"

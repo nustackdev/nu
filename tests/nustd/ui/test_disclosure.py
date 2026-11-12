@@ -158,7 +158,6 @@ def test_sheet_wire_type_and_slot_defaults():
         "open": False,
         "title": "",
         "side": "right",
-        "size": "md",
         "dismissible": True,
     }
 
@@ -166,7 +165,7 @@ def test_sheet_wire_type_and_slot_defaults():
 def test_sheet_shape_slot_forwards_to_the_ref():
     from nustd.ui import Sheet, SheetRef
 
-    props = {"title": "Edit", "side": "left", "size": "lg", "dismissible": False}
+    props = {"title": "Edit", "side": "left", "width": 560, "dismissible": False}
     assert Sheet.slot(**props).props == SheetRef.slot(**props).props
     assert Sheet.slot(**props).props["side"] == "left"
     assert "_wire_type" not in vars(Sheet)
@@ -212,7 +211,6 @@ def test_sheet_alone_under_a_column():
         "open": False,
         "title": "Edit",
         "side": "left",
-        "size": "md",
         "dismissible": True,
     }
 

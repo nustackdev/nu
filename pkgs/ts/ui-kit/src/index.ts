@@ -97,7 +97,6 @@ export {
 } from "./components/ui/command-palette";
 export {
 	Container,
-	type ContainerPadding,
 	type ContainerProps,
 	PAGE_WIDTH_CLASSES,
 	type PageWidth,

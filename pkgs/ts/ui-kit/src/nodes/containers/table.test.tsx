@@ -1,10 +1,10 @@
 // Table (the content table) over the real tree store: rows and cells by
-// position, any kind in a cell, header labels and header cells, column
-// alignment, spans, and the set_span op.
+// position, any kind in a cell, column records (labels, alignment, widths,
+// wrap, hide_below) and header cells, spans, and the set_child op.
 
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NodeView, tree } from "../../tree";
 import "..";
 
@@ -75,7 +75,7 @@ describe("Table", () => {
 	});
 
 	it("draws header labels, and header cells with content over them", () => {
-		mount({ header: ["Part", "Status"] });
+		mount({ columns: [{ label: "Part" }, { key: "Status" }] });
 		put("0", "0", "TextRef", { value: "pump" });
 		expect(headText()).toEqual(["Part", "Status"]);
 		put("header", "1", "BadgeRef", { label: "State" });
@@ -89,15 +89,78 @@ describe("Table", () => {
 	});
 
 	it("aligns columns", () => {
-		mount({ align: ["left", "right"] });
+		mount({ columns: [{ key: "a" }, { key: "b", align: "end" }] });
 		put("0", "1", "TextRef", { value: "9" });
 		const tds = host.querySelectorAll("tbody td");
-		expect(tds[0].className).toContain("text-left");
-		expect(tds[1].className).toContain("text-right");
+		expect(tds[0].className).toContain("text-start");
+		expect(tds[1].className).toContain("text-end");
+	});
+
+	it("sizes a column: width on the header, min and max on the cell's box", () => {
+		mount({ columns: [{ key: "a", width: 120, min_width: "4rem", max_width: "prose" }] });
+		put("0", "0", "TextRef", { value: "x" });
+		expect((host.querySelector("thead th") as HTMLElement).style.width).toBe("120px");
+		const box = host.querySelector("[data-slot=table-column-box]") as HTMLElement;
+		expect(box.style.minWidth).toBe("4rem");
+		expect(box.style.maxWidth).toBe("40rem");
+	});
+
+	it("truncates a column to one line with the whole text as its title", () => {
+		mount({
+			columns: [
+				{ key: "a", wrap: "truncate", max_width: 80 },
+				{ key: "b", wrap: "nowrap" },
+			],
+		});
+		put("0", "0", "TextRef", { value: "a long backend name" });
+		put("0", "1", "TextRef", { value: "kept" });
+		const [cut, kept] = [...host.querySelectorAll("[data-slot=table-column-box]")] as HTMLElement[];
+		expect(cut.className).toContain("text-ellipsis");
+		expect(cut.title).toBe("a long backend name");
+		expect(kept.className).toContain("whitespace-nowrap");
+		expect(kept.title).toBe("");
+	});
+
+	it("hides a column under its hide_below width, keeping its place", () => {
+		let width = 400;
+		vi.stubGlobal(
+			"ResizeObserver",
+			class {
+				observe() {}
+				disconnect() {}
+			},
+		);
+		const spy = vi
+			.spyOn(HTMLElement.prototype, "clientWidth", "get")
+			.mockImplementation(() => width);
+		try {
+			mount({ columns: [{ key: "a" }, { key: "b", hide_below: 480 }, { key: "c" }] });
+			for (const c of ["0", "1", "2"]) put("0", c, "TextRef", { value: c });
+			const heads = [...host.querySelectorAll("thead th")] as HTMLElement[];
+			const tds = [...host.querySelectorAll("tbody td")] as HTMLElement[];
+			expect(heads.map((h) => h.style.display)).toEqual(["", "none", ""]);
+			expect(tds.map((d) => d.style.display)).toEqual(["", "none", ""]);
+			width = 600;
+			act(() => root.unmount());
+			root = createRoot(host);
+			act(() => root.render(<NodeView path={["t"]} />));
+			const shown = [...host.querySelectorAll("tbody td")] as HTMLElement[];
+			expect(shown.map((d) => d.style.display)).toEqual(["", "", ""]);
+		} finally {
+			spy.mockRestore();
+			vi.unstubAllGlobals();
+		}
+	});
+
+	it("sizes its frame with the size layer", () => {
+		mount({ max_height: 200, scroll: "y" });
+		const box = host.querySelector("[data-slot=table-box]") as HTMLElement;
+		expect(box.style.maxHeight).toBe("200px");
+		expect(box.className).toContain("overflow-y-auto");
 	});
 
 	it("spans cells and leaves the covered ones out", () => {
-		mount({ spans: { "0,0": { cols: 2, rows: 2 } } });
+		mount({ span: { "0,0": { cols: 2, rows: 2 } } });
 		for (const r of ["0", "1"])
 			for (const c of ["0", "1", "2"]) put(r, c, "TextRef", { value: r + c });
 		expect(bodyText()).toEqual([["00", "02"], ["12"]]);
@@ -106,19 +169,23 @@ describe("Table", () => {
 		expect(first?.getAttribute("rowspan")).toBe("2");
 	});
 
-	it("takes set_span and drops a 1 by 1 one", () => {
+	it("takes set_child and drops a 1 by 1 span", () => {
 		mount();
 		for (const c of ["0", "1"]) put("0", c, "TextRef", { value: c });
 		act(() =>
-			tree
-				.getState()
-				.dispatch({ op: "set_span", ref: ["t"], payload: { key: "0,0", cols: 2, rows: 1 } }),
+			tree.getState().dispatch({
+				op: "set_child",
+				ref: ["t"],
+				payload: { key: "0,0", span: { cols: 2, rows: 1 } },
+			}),
 		);
 		expect(bodyText()).toEqual([["0"]]);
 		act(() =>
-			tree
-				.getState()
-				.dispatch({ op: "set_span", ref: ["t"], payload: { key: "0,0", cols: 1, rows: 1 } }),
+			tree.getState().dispatch({
+				op: "set_child",
+				ref: ["t"],
+				payload: { key: "0,0", span: { cols: 1, rows: 1 } },
+			}),
 		);
 		expect(bodyText()).toEqual([["0", "1"]]);
 	});

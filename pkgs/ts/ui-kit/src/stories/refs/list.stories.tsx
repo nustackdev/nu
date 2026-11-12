@@ -18,7 +18,7 @@ export const Strings: Story = {
 		<NodeStage
 			root="list-strings"
 			label="items only, then one appended"
-			chains={[[step("list-strings", "ListRef", { items: ["alpha", "beta"], variant: "bullet" })]]}
+			chains={[[step("list-strings", "List", { items: ["alpha", "beta"], variant: "bullet" })]]}
 			frames={[{ op: "append", ref: ["list-strings"], payload: "gamma" }]}
 		/>
 	),
@@ -26,7 +26,7 @@ export const Strings: Story = {
 
 export const Children: Story = {
 	render: () => {
-		const list = step("list-children", "ListRef", { items: ["a plain string first"] });
+		const list = step("list-children", "List", { items: ["a plain string first"] });
 		return (
 			<NodeStage
 				root="list-children"
@@ -45,7 +45,7 @@ export const Children: Story = {
 
 export const Numbered: Story = {
 	render: () => {
-		const list = step("list-numbered", "ListRef", {
+		const list = step("list-numbered", "List", {
 			items: ["one", "two"],
 			variant: "number",
 			start: 1,

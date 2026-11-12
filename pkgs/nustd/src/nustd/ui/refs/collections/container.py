@@ -10,7 +10,7 @@ The Shape over it lives in ``nustd.ui.shapes.container``.
         heading = nustd.ui.HeadingRef.slot(label="Your movies")
         shelf = Shelf.slot()
 
-    movies = Movies.slot(size="main")
+    movies = Movies.slot(max_width="panel")
 
 Headless Refs (a TitleRef, a HistoryRef) stay at the root, outside it: they
 draw nothing, so there is nothing to frame.
@@ -18,61 +18,42 @@ draw nothing, so there is nothing to frame.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, ClassVar
 
-from typing_extensions import Self
-
-from nu.forms import Dict
-from nustd.ui.core import Write
+from typing_extensions import Self, Unpack
 
 from .base import DictCollectionRef
+from .flow import FLOW_CHILDREN, STACK
+from .layout import ChildLayout, StackLayout
 
 
 if TYPE_CHECKING:
     from nu.domains.shape import Slot
-    from nu.lang import Nu
-    from nu.lang.args import IntArg, StrArg
     from nustd.ui.core import Ref, Section
 
-    from ..vocab import PageWidth
+
+__all__ = ["ContainerRef"]
 
 
-__all__ = ["ContainerPadding", "ContainerRef"]
+class ContainerRef(ChildLayout, DictCollectionRef):
+    """The page frame. Pin layout on the slot().
 
-
-#: The side gutter: the responsive one, or none for an edge-to-edge page.
-ContainerPadding = Literal["gutter", "none"]
-
-
-class ContainerRef(DictCollectionRef):
-    """The page frame. Pin chrome on the slot().
-
-    `size` is the cap, a named page width (``PageWidth``): ``form`` 480,
-    ``prose`` 640, ``panel`` 960, ``main`` 1200 (the default), ``dashboard``
-    1400, ``full`` no cap. `gap` is the spacing step between children, as on
-    a Column. `padding` ``"none"`` drops the side gutter, for a canvas that
-    runs edge to edge.
+    It speaks the layers of a Column (``layout``). ``max_width`` is the cap,
+    ``"main"`` (1200) unless set: a page width name (``form`` 480, ``prose``
+    640, ``panel`` 960, ``main``, ``dashboard`` 1400, ``full`` no cap) or any
+    length. ``gap`` is 6. ``padding`` replaces the responsive side gutter with
+    one step on every side; ``padding=0`` runs edge to edge.
     """
 
     _wire_type = "Container"
+    _layout: ClassVar[frozenset[str]] = STACK
+    _children: ClassVar[tuple[str, ...]] = FLOW_CHILDREN
 
     @classmethod
     def slot(
         cls,
         item: type[Section] | type[Ref] | Slot | None = None,
         /,
-        *,
-        size: PageWidth = "main",
-        gap: int = 6,
-        padding: ContainerPadding = "gutter",
+        **layout: Unpack[StackLayout],
     ) -> Self:
-        return super().slot(item, size=size, gap=int(gap), padding=padding)
-
-    def set_size(self, name: PageWidth | StrArg) -> Nu:
-        return Write(self, Dict.of(size=name))
-
-    def set_gap(self, step: IntArg) -> Nu:
-        return Write(self, Dict.of(gap=step))
-
-    def set_padding(self, name: ContainerPadding | StrArg) -> Nu:
-        return Write(self, Dict.of(padding=name))
+        return super().slot(item, **cls._laid_out(layout))

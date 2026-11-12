@@ -1,7 +1,6 @@
-// DataTableRef on the kit DataTable: the old wire (string columns, list rows, the
-// sort and row notifies, the write / append / read handlers) unchanged, and
-// the new one (dict columns and rows, row keys, select, edit, add, delete,
-// move), each intent one notify naming its kind in `event`, the row-level
+// DataTableRef on the kit DataTable: string columns and list rows (the sort
+// and row notifies, the write / append / read handlers), dict columns and
+// rows (row keys, select, edit, add, delete, move), each intent one notify naming its kind in `event`, the row-level
 // ops (set_row, insert_row, remove_rows, set_order), one handler each, and
 // the column requests `columns_editable` turns on.
 
@@ -86,7 +85,7 @@ function typeInto(value: string, key: string) {
 	press(el, key);
 }
 
-describe("DataTableRef, the old wire", () => {
+describe("DataTableRef, string columns and list rows", () => {
 	beforeEach(() =>
 		mount({ columns: ["title", "year"], rows: [["Arrival", 2016]], clickable_rows: true }),
 	);
@@ -179,7 +178,7 @@ const ROWS = [
 	{ id: "m2", title: "Perfect Days", year: 2023, seen: false, genre: "drama", note: "y" },
 ];
 
-describe("DataTableRef, the new wire", () => {
+describe("DataTableRef, dict columns and rows", () => {
 	it("draws dict columns, dict rows and list rows, keyed by row_key", () => {
 		mount({
 			columns: ["id", { key: "title", label: "Title" }],
@@ -486,7 +485,7 @@ describe("DataTableRef, column requests", () => {
 		{ key: "id", label: "ID" },
 		"a",
 		{ key: "a", label: "A again", kind: "number" },
-		{ key: "on", kind: "bool", align: "left" },
+		{ key: "on", kind: "bool", align: "start" },
 	];
 
 	const head = (key: string) => {
@@ -540,9 +539,9 @@ describe("DataTableRef, column requests", () => {
 			{ event: "column_delete", column: "a", column_index: 2 },
 			{ event: "column_move", column: "a", column_index: 2, index: 1 },
 			{ event: "column_add", index: 3 },
-			// No align sent: a number column shows right.
-			{ event: "column_align", column: "a", column_index: 2, align: "center", previous: "right" },
-			{ event: "column_align", column: "on", column_index: 3, align: "center", previous: "left" },
+			// No align sent: a number column shows at the end.
+			{ event: "column_align", column: "a", column_index: 2, align: "center", previous: "end" },
+			{ event: "column_align", column: "on", column_index: 3, align: "center", previous: "start" },
 		]);
 		// A request is not an answer: the columns are as sent.
 		expect(texts("thead th")).toEqual(["ID", "a", "A again", "on"]);
@@ -637,5 +636,45 @@ describe("DataTableRef, column cell specs", () => {
 		});
 		expect(host.querySelector("tbody")?.textContent).toContain("plain");
 		expect(tree.getState().getIn(["t", "~cells"])).toBeNull();
+	});
+});
+
+describe("DataTableRef looks and column layout", () => {
+	const rows = [{ id: "a", n: 1 }];
+	const striped = () =>
+		host.querySelector("tbody tr")?.className.includes("even:bg-bg-hover/50") ?? false;
+
+	it("is striped and framed unless it says otherwise", () => {
+		mount({ columns: ["id", "n"], rows });
+		expect(striped()).toBe(true);
+		expect(host.querySelector("table")?.className).toContain("rounded-md");
+		expect(host.querySelector("table")?.getAttribute("data-density")).toBe("default");
+	});
+
+	it("takes the content table's variant and density", () => {
+		mount({ columns: ["id", "n"], rows, variant: "borderless", density: "compact" });
+		expect(striped()).toBe(false);
+		expect(host.querySelector("table")?.className).toContain("border-0");
+		expect(host.querySelector("table")?.getAttribute("data-density")).toBe("compact");
+		dispatch("write", { variant: "default" });
+		expect(striped()).toBe(false);
+		expect(host.querySelector("table")?.className).toContain("rounded-md");
+	});
+
+	it("reads a column's widths as lengths, a number as px", () => {
+		mount({
+			columns: [
+				{ key: "id", width: 120 },
+				{ key: "n", width: "8rem", max_width: "prose", wrap: "truncate", align: "end" },
+			],
+			rows,
+		});
+		const heads = [...host.querySelectorAll("thead th")] as HTMLElement[];
+		expect(heads.map((h) => h.style.width)).toEqual(["120px", "8rem"]);
+		const box = cell("0", "n").querySelector("[data-slot=table-column-box]") as HTMLElement;
+		expect(box.style.maxWidth).toBe("40rem");
+		expect(box.className).toContain("text-ellipsis");
+		expect(box.title).toBe("1");
+		expect(cell("0", "n").className).toContain("text-end");
 	});
 });

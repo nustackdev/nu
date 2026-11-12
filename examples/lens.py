@@ -166,7 +166,7 @@ class Home(nustd.ui.Container):
 
 class App(nu.Shape):
     title = nustd.ui.TitleRef.slot(default="Lens")
-    home = Home.slot(size="dashboard")
+    home = Home.slot(max_width="dashboard")
 
 
 # ---- the wiring -------------------------------------------------------------

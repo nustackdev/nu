@@ -70,13 +70,13 @@ describe("PageSection", () => {
 		expect(q("[data-slot=section-body] [data-probe]")?.textContent).toBe("block");
 	});
 
-	it("draws no header with nothing to put in it, and maps size and bordered", () => {
-		write(["s", "PageSection", { size: "lg", bordered: true, gap: 2 }], ["b", "TextRef"]);
+	it("draws no header with nothing to put in it, and maps size and the body gap", () => {
+		write(["s", "PageSection", { size: "lg", gap: 2 }], ["b", "TextRef"]);
 		draw(["s"]);
 		expect(q("[data-slot=section-header]")).toBeNull();
 		const section = q("[data-slot=section]");
 		expect(section?.className).toContain("gap-8");
-		expect(section?.className).toContain("border-t");
+		expect(section?.className).not.toContain("border-t");
 		expect(q("[data-slot=section-body]")?.className).toContain("gap-2");
 	});
 });
@@ -114,36 +114,33 @@ describe("NavList", () => {
 });
 
 describe("Column page width", () => {
-	it("caps and centers at a named width", () => {
+	const col = () => host.firstElementChild as HTMLElement;
+
+	it("caps at a named width and leaves placing to its parent", () => {
 		write(["c", "Column", { max_width: "main" }], ["t", "TextRef", { value: "x" }]);
 		draw(["c"]);
-		const col = q("[data-max-width]");
-		expect(col?.dataset.maxWidth).toBe("main");
-		expect(col?.className).toContain("max-w-main");
-		expect(col?.className).toContain("mx-auto");
-		expect(col?.className).toContain("w-full");
+		expect(col().style.maxWidth).toBe("75rem");
+		expect(col().className).toContain("w-full");
+		expect(col().className).not.toContain("mx-auto");
 	});
 
-	it("caps without centering, and caps nothing at full", () => {
-		write(["c", "Column", { max_width: "prose", center: false }], ["t", "TextRef"]);
+	it("caps at any length", () => {
+		write(["c", "Column", { max_width: 640 }], ["t", "TextRef"]);
 		draw(["c"]);
-		expect(q("[data-max-width]")?.className).not.toContain("mx-auto");
-		act(() =>
-			tree.getState().dispatch({ op: "write", ref: ["c"], payload: { max_width: "full" } }),
-		);
-		expect(q("[data-max-width]")).toBeNull();
+		expect(col().style.maxWidth).toBe("640px");
 	});
 
-	it("takes the dashboard width by its token name", () => {
-		write(["c", "Column", { max_width: "dashboard" }], ["t", "TextRef"]);
+	it("caps nothing when no max_width is set", () => {
+		write(["c", "Column"], ["t", "TextRef"]);
 		draw(["c"]);
-		expect(q("[data-max-width]")?.className).toContain("max-w-dashboard");
+		expect(col().style.maxWidth).toBe("");
+		expect(col().className).not.toContain("w-full");
 	});
 
-	it("justifies evenly", () => {
-		write(["c", "Column", { justify: "evenly" }], ["t", "TextRef"]);
+	it("justifies between", () => {
+		write(["c", "Column", { justify: "between" }], ["t", "TextRef"]);
 		draw(["c"]);
-		expect(host.firstElementChild?.className).toContain("justify-evenly");
+		expect(col().className).toContain("justify-between");
 	});
 });
 
@@ -153,7 +150,7 @@ describe("Container", () => {
 		write(["p", "Container", {}], ["b", "TextRef", { value: "b" }]);
 		draw(["p"]);
 		const frame = q("[data-slot=container]");
-		expect(frame?.dataset.size).toBe("main");
+		expect(frame?.dataset.maxWidth).toBe("main");
 		const cls = frame?.className ?? "";
 		for (const c of ["w-full", "mx-auto", "max-w-main", "flex-col", "gap-6"]) {
 			expect(cls).toContain(c);
@@ -166,24 +163,27 @@ describe("Container", () => {
 		expect(frame?.textContent).toBe("blockb");
 	});
 
-	it("takes every page width, and prose by its token", () => {
+	it("takes every page width, and any length, as its max_width", () => {
 		const want: Record<string, string> = {
-			form: "max-w-form",
-			prose: "max-w-(--container-prose)",
-			panel: "max-w-panel",
-			dashboard: "max-w-dashboard",
-			full: "max-w-full",
+			form: "30rem",
+			prose: "40rem",
+			panel: "60rem",
+			dashboard: "87.5rem",
+			full: "100%",
+			"72rem": "72rem",
 		};
-		for (const [size, cls] of Object.entries(want)) {
-			write(["p", "Container", { size }]);
-			draw(["p"]);
-			act(() => tree.getState().dispatch({ op: "write", ref: ["p"], payload: { size } }));
-			expect(q("[data-slot=container]")?.className).toContain(cls);
+		write(["p", "Container"]);
+		draw(["p"]);
+		for (const [width, css] of Object.entries(want)) {
+			act(() =>
+				tree.getState().dispatch({ op: "write", ref: ["p"], payload: { max_width: width } }),
+			);
+			expect(q("[data-slot=container]")?.style.maxWidth).toBe(css);
 		}
 	});
 
 	it("drops the gutter edge to edge, and takes its gap", () => {
-		write(["p", "Container", { padding: "none", gap: 2 }], ["t", "TextRef"]);
+		write(["p", "Container", { padding: 0, gap: 2 }], ["t", "TextRef"]);
 		draw(["p"]);
 		const cls = q("[data-slot=container]")?.className ?? "";
 		expect(cls).not.toContain("px-4");

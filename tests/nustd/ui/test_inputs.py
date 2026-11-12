@@ -361,4 +361,4 @@ def test_sketch_on_change_reacts_to_an_element():
 
     asyncio.run(run())
     assert ("page", "sec", "pad") in tab.reads
-    assert [f.payload for f in tab.frames] == ["3"]
+    assert [f.payload for f in tab.frames] == [{"value": "3"}]

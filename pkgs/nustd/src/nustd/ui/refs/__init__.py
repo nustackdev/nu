@@ -15,8 +15,7 @@ Layout under ``refs/``:
 
 - collections/: open-ended children, optional chrome. ``CollectionRef``
   (base, the counterpart of ``LeafRef``); container (``ContainerRef``, the page frame); flow (``ColumnRef``, ``RowRef``); grid (``GridRef``); line
-  (``LineRef``); chrome (``CardRef``, ``BoxRef`` behind the Box,
-  ``TabsRef``, ``ModalRef``, ``AccordionRef``, ``FormRef``,
+  (``LineRef``); chrome (``CardRef``, ``TabsRef``, ``ModalRef``, ``AccordionRef``, ``FormRef``,
   ``FieldsetRef``, ``FieldRef``); disclosure (``CollapsibleRef``,
   ``SheetRef``); page (``PageSectionRef``, ``NavListRef``); table
   (``TableRef``, a content table of places, ``t[r, c]``, and its
@@ -35,11 +34,8 @@ Layout under ``refs/``:
   (``Chart``, one ECharts option, and typed builders over it: ``LineChart``,
   ``BarChart``, ``PieChart``, ``HeatmapChart``, ``Sparkline``, ...).
 - structural.py: top-level leaves bound to non-render browser APIs (the
-  page's History, ``document.title``). ``HistoryRef`` (``NavRef`` is its old
-  name), ``TitleRef``. ``encode_query`` / ``decode_query`` spell a query
+  page's History, ``document.title``). ``HistoryRef``, ``TitleRef``. ``encode_query`` / ``decode_query`` spell a query
   string the way the browser does.
-- layout.py, output.py, input.py, chart.py, tree.py: kept for old import
-  paths, re-exports only.
 
 Something is a container only when its children are open-ended user
 composition. Fixed known parts are props on a leaf: a button's label and
@@ -70,8 +66,8 @@ Having a primary value is the whole test, and most containers fail it:
 Row, Column, Card, Fieldset and Tabs wrap their children and carry nothing
 of their own, so they get no `set()`. Modal has one anyway, and is not an
 exception to the rule so much as the rule biting: open vs closed is the
-thing a modal carries. ``ListRef`` keeps its old ``set(items)`` for plain
-string items.
+thing a modal carries. ``ListRef.set(items)`` replaces its plain string
+items, the value a string list carries.
 """
 
 from __future__ import annotations
@@ -80,7 +76,6 @@ from nustd.ui.core import Ref, Section, SectionRef
 
 from .collections import (
     AccordionRef,
-    BoxRef,
     CardRef,
     CollapsibleRef,
     CollectionRef,
@@ -104,7 +99,8 @@ from .collections import (
     TableRowRef,
     TabsRef,
 )
-from .collections.list import (
+from .collections.layout import SetChild
+from .collections.order import (
     InsertItem,
     KeepItems,
     MoveItem,
@@ -186,7 +182,6 @@ from .leaves import (
 from .query import decode_query, encode_query
 from .structural import (
     HistoryRef,
-    NavRef,
     PathChanged,
     ReadEntry,
     RoutePath,
@@ -199,7 +194,6 @@ from .structural import (
 # Layer 2 last, after every Ref it builds on (see the module docstring).
 from nustd.ui.shapes import (
     Accordion,
-    Box,
     Card,
     Collapsible,
     Column,
@@ -227,8 +221,6 @@ __all__ = [
     "AvatarRef",
     "BadgeRef",
     "BarChart",
-    "Box",
-    "BoxRef",
     "BoxplotChart",
     "BreadcrumbRef",
     "ButtonRef",
@@ -290,7 +282,6 @@ __all__ = [
     "NavItemRef",
     "NavList",
     "NavListRef",
-    "NavRef",
     "NumberInputRef",
     "OrderItems",
     "PageLinkRef",
@@ -314,6 +305,7 @@ __all__ = [
     "Section",
     "SectionRef",
     "SelectRef",
+    "SetChild",
     "SetOrder",
     "SetRow",
     "ShapeCollectionRef",

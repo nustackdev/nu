@@ -48,7 +48,7 @@ export const SheetPane: Story = {
 			title: "Edit host",
 			open: true,
 			side: "right",
-			size: "sm",
+			width: 320,
 		});
 		const form = step("form", "Form", { gap: 4 });
 		return (

@@ -66,12 +66,12 @@ class Board(nustd.ui.Row):
 
 
 class Home(nustd.ui.Container):
-    main = Board.slot(gap=6, align="start", wrap=True, min_width=200)
+    main = Board.slot(gap=6, align="start", wrap=True)
 
 
 class App(nu.Shape):
     title = nustd.ui.TitleRef.slot(default="Sketch")
-    home = Home.slot(size="dashboard")
+    home = Home.slot(max_width="dashboard")
 
 
 board = App.home.main.board

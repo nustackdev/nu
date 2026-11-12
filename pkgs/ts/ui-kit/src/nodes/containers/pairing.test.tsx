@@ -25,7 +25,10 @@ afterEach(() => {
 });
 
 function body(seg: string, type: string, id: string, text: string) {
-	tree.getState().write([[seg, type], [id, "TextRef", { value: text }]]);
+	tree.getState().write([
+		[seg, type],
+		[id, "TextRef", { value: text }],
+	]);
 }
 
 describe("Tabs", () => {

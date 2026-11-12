@@ -6,6 +6,8 @@
 // Positions are (row, col) indices into what is drawn. Row -1 is the header,
 // and it is part of the grid only when some column sorts.
 
+import type { ColumnAlign } from "./table";
+
 export type DataTableKind = "text" | "number" | "bool" | "select";
 
 export type CellPos = { row: number; col: number };
@@ -194,6 +196,6 @@ export function parseNumber(text: string): number | null {
 }
 
 /** The side a kind's values sit on unless a column says otherwise. */
-export function defaultAlign(kind: DataTableKind): "left" | "center" | "right" {
-	return kind === "number" ? "right" : kind === "bool" ? "center" : "left";
+export function defaultAlign(kind: DataTableKind): ColumnAlign {
+	return kind === "number" ? "end" : kind === "bool" ? "center" : "start";
 }

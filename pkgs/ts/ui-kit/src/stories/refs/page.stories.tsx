@@ -2,7 +2,7 @@
 // PageSection with actions in its header, a sidebar and a top bar of nav
 // items, a feature list of framed icons, pages linked as rows, as tiles and
 // inline as mentions, a Spacer pushing a toolbar's end, and a page capped
-// and centered by its Column.
+// and centered by its Container.
 
 import type { ChainStep } from "@nustackdev/ui-core";
 import type { Meta, StoryObj } from "@storybook/react-vite";
@@ -36,13 +36,11 @@ export const SectionWithActions: Story = {
 			step(root, "PageSection", {
 				title: "Usage",
 				description: "Runs, tokens and errors over the last 30 days.",
-				size: "md",
-				bordered: false,
 				gap: 4,
 			}),
 		];
 		const actions = [...sec, step("actions", "Row", { gap: 2 })];
-		const grid = [...sec, step("stats", "Grid", { max_columns: 3, min_width: 180, gap: 3 })];
+		const grid = [...sec, step("stats", "Grid", { max_columns: 3, min_cell_width: 180, gap: 3 })];
 		return (
 			<NodeStage
 				root={root}
@@ -75,7 +73,7 @@ export const SectionWithActions: Story = {
 export const Sidebar: Story = {
 	render: () => {
 		const root = "page-sidebar";
-		const col = [step(root, "Column", { gap: 2, max_width: "form", center: false })];
+		const col = [step(root, "Column", { gap: 2, max_width: "form" })];
 		const main = [...col, step("main", "NavList", { label: "Workspace" })];
 		const more = [...col, step("more", "NavList", { label: "Library" })];
 		const item = (seg: string, label: string, href: string, icon: string, extra = {}) => [
@@ -168,7 +166,9 @@ const FEATURES = [
 export const FeatureList: Story = {
 	render: () => {
 		const root = "page-features";
-		const grid = [step(root, "Grid", { max_columns: 2, min_width: 220, gap: 6, align: "start" })];
+		const grid = [
+			step(root, "Grid", { max_columns: 2, min_cell_width: 220, gap: 6, align: "start" }),
+		];
 		const chains = FEATURES.flatMap(([icon, tone, title, body], i) => {
 			const row = [...grid, step(`f${i}`, "Row", { gap: 3, align: "start" })];
 			const text = [...row, step("text", "Column", { gap: 1 })];
@@ -247,7 +247,7 @@ export const PageLinkRows: Story = {
 export const PageLinkTiles: Story = {
 	render: () => {
 		const root = "page-links-tiles";
-		const grid = [step(root, "Grid", { max_columns: 4, min_width: 160, gap: 3 })];
+		const grid = [step(root, "Grid", { max_columns: 4, min_cell_width: 160, gap: 3 })];
 		return (
 			<NodeStage
 				root={root}
@@ -287,17 +287,19 @@ export const PageLinkInline: Story = {
 export const CenteredPage: Story = {
 	render: () => {
 		const root = "page-centered";
-		const page = [step(root, "Column", { gap: 6, padding: 4, max_width: "form", center: true })];
+		const page = [
+			step(root, "Container", { gap: 6, padding: 4, max_width: "form", divided: true }),
+		];
 		const head = [...page, step("head", "Row", { gap: 3, align: "center" })];
 		const about = [
 			...page,
 			step("about", "PageSection", { title: "About", description: "What this page is for." }),
 		];
-		const pages = [...page, step("pages", "PageSection", { title: "Pages", bordered: true })];
+		const pages = [...page, step("pages", "PageSection", { title: "Pages" })];
 		return (
 			<NodeStage
 				root={root}
-				label="Column(max_width='form'): a 480px page centered in its column"
+				label="Container(max_width='form', divided=True): a 480px page centered, a hairline between its parts"
 				chains={[
 					...under(
 						head,

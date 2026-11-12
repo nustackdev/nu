@@ -83,15 +83,15 @@ def test_containers_and_leaves():
 # --- PageSection -------------------------------------------------------------
 
 
-SECTION_DEFAULTS = {"title": "", "description": "", "size": "md", "bordered": False, "gap": 4}
+SECTION_DEFAULTS = {"title": "", "description": ""}
 
 
 def test_section_slot_defaults_and_shape_forwarding():
     from nustd.ui import PageSection, PageSectionRef
 
     assert PageSectionRef.slot().props == SECTION_DEFAULTS
-    props = PageSection.slot(title="Usage", size="lg", bordered=1, gap="6").props
-    assert props == {**SECTION_DEFAULTS, "title": "Usage", "size": "lg", "bordered": True, "gap": 6}
+    props = PageSection.slot(title="Usage", size="lg", gap=6).props
+    assert props == {**SECTION_DEFAULTS, "title": "Usage", "size": "lg", "gap": 6}
     with pytest.raises(TypeError):
         PageSectionRef.slot(actions="nope")
 
@@ -137,9 +137,9 @@ def test_section_setters_write_their_key():
     from nustd.ui.refs import PageSectionRef
 
     sec = PageSectionRef("s")
-    frames = _frames(sec.set_title("T") >> sec.set_description("D") >> sec.set_bordered(True))
-    assert [f.op for f in frames] == ["write"] * 3
-    assert [f.payload for f in frames] == [{"title": "T"}, {"description": "D"}, {"bordered": True}]
+    frames = _frames(sec.set_title("T") >> sec.set_description("D"))
+    assert [f.op for f in frames] == ["write"] * 2
+    assert [f.payload for f in frames] == [{"title": "T"}, {"description": "D"}]
 
 
 # --- NavList and NavItem -----------------------------------------------------
@@ -238,18 +238,17 @@ def test_page_link_slot_and_partial_set():
 # --- Column: page width ------------------------------------------------------
 
 
-def test_column_caps_and_centers():
+def test_column_caps_and_leaves_placing_to_its_parent():
     from nustd.ui import Column, ColumnRef
 
-    props = ColumnRef.slot().props
-    assert props["max_width"] == "full"
-    assert props["center"] is True
-    assert Column.slot(max_width="prose", center=False, justify="evenly").props == {
-        **props,
+    assert ColumnRef.slot().props == {}
+    assert Column.slot(max_width="prose", justify="between").props == {
         "max_width": "prose",
-        "center": False,
-        "justify": "evenly",
+        "justify": "between",
     }
+    assert ColumnRef.slot(max_width=640).props == {"max_width": 640}
+    with pytest.raises(TypeError, match="takes no center"):
+        ColumnRef.slot(center=False)
 
 
 # --- the header actions key: one spelling for Card and Section ---------------
@@ -404,22 +403,23 @@ def test_a_card_shape_media_and_footer_slots_win_over_the_defaults():
 # --- setters on the page containers --------------------------------------------
 
 
-def test_section_size_gap_and_nav_variant_setters():
+def test_section_size_and_nav_variant_ride_set_layout():
     from nustd.ui.refs import NavListRef, PageSectionRef
 
     sec, nav = PageSectionRef("s"), NavListRef("n")
-    frames = _frames(sec.set_size("lg") >> sec.set_gap(6) >> nav.set_variant("horizontal"))
-    assert [f.payload for f in frames] == [{"size": "lg"}, {"gap": 6}, {"variant": "horizontal"}]
+    frames = _frames(sec.set_layout(size="lg", gap=6) >> nav.set_layout(variant="horizontal"))
+    assert [f.payload for f in frames] == [{"size": "lg", "gap": 6}, {"variant": "horizontal"}]
+    assert not hasattr(PageSectionRef, "set_size")
+    assert not hasattr(NavListRef, "set_variant")
+    with pytest.raises(ValueError, match="size is one of md, lg"):
+        sec.set_layout(size="xl")
 
 
-def test_box_and_form_set_title():
-    from nustd.ui.refs import BoxRef, FormRef
+def test_form_set_title():
+    from nustd.ui.refs import FormRef
 
-    frames = _frames(BoxRef("b").set_title("B") >> FormRef("f").set_title("F"))
-    assert [(f.op, f.payload) for f in frames] == [
-        ("write", {"title": "B"}),
-        ("write", {"title": "F"}),
-    ]
+    frames = _frames(FormRef("f").set_title("F"))
+    assert [(f.op, f.payload) for f in frames] == [("write", {"title": "F"})]
 
 
 # --- href: one spelling on everything that links -------------------------------
@@ -474,13 +474,13 @@ def test_page_link_inline_variant_on_the_wire():
 @pytest.mark.parametrize(
     ("ref_name", "given", "expected"),
     [
-        ("RowRef", {"wrap": 1, "gap": "2"}, {"wrap": True, "gap": 2}),
-        ("ColumnRef", {"gap": "3", "padding": "1"}, {"gap": 3, "padding": 1}),
+        ("RowRef", {"wrap": True, "gap": 2}, {"wrap": True, "gap": 2}),
+        ("ColumnRef", {"gap": 3, "padding": 1}, {"gap": 3, "padding": 1}),
         ("ModalRef", {"open": 1, "dismissible": 0}, {"open": True, "dismissible": False}),
         ("FieldsetRef", {"disabled": 1}, {"disabled": True}),
         ("FieldRef", {"required": 1}, {"required": True}),
         ("ListRef", {"start": "3"}, {"start": 3}),
-        ("FormRef", {"gap": "2"}, {"gap": 2}),
+        ("FormRef", {"gap": 2}, {"gap": 2}),
     ],
 )
 def test_slot_coerces_bools_and_ints(ref_name, given, expected):

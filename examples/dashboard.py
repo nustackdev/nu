@@ -53,16 +53,15 @@ class Home(ui.Container):
         variant="warn",
         title="billing p95 above 400 ms since 09:40",
         body="The autoscaler is at its cap. Follow the runbook before paging payments.",
-        dismissible=True,
     )
     overview = ui.PageSectionRef.slot(title="Overview", description="Traffic, health, budget")
     services = ui.PageSectionRef.slot(title="Services", description="What runs and what shipped")
     activity = ui.PageSectionRef.slot(title="Activity", description="Queue and event stream")
-    runbook = ui.ModalRef.slot(title="Runbook: billing degraded", size="lg")
+    runbook = ui.ModalRef.slot(title="Runbook: billing degraded", width=672)
 
 
 class App(nu.Shape):
-    home = Home.slot(size="dashboard", gap=8)
+    home = Home.slot(max_width="dashboard", gap=8)
 
 
 home = App.home
@@ -216,7 +215,7 @@ board = home.overview[0].to(
     ui.GridRef.slot(
         cols="2fr 1fr",
         rows=["auto", "minmax(280px, auto)", "auto"],
-        spans={(0, 1): (1, 2)},
+        span={(0, 1): {"rows": 2}},
         gap=4,
         stack_below=800,
     )
@@ -224,7 +223,7 @@ board = home.overview[0].to(
 export = home.overview.actions[0].to(ui.ButtonRef.slot(variant="ghost", size="sm", icon="download"))
 
 # A flowing grid inside a placed one: tiles wrap by width, no places.
-tiles = board[0, 0].to(ui.GridRef.slot(max_columns=4, min_width=160, gap=3))
+tiles = board[0, 0].to(ui.GridRef.slot(max_columns=4, min_cell_width=160, gap=3))
 
 
 def tile(i: int, label: str, value: str, delta: str, trend: str, points: list[int]) -> nu.Nu:
@@ -290,8 +289,13 @@ new_deploy = home.services.actions[0].to(ui.ButtonRef.slot(icon="rocket", size="
 # Fleet: a content table, every cell a place that holds any kind.
 fleet = views["fleet"].to(
     ui.TableRef.slot(
-        header=["Service", "Version", "Status", "p95", ""],
-        align=["left", "left", "left", "right", "right"],
+        columns=[
+            {"label": "Service"},
+            {"label": "Version"},
+            {"label": "Status"},
+            {"label": "p95", "align": "end"},
+            {"label": "", "align": "end"},
+        ],
         label="Fleet",
     )
 )

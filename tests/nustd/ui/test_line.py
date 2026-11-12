@@ -1,7 +1,7 @@
 """Line: the inline flow container, as a Shape and as Refs alone.
 
 A Line holds open-ended children that run inline and wrap like a paragraph.
-Its props are its own (align, wrap); a child carries none. Runs against a
+Its props are its own (justify, wrap, the size layer, padding); a child carries none. Runs against a
 recording session, same harness as test_layers.
 """
 
@@ -50,8 +50,8 @@ def test_line_is_a_container_with_its_own_wire_type():
 def test_slot_defaults():
     from nustd.ui import LineRef
 
-    assert LineRef.slot().props == {"align": "start", "wrap": True}
-    assert LineRef.slot(align="center", wrap=False).props == {"align": "center", "wrap": False}
+    assert LineRef.slot().props == {}
+    assert LineRef.slot(justify="center", wrap=False).props == {"justify": "center", "wrap": False}
 
 
 def test_slot_takes_no_other_props():
@@ -68,7 +68,7 @@ def test_shape_slot_forwards_to_the_ref():
         pass
 
     assert Line.slot().props == LineRef.slot().props
-    assert Status.slot(align="end").props == LineRef.slot(align="end").props
+    assert Status.slot(justify="end").props == LineRef.slot(justify="end").props
     assert Status.slot(wrap=False).props["wrap"] is False
 
 
@@ -82,7 +82,7 @@ def test_boot_chains_of_a_page_with_a_line():
         combo = ShortcutRef.slot(keys=["mod", "K"])
 
     class Home(Column):
-        status = Status.slot(align="center")
+        status = Status.slot(justify="center")
 
     chains = boot_chains((), Home)
     status = [c for c in chains if c[0][0] == "status"]
@@ -93,7 +93,7 @@ def test_boot_chains_of_a_page_with_a_line():
         [("status", "Line"), ("tag", "BadgeRef")],
         [("status", "Line"), ("combo", "ShortcutRef")],
     ]
-    assert status[0][0][2] == {"align": "center", "wrap": True}
+    assert status[0][0][2] == {"justify": "center"}
     assert status[4][1][2]["keys"] == ["mod", "K"]
 
 
@@ -104,7 +104,7 @@ def test_refs_alone_text_under_line_under_card():
     line = LineRef("status", parent_ref=card, props={"wrap": False})
     [frame] = _frames(TextRef("lead", parent_ref=line).set("Built with"))
     assert _chain(frame) == [("card", "Card"), ("status", "Line"), ("lead", "TextRef")]
-    assert frame.chain[1][2] == {"align": "start", "wrap": False}
+    assert frame.chain[1][2] == {"wrap": False}
     assert frame.ref == ("card", "status", "lead")
 
 

@@ -13,7 +13,7 @@ class Dashboard(nustd.ui.Container):
 
 
 class App(nu.Shape):
-    home = Dashboard.slot(size="panel")
+    home = Dashboard.slot(max_width="panel")
 
 
 # reactive wire: whenever `value` changes, mirror it into `count`

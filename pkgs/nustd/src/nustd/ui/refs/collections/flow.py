@@ -1,19 +1,22 @@
 """Flow containers -- Refs that lay their children out and carry nothing else.
 
 Column stacks its children, Row puts them side by side. Neither has chrome
-of its own beyond spacing and alignment, so neither has a ``set()``: what
-you write to is the children. The Shapes over them live in
-``nustd.ui.shapes.flow``.
+of its own, so neither has a ``set()``: what you write to is the children.
+Both speak the four layers of ``layout`` and keep the flow's per child maps
+(``grow``, ``basis``, ``align_self``, ``sticky``), and both are ordered
+collections (``insert``, ``move``, ... see ``order``). The Shapes over them
+live in ``nustd.ui.shapes.flow``.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, ClassVar
 
-from typing_extensions import Self
+from typing_extensions import Self, Unpack
 
 from .base import DictCollectionRef
-from .sizing import normalize_weights, sizing_props
+from .layout import ARRANGE, SIZE, SPACE, ChildLayout, StackLayout, flag, px
+from .order import Ordered
 
 
 if TYPE_CHECKING:
@@ -22,88 +25,78 @@ if TYPE_CHECKING:
     from nu.domains.shape import Slot
     from nustd.ui.core import Ref, Section
 
-    from ..vocab import Align, PageWidth
-    from .sizing import Length, Scroll
+    from .layout import Check
 
 
-__all__ = ["ColumnRef", "RowRef"]
+__all__ = ["FLOW_CHILDREN", "STACK", "ColumnRef", "RowRef"]
 
 
-Justify = Literal["start", "center", "end", "between", "around", "evenly"]
+#: A stack's layer props: size, space, arrange, and a hairline between children.
+STACK = SIZE | SPACE | ARRANGE | {"divided"}
+
+#: The per child maps a flow keeps.
+FLOW_CHILDREN = ("grow", "basis", "align_self", "sticky")
 
 
-class ColumnRef(DictCollectionRef):
-    """Vertical flex layout. Pin chrome on the slot().
+class ColumnRef(ChildLayout, Ordered, DictCollectionRef):
+    """Children stacked top to bottom. Pin layout on the slot().
 
-    `max_width` caps the column at a named page width (``PageWidth``), and
-    `center` puts the capped column in the middle of what holds it. Under the
-    cap it takes the whole width it is given, the way an uncapped one does.
-    For a page's frame, with its side gutter, reach for ``ContainerRef``.
+    Layers (``layout``): size, ``padding`` (0), ``gap`` (4), ``justify``
+    (start) down the column, ``align`` (stretch) across it, ``divided`` a
+    hairline between children. A ``max_width`` makes the column take the
+    whole width up to it; where a capped column sits is its parent's to say
+    (``align``, or ``align_self`` for it alone). For a page's frame,
+    centred with its side gutter, reach for ``ContainerRef``.
 
-    `height`, `max_height` and `scroll` size the column and scroll what runs
-    past it (see ``sizing``). `grow` maps a child's key to its share of the
-    height left over, so in a column of fixed height a list under a header
-    takes the rest; `basis` maps a child's key to its height in px before
-    any growing.
+    Per child: ``grow`` shares the height left over (a list under a header
+    in a column of fixed height takes the rest), ``basis`` a child's height
+    before growing, ``align_self``, ``sticky`` (``"top"`` / ``"bottom"``) to
+    pin a head while the column scrolls.
     """
 
     _wire_type = "Column"
+    _layout: ClassVar[frozenset[str]] = STACK
+    _children: ClassVar[tuple[str, ...]] = FLOW_CHILDREN
 
     @classmethod
     def slot(
         cls,
         item: type[Section] | type[Ref] | Slot | None = None,
         /,
-        *,
-        gap: int = 4,
-        align: Align = "stretch",
-        justify: Justify = "start",
-        padding: int = 0,
-        max_width: PageWidth = "full",
-        center: bool = True,
-        height: Length | None = None,
-        max_height: Length | None = None,
-        scroll: Scroll = "none",
-        grow: Mapping[int | str, int] | None = None,
-        basis: Mapping[int | str, int] | None = None,
+        **layout: Unpack[StackLayout],
     ) -> Self:
-        return super().slot(
-            item,
-            gap=int(gap),
-            align=align,
-            justify=justify,
-            padding=int(padding),
-            max_width=max_width,
-            center=bool(center),
-            **sizing_props("ColumnRef", height=height, max_height=max_height, scroll=scroll),
-            **_child_sizes("ColumnRef", grow, basis),
-        )
+        return super().slot(item, **cls._laid_out(layout))
 
 
-RowAlign = Literal["start", "center", "end", "stretch", "baseline"]
-RowJustify = Literal["start", "center", "end", "between", "around", "evenly"]
+class RowRef(ChildLayout, Ordered, DictCollectionRef):
+    """Children side by side, left to right. Pin layout on slot().
 
+    Layers (``layout``): size, ``padding`` (0), ``gap`` (4), ``justify``
+    (start) along the row, ``align`` (center) across it, ``baseline``
+    included, ``divided`` a hairline between children. ``wrap`` lets
+    children run onto more lines; ``stack_below`` (px) turns the row into a
+    column when it is narrower than that, so a header with actions or two
+    cards side by side stack on a phone.
 
-class RowRef(DictCollectionRef):
-    """Horizontal flex layout. Pin chrome on slot().
+    How a child sizes comes from its kind, not from a prop on it. A child
+    with no width of its own (a chart, a table, an input, a card) fills: the
+    fill children share the free width equally, starting from 240px, so a
+    wrapping row wraps them there. Everything else (text, a button, a badge)
+    keeps its own size.
 
-    How a child sizes comes from its kind, not from a prop on it. A child with
-    no width of its own (a chart, a table, an input, a card) fills: the fill
-    children share the free width equally. Everything else (text, a button, a
-    badge) keeps its own size. ``min_width`` (px, on the 4px grid) is the
-    width a fill child asks for before it grows: a wrapping Row wraps fill
-    children at it, several per line rather than one per line, and a Row that
-    does not wrap shrinks them below it only once the line is full.
-
-    One child can still say otherwise, from the Row: `grow` maps a child's
-    key to its weight (a fill child weighs 1, so ``grow={"main": 2}`` takes
-    twice a plain one's share, and a content child given a weight grows
-    too); `basis` maps a child's key to its width in px before any growing,
-    so ``basis={"side": 280}`` is a 280px sidebar beside a filling main.
-    `height`, `max_height` and `scroll` size the row (see ``sizing``).
+    Per child: ``grow`` is a true ratio of the free width, ``grow={"a": 1,
+    "b": 2}`` draws 1:2, a grown child starting from 0; ``basis`` its width
+    before growing (``basis={"side": 280}`` is a 280px sidebar beside a
+    filling main); ``align_self``; ``sticky`` (``"left"`` / ``"right"``).
     """
 
     _wire_type = "Row"
+    _layout: ClassVar[frozenset[str]] = STACK
+    _children: ClassVar[tuple[str, ...]] = FLOW_CHILDREN
+    _aligns: ClassVar[tuple[str, ...]] = ("start", "center", "end", "stretch", "baseline")
+    _self_aligns: ClassVar[tuple[str, ...]] = ("start", "center", "end", "stretch", "baseline")
+    _sticky_sides: ClassVar[tuple[str, ...]] = ("left", "right")
+    _family: ClassVar[Mapping[str, Check]] = {"wrap": flag, "stack_below": px}
 
     @classmethod
     def slot(
@@ -111,40 +104,9 @@ class RowRef(DictCollectionRef):
         item: type[Section] | type[Ref] | Slot | None = None,
         /,
         *,
-        gap: int = 4,
-        align: RowAlign = "center",
-        justify: RowJustify = "start",
-        wrap: bool = False,
-        padding: int = 0,
-        min_width: int = 240,
-        height: Length | None = None,
-        max_height: Length | None = None,
-        scroll: Scroll = "none",
-        grow: Mapping[int | str, int] | None = None,
-        basis: Mapping[int | str, int] | None = None,
+        wrap: bool | None = None,
+        stack_below: int | None = None,
+        **layout: Unpack[StackLayout],
     ) -> Self:
-        return super().slot(
-            item,
-            gap=int(gap),
-            align=align,
-            justify=justify,
-            wrap=bool(wrap),
-            padding=int(padding),
-            min_width=int(min_width),
-            **sizing_props("RowRef", height=height, max_height=max_height, scroll=scroll),
-            **_child_sizes("RowRef", grow, basis),
-        )
-
-
-def _child_sizes(
-    owner: str,
-    grow: Mapping[int | str, int] | None,
-    basis: Mapping[int | str, int] | None,
-) -> dict[str, object]:
-    """``grow`` / ``basis`` as the wire keys them, each only when given."""
-    out: dict[str, object] = {}
-    if grow:
-        out["grow"] = normalize_weights(owner, "grow", grow)
-    if basis:
-        out["basis"] = normalize_weights(owner, "basis", basis)
-    return out
+        family = {"wrap": wrap, "stack_below": stack_below}
+        return super().slot(item, **cls._laid_out({**layout, **family}))

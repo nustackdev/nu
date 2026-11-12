@@ -1,15 +1,12 @@
-// Text alignment off the wire: start, center or end, with left and right
-// read as the older spelling of start and end. Text, Heading and Divider all
-// take `align` this way; anything else falls back.
+// Text alignment off the wire: start, center or end. Text, Heading and
+// Divider all take `align` this way; anything else falls back.
 
 export type Align = "start" | "center" | "end";
 
 const ALIGNS: Record<string, Align> = {
 	start: "start",
-	left: "start",
 	center: "center",
 	end: "end",
-	right: "end",
 };
 
 /** An `align` prop as start / center / end, or `fallback` for anything unknown. */

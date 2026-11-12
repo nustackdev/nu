@@ -307,24 +307,24 @@ class Raw(ui.Grid):
 class Home(ui.Container):
     header = Header.slot(gap=3)
     toolbar = Toolbar.slot(gap=2)
-    stats = Stats.slot(max_columns=3, min_width=180, gap=3)
+    stats = Stats.slot(max_columns=3, min_cell_width=180, gap=3)
     h_live = ui.HeadingRef.slot(label="Live")
-    live = Live.slot(wrap=True, min_width=300, gap=3)
+    live = Live.slot(wrap=True, basis={"lines": 300, "gauge": 300, "candles": 300}, gap=3)
     h_energy = ui.HeadingRef.slot(label="Energy")
-    energy = Energy.slot(wrap=True, min_width=300, gap=3)
+    energy = Energy.slot(wrap=True, basis={"area": 300, "split": 300, "flow": 300}, gap=3)
     h_sensors = ui.HeadingRef.slot(label="Sensors")
-    sensors = Sensors.slot(max_columns=2, min_width=320, gap=3)
+    sensors = Sensors.slot(max_columns=2, min_cell_width=320, gap=3)
     h_spread = ui.HeadingRef.slot(label="Spread")
-    spread = Spread.slot(max_columns=3, min_width=280, gap=3)
+    spread = Spread.slot(max_columns=3, min_cell_width=280, gap=3)
     h_storage = ui.HeadingRef.slot(label="Storage and pipeline")
-    storage = Storage.slot(max_columns=3, min_width=280, gap=3)
+    storage = Storage.slot(max_columns=3, min_cell_width=280, gap=3)
     h_raw = ui.HeadingRef.slot(label="Raw options")
-    raw = Raw.slot(max_columns=2, min_width=320, gap=3)
+    raw = Raw.slot(max_columns=2, min_cell_width=320, gap=3)
     calendar = CalendarCard.slot(title="A year of yield", subtitle="calendar heatmap")
 
 
 class App(nu.Shape):
-    home = Home.slot(size="dashboard")
+    home = Home.slot(max_width="dashboard")
 
 
 h = App.home

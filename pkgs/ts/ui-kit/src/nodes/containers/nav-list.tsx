@@ -14,6 +14,9 @@
 //           it runs out of room. Children get a row flow. `label` only
 //           names the landmark there.
 //
+// Layout (`layout.tsx`): the size props, `padding`, `gap` (2px stacked, 4px
+// on a bar, unless set).
+//
 // The items read the flow to size themselves (see NavItemRef), so the same
 // NavItem is a row in a sidebar and a tab-like link in a bar.
 
@@ -27,11 +30,15 @@ import {
 	type NodeProps,
 	useStringProp,
 } from "../../tree";
+import { gapClass, type LayoutDefaults, padClass, useLayout } from "./layout";
+
+const DEFAULTS: LayoutDefaults = {};
 
 function NavListView({ path }: NodeProps) {
 	const horizontal = useStringProp(path, "variant", "vertical") === "horizontal";
 	const label = useStringProp(path, "label");
 	const labelId = useId();
+	const layout = useLayout(path, DEFAULTS);
 	// A drawn label names the landmark by reference; a bar has none to point
 	// at, so it carries the name itself.
 	const heading = !horizontal && label !== "";
@@ -46,7 +53,11 @@ function NavListView({ path }: NodeProps) {
 				horizontal
 					? "scrollbar-none flex-row items-center gap-1 overflow-x-auto"
 					: "flex-col gap-0.5",
+				gapClass(layout),
+				padClass(layout),
+				layout.scroll,
 			)}
+			style={layout.size}
 		>
 			{heading ? (
 				<div id={labelId} className="px-3 pt-2 pb-1 font-medium text-text-muted text-xs">

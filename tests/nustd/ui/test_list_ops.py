@@ -55,7 +55,7 @@ def test_insert_a_typed_child_places_then_brings_it_on_screen():
     insert, init = _frames(LST.insert(LST["c"].to(CardRef), at=1))
     assert (insert.op, insert.ref, insert.payload) == ("insert_item", ("l",), {"key": "c", "at": 1})
     assert init.op == "init"
-    assert [(s, t) for s, t, _ in init.chain] == [("l", "ListRef"), ("c", "Card")]
+    assert [(s, t) for s, t, _ in init.chain] == [("l", "List"), ("c", "Card")]
 
 
 def test_insert_a_child_from_the_item_default():
@@ -70,7 +70,7 @@ def test_insert_a_bare_child_only_places():
 
 
 def test_insert_refuses_a_child_of_another_list():
-    with pytest.raises(ValueError, match="child of this list"):
+    with pytest.raises(ValueError, match="child of its own"):
         LST.insert(ListRef("m")["a"].to(TextRef))
 
 

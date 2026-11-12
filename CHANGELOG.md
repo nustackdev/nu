@@ -12,6 +12,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Every ui container speaks one layout vocabulary for size, spacing and alignment
+- Rows, columns and grids reorder children in place instead of erasing and rewriting
 - Any ui container can be reached into by position or name, to any depth
 - Tables split in two: sheet-like data tables and content tables holding anything
 - A child's kind is named where it is used; clashing kinds now fail loudly

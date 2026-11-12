@@ -84,7 +84,7 @@ def test_slot_is_a_real_slot():
     spec = ui.DataTableRef.slot(columns=["a"])
     assert isinstance(spec, Slot)
     assert spec.ref_cls is ui.DataTableRef
-    assert spec.props["columns"] == ["a"]
+    assert spec.props["columns"] == [{"key": "a"}]
     section_spec = Toolbar.slot(gap=2)
     assert isinstance(section_spec, Slot)
     assert section_spec.ref_cls is ui.RowRef
@@ -104,11 +104,11 @@ def test_to_a_bare_class():
 
 def test_to_a_slot_spec_with_props():
     table = ui.GridRef("g", item=ui.CardRef)["a"].to(
-        ui.DataTableRef.slot(columns=["x"], dense=True)
+        ui.DataTableRef.slot(columns=["x"], density="compact")
     )
     assert type(table) is ui.DataTableRef
-    assert table._payload["props"]["columns"] == ["x"]
-    assert table._payload["props"]["dense"] is True
+    assert table._payload["props"]["columns"] == [{"key": "x"}]
+    assert table._payload["props"]["density"] == "compact"
 
 
 def test_to_a_section_spec_navigates_its_slots():
@@ -141,12 +141,12 @@ def test_to_a_leaf_still_refuses_children():
 
 def test_wire_chain_carries_the_new_kind_and_props():
     grid = ui.GridRef("g", item=ui.CardRef)
-    term = grid["a"].to(ui.DataTableRef.slot(columns=["x"], dense=True)).set([{"x": 1}])
+    term = grid["a"].to(ui.DataTableRef.slot(columns=["x"], density="compact")).set([{"x": 1}])
     (frame,) = _frames(term)
     assert frame.ref == ("g", "a")
     assert [(seg, typ) for seg, typ, _ in frame.chain] == [("g", "Grid"), ("a", "DataTableRef")]
-    assert frame.chain[1][2]["columns"] == ["x"]
-    assert frame.chain[1][2]["dense"] is True
+    assert frame.chain[1][2]["columns"] == [{"key": "x"}]
+    assert frame.chain[1][2]["density"] == "compact"
 
 
 def test_wire_chain_after_a_nested_to_chain():
@@ -160,7 +160,7 @@ def test_wire_chain_after_a_nested_to_chain():
     )
     (frame,) = _frames(term)
     assert frame.ref == ("page", "a", "r", "text")
-    assert frame.payload == "hi"
+    assert frame.payload == {"value": "hi"}
     assert [(seg, typ) for seg, typ, _ in frame.chain] == [
         ("page", "Grid"),
         ("a", "Column"),

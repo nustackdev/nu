@@ -11,6 +11,14 @@
 //
 // The classes are the table recipes (lib/recipes.ts), which the markdown
 // schema draws its tables with too, so a DataTableRef and a markdown table match.
+//
+// Columns: both nu tables (the content Table and the DataTable) describe a
+// column with one record, and lay it out with the helpers at the end of this
+// file: `align` (start | center | end), `width` / `minWidth` / `maxWidth`
+// (CSS lengths), `wrap` (wrap | nowrap | truncate, truncate being one line
+// with an ellipsis and the full text as the title) and `hideBelow` (px of
+// the table's width under which the column is not drawn; it stays in the
+// DOM with display:none, so column indexes stay stable).
 
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
@@ -37,8 +45,8 @@ const tableVariants = cva(table.root, {
 	},
 });
 
-// TableContext pushes density + striped intent down to rows and cells so the
-// consumer only sets it once on the root.
+// TableContext pushes density + the striped variant down to rows and cells so
+// the consumer only sets it once on the root.
 interface TableCtx {
 	density: TableDensity;
 	striped: boolean;
@@ -50,14 +58,11 @@ const TableContext = React.createContext<TableCtx>({
 
 export interface TableProps
 	extends React.TableHTMLAttributes<HTMLTableElement>,
-		VariantProps<typeof tableVariants> {
-	/** Alternate rows tinted with any variant; the `striped` variant implies it. */
-	striped?: boolean;
-}
+		VariantProps<typeof tableVariants> {}
 
-export function Table({ className, variant, density, striped: stripe, ...props }: TableProps) {
+export function Table({ className, variant, density, ...props }: TableProps) {
 	const effectiveDensity: TableDensity = density ?? "default";
-	const striped = stripe ?? variant === "striped";
+	const striped = variant === "striped";
 	return (
 		<TableContext.Provider value={{ density: effectiveDensity, striped }}>
 			<div className={table.frame}>
@@ -143,3 +148,128 @@ export function TableCaption({
 }
 
 export { tableVariants };
+
+// ---- columns -------------------------------------------------------------
+
+/** Where a column's cells sit, logical so it follows the writing direction. */
+export type ColumnAlign = "start" | "center" | "end";
+
+/** How a column's text breaks: onto more lines, never, or clipped with an ellipsis. */
+export type ColumnWrap = "wrap" | "nowrap" | "truncate";
+
+/** How a column lays out, every length already CSS. */
+export type ColumnLayout = {
+	align?: ColumnAlign;
+	width?: string;
+	minWidth?: string;
+	maxWidth?: string;
+	wrap?: ColumnWrap;
+	/** Px of the table's width under which the column is not drawn. */
+	hideBelow?: number;
+};
+
+/** The text alignment class per column alignment. */
+export const COLUMN_ALIGN: Record<ColumnAlign, string> = {
+	start: "text-start",
+	center: "text-center",
+	end: "text-end",
+};
+
+/** The flex alignment (along the cell) per column alignment. */
+export const COLUMN_JUSTIFY: Record<ColumnAlign, string> = {
+	start: "justify-start",
+	center: "justify-center",
+	end: "justify-end",
+};
+
+/** The flex alignment (across a stacked cell) per column alignment. */
+export const COLUMN_ITEMS: Record<ColumnAlign, string> = {
+	start: "items-start",
+	center: "items-center",
+	end: "items-end",
+};
+
+const WRAP_CLASSES: Record<ColumnWrap, string | undefined> = {
+	wrap: undefined,
+	nowrap: "whitespace-nowrap",
+	truncate: "overflow-hidden text-ellipsis whitespace-nowrap",
+};
+
+/** The header cell's style: the column's starting width, and none at all when hidden. */
+export function columnHeadStyle(
+	col: ColumnLayout,
+	hidden: boolean,
+): React.CSSProperties | undefined {
+	if (hidden) return { display: "none" };
+	return col.width ? { width: col.width } : undefined;
+}
+
+/** A body cell's style: none at all when the column is hidden. */
+export function columnCellStyle(hidden: boolean): React.CSSProperties | undefined {
+	return hidden ? { display: "none" } : undefined;
+}
+
+/**
+ * What a cell holds, in the column's box: its min and max width (a table
+ * cell itself ignores both) and its wrap. A column that asks for neither
+ * draws its content bare. `title` is the full text a truncated cell shows on
+ * hover.
+ */
+export function ColumnBox({
+	col,
+	title,
+	className,
+	children,
+}: {
+	col: ColumnLayout;
+	title?: string;
+	className?: string;
+	children?: React.ReactNode;
+}) {
+	const wrap = col.wrap ?? "wrap";
+	if (!col.minWidth && !col.maxWidth && wrap === "wrap" && !className) return <>{children}</>;
+	const truncate = wrap === "truncate";
+	return (
+		<div
+			data-slot="table-column-box"
+			title={truncate ? title : undefined}
+			className={cn("min-w-0", WRAP_CLASSES[wrap], className)}
+			style={{
+				minWidth: col.minWidth,
+				// A truncated column clips at its max width, else at its width.
+				maxWidth: col.maxWidth ?? (truncate ? col.width : undefined),
+			}}
+		>
+			{children}
+		</div>
+	);
+}
+
+/**
+ * The indexes of the columns to leave out at the current width of `el`:
+ * each whose `hideBelow` is more than that width. Measures only while some
+ * column asks, and hides nothing until measured.
+ */
+export function useHiddenColumns(
+	el: HTMLElement | null,
+	columns: readonly ColumnLayout[],
+): ReadonlySet<number> {
+	const asks = columns.some((c) => (c.hideBelow ?? 0) > 0);
+	const [width, setWidth] = React.useState<number | null>(null);
+	React.useLayoutEffect(() => {
+		if (!el || !asks || typeof ResizeObserver === "undefined") return;
+		const measure = () => setWidth(el.clientWidth);
+		measure();
+		const observer = new ResizeObserver(measure);
+		observer.observe(el);
+		return () => observer.disconnect();
+	}, [el, asks]);
+	return React.useMemo(() => {
+		const out = new Set<number>();
+		if (!asks || width === null) return out;
+		columns.forEach((c, i) => {
+			if ((c.hideBelow ?? 0) > width) out.add(i);
+		});
+		return out;
+	}, [asks, width, columns]);
+}

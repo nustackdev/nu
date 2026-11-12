@@ -46,7 +46,7 @@ class Files(nustd.ui.Container):
 
 class App(nu.Shape):
     title: nustd.ui.TitleRef
-    files = Files.slot(size="main")
+    files = Files.slot(max_width="main")
 
 
 TREE = App.files.panes.files.tree

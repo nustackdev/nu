@@ -50,7 +50,7 @@ class Home(nustd.ui.Container):
 
 class App(nu.Shape):
     title = nustd.ui.TitleRef.slot(default="Markdown")
-    home = Home.slot(size="main")
+    home = Home.slot(max_width="main")
 
 
 # Every commit from the browser lands here. `nu.Str(App.home.split.editor.body)` is the read

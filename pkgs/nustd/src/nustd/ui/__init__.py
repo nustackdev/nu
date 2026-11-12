@@ -12,8 +12,9 @@ Layout under ``src/nustd/ui/``:
                  ``Append`` / ``Remove`` / ``Init`` / ``Hide`` / ``Display`` /
                  ``Changed``). Reusable by any host.
 - ``refs/``   -- layer 1, the widget kit as Refs: ``collections/`` (Column,
-                 Row, Card, ...: open-ended children) and ``leaves/`` (Text,
-                 Button, Table, charts, ...: drawn from props, no children).
+                 Row, Card, Table, ...: open-ended children) and ``leaves/``
+                 (Text, Button, DataTable, charts, ...: drawn from props, no
+                 children).
                  Any UI can be built from these alone. Depends only on core.
 - ``shapes/`` -- layer 2, a declarative DSL over the container Refs: one
                  ``Section`` per container (``Row``, ``Card``, ...) that points
@@ -77,9 +78,7 @@ from .refs import (
     AvatarRef,
     BadgeRef,
     BarChart,
-    Box,
     BoxplotChart,
-    BoxRef,
     BreadcrumbRef,
     ButtonRef,
     CalendarHeatmapRef,
@@ -140,7 +139,6 @@ from .refs import (
     NavItemRef,
     NavList,
     NavListRef,
-    NavRef,
     NumberInputRef,
     OrderItems,
     PageLinkRef,
@@ -158,6 +156,7 @@ from .refs import (
     SankeyChart,
     ScatterChart,
     SelectRef,
+    SetChild,
     SetOrder,
     SetRow,
     ShapeCollectionRef,
@@ -242,8 +241,6 @@ __all__ = [
     "AvatarRef",
     "BadgeRef",
     "BarChart",
-    "Box",
-    "BoxRef",
     "BoxplotChart",
     "BreadcrumbRef",
     "ButtonRef",
@@ -312,7 +309,6 @@ __all__ = [
     "NavItemRef",
     "NavList",
     "NavListRef",
-    "NavRef",
     "NumberInputRef",
     "OrderItems",
     "PageLinkRef",
@@ -336,6 +332,7 @@ __all__ = [
     "SelectRef",
     "Send",
     "Session",
+    "SetChild",
     "SetOrder",
     "SetRow",
     "ShapeCollectionRef",

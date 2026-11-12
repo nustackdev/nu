@@ -29,16 +29,16 @@ function sized(size: string, label: string): Story {
 	return {
 		render: () => {
 			const root = `container-${size}`;
-			return <NodeStage root={root} label={label} chains={page(root, { size })} />;
+			return <NodeStage root={root} label={label} chains={page(root, { max_width: size })} />;
 		},
 	};
 }
 
-export const Main = sized("main", "size main: 1200, the default");
-export const Dashboard = sized("dashboard", "size dashboard: 1400");
-export const Panel = sized("panel", "size panel: 960");
-export const Prose = sized("prose", "size prose: 640");
-export const FormWidth = sized("form", "size form: 480");
+export const Main = sized("main", "max_width main: 1200, the default");
+export const Dashboard = sized("dashboard", "max_width dashboard: 1400");
+export const Panel = sized("panel", "max_width panel: 960");
+export const Prose = sized("prose", "max_width prose: 640");
+export const FormWidth = sized("form", "max_width form: 480");
 
 export const EdgeToEdge: Story = {
 	render: () => {
@@ -46,8 +46,8 @@ export const EdgeToEdge: Story = {
 		return (
 			<NodeStage
 				root={root}
-				label='size full, padding "none": no cap, no gutter'
-				chains={page(root, { size: "full", padding: "none", gap: 4 })}
+				label="max_width full, padding 0: no cap, no gutter"
+				chains={page(root, { max_width: "full", padding: 0, gap: 4 })}
 			/>
 		);
 	},

@@ -502,6 +502,19 @@ function rowItems(view: EditorView): TableMenuItem[] {
 	});
 }
 
+// The menu speaks start / center / end, the way every kit table aligns; a
+// markdown source spells the same sides left / center / right.
+const MENU_ALIGN: Record<NonNullable<Align>, ColumnAlign> = {
+	left: "start",
+	center: "center",
+	right: "end",
+};
+const SOURCE_ALIGN: Record<ColumnAlign, NonNullable<Align>> = {
+	start: "left",
+	center: "center",
+	end: "right",
+};
+
 /** The column menu, read off the selection the same way. */
 function columnItems(view: EditorView): TableMenuItem[] {
 	const c = tableCommands;
@@ -511,9 +524,9 @@ function columnItems(view: EditorView): TableMenuItem[] {
 		moveLeft: action(view, c.moveColumnLeft),
 		moveRight: action(view, c.moveColumnRight),
 		align: {
-			value: columnAlign(view.state) ?? "left",
+			value: MENU_ALIGN[columnAlign(view.state) ?? "left"],
 			onValueChange: (next: ColumnAlign) =>
-				void c.alignColumn(next)(view.state, view.dispatch, view),
+				void c.alignColumn(SOURCE_ALIGN[next])(view.state, view.dispatch, view),
 		},
 		remove: action(view, c.deleteColumn),
 		extra: [deleteTableItem(view)],

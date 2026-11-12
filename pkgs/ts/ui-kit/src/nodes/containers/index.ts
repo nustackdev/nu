@@ -10,13 +10,12 @@ import { Card } from "./card";
 import { Collapsible } from "./collapsible";
 import { Column } from "./column";
 import { Container } from "./container";
-import { Box } from "./box";
 import { Field } from "./field";
 import { Fieldset } from "./fieldset";
 import { Form } from "./form";
 import { Grid } from "./grid";
 import { Line } from "./line";
-import { ListRef } from "./list";
+import { List } from "./list";
 import { Modal } from "./modal";
 import { NavList } from "./nav-list";
 import { PageSection } from "./page-section";
@@ -29,7 +28,6 @@ export const containerEntries: Record<string, NodeEntry> = {
 	Column,
 	Container,
 	Row,
-	Box,
 	Form,
 	Fieldset,
 	Field,
@@ -37,7 +35,7 @@ export const containerEntries: Record<string, NodeEntry> = {
 	Tabs,
 	Accordion,
 	Modal,
-	ListRef,
+	List,
 	Grid,
 	Line,
 	Collapsible,

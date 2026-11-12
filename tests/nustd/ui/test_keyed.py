@@ -61,7 +61,7 @@ class AtlasCard(SpeciesCard):
 
 class Home(ui.Column):
     entries = ui.List.slot(Entry)
-    atlas = ui.Grid.slot(SpeciesCard, min_width=200)
+    atlas = ui.Grid.slot(SpeciesCard, min_cell_width=200)
     pinned = ui.Grid.slot(AtlasCard)
     tags = ui.Line.slot(ui.BadgeRef)
     row = ui.Row.slot()
@@ -72,7 +72,6 @@ class Home(ui.Column):
 
 KIND = {
     "Accordion": DictCollectionRef,
-    "Box": DictCollectionRef,
     "Card": DictCollectionRef,
     "Collapsible": DictCollectionRef,
     "Column": DictCollectionRef,
@@ -82,7 +81,7 @@ KIND = {
     "Form": DictCollectionRef,
     "Grid": DictCollectionRef,
     "Line": ListCollectionRef,
-    "List": ListCollectionRef,
+    "List": DictCollectionRef,
     "Modal": DictCollectionRef,
     "NavList": DictCollectionRef,
     "PageSection": DictCollectionRef,
@@ -105,9 +104,6 @@ def test_every_container_ref_has_exactly_one_shape_named_after_it():
     from nustd.ui.core.base import _wire_type_of
     from nustd.ui.refs import collections
 
-    # ListRef kept its old wire type so bundles from before it took children
-    # still draw the strings; see ListRef.
-    wire_exceptions = {"List": "ListRef"}
     abstract = {"CollectionRef", "DictCollectionRef", "ListCollectionRef", "ShapeCollectionRef"}
     # A content table and its rows are reached by position (t[r, c]), never by
     # named slots, so they take no Shape.
@@ -121,7 +117,7 @@ def test_every_container_ref_has_exactly_one_shape_named_after_it():
         assert len(owners) == 1, (ref_name, owners)
         name = ref_name.removesuffix("Ref")
         assert owners[0].__name__ == name, ref_name
-        assert _wire_type_of(owners[0]) == wire_exceptions.get(name, name)
+        assert _wire_type_of(owners[0]) == name
         for module in (shapes, refs, ui):
             assert name in module.__all__ and getattr(module, name) is owners[0], (module, name)
         for module in (refs, ui):
@@ -153,7 +149,7 @@ def test_a_keyed_child_is_its_template_under_the_key():
 
 def test_an_indexed_child_is_its_template_at_the_index():
     frames = _frames(Home.entries[0].tag.set("VU"))
-    assert _chain(frames[0]) == [("entries", "ListRef"), ("0", "Line"), ("tag", "BadgeRef")]
+    assert _chain(frames[0]) == [("entries", "List"), ("0", "Line"), ("tag", "BadgeRef")]
 
 
 def test_each_key_is_its_own_child():
@@ -174,10 +170,10 @@ def test_a_computed_index_resolves_like_any_address():
 def test_slot_props_and_template_props_ride_the_chain():
     frames = _frames(Home.pinned["lion"].count.set("1"))
     props = {seg: p for seg, _, p in frames[0].chain}
-    assert props["pinned"]["min_width"] == 240
+    assert props["pinned"] == {}
     assert props["lion"]["subtitle"] == "atlas"
     plain = _frames(Home.atlas["lion"].count.set("1"))
-    assert dict(plain[0].chain[0][2])["min_width"] == 200
+    assert dict(plain[0].chain[0][2])["min_cell_width"] == 200
 
 
 def test_chrome_on_a_keyed_container_child():

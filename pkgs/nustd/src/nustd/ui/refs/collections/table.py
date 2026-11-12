@@ -9,7 +9,7 @@ them in number order whatever order they were written in.
 For rows that are data (sorting, selecting, editing, live row ops, a kv store
 behind it) use ``DataTableRef`` instead: its rows are values, not places.
 
-    t = ui.TableRef("specs", parent_ref=page, props={"header": ["Part", "Status"]})
+    t = ui.TableRef("specs", parent_ref=page, props={"columns": ["Part", "Status"]})
     t[0, 0].to(ui.TextRef).set("Pump")
     t[0, 1].to(ui.BadgeRef).set("ok", "ok")
     t[1, 0].to(ui.TextRef).set("Valve")
@@ -20,8 +20,10 @@ A default kind for every cell, so the ``.to`` can go:
     t = ui.TableRef("specs", parent_ref=page, item=ui.TextRef)
     t[0, 0].set("Pump")
 
-The header row is ``header=`` labels, and ``t.header[c]`` puts content in a
-header cell instead (a label with an icon, a sort control of your own).
+``columns=`` describes the columns, one record each (see ``columns``: a
+label, widths, wrapping, alignment, a width under which it hides), and the
+header row draws their labels; ``t.header[c]`` puts content in a header cell
+instead (a label with an icon, a sort control of your own).
 
 - ``t[r, c]``: the cell at row ``r``, column ``c``, both ints >= 0 or int
   terms. Its kind comes from ``item=`` when the table has one; otherwise it
@@ -29,9 +31,10 @@ header cell instead (a label with an icon, a sort control of your own).
 - ``t[r]`` / ``t.row(r)``: the row itself (``TableRowRef``), to erase or hide a
   whole row, or to reach its cells with ``row[c]``.
 - ``t.header[c]``: a header cell; ``t.header`` is the header row.
-- ``spans``: ``{(r, c): cols}`` or ``{(r, c): (cols, rows)}`` makes the cell at
-  ``(r, c)`` cover more than one column or row; the cells it covers are not
-  drawn. Header cells span columns with the ``("header", c)`` key.
+- ``span``: ``{(r, c): cols}`` or ``{(r, c): {"cols": c, "rows": r}}`` makes
+  the cell at ``(r, c)`` cover more than one column or row; the cells it
+  covers are not drawn. Header cells span columns with the ``("header", c)``
+  key. ``set_child((r, c), span=...)`` changes one at run time.
 
 Only ints address a content table: a row or column has no name of its own,
 so ``t["a", 0]``, ``t[-1, 0]`` and ``t[True, 0]`` fail loud.
@@ -39,20 +42,22 @@ so ``t["a", 0]``, ``t[-1, 0]`` and ``t[True, 0]`` fail loud.
 Same ``[r, c]`` as a placed ``GridRef``, different wire: the table has a row
 level (``t[r]`` is a ``TableRowRef`` and cell ``c`` sits under it, so a whole
 row erases or hides at once), while the grid places a cell at one segment
-``"r,c"`` right under itself and has no rows. Both key spans ``"r,c"``.
+``"r,c"`` right under itself and has no rows. Both key a span ``"r,c"``.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Literal
 
-from typing_extensions import Self
+from typing_extensions import Self, Unpack
 
 from nu.forms import Dict
 from nustd.ui.core import ItemRef, Ref, Write, as_spec, check_key, child_at
-from nustd.ui.core.places import SetSpan, Span, normalize_spans, place_of, span_key
+from nustd.ui.core.places import place, place_of, plain_place
 
 from .base import CollectionRef
+from .columns import normalize_columns
+from .layout import ChildLayout, Laid, SizeLayout, Span, choice, same_place
 
 
 if TYPE_CHECKING:
@@ -60,8 +65,10 @@ if TYPE_CHECKING:
 
     from nu.domains.shape import Slot
     from nu.lang import Nu
-    from nu.lang.args import IntArg, ListArg, StrArg
+    from nu.lang.args import IntArg, ListArg
     from nustd.ui.core import Section
+
+    from .layout import Check
 
 
 __all__ = ["HEADER", "TableRef", "TableRowRef"]
@@ -69,12 +76,13 @@ __all__ = ["HEADER", "TableRef", "TableRowRef"]
 
 TableVariant = Literal["default", "borderless", "striped"]
 TableDensity = Literal["compact", "default", "comfortable"]
-ColumnAlign = Literal["left", "center", "right"]
+
+#: The looks both tables take, the content table's and the data table's.
+VARIANTS = ("default", "borderless", "striped")
+DENSITIES = ("compact", "default", "comfortable")
 
 #: The segment the header row sits at. Body rows are digits, so it never collides.
 HEADER = "header"
-
-_ALIGNS = ("left", "center", "right")
 
 
 def _position(owner: str, key: object) -> object:
@@ -82,25 +90,12 @@ def _position(owner: str, key: object) -> object:
     return check_key(owner, key, names=False)
 
 
-def _span_key(at: object) -> str:
-    """A spans key as the wire carries it: ``"r,c"``, the header row as ``"header,c"``."""
-    return span_key("TableRef", at, header=HEADER)
-
-
-def _normalize_align(align: Sequence[str] | None) -> list[str]:
-    out = [str(a) for a in align or ()]
-    for a in out:
-        if a not in _ALIGNS:
-            msg = f"column align is one of {', '.join(_ALIGNS)}, not {a!r}"
-            raise ValueError(msg)
-    return out
-
-
 class TableRowRef(CollectionRef):
     """One row of a content table, body or header. ``row[c]`` is the cell at column ``c``.
 
     Built by the table (``t[r]``, ``t.row(r)``, ``t.header``), never on its
-    own. It draws nothing by itself: the table lays its cells out.
+    own. It draws nothing by itself and has no layout of its own: the table
+    lays its cells out.
     """
 
     _wire_type = "TableRow"
@@ -118,17 +113,26 @@ class TableRowRef(CollectionRef):
         return type(parent).__name__ if parent is not None else "TableRef"
 
 
-class TableRef(CollectionRef):
+class TableRef(ChildLayout, Laid, CollectionRef):
     """A content table: cells are places, ``t[r, c]``, any kind in each. Pin chrome on slot().
 
-    `header` is the header row's labels, `align` each column's alignment
-    ("left", "center", "right"), `variant` "default" (framed), "borderless"
-    or "striped", `density` "compact", "default" or "comfortable" (row
-    heights 24 / 28 / 32), `label` the accessible name, `spans` cells that
-    cover more than one column or row. `item` is every cell's default kind.
+    `columns` is one record per column (``columns``: label, widths, wrap,
+    hide_below, align), `variant` "default" (framed), "borderless" or
+    "striped", `density` "compact", "default" or "comfortable" (row heights
+    24 / 28 / 32), `label` the accessible name, `span` cells that cover more
+    than one column or row. `item` is every cell's default kind. The size
+    layer (``layout``) sizes the table's frame; ``set_layout`` changes it,
+    ``variant`` and ``density`` at run time.
     """
 
     _wire_type = "Table"
+    _positions: ClassVar[bool] = True
+    _names: ClassVar[bool] = False
+    _children: ClassVar[tuple[str, ...]] = ("span",)
+    _family: ClassVar[Mapping[str, Check]] = {
+        "variant": choice(*VARIANTS),
+        "density": choice(*DENSITIES),
+    }
 
     # The cell spec rides the payload (as a GridRef's item does), so it
     # survives a tree rewrite and the rows read it off the table.
@@ -159,24 +163,39 @@ class TableRef(CollectionRef):
         item: type[Ref] | Slot | None = None,
         /,
         *,
-        header: Sequence[str] | None = None,
-        align: Sequence[ColumnAlign] | None = None,
-        variant: TableVariant = "default",
-        density: TableDensity = "default",
+        columns: Sequence[str | Mapping[str, object]] | None = None,
+        variant: TableVariant | None = None,
+        density: TableDensity | None = None,
         label: str = "Table",
-        spans: Mapping[tuple[object, int], Span] | None = None,
+        span: Mapping[tuple[object, int], Span] | None = None,
+        **layout: Unpack[SizeLayout],
     ) -> Self:
+        family = {"variant": variant, "density": density}
         declared = super().slot(
-            header=[str(h) for h in header or ()],
-            align=_normalize_align(align),
-            variant=variant,
-            density=density,
+            columns=normalize_columns("TableRef", list(columns or ())),
             label=label,
-            spans=normalize_spans(spans, _span_key),
+            **cls._laid_out({**layout, **family, "span": span}),
         )
         if item is not None:
             declared.kwargs["item"] = as_spec("TableRef", item)  # type: ignore[attr-defined]
         return declared
+
+    @classmethod
+    def _child_key(cls, key: object, **_: object) -> str:
+        return plain_place("TableRef", key, what="a table cell", header=HEADER)
+
+    def _child_runtime_key(self, key: object) -> object:
+        return place_of(self._owner_name(), key, what="a table cell", header=HEADER)
+
+    def _key_of_child(self, child: Ref) -> object:
+        """A cell's place ``"r,c"``: its row is one of this table's rows."""
+        row = child._parent
+        if not isinstance(row, TableRowRef) or not same_place(row._parent, self):
+            msg = f"{self._owner_name()} takes one of its own cells or (r, c), not {child!r}"
+            raise ValueError(msg)
+        return place(
+            self._owner_name(), row._payload["segment"], child._payload["segment"], header=HEADER
+        )
 
     # --- descent -------------------------------------------------------------
 
@@ -211,21 +230,6 @@ class TableRef(CollectionRef):
 
     # --- chrome --------------------------------------------------------------
 
-    def set_header(self, labels: ListArg[str]) -> Nu:
-        """Replace the header labels; header cells with content keep it."""
-        return Write(self, Dict.of(header=labels))
-
-    def set_align(self, align: ListArg[str]) -> Nu:
-        """Replace every column's alignment, "left", "center" or "right" by position."""
-        value = _normalize_align(align) if isinstance(align, list) else align
-        return Write(self, Dict.of(align=value))
-
-    def set_span(self, cell: tuple[IntArg | StrArg, IntArg], cols: IntArg, rows: IntArg = 1) -> Nu:
-        """Span one cell, leaving the others as they are; 1 by 1 makes it plain again.
-
-        ``cell`` is ``(row, column)``, the way ``spans=`` keys it; ``row`` is a
-        body row position, or ``"header"`` for a header cell.
-        """
-        key = place_of(type(self).__name__, cell, what="a table cell", header=HEADER)
-        # The same op as a Grid cell span: one entry of the spans map, keyed "r,c".
-        return SetSpan(self, key, cols, rows)
+    def set_columns(self, columns: ListArg[object]) -> Nu:
+        """Replace the column records; header cells with content keep it."""
+        return Write(self, Dict.of(columns=normalize_columns("TableRef", columns)))

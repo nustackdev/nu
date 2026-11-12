@@ -40,7 +40,6 @@ BODY = [
     ui.RowRef,
     ui.ColumnRef,
     ui.ContainerRef,
-    ui.BoxRef,
     ui.ModalRef,
     ui.SheetRef,
     ui.CollapsibleRef,

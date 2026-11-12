@@ -214,26 +214,17 @@ def test_row_alone_under_card_alone():
         "title": "Hosts",
         "subtitle": "",
         "caption": "",
-        "variant": "default",
-        "size": "md",
         "href": "",
         "target": "_self",
     }
-    assert frame.chain[1][2] == {
-        "gap": 4,
-        "align": "center",
-        "justify": "start",
-        "wrap": True,
-        "padding": 0,
-        "min_width": 240,
-    }
+    assert frame.chain[1][2] == {"wrap": True}
 
 
 def test_every_former_bare_section_has_its_own_ref():
     from nustd.ui.core.base import _level_type
-    from nustd.ui.refs import BoxRef, ColumnRef, FormRef, RowRef
+    from nustd.ui.refs import ColumnRef, FormRef, RowRef
 
-    for ref_cls, wire in ((ColumnRef, "Column"), (RowRef, "Row"), (BoxRef, "Box")):
+    for ref_cls, wire in ((ColumnRef, "Column"), (RowRef, "Row")):
         assert _level_type(ref_cls("x")) == wire
     assert _level_type(FormRef("x")) == "Form"
 
@@ -266,7 +257,7 @@ def test_shape_slot_props_equal_the_refs():
 
 
 def test_kit_wire_types_of_shapes():
-    from nustd.ui import Box, Card, Form, List, Row
+    from nustd.ui import Card, Form, List, Row
 
     class Toolbar(Row):
         pass
@@ -274,9 +265,8 @@ def test_kit_wire_types_of_shapes():
     assert _wire_type_of(Row) == "Row"
     assert _wire_type_of(Toolbar) == "Row"
     assert _wire_type_of(Card) == "Card"
-    assert _wire_type_of(Box) == "Box"
     assert _wire_type_of(Form) == "Form"
-    assert _wire_type_of(List) == "ListRef"
+    assert _wire_type_of(List) == "List"
 
 
 def test_kit_computed_keys_resolve_distinct_paths():
@@ -317,9 +307,9 @@ def test_kit_boot_chains_of_a_page():
         [("bar", "Row"), ("a", "TextRef")],
         [("box", "Card")],
         [("box", "Card"), ("b", "TextRef")],
-        [("tags", "ListRef")],
-        [("tags", "ListRef"), ("c", "BadgeRef")],
-        [("names", "ListRef")],
+        [("tags", "List")],
+        [("tags", "List"), ("c", "BadgeRef")],
+        [("names", "List")],
         [("free", "Row")],
     ]
     assert chains[2][0][2]["title"] == "T"
@@ -338,8 +328,8 @@ def test_list_takes_any_node_as_an_item():
     )
     assert frames[0].payload == "second"
     assert [_chain(f) for f in frames[1:]] == [
-        [("names", "ListRef"), ("b", "BadgeRef")],
-        [("names", "ListRef"), ("l", "LinkRef")],
+        [("names", "List"), ("b", "BadgeRef")],
+        [("names", "List"), ("l", "LinkRef")],
     ]
     assert frames[1].chain[0][2] == {"items": ["first"], "variant": "bullet", "start": 1}
 
@@ -378,101 +368,38 @@ def test_every_ref_under_containers_is_a_container():
 
 def test_structural_and_lens_refs_are_leaves():
     from nustd.ui.lens import LensRef
-    from nustd.ui.refs import NavRef, TitleRef
+    from nustd.ui.refs import HistoryRef, TitleRef
 
-    assert issubclass(NavRef, LeafRef)
+    assert issubclass(HistoryRef, LeafRef)
     assert issubclass(TitleRef, LeafRef)
     assert issubclass(LensRef, LeafRef)
 
 
-# --- back-compat: every name importable on main still is ---------------------
-
-_UI_ALL_ON_MAIN = (
-    "Accordion AccordionRef AlertRef Append AreaChart BadgeRef BarChart ButtonRef Card "
-    "CardRef Changed CheckboxRef CodeRef Box Column DatePickerRef DividerRef "
-    "EmptyStateRef Field FieldRef Fieldset FieldsetRef Form Frame GaugeRef HeadingRef "
-    "ImageRef InputRef InsertRow JsonViewerRef KbdRef LineChart LinkRef ListRef "
-    "MarkdownRef Modal ModalRef NavRef NumberInputRef PieChart ProgressRef "
-    "RadioGroupRef Ref Remove RemoveRows Row Section SectionRef SelectRef Send Session "
-    "SetOrder SetRow ShortcutRef SliderRef Sparkline StatRef StatusDotRef Subscription "
-    "SwitchRef DataTableRef Tabs TabsRef TagInputRef TextAreaRef TextRef TitleRef TreeRef Write "
-    "WsSession core lens nudle refs serve table"
-).split()
-
-_REFS_ALL_ON_MAIN = (
-    "Accordion AccordionRef AlertRef AreaChart BadgeRef BarChart ButtonRef Card CardRef "
-    "CheckboxRef CodeRef Box Column DatePickerRef DividerRef EmptyStateRef Field "
-    "FieldRef Fieldset FieldsetRef Form GaugeRef HeadingRef ImageRef InputRef InsertRow "
-    "JsonViewerRef KbdRef LineChart LinkRef ListRef MarkdownRef Modal ModalRef NavRef "
-    "NumberInputRef PieChart ProgressRef RadioGroupRef Ref RemoveRows Row Section SectionRef "
-    "SelectRef SetOrder SetRow ShortcutRef SliderRef Sparkline StatRef StatusDotRef SwitchRef "
-    "DataTableRef Tabs TabsRef TagInputRef TextAreaRef TextRef TitleRef TreeRef"
-).split()
-
-_CORE_ALL_ON_MAIN = (
-    "EVENT OP_ERROR OP_INIT OP_NOTIFY OP_READ OP_REMOVE OP_WRITE Append Chain Changed Frame "
-    "Ref Remove Section SectionRef Send Session Subscription Write WsSession WsSubscription "
-    "boot_chains decode encode"
-).split()
+# --- exports ----------------------------------------------------------------
 
 
-@pytest.mark.parametrize(
-    ("module", "names"),
-    [
-        ("nustd.ui", _UI_ALL_ON_MAIN),
-        ("nustd.ui.refs", _REFS_ALL_ON_MAIN),
-        ("nustd.ui.core", _CORE_ALL_ON_MAIN),
-    ],
-)
-def test_every_name_on_main_still_imports(module, names):
+@pytest.mark.parametrize("module", ["nustd.ui", "nustd.ui.refs", "nustd.ui.core"])
+def test_every_exported_name_resolves_and_is_sorted(module):
     import importlib
 
     mod = importlib.import_module(module)
-    assert [n for n in names if not hasattr(mod, n)] == []
-    assert [n for n in names if n not in mod.__all__] == []
+    assert [n for n in mod.__all__ if not hasattr(mod, n)] == []
     # Sorted the way ruff sorts it: CONSTANTS, then Classes, then modules.
     order = sorted(mod.__all__, key=lambda n: (0 if n.isupper() else 1 if n[0].isupper() else 2, n))
     assert mod.__all__ == order
 
 
-# Added since main: the node lifecycle ops on every Ref (init, hide, display),
-# the clear a tab's boot starts with, and the item ref every child is.
-_CORE_ADDED = (
-    "OP_DISPLAY OP_HIDE Clear Display Hide Init ItemRef as_spec check_key child_at".split()
-)
-
-
-def test_core_all_is_main_plus_the_lifecycle_ops():
-    import nustd.ui.core
-
-    assert sorted(nustd.ui.core.__all__) == sorted(_CORE_ALL_ON_MAIN + _CORE_ADDED)
-
-
-def test_old_submodule_paths_still_import():
-    import nustd.ui
-    from nustd.ui.refs.chart import LineChart
-    from nustd.ui.refs.input import ButtonRef
-    from nustd.ui.refs.layout import AccordionRef, Row
-    from nustd.ui.refs.output import DataTableRef, ListRef
-    from nustd.ui.refs.tree import TreeRef
-
-    assert Row is nustd.ui.Row
-    assert AccordionRef is nustd.ui.AccordionRef
-    for cls in (LineChart, ButtonRef, ListRef, DataTableRef, TreeRef):
-        assert getattr(nustd.ui, cls.__name__) is cls
-
-
 def test_section_ref_with_a_shape_keeps_its_shapes_wire_type():
     import nustd.ui
     from nustd.ui.core.base import _level_type
-    from nustd.ui.refs.layout import AccordionRef
+    from nustd.ui.refs import AccordionRef
 
     assert _level_type(AccordionRef("o", section_cls=nustd.ui.Accordion)) == "Accordion"
     assert _level_type(SectionRef("c", section_cls=nustd.ui.Column)) == "Column"
 
 
 _NEW_NAMES = (
-    "CollectionRef LeafRef ColumnRef RowRef BoxRef FormRef List GridRef Grid LineRef Line "
+    "CollectionRef LeafRef ColumnRef RowRef FormRef List GridRef Grid LineRef Line "
     "CollapsibleRef Collapsible SheetRef Sheet AvatarRef BreadcrumbRef SkeletonRef SpinnerRef "
     "StatusPillRef ToggleRef SketchRef"
 ).split()

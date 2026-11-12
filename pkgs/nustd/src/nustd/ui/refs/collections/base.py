@@ -14,9 +14,10 @@ hold children. (``ContainerRef`` is one of them, the page frame.)
 - **Props** ride ``props=`` on the constructor, or ``slot(**props)`` when the
   Ref is declared on a Shape; both go through this class's own ``slot()``,
   so the defaults and normalization live here and nowhere else.
-- **No ``set()``** unless one chrome value is the thing the container
-  carries (Modal: open). The rest of its chrome is ``set_*``. ``ListRef``
-  keeps its old string ``set(items)`` for compatibility.
+- **No ``set()``** unless one value is the thing the container carries
+  (Modal: open, List: its string items). The rest of its chrome is
+  ``set_*``, its own layout ``set_layout``, a child's ``set_child`` (see
+  ``layout``).
 - **Descent** is the container's own. A ``DictCollectionRef`` takes
   ``ref[0]`` (a position) and ``ref["k"]`` (a name), a ``ListCollectionRef``
   positions only, a ``ShapeCollectionRef`` none (its parts are properties).
@@ -30,6 +31,8 @@ hold children. (``ContainerRef`` is one of them, the page frame.)
 
 The parent's flow decides how a child displays: the same Badge is a block in
 a Column, a cell in a Grid and a run of text in a Line. A child never says.
+How each container sizes, spaces and arranges is the four layers of
+``layout``, the same words on every one.
 """
 
 from __future__ import annotations
@@ -40,11 +43,15 @@ from typing_extensions import Self
 
 from nustd.ui.core import ItemRef, Ref, Section, SectionRef, as_spec, check_key, child_at
 
+from .layout import SIZE, Laid, layout_props, same_place
+
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
     from nu.domains.shape import Slot
+
+    from .layout import Check
 
 
 __all__ = ["CollectionRef", "DictCollectionRef", "ListCollectionRef", "ShapeCollectionRef"]
@@ -66,8 +73,54 @@ class CollectionRef(SectionRef):
     # a name, since the property answers with it; ``ref[name]`` is refused.
     _parts: ClassVar[frozenset[str]] = frozenset()
 
+    # Which keys a child takes: positions (int keys) and names (str keys).
+    _positions: ClassVar[bool] = True
+    _names: ClassVar[bool] = True
 
-class _ItemCollectionRef(CollectionRef):
+    # The layout this container speaks (see ``layout``): its layer props, its
+    # family and surface props (name to check), the per child maps it keeps,
+    # and the words its arrange props take.
+    _layout: ClassVar[frozenset[str]] = SIZE
+    _family: ClassVar[Mapping[str, Check]] = {}
+    _children: ClassVar[tuple[str, ...]] = ()
+    _justifies: ClassVar[tuple[str, ...]] = ("start", "center", "end", "between")
+    _aligns: ClassVar[tuple[str, ...]] = ("start", "center", "end", "stretch")
+    _self_aligns: ClassVar[tuple[str, ...]] = ("start", "center", "end", "stretch")
+    _sticky_sides: ClassVar[tuple[str, ...]] = ("top", "bottom")
+
+    @classmethod
+    def _laid_out(cls, given: Mapping[str, object], **context: object) -> dict[str, object]:
+        """The layout props in ``given`` that are set, checked (see ``layout_props``)."""
+        return layout_props(cls, given, **context)
+
+    @classmethod
+    def _child_key(cls, key: object, **_: object) -> str:
+        """A per child map key as the wire carries it: the child's segment text."""
+        check_key(cls.__name__, key, positions=cls._positions, names=cls._names, parts=cls._parts)
+        if isinstance(key, Ref) or not isinstance(key, int | str):
+            msg = f"{cls.__name__} per child maps on slot() take plain keys, not {key!r}"
+            raise TypeError(msg)
+        return str(key)
+
+    def _child_runtime_key(self, key: object) -> object:
+        """A ``set_child`` key: checked like a descent, a term passes as given."""
+        owner = self._owner_name()
+        check_key(owner, key, positions=self._positions, names=self._names, parts=self._parts)
+        return key
+
+    def _key_of_child(self, child: Ref) -> object:
+        """The key ``child`` sits at under this container; a child of another one fails loud."""
+        if not same_place(child._parent, self):
+            msg = f"{self._owner_name()} takes a child of its own or a key, not {child!r}"
+            raise ValueError(msg)
+        return child._payload["segment"]
+
+    def _owner_name(self) -> str:
+        section_cls = self._payload.get("section_cls")
+        return (section_cls or type(self)).__name__
+
+
+class _ItemCollectionRef(Laid, CollectionRef):
     """A container reached by ``ref[key]``, its children optionally from one default spec. Abstract.
 
     ``ref[key]`` is the child at ``key``: built from ``item`` when the
@@ -84,8 +137,6 @@ class _ItemCollectionRef(CollectionRef):
     """
 
     _takes_item: ClassVar[bool] = True
-    _positions: ClassVar[bool] = True
-    _names: ClassVar[bool] = True
 
     def __init__(
         self,
@@ -127,10 +178,6 @@ class _ItemCollectionRef(CollectionRef):
         """The child at ``address``: from the ``item`` spec, or bare. Core's descent hook."""
         return child_at(self, address, self._payload.get("item"))
 
-    def _owner_name(self) -> str:
-        section_cls = self._payload.get("section_cls")
-        return (section_cls or type(self)).__name__
-
 
 class DictCollectionRef(_ItemCollectionRef):
     """A container that takes its children by position and by name. Abstract.
@@ -151,7 +198,7 @@ class ListCollectionRef(_ItemCollectionRef):
     _names: ClassVar[bool] = False
 
 
-class ShapeCollectionRef(CollectionRef):
+class ShapeCollectionRef(Laid, CollectionRef):
     """A container whose children are its own named parts. Abstract.
 
     It takes no item template and cannot be subscripted: each part is a

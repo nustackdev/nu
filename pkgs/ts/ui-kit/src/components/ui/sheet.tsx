@@ -1,6 +1,6 @@
 // Sheet primitive: edge-anchored slide-in drawer built on Radix Dialog.
 // Design refs:
-//   primitives.md    §Sheet (parts, sides, sizes)
+//   primitives.md    §Sheet (parts, sides, width / height)
 //   palette.md       backgrounds, borders
 //   space-radius.md  §Density Sheet (pad 20, radius `xl`)
 //   motion.md        §3 Sheet (`duration-slow` slide, no content fade)
@@ -10,11 +10,12 @@
 // The variance is chrome: side prop drives slide direction and edge-fit.
 
 import { cva, type VariantProps } from "class-variance-authority";
-import { Dialog as SheetPrimitive } from "radix-ui";
 import { X } from "lucide-react";
+import { Dialog as SheetPrimitive } from "radix-ui";
 import type * as React from "react";
 
 import { cn } from "../../lib/utils";
+import { lengthCss } from "./dialog";
 import { IconButton } from "./icon-button";
 
 // Fixed edge-anchored positioning per side + slide-in/out per side.
@@ -46,58 +47,32 @@ const sheetContentVariants = cva(
 					"data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right",
 				].join(" "),
 			},
-			size: {
-				// side-agnostic default fills the perpendicular axis; the
-				// compoundVariants below map size to the correct axis.
-				sm: "",
-				md: "",
-				lg: "",
-			},
 		},
 		compoundVariants: [
-			// left / right sheets: width sm/md/lg = 320/440/560, full height.
-			{ side: "left", size: "sm", class: "h-full w-80" },
-			{ side: "left", size: "md", class: "h-full w-[27.5rem]" },
-			{ side: "left", size: "lg", class: "h-full w-[35rem]" },
-			{ side: "right", size: "sm", class: "h-full w-80" },
-			{ side: "right", size: "md", class: "h-full w-[27.5rem]" },
-			{ side: "right", size: "lg", class: "h-full w-[35rem]" },
-			// top / bottom sheets: height sm/md/lg = 240/320/440, full width.
-			{ side: "top", size: "sm", class: "w-full h-60" },
-			{ side: "top", size: "md", class: "w-full h-80" },
-			{ side: "top", size: "lg", class: "w-full h-[27.5rem]" },
-			{ side: "bottom", size: "sm", class: "w-full h-60" },
-			{ side: "bottom", size: "md", class: "w-full h-80" },
-			{ side: "bottom", size: "lg", class: "w-full h-[27.5rem]" },
+			// left / right sheets: 440px wide unless `width` says, full height.
+			{ side: ["left", "right"], class: "h-full w-[27.5rem]" },
+			// top / bottom sheets: 320px tall unless `height` says, full width.
+			{ side: ["top", "bottom"], class: "w-full h-80" },
 		],
 		defaultVariants: {
 			side: "right",
-			size: "md",
 		},
 	},
 );
 
-function Sheet({
-	...props
-}: React.ComponentProps<typeof SheetPrimitive.Root>) {
+function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
 	return <SheetPrimitive.Root data-slot="sheet" {...props} />;
 }
 
-function SheetTrigger({
-	...props
-}: React.ComponentProps<typeof SheetPrimitive.Trigger>) {
+function SheetTrigger({ ...props }: React.ComponentProps<typeof SheetPrimitive.Trigger>) {
 	return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />;
 }
 
-function SheetClose({
-	...props
-}: React.ComponentProps<typeof SheetPrimitive.Close>) {
+function SheetClose({ ...props }: React.ComponentProps<typeof SheetPrimitive.Close>) {
 	return <SheetPrimitive.Close data-slot="sheet-close" {...props} />;
 }
 
-function SheetPortal({
-	...props
-}: React.ComponentProps<typeof SheetPrimitive.Portal>) {
+function SheetPortal({ ...props }: React.ComponentProps<typeof SheetPrimitive.Portal>) {
 	return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />;
 }
 
@@ -124,23 +99,33 @@ function SheetOverlay({
 export interface SheetContentProps
 	extends React.ComponentProps<typeof SheetPrimitive.Content>,
 		VariantProps<typeof sheetContentVariants> {
+	/** A left or right sheet's width (440px unless set): px, or a CSS length. */
+	width?: number | string;
+	/** A top or bottom sheet's height (320px unless set): px, or a CSS length. */
+	height?: number | string;
 	showClose?: boolean;
 }
 
 function SheetContent({
 	className,
 	side,
-	size,
+	width,
+	height,
+	style,
 	children,
 	showClose = true,
 	...props
 }: SheetContentProps) {
+	const size: React.CSSProperties = {};
+	if (width !== undefined) size.width = lengthCss(width);
+	if (height !== undefined) size.height = lengthCss(height);
 	return (
 		<SheetPortal>
 			<SheetOverlay />
 			<SheetPrimitive.Content
 				data-slot="sheet-content"
-				className={cn(sheetContentVariants({ side, size }), className)}
+				className={cn(sheetContentVariants({ side }), className)}
+				style={{ ...size, ...style }}
 				{...props}
 			>
 				{children}
@@ -164,10 +149,7 @@ function SheetContent({
 	);
 }
 
-function SheetHeader({
-	className,
-	...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+function SheetHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
 	return (
 		<div
 			data-slot="sheet-header"
@@ -177,33 +159,21 @@ function SheetHeader({
 	);
 }
 
-function SheetFooter({
-	className,
-	...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+function SheetFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
 	return (
 		<div
 			data-slot="sheet-footer"
-			className={cn(
-				"mt-auto flex flex-col gap-2 sm:flex-row sm:justify-end",
-				className,
-			)}
+			className={cn("mt-auto flex flex-col gap-2 sm:flex-row sm:justify-end", className)}
 			{...props}
 		/>
 	);
 }
 
-function SheetTitle({
-	className,
-	...props
-}: React.ComponentProps<typeof SheetPrimitive.Title>) {
+function SheetTitle({ className, ...props }: React.ComponentProps<typeof SheetPrimitive.Title>) {
 	return (
 		<SheetPrimitive.Title
 			data-slot="sheet-title"
-			className={cn(
-				"text-2xl font-semibold leading-tight text-text-primary",
-				className,
-			)}
+			className={cn("text-2xl font-semibold leading-tight text-text-primary", className)}
 			{...props}
 		/>
 	);
@@ -224,14 +194,14 @@ function SheetDescription({
 
 export {
 	Sheet,
-	SheetTrigger,
-	SheetContent,
-	SheetHeader,
-	SheetFooter,
-	SheetTitle,
-	SheetDescription,
 	SheetClose,
+	SheetContent,
+	SheetDescription,
+	SheetFooter,
+	SheetHeader,
 	SheetOverlay,
 	SheetPortal,
+	SheetTitle,
+	SheetTrigger,
 	sheetContentVariants,
 };

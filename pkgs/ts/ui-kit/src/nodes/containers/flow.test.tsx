@@ -58,7 +58,7 @@ describe("Row", () => {
 		expect(cells()).toHaveLength(3);
 	});
 
-	it("grows a fill child's cell from the min width and keeps a content child's size", () => {
+	it("grows a fill child's cell from 240px and keeps a content child's size", () => {
 		draw(["r"]);
 		const [chart, btn, card] = cells();
 		expect(chart.style.flex).toBe("1 1 240px");
@@ -68,16 +68,20 @@ describe("Row", () => {
 		expect(btn.hasAttribute("data-fill")).toBe(false);
 	});
 
-	it("reads the row's min width for the fill basis", () => {
+	it("reads min_width as the row's own, leaving the fill basis alone", () => {
 		tree.getState().setProps(["r"], { min_width: 320 });
 		draw(["r"]);
-		expect(cells()[0].style.flex).toBe("1 1 320px");
+		expect((host.firstElementChild as HTMLElement).style.minWidth).toBe("320px");
+		expect(cells()[0].style.flex).toBe("1 1 240px");
 	});
 
-	it("snaps a gap off the ladder to the nearest step", () => {
+	it("takes every step of the space scale, and reads one off it as unset", () => {
 		tree.getState().setProps(["r"], { gap: 7 });
 		draw(["r"]);
-		expect(host.firstElementChild?.className).toContain("gap-6");
+		expect(host.firstElementChild?.className).toContain("gap-7");
+		tree.getState().setProps(["r"], { gap: 17 });
+		draw(["r"]);
+		expect(host.firstElementChild?.className).toContain("gap-4");
 	});
 });
 

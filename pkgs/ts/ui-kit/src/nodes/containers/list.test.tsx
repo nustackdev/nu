@@ -17,7 +17,7 @@ beforeEach(() => {
 	host = document.createElement("div");
 	document.body.appendChild(host);
 	root = createRoot(host);
-	tree.getState().write([["l", "ListRef", { items: [], variant: "bullet", start: 1 }]]);
+	tree.getState().write([["l", "List", { items: [], variant: "bullet", start: 1 }]]);
 	act(() => root.render(<NodeView path={["l"]} />));
 });
 
@@ -36,7 +36,7 @@ function send(op: string, payload: unknown) {
 const items = () => [...host.querySelectorAll("li")].map((li) => li.textContent);
 const list = () => host.querySelector("[data-slot=list]") as HTMLElement;
 
-describe("ListRef", () => {
+describe("List", () => {
 	it("replaces the items with a written list, stringified", () => {
 		send(OPS.write, ["a", 2, null, "c"]);
 		expect(items()).toEqual(["a", "2", "c"]);
@@ -75,11 +75,11 @@ describe("ListRef", () => {
 		send(OPS.write, ["a", "b"]);
 		act(() => {
 			tree.getState().write([
-				["l", "ListRef"],
+				["l", "List"],
 				["badge", "BadgeRef", { label: "live" }],
 			]);
 			tree.getState().write([
-				["l", "ListRef"],
+				["l", "List"],
 				["note", "TextRef", { value: "plain node" }],
 			]);
 		});
@@ -92,7 +92,7 @@ describe("ListRef", () => {
 	it("keeps child items when the strings are replaced or cleared", () => {
 		act(() => {
 			tree.getState().write([
-				["l", "ListRef"],
+				["l", "List"],
 				["note", "TextRef", { value: "kept" }],
 			]);
 		});
@@ -110,7 +110,7 @@ describe("ListRef", () => {
 				["1", "second"],
 			]) {
 				tree.getState().write([
-					["l", "ListRef"],
+					["l", "List"],
 					[i, "TextRef", { value: v }],
 				]);
 			}
@@ -126,7 +126,7 @@ describe("ListRef", () => {
 				["0", "a"],
 			]) {
 				tree.getState().write([
-					["l", "ListRef"],
+					["l", "List"],
 					[seg, "TextRef", { value: v }],
 				]);
 			}
@@ -135,12 +135,12 @@ describe("ListRef", () => {
 	});
 });
 
-describe("ListRef order ops", () => {
+describe("List order ops", () => {
 	function children(...entries: [string, string][]) {
 		act(() => {
 			for (const [seg, v] of entries) {
 				tree.getState().write([
-					["l", "ListRef"],
+					["l", "List"],
 					[seg, "TextRef", { value: v }],
 				]);
 			}

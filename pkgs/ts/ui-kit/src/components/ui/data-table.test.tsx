@@ -230,7 +230,7 @@ describe("DataTable", () => {
 		expect(rowEl("r1").hasAttribute("aria-selected")).toBe(false);
 		expect(rowEl("r2").getAttribute("aria-rowindex")).toBe("3");
 		expect(cell("r1", "title").textContent).toBe("Alpha");
-		expect(cell("r1", "points").className).toContain("text-right");
+		expect(cell("r1", "points").className).toContain("text-end");
 		// A read-only bool is a checkbox nobody can click.
 		const box = cell("r2", "done").querySelector('[role="checkbox"]');
 		expect(box?.getAttribute("aria-checked")).toBe("true");
@@ -981,14 +981,14 @@ describe("DataTable", () => {
 					t.sortDescending,
 					t.renameColumn,
 					t.columnType,
-					t.alignLeft,
+					t.alignStart,
 					t.alignCenter,
-					t.alignRight,
+					t.alignEnd,
 					t.deleteColumn,
 				]);
 				// The first column moves no further left.
 				expect(item(t.moveColumnLeft).hasAttribute("data-disabled")).toBe(true);
-				expect(item(t.alignLeft).getAttribute("aria-checked")).toBe("true");
+				expect(item(t.alignStart).getAttribute("aria-checked")).toBe("true");
 			});
 
 			it("asks the host for each column request and changes nothing itself", () => {

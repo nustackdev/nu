@@ -1,4 +1,4 @@
-// ListRef -- a bulleted or numbered list whose items are any nodes.
+// List -- a bulleted or numbered list whose items are any nodes.
 //
 // A container. Plain string items come first: they live on the node as
 // `items: string[]`, one string per item, drawn as given. Then every child
@@ -10,7 +10,8 @@
 //
 // Composes the kit List primitive. Its box carries the same 4px of vertical
 // padding as every text output (see TextRef, Prose), padding and never
-// margin.
+// margin, unless `padding` says otherwise. Layout (`layout.tsx`): the size
+// props, `padding`, `gap` between items, `divided` a hairline between them.
 //
 // The children are a keyed, ordered collection. A child's segment is its
 // key; where it draws is its place in the order the node keeps in
@@ -27,7 +28,9 @@
 //   insert_item, move_item, remove_item, truncate_items, keep_items, order_items
 
 import { asOrder, ORDER_PROP, orderHandlers } from "@nustackdev/ui-core";
-import { List, ListItem, type ListVariant } from "../../components/ui/list";
+import type { CSSProperties } from "react";
+import { ListItem, List as ListPrimitive, type ListVariant } from "../../components/ui/list";
+import { cn } from "../../lib/utils";
 import {
 	type CellProps,
 	FlowProvider,
@@ -38,6 +41,9 @@ import {
 	useListProp,
 	useProp,
 } from "../../tree";
+import { type LayoutDefaults, padClass, stepLength, useLayout } from "./layout";
+
+const DEFAULTS: LayoutDefaults = {};
 
 const VARIANTS: readonly ListVariant[] = ["bullet", "number"];
 
@@ -57,8 +63,24 @@ function ListView({ path }: NodeProps) {
 	const rawStart = useProp<unknown>(path, "start", 1);
 	const start = typeof rawStart === "number" ? rawStart : 1;
 	const order = asOrder(useProp<unknown>(path, ORDER_PROP, undefined));
+	const layout = useLayout(path, DEFAULTS);
+	const style = {
+		...layout.size,
+		...(layout.gap !== undefined ? { "--list-gap": stepLength(layout.gap) } : {}),
+	} as CSSProperties;
 	return (
-		<List variant={variant} start={start} className="py-1">
+		<ListPrimitive
+			variant={variant}
+			start={start}
+			className={cn(
+				layout.padding === undefined ? "py-1" : padClass(layout),
+				layout.gap !== undefined && "[&>li+li]:mt-(--list-gap)",
+				layout.divided &&
+					"divide-y divide-border-subtle [&>li:not(:last-child)]:pb-(--list-gap,0px)",
+				layout.scroll,
+			)}
+			style={style}
+		>
 			{normalizeItems(items).map((item, i) => (
 				// Items are plain strings with no id of their own; position is the identity.
 				// biome-ignore lint/suspicious/noArrayIndexKey: see above
@@ -67,15 +89,15 @@ function ListView({ path }: NodeProps) {
 			<FlowProvider flow="block">
 				<NodeChildren path={path} cell={ItemCell} indexed order={order} />
 			</FlowProvider>
-		</List>
+		</ListPrimitive>
 	);
 }
 
-export const ListRef: NodeEntry = {
+export const List: NodeEntry = {
 	component: ListView,
 	fill: true,
 	handlers: {
-		...orderHandlers,
+		...orderHandlers(),
 		write: (ctx, payload) =>
 			ctx.update((props) => {
 				if (payload == null) {

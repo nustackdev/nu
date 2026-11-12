@@ -32,7 +32,7 @@ class Home(nustd.ui.Container):
     table = nustd.ui.DataTableRef.slot(
         columns=[
             {"key": "task", "label": "Task"},
-            {"key": "hours", "label": "Hours", "kind": "number", "align": "right"},
+            {"key": "hours", "label": "Hours", "kind": "number", "align": "end"},
             {"key": "done", "label": "Done", "kind": "bool"},
         ],
         label="Sheet",
@@ -47,7 +47,7 @@ class Home(nustd.ui.Container):
 
 class App(nu.Shape):
     title: nustd.ui.TitleRef
-    home = Home.slot(size="main")
+    home = Home.slot(max_width="main")
 
 
 ui = App.title.set("Sheet") >> nustd.ui.table.sync(

@@ -61,10 +61,8 @@ export const StatCards: Story = {
 		const root = "grid-stats";
 		const grid = step(root, "Grid", {
 			max_columns: 3,
-			min_width: 200,
+			min_cell_width: 200,
 			gap: 4,
-			align: "stretch",
-			padding: 0,
 		});
 		const chains: ChainStep[][] = [];
 		const frames: TreeFrame[] = [];
@@ -96,7 +94,7 @@ export const StatCards: Story = {
 export const Gallery: Story = {
 	render: () => {
 		const root = "grid-gallery";
-		const grid = step(root, "Grid", { max_columns: 0, min_width: 140, gap: 3 });
+		const grid = step(root, "Grid", { max_columns: 0, min_cell_width: 140, gap: 3 });
 		const tones = ["ok", "info", "warn", "neutral"] as const;
 		const chains: ChainStep[][] = Array.from({ length: 8 }, (_, i) => {
 			const card = step(`t${i}`, "Card", { title: `Species ${i + 1}` });
@@ -109,7 +107,11 @@ export const Gallery: Story = {
 			];
 		}).map((chain) => [grid, ...chain]);
 		return (
-			<NodeStage root={root} label="max_columns 0, min_width 140: as many as fit" chains={chains} />
+			<NodeStage
+				root={root}
+				label="max_columns 0, min_cell_width 140: as many as fit"
+				chains={chains}
+			/>
 		);
 	},
 };
@@ -117,7 +119,7 @@ export const Gallery: Story = {
 export const Charts: Story = {
 	render: () => {
 		const root = "grid-charts";
-		const grid = step(root, "Grid", { max_columns: 2, min_width: 220, gap: 4 });
+		const grid = step(root, "Grid", { max_columns: 2, min_cell_width: 220, gap: 4 });
 		const pie = step("pie", "Card", { title: "Jobs by state" });
 		const line = step("line", "Card", { title: "Throughput" });
 		return (
@@ -146,12 +148,10 @@ export const Bento: Story = {
 		const root = "grid-bento";
 		const grid = step(root, "Grid", {
 			max_columns: 4,
-			min_width: 140,
+			min_cell_width: 140,
 			gap: 3,
-			align: "stretch",
-			padding: 0,
 			dense: true,
-			spans: {
+			span: {
 				trend: { cols: 2, rows: 2 },
 				split: { cols: 3, rows: 1 },
 				side: { cols: 1, rows: 2 },
@@ -167,7 +167,7 @@ export const Bento: Story = {
 		return (
 			<NodeStage
 				root={root}
-				label="max_columns 4, dense, spans {trend: 2x2, split: 3x1, side: 1x2}; narrow it and the spans clamp, then stack"
+				label="max_columns 4, dense, span {trend: 2x2, split: 3x1, side: 1x2}; narrow it and the spans clamp, then stack"
 				chains={[
 					[grid, trend, chartStep("chart", "sparkline", { height: 180 })],
 					...small("runs", "Runs", "1,284"),

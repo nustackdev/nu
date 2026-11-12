@@ -50,7 +50,7 @@ FOOTER = "footer"
 CONTROL = "control"
 
 # A row of small controls: buttons, badges, icon buttons, centred on the line.
-_ROW_PROPS = {"gap": 2, "align": "center"}
+_ROW_PROPS = {"gap": 2}
 
 
 def part_ref(ref: Ref, key: str, default: Slot | None) -> Ref:

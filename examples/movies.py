@@ -78,8 +78,8 @@ class ScoreFieldset(nustd.ui.Fieldset):
 
 
 class AddMovieForm(nustd.ui.Form):
-    details = DetailsFieldset.slot(legend="Movie", gap="md")
-    score = ScoreFieldset.slot(legend="Your take", gap="md")
+    details = DetailsFieldset.slot(legend="Movie")
+    score = ScoreFieldset.slot(legend="Your take")
     submit = nustd.ui.ButtonRef.slot(label="Log it", variant="primary")
     feedback = nustd.ui.AlertRef.slot(variant="ok", dismissible=True)
 
@@ -124,8 +124,7 @@ class TableBody(nustd.ui.Column):
     table = nustd.ui.DataTableRef.slot(
         columns=["title", "year", "genre", "rating", "watched", "notes"],
         row_key="id",
-        striped=True,
-        dense=True,
+        density="compact",
         clickable_rows=True,
         max_rows=200,
     )
@@ -172,7 +171,7 @@ class NotesCard(nustd.ui.Card):
 
 class DetailActions(nustd.ui.Row):
     back = nustd.ui.ButtonRef.slot(label="Back", variant="ghost")
-    remove = nustd.ui.ButtonRef.slot(label="Delete", variant="danger")
+    delete = nustd.ui.ButtonRef.slot(label="Delete", variant="danger")
 
 
 class MovieDetail(nustd.ui.Column):
@@ -197,7 +196,7 @@ class Page(nustd.ui.Container):
 class App(nu.Shape):
     title = nustd.ui.TitleRef.slot()
     history = nustd.ui.HistoryRef.slot()
-    page = Page.slot(size="main")
+    page = Page.slot(max_width="main")
 
 
 # ---- State ------------------------------------------------------------------
@@ -389,7 +388,7 @@ def _draw_detail(i: nu.Int) -> nu.Nu:
 
 def _detail_actions(i: nu.Int) -> nu.Nu:
     on_delete = nu.ReactEvery(
-        App.page.detail.actions.remove.on_click(),
+        App.page.detail.actions.delete.on_click(),
         nustd.kv.Transaction(State.movies.del_at(i) >> State.total.set(nu.Len(State.movies)))
         >> App.history.push("/"),
     )

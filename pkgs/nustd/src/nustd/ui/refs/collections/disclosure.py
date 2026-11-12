@@ -14,15 +14,17 @@ it as a slot on the Shape or as a Ref with ``parent_ref=`` this one.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, ClassVar, Literal
 
-from typing_extensions import Self
+from typing_extensions import Self, Unpack
 
 from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core.interactions import Changed, Write
 
 from .base import DictCollectionRef
+from .flow import FLOW_CHILDREN, STACK
+from .layout import ChildLayout, StackLayout, one_of
 
 
 if TYPE_CHECKING:
@@ -45,16 +47,20 @@ def _open_title(open: object, title: object) -> dict[str, object]:
     return payload
 
 
-class CollapsibleRef(DictCollectionRef):
+class CollapsibleRef(ChildLayout, DictCollectionRef):
     """One titled region whose children fold away.
 
     A trigger row (chevron + title) over a body of open-ended children. The
     user toggles it in the tab, which sends ``{open: bool}`` as a notify;
     ``on_change()`` takes those. ``set(open=...)`` opens or closes it from
-    the server.
+    the server. The body speaks the layers of a Column (``layout``):
+    ``gap`` (3), ``padding``, ``justify``, ``align``, ``divided``, and the
+    per child maps.
     """
 
     _wire_type = "Collapsible"
+    _layout: ClassVar[frozenset[str]] = STACK
+    _children: ClassVar[tuple[str, ...]] = FLOW_CHILDREN
 
     @classmethod
     def slot(
@@ -64,8 +70,9 @@ class CollapsibleRef(DictCollectionRef):
         *,
         title: str = "",
         open: bool = False,
+        **layout: Unpack[StackLayout],
     ) -> Self:
-        return super().slot(item, title=title, open=bool(open))
+        return super().slot(item, title=title, open=bool(open), **cls._laid_out(layout))
 
     def set_open(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(open=flag))
@@ -81,21 +88,27 @@ class CollapsibleRef(DictCollectionRef):
 
 
 Side = Literal["left", "right", "top", "bottom"]
-SheetSize = Literal["sm", "md", "lg"]
+_SIDES = ("left", "right", "top", "bottom")
 
 
-class SheetRef(DictCollectionRef):
+class SheetRef(ChildLayout, DictCollectionRef):
     """Drawer that slides in from an edge over the page, children as its body.
 
     Server-owned ``open`` and ``title``. When ``dismissible`` is true the user
     can close it (backdrop, Esc, the close button) and the tab sends
     ``{open: false}``, which ``on_change()`` takes. Like Modal, the sheet
     stays open until the program writes ``open=False`` back, so a program
-    can hold it open (unsaved edits). ``size`` is the width of a left or
-    right sheet and the height of a top or bottom one.
+    can hold it open (unsaved edits).
+
+    A left or right sheet is ``width`` wide (440px unless set), a top or
+    bottom one ``height`` tall (320px unless set). The body speaks the
+    layers of a Column (``layout``): ``gap`` (4), ``padding``, ``justify``,
+    ``align``, ``divided``, and the per child maps.
     """
 
     _wire_type = "Sheet"
+    _layout: ClassVar[frozenset[str]] = STACK
+    _children: ClassVar[tuple[str, ...]] = FLOW_CHILDREN
 
     @classmethod
     def slot(
@@ -106,16 +119,16 @@ class SheetRef(DictCollectionRef):
         open: bool = False,
         title: str = "",
         side: Side = "right",
-        size: SheetSize = "md",
         dismissible: bool = True,
+        **layout: Unpack[StackLayout],
     ) -> Self:
         return super().slot(
             item,
             open=bool(open),
             title=title,
-            side=side,
-            size=size,
+            side=one_of("SheetRef", "side", side, _SIDES),
             dismissible=bool(dismissible),
+            **cls._laid_out(layout),
         )
 
     def set_open(self, flag: BoolArg) -> Nu:

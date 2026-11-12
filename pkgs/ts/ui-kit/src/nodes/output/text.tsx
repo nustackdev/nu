@@ -1,9 +1,8 @@
 // TextRef -- display-only paragraph string. Renders via kit Text primitive.
 //
-// Server-owned, and there is nothing to do on a write: the default store
-// behaviour lands a bare payload on `value` and merges an object one into the
-// props (`{tone: "muted"}`), so this type is a component and nothing else.
-// Nil payload (Nu sentinel) reads back as the empty string at render time.
+// Server-owned. A write is an object, merged into the props (`{value}`,
+// `{tone: "muted"}`); anything else is dropped, so one write has one form.
+// Nil `value` (Nu sentinel) reads back as the empty string at render time.
 // Wire strings often carry `\n`; whitespace is preserved here.
 //
 // Style props are the Text primitive's own variants: `tone`, `size`,
@@ -22,6 +21,7 @@
 // word spaces like any paragraph's. Only the style props that were set ride
 // on the span (a muted or mono run), so the rest stays the Line's.
 
+import type { NodeHandler } from "@nustackdev/ui-core";
 import type { CSSProperties } from "react";
 import { Text, textVariants } from "../../components/ui/text";
 import { normAlign, TEXT_ALIGN } from "../../lib/align";
@@ -98,4 +98,12 @@ function TextView({ path }: NodeProps) {
 	);
 }
 
-export const TextRef: NodeEntry = { component: TextView };
+/** A leaf's `write`: an object merges into the props, any other payload is dropped. */
+export const writeObject: NodeHandler = (ctx, payload) => {
+	if (!payload || typeof payload !== "object" || Array.isArray(payload)) return;
+	ctx.update((props) => {
+		Object.assign(props, payload as Record<string, unknown>);
+	});
+};
+
+export const TextRef: NodeEntry = { component: TextView, handlers: { write: writeObject } };
