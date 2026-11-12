@@ -1,7 +1,7 @@
 // Chart primitive. Draws one ECharts option, themed by the kit tokens.
 //
 // Design refs:
-//   language/color.md   chart-1..8 in order, Tide sequential, diverging ramp
+//   language/color.md   chart-1..10 in order, sequential and diverging ramps
 //   typography.md       tick labels: mono, xs, muted
 //   palette.md          chart tooltip on the floating elevation
 //

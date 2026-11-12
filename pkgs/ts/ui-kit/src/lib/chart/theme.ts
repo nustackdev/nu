@@ -31,9 +31,9 @@ export type ChartTokens = {
 // Dawn values, for a chart drawn where the kit stylesheet is not loaded (a
 // test, a bare page). Same names as index.css.
 const FALLBACK: ChartTokens = {
-	palette: ["#0268a7", "#a67e1b", "#973069", "#2692b3", "#ae391b", "#1c9480", "#5d43ac", "#cb6f1d"],
-	sequential: ["#acedf5", "#68d6ea", "#24bbdb", "#1d9cc0", "#157fa4", "#146387", "#29475c"],
-	diverging: ["#1666aa", "#5e97cd", "#a2c6e6", "#dde0e5", "#e2b793", "#ca7d44", "#9c470e"],
+	palette: ["#a463f2", "#4269d0", "#bf8c05", "#f46853", "#49a490", "#3ca951", "#e16f9d", "#7395cd", "#9c6b4e", "#91959d"],
+	sequential: ["#dee8ff", "#b6caf9", "#8aa9f1", "#5f87e7", "#3a67d0", "#234ca4", "#153470"],
+	diverging: ["#1f3c9c", "#466fcb", "#8aace4", "#e2e5e9", "#e4bd81", "#cb7e19", "#944e00"],
 	text: "#1a1d24",
 	textSecondary: "#4e5158",
 	textMuted: "#6a6d74",
@@ -69,7 +69,7 @@ export function readChartTokens(el: Element): ChartTokens {
 	const ramp = (prefix: string, n: number, fallback: string[]) =>
 		Array.from({ length: n }, (_, i) => read(`--${prefix}-${i + 1}`, fallback[i]));
 	return {
-		palette: ramp("chart", 8, FALLBACK.palette),
+		palette: ramp("chart", 10, FALLBACK.palette),
 		sequential: ramp("chart-seq", 7, FALLBACK.sequential),
 		diverging: ramp("chart-div", 7, FALLBACK.diverging),
 		text: read("--text-primary", FALLBACK.text),

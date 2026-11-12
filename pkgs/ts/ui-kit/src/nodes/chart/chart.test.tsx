@@ -123,7 +123,8 @@ describe("theme", () => {
 		document.body.appendChild(el);
 		const t = readChartTokens(el);
 		expect(t.palette[0]).toBe("#123456");
-		expect(t.palette[1]).toBe("#a67e1b");
+		expect(t.palette[1]).toBe("#4269d0");
+		expect(t.palette).toHaveLength(10);
 		const theme = chartTheme(t);
 		expect((theme.color as string[])[0]).toBe("#123456");
 		expect(resolveVars(el, { color: ["var(--chart-1)", "#fff"], data: [1, 2] })).toEqual({

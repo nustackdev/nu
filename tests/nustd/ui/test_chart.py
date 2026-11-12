@@ -289,7 +289,7 @@ def test_sparkline_has_no_chrome():
 # --- the samples the kit stories draw ------------------------------------------------
 
 _MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"]
-_EIGHT = [f"Series {i + 1}" for i in range(8)]
+_TEN = [f"Series {i + 1}" for i in range(10)]
 _DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 _TREE = {"src": {"nu": 120, "nustd": {"ui": 80, "kv": 40}}, "tests": 60, "docs": 30}
 
@@ -302,8 +302,8 @@ def _samples() -> dict:
     t0 = 1_700_000_000_000
     return {
         "line": (
-            ui.LineChart.slot(_EIGHT, title="Requests", x_type="category", y_label="req/s"),
-            {n: [[m, _wig(i, k)] for k, m in enumerate(_MONTHS)] for i, n in enumerate(_EIGHT)},
+            ui.LineChart.slot(_TEN, title="Requests", x_type="category", y_label="req/s"),
+            {n: [[m, _wig(i, k)] for k, m in enumerate(_MONTHS)] for i, n in enumerate(_TEN)},
         ),
         "line-time": (
             ui.LineChart.slot(
@@ -325,10 +325,10 @@ def _samples() -> dict:
             [[m, _wig(0, k), _wig(1, k), _wig(2, k)] for k, m in enumerate(_MONTHS)],
         ),
         "bar": (
-            ui.BarChart.slot(_EIGHT[:4], title="Sightings"),
+            ui.BarChart.slot(_TEN[:4], title="Sightings"),
             {
                 n: [[m, _wig(i, k)] for k, m in enumerate(_MONTHS[:6])]
-                for i, n in enumerate(_EIGHT[:4])
+                for i, n in enumerate(_TEN[:4])
             },
         ),
         "bar-stacked": (
@@ -355,7 +355,7 @@ def _samples() -> dict:
         ),
         "pie": (
             ui.PieChart.slot(label_format="{b}: {d}%"),
-            {f"Slot {i + 1}": 8 + ((i * 5) % 11) for i in range(8)},
+            {f"Slot {i + 1}": 8 + ((i * 5) % 11) for i in range(10)},
         ),
         "donut": (
             ui.PieChart.slot(donut=True, total_label="animals", legend=True, labels=False),

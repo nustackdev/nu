@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Charts get ten warmer, easier to tell apart colors; info notes turn softer blue
 - Every ui container speaks one layout vocabulary for size, spacing and alignment
 - Rows, columns and grids reorder children in place instead of erasing and rewriting
 - Any ui container can be reached into by position or name, to any depth

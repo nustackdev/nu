@@ -132,6 +132,7 @@
 	/* Starlight Blue: the accent */
 	--starlight:              #1e63b8;
 	--starlight-soft:         #ddebfe;
+	--starlight-line:         #b1cdf4;
 
 	/* secondary states: color, soft, soft-hover, line */
 	--aurora:                 #00713f;
@@ -150,10 +151,10 @@
 	--ember-soft-hover:       #fededb;
 	--ember-line:             #f5b9b4;
 
-	--moonlight:              #03698e;
-	--moonlight-soft:         #ddf2fe;
-	--moonlight-soft-hover:   #cfebfb;
-	--moonlight-line:         #a4d2eb;
+	--moonlight:              #1961aa;
+	--moonlight-soft:         #e3f0ff;
+	--moonlight-soft-hover:   #d5e8ff;
+	--moonlight-line:         #afcef3;
 
 	/* destructive fill, white label */
 	--ember-solid:            #bb262c;
@@ -161,33 +162,35 @@
 	--ember-solid-pressed:    #a0171f;
 	--ember-solid-ring:       #94151d;
 
-	/* chart slots, use in order */
-	--cobalt:                 #0268a7;
-	--saffron:                #a67e1b;
-	--orchid:                 #973069;
-	--glacier:                #2692b3;
-	--terracotta:             #ae391b;
-	--lagoon:                 #1c9480;
-	--iris:                   #5d43ac;
-	--apricot:                #cb6f1d;
+	/* chart categorical, Observable 10 with purple and blue first. Use in order */
+	--chart-1:                #a463f2; /* purple */
+	--chart-2:                #4269d0; /* blue */
+	--chart-3:                #bf8c05; /* yellow */
+	--chart-4:                #f46853; /* red */
+	--chart-5:                #49a490; /* cyan */
+	--chart-6:                #3ca951; /* green */
+	--chart-7:                #e16f9d; /* pink */
+	--chart-8:                #7395cd; /* light blue */
+	--chart-9:                #9c6b4e; /* brown */
+	--chart-10:               #91959d; /* gray */
 
-	/* sequential ramp, Tide, low to high */
-	--tide-1:                 #acedf5;
-	--tide-2:                 #68d6ea;
-	--tide-3:                 #24bbdb;
-	--tide-4:                 #1d9cc0;
-	--tide-5:                 #157fa4;
-	--tide-6:                 #146387;
-	--tide-7:                 #29475c;
+	/* chart sequential, one blue (hue 266), low to high */
+	--chart-seq-1:            #dee8ff;
+	--chart-seq-2:            #b6caf9;
+	--chart-seq-3:            #8aa9f1;
+	--chart-seq-4:            #5f87e7;
+	--chart-seq-5:            #3a67d0;
+	--chart-seq-6:            #234ca4;
+	--chart-seq-7:            #153470;
 
-	/* diverging ramp, cobalt to apricot, never red and green */
-	--diverging-1:            #1666aa;
-	--diverging-2:            #5e97cd;
-	--diverging-3:            #a2c6e6;
-	--diverging-4:            #dde0e5;
-	--diverging-5:            #e2b793;
-	--diverging-6:            #ca7d44;
-	--diverging-7:            #9c470e;
+	/* chart diverging, blue to amber through a neutral middle, low to high */
+	--chart-div-1:            #1f3c9c;
+	--chart-div-2:            #466fcb;
+	--chart-div-3:            #8aace4;
+	--chart-div-4:            #e2e5e9;
+	--chart-div-5:            #e4bd81;
+	--chart-div-6:            #cb7e19;
+	--chart-div-7:            #944e00;
 }
 
 .dark {
@@ -225,6 +228,7 @@
 	/* Starlight Blue */
 	--starlight:              #8cbcff;
 	--starlight-soft:         #1e3457;
+	--starlight-line:         #305486;
 
 	/* secondary states */
 	--aurora:                 #65d391;
@@ -243,10 +247,10 @@
 	--ember-soft-hover:       #542725;
 	--ember-line:             #813937;
 
-	--moonlight:              #6fc7f2;
-	--moonlight-soft:         #0b3345;
-	--moonlight-soft-hover:   #0c3d52;
-	--moonlight-line:         #185b78;
+	--moonlight:              #87bffe;
+	--moonlight-soft:         #15304d;
+	--moonlight-soft-hover:   #1a395b;
+	--moonlight-line:         #2a5685;
 
 	/* destructive fill: hover and pressed go darker, as in light */
 	--ember-solid:            #c72c34;
@@ -254,33 +258,35 @@
 	--ember-solid-pressed:    #a51d27;
 	--ember-solid-ring:       #a01722;
 
-	/* chart slots */
-	--cobalt:                 #3392db;
-	--saffron:                #efc558;
-	--orchid:                 #d36c9d;
-	--glacier:                #76e4f7;
-	--terracotta:             #de6f53;
-	--lagoon:                 #58dec1;
-	--iris:                   #9887e8;
-	--apricot:                #faba80;
+	/* chart categorical, Observable 10 with purple and blue first. Use in order */
+	--chart-1:                #a463f2; /* purple */
+	--chart-2:                #4269d0; /* blue */
+	--chart-3:                #efb118; /* yellow */
+	--chart-4:                #ff725c; /* red */
+	--chart-5:                #6cc5b0; /* cyan */
+	--chart-6:                #3ca951; /* green */
+	--chart-7:                #ff8ab7; /* pink */
+	--chart-8:                #97bbf5; /* light blue */
+	--chart-9:                #9c6b4e; /* brown */
+	--chart-10:               #9498a0; /* gray */
 
-	/* sequential ramp, Tide */
-	--tide-1:                 #193a48;
-	--tide-2:                 #1e5668;
-	--tide-3:                 #1d7588;
-	--tide-4:                 #1b95a7;
-	--tide-5:                 #24b6c4;
-	--tide-6:                 #4fd6dc;
-	--tide-7:                 #74f6f4;
+	/* chart sequential, one blue (hue 266), low to high */
+	--chart-seq-1:            #27365c;
+	--chart-seq-2:            #314a83;
+	--chart-seq-3:            #3d63b0;
+	--chart-seq-4:            #4b7dd9;
+	--chart-seq-5:            #669bf1;
+	--chart-seq-6:            #8cb9fe;
+	--chart-seq-7:            #bad6fe;
 
-	/* diverging ramp */
-	--diverging-1:            #60b1fb;
-	--diverging-2:            #4a8bc5;
-	--diverging-3:            #3d678c;
-	--diverging-4:            #3e4044;
-	--diverging-5:            #825934;
-	--diverging-6:            #b97340;
-	--diverging-7:            #e89265;
+	/* chart diverging, blue to amber through a neutral middle, low to high */
+	--chart-div-1:            #9bbeff;
+	--chart-div-2:            #688fe8;
+	--chart-div-3:            #4b66a8;
+	--chart-div-4:            #4b4d52;
+	--chart-div-5:            #986528;
+	--chart-div-6:            #d28a21;
+	--chart-div-7:            #ffb845;
 }
 
 /* ============================== L2: kit roles =============================
@@ -322,7 +328,7 @@
 	--accent-2:               var(--starlight);
 	--accent-2-soft:          var(--starlight-soft);
 	--accent-2-wash:          var(--starlight-soft);
-	--accent-2-line:          color-mix(in oklab, var(--starlight) 44%, transparent);
+	--accent-2-line:          var(--starlight-line);
 	--accent-2-hover:         color-mix(in oklab, var(--starlight) 70%, var(--ink-1));
 
 	/* status: color is text and icons, wash is the soft fill, line borders it */
@@ -359,34 +365,6 @@
 	--tree-lane:              1.25rem;   /* 20  icon / chevron lane */
 	--tree-gap:               0.375rem;  /* 6   lane to title */
 	--tree-indent:            1rem;      /* 16  per level */
-
-	/* chart categorical: the language slots, in order. Their own set, a blue
-	 * in a chart is not Starlight. */
-	--chart-1:                var(--cobalt);
-	--chart-2:                var(--saffron);
-	--chart-3:                var(--orchid);
-	--chart-4:                var(--glacier);
-	--chart-5:                var(--terracotta);
-	--chart-6:                var(--lagoon);
-	--chart-7:                var(--iris);
-	--chart-8:                var(--apricot);
-
-	/* chart sequential (Tide) and diverging ramps, low to high */
-	--chart-seq-1:            var(--tide-1);
-	--chart-seq-2:            var(--tide-2);
-	--chart-seq-3:            var(--tide-3);
-	--chart-seq-4:            var(--tide-4);
-	--chart-seq-5:            var(--tide-5);
-	--chart-seq-6:            var(--tide-6);
-	--chart-seq-7:            var(--tide-7);
-
-	--chart-div-1:            var(--diverging-1);
-	--chart-div-2:            var(--diverging-2);
-	--chart-div-3:            var(--diverging-3);
-	--chart-div-4:            var(--diverging-4);
-	--chart-div-5:            var(--diverging-5);
-	--chart-div-6:            var(--diverging-6);
-	--chart-div-7:            var(--diverging-7);
 
 	/* syntax: what a code view colors by role. Eight roles and no more, so
 	 * code reads as text with a few accents rather than a fruit salad. */

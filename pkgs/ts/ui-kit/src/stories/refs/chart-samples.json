@@ -92,6 +92,20 @@
 						"smooth": false,
 						"name": "Series 8",
 						"data": []
+					},
+					{
+						"type": "line",
+						"showSymbol": false,
+						"smooth": false,
+						"name": "Series 9",
+						"data": []
+					},
+					{
+						"type": "line",
+						"showSymbol": false,
+						"smooth": false,
+						"name": "Series 10",
+						"data": []
 					}
 				]
 			},
@@ -202,6 +216,32 @@
 						["Jun", 43],
 						["Jul", 44],
 						["Aug", 45]
+					]
+				},
+				{
+					"name": "Series 9",
+					"data": [
+						["Jan", 42],
+						["Feb", 44],
+						["Mar", 46],
+						["Apr", 48],
+						["May", 50],
+						["Jun", 43],
+						["Jul", 45],
+						["Aug", 47]
+					]
+				},
+				{
+					"name": "Series 10",
+					"data": [
+						["Jan", 46],
+						["Feb", 49],
+						["Mar", 52],
+						["Apr", 46],
+						["May", 49],
+						["Jun", 52],
+						["Jul", 46],
+						["Aug", 49]
 					]
 				}
 			]
@@ -968,6 +1008,14 @@
 						{
 							"name": "Slot 8",
 							"value": 10
+						},
+						{
+							"name": "Slot 9",
+							"value": 15
+						},
+						{
+							"name": "Slot 10",
+							"value": 9
 						}
 					]
 				}

@@ -97,8 +97,10 @@
 	--color-chart-6: var(--chart-6);
 	--color-chart-7: var(--chart-7);
 	--color-chart-8: var(--chart-8);
+	--color-chart-9: var(--chart-9);
+	--color-chart-10: var(--chart-10);
 
-	/* chart sequential (Tide) and diverging ramps */
+	/* chart sequential and diverging ramps */
 	--color-chart-seq-1: var(--chart-seq-1);
 	--color-chart-seq-2: var(--chart-seq-2);
 	--color-chart-seq-3: var(--chart-seq-3);
