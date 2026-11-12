@@ -1,14 +1,20 @@
 // Grid over the real tree store: one cell per child in insertion order, the
-// track list off columns and min_width, a "grid" flow for each child, and
+// track list off max_columns and min_width, a "grid" flow for each child, and
 // the spans the grid keeps for its cells.
 
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { gridSpan, gridTemplate, trackCount } from "../../components/ui/grid";
+import {
+	gridPlace,
+	gridSpan,
+	gridTemplate,
+	templateTracks,
+	trackCount,
+} from "../../components/ui/grid";
 import { NodeView, register, tree, useFlow } from "../../tree";
 import "..";
-import { readSpans } from "./grid";
+import { readingOrder, readPlace, readSpans } from "./grid";
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -36,7 +42,7 @@ beforeEach(() => {
 	host = document.createElement("div");
 	document.body.appendChild(host);
 	root = createRoot(host);
-	write(["g", "Grid", { columns: 0, min_width: 240, gap: 4, align: "stretch", padding: 0 }]);
+	write(["g", "Grid", { max_columns: 0, min_width: 240, gap: 4, align: "stretch", padding: 0 }]);
 	act(() => root.render(<NodeView path={["g"]} />));
 });
 
@@ -55,7 +61,7 @@ describe("Grid", () => {
 		expect(cells().map((c) => c.textContent)).toEqual(["two", "one", "three"]);
 	});
 
-	it("puts the track list for columns and min_width inline", () => {
+	it("puts the track list for max_columns and min_width inline", () => {
 		expect(grid().style.gridTemplateColumns).toBe(gridTemplate(0, 240, 4));
 		expect(grid().style.gridTemplateColumns).toContain("auto-fill");
 		expect(grid().style.gridTemplateColumns).toContain("240px");
@@ -63,7 +69,7 @@ describe("Grid", () => {
 		act(() =>
 			tree
 				.getState()
-				.dispatch({ op: "write", ref: ["g"], payload: { columns: 3, min_width: 200 } }),
+				.dispatch({ op: "write", ref: ["g"], payload: { max_columns: 3, min_width: 200 } }),
 		);
 		const tracks = grid().style.gridTemplateColumns;
 		expect(tracks).toBe(gridTemplate(3, 200, 4));
@@ -78,7 +84,7 @@ describe("Grid", () => {
 		expect(gridTemplate(0, 200, 2)).toBe("repeat(auto-fill, minmax(min(100%, 200px), 1fr))");
 	});
 
-	it("maps gap, padding and align to classes, falling back on unknown values", () => {
+	it("maps gap, padding and align to classes, snapping to the ladder Row uses", () => {
 		act(() =>
 			tree
 				.getState()
@@ -91,8 +97,13 @@ describe("Grid", () => {
 		act(() =>
 			tree.getState().dispatch({ op: "write", ref: ["g"], payload: { gap: 7, align: "sideways" } }),
 		);
-		expect(grid().className).toContain("gap-4");
+		// Off the ladder snaps to the nearest step (a tie to the smaller), as on Row.
+		expect(grid().className).toContain("gap-6");
 		expect(grid().className).toContain("items-stretch");
+
+		act(() => tree.getState().dispatch({ op: "write", ref: ["g"], payload: { gap: 16 } }));
+		expect(grid().className).toContain("gap-16");
+		expect(grid().style.gridTemplateColumns).toBe(gridTemplate(0, 240, 16));
 	});
 
 	it("hands every child a grid flow", () => {
@@ -114,7 +125,7 @@ describe("Grid spans", () => {
 			tree.getState().dispatch({
 				op: "write",
 				ref: ["g"],
-				payload: { columns: 3, spans: { hero: { cols: 2, rows: 2 } } },
+				payload: { max_columns: 3, spans: { hero: { cols: 2, rows: 2 } } },
 			}),
 		);
 		write(["g", "Grid"], ["hero", "Card"]);
@@ -157,11 +168,11 @@ describe("Grid spans", () => {
 	});
 
 	it("counts the tracks auto-fill lays out at a width", () => {
-		// columns 4, min 140, 12px gaps: four at 800, two at 336, one at 200.
+		// max_columns 4, min 140, 12px gaps: four at 800, two at 336, one at 200.
 		expect(trackCount(800, 4, 140, 12)).toBe(4);
 		expect(trackCount(336, 4, 140, 12)).toBe(2);
 		expect(trackCount(200, 4, 140, 12)).toBe(1);
-		// columns 0: as many as fit at min width.
+		// max_columns 0: as many as fit at min width.
 		expect(trackCount(1000, 0, 240, 16)).toBe(3);
 		expect(trackCount(0, 3, 240, 16)).toBe(1);
 	});
@@ -173,5 +184,109 @@ describe("Grid spans", () => {
 		});
 		expect(gridSpan(2, 2, 1)).toEqual({ gridColumn: undefined, gridRow: undefined });
 		expect(gridSpan(2, 1, Number.POSITIVE_INFINITY).gridColumn).toBe("span 2 / span 2");
+	});
+});
+
+describe("Grid placed", () => {
+	const board = (props: Record<string, unknown> = {}) =>
+		act(() =>
+			tree.getState().dispatch({
+				op: "write",
+				ref: ["g"],
+				payload: { cols: "2fr 1fr", rows: "64px 1fr", ...props },
+			}),
+		);
+
+	it("lays the track template out instead of the equal tracks", () => {
+		board();
+		expect(grid().dataset.mode).toBe("placed");
+		expect(grid().style.gridTemplateColumns).toBe("2fr 1fr");
+		expect(grid().style.gridTemplateRows).toBe("64px 1fr");
+	});
+
+	it("puts a cell at its place and leaves the rest empty", () => {
+		board();
+		write(["g", "Grid"], ["1,1", "TextRef", { value: "late" }]);
+		write(["g", "Grid"], ["0,0", "TextRef", { value: "first" }]);
+		const [a, b] = cells();
+		expect(a.dataset.cell).toBe("0,0");
+		expect(a.style.gridRow).toBe("1");
+		expect(a.style.gridColumn).toBe("1");
+		expect(b.dataset.cell).toBe("1,1");
+		expect(b.style.gridRow).toBe("2");
+		expect(b.style.gridColumn).toBe("2");
+		expect(cells()).toHaveLength(2);
+	});
+
+	it("spans a place, clipped at the board's last column", () => {
+		board({ spans: { "0,0": { cols: 2, rows: 1 }, "1,1": { cols: 3, rows: 2 } } });
+		write(["g", "Grid"], ["0,0", "Card"]);
+		write(["g", "Grid"], ["1,1", "Card"]);
+		const [hero, side] = cells();
+		expect(hero.style.gridColumn).toBe("1 / span 2");
+		expect(side.style.gridColumn).toBe("2");
+		expect(side.style.gridRow).toBe("2 / span 2");
+	});
+
+	it("lets keyed children flow into free places, after the placed ones", () => {
+		board();
+		write(["g", "Grid"], ["note", "TextRef", { value: "n" }]);
+		write(["g", "Grid"], ["0,1", "TextRef", { value: "p" }]);
+		expect(cells().map((c) => c.dataset.cell)).toEqual(["0,1", "note"]);
+		expect(cells()[1].style.gridRow).toBe("");
+	});
+
+	it("drops a hidden cell and leaves its place empty", () => {
+		board();
+		write(["g", "Grid"], ["0,0", "TextRef", { value: "a" }]);
+		write(["g", "Grid"], ["0,1", "TextRef", { value: "b" }]);
+		act(() => tree.getState().dispatch({ op: "hide", ref: ["g", "0,0"], payload: null }));
+		expect(cells().map((c) => c.dataset.cell)).toEqual(["0,1"]);
+		expect(cells()[0].style.gridColumn).toBe("2");
+	});
+
+	it("refuses a template that is not track sizes", () => {
+		board({ cols: "1fr; background: red", rows: "url(x)" });
+		expect(grid().dataset.mode).toBe("flow");
+		expect(grid().style.gridTemplateColumns).toContain("auto-fill");
+	});
+
+	it("reads a count as that many equal tracks", () => {
+		board({ cols: 3, rows: null });
+		expect(grid().style.gridTemplateColumns).toBe("repeat(3, minmax(0, 1fr))");
+		expect(grid().style.gridTemplateRows).toBe("");
+	});
+
+	it("counts the tracks a template names", () => {
+		expect(templateTracks("2fr 1fr")).toBe(2);
+		expect(templateTracks("240px minmax(0, 1fr) auto")).toBe(3);
+		expect(templateTracks("repeat(3, minmax(0, 1fr))")).toBe(3);
+		expect(templateTracks("200px repeat(2, 1fr 2fr)")).toBe(5);
+		expect(templateTracks("repeat(auto-fill, minmax(100px, 1fr))")).toBe(Number.POSITIVE_INFINITY);
+	});
+
+	it("places from zero-based row and column", () => {
+		expect(gridPlace(0, 0, 1, 1, 2)).toEqual({ gridRow: "1", gridColumn: "1" });
+		expect(gridPlace(2, 1, 4, 2, 3)).toEqual({ gridRow: "3 / span 2", gridColumn: "2 / span 2" });
+	});
+
+	it("reads places and puts them in reading order", () => {
+		expect(readPlace("3,12")).toEqual([3, 12]);
+		expect(readPlace("a,1")).toBeNull();
+		expect(readPlace("2")).toBeNull();
+		expect(readingOrder(["1,0", "note", "0,2", "1", "0,0", "0"])).toEqual([
+			"0,0",
+			"0,2",
+			"1,0",
+			"note",
+			"0",
+			"1",
+		]);
+	});
+
+	it("takes height and scroll", () => {
+		board({ height: 320, scroll: "y" });
+		expect(grid().style.height).toBe("320px");
+		expect(grid().className).toContain("overflow-y-auto");
 	});
 });

@@ -18,8 +18,10 @@ Layout under ``refs/``:
   (``LineRef``); chrome (``CardRef``, ``BoxRef`` behind the Box,
   ``TabsRef``, ``ModalRef``, ``AccordionRef``, ``FormRef``,
   ``FieldsetRef``, ``FieldRef``); disclosure (``CollapsibleRef``,
-  ``SheetRef``); page (``PageSectionRef``, ``NavListRef``); and
-  ``ListRef``, whose items are its plain strings and then any child node.
+  ``SheetRef``); page (``PageSectionRef``, ``NavListRef``); table
+  (``TableRef``, a content table of places, ``t[r, c]``, and its
+  ``TableRowRef``); and ``ListRef``, whose items are its plain strings and
+  then any child node.
 - leaves/: one thing drawn from props, never children. ``LeafRef`` (base);
   output (``HeadingRef``, ``TextRef``, ``ImageRef``, ``LinkRef``,
   ``BadgeRef``, ``StatusDotRef``, ``KbdRef``, ``ShortcutRef``, ``AlertRef``,
@@ -27,7 +29,7 @@ Layout under ``refs/``:
   ``GaugeRef``, ``JsonViewerRef``); display (``AvatarRef``,
   ``BreadcrumbRef``, ``SkeletonRef``, ``SpinnerRef``, ``StatusPillRef``);
   page (``IconRef``, ``SpacerRef``, ``PageLinkRef``, ``NavItemRef``);
-  table (``TableRef`` and its row ops); tree (``TreeRef``); input (tab-owned:
+  data_table (``DataTableRef`` and its row ops); tree (``TreeRef``); input (tab-owned:
   ``ButtonRef``, ``InputRef``, ``ToggleRef``, ..., plus ``MarkdownRef`` and
   ``CodeRef``, read-only by default and editable on request); and chart
   (``Chart``, one ECharts option, and typed builders over it: ``LineChart``,
@@ -98,7 +100,17 @@ from .collections import (
     RowRef,
     ShapeCollectionRef,
     SheetRef,
+    TableRef,
+    TableRowRef,
     TabsRef,
+)
+from .collections.list import (
+    InsertItem,
+    KeepItems,
+    MoveItem,
+    OrderItems,
+    RemoveItem,
+    TruncateItems,
 )
 from .leaves import (
     AlertRef,
@@ -114,6 +126,7 @@ from .leaves import (
     Chart,
     CheckboxRef,
     CodeRef,
+    DataTableRef,
     DatePickerRef,
     DividerRef,
     EmptyStateRef,
@@ -161,7 +174,6 @@ from .leaves import (
     StatusSquaresRef,
     SunburstChart,
     SwitchRef,
-    TableRef,
     TagInputRef,
     TextAreaRef,
     TextRef,
@@ -234,6 +246,7 @@ __all__ = [
     "ColumnRef",
     "Container",
     "ContainerRef",
+    "DataTableRef",
     "DatePickerRef",
     "DictCollectionRef",
     "DividerRef",
@@ -257,9 +270,11 @@ __all__ = [
     "IconRef",
     "ImageRef",
     "InputRef",
+    "InsertItem",
     "InsertRow",
     "JsonViewerRef",
     "KbdRef",
+    "KeepItems",
     "LeafRef",
     "Line",
     "LineChart",
@@ -271,11 +286,13 @@ __all__ = [
     "MarkdownRef",
     "Modal",
     "ModalRef",
+    "MoveItem",
     "NavItemRef",
     "NavList",
     "NavListRef",
     "NavRef",
     "NumberInputRef",
+    "OrderItems",
     "PageLinkRef",
     "PageSection",
     "PageSectionRef",
@@ -287,6 +304,7 @@ __all__ = [
     "ReadEntry",
     "Ref",
     "RelativeTimeRef",
+    "RemoveItem",
     "RemoveRows",
     "RoutePath",
     "Row",
@@ -315,6 +333,7 @@ __all__ = [
     "SunburstChart",
     "SwitchRef",
     "TableRef",
+    "TableRowRef",
     "Tabs",
     "TabsRef",
     "TagInputRef",
@@ -325,6 +344,7 @@ __all__ = [
     "ToggleRef",
     "TreeRef",
     "TreemapChart",
+    "TruncateItems",
     "WaterfallRef",
     "decode_query",
     "encode_query",

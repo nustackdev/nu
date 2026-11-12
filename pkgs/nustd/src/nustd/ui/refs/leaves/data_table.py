@@ -1,4 +1,4 @@
-"""``TableRef`` -- rows and columns, and the row ops that change them in place.
+"""``DataTableRef`` -- rows and columns, and the row ops that change them in place.
 
 A collection leaf: the rows are data on the node, never child nodes, so a
 table has no children. Server owns the rows, the browser reports what you do
@@ -7,24 +7,27 @@ to them.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, Literal
 
 from typing_extensions import Self
 
+from nu.domains.shape import Slot
 from nu.forms import Dict, List
-from nustd.ui.core import Append, Changed, Send, Write
+from nustd.ui.core import Append, Changed, Ref, Send, Write
+from nustd.ui.core.base import _wire_type_of
 
 from .base import LeafRef
 
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Sequence
 
     from nu.lang import Nu
     from nu.lang.args import DictArg, IntArg, ListArg, StrArg
 
 
-__all__ = ["InsertRow", "RemoveRows", "SetOrder", "SetRow", "TableRef"]
+__all__ = ["DataTableRef", "InsertRow", "RemoveRows", "SetOrder", "SetRow"]
 
 
 SortDirection = Literal["asc", "desc"]
@@ -34,7 +37,7 @@ Selection = Literal["none", "single", "multi"]
 #
 # A table's own changes, each its own op on the wire (``set_row``,
 # ``insert_row``, ``remove_rows``, ``set_order``) and its own handler on the
-# browser's TableRef node. The TableRef methods build them; they are exported
+# browser's DataTableRef node. The DataTableRef methods build them; they are exported
 # for code that composes frames directly. Keys are the ones the browser draws:
 # the ``row_key`` field, or the position as a string without one.
 
@@ -63,7 +66,69 @@ class SetOrder(Send):
     _payload_fields = ("keys",)
 
 
-class TableRef(LeafRef):
+# ---- column cell specs ------------------------------------------------------
+#
+# A column may say how its cells draw: ``{"key": "status", "cell":
+# BadgeRef.slot(variant="info")}``. The browser draws that kind in every cell
+# of the column from the cell's value; the value itself stays what sorts,
+# edits and is read back. A scalar value lands on the kind's main prop (a
+# Badge's ``label``, a RelativeTime's ``ts``); a mapping value merges over the
+# spec's props, so a link cell can carry ``{"href": ..., "label": ...}``.
+
+#: The kinds a column cell can draw as, by wire kind, and the prop a scalar
+#: cell value lands on. Display kinds only: a cell draws, it never asks.
+CELL_KINDS: dict[str, str] = {
+    "BadgeRef": "label",
+    "IconRef": "name",
+    "KbdRef": "label",
+    "LinkRef": "label",
+    "PageLinkRef": "title",
+    "ProgressRef": "value",
+    "RelativeTimeRef": "ts",
+    "StatusDotRef": "tone",
+    "StatusPillRef": "label",
+    "StatusSquaresRef": "counts",
+    "TextRef": "value",
+}
+
+
+def _cell_spec(column: str, spec: object) -> dict[str, object]:
+    """A column's ``cell`` as the wire carries it: ``{kind, props, prop}``."""
+    if isinstance(spec, type) and issubclass(spec, Ref):
+        spec = Slot(spec)
+    if isinstance(spec, Slot):
+        kind, props = _wire_type_of(spec.ref_cls), dict(spec.props)
+    elif isinstance(spec, dict) and "kind" in spec:
+        # Already lowered (a column read back from a store, a driver's copy).
+        kind, props = str(spec["kind"]), dict(spec.get("props") or {})  # type: ignore[arg-type]
+    else:
+        msg = f"column {column!r} cell must be a ref class or a Kind.slot(...) spec, not {spec!r}"
+        raise TypeError(msg)
+    if kind not in CELL_KINDS:
+        supported = ", ".join(sorted(CELL_KINDS))
+        msg = f"column {column!r} cell cannot draw as {kind}; a cell draws as one of {supported}"
+        raise TypeError(msg)
+    return {"kind": kind, "props": props, "prop": CELL_KINDS[kind]}
+
+
+def _column(c: object) -> object:
+    """One column as the wire carries it: strings as they are, mappings copied, ``cell`` lowered."""
+    if not isinstance(c, Mapping):
+        return c
+    out = dict(c)
+    if "cell" in out and out["cell"] is not None:
+        out["cell"] = _cell_spec(str(out.get("key", "")), out["cell"])
+    return out
+
+
+def _columns(columns: object) -> object:
+    """Columns as the wire carries them, when they are a plain list; a term passes through."""
+    if isinstance(columns, (list, tuple)):
+        return [_column(c) for c in columns]
+    return columns
+
+
+class DataTableRef(LeafRef):
     """Rows and columns. The server owns the rows; the browser reports what you do.
 
     Reads by default: a header click asks for a sort, and that is all. Each
@@ -72,7 +137,7 @@ class TableRef(LeafRef):
     ``event`` field, and each ``on_*`` takes only its own kind::
 
         class Shelf(nustd.ui.Column):
-            table = nustd.ui.TableRef.slot(
+            table = nustd.ui.DataTableRef.slot(
                 columns=["id", {"key": "title", "label": "Title"}],
                 row_key="id",
                 editable=True,
@@ -112,6 +177,20 @@ class TableRef(LeafRef):
     align?, width?, sortable?}`` with ``kind`` one of "text" (the default),
     "number", "bool" or "select" (picks from ``options``). Every column sorts
     unless it says ``sortable: False``.
+
+    **Cell specs.** A column mapping's ``cell`` draws every cell of that
+    column as a ui kind, from the cell's value: ``{"key": "status", "cell":
+    BadgeRef.slot(variant="info")}``. The value stays the data (it sorts,
+    edits and reads back as sent), only its look changes; an edit opens the
+    column's ``kind`` editor as before. A scalar value lands on the kind's
+    main prop (``CELL_KINDS``: a Badge's ``label``, a RelativeTime's ``ts``, a
+    StatusSquares' ``counts``); a mapping value merges over the spec's props,
+    so a ``LinkRef`` cell takes ``{"href": ..., "label": ...}``. A blank cell
+    (None or "") draws nothing. Supported kinds: TextRef, BadgeRef, LinkRef,
+    PageLinkRef, StatusDotRef, StatusPillRef, StatusSquaresRef,
+    RelativeTimeRef, ProgressRef, KbdRef, IconRef. Display kinds only; for
+    anything else in a cell (a button, a row of controls, a nested table) use
+    a content ``TableRef``.
 
     **Rows** are lists (cells by column position) or mappings (cells by column
     key), mixed freely. ``row_key`` names the field that keys a row: a column
@@ -157,7 +236,7 @@ class TableRef(LeafRef):
             arrives on its ``on_column_*``.
     """
 
-    _wire_type = "TableRef"
+    _wire_type = "DataTableRef"
 
     @classmethod
     def slot(
@@ -180,7 +259,7 @@ class TableRef(LeafRef):
         columns_editable: bool = False,
     ) -> Self:
         return super().slot(
-            columns=[c if isinstance(c, str) else dict(c) for c in columns or ()],
+            columns=_columns(list(columns or ())),
             label=label,
             striped=striped,
             dense=dense,
@@ -201,6 +280,8 @@ class TableRef(LeafRef):
 
     def set(self, table: DictArg[str, Any]) -> Nu:
         """Merge any props, eg ``{"columns": [...], "rows": [...]}``."""
+        if isinstance(table, dict) and "columns" in table:
+            table = {**table, "columns": _columns(table["columns"])}
         return Write(self, table)
 
     def set_rows(self, rows: ListArg[Any]) -> Nu:
@@ -223,7 +304,7 @@ class TableRef(LeafRef):
         ``set({"columns": columns, "rows": rows})``, since a second frame
         would show the old cells under the new headers until it lands.
         """
-        return Write(self, Dict.of(columns=columns))
+        return Write(self, Dict.of(columns=_columns(columns)))
 
     # The row-level ops below each ship one frame of their own (``SetRow``,
     # ``InsertRow``, ``RemoveRows``, ``SetOrder``) with only the row or the

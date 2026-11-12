@@ -7,8 +7,8 @@
 // it is the node's first (and only expected) child in the tree: we take the
 // first segment from `useChildren` and render it ourselves rather than via
 // `NodeChildren`, because the control has to sit inside the
-// aria-describedby / aria-invalid wrapper. Any extra children are ignored,
-// same as the old module ignored a `children` list that was not length 1.
+// aria-describedby / aria-invalid wrapper. Extra children do not draw; a
+// notice names them (the server refuses a second control where it is built).
 // Wires aria-invalid / aria-describedby per a11y.md §5.
 
 import { useId } from "react";
@@ -22,6 +22,7 @@ import {
 	useChildren,
 	useStringProp,
 } from "../../tree";
+import { Unpaired } from "./unpaired";
 
 function FieldView({ path }: NodeProps) {
 	const label = useStringProp(path, "label");
@@ -60,6 +61,7 @@ function FieldView({ path }: NodeProps) {
 					</Text>
 				)}
 			</div>
+			<Unpaired path={path} segments={children.slice(1)} why="a Field holds one control" />
 			{showBottom ? (
 				<Text
 					id={hasError ? errorId : helpId}

@@ -8,7 +8,7 @@
 // (`Ref.hide()`) renders nothing at all, and containers leave it out of
 // their children (see `useChildren`), so it takes no cell either.
 
-import type { Path } from "@nustackdev/ui-core";
+import { indexedOrder, keyedOrder, type Path } from "@nustackdev/ui-core";
 import type { ComponentType, ReactNode } from "react";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { type Flow, FlowProvider, useFlow } from "./flow";
@@ -58,18 +58,11 @@ export function BareCell({ children }: CellProps) {
 	return <>{children}</>;
 }
 
-/**
- * Children in index order, for a container that takes children by position
- * (List, Line). Segments that are indices ("0", "1", ...) sort by number
- * among the places indexed children hold; named segments keep their place in
- * write order. So `[2]` written before `[0]` still draws 0 before 2.
- */
-export function indexedOrder(segments: readonly string[]): string[] {
-	const isIndex = (s: string) => /^\d+$/.test(s);
-	const indexed = segments.filter(isIndex).sort((a, b) => Number(a) - Number(b));
-	let next = 0;
-	return segments.map((s) => (isIndex(s) ? indexed[next++] : s));
-}
+// Children in index order, for a container that takes children by position
+// (every body container: Row, Column, Grid, Card, List, Line, ...): indices
+// by number, names where first written. Lives in ui-core next to the keyed
+// order an ordered collection (List) keeps.
+export { indexedOrder };
 
 /**
  * Every child of a node, in insertion order. What a container type renders.
@@ -78,6 +71,8 @@ export function indexedOrder(segments: readonly string[]): string[] {
  * list item, a grid cell, a row slot that fills). Without it a block flow
  * wraps each child in `BlockCell`, and any other flow draws them bare.
  * `indexed` puts indexed children in index order (see `indexedOrder`).
+ * `order` is the order an ordered collection keeps (a List's `props.order`):
+ * children draw by it, ones it has no place for after (see `keyedOrder`).
  * `skip` leaves out the segments a type places itself (a card's `media`,
  * a section's `actions`), so what is left is the body.
  */
@@ -85,16 +80,18 @@ export function NodeChildren({
 	path,
 	cell,
 	indexed = false,
+	order,
 	skip,
 }: {
 	path: Path;
 	cell?: ComponentType<CellProps>;
 	indexed?: boolean;
+	order?: readonly string[];
 	skip?: ReadonlySet<string>;
 }) {
 	const written = useChildren(path);
 	const kept = skip ? written.filter((s) => !skip.has(s)) : written;
-	const children = indexed ? indexedOrder(kept) : kept;
+	const children = order ? keyedOrder(order, kept) : indexed ? indexedOrder(kept) : kept;
 	const flow = useFlow();
 	const Cell = cell ?? (flow === "block" ? BlockCell : undefined);
 	return (

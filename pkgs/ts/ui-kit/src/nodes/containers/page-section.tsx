@@ -58,7 +58,7 @@ function PageSectionView({ path }: NodeProps) {
 					className={cn("flex min-w-0 flex-col", stepClass(GAP_CLASSES, gap))}
 				>
 					<FlowProvider flow="block">
-						<NodeChildren path={path} skip={SLOTS} />
+						<NodeChildren path={path} skip={SLOTS} indexed />
 					</FlowProvider>
 				</div>
 			) : null}

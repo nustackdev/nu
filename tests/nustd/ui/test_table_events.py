@@ -1,4 +1,4 @@
-"""TableRef: frames out, and notifies in where each ``on_*`` takes only its own kind.
+"""DataTableRef: frames out, and notifies in where each ``on_*`` takes only its own kind.
 
 A fake subscription fires every payload the moment a reaction binds, so
 ``ReactOnce`` runs its body on the first one its filter lets through.
@@ -12,12 +12,12 @@ import pytest
 
 import nu
 from nu import Context, Shape
-from nustd.ui import Column, Session, TableRef
+from nustd.ui import Column, DataTableRef, Session
 from nustd.ui.refs import TextRef
 
 
 class ShelfPage(Column):
-    table = TableRef.slot(columns=["title"], clickable_rows=True)
+    table = DataTableRef.slot(columns=["title"], clickable_rows=True)
     out = TextRef.slot()
 
 
@@ -89,7 +89,7 @@ def test_sort_skips_a_row_click():
 
 
 class GridPage(Column):
-    table = TableRef.slot(
+    table = DataTableRef.slot(
         columns=["id", {"key": "title", "label": "Title", "kind": "text"}],
         row_key="id",
         selection="multi",
@@ -153,7 +153,7 @@ def test_slot_takes_mapping_columns_and_copies_them():
     column = {"key": "year", "kind": "number"}
 
     class Mixed(Column):
-        table = TableRef.slot(columns=["title", column])
+        table = DataTableRef.slot(columns=["title", column])
 
     column["kind"] = "text"
     props = nu.tree.payload(Mixed.table)["props"]
@@ -299,7 +299,7 @@ def test_a_table_interaction_is_named_in_snake_case():
 
 def test_columns_editable_is_a_slot_flag():
     class Columns(Column):
-        table = TableRef.slot(columns=["a"], columns_editable=True)
+        table = DataTableRef.slot(columns=["a"], columns_editable=True)
 
     assert nu.tree.payload(Columns.table)["props"]["columns_editable"] is True
 

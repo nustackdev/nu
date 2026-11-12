@@ -4,7 +4,7 @@
 // kit component on a page (`Table`, `List`, `Heading`, `Code`) and as an
 // element in a markdown document (the prose schema's `toDOM`, the fence node
 // view). Both read their classes from here, so a markdown table and a
-// TableRef are drawn by the same class list, not by two lists kept in step.
+// DataTableRef are drawn by the same class list, not by two lists kept in step.
 //
 // Every value is a full class string written out literally. Tailwind finds
 // classes by scanning source text, so a class assembled from fragments at

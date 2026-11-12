@@ -234,10 +234,10 @@ def test_write_carries_the_annotated_chain():
 
 
 def test_append_carries_the_annotated_chain():
-    from nustd.ui.refs import TableRef
+    from nustd.ui.refs import DataTableRef
 
     class TSec2(Row):
-        t = TableRef.slot()
+        t = DataTableRef.slot()
 
     class TPage2(Column):
         sec = TSec2.slot()
@@ -248,7 +248,7 @@ def test_append_carries_the_annotated_chain():
     sess = _RecordingSession()
     ctx = Context().bind(Session, sess)
     asyncio.run(nu.arun(TApp2.table.sec.t.append(["a", "b"]), ctx))
-    assert [lvl[1] for lvl in sess.frames[0].chain] == ["Column", "Row", "TableRef"]
+    assert [lvl[1] for lvl in sess.frames[0].chain] == ["Column", "Row", "DataTableRef"]
 
 
 def test_deep_nested_page_path():
@@ -441,7 +441,9 @@ def test_widget_set_emits_write_frame(widget_cls, mod):
     handle = _mount(widget_cls)
     sess = _RecordingSession()
     ctx = Context().bind(Session, sess)
-    asyncio.run(nu.arun(handle.set("v"), ctx))
+    # A tone first (StatusDotRef) is checked against its set, so it gets a real one.
+    first = "ok" if widget_cls.__name__ == "StatusDotRef" else "v"
+    asyncio.run(nu.arun(handle.set(first), ctx))
     assert len(sess.frames) == 1
     assert sess.frames[0].ref == ("page", "sec", "w")
     # A chart's set(data) is a partial option, so it merges; set(option=...)
@@ -636,10 +638,10 @@ def test_card_set_title_emits_frame():
 
 
 def test_table_append_emits_frame():
-    from nustd.ui.refs import TableRef
+    from nustd.ui.refs import DataTableRef
 
     class TSec(Row):
-        t = TableRef.slot()
+        t = DataTableRef.slot()
 
     class TablePage(Column):
         sec = TSec.slot()
@@ -779,3 +781,39 @@ def test_relative_time_sends_the_stamp_once():
 
     when = datetime(2026, 11, 10, 12, tzinfo=timezone.utc)
     assert RelativeTimeRef.slot(ts=when).props["ts"] == when.timestamp() * 1000
+
+
+# --- variants and tones are checked when the program is built ---------------
+
+
+@pytest.mark.parametrize(
+    "build",
+    [
+        lambda ui: ui.BadgeRef.slot(variant="success"),
+        lambda ui: ui.BadgeRef("b").set("x", "success"),
+        lambda ui: ui.BadgeRef("b").set_variant("primary"),
+        lambda ui: ui.AlertRef.slot(variant="error"),
+        lambda ui: ui.AlertRef("a").set("t", variant="warning"),
+        lambda ui: ui.GaugeRef.slot(variant="info"),
+        lambda ui: ui.GaugeRef("g").set_variant("good"),
+        lambda ui: ui.StatusDotRef.slot(tone="green"),
+        lambda ui: ui.StatusDotRef("d").set("up"),
+        lambda ui: ui.StatusPillRef.slot(tone="bad"),
+        lambda ui: ui.StatusPillRef("p").set("x", tone="red"),
+        lambda ui: ui.StatusPillRef("p").set_tone("success"),
+    ],
+)
+def test_an_unknown_variant_or_tone_fails_loud_with_the_list(build):
+    from nustd import ui
+
+    with pytest.raises(ValueError, match=r"is one of .*neutral.*, not '"):
+        build(ui)
+
+
+def test_known_variants_pass_and_terms_are_left_to_run_time():
+    import nu
+    from nustd import ui
+
+    assert ui.BadgeRef.slot(variant="dashed").props["variant"] == "dashed"
+    ui.StatusPillRef("p").set("x", tone=nu.Str("ok"))
+    ui.BadgeRef("b").set("x", nu.Str("whatever"))

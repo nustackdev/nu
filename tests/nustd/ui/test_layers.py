@@ -239,12 +239,12 @@ def test_every_former_bare_section_has_its_own_ref():
 
 
 def test_kit_leaf_as_parent_raises():
-    from nustd.ui.refs import ButtonRef, TableRef, TextRef
+    from nustd.ui.refs import ButtonRef, DataTableRef, TextRef
 
     with pytest.raises(TypeError, match=r"TextRef is a leaf and holds no children; put 'x'"):
         TextRef("x", parent_ref=TextRef("t"))
-    with pytest.raises(TypeError, match="TableRef is a leaf"):
-        ButtonRef("b", parent_ref=TableRef("tbl"))
+    with pytest.raises(TypeError, match="DataTableRef is a leaf"):
+        ButtonRef("b", parent_ref=DataTableRef("tbl"))
 
 
 def test_kit_container_with_no_shape_has_no_slots():
@@ -395,7 +395,7 @@ _UI_ALL_ON_MAIN = (
     "MarkdownRef Modal ModalRef NavRef NumberInputRef PieChart ProgressRef "
     "RadioGroupRef Ref Remove RemoveRows Row Section SectionRef SelectRef Send Session "
     "SetOrder SetRow ShortcutRef SliderRef Sparkline StatRef StatusDotRef Subscription "
-    "SwitchRef TableRef Tabs TabsRef TagInputRef TextAreaRef TextRef TitleRef TreeRef Write "
+    "SwitchRef DataTableRef Tabs TabsRef TagInputRef TextAreaRef TextRef TitleRef TreeRef Write "
     "WsSession core lens nudle refs serve table"
 ).split()
 
@@ -406,7 +406,7 @@ _REFS_ALL_ON_MAIN = (
     "JsonViewerRef KbdRef LineChart LinkRef ListRef MarkdownRef Modal ModalRef NavRef "
     "NumberInputRef PieChart ProgressRef RadioGroupRef Ref RemoveRows Row Section SectionRef "
     "SelectRef SetOrder SetRow ShortcutRef SliderRef Sparkline StatRef StatusDotRef SwitchRef "
-    "TableRef Tabs TabsRef TagInputRef TextAreaRef TextRef TitleRef TreeRef"
+    "DataTableRef Tabs TabsRef TagInputRef TextAreaRef TextRef TitleRef TreeRef"
 ).split()
 
 _CORE_ALL_ON_MAIN = (
@@ -437,7 +437,9 @@ def test_every_name_on_main_still_imports(module, names):
 
 # Added since main: the node lifecycle ops on every Ref (init, hide, display),
 # the clear a tab's boot starts with, and the item ref every child is.
-_CORE_ADDED = "OP_DISPLAY OP_HIDE Clear Display Hide Init ItemRef".split()
+_CORE_ADDED = (
+    "OP_DISPLAY OP_HIDE Clear Display Hide Init ItemRef as_spec check_key child_at".split()
+)
 
 
 def test_core_all_is_main_plus_the_lifecycle_ops():
@@ -451,12 +453,12 @@ def test_old_submodule_paths_still_import():
     from nustd.ui.refs.chart import LineChart
     from nustd.ui.refs.input import ButtonRef
     from nustd.ui.refs.layout import AccordionRef, Row
-    from nustd.ui.refs.output import ListRef, TableRef
+    from nustd.ui.refs.output import DataTableRef, ListRef
     from nustd.ui.refs.tree import TreeRef
 
     assert Row is nustd.ui.Row
     assert AccordionRef is nustd.ui.AccordionRef
-    for cls in (LineChart, ButtonRef, ListRef, TableRef, TreeRef):
+    for cls in (LineChart, ButtonRef, ListRef, DataTableRef, TreeRef):
         assert getattr(nustd.ui, cls.__name__) is cls
 
 

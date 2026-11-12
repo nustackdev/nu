@@ -1,7 +1,7 @@
 """Grid: equal cells, as a Shape and as Refs alone.
 
 A Grid holds open-ended children, one per cell. Its props are its own
-(columns, min_width, gap, align, padding, dense, spans); a child carries
+(max_columns, min_width, gap, align, padding, dense, spans); a child carries
 none, not even its span. Runs against a recording session, same harness as
 test_layers.
 """
@@ -38,7 +38,7 @@ def _chain(frame):
 
 
 DEFAULTS = {
-    "columns": 0,
+    "max_columns": 0,
     "min_width": 240,
     "gap": 4,
     "align": "stretch",
@@ -69,8 +69,8 @@ def test_slot_defaults():
 def test_slot_coerces_the_numbers():
     from nustd.ui import GridRef
 
-    props = GridRef.slot(columns="3", min_width=200.0, gap="2", padding="1").props
-    assert props == {**DEFAULTS, "columns": 3, "min_width": 200, "gap": 2, "padding": 1}
+    props = GridRef.slot(max_columns="3", min_width=200.0, gap="2", padding="1").props
+    assert props == {**DEFAULTS, "max_columns": 3, "min_width": 200, "gap": 2, "padding": 1}
 
 
 def test_slot_takes_no_per_cell_props():
@@ -88,7 +88,8 @@ def test_shape_slot_forwards_to_the_ref():
 
     assert Grid.slot().props == GridRef.slot().props
     assert (
-        Gallery.slot(columns=3, align="start").props == GridRef.slot(columns=3, align="start").props
+        Gallery.slot(max_columns=3, align="start").props
+        == GridRef.slot(max_columns=3, align="start").props
     )
     assert Gallery.slot().ref_cls is GridRef
     assert Gallery.slot().kwargs["section_cls"] is Gallery
@@ -103,7 +104,7 @@ def test_boot_chains_of_a_page_with_a_grid_of_cards():
         errors = CardRef.slot(title="Errors")
 
     class Home(Column):
-        stats = Stats.slot(columns=3, gap=3)
+        stats = Stats.slot(max_columns=3, gap=3)
 
     chains = boot_chains((), Home)
     stats = [c for c in chains if c[0][0] == "stats"]
@@ -113,7 +114,7 @@ def test_boot_chains_of_a_page_with_a_grid_of_cards():
         [("stats", "Grid"), ("jobs", "Card")],
         [("stats", "Grid"), ("errors", "Card")],
     ]
-    assert stats[0][0][2] == {**DEFAULTS, "columns": 3, "gap": 3}
+    assert stats[0][0][2] == {**DEFAULTS, "max_columns": 3, "gap": 3}
     assert stats[2][1][2]["title"] == "Jobs"
 
 
@@ -137,13 +138,13 @@ def test_refs_alone_computed_cells_resolve_distinct_paths():
     assert frames[0].chain[1][2] == {**DEFAULTS, "min_width": 200}
 
 
-def test_set_columns_writes_columns_only():
+def test_set_max_columns_writes_the_cap_only():
     from nustd.ui.refs import GridRef
 
-    [frame] = _frames(GridRef("g").set_columns(2))
+    [frame] = _frames(GridRef("g").set_max_columns(2))
     assert frame.op == "write"
     assert frame.ref == ("g",)
-    assert frame.payload == {"columns": 2}
+    assert frame.payload == {"max_columns": 2}
 
 
 def test_a_grid_has_no_primary_value():
@@ -167,7 +168,7 @@ def test_a_leaf_under_a_grid_still_refuses_children():
 def test_spans_normalize_to_cols_and_rows():
     from nustd.ui import GridRef
 
-    props = GridRef.slot(columns=3, spans={"hero": (2, 2), "wide": 3, "plain": 1}).props
+    props = GridRef.slot(max_columns=3, spans={"hero": (2, 2), "wide": 3, "plain": 1}).props
     assert props["spans"] == {"hero": {"cols": 2, "rows": 2}, "wide": {"cols": 3, "rows": 1}}
 
 
@@ -187,7 +188,7 @@ def test_a_bento_shape_spans_by_slot_name():
         jobs = CardRef.slot(title="Jobs")
 
     class Home(Column):
-        bento = Bento.slot(columns=3, dense=True, spans={"revenue": (2, 2)})
+        bento = Bento.slot(max_columns=3, dense=True, spans={"revenue": (2, 2)})
 
     [grid, *cells] = [c for c in boot_chains((), Home) if c[0][0] == "bento"]
     assert grid[0][2]["spans"] == {"revenue": {"cols": 2, "rows": 2}}
@@ -215,3 +216,183 @@ def test_set_span_takes_a_child_ref_and_a_computed_key():
     [by_ref, by_term] = _frames(grid.set_span(card, 3) >> grid.set_span(nu.Str("c") + nu.str(1), 2))
     assert by_ref.payload == {"key": "c2", "cols": 3, "rows": 1}
     assert by_term.payload == {"key": "c1", "cols": 2, "rows": 1}
+
+
+# --- placed: a track template, cells at (r, c) ------------------------------
+
+
+def test_placed_cell_sits_at_r_comma_c():
+    from nustd.ui import GridRef, TextRef
+
+    g = GridRef("g", props={"cols": "2fr 1fr"})
+    [frame] = _frames(g[1, 0].to(TextRef).set("x"))
+    assert frame.ref == ("g", "1,0")
+    assert _chain(frame) == [("g", "Grid"), ("1,0", "TextRef")]
+    assert frame.chain[0][2]["cols"] == "2fr 1fr"
+
+
+def test_placed_cell_by_method_and_computed_place():
+    from nustd.ui import GridRef, TextRef
+
+    g = GridRef("g", props={"cols": 2})
+    assert g.cell(0, 1)._payload["segment"] == "0,1"
+    [frame] = _frames(g[nu.Int(2), 1].to(TextRef).set("x"))
+    assert frame.ref == ("g", "2,1")
+
+
+def test_placed_cell_takes_the_item_default():
+    from nustd.ui import CardRef, GridRef
+
+    g = GridRef("g", item=CardRef.slot(title="T"), props={"cols": "1fr 1fr"})
+    cell = g[0, 0]
+    assert type(cell) is CardRef
+    [frame] = _frames(cell.set_title("x"))
+    assert _chain(frame) == [("g", "Grid"), ("0,0", "Card")]
+
+
+def test_placed_cell_without_a_template_is_refused():
+    from nustd.ui import GridRef
+
+    with pytest.raises(TypeError, match="track template"):
+        GridRef("g", props={"max_columns": 3})[0, 1]
+    with pytest.raises(TypeError, match="track template"):
+        GridRef("g")[0, 1]
+
+
+@pytest.mark.parametrize(
+    ("at", "error"),
+    [
+        ((0, "a"), TypeError),
+        ((-1, 0), IndexError),
+        ((True, 0), TypeError),
+        ((0, 0, 0), TypeError),
+        ((None, 0), TypeError),
+    ],
+)
+def test_placed_keys_are_positions_only(at, error):
+    from nustd.ui import GridRef
+
+    with pytest.raises(error):
+        GridRef("g", props={"cols": "1fr 1fr"})[at]
+
+
+def test_a_name_that_reads_as_a_place_is_refused():
+    from nustd.ui import GridRef
+
+    with pytest.raises(ValueError, match=r"grid\[r, c\]"):
+        GridRef("g", props={"cols": "1fr"})["0,1"]
+
+
+def test_flow_keys_still_work_on_a_placed_grid():
+    from nustd.ui import GridRef, TextRef
+
+    g = GridRef("g", props={"cols": "1fr 1fr"})
+    [a, b] = _frames(g["note"].to(TextRef).set("n") >> g[0].to(TextRef).set("z"))
+    assert a.ref == ("g", "note")
+    assert b.ref == ("g", "0")
+
+
+def test_track_templates_normalize():
+    from nustd.ui import GridRef
+
+    props = GridRef.slot(
+        cols=[240, "1fr", "minmax(0, 2fr)"], rows=[64, "auto"], stack_below=640
+    ).props
+    assert props["cols"] == "240px 1fr minmax(0, 2fr)"
+    assert props["rows"] == "64px auto"
+    assert props["stack_below"] == 640
+    assert GridRef.slot(cols=3).props["cols"] == "repeat(3, minmax(0, 1fr))"
+    assert GridRef.slot(cols="  2fr   1fr ").props["cols"] == "2fr 1fr"
+    assert "rows" not in GridRef.slot(cols=2).props
+
+
+def test_flow_grid_wire_is_unchanged():
+    from nustd.ui import GridRef
+
+    assert GridRef.slot().props == DEFAULTS
+
+
+def test_placed_grid_ships_no_flow_props():
+    from nustd.ui import GridRef
+
+    props = GridRef.slot(cols="2fr 1fr", rows=2).props
+    assert props == {
+        "gap": 4,
+        "align": "stretch",
+        "padding": 0,
+        "dense": False,
+        "spans": {},
+        "cols": "2fr 1fr",
+        "rows": "repeat(2, minmax(0, 1fr))",
+        "stack_below": 0,
+    }
+
+
+@pytest.mark.parametrize("flow", [{"max_columns": 3}, {"min_width": 200}])
+def test_placed_grid_refuses_flow_props(flow):
+    from nustd.ui import GridRef
+
+    with pytest.raises(ValueError, match="max_columns= and min_width= size a flowing grid"):
+        GridRef.slot(cols="1fr 1fr", **flow)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"cols": "1fr; color: red"},
+        {"cols": "url(x)"},
+        {"cols": 0},
+        {"cols": ""},
+        {"rows": "1fr"},
+        {"stack_below": 400},
+        {"spans": {(0, 0): 2}},
+    ],
+)
+def test_bad_templates_are_refused(kwargs):
+    from nustd.ui import GridRef
+
+    with pytest.raises((ValueError, TypeError)):
+        GridRef.slot(**kwargs)
+
+
+def test_placed_spans_key_by_place():
+    from nustd.ui import GridRef
+
+    props = GridRef.slot(cols="2fr 1fr", spans={(0, 0): (2, 1), (1, 1): 1, "note": 2}).props
+    assert props["spans"] == {"0,0": {"cols": 2, "rows": 1}, "note": {"cols": 2, "rows": 1}}
+
+
+def test_set_span_takes_a_place():
+    from nustd.ui import GridRef
+
+    g = GridRef("g", props={"cols": "1fr 1fr"})
+    [frame] = _frames(g.set_span((1, 0), 2, 2))
+    assert frame.payload == {"key": "1,0", "cols": 2, "rows": 2}
+    [by_ref] = _frames(g.set_span(g[0, 1], 2))
+    assert by_ref.payload["key"] == "0,1"
+
+
+def test_set_cols_and_rows_write_templates():
+    from nustd.ui import GridRef
+
+    [cols, rows] = _frames(GridRef("g").set_cols([200, "1fr"]) >> GridRef("g").set_rows(2))
+    assert cols.payload == {"cols": "200px 1fr"}
+    assert rows.payload == {"rows": "repeat(2, minmax(0, 1fr))"}
+
+
+def test_a_placed_shape_grid():
+    from nustd.ui import Grid
+
+    class Board(Grid):
+        pass
+
+    slot = Board.slot(cols="2fr 1fr")
+    assert slot.props["cols"] == "2fr 1fr"
+
+
+def test_grid_takes_height_and_scroll():
+    from nustd.ui import GridRef
+
+    props = GridRef.slot(height=320, scroll="y").props
+    assert props["height"] == 320
+    assert props["scroll"] == "y"

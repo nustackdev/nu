@@ -12,6 +12,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Any ui container can be reached into by position or name, to any depth
+- Tables split in two: sheet-like data tables and content tables holding anything
 - A child's kind is named where it is used; clashing kinds now fail loudly
 - Split panels folded to a fixed width stay folded through resizes and reloads
 

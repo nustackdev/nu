@@ -45,7 +45,7 @@ class Toolbar(Row):
 
 
 class Page(Column):
-    top = ui.TableRef.slot(columns=["name"])
+    top = ui.DataTableRef.slot(columns=["name"])
     bar = Toolbar.slot(gap=1)
 
 
@@ -81,9 +81,9 @@ def test_descent_returns_item_refs():
 
 
 def test_slot_is_a_real_slot():
-    spec = ui.TableRef.slot(columns=["a"])
+    spec = ui.DataTableRef.slot(columns=["a"])
     assert isinstance(spec, Slot)
-    assert spec.ref_cls is ui.TableRef
+    assert spec.ref_cls is ui.DataTableRef
     assert spec.props["columns"] == ["a"]
     section_spec = Toolbar.slot(gap=2)
     assert isinstance(section_spec, Slot)
@@ -103,8 +103,10 @@ def test_to_a_bare_class():
 
 
 def test_to_a_slot_spec_with_props():
-    table = ui.GridRef("g", item=ui.CardRef)["a"].to(ui.TableRef.slot(columns=["x"], dense=True))
-    assert type(table) is ui.TableRef
+    table = ui.GridRef("g", item=ui.CardRef)["a"].to(
+        ui.DataTableRef.slot(columns=["x"], dense=True)
+    )
+    assert type(table) is ui.DataTableRef
     assert table._payload["props"]["columns"] == ["x"]
     assert table._payload["props"]["dense"] is True
 
@@ -117,7 +119,7 @@ def test_to_a_section_spec_navigates_its_slots():
 
 
 def test_to_a_container_spec_with_an_item_template():
-    inner = ui.ColumnRef("c").to(ui.GridRef.slot(ui.TextRef, columns=2))
+    inner = ui.ColumnRef("c").to(ui.GridRef.slot(ui.TextRef, max_columns=2))
     assert type(inner["k"]) is ui.TextRef
 
 
@@ -139,10 +141,10 @@ def test_to_a_leaf_still_refuses_children():
 
 def test_wire_chain_carries_the_new_kind_and_props():
     grid = ui.GridRef("g", item=ui.CardRef)
-    term = grid["a"].to(ui.TableRef.slot(columns=["x"], dense=True)).set([{"x": 1}])
+    term = grid["a"].to(ui.DataTableRef.slot(columns=["x"], dense=True)).set([{"x": 1}])
     (frame,) = _frames(term)
     assert frame.ref == ("g", "a")
-    assert [(seg, typ) for seg, typ, _ in frame.chain] == [("g", "Grid"), ("a", "TableRef")]
+    assert [(seg, typ) for seg, typ, _ in frame.chain] == [("g", "Grid"), ("a", "DataTableRef")]
     assert frame.chain[1][2]["columns"] == ["x"]
     assert frame.chain[1][2]["dense"] is True
 
@@ -150,7 +152,7 @@ def test_wire_chain_carries_the_new_kind_and_props():
 def test_wire_chain_after_a_nested_to_chain():
     term = (
         ui.ContainerRef("page")
-        .to(ui.GridRef.slot(ui.CardRef, columns=2))["a"]
+        .to(ui.GridRef.slot(ui.CardRef, max_columns=2))["a"]
         .to(ui.ColumnRef.slot(gap=3))
         .to(ui.ColumnRef.slot(ui.RowRef, gap=3))["r"]
         .to(Toolbar.slot(gap=1))
@@ -165,7 +167,7 @@ def test_wire_chain_after_a_nested_to_chain():
         ("r", "Row"),
         ("text", "TextRef"),
     ]
-    assert frame.chain[0][2]["columns"] == 2
+    assert frame.chain[0][2]["max_columns"] == 2
     assert frame.chain[1][2]["gap"] == 3
     assert frame.chain[2][2]["gap"] == 1
 
@@ -209,7 +211,7 @@ def test_inbound_error_frame_is_logged(caplog):
         ref=("g", "a"),
         payload={
             "code": "kind_mismatch",
-            "message": "kind mismatch at g / a: the node is TextRef, the write names TableRef",
+            "message": "kind mismatch at g / a: the node is TextRef, the write names DataTableRef",
         },
     )
     session = WsSession(_FakeWs(refused))  # type: ignore[arg-type]
@@ -218,7 +220,7 @@ def test_inbound_error_frame_is_logged(caplog):
     (record,) = caplog.records
     assert record.levelno == logging.ERROR
     assert "kind_mismatch at g/a" in record.getMessage()
-    assert "the node is TextRef, the write names TableRef" in record.getMessage()
+    assert "the node is TextRef, the write names DataTableRef" in record.getMessage()
 
 
 def test_inbound_error_frame_without_a_payload_still_logs(caplog):

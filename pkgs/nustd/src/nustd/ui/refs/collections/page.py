@@ -12,7 +12,7 @@ A page, end to end, from Refs alone:
     page = ContainerRef("page", props={"size": "main"})
     usage = PageSectionRef("usage", parent_ref=page, props={"title": "Usage"})
     ButtonRef("export", parent_ref=usage.actions, props={"label": "Export"})
-    GridRef("stats", parent_ref=usage, props={"columns": 3})
+    GridRef("stats", parent_ref=usage, props={"max_columns": 3})
 
 The section is named ``PageSection`` because ``Section`` is already the
 Shape base every container Shape builds on. Shape, Ref and wire type are
@@ -21,7 +21,7 @@ Shape base every container Shape builds on. Shape, Ref and wire type are
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, ClassVar, Literal
 
 from typing_extensions import Self
 
@@ -29,10 +29,11 @@ from nu.forms import Dict
 from nustd.ui.core import Write
 
 from .base import DictCollectionRef
-from .named import actions_ref
+from .named import ACTIONS, actions_ref
 
 
 if TYPE_CHECKING:
+    from nu.domains.shape import Slot
     from nu.lang import Nu
     from nu.lang.args import BoolArg, IntArg, StrArg
     from nustd.ui.core import Ref, Section
@@ -58,11 +59,12 @@ class PageSectionRef(DictCollectionRef):
     """
 
     _wire_type = "PageSection"
+    _parts: ClassVar[frozenset[str]] = frozenset({ACTIONS})
 
     @classmethod
     def slot(
         cls,
-        item: type[Section] | type[Ref] | None = None,
+        item: type[Section] | type[Ref] | Slot | None = None,
         /,
         *,
         title: str = "",
@@ -116,7 +118,7 @@ class NavListRef(DictCollectionRef):
     @classmethod
     def slot(
         cls,
-        item: type[Section] | type[Ref] | None = None,
+        item: type[Section] | type[Ref] | Slot | None = None,
         /,
         *,
         variant: NavVariant = "vertical",

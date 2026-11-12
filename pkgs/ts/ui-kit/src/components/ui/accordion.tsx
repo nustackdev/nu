@@ -16,11 +16,11 @@
 // focus ring sits inside it, and trigger text and content share one inset.
 // Never pad the items of a boxed accordion; the trigger and content own it.
 
-import { Accordion as AccordionPrimitive } from "radix-ui";
 import { ChevronDown } from "lucide-react";
+import { Accordion as AccordionPrimitive } from "radix-ui";
 import type * as React from "react";
-
 import { cn } from "../../lib/utils";
+import { CLIP_WHILE_MOVING, useClipWhileMoving } from "./collapsible";
 
 export function Accordion({
 	className,
@@ -48,10 +48,7 @@ export function AccordionItem({
 	return (
 		<AccordionPrimitive.Item
 			data-slot="accordion-item"
-			className={cn(
-				"border-b border-border-subtle last:border-b-0",
-				className,
-			)}
+			className={cn("border-b border-border-subtle last:border-b-0", className)}
 			{...props}
 		/>
 	);
@@ -97,19 +94,25 @@ export function AccordionTrigger({
 export function AccordionContent({
 	className,
 	children,
+	onAnimationStart,
+	onAnimationEnd,
 	...props
 }: React.ComponentProps<typeof AccordionPrimitive.Content>) {
+	// Clips only while the height moves (or closed), as a Collapsible does.
+	const moving = useClipWhileMoving(onAnimationStart, onAnimationEnd);
 	return (
 		<AccordionPrimitive.Content
 			data-slot="accordion-content"
 			className={cn(
 				// Radix wires --radix-accordion-content-height; the two named
 				// keyframes below live in tw-animate-css.
-				"overflow-hidden text-sm text-text-secondary",
+				CLIP_WHILE_MOVING,
+				"text-sm text-text-secondary",
 				"data-[state=open]:animate-accordion-down",
 				"data-[state=closed]:animate-accordion-up",
 			)}
 			{...props}
+			{...moving}
 		>
 			<div className={cn("px-3 pt-1 pb-3", className)}>{children}</div>
 		</AccordionPrimitive.Content>

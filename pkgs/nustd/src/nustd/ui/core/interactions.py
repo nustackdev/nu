@@ -33,8 +33,9 @@ from nu.engine.structure import Declared
 from nu.lang import Command, ScalarQuery
 from nu.lang.null import is_null
 
+from .base import check_creates
 from .chains import boot_chains
-from .protocol import OP_INIT, OP_REMOVE, Frame
+from .protocol import OP_INIT, OP_REMOVE, Frame, _op_of
 from .session import Session
 
 
@@ -92,6 +93,12 @@ class Send(Command):
 
     #: The payload's field names, one per argument after the Ref.
     _payload_fields: tuple[str, ...] = ()
+
+    def __init__(self, ref: Ref, *args: object) -> None:
+        # A send carries the chain, so it may be what creates the node; a
+        # bare child names no kind to create it as.
+        check_creates(ref, _op_of(self))
+        super().__init__(ref, *args)
 
     def _frame_op(self) -> object:
         """What the frame ships as its op: this interaction, named by its class."""
@@ -253,6 +260,10 @@ class Init(_ChainCommand):
     browser already holds (a value, a hidden flag), so a second one changes
     nothing.
     """
+
+    def __init__(self, ref: Ref) -> None:
+        check_creates(ref, "init")
+        super().__init__(ref)
 
     def _frames(self, chain: Chain) -> list[Frame]:
         section_cls = self._children[0]._payload.get("section_cls")

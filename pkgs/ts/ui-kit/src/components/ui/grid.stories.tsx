@@ -44,7 +44,7 @@ function Tile({ n }: { n: number }) {
 export const Columns: StoryObj = {
 	render: () => (
 		<div className="p-8">
-			<Grid columns={3}>
+			<Grid maxColumns={3}>
 				{STATS.map((s, i) => (
 					<StatCard key={s.label} i={i} />
 				))}
@@ -75,7 +75,7 @@ export const Gaps: StoryObj = {
 					<Text size="xs" tone="muted" mono>
 						gap {gap} ({gap * 4}px)
 					</Text>
-					<Grid columns={4} minWidth={120} gap={gap}>
+					<Grid maxColumns={4} minWidth={120} gap={gap}>
 						{[1, 2, 3, 4].map((n) => (
 							<Tile key={n} n={n} />
 						))}
@@ -95,7 +95,7 @@ export const Align: StoryObj = {
 					<Text size="xs" tone="muted" mono>
 						align {align}
 					</Text>
-					<Grid columns={3} minWidth={160} align={align}>
+					<Grid maxColumns={3} minWidth={160} align={align}>
 						<Card>
 							<CardHeader>
 								<CardTitle>Short</CardTitle>

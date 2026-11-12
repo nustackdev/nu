@@ -6,15 +6,15 @@ what a target or a control size is. The kit's TS nodes read the same words.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, get_args
 
 from nu.forms import Dict
+from nu.lang import Nu
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Write
 
 
 if TYPE_CHECKING:
-    from nu.lang import Nu
     from nu.lang.args import StrArg
     from nustd.ui.core import Ref
 
@@ -29,6 +29,7 @@ __all__ = [
     "Target",
     "TextAlign",
     "Tone",
+    "one_of",
     "set_href",
 ]
 
@@ -74,3 +75,19 @@ def set_href(ref: Ref, url: StrArg, target: Target | StrArg = UNSET) -> Nu:
     if target is not UNSET:
         payload["target"] = target
     return Write(ref, Dict.of(**payload))
+
+
+def one_of(owner: str, prop: str, value: object, choices: object) -> object:
+    """``value`` when it is one of the Literal ``choices``, else fail loud with the list.
+
+    A term (computed at run time) and ``UNSET`` pass as they are: only a value
+    written in the program can be checked when it is built. The browser draws
+    an unknown word as its default, so a typo here would draw wrong silently.
+    """
+    if value is UNSET or isinstance(value, Nu):
+        return value
+    allowed = get_args(choices)
+    if value not in allowed:
+        msg = f"{owner} {prop} is one of {', '.join(allowed)}, not {value!r}"
+        raise ValueError(msg)
+    return value

@@ -9,7 +9,7 @@ as they are. Each slot is one cell, in the order declared.
         jobs = CardRef.slot(title="Jobs")
         errors = CardRef.slot(title="Errors")
 
-    stats = Stats.slot(columns=3, gap=3)
+    stats = Stats.slot(max_columns=3, gap=3)
 """
 
 from __future__ import annotations

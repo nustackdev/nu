@@ -4,6 +4,7 @@ import type { NodeEntry } from "../../tree";
 import { AlertRef } from "./alert";
 import { BadgeRef } from "./badge";
 import { CalendarHeatmapRef } from "./calendar-heatmap";
+import { DataTableRef } from "./data-table";
 import { DividerRef } from "./divider";
 import { EmptyStateRef } from "./empty-state";
 import { GaugeRef } from "./gauge";
@@ -23,7 +24,6 @@ import { SpacerRef } from "./spacer";
 import { StatRef } from "./stat";
 import { StatusDotRef } from "./status-dot";
 import { StatusSquaresRef } from "./status-squares";
-import { TableRef } from "./table";
 import { TextRef } from "./text";
 import { TimelineRef } from "./timeline";
 import { TreeRef } from "./tree";
@@ -50,7 +50,7 @@ export const outputEntries: Record<string, NodeEntry> = {
 	WaterfallRef,
 	TimelineRef,
 	CalendarHeatmapRef,
-	TableRef,
+	DataTableRef,
 	JsonViewerRef,
 	LensRef,
 	TreeRef,

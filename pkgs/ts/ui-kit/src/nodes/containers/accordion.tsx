@@ -4,7 +4,7 @@
 // whatever order the bodies were written in. Each body renders inside its
 // own `AccordionContent`, so we place them with `NodeView` rather than
 // `NodeChildren`. A section with no matching child renders empty; a child no
-// section names is not drawn.
+// section names is not drawn, and a notice under the sections names it.
 //
 // The tab owns `open` (toggle locally first, then notify); the server owns
 // the section list. One `write` op multiplexes chrome updates by payload key:
@@ -34,6 +34,7 @@ import {
 	useSend,
 	useSetProps,
 } from "../../tree";
+import { Unpaired } from "./unpaired";
 
 type Section = { id: string; label: string };
 
@@ -66,6 +67,8 @@ function AccordionView({ path }: NodeProps) {
 
 	const sections = normalizeSections(rawSections);
 	const bodies = new Set(children);
+	const ids = new Set(sections.map((s) => s.id));
+	const stray = children.filter((s) => !ids.has(s));
 	const openRaw = normalizeOpen(rawOpen);
 	// multi=false with multiple ids: keep the first, drop the rest.
 	const open = !multi && openRaw.length > 1 ? [openRaw[0]] : openRaw;
@@ -89,23 +92,23 @@ function AccordionView({ path }: NodeProps) {
 			};
 
 	return (
-		<AccordionPrimitive
-			{...rootProps}
-			variant="boxed"
-		>
-			{sections.map((s, i) => (
-				<AccordionItem key={`${i}-${s.id}`} value={s.id}>
-					<AccordionTrigger>{s.label}</AccordionTrigger>
-					<AccordionContent>
-						{bodies.has(s.id) ? (
-							<FlowProvider flow="block">
-								<NodeView path={[...path, s.id]} />
-							</FlowProvider>
-						) : null}
-					</AccordionContent>
-				</AccordionItem>
-			))}
-		</AccordionPrimitive>
+		<>
+			<AccordionPrimitive {...rootProps} variant="boxed">
+				{sections.map((s, i) => (
+					<AccordionItem key={`${i}-${s.id}`} value={s.id}>
+						<AccordionTrigger>{s.label}</AccordionTrigger>
+						<AccordionContent>
+							{bodies.has(s.id) ? (
+								<FlowProvider flow="block">
+									<NodeView path={[...path, s.id]} />
+								</FlowProvider>
+							) : null}
+						</AccordionContent>
+					</AccordionItem>
+				))}
+			</AccordionPrimitive>
+			<Unpaired path={path} segments={stray} why="no section has that id" />
+		</>
 	);
 }
 

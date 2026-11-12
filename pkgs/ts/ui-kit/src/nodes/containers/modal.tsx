@@ -13,6 +13,12 @@
 // content pick up motion + backdrop tint from the primitive; we own the
 // notify wiring only.
 //
+// `size` caps the width ("sm" | "md" | "lg" | "xl", the primitive's sizes).
+// The dialog never grows past the window: it caps at the viewport height less
+// a margin, the title stays put and the body scrolls. The body pads itself a
+// little and takes it back with a negative margin, so a focus ring on a child
+// at the edge is not clipped by the scroll.
+//
 // TODO(retune): the legacy Modal kept children mounted while closed so child
 // state survived across open/close cycles. Radix Dialog remounts by default.
 // The current cut accepts that remount to avoid fighting Radix's mount
@@ -29,13 +35,17 @@ import {
 	type NodeEntry,
 	type NodeProps,
 	useBoolProp,
+	useEnumProp,
 	useSend,
 	useSetProps,
 	useStringProp,
 } from "../../tree";
 
+const SIZES = ["sm", "md", "lg", "xl"] as const;
+
 function ModalView({ path }: NodeProps) {
 	const open = useBoolProp(path, "open");
+	const size = useEnumProp(path, "size", SIZES, "md");
 	const title = useStringProp(path, "title");
 	const dismissible = useBoolProp(path, "dismissible", true);
 	const send = useSend(path);
@@ -55,15 +65,22 @@ function ModalView({ path }: NodeProps) {
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent showClose={dismissible}>
+			<DialogContent
+				showClose={dismissible}
+				size={size}
+				className="flex max-h-[calc(100dvh-2rem)] flex-col"
+			>
 				{title ? (
 					<DialogHeader>
 						<DialogTitle>{title}</DialogTitle>
 					</DialogHeader>
 				) : null}
-				<div className="flex flex-col gap-4">
+				<div
+					data-slot="modal-body"
+					className="-m-1 flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto p-1"
+				>
 					<FlowProvider flow="block">
-						<NodeChildren path={path} />
+						<NodeChildren path={path} indexed />
 					</FlowProvider>
 				</div>
 			</DialogContent>

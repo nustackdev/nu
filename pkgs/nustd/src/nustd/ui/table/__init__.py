@@ -1,6 +1,6 @@
 """nustd.ui.table -- a table whose rows are what the store holds.
 
-A package beside ``lens`` rather than a module in ``refs``: ``TableRef`` is the
+A package beside ``lens`` rather than a module in ``refs``: ``DataTableRef`` is the
 widget and stays in ``refs``; this is the machinery that binds one to a store.
 
 - :mod:`.values`   -- the rules, plain Python over plain values: how a typed

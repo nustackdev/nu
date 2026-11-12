@@ -51,7 +51,7 @@ function FormView({ path }: NodeProps) {
 				</Heading>
 			) : null}
 			<FlowProvider flow="block">
-				<NodeChildren path={path} />
+				<NodeChildren path={path} indexed />
 			</FlowProvider>
 		</form>
 	);

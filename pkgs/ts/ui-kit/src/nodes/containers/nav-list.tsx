@@ -54,7 +54,7 @@ function NavListView({ path }: NodeProps) {
 				</div>
 			) : null}
 			<FlowProvider flow={horizontal ? "row" : "block"}>
-				<NodeChildren path={path} cell={BareCell} />
+				<NodeChildren path={path} cell={BareCell} indexed />
 			</FlowProvider>
 		</nav>
 	);

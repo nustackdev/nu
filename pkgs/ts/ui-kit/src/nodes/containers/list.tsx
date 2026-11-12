@@ -12,11 +12,21 @@
 // padding as every text output (see TextRef, Prose), padding and never
 // margin.
 //
-// Wire (the strings only; children arrive as their own nodes):
+// The children are a keyed, ordered collection. A child's segment is its
+// key; where it draws is its place in the order the node keeps in
+// `props.order` (ui-core `order.ts`). Until an order op arrives there is no
+// kept order and children draw in index order as above; the first op writes
+// the drawn order down, and from then on a child with no place draws after
+// the placed ones. The string items always draw first.
+//
+// Wire (the strings; children arrive as their own nodes):
 //   write   a list replaces the items wholesale, each one stringified; a map
 //           merges {items, variant, start} like every other node; nil clears.
 //   append  push one item to the end.
+// Wire (the child order, see ui-core `ORDER_OPS`):
+//   insert_item, move_item, remove_item, truncate_items, keep_items, order_items
 
+import { asOrder, ORDER_PROP, orderHandlers } from "@nustackdev/ui-core";
 import { List, ListItem, type ListVariant } from "../../components/ui/list";
 import {
 	type CellProps,
@@ -46,6 +56,7 @@ function ListView({ path }: NodeProps) {
 	const variant = useEnumProp(path, "variant", VARIANTS, "bullet");
 	const rawStart = useProp<unknown>(path, "start", 1);
 	const start = typeof rawStart === "number" ? rawStart : 1;
+	const order = asOrder(useProp<unknown>(path, ORDER_PROP, undefined));
 	return (
 		<List variant={variant} start={start} className="py-1">
 			{normalizeItems(items).map((item, i) => (
@@ -54,7 +65,7 @@ function ListView({ path }: NodeProps) {
 				<ListItem key={i}>{item}</ListItem>
 			))}
 			<FlowProvider flow="block">
-				<NodeChildren path={path} cell={ItemCell} indexed />
+				<NodeChildren path={path} cell={ItemCell} indexed order={order} />
 			</FlowProvider>
 		</List>
 	);
@@ -64,6 +75,7 @@ export const ListRef: NodeEntry = {
 	component: ListView,
 	fill: true,
 	handlers: {
+		...orderHandlers,
 		write: (ctx, payload) =>
 			ctx.update((props) => {
 				if (payload == null) {

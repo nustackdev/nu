@@ -17,6 +17,7 @@ import {
 	type NodeProps,
 	useStringProp,
 } from "../../tree";
+import { useSizing } from "./sizing";
 
 // `none` rides the sm Panel (its gap ladder) with the pad zeroed: Panel has
 // no size without a pad of its own.
@@ -60,6 +61,8 @@ function BoxView({ path }: NodeProps) {
 	const background = useStringProp(path, "background", "none");
 	const shadow = useStringProp(path, "shadow", "none");
 	const gap = useStringProp(path, "gap", "md");
+	// Height sits on the panel, scroll on the body, so the title stays put.
+	const box = useSizing(path);
 
 	const size = PADDING_TO_SIZE[padding] ?? "md";
 	const gapCls = GAP_CLASSES[gap] ?? GAP_CLASSES.md;
@@ -71,7 +74,7 @@ function BoxView({ path }: NodeProps) {
 	const padCls = padding === "none" ? "[--panel-pad:0px]" : "";
 
 	return (
-		<Panel size={size} className={cn(bgCls, shadowCls, borderCls, padCls)}>
+		<Panel size={size} className={cn(bgCls, shadowCls, borderCls, padCls)} style={box.style}>
 			{title ? (
 				<PanelHeader>
 					<PanelTitle>{title}</PanelTitle>
@@ -79,10 +82,15 @@ function BoxView({ path }: NodeProps) {
 			) : null}
 			{/* PanelContent pads only the sides; the box pads its ends too, the
 			    top under a title being the header's. */}
-			<PanelContent className={title ? "pb-[var(--panel-pad)]" : "py-[var(--panel-pad)]"}>
-				<div className={`flex flex-col ${gapCls}`}>
+			<PanelContent
+				className={cn(
+					title ? "pb-[var(--panel-pad)]" : "py-[var(--panel-pad)]",
+					box.className && ["min-h-0 flex-1", box.className],
+				)}
+			>
+				<div className={`flex min-w-0 flex-col ${gapCls}`}>
 					<FlowProvider flow="block">
-						<NodeChildren path={path} />
+						<NodeChildren path={path} indexed />
 					</FlowProvider>
 				</div>
 			</PanelContent>

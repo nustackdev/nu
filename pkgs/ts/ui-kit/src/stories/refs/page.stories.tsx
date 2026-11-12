@@ -42,7 +42,7 @@ export const SectionWithActions: Story = {
 			}),
 		];
 		const actions = [...sec, step("actions", "Row", { gap: 2 })];
-		const grid = [...sec, step("stats", "Grid", { columns: 3, min_width: 180, gap: 3 })];
+		const grid = [...sec, step("stats", "Grid", { max_columns: 3, min_width: 180, gap: 3 })];
 		return (
 			<NodeStage
 				root={root}
@@ -168,7 +168,7 @@ const FEATURES = [
 export const FeatureList: Story = {
 	render: () => {
 		const root = "page-features";
-		const grid = [step(root, "Grid", { columns: 2, min_width: 220, gap: 6, align: "start" })];
+		const grid = [step(root, "Grid", { max_columns: 2, min_width: 220, gap: 6, align: "start" })];
 		const chains = FEATURES.flatMap(([icon, tone, title, body], i) => {
 			const row = [...grid, step(`f${i}`, "Row", { gap: 3, align: "start" })];
 			const text = [...row, step("text", "Column", { gap: 1 })];
@@ -247,7 +247,7 @@ export const PageLinkRows: Story = {
 export const PageLinkTiles: Story = {
 	render: () => {
 		const root = "page-links-tiles";
-		const grid = [step(root, "Grid", { columns: 4, min_width: 160, gap: 3 })];
+		const grid = [step(root, "Grid", { max_columns: 4, min_width: 160, gap: 3 })];
 		return (
 			<NodeStage
 				root={root}

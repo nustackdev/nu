@@ -73,7 +73,7 @@ function SheetView({ path }: NodeProps) {
 				</SheetHeader>
 				<div className="-mx-5 -my-1 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 py-1">
 					<FlowProvider flow="block">
-						<NodeChildren path={path} />
+						<NodeChildren path={path} indexed />
 					</FlowProvider>
 				</div>
 			</SheetContent>

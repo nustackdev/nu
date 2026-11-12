@@ -2,9 +2,9 @@
 
 Three cards, top to bottom:
 
-- **Simple.** A read-only TableRef: the server sorts it when a header is
+- **Simple.** A read-only DataTableRef: the server sorts it when a header is
   clicked, and a row click says which planet it was. Nothing else is on.
-- **Data.** An editable TableRef kept by ``nustd.ui.table.sync``: edit cells,
+- **Data.** An editable DataTableRef kept by ``nustd.ui.table.sync``: edit cells,
   select, add, delete and move rows, and add, rename, move, retype, align or
   delete columns, from the row and column handles, the right-click menu or the
   keyboard. Every change is stored as asked, and a second tab shows it live.
@@ -62,7 +62,7 @@ TABLE.on_edit()  # one request, the server answers
 
 
 class SimpleBody(nustd.ui.Column):
-    table = nustd.ui.TableRef.slot(
+    table = nustd.ui.DataTableRef.slot(
         columns=[
             {"key": "name", "label": "Planet"},
             {"key": "moons", "label": "Moons", "kind": "number", "align": "right"},
@@ -81,7 +81,7 @@ class SimpleCard(nustd.ui.Card):
 
 
 class DataCard(nustd.ui.Card):
-    table = nustd.ui.TableRef.slot(
+    table = nustd.ui.DataTableRef.slot(
         columns=[
             {"key": "task", "label": "Task"},
             {"key": "hours", "label": "Hours", "kind": "number", "align": "right"},

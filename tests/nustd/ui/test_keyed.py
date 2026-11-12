@@ -18,6 +18,7 @@ import nu
 from nu import Context
 from nustd import ui
 from nustd.ui import Session, shapes
+from nustd.ui.core import ItemRef
 from nustd.ui.refs.collections import (
     DictCollectionRef,
     ListCollectionRef,
@@ -108,7 +109,10 @@ def test_every_container_ref_has_exactly_one_shape_named_after_it():
     # still draw the strings; see ListRef.
     wire_exceptions = {"List": "ListRef"}
     abstract = {"CollectionRef", "DictCollectionRef", "ListCollectionRef", "ShapeCollectionRef"}
-    concrete = sorted(set(collections.__all__) - abstract)
+    # A content table and its rows are reached by position (t[r, c]), never by
+    # named slots, so they take no Shape.
+    positional = {"TableRef", "TableRowRef"}
+    concrete = sorted(set(collections.__all__) - abstract - positional)
     shape_classes = [getattr(shapes, n) for n in shapes.__all__]
     assert len(shape_classes) == len(concrete)
     for ref_name in concrete:
@@ -228,10 +232,10 @@ def test_a_ref_built_alone_takes_an_item():
 
 def test_a_ref_slot_takes_an_item():
     class Page(ui.Column):
-        g = ui.GridRef.slot(ui.TextRef, columns=3)
+        g = ui.GridRef.slot(ui.TextRef, max_columns=3)
 
     frames = _frames(Page.g["k"].set("hi"))
-    assert frames[0].chain[0][2]["columns"] == 3
+    assert frames[0].chain[0][2]["max_columns"] == 3
     assert frames[0].chain[1][1] == "TextRef"
 
 
@@ -259,23 +263,30 @@ def test_a_field_is_not_subscriptable():
         Page.f["x"]
 
 
-def test_a_container_without_an_item_refuses_keys():
-    with pytest.raises(TypeError, match=r"\.slot\(Item\)"):
-        Home.row["x"]
+def test_a_container_without_an_item_answers_a_bare_child():
+    child = Home.row["x"]
+    assert type(child) is ItemRef
+    assert type(child.to(ui.TextRef)) is ui.TextRef
 
 
-def test_an_item_must_be_a_section_or_a_ref_class():
-    with pytest.raises(TypeError, match="Section or a Ref class"):
+def test_an_item_is_a_class_or_a_spec():
+    with pytest.raises(TypeError, match=r"ref class, a Section class or a Kind\.slot"):
         ui.Grid.slot("card")
-    with pytest.raises(TypeError, match="Section or a Ref class"):
-        ui.Grid.slot(SpeciesCard.slot())
+    frames = _frames(
+        type("P", (ui.Column,), {"g": ui.Grid.slot(SpeciesCard.slot(subtitle="s"))})
+        .g["lion"]
+        .count.set("1")
+    )
+    assert _chain(frames[0])[1] == ("lion", "Card")
+    assert frames[0].chain[1][2]["subtitle"] == "s"
 
 
-def test_list_indices_are_non_negative_ints():
-    with pytest.raises(TypeError, match="ints"):
-        Home.entries["a"]
+def test_list_takes_positions_and_names_line_only_positions():
+    assert type(Home.entries["a"]) is ui.LineRef
     with pytest.raises(IndexError):
         Home.entries[-1]
+    with pytest.raises(TypeError, match="by position, not by name"):
+        Home.tags["a"]
 
 
 def test_a_keyed_leaf_still_refuses_children():

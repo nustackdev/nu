@@ -60,7 +60,7 @@ export const StatCards: Story = {
 	render: () => {
 		const root = "grid-stats";
 		const grid = step(root, "Grid", {
-			columns: 3,
+			max_columns: 3,
 			min_width: 200,
 			gap: 4,
 			align: "stretch",
@@ -85,7 +85,7 @@ export const StatCards: Story = {
 		return (
 			<NodeStage
 				root={root}
-				label="columns 3: six cards, a stat and a sparkline each"
+				label="max_columns 3: six cards, a stat and a sparkline each"
 				chains={chains}
 				frames={frames}
 			/>
@@ -96,7 +96,7 @@ export const StatCards: Story = {
 export const Gallery: Story = {
 	render: () => {
 		const root = "grid-gallery";
-		const grid = step(root, "Grid", { columns: 0, min_width: 140, gap: 3 });
+		const grid = step(root, "Grid", { max_columns: 0, min_width: 140, gap: 3 });
 		const tones = ["ok", "info", "warn", "neutral"] as const;
 		const chains: ChainStep[][] = Array.from({ length: 8 }, (_, i) => {
 			const card = step(`t${i}`, "Card", { title: `Species ${i + 1}` });
@@ -109,7 +109,7 @@ export const Gallery: Story = {
 			];
 		}).map((chain) => [grid, ...chain]);
 		return (
-			<NodeStage root={root} label="columns 0, min_width 140: as many as fit" chains={chains} />
+			<NodeStage root={root} label="max_columns 0, min_width 140: as many as fit" chains={chains} />
 		);
 	},
 };
@@ -117,13 +117,13 @@ export const Gallery: Story = {
 export const Charts: Story = {
 	render: () => {
 		const root = "grid-charts";
-		const grid = step(root, "Grid", { columns: 2, min_width: 220, gap: 4 });
+		const grid = step(root, "Grid", { max_columns: 2, min_width: 220, gap: 4 });
 		const pie = step("pie", "Card", { title: "Jobs by state" });
 		const line = step("line", "Card", { title: "Throughput" });
 		return (
 			<NodeStage
 				root={root}
-				label="columns 2: a donut PieChart and a tall Sparkline, each its cell's width"
+				label="max_columns 2: a donut PieChart and a tall Sparkline, each its cell's width"
 				chains={[
 					[grid, pie, chartStep("chart", "donut")],
 					[grid, line, chartStep("chart", "sparkline", { height: 160 })],
@@ -145,7 +145,7 @@ export const Bento: Story = {
 	render: () => {
 		const root = "grid-bento";
 		const grid = step(root, "Grid", {
-			columns: 4,
+			max_columns: 4,
 			min_width: 140,
 			gap: 3,
 			align: "stretch",
@@ -167,7 +167,7 @@ export const Bento: Story = {
 		return (
 			<NodeStage
 				root={root}
-				label="columns 4, dense, spans {trend: 2x2, split: 3x1, side: 1x2}; narrow it and the spans clamp, then stack"
+				label="max_columns 4, dense, spans {trend: 2x2, split: 3x1, side: 1x2}; narrow it and the spans clamp, then stack"
 				chains={[
 					[grid, trend, chartStep("chart", "sparkline", { height: 180 })],
 					...small("runs", "Runs", "1,284"),

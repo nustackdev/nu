@@ -77,7 +77,7 @@ function CollapsibleView({ path }: NodeProps) {
 			<CollapsibleContent>
 				<div className="flex flex-col gap-3 pt-2">
 					<FlowProvider flow="block">
-						<NodeChildren path={path} />
+						<NodeChildren path={path} indexed />
 					</FlowProvider>
 				</div>
 			</CollapsibleContent>

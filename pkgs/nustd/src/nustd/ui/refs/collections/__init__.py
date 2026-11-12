@@ -12,6 +12,7 @@
 - list:   ListRef, string items first, then any child node as an item.
 - page:   PageSectionRef (a titled part of a page), NavListRef (a sidebar
           list or a top bar).
+- table:  TableRef, a content table of places, t[r, c]; TableRowRef, one row.
 """
 
 from .base import CollectionRef, DictCollectionRef, ListCollectionRef, ShapeCollectionRef
@@ -23,6 +24,7 @@ from .grid import GridRef
 from .line import LineRef
 from .list import ListRef
 from .page import NavListRef, PageSectionRef
+from .table import TableRef, TableRowRef
 
 
 __all__ = [
@@ -47,5 +49,7 @@ __all__ = [
     "RowRef",
     "ShapeCollectionRef",
     "SheetRef",
+    "TableRef",
+    "TableRowRef",
     "TabsRef",
 ]

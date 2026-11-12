@@ -1,6 +1,6 @@
 """A table that is its store: requests written verbatim, every tab kept live.
 
-``TableRef`` is deliberately fabric-free. It sends frames and hands requests
+``DataTableRef`` is deliberately fabric-free. It sends frames and hands requests
 over, and it neither knows nor cares what the rows stand for, so an app can
 answer an edit with a refusal, a lookup or a write to anywhere. :mod:`.values`
 is fabric-free too: plain rules over plain values.
@@ -72,7 +72,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from nu.domains.shape import StructuredRef
-    from nustd.ui.refs import TableRef
+    from nustd.ui.refs import DataTableRef
 
 
 __all__ = ["REPAINT_DELAY", "Row", "sync"]
@@ -81,7 +81,7 @@ __all__ = ["REPAINT_DELAY", "Row", "sync"]
 #: How long a burst of writes is waited out before a tab repaints once.
 REPAINT_DELAY = 0.25
 
-#: The field a row's key ships under when the TableRef slot names no ``row_key``.
+#: The field a row's key ships under when the DataTableRef slot names no ``row_key``.
 KEY_FIELD = "_key"
 
 
@@ -118,7 +118,7 @@ def _new_key() -> nu.Nu:
 
 
 def sync(
-    table: TableRef,
+    table: DataTableRef,
     rows: StructuredRef,
     order: StructuredRef,
     columns: StructuredRef | None = None,
@@ -158,7 +158,7 @@ def sync(
     several in a :class:`nu.ParallelAsync`.
 
     Args:
-        table: the ``TableRef`` on the mounted page. Its ``row_key`` names the
+        table: the ``DataTableRef`` on the mounted page. Its ``row_key`` names the
             field a row's key ships under, ``"_key"`` (not shown) when it names
             none.
         rows: a ``DictRef`` of :class:`Row`, keyed by row key.

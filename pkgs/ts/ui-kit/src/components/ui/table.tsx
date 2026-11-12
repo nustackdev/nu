@@ -10,7 +10,7 @@
 // Density: compact / default / comfortable -> row heights 24 / 28 / 32.
 //
 // The classes are the table recipes (lib/recipes.ts), which the markdown
-// schema draws its tables with too, so a TableRef and a markdown table match.
+// schema draws its tables with too, so a DataTableRef and a markdown table match.
 
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";

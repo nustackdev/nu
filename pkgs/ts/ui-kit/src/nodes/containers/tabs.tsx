@@ -4,7 +4,7 @@
 // `tabs["overview"]` on the server is the overview panel whatever order the
 // bodies were written in, and reordering the tabs list moves the bodies with
 // it. A tab with no such child shows an empty panel; a child no tab names is
-// not drawn. We render each body ourselves instead of via `NodeChildren`
+// not drawn, and a notice under the strip names it. We render each body ourselves instead of via `NodeChildren`
 // because every one has to sit in its own `TabsContent` panel.
 //
 // Server-owned tabs / active (with optimistic local active on click). Two
@@ -39,6 +39,7 @@ import {
 	useSetProps,
 	useStringProp,
 } from "../../tree";
+import { Unpaired } from "./unpaired";
 
 type Tab = { id: string; label: string };
 const VARIANTS = ["line", "pill", "segmented"] as const;
@@ -76,6 +77,8 @@ function TabsView({ path }: NodeProps) {
 	};
 
 	if (tabs.length === 0) return null;
+	const ids = new Set(tabs.map((t) => t.id));
+	const stray = children.filter((s) => !ids.has(s));
 
 	return (
 		<TabsPrimitive value={activeId} onValueChange={onValueChange}>
@@ -105,6 +108,7 @@ function TabsView({ path }: NodeProps) {
 					) : null}
 				</TabsContent>
 			))}
+			<Unpaired path={path} segments={stray} why="no tab has that id" />
 		</TabsPrimitive>
 	);
 }

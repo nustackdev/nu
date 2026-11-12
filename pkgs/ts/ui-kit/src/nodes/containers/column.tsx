@@ -2,8 +2,8 @@
 // justification, and padding.
 //
 // Children are not a prop and not a list of paths: they are the node's own
-// children in the tree, in insertion order, which is the order they were
-// first written in. `NodeChildren` renders them, so there is nothing to
+// children in the tree. Positions (`col[0]`) draw in number order, names in
+// the order they were first written. `NodeChildren` renders them, so there is nothing to
 // thread through and nothing to keep in sync.
 //
 // TODO(retune): the legacy Column Ref accepts numeric `gap` / `padding`
@@ -25,13 +25,21 @@
 // inline margins, which center it in a block or a flex column parent alike.
 // "full", the default, caps nothing. The names are the Container's page
 // widths; a page's frame, with its gutter, is a Container.
+//
+// `height`, `max_height` and `scroll` size the column (see `sizing.ts`).
+// `grow` {seg: weight} hands a child a share of the height left over, so in a
+// column of fixed height a list under a header takes the rest; `basis`
+// {seg: px} is a child's height before growing. A sized child sits in a flex
+// cell of its own; the rest keep the cell above.
 
+import { type ComponentType, createContext, useContext, useMemo } from "react";
 import { PAGE_WIDTH_CLASSES, type PageWidth } from "../../components/ui/container";
 import { GAP_CLASSES, PADDING_CLASSES, stepClass } from "../../lib/steps";
 import { cn } from "../../lib/utils";
 import {
 	BareCell,
 	BlockCell,
+	type CellProps,
 	FlowProvider,
 	NodeChildren,
 	type NodeEntry,
@@ -40,6 +48,7 @@ import {
 	useNumberProp,
 	useStringProp,
 } from "../../tree";
+import { useSizing, useWeights, type Weights } from "./sizing";
 
 const ALIGN_CLASSES: Record<string, string> = {
 	start: "items-start",
@@ -57,6 +66,28 @@ const JUSTIFY_CLASSES: Record<string, string> = {
 	evenly: "justify-evenly",
 };
 
+type ChildSizes = { grow: Weights; basis: Weights; Cell: ComponentType<CellProps> };
+
+const ChildSizesContext = createContext<ChildSizes>({ grow: {}, basis: {}, Cell: BlockCell });
+
+// A child the column sizes gets a flex cell along the column; any other
+// child keeps the column's own cell.
+function ColumnCell({ path, children }: CellProps) {
+	const { grow, basis, Cell } = useContext(ChildSizesContext);
+	const segment = String(path[path.length - 1]);
+	const weight = grow[segment];
+	const start = basis[segment];
+	if (weight === undefined && start === undefined) return <Cell path={path}>{children}</Cell>;
+	return (
+		<div
+			data-slot="column-cell"
+			className="flex min-h-0 min-w-0 flex-col *:grow"
+			style={{ flex: `${weight ?? 0} 1 ${start !== undefined ? `${start}px` : "0px"}` }}
+		>
+			{children}
+		</div>
+	);
+}
 
 function ColumnView({ path }: NodeProps) {
 	const gap = useNumberProp(path, "gap", 4);
@@ -65,6 +96,8 @@ function ColumnView({ path }: NodeProps) {
 	const padding = useNumberProp(path, "padding", 0);
 	const maxWidth = useStringProp(path, "max_width", "full");
 	const center = useBoolProp(path, "center", true);
+	const { grow, basis } = useWeights(path);
+	const box = useSizing(path);
 
 	const gapCls = stepClass(GAP_CLASSES, gap);
 	const padCls = stepClass(PADDING_CLASSES, padding);
@@ -72,6 +105,8 @@ function ColumnView({ path }: NodeProps) {
 	const justifyCls = JUSTIFY_CLASSES[justify] ?? JUSTIFY_CLASSES.start;
 	// The page widths the Container takes too; "full" caps nothing here.
 	const maxCls = maxWidth === "full" ? undefined : PAGE_WIDTH_CLASSES[maxWidth as PageWidth];
+	const Cell = alignCls === ALIGN_CLASSES.stretch ? BlockCell : BareCell;
+	const sizes = useMemo(() => ({ grow, basis, Cell }), [grow, basis, Cell]);
 
 	return (
 		<div
@@ -84,13 +119,14 @@ function ColumnView({ path }: NodeProps) {
 				justifyCls,
 				maxCls && ["w-full", maxCls],
 				maxCls && center && "mx-auto",
+				box.className,
 			)}
+			style={box.style}
 		>
 			<FlowProvider flow="block">
-				<NodeChildren
-					path={path}
-					cell={alignCls === ALIGN_CLASSES.stretch ? BlockCell : BareCell}
-				/>
+				<ChildSizesContext.Provider value={sizes}>
+					<NodeChildren path={path} cell={ColumnCell} indexed />
+				</ChildSizesContext.Provider>
 			</FlowProvider>
 		</div>
 	);

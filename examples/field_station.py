@@ -131,7 +131,7 @@ class SpeciesCard(ui.Card):
 
 
 class Log(ui.Collapsible):
-    runs = ui.TableRef.slot(columns=["time", "trap", "species", "count"], row_key="time")
+    runs = ui.DataTableRef.slot(columns=["time", "trap", "species", "count"], row_key="time")
 
 
 class NotesField(ui.Field):
@@ -173,7 +173,7 @@ class Home(ui.Container):
     intro = Intro.slot()
     toolbar = Toolbar.slot(gap=1)
     h_stats = ui.HeadingRef.slot(label="Today")
-    stats = Stats.slot(columns=4, min_width=140, gap=3)
+    stats = Stats.slot(max_columns=4, min_width=140, gap=3)
     h_trend = ui.HeadingRef.slot(label="Populations")
     trend = Trend.slot(wrap=True, min_width=320)
     mix = Mix.slot(wrap=True, min_width=280)

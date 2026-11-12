@@ -2,7 +2,7 @@
 //
 // Children are the node's own children in the tree, in insertion order, one
 // cell each. Composes the kit Grid primitive, which owns the track list:
-// `columns` caps the cells on a row (0 lets the width decide), `min_width`
+// `max_columns` caps the cells on a row (0 lets the width decide), `min_width`
 // is the narrowest a cell gets, so the same grid is three wide on a desktop
 // and stacks on a phone.
 //
@@ -21,29 +21,60 @@
 // phone. The grid measures its tracks only while some cell spans.
 //
 // Wire: chrome is plain props, merged by the default store `write`
-// ({columns, min_width, gap, align, padding, dense, spans}); `set_columns`
-// from Python is a write of {columns}. `set_span` is its own op, {key, cols,
-// rows}, merged into `spans` here, since a write would replace the whole map.
+// ({max_columns, min_width, gap, align, padding, dense, spans});
+// `set_max_columns` from Python is a write of {max_columns}. `set_span` is
+// its own op, {key, cols, rows}, merged into `spans` here, since a write
+// would replace the whole map. A placed grid ships no `max_columns` or
+// `min_width`, a flowing one no `cols` / `rows` / `stack_below`.
 // Unknown values fall back to the defaults below.
+//
+// ## Placed
+//
+// `cols` (a track template, "2fr 1fr") makes it a board: a child at segment
+// "r,c" sits at row r, column c (`grid[r, c]` in Python), and a place nobody
+// fills stays empty. `rows` is the row template; rows past it size to their
+// content. Spans keyed "r,c" cover tracks from that place, clipped at the
+// board's last column. Keyed children ("note", "0") fill the free places,
+// row after row, the way CSS auto placement does. Cells draw in reading
+// order (placed ones by row then column, then the keyed ones), so a screen
+// reader and a stacked board read the same.
+//
+// `stack_below` (px): under that width the board is one column, cells in
+// that reading order and no spans, so a phone gets a stack. 0 never stacks.
+//
+// `height`, `max_height` and `scroll` size the grid (see `sizing.ts`); a
+// board with `rows="auto 1fr"` and a height gives its last row the rest.
 
-import { createContext, useContext, useMemo, useState } from "react";
+import {
+	type CSSProperties,
+	createContext,
+	useContext,
+	useLayoutEffect,
+	useMemo,
+	useState,
+} from "react";
 import {
 	type GridAlign,
 	Grid as GridPrimitive,
+	gridPlace,
 	gridSpan,
+	templateTracks,
 	useTrackCount,
 } from "../../components/ui/grid";
 import {
 	type CellProps,
 	FlowProvider,
-	NodeChildren,
+	indexedOrder,
 	type NodeEntry,
 	type NodeProps,
+	NodeView,
 	useBoolProp,
+	useChildren,
 	useEnumProp,
 	useNumberProp,
 	useProp,
 } from "../../tree";
+import { useSizing } from "./sizing";
 
 const ALIGNS: readonly GridAlign[] = ["stretch", "start", "center", "end"];
 
@@ -67,32 +98,105 @@ export function readSpans(raw: unknown): Spans {
 	return out;
 }
 
-const SpanContext = createContext<{ spans: Spans; tracks: number }>({
+/** A segment that names a place, "r,c", as [row, col]; anything else null. */
+export function readPlace(segment: string): [number, number] | null {
+	const m = /^(\d+),(\d+)$/.exec(segment);
+	return m ? [Number(m[1]), Number(m[2])] : null;
+}
+
+/**
+ * Children in reading order: placed ones ("r,c") by row then column, then
+ * the keyed ones, positions in number order and names in write order.
+ */
+export function readingOrder(segments: readonly string[]): string[] {
+	const placed: [string, number, number][] = [];
+	const keyed: string[] = [];
+	for (const s of segments) {
+		const at = readPlace(s);
+		if (at) placed.push([s, at[0], at[1]]);
+		else keyed.push(s);
+	}
+	placed.sort((a, b) => a[1] - b[1] || a[2] - b[2]);
+	return [...placed.map(([s]) => s), ...indexedOrder(keyed)];
+}
+
+type Mode = "flow" | "placed" | "stacked";
+
+const SpanContext = createContext<{ spans: Spans; tracks: number; mode: Mode }>({
 	spans: NO_SPANS,
 	tracks: Number.POSITIVE_INFINITY,
+	mode: "flow",
 });
+
+/** Where a cell sits: a span in flow, a place (and span) on a board, nothing stacked. */
+function cellStyle(
+	segment: string,
+	spans: Spans,
+	tracks: number,
+	mode: Mode,
+): CSSProperties | undefined {
+	if (mode === "stacked") return undefined;
+	const span = spans[segment];
+	if (mode === "placed") {
+		const at = readPlace(segment);
+		if (at) return gridPlace(at[0], at[1], span?.cols ?? 1, span?.rows ?? 1, tracks);
+		// A keyed child on a board flows into a free place, spanning if asked.
+		return span ? gridSpan(span.cols, span.rows, tracks) : undefined;
+	}
+	return span ? gridSpan(span.cols, span.rows, tracks) : undefined;
+}
 
 // One child, one cell. A one-track grid of its own, so the child fills the
 // cell in both directions the way a direct grid item would, and min-width 0
 // all the way down so a chart takes the cell's width, not its own.
 function GridCell({ path, children }: CellProps) {
-	const { spans, tracks } = useContext(SpanContext);
+	const { spans, tracks, mode } = useContext(SpanContext);
 	const segment = String(path[path.length - 1]);
-	const span = spans[segment];
 	return (
 		<div
 			data-slot="grid-cell"
 			data-cell={segment}
 			className="grid min-w-0 grid-cols-1"
-			style={span ? gridSpan(span.cols, span.rows, tracks) : undefined}
+			style={cellStyle(segment, spans, tracks, mode)}
 		>
 			<FlowProvider flow="grid">{children}</FlowProvider>
 		</div>
 	);
 }
 
+/** The width of `el`, kept current as it resizes; null until measured or when off. */
+function useWidth(el: HTMLElement | null, enabled: boolean): number | null {
+	const [width, setWidth] = useState<number | null>(null);
+	useLayoutEffect(() => {
+		if (!el || !enabled || typeof ResizeObserver === "undefined") return;
+		const measure = () => setWidth(el.clientWidth);
+		measure();
+		const observer = new ResizeObserver(measure);
+		observer.observe(el);
+		return () => observer.disconnect();
+	}, [el, enabled]);
+	return enabled ? width : null;
+}
+
+const TRACK_FUNCTIONS = new Set(["repeat", "minmax", "fit-content", "min", "max", "calc"]);
+
+/** A track template off the wire: text as is, a count as that many equal tracks. */
+function readTemplate(raw: unknown): string {
+	if (typeof raw === "number" && Number.isInteger(raw) && raw >= 1) {
+		return `repeat(${raw}, minmax(0, 1fr))`;
+	}
+	if (typeof raw !== "string") return "";
+	const text = raw.trim();
+	// The same guard the Python side applies: track sizes and track functions only.
+	if (!/^[a-z0-9.%(), -]+$/.test(text)) return "";
+	for (const [, name] of text.matchAll(/([a-z-]+)\(/g)) {
+		if (!TRACK_FUNCTIONS.has(name)) return "";
+	}
+	return text;
+}
+
 function GridView({ path }: NodeProps) {
-	const columns = useNumberProp(path, "columns", 0);
+	const maxColumns = useNumberProp(path, "max_columns", 0);
 	const minWidth = useNumberProp(path, "min_width", 240);
 	const gap = useNumberProp(path, "gap", 4);
 	const align = useEnumProp(path, "align", ALIGNS, "stretch");
@@ -102,30 +206,53 @@ function GridView({ path }: NodeProps) {
 	// re-render on a span change and not on every grid render.
 	const rawSpans = useProp<unknown>(path, "spans", null);
 	const spans = useMemo(() => readSpans(rawSpans), [rawSpans]);
+	const cols = readTemplate(useProp<unknown>(path, "cols", ""));
+	const rows = readTemplate(useProp<unknown>(path, "rows", ""));
+	const stackBelow = useNumberProp(path, "stack_below", 0);
+	const box = useSizing(path);
+	const placed = cols !== "";
 	const spanning = Object.keys(spans).length > 0;
 	const [el, setEl] = useState<HTMLDivElement | null>(null);
-	const tracks = useTrackCount(
+	const flowTracks = useTrackCount(
 		el,
-		columns,
+		maxColumns,
 		minWidth,
-		columns >= 1 ? Math.floor(columns) : Number.POSITIVE_INFINITY,
-		spanning,
+		maxColumns >= 1 ? Math.floor(maxColumns) : Number.POSITIVE_INFINITY,
+		spanning && !placed,
 	);
+	const width = useWidth(el, placed && stackBelow > 0);
+	const stacked = placed && width !== null && width < stackBelow;
+	const mode: Mode = stacked ? "stacked" : placed ? "placed" : "flow";
+	const tracks = placed ? templateTracks(cols) : flowTracks;
 
-	const spanValue = useMemo(() => ({ spans, tracks }), [spans, tracks]);
+	const spanValue = useMemo(() => ({ spans, tracks, mode }), [spans, tracks, mode]);
+	const written = useChildren(path);
+	const order = useMemo(
+		() => (placed ? readingOrder(written) : indexedOrder(written)),
+		[placed, written],
+	);
 
 	return (
 		<GridPrimitive
 			ref={setEl}
-			columns={columns}
+			maxColumns={maxColumns}
 			minWidth={minWidth}
 			gap={gap}
 			align={align}
 			padding={padding}
 			dense={dense}
+			cols={stacked ? "minmax(0, 1fr)" : cols || undefined}
+			rows={stacked ? undefined : rows || undefined}
+			data-mode={mode}
+			className={box.className}
+			style={box.style}
 		>
 			<SpanContext.Provider value={spanValue}>
-				<NodeChildren path={path} cell={GridCell} />
+				{order.map((segment) => (
+					<GridCell key={segment} path={[...path, segment]}>
+						<NodeView path={[...path, segment]} />
+					</GridCell>
+				))}
 			</SpanContext.Provider>
 		</GridPrimitive>
 	);

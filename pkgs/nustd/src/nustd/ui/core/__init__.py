@@ -12,6 +12,9 @@ The reusable seam under nustd.ui:
   ``WsSubscription``   -- that transport over a websocket, shared by ws hosts
 - ``Chain`` /
   ``boot_chains``      -- a Shape's slots as the init frames that seed a tree
+- ``child_at`` /
+  ``check_key`` /
+  ``as_spec``          -- descent: the child a container answers with at a place
 - ``Frame`` /
   ``encode/decode``    -- wire protocol envelope
 - ``Send`` /
@@ -32,6 +35,7 @@ under ``nustd.ui.refs`` targets this core, not any specific host.
 
 from .base import ItemRef, Ref
 from .chains import Chain, boot_chains
+from .descent import as_spec, check_key, child_at
 from .interactions import (
     EVENT,
     Append,
@@ -90,7 +94,10 @@ __all__ = [
     "Write",
     "WsSession",
     "WsSubscription",
+    "as_spec",
     "boot_chains",
+    "check_key",
+    "child_at",
     "decode",
     "encode",
 ]

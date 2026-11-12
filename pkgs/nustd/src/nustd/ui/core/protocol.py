@@ -15,7 +15,8 @@ included, so there is no separator that could take it apart again.
 
 `chain` is that same path annotated: one `(segment, type, props)` triple per
 level, root-first, so the browser can create every node on the way down the
-first time it sees a write. Every write ships the whole chain even when the
+first time it sees a write. A level whose type is None (a bare child, kind
+unnamed) claims nothing: it addresses whatever is there. Every write ships the whole chain even when the
 nodes already exist -- the sender is stateless and the browser heals itself.
 
 Wire format is transport-agnostic -- ships bytes; hosts (nudle, others)
@@ -87,7 +88,7 @@ class Frame:
         ref: Sequence[str] = (),
         payload: Any = None,
         id: str | None = None,
-        chain: Sequence[tuple[str, str, dict[str, Any]]] = (),
+        chain: Sequence[tuple[str, str | None, dict[str, Any]]] = (),
     ) -> None:
         self.op = _op_of(op)
         self.ref = tuple(ref)

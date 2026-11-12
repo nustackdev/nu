@@ -1,6 +1,7 @@
 """Kept for old import paths: the output names, now in ``leaves`` and ``collections.list``."""
 
 from nustd.ui.refs.collections.list import ListRef
+from nustd.ui.refs.leaves.data_table import DataTableRef, InsertRow, RemoveRows, SetOrder, SetRow
 from nustd.ui.refs.leaves.output import (
     AlertRef,
     BadgeRef,
@@ -18,12 +19,12 @@ from nustd.ui.refs.leaves.output import (
     StatusDotRef,
     TextRef,
 )
-from nustd.ui.refs.leaves.table import InsertRow, RemoveRows, SetOrder, SetRow, TableRef
 
 
 __all__ = [
     "AlertRef",
     "BadgeRef",
+    "DataTableRef",
     "DividerRef",
     "EmptyStateRef",
     "GaugeRef",
@@ -41,6 +42,5 @@ __all__ = [
     "ShortcutRef",
     "StatRef",
     "StatusDotRef",
-    "TableRef",
     "TextRef",
 ]

@@ -18,24 +18,29 @@ a class has no mount point.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from typing_extensions import Self
 
 from nu.forms import Dict
 from nu.lang.sentinels import UNSET
+from nustd.ui.core import child_at
 from nustd.ui.core.interactions import Changed, Send, Write
 
 from ..vocab import Align, Target
 from ..vocab import set_href as _set_href
 from .base import DictCollectionRef, ShapeCollectionRef
-from .named import actions_ref, footer_ref, media_ref
+from .named import ACTIONS, CONTROL, FOOTER, MEDIA, actions_ref, footer_ref, media_ref
+from .sizing import sizing_props
 
 
 if TYPE_CHECKING:
+    from nu.domains.shape import Slot
     from nu.lang import Nu
     from nu.lang.args import Arg, BoolArg, ListArg, StrArg
     from nustd.ui.core import Ref, Section
+
+    from .sizing import Length, Scroll
 
 
 __all__ = [
@@ -75,18 +80,48 @@ def _normalize_open(ids: object) -> list[str]:
     return [str(x) for x in ids if x is not None]
 
 
+def _admit_paired(ref: Ref, address: object, prop: str, what: str) -> None:
+    """Refuse a body at an id the container's declared ``prop`` list does not name.
+
+    A body is drawn only under an entry with its id, so a child at any other
+    id would never show. Checked against the list the container was declared
+    with; one left empty (filled later by ``set_tabs`` / ``set_sections``)
+    has nothing to check against.
+    """
+    if not isinstance(address, str):
+        return
+    declared = (ref._payload.get("props") or {}).get(prop)
+    if not isinstance(declared, list) or not declared:
+        return
+    ids = [e.get("id") for e in declared if isinstance(e, dict)]
+    if address not in ids:
+        owner = type(ref).__name__
+        msg = (
+            f"{owner}[{address!r}] is no {what} id, so it would never draw; {prop} lists"
+            f" {ids}. Add an entry for it, or put it under one of those"
+        )
+        raise ValueError(msg)
+
+
 class AccordionRef(DictCollectionRef):
     """Stack of collapsible sections, each body the child at the section's id.
 
-    The tab owns open state, the server owns the section list.
+    The tab owns open state, the server owns the section list. ``acc["id"]``
+    is the body of section ``id``; an id the declared ``sections`` does not
+    list is refused, since it would never draw.
     """
 
     _wire_type = "Accordion"
+    _positions: ClassVar[bool] = False
+
+    def _admit(self, address: object) -> None:
+        super()._admit(address)
+        _admit_paired(self, address, "sections", "section")
 
     @classmethod
     def slot(
         cls,
-        item: type[Section] | type[Ref] | None = None,
+        item: type[Section] | type[Ref] | Slot | None = None,
         /,
         *,
         sections: list[dict[str, str]] | None = None,
@@ -157,11 +192,12 @@ class CardRef(DictCollectionRef):
     """
 
     _wire_type = "Card"
+    _parts: ClassVar[frozenset[str]] = frozenset({MEDIA, ACTIONS, FOOTER})
 
     @classmethod
     def slot(
         cls,
-        item: type[Section] | type[Ref] | None = None,
+        item: type[Section] | type[Ref] | Slot | None = None,
         /,
         *,
         title: str = "",
@@ -231,6 +267,8 @@ class BoxRef(DictCollectionRef):
     ``background`` is the ground: ``muted`` the hover wash, ``sunken`` a well,
     ``accent`` the Starlight wash (a callout) and ``brand`` the Afterglow soft
     fill (a highlighted plan); the tinted two bring their own border tint.
+    ``height``, ``max_height`` and ``scroll`` size the box and scroll its
+    body past them (see ``sizing``); the title stays put.
     """
 
     _wire_type = "Box"
@@ -238,7 +276,7 @@ class BoxRef(DictCollectionRef):
     @classmethod
     def slot(
         cls,
-        item: type[Section] | type[Ref] | None = None,
+        item: type[Section] | type[Ref] | Slot | None = None,
         /,
         *,
         title: str = "",
@@ -247,6 +285,9 @@ class BoxRef(DictCollectionRef):
         background: Background = "none",
         shadow: Shadow = "none",
         gap: Gap = "md",
+        height: Length | None = None,
+        max_height: Length | None = None,
+        scroll: Scroll = "none",
     ) -> Self:
         return super().slot(
             item,
@@ -256,6 +297,7 @@ class BoxRef(DictCollectionRef):
             background=background,
             shadow=shadow,
             gap=gap,
+            **sizing_props("BoxRef", height=height, max_height=max_height, scroll=scroll),
         )
 
     def set_title(self, text: StrArg) -> Nu:
@@ -263,9 +305,39 @@ class BoxRef(DictCollectionRef):
 
 
 class FieldRef(ShapeCollectionRef):
-    """Label + one child input + help / error text."""
+    """Label + one control + help / error text.
+
+    ``field.control`` is the control: the one slot its Shape declares, or a
+    bare child at ``control`` whose kind ``.to`` names
+    (``field.control.to(InputRef)``). A Field holds that one child and no
+    other, so a second one is refused where it is built.
+    """
 
     _wire_type = "Field"
+    _parts: ClassVar[frozenset[str]] = frozenset({CONTROL})
+
+    @property
+    def control(self) -> Ref:
+        """The one control: the Shape's slot, or a bare child at ``control``."""
+        section_cls = self._payload.get("section_cls")
+        slots = getattr(section_cls, "_slots", {})
+        if slots:
+            slot = next(iter(slots.values()))
+            return slot.create_ref(owner_shape=section_cls, parent_ref=self)
+        return child_at(self, CONTROL)
+
+    def _admit(self, address: object) -> None:
+        super()._admit(address)
+        if not isinstance(address, str):
+            return
+        slots = getattr(self._payload.get("section_cls"), "_slots", {})
+        place = next(iter(slots), CONTROL)
+        if address != place:
+            msg = (
+                f"Field holds one control, at {place!r}, not {address!r}; reach it as"
+                f" field.control, and put several inputs in a Row or a Column there"
+            )
+            raise TypeError(msg)
 
     @classmethod
     def slot(
@@ -302,7 +374,7 @@ class FieldsetRef(DictCollectionRef):
     @classmethod
     def slot(
         cls,
-        item: type[Section] | type[Ref] | None = None,
+        item: type[Section] | type[Ref] | Slot | None = None,
         /,
         *,
         legend: str = "",
@@ -329,7 +401,7 @@ class FormRef(DictCollectionRef):
     @classmethod
     def slot(
         cls,
-        item: type[Section] | type[Ref] | None = None,
+        item: type[Section] | type[Ref] | Slot | None = None,
         /,
         *,
         title: str = "",
@@ -343,22 +415,32 @@ class FormRef(DictCollectionRef):
         return Write(self, Dict.of(title=text))
 
 
+ModalSize = Literal["sm", "md", "lg", "xl"]
+
+
 class ModalRef(DictCollectionRef):
-    """Dialog overlay. Open vs closed is the thing it carries, so it has a `set()`."""
+    """Dialog overlay. Open vs closed is the thing it carries, so it has a `set()`.
+
+    `size` caps its width ("sm", "md", "lg", "xl"). It never grows past the
+    window: a tall body scrolls inside it, the title stays put.
+    """
 
     _wire_type = "Modal"
 
     @classmethod
     def slot(
         cls,
-        item: type[Section] | type[Ref] | None = None,
+        item: type[Section] | type[Ref] | Slot | None = None,
         /,
         *,
         open: bool = False,
         title: str = "",
         dismissible: bool = True,
+        size: ModalSize = "md",
     ) -> Self:
-        return super().slot(item, open=bool(open), title=title, dismissible=bool(dismissible))
+        return super().slot(
+            item, open=bool(open), title=title, dismissible=bool(dismissible), size=size
+        )
 
     def set_open(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(open=flag))
@@ -422,17 +504,25 @@ TabsVariant = Literal["line", "pill", "segmented"]
 class TabsRef(DictCollectionRef):
     """Tab strip plus active body. A tab's body is the child at the tab's id.
 
+    ``tabs["id"]`` is the body of tab ``id``; an id the declared ``tabs``
+    does not list is refused, since it would never draw.
+
     ``variant`` is the strip: ``line`` underlines the active tab across a full
     width rule, ``pill`` puts a chip behind it, ``segmented`` is one track
     with a raised thumb, for a view switch.
     """
 
     _wire_type = "Tabs"
+    _positions: ClassVar[bool] = False
+
+    def _admit(self, address: object) -> None:
+        super()._admit(address)
+        _admit_paired(self, address, "tabs", "tab")
 
     @classmethod
     def slot(
         cls,
-        item: type[Section] | type[Ref] | None = None,
+        item: type[Section] | type[Ref] | Slot | None = None,
         /,
         *,
         tabs: list[dict[str, str]] | None = None,

@@ -1,4 +1,4 @@
-// TableRef -- rows and columns on the kit DataTable: reads by default, and
+// DataTableRef -- rows and columns on the kit DataTable: reads by default, and
 // selects, edits, inserts, deletes and moves rows, and reshapes columns, when
 // the server asks it to.
 //
@@ -34,6 +34,22 @@
 //                   (the column handle's menu, a header right-click, F2 on a header).
 //
 // Every header sorts unless its dict says `sortable: false`, as it always has.
+//
+// ## Cell specs
+//
+// A column dict may carry `cell: {kind, props, prop}`: every cell of that
+// column draws as that registered kind, from the cell's value. A scalar value
+// lands on `prop` (the kind's main prop, "value" when unset), a dict value
+// merges over `props`, and a blank (null or "") draws nothing. The value is
+// still the data: it sorts, edits (the column's `kind` editor, as before) and
+// reads back as sent. Only the look changes. Python lowers
+// `{"cell": BadgeRef.slot(...)}` to this shape and checks the kind; here an
+// unregistered kind draws the plain text.
+//
+// Each drawn cell is a browser-only node at `[table, "~cells", rowKey,
+// column]`, written when the cell mounts and removed when it unmounts, so a
+// row or column that goes away takes its cells with it. The server never
+// writes there (the table is a leaf), and erasing the table takes them all.
 //
 // ## Row keys
 //
@@ -88,7 +104,7 @@
 //
 //   write   a partial merge, except `max_rows` is a sliding window over `rows`.
 //   append  push one row (a list or a dict), same cap.
-//   The row-level changes, one op each (the Python TableRef's SetRow, InsertRow,
+//   The row-level changes, one op each (the Python DataTableRef's SetRow, InsertRow,
 //   RemoveRows and SetOrder interactions), so the server ships only what changed:
 //   set_row      {key, row}    replace the row keyed `key` in place, or append it when no
 //                              row has that key (same cap)
@@ -100,8 +116,8 @@
 //   with a key is the one touched, and a malformed payload changes nothing.
 //   read    answer {columns, rows} as they were sent.
 
-import { type NodeHandler, OPS, type Props } from "@nustackdev/ui-core";
-import { useCallback, useEffect, useMemo } from "react";
+import { getNode, type NodeHandler, OPS, type Path, type Props } from "@nustackdev/ui-core";
+import { useCallback, useEffect, useLayoutEffect, useMemo } from "react";
 import {
 	DataTable,
 	type DataTableColumn,
@@ -112,8 +128,13 @@ import {
 import { defaultAlign } from "../../components/ui/data-table-model";
 import { Text } from "../../components/ui/text";
 import {
+	FlowProvider,
 	type NodeEntry,
 	type NodeProps,
+	NodeView,
+	pathKey,
+	registry,
+	tree,
 	useBoolProp,
 	useListProp,
 	useSend,
@@ -123,8 +144,14 @@ import {
 
 type WireRow = unknown[] | Record<string, unknown>;
 
+/** How a column's cells draw: a registered kind, its props, and where a scalar value lands. */
+type CellSpec = { kind: string; props: Props; prop: string };
+
 /** A column as drawn: the kit's shape under a key unique in the table, plus the key as sent. */
-type Column = DataTableColumn & { name: string };
+type Column = DataTableColumn & { name: string; cell?: CellSpec };
+
+/** The segment the drawn cells sit under, browser side only. */
+const CELLS = "~cells";
 
 const KINDS: readonly DataTableKind[] = ["text", "number", "bool", "select"];
 const ALIGNS = ["left", "center", "right"] as const;
@@ -169,6 +196,75 @@ function unique(key: string, taken: Set<string>): string {
 	return out;
 }
 
+/** A column's `cell` off the wire, or undefined when it names no registered kind. */
+function readCellSpec(v: unknown): CellSpec | undefined {
+	if (!isDict(v) || typeof v.kind !== "string" || !registry[v.kind]?.component) return undefined;
+	const prop = typeof v.prop === "string" && v.prop !== "" ? v.prop : "value";
+	return { kind: v.kind, props: isDict(v.props) ? v.props : {}, prop };
+}
+
+/** The props one cell draws with, or null for a blank cell. */
+function cellProps(spec: CellSpec, value: unknown): Props | null {
+	if (value == null || value === "") return null;
+	if (isDict(value)) return { ...spec.props, ...value };
+	return { ...spec.props, [spec.prop]: value };
+}
+
+/**
+ * One cell drawn as its column's kind: a browser-only node under the table,
+ * there while the cell is mounted. A value that changes rewrites its props
+ * (keys the last value set and this one does not are cleared); a kind that
+ * changes replaces the node.
+ */
+function SpecCell({
+	path,
+	row,
+	column,
+	spec,
+	value,
+}: {
+	path: Path;
+	row: string;
+	column: string;
+	spec: CellSpec;
+	value: unknown;
+}) {
+	const key = pathKey([...path, CELLS, row, column]);
+	// biome-ignore lint/correctness/useExhaustiveDependencies: the place is compared by key.
+	const at = useMemo(() => [...path, CELLS, row, column], [key]);
+	const props = useMemo(() => cellProps(spec, value), [spec, value]);
+	useLayoutEffect(() => {
+		const store = tree.getState();
+		const there = store.getIn(at);
+		if (!props) {
+			if (there) store.remove(at);
+			return;
+		}
+		if (there && there.type !== spec.kind) store.remove(at);
+		const kept = there && there.type === spec.kind ? there.props : {};
+		const cleared: Props = {};
+		for (const k of Object.keys(kept)) if (!(k in props)) cleared[k] = undefined;
+		const above = at.slice(0, -1).map((s) => [s, null] as [string, null]);
+		store.write([...above, [at[at.length - 1], spec.kind]], { ...cleared, ...props });
+	}, [at, spec.kind, props]);
+	useLayoutEffect(
+		() => () => {
+			const store = tree.getState();
+			store.remove(at);
+			// The row's holder goes with its last cell.
+			const holder = at.slice(0, -1);
+			if (getNode(store.root, holder)?.children.size === 0) store.remove(holder);
+		},
+		[at],
+	);
+	if (!props) return null;
+	return (
+		<FlowProvider flow="inline">
+			<NodeView path={at} />
+		</FlowProvider>
+	);
+}
+
 /** The wire's columns as the kit draws them; positional or dict-row keys when none are sent. */
 function readColumns(
 	raw: readonly unknown[],
@@ -203,6 +299,7 @@ function readColumns(
 			align,
 			width: d.width == null ? undefined : str(d.width),
 			sortable: d.sortable !== false,
+			cell: readCellSpec(d.cell),
 		};
 	});
 }
@@ -349,6 +446,19 @@ function TableView({ path }: NodeProps) {
 	);
 	const sortKey = cols.find((c) => c.name === sortColumn && sortColumn !== "")?.key;
 	const nameOf = useCallback((key: string) => cols.find((c) => c.key === key)?.name ?? key, [cols]);
+	const specs = useMemo(() => {
+		const out = new Map<string, CellSpec>();
+		for (const c of cols) if (c.cell) out.set(c.key, c.cell);
+		return out;
+	}, [cols]);
+	const renderCell = useCallback(
+		(value: unknown, column: DataTableColumn, row: DataTableRow) => {
+			const spec = specs.get(column.key);
+			if (!spec) return undefined;
+			return <SpecCell path={path} row={row.key} column={column.key} spec={spec} value={value} />;
+		},
+		[specs, path],
+	);
 
 	const notify = useCallback(
 		(event: string, fields: Record<string, unknown>) => send(OPS.notify, { event, ...fields }),
@@ -469,11 +579,12 @@ function TableView({ path }: NodeProps) {
 			onColumnMove={columnsEditable ? onColumnMove : undefined}
 			onColumnKind={columnsEditable ? onColumnKind : undefined}
 			onColumnAlign={columnsEditable ? onColumnAlign : undefined}
+			renderCell={specs.size ? renderCell : undefined}
 		/>
 	);
 }
 
-export const TableRef: NodeEntry = {
+export const DataTableRef: NodeEntry = {
 	component: TableView,
 	fill: true,
 	handlers: {

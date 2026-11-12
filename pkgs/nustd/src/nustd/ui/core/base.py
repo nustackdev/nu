@@ -63,13 +63,17 @@ def _wire_type_of(ref_or_section_cls: type) -> str:
     return from_ref or ref_or_section_cls.__name__
 
 
-def _level_type(term: object) -> str:
-    """Wire type the browser renders this level with.
+def _level_type(term: object) -> str | None:
+    """Wire type the browser renders this level with, or None for no claim.
 
     A SectionRef is substrate: what the browser draws is the Section class
-    it carries, same as the boot batch reports. Everything else is the
+    it carries, same as the boot batch reports. A bare ``ItemRef`` (a child
+    reached by descent whose kind nobody named) claims none, so the browser
+    takes the level as whatever is already there. Everything else is the
     ref class itself.
     """
+    if type(term) is ItemRef:
+        return None
     section_cls = getattr(term, "_payload", {}).get("section_cls")
     return _wire_type_of(section_cls if section_cls is not None else type(term))
 
@@ -104,13 +108,8 @@ class Ref(StructuredRef):
         owner_shape: type[Shape] | None = None,
         props: Mapping[str, object] | None = None,
     ) -> None:
-        if isinstance(parent_ref, Ref) and type(parent_ref)._leaf:
-            leaf = type(parent_ref).__name__
-            msg = (
-                f"{leaf} is a leaf and holds no children; put {address!r} in a "
-                "container (Column, Row, Card, ...)"
-            )
-            raise TypeError(msg)
+        if isinstance(parent_ref, Ref):
+            parent_ref._admit(address)
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
         # State lives in ``payload`` (part of the Term identity) so the base
         # ``Term._with_children`` carries it across a tree rewrite -- no override.
@@ -120,6 +119,33 @@ class Ref(StructuredRef):
             # same normalizer and the same defaults, so the browser cannot tell
             # ``RowRef("r", parent_ref=card, props=...)`` from a declared slot.
             self._payload["props"] = dict(type(self).slot(**props).props)
+
+    def _admit(self, address: object) -> None:
+        """Refuse a child at ``address`` this Ref cannot hold, by raising.
+
+        Runs when the child is built, so a wrong child fails where it is
+        written. A leaf holds none, and a bare item ref holds none until its
+        kind is named. A container with rules of its own (a Field's one
+        control, a Tabs' bodies at tab ids) extends it.
+        """
+        if type(self) is ItemRef:
+            msg = (
+                f"{self._segment_repr()} is a bare child, its kind unnamed, so it holds no"
+                f" children; name the kind first: .to(ColumnRef)[...] or .to(Kind.slot(...))"
+            )
+            raise TypeError(msg)
+        if type(self)._leaf:
+            leaf = type(self).__name__
+            msg = (
+                f"{leaf} is a leaf and holds no children; put {address!r} in a "
+                "container (Column, Row, Card, ...)"
+            )
+            raise TypeError(msg)
+
+    def _segment_repr(self) -> str:
+        """``ref[key]`` for messages: the key this Ref was built at, when it is a plain one."""
+        segment = self._payload.get("segment")
+        return f"ref[{segment!r}]" if isinstance(segment, (str, int)) else "this child"
 
     # --- wire-path resolution ------------------------------------------------
 
@@ -143,7 +169,9 @@ class Ref(StructuredRef):
         segments.reverse()
         return tuple(segments)
 
-    async def _aresolve_chain(self, rt: Runtime, nid: int) -> tuple[tuple[str, str, dict], ...]:
+    async def _aresolve_chain(
+        self, rt: Runtime, nid: int
+    ) -> tuple[tuple[str, str | None, dict], ...]:
         """Same walk as ``_aresolve_address``, annotated per level.
 
         Returns ``(segment, type, props)`` root-first, one entry per level.
@@ -152,7 +180,7 @@ class Ref(StructuredRef):
         browser needs all three to create a component on first write instead
         of being told about it up front.
         """
-        levels: list[tuple[str, str, dict]] = []
+        levels: list[tuple[str, str | None, dict]] = []
         cur = nid
         while True:
             kids = rt.program.children[cur]
@@ -282,5 +310,30 @@ class ItemRef(shape.ItemRef, Ref):
 
     Mirrors kv's ``ItemRef``: core's item tier over the fabric's own base. It
     is the one class ``.to`` and whatever the item tier grows reach every ui
-    child through, so it adds nothing of its own.
+    child through.
+
+    Built as itself, it is a bare child: what a container's descent answers
+    with when nothing names the kind (``row[0]`` on a Row with no ``item=``).
+    A bare child names no kind on the wire, so it can address whatever is
+    already at its place (``erase``, ``hide``, ``display``) but cannot bring
+    anything into being: ``init`` and every write raise, pointing at ``.to``.
     """
+
+    def init(self) -> Nu:
+        if type(self) is ItemRef:
+            raise TypeError(_bare_creates(self, "init"))
+        return super().init()
+
+
+def _bare_creates(ref: Ref, op: str) -> str:
+    """Why ``op`` on a bare child is refused: it would create a node of no kind."""
+    return (
+        f"{op} on {ref._segment_repr()} would create it, and a bare child names no kind;"
+        f" name it first: .to(TextRef).{op}(...) or .to(Kind.slot(...))"
+    )
+
+
+def check_creates(ref: object, op: str) -> None:
+    """Raise ``TypeError`` when ``op`` (which may create ``ref``'s node) targets a bare child."""
+    if type(ref) is ItemRef:
+        raise TypeError(_bare_creates(ref, op))  # type: ignore[arg-type]

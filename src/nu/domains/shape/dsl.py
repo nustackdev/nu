@@ -189,7 +189,11 @@ class ShapeMeta(ABCMeta):
                 value._owner_cls = cls
 
         inherited = {n for base in bases for n in getattr(base, "_slots", {})}
-        _check_slot_names(name, {n: s for n, s in slots.items() if n not in inherited})
+        _check_slot_names(
+            name,
+            {n: s for n, s in slots.items() if n not in inherited},
+            cls._slot_host_refs(),  # type: ignore[attr-defined]
+        )
 
         for field_name, slot in slots.items():
             setattr(cls, field_name, SlotDescriptor(field_name, slot))
@@ -215,7 +219,11 @@ def _shape_ref_classes() -> list[type]:
     return found
 
 
-def _check_slot_names(shape: str, slots: dict[str, Slot]) -> None:
+def _check_slot_names(
+    shape: str,
+    slots: dict[str, Slot],
+    host_refs: tuple[tuple[type, frozenset[str]], ...] = (),
+) -> None:
     """Refuse a slot named after a method or attribute of a ref.
 
     A slot is reached as an attribute of the shape ref above it
@@ -223,11 +231,16 @@ def _check_slot_names(shape: str, slots: dict[str, Slot]) -> None:
     attributes first: a slot named ``len`` or ``iter`` would silently reach the
     ref method instead. The reserved names are read off every ShapeRef class
     defined so far, the nu blueprint and each fabric's (the class a nested
-    shape slot produces), so they follow the surface as it grows.
+    shape slot produces), so they follow the surface as it grows, and off
+    ``host_refs``: the refs a fabric reaches this shape's slots through
+    (``Shape._slot_host_refs``), each with the names it answers with the slot
+    itself and so leaves free.
     """
-    shape_refs = _shape_ref_classes()
+    shape_refs = [(ref_cls, frozenset()) for ref_cls in _shape_ref_classes()]
     for field_name in slots:
-        for ref_cls in shape_refs:
+        for ref_cls, free in (*shape_refs, *host_refs):
+            if field_name in free:
+                continue
             if field_name in _public_names(ref_cls):
                 msg = (
                     f"Shape {shape}: slot {field_name!r} clashes with "
@@ -297,3 +310,14 @@ class Shape(metaclass=ShapeMeta):
     """
 
     _slots: ClassVar[dict[str, Slot]] = {}
+
+    @classmethod
+    def _slot_host_refs(cls) -> tuple[tuple[type, frozenset[str]], ...]:
+        """Refs this shape's slots are reached through as attributes, beyond ShapeRef.
+
+        A fabric whose shapes are reached through a ref of its own (ui's
+        container refs) names it here, with the names that ref answers with the
+        slot itself, so slot names are checked against its surface too. Each
+        entry is ``(ref_cls, free_names)``. None by default.
+        """
+        return ()

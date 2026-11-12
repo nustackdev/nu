@@ -5,7 +5,7 @@
           Shortcut, Alert, Divider, EmptyState, Stat, Progress, Gauge,
           JsonViewer).
 - page:   page furniture (Icon, Spacer, PageLink, NavItem).
-- table:  TableRef and its row ops.
+- data_table:  DataTableRef and its row ops.
 - tree:   TreeRef.
 - waterfall: WaterfallRef.
 - timeline: TimelineRef.
@@ -35,6 +35,7 @@ from .chart import (
     SunburstChart,
     TreemapChart,
 )
+from .data_table import DataTableRef, InsertRow, RemoveRows, SetOrder, SetRow
 from .display import AvatarRef, BreadcrumbRef, SkeletonRef, SpinnerRef, StatusPillRef
 from .input import (
     ButtonRef,
@@ -75,7 +76,6 @@ from .output import (
     TextRef,
 )
 from .page import IconRef, NavItemRef, PageLinkRef, SpacerRef
-from .table import InsertRow, RemoveRows, SetOrder, SetRow, TableRef
 from .timeline import TimelineRef
 from .tree import TreeRef
 from .waterfall import WaterfallRef
@@ -95,6 +95,7 @@ __all__ = [
     "Chart",
     "CheckboxRef",
     "CodeRef",
+    "DataTableRef",
     "DatePickerRef",
     "DividerRef",
     "EmptyStateRef",
@@ -142,7 +143,6 @@ __all__ = [
     "StatusSquaresRef",
     "SunburstChart",
     "SwitchRef",
-    "TableRef",
     "TagInputRef",
     "TextAreaRef",
     "TextRef",

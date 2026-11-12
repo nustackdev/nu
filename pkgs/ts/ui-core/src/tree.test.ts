@@ -273,7 +273,7 @@ describe("dispatch", () => {
 
 	it("lands a list payload on value rather than spreading it", () => {
 		const store = createTreeStore();
-		store.getState().dispatch(frame(OPS.write, ["a"], [1, 2, 3], [step("a", "TableRef")]));
+		store.getState().dispatch(frame(OPS.write, ["a"], [1, 2, 3], [step("a", "DataTableRef")]));
 		expect(store.getState().getIn(["a"])?.props).toEqual({ value: [1, 2, 3] });
 	});
 
@@ -301,7 +301,7 @@ describe("dispatch", () => {
 
 	it("routes an op to the handler for the node's type", () => {
 		const behaviours: Record<string, Behaviour> = {
-			TableRef: {
+			DataTableRef: {
 				handlers: {
 					append: (ctx, payload) =>
 						ctx.update((props) => {
@@ -311,7 +311,7 @@ describe("dispatch", () => {
 			},
 		};
 		const store = createTreeStore({ resolve: (t) => behaviours[t] });
-		store.getState().write([step("t", "TableRef", { rows: [] })]);
+		store.getState().write([step("t", "DataTableRef", { rows: [] })]);
 		store.getState().dispatch(frame("append", ["t"], { id: 1 }));
 		store.getState().dispatch(frame("append", ["t"], { id: 2 }));
 		expect(store.getState().getIn(["t"])?.props.rows).toEqual([{ id: 1 }, { id: 2 }]);

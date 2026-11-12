@@ -34,11 +34,16 @@ export const PADDING_CLASSES: Record<number, string> = {
 	16: "p-16",
 };
 
-/** The class for the ladder step nearest `n` (ties go to the smaller step). */
-export function stepClass(ladder: Record<number, string>, n: number): string {
+/** The ladder step nearest `n` (ties go to the smaller step). */
+export function nearestStep(ladder: Record<number, string>, n: number): number {
 	let best = 0;
 	for (const key of Object.keys(ladder).map(Number)) {
 		if (Math.abs(key - n) < Math.abs(best - n)) best = key;
 	}
-	return ladder[best];
+	return best;
+}
+
+/** The class for the ladder step nearest `n` (ties go to the smaller step). */
+export function stepClass(ladder: Record<number, string>, n: number): string {
+	return ladder[nearestStep(ladder, n)];
 }

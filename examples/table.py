@@ -1,4 +1,4 @@
-"""Table - an editable watchlist on TableRef.
+"""Table - an editable watchlist on DataTableRef.
 
 Flow: double click or F2 to edit a cell, click a checkbox to flip it, pick a
 genre from its list. Click to select (Cmd/Ctrl or Shift for more), Delete to
@@ -39,7 +39,7 @@ _FIELDS = [c["key"] for c in _COLUMNS]
 
 
 class WatchColumn(nustd.ui.Column):
-    table = nustd.ui.TableRef.slot(
+    table = nustd.ui.DataTableRef.slot(
         columns=_COLUMNS,
         label="Watchlist",
         row_key="id",

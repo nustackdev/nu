@@ -6,7 +6,7 @@ the Ref carries the chrome methods, the slot defaults and the wire type, and
 
     class Usage(PageSection):
         actions = ButtonRef.slot(label="Export", variant="secondary")
-        stats = Stats.slot(columns=3)
+        stats = Stats.slot(max_columns=3)
 
     class Sidebar(NavList):
         home = NavItemRef.slot(label="Home", href="/", icon="house")

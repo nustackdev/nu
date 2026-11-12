@@ -121,7 +121,7 @@ class StatsCard(nustd.ui.Card):
 
 
 class TableBody(nustd.ui.Column):
-    table = nustd.ui.TableRef.slot(
+    table = nustd.ui.DataTableRef.slot(
         columns=["title", "year", "genre", "rating", "watched", "notes"],
         row_key="id",
         striped=True,

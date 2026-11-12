@@ -1,7 +1,8 @@
 // Row -- horizontal Section. Arranges its children in a line with gap,
 // alignment, justification, wrap, and padding.
 //
-// Children are the node's own children in the tree, in insertion order.
+// Children are the node's own children in the tree: positions (`row[0]`) in
+// number order, names in the order they were first written.
 // `NodeChildren` does the lookup, the recursion and the error boundary, so
 // there is no child path list to thread through and nothing to keep in sync.
 //
@@ -20,7 +21,7 @@
 //            longest word, so long text wraps instead of pushing the row
 //            wider; a button or badge never shrinks below its label.
 //
-// Fill: Chart (every chart type), TableRef, TreeRef,
+// Fill: Chart (every chart type), DataTableRef, TreeRef,
 // JsonViewerRef, LensRef, CodeRef, MarkdownRef, InputRef, NumberInputRef,
 // TextAreaRef, TagInputRef, DatePickerRef, SliderRef, SketchRef, ProgressRef, AlertRef,
 // EmptyStateRef, ImageRef, HeadingRef, PageLinkRef (but an inline one), and
@@ -36,6 +37,13 @@
 // A `grow` type (SpacerRef) is the one child that grows from nothing (flex
 // 1 1 0): it takes whatever the line has left, so the children after it sit
 // at the end. Two spacers split the rest between them.
+//
+// The row can still size one child against its kind, keyed by segment like
+// a Grid's spans: `grow` {seg: weight} (a fill child weighs 1, so 2 takes
+// twice its share; a content child given a weight grows too), `basis`
+// {seg: px} the width a child starts from before growing (with no weight of
+// its own it stays there, shrinking only once the line is full). `height`,
+// `max_height` and `scroll` size the row itself (see `sizing.ts`).
 //
 // TODO(retune): same dynamic-class concern as Column -- numeric `gap` /
 // `padding` template raw Tailwind class names, so we map the discrete step
@@ -58,6 +66,7 @@ import {
 	useNumberProp,
 	useStringProp,
 } from "../../tree";
+import { useSizing, useWeights, type Weights } from "./sizing";
 
 const ALIGN_CLASSES: Record<string, string> = {
 	start: "items-start",
@@ -78,9 +87,34 @@ const JUSTIFY_CLASSES: Record<string, string> = {
 
 const MIN_WIDTH = 240;
 
-type Sizing = { minWidth: number; stretch: boolean };
+type Sizing = { minWidth: number; stretch: boolean; grow: Weights; basis: Weights };
 
-const SizingContext = createContext<Sizing>({ minWidth: MIN_WIDTH, stretch: false });
+const SizingContext = createContext<Sizing>({
+	minWidth: MIN_WIDTH,
+	stretch: false,
+	grow: {},
+	basis: {},
+});
+
+/** The flex of one child: its kind's default, unless the row sizes it by segment. */
+export function rowFlex(
+	kind: "grow" | "fill" | "content",
+	minWidth: number,
+	weight: number | undefined,
+	basis: number | undefined,
+): string {
+	const base = kind === "grow" ? "1 1 0px" : kind === "fill" ? `1 1 ${minWidth}px` : "0 1 auto";
+	if (weight === undefined && basis === undefined) return base;
+	const start =
+		basis !== undefined
+			? `${basis}px`
+			: kind === "grow"
+				? "0px"
+				: kind === "fill"
+					? `${minWidth}px`
+					: "auto";
+	return `${weight ?? 0} 1 ${start}`;
+}
 
 // One child, one cell. A flex column, so the child takes the cell's width.
 // A fill cell always stretches to the line's height and its child grows to
@@ -91,8 +125,14 @@ const SizingContext = createContext<Sizing>({ minWidth: MIN_WIDTH, stretch: fals
 function RowCell({ path, children }: CellProps) {
 	const fill = useFill(path);
 	const grow = isGrow(useNode(path).type);
-	const { minWidth, stretch } = useContext(SizingContext);
-	const flex = grow ? "1 1 0px" : fill ? `1 1 ${minWidth}px` : "0 1 auto";
+	const { minWidth, stretch, grow: weights, basis } = useContext(SizingContext);
+	const segment = String(path[path.length - 1]);
+	const flex = rowFlex(
+		grow ? "grow" : fill ? "fill" : "content",
+		minWidth,
+		weights[segment],
+		basis[segment],
+	);
 	return (
 		<div
 			data-slot="row-cell"
@@ -112,6 +152,8 @@ function RowView({ path }: NodeProps) {
 	const wrap = useBoolProp(path, "wrap");
 	const padding = useNumberProp(path, "padding", 0);
 	const minWidth = Math.max(0, useNumberProp(path, "min_width", MIN_WIDTH));
+	const { grow, basis } = useWeights(path);
+	const box = useSizing(path);
 
 	const gapCls = stepClass(GAP_CLASSES, gap);
 	const padCls = stepClass(PADDING_CLASSES, padding);
@@ -121,11 +163,20 @@ function RowView({ path }: NodeProps) {
 
 	return (
 		<div
-			className={`flex min-w-0 flex-row ${gapCls} ${padCls} ${alignCls} ${justifyCls} ${wrapCls}`}
+			className={cn(
+				"flex min-w-0 flex-row",
+				gapCls,
+				padCls,
+				alignCls,
+				justifyCls,
+				wrapCls,
+				box.className,
+			)}
+			style={box.style}
 		>
-			<SizingContext.Provider value={{ minWidth, stretch: align === "stretch" }}>
+			<SizingContext.Provider value={{ minWidth, stretch: align === "stretch", grow, basis }}>
 				<FlowProvider flow="row">
-					<NodeChildren path={path} cell={RowCell} />
+					<NodeChildren path={path} cell={RowCell} indexed />
 				</FlowProvider>
 			</SizingContext.Provider>
 		</div>

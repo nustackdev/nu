@@ -22,6 +22,7 @@ import { NavList } from "./nav-list";
 import { PageSection } from "./page-section";
 import { Row } from "./row";
 import { Sheet } from "./sheet";
+import { Table, TableRow } from "./table";
 import { Tabs } from "./tabs";
 
 export const containerEntries: Record<string, NodeEntry> = {
@@ -43,4 +44,6 @@ export const containerEntries: Record<string, NodeEntry> = {
 	Sheet,
 	PageSection,
 	NavList,
+	Table,
+	TableRow,
 };

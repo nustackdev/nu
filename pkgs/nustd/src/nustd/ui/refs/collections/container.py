@@ -29,6 +29,7 @@ from .base import DictCollectionRef
 
 
 if TYPE_CHECKING:
+    from nu.domains.shape import Slot
     from nu.lang import Nu
     from nu.lang.args import IntArg, StrArg
     from nustd.ui.core import Ref, Section
@@ -58,7 +59,7 @@ class ContainerRef(DictCollectionRef):
     @classmethod
     def slot(
         cls,
-        item: type[Section] | type[Ref] | None = None,
+        item: type[Section] | type[Ref] | Slot | None = None,
         /,
         *,
         size: PageWidth = "main",

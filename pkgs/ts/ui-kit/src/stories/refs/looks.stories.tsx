@@ -157,7 +157,7 @@ const PLANS = [
 export const Cards: Story = {
 	render: () => {
 		const col = [step("looks-cards", "Column", { gap: 4 })];
-		const grid = [...col, step("plans", "Grid", { columns: 3, gap: 3 })];
+		const grid = [...col, step("plans", "Grid", { max_columns: 3, gap: 3 })];
 		const chains: ChainStep[][] = [col, grid];
 		for (const p of PLANS) {
 			const card = [
@@ -190,12 +190,12 @@ export const Cards: Story = {
 				}),
 			]);
 		}
-		const surfaces = [...col, step("surfaces", "Grid", { columns: 4, gap: 3 })];
+		const surfaces = [...col, step("surfaces", "Grid", { max_columns: 4, gap: 3 })];
 		for (const v of ["default", "elevated", "sunken", "outline"]) {
 			const card = [...surfaces, step(v, "Card", { title: v, variant: v, size: "sm" })];
 			chains.push(card, [...card, step("t", "TextRef", { value: "size sm", tone: "muted" })]);
 		}
-		const more = [...col, step("more", "Grid", { columns: 2, gap: 3 })];
+		const more = [...col, step("more", "Grid", { max_columns: 2, gap: 3 })];
 		const media = [...more, step("media", "Card", { title: "Release notes", subtitle: "0.6.6" })];
 		chains.push(
 			media,
@@ -252,7 +252,7 @@ export const Chrome: Story = {
 				step("lg", "BadgeRef", { label: "lg", variant: "info", size: "lg" }),
 			]),
 		);
-		const grounds = [...col, step("grounds", "Grid", { columns: 5, gap: 3 })];
+		const grounds = [...col, step("grounds", "Grid", { max_columns: 5, gap: 3 })];
 		for (const g of ["none", "muted", "sunken", "accent", "brand"]) {
 			const box = [...grounds, step(g, "Box", { background: g, title: g })];
 			chains.push(box, [...box, step("t", "TextRef", { value: "Box ground", size: "sm" })]);
@@ -262,7 +262,7 @@ export const Chrome: Story = {
 			...flush,
 			step("t", "TextRef", { value: "padding none: flush to the edge" }),
 		]);
-		const empties = [...col, step("empties", "Grid", { columns: 2, gap: 3 })];
+		const empties = [...col, step("empties", "Grid", { max_columns: 2, gap: 3 })];
 		chains.push(
 			...under(empties, [
 				step("e1", "EmptyStateRef", {

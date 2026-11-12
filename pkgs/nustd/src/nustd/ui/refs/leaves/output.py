@@ -16,7 +16,7 @@ from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Changed, Write
 
-from ..vocab import HeadingTone, StatusTone, Target, TextAlign, Tone
+from ..vocab import HeadingTone, StatusTone, Target, TextAlign, Tone, one_of
 from ..vocab import set_href as _set_href
 from .base import LeafRef
 
@@ -49,10 +49,11 @@ class AlertRef(LeafRef):
         body: str = "",
         dismissible: bool = False,
     ) -> Self:
+        variant = one_of("AlertRef", "variant", variant, Variant)  # type: ignore[assignment]
         return super().slot(variant=variant, title=title, body=body, dismissible=dismissible)
 
     def set_variant(self, name: Variant | StrArg) -> Nu:
-        return Write(self, Dict.of(variant=name))
+        return Write(self, Dict.of(variant=one_of("AlertRef", "variant", name, Variant)))
 
     def set_title(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(title=text))
@@ -74,7 +75,7 @@ class AlertRef(LeafRef):
         if body is not UNSET:
             payload["body"] = body
         if variant is not UNSET:
-            payload["variant"] = variant
+            payload["variant"] = one_of("AlertRef", "variant", variant, Variant)
         if dismissible is not UNSET:
             payload["dismissible"] = dismissible
         return Write(self, Dict.of(**payload))
@@ -103,13 +104,14 @@ class BadgeRef(LeafRef):
     def slot(
         cls, *, label: str = "", variant: BadgeVariant = "neutral", size: BadgeSize = "md"
     ) -> Self:
+        variant = one_of("BadgeRef", "variant", variant, BadgeVariant)  # type: ignore[assignment]
         return super().slot(label=label, variant=variant, size=size)
 
     def set_label(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(label=text))
 
     def set_variant(self, name: BadgeVariant | StrArg) -> Nu:
-        return Write(self, Dict.of(variant=name))
+        return Write(self, Dict.of(variant=one_of("BadgeRef", "variant", name, BadgeVariant)))
 
     def set_size(self, name: BadgeSize | StrArg) -> Nu:
         return Write(self, Dict.of(size=name))
@@ -121,7 +123,7 @@ class BadgeRef(LeafRef):
     ) -> Nu:
         payload: dict[str, object] = {"label": label}
         if variant is not UNSET:
-            payload["variant"] = variant
+            payload["variant"] = one_of("BadgeRef", "variant", variant, BadgeVariant)
         return Write(self, Dict.of(**payload))
 
 
@@ -249,6 +251,7 @@ class GaugeRef(LeafRef):
         caption: str = "",
         variant: GaugeVariant = "neutral",
     ) -> Self:
+        variant = one_of("GaugeRef", "variant", variant, GaugeVariant)  # type: ignore[assignment]
         return super().slot(value=value, caption=caption, variant=variant)
 
     def set_value(self, value: FloatArg) -> Nu:
@@ -258,7 +261,7 @@ class GaugeRef(LeafRef):
         return Write(self, Dict.of(caption=text))
 
     def set_variant(self, variant: GaugeVariant | StrArg) -> Nu:
-        return Write(self, Dict.of(variant=variant))
+        return Write(self, Dict.of(variant=one_of("GaugeRef", "variant", variant, GaugeVariant)))
 
     def set(
         self,
@@ -270,7 +273,7 @@ class GaugeRef(LeafRef):
         if caption is not UNSET:
             payload["caption"] = caption
         if variant is not UNSET:
-            payload["variant"] = variant
+            payload["variant"] = one_of("GaugeRef", "variant", variant, GaugeVariant)
         return Write(self, Dict.of(**payload))
 
 
@@ -805,6 +808,7 @@ class StatusDotRef(LeafRef):
 
     @classmethod
     def slot(cls, *, tone: StatusTone = "neutral", label: str = "", pulse: bool = False) -> Self:
+        tone = one_of("StatusDotRef", "tone", tone, StatusTone)  # type: ignore[assignment]
         return super().slot(tone=tone, label=label, pulse=pulse)
 
     def set_label(self, text: StrArg) -> Nu:
@@ -819,7 +823,7 @@ class StatusDotRef(LeafRef):
         label: StrArg = UNSET,
         pulse: BoolArg = UNSET,
     ) -> Nu:
-        payload: dict[str, object] = {"tone": tone}
+        payload: dict[str, object] = {"tone": one_of("StatusDotRef", "tone", tone, StatusTone)}
         if label is not UNSET:
             payload["label"] = label
         if pulse is not UNSET:

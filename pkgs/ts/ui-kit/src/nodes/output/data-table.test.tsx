@@ -1,4 +1,4 @@
-// TableRef on the kit DataTable: the old wire (string columns, list rows, the
+// DataTableRef on the kit DataTable: the old wire (string columns, list rows, the
 // sort and row notifies, the write / append / read handlers) unchanged, and
 // the new one (dict columns and rows, row keys, select, edit, add, delete,
 // move), each intent one notify naming its kind in `event`, the row-level
@@ -36,7 +36,7 @@ afterEach(() => {
 });
 
 function mount(props: Record<string, unknown>) {
-	tree.getState().write([["t", "TableRef", props]]);
+	tree.getState().write([["t", "DataTableRef", props]]);
 	act(() => root.render(<NodeView path={["t"]} />));
 }
 
@@ -86,7 +86,7 @@ function typeInto(value: string, key: string) {
 	press(el, key);
 }
 
-describe("TableRef, the old wire", () => {
+describe("DataTableRef, the old wire", () => {
 	beforeEach(() =>
 		mount({ columns: ["title", "year"], rows: [["Arrival", 2016]], clickable_rows: true }),
 	);
@@ -147,7 +147,7 @@ describe("TableRef, the old wire", () => {
 	});
 });
 
-describe("TableRef, plain", () => {
+describe("DataTableRef, plain", () => {
 	it("says no rows when there is nothing at all", () => {
 		mount({});
 		expect(host.textContent).toBe("no rows");
@@ -179,7 +179,7 @@ const ROWS = [
 	{ id: "m2", title: "Perfect Days", year: 2023, seen: false, genre: "drama", note: "y" },
 ];
 
-describe("TableRef, the new wire", () => {
+describe("DataTableRef, the new wire", () => {
 	it("draws dict columns, dict rows and list rows, keyed by row_key", () => {
 		mount({
 			columns: ["id", { key: "title", label: "Title" }],
@@ -333,7 +333,7 @@ describe("TableRef, the new wire", () => {
 	});
 });
 
-describe("TableRef, row-level ops", () => {
+describe("DataTableRef, row-level ops", () => {
 	const DICTS = [
 		{ id: "a", title: "A" },
 		{ id: "b", title: "B" },
@@ -460,7 +460,7 @@ describe("TableRef, row-level ops", () => {
 			["remove_rows", { keys: "a" }],
 			["remove_rows", {}],
 			["set_order", { keys: "c" }],
-			// No such op on a TableRef: the store reports it and the node is left alone.
+			// No such op on a DataTableRef: the store reports it and the node is left alone.
 			["patch", { op: "remove_rows", keys: ["a"] }],
 		];
 		for (const [op, payload] of cases) dispatch(op, payload);
@@ -480,7 +480,7 @@ describe("TableRef, row-level ops", () => {
 	});
 });
 
-describe("TableRef, column requests", () => {
+describe("DataTableRef, column requests", () => {
 	const t = tableMenuText;
 	const COLS = [
 		{ key: "id", label: "ID" },
@@ -515,7 +515,10 @@ describe("TableRef, column requests", () => {
 		expect(menuTexts()).toEqual([t.sortAscending, t.sortDescending]);
 	});
 
-	it("names each column request one notify, the column by its key as sent", async () => {
+	// Five menu round trips: under a full parallel run it can pass the 5s default.
+	it("names each column request one notify, the column by its key as sent", {
+		timeout: 15_000,
+	}, async () => {
 		mount({ columns: COLS, rows: [[1, "x", 2, true]], columns_editable: true });
 		// The second "a" is "a~2" to the grid, "a" on the wire.
 		openColumnMenu("a~2");
@@ -573,5 +576,66 @@ describe("TableRef, column requests", () => {
 		// Dict rows follow the columns by key, untouched.
 		dispatch("write", { columns: ["y", "x"], rows: [{ x: 1, y: 2 }] });
 		expect(texts("tbody td")).toEqual(["2", "1"]);
+	});
+});
+
+describe("DataTableRef, column cell specs", () => {
+	const columns = [
+		"name",
+		{ key: "status", cell: { kind: "BadgeRef", props: { variant: "info" }, prop: "label" } },
+		{ key: "site", cell: { kind: "LinkRef", props: {}, prop: "label" } },
+	];
+
+	it("draws a cell as its column's kind, from the value", () => {
+		mount({
+			columns,
+			row_key: "name",
+			rows: [{ name: "a", status: "ok", site: { href: "https://x.test", label: "x" } }],
+		});
+		const badge = cell("a", "status").querySelector("[data-slot=badge]");
+		expect(badge?.textContent).toBe("ok");
+		const link = cell("a", "site").querySelector("a");
+		expect(link?.getAttribute("href")).toBe("https://x.test");
+		expect(link?.textContent).toContain("x");
+		expect(tree.getState().getIn(["t", "~cells", "a", "status"])?.type).toBe("BadgeRef");
+	});
+
+	it("follows the value, and a blank draws nothing", () => {
+		mount({ columns, row_key: "name", rows: [{ name: "a", status: "ok" }] });
+		dispatch("set_row", { key: "a", row: { name: "a", status: "late" } });
+		expect(cell("a", "status").textContent).toBe("late");
+		dispatch("set_row", { key: "a", row: { name: "a", status: "" } });
+		expect(cell("a", "status").textContent).toBe("");
+		expect(tree.getState().getIn(["t", "~cells", "a", "status"])).toBeNull();
+	});
+
+	it("drops a row's drawn cells with the row", () => {
+		mount({
+			columns,
+			row_key: "name",
+			rows: [
+				{ name: "a", status: "ok" },
+				{ name: "b", status: "late" },
+			],
+		});
+		dispatch("remove_rows", { keys: ["a"] });
+		expect(tree.getState().getIn(["t", "~cells", "a"])).toBeNull();
+		expect(tree.getState().getIn(["t", "~cells", "b", "status"])?.type).toBe("BadgeRef");
+	});
+
+	it("keeps the value as the data: sort and read see it as sent", () => {
+		mount({ columns, row_key: "name", rows: [{ name: "a", status: "ok" }] });
+		dispatch("read", null, "r1");
+		const read = sent.find((f) => f.op === OPS.read);
+		expect(read?.payload).toMatchObject({ rows: [{ name: "a", status: "ok" }] });
+	});
+
+	it("draws an unregistered kind as plain text", () => {
+		mount({
+			columns: [{ key: "s", cell: { kind: "NoSuchRef", props: {} } }],
+			rows: [{ s: "plain" }],
+		});
+		expect(host.querySelector("tbody")?.textContent).toContain("plain");
+		expect(tree.getState().getIn(["t", "~cells"])).toBeNull();
 	});
 });

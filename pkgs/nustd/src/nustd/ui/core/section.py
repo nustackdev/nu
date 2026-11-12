@@ -78,8 +78,8 @@ class SectionRef(ItemRef):
                 raise AttributeError(name)
             raise AttributeError(
                 f"'{type(self).__name__}' object has no attribute '{name}'"
-                " (it carries no Shape, so it has no slots to navigate; build"
-                f" its children as Refs with parent_ref=)"
+                " (it carries no Shape, so it has no slots to navigate; reach"
+                f" its children with ref[key] or build them with parent_ref=)"
             )
         slots = getattr(section_cls, "_slots", {})
         if name in slots:
@@ -118,14 +118,25 @@ class Section(Shape):
     _wire_type: ClassVar[str] = ""
 
     @classmethod
-    def slot(cls, item: type[Section] | type[Ref] | None = None, /, **props: object) -> Self:
+    def _slot_host_refs(cls) -> tuple[tuple[type, frozenset[str]], ...]:
+        """Slots are reached as attributes of ``_ref_cls``: check names against its surface.
+
+        A slot named ``hide``, ``to`` or ``set_title`` would reach the Ref's
+        method, never the slot. The names the Ref answers with the slot itself
+        (a Card's ``actions``, a Field's ``control``) stay free.
+        """
+        ref_cls = cls._ref_cls
+        return ((ref_cls, getattr(ref_cls, "_parts", frozenset())),)
+
+    @classmethod
+    def slot(cls, item: type[Section] | type[Ref] | Slot | None = None, /, **props: object) -> Self:
         """Declare this Section as a slot. Props and ``item`` go to the Ref as they are.
 
         The Ref's own ``slot()`` normalizes them and fills its defaults, so a
         Shape and the Ref built alone (``RowRef("r", props=...)``) carry the
-        same props. ``item`` is the template keyed children are built from
-        (``Grid.slot(SpeciesCard)``), and only a container that takes
-        children by key or index accepts one.
+        same props. ``item`` is the default kind ``ref[key]`` children are
+        built as (``Grid.slot(SpeciesCard)``, ``Row.slot(CardRef.slot(size="sm"))``),
+        and only a container that takes children by key or index accepts one.
         """
         if item is None:
             declared = cls._ref_cls.slot(**props)

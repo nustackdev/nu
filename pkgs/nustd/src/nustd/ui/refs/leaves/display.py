@@ -21,14 +21,13 @@ from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Write
 
+from ..vocab import StatusTone, one_of
 from .base import LeafRef
 
 
 if TYPE_CHECKING:
     from nu.lang import Nu
     from nu.lang.args import IntArg, ListArg, StrArg
-
-    from ..vocab import StatusTone
 
 
 __all__ = ["AvatarRef", "BreadcrumbRef", "SkeletonRef", "SpinnerRef", "StatusPillRef"]
@@ -180,18 +179,19 @@ class StatusPillRef(LeafRef):
 
     @classmethod
     def slot(cls, *, tone: StatusTone = "neutral", label: str = "") -> Self:
+        tone = one_of("StatusPillRef", "tone", tone, StatusTone)  # type: ignore[assignment]
         return super().slot(tone=tone, label=label)
 
     def set_label(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(label=text))
 
     def set_tone(self, name: StatusTone | StrArg) -> Nu:
-        return Write(self, Dict.of(tone=name))
+        return Write(self, Dict.of(tone=one_of("StatusPillRef", "tone", name, StatusTone)))
 
     def set(self, label: StrArg, *, tone: StatusTone | StrArg = UNSET) -> Nu:
         # Tone first in the payload when given, as `StatusDotRef` ships it.
         payload: dict[str, object] = {}
         if tone is not UNSET:
-            payload["tone"] = tone
+            payload["tone"] = one_of("StatusPillRef", "tone", tone, StatusTone)
         payload["label"] = label
         return Write(self, Dict.of(**payload))

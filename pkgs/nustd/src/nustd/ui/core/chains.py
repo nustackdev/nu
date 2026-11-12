@@ -27,8 +27,9 @@ __all__ = ["Chain", "boot_chains"]
 
 
 #: One chain, root-first: ``(segment, type, props)`` per level. What a write
-#: carries and what a boot ``init`` frame is made of.
-Chain = tuple[tuple[str, str, dict[str, Any]], ...]
+#: carries and what a boot ``init`` frame is made of. A type of None claims
+#: no kind (a bare child): the level is whatever is already there.
+Chain = tuple[tuple[str, str | None, dict[str, Any]], ...]
 
 
 def boot_chains(base: Chain, shape_cls: type[Shape]) -> list[Chain]:

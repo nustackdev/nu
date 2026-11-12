@@ -97,7 +97,7 @@ function CardView({ path }: NodeProps) {
 			) : null}
 			<CardContent className={cn("flex flex-col gap-3 py-3", showFooter && "flex-1")}>
 				<FlowProvider flow="block">
-					<NodeChildren path={path} skip={SLOTS} />
+					<NodeChildren path={path} skip={SLOTS} indexed />
 				</FlowProvider>
 			</CardContent>
 			{hasFooter ? (

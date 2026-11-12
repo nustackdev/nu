@@ -4,7 +4,7 @@ Layout under ``src/nustd/ui/``:
 
 - ``lens/``   -- the Shape lens: ``LensRef``, the walk that turns a Shape and
                  a cursor into columns, and ``browse`` to assemble the two.
-- ``table/``  -- ``sync``: a ``TableRef`` kept equal to a kv store, live
+- ``table/``  -- ``sync``: a ``DataTableRef`` kept equal to a kv store, live
                  across tabs, and ``Row``, the stored row it reads.
 - ``core/``   -- host-independent UI fabric: ``Ref``, ``Section`` /
                  ``SectionRef``, abstract ``Session`` / ``Subscription``,
@@ -56,7 +56,7 @@ import importlib
 from typing import TYPE_CHECKING
 
 from . import core, flows, lens, refs, shapes, table
-from .core import Frame, Ref, Section, SectionRef, Session, Subscription, WsSession
+from .core import Frame, ItemRef, Ref, Section, SectionRef, Session, Subscription, WsSession
 from .core.interactions import (
     Append,
     Changed,
@@ -96,6 +96,7 @@ from .refs import (
     ColumnRef,
     Container,
     ContainerRef,
+    DataTableRef,
     DatePickerRef,
     DictCollectionRef,
     DividerRef,
@@ -119,9 +120,11 @@ from .refs import (
     IconRef,
     ImageRef,
     InputRef,
+    InsertItem,
     InsertRow,
     JsonViewerRef,
     KbdRef,
+    KeepItems,
     LeafRef,
     Line,
     LineChart,
@@ -133,11 +136,13 @@ from .refs import (
     MarkdownRef,
     Modal,
     ModalRef,
+    MoveItem,
     NavItemRef,
     NavList,
     NavListRef,
     NavRef,
     NumberInputRef,
+    OrderItems,
     PageLinkRef,
     PageSection,
     PageSectionRef,
@@ -146,6 +151,7 @@ from .refs import (
     RadarChart,
     RadioGroupRef,
     RelativeTimeRef,
+    RemoveItem,
     RemoveRows,
     Row,
     RowRef,
@@ -171,6 +177,7 @@ from .refs import (
     SunburstChart,
     SwitchRef,
     TableRef,
+    TableRowRef,
     Tabs,
     TabsRef,
     TagInputRef,
@@ -181,6 +188,7 @@ from .refs import (
     ToggleRef,
     TreemapChart,
     TreeRef,
+    TruncateItems,
     WaterfallRef,
     decode_query,
     encode_query,
@@ -255,6 +263,7 @@ __all__ = [
     "ColumnRef",
     "Container",
     "ContainerRef",
+    "DataTableRef",
     "DatePickerRef",
     "DictCollectionRef",
     "Display",
@@ -282,9 +291,12 @@ __all__ = [
     "ImageRef",
     "Init",
     "InputRef",
+    "InsertItem",
     "InsertRow",
+    "ItemRef",
     "JsonViewerRef",
     "KbdRef",
+    "KeepItems",
     "LeafRef",
     "Line",
     "LineChart",
@@ -296,11 +308,13 @@ __all__ = [
     "MarkdownRef",
     "Modal",
     "ModalRef",
+    "MoveItem",
     "NavItemRef",
     "NavList",
     "NavListRef",
     "NavRef",
     "NumberInputRef",
+    "OrderItems",
     "PageLinkRef",
     "PageSection",
     "PageSectionRef",
@@ -311,6 +325,7 @@ __all__ = [
     "Ref",
     "RelativeTimeRef",
     "Remove",
+    "RemoveItem",
     "RemoveRows",
     "Row",
     "RowRef",
@@ -341,6 +356,7 @@ __all__ = [
     "SunburstChart",
     "SwitchRef",
     "TableRef",
+    "TableRowRef",
     "Tabs",
     "TabsRef",
     "TagInputRef",
@@ -351,6 +367,7 @@ __all__ = [
     "ToggleRef",
     "TreeRef",
     "TreemapChart",
+    "TruncateItems",
     "WaterfallRef",
     "Write",
     "WsSession",

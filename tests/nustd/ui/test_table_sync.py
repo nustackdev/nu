@@ -119,7 +119,7 @@ _COLUMNS = [
 
 
 class SheetPage(nustd.ui.Column):
-    table = nustd.ui.TableRef.slot(
+    table = nustd.ui.DataTableRef.slot(
         columns=_COLUMNS,
         row_key="id",
         editable=True,

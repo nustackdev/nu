@@ -29,7 +29,7 @@ class Sheet(nu.Shape):
 
 class Home(nustd.ui.Container):
     heading = nustd.ui.HeadingRef.slot(label="Sheet")
-    table = nustd.ui.TableRef.slot(
+    table = nustd.ui.DataTableRef.slot(
         columns=[
             {"key": "task", "label": "Task"},
             {"key": "hours", "label": "Hours", "kind": "number", "align": "right"},

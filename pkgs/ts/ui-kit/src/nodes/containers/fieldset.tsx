@@ -7,6 +7,10 @@
 // `disabled` attribute on `<fieldset>` because that would cascade to child
 // inputs. Uses semantic tokens (border-default, text-muted) instead of raw
 // opacity for the disabled treatment.
+//
+// `min-w-0` on the fieldset: a browser gives `<fieldset>` a min inline size
+// of its content, so without it a wide child (a table, a long line) widens
+// the fieldset past the column that holds it.
 
 import {
 	FlowProvider,
@@ -34,15 +38,15 @@ function FieldsetView({ path }: NodeProps) {
 
 	return (
 		<fieldset
-			className={`rounded-md border p-4 ${borderCls} ${textCls}`}
+			className={`min-w-0 rounded-md border p-4 ${borderCls} ${textCls}`}
 			aria-disabled={disabled || undefined}
 		>
 			{legend ? (
 				<legend className="px-1 text-sm font-semibold text-text-secondary">{legend}</legend>
 			) : null}
-			<div className={`flex flex-col ${gapCls}`}>
+			<div className={`flex min-w-0 flex-col ${gapCls}`}>
 				<FlowProvider flow="block">
-					<NodeChildren path={path} />
+					<NodeChildren path={path} indexed />
 				</FlowProvider>
 			</div>
 		</fieldset>

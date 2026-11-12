@@ -1,7 +1,7 @@
 // ListRef over the real tree store: what each wire op leaves on screen, and
 // child nodes drawn as items after the strings.
 
-import { OPS } from "@nustackdev/ui-core";
+import { OPS, ORDER_OPS } from "@nustackdev/ui-core";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -74,8 +74,14 @@ describe("ListRef", () => {
 	it("draws each child node as one more item, after the strings", () => {
 		send(OPS.write, ["a", "b"]);
 		act(() => {
-			tree.getState().write([["l", "ListRef"], ["badge", "BadgeRef", { label: "live" }]]);
-			tree.getState().write([["l", "ListRef"], ["note", "TextRef", { value: "plain node" }]]);
+			tree.getState().write([
+				["l", "ListRef"],
+				["badge", "BadgeRef", { label: "live" }],
+			]);
+			tree.getState().write([
+				["l", "ListRef"],
+				["note", "TextRef", { value: "plain node" }],
+			]);
 		});
 		expect(items()).toEqual(["a", "b", "live", "plain node"]);
 		const last = host.querySelectorAll("li")[2];
@@ -85,7 +91,10 @@ describe("ListRef", () => {
 
 	it("keeps child items when the strings are replaced or cleared", () => {
 		act(() => {
-			tree.getState().write([["l", "ListRef"], ["note", "TextRef", { value: "kept" }]]);
+			tree.getState().write([
+				["l", "ListRef"],
+				["note", "TextRef", { value: "kept" }],
+			]);
 		});
 		send(OPS.write, ["x"]);
 		expect(items()).toEqual(["x", "kept"]);
@@ -95,8 +104,15 @@ describe("ListRef", () => {
 
 	it("draws indexed children in index order, whatever order they were written", () => {
 		act(() => {
-			for (const [i, v] of [["2", "third"], ["0", "first"], ["1", "second"]]) {
-				tree.getState().write([["l", "ListRef"], [i, "TextRef", { value: v }]]);
+			for (const [i, v] of [
+				["2", "third"],
+				["0", "first"],
+				["1", "second"],
+			]) {
+				tree.getState().write([
+					["l", "ListRef"],
+					[i, "TextRef", { value: v }],
+				]);
 			}
 		});
 		expect(items()).toEqual(["first", "second", "third"]);
@@ -104,10 +120,67 @@ describe("ListRef", () => {
 
 	it("keeps named children in place among indexed ones", () => {
 		act(() => {
-			for (const [seg, v] of [["1", "b"], ["head", "named"], ["0", "a"]]) {
-				tree.getState().write([["l", "ListRef"], [seg, "TextRef", { value: v }]]);
+			for (const [seg, v] of [
+				["1", "b"],
+				["head", "named"],
+				["0", "a"],
+			]) {
+				tree.getState().write([
+					["l", "ListRef"],
+					[seg, "TextRef", { value: v }],
+				]);
 			}
 		});
 		expect(items()).toEqual(["a", "named", "b"]);
+	});
+});
+
+describe("ListRef order ops", () => {
+	function children(...entries: [string, string][]) {
+		act(() => {
+			for (const [seg, v] of entries) {
+				tree.getState().write([
+					["l", "ListRef"],
+					[seg, "TextRef", { value: v }],
+				]);
+			}
+		});
+	}
+
+	beforeEach(() => children(["0", "a"], ["1", "b"], ["2", "c"]));
+
+	it("moves one child, the strings stay first", () => {
+		send(OPS.write, ["s"]);
+		send(ORDER_OPS.move, { key: "2", at: 0 });
+		expect(items()).toEqual(["s", "c", "a", "b"]);
+	});
+
+	it("draws a child written into an inserted place there", () => {
+		send(ORDER_OPS.insert, { key: "new", before: "1" });
+		expect(items()).toEqual(["a", "b", "c"]);
+		children(["new", "n"]);
+		expect(items()).toEqual(["a", "n", "b", "c"]);
+	});
+
+	it("draws a child nothing placed after the placed ones", () => {
+		send(ORDER_OPS.move, { key: "0" });
+		children(["late", "z"]);
+		expect(items()).toEqual(["b", "c", "a", "z"]);
+	});
+
+	it("removes, truncates and keeps", () => {
+		children(["3", "d"]);
+		send(ORDER_OPS.remove, { key: "1" });
+		expect(items()).toEqual(["a", "c", "d"]);
+		send(ORDER_OPS.truncate, { count: 2 });
+		expect(items()).toEqual(["a", "c"]);
+		expect(tree.getState().getIn(["l", "3"])).toBeNull();
+		send(ORDER_OPS.keep, { keys: ["2"] });
+		expect(items()).toEqual(["c"]);
+	});
+
+	it("puts the keys named first", () => {
+		send(ORDER_OPS.order, { keys: ["2", "1"] });
+		expect(items()).toEqual(["c", "b", "a"]);
 	});
 });

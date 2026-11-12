@@ -33,7 +33,7 @@ function ContainerView({ path }: NodeProps) {
 	return (
 		<ContainerFrame size={size} padding={padding} className={stepClass(GAP_CLASSES, gap)}>
 			<FlowProvider flow="block">
-				<NodeChildren path={path} cell={BlockCell} />
+				<NodeChildren path={path} cell={BlockCell} indexed />
 			</FlowProvider>
 		</ContainerFrame>
 	);

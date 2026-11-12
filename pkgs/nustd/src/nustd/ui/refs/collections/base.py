@@ -17,15 +17,16 @@ hold children. (``ContainerRef`` is one of them, the page frame.)
 - **No ``set()``** unless one chrome value is the thing the container
   carries (Modal: open). The rest of its chrome is ``set_*``. ``ListRef``
   keeps its old string ``set(items)`` for compatibility.
-- **How it holds children** is the container's kind, one per class, the way
-  kv has ``ShapeRef``, ``DictRef`` and ``ListRef``. A ``DictCollectionRef``
-  takes children by key, a ``ListCollectionRef`` by index, and a
-  ``ShapeCollectionRef`` only the ones its Shape declares. The first two may
-  carry an item template, ``slot(Item)`` or ``item=Item``, and ``ref[key]``
-  answers with an ``Item`` there, the way ``DictRef.slot(Order)`` answers
-  ``desks["d1"]`` with an Order. Declared slots are keys too, so named and
-  templated children mix. There are no collection ops: a UI child is a
-  component, not a value, so the kind only says how a child is reached.
+- **Descent** is the container's own. A ``DictCollectionRef`` takes
+  ``ref[0]`` (a position) and ``ref["k"]`` (a name), a ``ListCollectionRef``
+  positions only, a ``ShapeCollectionRef`` none (its parts are properties).
+  Named parts (``card.actions``) are properties with a default kind. The
+  child at a key is a bare ``ItemRef`` (``.to(Kind)`` names the kind where
+  it is used) unless the container has a default, ``slot(Item)`` or
+  ``item=Item``, where ``Item`` is a class or a ``Kind.slot(**props)`` spec.
+  Declared slots are reached by attribute, not by key. There are no
+  collection ops: a UI child is a component, not a value, so the kind only
+  says how a child is reached.
 
 The parent's flow decides how a child displays: the same Badge is a block in
 a Column, a cell in a Grid and a run of text in a Line. A child never says.
@@ -37,12 +38,13 @@ from typing import TYPE_CHECKING, ClassVar
 
 from typing_extensions import Self
 
-from nu.lang import Nu
-from nustd.ui.core import ItemRef, Ref, Section, SectionRef
+from nustd.ui.core import ItemRef, Ref, Section, SectionRef, as_spec, check_key, child_at
 
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+
+    from nu.domains.shape import Slot
 
 
 __all__ = ["CollectionRef", "DictCollectionRef", "ListCollectionRef", "ShapeCollectionRef"]
@@ -59,22 +61,37 @@ class CollectionRef(SectionRef):
     # Abstract: never on the wire. Every concrete container declares its own.
     _wire_type: ClassVar[str] = ""
 
+    # Names this container places itself and answers by property (a Card's
+    # ``media``, ``actions``, ``footer``). A Shape may declare a slot of such
+    # a name, since the property answers with it; ``ref[name]`` is refused.
+    _parts: ClassVar[frozenset[str]] = frozenset()
+
 
 class _ItemCollectionRef(CollectionRef):
-    """A container whose children may come from one item template. Abstract.
+    """A container reached by ``ref[key]``, its children optionally from one default spec. Abstract.
 
-    The template is a Section class or a Ref class. It rides the payload, as
-    ``section_cls`` does, so it survives a tree rewrite, and ``ref[key]``
-    reads it there to build the child. No class is made for it.
+    ``ref[key]`` is the child at ``key``: built from ``item`` when the
+    container has one, else a bare ``ItemRef`` whose kind ``.to`` names at
+    the use site. ``item`` is a Section class, a ref class or a
+    ``Kind.slot(**props)`` spec. It rides the payload as a spec, as
+    ``section_cls`` does, so it survives a tree rewrite. No class is made
+    for it.
+
+    Which keys a kind takes is three class settings: ``_positions`` (int
+    keys), ``_names`` (str keys) and ``_parts``, the names the container
+    places itself and answers by property (``card.actions``), refused as
+    body keys so one place never holds two kinds.
     """
 
     _takes_item: ClassVar[bool] = True
+    _positions: ClassVar[bool] = True
+    _names: ClassVar[bool] = True
 
     def __init__(
         self,
         address: object,
         *,
-        item: type[Section] | type[Ref] | None = None,
+        item: type[Section] | type[Ref] | Slot | None = None,
         section_cls: type[Section] | None = None,
         parent_ref: Ref | None = None,
         owner_shape: type[Section] | None = None,
@@ -87,72 +104,56 @@ class _ItemCollectionRef(CollectionRef):
             owner_shape=owner_shape,
             props=props,
         )
-        self._payload["item"] = _checked_item(type(self), item)
+        self._payload["item"] = as_spec(type(self).__name__, item)
 
     @classmethod
-    def slot(cls, item: type[Section] | type[Ref] | None = None, /, **props: object) -> Self:
-        """Declare this container as a slot, its children drawn from ``item``."""
+    def slot(cls, item: type[Section] | type[Ref] | Slot | None = None, /, **props: object) -> Self:
+        """Declare this container as a slot, its children drawn from ``item`` by default."""
         declared = super().slot(**props)
         if item is not None:
-            declared.kwargs["item"] = _checked_item(cls, item)  # type: ignore[attr-defined]
+            declared.kwargs["item"] = as_spec(cls.__name__, item)  # type: ignore[attr-defined]
         return declared
 
-    def _item_child(self, key: object) -> ItemRef:
-        item = self._payload.get("item")
+    def __getitem__(self, key: object) -> ItemRef:
+        return self._child(key)
+
+    def _child(self, key: object) -> ItemRef:
+        """The child at ``key``, after checking this container takes such a key."""
+        owner = self._owner_name()
+        check_key(owner, key, positions=self._positions, names=self._names, parts=self._parts)
+        return self._wrap_item_ref(key)
+
+    def _wrap_item_ref(self, address: object) -> ItemRef:
+        """The child at ``address``: from the ``item`` spec, or bare. Core's descent hook."""
+        return child_at(self, address, self._payload.get("item"))
+
+    def _owner_name(self) -> str:
         section_cls = self._payload.get("section_cls")
-        if item is None:
-            owner = (section_cls or type(self)).__name__
-            msg = (
-                f"{owner} has no item template to build ref[{key!r}] from; declare"
-                f" one with .slot(Item), or build children as Refs with parent_ref="
-            )
-            raise TypeError(msg)
-        slot = item.slot()
-        ref = slot.ref_cls(key, owner_shape=section_cls, parent_ref=self, **slot.kwargs)
-        if slot.props:
-            ref._payload["props"] = dict(slot.props)
-        return ref
+        return (section_cls or type(self)).__name__
 
 
 class DictCollectionRef(_ItemCollectionRef):
-    """A container that takes its children by key. Abstract.
+    """A container that takes its children by position and by name. Abstract.
 
-    ``ref[key]`` is the item template's child at ``key``. The key is a term
-    like any address, so a computed key works too.
+    ``ref[0]`` is a position, drawn in number order; ``ref["k"]`` a name,
+    drawn in the order first written. Both mix in one container. The key is
+    a term like any address, so a computed key works too.
     """
-
-    def __getitem__(self, key: object) -> ItemRef:
-        return self._item_child(key)
 
 
 class ListCollectionRef(_ItemCollectionRef):
     """A container that takes its children by position. Abstract.
 
-    ``ref[i]`` is the item template's child at index ``i``, an int or an
-    int term. The browser draws indexed children in index order.
+    ``ref[i]`` is the child at index ``i``, an int or an int term. The
+    browser draws indexed children in index order.
     """
 
-    def __getitem__(self, index: object) -> ItemRef:
-        if isinstance(index, bool) or not isinstance(index, (int, Nu)):
-            msg = f"{type(self).__name__} indices are ints, not {type(index).__name__}"
-            raise TypeError(msg)
-        if isinstance(index, int) and index < 0:
-            msg = f"{type(self).__name__} has no length to count back from; use an index >= 0"
-            raise IndexError(msg)
-        return self._item_child(index)
+    _names: ClassVar[bool] = False
 
 
 class ShapeCollectionRef(CollectionRef):
-    """A container whose children are only the ones its Shape declares. Abstract.
+    """A container whose children are its own named parts. Abstract.
 
-    It takes no item template and cannot be subscripted.
+    It takes no item template and cannot be subscripted: each part is a
+    property (``field.control``).
     """
-
-
-def _checked_item(owner: type, item: object) -> type[Section] | type[Ref] | None:
-    if item is None or (
-        isinstance(item, type) and issubclass(item, (Section, Ref)) and item is not Section
-    ):
-        return item  # type: ignore[return-value]
-    msg = f"{owner.__name__} item must be a Section or a Ref class, not {item!r}"
-    raise TypeError(msg)
