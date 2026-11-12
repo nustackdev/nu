@@ -38,7 +38,7 @@ from typing import TYPE_CHECKING, ClassVar
 from typing_extensions import Self
 
 from nu.lang import Nu
-from nustd.ui.core import Ref, Section, SectionRef
+from nustd.ui.core import ItemRef, Ref, Section, SectionRef
 
 
 if TYPE_CHECKING:
@@ -97,7 +97,7 @@ class _ItemCollectionRef(CollectionRef):
             declared.kwargs["item"] = _checked_item(cls, item)  # type: ignore[attr-defined]
         return declared
 
-    def _item_child(self, key: object) -> Ref:
+    def _item_child(self, key: object) -> ItemRef:
         item = self._payload.get("item")
         section_cls = self._payload.get("section_cls")
         if item is None:
@@ -121,7 +121,7 @@ class DictCollectionRef(_ItemCollectionRef):
     like any address, so a computed key works too.
     """
 
-    def __getitem__(self, key: object) -> Ref:
+    def __getitem__(self, key: object) -> ItemRef:
         return self._item_child(key)
 
 
@@ -132,7 +132,7 @@ class ListCollectionRef(_ItemCollectionRef):
     int term. The browser draws indexed children in index order.
     """
 
-    def __getitem__(self, index: object) -> Ref:
+    def __getitem__(self, index: object) -> ItemRef:
         if isinstance(index, bool) or not isinstance(index, (int, Nu)):
             msg = f"{type(self).__name__} indices are ints, not {type(index).__name__}"
             raise TypeError(msg)

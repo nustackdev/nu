@@ -9,6 +9,7 @@ import {
 	type TreeFrame,
 	createTreeStore,
 } from "./tree";
+import { OP_ERROR } from "./protocol";
 
 function step(segment: string, type: string | null = null, props?: Record<string, unknown>): ChainStep {
 	return props ? [segment, type, props] : [segment, type];
@@ -97,25 +98,45 @@ describe("write", () => {
 		expect(store.getState().getIn(["sec", "t"])?.props).toEqual({ value: "x" });
 	});
 
-	it("rebuilds a node whose type changed and disposes the old branch", () => {
-		const gone: string[][] = [];
-		const behaviours: Record<string, Behaviour> = {
-			Card: { dispose: (ctx) => gone.push(ctx.path) },
-			TextRef: { dispose: (ctx) => gone.push(ctx.path) },
-		};
-		const store = createTreeStore({ resolve: (t) => behaviours[t] });
-		store.getState().write([step("sec", "Card", { title: "One" }), step("t", "TextRef")]);
-		store.getState().write([step("sec", "Modal", { open: true })]);
-
-		expect(gone).toEqual([
-			["sec", "t"],
-			["sec"],
-		]);
-		expect(store.getState().getIn(["sec"])).toEqual({
-			type: "Modal",
-			props: { open: true },
-			children: new Map(),
+	it("refuses a write naming another kind for a node already there", () => {
+		const errors: [string, string[]][] = [];
+		const dispose = vi.fn();
+		const store = createTreeStore({
+			resolve: () => ({ dispose }),
+			onError: (message, path) => errors.push([message, path]),
 		});
+		store.getState().write([step("sec", "Card", { title: "One" }), step("t", "TextRef")]);
+		const before = store.getState().root;
+
+		const applied = store.getState().write([step("sec", "Modal", { open: true })], { open: true });
+
+		expect(applied).toBe(false);
+		// Nothing of the refused write lands, and nothing is torn down.
+		expect(store.getState().root).toBe(before);
+		expect(dispose).not.toHaveBeenCalled();
+		expect(errors).toHaveLength(1);
+		expect(errors[0][0]).toContain("kind mismatch at sec: the node is Card, the write names Modal");
+	});
+
+	it("refuses a mismatch above a leaf that is already there", () => {
+		const errors: string[] = [];
+		const store = createTreeStore({ onError: (message) => errors.push(message) });
+		store.getState().write([step("a", "Card"), step("t", "TextRef", { value: "x" })]);
+
+		const applied = store.getState().write([step("a", "Grid"), step("t", "TextRef")], { value: "y" });
+
+		expect(applied).toBe(false);
+		expect(store.getState().getIn(["a", "t"])?.props).toEqual({ value: "x" });
+		expect(errors[0]).toContain("kind mismatch at a: the node is Card, the write names Grid");
+	});
+
+	it("puts another kind at an address once the old node is removed", () => {
+		const store = createTreeStore({ onError: () => {} });
+		store.getState().write([step("a", "TextRef"), step("x", "TextRef")]);
+		store.getState().write([step("b", "TextRef")]);
+		store.getState().remove(["a"]);
+		expect(store.getState().write([step("a", "Card")])).toBe(true);
+		expect(store.getState().getIn(["a"])?.type).toBe("Card");
 	});
 
 	it("keeps a node whose write does not name a type", () => {
@@ -145,14 +166,6 @@ describe("write", () => {
 			store.getState().write([step("box", "Column"), step(seg, "TextRef", { value: seg })]);
 		}
 		expect(segments(store.getState().getIn(["box"]))).toEqual(["z", "0", "a", "1"]);
-	});
-
-	it("keeps a rebuilt level in its original slot", () => {
-		const store = createTreeStore();
-		store.getState().write([step("a", "TextRef"), step("x", "TextRef")]);
-		store.getState().write([step("b", "TextRef")]);
-		store.getState().write([step("a", "Card")]);
-		expect(segments(store.getState().root)).toEqual(["a", "b"]);
 	});
 
 	it("writes into the root with an empty chain", () => {
@@ -489,6 +502,58 @@ describe("visibility", () => {
 		store.getState().dispatch(frame(OPS.hide, ["a"], null, [step("a", "TextRef")]));
 		store.getState().dispatch(frame(OPS.remove, ["a"]));
 		expect(store.getState().getIn(["a"])).toBeNull();
+	});
+});
+
+describe("kind mismatch", () => {
+	it("answers a refused write with an error frame and runs no handler", () => {
+		const sent: TreeFrame[] = [];
+		const handler = vi.fn();
+		const store = createTreeStore({
+			resolve: (t) => (t === "Modal" ? { handlers: { write: handler } } : undefined),
+			onError: () => {},
+		});
+		store.getState().setSender((f) => sent.push(f));
+		store.getState().dispatch(frame(OPS.write, ["a"], "x", [step("a", "TextRef")]));
+
+		store.getState().dispatch(frame(OPS.write, ["a"], { open: true }, [step("a", "Modal")]));
+
+		expect(handler).not.toHaveBeenCalled();
+		expect(store.getState().getIn(["a"])).toEqual({
+			type: "TextRef",
+			props: { value: "x" },
+			children: new Map(),
+		});
+		expect(sent).toHaveLength(1);
+		expect(sent[0].op).toBe(OP_ERROR);
+		expect(sent[0].ref).toEqual(["a"]);
+		expect(sent[0].payload).toMatchObject({ code: "kind_mismatch" });
+		expect((sent[0].payload as { message: string }).message).toContain(
+			"the node is TextRef, the write names Modal",
+		);
+	});
+
+	it("refuses init, hide and custom ops the same way", () => {
+		const sent: TreeFrame[] = [];
+		const store = createTreeStore({ onError: () => {} });
+		store.getState().setSender((f) => sent.push(f));
+		store.getState().write([step("a", "Card")]);
+
+		store.getState().dispatch(frame(OPS.init, ["a"], null, [step("a", "Grid")]));
+		store.getState().dispatch(frame(OPS.hide, ["a"], null, [step("a", "Grid")]));
+		store.getState().dispatch(frame("set_span", ["a", "c"], [2, 1], [step("a", "Grid"), step("c")]));
+
+		expect(sent.map((f) => f.op)).toEqual([OP_ERROR, OP_ERROR, OP_ERROR]);
+		expect(store.getState().getIn(["a"])?.type).toBe("Card");
+		expect(store.getState().getIn(["a"])?.hidden).toBeUndefined();
+		expect(store.getState().getIn(["a", "c"])).toBeNull();
+	});
+
+	it("hands an inbound error frame to onError", () => {
+		const errors: [string, string[]][] = [];
+		const store = createTreeStore({ onError: (message, path) => errors.push([message, path]) });
+		store.getState().dispatch(frame(OP_ERROR, ["a"], { code: "internal", message: "boom" }));
+		expect(errors).toEqual([["server: boom", ["a"]]]);
 	});
 });
 

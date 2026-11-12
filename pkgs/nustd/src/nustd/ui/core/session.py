@@ -15,6 +15,7 @@ with ``rt.ctx.fabrics.get(Session)``.
 from __future__ import annotations
 
 import asyncio
+import logging
 import uuid
 from abc import ABC, abstractmethod
 from collections import defaultdict
@@ -29,6 +30,8 @@ if TYPE_CHECKING:
 
 
 __all__ = ["Session", "Subscription", "WsSession", "WsSubscription"]
+
+_log = logging.getLogger(__name__)
 
 
 Callback = Callable[[object], None]
@@ -187,9 +190,21 @@ class WsSession(Session):
                 fut.set_result(frame.payload)
             return
         if frame.op == OP_ERROR:
-            # The browser may report one. Nothing here acts on it yet.
+            self._on_error(frame)
             return
         # Unknown inbound op: ignored.
+
+    def _on_error(self, frame: Frame) -> None:
+        """Log what the browser refused, a write naming the wrong kind for a node among them.
+
+        Sends are fire and forget, so the program has already moved on by the
+        time the refusal lands: the log is where it surfaces. A host that wants
+        more overrides this.
+        """
+        payload = frame.payload if isinstance(frame.payload, dict) else {}
+        code = payload.get("code", "error")
+        message = payload.get("message", frame.payload)
+        _log.error("nustd.ui browser refused %s at %s: %s", code, "/".join(frame.ref), message)
 
     def _fail_pending(self) -> None:
         for fut in self._pending.values():

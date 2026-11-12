@@ -3,8 +3,10 @@
 
 import { decode as mpDecode, encode as mpEncode } from "@msgpack/msgpack";
 
-// The op vocabulary lives in OPS (tree.ts). `error` is the one op the tree
-// store has no member for -- nothing on this side handles one yet.
+// The op vocabulary lives in OPS (tree.ts). `error` goes either way: a frame
+// the far end refused, payload `ErrorPayload`. The tree store sends
+// `kind_mismatch` for a write naming a kind other than the node's, and hands
+// an inbound one to its `onError`.
 export const OP_ERROR = "error";
 
 // A ref's address: the Ref chain's segments, root-first. Stays a list end
@@ -34,6 +36,7 @@ export type Frame = {
 };
 
 export type ErrorCode =
+	| "kind_mismatch"
 	| "ref_not_found"
 	| "op_not_allowed"
 	| "payload_invalid"

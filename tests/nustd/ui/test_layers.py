@@ -436,8 +436,8 @@ def test_every_name_on_main_still_imports(module, names):
 
 
 # Added since main: the node lifecycle ops on every Ref (init, hide, display),
-# and the clear a tab's boot starts with.
-_CORE_ADDED = "OP_DISPLAY OP_HIDE Clear Display Hide Init".split()
+# the clear a tab's boot starts with, and the item ref every child is.
+_CORE_ADDED = "OP_DISPLAY OP_HIDE Clear Display Hide Init ItemRef".split()
 
 
 def test_core_all_is_main_plus_the_lifecycle_ops():

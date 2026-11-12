@@ -51,6 +51,9 @@ __all__ = [
 ]
 
 
+# Either direction: a frame the far end refused, payload ``{code, message}``.
+# The browser sends ``kind_mismatch`` for a write whose chain names a kind
+# other than the one a node already there has; nothing of that write lands.
 OP_ERROR = "error"
 OP_NOTIFY = "notify"
 OP_READ = "read"

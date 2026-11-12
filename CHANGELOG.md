@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- A child's kind is named where it is used; clashing kinds now fail loudly
 - Split panels folded to a fixed width stay folded through resizes and reloads
 
 ## 0.7.3 - 2026-11-12

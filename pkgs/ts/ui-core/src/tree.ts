@@ -12,12 +12,17 @@
 // mounted ahead of time and there is no fields list. Chain props are a seed
 // for a level being created, never an update to one already there.
 //
+// A node's type is fixed once named. A chain that names another type for a
+// node already there is refused whole: nothing lands, `onError` reports it and
+// a frame from the server gets an `error` frame back. Changing what sits at an
+// address takes a `remove` first.
+//
 // React-free on purpose: this is zustand's vanilla store, so core stays usable
 // from a worker, a test, or anywhere else with no DOM. The React bindings and
 // the component registry live in the kit.
 
 import { current, enableMapSet, isDraft } from "immer";
-import type { ChainLevel, Frame } from "./protocol";
+import { type ChainLevel, type ErrorPayload, type Frame, OP_ERROR } from "./protocol";
 import { createStore, type StoreApi } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
 
@@ -104,8 +109,12 @@ export type Resolve = (type: string) => Behaviour | undefined;
 export type TreeState = { root: Node };
 
 export type TreeActions = {
-	/** Walk the chain, creating what is missing, then merge `props` into the leaf. */
-	write: (chain: ChainStep[], props?: Props) => void;
+	/**
+	 * Walk the chain, creating what is missing, then merge `props` into the leaf.
+	 * False when the chain names a kind other than a node's already there: the
+	 * write is refused whole and `onError` has it.
+	 */
+	write: (chain: ChainStep[], props?: Props) => boolean;
 	/** Drop a subtree, running dispose down the branch. Server-driven only. */
 	remove: (path: Path) => void;
 	getIn: (path: Path) => Node | null;
@@ -147,6 +156,35 @@ export function asProps(payload: unknown): Props {
 export function frameChain(frame: TreeFrame): ChainStep[] {
 	if (frame.chain) return frame.chain;
 	return frame.ref.map((segment) => [segment, null] as ChainStep);
+}
+
+/** Where `chain` names a type other than the node already there has, or null. */
+export function kindConflict(
+	root: Node,
+	chain: ChainStep[],
+): { path: Path; have: string; want: string } | null {
+	let node: Node = root;
+	const here: Path = [];
+	for (const [segment, rawType] of chain) {
+		const child = node.children.get(segment);
+		if (!child) return null;
+		here.push(segment);
+		const want = rawType ?? null;
+		// An untyped side on either end is no claim: a synthesized chain names
+		// no type, and an autovivified level takes the first one named.
+		if (want !== null && child.type !== null && child.type !== want) {
+			return { path: [...here], have: child.type, want };
+		}
+		node = child;
+	}
+	return null;
+}
+
+function mismatch(conflict: { path: Path; have: string; want: string }): string {
+	return (
+		`kind mismatch at ${conflict.path.join(" / ")}: the node is ${conflict.have}, ` +
+		`the write names ${conflict.want}; remove it first to put another kind there`
+	);
 }
 
 /** Pure lookup, handy for selectors over a state snapshot. */
@@ -204,14 +242,20 @@ export function createTreeStore(options: TreeStoreOptions = {}): TreeStore {
 
 			write: (chain, props) => {
 				const path = chain.map((step) => step[0]);
-				// One existence probe first. When the leaf is already there with
-				// the right type, everything above it is too, so the walk is
-				// skipped and only the payload lands.
+				const conflict = kindConflict(get().root, chain);
+				if (conflict) {
+					onError(mismatch(conflict), path);
+					return false;
+				}
+				// When the leaf is already there, the conflict walk has seen every
+				// level above it agree, so only the payload lands.
 				const existing = getNode(get().root, path);
-				const leafType = chain.length ? (chain[chain.length - 1][1] ?? null) : null;
-				if (existing && (leafType === null || existing.type === leafType)) {
-					if (props && Object.keys(props).length) get().setProps(path, props);
-					return;
+				if (existing) {
+					const leafType = chain.length ? (chain[chain.length - 1][1] ?? null) : null;
+					if (leafType === null || existing.type !== null) {
+						if (props && Object.keys(props).length) get().setProps(path, props);
+						return true;
+					}
 				}
 				set((draft) => {
 					let node = draft.root as Node;
@@ -220,18 +264,10 @@ export function createTreeStore(options: TreeStoreOptions = {}): TreeStore {
 						here.push(segment);
 						const type = rawType ?? null;
 						let child: Node | undefined = node.children.get(segment);
-						// A level whose type changes is rebuilt, not patched:
-						// its old props and children go, and the branch disposes.
-						if (child && type !== null && child.type !== null && child.type !== type) {
-							collectDispose(child, [...here], pending);
-							child = undefined;
-						}
 						if (!child) {
 							child = emptyNode(type);
 							if (stepProps) Object.assign(child.props, stepProps);
-								// `set` on a key already there keeps its slot, so a
-								// rebuilt level does not jump to the end.
-								node.children.set(segment, child);
+							node.children.set(segment, child);
 						} else if (child.type === null && type !== null) {
 							// Autovivified earlier by something below it, so it
 							// never got its declared props. This write names its
@@ -245,7 +281,7 @@ export function createTreeStore(options: TreeStoreOptions = {}): TreeStore {
 					}
 					if (props) Object.assign(node.props, props);
 				});
-				flushDispose();
+				return true;
 			},
 
 			remove: (path) => {
@@ -303,6 +339,23 @@ export function createTreeStore(options: TreeStoreOptions = {}): TreeStore {
 
 			dispatch: (frame) => {
 				const api = get();
+				if (frame.op === OP_ERROR) {
+					const payload = (frame.payload ?? {}) as Partial<ErrorPayload>;
+					onError(`server: ${payload.message ?? payload.code ?? "error"}`, frame.ref);
+					return;
+				}
+				// A chain the store refused never reaches a handler; the server
+				// hears why, since the write it sent did not land.
+				const refuse = () => {
+					const conflict = kindConflict(api.root, frameChain(frame));
+					const message = conflict ? mismatch(conflict) : "write refused";
+					api.send({
+						op: OP_ERROR,
+						ref: frame.ref,
+						payload: { code: "kind_mismatch", message } satisfies ErrorPayload,
+						id: frame.id,
+					});
+				};
 				if (frame.op === OPS.remove) {
 					api.remove(frame.ref);
 					return;
@@ -311,13 +364,16 @@ export function createTreeStore(options: TreeStoreOptions = {}): TreeStore {
 				if (frame.op === OPS.init) {
 					// Structure and nothing else. An init carries no payload, so
 					// it never touches a value the program already set.
-					api.write(chain);
+					if (!api.write(chain)) refuse();
 					return;
 				}
 				if (frame.op === OPS.hide || frame.op === OPS.display) {
 					// Structure first (the node may not exist yet), then the
 					// flag. Generic for every type, never a handler's call.
-					api.write(chain);
+					if (!api.write(chain)) {
+						refuse();
+						return;
+					}
 					api.setHidden(frame.ref, frame.op === OPS.hide);
 					return;
 				}
@@ -328,7 +384,10 @@ export function createTreeStore(options: TreeStoreOptions = {}): TreeStore {
 				if (frame.op === OPS.write) {
 					// Structure first, always: the node may not exist yet, so
 					// the chain runs before anything can be looked up by type.
-					api.write(chain);
+					if (!api.write(chain)) {
+						refuse();
+						return;
+					}
 					const written = api.getIn(frame.ref);
 					if (!written) return;
 					const custom = handlerFor(written);
@@ -346,7 +405,10 @@ export function createTreeStore(options: TreeStoreOptions = {}): TreeStore {
 				// first, the same way a write does: a Card's `set_title` may be
 				// the first frame that ever names that Card. A frame with no
 				// chain is addressed at a node that should already be there.
-				if (frame.chain) api.write(chain);
+				if (frame.chain && !api.write(chain)) {
+					refuse();
+					return;
+				}
 				const node = api.getIn(frame.ref);
 				if (!node) {
 					onError(`no node for op "${frame.op}"`, frame.ref);

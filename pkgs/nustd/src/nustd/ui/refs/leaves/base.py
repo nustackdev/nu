@@ -11,13 +11,13 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from nustd.ui.core import Ref
+from nustd.ui.core import ItemRef
 
 
 __all__ = ["LeafRef"]
 
 
-class LeafRef(Ref):
+class LeafRef(ItemRef):
     """Base for leaf Refs: one thing drawn from props, no children. Abstract."""
 
     _leaf: ClassVar[bool] = True

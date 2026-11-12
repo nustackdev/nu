@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from typing_extensions import Self
 
+from nu.domains import shape
 from nu.domains.shape import Slot
 from nu.domains.shape.base import StructuredRef
 from nu.engine.structure import Declared
@@ -33,7 +34,7 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 
-__all__ = ["Ref"]
+__all__ = ["ItemRef", "Ref"]
 
 
 def _wire_type_of(ref_or_section_cls: type) -> str:
@@ -274,3 +275,12 @@ class Ref(StructuredRef):
     @classmethod
     def slot(cls, **props: object) -> Self:
         return Slot(cls, props=props)  # type: ignore[return-value]
+
+
+class ItemRef(shape.ItemRef, Ref):
+    """What every ui child is, leaf or container: the ui row of core's item ref.
+
+    Mirrors kv's ``ItemRef``: core's item tier over the fabric's own base. It
+    is the one class ``.to`` and whatever the item tier grows reach every ui
+    child through, so it adds nothing of its own.
+    """

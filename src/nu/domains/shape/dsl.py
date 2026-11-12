@@ -71,12 +71,18 @@ class Slot(Generic[_RefT]):
 
     def create_ref(
         self,
-        owner_shape: type[Shape],
+        owner_shape: type[Shape] | None,
         parent_ref: StructuredRef | None = None,
+        *,
+        address: object = None,
     ) -> _RefT:
-        """Instantiate the Ref, wiring owner_shape and parent_ref."""
+        """Instantiate the Ref, wiring owner_shape and parent_ref.
+
+        ``address`` is the slot's own name unless given: ``ItemRef.to`` builds
+        a slot spec at the address it re-kinds, which is no slot name at all.
+        """
         ref = self.ref_cls(  # type: ignore[call-arg]
-            self.name,
+            self.name if address is None else address,
             owner_shape=owner_shape,
             parent_ref=parent_ref,
             **self.kwargs,

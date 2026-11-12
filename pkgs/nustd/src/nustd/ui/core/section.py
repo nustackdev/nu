@@ -32,7 +32,7 @@ from typing_extensions import Self
 
 from nu.domains.shape import Shape, Slot
 
-from .base import Ref
+from .base import ItemRef, Ref
 
 
 if TYPE_CHECKING:
@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 __all__ = ["Section", "SectionRef"]
 
 
-class SectionRef(Ref):
+class SectionRef(ItemRef):
     """Substrate Ref under every container.
 
     Created by ``Section.slot()`` and exposed at the parent (a Shape or

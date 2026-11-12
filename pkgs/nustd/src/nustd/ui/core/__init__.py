@@ -3,6 +3,7 @@
 The reusable seam under nustd.ui:
 
 - ``Ref``              -- generic UI Ref base (wire-path resolution, node lifecycle)
+- ``ItemRef``          -- what every leaf and container is, core's item ref in ui
 - ``Section`` /
   ``SectionRef``       -- shape-based container primitive + substrate ref
 - ``Session`` /
@@ -29,7 +30,7 @@ drawn with ``nustd.ui.boot`` / ``route`` / ``Ref.showing``. The widget kit
 under ``nustd.ui.refs`` targets this core, not any specific host.
 """
 
-from .base import Ref
+from .base import ItemRef, Ref
 from .chains import Chain, boot_chains
 from .interactions import (
     EVENT,
@@ -78,6 +79,7 @@ __all__ = [
     "Frame",
     "Hide",
     "Init",
+    "ItemRef",
     "Ref",
     "Remove",
     "Section",
