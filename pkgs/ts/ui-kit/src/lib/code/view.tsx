@@ -58,6 +58,8 @@ export type CodeMirrorViewProps = {
 	maxHeight?: number;
 	/** Persist. Fires on cmd+enter and on blur, and only when the text changed. */
 	onCommit?: (source: string) => void;
+	/** The deliberate send: cmd+enter, after its commit. */
+	onSubmit?: () => void;
 	/** Whether the buffer differs from `value`, on every keystroke. */
 	onDirty?: (dirty: boolean) => void;
 	className?: string;
@@ -72,7 +74,7 @@ export type CodeMirrorViewProps = {
 const inbound = Annotation.define<boolean>();
 
 /** The editing set, with this view's own undo stack and its deliberate-save key. */
-function editing(commit: () => void): Extension {
+function editing(commit: () => void, submit: () => void): Extension {
 	return codeEditing({
 		history: true,
 		keys: [
@@ -80,6 +82,7 @@ function editing(commit: () => void): Extension {
 				key: "Mod-Enter",
 				run: () => {
 					commit();
+					submit();
 					return true;
 				},
 			},
@@ -96,6 +99,7 @@ export function CodeMirrorView({
 	minHeight = 0,
 	maxHeight = 0,
 	onCommit,
+	onSubmit,
 	onDirty,
 	className,
 	onView,
@@ -106,8 +110,8 @@ export function CodeMirrorView({
 	const dirtyRef = useRef(false);
 	// The view binds its listeners once, so everything they read goes through
 	// a ref rather than a closed-over prop.
-	const cb = useRef({ value, onCommit, onDirty, onView });
-	cb.current = { value, onCommit, onDirty, onView };
+	const cb = useRef({ value, onCommit, onSubmit, onDirty, onView });
+	cb.current = { value, onCommit, onSubmit, onDirty, onView };
 
 	const showNumbers = numbered ?? !readOnly;
 
@@ -127,7 +131,12 @@ export function CodeMirrorView({
 		cb.current.onCommit?.(next);
 	}, []);
 
-	const modeFor = useCallback((ro: boolean) => (ro ? codeReading : editing(commit)), [commit]);
+	const submit = useCallback(() => cb.current.onSubmit?.(), []);
+
+	const modeFor = useCallback(
+		(ro: boolean) => (ro ? codeReading : editing(commit, submit)),
+		[commit, submit],
+	);
 
 	useLayoutEffect(() => {
 		const host = hostRef.current;

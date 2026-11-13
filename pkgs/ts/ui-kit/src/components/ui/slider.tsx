@@ -39,7 +39,12 @@ const sliderThumbSizes = {
 
 export interface SliderProps
 	extends Omit<React.ComponentProps<typeof SliderPrimitive.Root>, "size">,
-		VariantProps<typeof sliderVariants> {}
+		VariantProps<typeof sliderVariants> {
+	/** Props for every thumb, the element with `role="slider"`: where aria and an id go. */
+	thumbProps?: React.ComponentProps<typeof SliderPrimitive.Thumb>;
+	/** One accessible name per thumb, in order (a range's low and high). */
+	thumbLabels?: string[];
+}
 
 export function Slider({
 	className,
@@ -48,6 +53,8 @@ export function Slider({
 	value,
 	min = 0,
 	max = 100,
+	thumbProps,
+	thumbLabels,
 	...props
 }: SliderProps) {
 	// Thumb count comes from the initial value shape; a single-thumb slider
@@ -82,6 +89,8 @@ export function Slider({
 				<SliderPrimitive.Thumb
 					// biome-ignore lint/suspicious/noArrayIndexKey: thumb count is fixed.
 					key={i}
+					{...thumbProps}
+					aria-label={thumbLabels?.[i] ?? thumbProps?.["aria-label"]}
 					data-slot="slider-thumb"
 					className={cn(
 						"block shrink-0 rounded-full bg-bg-surface border-2 border-border-strong",

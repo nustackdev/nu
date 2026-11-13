@@ -10,6 +10,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Form fields get real labels, help and announced errors; buttons never submit by accident
+
 ## 0.7.4 - 2026-11-13
 
 - Release nu 0.7.4

@@ -54,6 +54,11 @@ export const Matrix: StoryObj = {
 					<div className="flex flex-wrap gap-3">
 						<Button>Default</Button>
 						<Button disabled>Disabled</Button>
+						<Button loading>Saving</Button>
+						<Button variant="secondary" loading>
+							<Sparkles />
+							Loading hides the icon
+						</Button>
 						<Button variant="ghost" ring="inset">
 							Inset ring
 						</Button>

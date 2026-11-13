@@ -22,9 +22,9 @@
 // the component registry live in the kit.
 
 import { current, enableMapSet, isDraft } from "immer";
-import { type ChainLevel, type ErrorPayload, type Frame, OP_ERROR } from "./protocol";
-import { createStore, type StoreApi } from "zustand/vanilla";
 import { immer } from "zustand/middleware/immer";
+import { createStore, type StoreApi } from "zustand/vanilla";
+import { type ChainLevel, type ErrorPayload, type Frame, OP_ERROR } from "./protocol";
 
 // `children` is a Map, and immer only drafts those once this is on.
 enableMapSet();
@@ -45,6 +45,10 @@ export type Node = {
 	props: Props;
 	children: Map<string, Node>;
 	hidden?: boolean;
+	// The props the node's slot declared, as they came on the chain that
+	// created it. Never written after that, so a reset (an input back to its
+	// declared value) has something to go back to once the live props moved.
+	seed?: Props;
 };
 
 /** Alias for consumers where the DOM's `Node` is also in scope. */
@@ -266,14 +270,20 @@ export function createTreeStore(options: TreeStoreOptions = {}): TreeStore {
 						let child: Node | undefined = node.children.get(segment);
 						if (!child) {
 							child = emptyNode(type);
-							if (stepProps) Object.assign(child.props, stepProps);
+							if (stepProps) {
+								Object.assign(child.props, stepProps);
+								child.seed = { ...stepProps };
+							}
 							node.children.set(segment, child);
 						} else if (child.type === null && type !== null) {
 							// Autovivified earlier by something below it, so it
 							// never got its declared props. This write names its
 							// type, which is when it really comes into being.
 							child.type = type;
-							if (stepProps) Object.assign(child.props, stepProps);
+							if (stepProps) {
+								Object.assign(child.props, stepProps);
+								child.seed = { ...stepProps };
+							}
 						}
 						// Otherwise: the level is already there with the right
 						// type. The chain says nothing new about it.

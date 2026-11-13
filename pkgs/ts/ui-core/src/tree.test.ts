@@ -74,6 +74,18 @@ describe("write", () => {
 		expect(segments(store.getState().getIn(["sec"]))).toEqual(["t", "u"]);
 	});
 
+	it("keeps the declared props as the node's seed, untouched by later writes", () => {
+		const store = createTreeStore();
+		store.getState().write([step("f", "Form"), step("title", "InputRef", { value: "seed" })]);
+		store.getState().setProps(["f", "title"], { value: "typed" });
+		store.getState().write([step("f", "Form"), step("title", "InputRef", { value: "seed" })], {
+			value: "written",
+		});
+		const node = store.getState().getIn(["f", "title"]);
+		expect(node?.props.value).toBe("written");
+		expect(node?.seed).toEqual({ value: "seed" });
+	});
+
 	it("keeps a prop set at runtime when a deep write rides through", () => {
 		const store = createTreeStore();
 		const chain = [
@@ -147,6 +159,7 @@ describe("write", () => {
 			type: "InputRef",
 			props: { value: "y" },
 			children: new Map(),
+			seed: { value: "x" },
 		});
 	});
 
@@ -296,6 +309,7 @@ describe("dispatch", () => {
 			type: "InputRef",
 			props: { label: "L", value: "typed" },
 			children: new Map(),
+			seed: { label: "L" },
 		});
 	});
 

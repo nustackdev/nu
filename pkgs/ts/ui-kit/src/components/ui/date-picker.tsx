@@ -26,6 +26,8 @@ interface DatePickerBaseProps {
 	id?: string;
 	name?: string;
 	"aria-label"?: string;
+	/** More props for the trigger button (aria, a key handler, autofocus). */
+	triggerProps?: React.ComponentProps<"button">;
 }
 
 interface DatePickerProps extends DatePickerBaseProps {
@@ -99,6 +101,7 @@ function TriggerSurface({
 	ariaLabel,
 	name,
 	open,
+	triggerProps,
 }: {
 	variant?: Variant;
 	size?: Size;
@@ -111,9 +114,11 @@ function TriggerSurface({
 	ariaLabel?: string;
 	name?: string;
 	open: boolean;
+	triggerProps?: React.ComponentProps<"button">;
 }) {
 	return (
 		<PopoverPrimitive.Trigger
+			{...triggerProps}
 			data-slot="date-picker-trigger"
 			data-empty={empty || undefined}
 			disabled={disabled}
@@ -162,6 +167,7 @@ function DatePicker({
 	id,
 	name,
 	"aria-label": ariaLabel,
+	triggerProps,
 }: DatePickerProps) {
 	const [internal, setInternal] = React.useState<Date | null>(defaultValue);
 	const value = valueProp === undefined ? internal : valueProp;
@@ -188,6 +194,7 @@ function DatePicker({
 				ariaLabel={ariaLabel}
 				name={name}
 				open={open}
+				triggerProps={triggerProps}
 			/>
 			<PopoverPrimitive.Portal>
 				<PopoverPrimitive.Content
@@ -236,6 +243,7 @@ function DateRangePicker({
 	id,
 	name,
 	"aria-label": ariaLabel,
+	triggerProps,
 }: DateRangePickerProps) {
 	const [internal, setInternal] = React.useState<DateRange | null>(defaultValue);
 	const value = valueProp === undefined ? internal : valueProp;
@@ -268,6 +276,7 @@ function DateRangePicker({
 				ariaLabel={ariaLabel}
 				name={name}
 				open={open}
+				triggerProps={triggerProps}
 			/>
 			<PopoverPrimitive.Portal>
 				<PopoverPrimitive.Content

@@ -65,6 +65,8 @@ interface TagInputProps
 	disabled?: boolean;
 	invalid?: boolean;
 	size?: TagInputSize;
+	/** Keep a tag already in the list instead of dropping the repeat. */
+	allowDuplicates?: boolean;
 }
 
 function TagInput({
@@ -78,6 +80,8 @@ function TagInput({
 	maxTags,
 	placeholder,
 	onKeyDown,
+	onBlur,
+	allowDuplicates = false,
 	...props
 }: TagInputProps) {
 	const inputRef = React.useRef<HTMLInputElement>(null);
@@ -87,7 +91,7 @@ function TagInput({
 		(raw: string) => {
 			const clean = raw.trim();
 			if (!clean) return;
-			if (value.includes(clean)) {
+			if (!allowDuplicates && value.includes(clean)) {
 				setDraft("");
 				return;
 			}
@@ -95,7 +99,7 @@ function TagInput({
 			onValueChange([...value, clean]);
 			setDraft("");
 		},
-		[maxTags, onValueChange, value],
+		[allowDuplicates, maxTags, onValueChange, value],
 	);
 
 	const removeAt = React.useCallback(
@@ -121,7 +125,7 @@ function TagInput({
 
 	const handleBlur = (event: React.FocusEvent<HTMLInputElement>) => {
 		commit(draft);
-		props.onBlur?.(event);
+		onBlur?.(event);
 	};
 
 	return (

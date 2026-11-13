@@ -178,6 +178,17 @@ export {
 	type IconProps,
 	iconVariants,
 } from "./components/ui/icon";
+export {
+	Field,
+	FieldContext,
+	FieldError,
+	FieldHelp,
+	type FieldProps,
+	type FieldState,
+	Label,
+	type LabelProps,
+	useFieldControl,
+} from "./components/ui/field";
 export { IconButton, iconButtonVariants } from "./components/ui/icon-button";
 export { Image } from "./components/ui/image";
 export { InlineEdit, type InlineEditProps } from "./components/ui/inline-edit";

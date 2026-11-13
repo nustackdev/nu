@@ -51,6 +51,8 @@ export interface NumberInputProps
 		VariantProps<typeof numberInputVariants> {
 	value?: number | null;
 	onValueChange?: (value: number | null) => void;
+	/** A finished change: a stepper click or an arrow key. Typing only calls `onValueChange`. */
+	onValueCommit?: (value: number) => void;
 	min?: number;
 	max?: number;
 	step?: number;
@@ -73,6 +75,8 @@ export function NumberInput({
 	invalid,
 	steppers = true,
 	onBlur,
+	onKeyDown,
+	onValueCommit,
 	...props
 }: NumberInputProps) {
 	const [draft, setDraft] = useState<string>(() =>
@@ -135,12 +139,14 @@ export function NumberInput({
 	};
 
 	const bump = (delta: number) => {
+		if (disabled || props.readOnly) return;
 		const base =
 			draft === "" || draft === "-" ? 0 : Number(draft);
 		if (!Number.isFinite(base)) return;
 		const next = clamp(base + delta);
 		setDraft(String(next));
 		emit(next);
+		onValueCommit?.(next);
 	};
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -151,6 +157,7 @@ export function NumberInput({
 			e.preventDefault();
 			bump(e.shiftKey ? -step * 10 : -step);
 		}
+		onKeyDown?.(e);
 	};
 
 	return (

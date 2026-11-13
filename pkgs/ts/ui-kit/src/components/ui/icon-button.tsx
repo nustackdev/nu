@@ -77,13 +77,16 @@ export function IconButton({
 	asChild = false,
 	tip,
 	tipSide = "bottom",
+	type = "button",
 	...props
 }: IconButtonProps) {
 	const Comp = asChild ? SlotPrimitive.Root : "button";
+	// "button" unless told otherwise, like Button: inside a form it never submits by accident.
 	const button = (
 		<Comp
 			data-slot="icon-button"
 			className={cn(iconButtonVariants({ variant, size, ring, className }))}
+			type={asChild ? undefined : type}
 			{...props}
 		/>
 	);

@@ -2,6 +2,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { Slot as SlotPrimitive } from "radix-ui";
 import type * as React from "react";
 import { cn, ringVariants } from "../../lib/utils";
+import { Spinner } from "./spinner";
 
 // Base + variants per design/primitives.md §Button.
 // Motion tokens: transition-colors duration-fast ease-out (motion.md §3).
@@ -57,15 +58,24 @@ export interface ButtonProps
 	extends React.ComponentProps<"button">,
 		VariantProps<typeof buttonVariants> {
 	asChild?: boolean;
+	/** A spinner in place of the icon, `aria-busy`, and no clicks until it clears. */
+	loading?: boolean;
 }
 
 // No forwardRef: React 19 passes `ref` as a normal prop through Slot / <button>.
+//
+// `type` defaults to "button", not the HTML "submit": a button inside a form
+// submits only when it says so (`type="submit"`), so a Cancel never does.
 export function Button({
 	className,
 	variant,
 	size,
 	ring,
 	asChild = false,
+	loading = false,
+	type = "button",
+	disabled,
+	children,
 	...props
 }: ButtonProps) {
 	const Comp = asChild ? SlotPrimitive.Root : "button";
@@ -73,9 +83,27 @@ export function Button({
 		<Comp
 			data-slot="button"
 			className={cn(buttonVariants({ variant, size, ring, className }))}
+			type={asChild ? undefined : type}
+			disabled={disabled || loading || undefined}
+			aria-busy={loading || undefined}
 			{...props}
-		/>
+		>
+			{loading && !asChild ? (
+				<>
+					<Spinner size="sm" label="Working" className="text-current" />
+					<Slottable>{children}</Slottable>
+				</>
+			) : (
+				children
+			)}
+		</Comp>
 	);
+}
+
+// While loading the spinner takes the place of a leading icon: an svg child
+// would sit beside it, so the button hides its own svgs and keeps the label.
+function Slottable({ children }: { children: React.ReactNode }) {
+	return <span className="contents [&>svg]:hidden">{children}</span>;
 }
 
 export { buttonVariants };

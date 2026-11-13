@@ -40,6 +40,8 @@ export interface CodeProps extends Omit<React.HTMLAttributes<HTMLElement>, "onCh
 	maxHeight?: number;
 	/** Block only. Fires on cmd+enter and on blur, and only when the text changed. */
 	onCommit?: (source: string) => void;
+	/** cmd+enter in the editor, after its commit. */
+	onSubmit?: () => void;
 	/** Block only. Whether the buffer differs from `value`, on every keystroke. */
 	onDirty?: (dirty: boolean) => void;
 	/** Block only. The live CodeMirror view on mount, null on teardown. */
@@ -59,6 +61,7 @@ function Code({
 	minHeight,
 	maxHeight,
 	onCommit,
+	onSubmit,
 	onDirty,
 	onView,
 	children,
@@ -83,6 +86,7 @@ function Code({
 					minHeight={minHeight}
 					maxHeight={maxHeight}
 					onCommit={onCommit}
+					onSubmit={onSubmit}
 					onDirty={onDirty}
 					onView={onView}
 				/>
