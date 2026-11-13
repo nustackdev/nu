@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- A forms example shows one submit, field checks, program errors and a locked fieldset
 - Forms check fields before sending, show errors on fields, and disable whole fieldsets
 - Empty pickers read null, not zero; code and markdown editors switch to readonly
 - New inputs: segmented control, checkbox group, multiselect, autocomplete, time, date range, color
