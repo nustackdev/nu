@@ -12,6 +12,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- New inputs: segmented control, checkbox group, multiselect, autocomplete, time, date range, color
+- Text inputs gain search, password reveal, inline editing and button groups that line up
 - Enter submits inputs and whole forms in one round trip with every value
 - Every input now seeds and sets its value one way; old seed names break
 - Form fields get real labels, help and announced errors; buttons never submit by accident

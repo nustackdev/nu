@@ -1,10 +1,11 @@
 import { format as formatDate } from "date-fns";
-import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Popover as PopoverPrimitive } from "radix-ui";
 import * as React from "react";
 import { DayPicker, type DateRange } from "react-day-picker";
 
 import { cn } from "../../lib/utils";
+import { IconButton } from "./icon-button";
 import { selectTriggerVariants } from "./select";
 
 // DatePicker = kit Popover + react-day-picker. react-day-picker owns keyboard
@@ -28,6 +29,12 @@ interface DatePickerBaseProps {
 	"aria-label"?: string;
 	/** More props for the trigger button (aria, a key handler, autofocus). */
 	triggerProps?: React.ComponentProps<"button">;
+	/** A clear button over the trigger while there is a value; Backspace or Delete on the trigger clears too. */
+	clearable?: boolean;
+	/** The clear button's accessible name. */
+	clearLabel?: string;
+	/** The calendar opened or closed. */
+	onOpenChange?: (open: boolean) => void;
 }
 
 interface DatePickerProps extends DatePickerBaseProps {
@@ -102,6 +109,7 @@ function TriggerSurface({
 	name,
 	open,
 	triggerProps,
+	clearing,
 }: {
 	variant?: Variant;
 	size?: Size;
@@ -115,6 +123,8 @@ function TriggerSurface({
 	name?: string;
 	open: boolean;
 	triggerProps?: React.ComponentProps<"button">;
+	/** A clear button sits over the trigger's end: leave room, drop the calendar glyph. */
+	clearing?: boolean;
 }) {
 	return (
 		<PopoverPrimitive.Trigger
@@ -130,13 +140,72 @@ function TriggerSurface({
 			className={cn(
 				selectTriggerVariants({ variant, size, invalid }),
 				empty && "text-text-muted",
+				clearing && "pr-8",
 				className,
 			)}
 		>
 			<span className="truncate">{label}</span>
-			<Calendar className="opacity-60" />
+			{clearing ? null : <Calendar className="opacity-60" />}
 		</PopoverPrimitive.Trigger>
 	);
+}
+
+// The clear button is a sibling of the trigger (a button may not hold a
+// button), laid over the trigger's end. Clearing moves focus back to the
+// trigger, since the clear button itself goes away with the value.
+function Clearable({
+	show,
+	label,
+	size,
+	onClear,
+	children,
+}: {
+	show: boolean;
+	label: string;
+	size?: Size;
+	onClear: () => void;
+	children: React.ReactNode;
+}) {
+	const box = React.useRef<HTMLDivElement>(null);
+	return (
+		<div ref={box} data-slot="date-picker-clearable" className="relative w-full">
+			{children}
+			{show ? (
+				<IconButton
+					variant="ghost"
+					size={size === "lg" ? "sm" : "xs"}
+					aria-label={label}
+					className="absolute right-1.5 top-1/2 -translate-y-1/2"
+					onClick={() => {
+						onClear();
+						box.current
+							?.querySelector<HTMLButtonElement>('[data-slot="date-picker-trigger"]')
+							?.focus();
+					}}
+				>
+					<X aria-hidden />
+				</IconButton>
+			) : null}
+		</div>
+	);
+}
+
+/** The trigger's key handler with Backspace and Delete clearing, after the caller's own. */
+function clearKeys(
+	triggerProps: React.ComponentProps<"button"> | undefined,
+	clear: (() => void) | null,
+): React.ComponentProps<"button"> | undefined {
+	if (!clear) return triggerProps;
+	return {
+		...triggerProps,
+		onKeyDown: (e) => {
+			triggerProps?.onKeyDown?.(e);
+			if (e.defaultPrevented) return;
+			if (e.key !== "Backspace" && e.key !== "Delete") return;
+			e.preventDefault();
+			clear();
+		},
+	};
 }
 
 function popoverContentClasses(className?: string) {
@@ -168,10 +237,17 @@ function DatePicker({
 	name,
 	"aria-label": ariaLabel,
 	triggerProps,
+	clearable = false,
+	clearLabel = "Clear date",
+	onOpenChange,
 }: DatePickerProps) {
 	const [internal, setInternal] = React.useState<Date | null>(defaultValue);
 	const value = valueProp === undefined ? internal : valueProp;
-	const [open, setOpen] = React.useState(false);
+	const [open, setOpenState] = React.useState(false);
+	const setOpen = (next: boolean) => {
+		setOpenState(next);
+		onOpenChange?.(next);
+	};
 
 	const setValue = (next: Date | null) => {
 		if (valueProp === undefined) setInternal(next);
@@ -179,8 +255,10 @@ function DatePicker({
 	};
 
 	const label = value ? formatDate(value, format) : placeholder;
+	const clearing = clearable && Boolean(value) && !disabled;
+	const clear = clearing ? () => setValue(null) : null;
 
-	return (
+	const picker = (
 		<PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
 			<TriggerSurface
 				variant={variant}
@@ -194,7 +272,8 @@ function DatePicker({
 				ariaLabel={ariaLabel}
 				name={name}
 				open={open}
-				triggerProps={triggerProps}
+				triggerProps={clearKeys(triggerProps, clear)}
+				clearing={clearing}
 			/>
 			<PopoverPrimitive.Portal>
 				<PopoverPrimitive.Content
@@ -206,6 +285,7 @@ function DatePicker({
 					<DayPicker
 						mode="single"
 						selected={value ?? undefined}
+						defaultMonth={value ?? undefined}
 						onSelect={(next) => {
 							setValue(next ?? null);
 							if (next) setOpen(false);
@@ -224,6 +304,12 @@ function DatePicker({
 				</PopoverPrimitive.Content>
 			</PopoverPrimitive.Portal>
 		</PopoverPrimitive.Root>
+	);
+	if (!clearable) return picker;
+	return (
+		<Clearable show={clearing} label={clearLabel} size={size} onClear={() => setValue(null)}>
+			{picker}
+		</Clearable>
 	);
 }
 
@@ -244,10 +330,17 @@ function DateRangePicker({
 	name,
 	"aria-label": ariaLabel,
 	triggerProps,
+	clearable = false,
+	clearLabel = "Clear range",
+	onOpenChange,
 }: DateRangePickerProps) {
 	const [internal, setInternal] = React.useState<DateRange | null>(defaultValue);
 	const value = valueProp === undefined ? internal : valueProp;
-	const [open, setOpen] = React.useState(false);
+	const [open, setOpenState] = React.useState(false);
+	const setOpen = (next: boolean) => {
+		setOpenState(next);
+		onOpenChange?.(next);
+	};
 
 	const setValue = (next: DateRange | null) => {
 		if (valueProp === undefined) setInternal(next);
@@ -261,8 +354,10 @@ function DateRangePicker({
 	};
 
 	const empty = !value || !value.from;
+	const clearing = clearable && !empty && !disabled;
+	const clear = clearing ? () => setValue(null) : null;
 
-	return (
+	const picker = (
 		<PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
 			<TriggerSurface
 				variant={variant}
@@ -276,7 +371,8 @@ function DateRangePicker({
 				ariaLabel={ariaLabel}
 				name={name}
 				open={open}
-				triggerProps={triggerProps}
+				triggerProps={clearKeys(triggerProps, clear)}
+				clearing={clearing}
 			/>
 			<PopoverPrimitive.Portal>
 				<PopoverPrimitive.Content
@@ -289,6 +385,7 @@ function DateRangePicker({
 						mode="range"
 						numberOfMonths={2}
 						selected={value ?? undefined}
+						defaultMonth={value?.from}
 						onSelect={(next) => setValue(next ?? null)}
 						disabled={
 							min || max
@@ -304,6 +401,12 @@ function DateRangePicker({
 				</PopoverPrimitive.Content>
 			</PopoverPrimitive.Portal>
 		</PopoverPrimitive.Root>
+	);
+	if (!clearable) return picker;
+	return (
+		<Clearable show={clearing} label={clearLabel} size={size} onClear={() => setValue(null)}>
+			{picker}
+		</Clearable>
 	);
 }
 

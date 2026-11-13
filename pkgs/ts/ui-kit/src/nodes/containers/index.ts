@@ -14,6 +14,7 @@ import { Field } from "./field";
 import { Fieldset } from "./fieldset";
 import { Form } from "./form";
 import { Grid } from "./grid";
+import { InputGroup } from "./input-group";
 import { Line } from "./line";
 import { List } from "./list";
 import { Modal } from "./modal";
@@ -31,6 +32,7 @@ export const containerEntries: Record<string, NodeEntry> = {
 	Form,
 	Fieldset,
 	Field,
+	InputGroup,
 	Card,
 	Tabs,
 	Accordion,

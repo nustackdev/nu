@@ -5,6 +5,7 @@
 - container: ContainerRef, the page frame.
 - flow:   ColumnRef, RowRef.
 - grid:   GridRef, equal cells row after row.
+- input_group: InputGroupRef, a field and the buttons that act on it.
 - line:   LineRef, children that run inline like a paragraph.
 - chrome: CardRef, TabsRef, ModalRef, AccordionRef, FormRef, FieldsetRef,
           FieldRef.
@@ -24,6 +25,7 @@ from .container import ContainerRef
 from .disclosure import CollapsibleRef, SheetRef
 from .flow import ColumnRef, RowRef
 from .grid import GridRef
+from .input_group import InputGroupRef
 from .line import LineRef
 from .list import ListRef
 from .page import NavListRef, PageSectionRef
@@ -42,6 +44,7 @@ __all__ = [
     "FieldsetRef",
     "FormRef",
     "GridRef",
+    "InputGroupRef",
     "LineRef",
     "ListCollectionRef",
     "ListRef",

@@ -24,6 +24,7 @@ export {
 	AlertTitle,
 	alertVariants,
 } from "./components/ui/alert";
+export { Autocomplete, type AutocompleteProps } from "./components/ui/autocomplete";
 export { Avatar, AvatarFallback, AvatarImage } from "./components/ui/avatar";
 export { Badge, badgeVariants } from "./components/ui/badge";
 export {
@@ -64,6 +65,12 @@ export {
 	type ChartProps,
 } from "./components/ui/chart";
 export { Checkbox, checkboxVariants } from "./components/ui/checkbox";
+export {
+	CheckboxGroup,
+	type CheckboxGroupProps,
+	type ChoiceOption,
+	toggleOption,
+} from "./components/ui/checkbox-group";
 export type { CodeProps } from "./components/ui/code";
 export { Code } from "./components/ui/code";
 export {
@@ -71,6 +78,13 @@ export {
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "./components/ui/collapsible";
+export {
+	ColorPicker,
+	type ColorPickerProps,
+	hexToHsv,
+	hsvToHex,
+	normalizeHex,
+} from "./components/ui/color-picker";
 export {
 	Combobox,
 	ComboboxContent,
@@ -80,6 +94,7 @@ export {
 	ComboboxItem,
 	ComboboxList,
 	ComboboxTrigger,
+	comboboxItemClass,
 } from "./components/ui/combobox";
 export {
 	CommandEmpty,
@@ -127,7 +142,12 @@ export {
 	type DataTableRow,
 	type DataTableSort,
 } from "./components/ui/data-table";
-export { DatePicker, DateRangePicker } from "./components/ui/date-picker";
+export {
+	DatePicker,
+	type DatePickerProps,
+	DateRangePicker,
+	type DateRangePickerProps,
+} from "./components/ui/date-picker";
 export {
 	Dialog,
 	DialogClose,
@@ -193,6 +213,15 @@ export { IconButton, iconButtonVariants } from "./components/ui/icon-button";
 export { Image } from "./components/ui/image";
 export { InlineEdit, type InlineEditProps } from "./components/ui/inline-edit";
 export { Input, inputVariants } from "./components/ui/input";
+export {
+	InputAffix,
+	type InputAffixProps,
+	PasswordInput,
+	type PasswordInputProps,
+	SearchInput,
+	type SearchInputProps,
+} from "./components/ui/input-affix";
+export { InputGroup } from "./components/ui/input-group";
 export { JsonView } from "./components/ui/json-view";
 export { Kbd, type KbdProps, kbdVariants } from "./components/ui/kbd";
 export { Line, type LineProps } from "./components/ui/line";
@@ -205,6 +234,7 @@ export {
 } from "./components/ui/list";
 export type { MarkdownProps } from "./components/ui/markdown";
 export { Markdown } from "./components/ui/markdown";
+export { MultiSelect, type MultiSelectProps } from "./components/ui/multi-select";
 export { NavLink, navLinkVariants } from "./components/ui/nav-link";
 export { NumberInput, numberInputVariants } from "./components/ui/number-input";
 export type { OverflowTooltipProps } from "./components/ui/overflow-tooltip";
@@ -235,6 +265,13 @@ export {
 	radioGroupItemVariants,
 } from "./components/ui/radio-group";
 export {
+	RangeSlider,
+	type RangeSliderProps,
+	type SliderMark,
+	type SliderRange,
+	stepDecimals,
+} from "./components/ui/range-slider";
+export {
 	formatRelativeTime,
 	RELATIVE_TIME_MODES,
 	RelativeTime,
@@ -258,6 +295,14 @@ export {
 	type ScrollAreaOrientation,
 	type ScrollAreaProps,
 } from "./components/ui/scroll-area";
+export {
+	SegmentedControl,
+	SegmentedControlItem,
+	type SegmentedControlItemProps,
+	type SegmentedControlProps,
+	segmentedControlVariants,
+	segmentedItemVariants,
+} from "./components/ui/segmented-control";
 export { Section, sectionVariants } from "./components/ui/section";
 export {
 	Select,
@@ -355,6 +400,12 @@ export {
 export { TagInput, tagInputVariants } from "./components/ui/tag-input";
 export { Text, textVariants } from "./components/ui/text";
 export { TextArea, textAreaVariants } from "./components/ui/text-area";
+export {
+	DateTimePicker,
+	type DateTimePickerProps,
+	TimePicker,
+	type TimePickerProps,
+} from "./components/ui/time-picker";
 export {
 	capItems,
 	formatDuration,

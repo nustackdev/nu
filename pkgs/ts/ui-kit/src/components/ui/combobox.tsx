@@ -211,6 +211,17 @@ function ComboboxGroup({
 	);
 }
 
+/** The look of a row in a combobox list, shared by the kit's other pickers over a list. */
+const comboboxItemClass = [
+	"relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-base outline-hidden",
+	"text-text-primary",
+	"data-[selected=true]:bg-bg-hover",
+	"data-[highlighted=true]:bg-bg-hover",
+	"aria-selected:bg-bg-hover",
+	"data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
+	"[&>svg]:pointer-events-none [&>svg]:size-4 [&>svg]:shrink-0",
+].join(" ");
+
 interface ComboboxItemProps
 	extends Omit<React.ComponentProps<typeof CommandPrimitive.Item>, "onSelect"> {
 	onSelect?: (value: string) => void;
@@ -235,16 +246,7 @@ function ComboboxItem({
 				ctx.setOpen(false);
 				onSelect?.(picked);
 			}}
-			className={cn(
-				"relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-base outline-hidden",
-				"text-text-primary",
-				"data-[selected=true]:bg-bg-hover",
-				"data-[highlighted=true]:bg-bg-hover",
-				"aria-selected:bg-bg-hover",
-				"data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
-				"[&>svg]:pointer-events-none [&>svg]:size-4 [&>svg]:shrink-0",
-				className,
-			)}
+			className={cn(comboboxItemClass, className)}
 			{...props}
 		>
 			{children}
@@ -262,4 +264,5 @@ export {
 	ComboboxItem,
 	ComboboxList,
 	ComboboxTrigger,
+	comboboxItemClass,
 };

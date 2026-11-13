@@ -14,6 +14,7 @@ Anything a Shape declares can also be built from Refs alone; see
 - container: Container, the page frame.
 - flow:   Column, Row.
 - grid:   Grid, equal cells.
+- input_group: InputGroup, a field and its buttons on one line.
 - line:   Line, slots that run inline.
 - chrome: Card, Tabs, Modal, Accordion, Form, Fieldset, Field.
 - disclosure: Collapsible, Sheet.
@@ -28,6 +29,7 @@ from .container import Container
 from .disclosure import Collapsible, Sheet
 from .flow import Column, Row
 from .grid import Grid
+from .input_group import InputGroup
 from .line import Line
 from .list import List
 from .page import NavList, PageSection
@@ -43,6 +45,7 @@ __all__ = [
     "Fieldset",
     "Form",
     "Grid",
+    "InputGroup",
     "Line",
     "List",
     "Modal",

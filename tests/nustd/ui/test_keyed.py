@@ -80,6 +80,7 @@ KIND = {
     "Fieldset": DictCollectionRef,
     "Form": DictCollectionRef,
     "Grid": DictCollectionRef,
+    "InputGroup": DictCollectionRef,
     "Line": ListCollectionRef,
     "List": DictCollectionRef,
     "Modal": DictCollectionRef,

@@ -10,11 +10,15 @@
 // input as usual (a blur, so a commit) unless `onTab` is given: then Tab and
 // Shift+Tab end the edit with the value and the direction, for a grid that
 // moves the edit on to the next cell.
+//
+// `inputProps` go on the input itself, for a caller that wires it into a
+// form field: an id, `aria-describedby`, `aria-labelledby` (which names it
+// over `label`), `invalid`, `required`, `maxLength`, a placeholder.
 
 import type * as React from "react";
 import { useEffect, useRef } from "react";
 import { cn } from "../../lib/utils";
-import { Input } from "./input";
+import { Input, type InputProps } from "./input";
 
 export type InlineEditProps = {
 	/** The value it opens with. */
@@ -29,6 +33,11 @@ export type InlineEditProps = {
 	/** The on-screen keyboard to ask for, eg "decimal" for a number. */
 	inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
 	className?: string;
+	/** Native and aria props for the input (id, describedby, invalid, ...). */
+	inputProps?: Omit<
+		InputProps,
+		"ref" | "size" | "value" | "defaultValue" | "onBlur" | "onKeyDown" | "className"
+	>;
 };
 
 export function InlineEdit({
@@ -39,6 +48,7 @@ export function InlineEdit({
 	onTab,
 	inputMode,
 	className,
+	inputProps,
 }: InlineEditProps) {
 	const done = useRef(false);
 	const input = useRef<HTMLInputElement | null>(null);
@@ -56,6 +66,7 @@ export function InlineEdit({
 	return (
 		<span data-slot="inline-edit" className="flex min-w-0 flex-1 items-center">
 			<Input
+				{...inputProps}
 				ref={input}
 				size="sm"
 				ring="inset"

@@ -16,19 +16,28 @@ import nu
 from nu import Context, Shape
 from nustd.ui import Column, Session
 from nustd.ui.refs import (
+    AutocompleteRef,
     ButtonRef,
+    CheckboxGroupRef,
     CheckboxRef,
     CodeRef,
+    ColorPickerRef,
     DatePickerRef,
+    DateRangePickerRef,
+    DateTimePickerRef,
     Field,
     Form,
     FormRef,
+    InlineEditRef,
     InputLeaf,
     InputRef,
     MarkdownRef,
+    MultiSelectRef,
     NumberInputRef,
     RadioGroupRef,
+    RangeSliderRef,
     Row,
+    SegmentedControlRef,
     SelectRef,
     SketchRef,
     SliderRef,
@@ -36,6 +45,7 @@ from nustd.ui.refs import (
     TagInputRef,
     TextAreaRef,
     TextRef,
+    TimePickerRef,
     ToggleRef,
 )
 
@@ -113,16 +123,26 @@ def _react(sub, path, payloads, tab: _Tab, out) -> list:
 COMMON = {"label", "disabled", "readonly", "required", "autofocus", "size"}
 
 INPUTS = [
+    AutocompleteRef,
+    CheckboxGroupRef,
     CheckboxRef,
+    ColorPickerRef,
     DatePickerRef,
+    DateRangePickerRef,
+    DateTimePickerRef,
+    InlineEditRef,
     InputRef,
+    MultiSelectRef,
     NumberInputRef,
     RadioGroupRef,
+    RangeSliderRef,
+    SegmentedControlRef,
     SelectRef,
     SliderRef,
     SwitchRef,
     TagInputRef,
     TextAreaRef,
+    TimePickerRef,
     ToggleRef,
 ]
 
@@ -186,6 +206,11 @@ def test_reset_ships_a_reset_frame_with_the_chain():
 def test_submit_inputs():
     for cls in (InputRef, NumberInputRef, DatePickerRef, TagInputRef, TextAreaRef, CodeRef):
         assert hasattr(cls, "on_submit"), cls.__name__
+    assert hasattr(InlineEditRef, "on_submit")
+    for cls in (TimePickerRef, DateTimePickerRef, DateRangePickerRef):
+        assert hasattr(cls, "on_submit"), cls.__name__
+    assert hasattr(ColorPickerRef, "on_submit")
+    assert not hasattr(RangeSliderRef, "on_submit")
     for cls in (MarkdownRef, CheckboxRef, SwitchRef, SelectRef, SliderRef, SketchRef):
         assert not hasattr(cls, "on_submit"), cls.__name__
 

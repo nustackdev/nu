@@ -17,7 +17,7 @@ import { Text } from "../../components/ui/text";
 import { type NodeEntry, type NodeProps, useStringProp } from "../../tree";
 import { asText, isEnter, resetHandler, useCommit, useControl, valueWrite } from "./control";
 
-function toIso(d: Date | null): string {
+export function toIso(d: Date | null): string {
 	if (!d) return "";
 	const y = d.getFullYear();
 	const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -25,7 +25,7 @@ function toIso(d: Date | null): string {
 	return `${y}-${m}-${day}`;
 }
 
-function fromIso(s: string): Date | null {
+export function fromIso(s: string): Date | null {
 	if (!s) return null;
 	// Interpret as local date to avoid off-by-one UTC shifts on formatting.
 	const [y, m, d] = s.split("-").map(Number);

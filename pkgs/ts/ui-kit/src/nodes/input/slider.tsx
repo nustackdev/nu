@@ -63,7 +63,13 @@ function SliderView({ path }: NodeProps) {
 						"aria-labelledby": c.label ? labelId : c.labelledBy,
 					}}
 					onValueChange={(vals) => edit(vals[0] ?? min)}
-					onValueCommit={commit}
+					// Radix fires a key's commit before its change, so the commit
+					// lands the value it carries first, or a key press would report
+					// the step before it.
+					onValueCommit={(vals) => {
+						edit(vals[0] ?? min);
+						commit();
+					}}
 					className="flex-1"
 				/>
 				{showValue && (

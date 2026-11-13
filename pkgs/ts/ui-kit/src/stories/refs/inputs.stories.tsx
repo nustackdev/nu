@@ -130,6 +130,60 @@ export const Selects: Story = {
 	},
 };
 
+export const Choices: Story = {
+	render: () => {
+		const grid = step("inputs-choices", "Grid", {
+			max_columns: 2,
+			min_cell_width: 260,
+			gap: 6,
+			align: "start",
+		});
+		return (
+			<NodeStage
+				root="inputs-choices"
+				label="one pick from a row, several from a list or a dropdown, free text with suggestions"
+				chains={[
+					[
+						grid,
+						step("range", "SegmentedControlRef", {
+							label: "Range",
+							options: ["Day", "Week", "Month"],
+							value: "Week",
+						}),
+					],
+					[
+						grid,
+						step("genres", "CheckboxGroupRef", {
+							label: "Genres",
+							options: ["drama", "comedy", "sci-fi", "documentary"],
+							value: ["drama", "sci-fi"],
+							orientation: "horizontal",
+						}),
+					],
+					[
+						grid,
+						step("packages", "MultiSelectRef", {
+							label: "Packages",
+							options: PACKAGES,
+							value: ["nu", "nustd", "nudle"],
+							placeholder: "Pick packages",
+						}),
+					],
+					[
+						grid,
+						step("package", "AutocompleteRef", {
+							label: "Package, or anything",
+							options: PACKAGES,
+							value: "",
+							placeholder: "Type nu...",
+						}),
+					],
+				]}
+			/>
+		);
+	},
+};
+
 export const Sketch: Story = {
 	render: () => {
 		const row = step("inputs-sketch", "Row", { gap: 4, align: "start", wrap: true });
@@ -217,11 +271,190 @@ const STATE_KINDS: [string, Record<string, unknown>][] = [
 	["SelectRef", { options: PACKAGES, value: "nustd" }],
 	["TagInputRef", { value: ["sci-fi", "2016"] }],
 	["DatePickerRef", { value: "2016-11-11" }],
+	["DateRangePickerRef", { value: { start: "2016-11-11", end: "2016-11-13" } }],
+	["DateTimePickerRef", { value: "2016-11-11T19:30" }],
+	["TimePickerRef", { value: "19:30" }],
 	["CheckboxRef", { value: true }],
 	["SwitchRef", { value: true }],
 	["RadioGroupRef", { options: ["drama", "comedy"], value: "drama" }],
 	["SliderRef", { value: 40 }],
+	["RangeSliderRef", { value: [20, 60] }],
+	["ColorPickerRef", { value: "#4269d0" }],
+	["SegmentedControlRef", { options: ["Day", "Week", "Month"], value: "Week" }],
+	["CheckboxGroupRef", { options: ["drama", "comedy", "sci-fi"], value: ["drama"] }],
+	["MultiSelectRef", { options: PACKAGES, value: ["nu", "nustd"] }],
+	["AutocompleteRef", { options: PACKAGES, value: "nudle", placeholder: "Package" }],
+	["InlineEditRef", { value: "Arrival", placeholder: "Untitled" }],
 ];
+
+export const RangeAndColor: Story = {
+	render: () => {
+		const col = step("inputs-range-color", "Column", { gap: 6 });
+		return (
+			<NodeStage
+				root="inputs-range-color"
+				label="a release or an arrow key sends one change; Enter in the hex field submits"
+				chains={[
+					[
+						col,
+						step("salary", "RangeSliderRef", {
+							label: "Salary",
+							value: [40, 120],
+							max: 200,
+							format: "{}k",
+						}),
+					],
+					[
+						col,
+						step("share", "RangeSliderRef", {
+							label: "Share",
+							min: 0,
+							max: 1,
+							step: 0.05,
+							value: [0.25, 0.75],
+							marks: [0, { value: 0.5, label: "half" }, 1],
+							thumb_labels: ["From", "To"],
+						}),
+					],
+					[
+						col,
+						step("accent", "ColorPickerRef", {
+							label: "Accent",
+							value: "#8946db",
+							swatches: "palette",
+						}),
+					],
+					[
+						col,
+						step("ink", "ColorPickerRef", {
+							label: "Ink",
+							value: "#111111",
+							swatches: ["#111111", "#555555", "#999999", "#dddddd"],
+						}),
+					],
+				]}
+			/>
+		);
+	},
+};
+
+export const Dates: Story = {
+	render: () => {
+		const grid = step("inputs-dates", "Grid", {
+			max_columns: 2,
+			min_cell_width: 280,
+			gap: 6,
+			align: "start",
+		});
+		return (
+			<NodeStage
+				root="inputs-dates"
+				label="a time with seconds, a date and time with bounds, a range, all clearable; Enter submits"
+				chains={[
+					[grid, step("at", "TimePickerRef", { label: "Alarm", value: "06:45:30", step: 1 })],
+					[
+						grid,
+						step("starts", "DateTimePickerRef", {
+							label: "Screening",
+							value: "2016-11-11T19:30",
+							min: "2016-11-01T10:00",
+							max: "2016-11-30T23:00",
+						}),
+					],
+					[
+						grid,
+						step("stay", "DateRangePickerRef", {
+							label: "Festival",
+							value: { start: "2016-11-11", end: "2016-11-13" },
+						}),
+					],
+					[grid, step("empty", "DateTimePickerRef", { label: "Not set", value: "" })],
+				]}
+			/>
+		);
+	},
+};
+
+export const TypesAndGroups: Story = {
+	render: () => {
+		const col = step("inputs-kinds", "Column", { gap: 6, max_width: "form" });
+		const say = step("say", "InputGroup", {});
+		const find = step("find", "InputGroup", {});
+		const job = step("job", "InputGroup", {});
+		return (
+			<NodeStage
+				root="inputs-kinds"
+				label="search with clear, password with reveal, email / url / tel, inline edit, and inputs grouped with their buttons"
+				chains={[
+					[
+						col,
+						step("search", "InputRef", {
+							type: "search",
+							value: "arrival",
+							placeholder: "Search films",
+						}),
+					],
+					[
+						col,
+						step("password", "InputRef", {
+							type: "password",
+							label: "Password",
+							value: "correct horse",
+						}),
+					],
+					[
+						col,
+						step("email", "InputRef", {
+							type: "email",
+							label: "Email",
+							placeholder: "you@example.com",
+						}),
+					],
+					[col, step("url", "InputRef", { type: "url", label: "Site", placeholder: "https://" })],
+					[
+						col,
+						step("tel", "InputRef", { type: "tel", label: "Phone", placeholder: "+1 555 0100" }),
+					],
+					[
+						col,
+						step("title", "InlineEditRef", {
+							label: "Title",
+							value: "Field notes",
+							placeholder: "Untitled",
+						}),
+					],
+					[
+						col,
+						step("key", "InlineEditRef", {
+							label: "Key",
+							value: "notes",
+							error: "That key is taken",
+						}),
+					],
+					[
+						col,
+						step("empty", "InlineEditRef", { value: "", placeholder: "Add a name", size: "lg" }),
+					],
+					[
+						col,
+						find,
+						step("q", "InputRef", { type: "search", value: "", placeholder: "Search the base" }),
+					],
+					[col, find, step("go", "ButtonRef", { label: "Search", variant: "secondary" })],
+					[col, job, step("name", "InputRef", { label: "New job", placeholder: "Job name" })],
+					[col, job, step("create", "ButtonRef", { label: "Create job" })],
+					[col, say, step("text", "InputRef", { placeholder: "Say something" })],
+					[col, say, step("send", "ButtonRef", { label: "Say", icon: "send" })],
+					[
+						col,
+						say,
+						step("stop", "ButtonRef", { label: "Stop", icon: "square", variant: "secondary" }),
+					],
+				]}
+			/>
+		);
+	},
+};
 
 export const States: Story = {
 	render: () => {

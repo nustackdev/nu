@@ -27,7 +27,7 @@ The contract every input shares (``InputLeaf``):
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, get_args
 
 from typing_extensions import Self
 
@@ -312,7 +312,9 @@ class DatePickerRef(_Submits, _Placeholder, InputLeaf):
         return Write(self, value)
 
 
-InputType = Literal["text", "password", "email", "number"]
+InputType = Literal["text", "search", "email", "url", "tel", "password", "number"]
+
+_INPUT_TYPES: tuple[str, ...] = get_args(InputType)
 
 
 class InputRef(_Submits, _Placeholder, InputLeaf):
@@ -325,6 +327,20 @@ class InputRef(_Submits, _Placeholder, InputLeaf):
 
     Default face is display (Inter); code-shaped fields opt into
     JetBrains Mono via `mono=True`, which flips `font-mono` at render time.
+
+    `type` picks the field, the value is text for every one:
+
+    - `text`, `email`, `url`, `tel`: the native field; the browser picks the
+      on-screen keyboard and checks the format on a Form submit.
+    - `search`: a magnifier before the text and a clear button after it;
+      the button and Escape clear the field and commit at once (a change).
+    - `password`: the text is hidden, with a show / hide toggle.
+    - `number`: a numeric keyboard over text that may stay empty, for an
+      optional number such as a filter's "any". For a number the program
+      reads as a number, with steps, min and max, use `NumberInputRef`.
+
+    For a field with a button that acts on it (Search, Send, Add), put both
+    in an `InputGroup`.
     """
 
     _wire_type = "InputRef"
@@ -346,6 +362,9 @@ class InputRef(_Submits, _Placeholder, InputLeaf):
         autofocus: bool = False,
         size: ControlSize = "md",
     ) -> Self:
+        if type not in _INPUT_TYPES:
+            msg = f"InputRef type is one of {', '.join(_INPUT_TYPES)}, not {type!r}"
+            raise ValueError(msg)
         return super().slot(
             placeholder=placeholder,
             value=value,

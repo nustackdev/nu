@@ -28,6 +28,9 @@ export const Matrix: StoryObj = {
 						<div className="w-56">
 							<DatePicker disabled />
 						</div>
+						<div className="w-56">
+							<DatePicker clearable defaultValue={new Date(2016, 10, 11)} />
+						</div>
 					</div>
 				</div>
 
@@ -35,8 +38,16 @@ export const Matrix: StoryObj = {
 					<div className="mb-3 font-mono text-xs uppercase tracking-widest text-text-muted">
 						range
 					</div>
-					<div className="w-72">
-						<DateRangePicker />
+					<div className="flex gap-3">
+						<div className="w-72">
+							<DateRangePicker />
+						</div>
+						<div className="w-72">
+							<DateRangePicker
+								clearable
+								defaultValue={{ from: new Date(2016, 10, 11), to: new Date(2016, 10, 13) }}
+							/>
+						</div>
 					</div>
 				</div>
 			</div>

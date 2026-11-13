@@ -10,7 +10,11 @@
 - waterfall: WaterfallRef.
 - timeline: TimelineRef.
 - display: Avatar, Breadcrumb, Skeleton, Spinner, StatusPill.
+- choice: SegmentedControl, CheckboxGroup, MultiSelect, Autocomplete.
 - input:  tab-owned inputs (Toggle among them), plus MarkdownRef and CodeRef.
+- range:  RangeSliderRef, a two-thumb slider.
+- color:  ColorPickerRef.
+- inline_edit: InlineEditRef, text that edits in place.
 - chart:  Chart, an ECharts option, and the typed builders over it
           (LineChart, BarChart, PieChart, HeatmapChart, ...).
 """
@@ -35,8 +39,16 @@ from .chart import (
     SunburstChart,
     TreemapChart,
 )
+from .choice import (
+    AutocompleteRef,
+    CheckboxGroupRef,
+    MultiSelectRef,
+    SegmentedControlRef,
+)
+from .color import ColorPickerRef
 from .data_table import DataTableRef, InsertRow, RemoveRows, SetOrder, SetRow
 from .display import AvatarRef, BreadcrumbRef, SkeletonRef, SpinnerRef, StatusPillRef
+from .inline_edit import InlineEditRef
 from .input import (
     ButtonRef,
     CheckboxRef,
@@ -77,6 +89,8 @@ from .output import (
     TextRef,
 )
 from .page import IconRef, NavItemRef, PageLinkRef, SpacerRef
+from .range import RangeSliderRef
+from .time import DateRangePickerRef, DateTimePickerRef, TimePickerRef
 from .timeline import TimelineRef
 from .tree import TreeRef
 from .waterfall import WaterfallRef
@@ -85,6 +99,7 @@ from .waterfall import WaterfallRef
 __all__ = [
     "AlertRef",
     "AreaChart",
+    "AutocompleteRef",
     "AvatarRef",
     "BadgeRef",
     "BarChart",
@@ -94,10 +109,14 @@ __all__ = [
     "CalendarHeatmapRef",
     "CandlestickChart",
     "Chart",
+    "CheckboxGroupRef",
     "CheckboxRef",
     "CodeRef",
+    "ColorPickerRef",
     "DataTableRef",
     "DatePickerRef",
+    "DateRangePickerRef",
+    "DateTimePickerRef",
     "DividerRef",
     "EmptyStateRef",
     "FunnelChart",
@@ -109,6 +128,7 @@ __all__ = [
     "HtmlRef",
     "IconRef",
     "ImageRef",
+    "InlineEditRef",
     "InputLeaf",
     "InputRef",
     "InsertRow",
@@ -118,6 +138,7 @@ __all__ = [
     "LineChart",
     "LinkRef",
     "MarkdownRef",
+    "MultiSelectRef",
     "NavItemRef",
     "NumberInputRef",
     "PageLinkRef",
@@ -125,10 +146,12 @@ __all__ = [
     "ProgressRef",
     "RadarChart",
     "RadioGroupRef",
+    "RangeSliderRef",
     "RelativeTimeRef",
     "RemoveRows",
     "SankeyChart",
     "ScatterChart",
+    "SegmentedControlRef",
     "SelectRef",
     "SetOrder",
     "SetRow",
@@ -148,6 +171,7 @@ __all__ = [
     "TagInputRef",
     "TextAreaRef",
     "TextRef",
+    "TimePickerRef",
     "TimelineRef",
     "ToggleRef",
     "TreeRef",
