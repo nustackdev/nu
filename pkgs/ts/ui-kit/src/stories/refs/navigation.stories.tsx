@@ -1,8 +1,8 @@
 // Refs/Navigation: every kit link under an AnchorCatcher, moving a fake host
 // through History. A plain click is a push, so the nav items light up for
 // the page they name; Option+click (or Option+Enter) reaches the host rule
-// as "alt", which this host only logs, the way nuspace opens a pane beside.
-// Cmd-click, the _blank link and the external one stay the browser's.
+// as "alt" and Option+Cmd+click as "alt-mod", which this host only logs
+// (nuspace opens "alt-mod" to the side). Cmd-click, the _blank link and the external one stay the browser's.
 //
 // The host lives under /nav-demo, and Reset puts the frame back where
 // Storybook loaded it.
@@ -54,7 +54,7 @@ function FakeHost() {
 	const rule: AnchorRule = (href, gesture) => {
 		setLog((l) => [...l.slice(-3), `${gesture} ${href}`]);
 		if (gesture === "plain") History.push(href);
-		// "alt" is handled too: a real host opens it beside.
+		// The rest are handled too: a real host opens them elsewhere.
 		return true;
 	};
 	const col = [step(ROOT, "Column", { gap: 4 })];

@@ -268,7 +268,27 @@ describe("useRoute and AnchorCatcher", () => {
 		]);
 	});
 
-	it("takes Option+Enter on the link as alt, once, and no other key", () => {
+	it("hands Option with Cmd or Ctrl to the rule as alt-mod, native by default", () => {
+		links(`<a id="l" href="/feed">x</a>`);
+		const a = host.querySelector("#l") as Element;
+		expect(click(a, { altKey: true, metaKey: true }).defaultPrevented).toBe(false);
+		expect(History.current().path).toBe("/start");
+
+		const seen: string[] = [];
+		const rule: AnchorRule = (href, gesture) => {
+			seen.push(`${gesture} ${href}`);
+			return true;
+		};
+		links(`<a id="l" href="/feed">x</a>`, rule);
+		const b = host.querySelector("#l") as Element;
+		expect(click(b, { altKey: true, metaKey: true }).defaultPrevented).toBe(true);
+		expect(click(b, { altKey: true, ctrlKey: true }).defaultPrevented).toBe(true);
+		expect(click(b, { altKey: true, metaKey: true, shiftKey: true }).defaultPrevented).toBe(false);
+		expect(click(b, { altKey: true, shiftKey: true }).defaultPrevented).toBe(false);
+		expect(seen).toEqual(["alt-mod /feed", "alt-mod /feed"]);
+	});
+
+	it("takes Option+Enter on the link as alt and Option+Cmd+Enter as alt-mod, once, and no other key", () => {
 		const seen: string[] = [];
 		let take = true;
 		const rule: AnchorRule = (href, gesture) => {
@@ -286,16 +306,23 @@ describe("useRoute and AnchorCatcher", () => {
 		};
 		expect(key({ key: "Enter", altKey: true }).defaultPrevented).toBe(true);
 		expect(seen).toEqual(["alt /feed"]);
-		// Plain Enter is the browser's click, cmd+Enter and other keys are untouched.
+		// Option+Cmd+Enter is alt-mod. Plain Enter is the browser's click, Cmd+Enter
+		// and other keys are untouched.
+		expect(key({ key: "Enter", altKey: true, metaKey: true }).defaultPrevented).toBe(true);
+		expect(seen).toEqual(["alt /feed", "alt-mod /feed"]);
+		seen.length = 0;
 		expect(key({ key: "Enter" }).defaultPrevented).toBe(false);
-		expect(key({ key: "Enter", altKey: true, metaKey: true }).defaultPrevented).toBe(false);
+		expect(key({ key: "Enter", metaKey: true }).defaultPrevented).toBe(false);
 		expect(key({ key: "a", altKey: true }).defaultPrevented).toBe(false);
-		expect(seen).toEqual(["alt /feed"]);
+		expect(key({ key: "Enter", altKey: true, metaKey: true, shiftKey: true }).defaultPrevented).toBe(
+			false,
+		);
+		expect(seen).toEqual([]);
 		// Declined: the click the key fires next is not asked again.
 		take = false;
 		expect(key({ key: "Enter", altKey: true }).defaultPrevented).toBe(false);
 		click(a, { altKey: true });
-		expect(seen).toEqual(["alt /feed", "alt /feed"]);
+		expect(seen).toEqual(["alt /feed"]);
 	});
 
 	it("cleans up", () => {

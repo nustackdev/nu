@@ -8,21 +8,22 @@
 //   - an `a[href]` the event reached, not already handled (defaultPrevented)
 //   - same origin as the page, target empty or `_self`, no `download`
 //   - not inside an editable region (a link in an editor is for editing)
-//   - the primary button. Cmd, Ctrl and Shift are always the browser's, and a
-//     middle or right click never arrives as a click at all.
-//   - Option / Alt is passed on as gesture "alt", everything else qualifying
-//     is "plain"
+//   - the primary button. Cmd, Ctrl and Shift alone are always the browser's,
+//     and a middle or right click never arrives as a click at all.
+//   - Option / Alt is passed on as gesture "alt", Option with Cmd / Ctrl as
+//     "alt-mod", everything else qualifying is "plain"
 //
 // The rule answers true when it handled the link (the catcher then cancels
 // the browser's navigation) and false to leave it native. The default rule
-// pushes a plain one through History and leaves "alt" native.
+// pushes a plain one through History and leaves the others native.
 //
 // Keys: Enter on a focused link fires a click in every browser, so plain
 // Enter is the click path above. Option+Enter is not one gesture across
 // browsers (some fire a click carrying the modifier, some take it as their
 // own "download the link" with no click to catch), so the catcher does not
 // wait for a click: a keydown of Option+Enter on the link itself goes to the
-// rule as "alt". When the rule takes it, the keydown's
+// rule as "alt", and Option+Cmd/Ctrl+Enter as "alt-mod". When the rule
+// takes it, the keydown's
 // default (and any click it would fire) is cancelled; when it does not, the
 // click that may follow is let through untouched, so the rule is asked once
 // per gesture. Nothing else is listened for: no key the catcher does not
@@ -37,8 +38,16 @@ import { type ReactNode, type RefObject, useEffect, useRef } from "react";
 import { sameOrigin } from "../lib/anchor";
 import { History } from "./history";
 
-/** How the link was activated: plainly, or with Option / Alt held. */
-export type Gesture = "plain" | "alt";
+/** How the link was activated: plainly, with Option / Alt held, or with Option and Cmd / Ctrl. */
+export type Gesture = "plain" | "alt" | "alt-mod";
+
+/** The gesture of a click or Enter's modifiers, or null when they are the browser's (any Shift, Cmd / Ctrl alone). */
+function gestureOf(e: MouseEvent | KeyboardEvent): Gesture | null {
+	if (e.shiftKey) return null;
+	const mod = e.metaKey || e.ctrlKey;
+	if (e.altKey) return mod ? "alt-mod" : "alt";
+	return mod ? null : "plain";
+}
 
 /**
  * The host's rule for an in-app link. True when it handled the move (the
@@ -51,7 +60,7 @@ export type AnchorRule = (
 	event: MouseEvent | KeyboardEvent,
 ) => boolean;
 
-/** Plain: a push through History. Alt: native. */
+/** Plain: a push through History. The rest: native. */
 export const defaultAnchorRule: AnchorRule = (href, gesture) => {
 	if (gesture !== "plain") return false;
 	History.push(href);
@@ -91,23 +100,25 @@ export function catchAnchors(root: HTMLElement, rule: AnchorRule = defaultAnchor
 
 	const onClick = (e: MouseEvent) => {
 		if (e.defaultPrevented || e.button !== 0) return;
-		if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+		const gesture = gestureOf(e);
+		if (!gesture) return;
 		const a = anchorOf(e.target, root);
 		if (!a) return;
 		if (a === declined) return;
 		const href = inAppHref(a);
 		if (href === null) return;
-		if (rule(href, e.altKey ? "alt" : "plain", a, e)) e.preventDefault();
+		if (rule(href, gesture, a, e)) e.preventDefault();
 	};
 
 	const onKeyDown = (e: KeyboardEvent) => {
 		if (e.defaultPrevented || e.key !== "Enter" || e.isComposing) return;
-		if (!e.altKey || e.metaKey || e.ctrlKey || e.shiftKey) return;
+		const gesture = gestureOf(e);
+		if (!gesture || gesture === "plain") return;
 		const a = e.target;
 		if (!(a instanceof HTMLAnchorElement) || !a.hasAttribute("href") || !root.contains(a)) return;
 		const href = inAppHref(a);
 		if (href === null) return;
-		if (rule(href, "alt", a, e)) {
+		if (rule(href, gesture, a, e)) {
 			e.preventDefault();
 			return;
 		}
