@@ -1,4 +1,9 @@
-// ButtonRef -- click trigger. Sends a notify on each click. No value.
+// ButtonRef -- click trigger. Sends `{event: "click"}` on each click. No value.
+//
+// `submit` makes it a form's submit button (`type="submit"`; every other
+// button is `type="button"`, so a Cancel in a Form never submits). Its name
+// is its segment, so the Form's submit payload says which button fired.
+// `loading` draws a spinner in place of the icon and takes no clicks.
 //
 // Chrome (label, variant, size, disabled, icon, tooltip, href, target) is
 // props, seeded at the slot and merged by any later write, which is the
@@ -42,12 +47,18 @@ import {
 	useSend,
 	useStringProp,
 } from "../../tree";
+import { EVENTS, useForm } from "./control";
 
 function ButtonView({ path }: NodeProps) {
 	const label = useStringProp(path, "label");
 	const variant = kitVariant(useStringProp(path, "variant", "primary"));
 	const size = useEnumProp(path, "size", BUTTON_SIZES, "md");
 	const disabled = useBoolProp(path, "disabled");
+	const submit = useBoolProp(path, "submit");
+	// A busy Form spins its submit buttons until the program clears it.
+	const form = useForm();
+	const loading = useBoolProp(path, "loading") || (submit && Boolean(form?.busy));
+	const autoFocus = useBoolProp(path, "autofocus");
 	const iconName = useStringProp(path, "icon");
 	const tooltip = useStringProp(path, "tooltip");
 	const href = useStringProp(path, "href");
@@ -55,8 +66,8 @@ function ButtonView({ path }: NodeProps) {
 	const send = useSend(path);
 	const Icon = iconFor(iconName);
 	const onClick = () => {
-		if (disabled) return;
-		send(OPS.notify);
+		if (disabled || loading) return;
+		send(OPS.notify, { event: EVENTS.click });
 	};
 	const iconOnly = Boolean(Icon) && label === "";
 	const content = iconOnly ? (
@@ -85,9 +96,13 @@ function ButtonView({ path }: NodeProps) {
 			className="shrink-0"
 			variant={variant}
 			size={size}
-			disabled={link ? undefined : disabled}
+			disabled={link ? undefined : disabled || loading}
+			aria-busy={loading || undefined}
 			aria-label={tooltip || iconName}
 			asChild={link}
+			type={submit ? "submit" : "button"}
+			name={submit ? path[path.length - 1] : undefined}
+			autoFocus={autoFocus}
 			onClick={onClick}
 		>
 			{linkChild ?? content}
@@ -98,7 +113,11 @@ function ButtonView({ path }: NodeProps) {
 			variant={variant}
 			size={size}
 			disabled={link ? undefined : disabled}
+			loading={link ? undefined : loading}
 			asChild={link}
+			type={submit ? "submit" : "button"}
+			name={submit ? path[path.length - 1] : undefined}
+			autoFocus={autoFocus}
 			onClick={onClick}
 		>
 			{linkChild ?? content}

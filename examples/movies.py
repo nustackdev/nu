@@ -44,7 +44,7 @@ class YearField(nustd.ui.Field):
         min=1900.0,
         max=2100.0,
         step=1.0,
-        default=2020.0,
+        value=2020.0,
     )
 
 
@@ -53,16 +53,16 @@ class RatingField(nustd.ui.Field):
         min=1.0,
         max=10.0,
         step=0.5,
-        default=7.0,
+        value=7.0,
     )
 
 
 class GenreField(nustd.ui.Field):
-    input = nustd.ui.SelectRef.slot(options=_GENRES, selected="drama")
+    input = nustd.ui.SelectRef.slot(options=_GENRES, value="drama")
 
 
 class SwitchField(nustd.ui.Field):
-    input = nustd.ui.SwitchRef.slot(default=True)
+    input = nustd.ui.SwitchRef.slot(value=True)
 
 
 class DetailsFieldset(nustd.ui.Fieldset):
@@ -80,20 +80,20 @@ class ScoreFieldset(nustd.ui.Fieldset):
 class AddMovieForm(nustd.ui.Form):
     details = DetailsFieldset.slot(legend="Movie")
     score = ScoreFieldset.slot(legend="Your take")
-    submit = nustd.ui.ButtonRef.slot(label="Log it", variant="primary")
+    submit = nustd.ui.ButtonRef.slot(label="Log it", variant="primary", submit=True)
     feedback = nustd.ui.AlertRef.slot(variant="ok", dismissible=True)
 
 
 class MinRatingField(nustd.ui.Field):
-    input = nustd.ui.NumberInputRef.slot(min=1.0, max=10.0, step=0.5, default=1.0)
+    input = nustd.ui.NumberInputRef.slot(min=1.0, max=10.0, step=0.5, value=1.0)
 
 
 class FilterGenreField(nustd.ui.Field):
-    input = nustd.ui.SelectRef.slot(options=_GENRES_WITH_ANY, selected="")
+    input = nustd.ui.SelectRef.slot(options=_GENRES_WITH_ANY, value="")
 
 
 class WatchedOnlyField(nustd.ui.Field):
-    input = nustd.ui.SwitchRef.slot(default=False)
+    input = nustd.ui.SwitchRef.slot(value=False)
 
 
 class FilterRow(nustd.ui.Row):
@@ -149,7 +149,7 @@ class Movies(nustd.ui.Column):
     )
 
     stats = StatsCard.slot(title="Your shelf")
-    form = AddMovieForm.slot(title="Log a movie", gap=4, padding=4)
+    form = AddMovieForm.slot(title="Log a movie", gap=4, padding=4, clear_on_submit=True)
     filters = FilterCard.slot(title="Filter")
     shelf = TableCard.slot(title="Movies")
 
@@ -326,37 +326,38 @@ hydrate = nustd.kv.Snapshot(
 )
 
 
-on_add = nu.ReactEvery(
-    App.page.movies.form.submit.on_click(),
-    nustd.kv.Transaction(
+# Enter in the title or a click on "Log it" submits the form once, every
+# value in the payload: no read per field. The browser checks the required
+# title first, and puts the seeds back after the submit.
+def _log(sub: nu.Nu) -> nu.Nu:
+    details, score = sub["values"]["details"], sub["values"]["score"]
+    title = nu.Str(details["title"])
+    watched = nu.Bool(score["watched"])
+    return nustd.kv.Transaction(
         State.movies.append(
             nu.Dict.of(
-                title=nu.Str(App.page.movies.form.details.title.input),
-                year=nu.Int(App.page.movies.form.details.year.input),
-                genre=nu.Str(App.page.movies.form.details.genre.input),
-                rating=nu.Float(App.page.movies.form.score.rating.input),
-                watched=nu.Bool(App.page.movies.form.score.watched.input),
-                notes=nu.Str(App.page.movies.form.score.notes.input),
+                title=title,
+                year=nu.Int(details["year"]),
+                genre=nu.Str(details["genre"]),
+                rating=nu.Float(score["rating"]),
+                watched=watched,
+                notes=nu.Str(score["notes"]),
             ),
         )
         | State.total.set(State.total + 1)
-        | State.watched.set(
-            State.watched + nu.If(nu.Bool(App.page.movies.form.score.watched.input), 1, 0),
-        )
-        | State.latest_title.set(nu.Str(App.page.movies.form.details.title.input)),
-    )
-    >> nustd.kv.Snapshot(
+        | State.watched.set(State.watched + nu.If(watched, 1, 0))
+        | State.latest_title.set(title),
+    ) >> nustd.kv.Snapshot(
         App.page.movies.shelf.body.table.set(_rows_form())
         | App.page.movies.stats.body.total.set_value(nu.str(State.total))
         | App.page.movies.stats.body.watched.set_value(nu.str(State.watched))
         | App.page.movies.stats.body.unseen.set_value(nu.str(State.total - State.watched))
         | App.page.movies.stats.body.latest.set(State.latest_title)
-        | App.page.movies.form.feedback.set(
-            title="Logged",
-            body="Added " + nu.Str(App.page.movies.form.details.title.input),
-        )
-    ),
-)
+        | App.page.movies.form.feedback.set(title="Logged", body="Added " + title)
+    )
+
+
+on_add = nu.ReactEvery(App.page.movies.form.on_submit(), _log)
 
 
 # A row opens its movie's page. The movie is in the URL, so the page is a
@@ -414,9 +415,9 @@ on_filter_apply = nu.ReactEvery(
 on_filter_clear = nu.ReactEvery(
     App.page.movies.filters.body.reset.on_click(),
     nustd.kv.Snapshot(
-        App.page.movies.filters.body.min_rating.input.set(1.0)
-        | App.page.movies.filters.body.genre.input.set("")
-        | App.page.movies.filters.body.watched_only.input.set(False)
+        App.page.movies.filters.body.min_rating.input.reset()
+        | App.page.movies.filters.body.genre.input.reset()
+        | App.page.movies.filters.body.watched_only.input.reset()
         | App.page.movies.shelf.body.table.set(_rows_form())
     ),
 )

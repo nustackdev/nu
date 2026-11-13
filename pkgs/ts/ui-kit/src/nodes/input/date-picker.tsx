@@ -1,21 +1,21 @@
 // DatePickerRef -- date input. Browser is source of truth.
 //
-// User picks a date: the node's `value` prop updates (local edit) and a notify
-// fires. A server-initiated read is answered by the store from `value`. A
-// server-initiated write replaces it, and needs a handler for the same reason
-// InputRef does: a null write must land as "" so the field does not go
-// uncontrolled and a following read answers "" rather than null.
+// The value is an ISO `YYYY-MM-DD` string on the node's `value` ("" for
+// none), both ways on the wire. A pick lands it and sends `{event: "change"}`
+// at once (./control.ts). Enter on the closed trigger submits (and asks an
+// enclosing Form to submit); Space and ArrowDown open the calendar. A write
+// replaces the value (nil lands as "" so the field never goes uncontrolled),
+// a map write merges chrome, and `reset` puts the declared value back.
 //
-// The value is an ISO `YYYY-MM-DD` string on the wire, both ways. The slot
-// declares the starting date as `default`, so `value` reads with `default` as
-// its fallback until a write or a pick lands one. Composes the kit DatePicker
-// primitive (Popover + react-day-picker) so the calendar is consistent
-// cross-browser and reads through kit tokens.
+// Composes the kit DatePicker primitive (Popover + react-day-picker), so the
+// calendar is consistent cross-browser and reads through kit tokens. The
+// trigger is the control: it takes the id, the label and the Field's aria.
 
-import { OPS } from "@nustackdev/ui-core";
+import { useId } from "react";
 import { DatePicker } from "../../components/ui/date-picker";
 import { Text } from "../../components/ui/text";
-import { type NodeEntry, type NodeProps, useSend, useSetValue, useStringProp } from "../../tree";
+import { type NodeEntry, type NodeProps, useStringProp } from "../../tree";
+import { asText, isEnter, resetHandler, useCommit, useControl, valueWrite } from "./control";
 
 function toIso(d: Date | null): string {
 	if (!d) return "";
@@ -34,30 +34,47 @@ function fromIso(s: string): Date | null {
 }
 
 function DatePickerView({ path }: NodeProps) {
-	const initial = useStringProp(path, "default");
-	const value = useStringProp(path, "value", initial);
-	const label = useStringProp(path, "label");
-	const placeholder = useStringProp(path, "placeholder");
+	const value = useStringProp(path, "value");
 	const min = useStringProp(path, "min");
 	const max = useStringProp(path, "max");
-	const setValue = useSetValue(path);
-	const send = useSend(path);
+	const c = useControl(path);
+	const { pick, submit } = useCommit(path);
+	const labelId = useId();
 	return (
 		<div className="flex flex-col gap-1">
-			{label && (
-				<Text as="span" size="sm" tone="secondary" weight="medium">
-					{label}
+			{c.label && (
+				<Text
+					as="span"
+					id={labelId}
+					size="sm"
+					tone="secondary"
+					weight="medium"
+					className={c.disabled ? "opacity-50" : undefined}
+				>
+					{c.label}
 				</Text>
 			)}
 			<DatePicker
+				id={c.id}
 				value={fromIso(value)}
 				min={fromIso(min) ?? undefined}
 				max={fromIso(max) ?? undefined}
-				placeholder={placeholder || undefined}
-				onValueChange={(next) => {
-					setValue(toIso(next));
-					send(OPS.notify);
+				size={c.size}
+				invalid={c.invalid}
+				disabled={c.disabled || c.readOnly}
+				placeholder={c.placeholder || undefined}
+				triggerProps={{
+					autoFocus: c.autoFocus,
+					"aria-labelledby": c.label ? `${labelId} ${c.id}` : c.labelledBy,
+					"aria-describedby": c.describedBy,
+					"aria-required": c.required || undefined,
+					onKeyDown: (e) => {
+						if (!isEnter(e)) return;
+						e.preventDefault();
+						submit(e.currentTarget);
+					},
 				}}
+				onValueChange={(next) => pick(toIso(next))}
 			/>
 		</div>
 	);
@@ -66,10 +83,9 @@ function DatePickerView({ path }: NodeProps) {
 export const DatePickerRef: NodeEntry = {
 	component: DatePickerView,
 	fill: true,
+	input: { empty: "" },
 	handlers: {
-		write: (ctx, payload) =>
-			ctx.update((props) => {
-				props.value = payload == null ? "" : String(payload);
-			}),
+		write: valueWrite(asText),
+		reset: resetHandler,
 	},
 };

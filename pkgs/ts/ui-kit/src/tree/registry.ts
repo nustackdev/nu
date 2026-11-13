@@ -11,6 +11,19 @@ import type { ComponentType } from "react";
 
 export type NodeProps = { path: Path };
 
+/**
+ * What makes a node an input: it holds a value a Form gathers on submit and
+ * a reset puts back. The value lives on `props.value` for every input.
+ */
+export type InputSpec = {
+	/** The value with no seed: what a reset lands when the slot declared none. */
+	empty: unknown | ((props: Record<string, unknown>) => unknown);
+	/** What a form snapshot carries for this node. Unset is `props.value`. */
+	read?: (props: Record<string, unknown>) => unknown;
+	/** Whether a form gathers this node at all (a read-only document does not). */
+	gathered?: (props: Record<string, unknown>) => boolean;
+};
+
 export type NodeEntry = Behaviour & {
 	component?: ComponentType<NodeProps>;
 	// The node has no intrinsic width (a chart, a table, an input), so a row
@@ -22,6 +35,11 @@ export type NodeEntry = Behaviour & {
 	// The node is empty room (a Spacer): a row grows its cell from nothing,
 	// so it takes whatever the line has left. Read through `isGrow`.
 	grow?: boolean;
+	// The node is an input: a Form gathers its value and a reset restores it.
+	input?: InputSpec;
+	// The node wraps one control and stands for it in a form's values (a
+	// Field): its value is its one child's, keyed at the wrapper's segment.
+	wraps?: boolean;
 };
 
 export type { DisposeCtx, NodeHandler };

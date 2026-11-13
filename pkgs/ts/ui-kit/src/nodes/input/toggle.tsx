@@ -1,44 +1,42 @@
 // ToggleRef -- two-state toolbar button. Browser is source of truth.
 //
-// Same wire shape as SwitchRef, different renderer and prop: the kit Toggle
-// primitive, state on `pressed`. User presses: `pressed` flips immediately
-// (local edit), a notify ships to the server. A bare write lands on
-// `pressed` (coerced to a real bool, the toggle must never go uncontrolled),
-// a map write merges chrome (label, icon), and a read answers with `pressed`.
+// Same wire shape as SwitchRef, different renderer: the kit Toggle primitive.
+// Pressed or not is the node's `value` (a real bool); a press lands it and
+// sends `{event: "change"}` at once (./control.ts). A bare write lands on
+// `value` coerced to a bool, a map write merges chrome (label, icon), the
+// store answers a read from `value`, and `reset` puts the declared value back.
 //
 // `icon` is a lucide name, resolved like ButtonRef's, and draws before the
 // label. Toggle sizes track IconButton, so a toolbar Row of both lines up,
 // and like a button it keeps its size in a Row. With no label the icon name
 // is the accessible name.
 
-import { OPS } from "@nustackdev/ui-core";
 import { Toggle } from "../../components/ui/toggle";
 import { iconFor } from "../../lib/icons";
-import {
-	type NodeEntry,
-	type NodeProps,
-	useBoolProp,
-	useSend,
-	useSetProps,
-	useStringProp,
-} from "../../tree";
+import { type NodeEntry, type NodeProps, useBoolProp, useStringProp } from "../../tree";
+import { asBool, resetHandler, useCommit, useControl, valueWrite } from "./control";
 
 function ToggleView({ path }: NodeProps) {
-	const label = useStringProp(path, "label");
 	const iconName = useStringProp(path, "icon");
-	const pressed = useBoolProp(path, "pressed");
-	const setProps = useSetProps(path);
-	const send = useSend(path);
+	const pressed = useBoolProp(path, "value");
+	const c = useControl(path);
+	const label = useStringProp(path, "label");
+	const { pick } = useCommit(path);
 	const Icon = iconFor(iconName);
 	const text = label === "" && !Icon ? path.join(" / ") : label;
 	return (
 		<Toggle
+			{...c.aria}
 			className="shrink-0"
+			size={c.size}
 			pressed={pressed}
+			disabled={c.disabled}
+			autoFocus={c.autoFocus}
+			aria-readonly={c.readOnly || undefined}
 			aria-label={label === "" && Icon ? iconName : undefined}
 			onPressedChange={(next) => {
-				setProps({ pressed: next });
-				send(OPS.notify);
+				if (c.readOnly) return;
+				pick(next);
 			}}
 		>
 			{Icon && <Icon aria-hidden />}
@@ -49,15 +47,9 @@ function ToggleView({ path }: NodeProps) {
 
 export const ToggleRef: NodeEntry = {
 	component: ToggleView,
+	input: { empty: false },
 	handlers: {
-		write: (ctx, payload) =>
-			ctx.update((props) => {
-				if (payload && typeof payload === "object" && !Array.isArray(payload)) {
-					Object.assign(props, payload);
-					return;
-				}
-				props.pressed = Boolean(payload);
-			}),
-		read: (ctx) => ctx.send(OPS.read, Boolean(ctx.node.props.pressed), ctx.frame.id),
+		write: valueWrite(asBool),
+		reset: resetHandler,
 	},
 };

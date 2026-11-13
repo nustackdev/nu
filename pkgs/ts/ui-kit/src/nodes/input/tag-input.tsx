@@ -1,28 +1,22 @@
 // TagInputRef -- multi-tag entry field. Browser is source of truth.
 //
-// Committed tags live on the node as `value: string[]`. A pick or a removal is
-// a local edit plus a notify. A server-initiated read is answered by the store
-// from `value`.
+// Committed tags live on the node as `value: string[]`. Adding or removing a
+// tag lands the list and sends `{event: "change"}` at once (./control.ts).
+// Enter with text in the draft adds a tag; Enter on an empty draft submits
+// (and asks an enclosing Form to submit). The store answers a read from
+// `value`.
 //
-// The write handler is here because a list value is not what the default write
-// does: nil clears to [], a list replaces wholesale with every item stringified,
-// and anything else is ignored outright rather than stomping the committed
-// tags with a scalar. Chrome (label, placeholder, max_tags, allow_duplicates)
-// is just more props. Composes the kit TagInput primitive; the primitive owns
-// the buffer + commit-on-Enter/comma + remove-on-Backspace behavior.
+// The write handler is here because a list value is not what the default
+// write does: nil clears to [], a list replaces wholesale with every item
+// stringified, a map merges chrome, and any other scalar is ignored rather
+// than stomping the tags. `reset` puts the declared tags back. Composes the
+// kit TagInput primitive; the primitive owns the draft, commit-on-Enter/comma
+// and remove-on-Backspace.
 
-import { OPS } from "@nustackdev/ui-core";
-import { useId } from "react";
+import { Label } from "../../components/ui/field";
 import { TagInput } from "../../components/ui/tag-input";
-import {
-	type NodeEntry,
-	type NodeProps,
-	useListProp,
-	useProp,
-	useSend,
-	useSetValue,
-	useStringProp,
-} from "../../tree";
+import { type NodeEntry, type NodeProps, useBoolProp, useListProp, useProp } from "../../tree";
+import { isEnter, resetHandler, useCommit, useControl } from "./control";
 
 function normalizeTags(raw: unknown): string[] {
 	if (!Array.isArray(raw)) return [];
@@ -36,29 +30,37 @@ function normalizeTags(raw: unknown): string[] {
 
 function TagInputView({ path }: NodeProps) {
 	const tags = useListProp<string>(path, "value");
-	const label = useStringProp(path, "label");
-	const placeholder = useStringProp(path, "placeholder");
 	const rawMax = useProp<unknown>(path, "max_tags", null);
 	const maxTags = typeof rawMax === "number" ? rawMax : null;
-	const setValue = useSetValue(path);
-	const send = useSend(path);
-	const id = useId();
+	const allowDuplicates = useBoolProp(path, "allow_duplicates");
+	const c = useControl(path);
+	const { pick, submit } = useCommit(path);
 
 	return (
 		<div className="flex flex-col gap-1">
-			{label && (
-				<label htmlFor={id} className="text-sm font-medium text-text-secondary">
-					{label}
-				</label>
+			{c.label && (
+				<Label htmlFor={c.id} required={c.required} disabled={c.disabled}>
+					{c.label}
+				</Label>
 			)}
 			<TagInput
-				id={id}
+				{...c.aria}
 				value={tags}
+				size={c.size}
 				maxTags={maxTags ?? undefined}
-				placeholder={placeholder || undefined}
+				allowDuplicates={allowDuplicates}
+				placeholder={c.placeholder || undefined}
+				disabled={c.disabled}
+				readOnly={c.readOnly}
+				invalid={c.invalid}
+				autoFocus={c.autoFocus}
+				onKeyDown={(e) => {
+					if (!isEnter(e) || e.currentTarget.value !== "") return;
+					e.preventDefault();
+					submit(e.currentTarget);
+				}}
 				onValueChange={(next) => {
-					setValue(next);
-					send(OPS.notify);
+					if (!c.readOnly) pick(next);
 				}}
 			/>
 		</div>
@@ -68,6 +70,7 @@ function TagInputView({ path }: NodeProps) {
 export const TagInputRef: NodeEntry = {
 	component: TagInputView,
 	fill: true,
+	input: { empty: [] },
 	handlers: {
 		write: (ctx, payload) =>
 			ctx.update((props) => {
@@ -75,8 +78,15 @@ export const TagInputRef: NodeEntry = {
 					props.value = [];
 					return;
 				}
-				if (!Array.isArray(payload)) return;
-				props.value = normalizeTags(payload);
+				if (Array.isArray(payload)) {
+					props.value = normalizeTags(payload);
+					return;
+				}
+				if (typeof payload === "object") {
+					Object.assign(props, payload);
+					if ("value" in payload) props.value = normalizeTags(props.value);
+				}
 			}),
+		reset: resetHandler,
 	},
 };

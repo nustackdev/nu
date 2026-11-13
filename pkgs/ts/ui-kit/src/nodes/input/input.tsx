@@ -1,60 +1,57 @@
 // InputRef -- text input. Browser is source of truth.
 //
-// User types: the node's `value` prop updates immediately (controlled input).
-// On blur or Enter: notify the server. Server-initiated read is answered by
-// the store from `value`, so there is nothing to write for it here. A
-// server-initiated write replaces the value (canonical / reset) and is the
-// one op that needs a handler: a null write must land as "" so the input
-// does not go uncontrolled.
+// User types: the node's `value` prop updates immediately (controlled input),
+// so a read sees what is under the caret. Blur commits (`{event: "change"}`,
+// only when the value moved). Enter commits, then submits (`{event:
+// "submit"}`), then asks an enclosing Form to submit; focus stays put. See
+// ./control.ts for the contract every input shares.
 //
-// Chrome (label, placeholder, type, max_length, mono) is just more props,
+// A server-initiated write replaces the value and is the one op that needs a
+// handler: a null write must land as "" so the input does not go
+// uncontrolled. `reset` puts the declared value back.
+//
+// Chrome (label, placeholder, type, max_length, mono, and the common
+// disabled / readonly / required / autofocus / size) is just more props,
 // declared at the slot and read at render.
 
-import { OPS } from "@nustackdev/ui-core";
-import { useId } from "react";
+import { Label } from "../../components/ui/field";
 import { Input } from "../../components/ui/input";
-import {
-	type NodeEntry,
-	type NodeProps,
-	useBoolProp,
-	useProp,
-	useSend,
-	useSetValue,
-	useStringProp,
-} from "../../tree";
+import { type NodeEntry, type NodeProps, useBoolProp, useProp, useStringProp } from "../../tree";
+import { asText, isEnter, resetHandler, useCommit, useControl, valueWrite } from "./control";
 
 function InputView({ path }: NodeProps) {
 	const value = useStringProp(path, "value");
-	const label = useStringProp(path, "label");
-	const placeholder = useStringProp(path, "placeholder");
 	const inputType = useStringProp(path, "type", "text");
 	const maxLength = useProp<number | null>(path, "max_length", null);
 	const mono = useBoolProp(path, "mono");
-	const setValue = useSetValue(path);
-	const send = useSend(path);
-	const id = useId();
-	const commit = () => send(OPS.notify);
+	const c = useControl(path);
+	const { edit, commit, submit } = useCommit(path);
 	return (
 		<div className="flex flex-col gap-1">
-			{label && (
-				<label htmlFor={id} className="text-sm font-medium text-text-secondary">
-					{label}
-				</label>
+			{c.label && (
+				<Label htmlFor={c.id} required={c.required} disabled={c.disabled}>
+					{c.label}
+				</Label>
 			)}
 			<Input
-				id={id}
+				{...c.aria}
 				type={inputType}
-				placeholder={placeholder}
+				size={c.size}
+				placeholder={c.placeholder}
 				maxLength={maxLength ?? undefined}
+				disabled={c.disabled}
+				readOnly={c.readOnly}
+				required={c.required}
+				autoFocus={c.autoFocus}
+				invalid={c.invalid}
 				value={value}
 				className={mono ? "font-mono" : undefined}
-				onChange={(e) => setValue(e.target.value)}
+				onChange={(e) => edit(e.target.value)}
 				onBlur={commit}
 				onKeyDown={(e) => {
-					if (e.key === "Enter") {
-						commit();
-						(e.target as HTMLInputElement).blur();
-					}
+					if (!isEnter(e)) return;
+					e.preventDefault();
+					submit(e.currentTarget);
 				}}
 			/>
 		</div>
@@ -64,10 +61,9 @@ function InputView({ path }: NodeProps) {
 export const InputRef: NodeEntry = {
 	component: InputView,
 	fill: true,
+	input: { empty: "" },
 	handlers: {
-		write: (ctx, payload) =>
-			ctx.update((props) => {
-				props.value = payload == null ? "" : String(payload);
-			}),
+		write: valueWrite(asText),
+		reset: resetHandler,
 	},
 };

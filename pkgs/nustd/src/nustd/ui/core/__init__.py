@@ -45,6 +45,7 @@ from .interactions import (
     Hide,
     Init,
     Remove,
+    Reset,
     Send,
     Write,
 )
@@ -86,6 +87,7 @@ __all__ = [
     "ItemRef",
     "Ref",
     "Remove",
+    "Reset",
     "Section",
     "SectionRef",
     "Send",

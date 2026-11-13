@@ -472,6 +472,22 @@ export type {
 	MarkdownRegistration,
 } from "./nodes/input/markdown";
 export { markdownAt, registerMarkdown, subscribeMarkdown } from "./nodes/input/markdown";
+export {
+	type Commit,
+	type Control,
+	EVENTS,
+	FormContext,
+	type FormState,
+	gather,
+	isEnter,
+	requestFormSubmit,
+	resetInput,
+	resetUnder,
+	useCommit,
+	useControl,
+	useForm,
+	valueWrite,
+} from "./nodes/input/control";
 export type { LensColumnsProps } from "./nodes/output/lens/columns";
 export { LensColumns } from "./nodes/output/lens/columns";
 export type { Column as LensColumn, Entry as LensEntry } from "./nodes/output/lens/types";

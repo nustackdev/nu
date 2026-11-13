@@ -84,6 +84,7 @@ import {
 	useSetValue,
 	useStringProp,
 } from "../../tree";
+import { EVENTS } from "./control";
 
 /** A mounted markdown editor: its handle while it takes commands, null while read-only. */
 export type MarkdownEntry = { handle: MarkdownHandle | null };
@@ -233,7 +234,7 @@ function MarkdownView({ path }: NodeProps) {
 			const s = savesOf(path);
 			s.texts = [...s.texts.slice(1 - SAVES_KEPT), source];
 			s.unread = true;
-			send(OPS.notify);
+			send(OPS.notify, { event: EVENTS.change });
 		},
 		[key, setValue, send],
 	);
@@ -271,6 +272,7 @@ function MarkdownView({ path }: NodeProps) {
 export const MarkdownRef: NodeEntry = {
 	component: MarkdownView,
 	fill: true,
+	input: { empty: "", gathered: (props) => Boolean(props.editable) },
 	handlers: {
 		write: (ctx, payload) => {
 			const source = sourceOf(payload);

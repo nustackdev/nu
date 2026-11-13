@@ -1,46 +1,43 @@
 // CheckboxRef -- boolean toggle. Browser is source of truth.
 //
-// User toggles: the node's `checked` prop flips immediately (local edit), a
-// notify ships to the server. Its state does not live on `value`, it lives on
-// `checked`, so both directions need a handler: a write must land the payload
-// on `checked` (coerced to a real bool, the input must never go uncontrolled)
-// and a read must answer with `checked` rather than `props.value`.
+// The checked state is the node's `value` (a real bool). A toggle lands it
+// and sends `{event: "change"}` at once (./control.ts). A write lands the
+// payload on `value`, coerced to a bool so the box never goes uncontrolled; a
+// map write merges chrome. The store answers a read from `value`. `reset`
+// puts the declared value back.
 //
-// Chrome (label, checked) is just more props, declared at the slot and read at
-// render. Composes the kit Checkbox primitive (Radix under the hood).
+// Composes the kit Checkbox primitive (Radix under the hood). Readonly keeps
+// the look and takes no toggles.
 
-import { OPS } from "@nustackdev/ui-core";
-import { useId } from "react";
 import { Checkbox } from "../../components/ui/checkbox";
-import {
-	type NodeEntry,
-	type NodeProps,
-	useBoolProp,
-	useSend,
-	useSetProps,
-	useStringProp,
-} from "../../tree";
+import { Label } from "../../components/ui/field";
+import { type NodeEntry, type NodeProps, useBoolProp } from "../../tree";
+import { asBool, resetHandler, useCommit, useControl, valueWrite } from "./control";
 
 function CheckboxView({ path }: NodeProps) {
-	const checked = useBoolProp(path, "checked");
-	const label = useStringProp(path, "label");
-	const setProps = useSetProps(path);
-	const send = useSend(path);
-	const id = useId();
+	const checked = useBoolProp(path, "value");
+	const c = useControl(path);
+	const { pick } = useCommit(path);
 	return (
 		<div className="inline-flex items-center gap-2">
 			<Checkbox
-				id={id}
+				{...c.aria}
 				checked={checked}
+				size={c.size}
+				disabled={c.disabled}
+				required={c.required}
+				autoFocus={c.autoFocus}
+				invalid={c.invalid}
+				aria-readonly={c.readOnly || undefined}
 				onCheckedChange={(next) => {
-					setProps({ checked: next === true });
-					send(OPS.notify);
+					if (c.readOnly) return;
+					pick(next === true);
 				}}
 			/>
-			{label && (
-				<label htmlFor={id} className="text-base text-text-primary cursor-default">
-					{label}
-				</label>
+			{c.label && (
+				<Label htmlFor={c.id} inline required={c.required} disabled={c.disabled}>
+					{c.label}
+				</Label>
 			)}
 		</div>
 	);
@@ -48,11 +45,9 @@ function CheckboxView({ path }: NodeProps) {
 
 export const CheckboxRef: NodeEntry = {
 	component: CheckboxView,
+	input: { empty: false },
 	handlers: {
-		write: (ctx, payload) =>
-			ctx.update((props) => {
-				props.checked = Boolean(payload);
-			}),
-		read: (ctx) => ctx.send(OPS.read, Boolean(ctx.node.props.checked), ctx.frame.id),
+		write: valueWrite(asBool),
+		reset: resetHandler,
 	},
 };

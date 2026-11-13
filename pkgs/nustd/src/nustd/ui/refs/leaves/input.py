@@ -4,7 +4,24 @@ Also home to the two Refs with both faces, `MarkdownRef` and `CodeRef`:
 read-only by default, editable on request, readable either way.
 
 The browser owns the live value. Host reads via `Ref` (round-trip
-through session), subscribes to changes via `.on_change()` / `.on_click()`.
+through session), subscribes via `.on_change()` / `.on_submit()` /
+`.on_click()`.
+
+The contract every input shares (``InputLeaf``):
+
+- the seed is ``value=`` at the slot, whatever the value's kind (text, a
+  bool, a pick, a list), and ``set(value)`` writes it; ``reset()`` puts the
+  seed back;
+- every notify names its event: ``on_change()`` hears ``{event: "change"}``,
+  sent when a value is committed and only when it moved (blur, Enter, a
+  pick, a toggle, a release); ``on_submit()`` hears ``{event: "submit"}``,
+  sent when the person asks to send (Enter in a single-line field,
+  cmd/ctrl+Enter in a multi-line one). Enter that changed the value sends
+  the change first, then the submit;
+- the common props: ``label``, ``disabled``, ``readonly``, ``required``,
+  ``autofocus`` and ``size``, with ``set_label``, ``set_disabled``,
+  ``set_readonly`` and ``set_required``. Inside a ``Field`` the Field labels
+  the control, and its help, error and required land on the control itself.
 """
 
 from __future__ import annotations
@@ -16,7 +33,7 @@ from typing_extensions import Self
 
 from nu.forms import Dict
 from nu.lang.sentinels import UNSET
-from nustd.ui.core import Changed, Write
+from nustd.ui.core import Changed, Reset, Write
 
 from ..vocab import ControlSize, Target
 from ..vocab import set_href as _set_href
@@ -31,7 +48,88 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 
+#: The event an input sends when a value is committed.
+CHANGE = "change"
+#: The event an input sends when the person asks to send what it holds.
+SUBMIT = "submit"
+#: The event a button sends on a click.
+CLICK = "click"
+
+
 Variant = Literal["primary", "secondary", "outline", "ghost", "soft", "danger", "link"]
+
+
+def _common(
+    *,
+    label: str,
+    disabled: bool,
+    readonly: bool,
+    required: bool,
+    autofocus: bool,
+    size: ControlSize,
+) -> dict[str, object]:
+    """The props every input declares, in one place."""
+    return {
+        "label": label,
+        "disabled": bool(disabled),
+        "readonly": bool(readonly),
+        "required": bool(required),
+        "autofocus": bool(autofocus),
+        "size": size,
+    }
+
+
+class InputLeaf(LeafRef):
+    """What every input Ref is: a live value in the browser, read, written, heard.
+
+    Abstract. Reading the Ref is a round trip for the live value. ``set``
+    writes it, ``reset`` puts the slot's ``value=`` back, ``on_change`` hears
+    each committed change. The common props have their setters here.
+    """
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        async def athunk(rt: Runtime) -> Any:
+            return await self._aread(rt, nid)
+
+        return athunk
+
+    def set(self, value: Any) -> Nu:
+        return Write(self, value)
+
+    def reset(self) -> Nu:
+        """Put the value the slot declared back. Sends no change."""
+        return Reset(self)
+
+    def on_change(self) -> Changed:
+        """Each committed change: blur, Enter, a pick, a toggle. Never per keystroke."""
+        return Changed(self, CHANGE)
+
+    def set_label(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(label=text))
+
+    def set_disabled(self, flag: BoolArg) -> Nu:
+        return Write(self, Dict.of(disabled=flag))
+
+    def set_readonly(self, flag: BoolArg) -> Nu:
+        return Write(self, Dict.of(readonly=flag))
+
+    def set_required(self, flag: BoolArg) -> Nu:
+        return Write(self, Dict.of(required=flag))
+
+
+class _Submits:
+    """Mixin: the input has a send key, heard by ``on_submit()``."""
+
+    def on_submit(self) -> Changed:
+        """The person asked to send: Enter, or cmd/ctrl+Enter in a multi-line field."""
+        return Changed(self, SUBMIT)  # type: ignore[arg-type]
+
+
+class _Placeholder:
+    """Mixin: the input shows a placeholder while empty."""
+
+    def set_placeholder(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(placeholder=text))  # type: ignore[arg-type]
 
 
 class ButtonRef(LeafRef):
@@ -47,6 +145,12 @@ class ButtonRef(LeafRef):
     empty label the button draws as a square icon button, named for screen
     readers by `tooltip` (or the icon name when there is none). `tooltip` is
     the hover hint, shown whenever it is set.
+
+    Inside a Form a button submits only with `submit=True`; every other
+    button is a plain one, so a Cancel never submits. The Form's submit
+    payload names the submit button that fired by its slot name. `loading`
+    draws a spinner in place of the icon and takes no clicks; a Form that is
+    busy spins its submit buttons on its own.
 
     Any lucide name draws (https://lucide.dev/icons), the same names every
     Ref with an `icon` takes. An unknown name draws the label alone.
@@ -66,6 +170,9 @@ class ButtonRef(LeafRef):
         size: ControlSize = "md",
         href: str = "",
         target: Target = "_self",
+        submit: bool = False,
+        loading: bool = False,
+        autofocus: bool = False,
     ) -> Self:
         return super().slot(
             label=label,
@@ -76,10 +183,13 @@ class ButtonRef(LeafRef):
             size=size,
             href=href,
             target=target,
+            submit=bool(submit),
+            loading=bool(loading),
+            autofocus=bool(autofocus),
         )
 
     def on_click(self) -> Changed:
-        return Changed(self)
+        return Changed(self, CLICK)
 
     def set_label(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(label=text))
@@ -89,6 +199,9 @@ class ButtonRef(LeafRef):
 
     def set_disabled(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(disabled=flag))
+
+    def set_loading(self, flag: BoolArg) -> Nu:
+        return Write(self, Dict.of(loading=flag))
 
     def set_icon(self, name: StrArg) -> Nu:
         return Write(self, Dict.of(icon=name))
@@ -123,30 +236,45 @@ class ButtonRef(LeafRef):
         return Write(self, Dict.of(**payload))
 
 
-class CheckboxRef(LeafRef):
+class CheckboxRef(InputLeaf):
     """Boolean toggle whose checked state lives in the browser."""
 
     _wire_type = "CheckboxRef"
 
     @classmethod
-    def slot(cls, *, label: str = "", checked: bool = False) -> Self:
-        return super().slot(label=label, checked=checked)
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        async def athunk(rt: Runtime) -> Any:
-            return await self._aread(rt, nid)
-
-        return athunk
+    def slot(
+        cls,
+        *,
+        label: str = "",
+        value: bool = False,
+        disabled: bool = False,
+        readonly: bool = False,
+        required: bool = False,
+        autofocus: bool = False,
+        size: ControlSize = "md",
+    ) -> Self:
+        return super().slot(
+            value=bool(value),
+            **_common(
+                label=label,
+                disabled=disabled,
+                readonly=readonly,
+                required=required,
+                autofocus=autofocus,
+                size=size,
+            ),
+        )
 
     def set(self, value: BoolArg) -> Nu:
         return Write(self, value)
 
-    def on_change(self) -> Changed:
-        return Changed(self)
 
+class DatePickerRef(_Submits, _Placeholder, InputLeaf):
+    """Date input whose ISO yyyy-mm-dd value lives in the browser ("" for none).
 
-class DatePickerRef(LeafRef):
-    """Date input whose ISO yyyy-mm-dd value lives in the browser."""
+    A pick is a change. Enter on the closed picker submits; Space and the
+    down arrow open the calendar.
+    """
 
     _wire_type = "DatePickerRef"
 
@@ -158,34 +286,42 @@ class DatePickerRef(LeafRef):
         placeholder: str = "",
         min: str = "",
         max: str = "",
-        default: str = "",
+        value: str = "",
+        disabled: bool = False,
+        readonly: bool = False,
+        required: bool = False,
+        autofocus: bool = False,
+        size: ControlSize = "md",
     ) -> Self:
         return super().slot(
-            label=label,
             placeholder=placeholder,
             min=min,
             max=max,
-            default=default,
+            value=value,
+            **_common(
+                label=label,
+                disabled=disabled,
+                readonly=readonly,
+                required=required,
+                autofocus=autofocus,
+                size=size,
+            ),
         )
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        async def athunk(rt: Runtime) -> Any:
-            return await self._aread(rt, nid)
-
-        return athunk
 
     def set(self, value: StrArg) -> Nu:
         return Write(self, value)
-
-    def on_change(self) -> Changed:
-        return Changed(self)
 
 
 InputType = Literal["text", "password", "email", "number"]
 
 
-class InputRef(LeafRef):
+class InputRef(_Submits, _Placeholder, InputLeaf):
     """Text input whose value lives in the browser.
+
+    A read sees what is under the caret. Blur commits (a change, when the
+    text moved), Enter commits and submits, and focus stays in the field.
+    `clear_on_submit` puts the seed back after each submit, for a field you
+    type into, send, and type into again.
 
     Default face is display (Inter); code-shaped fields opt into
     JetBrains Mono via `mono=True`, which flips `font-mono` at render time.
@@ -203,30 +339,35 @@ class InputRef(LeafRef):
         type: InputType = "text",
         max_length: int | None = None,
         mono: bool = False,
+        clear_on_submit: bool = False,
+        disabled: bool = False,
+        readonly: bool = False,
+        required: bool = False,
+        autofocus: bool = False,
+        size: ControlSize = "md",
     ) -> Self:
         return super().slot(
-            label=label,
             placeholder=placeholder,
             value=value,
             type=type,
             max_length=max_length,
             mono=mono,
+            clear_on_submit=bool(clear_on_submit),
+            **_common(
+                label=label,
+                disabled=disabled,
+                readonly=readonly,
+                required=required,
+                autofocus=autofocus,
+                size=size,
+            ),
         )
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        async def athunk(rt: Runtime) -> Any:
-            return await self._aread(rt, nid)
-
-        return athunk
 
     def set(self, value: StrArg) -> Nu:
         return Write(self, value)
 
-    def on_change(self) -> Changed:
-        return Changed(self)
 
-
-class CodeRef(LeafRef):
+class CodeRef(_Submits, InputLeaf):
     """Source code, read-only by default. Value is the text, both ways.
 
     Read-only it renders a highlighted block with a copy button. With
@@ -234,8 +375,9 @@ class CodeRef(LeafRef):
     with `set`, reads it back through `Ref` like any input Ref, and subscribes
     with `on_change()`. The browser commits on cmd+enter and on blur, not on
     every keystroke, so a read between commits sees the last committed text
-    and not what is under the caret. One engine for both modes, so flipping
-    `editable` never changes how the code looks.
+    and not what is under the caret. cmd+enter also submits (`on_submit()`).
+    One engine for both modes, so flipping `editable` never changes how the
+    code looks.
 
     Last actor wins, same as `MarkdownRef`. A `set` from the server replaces
     the buffer outright, a notify from the browser replaces the server's
@@ -279,12 +421,6 @@ class CodeRef(LeafRef):
             max_height=max_height,
         )
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        async def athunk(rt: Runtime) -> Any:
-            return await self._aread(rt, nid)
-
-        return athunk
-
     def set(self, value: StrArg) -> Nu:
         return Write(self, value)
 
@@ -294,12 +430,13 @@ class CodeRef(LeafRef):
     def set_editable(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(editable=flag))
 
-    def on_change(self) -> Changed:
-        return Changed(self)
 
+class NumberInputRef(_Submits, _Placeholder, InputLeaf):
+    """Numeric input whose value lives in the browser.
 
-class NumberInputRef(LeafRef):
-    """Numeric input whose value lives in the browser."""
+    Typing is local; blur, Enter, a stepper click or an arrow key commits.
+    Enter also submits.
+    """
 
     _wire_type = "NumberInputRef"
 
@@ -312,25 +449,28 @@ class NumberInputRef(LeafRef):
         min: float | None = None,
         max: float | None = None,
         step: float = 1.0,
-        default: float = 0.0,
+        value: float = 0.0,
+        disabled: bool = False,
+        readonly: bool = False,
+        required: bool = False,
+        autofocus: bool = False,
+        size: ControlSize = "md",
     ) -> Self:
         return super().slot(
-            label=label,
             placeholder=placeholder,
             min=min,
             max=max,
             step=step,
-            default=default,
+            value=value,
+            **_common(
+                label=label,
+                disabled=disabled,
+                readonly=readonly,
+                required=required,
+                autofocus=autofocus,
+                size=size,
+            ),
         )
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        async def athunk(rt: Runtime) -> Any:
-            return await self._aread(rt, nid)
-
-        return athunk
-
-    def set_value(self, value: FloatArg) -> Nu:
-        return Write(self, Dict.of(value=value))
 
     def set_min(self, value: FloatArg | None) -> Nu:
         return Write(self, Dict.of(min=value))
@@ -340,9 +480,6 @@ class NumberInputRef(LeafRef):
 
     def set_step(self, value: FloatArg) -> Nu:
         return Write(self, Dict.of(step=value))
-
-    def set_label(self, text: StrArg) -> Nu:
-        return Write(self, Dict.of(label=text))
 
     def set(
         self,
@@ -366,11 +503,8 @@ class NumberInputRef(LeafRef):
             payload["label"] = label
         return Write(self, Dict.of(**payload))
 
-    def on_change(self) -> Changed:
-        return Changed(self)
 
-
-class MarkdownRef(LeafRef):
+class MarkdownRef(_Placeholder, InputLeaf):
     """A markdown document, read-only by default. Value is the markdown, both ways.
 
     The browser never shows the source. Read-only it renders the document;
@@ -378,7 +512,8 @@ class MarkdownRef(LeafRef):
     server writes the source with `set`, reads it back through `Ref` like any
     input Ref, and subscribes with `on_change()`. The browser notifies back
     on a quiet moment or on blur. One engine for both modes, so a document
-    looks the same whether or not you can type in it.
+    looks the same whether or not you can type in it. A document saves
+    itself, so it has no send key and no `on_submit()`.
 
     The dialect: paragraphs, headings, bullet, numbered and checkbox lists,
     quotes, code fences, GFM pipe tables, rules, images, bold, italic, inline
@@ -405,23 +540,11 @@ class MarkdownRef(LeafRef):
     ) -> Self:
         return super().slot(value=value, placeholder=placeholder, editable=editable)
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        async def athunk(rt: Runtime) -> Any:
-            return await self._aread(rt, nid)
-
-        return athunk
-
     def set(self, value: StrArg) -> Nu:
         return Write(self, value)
 
-    def set_placeholder(self, text: StrArg) -> Nu:
-        return Write(self, Dict.of(placeholder=text))
-
     def set_editable(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(editable=flag))
-
-    def on_change(self) -> Changed:
-        return Changed(self)
 
 
 def _normalize_options(opts: object) -> list[dict[str, str]]:
@@ -439,11 +562,23 @@ def _normalize_options(opts: object) -> list[dict[str, str]]:
     return out
 
 
+def _options_write(ref: InputLeaf, opts: object) -> Nu:
+    """The ``set_options`` write: a literal list normalized here, a term as it is."""
+    if isinstance(opts, list):
+        payload: object = {"options": _normalize_options(opts)}
+    else:
+        payload = {"options": opts}
+    return Write(ref, Dict.of(**payload))
+
+
 Orientation = Literal["vertical", "horizontal"]
 
 
-class RadioGroupRef(LeafRef):
-    """Single-choice radio group whose value lives in the browser."""
+class RadioGroupRef(InputLeaf):
+    """Single-choice radio group whose value lives in the browser ("" for none).
+
+    `label` names the group (or the Field around it does).
+    """
 
     _wire_type = "RadioGroupRef"
 
@@ -452,40 +587,38 @@ class RadioGroupRef(LeafRef):
         cls,
         *,
         options: list[str] | list[dict[str, str]] | None = None,
-        selected: str = "",
+        value: str = "",
         orientation: Orientation = "vertical",
+        label: str = "",
+        disabled: bool = False,
+        readonly: bool = False,
+        required: bool = False,
+        autofocus: bool = False,
+        size: ControlSize = "md",
     ) -> Self:
         return super().slot(
             options=_normalize_options(options or []),
-            selected=selected,
+            value=value,
             orientation=orientation,
+            **_common(
+                label=label,
+                disabled=disabled,
+                readonly=readonly,
+                required=required,
+                autofocus=autofocus,
+                size=size,
+            ),
         )
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        async def athunk(rt: Runtime) -> Any:
-            return await self._aread(rt, nid)
-
-        return athunk
 
     def set(self, value: StrArg) -> Nu:
         return Write(self, value)
 
     def set_options(self, opts: ListArg[str] | ListArg[dict[str, str]]) -> Nu:
-        if isinstance(opts, list):
-            payload: object = {"options": _normalize_options(opts)}
-        else:
-            payload = {"options": opts}
-        return Write(self, Dict.of(**payload))
-
-    def on_change(self) -> Changed:
-        return Changed(self)
+        return _options_write(self, opts)
 
 
-OptionInput = "list[str] | list[dict[str, str]]"
-
-
-class SelectRef(LeafRef):
-    """Dropdown single-select whose value lives in the browser.
+class SelectRef(_Placeholder, InputLeaf):
+    """Dropdown single-select whose value lives in the browser ("" for none).
 
     `searchable=True` swaps the picker for one with a filter field, for long
     option lists. Options, value, reads and notifies stay the same.
@@ -498,38 +631,39 @@ class SelectRef(LeafRef):
         cls,
         *,
         options: list[str] | list[dict[str, str]] | None = None,
-        selected: str = "",
+        value: str = "",
         placeholder: str = "",
         searchable: bool = False,
+        label: str = "",
+        disabled: bool = False,
+        readonly: bool = False,
+        required: bool = False,
+        autofocus: bool = False,
+        size: ControlSize = "md",
     ) -> Self:
         return super().slot(
             options=_normalize_options(options or []),
-            selected=selected,
+            value=value,
             placeholder=placeholder,
             searchable=searchable,
+            **_common(
+                label=label,
+                disabled=disabled,
+                readonly=readonly,
+                required=required,
+                autofocus=autofocus,
+                size=size,
+            ),
         )
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        async def athunk(rt: Runtime) -> Any:
-            return await self._aread(rt, nid)
-
-        return athunk
 
     def set(self, value: StrArg) -> Nu:
         return Write(self, value)
 
     def set_options(self, opts: ListArg[str] | ListArg[dict[str, str]]) -> Nu:
-        if isinstance(opts, list):
-            payload: object = {"options": _normalize_options(opts)}
-        else:
-            payload = {"options": opts}
-        return Write(self, Dict.of(**payload))
+        return _options_write(self, opts)
 
     def set_searchable(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(searchable=flag))
-
-    def on_change(self) -> Changed:
-        return Changed(self)
 
 
 SketchTool = Literal["pen", "rect", "ellipse", "line", "arrow"]
@@ -643,7 +777,7 @@ def _subset(name: str, given: object, allowed: tuple[str, ...]) -> list[str]:
     return [a for a in allowed if a in given]
 
 
-class SketchRef(LeafRef):
+class SketchRef(InputLeaf):
     """A board a person draws on with a pointer; the elements live in the browser.
 
     Pen ink (pressure-aware from a pen), rects, ellipses, lines and arrows,
@@ -748,18 +882,12 @@ class SketchRef(LeafRef):
     def clear(self) -> Nu:
         return Write(self, [])
 
-    def set_label(self, text: StrArg) -> Nu:
-        return Write(self, Dict.of(label=text))
 
-    def set_readonly(self, flag: BoolArg) -> Nu:
-        return Write(self, Dict.of(readonly=flag))
+class SliderRef(InputLeaf):
+    """Numeric slider whose value lives in the browser.
 
-    def on_change(self) -> Changed:
-        return Changed(self)
-
-
-class SliderRef(LeafRef):
-    """Numeric slider whose value lives in the browser."""
+    Dragging is local; the release (or an arrow key) commits.
+    """
 
     _wire_type = "SliderRef"
 
@@ -773,24 +901,27 @@ class SliderRef(LeafRef):
         value: float = 0.0,
         label: str = "",
         show_value: bool = True,
+        disabled: bool = False,
+        readonly: bool = False,
+        required: bool = False,
+        autofocus: bool = False,
+        size: ControlSize = "md",
     ) -> Self:
         return super().slot(
             min=min,
             max=max,
             step=step,
             value=value,
-            label=label,
             show_value=show_value,
+            **_common(
+                label=label,
+                disabled=disabled,
+                readonly=readonly,
+                required=required,
+                autofocus=autofocus,
+                size=size,
+            ),
         )
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        async def athunk(rt: Runtime) -> Any:
-            return await self._aread(rt, nid)
-
-        return athunk
-
-    def set_value(self, value: FloatArg) -> Nu:
-        return Write(self, Dict.of(value=value))
 
     def set_min(self, value: FloatArg) -> Nu:
         return Write(self, Dict.of(min=value))
@@ -800,9 +931,6 @@ class SliderRef(LeafRef):
 
     def set_step(self, value: FloatArg) -> Nu:
         return Write(self, Dict.of(step=value))
-
-    def set_label(self, text: StrArg) -> Nu:
-        return Write(self, Dict.of(label=text))
 
     def set_show_value(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(show_value=flag))
@@ -832,34 +960,45 @@ class SliderRef(LeafRef):
             payload["show_value"] = show_value
         return Write(self, Dict.of(**payload))
 
-    def on_change(self) -> Changed:
-        return Changed(self)
 
-
-class SwitchRef(LeafRef):
-    """On/off switch whose checked state lives in the browser."""
+class SwitchRef(InputLeaf):
+    """On/off switch whose state lives in the browser."""
 
     _wire_type = "SwitchRef"
 
     @classmethod
-    def slot(cls, *, label: str = "", default: bool = False) -> Self:
-        return super().slot(label=label, checked=default)
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        async def athunk(rt: Runtime) -> Any:
-            return await self._aread(rt, nid)
-
-        return athunk
+    def slot(
+        cls,
+        *,
+        label: str = "",
+        value: bool = False,
+        disabled: bool = False,
+        readonly: bool = False,
+        required: bool = False,
+        autofocus: bool = False,
+        size: ControlSize = "md",
+    ) -> Self:
+        return super().slot(
+            value=bool(value),
+            **_common(
+                label=label,
+                disabled=disabled,
+                readonly=readonly,
+                required=required,
+                autofocus=autofocus,
+                size=size,
+            ),
+        )
 
     def set(self, value: BoolArg) -> Nu:
         return Write(self, value)
 
-    def on_change(self) -> Changed:
-        return Changed(self)
 
+class TagInputRef(_Submits, _Placeholder, InputLeaf):
+    """Multi-tag entry field whose committed list lives in the browser.
 
-class TagInputRef(LeafRef):
-    """Multi-tag entry field whose committed list lives in the browser."""
+    Enter with text adds a tag (a change); Enter on an empty draft submits.
+    """
 
     _wire_type = "TagInputRef"
 
@@ -872,34 +1011,47 @@ class TagInputRef(LeafRef):
         value: list[str] | None = None,
         max_tags: int | None = None,
         allow_duplicates: bool = False,
+        clear_on_submit: bool = False,
+        disabled: bool = False,
+        readonly: bool = False,
+        required: bool = False,
+        autofocus: bool = False,
+        size: ControlSize = "md",
     ) -> Self:
         return super().slot(
-            label=label,
             placeholder=placeholder,
             value=list(value or []),
             max_tags=max_tags,
             allow_duplicates=allow_duplicates,
+            clear_on_submit=bool(clear_on_submit),
+            **_common(
+                label=label,
+                disabled=disabled,
+                readonly=readonly,
+                required=required,
+                autofocus=autofocus,
+                size=size,
+            ),
         )
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        async def athunk(rt: Runtime) -> Any:
-            return await self._aread(rt, nid)
-
-        return athunk
 
     def set(self, value: ListArg[str]) -> Nu:
         return Write(self, value)
 
-    def on_change(self) -> Changed:
-        return Changed(self)
+
+SubmitOn = Literal["mod+enter", "enter"]
 
 
-class TextAreaRef(LeafRef):
+class TextAreaRef(_Submits, _Placeholder, InputLeaf):
     """Multi-line text input whose value lives in the browser.
 
+    Blur commits. cmd/ctrl+Enter commits and submits, plain Enter is a
+    newline. `submit_on="enter"` makes it a chat composer: Enter submits and
+    shift+Enter is the newline. Focus stays in the field after a submit, and
+    `clear_on_submit` empties it for the next message.
+
     `auto_resize=True` maps to the primitive's `field-sizing: content` mode.
-    Default face is display (Inter); set `mono=True` at class level for
-    code-shaped fields to flip `font-mono` at render.
+    Default face is display (Inter); `mono=True` flips `font-mono` at render
+    for code-shaped fields.
     """
 
     _wire_type = "TextAreaRef"
@@ -914,6 +1066,14 @@ class TextAreaRef(LeafRef):
         max_length: int | None = None,
         auto_resize: bool = False,
         mono: bool = False,
+        submit_on: SubmitOn = "mod+enter",
+        clear_on_submit: bool = False,
+        label: str = "",
+        disabled: bool = False,
+        readonly: bool = False,
+        required: bool = False,
+        autofocus: bool = False,
+        size: ControlSize = "md",
     ) -> Self:
         return super().slot(
             value=value,
@@ -922,22 +1082,23 @@ class TextAreaRef(LeafRef):
             max_length=max_length,
             auto_resize=auto_resize,
             mono=mono,
+            submit_on=submit_on,
+            clear_on_submit=bool(clear_on_submit),
+            **_common(
+                label=label,
+                disabled=disabled,
+                readonly=readonly,
+                required=required,
+                autofocus=autofocus,
+                size=size,
+            ),
         )
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        async def athunk(rt: Runtime) -> Any:
-            return await self._aread(rt, nid)
-
-        return athunk
 
     def set(self, value: StrArg) -> Nu:
         return Write(self, value)
 
-    def on_change(self) -> Changed:
-        return Changed(self)
 
-
-class ToggleRef(LeafRef):
+class ToggleRef(InputLeaf):
     """Two-state toolbar button whose pressed state lives in the browser.
 
     Pressed or not is the value, read live like `SwitchRef`'s. `SwitchRef`
@@ -949,33 +1110,47 @@ class ToggleRef(LeafRef):
     _wire_type = "ToggleRef"
 
     @classmethod
-    def slot(cls, *, label: str = "", icon: str = "", pressed: bool = False) -> Self:
-        return super().slot(label=label, icon=icon, pressed=bool(pressed))
+    def slot(
+        cls,
+        *,
+        label: str = "",
+        icon: str = "",
+        value: bool = False,
+        disabled: bool = False,
+        readonly: bool = False,
+        required: bool = False,
+        autofocus: bool = False,
+        size: ControlSize = "md",
+    ) -> Self:
+        return super().slot(
+            icon=icon,
+            value=bool(value),
+            **_common(
+                label=label,
+                disabled=disabled,
+                readonly=readonly,
+                required=required,
+                autofocus=autofocus,
+                size=size,
+            ),
+        )
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        async def athunk(rt: Runtime) -> Any:
-            return await self._aread(rt, nid)
-
-        return athunk
-
-    def set(self, pressed: BoolArg) -> Nu:
-        return Write(self, pressed)
-
-    def set_label(self, text: StrArg) -> Nu:
-        return Write(self, Dict.of(label=text))
+    def set(self, value: BoolArg) -> Nu:
+        return Write(self, value)
 
     def set_icon(self, name: StrArg) -> Nu:
         return Write(self, Dict.of(icon=name))
 
-    def on_change(self) -> Changed:
-        return Changed(self)
-
 
 __all__ = [
+    "CHANGE",
+    "CLICK",
+    "SUBMIT",
     "ButtonRef",
     "CheckboxRef",
     "CodeRef",
     "DatePickerRef",
+    "InputLeaf",
     "InputRef",
     "MarkdownRef",
     "NumberInputRef",

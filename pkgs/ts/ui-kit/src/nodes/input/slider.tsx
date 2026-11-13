@@ -1,52 +1,52 @@
 // SliderRef -- numeric slider with min/max/step. Browser is source of truth.
 //
-// User drags: the node's `value` prop updates immediately (controlled input).
-// On commit: notify the server. A server-initiated read is answered by the
-// store from `value`. A server-initiated write needs a handler for one reason:
-// the scalar form is a bare number and nil has to land as the floor rather
-// than as null, or the slider goes uncontrolled and the next read answers
-// null. The map form merges {value, min, max, step, label, show_value} the way
-// the store merges everything else; those keys are coerced at render.
+// Dragging is a local edit (the node's `value` follows the thumb). The
+// release, or an arrow key, commits: `{event: "change"}` when the value moved
+// (./control.ts). A server-initiated write needs a handler: the scalar form
+// is a bare number and nil lands on the floor rather than as null, or the
+// slider goes uncontrolled and the next read answers null. The map form
+// merges {value, min, max, step, label, show_value, ...}. `reset` puts the
+// declared value back.
 //
-// Composes the kit Slider primitive (Radix Slider) so track/thumb/keyboard
-// read through kit tokens. The primitive takes an array value; we wrap our
-// scalar accordingly.
+// The thumb (the element with `role="slider"`) carries the id, the label and
+// the Field's aria. Composes the kit Slider primitive (Radix Slider); the
+// primitive takes an array value, so the scalar is wrapped.
 
-import { OPS } from "@nustackdev/ui-core";
+import { useId } from "react";
 import { Slider } from "../../components/ui/slider";
 import { Text } from "../../components/ui/text";
-import {
-	type NodeEntry,
-	type NodeProps,
-	useBoolProp,
-	useNumberProp,
-	useSend,
-	useSetValue,
-	useStringProp,
-} from "../../tree";
+import { type NodeEntry, type NodeProps, useBoolProp, useNumberProp } from "../../tree";
+import { resetHandler, useCommit, useControl, valueWrite } from "./control";
 
 function toFiniteNumber(n: unknown, fallback: number): number {
 	const v = Number(n);
 	return Number.isFinite(v) ? v : fallback;
 }
 
+const floorOf = (props: Record<string, unknown>) => toFiniteNumber(props.min, 0);
+
 function SliderView({ path }: NodeProps) {
 	const min = useNumberProp(path, "min", 0);
 	const max = useNumberProp(path, "max", 100);
 	const step = useNumberProp(path, "step", 1);
 	const value = useNumberProp(path, "value", min);
-	const label = useStringProp(path, "label");
 	const showValue = useBoolProp(path, "show_value", true);
-	const setValue = useSetValue(path);
-	const send = useSend(path);
-
-	const commit = () => send(OPS.notify);
+	const c = useControl(path);
+	const { edit, commit } = useCommit(path);
+	const labelId = useId();
 
 	return (
 		<div className="flex w-full flex-col gap-1">
-			{label && (
-				<Text as="span" size="sm" tone="secondary" weight="medium">
-					{label}
+			{c.label && (
+				<Text
+					as="span"
+					id={labelId}
+					size="sm"
+					tone="secondary"
+					weight="medium"
+					className={c.disabled ? "opacity-50" : undefined}
+				>
+					{c.label}
 				</Text>
 			)}
 			<div className="flex items-center gap-3">
@@ -55,7 +55,14 @@ function SliderView({ path }: NodeProps) {
 					min={min}
 					max={max}
 					step={step}
-					onValueChange={(vals) => setValue(vals[0] ?? 0)}
+					size={c.size}
+					disabled={c.disabled || c.readOnly}
+					thumbProps={{
+						...c.aria,
+						autoFocus: c.autoFocus,
+						"aria-labelledby": c.label ? labelId : c.labelledBy,
+					}}
+					onValueChange={(vals) => edit(vals[0] ?? min)}
 					onValueCommit={commit}
 					className="flex-1"
 				/>
@@ -72,17 +79,9 @@ function SliderView({ path }: NodeProps) {
 export const SliderRef: NodeEntry = {
 	component: SliderView,
 	fill: true,
+	input: { empty: floorOf },
 	handlers: {
-		write: (ctx, payload) =>
-			ctx.update((props) => {
-				if (payload && typeof payload === "object" && !Array.isArray(payload)) {
-					Object.assign(props, payload);
-					if ("value" in payload) {
-						props.value = toFiniteNumber(props.value, toFiniteNumber(props.min, 0));
-					}
-					return;
-				}
-				props.value = toFiniteNumber(payload, toFiniteNumber(props.min, 0));
-			}),
+		write: valueWrite((raw, props) => toFiniteNumber(raw, floorOf(props))),
+		reset: resetHandler,
 	},
 };

@@ -59,7 +59,7 @@ export {
 } from "./NodeView";
 export type { Query, QueryValue } from "./query";
 export { mergeQuery, parseQuery, queryValue, serializeQuery } from "./query";
-export type { NodeEntry, NodeProps } from "./registry";
+export type { InputSpec, NodeEntry, NodeProps } from "./registry";
 export { componentFor, isFill, isGrow, register, registry, resolve } from "./registry";
 export type { RouteBranch, RouteMatch, RouteParams } from "./router";
 export { matchRoute, useRoute } from "./router";

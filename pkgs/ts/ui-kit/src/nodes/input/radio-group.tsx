@@ -1,92 +1,96 @@
 // RadioGroupRef -- single-choice radio group. Browser is source of truth.
 //
-// Same state shape as SelectRef, different affordance. User picks: the node's
-// `selected` prop updates immediately (local edit), a notify ships to the
-// server. State lives on `selected`, not on `value`, so a bare write has to be
-// steered there by a handler; an object payload merges into props the way the
-// store merges everything else, which is how `options` gets replaced. A read
-// answers with `selected`.
+// Same state shape as SelectRef, different affordance. The picked option's
+// value is the node's `value` ("" for none); a pick lands it and sends
+// `{event: "change"}` at once (./control.ts). A bare write selects (nil
+// clears), an object payload merges into props (how `options` is replaced),
+// the store answers a read from `value`, and `reset` puts the declared value
+// back.
 //
-// Options arrive raw off the wire (strings or {value,label} maps) and are
-// normalized at render rather than in a factory. Composes the kit RadioGroup
-// primitive.
+// The group is named by its label (`aria-labelledby`), or by the Field
+// around it. Options arrive raw off the wire (strings or {value,label} maps)
+// and are normalized at render. Composes the kit RadioGroup primitive.
 
-import { OPS } from "@nustackdev/ui-core";
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
+import { Label } from "../../components/ui/field";
 import { RadioGroup, RadioGroupItem } from "../../components/ui/radio-group";
-import {
-	type NodeEntry,
-	type NodeProps,
-	useListProp,
-	useSend,
-	useSetProps,
-	useStringProp,
-} from "../../tree";
-
-type Option = { value: string; label: string };
-
-function normalizeOptions(raw: unknown[]): Option[] {
-	const out: Option[] = [];
-	for (const item of raw) {
-		if (typeof item === "string") {
-			out.push({ value: item, label: item });
-		} else if (item && typeof item === "object") {
-			const o = item as { value?: unknown; label?: unknown };
-			const value = o.value == null ? "" : String(o.value);
-			const label = o.label == null ? value : String(o.label);
-			out.push({ value, label });
-		}
-	}
-	return out;
-}
+import { Text } from "../../components/ui/text";
+import { type NodeEntry, type NodeProps, useListProp, useStringProp } from "../../tree";
+import { asText, resetHandler, useCommit, useControl, valueWrite } from "./control";
+import { normalizeOptions } from "./select";
 
 function RadioGroupView({ path }: NodeProps) {
-	const selected = useStringProp(path, "selected");
+	const selected = useStringProp(path, "value");
 	const orientation = useStringProp(path, "orientation", "vertical");
 	const rawOptions = useListProp<unknown>(path, "options");
 	const options = useMemo(() => normalizeOptions(rawOptions), [rawOptions]);
-	const setProps = useSetProps(path);
-	const send = useSend(path);
+	const c = useControl(path);
+	const { pick } = useCommit(path);
+	const labelId = useId();
 	const listCls =
 		orientation === "horizontal" ? "flex flex-row flex-wrap gap-4" : "flex flex-col gap-2";
-	const prefix = path.join("-");
+	const prefix = `${c.id}-opt`;
 	return (
-		<RadioGroup
-			value={selected}
-			onValueChange={(next) => {
-				setProps({ selected: next });
-				send(OPS.notify);
-			}}
-			className={listCls}
-		>
-			{options.map((o) => {
-				const id = `radio-${prefix}-${o.value}`;
-				return (
-					<div key={o.value} className="flex items-center gap-2">
-						<RadioGroupItem value={o.value} id={id} />
-						<label htmlFor={id} className="text-base text-text-primary cursor-default">
-							{o.label}
-						</label>
-					</div>
-				);
-			})}
-		</RadioGroup>
+		<div className="flex flex-col gap-1">
+			{c.label && (
+				<Text
+					as="span"
+					id={labelId}
+					size="sm"
+					tone="secondary"
+					weight="medium"
+					className={c.disabled ? "opacity-50" : undefined}
+				>
+					{c.label}
+					{c.required ? (
+						<span className="ml-0.5 text-accent-text" aria-hidden>
+							*
+						</span>
+					) : null}
+				</Text>
+			)}
+			<RadioGroup
+				id={c.id}
+				value={selected}
+				orientation={orientation === "horizontal" ? "horizontal" : "vertical"}
+				disabled={c.disabled}
+				required={c.required}
+				aria-labelledby={c.label ? labelId : c.labelledBy}
+				aria-describedby={c.describedBy}
+				aria-invalid={c.invalid || undefined}
+				aria-readonly={c.readOnly || undefined}
+				onValueChange={(next) => {
+					if (!c.readOnly) pick(next);
+				}}
+				className={listCls}
+			>
+				{options.map((o, i) => {
+					const id = `${prefix}-${i}`;
+					return (
+						<div key={o.value} className="flex items-center gap-2">
+							<RadioGroupItem
+								value={o.value}
+								id={id}
+								size={c.size}
+								invalid={c.invalid}
+								autoFocus={c.autoFocus && i === 0}
+							/>
+							<Label htmlFor={id} inline disabled={c.disabled}>
+								{o.label}
+							</Label>
+						</div>
+					);
+				})}
+			</RadioGroup>
+		</div>
 	);
 }
 
 export const RadioGroupRef: NodeEntry = {
 	component: RadioGroupView,
+	input: { empty: "" },
 	handlers: {
-		write: (ctx, payload) =>
-			ctx.update((props) => {
-				// Map form merges (that is how `options` is pushed). Bare value
-				// push (string or coercible) selects; nil clears the selection.
-				if (payload && typeof payload === "object" && !Array.isArray(payload)) {
-					Object.assign(props, payload);
-					return;
-				}
-				props.selected = payload == null ? "" : String(payload);
-			}),
-		read: (ctx) => ctx.send(OPS.read, String(ctx.node.props.selected ?? ""), ctx.frame.id),
+		write: valueWrite(asText),
+		reset: resetHandler,
 	},
 };

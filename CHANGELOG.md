@@ -12,6 +12,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Enter submits inputs and whole forms in one round trip with every value
+- Every input now seeds and sets its value one way; old seed names break
 - Form fields get real labels, help and announced errors; buttons never submit by accident
 
 ## 0.7.4 - 2026-11-13

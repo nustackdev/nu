@@ -1,10 +1,10 @@
 // SelectRef -- single-select dropdown. Browser is source of truth.
 //
-// User picks: the node's `selected` prop updates immediately (local edit), a
-// notify ships to the server. State lives on `selected`, not on `value`, so a
-// bare write has to be steered there by a handler; an object payload merges
-// into props the way the store merges everything else, which is how `options`
-// gets replaced. A read answers with `selected`.
+// The picked option's value is the node's `value` ("" for none). A pick lands
+// it and sends `{event: "change"}` at once (./control.ts). A bare write
+// selects (nil clears); an object payload merges into props the way the store
+// merges everything else, which is how `options` gets replaced. The store
+// answers a read from `value`, and `reset` puts the declared value back.
 //
 // Options arrive raw off the wire (strings or {value,label} maps) and are
 // normalized at render rather than in a factory. Composes the kit Select
@@ -17,8 +17,7 @@
 // a select has no intrinsic width, so in a Row it takes a share of the free
 // width.
 
-import { OPS } from "@nustackdev/ui-core";
-import { useId, useMemo } from "react";
+import { useMemo } from "react";
 import {
 	Combobox,
 	ComboboxContent,
@@ -28,6 +27,7 @@ import {
 	ComboboxList,
 	ComboboxTrigger,
 } from "../../components/ui/combobox";
+import { Label } from "../../components/ui/field";
 import {
 	Select,
 	SelectContent,
@@ -40,14 +40,13 @@ import {
 	type NodeProps,
 	useBoolProp,
 	useListProp,
-	useSend,
-	useSetProps,
 	useStringProp,
 } from "../../tree";
+import { asText, type Control, resetHandler, useCommit, useControl, valueWrite } from "./control";
 
-type Option = { value: string; label: string };
+export type Option = { value: string; label: string };
 
-function normalizeOptions(raw: unknown[]): Option[] {
+export function normalizeOptions(raw: unknown[]): Option[] {
 	const out: Option[] = [];
 	for (const item of raw) {
 		if (typeof item === "string") {
@@ -63,51 +62,50 @@ function normalizeOptions(raw: unknown[]): Option[] {
 }
 
 function SelectView({ path }: NodeProps) {
-	const selected = useStringProp(path, "selected");
-	const label = useStringProp(path, "label");
-	const placeholder = useStringProp(path, "placeholder");
+	const selected = useStringProp(path, "value");
 	const searchable = useBoolProp(path, "searchable");
 	const rawOptions = useListProp<unknown>(path, "options");
 	const options = useMemo(() => normalizeOptions(rawOptions), [rawOptions]);
-	const setProps = useSetProps(path);
-	const send = useSend(path);
-	const id = useId();
-	const pick = (next: string) => {
-		setProps({ selected: next });
-		send(OPS.notify);
-	};
+	const c = useControl(path);
+	const { pick } = useCommit(path);
 	const Picker = searchable ? SearchPicker : PlainPicker;
 	return (
 		<div className="flex flex-col gap-1">
-			{label && (
-				<label htmlFor={id} className="text-sm font-medium text-text-secondary">
-					{label}
-				</label>
+			{c.label && (
+				<Label htmlFor={c.id} required={c.required} disabled={c.disabled}>
+					{c.label}
+				</Label>
 			)}
 			<Picker
-				id={id}
+				control={c}
 				selected={selected}
-				placeholder={placeholder}
 				options={options}
-				onPick={pick}
+				onPick={(next) => {
+					if (!c.readOnly) pick(next);
+				}}
 			/>
 		</div>
 	);
 }
 
 type PickerProps = {
-	id: string;
+	control: Control;
 	selected: string;
-	placeholder: string;
 	options: Option[];
 	onPick: (value: string) => void;
 };
 
-function PlainPicker({ id, selected, placeholder, options, onPick }: PickerProps) {
+function PlainPicker({ control: c, selected, options, onPick }: PickerProps) {
 	return (
-		<Select value={selected || undefined} onValueChange={onPick}>
-			<SelectTrigger id={id}>
-				<SelectValue placeholder={placeholder} />
+		<Select value={selected} onValueChange={onPick} disabled={c.disabled} required={c.required}>
+			<SelectTrigger
+				{...c.aria}
+				size={c.size}
+				invalid={c.invalid}
+				autoFocus={c.autoFocus}
+				aria-readonly={c.readOnly || undefined}
+			>
+				<SelectValue placeholder={c.placeholder} />
 			</SelectTrigger>
 			<SelectContent>
 				{options.map((o) => (
@@ -122,12 +120,20 @@ function PlainPicker({ id, selected, placeholder, options, onPick }: PickerProps
 
 // cmdk filters on an item's value plus its keywords, so the label rides as a
 // keyword and typing either one finds the option.
-function SearchPicker({ id, selected, placeholder, options, onPick }: PickerProps) {
+function SearchPicker({ control: c, selected, options, onPick }: PickerProps) {
 	const current = options.find((o) => o.value === selected);
 	return (
 		<Combobox value={selected} onValueChange={onPick}>
-			<ComboboxTrigger id={id} data-placeholder={current ? undefined : ""}>
-				<span>{current ? current.label : placeholder}</span>
+			<ComboboxTrigger
+				{...c.aria}
+				size={c.size}
+				invalid={c.invalid}
+				disabled={c.disabled}
+				autoFocus={c.autoFocus}
+				aria-readonly={c.readOnly || undefined}
+				data-placeholder={current ? undefined : ""}
+			>
+				<span>{current ? current.label : c.placeholder}</span>
 			</ComboboxTrigger>
 			<ComboboxContent>
 				<ComboboxInput placeholder="Search" />
@@ -147,17 +153,9 @@ function SearchPicker({ id, selected, placeholder, options, onPick }: PickerProp
 export const SelectRef: NodeEntry = {
 	component: SelectView,
 	fill: true,
+	input: { empty: "" },
 	handlers: {
-		write: (ctx, payload) =>
-			ctx.update((props) => {
-				// Map form merges (that is how `options` is pushed). Bare value
-				// push (string or coercible) selects; nil clears the selection.
-				if (payload && typeof payload === "object" && !Array.isArray(payload)) {
-					Object.assign(props, payload);
-					return;
-				}
-				props.selected = payload == null ? "" : String(payload);
-			}),
-		read: (ctx) => ctx.send(OPS.read, String(ctx.node.props.selected ?? ""), ctx.frame.id),
+		write: valueWrite(asText),
+		reset: resetHandler,
 	},
 };

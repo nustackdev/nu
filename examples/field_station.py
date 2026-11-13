@@ -55,7 +55,7 @@ class Toolbar(ui.Row):
     wipe = ui.ButtonRef.slot(icon="trash-2", tooltip="Clear trap log", variant="ghost")
     sep = ui.DividerRef.slot()
     night = ui.ToggleRef.slot(icon="moon", label="Night traps")
-    pins = ui.ToggleRef.slot(icon="pin", pressed=True)
+    pins = ui.ToggleRef.slot(icon="pin", value=True)
     sep2 = ui.DividerRef.slot()
     pick = ui.SelectRef.slot(
         options=[s[0] for s in SPECIES], placeholder="Jump to species", searchable=True
@@ -138,11 +138,16 @@ class NotesField(ui.Field):
     notes = ui.TextAreaRef.slot(placeholder="Behaviour, weather, anything odd", rows=3)
 
 
+class SightingActions(ui.Row):
+    cancel = ui.ButtonRef.slot(label="Cancel", variant="secondary")
+    save = ui.ButtonRef.slot(label="Save sighting", submit=True)
+
+
 class SightingForm(ui.Form):
-    species = ui.InputRef.slot(label="Species", placeholder="Panthera leo")
-    count = ui.NumberInputRef.slot(label="Count")
+    species = ui.InputRef.slot(label="Species", placeholder="Panthera leo", required=True)
+    count = ui.NumberInputRef.slot(label="Count", value=1.0, min=1.0)
     notes = NotesField.slot(label="Notes")
-    save = ui.ButtonRef.slot(label="Save sighting")
+    actions = SightingActions.slot(gap=2, justify="end")
 
 
 class ConfirmActions(ui.Row):
@@ -159,7 +164,7 @@ class ConfirmClear(ui.Modal):
 
 class LogSheet(ui.Sheet):
     hint = ui.TextRef.slot(value="Saved sightings land in the log below.")
-    form = SightingForm.slot()
+    form = SightingForm.slot(clear_on_submit=True)
 
 
 # --- page ---------------------------------------------------------------------
@@ -266,7 +271,9 @@ for t in range(24):
 program = seed >> nu.ParallelAsync(
     nu.ForeverDo(chain(*ticks)),
     nu.ReactEvery(h.toolbar.edit.on_click(), h.sheet.set_open(True)),
-    nu.ReactEvery(h.sheet.form.save.on_click(), h.sheet.set_open(False)),
+    # Enter in Species or a click on Save submits once; Cancel only closes.
+    nu.ReactEvery(h.sheet.form.on_submit(), h.sheet.set_open(False)),
+    nu.ReactEvery(h.sheet.form.actions.cancel.on_click(), h.sheet.set_open(False)),
     nu.ReactEvery(h.toolbar.wipe.on_click(), h.confirm.set_open(True)),
     nu.ReactEvery(h.confirm.actions.cancel.on_click(), h.confirm.set_open(False)),
     nu.ReactEvery(

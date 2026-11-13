@@ -28,7 +28,7 @@ from typing_extensions import Self, Unpack
 from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import child_at
-from nustd.ui.core.interactions import Changed, Send, Write
+from nustd.ui.core.interactions import Changed, Reset, Send, Write
 
 from ..vocab import Target
 from ..vocab import set_href as _set_href
@@ -39,11 +39,12 @@ from .named import ACTIONS, CONTROL, FOOTER, MEDIA, actions_ref, footer_ref, med
 
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Callable, Mapping
 
     from nu.domains.shape import Slot
     from nu.lang import Nu
     from nu.lang.args import Arg, BoolArg, ListArg, StrArg
+    from nu.lang.runtime import Runtime
     from nustd.ui.core import Ref, Section
 
     from .layout import Check
@@ -381,7 +382,29 @@ class FieldsetRef(ChildLayout, DictCollectionRef):
 
 
 class FormRef(ChildLayout, DictCollectionRef):
-    """Semantic form wrapper. Pin chrome on slot(); submit lives on a child ButtonRef.
+    """A form: its inputs, sent together.
+
+    ``on_submit()`` hears one ``{event: "submit", values, button}`` per
+    submit: Enter in any single-line input inside, a click on a button
+    declared ``submit=True``, or cmd/ctrl+Enter in a multi-line one. Every
+    other button is a plain one, so a Cancel in a form never submits.
+    ``values`` is every input under the form in one snapshot, nested the way
+    the slots are and keyed by slot name, a Field standing for its control::
+
+        {"details": {"title": "Dune", "year": 2021}, "watched": True}
+
+    ``button`` is the slot name of the submit button that fired, or None.
+    The browser checks ``required``, ``min``, ``max`` and the like before it
+    sends anything. Read the payload in the reaction rather than reading each
+    input again::
+
+        nu.ReactEvery(App.add.on_submit(), lambda sub: save(sub["values"]))
+
+    ``values()`` is the same snapshot as a read, any time. ``reset()`` puts
+    every input back to the value its slot declared, and ``clear_on_submit``
+    does that after each submit. ``busy_on_submit`` marks the form busy as it
+    sends: further submits are dropped and the submit buttons spin until
+    ``set_busy(False)``.
 
     The body speaks the layers of a Column (``layout``): ``padding`` (0),
     ``gap`` (4), ``justify``, ``align`` (stretch), ``divided``, and the per
@@ -399,9 +422,39 @@ class FormRef(ChildLayout, DictCollectionRef):
         /,
         *,
         title: str = "",
+        clear_on_submit: bool = False,
+        busy_on_submit: bool = False,
         **layout: Unpack[StackLayout],
     ) -> Self:
-        return super().slot(item, title=title, **cls._laid_out(layout))
+        return super().slot(
+            item,
+            title=title,
+            clear_on_submit=bool(clear_on_submit),
+            busy_on_submit=bool(busy_on_submit),
+            **cls._laid_out(layout),
+        )
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        async def athunk(rt: Runtime) -> Any:
+            return await self._aread(rt, nid)
+
+        return athunk
+
+    def on_submit(self) -> Changed:
+        """Each submit, its payload ``{event: "submit", values, button}``."""
+        return Changed(self, "submit")
+
+    def values(self) -> Dict:
+        """Every input under the form, nested by slot name, in one read."""
+        return Dict(self)
+
+    def reset(self) -> Nu:
+        """Put every input in the form back to the value its slot declared."""
+        return Reset(self)
+
+    def set_busy(self, flag: BoolArg) -> Nu:
+        """Busy drops submits and spins the submit buttons; ``busy_on_submit`` sets it."""
+        return Write(self, Dict.of(busy=flag))
 
     def set_title(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(title=text))

@@ -38,8 +38,8 @@ LANGUAGES = ["python", "javascript", "typescript", "sql", "yaml", "shell", "mark
 
 
 class Controls(nustd.ui.Row):
-    language = nustd.ui.SelectRef.slot(options=LANGUAGES, selected="python")
-    editable = nustd.ui.SwitchRef.slot(label="editable", default=True)
+    language = nustd.ui.SelectRef.slot(options=LANGUAGES, value="python")
+    editable = nustd.ui.SwitchRef.slot(label="editable", value=True)
 
 
 class Editor(nustd.ui.Card):

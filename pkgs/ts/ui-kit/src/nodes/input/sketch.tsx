@@ -36,6 +36,7 @@ import {
 	useSetValue,
 	useStringProp,
 } from "../../tree";
+import { EVENTS, resetHandler } from "./control";
 
 function normalized(props: Props, raw: unknown) {
 	return normalizeElements(raw, sketchConfig(props).defaults);
@@ -72,7 +73,7 @@ function SketchView({ path }: NodeProps) {
 				style={{ width: "100%", maxWidth: width }}
 				onValueChange={(next) => {
 					setValue(next);
-					send(OPS.notify);
+					send(OPS.notify, { event: EVENTS.change });
 				}}
 			/>
 		</div>
@@ -84,7 +85,9 @@ export const SketchRef: NodeEntry = {
 	// The board shrinks to its share of a row, keeping its aspect, and never
 	// grows past its configured width.
 	fill: true,
+	input: { empty: [] },
 	handlers: {
+		reset: resetHandler,
 		write: (ctx, payload) =>
 			ctx.update((props) => {
 				if (payload == null) {

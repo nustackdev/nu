@@ -14,6 +14,8 @@ Changed, HeadingRef.set -> Write).
              with every slot its Shape declares under it
 - Hide    -- server -> client, take a Ref's node off screen, subtree and all
 - Display -- server -> client, put a hidden node back on screen
+- Reset   -- server -> client, put an input (or every input in a Form) back
+             to the value its slot declared
 - Changed -- subscribe to client-side notifications on a Ref, all of them
              or only one event's
 
@@ -59,6 +61,7 @@ __all__ = [
     "Hide",
     "Init",
     "Remove",
+    "Reset",
     "Send",
     "Write",
 ]
@@ -291,6 +294,16 @@ class Display(_ChainCommand):
     stays hidden, and a node under a hidden ancestor stays off screen until
     that ancestor is displayed. On a node that is not hidden it does nothing
     but bring the node into being if it is not there yet.
+    """
+
+
+class Reset(_ChainCommand):
+    """Put an input back to the value its slot declared, or every input in a Form.
+
+    The browser keeps each node's declared props from when it was created,
+    so a reset needs nothing from the server but the address. It sends no
+    change notify: the program asked for it, so the program knows. A node
+    that is no input and holds none takes it as a no-op.
     """
 
 

@@ -134,29 +134,29 @@ describe("ButtonRef", () => {
 
 describe("ToggleRef", () => {
 	it("flips pressed and notifies on press", () => {
-		mount("ToggleRef", { label: "", icon: "bold", pressed: false });
+		mount("ToggleRef", { label: "", icon: "bold", value: false });
 		const t = slot("toggle");
 		expect(t?.getAttribute("aria-label")).toBe("bold");
 		expect(t?.getAttribute("aria-pressed")).toBe("false");
 		act(() => t?.click());
-		expect(props().pressed).toBe(true);
+		expect(props().value).toBe(true);
 		expect(slot("toggle")?.getAttribute("aria-pressed")).toBe("true");
 		expect(sent.map((f) => f.op)).toEqual([OPS.notify]);
 	});
 
 	it("lands a bare write on pressed and merges a map", () => {
-		mount("ToggleRef", { label: "Wrap", icon: "", pressed: false });
+		mount("ToggleRef", { label: "Wrap", icon: "", value: false });
 		dispatch(OPS.write, true);
-		expect(props().pressed).toBe(true);
+		expect(props().value).toBe(true);
 		dispatch(OPS.write, { label: "Pin", icon: "pin" });
-		expect(props()).toMatchObject({ label: "Pin", icon: "pin", pressed: true });
+		expect(props()).toMatchObject({ label: "Pin", icon: "pin", value: true });
 		expect(slot("toggle")?.querySelector("svg")).not.toBeNull();
 		dispatch(OPS.write, null);
-		expect(props().pressed).toBe(false);
+		expect(props().value).toBe(false);
 	});
 
 	it("answers a read with the pressed state", () => {
-		mount("ToggleRef", { label: "Pin", pressed: true });
+		mount("ToggleRef", { label: "Pin", value: true });
 		dispatch(OPS.read, null, "r1");
 		expect(sent).toEqual([expect.objectContaining({ op: OPS.read, payload: true, id: "r1" })]);
 	});
@@ -169,7 +169,7 @@ describe("SelectRef", () => {
 	];
 
 	it("renders the Combobox trigger when searchable", () => {
-		mount("SelectRef", { options, selected: "nu", searchable: true });
+		mount("SelectRef", { options, value: "nu", searchable: true });
 		const trigger = slot("combobox-trigger");
 		expect(trigger).not.toBeNull();
 		expect(trigger?.getAttribute("role")).toBe("combobox");
@@ -178,20 +178,20 @@ describe("SelectRef", () => {
 	});
 
 	it("shows the placeholder, muted, with nothing picked", () => {
-		mount("SelectRef", { options, selected: "", placeholder: "Pick one", searchable: true });
+		mount("SelectRef", { options, value: "", placeholder: "Pick one", searchable: true });
 		const trigger = slot("combobox-trigger");
 		expect(trigger?.textContent).toBe("Pick one");
 		expect(trigger?.hasAttribute("data-placeholder")).toBe(true);
 	});
 
 	it("keeps the plain Select by default", () => {
-		mount("SelectRef", { options, selected: "nu" });
+		mount("SelectRef", { options, value: "nu" });
 		expect(slot("select-trigger")).not.toBeNull();
 		expect(slot("combobox-trigger")).toBeNull();
 	});
 
 	it("keeps the read contract when searchable", () => {
-		mount("SelectRef", { options, selected: "", searchable: true });
+		mount("SelectRef", { options, value: "", searchable: true });
 		dispatch(OPS.write, "nulog");
 		expect(slot("combobox-trigger")?.textContent).toBe("nulog");
 		dispatch(OPS.read, null, "r2");

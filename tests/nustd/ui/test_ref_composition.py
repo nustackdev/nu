@@ -474,7 +474,7 @@ def test_widget_sweep_is_non_empty():
 def _shipped_ref_classes():
     """Every concrete Ref class the kit defines under nustd.ui.refs.
 
-    The two abstract bases are skipped: they declare an empty wire type on
+    The abstract bases are skipped: they declare an empty wire type on
     purpose and never reach the wire.
     """
     import inspect
@@ -483,12 +483,20 @@ def _shipped_ref_classes():
     from nustd.ui.refs import (
         CollectionRef,
         DictCollectionRef,
+        InputLeaf,
         LeafRef,
         ListCollectionRef,
         ShapeCollectionRef,
     )
 
-    abstract = (CollectionRef, DictCollectionRef, ListCollectionRef, ShapeCollectionRef, LeafRef)
+    abstract = (
+        CollectionRef,
+        DictCollectionRef,
+        ListCollectionRef,
+        ShapeCollectionRef,
+        LeafRef,
+        InputLeaf,
+    )
 
     out = []
     for mod in _ref_modules():

@@ -5,8 +5,10 @@
 // browser is source of truth while you type. Renders the kit's `Code` block,
 // one engine either way, so flipping the flag never changes how the code looks.
 //
-// Commit moments (cmd+enter, blur): the node's `value` prop updates locally,
-// then a notify goes out and the server reads back. A server-initiated write
+// Commit moments (cmd+enter, blur, only when the text changed): the node's
+// `value` prop updates locally, then `{event: "change"}` goes out and the
+// server reads back. cmd+enter also sends `{event: "submit"}` after its
+// commit, and asks an enclosing Form to submit (./control.ts). A server-initiated write
 // replaces the source, and needs a handler for the InputRef reason: nil must
 // land as "" so the view never sees null and a following read answers "". The
 // map form merges {value, language, editable, line_numbers, wrap, show_copy,
@@ -25,6 +27,7 @@ import {
 	useSetValue,
 	useStringProp,
 } from "../../tree";
+import { EVENTS, requestFormSubmit, resetHandler } from "./control";
 
 function CodeView({ path }: NodeProps) {
 	const value = useStringProp(path, "value");
@@ -44,10 +47,15 @@ function CodeView({ path }: NodeProps) {
 			// Local first, so the read the notify provokes answers with the text
 			// that provoked it.
 			setValue(source);
-			send(OPS.notify);
+			send(OPS.notify, { event: EVENTS.change });
 		},
 		[setValue, send],
 	);
+
+	const submit = useCallback(() => {
+		send(OPS.notify, { event: EVENTS.submit });
+		requestFormSubmit(document.activeElement);
+	}, [send]);
 
 	return (
 		<Code
@@ -61,6 +69,7 @@ function CodeView({ path }: NodeProps) {
 			minHeight={minHeight}
 			maxHeight={maxHeight}
 			onCommit={commit}
+			onSubmit={submit}
 		/>
 	);
 }
@@ -68,7 +77,9 @@ function CodeView({ path }: NodeProps) {
 export const CodeRef: NodeEntry = {
 	component: CodeView,
 	fill: true,
+	input: { empty: "", gathered: (props) => Boolean(props.editable) },
 	handlers: {
+		reset: resetHandler,
 		write: (ctx, payload) =>
 			ctx.update((props) => {
 				// Scalar form: a bare string (or nil) replaces just the source.

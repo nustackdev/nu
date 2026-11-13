@@ -61,6 +61,9 @@ def test_button_slot_defaults_carry_empty_icon_and_tooltip():
         "size": "md",
         "href": "",
         "target": "_self",
+        "submit": False,
+        "loading": False,
+        "autofocus": False,
     }
 
 
@@ -85,6 +88,9 @@ def test_button_seeds_its_icon_and_tooltip_on_the_wire():
             "size": "md",
             "href": "",
             "target": "_self",
+            "submit": False,
+            "loading": False,
+            "autofocus": False,
         },
     )
 
@@ -120,17 +126,27 @@ def test_button_existing_payloads_unchanged():
 
 def test_toggle_wire_type_and_slot_defaults():
     assert ToggleRef._wire_type == "ToggleRef"
-    assert ToggleRef.slot().props == {"label": "", "icon": "", "pressed": False}
-    assert ToggleRef.slot(icon="bold", pressed=1).props["pressed"] is True
+    assert ToggleRef.slot().props == {
+        "icon": "",
+        "value": False,
+        "label": "",
+        "disabled": False,
+        "readonly": False,
+        "required": False,
+        "autofocus": False,
+        "size": "md",
+    }
+    assert ToggleRef.slot(icon="bold", value=1).props["value"] is True
 
 
-def test_toggle_set_writes_the_bare_pressed_state():
+def test_toggle_set_writes_the_bare_value():
     handle = _mount(ToggleRef.slot(icon="text-wrap"))
     [frame] = _frames(handle.set(True))
     assert frame.ref == ("page", "sec", "w")
     assert frame.op == "write"
     assert frame.payload is True
-    assert _seeded(frame) == ("ToggleRef", {"label": "", "icon": "text-wrap", "pressed": False})
+    assert _seeded(frame)[1] == {**ToggleRef.slot(icon="text-wrap").props}
+    assert _seeded(frame)[1]["value"] is False
 
 
 def test_toggle_chrome_setters_merge_one_key():
@@ -331,9 +347,10 @@ class _Tab(_RecordingSession):
     def subscribe(self, path):
         return self.subs.setdefault(path, _Notifies())
 
-    def notify(self, path):
+    def notify(self, path, payload=None):
+        payload = {"event": "change"} if payload is None else payload
         for cb in tuple(self.subs[path].callbacks):
-            cb(None)
+            cb(payload)
 
 
 def test_sketch_on_change_reacts_to_an_element():

@@ -1,17 +1,22 @@
-// Field -- labelled form-field wrapper. Display-only chrome around exactly
-// one child. Label, help, error and required are plain props, merged by
-// the default `write` and coerced at read time, so there is no handler here.
+// Field -- labelled form-field wrapper around exactly one control. Label,
+// help, error and required are plain props, merged by the default `write`
+// and coerced at read time, so there is no handler here.
 //
-// The control is the first (and only expected) child in the tree: we take
-// the first segment from `useChildren` and render it ourselves rather than via
-// `NodeChildren`, because the control has to sit inside the
-// aria-describedby / aria-invalid wrapper. Extra children do not draw; a
-// notice names them (the server refuses a second control where it is built).
-// Wires aria-invalid / aria-describedby per a11y.md §5. Layout
-// (`layout.tsx`): the size props, `scroll`, and `gap` (1) between label, control and
-// help.
+// Built on the kit Field (components/ui/field.tsx, a11y.md §5): a real
+// `<label for>` pointing at the control, help that stays when an error shows,
+// an error with `role="alert"`. The ids, the invalid and required state and
+// the label ride `FieldContext` down to the control node, which puts them on
+// the real element (`aria-describedby`, `aria-invalid`, `required`) and
+// skips a label of its own. So an error turns the control red, and the Field
+// label is the control's accessible name.
+//
+// The control is the first (and only expected) child in the tree. Extra
+// children do not draw; a notice names them (the server refuses a second
+// control where it is built). In a Form's values a Field stands for its
+// control (`wraps`). Layout (`layout.tsx`): the size props, `scroll`, and
+// `gap` (1) between label, control and help.
 
-import { useId } from "react";
+import { Field as FieldChrome } from "../../components/ui/field";
 import { Text } from "../../components/ui/text";
 import { cn } from "../../lib/utils";
 import {
@@ -33,52 +38,33 @@ function FieldView({ path }: NodeProps) {
 	const help = useStringProp(path, "help");
 	const error = useStringProp(path, "error");
 	const required = useBoolProp(path, "required");
+	const disabled = useBoolProp(path, "disabled");
 	const children = useChildren(path);
 	const layout = useLayout(path, DEFAULTS);
-	const helpId = useId();
-	const errorId = useId();
-
-	const hasError = error.length > 0;
 	const child = children[0];
-	const showBottom = hasError || help.length > 0;
-	const describedBy = hasError ? errorId : help ? helpId : undefined;
 
 	return (
-		<div className={cn("flex flex-col", gapClass(layout), layout.scroll)} style={layout.size}>
-			{label ? (
-				<Text as="span" size="sm" tone={hasError ? "danger" : "secondary"} weight="medium">
-					{label}
-					{required ? (
-						<span className="text-accent-text ml-0.5" aria-hidden>
-							*
-						</span>
-					) : null}
+		<FieldChrome
+			label={label}
+			help={help}
+			error={error}
+			required={required}
+			disabled={disabled}
+			className={cn("flex flex-col", gapClass(layout), layout.scroll)}
+			style={layout.size}
+		>
+			{child ? (
+				<FlowProvider flow="block">
+					<NodeView path={[...path, child]} />
+				</FlowProvider>
+			) : (
+				<Text size="xs" tone="danger" mono>
+					no child under {path.join(" / ")}
 				</Text>
-			) : null}
-			<div aria-describedby={describedBy} aria-invalid={hasError || undefined}>
-				{child ? (
-					<FlowProvider flow="block">
-						<NodeView path={[...path, child]} />
-					</FlowProvider>
-				) : (
-					<Text size="xs" tone="danger" mono>
-						no child under {path.join(" / ")}
-					</Text>
-				)}
-			</div>
+			)}
 			<Unpaired path={path} segments={children.slice(1)} why="a Field holds one control" />
-			{showBottom ? (
-				<Text
-					id={hasError ? errorId : helpId}
-					as="span"
-					size="xs"
-					tone={hasError ? "danger" : "secondary"}
-				>
-					{hasError ? error : help}
-				</Text>
-			) : null}
-		</div>
+		</FieldChrome>
 	);
 }
 
-export const Field: NodeEntry = { component: FieldView, fill: true };
+export const Field: NodeEntry = { component: FieldView, fill: true, wraps: true };
