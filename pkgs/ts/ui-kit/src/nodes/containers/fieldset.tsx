@@ -3,10 +3,13 @@
 // in the tree, a stack (`layout.tsx`: `padding` 4 on the fieldset, `gap` 4,
 // `justify`, `align`, `divided`, the size props, the per child maps).
 //
-// The `disabled` flag is visual-only -- we deliberately do not set the HTML
-// `disabled` attribute on `<fieldset>` because that would cascade to child
-// inputs. Uses semantic tokens (border-default, text-muted) instead of raw
-// opacity for the disabled treatment.
+// `disabled` disables every control inside (../input/control.ts
+// `DisabledScope`, which each input and button reads), the way a native
+// disabled fieldset does but for the kit's composite controls too. The HTML
+// attribute itself stays off: the scope already covers every control, and a
+// native one would also disable plain buttons a program put there to
+// re-enable the fieldset. Uses semantic tokens (border-default, text-muted)
+// instead of raw opacity for the disabled treatment.
 //
 // `min-w-0` on the fieldset: a browser gives `<fieldset>` a min inline size
 // of its content, so without it a wide child (a table, a long line) widens
@@ -16,6 +19,7 @@
 
 import { cn } from "../../lib/utils";
 import { type NodeEntry, type NodeProps, useBoolProp, useStringProp } from "../../tree";
+import { DisabledScope } from "../input/control";
 import { childHandlers, type LayoutDefaults, padClass, Stack, useLayout } from "./layout";
 
 const DEFAULTS: LayoutDefaults = { gap: 4, padding: 4, justify: "start", align: "stretch" };
@@ -42,7 +46,9 @@ function FieldsetView({ path }: NodeProps) {
 			{legend ? (
 				<legend className="px-1 text-sm font-semibold text-text-secondary">{legend}</legend>
 			) : null}
-			<Stack path={path} layout={{ ...layout, padding: undefined, size: undefined }} />
+			<DisabledScope disabled={disabled}>
+				<Stack path={path} layout={{ ...layout, padding: undefined, size: undefined }} />
+			</DisabledScope>
 		</fieldset>
 	);
 }

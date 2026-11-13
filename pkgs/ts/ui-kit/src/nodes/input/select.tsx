@@ -1,8 +1,8 @@
 // SelectRef -- single-select dropdown. Browser is source of truth.
 //
-// The picked option's value is the node's `value` ("" for none). A pick lands
+// The picked option's value is the node's `value` (null for none). A pick lands
 // it and sends `{event: "change"}` at once (./control.ts). A bare write
-// selects (nil clears); an object payload merges into props the way the store
+// selects (nil or "" clears); an object payload merges into props the way the store
 // merges everything else, which is how `options` gets replaced. The store
 // answers a read from `value`, and `reset` puts the declared value back.
 //
@@ -42,7 +42,14 @@ import {
 	useListProp,
 	useStringProp,
 } from "../../tree";
-import { asText, type Control, resetHandler, useCommit, useControl, valueWrite } from "./control";
+import {
+	asTextOrNull,
+	type Control,
+	resetHandler,
+	useCommit,
+	useControl,
+	valueWrite,
+} from "./control";
 
 export type Option = { value: string; label: string };
 
@@ -153,9 +160,9 @@ function SearchPicker({ control: c, selected, options, onPick }: PickerProps) {
 export const SelectRef: NodeEntry = {
 	component: SelectView,
 	fill: true,
-	input: { empty: "" },
+	input: { empty: null },
 	handlers: {
-		write: valueWrite(asText),
+		write: valueWrite(asTextOrNull),
 		reset: resetHandler,
 	},
 };

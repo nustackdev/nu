@@ -5,6 +5,7 @@ import { AutocompleteRef } from "./autocomplete";
 import { ButtonRef } from "./button";
 import { CheckboxRef } from "./checkbox";
 import { CheckboxGroupRef } from "./checkbox-group";
+import { withInputChrome } from "./chrome";
 import { CodeRef } from "./code";
 import { ColorPickerRef } from "./color-picker";
 import { DatePickerRef } from "./date-picker";
@@ -27,7 +28,7 @@ import { TextAreaRef } from "./text-area";
 import { TimePickerRef } from "./time-picker";
 import { ToggleRef } from "./toggle";
 
-export const inputEntries: Record<string, NodeEntry> = {
+const entries: Record<string, NodeEntry> = {
 	InputRef,
 	InlineEditRef,
 	TextAreaRef,
@@ -54,3 +55,8 @@ export const inputEntries: Record<string, NodeEntry> = {
 	SketchRef,
 	ColorPickerRef,
 };
+
+/** Every input type, each with the focus op and bare-control errors (./chrome.tsx). */
+export const inputEntries: Record<string, NodeEntry> = Object.fromEntries(
+	Object.entries(entries).map(([name, entry]) => [name, withInputChrome(entry)]),
+);

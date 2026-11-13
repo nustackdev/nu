@@ -10,7 +10,7 @@
 // handler: a null write must land as "" so the input does not go
 // uncontrolled. `reset` puts the declared value back.
 //
-// Chrome (label, placeholder, type, max_length, mono, and the common
+// Chrome (label, placeholder, type, max_length, pattern, mono, and the common
 // disabled / readonly / required / autofocus / size) is just more props,
 // declared at the slot and read at render.
 //
@@ -32,6 +32,7 @@ function InputView({ path }: NodeProps) {
 	const value = useStringProp(path, "value");
 	const inputType = useStringProp(path, "type", "text");
 	const maxLength = useProp<number | null>(path, "max_length", null);
+	const pattern = useStringProp(path, "pattern");
 	const mono = useBoolProp(path, "mono");
 	const c = useControl(path);
 	const { edit, commit, submit } = useCommit(path);
@@ -40,6 +41,7 @@ function InputView({ path }: NodeProps) {
 		size: c.size,
 		placeholder: c.placeholder,
 		maxLength: maxLength ?? undefined,
+		pattern: pattern || undefined,
 		disabled: c.disabled,
 		readOnly: c.readOnly,
 		required: c.required,

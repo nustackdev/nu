@@ -46,7 +46,7 @@ afterEach(async () => {
 const PATH = ["n"];
 
 function mount(value: string, editable = true): MarkdownHandle {
-	tree.getState().write([["n", "MarkdownRef", { value, editable }]]);
+	tree.getState().write([["n", "MarkdownRef", { value, readonly: !editable }]]);
 	act(() => root.render(<NodeView path={PATH} />));
 	const doc = markdownAt(PATH)?.handle;
 	if (!doc) throw new Error("no editable markdown editor registered");
@@ -165,12 +165,12 @@ describe("MarkdownRef saves", () => {
 
 describe("MarkdownRef registration", () => {
 	it("hands its handle only while editable: a read-only editor is there, and takes no commands", () => {
-		tree.getState().write([["n", "MarkdownRef", { value: "a\n", editable: false }]]);
+		tree.getState().write([["n", "MarkdownRef", { value: "a\n", readonly: true }]]);
 		act(() => root.render(<NodeView path={PATH} />));
 		expect(markdownAt(PATH)).toEqual({ handle: null });
-		dispatch(OPS.write, { editable: true });
+		dispatch(OPS.write, { readonly: false });
 		expect(markdownAt(PATH)?.handle).not.toBeNull();
-		dispatch(OPS.write, { editable: false });
+		dispatch(OPS.write, { readonly: true });
 		expect(markdownAt(PATH)).toEqual({ handle: null });
 	});
 
@@ -179,12 +179,12 @@ describe("MarkdownRef registration", () => {
 		const stop = subscribeMarkdown(PATH, (_path, e) =>
 			seen.push(e === null ? "left" : e.handle ? "editable" : "read-only"),
 		);
-		// `body.set(...)`, then `body.set_editable(True)`: two frames, two renders.
+		// `body.set(...)`, then `body.set_readonly(False)`: two frames, two renders.
 		tree.getState().write([["n", "MarkdownRef", { value: "" }]]);
 		act(() => root.render(<NodeView path={PATH} />));
 		expect(markdownAt(PATH)).toEqual({ handle: null });
 		expect(seen).toEqual(["read-only"]);
-		dispatch(OPS.write, { editable: true });
+		dispatch(OPS.write, { readonly: false });
 		expect(markdownAt(PATH)?.handle).not.toBeNull();
 		await act(async () => root.unmount());
 		expect(markdownAt(PATH)).toBeNull();
@@ -202,7 +202,7 @@ describe("MarkdownRef registration", () => {
 		tree.getState().write([["n", "MarkdownRef", { value: "" }]]);
 		act(() => root.render(<NodeView path={PATH} />));
 		expect(seen).toEqual([]);
-		dispatch(OPS.write, { editable: true });
+		dispatch(OPS.write, { readonly: false });
 		expect(seen).toHaveLength(1);
 		const doc = seen[0];
 		if (!doc) throw new Error("no handle");

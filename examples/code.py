@@ -44,7 +44,7 @@ class Controls(nustd.ui.Row):
 
 class Editor(nustd.ui.Card):
     controls = Controls.slot()
-    source = nustd.ui.CodeRef.slot(value=SEED, language="python", editable=True, min_height=260)
+    source = nustd.ui.CodeRef.slot(value=SEED, language="python", readonly=False, min_height=260)
 
 
 class Mirror(nustd.ui.Card):
@@ -86,7 +86,7 @@ on_language = nu.ReactEvery(
     source.set_language(nu.Str(language)) | mirror.text.set_language(nu.Str(language)),
 )
 
-on_mode = nu.ReactEvery(editable.on_change(), source.set_editable(nu.Bool(editable)))
+on_mode = nu.ReactEvery(editable.on_change(), source.set_readonly(nu.Bool(editable).not_()))
 
 ui = mirror.chars.set_value(str(len(SEED))) >> (on_edit | on_language | on_mode)
 

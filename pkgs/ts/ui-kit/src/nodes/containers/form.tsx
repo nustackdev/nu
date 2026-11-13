@@ -6,16 +6,25 @@
 // under the form, nested the way the tree is and keyed by segment, a Field
 // standing for its control (./../input/control.ts `gather`). `button` is the
 // segment of the submit button that fired, or null for Enter with none. The
-// browser's own reload is always blocked. Native constraint validation runs
-// first, so a `required` input left empty stops the submit in the browser.
+// browser's own reload is always blocked.
+//
+// Checks run first (`validateUnder`): required, min, max, max_length,
+// pattern and the email format. The form is `noValidate`, so the browser's
+// bubble never shows; each failing control's Field shows the message, the
+// submit is dropped (nothing goes on the wire) and the first failing control
+// takes focus. `set_errors` lands the program's own messages the same way,
+// keyed like the values, and focuses the first one named; `set_errors({})`
+// clears them. A `disabled` form disables every control in it and submits
+// nothing.
 //
 // After the notify, `clear_on_submit` puts every input back to its seed, and
 // `busy_on_submit` marks the form busy: further submits are dropped and the
 // submit buttons spin until the program clears it (`set_busy(False)`).
 //
 // Ops: `read` answers with the same snapshot (`form.values()`), `reset` puts
-// every input back to its seed. Chrome (`title`, `busy`) is plain props,
-// merged by the default `write`. Layout (`layout.tsx`): a stack's layers,
+// every input back to its seed, `set_errors` lands errors. Chrome (`title`,
+// `busy`, `disabled`) is plain props, merged by the default `write`. Layout
+// (`layout.tsx`): a stack's layers,
 // `padding` (0), `gap` (4), `justify`, `align` (stretch), `divided`, the size
 // props and the per child maps.
 
@@ -32,7 +41,16 @@ import {
 	useSend,
 	useStringProp,
 } from "../../tree";
-import { EVENTS, FormContext, gather, resetUnder } from "../input/control";
+import {
+	applyErrors,
+	DisabledScope,
+	EVENTS,
+	FormContext,
+	gather,
+	requestFocus,
+	resetUnder,
+	validateUnder,
+} from "../input/control";
 import {
 	childHandlers,
 	flowClass,
@@ -47,34 +65,44 @@ const DEFAULTS: LayoutDefaults = { gap: 4, padding: 0, justify: "start", align: 
 function FormView({ path }: NodeProps) {
 	const title = useStringProp(path, "title");
 	const busy = useBoolProp(path, "busy");
+	const disabled = useBoolProp(path, "disabled");
 	const layout = useLayout(path, DEFAULTS);
 	const send = useSend(path);
 	const state = useMemo(() => ({ busy }), [busy]);
 	return (
 		<FormContext.Provider value={state}>
-			<form
-				data-nu-form=""
-				aria-busy={busy || undefined}
-				onSubmit={(e) => {
-					e.preventDefault();
-					const props = nodeAt(path)?.props ?? {};
-					if (props.busy) return;
-					const submitter = (e.nativeEvent as SubmitEvent).submitter;
-					const button = submitter?.getAttribute("name") || null;
-					send(OPS.notify, { event: EVENTS.submit, values: gather(path), button });
-					if (props.clear_on_submit) resetUnder(path);
-					if (props.busy_on_submit) tree.getState().setProps(path, { busy: true });
-				}}
-				className={cn("flex flex-col", flowClass(layout, "column"))}
-				style={flowStyle(layout)}
-			>
-				{title ? (
-					<Heading as="h3" size="xl" className="mb-2">
-						{title}
-					</Heading>
-				) : null}
-				<StackChildren path={path} layout={layout} />
-			</form>
+			<DisabledScope disabled={disabled}>
+				<form
+					data-nu-form=""
+					noValidate
+					aria-busy={busy || undefined}
+					aria-disabled={disabled || undefined}
+					onSubmit={(e) => {
+						e.preventDefault();
+						const props = nodeAt(path)?.props ?? {};
+						if (props.busy || props.disabled) return;
+						const failing = validateUnder(path);
+						if (failing[0]) {
+							requestFocus(failing[0]);
+							return;
+						}
+						const submitter = (e.nativeEvent as SubmitEvent).submitter;
+						const button = submitter?.getAttribute("name") || null;
+						send(OPS.notify, { event: EVENTS.submit, values: gather(path), button });
+						if (props.clear_on_submit) resetUnder(path);
+						if (props.busy_on_submit) tree.getState().setProps(path, { busy: true });
+					}}
+					className={cn("flex flex-col", flowClass(layout, "column"))}
+					style={flowStyle(layout)}
+				>
+					{title ? (
+						<Heading as="h3" size="xl" className="mb-2">
+							{title}
+						</Heading>
+					) : null}
+					<StackChildren path={path} layout={layout} />
+				</form>
+			</DisabledScope>
 		</FormContext.Provider>
 	);
 }
@@ -86,5 +114,9 @@ export const Form: NodeEntry = {
 		...childHandlers,
 		read: (ctx) => ctx.send(OPS.read, gather(ctx.path), ctx.frame.id),
 		reset: (ctx) => resetUnder(ctx.path),
+		set_errors: (ctx, payload) => {
+			const first = applyErrors(ctx.path, payload);
+			if (first) requestFocus(first);
+		},
 	},
 };

@@ -52,8 +52,15 @@ function dispatch(path: string[], op: string, payload: unknown = null, id?: stri
 	act(() => tree.getState().dispatch({ op, ref: path, payload, id }));
 }
 
+// An input's submit also carries the value it sent (forms.test.tsx checks it);
+// these tests are about which events go out, so it is left off here.
+const bare = (payload: unknown) => {
+	if (!payload || typeof payload !== "object" || !("value" in payload)) return payload;
+	const { value: _sent, ...rest } = payload as Record<string, unknown>;
+	return rest;
+};
 const notifies = () =>
-	sent.filter((f) => f.op === OPS.notify).map((f) => ({ ref: f.ref, payload: f.payload }));
+	sent.filter((f) => f.op === OPS.notify).map((f) => ({ ref: f.ref, payload: bare(f.payload) }));
 const propsAt = (path: string[]) => tree.getState().getIn(path)?.props ?? {};
 
 function key(el: Element, k: string, init: KeyboardEventInit = {}) {

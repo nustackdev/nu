@@ -298,7 +298,7 @@ def test_markdown_round_trips_both_ways():
     from nustd.ui.refs import MarkdownRef
 
     class Doc(Row):
-        body = MarkdownRef.slot(placeholder="Write something", editable=True)
+        body = MarkdownRef.slot(placeholder="Write something", readonly=False)
 
     class DocPage(Column):
         doc = Doc.slot()
@@ -338,16 +338,16 @@ def test_markdown_partial_write_carries_a_dict():
 
     sess = _RecordingSession()
     ctx = Context().bind(Session, sess)
-    asyncio.run(nu.arun(DocApp2.doc.doc.body.set_editable(True), ctx))
-    assert sess.frames[0].payload == {"editable": True}
+    asyncio.run(nu.arun(DocApp2.doc.doc.body.set_readonly(False), ctx))
+    assert sess.frames[0].payload == {"readonly": False}
 
 
 def test_markdown_and_code_default_to_read_only():
     """Display is the common case, so both two-faced Refs start read-only."""
     from nustd.ui.refs import CodeRef, MarkdownRef
 
-    assert MarkdownRef.slot().props["editable"] is False
-    assert CodeRef.slot().props["editable"] is False
+    assert MarkdownRef.slot().props["readonly"] is True
+    assert CodeRef.slot().props["readonly"] is True
 
 
 def test_code_round_trips_both_ways():
@@ -356,7 +356,7 @@ def test_code_round_trips_both_ways():
     from nustd.ui.refs import CodeRef
 
     class Src(Row):
-        code = CodeRef.slot(language="python", editable=True)
+        code = CodeRef.slot(language="python", readonly=False)
 
     class SrcPage(Column):
         src = Src.slot()
@@ -374,11 +374,11 @@ def test_code_round_trips_both_ways():
 
     asyncio.run(nu.arun(ref.set("x = 1\n"), ctx))
     asyncio.run(nu.arun(ref.set_language("sql"), ctx))
-    asyncio.run(nu.arun(ref.set_editable(False), ctx))
+    asyncio.run(nu.arun(ref.set_readonly(True), ctx))
     assert [f.payload for f in sess.frames] == [
         "x = 1\n",
         {"language": "sql"},
-        {"editable": False},
+        {"readonly": True},
     ]
 
     result = asyncio.run(nu.arun(ref, ctx))

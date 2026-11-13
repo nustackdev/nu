@@ -53,8 +53,15 @@ function dispatch(path: string[], op: string, payload: unknown = null, id?: stri
 	act(() => tree.getState().dispatch({ op, ref: path, payload, id }));
 }
 
+// An input's submit also carries the value it sent (forms.test.tsx checks it);
+// these tests are about which events go out, so it is left off here.
+const bare = (payload: unknown) => {
+	if (!payload || typeof payload !== "object" || !("value" in payload)) return payload;
+	const { value: _sent, ...rest } = payload as Record<string, unknown>;
+	return rest;
+};
 const notifies = () =>
-	sent.filter((f) => f.op === OPS.notify).map((f) => ({ ref: f.ref, payload: f.payload }));
+	sent.filter((f) => f.op === OPS.notify).map((f) => ({ ref: f.ref, payload: bare(f.payload) }));
 const propsAt = (path: string[]) => tree.getState().getIn(path)?.props ?? {};
 
 function type(el: HTMLInputElement, text: string) {
@@ -106,7 +113,7 @@ describe("TimePickerRef", () => {
 		put(["n", "TimePickerRef", { value: "18:45" }]);
 		draw(["n"]);
 		click(host.querySelector('button[aria-label="Clear time"]'));
-		expect(propsAt(["n"]).value).toBe("");
+		expect(propsAt(["n"]).value).toBeNull();
 		expect(notifies()).toEqual([CHANGE]);
 		expect(host.querySelector('button[aria-label="Clear time"]')).toBeNull();
 	});
@@ -135,7 +142,7 @@ describe("TimePickerRef", () => {
 		expect(propsAt(["n"]).value).toBe("12:15");
 		expect(propsAt(["n"]).label).toBe("At");
 		dispatch(["n"], OPS.write, null);
-		expect(propsAt(["n"]).value).toBe("");
+		expect(propsAt(["n"]).value).toBeNull();
 		dispatch(["n"], "reset");
 		expect(propsAt(["n"]).value).toBe("07:00");
 		dispatch(["n"], OPS.read, null, "r");
@@ -174,7 +181,7 @@ describe("DateTimePickerRef", () => {
 		put(["n", "DateTimePickerRef", { value: "2016-11-11T19:30" }]);
 		draw(["n"]);
 		click(host.querySelector('button[aria-label="Clear date and time"]'));
-		expect(propsAt(["n"]).value).toBe("");
+		expect(propsAt(["n"]).value).toBeNull();
 		expect(timeField().value).toBe("");
 		expect(notifies()).toEqual([CHANGE]);
 	});
@@ -188,7 +195,7 @@ describe("DateTimePickerRef", () => {
 		dispatch(["n"], OPS.write, "2021-05-06T07:08");
 		expect(timeField().value).toBe("07:08");
 		dispatch(["n"], OPS.write, null);
-		expect(propsAt(["n"]).value).toBe("");
+		expect(propsAt(["n"]).value).toBeNull();
 		dispatch(["n"], "reset");
 		expect(propsAt(["n"]).value).toBe("2020-01-02T03:04");
 	});

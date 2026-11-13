@@ -58,6 +58,7 @@ __all__ = [
     "Changed",
     "Clear",
     "Display",
+    "Focus",
     "Hide",
     "Init",
     "Remove",
@@ -304,6 +305,16 @@ class Reset(_ChainCommand):
     so a reset needs nothing from the server but the address. It sends no
     change notify: the program asked for it, so the program knows. A node
     that is no input and holds none takes it as a no-op.
+    """
+
+
+class Focus(_ChainCommand):
+    """Move the keyboard focus to an input.
+
+    The browser focuses the input's control (a picker's trigger, the first
+    option of a group) once per ``focus`` frame, and a frame that lands
+    before the node is drawn focuses it as it appears. A Form focuses its
+    first failing input by itself after a blocked submit or ``set_errors``.
     """
 
 

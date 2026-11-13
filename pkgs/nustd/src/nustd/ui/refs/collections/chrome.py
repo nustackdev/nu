@@ -354,6 +354,9 @@ class FieldRef(ShapeCollectionRef):
 class FieldsetRef(ChildLayout, DictCollectionRef):
     """Grouped fields with a legend. Display-only, server-owned.
 
+    ``disabled`` disables every input and button inside, and a Form's checks
+    skip them.
+
     The body speaks the layers of a Column (``layout``): ``padding`` (4),
     ``gap`` (4), ``justify``, ``align``, ``divided``, and the per child maps.
     """
@@ -394,17 +397,26 @@ class FormRef(ChildLayout, DictCollectionRef):
         {"details": {"title": "Dune", "year": 2021}, "watched": True}
 
     ``button`` is the slot name of the submit button that fired, or None.
-    The browser checks ``required``, ``min``, ``max`` and the like before it
-    sends anything. Read the payload in the reaction rather than reading each
-    input again::
+    Read the payload in the reaction rather than reading each input again::
 
         nu.ReactEvery(App.add.on_submit(), lambda sub: save(sub["values"]))
+
+    The browser checks every input before it sends anything: ``required``,
+    ``min``, ``max``, ``max_length``, ``pattern`` and the ``email`` format.
+    A failing input's Field (or the input, when it has none) shows why, the
+    first one takes focus, and no submit goes out. The program's own verdict
+    goes the same way: ``set_errors({"title": "Already in the list"})``,
+    keyed like ``values`` (nested by slot name, a Field standing for its
+    control), puts each message on its input's Field, clears every input it
+    does not name, and focuses the first one named; ``set_errors({})``
+    clears them all.
 
     ``values()`` is the same snapshot as a read, any time. ``reset()`` puts
     every input back to the value its slot declared, and ``clear_on_submit``
     does that after each submit. ``busy_on_submit`` marks the form busy as it
     sends: further submits are dropped and the submit buttons spin until
-    ``set_busy(False)``.
+    ``set_busy(False)``. ``disabled`` disables every input and button in the
+    form and drops its submits.
 
     The body speaks the layers of a Column (``layout``): ``padding`` (0),
     ``gap`` (4), ``justify``, ``align`` (stretch), ``divided``, and the per
@@ -424,6 +436,7 @@ class FormRef(ChildLayout, DictCollectionRef):
         title: str = "",
         clear_on_submit: bool = False,
         busy_on_submit: bool = False,
+        disabled: bool = False,
         **layout: Unpack[StackLayout],
     ) -> Self:
         return super().slot(
@@ -431,6 +444,7 @@ class FormRef(ChildLayout, DictCollectionRef):
             title=title,
             clear_on_submit=bool(clear_on_submit),
             busy_on_submit=bool(busy_on_submit),
+            disabled=bool(disabled),
             **cls._laid_out(layout),
         )
 
@@ -458,6 +472,29 @@ class FormRef(ChildLayout, DictCollectionRef):
 
     def set_title(self, text: StrArg) -> Nu:
         return Write(self, Dict.of(title=text))
+
+    def set_disabled(self, flag: BoolArg) -> Nu:
+        """Disable every input and button in the form, and drop its submits."""
+        return Write(self, Dict.of(disabled=flag))
+
+    def set_errors(self, errors: Arg[Any]) -> Nu:
+        """Show the program's errors on the form's inputs, keyed like ``values``.
+
+        Each message lands on its input's Field (or on the input), every input
+        not named is cleared, and the first one named takes focus.
+        ``set_errors({})`` clears them all.
+        """
+        return _SetErrors(self, errors)
+
+
+class _SetErrors(Send):
+    """A Form's errors by slot name, ``set_errors`` on the wire."""
+
+    def _frame_op(self) -> object:
+        return "set_errors"
+
+    def _frame_payload(self, values: list[object]) -> object:
+        return values[0]
 
 
 class ModalRef(ChildLayout, DictCollectionRef):

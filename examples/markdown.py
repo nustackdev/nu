@@ -30,7 +30,7 @@ print("a fence: type ``` and a space to start one")
 
 class Editor(nustd.ui.Card):
     body = nustd.ui.MarkdownRef.slot(
-        value=SEED, placeholder="Write, or type # for a heading", editable=True
+        value=SEED, placeholder="Write, or type # for a heading", readonly=False
     )
 
 

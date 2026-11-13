@@ -47,13 +47,15 @@ import {
 	useSend,
 	useStringProp,
 } from "../../tree";
-import { EVENTS, useForm } from "./control";
+import { EVENTS, useDisabledScope, useForm } from "./control";
 
 function ButtonView({ path }: NodeProps) {
 	const label = useStringProp(path, "label");
 	const variant = kitVariant(useStringProp(path, "variant", "primary"));
 	const size = useEnumProp(path, "size", BUTTON_SIZES, "md");
-	const disabled = useBoolProp(path, "disabled");
+	// A disabled Fieldset or Form disables its buttons too.
+	const scoped = useDisabledScope();
+	const disabled = useBoolProp(path, "disabled") || scoped;
 	const submit = useBoolProp(path, "submit");
 	// A busy Form spins its submit buttons until the program clears it.
 	const form = useForm();

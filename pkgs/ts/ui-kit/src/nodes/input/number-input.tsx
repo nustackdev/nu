@@ -6,9 +6,10 @@
 // commits, then submits and asks an enclosing Form to submit. See
 // ./control.ts for the contract.
 //
-// A server-initiated write needs a handler: the scalar form is a bare number
-// and nil lands on the floor (`min`, or 0) rather than as null, or the input
-// goes uncontrolled and the next read answers null. The map form merges
+// Empty is null, not 0: a cleared field holds null, a read answers null and
+// a form's values carry it, so "no number" never reads as a zero. A
+// server-initiated write needs a handler: the scalar form is a bare number,
+// nil or anything that is not a finite number lands as null. The map form merges
 // {value, min, max, step, label, ...} the way the store merges everything
 // else. `reset` puts the declared value back. Composes the kit NumberInput
 // primitive; the primitive owns steppers and the keyboard model.
@@ -18,19 +19,18 @@ import { NumberInput } from "../../components/ui/number-input";
 import { type NodeEntry, type NodeProps, useNumberProp, useProp } from "../../tree";
 import { isEnter, resetHandler, useCommit, useControl, valueWrite } from "./control";
 
-function toFiniteNumber(n: unknown, fallback: number): number {
+function toNumberOrNull(n: unknown): number | null {
+	if (n == null || n === "") return null;
 	const v = Number(n);
-	return Number.isFinite(v) ? v : fallback;
+	return Number.isFinite(v) ? v : null;
 }
-
-const floorOf = (props: Record<string, unknown>) => toFiniteNumber(props.min, 0);
 
 function NumberInputView({ path }: NodeProps) {
 	const rawMin = useProp<unknown>(path, "min", null);
 	const rawMax = useProp<unknown>(path, "max", null);
 	const min = typeof rawMin === "number" ? rawMin : null;
 	const max = typeof rawMax === "number" ? rawMax : null;
-	const value = useNumberProp(path, "value", min ?? 0);
+	const value = toNumberOrNull(useProp<unknown>(path, "value", null));
 	const step = useNumberProp(path, "step", 1);
 	const c = useControl(path);
 	const { edit, commit, pick, submit } = useCommit(path);
@@ -55,7 +55,7 @@ function NumberInputView({ path }: NodeProps) {
 				required={c.required}
 				autoFocus={c.autoFocus}
 				invalid={c.invalid}
-				onValueChange={(next) => edit(next ?? 0)}
+				onValueChange={(next) => edit(next)}
 				onValueCommit={pick}
 				onBlur={commit}
 				onKeyDown={(e) => {
@@ -71,9 +71,9 @@ function NumberInputView({ path }: NodeProps) {
 export const NumberInputRef: NodeEntry = {
 	component: NumberInputView,
 	fill: true,
-	input: { empty: floorOf },
+	input: { empty: null },
 	handlers: {
-		write: valueWrite((raw, props) => toFiniteNumber(raw, floorOf(props))),
+		write: valueWrite(toNumberOrNull),
 		reset: resetHandler,
 	},
 };

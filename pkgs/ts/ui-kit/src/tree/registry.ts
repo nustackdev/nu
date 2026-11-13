@@ -22,6 +22,11 @@ export type InputSpec = {
 	read?: (props: Record<string, unknown>) => unknown;
 	/** Whether a form gathers this node at all (a read-only document does not). */
 	gathered?: (props: Record<string, unknown>) => boolean;
+	/**
+	 * The node draws its own `error` (and a form's failed `check`) under the
+	 * control, so nothing frames it with Field chrome when it has no Field.
+	 */
+	ownsError?: boolean;
 };
 
 export type NodeEntry = Behaviour & {

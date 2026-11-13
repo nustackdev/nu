@@ -23,7 +23,7 @@ from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Write
 
-from .input import InputLeaf, _common, _Placeholder, _Submits
+from .input import InputLeaf, _common, _Nullable, _Placeholder, _Submits
 
 
 if TYPE_CHECKING:
@@ -58,8 +58,8 @@ def _date(value: str | dt.date | None) -> str:
     return value
 
 
-class TimePickerRef(_Submits, InputLeaf):
-    """Time of day input whose "HH:MM" value lives in the browser ("" for none).
+class TimePickerRef(_Nullable, _Submits, InputLeaf):
+    """Time of day input whose "HH:MM" value lives in the browser (NULL for none).
 
     The field is typed into, segment by segment: blur commits (a change, when
     the time moved), Enter commits and submits. The clear button is a change
@@ -74,7 +74,7 @@ class TimePickerRef(_Submits, InputLeaf):
         cls,
         *,
         label: str = "",
-        value: str | dt.time = "",
+        value: str | dt.time | None = None,
         min: str | dt.time = "",
         max: str | dt.time = "",
         step: int | None = None,
@@ -87,7 +87,7 @@ class TimePickerRef(_Submits, InputLeaf):
     ) -> Self:
         seconds = step is not None and step < 60
         return super().slot(
-            value=_time(value, seconds=seconds),
+            value=_time(value, seconds=seconds) if value else None,
             min=_time(min, seconds=seconds),
             max=_time(max, seconds=seconds),
             step=step,
@@ -106,8 +106,8 @@ class TimePickerRef(_Submits, InputLeaf):
         return Write(self, value)
 
 
-class DateTimePickerRef(_Submits, _Placeholder, InputLeaf):
-    """Date and time input whose "YYYY-MM-DDTHH:MM" value lives in the browser ("" for none).
+class DateTimePickerRef(_Nullable, _Submits, _Placeholder, InputLeaf):
+    """Date and time input whose "YYYY-MM-DDTHH:MM" value lives in the browser (NULL for none).
 
     A calendar pick is a change at once and keeps the time already there
     (midnight when there is none). The time field beside it is typed into:
@@ -124,7 +124,7 @@ class DateTimePickerRef(_Submits, _Placeholder, InputLeaf):
         *,
         label: str = "",
         placeholder: str = "",
-        value: str | dt.datetime | dt.date = "",
+        value: str | dt.datetime | dt.date | None = None,
         min: str | dt.datetime | dt.date = "",
         max: str | dt.datetime | dt.date = "",
         clearable: bool = True,
@@ -136,7 +136,7 @@ class DateTimePickerRef(_Submits, _Placeholder, InputLeaf):
     ) -> Self:
         return super().slot(
             placeholder=placeholder,
-            value=_date_time(value),
+            value=_date_time(value) if value else None,
             min=_date_time(min),
             max=_date_time(max),
             clearable=bool(clearable),

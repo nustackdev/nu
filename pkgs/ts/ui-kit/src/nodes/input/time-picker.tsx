@@ -1,12 +1,12 @@
 // TimePickerRef -- time of day input. Browser is source of truth.
 //
 // The value is "HH:MM" on the node's `value` ("HH:MM:SS" when `step` is under
-// a minute), or "" for none, both ways on the wire. The field is text-like:
+// a minute), or null for none, both ways on the wire. The field is text-like:
 // typing is a local edit, blur commits (a change, when it moved), Enter
 // commits, then submits and asks an enclosing Form to submit. The clear
-// button lands "" and sends its change at once. `min`, `max` and `step`
-// (seconds) are the native constraints. A write replaces the value (nil
-// lands as ""), a map write merges chrome, and `reset` puts the declared
+// button lands null and sends its change at once. `min`, `max` and `step`
+// (seconds) are the native constraints. A write replaces the value (nil and
+// "" land as null), a map write merges chrome, and `reset` puts the declared
 // value back. See ./control.ts for the contract.
 //
 // Composes the kit TimePicker (a native time field in kit Input chrome).
@@ -14,7 +14,7 @@
 import { Label } from "../../components/ui/field";
 import { TimePicker } from "../../components/ui/time-picker";
 import { type NodeEntry, type NodeProps, useBoolProp, useProp, useStringProp } from "../../tree";
-import { asText, isEnter, resetHandler, useCommit, useControl, valueWrite } from "./control";
+import { asTextOrNull, isEnter, resetHandler, useCommit, useControl, valueWrite } from "./control";
 
 function TimePickerView({ path }: NodeProps) {
 	const value = useStringProp(path, "value");
@@ -44,8 +44,8 @@ function TimePickerView({ path }: NodeProps) {
 				step={typeof step === "number" && step > 0 ? step : undefined}
 				clearable={clearable}
 				value={value}
-				onValueChange={edit}
-				onValueCommit={pick}
+				onValueChange={(next) => edit(next || null)}
+				onValueCommit={(next) => pick(next || null)}
 				onBlur={commit}
 				onKeyDown={(e) => {
 					if (!isEnter(e)) return;
@@ -60,9 +60,9 @@ function TimePickerView({ path }: NodeProps) {
 export const TimePickerRef: NodeEntry = {
 	component: TimePickerView,
 	fill: true,
-	input: { empty: "" },
+	input: { empty: null },
 	handlers: {
-		write: valueWrite(asText),
+		write: valueWrite(asTextOrNull),
 		reset: resetHandler,
 	},
 };

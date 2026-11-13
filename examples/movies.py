@@ -25,7 +25,7 @@ _GENRES = [
     {"value": "anim", "label": "Animation"},
 ]
 
-_GENRES_WITH_ANY = [{"value": "", "label": "Any genre"}, *_GENRES]
+_GENRES_WITH_ANY = [{"value": "any", "label": "Any genre"}, *_GENRES]
 
 
 # ---- UI ---------------------------------------------------------------------
@@ -67,12 +67,12 @@ class SwitchField(nustd.ui.Field):
 
 class DetailsFieldset(nustd.ui.Fieldset):
     title = TitleField.slot(label="Title", help="Movie title", required=True)
-    year = YearField.slot(label="Year")
+    year = YearField.slot(label="Year", required=True)
     genre = GenreField.slot(label="Genre")
 
 
 class ScoreFieldset(nustd.ui.Fieldset):
-    rating = RatingField.slot(label="Rating", help="How much you liked it")
+    rating = RatingField.slot(label="Rating", help="How much you liked it", required=True)
     watched = SwitchField.slot(label="Watched?", help="Off means still on the pile")
     notes = TextAreaField.slot(label="Notes")
 
@@ -89,7 +89,7 @@ class MinRatingField(nustd.ui.Field):
 
 
 class FilterGenreField(nustd.ui.Field):
-    input = nustd.ui.SelectRef.slot(options=_GENRES_WITH_ANY, value="")
+    input = nustd.ui.SelectRef.slot(options=_GENRES_WITH_ANY, placeholder="Any genre")
 
 
 class WatchedOnlyField(nustd.ui.Field):
@@ -281,7 +281,7 @@ def _rows_form() -> nu.Nu:
 def _rows_filtered() -> nu.Nu:
     """Same shape as _rows_form, but honors the current FilterRow inputs.
 
-    An input nobody has touched yet reads None: that filter is not set. Rows
+    An empty pick or number reads NULL: that filter is not set. Rows
     keep the movie's index as their key, so a click on a filtered table still
     opens the right movie.
     """
@@ -291,8 +291,8 @@ def _rows_filtered() -> nu.Nu:
     shown = nu.Filter(
         nu.Enumerate(nu.Iter(State.movies)),
         lambda entry: nu.And(
-            nu.Or(nu.Eq(min_r, None), nu.Ge(entry[1]["rating"], min_r)),
-            nu.Or(nu.Eq(genre, None), nu.Eq(genre, ""), nu.Eq(entry[1]["genre"], genre)),
+            nu.Or(min_r.is_null(), nu.Ge(entry[1]["rating"], min_r)),
+            nu.Or(genre.is_null(), nu.Eq(genre, "any"), nu.Eq(entry[1]["genre"], genre)),
             nu.Or(nu.Not(watched_only), entry[1]["watched"]),
         ),
     )
@@ -328,7 +328,8 @@ hydrate = nustd.kv.Snapshot(
 
 # Enter in the title or a click on "Log it" submits the form once, every
 # value in the payload: no read per field. The browser checks the required
-# title first, and puts the seeds back after the submit.
+# title, year and rating first (an empty one shows why under its field and
+# nothing is sent), and puts the seeds back after the submit.
 def _log(sub: nu.Nu) -> nu.Nu:
     details, score = sub["values"]["details"], sub["values"]["score"]
     title = nu.Str(details["title"])

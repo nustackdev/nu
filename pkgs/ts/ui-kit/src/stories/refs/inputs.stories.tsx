@@ -4,7 +4,8 @@
 // plain one over the same options, a sketch board (a digit pad beside a board
 // a program drew on), the common states (disabled, readonly, required,
 // invalid through a Field) on every input, and a Form that submits on Enter
-// or its submit button and not on Cancel.
+// or its submit button and not on Cancel, and one that checks its fields
+// before it sends, with a disabled Fieldset in it.
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { NodeStage, sinkParameters, step } from "./harness";
@@ -502,6 +503,39 @@ export const FormSubmit: Story = {
 					],
 					[form, actions, step("cancel", "ButtonRef", { label: "Cancel", variant: "secondary" })],
 					[form, actions, step("save", "ButtonRef", { label: "Log it", submit: true })],
+				]}
+			/>
+		);
+	},
+};
+
+export const FormChecks: Story = {
+	render: () => {
+		const form = step("inputs-checks", "Form", { title: "Sign up" });
+		const plan = step("plan", "Fieldset", { legend: "Plan (locked)", disabled: true });
+		return (
+			<NodeStage
+				root="inputs-checks"
+				label="Sign up with Name empty, a bad email or an age under 18: the Field shows why and the first one takes focus. The locked Fieldset disables what is in it"
+				chains={[
+					[
+						form,
+						step("name", "Field", { label: "Name", required: true }),
+						step("control", "InputRef", { value: "" }),
+					],
+					[form, step("email", "InputRef", { label: "Email", type: "email", value: "" })],
+					[
+						form,
+						step("age", "Field", { label: "Age", help: "18 or over" }),
+						step("control", "NumberInputRef", { value: null, min: 18 }),
+					],
+					[
+						form,
+						plan,
+						step("tier", "SelectRef", { label: "Tier", value: null, options: ["Free", "Pro"] }),
+					],
+					[form, plan, step("upgrade", "ButtonRef", { label: "Upgrade", variant: "secondary" })],
+					[form, step("go", "ButtonRef", { label: "Sign up", submit: true })],
 				]}
 			/>
 		);

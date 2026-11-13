@@ -35,7 +35,10 @@ const BOX: Record<InputSize, string> = {
 
 function InlineEditView({ path }: NodeProps) {
 	const value = useStringProp(path, "value");
-	const error = useStringProp(path, "error");
+	// The program's error, else the message a form's check left.
+	const given = useStringProp(path, "error");
+	const check = useStringProp(path, "check");
+	const error = given || check;
 	const maxLength = useProp<number | null>(path, "max_length", null);
 	const c = useControl(path);
 	const { edit, commit, submit } = useCommit(path);
@@ -151,7 +154,7 @@ function InlineEditView({ path }: NodeProps) {
 export const InlineEditRef: NodeEntry = {
 	component: InlineEditView,
 	fill: true,
-	input: { empty: "" },
+	input: { empty: "", ownsError: true },
 	handlers: {
 		write: valueWrite(asText),
 		reset: resetHandler,

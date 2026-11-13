@@ -100,7 +100,7 @@ class DataCard(nustd.ui.Card):
 
 class MarkdownBody(nustd.ui.Column):
     editor = nustd.ui.MarkdownRef.slot(
-        editable=True, placeholder="Write, or type | a | b | then Enter"
+        readonly=False, placeholder="Write, or type | a | b | then Enter"
     )
     preview_label = nustd.ui.TextRef.slot(value="Read-only, the same document:")
     preview = nustd.ui.MarkdownRef.slot()

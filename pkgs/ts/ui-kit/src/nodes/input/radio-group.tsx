@@ -1,9 +1,9 @@
 // RadioGroupRef -- single-choice radio group. Browser is source of truth.
 //
 // Same state shape as SelectRef, different affordance. The picked option's
-// value is the node's `value` ("" for none); a pick lands it and sends
-// `{event: "change"}` at once (./control.ts). A bare write selects (nil
-// clears), an object payload merges into props (how `options` is replaced),
+// value is the node's `value` (null for none); a pick lands it and sends
+// `{event: "change"}` at once (./control.ts). A bare write selects (nil or
+// "" clears), an object payload merges into props (how `options` is replaced),
 // the store answers a read from `value`, and `reset` puts the declared value
 // back.
 //
@@ -16,7 +16,7 @@ import { Label } from "../../components/ui/field";
 import { RadioGroup, RadioGroupItem } from "../../components/ui/radio-group";
 import { Text } from "../../components/ui/text";
 import { type NodeEntry, type NodeProps, useListProp, useStringProp } from "../../tree";
-import { asText, resetHandler, useCommit, useControl, valueWrite } from "./control";
+import { asTextOrNull, resetHandler, useCommit, useControl, valueWrite } from "./control";
 import { normalizeOptions } from "./select";
 
 function RadioGroupView({ path }: NodeProps) {
@@ -88,9 +88,9 @@ function RadioGroupView({ path }: NodeProps) {
 
 export const RadioGroupRef: NodeEntry = {
 	component: RadioGroupView,
-	input: { empty: "" },
+	input: { empty: null },
 	handlers: {
-		write: valueWrite(asText),
+		write: valueWrite(asTextOrNull),
 		reset: resetHandler,
 	},
 };

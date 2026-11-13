@@ -1,7 +1,8 @@
 """Input Refs -- tab-owned; server reads via `read` + `notify` path.
 
 Also home to the two Refs with both faces, `MarkdownRef` and `CodeRef`:
-read-only by default, editable on request, readable either way.
+read-only by default (``readonly=True``), editable with ``readonly=False``,
+readable either way.
 
 The browser owns the live value. Host reads via `Ref` (round-trip
 through session), subscribes via `.on_change()` / `.on_submit()` /
@@ -14,14 +15,22 @@ The contract every input shares (``InputLeaf``):
   seed back;
 - every notify names its event: ``on_change()`` hears ``{event: "change"}``,
   sent when a value is committed and only when it moved (blur, Enter, a
-  pick, a toggle, a release); ``on_submit()`` hears ``{event: "submit"}``,
-  sent when the person asks to send (Enter in a single-line field,
-  cmd/ctrl+Enter in a multi-line one). Enter that changed the value sends
-  the change first, then the submit;
+  pick, a toggle, a release); ``on_submit()`` hears ``{event: "submit",
+  value}``, sent when the person asks to send (Enter in a single-line field,
+  cmd/ctrl+Enter in a multi-line one) with the value sent, so the reaction
+  needs no read back and ``clear_on_submit`` loses nothing. Enter that
+  changed the value sends the change first, then the submit;
 - the common props: ``label``, ``disabled``, ``readonly``, ``required``,
   ``autofocus`` and ``size``, with ``set_label``, ``set_disabled``,
   ``set_readonly`` and ``set_required``. Inside a ``Field`` the Field labels
   the control, and its help, error and required land on the control itself.
+  A disabled ``Fieldset`` or ``Form`` disables every input in it;
+- ``focus()`` moves the keyboard focus to the input;
+- an input whose empty is "nothing picked" (``NumberInputRef``,
+  ``SelectRef``, ``RadioGroupRef``, ``DatePickerRef``, ``TimePickerRef``,
+  ``DateTimePickerRef``) holds no value when empty: a read gives NULL and a
+  form's values carry None. Its slot's ``value=`` defaults to None, and
+  ``set("")`` clears it.
 """
 
 from __future__ import annotations
@@ -32,8 +41,9 @@ from typing import TYPE_CHECKING, Any, Literal, get_args
 from typing_extensions import Self
 
 from nu.forms import Dict
+from nu.lang.null import NULL
 from nu.lang.sentinels import UNSET
-from nustd.ui.core import Changed, Reset, Write
+from nustd.ui.core import Changed, Focus, Reset, Write
 
 from ..vocab import ControlSize, Target
 from ..vocab import set_href as _set_href
@@ -100,6 +110,10 @@ class InputLeaf(LeafRef):
         """Put the value the slot declared back. Sends no change."""
         return Reset(self)
 
+    def focus(self) -> Nu:
+        """Move the keyboard focus to this input."""
+        return Focus(self)
+
     def on_change(self) -> Changed:
         """Each committed change: blur, Enter, a pick, a toggle. Never per keystroke."""
         return Changed(self, CHANGE)
@@ -121,8 +135,20 @@ class _Submits:
     """Mixin: the input has a send key, heard by ``on_submit()``."""
 
     def on_submit(self) -> Changed:
-        """The person asked to send: Enter, or cmd/ctrl+Enter in a multi-line field."""
+        """The person asked to send: Enter, or cmd/ctrl+Enter in a multi-line field.
+
+        The payload is ``{event: "submit", value}``, the value sent: read it
+        there (``lambda sub: save(sub["value"])``), not off the input, which
+        ``clear_on_submit`` has emptied by then.
+        """
         return Changed(self, SUBMIT)  # type: ignore[arg-type]
+
+
+class _Nullable:
+    """Mixin: the input holds no value when empty, so a read gives NULL."""
+
+    def _lift(self, raw: object) -> object:
+        return NULL if raw is None else raw
 
 
 class _Placeholder:
@@ -269,8 +295,8 @@ class CheckboxRef(InputLeaf):
         return Write(self, value)
 
 
-class DatePickerRef(_Submits, _Placeholder, InputLeaf):
-    """Date input whose ISO yyyy-mm-dd value lives in the browser ("" for none).
+class DatePickerRef(_Nullable, _Submits, _Placeholder, InputLeaf):
+    """Date input whose ISO yyyy-mm-dd value lives in the browser (NULL for none).
 
     A pick is a change. Enter on the closed picker submits; Space and the
     down arrow open the calendar.
@@ -286,7 +312,7 @@ class DatePickerRef(_Submits, _Placeholder, InputLeaf):
         placeholder: str = "",
         min: str = "",
         max: str = "",
-        value: str = "",
+        value: str | None = None,
         disabled: bool = False,
         readonly: bool = False,
         required: bool = False,
@@ -297,7 +323,7 @@ class DatePickerRef(_Submits, _Placeholder, InputLeaf):
             placeholder=placeholder,
             min=min,
             max=max,
-            value=value,
+            value=value or None,
             **_common(
                 label=label,
                 disabled=disabled,
@@ -323,7 +349,8 @@ class InputRef(_Submits, _Placeholder, InputLeaf):
     A read sees what is under the caret. Blur commits (a change, when the
     text moved), Enter commits and submits, and focus stays in the field.
     `clear_on_submit` puts the seed back after each submit, for a field you
-    type into, send, and type into again.
+    type into, send, and type into again; the submit's payload carries the
+    text sent (``sub["value"]``).
 
     Default face is display (Inter); code-shaped fields opt into
     JetBrains Mono via `mono=True`, which flips `font-mono` at render time.
@@ -338,6 +365,10 @@ class InputRef(_Submits, _Placeholder, InputLeaf):
     - `number`: a numeric keyboard over text that may stay empty, for an
       optional number such as a filter's "any". For a number the program
       reads as a number, with steps, min and max, use `NumberInputRef`.
+
+    Inside a `Form`, `required`, `max_length`, `pattern` (a regular
+    expression the whole text must match) and the `email` format are checked
+    before the form submits; a failing field shows why and takes focus.
 
     For a field with a button that acts on it (Search, Send, Add), put both
     in an `InputGroup`.
@@ -354,6 +385,7 @@ class InputRef(_Submits, _Placeholder, InputLeaf):
         value: str = "",
         type: InputType = "text",
         max_length: int | None = None,
+        pattern: str = "",
         mono: bool = False,
         clear_on_submit: bool = False,
         disabled: bool = False,
@@ -370,6 +402,7 @@ class InputRef(_Submits, _Placeholder, InputLeaf):
             value=value,
             type=type,
             max_length=max_length,
+            pattern=pattern,
             mono=mono,
             clear_on_submit=bool(clear_on_submit),
             **_common(
@@ -390,13 +423,13 @@ class CodeRef(_Submits, InputLeaf):
     """Source code, read-only by default. Value is the text, both ways.
 
     Read-only it renders a highlighted block with a copy button. With
-    `editable=True` the same view becomes an editor: the server seeds the text
+    `readonly=False` the same view becomes an editor: the server seeds the text
     with `set`, reads it back through `Ref` like any input Ref, and subscribes
     with `on_change()`. The browser commits on cmd+enter and on blur, not on
     every keystroke, so a read between commits sees the last committed text
     and not what is under the caret. cmd+enter also submits (`on_submit()`).
-    One engine for both modes, so flipping `editable` never changes how the
-    code looks.
+    One engine for both modes, so flipping `readonly` never changes how the
+    code looks. A disabled `Fieldset` or `Form` around it makes it read-only.
 
     Last actor wins, same as `MarkdownRef`. A `set` from the server replaces
     the buffer outright, a notify from the browser replaces the server's
@@ -422,7 +455,7 @@ class CodeRef(_Submits, InputLeaf):
         *,
         value: str = "",
         language: str = "",
-        editable: bool = False,
+        readonly: bool = True,
         line_numbers: bool | None = None,
         wrap: bool = False,
         show_copy: bool = True,
@@ -432,7 +465,7 @@ class CodeRef(_Submits, InputLeaf):
         return super().slot(
             value=value,
             language=language,
-            editable=editable,
+            readonly=bool(readonly),
             line_numbers=line_numbers,
             wrap=wrap,
             show_copy=show_copy,
@@ -446,15 +479,14 @@ class CodeRef(_Submits, InputLeaf):
     def set_language(self, name: StrArg) -> Nu:
         return Write(self, Dict.of(language=name))
 
-    def set_editable(self, flag: BoolArg) -> Nu:
-        return Write(self, Dict.of(editable=flag))
 
-
-class NumberInputRef(_Submits, _Placeholder, InputLeaf):
-    """Numeric input whose value lives in the browser.
+class NumberInputRef(_Nullable, _Submits, _Placeholder, InputLeaf):
+    """Numeric input whose value lives in the browser (NULL while empty).
 
     Typing is local; blur, Enter, a stepper click or an arrow key commits.
-    Enter also submits.
+    Enter also submits. A cleared field holds no number, never a zero.
+    Inside a `Form`, `min`, `max` and `required` are checked before it
+    submits.
     """
 
     _wire_type = "NumberInputRef"
@@ -468,7 +500,7 @@ class NumberInputRef(_Submits, _Placeholder, InputLeaf):
         min: float | None = None,
         max: float | None = None,
         step: float = 1.0,
-        value: float = 0.0,
+        value: float | None = None,
         disabled: bool = False,
         readonly: bool = False,
         required: bool = False,
@@ -527,7 +559,7 @@ class MarkdownRef(_Placeholder, InputLeaf):
     """A markdown document, read-only by default. Value is the markdown, both ways.
 
     The browser never shows the source. Read-only it renders the document;
-    with `editable=True` the same view becomes a live wysiwyg editor: the
+    with `readonly=False` the same view becomes a live wysiwyg editor: the
     server writes the source with `set`, reads it back through `Ref` like any
     input Ref, and subscribes with `on_change()`. The browser notifies back
     on a quiet moment or on blur. One engine for both modes, so a document
@@ -555,15 +587,12 @@ class MarkdownRef(_Placeholder, InputLeaf):
         *,
         value: str = "",
         placeholder: str = "",
-        editable: bool = False,
+        readonly: bool = True,
     ) -> Self:
-        return super().slot(value=value, placeholder=placeholder, editable=editable)
+        return super().slot(value=value, placeholder=placeholder, readonly=bool(readonly))
 
     def set(self, value: StrArg) -> Nu:
         return Write(self, value)
-
-    def set_editable(self, flag: BoolArg) -> Nu:
-        return Write(self, Dict.of(editable=flag))
 
 
 def _normalize_options(opts: object) -> list[dict[str, str]]:
@@ -593,8 +622,8 @@ def _options_write(ref: InputLeaf, opts: object) -> Nu:
 Orientation = Literal["vertical", "horizontal"]
 
 
-class RadioGroupRef(InputLeaf):
-    """Single-choice radio group whose value lives in the browser ("" for none).
+class RadioGroupRef(_Nullable, InputLeaf):
+    """Single-choice radio group whose value lives in the browser (NULL for none).
 
     `label` names the group (or the Field around it does).
     """
@@ -606,7 +635,7 @@ class RadioGroupRef(InputLeaf):
         cls,
         *,
         options: list[str] | list[dict[str, str]] | None = None,
-        value: str = "",
+        value: str | None = None,
         orientation: Orientation = "vertical",
         label: str = "",
         disabled: bool = False,
@@ -617,7 +646,7 @@ class RadioGroupRef(InputLeaf):
     ) -> Self:
         return super().slot(
             options=_normalize_options(options or []),
-            value=value,
+            value=value or None,
             orientation=orientation,
             **_common(
                 label=label,
@@ -636,8 +665,8 @@ class RadioGroupRef(InputLeaf):
         return _options_write(self, opts)
 
 
-class SelectRef(_Placeholder, InputLeaf):
-    """Dropdown single-select whose value lives in the browser ("" for none).
+class SelectRef(_Nullable, _Placeholder, InputLeaf):
+    """Dropdown single-select whose value lives in the browser (NULL for none).
 
     `searchable=True` swaps the picker for one with a filter field, for long
     option lists. Options, value, reads and notifies stay the same.
@@ -650,7 +679,7 @@ class SelectRef(_Placeholder, InputLeaf):
         cls,
         *,
         options: list[str] | list[dict[str, str]] | None = None,
-        value: str = "",
+        value: str | None = None,
         placeholder: str = "",
         searchable: bool = False,
         label: str = "",
@@ -662,7 +691,7 @@ class SelectRef(_Placeholder, InputLeaf):
     ) -> Self:
         return super().slot(
             options=_normalize_options(options or []),
-            value=value,
+            value=value or None,
             placeholder=placeholder,
             searchable=searchable,
             **_common(

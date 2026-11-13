@@ -1,6 +1,8 @@
 // Field -- labelled form-field wrapper around exactly one control. Label,
 // help, error and required are plain props, merged by the default `write`
-// and coerced at read time, so there is no handler here.
+// and coerced at read time, so there is no handler here. `check` is the
+// message a Form's own checks left (./../input/control.ts `validateUnder`);
+// it shows when there is no `error`, and clears when the control is edited.
 //
 // Built on the kit Field (components/ui/field.tsx, a11y.md §5): a real
 // `<label for>` pointing at the control, help that stays when an error shows,
@@ -28,6 +30,7 @@ import {
 	useChildren,
 	useStringProp,
 } from "../../tree";
+import { useDisabledScope } from "../input/control";
 import { gapClass, type LayoutDefaults, useLayout } from "./layout";
 import { Unpaired } from "./unpaired";
 
@@ -36,9 +39,13 @@ const DEFAULTS: LayoutDefaults = { gap: 1 };
 function FieldView({ path }: NodeProps) {
 	const label = useStringProp(path, "label");
 	const help = useStringProp(path, "help");
-	const error = useStringProp(path, "error");
+	// The program's error wins over a failed check the form ran.
+	const given = useStringProp(path, "error");
+	const check = useStringProp(path, "check");
+	const error = given || check;
 	const required = useBoolProp(path, "required");
-	const disabled = useBoolProp(path, "disabled");
+	const scoped = useDisabledScope();
+	const disabled = useBoolProp(path, "disabled") || scoped;
 	const children = useChildren(path);
 	const layout = useLayout(path, DEFAULTS);
 	const child = children[0];

@@ -1,10 +1,10 @@
 // DatePickerRef -- date input. Browser is source of truth.
 //
-// The value is an ISO `YYYY-MM-DD` string on the node's `value` ("" for
+// The value is an ISO `YYYY-MM-DD` string on the node's `value` (null for
 // none), both ways on the wire. A pick lands it and sends `{event: "change"}`
 // at once (./control.ts). Enter on the closed trigger submits (and asks an
 // enclosing Form to submit); Space and ArrowDown open the calendar. A write
-// replaces the value (nil lands as "" so the field never goes uncontrolled),
+// replaces the value (nil and "" land as null, no date),
 // a map write merges chrome, and `reset` puts the declared value back.
 //
 // Composes the kit DatePicker primitive (Popover + react-day-picker), so the
@@ -15,7 +15,7 @@ import { useId } from "react";
 import { DatePicker } from "../../components/ui/date-picker";
 import { Text } from "../../components/ui/text";
 import { type NodeEntry, type NodeProps, useStringProp } from "../../tree";
-import { asText, isEnter, resetHandler, useCommit, useControl, valueWrite } from "./control";
+import { asTextOrNull, isEnter, resetHandler, useCommit, useControl, valueWrite } from "./control";
 
 export function toIso(d: Date | null): string {
 	if (!d) return "";
@@ -74,7 +74,7 @@ function DatePickerView({ path }: NodeProps) {
 						submit(e.currentTarget);
 					},
 				}}
-				onValueChange={(next) => pick(toIso(next))}
+				onValueChange={(next) => pick(next ? toIso(next) : null)}
 			/>
 		</div>
 	);
@@ -83,9 +83,9 @@ function DatePickerView({ path }: NodeProps) {
 export const DatePickerRef: NodeEntry = {
 	component: DatePickerView,
 	fill: true,
-	input: { empty: "" },
+	input: { empty: null },
 	handlers: {
-		write: valueWrite(asText),
+		write: valueWrite(asTextOrNull),
 		reset: resetHandler,
 	},
 };

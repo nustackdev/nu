@@ -1,15 +1,15 @@
 // DateTimePickerRef -- date and time of day in one value. Browser is source
 // of truth.
 //
-// The value is a local ISO "YYYY-MM-DDTHH:MM" on the node's `value` ("" for
-// none), both ways on the wire. A calendar pick lands the date (keeping the
+// The value is a local ISO "YYYY-MM-DDTHH:MM" on the node's `value` (null
+// for none), both ways on the wire. A calendar pick lands the date (keeping the
 // time there, or midnight) and sends `{event: "change"}` at once; the time
 // field is text-like: typing is a local edit, blur commits. Enter on the
 // closed date trigger or in the time field commits, then submits and asks an
 // enclosing Form to submit. The clear button empties both parts and sends its
 // change. `min` and `max` are ISO date-times: days outside are disabled, and
 // on the first or last day the time field takes the bound. A write replaces
-// the value (nil lands as ""), a map write merges chrome, and `reset` puts
+// the value (nil and "" land as null), a map write merges chrome, and `reset` puts
 // the declared value back. See ./control.ts for the contract.
 //
 // Composes the kit DateTimePicker (DatePicker + TimePicker on one row). The
@@ -20,7 +20,7 @@ import { type KeyboardEvent, useId } from "react";
 import { Label } from "../../components/ui/field";
 import { DateTimePicker } from "../../components/ui/time-picker";
 import { type NodeEntry, type NodeProps, useBoolProp, useStringProp } from "../../tree";
-import { asText, isEnter, resetHandler, useCommit, useControl, valueWrite } from "./control";
+import { asTextOrNull, isEnter, resetHandler, useCommit, useControl, valueWrite } from "./control";
 
 const DATE_TIME = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/;
 
@@ -91,8 +91,8 @@ function DateTimePickerView({ path }: NodeProps) {
 					onBlur: commit,
 					onKeyDown: onEnter,
 				}}
-				onValueChange={(next) => edit(toIsoDateTime(next))}
-				onValueCommit={(next) => pick(toIsoDateTime(next))}
+				onValueChange={(next) => edit(next ? toIsoDateTime(next) : null)}
+				onValueCommit={(next) => pick(next ? toIsoDateTime(next) : null)}
 			/>
 		</div>
 	);
@@ -101,9 +101,9 @@ function DateTimePickerView({ path }: NodeProps) {
 export const DateTimePickerRef: NodeEntry = {
 	component: DateTimePickerView,
 	fill: true,
-	input: { empty: "" },
+	input: { empty: null },
 	handlers: {
-		write: valueWrite(asText),
+		write: valueWrite(asTextOrNull),
 		reset: resetHandler,
 	},
 };

@@ -341,3 +341,75 @@ def test_form_reserves_its_method_names_for_slots():
     for name in ("on_submit", "values", "reset", "set_busy"):
         with pytest.raises((TypeError, ValueError)):
             type("Bad", (Form,), {name: InputRef.slot()})
+
+
+# --- focus, errors, disabled, null empties ---------------------------------------
+
+
+@pytest.mark.parametrize("cls", INPUTS, ids=[c.__name__ for c in INPUTS])
+def test_every_input_focuses(cls):
+    [frame] = _frames(_mount(cls.slot()).focus())
+    assert frame.op == "focus"
+    assert frame.ref == ("page", "sec", "w")
+    assert frame.chain[-1][1] == cls._wire_type
+
+
+def test_form_set_errors_ships_the_errors_keyed_like_values():
+    form, _ = _app()
+    [frame] = _frames(form.set_errors({"title": "Taken", "meta": {"year": "Too old"}}))
+    assert frame.op == "set_errors"
+    assert frame.ref == ("page", "add")
+    assert frame.payload == {"title": "Taken", "meta": {"year": "Too old"}}
+    assert _frames(form.set_errors({}))[0].payload == {}
+
+
+def test_form_and_fieldset_disabled():
+    from nustd.ui.refs import FieldsetRef
+
+    assert FormRef.slot().props["disabled"] is False
+    assert FormRef.slot(disabled=True).props["disabled"] is True
+    form, _ = _app()
+    assert _frames(form.set_disabled(True))[0].payload == {"disabled": True}
+    assert FieldsetRef.slot(disabled=True).props["disabled"] is True
+
+
+def test_input_pattern():
+    assert InputRef.slot().props["pattern"] == ""
+    assert InputRef.slot(pattern="[0-9]+").props["pattern"] == "[0-9]+"
+
+
+NULLABLE = [
+    NumberInputRef,
+    SelectRef,
+    RadioGroupRef,
+    DatePickerRef,
+    TimePickerRef,
+    DateTimePickerRef,
+]
+
+
+@pytest.mark.parametrize("cls", NULLABLE, ids=[c.__name__ for c in NULLABLE])
+def test_pick_or_nothing_inputs_seed_none_and_read_null_when_empty(cls):
+    from nu.lang.null import is_null
+
+    assert cls.slot().props["value"] is None
+    handle = _mount(cls.slot())
+    empty = asyncio.run(nu.arun(handle, Context().bind(Session, _Tab(value=None))))
+    assert is_null(empty[0])
+    held = asyncio.run(nu.arun(handle, Context().bind(Session, _Tab(value="x"))))
+    assert held[0] == "x"
+
+
+def test_empty_string_seeds_are_none_for_picks():
+    assert SelectRef.slot(value="").props["value"] is None
+    assert DatePickerRef.slot(value="").props["value"] is None
+    assert SelectRef.slot(value="a").props["value"] == "a"
+    assert NumberInputRef.slot(value=0).props["value"] == 0
+
+
+def test_code_and_markdown_readonly():
+    assert CodeRef.slot().props["readonly"] is True
+    assert MarkdownRef.slot(readonly=False).props["readonly"] is False
+    assert "editable" not in CodeRef.slot().props
+    handle = _mount(CodeRef.slot())
+    assert _frames(handle.set_readonly(False))[0].payload == {"readonly": False}

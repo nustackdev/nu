@@ -2,8 +2,9 @@
 //
 // One node for both faces of a document. The value is a markdown string both
 // ways, and the browser never shows the source: read-only it renders the
-// document, with `editable` on it is a live wysiwyg editor and the browser is
-// source of truth while you type. Renders the kit's `Markdown` primitive, one
+// document, with `readonly` off it is a live wysiwyg editor and the browser is
+// source of truth while you type (`readonly` is true when unset, and a
+// disabled Fieldset or Form around it makes it read-only too). Renders the kit's `Markdown` primitive, one
 // engine either way, so what a document looks like never depends on whether
 // you can type in it.
 //
@@ -11,7 +12,7 @@
 // locally, then a notify goes out and the server reads back. A server-initiated
 // write replaces the source, and needs a handler for the InputRef reason: nil
 // must land as "" so the editor never sees null and a following read answers
-// "". The map form merges {value, placeholder, editable} the way the store
+// "". The map form merges {value, placeholder, readonly} the way the store
 // merges everything else.
 //
 // Last actor wins. No OT, no CRDT: two people in one node clobber each other,
@@ -84,7 +85,7 @@ import {
 	useSetValue,
 	useStringProp,
 } from "../../tree";
-import { EVENTS } from "./control";
+import { EVENTS, useDisabledScope } from "./control";
 
 /** A mounted markdown editor: its handle while it takes commands, null while read-only. */
 export type MarkdownEntry = { handle: MarkdownHandle | null };
@@ -219,7 +220,8 @@ function whenRead(path: Path, fn: () => void, lost?: () => void): () => void {
 function MarkdownView({ path }: NodeProps) {
 	const value = useStringProp(path, "value");
 	const hint = useStringProp(path, "placeholder");
-	const editable = useBoolProp(path, "editable");
+	const scoped = useDisabledScope();
+	const readOnly = useBoolProp(path, "readonly", true) || scoped;
 	const setValue = useSetValue(path);
 	const send = useSend(path);
 	const key = pathKey(path);
@@ -260,7 +262,7 @@ function MarkdownView({ path }: NodeProps) {
 		<Markdown
 			value={value}
 			placeholder={hint}
-			readOnly={!editable}
+			readOnly={readOnly}
 			onCommit={commit}
 			onView={onView}
 			onHandle={onHandle}
@@ -272,7 +274,7 @@ function MarkdownView({ path }: NodeProps) {
 export const MarkdownRef: NodeEntry = {
 	component: MarkdownView,
 	fill: true,
-	input: { empty: "", gathered: (props) => Boolean(props.editable) },
+	input: { empty: "", gathered: (props) => props.readonly === false },
 	handlers: {
 		write: (ctx, payload) => {
 			const source = sourceOf(payload);

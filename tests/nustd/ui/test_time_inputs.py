@@ -64,7 +64,7 @@ COMMON = {
 
 def test_time_slot_defaults():
     assert TimePickerRef.slot().props == {
-        "value": "",
+        "value": None,
         "min": "",
         "max": "",
         "step": None,
@@ -106,7 +106,7 @@ def test_time_has_no_placeholder():
 def test_date_time_slot_defaults_and_objects():
     assert DateTimePickerRef.slot().props == {
         "placeholder": "",
-        "value": "",
+        "value": None,
         "min": "",
         "max": "",
         "clearable": True,
