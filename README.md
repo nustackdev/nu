@@ -110,8 +110,12 @@ from nustd.cluster import RayCluster, RayService, Teleport
 op = nu.print("hello from a worker")
 
 # a local ray instance with two workers; "auto" joins your cluster instead
-app = nu.Provide(RayCluster, {"address": None},
-    nu.ProvideList(RayService, [{"num_cpus": 1}, {"num_cpus": 1}],
+app = nu.Provide(
+    RayCluster,
+    {"address": None},
+    nu.ProvideList(
+        RayService,
+        [{"num_cpus": 1}, {"num_cpus": 1}],
         nu.Parallel(
             Teleport(op, target=0),
             Teleport(op, target=1),

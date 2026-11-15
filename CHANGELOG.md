@@ -2,16 +2,18 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.7.4
-- **nustd** (fabrics) — 0.7.4
-- **nudle** — 0.1.12
-- **ui-core** — 0.2.3
-- **ui-kit** — 0.4.4
+- **nucore** (kernel) — 0.7.5
+- **nustd** (fabrics) — 0.7.5
+- **nudle** — 0.1.13
+- **ui-core** — 0.2.4
+- **ui-kit** — 0.4.5
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.7.5 - 2026-11-16
 
+- Release nu 0.7.5
+- README example follows the newer formatter
 - A forms example shows one submit, field checks, program errors and a locked fieldset
 - Forms check fields before sending, show errors on fields, and disable whole fieldsets
 - Empty pickers read null, not zero; code and markdown editors switch to readonly
