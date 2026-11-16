@@ -1,4 +1,4 @@
-"""Media leaves -- ``ImageRef``, ``VideoRef`` and ``AudioRef``.
+"""Media leaves -- ``ImageRef``, ``VideoRef``, ``AudioRef`` and ``FileRef``.
 
 Server-owned and display only: the server writes the source and how to show
 it, the browser draws it. An image shows, or with ``zoom`` opens in the kit
@@ -19,6 +19,11 @@ it names::
 image viewer's cluster, or a chip over a plain image's corner::
 
     Clip.video.set_download(files.url(bid, download=True))
+
+``FileRef`` is any other file: one row with its name, size and type, that
+opens ``src`` in a new tab and saves through ``download``::
+
+    Doc.file.set(files.url(bid), name="report.pdf", size=48_200, mime="application/pdf")
 
 ``AudioRef`` draws the sound's waveform when its source allows a CORS fetch,
 a plain scrub bar when it does not. Autoplay only starts muted in most
@@ -43,7 +48,7 @@ if TYPE_CHECKING:
     from nu.lang.args import BoolArg, IntArg, StrArg
 
 
-__all__ = ["AudioRef", "ImageRef", "VideoRef"]
+__all__ = ["AudioRef", "FileRef", "ImageRef", "VideoRef"]
 
 
 ImageFit = Literal["contain", "cover", "fill", "none", "scale-down"]
@@ -291,4 +296,65 @@ class AudioRef(LeafRef):
             payload["autoplay"] = autoplay
         if loop is not UNSET:
             payload["loop"] = loop
+        return Write(self, Dict.of(**payload))
+
+
+class FileRef(LeafRef):
+    """Display-only file ref: one row with the file's name, size and type. One `write` op carries every mutation.
+
+    The row opens `src` in a new tab, so the browser shows what it can (a
+    pdf, a text file). `name` is what the row reads; when empty it reads the
+    last part of `src`. `size` is in bytes, drawn in decimal units (48.2 KB);
+    None draws none. `mime` picks the glyph and the type label. `download` is
+    a url that saves the file (a blob mount's ``url(bid, download=True)``).
+    An empty `src` draws the row muted and inert, named `name` or "No file".
+    """
+
+    _wire_type = "FileRef"
+
+    @classmethod
+    def slot(
+        cls,
+        *,
+        src: str = "",
+        name: str = "",
+        size: int | None = None,
+        mime: str = "",
+        download: str = "",
+    ) -> Self:
+        return super().slot(src=src, name=name, size=size, mime=mime, download=download)
+
+    def set_src(self, url: StrArg) -> Nu:
+        return Write(self, Dict.of(src=url))
+
+    def set_name(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(name=text))
+
+    def set_size(self, n_bytes: IntArg | None) -> Nu:
+        return Write(self, Dict.of(size=n_bytes))
+
+    def set_mime(self, mime: StrArg) -> Nu:
+        return Write(self, Dict.of(mime=mime))
+
+    def set_download(self, url: StrArg) -> Nu:
+        """The url the row's download link saves; "" drops the link."""
+        return Write(self, Dict.of(download=url))
+
+    def set(
+        self,
+        src: StrArg,
+        name: StrArg = UNSET,
+        size: IntArg | None = UNSET,
+        mime: StrArg = UNSET,
+        download: StrArg = UNSET,
+    ) -> Nu:
+        payload: dict[str, object] = {"src": src}
+        if name is not UNSET:
+            payload["name"] = name
+        if size is not UNSET:
+            payload["size"] = size
+        if mime is not UNSET:
+            payload["mime"] = mime
+        if download is not UNSET:
+            payload["download"] = download
         return Write(self, Dict.of(**payload))

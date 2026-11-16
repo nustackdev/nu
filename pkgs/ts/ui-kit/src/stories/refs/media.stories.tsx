@@ -1,4 +1,4 @@
-// Refs/Media: VideoRef and AudioRef as Python sends them. A video with a
+// Refs/Media: VideoRef, AudioRef and FileRef as Python sends them. A video with a
 // poster held to a ratio, a stack of audio rows, and the empty frames.
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
@@ -67,6 +67,50 @@ export const Audio: Story = {
 						}),
 					],
 					[step(root, "Column", { gap: 1 }), step("none", "AudioRef", { title: "untitled.mp3" })],
+				]}
+			/>
+		);
+	},
+};
+
+export const File: Story = {
+	render: () => {
+		const root = "media-file";
+		return (
+			<NodeStage
+				root={root}
+				label="FileRef: rows in a column, by kind, one with no source"
+				chains={[
+					[
+						step(root, "Column", { gap: 1 }),
+						step("pdf", "FileRef", {
+							src: `${MDN}/examples/lizard.png`,
+							name: "quarterly-report.pdf",
+							size: 2_480_113,
+							mime: "application/pdf",
+							download: `${MDN}/examples/lizard.png`,
+						}),
+					],
+					[
+						step(root, "Column", { gap: 1 }),
+						step("csv", "FileRef", {
+							src: `${MDN}/examples/lizard.png`,
+							name: "runs.csv",
+							size: 48_200,
+							mime: "text/csv",
+						}),
+					],
+					[
+						step(root, "Column", { gap: 1 }),
+						step("zip", "FileRef", {
+							src: `${MDN}/examples/lizard.png`,
+							name: "weights.zip",
+							size: 1_204_000_000,
+							mime: "application/zip",
+							download: `${MDN}/examples/lizard.png`,
+						}),
+					],
+					[step(root, "Column", { gap: 1 }), step("none", "FileRef", { name: "later.bin" })],
 				]}
 			/>
 		);

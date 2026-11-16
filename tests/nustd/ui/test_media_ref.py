@@ -1,4 +1,4 @@
-"""VideoRef and AudioRef: what each slot seeds and what each setter puts on the wire."""
+"""VideoRef, AudioRef and FileRef: what each slot seeds and what each setter puts on the wire."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import asyncio
 
 import nu
 from nu import Context, Shape
-from nustd.ui import AudioRef, Column, Session, VideoRef
+from nustd.ui import AudioRef, Column, FileRef, Session, VideoRef
 from nustd.ui.refs import Row
 
 
@@ -128,6 +128,36 @@ def test_audio_set_and_setters():
         (audio.set_autoplay(True), {"autoplay": True}),
         (audio.set_loop(True), {"loop": True}),
         (audio.set_download("/a.mp3?download=1"), {"download": "/a.mp3?download=1"}),
+    ]
+    for term, payload in cases:
+        [frame] = _frames(term)
+        assert frame.payload == payload
+
+
+# --- FileRef --------------------------------------------------------------------
+
+
+def test_file_slot_seeds_every_prop():
+    [frame] = _frames(_mount(FileRef, name="report.pdf").set_src("/blobs/a"))
+    wire_type, props = frame.chain[-1][1:]
+    assert wire_type == "FileRef"
+    assert props == {"src": "", "name": "report.pdf", "size": None, "mime": "", "download": ""}
+    assert frame.payload == {"src": "/blobs/a"}
+
+
+def test_file_set_and_setters():
+    file = _mount(FileRef)
+    cases = [
+        (file.set("/blobs/a"), {"src": "/blobs/a"}),
+        (
+            file.set("/blobs/a", name="r.pdf", size=48_200, mime="application/pdf"),
+            {"src": "/blobs/a", "name": "r.pdf", "size": 48_200, "mime": "application/pdf"},
+        ),
+        (file.set_name("r.pdf"), {"name": "r.pdf"}),
+        (file.set_size(12), {"size": 12}),
+        (file.set_size(None), {"size": None}),
+        (file.set_mime("text/csv"), {"mime": "text/csv"}),
+        (file.set_download("/blobs/a?download=1"), {"download": "/blobs/a?download=1"}),
     ]
     for term, payload in cases:
         [frame] = _frames(term)

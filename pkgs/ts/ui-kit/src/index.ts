@@ -195,6 +195,13 @@ export {
 	useFieldControl,
 } from "./components/ui/field";
 export {
+	File,
+	type FileProps,
+	fileGlyph,
+	fileName,
+	fileType,
+} from "./components/ui/file";
+export {
 	accepts,
 	FileInput,
 	type FileInputFile,

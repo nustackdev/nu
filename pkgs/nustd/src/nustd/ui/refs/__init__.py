@@ -26,7 +26,7 @@ Layout under ``refs/``:
   ``BadgeRef``, ``StatusDotRef``, ``KbdRef``, ``ShortcutRef``, ``AlertRef``,
   ``DividerRef``, ``EmptyStateRef``, ``StatRef``, ``ProgressRef``,
   ``GaugeRef``, ``JsonViewerRef``); media (``ImageRef``, ``VideoRef``,
-  ``AudioRef``);
+  ``AudioRef``, ``FileRef``);
   display (``AvatarRef``, ``BreadcrumbRef``, ``SkeletonRef``, ``SpinnerRef``,
   ``StatusPillRef``);
   page (``IconRef``, ``SpacerRef``, ``PageLinkRef``, ``NavItemRef``);
@@ -136,6 +136,7 @@ from .leaves import (
     DividerRef,
     EmptyStateRef,
     FileGone,
+    FileRef,
     FunnelChart,
     GaugeChart,
     GaugeRef,
@@ -281,6 +282,7 @@ __all__ = [
     "Fieldset",
     "FieldsetRef",
     "FileGone",
+    "FileRef",
     "Form",
     "FormRef",
     "FunnelChart",

@@ -1,4 +1,4 @@
-// ImageRef, VideoRef and AudioRef over the real tree store, and the scrub
+// ImageRef, VideoRef, AudioRef and FileRef over the real tree store, and the scrub
 // bar under video and audio: what each node draws from its props, the empty and fallback frames,
 // and the slider semantics a screen reader and a keyboard get.
 
@@ -6,6 +6,7 @@ import { OPS } from "@nustackdev/ui-core";
 import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fileGlyph, fileName, fileType } from "../../components/ui/file";
 import { Scrubber } from "../../components/ui/media-controls";
 import { NodeView, tree } from "../../tree";
 import "..";
@@ -237,6 +238,60 @@ describe("AudioRef", () => {
 		expect(host.querySelector("audio")).toBeNull();
 		expect(slot("audio")?.textContent).toContain("No audio");
 		expect((slot("media-play") as HTMLButtonElement | null)?.disabled).toBe(true);
+	});
+});
+
+describe("FileRef", () => {
+	it("draws the name, size and type, opened in a new tab", () => {
+		mount("FileRef", {
+			src: "/blobs/abc",
+			name: "report.pdf",
+			size: 48_200,
+			mime: "application/pdf",
+			download: "/blobs/abc?download=1",
+		});
+		const link = slot("file-link") as HTMLAnchorElement | null;
+		expect(link?.getAttribute("href")).toBe("/blobs/abc");
+		expect(link?.getAttribute("target")).toBe("_blank");
+		expect(slot("file-name")?.textContent).toBe("report.pdf");
+		expect(slot("file-meta")?.textContent).toBe("48.2 KB · PDF");
+		expect(slot("media-download")?.getAttribute("href")).toBe("/blobs/abc?download=1");
+	});
+
+	it("reads the url's last part without a name, and drops what it lacks", () => {
+		mount("FileRef", { src: "/files/notes%20v2.txt?x=1" });
+		expect(slot("file-name")?.textContent).toBe("notes v2.txt");
+		expect(slot("file-meta")).toBeNull();
+		expect(slot("media-download")).toBeNull();
+	});
+
+	it("is muted and inert without a source until one lands", () => {
+		mount("FileRef", { name: "later.csv", download: "/d" });
+		expect(slot("file")?.dataset.empty).toBe("true");
+		expect(slot("file-link")).toBeNull();
+		expect(slot("media-download")).toBeNull();
+		expect(slot("file-name")?.textContent).toBe("later.csv");
+		dispatch({ src: "/blobs/x" });
+		expect(slot("file-link")?.getAttribute("href")).toBe("/blobs/x");
+	});
+
+	it("says there is no file with neither source nor name", () => {
+		mount("FileRef", {});
+		expect(slot("file-name")?.textContent).toBe("No file");
+	});
+
+	it("picks a glyph and a label by mime", () => {
+		expect(fileGlyph("image/png").displayName).toContain("Image");
+		expect(fileGlyph("text/csv").displayName).toContain("Spreadsheet");
+		expect(fileGlyph("application/zip").displayName).toContain("Archive");
+		expect(fileGlyph("").displayName).toBe(fileGlyph("application/x-thing").displayName);
+		expect(fileType("application/pdf")).toBe("PDF");
+		expect(fileType("image/svg+xml")).toBe("XML");
+		expect(fileType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")).toBe(
+			"SHEET",
+		);
+		expect(fileType("")).toBe("");
+		expect(fileName("/a/b/")).toBe("");
 	});
 });
 
