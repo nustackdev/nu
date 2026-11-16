@@ -61,6 +61,11 @@
 	--color-accent-2-line:        var(--accent-2-line);
 	--color-accent-2-hover:       var(--accent-2-hover);
 
+	/* media: on a picture, the same in both themes (see .on-media) */
+	--color-media-fg:             var(--media-fg);
+	--color-media-fg-muted:       var(--media-fg-muted);
+	--color-media-scrim:          var(--media-scrim);
+
 	/* status */
 	--color-status-danger:        var(--status-danger);
 	--color-status-danger-fg:     var(--status-danger-fg);

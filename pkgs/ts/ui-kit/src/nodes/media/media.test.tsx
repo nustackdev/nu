@@ -112,9 +112,49 @@ describe("ImageRef", () => {
 			const labels = [...(slot("image-viewer-controls")?.querySelectorAll("button") ?? [])].map(
 				(b) => b.getAttribute("aria-label"),
 			);
-			expect(labels).toEqual(["Zoom out", "Zoom in", "Fit", "Actual size", "Expand"]);
+			expect(labels).toEqual(["Zoom out", "Zoom in", "Fit", "Actual size", "Full screen"]);
 			const fit = slot("image-viewer-controls")?.querySelector('[aria-label="Fit"]');
 			expect(fit?.getAttribute("aria-disabled")).toBe("true");
+		} finally {
+			w.mockRestore();
+			h.mockRestore();
+		}
+	});
+
+	it("opens full window with the exit where full screen was, and a solid close", () => {
+		const w = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(400);
+		const h = vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(300);
+		try {
+			mount("ImageRef", { src: "/a.png", alt: "Shot", zoom: true });
+			const img = slot("image-viewer-stage")?.querySelector("img") as HTMLImageElement;
+			Object.defineProperty(img, "naturalWidth", { value: 800 });
+			Object.defineProperty(img, "naturalHeight", { value: 600 });
+			act(() => {
+				img.dispatchEvent(new Event("load"));
+			});
+			const full = host.querySelector<HTMLElement>('[aria-label="Full screen"]');
+			act(() => full?.click());
+			const overlay = document.querySelector<HTMLElement>("[data-slot=image-viewer-overlay]");
+			expect(overlay).not.toBeNull();
+			// The full window viewer is its own viewer: its image loads again.
+			const inner = overlay?.querySelector("img") as HTMLImageElement;
+			Object.defineProperty(inner, "naturalWidth", { value: 800 });
+			Object.defineProperty(inner, "naturalHeight", { value: 600 });
+			act(() => {
+				inner.dispatchEvent(new Event("load"));
+			});
+			const cluster = overlay?.querySelector("[data-slot=image-viewer-controls]");
+			const last = [...(cluster?.querySelectorAll("button") ?? [])].at(-1);
+			expect(last?.getAttribute("aria-label")).toBe("Exit full screen");
+			expect(cls(cluster ?? null)).toEqual(expect.arrayContaining(["right-5", "bottom-5"]));
+			const close = overlay?.querySelector("[data-slot=image-viewer-close]");
+			expect(close?.getAttribute("aria-label")).toBe("Close");
+			expect(cls(close ?? null)).toEqual(expect.arrayContaining(["top-5", "right-5"]));
+			const stage = overlay?.querySelector("[data-slot=image-viewer-stage]") as HTMLElement;
+			act(() => {
+				stage.dispatchEvent(new KeyboardEvent("keydown", { key: "f", bubbles: true }));
+			});
+			expect(document.querySelector("[data-slot=image-viewer-overlay]")).toBeNull();
 		} finally {
 			w.mockRestore();
 			h.mockRestore();

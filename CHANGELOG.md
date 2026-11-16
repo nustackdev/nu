@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Video controls stay white over any picture; image full screen matches video's
 - Images join video and audio as media, in the kit and in Python
 - Images load lazily, fetched only as they scroll near the viewport
 - Pages can show video and audio players, with sources and looks set from Python

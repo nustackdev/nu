@@ -366,6 +366,18 @@
 	--tree-gap:               0.375rem;  /* 6   lane to title */
 	--tree-indent:            1rem;      /* 16  per level */
 
+	/* media: what sits on a picture (the video controls). The picture is the
+	 * same in both themes, so these are too: white on a fixed Dusk scrim, and
+	 * the played run in Afterglow, which already holds one value in both. */
+	--media-fg:               #ffffff;
+	--media-fg-muted:         rgb(255 255 255 / 0.72);
+	--media-track:            rgb(255 255 255 / 0.26);
+	--media-buffer:           rgb(255 255 255 / 0.44);
+	--media-hover:            rgb(255 255 255 / 0.14);
+	--media-scrim:            rgb(19 22 29 / 0.74);   /* Dusk ground-deep */
+	--media-chip:             #292e37;                /* Dusk ground-overlay */
+	--media-chip-line:        rgb(255 255 255 / 0.12);
+
 	/* syntax: what a code view colors by role. Eight roles and no more, so
 	 * code reads as text with a few accents rather than a fruit salad. */
 	--syntax-keyword:         var(--afterglow-text);
@@ -454,6 +466,29 @@
 	--tree-hover:             var(--bg-hover);
 	--tree-highlight:         color-mix(in oklab, var(--bg-hover) 50%, transparent);
 	--tree-selected:          var(--bg-press);
+}
+
+/* ============================== on-media ==================================
+ * A subtree drawn over a picture. It rebinds the roles its pieces read, the
+ * way .dark rebinds a subtree to Dusk, so ghost buttons, the scrub bar, the
+ * volume slider and the time readout take the media values with no prop.
+ * Menus and tooltips portal out of it and keep the page theme.
+ * ==========================================================================*/
+.on-media {
+	--text-primary:           var(--media-fg);
+	--text-secondary:         var(--media-fg-muted);
+	--text-muted:             var(--media-fg);   /* a lone glyph rests white on a picture */
+	--bg-canvas:              transparent;       /* ring offsets */
+	--bg-surface:             var(--media-fg);   /* slider thumb */
+	--bg-hover:               var(--media-hover);
+	--bg-press:               var(--media-track);
+	--bg-press-strong:        var(--media-buffer);
+	--bg-elevated:            var(--media-chip);
+	--border-subtle:          var(--media-chip-line);
+	--border-default:         var(--media-chip-line);
+	--border-strong:          var(--media-fg);
+	--ring:                   var(--media-fg);
+	color: var(--text-primary);
 }
 
 /* ============================== base ====================================== */

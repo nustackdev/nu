@@ -195,7 +195,7 @@ export function Audio({
 				) : null}
 				<MediaPlayButton
 					media={media}
-					variant="soft"
+					variant="default"
 					size="md"
 					className="rounded-full"
 					disabled={!src || failed}
@@ -228,7 +228,7 @@ export function Audio({
 					</span>
 				)}
 				<MediaTime time={media.time} duration={media.duration} />
-				<MediaVolume media={media} />
+				<MediaVolume media={media} glyphClassName="text-text-primary" />
 				<MediaRate media={media} />
 			</div>
 		</TooltipProvider>
