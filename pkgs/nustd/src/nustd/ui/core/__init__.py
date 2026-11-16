@@ -17,6 +17,7 @@ The reusable seam under nustd.ui:
   ``as_spec``          -- descent: the child a container answers with at a place
 - ``Frame`` /
   ``encode/decode``    -- wire protocol envelope
+- ``UploadView``       -- one tab's resolve only view of the upload area
 - ``Send`` /
   ``Write`` /
   ``Append`` /
@@ -65,6 +66,7 @@ from .protocol import (
 )
 from .section import Section, SectionRef
 from .session import Session, Subscription, WsSession, WsSubscription
+from .uploads import UPLOAD_PREFIX, UploadView
 
 
 __all__ = [
@@ -77,6 +79,7 @@ __all__ = [
     "OP_READ",
     "OP_REMOVE",
     "OP_WRITE",
+    "UPLOAD_PREFIX",
     "Append",
     "Chain",
     "Changed",
@@ -95,6 +98,7 @@ __all__ = [
     "Send",
     "Session",
     "Subscription",
+    "UploadView",
     "Write",
     "WsSession",
     "WsSubscription",

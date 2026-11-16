@@ -145,9 +145,9 @@ def test_serve_mounts_the_route_first():
 
     extra = Route("/api/extra", lambda request: None)
     tree = nustd.ui.serve(nu.Int(0), routes=[extra])
-    (server,) = tree._payload["brackets"]
+    server, _uploads = tree._payload["brackets"]
     paths = [r.path for r in server._payload["kwargs"]["routes"]]
-    assert paths == ["/api/telemetry-config", "/api/extra"]
+    assert paths == ["/api/telemetry-config", "/_nu/upload/{sid}", "/api/extra"]
 
 
 def test_the_suite_runs_with_telemetry_off():
