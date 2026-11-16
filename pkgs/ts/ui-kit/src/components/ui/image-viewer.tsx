@@ -273,6 +273,8 @@ function ImageViewer({
 						key={src}
 						src={src}
 						alt={alt}
+						loading="lazy"
+						decoding="async"
 						draggable={false}
 						onLoad={onLoad}
 						className={cn(

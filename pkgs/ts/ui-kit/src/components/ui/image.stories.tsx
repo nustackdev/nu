@@ -61,6 +61,30 @@ export const Matrix: StoryObj = {
 	),
 };
 
+// Scroll the frame: each image is fetched only as it nears view
+// (watch the network panel).
+const LAZY_SEEDS = Array.from({ length: 30 }, (_, i) => `lazy${i + 1}`);
+
+export const Lazy: StoryObj = {
+	render: () => (
+		<div className="m-8 h-96 max-w-md overflow-y-auto border border-border-default">
+			<div className="space-y-6 p-4">
+				{LAZY_SEEDS.map((seed, i) => (
+					<div key={seed}>
+						<Image
+							src={`https://picsum.photos/seed/${seed}/400/240`}
+							alt={`Lazy image ${i + 1}`}
+							aspectRatio="5 / 3"
+							className="w-full"
+						/>
+						<div className="mt-1 font-mono text-xs text-text-muted">{i + 1}</div>
+					</div>
+				))}
+			</div>
+		</div>
+	),
+};
+
 const meta: Meta = {
 	title: "UI/Image",
 };
