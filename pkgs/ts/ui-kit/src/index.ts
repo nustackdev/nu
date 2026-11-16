@@ -246,6 +246,18 @@ export {
 } from "./components/ui/list";
 export type { MarkdownProps } from "./components/ui/markdown";
 export { Markdown } from "./components/ui/markdown";
+export {
+	MediaControls,
+	type MediaControlsProps,
+	MediaFullscreenButton,
+	MediaPlayButton,
+	MediaRate,
+	MediaTime,
+	MediaVolume,
+	Scrubber,
+	type ScrubberProps,
+	type ScrubTrackState,
+} from "./components/ui/media-controls";
 export { MultiSelect, type MultiSelectProps } from "./components/ui/multi-select";
 export { NavLink, navLinkVariants } from "./components/ui/nav-link";
 export { NumberInput, numberInputVariants } from "./components/ui/number-input";
@@ -511,6 +523,26 @@ export { createMarkdown, markdown } from "./lib/markdown/markdown";
 export { placeholder as prosePlaceholder, proseInputRules } from "./lib/markdown/rules";
 export type { ProseClasses, ProseSchema } from "./lib/markdown/schema";
 export { createProseSchema, proseRecipes, proseSchema, safeUrl } from "./lib/markdown/schema";
+export {
+	clampTime,
+	computePeaks,
+	formatRate,
+	formatTime,
+	fractionOf,
+	keyCommand,
+	type MediaCommand,
+	RATES,
+	resamplePeaks,
+	spokenTime,
+	timeAt,
+} from "./lib/media/model";
+export {
+	type MediaApi,
+	type MediaKeyOptions,
+	type MediaSnapshot,
+	useMedia,
+	useMediaKeys,
+} from "./lib/media/use-media";
 export {
 	CLICK_SLOP,
 	type DragAxis,
