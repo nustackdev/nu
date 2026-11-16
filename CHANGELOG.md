@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Serve blob stores over http with ranges, caching and streamed uploads
 - Add a blob fabric: large bytes on lmdb, files or S3, streamed both ways
 
 ## 0.7.5 - 2026-11-16

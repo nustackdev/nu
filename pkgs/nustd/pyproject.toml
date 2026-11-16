@@ -90,7 +90,8 @@ mp_pool = []
 valkey = [
     "valkeylite>=9.1.2",
 ]
-# `nustd.blob`'s default backend; the files backend needs nothing.
+# `nustd.blob`'s default backend; the files backend needs nothing. Serving a
+# store over http (`nustd.blob.http.serve_blobs`) takes Starlette from `ws_server`.
 blob = [
     "lmdb>=1.4",
 ]

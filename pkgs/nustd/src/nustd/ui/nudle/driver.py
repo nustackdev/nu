@@ -12,6 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import nu
+from nustd.blob.http.serving import serve_blobs
 from nustd.ui.core.session import WsSession
 from nustd.ws_server import SID_ATTR, listen, run_once, session_for, sessions_fold
 
@@ -19,11 +20,13 @@ from . import telemetry
 
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
 
     from starlette.routing import BaseRoute
 
+    from nu.context.fabric import Provide
     from nu.lang import Nu
+    from nustd.blob.http import BlobMount
 
 
 __all__ = ["serve"]
@@ -34,6 +37,7 @@ def serve(
     *,
     static: str | None = "nudle",
     routes: Sequence[BaseRoute] = (),
+    blobs: Mapping[BlobMount, Provide] | None = None,
     host: str = "127.0.0.1",
     port: int = 8080,
     log_level: str = "warning",
@@ -61,6 +65,11 @@ def serve(
             alone, for a headless run or a separate vite dev server.
         routes: extra Starlette routes for the server, served after nudle's
             own ``/api/telemetry-config`` and before the SPA mount.
+        blobs: blob stores to serve too, each mount to the spec of its store
+            (``nustd.blob.lmdb``, ``files`` or ``s3``): the server takes
+            reads and uploads under each mount and holds each store open
+            while it runs. The program binds the same specs to reach the
+            stores. None serves no blobs.
         host: uvicorn bind host.
         port: uvicorn bind port.
         log_level: uvicorn log level. The default silences uvicorn's own
@@ -78,11 +87,13 @@ def serve(
             ),
         )
     """
+    brackets, blob_routes = serve_blobs(blobs) if blobs else ([], [])
     return nu.With(
+        *brackets,
         listen(
             session_cls=WsSession,
             static=static,
-            routes=(telemetry.route(), *routes),
+            routes=(telemetry.route(), *routes, *blob_routes),
             host=host,
             port=port,
             log_level=log_level,
