@@ -2,7 +2,6 @@
 
 import type { NodeEntry } from "../../tree";
 import { AlertRef } from "./alert";
-import { AudioRef } from "./audio";
 import { BadgeRef } from "./badge";
 import { CalendarHeatmapRef } from "./calendar-heatmap";
 import { DataTableRef } from "./data-table";
@@ -12,7 +11,6 @@ import { GaugeRef } from "./gauge";
 import { HeadingRef } from "./heading";
 import { HtmlRef } from "./html";
 import { IconRef } from "./icon";
-import { ImageRef } from "./image";
 import { JsonViewerRef } from "./json-viewer";
 import { KbdRef } from "./kbd";
 import { LensRef } from "./lens";
@@ -28,7 +26,6 @@ import { StatusSquaresRef } from "./status-squares";
 import { TextRef } from "./text";
 import { TimelineRef } from "./timeline";
 import { TreeRef } from "./tree";
-import { VideoRef } from "./video";
 import { WaterfallRef } from "./waterfall";
 
 export const outputEntries: Record<string, NodeEntry> = {
@@ -44,9 +41,6 @@ export const outputEntries: Record<string, NodeEntry> = {
 	RelativeTimeRef,
 	DividerRef,
 	EmptyStateRef,
-	ImageRef,
-	VideoRef,
-	AudioRef,
 	HtmlRef,
 	LinkRef,
 	ProgressRef,

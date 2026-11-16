@@ -22,10 +22,11 @@ Layout under ``refs/``:
   ``TableRowRef``); and ``ListRef``, whose items are its plain strings and
   then any child node.
 - leaves/: one thing drawn from props, never children. ``LeafRef`` (base);
-  output (``HeadingRef``, ``TextRef``, ``ImageRef``, ``LinkRef``,
+  output (``HeadingRef``, ``TextRef``, ``LinkRef``,
   ``BadgeRef``, ``StatusDotRef``, ``KbdRef``, ``ShortcutRef``, ``AlertRef``,
   ``DividerRef``, ``EmptyStateRef``, ``StatRef``, ``ProgressRef``,
-  ``GaugeRef``, ``JsonViewerRef``); media (``VideoRef``, ``AudioRef``);
+  ``GaugeRef``, ``JsonViewerRef``); media (``ImageRef``, ``VideoRef``,
+  ``AudioRef``);
   display (``AvatarRef``, ``BreadcrumbRef``, ``SkeletonRef``, ``SpinnerRef``,
   ``StatusPillRef``);
   page (``IconRef``, ``SpacerRef``, ``PageLinkRef``, ``NavItemRef``);

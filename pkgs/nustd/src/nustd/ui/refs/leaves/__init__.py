@@ -80,7 +80,7 @@ from .input import (
     TextAreaRef,
     ToggleRef,
 )
-from .media import AudioRef, VideoRef
+from .media import AudioRef, ImageRef, VideoRef
 from .output import (
     AlertRef,
     BadgeRef,
@@ -90,7 +90,6 @@ from .output import (
     GaugeRef,
     HeadingRef,
     HtmlRef,
-    ImageRef,
     JsonViewerRef,
     KbdRef,
     LinkRef,
