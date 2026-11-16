@@ -196,6 +196,7 @@ Fabrics. Bind one and every Ref inside the bracket reaches a real system.
 | Module | What | Extra |
 | --- | --- | --- |
 | [`nustd.kv`](https://nustack.dev/docs/nustd/reference/kv) | Persistent state over RocksDB, LMDB or SQLite | `kv` |
+| `nustd.blob` | Images, video and other large bytes, stored once and streamed by range | `blob` |
 | [`nustd.ui`](https://nustack.dev/docs/nustd/reference/ui) | Live web UI | `ui` |
 | [`nustd.cluster`](https://nustack.dev/docs/nustd/reference/cluster) | Run trees across a Ray cluster | `cluster` |
 | [`nustd.mp`](https://nustack.dev/docs/nustd/reference/mp) / [`mp_pool`](https://nustack.dev/docs/nustd/reference/mp_pool) | Run trees in local worker processes | `mp` |

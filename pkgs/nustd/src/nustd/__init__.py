@@ -11,10 +11,10 @@ One import, then dot-access::
 
 Two kinds of thing live here, side by side.
 
-**Fabrics** (``kv``, ``queue``, ``ui``, ``ws_server``, ``service``, ``llm``,
-``cc``, ``http``, ``proxy``, ``mp``, ``mp_pool``, ``cluster``, ``valkey``) back
-a Shape with somewhere real to live: a store, a browser, a process pool, a
-model, a private notification server. Each
+**Fabrics** (``kv``, ``blob``, ``queue``, ``ui``, ``ws_server``, ``service``,
+``llm``, ``cc``, ``http``, ``proxy``, ``mp``, ``mp_pool``, ``cluster``,
+``valkey``) back a Shape with somewhere real to live: a store, a blob store, a
+browser, a process pool, a model, a private notification server. Each
 is heavy and pulls a large tree behind it (storage backends, the UI runtime,
 RPC, ray), so they load on first attribute access, not on ``import nustd``.
 
@@ -70,6 +70,7 @@ from . import (
 # go-to-definition despite never being bound at import time.
 if TYPE_CHECKING:
     from . import (
+        blob,
         cc,
         cluster,
         http,
@@ -88,6 +89,9 @@ if TYPE_CHECKING:
 # Value is the extra that pulls the fabric's backend, or None when the fabric
 # needs nothing beyond a plain ``nustd`` install.
 _LAZY = {
+    # Imports without lmdb: the files backend needs none, and the lmdb one
+    # raises naming the extra when it opens.
+    "blob": "blob",
     "cc": "cc",
     "cluster": "cluster",
     "http": "http",
