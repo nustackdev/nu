@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- A gallery example streams dropped media into a blob store, with progress and delete
 - Fix a stale upload test so the upload exports are checked where they live
 - Blob stores take a stream straight in, so copies and uploads never sit whole
 - Writes can now fold a whole stream into one value, not only reads

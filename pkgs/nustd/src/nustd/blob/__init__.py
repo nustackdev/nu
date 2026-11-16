@@ -56,6 +56,7 @@ from .protocol import (
 
 
 if TYPE_CHECKING:
+    from . import http
     from .fabric import BlobFabric
     from .interactions import (
         BlobDelete,
@@ -130,6 +131,7 @@ __all__ = [
     "StoreRef",
     "backend_of",
     "files",
+    "http",
     "lmdb",
     "s3",
 ]
