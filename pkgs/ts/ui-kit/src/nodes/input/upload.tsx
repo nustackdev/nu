@@ -1,8 +1,10 @@
 // UploadFileRef and UploadFilesRef -- a person hands files to the program.
 // Browser is source of truth.
 //
-// Both draw the kit FileDrop (click to pick, drop, paste, keyboard) and a
-// FileRow per file. The value is one dict per file (`{key, name, mime, size,
+// Both draw the kit FileInput (click to pick, drop, paste, keyboard).
+// UploadFileRef shows its picked file in the zone's place, with Replace and
+// remove; UploadFilesRef keeps the zone and lists a FileRow per file under it.
+// The zone's hint is built from `accept` and `max_size`. The value is one dict per file (`{key, name, mime, size,
 // modified, state, sent, error}`): a dict or null on UploadFileRef, a list on
 // UploadFilesRef. The files themselves stay in the browser, in the node's
 // handle map (./upload-handles.ts), along with every command the program can
@@ -22,8 +24,8 @@
 import { OPS } from "@nustackdev/ui-core";
 import { useEffect, useId, useState } from "react";
 import { FieldError, Label } from "../../components/ui/field";
-import { FileDrop, FileRow, type FileState, formatBytes } from "../../components/ui/file-drop";
-import { cn } from "../../lib/utils";
+import { FileInput, FileRow, type FileState } from "../../components/ui/file-input";
+import { formatBytes } from "../../lib/count";
 import { type NodeEntry, type NodeProps, useProp, useStringProp } from "../../tree";
 import { useCommit, useControl } from "./control";
 import { addFiles, dropFiles, prune, removeFile, uploadHandlers } from "./upload-handles";
@@ -87,6 +89,12 @@ function UploadView({ path, multiple }: NodeProps & { multiple: boolean }) {
 
 	const closed = c.disabled || c.readOnly;
 	const describedBy = [c.describedBy, notice ? noticeId : null].filter(Boolean).join(" ");
+	const remove = (key: string) => {
+		if (closed) return;
+		setNotice("");
+		pick(removeFile(path, key));
+	};
+	const first = multiple ? null : (rows[0] ?? null);
 
 	return (
 		<div className="flex flex-col gap-1">
@@ -95,12 +103,15 @@ function UploadView({ path, multiple }: NodeProps & { multiple: boolean }) {
 					{c.label}
 				</Label>
 			)}
-			<FileDrop
+			<FileInput
 				{...c.aria}
 				aria-describedby={describedBy || undefined}
 				accept={accept}
 				multiple={multiple}
 				prompt={prompt || undefined}
+				maxSize={maxSize}
+				file={first}
+				onRemove={first ? () => remove(first.key) : undefined}
 				size={c.size}
 				disabled={c.disabled}
 				readOnly={c.readOnly}
@@ -108,8 +119,8 @@ function UploadView({ path, multiple }: NodeProps & { multiple: boolean }) {
 				autoFocus={c.autoFocus}
 				onFiles={take}
 			/>
-			{rows.length > 0 && (
-				<ul className={cn("flex flex-col", c.disabled && "opacity-50")}>
+			{multiple && rows.length > 0 && (
+				<ul className="flex flex-col">
 					{rows.map((r) => (
 						<FileRow
 							key={r.key}
@@ -118,15 +129,7 @@ function UploadView({ path, multiple }: NodeProps & { multiple: boolean }) {
 							state={r.state}
 							error={r.error}
 							disabled={c.disabled}
-							onRemove={
-								c.readOnly
-									? undefined
-									: () => {
-											if (closed) return;
-											setNotice("");
-											pick(removeFile(path, r.key));
-										}
-							}
+							onRemove={c.readOnly ? undefined : () => remove(r.key)}
 						/>
 					))}
 				</ul>

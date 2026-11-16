@@ -195,14 +195,16 @@ export {
 } from "./components/ui/field";
 export {
 	accepts,
-	FileDrop,
-	type FileDropProps,
+	FileInput,
+	type FileInputFile,
+	type FileInputProps,
 	FileRow,
 	type FileRowProps,
 	type FileState,
-	fileDropVariants,
-	formatBytes,
-} from "./components/ui/file-drop";
+	fileFrameVariants,
+	fileHint,
+	fileInputVariants,
+} from "./components/ui/file-input";
 export { Gauge, gaugeVariants } from "./components/ui/gauge";
 export {
 	Grid,
@@ -490,7 +492,7 @@ export { mergeOption } from "./lib/chart/option";
 export { type ChartTokens, chartTheme, readChartTokens } from "./lib/chart/theme";
 export { loadLanguage } from "./lib/code/languages";
 export { kitHighlight, kitTheme } from "./lib/code/theme";
-export { formatCount, formatFullCount } from "./lib/count";
+export { formatBytes, formatCount, formatFullCount } from "./lib/count";
 export { ICON_NAMES, iconFor, isIconName } from "./lib/icons";
 export type { KeyBindings, KeyScope } from "./lib/keyboard";
 export { useKeyScope } from "./lib/keyboard";
