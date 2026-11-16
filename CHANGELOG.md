@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- An example searches a picked csv; an end to end test drives uploads
 - File pickers in the kit hold browser handles and answer program reads
 - Apps read picked files by range, whole or streamed, pulling only when needed
 - Browser files can land on the server in a per tab temp area
