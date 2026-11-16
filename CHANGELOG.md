@@ -2,16 +2,17 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.7.5
-- **nustd** (fabrics) — 0.7.5
-- **nudle** — 0.1.13
+- **nucore** (kernel) — 0.8.0
+- **nustd** (fabrics) — 0.8.0
+- **nudle** — 0.1.14
 - **ui-core** — 0.2.4
-- **ui-kit** — 0.4.5
+- **ui-kit** — 0.4.6
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.8.0 - 2026-11-16
 
+- Release nu 0.8.0
 - LMDB blob stores refuse a blob over 2 GiB up front, not at commit
 - Uploads take any size by default; a full server disk says so
 - A file row shows any file with its name, size and type, to open or save
