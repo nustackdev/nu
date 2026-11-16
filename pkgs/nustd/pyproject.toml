@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "nustd"
 version = "0.7.5"
-description = "Batteries for nu: the fabrics (kv, queue, service, llm, cc, http, proxy, mp, mp_pool, cluster, valkey, ws_server, ui) and the standard library, imported as nustd."
+description = "Batteries for nu: the fabrics (kv, blob, queue, service, llm, cc, http, proxy, mp, mp_pool, cluster, valkey, ws_server, ui) and the standard library, imported as nustd."
 readme = "README.md"
 license = "Apache-2.0"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
@@ -90,6 +90,14 @@ mp_pool = []
 valkey = [
     "valkeylite>=9.1.2",
 ]
+# `nustd.blob`'s default backend; the files backend needs nothing.
+blob = [
+    "lmdb>=1.4",
+]
+# `nustd.blob`'s s3 backend: any S3-compatible service (AWS, R2, MinIO).
+blob_s3 = [
+    "boto3>=1.35",
+]
 all = [
     "nustd[kv]",
     "nustd[queue]",
@@ -103,6 +111,8 @@ all = [
     "nustd[mp]",
     "nustd[mp_pool]",
     "nustd[valkey]",
+    "nustd[blob]",
+    "nustd[blob_s3]",
     # Every kv backend: rocksdb, lmdb, redis. 0.1.8 is where virtuals' own
     # `all` started meaning the backends rather than its dev tooling.
     "virtuals-py[all]>=0.2.2",

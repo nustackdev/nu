@@ -46,6 +46,7 @@ dot-access: `import nustd`, then `nustd.kv`, `nustd.ui`, `nustd.uuid`.
 | `nustd.service` | -                | Service / method dispatch             |
 | `nustd.queue`   | `nustd[queue]`   | Janus queue refs (loop and threads)   |
 | `nustd.kv`      | `nustd[kv]`      | Key-value storage (virtuals, RocksDB) |
+| `nustd.blob`    | `nustd[blob]`    | Write-once blobs on LMDB or files     |
 | `nustd.ui`      | `nustd[ui]`      | The nudle web UI runtime              |
 | `nustd.llm`     | `nustd[llm]`     | LLM calls                             |
 | `nustd.cc`      | `nustd[cc]`      | Claude Agent SDK sessions             |

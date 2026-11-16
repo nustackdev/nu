@@ -10,6 +10,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Add a blob fabric: large bytes on lmdb, files or S3, streamed both ways
+
 ## 0.7.5 - 2026-11-16
 
 - Release nu 0.7.5
