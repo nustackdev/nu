@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- LMDB blob stores refuse a blob over 2 GiB up front, not at commit
 - Uploads take any size by default; a full server disk says so
 - A file row shows any file with its name, size and type, to open or save
 - Large uploads go up in resumable pieces, so a network drop costs one piece

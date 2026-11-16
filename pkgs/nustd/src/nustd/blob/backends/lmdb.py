@@ -28,6 +28,7 @@ __all__ = [
     "DEFAULT_MAX_READERS",
     "DEFAULT_WRITEMAP",
     "MAX_VALUE",
+    "MAX_WRITE",
     "LMDBBackend",
 ]
 
@@ -55,6 +56,13 @@ without writemap. Linux has no such cost and keeps the RAM saving.
 MAX_VALUE = (1 << 32) - 1
 """LMDB keeps a value's size in 32 bits."""
 
+MAX_WRITE = (1 << 31) - 1
+"""The most one value holds here: macOS refuses one ``write`` past ``INT_MAX``.
+
+Without writemap LMDB writes a value at commit in one call, so past this the
+commit fails with ``EINVAL``. One cap on every platform keeps it simple.
+"""
+
 
 class LMDBBackend(LocalBackend):
     """Blobs in one LMDB environment: a value per id, ranges read straight from the map.
@@ -64,8 +72,8 @@ class LMDBBackend(LocalBackend):
 
     Limits, all native to LMDB:
 
-    - One value holds at most ``MAX_VALUE`` bytes (just under 4 GiB). A bigger
-      put raises ``BlobTooLarge`` before anything is written.
+    - One value holds at most ``MAX_WRITE`` bytes (just under 2 GiB). A
+      bigger put raises ``BlobTooLarge`` before anything is written.
     - No streamed put: py-lmdb has no ``MDB_RESERVE``, so a value goes in as
       one write. A path goes in from an mmap of itself; a file or an iterable
       spools to a temp file inside the env directory and goes in from an mmap
@@ -102,7 +110,7 @@ class LMDBBackend(LocalBackend):
       pull, and so does one deleted and put again under the same id.
     """
 
-    max_size: int = MAX_VALUE
+    max_size: int = MAX_WRITE
 
     def __init__(
         self,
