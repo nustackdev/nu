@@ -24,7 +24,7 @@
 // Fill: Chart (every chart type), DataTableRef, TreeRef,
 // JsonViewerRef, LensRef, CodeRef, MarkdownRef, InputRef, NumberInputRef,
 // TextAreaRef, TagInputRef, DatePickerRef, SliderRef, SketchRef, ProgressRef, AlertRef,
-// EmptyStateRef, ImageRef, HeadingRef, PageLinkRef (but an inline one), and
+// EmptyStateRef, ImageRef, VideoRef, AudioRef, HeadingRef, PageLinkRef (but an inline one), and
 // the containers Card, Form, Fieldset, Field, Tabs, Accordion, Column,
 // Row, ListRef, PageSection, NavList (Grid, Line, Select, Skeleton,
 // Collapsible set their own). Content:

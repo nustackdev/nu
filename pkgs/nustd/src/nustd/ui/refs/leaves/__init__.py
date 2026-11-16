@@ -9,6 +9,7 @@
 - tree:   TreeRef.
 - waterfall: WaterfallRef.
 - timeline: TimelineRef.
+- media:  VideoRef and AudioRef, played with the kit transport.
 - display: Avatar, Breadcrumb, Skeleton, Spinner, StatusPill.
 - choice: SegmentedControl, CheckboxGroup, MultiSelect, Autocomplete.
 - input:  tab-owned inputs (Toggle among them), plus MarkdownRef and CodeRef.
@@ -79,6 +80,7 @@ from .input import (
     TextAreaRef,
     ToggleRef,
 )
+from .media import AudioRef, VideoRef
 from .output import (
     AlertRef,
     BadgeRef,
@@ -112,6 +114,7 @@ from .waterfall import WaterfallRef
 __all__ = [
     "AlertRef",
     "AreaChart",
+    "AudioRef",
     "AutocompleteRef",
     "AvatarRef",
     "BadgeRef",
@@ -199,5 +202,6 @@ __all__ = [
     "UploadRefused",
     "UploadTooLarge",
     "UploadedFileRef",
+    "VideoRef",
     "WaterfallRef",
 ]

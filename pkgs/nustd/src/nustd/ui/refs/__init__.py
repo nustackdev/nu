@@ -25,8 +25,9 @@ Layout under ``refs/``:
   output (``HeadingRef``, ``TextRef``, ``ImageRef``, ``LinkRef``,
   ``BadgeRef``, ``StatusDotRef``, ``KbdRef``, ``ShortcutRef``, ``AlertRef``,
   ``DividerRef``, ``EmptyStateRef``, ``StatRef``, ``ProgressRef``,
-  ``GaugeRef``, ``JsonViewerRef``); display (``AvatarRef``,
-  ``BreadcrumbRef``, ``SkeletonRef``, ``SpinnerRef``, ``StatusPillRef``);
+  ``GaugeRef``, ``JsonViewerRef``); media (``VideoRef``, ``AudioRef``);
+  display (``AvatarRef``, ``BreadcrumbRef``, ``SkeletonRef``, ``SpinnerRef``,
+  ``StatusPillRef``);
   page (``IconRef``, ``SpacerRef``, ``PageLinkRef``, ``NavItemRef``);
   data_table (``DataTableRef`` and its row ops); tree (``TreeRef``); input (tab-owned:
   ``ButtonRef``, ``InputRef``, ``ToggleRef``, ..., plus ``MarkdownRef`` and
@@ -112,6 +113,7 @@ from .collections.order import (
 from .leaves import (
     AlertRef,
     AreaChart,
+    AudioRef,
     AutocompleteRef,
     AvatarRef,
     BadgeRef,
@@ -199,6 +201,7 @@ from .leaves import (
     UploadFilesRef,
     UploadRefused,
     UploadTooLarge,
+    VideoRef,
     WaterfallRef,
 )
 from .query import decode_query, encode_query
@@ -241,6 +244,7 @@ __all__ = [
     "AccordionRef",
     "AlertRef",
     "AreaChart",
+    "AudioRef",
     "AutocompleteRef",
     "AvatarRef",
     "BadgeRef",
@@ -383,6 +387,7 @@ __all__ = [
     "UploadRefused",
     "UploadTooLarge",
     "UploadedFileRef",
+    "VideoRef",
     "WaterfallRef",
     "decode_query",
     "encode_query",

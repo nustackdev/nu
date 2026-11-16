@@ -2,6 +2,7 @@
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { MoreHorizontal } from "lucide-react";
+import { Audio } from "../../components/ui/audio";
 import { Avatar, AvatarFallback } from "../../components/ui/avatar";
 import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
@@ -43,6 +44,7 @@ import {
 	TableRow,
 } from "../../components/ui/table";
 import { Text } from "../../components/ui/text";
+import { Video } from "../../components/ui/video";
 import { Block, Row, SinkPage, sinkParameters, ThemePair } from "./frame";
 
 const CARD_VARIANTS = ["default", "elevated", "sunken", "outline"] as const;
@@ -92,6 +94,10 @@ const DT_ROWS: DataTableRow[] = [
 	{ key: "b", cells: ["train", 42, false, "draft"] },
 	{ key: "c", cells: ["report", 7, true, "done"] },
 ];
+
+// CC0 clips MDN serves with open CORS; the audio waveform needs it.
+const VIDEO_SRC = "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4";
+const AUDIO_SRC = "https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3";
 
 // A tiny inline SVG so Image needs no network.
 const IMAGE_SRC = `data:image/svg+xml;utf8,${encodeURIComponent(
@@ -328,6 +334,16 @@ function Data() {
 					className="w-64 border border-border-subtle"
 					aspectRatio="16 / 9"
 				/>
+			</Row>
+			<Row label="Video">
+				<div className="w-64">
+					<Video src={VIDEO_SRC} aspectRatio="16 / 9" label="Flower" />
+				</div>
+			</Row>
+			<Row label="Audio">
+				<div className="w-full max-w-md">
+					<Audio src={AUDIO_SRC} title="t-rex-roar.mp3" />
+				</div>
 			</Row>
 			<Row label="Avatar">
 				{(["sm", "md", "lg", "xl"] as const).map((size) => (
