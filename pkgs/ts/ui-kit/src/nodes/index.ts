@@ -2,6 +2,7 @@
 //
 // The registry is closed by default: adding a type means dropping a module
 // under one of the group folders and adding a line to that group's barrel.
+// `media/` holds images, video and audio.
 // `containers/` holds the types with open-ended children (Row, Card, ...);
 // every other group holds leaves, drawn from their own props.
 // A type that lives in a downstream package (nuspace, an app) calls
@@ -12,12 +13,14 @@ import { chartEntries } from "./chart";
 import { containerEntries } from "./containers";
 import { displayEntries } from "./display";
 import { inputEntries } from "./input";
+import { mediaEntries } from "./media";
 import { outputEntries } from "./output";
 import { structuralEntries } from "./structural";
 
 export const nodeEntries: Record<string, NodeEntry> = {
 	...structuralEntries,
 	...outputEntries,
+	...mediaEntries,
 	...displayEntries,
 	...inputEntries,
 	...chartEntries,
