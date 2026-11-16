@@ -10,7 +10,8 @@
 // or the speed menu is open, and fades out once playback runs idle; the
 // cursor goes with it. The frame is a dark stage in both themes, the way a
 // screen is: the scrim, the controls and the focus ring all resolve against
-// dark tokens, so they read over any picture.
+// dark tokens, so they read over any picture. With nothing to play (no
+// source, or one that failed) it is a plain sunken well in the page's theme.
 //
 // The frame takes focus and owns the transport keys (lib/media/model.ts
 // `keyCommand`): space or k, j l and the arrows, `,` and `.` to step one
@@ -130,7 +131,8 @@ export function Video({
 			aria-label={label}
 			aria-keyshortcuts="Space K J L ArrowLeft ArrowRight M F"
 			className={cn(
-				"dark group/video relative w-full overflow-hidden bg-bg-sunken text-text-primary",
+				"group/video relative w-full overflow-hidden bg-bg-sunken text-text-primary",
+				!(empty || failed) && "dark",
 				"cursor-default select-none outline-hidden",
 				"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas",
 				"[&:fullscreen]:rounded-none",
