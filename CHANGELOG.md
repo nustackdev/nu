@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- An image viewer: zoom toward the pointer, pan, crisp pixels and a full window view
 - A shared media transport: scrub bar, time readout, volume, speed and player keys
 - Polish the file input: hint line, single file swap, safe drops outside it
 - Move upload logic into its own ui package; nudle only assembles it
