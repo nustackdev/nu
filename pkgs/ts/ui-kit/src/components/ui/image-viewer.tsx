@@ -9,6 +9,7 @@
 //   double click fit -> zoom in at the point; anywhere else -> fit
 //   + / -        zoom in / out a step, toward the centre
 //   0 / 1        fit / 1:1
+//   f            full window, and back
 //   arrows       pan, while zoomed (shift for a longer step)
 //
 // Until the reader zooms, the view follows the box: a resize refits. Past 1:1
@@ -16,17 +17,20 @@
 // controls cluster in the corner rests hidden and shows on hover or focus
 // (`controls="always"` pins it, `"none"` drops it); on a touch screen it is
 // always shown. `expandable` adds a button that opens the same viewer over
-// the whole window, Esc to close (`expanded` holds it from outside). `pixel` shows the image pixel under the
-// pointer.
+// the whole window, Esc to close (`expanded` holds it from outside). It is
+// the video player's full screen button, and in the full window view the
+// exit button takes its place in the cluster, so the way out is where the
+// way in was; a solid close button sits top right too. `pixel` shows the
+// image pixel under the pointer.
 //
 // The box has no size of its own: give it a height, or an `aspectRatio` with
 // a width. With neither it is 320px tall (h-80).
 
-import { Maximize2, Scan, ZoomIn, ZoomOut } from "lucide-react";
+import { Maximize, Minimize, RotateCcw, X, ZoomIn, ZoomOut } from "lucide-react";
 import * as React from "react";
 import { useKeyScope } from "../../lib/keyboard";
 import { cn } from "../../lib/utils";
-import { Dialog, DialogContent, DialogTitle } from "./dialog";
+import { Dialog, DialogClose, DialogContent, DialogTitle } from "./dialog";
 import { IconButton } from "./icon-button";
 import { RADIUS_CLASS } from "./image";
 import {
@@ -68,6 +72,8 @@ export interface ImageViewerProps extends Omit<React.ComponentProps<"div">, "chi
 	/** The full-window view, held by the caller; uncontrolled unless set. */
 	expanded?: boolean;
 	onExpandedChange?: (open: boolean) => void;
+	/** Draws the exit button where expand sits, and the full window insets. Internal. */
+	onExit?: () => void;
 }
 
 type State = { view: View; follow: boolean; smooth: boolean };
@@ -105,6 +111,7 @@ function ImageViewer({
 	pixel = false,
 	expanded: expandedProp,
 	onExpandedChange,
+	onExit,
 	className,
 	style,
 	...props
@@ -165,6 +172,7 @@ function ImageViewer({
 		_: () => zoomStep(-1),
 		"0": toFit,
 		"1": toActual,
+		...(onExit ? { f: onExit } : expandable ? { f: () => setExpanded(true) } : {}),
 		// Arrows only while there is somewhere to go, so otherwise they scroll the page.
 		...(pannable
 			? {
@@ -302,7 +310,8 @@ function ImageViewer({
 					data-slot="image-viewer-pixel"
 					aria-hidden="true"
 					className={cn(
-						"pointer-events-none absolute bottom-2 left-2 rounded-sm px-1.5 py-0.5",
+						"pointer-events-none absolute rounded-sm px-1.5 py-0.5",
+						onExit ? "bottom-5 left-5" : "bottom-2 left-2",
 						"border border-border-subtle bg-bg-elevated shadow-raised",
 						"font-mono text-xs tabular-nums text-text-secondary",
 					)}
@@ -319,7 +328,8 @@ function ImageViewer({
 						role="group"
 						aria-label="Zoom"
 						className={cn(
-							"absolute right-2 bottom-2 flex items-center gap-0.5 rounded-md p-0.5",
+							"absolute flex items-center gap-0.5 rounded-md p-0.5",
+							onExit ? "right-5 bottom-5" : "right-2 bottom-2",
 							"border border-border-subtle bg-bg-elevated shadow-raised",
 							"transition-opacity duration-fast ease-out",
 							controls === "hover" &&
@@ -350,7 +360,7 @@ function ImageViewer({
 						</Control>
 						<span aria-hidden="true" className="mx-0.5 h-4 w-px bg-border-subtle" />
 						<Control label="Fit" keys={["0"]} off={sameScale(scale, fit)} onClick={toFit}>
-							<Scan />
+							<RotateCcw />
 						</Control>
 						<Control
 							label="Actual size"
@@ -361,12 +371,18 @@ function ImageViewer({
 						>
 							1:1
 						</Control>
-						{expandable && (
+						{(expandable || onExit) && (
 							<>
 								<span aria-hidden="true" className="mx-0.5 h-4 w-px bg-border-subtle" />
-								<Control label="Expand" onClick={() => setExpanded(true)}>
-									<Maximize2 />
-								</Control>
+								{onExit ? (
+									<Control label="Exit full screen" keys={["F"]} onClick={onExit}>
+										<Minimize />
+									</Control>
+								) : (
+									<Control label="Full screen" keys={["F"]} onClick={() => setExpanded(true)}>
+										<Maximize />
+									</Control>
+								)}
 							</>
 						)}
 					</div>
@@ -378,6 +394,7 @@ function ImageViewer({
 					<DialogContent
 						data-slot="image-viewer-overlay"
 						aria-describedby={undefined}
+						showClose={false}
 						className={cn(
 							"top-0 left-0 block h-dvh w-dvw max-w-none translate-x-0 translate-y-0",
 							"rounded-none border-0 bg-bg-canvas p-0",
@@ -390,8 +407,21 @@ function ImageViewer({
 							controls="always"
 							expandable={false}
 							pixel={pixel}
+							onExit={() => setExpanded(false)}
 							className="h-full bg-bg-canvas"
 						/>
+						{/* Solid, not ghost: it sits on the image once zoomed in. */}
+						<DialogClose asChild>
+							<IconButton
+								data-slot="image-viewer-close"
+								variant="secondary"
+								size="md"
+								aria-label="Close"
+								className="absolute top-5 right-5 shadow-raised"
+							>
+								<X />
+							</IconButton>
+						</DialogClose>
 					</DialogContent>
 				</Dialog>
 			)}

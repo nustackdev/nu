@@ -288,7 +288,16 @@ export function MediaTime({
  * Mute, and a volume slider that opens beside it on hover or focus: the level
  * is there when you reach for it and out of the way otherwise.
  */
-export function MediaVolume({ media, className }: { media: MediaApi; className?: string }) {
+export function MediaVolume({
+	media,
+	className,
+	glyphClassName,
+}: {
+	media: MediaApi;
+	className?: string;
+	/** On the mute button: a row on the page surface lifts it off the ghost rest. */
+	glyphClassName?: string;
+}) {
 	const level = media.muted ? 0 : media.volume;
 	const Glyph = level === 0 ? VolumeX : level < 0.5 ? Volume1 : Volume2;
 	const label = level === 0 ? "Unmute" : "Mute";
@@ -300,6 +309,7 @@ export function MediaVolume({ media, className }: { media: MediaApi; className?:
 				aria-label={label}
 				tip={tip(label, "M")}
 				tipSide="top"
+				className={glyphClassName}
 				onClick={media.toggleMute}
 			>
 				<Glyph />

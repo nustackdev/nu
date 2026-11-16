@@ -9,9 +9,10 @@
 // while paused, while the pointer moves, while a control has keyboard focus
 // or the speed menu is open, and fades out once playback runs idle; the
 // cursor goes with it. The frame is a dark stage in both themes, the way a
-// screen is: the scrim, the controls and the focus ring all resolve against
-// dark tokens, so they read over any picture. With nothing to play (no
-// source, or one that failed) it is a plain sunken well in the page's theme.
+// screen is, and the controls sit in an `.on-media` subtree: white glyphs on
+// a fixed Dusk scrim, the played run in Afterglow, the same over any picture
+// in either theme. With nothing to play (no source, or one that failed) it
+// is a plain sunken well in the page's theme.
 //
 // The frame takes focus and owns the transport keys (lib/media/model.ts
 // `keyCommand`): space or k, j l and the arrows, `,` and `.` to step one
@@ -186,7 +187,7 @@ export function Video({
 			) : null}
 
 			{media.waiting && !failed ? (
-				<div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+				<div className="on-media pointer-events-none absolute inset-0 flex items-center justify-center">
 					<Spinner size="xl" tone="neutral" label="Buffering" />
 				</div>
 			) : null}
@@ -196,7 +197,8 @@ export function Video({
 					data-slot="video-controls"
 					data-shown={shown ? "" : undefined}
 					className={cn(
-						"absolute inset-x-0 bottom-0 bg-linear-to-t from-bg-overlay to-transparent px-2.5 pt-8 pb-1",
+						"on-media absolute inset-x-0 bottom-0 px-2.5 pt-8 pb-1",
+						"bg-linear-to-t from-media-scrim via-media-scrim/45 to-transparent",
 						"opacity-0 transition-opacity duration-base ease-out",
 						"data-shown:opacity-100 has-focus-visible:opacity-100",
 					)}
