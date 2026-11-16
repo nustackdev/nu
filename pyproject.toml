@@ -255,6 +255,9 @@ classmethod-decorators = ["value_constructor"]  # nu.forms: a classmethod refs d
     "D102",    # widget setters are one-liners; docstring per method is ceremony
     "ANN401",
 ]
+"**/src/nustd/ui/uploads/**/*.py" = [
+    "ANN401",  # the reads' athunks and file helpers return Any, as in refs
+]
 "**/src/nustd/ui/nudle/**/*.py" = [
     "D102", "D103", "D205", "ANN401", "S110",
 ]

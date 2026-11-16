@@ -21,7 +21,6 @@ import nustd.ui
 from nu import Context, Shape
 from nu.lang.null import is_null
 from nustd.ui import Column, Session
-from nustd.ui.core import UploadView
 from nustd.ui.refs import (
     FileGone,
     NoFile,
@@ -35,7 +34,8 @@ from nustd.ui.refs import (
     UploadRefused,
     UploadTooLarge,
 )
-from nustd.ui.refs.leaves import upload as up
+from nustd.ui.uploads import UploadView
+from nustd.ui.uploads import interactions as up
 
 
 if TYPE_CHECKING:

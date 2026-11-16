@@ -6,9 +6,8 @@ runs the branch the pathname names) and the browser renders it, links
 included, inside the kit's AnchorCatcher.
 
 ``driver`` stacks the ws server, the upload intake, the session driver and
-the per-tab fold into one tree as ``serve``; ``uploads`` holds the temp area
-the browser posts picked files into, its route, and the bracket binding each
-tab's view of it; ``telemetry`` decides whether the SPA may send
+the per-tab fold into one tree as ``serve``, assembling the uploads from
+``nustd.ui.uploads``; ``telemetry`` decides whether the SPA may send
 its one opt-out launch ping, and hands it what to send with.
 The wire protocol and the shared ws session live in ``nustd.ui.core``, the
 connection lifecycle in ``nustd.ws_server``, and the Vite SPA + PyPI wheel
@@ -20,7 +19,6 @@ from __future__ import annotations
 from nustd.ui.core import Append, Changed, Frame, Send, Subscription, Write, decode, encode
 
 from .driver import serve
-from .uploads import UploadArea, UploadViewFor, upload_view, uploads
 
 
 __all__ = [
@@ -29,12 +27,8 @@ __all__ = [
     "Frame",
     "Send",
     "Subscription",
-    "UploadArea",
-    "UploadViewFor",
     "Write",
     "decode",
     "encode",
     "serve",
-    "upload_view",
-    "uploads",
 ]
