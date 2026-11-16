@@ -850,7 +850,8 @@ def test_errors_are_exported_from_nustd_ui():
         "UploadFilesRef",
         "UploadedFileRef",
     ):
-        assert getattr(nustd.ui, name) is getattr(up, name)
+        home = nustd.ui.refs if name.endswith("Ref") else nustd.ui.uploads
+        assert getattr(nustd.ui, name) is getattr(home, name)
         assert name in nustd.ui.__all__
     for cls in (NoFile, FileGone, UploadCanceled, UploadTooLarge, UploadRefused, UploadFailed):
         assert issubclass(cls, UploadError)
