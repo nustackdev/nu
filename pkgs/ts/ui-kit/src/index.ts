@@ -564,7 +564,10 @@ export {
 } from "./lib/roving";
 export { formatShortcut, isMac, keyLabel, keySpoken, type Platform } from "./lib/shortcut";
 export {
+	PIECE,
+	type PieceOptions,
 	postBlob,
+	postFile,
 	type Transfer,
 	type TransferCode,
 	type TransferResult,

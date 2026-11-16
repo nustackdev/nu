@@ -165,7 +165,7 @@ class UploadView:
 # ---- the area -------------------------------------------------------------
 
 
-#: The most bytes one POST may carry unless the host says otherwise.
+#: The most bytes one file may carry unless the host says otherwise.
 DEFAULT_CAP = 2 << 30
 
 #: A ``nu-uploads-*`` dir untouched this long belongs to a server that is gone.
@@ -187,7 +187,7 @@ class UploadArea:
     Args:
         root: the folder to keep files in. Made at setup if missing, removed
             whole at cleanup, so give it a dir of its own.
-        cap: the most bytes one POST may carry.
+        cap: the most bytes one file may carry, whole or in pieces.
 
     Notes:
         - Layout is ``root / sid / token``. A token is ``uuid4().hex``; a
@@ -220,7 +220,7 @@ class UploadArea:
 
     @property
     def cap(self) -> int:
-        """The most bytes one POST may carry."""
+        """The most bytes one file may carry."""
         return self._cap
 
     # ---- lifecycle ----------------------------------------------------------

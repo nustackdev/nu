@@ -60,9 +60,9 @@ def uploads(
         root: the folder for posted files, made at setup if missing and
             removed at cleanup. None picks a fresh ``nu-uploads-<hex>`` in
             the system temp dir, made at setup.
-        cap: the most bytes one POST may carry. A bigger body is answered
-            413, before reading when ``Content-Length`` says so, at the
-            first byte past the cap otherwise.
+        cap: the most bytes one file may carry, whole or in pieces. A
+            bigger file is answered 413, before reading when its size is
+            declared, at the first byte past the cap otherwise.
 
     Returns:
         ``(bracket, routes)``. The bracket goes in the ``nu.With`` after the

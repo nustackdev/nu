@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Large uploads go up in resumable pieces, so a network drop costs one piece
 - Images, videos and sound can carry a download link the person saves them by
 - A gallery example streams dropped media into a blob store, with progress and delete
 - Fix a stale upload test so the upload exports are checked where they live

@@ -393,7 +393,7 @@ describe("commands", () => {
 		dispatch(["n"], "pull", { key: null, rid: "r1", url: URL });
 		const xhr = FakeXHR.all[0];
 		expect(xhr.method).toBe("POST");
-		expect(xhr.url).toBe(URL);
+		expect(xhr.url).toBe(`${URL}?total=1000`);
 		expect(one()).toMatchObject({ state: "pulling" });
 		act(() => xhr.progress(5, 1000)); // under 1%
 		act(() => xhr.progress(100, 1000)); // moved 10%
@@ -520,11 +520,20 @@ describe("commands", () => {
 		expect(row?.textContent).toContain("Pick it again");
 	});
 
-	it("maps a dropped network, 413 and 403 to their codes", async () => {
+	it("maps a network that stays down, 413 and 403 to their codes", async () => {
+		vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
 		picked("UploadFileRef", {}, file("a.csv", 10));
-		const codes: string[] = [];
+		dispatch(["n"], "pull", { key: null, rid: "r", url: URL });
+		for (let i = 0; i < 5; i++) {
+			const xhr = FakeXHR.all.at(-1);
+			if (xhr) act(() => xhr.fail());
+			await act(() => vi.advanceTimersByTimeAsync(60_000));
+		}
+		expect(FakeXHR.all).toHaveLength(5); // the piece sent five times, then given up
+		vi.useRealTimers();
+		await settle();
+		const codes = [String(events("upload").at(-1)?.error)];
 		for (const end of [
-			(x: FakeXHR) => x.fail(),
 			(x: FakeXHR) => x.answer(413, { detail: "cap" }),
 			(x: FakeXHR) => x.answer(403),
 		]) {

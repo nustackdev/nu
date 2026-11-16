@@ -207,7 +207,110 @@ def test_a_chunked_body_under_cap_lands_whole(rig: _Rig, client: TestClient):
     assert rig.area.path(sid, res.json()["token"]).read_bytes()[::1000] == b"ABCD"
 
 
-async def _drive(app: Starlette, sid: str, messages: list[dict]) -> list[dict]:
+# ---- pieces ------------------------------------------------------------------
+
+
+def _piece(client: TestClient, sid: str, body: bytes, total: int, token: str = "", at: int = 0):
+    query = f"token={token}&offset={at}&total={total}" if token else f"total={total}"
+    return client.post(f"{_url(sid)}?{query}", content=body, headers=SAME)
+
+
+def test_pieces_land_the_file_once_the_last_is_in(rig: _Rig, client: TestClient):
+    sid = rig.open_tab()
+    first = _piece(client, sid, b"abcd", 10)
+    assert first.status_code == 202
+    token = first.json()["token"]
+    assert first.json() == {"token": token, "size": 4}
+    assert rig.files(sid) == [f"{token}.part"]
+    assert _piece(client, sid, b"efgh", 10, token, 4).json() == {"token": token, "size": 8}
+    last = _piece(client, sid, b"ij", 10, token, 8)
+    assert last.status_code == 201
+    assert last.json() == {"token": token, "size": 10}
+    assert rig.area.path(sid, token).read_bytes() == b"abcdefghij"
+
+
+def test_a_piece_sent_twice_lands_once(rig: _Rig, client: TestClient):
+    sid = rig.open_tab()
+    token = _piece(client, sid, b"abcd", 8).json()["token"]
+    _piece(client, sid, b"ef", 8, token, 4)  # half of a piece, then the drop
+    assert _piece(client, sid, b"efgh", 8, token, 4).status_code == 201
+    assert rig.area.path(sid, token).read_bytes() == b"abcdefgh"
+
+
+def test_the_last_piece_sent_again_is_answered_landed(rig: _Rig, client: TestClient):
+    sid = rig.open_tab()
+    token = _piece(client, sid, b"ab", 4).json()["token"]
+    assert _piece(client, sid, b"cd", 4, token, 2).status_code == 201
+    again = _piece(client, sid, b"cd", 4, token, 2)
+    assert again.status_code == 201
+    assert again.json() == {"token": token, "size": 4}
+
+
+def test_a_piece_past_what_arrived_is_told_the_size(rig: _Rig, client: TestClient):
+    sid = rig.open_tab()
+    token = _piece(client, sid, b"ab", 8).json()["token"]
+    res = _piece(client, sid, b"gh", 8, token, 6)
+    assert res.status_code == 409
+    assert res.json() == {"token": token, "size": 2}
+
+
+def test_a_total_over_the_cap_is_refused_before_reading(tmp_path: Path):
+    r = _Rig(tmp_path / "area", cap=8)
+    try:
+        with TestClient(r.app) as c:
+            sid = r.open_tab()
+            assert _piece(c, sid, b"x", 9).status_code == 413
+            assert r.files(sid) == []
+    finally:
+        r.area.cleanup()
+
+
+def test_a_piece_running_past_its_total_is_cut(rig: _Rig, client: TestClient):
+    sid = rig.open_tab()
+    token = _piece(client, sid, b"ab", 4).json()["token"]
+    assert _piece(client, sid, b"cdef", 4, token, 2).status_code == 400
+    assert rig.files(sid) == []
+
+
+def test_an_empty_file_lands_from_its_one_piece(rig: _Rig, client: TestClient):
+    sid = rig.open_tab()
+    res = _piece(client, sid, b"", 0)
+    assert res.status_code == 201
+    assert rig.area.path(sid, res.json()["token"]).read_bytes() == b""
+
+
+@pytest.mark.parametrize(
+    "query",
+    ["total=x", "total=4&token=nope&offset=0", "total=4&token=" + "a" * 32 + "&offset=9"],
+)
+def test_a_bad_piece_query_is_refused(rig: _Rig, client: TestClient, query: str):
+    sid = rig.open_tab()
+    assert client.post(f"{_url(sid)}?{query}", content=b"ab", headers=SAME).status_code == 400
+
+
+def test_a_piece_of_an_unknown_token_is_not_found(rig: _Rig, client: TestClient):
+    sid = rig.open_tab()
+    assert _piece(client, sid, b"ab", 4, "b" * 32, 2).status_code == 404
+
+
+async def test_a_dropped_piece_keeps_what_arrived_before_it(rig: _Rig):
+    sid = rig.open_tab()
+    with TestClient(rig.app) as c:
+        token = _piece(c, sid, b"abcd", 12).json()["token"]
+    await _drive(
+        rig.app,
+        sid,
+        [
+            {"type": "http.request", "body": b"ef", "more_body": True},
+            {"type": "http.disconnect"},
+        ],
+        query=f"token={token}&offset=4&total=12".encode(),
+    )
+    assert rig.files(sid) == [f"{token}.part"]
+    assert (rig.area.root / sid / f"{token}.part").read_bytes()[:4] == b"abcd"
+
+
+async def _drive(app: Starlette, sid: str, messages: list[dict], query: bytes = b"") -> list[dict]:
     """Run one POST through the ASGI app with a body told message by message."""
     scope = {
         "type": "http",
@@ -217,7 +320,7 @@ async def _drive(app: Starlette, sid: str, messages: list[dict]) -> list[dict]:
         "scheme": "http",
         "path": _url(sid),
         "raw_path": _url(sid).encode(),
-        "query_string": b"",
+        "query_string": query,
         "root_path": "",
         "headers": [(b"host", b"testserver"), (b"sec-fetch-site", b"same-origin")],
         "client": ("127.0.0.1", 1),

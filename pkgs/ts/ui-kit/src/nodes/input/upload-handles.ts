@@ -34,7 +34,7 @@
 
 import { type NodeHandler, OPS, type Path } from "@nustackdev/ui-core";
 import type { FileState } from "../../components/ui/file-input";
-import { postBlob, type Transfer, type TransferResult } from "../../lib/transfer";
+import { postBlob, postFile, type Transfer, type TransferResult } from "../../lib/transfer";
 import { nodeAt, pathKey, tree } from "../../tree";
 import { resetInput } from "./control";
 
@@ -311,7 +311,7 @@ function startPull(path: Path, h: Handle, rid: unknown, url: string): void {
 	h.waiters = [rid as string];
 	h.reportedAt = Number.NEGATIVE_INFINITY;
 	h.reported = 0;
-	const transfer = postBlob(url, h.file, (sent) => progressed(path, h, sent));
+	const transfer = postFile(url, h.file, (sent) => progressed(path, h, sent));
 	h.pull = transfer;
 	void transfer.done.then((result) => pulled(path, h, result));
 	land(path);
