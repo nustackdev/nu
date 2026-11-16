@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- A video player with the kit transport, poster, frame stepping and full screen
 - Images can turn zoomable with one flag, for inspecting photos and model inputs
 - An image viewer: zoom toward the pointer, pan, crisp pixels and a full window view
 - A shared media transport: scrub bar, time readout, volume, speed and player keys

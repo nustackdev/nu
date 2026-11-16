@@ -481,6 +481,7 @@ export {
 	type TreeProps,
 } from "./components/ui/tree";
 export type { TreeMove, TreeRow, TreeSource } from "./components/ui/tree-model";
+export { Video, type VideoProps } from "./components/ui/video";
 export { Waterfall, type WaterfallProps } from "./components/ui/waterfall";
 export {
 	formatSpanTime,
