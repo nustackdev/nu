@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 from nu.context.fabric import Provide
 from nu.core.spans.bracket import _LifecycleBracket
 
-from .area import _PREFIX, DEFAULT_CAP, UploadArea, UploadView
+from .area import _PREFIX, UploadArea, UploadView
 
 
 if TYPE_CHECKING:
@@ -48,7 +48,7 @@ def _held(area: UploadArea) -> UploadArea:
 def uploads(
     root: str | os.PathLike[str] | None = None,
     *,
-    cap: int = DEFAULT_CAP,
+    cap: int | None = None,
 ) -> tuple[Provide, list[Route]]:
     """The temp area's bracket and its intake route, sharing one area.
 
@@ -62,7 +62,9 @@ def uploads(
             the system temp dir, made at setup.
         cap: the most bytes one file may carry, whole or in pieces. A
             bigger file is answered 413, before reading when its size is
-            declared, at the first byte past the cap otherwise.
+            declared, at the first byte past the cap otherwise. None, the
+            default, takes any size; a disk that fills mid write is
+            answered 507.
 
     Returns:
         ``(bracket, routes)``. The bracket goes in the ``nu.With`` after the

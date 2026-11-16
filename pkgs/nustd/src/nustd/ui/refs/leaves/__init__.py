@@ -29,6 +29,7 @@ from nustd.ui.uploads.errors import (
     UploadCanceled,
     UploadError,
     UploadFailed,
+    UploadNoSpace,
     UploadRefused,
     UploadTooLarge,
 )
@@ -200,6 +201,7 @@ __all__ = [
     "UploadFailed",
     "UploadFileRef",
     "UploadFilesRef",
+    "UploadNoSpace",
     "UploadRefused",
     "UploadTooLarge",
     "UploadedFileRef",

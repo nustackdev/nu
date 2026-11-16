@@ -31,6 +31,7 @@ from nustd.ui.refs import (
     UploadFailed,
     UploadFileRef,
     UploadFilesRef,
+    UploadNoSpace,
     UploadRefused,
     UploadTooLarge,
 )
@@ -615,10 +616,17 @@ def test_a_file_changed_on_disk_raises_file_gone(tab):
         _run(tab, F.get_bytes())
 
 
-def test_too_large_names_the_cap_side(tab):
+def test_too_large_names_the_limit_side(tab):
     _pick(tab, DATA)
     tab.fail = "too_large"
-    with pytest.raises(UploadTooLarge, match="cap"):
+    with pytest.raises(UploadTooLarge, match="upload limit"):
+        _run(tab, F.get_bytes())
+
+
+def test_a_full_server_disk_raises_no_space(tab):
+    _pick(tab, DATA)
+    tab.fail = "no_space"
+    with pytest.raises(UploadNoSpace, match="out of disk space"):
         _run(tab, F.get_bytes())
 
 

@@ -133,4 +133,10 @@ describe("postFile", () => {
 		last().answer(413, "cap");
 		expect(await t.done).toEqual({ token: null, size: 3, error: "too_large" });
 	});
+
+	it("maps a 507, a server out of disk, to no_space", async () => {
+		const t = postFile("/u", new Blob(["abc"]));
+		last().answer(507, "full");
+		expect(await t.done).toEqual({ token: null, size: 3, error: "no_space" });
+	});
 });

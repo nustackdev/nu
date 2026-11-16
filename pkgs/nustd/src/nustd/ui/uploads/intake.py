@@ -6,8 +6,10 @@ the ws, and the program hears a token back over the ws. Bytes never ride the
 ws and the browser never learns a server path.
 
 The route ``POST /_nu/upload/{sid}``: same origin only, live tabs only,
-capped before and while streaming, written to ``.part`` and renamed when
-whole. It answers ``{token, size}`` and nothing else.
+capped before and while streaming when the area has a cap, written to
+``.part`` and renamed when whole. It answers ``{token, size}`` and nothing
+else. A disk that fills mid write drops the ``.part`` and is answered
+``507``, so the tab says so instead of a broken transfer.
 
 A large file goes up in pieces, so a dropped connection costs one piece and
 not the file. The query says which piece:
@@ -27,6 +29,7 @@ route, so importing ``nustd.ui.uploads`` never loads a web server.
 from __future__ import annotations
 
 import asyncio
+import errno
 import weakref
 from typing import TYPE_CHECKING
 from urllib.parse import urlsplit
@@ -87,14 +90,14 @@ def _route(area: UploadArea) -> Route:
             return _plain("no live tab for this upload", 403)
         query = request.query_params
         if "total" not in query:
-            if _declared(request) > area.cap:
+            if _over(area, _declared(request)):
                 return _too_large(area.cap)
             token, part = area.new(sid)
             return await _fill(request, area, sid, token, part, 0, None, keep=False)
         total = _count(query.get("total"))
         if total is None:
             return _plain("total is a byte count", 400)
-        if total > area.cap:
+        if _over(area, total):
             return _too_large(area.cap)
         if "token" not in query:
             token, part = area.new(sid)
@@ -157,7 +160,7 @@ async def _fill(
             out.truncate()
             async for piece in request.stream():
                 size += len(piece)
-                if size > limit:
+                if limit is not None and size > limit:
                     raise _TooLarge
                 out.write(piece)
         whole = total is None or size == total
@@ -170,8 +173,10 @@ async def _fill(
         if not keep:
             part.unlink(missing_ok=True)
         return Response(status_code=400)  # the client is gone; nobody reads this
-    except OSError:
+    except OSError as exc:
         part.unlink(missing_ok=True)
+        if exc.errno in _FULL:
+            return _plain("no space left on the server for this upload", 507)
         if area.is_live(sid):
             raise
         return _plain("no live tab for this upload", 403)  # its dir was swept under us
@@ -205,5 +210,14 @@ def _plain(text: str, status: int) -> Response:
     return Response(text, status_code=status, media_type="text/plain")
 
 
-def _too_large(cap: int) -> Response:
+#: What a write to a full disk, or past a quota, raises.
+_FULL = frozenset({errno.ENOSPC, errno.EDQUOT, errno.EFBIG})
+
+
+def _over(area: UploadArea, size: int) -> bool:
+    """Whether ``size`` bytes are over the area's cap; never when it has none."""
+    return area.cap is not None and size > area.cap
+
+
+def _too_large(cap: int | None) -> Response:
     return _plain(f"upload over the cap of {cap} bytes", 413)

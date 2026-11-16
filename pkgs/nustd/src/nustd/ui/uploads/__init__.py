@@ -25,7 +25,6 @@ imports it only when it builds the route.
 from __future__ import annotations
 
 from .area import (
-    DEFAULT_CAP,
     STALE_AFTER,
     UPLOAD_PREFIX,
     UploadArea,
@@ -41,6 +40,7 @@ from .errors import (
     UploadCanceled,
     UploadError,
     UploadFailed,
+    UploadNoSpace,
     UploadRefused,
     UploadTooLarge,
 )
@@ -60,7 +60,6 @@ from .presets import UploadViewFor, upload_view, uploads
 
 
 __all__ = [
-    "DEFAULT_CAP",
     "GET_BYTES_WARN",
     "STALE_AFTER",
     "STEP",
@@ -79,6 +78,7 @@ __all__ = [
     "UploadCanceled",
     "UploadError",
     "UploadFailed",
+    "UploadNoSpace",
     "UploadRefused",
     "UploadTooLarge",
     "UploadView",

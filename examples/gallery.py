@@ -179,7 +179,6 @@ app = nu.With(
     body=ui.serve(
         ui.boot(App.title, App.home) >> (items | uploads),
         blobs={MOUNT: SPEC},
-        upload_cap=64 << 30,
         port=8095,
     ),
 )

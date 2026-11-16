@@ -16,6 +16,7 @@ __all__ = [
     "UploadCanceled",
     "UploadError",
     "UploadFailed",
+    "UploadNoSpace",
     "UploadRefused",
     "UploadTooLarge",
 ]
@@ -26,7 +27,7 @@ class UploadError(Exception):
 
     The base of every upload failure, so an app catches one thing. ``code``
     is what the tab answered (``no_file``, ``unreadable``, ``canceled``,
-    ``too_large``, ``refused``, ``network``).
+    ``too_large``, ``no_space``, ``refused``, ``network``).
     """
 
     code: ClassVar[str] = ""
@@ -60,6 +61,12 @@ class UploadTooLarge(UploadError):  # noqa: N818 - a state, not an error kind
     code = "too_large"
 
 
+class UploadNoSpace(UploadError):  # noqa: N818 - a state, not an error kind
+    """The server's disk filled while the bytes went in, so it dropped them (507)."""
+
+    code = "no_space"
+
+
 class UploadRefused(UploadError):  # noqa: N818 - a state, not an error kind
     """The server refused the transfer, or a token names nothing on the server.
 
@@ -78,14 +85,23 @@ class UploadFailed(UploadError):  # noqa: N818 - a state, not an error kind
 
 _ERRORS: dict[str, type[UploadError]] = {
     cls.code: cls
-    for cls in (NoFile, FileGone, UploadCanceled, UploadTooLarge, UploadRefused, UploadFailed)
+    for cls in (
+        NoFile,
+        FileGone,
+        UploadCanceled,
+        UploadTooLarge,
+        UploadNoSpace,
+        UploadRefused,
+        UploadFailed,
+    )
 }
 
 _MESSAGES = {
     "no_file": "no file is picked",
     "unreadable": "the file changed or moved on disk after it was picked; pick it again",
     "canceled": "the transfer was canceled",
-    "too_large": "the file is over the server's upload cap",
+    "too_large": "the file is over the server's upload limit",
+    "no_space": "the server ran out of disk space for the file",
     "refused": "the server refused the transfer",
     "network": "the transfer broke on the way",
 }

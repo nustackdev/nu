@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 import nu
 from nustd.blob.http.serving import serve_blobs
 from nustd.ui.core.session import WsSession
-from nustd.ui.uploads import DEFAULT_CAP, upload_view
+from nustd.ui.uploads import upload_view
 from nustd.ui.uploads import uploads as upload_pair
 from nustd.ws_server import SID_ATTR, listen, run_once, session_for, sessions_fold
 
@@ -45,7 +45,7 @@ def serve(
     blobs: Mapping[BlobMount, Provide] | None = None,
     uploads: bool = True,
     upload_root: str | os.PathLike[str] | None = None,
-    upload_cap: int = DEFAULT_CAP,
+    upload_cap: int | None = None,
     host: str = "127.0.0.1",
     port: int = 8080,
     log_level: str = "warning",
@@ -85,8 +85,8 @@ def serve(
         upload_root: the folder the upload intake writes posted files to,
             made if missing and removed when the server stops. None picks a
             fresh ``nu-uploads-<hex>`` in the system temp dir.
-        upload_cap: the most bytes one upload POST may carry, 2 GiB unless
-            set.
+        upload_cap: the most bytes one uploaded file may carry. None, the
+            default, takes any size the disk holds.
         host: uvicorn bind host.
         port: uvicorn bind port.
         log_level: uvicorn log level. The default silences uvicorn's own

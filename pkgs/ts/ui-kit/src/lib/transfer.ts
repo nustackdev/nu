@@ -19,7 +19,13 @@
 // `unreadable`; a body that still reads means the network dropped.
 
 /** Why a transfer ended without a token. */
-export type TransferCode = "unreadable" | "too_large" | "refused" | "network" | "canceled";
+export type TransferCode =
+	| "unreadable"
+	| "too_large"
+	| "no_space"
+	| "refused"
+	| "network"
+	| "canceled";
 
 export type TransferResult =
 	| { token: string; size: number; error: "" }
@@ -82,6 +88,7 @@ function send(
 /** The error code of an answer that carried no token. */
 function codeOf(status: number): TransferCode {
 	if (status === 413) return "too_large";
+	if (status === 507) return "no_space";
 	if (status === 403) return "refused";
 	return "network";
 }

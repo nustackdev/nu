@@ -51,7 +51,7 @@ class _Session:
 class _Rig:
     """An area set up against a server whose book the test drives."""
 
-    def __init__(self, root: Path, cap: int = 1 << 20) -> None:
+    def __init__(self, root: Path, cap: int | None = 1 << 20) -> None:
         self.server = WebServer(session_cls=_Session)
         bracket, routes = uploads(root, cap=cap)
         self.area: UploadArea = bracket._payload["kwargs"]["area"]
@@ -263,6 +263,57 @@ def test_a_total_over_the_cap_is_refused_before_reading(tmp_path: Path):
             assert r.files(sid) == []
     finally:
         r.area.cleanup()
+
+
+def test_no_cap_by_default_takes_any_total(tmp_path: Path):
+    bracket, _ = uploads(tmp_path / "area")
+    assert bracket._payload["kwargs"]["area"].cap is None
+    r = _Rig(tmp_path / "area", cap=None)
+    try:
+        with TestClient(r.app) as c:
+            sid = r.open_tab()
+            # Ten TiB declared: nothing refuses it, the first piece goes in.
+            answer = _piece(c, sid, b"x", 10 << 40)
+            assert answer.status_code == 202
+            assert answer.json()["size"] == 1
+    finally:
+        r.area.cleanup()
+
+
+def test_a_full_disk_drops_the_part_and_says_so(rig: _Rig, client: TestClient, monkeypatch):
+    import errno
+    import pathlib
+
+    real = pathlib.Path.open
+
+    class _Full:
+        def __init__(self, f) -> None:
+            self.f = f
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc) -> None:
+            self.f.close()
+
+        def seek(self, n: int) -> None:
+            self.f.seek(n)
+
+        def truncate(self) -> None:
+            self.f.truncate()
+
+        def write(self, data: bytes) -> int:
+            raise OSError(errno.ENOSPC, "No space left on device")
+
+    def opened(self, mode="r", *args, **kwargs):
+        f = real(self, mode, *args, **kwargs)
+        return _Full(f) if self.name.endswith(".part") else f
+
+    monkeypatch.setattr(pathlib.Path, "open", opened)
+    sid = rig.open_tab()
+    answer = _piece(client, sid, b"abc", 3)
+    assert answer.status_code == 507
+    assert rig.files(sid) == []
 
 
 def test_a_piece_running_past_its_total_is_cut(rig: _Rig, client: TestClient):
@@ -654,8 +705,8 @@ def test_serve_always_mounts_the_intake(tmp_path: Path):
     assert area.cap == 7
 
 
-def test_serve_defaults_to_a_temp_root_and_two_gib():
+def test_serve_defaults_to_a_temp_root_and_no_cap():
     tree = serve(nu.Str("x"), static=None, open_browser=False)
     area = tree._payload["brackets"][1]._payload["kwargs"]["area"]
     assert area.root.name.startswith("nu-uploads-")
-    assert area.cap == 2 << 30
+    assert area.cap is None

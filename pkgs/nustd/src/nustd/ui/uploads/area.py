@@ -40,7 +40,6 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "DEFAULT_CAP",
     "STALE_AFTER",
     "UPLOAD_PREFIX",
     "UploadArea",
@@ -165,9 +164,6 @@ class UploadView:
 # ---- the area -------------------------------------------------------------
 
 
-#: The most bytes one file may carry unless the host says otherwise.
-DEFAULT_CAP = 2 << 30
-
 #: A ``nu-uploads-*`` dir untouched this long belongs to a server that is gone.
 STALE_AFTER = 24 * 60 * 60
 
@@ -187,7 +183,9 @@ class UploadArea:
     Args:
         root: the folder to keep files in. Made at setup if missing, removed
             whole at cleanup, so give it a dir of its own.
-        cap: the most bytes one file may carry, whole or in pieces.
+        cap: the most bytes one file may carry, whole or in pieces. None,
+            the default, takes any size: the disk is the limit, and a write
+            that finds it full is answered as such.
 
     Notes:
         - Layout is ``root / sid / token``. A token is ``uuid4().hex``; a
@@ -204,8 +202,8 @@ class UploadArea:
         nu.With(listen(..., routes=routes), bracket, body=...)
     """
 
-    def __init__(self, root: str | os.PathLike[str], cap: int = DEFAULT_CAP) -> None:
-        if isinstance(cap, bool) or not isinstance(cap, int) or cap < 0:
+    def __init__(self, root: str | os.PathLike[str], cap: int | None = None) -> None:
+        if cap is not None and (isinstance(cap, bool) or not isinstance(cap, int) or cap < 0):
             msg = f"cap is a byte count, got {cap!r}"
             raise ValueError(msg)
         self._root = Path(root).absolute()
@@ -219,8 +217,8 @@ class UploadArea:
         return self._root
 
     @property
-    def cap(self) -> int:
-        """The most bytes one file may carry."""
+    def cap(self) -> int | None:
+        """The most bytes one file may carry; None for any size."""
         return self._cap
 
     # ---- lifecycle ----------------------------------------------------------
