@@ -1,11 +1,11 @@
 // Content nodes over the real tree store: TextRef and HeadingRef type,
-// LinkRef looks, ImageRef corners and ratio, EmptyStateRef's icon and way
+// LinkRef looks, ImageRef corners, ratio and zoom, EmptyStateRef's icon and way
 // out, BadgeRef's brand tones and sizes, DividerRef's label align.
 
 import { OPS, type TreeFrame } from "@nustackdev/ui-core";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NodeView, tree } from "../../tree";
 import "..";
 import { normAspect } from "./image";
@@ -220,6 +220,64 @@ describe("ImageRef", () => {
 		expect(img?.style.aspectRatio).toBe("16 / 9");
 		expect(img?.style.width).toBe("100%");
 		expect(cls(img)).toContain("object-scale-down");
+	});
+
+	it("draws a viewer with zoom on, 320px tall unless sized", () => {
+		mount("ImageRef", { src: "/a.png", zoom: true });
+		const viewer = slot("image-viewer");
+		expect(viewer).not.toBeNull();
+		expect(slot("image")).toBeNull();
+		expect(cls(viewer)).toContain("h-80");
+		dispatch(OPS.write, { aspect: "4:3" });
+		expect(slot("image-viewer")?.style.aspectRatio).toBe("4 / 3");
+		expect(cls(slot("image-viewer"))).not.toContain("h-80");
+		dispatch(OPS.write, { height: 200 });
+		expect(slot("image-viewer")?.style.height).toBe("200px");
+		dispatch(OPS.write, { zoom: false });
+		expect(slot("image-viewer")).toBeNull();
+		expect(slot("image")).not.toBeNull();
+	});
+
+	it("fits a small image, zooms by key and goes pixelated past 1:1", () => {
+		const w = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(400);
+		const h = vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(300);
+		try {
+			mount("ImageRef", { src: "/sprite.png", alt: "Sprite", zoom: true });
+			const img = slot("image-viewer-stage")?.querySelector("img") as HTMLImageElement;
+			Object.defineProperty(img, "naturalWidth", { value: 16 });
+			Object.defineProperty(img, "naturalHeight", { value: 16 });
+			act(() => {
+				img.dispatchEvent(new Event("load"));
+			});
+			const zoom = () => slot("image-viewer-zoom")?.textContent;
+			expect(zoom()).toBe("1875%");
+			expect(img.style.width).toBe("300px");
+			expect(img.style.imageRendering).toBe("pixelated");
+
+			const stage = slot("image-viewer-stage") as HTMLElement;
+			expect(stage.getAttribute("aria-label")).toBe("Sprite");
+			const key = (k: string) =>
+				act(() => {
+					stage.dispatchEvent(new KeyboardEvent("keydown", { key: k, bubbles: true }));
+				});
+			key("1");
+			expect(zoom()).toBe("100%");
+			expect(img.style.imageRendering).toBe("");
+			key("+");
+			expect(zoom()).toBe("150%");
+			key("0");
+			expect(zoom()).toBe("1875%");
+
+			const labels = [...(slot("image-viewer-controls")?.querySelectorAll("button") ?? [])].map(
+				(b) => b.getAttribute("aria-label"),
+			);
+			expect(labels).toEqual(["Zoom out", "Zoom in", "Fit", "Actual size", "Expand"]);
+			const fit = slot("image-viewer-controls")?.querySelector('[aria-label="Fit"]');
+			expect(fit?.getAttribute("aria-disabled")).toBe("true");
+		} finally {
+			w.mockRestore();
+			h.mockRestore();
+		}
 	});
 
 	it("reads the aspect spellings", () => {

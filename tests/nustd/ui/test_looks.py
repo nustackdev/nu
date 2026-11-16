@@ -248,6 +248,13 @@ def test_image_setters_merge_one_key():
     handle = _mount(ImageRef.slot())
     assert _payload(handle.set_radius("lg")) == {"radius": "lg"}
     assert _payload(handle.set_aspect("4/3")) == {"aspect": "4/3"}
+    assert _payload(handle.set_zoom(True)) == {"zoom": True}
+
+
+def test_image_zoom_off_by_default():
+    assert ImageRef.slot(src="/a.png").props["zoom"] is False
+    props = ImageRef.slot(src="/a.png", zoom=True, height=240).props
+    assert (props["zoom"], props["height"]) == (True, 240)
 
 
 # --- Tabs, EmptyState, Badge, Card ----------------------------------------------
