@@ -13,6 +13,7 @@
 // button, which is that button's own.
 
 import { type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { KeyScope } from "../keyboard";
 import { bufferedEnd, clampTime, keyCommand, type MediaCommand, timeAt } from "./model";
 
 export interface MediaSnapshot {
@@ -212,13 +213,14 @@ export interface MediaKeyOptions {
 const OWN_KEYS = new Set([" ", "Enter"]);
 
 /**
- * The transport's key handler (model.ts `keyCommand`) for the player's root.
- * Chords pass through, as does anything a control inside already took.
+ * Props for the player's root: a tab stop and the transport's keys (model.ts
+ * `keyCommand`), like lib/keyboard.ts `useKeyScope`. Chords pass through, as
+ * does anything a control inside already took.
  */
-export function useMediaKeys(media: MediaApi, opts: MediaKeyOptions) {
+export function useMediaKeys(media: MediaApi, opts: MediaKeyOptions): KeyScope<HTMLElement> {
 	const live = useRef({ media, opts });
 	live.current = { media, opts };
-	return useCallback((event: KeyboardEvent<HTMLElement>) => {
+	const onKeyDown = useCallback((event: KeyboardEvent<HTMLElement>) => {
 		if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
 		const target = event.target as HTMLElement;
 		if (target !== event.currentTarget) {
@@ -235,6 +237,7 @@ export function useMediaKeys(media: MediaApi, opts: MediaKeyOptions) {
 		event.stopPropagation();
 		run(m, cmd, o);
 	}, []);
+	return { tabIndex: 0, onKeyDown };
 }
 
 function run(m: MediaApi, cmd: MediaCommand, o: MediaKeyOptions) {
