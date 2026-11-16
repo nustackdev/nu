@@ -1,6 +1,8 @@
 // Image primitive.
 //
 // Thin <img> wrapper with radius + fit + aspect ratio + loading placeholder.
+// Lazy by default: the browser fetches it only as it nears the viewport.
+// Pass loading="eager" for an image that must show on first paint.
 // Alt is required in the prop type per a11y.md §7.
 
 import type * as React from "react";
@@ -46,6 +48,8 @@ function Image({
 		<img
 			data-slot="image"
 			alt={alt}
+			loading="lazy"
+			decoding="async"
 			className={cn(
 				"block max-w-full bg-bg-hover",
 				RADIUS_CLASS[radius],
