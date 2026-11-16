@@ -15,6 +15,8 @@
 - range:  RangeSliderRef, a two-thumb slider.
 - color:  ColorPickerRef.
 - inline_edit: InlineEditRef, text that edits in place.
+- upload: UploadFile, UploadFiles and the entry UploadedFile, picked files
+          read on demand, plus the upload errors.
 - chart:  Chart, an ECharts option, and the typed builders over it
           (LineChart, BarChart, PieChart, HeatmapChart, ...).
 """
@@ -93,6 +95,18 @@ from .range import RangeSliderRef
 from .time import DateRangePickerRef, DateTimePickerRef, TimePickerRef
 from .timeline import TimelineRef
 from .tree import TreeRef
+from .upload import (
+    FileGone,
+    NoFile,
+    UploadCanceled,
+    UploadedFileRef,
+    UploadError,
+    UploadFailed,
+    UploadFileRef,
+    UploadFilesRef,
+    UploadRefused,
+    UploadTooLarge,
+)
 from .waterfall import WaterfallRef
 
 
@@ -119,6 +133,7 @@ __all__ = [
     "DateTimePickerRef",
     "DividerRef",
     "EmptyStateRef",
+    "FileGone",
     "FunnelChart",
     "GaugeChart",
     "GaugeRef",
@@ -140,6 +155,7 @@ __all__ = [
     "MarkdownRef",
     "MultiSelectRef",
     "NavItemRef",
+    "NoFile",
     "NumberInputRef",
     "PageLinkRef",
     "PieChart",
@@ -176,5 +192,13 @@ __all__ = [
     "ToggleRef",
     "TreeRef",
     "TreemapChart",
+    "UploadCanceled",
+    "UploadError",
+    "UploadFailed",
+    "UploadFileRef",
+    "UploadFilesRef",
+    "UploadRefused",
+    "UploadTooLarge",
+    "UploadedFileRef",
     "WaterfallRef",
 ]

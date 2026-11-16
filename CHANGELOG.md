@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Apps read picked files by range, whole or streamed, pulling only when needed
 - Browser files can land on the server in a per tab temp area
 - Serve blob stores over http with ranges, caching and streamed uploads
 - Add a blob fabric: large bytes on lmdb, files or S3, streamed both ways

@@ -421,7 +421,9 @@ def _leaf_widgets(*, needs_on_change: bool = False):
     return out
 
 
-_SET_WIDGETS = _leaf_widgets()
+# A program cannot put a file in a picker: the upload inputs' set raises by
+# design (test_upload_refs pins it), so they are out of the write sweep.
+_SET_WIDGETS = [(cls, mod) for cls, mod in _leaf_widgets() if mod != "upload"]
 _CHANGED_WIDGETS = _leaf_widgets(needs_on_change=True)
 
 
