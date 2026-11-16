@@ -19,6 +19,9 @@ Layout under ``src/nustd/ui/``:
 - ``shapes/`` -- layer 2, a declarative DSL over the container Refs: one
                  ``Section`` per container (``Row``, ``Card``, ...) that points
                  ``_ref_cls`` at its Ref and adds named child slots.
+- ``uploads/`` -- a picked file's trip from tab to program: the temp area,
+                 its intake route, the reads and commands the upload refs
+                 hand out, their errors, and the presets a host assembles.
 - ``flows.py`` -- the terms a program is framed by: ``boot`` (start the
                  tab's tree over, bring the given Refs up in order) and
                  ``route`` (run the branch the page's pathname names).
@@ -56,7 +59,7 @@ from __future__ import annotations
 import importlib
 from typing import TYPE_CHECKING
 
-from . import core, flows, lens, refs, shapes, table
+from . import core, flows, lens, refs, shapes, table, uploads
 from .core import Frame, ItemRef, Ref, Section, SectionRef, Session, Subscription, WsSession
 from .core.interactions import (
     Append,
@@ -426,4 +429,5 @@ __all__ = [
     "serve",
     "shapes",
     "table",
+    "uploads",
 ]

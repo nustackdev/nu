@@ -16,10 +16,20 @@
 - color:  ColorPickerRef.
 - inline_edit: InlineEditRef, text that edits in place.
 - upload: UploadFile, UploadFiles and the entry UploadedFile, picked files
-          read on demand, plus the upload errors.
+          read on demand, plus the upload errors from nustd.ui.uploads.
 - chart:  Chart, an ECharts option, and the typed builders over it
           (LineChart, BarChart, PieChart, HeatmapChart, ...).
 """
+
+from nustd.ui.uploads.errors import (
+    FileGone,
+    NoFile,
+    UploadCanceled,
+    UploadError,
+    UploadFailed,
+    UploadRefused,
+    UploadTooLarge,
+)
 
 from .base import LeafRef
 from .chart import (
@@ -95,18 +105,7 @@ from .range import RangeSliderRef
 from .time import DateRangePickerRef, DateTimePickerRef, TimePickerRef
 from .timeline import TimelineRef
 from .tree import TreeRef
-from .upload import (
-    FileGone,
-    NoFile,
-    UploadCanceled,
-    UploadedFileRef,
-    UploadError,
-    UploadFailed,
-    UploadFileRef,
-    UploadFilesRef,
-    UploadRefused,
-    UploadTooLarge,
-)
+from .upload import UploadedFileRef, UploadFileRef, UploadFilesRef
 from .waterfall import WaterfallRef
 
 

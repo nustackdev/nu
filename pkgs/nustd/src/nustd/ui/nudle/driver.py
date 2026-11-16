@@ -4,9 +4,9 @@ The ws server carrying the ui wire protocol, and a fold that runs one arm of
 the ui program per connection the server holds open. Each layer is public on
 its own for a hand-assembled tree; this is the arrangement that covers the
 normal case. nudle adds its own telemetry config route to the server, which
-the SPA reads before its one launch ping (see ``telemetry``), and always
-mounts the upload intake with its temp area (see ``uploads``), binding each
-arm its tab's view of that area.
+the SPA reads before its one launch ping (see ``telemetry``), and by default
+mounts the upload intake with its temp area (see ``nustd.ui.uploads``),
+binding each arm its tab's view of that area.
 """
 
 from __future__ import annotations
@@ -16,10 +16,11 @@ from typing import TYPE_CHECKING
 import nu
 from nustd.blob.http.serving import serve_blobs
 from nustd.ui.core.session import WsSession
+from nustd.ui.uploads import DEFAULT_CAP, upload_view
+from nustd.ui.uploads import uploads as upload_pair
 from nustd.ws_server import SID_ATTR, listen, run_once, session_for, sessions_fold
 
 from . import telemetry
-from .uploads import DEFAULT_CAP, upload_view, uploads
 
 
 if TYPE_CHECKING:
@@ -42,6 +43,7 @@ def serve(
     static: str | None = "nudle",
     routes: Sequence[BaseRoute] = (),
     blobs: Mapping[BlobMount, Provide] | None = None,
+    uploads: bool = True,
     upload_root: str | os.PathLike[str] | None = None,
     upload_cap: int = DEFAULT_CAP,
     host: str = "127.0.0.1",
@@ -77,6 +79,9 @@ def serve(
             reads and uploads under each mount and holds each store open
             while it runs. The program binds the same specs to reach the
             stores. None serves no blobs.
+        uploads: mount the upload intake and its temp area, and bind each
+            arm its tab's view of it. False mounts no route, opens no area
+            and binds no view, so the upload refs cannot read.
         upload_root: the folder the upload intake writes posted files to,
             made if missing and removed when the server stops. None picks a
             fresh ``nu-uploads-<hex>`` in the system temp dir.
@@ -99,10 +104,16 @@ def serve(
             ),
         )
     """
-    brackets, blob_routes = serve_blobs(blobs) if blobs else ([], [])
-    upload_area, upload_routes = uploads(upload_root, cap=upload_cap)
+    blob_brackets, blob_routes = serve_blobs(blobs) if blobs else ([], [])
+    arm = run_once(program)
+    upload_brackets: list[Provide] = []
+    upload_routes: Sequence[BaseRoute] = ()
+    if uploads:
+        upload_area, upload_routes = upload_pair(upload_root, cap=upload_cap)
+        upload_brackets.append(upload_area)
+        arm = upload_view(SID_ATTR, arm)
     return nu.With(
-        *brackets,
+        *blob_brackets,
         listen(
             session_cls=WsSession,
             static=static,
@@ -115,11 +126,6 @@ def serve(
             ready_timeout=ready_timeout,
             shutdown_timeout=shutdown_timeout,
         ),
-        upload_area,
-        body=sessions_fold(
-            session_for(
-                SID_ATTR,
-                upload_view(SID_ATTR, run_once(program)),
-            ),
-        ),
+        *upload_brackets,
+        body=sessions_fold(session_for(SID_ATTR, arm)),
     )

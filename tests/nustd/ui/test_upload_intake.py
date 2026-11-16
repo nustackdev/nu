@@ -21,9 +21,16 @@ from starlette.testclient import TestClient
 import nu
 from nu.context.fabric import FabricRef
 from nu.lang.runtime import Context
-from nustd.ui.core import UPLOAD_PREFIX, UploadView
-from nustd.ui.nudle import UploadArea, serve, upload_view, uploads
-from nustd.ui.nudle.uploads import STALE_AFTER, same_origin
+from nustd.ui.nudle import serve
+from nustd.ui.uploads import (
+    STALE_AFTER,
+    UPLOAD_PREFIX,
+    UploadArea,
+    UploadView,
+    upload_view,
+    uploads,
+)
+from nustd.ui.uploads.intake import same_origin
 from nustd.ws_server import WebServer
 from nustd.ws_server.fabric import _Connection
 
