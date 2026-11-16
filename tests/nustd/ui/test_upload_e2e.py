@@ -7,8 +7,9 @@ one puts the python halves together for real: ``nudle.serve`` on a port,
 a ws client playing the browser tab (the kit's answers, from its frame
 table), and every byte POSTed over http to the intake, as the kit does.
 What it checks is the round trip a person's pick takes: an uncached slice,
-a pull, a cached slice, ``open`` in pieces, ``discard``, then the tab's dir
-swept on close and the root removed when the server stops.
+a pull, a cached slice, ``open`` in pieces, the file streamed into a blob
+store, ``discard``, then the tab's dir swept on close and the root removed
+when the server stops.
 """
 
 from __future__ import annotations
@@ -24,6 +25,7 @@ import pytest
 from websockets.asyncio.client import connect
 
 import nu
+import nustd
 from nustd import ui
 
 
@@ -49,6 +51,7 @@ class App(nu.Shape):
 CSV_REF = App.page.csv
 MANY = App.page.many
 LOG = App.page.log
+Media = nustd.blob.StoreRef("media")
 
 CSV_PATH = ["page", "csv"]
 MANY_PATH = ["page", "many"]
@@ -70,6 +73,7 @@ def _one_file() -> nu.Nu:
                 "open " + nu.str(nu.List(pieces).len()) + " " + nu.Bytes(b"").join(pieces).decode()
             ),
         )
+        >> nu.let(Media.put_stream(CSV_REF.open(step=8)), lambda bid: _text("blob", Media.get(bid)))
         >> nu.let(CSV_REF.get_slice(-6), lambda tail: _text("tail", tail))
         >> CSV_REF.discard()
         >> nu.let(CSV_REF.get_slice(0, 2), lambda again: _text("again", again))
@@ -302,7 +306,8 @@ async def server(tmp_path: Path):
     """``nudle.serve`` on a free port, its upload root under ``tmp_path``."""
     port = _free_port()
     root = tmp_path / "uploads"
-    app = ui.serve(PROGRAM, static=None, upload_root=root, port=port, open_browser=False)
+    program = nu.With(nustd.blob.lmdb(Media, tmp_path / "media"), body=PROGRAM)
+    app = ui.serve(program, static=None, upload_root=root, port=port, open_browser=False)
     task = asyncio.create_task(nu.arun(app))
     base = f"http://127.0.0.1:{port}"
     while not root.is_dir():
@@ -336,18 +341,19 @@ async def test_one_file_round_trip(server: tuple[str, Path, asyncio.Task]) -> No
             "ready",
             "head id,name",
             f"open 4 {CSV.decode()}",
+            f"blob {CSV.decode()}",
             "tail grace\n",
             "again id",
             "done",
         ]
         # three POSTs: the head slice, the whole file once, the slice after
-        # the discard; the cached slice and open sent nothing
+        # the discard; the cached slice, open and the blob put sent nothing
         assert tab.posts == [7, len(CSV), 2]
         slices = [a for a in tab.answers if a["event"] == "slice"]
         assert [s["cached"] for s in slices] == [False, True, False]
-        # the pull and open's own pull answered with one landed token
+        # the pull and each open's own pull answered with one landed token
         uploads = [a for a in tab.answers if a["event"] == "upload"]
-        assert len(uploads) == 2
+        assert len(uploads) == 3
         assert len({a["token"] for a in uploads}) == 1
         landed = uploads[0]["token"]
         # the cache was on disk when it landed and when it was discarded;

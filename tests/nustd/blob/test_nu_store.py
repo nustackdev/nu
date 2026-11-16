@@ -16,6 +16,7 @@ from nustd.blob import (
     BlobNewId,
     BlobOpen,
     BlobPut,
+    BlobPutStream,
     FilesBackend,
     LMDBBackend,
     S3Backend,
@@ -80,6 +81,7 @@ def test_store_knows_no_urls():
 
 def test_methods_build_the_matching_atoms():
     assert isinstance(Media.put(b"x"), BlobPut)
+    assert isinstance(Media.put_stream(Media.open(BID)), BlobPutStream)
     assert isinstance(Media.new_id(), BlobNewId)
     assert isinstance(Media.get(BID), BlobGet)
     assert isinstance(Media.open(BID), BlobOpen)
@@ -115,13 +117,14 @@ def test_atoms_take_a_store_ref_directly():
     [
         lambda store: BlobGet(store, BID),
         lambda store: BlobPut(store, b"x", None, "", ""),
+        lambda store: BlobPutStream(store, nu.Iter([b"x"]), None, "", ""),
         lambda store: BlobNewId(store),
         lambda store: BlobOpen(store, BID, 0, None, 1024),
         lambda store: BlobMeta(store, BID),
         lambda store: BlobHas(store, BID),
         lambda store: BlobDelete(store, BID),
     ],
-    ids=["get", "put", "new_id", "open", "meta", "has", "delete"],
+    ids=["get", "put", "put_stream", "new_id", "open", "meta", "has", "delete"],
 )
 def test_store_slot_that_is_no_term_is_refused(build, store):
     with pytest.raises(TypeError, match="the store slot is a term"):
@@ -137,6 +140,7 @@ def test_store_slot_that_is_no_term_is_refused(build, store):
         lambda: Media.has(""),
         lambda: Media.delete("../x"),
         lambda: Media.put(b"x", blob_id="short"),
+        lambda: Media.put_stream(nu.Iter([b"x"]), blob_id="short"),
     ],
 )
 def test_malformed_str_id_is_refused_at_build(build):
@@ -152,6 +156,8 @@ def test_build_mints_nothing():
 
 def test_kinds():
     assert isinstance(Media.put(b"x"), nu.ScalarAction)
+    assert isinstance(Media.put_stream(Media.open(BID)), nu.ActionReduction)
+    assert isinstance(Media.put_stream(Media.open(BID)), nu.ScalarAction)
     assert isinstance(Media.new_id(), nu.ScalarQuery)
     assert isinstance(Media.open(BID), nu.StreamQuery)
     assert isinstance(Media.delete(BID), nu.Command)

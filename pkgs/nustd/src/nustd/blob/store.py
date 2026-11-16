@@ -18,6 +18,7 @@ from .interactions import (
     BlobNewId,
     BlobOpen,
     BlobPut,
+    BlobPutStream,
 )
 from .protocol import STEP
 
@@ -128,7 +129,7 @@ class StoreRef(FabricRef):
         Args:
             source: bytes, a ``Path``, a binary file or an iterable of bytes;
                 under an async run also an async iterable. Not a stream term:
-                see ``BlobPut``.
+                put one with ``put_stream``.
             blob_id: an id minted earlier, by ``new_id``; None mints at run
                 time.
             mime: the media type the bytes are served as.
@@ -136,6 +137,27 @@ class StoreRef(FabricRef):
         """
         _check_given_id(blob_id)
         return BlobPut(self._fresh(), source, blob_id, mime, name)
+
+    def put_stream(
+        self,
+        source: object,
+        *,
+        blob_id: StrArg | None = None,
+        mime: StrArg = "",
+        name: StrArg = "",
+    ) -> BlobPutStream:
+        """Store a stream of byte pieces once and yield the new id; see ``BlobPutStream``.
+
+        Args:
+            source: a stream term of ``bytes`` pieces, such as another store's
+                ``open``; the pieces reach the store as they are pulled.
+            blob_id: an id minted earlier, by ``new_id``; None mints at run
+                time.
+            mime: the media type the bytes are served as.
+            name: the file name a download offers.
+        """
+        _check_given_id(blob_id)
+        return BlobPutStream(self._fresh(), source, blob_id, mime, name)
 
     def new_id(self) -> BlobNewId:
         """A fresh id, minted at run time, for a put inside a block that can retry."""

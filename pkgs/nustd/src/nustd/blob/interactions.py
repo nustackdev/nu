@@ -1,21 +1,27 @@
-"""The blob interactions: put, mint, read whole, stream, meta, has, delete.
+"""The blob interactions: put, put a stream, mint, read whole, stream, meta, has, delete.
 
 Slot 0 of every atom is the store: a ``StoreRef`` yielding the ``BlobFabric``
 bound under the store's name. Everything else is a child, so an id, a range
 or a source can come from any term, such as the id a put earlier in the same
 program yielded.
 
-==========  ===================================  ============  =======
-atom        slots                                sort          mutates
-==========  ===================================  ============  =======
-BlobPut     (store, source, blob_id, mime, name)  ScalarAction  {0}
-BlobNewId   (store,)                             ScalarQuery   -
-BlobGet     (store, blob_id)                     ScalarQuery   -
-BlobOpen    (store, blob_id, start, end, step)   StreamQuery   -
-BlobMeta    (store, blob_id)                     ScalarQuery   -
-BlobHas     (store, blob_id)                     ScalarQuery   -
-BlobDelete  (store, blob_id)                     Command       {0}
-==========  ===================================  ============  =======
+=============  ====================================  ===============  =======
+atom           slots                                 sort             mutates
+=============  ====================================  ===============  =======
+BlobPut        (store, source, blob_id, mime, name)  ScalarAction     {0}
+BlobPutStream  (store, source, blob_id, mime, name)  ActionReduction  {0}
+BlobNewId      (store,)                              ScalarQuery      -
+BlobGet        (store, blob_id)                      ScalarQuery      -
+BlobOpen       (store, blob_id, start, end, step)    StreamQuery      -
+BlobMeta       (store, blob_id)                      ScalarQuery      -
+BlobHas        (store, blob_id)                      ScalarQuery      -
+BlobDelete     (store, blob_id)                      Command          {0}
+=============  ====================================  ===============  =======
+
+``BlobPut`` takes one value as its source. ``BlobPutStream`` takes a stream
+term in that slot, such as another store's ``open``, and folds it into one
+write: the pieces go straight to the backend as they are pulled, never
+collected.
 
 A sync run calls the backend's sync methods, an async run its async twins, so
 no blob call blocks the event loop.
@@ -25,8 +31,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu.core._stream import aiter_any, sync_iter
 from nu.engine.structure import Declared
-from nu.lang import Command, Nu, ScalarAction, ScalarQuery, StreamQuery
+from nu.lang import ActionReduction, Command, Nu, ScalarAction, ScalarQuery, StreamQuery
 from nu.lang.null import is_null
 
 from ._base import new_id
@@ -51,6 +58,7 @@ __all__ = [
     "BlobNewId",
     "BlobOpen",
     "BlobPut",
+    "BlobPutStream",
 ]
 
 
@@ -109,11 +117,11 @@ class BlobPut(ScalarAction):
           a second copy behind.
         - A file or an iterable spools to the store's disk first and is never
           held whole in memory.
-        - The source is a scalar: a stream term, such as another store's
-          ``open``, is refused by the tree's checks, since a mutating atom
-          cannot also fold a stream. Copying a blob between stores inside a
-          tree goes through ``nu.Collect``, which holds it whole; outside a
-          tree, pass one backend's ``stream`` to another's ``put``.
+        - The source is one value: a stream term, such as another store's
+          ``open``, is refused by the tree's checks. Put a stream with
+          ``BlobPutStream`` (``store.put_stream``), which feeds the pieces
+          to the store as they come, so a copy between stores is
+          ``B.put_stream(A.open(bid))``.
 
     Yields:
         The id, a 32 character hex ``str``. ``BlobMeta`` gives the rest.
@@ -157,6 +165,77 @@ class BlobPut(ScalarAction):
             data: AsyncSource = await source(rt)
             info = await backend.aput(
                 data,
+                blob_id=_optional(await blob_id(rt)),  # type: ignore[arg-type]
+                mime=await mime(rt),
+                name=await name(rt),
+            )
+            return info.id
+
+        return athunk
+
+
+class BlobPutStream(ActionReduction):
+    """Stores a stream of byte pieces once under a fresh id and yields the id.
+
+    Args:
+        store: the store slot, a ``StoreRef``.
+        source: a stream term of ``bytes`` pieces, such as another store's
+            ``open`` or an upload's stream. A scalar is refused by the tree's
+            checks: put one value with ``BlobPut``.
+        blob_id: the id to store under. None mints one when the put runs.
+        mime: the media type a reader serves the bytes as.
+        name: the file name a download offers.
+
+    Notes:
+        - A reduction: slot 1 takes the stream and the put folds it into one
+          write. Every other slot is one value.
+        - The pieces go straight to the backend as they are pulled, which
+          spools them to the store's disk; the whole blob is never held in
+          memory.
+        - Id, mime and name work as in ``BlobPut``, retries included.
+
+    Yields:
+        The id, a 32 character hex ``str``.
+
+    Example:
+        bid = Media.put_stream(Archive.open(old_id), mime="image/png")
+    """
+
+    _mutates = Declared(value=frozenset({0}), name="mutates")
+    _reduces = Declared(value=1, name="reduces")
+
+    def __init__(
+        self,
+        store: object,
+        source: object,
+        blob_id: StrArg | None = None,
+        mime: StrArg = "",
+        name: StrArg = "",
+    ) -> None:
+        super().__init__(_store_node(store), source, blob_id, mime, name)
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        store, source, blob_id, mime, name = children
+
+        def thunk(rt: Runtime) -> str:
+            backend = _backend(store(rt))
+            info = backend.put(
+                sync_iter(source(rt)),
+                blob_id=_optional(blob_id(rt)),  # type: ignore[arg-type]
+                mime=mime(rt),
+                name=name(rt),
+            )
+            return info.id
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        store, source, blob_id, mime, name = children
+
+        async def athunk(rt: Runtime) -> str:
+            backend = _backend(await store(rt))
+            info = await backend.aput(
+                aiter_any(await source(rt)),
                 blob_id=_optional(await blob_id(rt)),  # type: ignore[arg-type]
                 mime=await mime(rt),
                 name=await name(rt),

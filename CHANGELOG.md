@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Blob stores take a stream straight in, so copies and uploads never sit whole
 - Writes can now fold a whole stream into one value, not only reads
 - Video controls stay white over any picture; image full screen matches video's
 - Images join video and audio as media, in the kit and in Python

@@ -15,6 +15,7 @@ from _support.blob_workers import BUCKET
 
 import nu
 import nustd
+from nu.engine.validation import ValidationError
 from nu.forms import Dict
 from nustd.blob import (
     BlobExists,
@@ -226,6 +227,74 @@ def test_open_range_clamps(media, run):
 def test_open_of_a_missing_id_raises(media, run):
     with pytest.raises(BlobNotFound):
         run(media(nu.Collect(Media.open("f" * 32))))
+
+
+# --- put_stream -----------------------------------------------------------------
+
+
+PIECES = [DATA[i : i + 1000] for i in range(0, len(DATA), 1000)]
+
+
+def test_put_stream_folds_a_stream_term_into_one_blob(media, run):
+    term = nu.let(
+        Media.put_stream(nu.Iter(PIECES), mime="image/png", name="cat.png"),
+        lambda bid: Dict.of(bytes=Media.get(bid), meta=Media.meta(bid)),
+    )
+    out = run(media(term))
+    assert out["bytes"] == DATA
+    assert out["meta"]["size"] == len(DATA)
+    assert out["meta"]["mime"] == "image/png"
+    assert out["meta"]["name"] == "cat.png"
+
+
+def test_put_stream_under_a_given_id(media, run):
+    bid = "ab" * 16
+    assert run(media(Media.put_stream(nu.Iter(PIECES), blob_id=bid))) == bid
+    assert run(media(Media.get(bid))) == DATA
+    with pytest.raises(BlobExists):
+        run(media(Media.put_stream(nu.Iter(PIECES), blob_id=bid)))
+
+
+def test_put_stream_of_an_empty_stream_stores_no_bytes(media, run):
+    bid = run(media(Media.put_stream(nu.Iter([]))))
+    assert run(media(Media.get(bid))) == b""
+
+
+def test_put_stream_copies_a_blob_between_stores(kind, tmp_path, run):
+    other = "files" if kind == "lmdb" else "lmdb"
+    tree = lambda body: nu.With(  # noqa: E731
+        bind(kind, Media, tmp_path / "media"),
+        bind(other, Pics, tmp_path / "pics"),
+        body=body,
+    )
+    term = nu.let(
+        Media.put(DATA, mime="image/png"),
+        lambda a: nu.let(
+            Pics.put_stream(Media.open(a, step=1000), mime="image/png"),
+            lambda b: Dict.of(a=a, b=b, bytes=Pics.get(b), meta=Pics.meta(b)),
+        ),
+    )
+    out = run(tree(term))
+    assert out["b"] != out["a"]
+    assert out["bytes"] == DATA
+    assert out["meta"]["size"] == len(DATA)
+    assert out["meta"]["mime"] == "image/png"
+
+
+def test_put_of_a_stream_term_is_still_refused(kind, tmp_path, run):
+    tree = lambda body: nu.With(  # noqa: E731
+        bind(kind, Media, tmp_path / "media"),
+        bind(kind, Pics, tmp_path / "pics"),
+        body=body,
+    )
+    bid = run(tree(Media.put(DATA)))
+    with pytest.raises(ValidationError, match="BlobPut is fed a stream in slot 1"):
+        run(tree(Pics.put(Media.open(bid))))
+
+
+def test_put_stream_of_a_scalar_is_refused(media, run):
+    with pytest.raises(ValidationError, match="BlobPutStream folds the stream in slot 1"):
+        run(media(Media.put_stream(nu.Literal(DATA))))
 
 
 # --- arguments as terms ----------------------------------------------------------

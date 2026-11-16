@@ -11,7 +11,7 @@ Surface:
       backend under a store's name for the span of a tree.
     - backend_of(spec): the backend such a binding builds, for use outside a
       tree, unopened.
-    - BlobPut, BlobNewId, BlobGet, BlobOpen, BlobMeta, BlobHas, BlobDelete:
+    - BlobPut, BlobPutStream, BlobNewId, BlobGet, BlobOpen, BlobMeta, BlobHas, BlobDelete:
       the interactions those terms build; BlobFabric beneath them.
     - BlobBackend: the protocol every backend keeps, sync plus async twins.
     - BlobInfo, BlobNotFound, BlobExists, BlobTooLarge: what calls give and raise.
@@ -65,6 +65,7 @@ if TYPE_CHECKING:
         BlobNewId,
         BlobOpen,
         BlobPut,
+        BlobPutStream,
     )
     from .presets import backend_of, files, lmdb, s3
     from .store import StoreRef
@@ -82,6 +83,7 @@ _LAZY = {
     "BlobNewId": "interactions",
     "BlobOpen": "interactions",
     "BlobPut": "interactions",
+    "BlobPutStream": "interactions",
     "StoreRef": "store",
     "backend_of": "presets",
     "files": "presets",
@@ -119,6 +121,7 @@ __all__ = [
     "BlobNotFound",
     "BlobOpen",
     "BlobPut",
+    "BlobPutStream",
     "BlobTooLarge",
     "FilesBackend",
     "LMDBBackend",
