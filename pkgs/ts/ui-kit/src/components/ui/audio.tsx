@@ -9,6 +9,8 @@
 // plain scrub bar. `peaks` skips the decode for a caller that has them
 // already; `waveform={false}` skips it altogether.
 //
+// `download` ends the row with a download link.
+//
 // The row takes focus and owns the transport keys like Video, with `,` and
 // `.` stepping a tenth of a second while paused. It draws no box of its own:
 // rows stack into a list with lines between them, like any dense list.
@@ -20,6 +22,7 @@ import { loadPeaks } from "../../lib/media/peaks";
 import { useMedia, useMediaKeys } from "../../lib/media/use-media";
 import { cn } from "../../lib/utils";
 import {
+	MediaDownloadButton,
 	MediaPlayButton,
 	MediaRate,
 	MediaTime,
@@ -45,6 +48,8 @@ export interface AudioProps
 	waveform?: boolean;
 	/** Peaks in [0, 1], already computed: drawn as given, no decode. */
 	peaks?: ArrayLike<number>;
+	/** A url that saves the sound: a download link at the end of the row. */
+	download?: string;
 	/** Classes and styles for the row, not the <audio> inside it. */
 	className?: string;
 	style?: React.CSSProperties;
@@ -156,6 +161,7 @@ export function Audio({
 	label,
 	waveform = true,
 	peaks: given,
+	download,
 	className,
 	style,
 	children,
@@ -230,6 +236,7 @@ export function Audio({
 				<MediaTime time={media.time} duration={media.duration} />
 				<MediaVolume media={media} glyphClassName="text-text-primary" />
 				<MediaRate media={media} />
+				{download ? <MediaDownloadButton href={download} className="text-text-primary" /> : null}
 			</div>
 		</TooltipProvider>
 	);

@@ -19,6 +19,8 @@
 // frame while paused (`fps`, 30 unless told), m, f, and 0 to 9. A click
 // plays or pauses, a double click goes full screen.
 //
+// `download` puts a download link in the transport, before full screen.
+//
 // Captions go in as children: `<track kind="captions" ... />`.
 
 import { VideoOff } from "lucide-react";
@@ -57,6 +59,8 @@ export interface VideoProps
 	label?: string;
 	/** False drops the transport: the frame still plays on click and keys. */
 	controls?: boolean;
+	/** A url that saves the video: a download link in the transport. */
+	download?: string;
 	/** Classes and styles for the frame, not the <video> inside it. */
 	className?: string;
 	style?: React.CSSProperties;
@@ -88,6 +92,7 @@ export function Video({
 	fps = 30,
 	label = "Video",
 	controls = true,
+	download,
 	className,
 	style,
 	children,
@@ -210,6 +215,7 @@ export function Video({
 								? { active: fullscreen.active, onToggle: fullscreen.toggle }
 								: undefined
 						}
+						download={download}
 						onMenuOpenChange={setMenuOpen}
 					/>
 				</div>

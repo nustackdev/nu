@@ -1,7 +1,7 @@
 // VideoRef -- display-only video by url, played with the kit transport.
 //
 // Server-owned. A write is a partial merge of {src, poster, fit, width,
-// height, radius, aspect, autoplay, loop, muted} into the node's props, which
+// height, radius, aspect, autoplay, loop, muted, download} into the node's props, which
 // is the default store behaviour, so there is no handler; playback stays in
 // the browser and nothing is sent back. Whitelists and the nullable-int
 // coercion happen at read time, like ImageRef. Composes the kit Video
@@ -10,7 +10,8 @@
 // `aspect` holds the frame to a ratio ("16/9", "1:1", "4 / 3", 1.5); without
 // one the frame takes the video's own shape once it loads. `radius` is the
 // corner scale (none / sm / md / lg), none unless set. Autoplay only starts
-// muted in most browsers.
+// muted in most browsers. `download`, a url, puts a download link in the
+// transport.
 
 import type { CSSProperties } from "react";
 import { Video } from "../../components/ui/video";
@@ -45,6 +46,7 @@ function VideoView({ path }: NodeProps) {
 	const autoplay = useBoolProp(path, "autoplay");
 	const loop = useBoolProp(path, "loop");
 	const muted = useBoolProp(path, "muted");
+	const download = useStringProp(path, "download");
 	const style: CSSProperties = {};
 	if (width != null) style.width = `${width}px`;
 	if (height != null) style.height = `${height}px`;
@@ -58,6 +60,7 @@ function VideoView({ path }: NodeProps) {
 			autoPlay={autoplay}
 			loop={loop}
 			muted={muted}
+			download={download || undefined}
 			style={style}
 		/>
 	);

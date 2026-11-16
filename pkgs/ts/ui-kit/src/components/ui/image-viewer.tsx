@@ -20,13 +20,14 @@
 // the whole window, Esc to close (`expanded` holds it from outside). It is
 // the video player's full screen button, and in the full window view the
 // exit button takes its place in the cluster, so the way out is where the
-// way in was; a solid close button sits top right too. `pixel` shows the
+// way in was; a solid close button sits top right too. `download` adds a
+// download link to the cluster, in both views. `pixel` shows the
 // image pixel under the pointer.
 //
 // The box has no size of its own: give it a height, or an `aspectRatio` with
 // a width. With neither it is 320px tall (h-80).
 
-import { Maximize, Minimize, RotateCcw, X, ZoomIn, ZoomOut } from "lucide-react";
+import { Download, Maximize, Minimize, RotateCcw, X, ZoomIn, ZoomOut } from "lucide-react";
 import * as React from "react";
 import { useKeyScope } from "../../lib/keyboard";
 import { cn } from "../../lib/utils";
@@ -69,6 +70,8 @@ export interface ImageViewerProps extends Omit<React.ComponentProps<"div">, "chi
 	expandable?: boolean;
 	/** Show the image pixel under the pointer. */
 	pixel?: boolean;
+	/** A url that saves the image: a download link in the cluster. */
+	download?: string;
 	/** The full-window view, held by the caller; uncontrolled unless set. */
 	expanded?: boolean;
 	onExpandedChange?: (open: boolean) => void;
@@ -109,6 +112,7 @@ function ImageViewer({
 	controls = "hover",
 	expandable = true,
 	pixel = false,
+	download,
 	expanded: expandedProp,
 	onExpandedChange,
 	onExit,
@@ -371,6 +375,25 @@ function ImageViewer({
 						>
 							1:1
 						</Control>
+						{download && (
+							<>
+								<span aria-hidden="true" className="mx-0.5 h-4 w-px bg-border-subtle" />
+								<IconButton
+									asChild
+									variant="ghost"
+									size="sm"
+									ring="inset"
+									aria-label="Download"
+									tip="Download"
+									tipSide="top"
+									data-slot="image-viewer-download"
+								>
+									<a href={download} download>
+										<Download />
+									</a>
+								</IconButton>
+							</>
+						)}
 						{(expandable || onExit) && (
 							<>
 								<span aria-hidden="true" className="mx-0.5 h-4 w-px bg-border-subtle" />
@@ -407,6 +430,7 @@ function ImageViewer({
 							controls="always"
 							expandable={false}
 							pixel={pixel}
+							download={download}
 							onExit={() => setExpanded(false)}
 							className="h-full bg-bg-canvas"
 						/>

@@ -49,6 +49,7 @@ def test_video_slot_seeds_every_prop():
         "autoplay": False,
         "loop": False,
         "muted": False,
+        "download": "",
     }
     assert frame.payload == {"src": "/a.mp4"}
 
@@ -91,6 +92,7 @@ def test_video_setters():
         (video.set_autoplay(True), {"autoplay": True}),
         (video.set_loop(True), {"loop": True}),
         (video.set_muted(False), {"muted": False}),
+        (video.set_download("/a.mp4?download=1"), {"download": "/a.mp4?download=1"}),
     ]
     for term, payload in cases:
         [frame] = _frames(term)
@@ -104,7 +106,13 @@ def test_audio_slot_seeds_every_prop():
     [frame] = _frames(_mount(AudioRef, title="take-01.mp3").set_src("/a.mp3"))
     wire_type, props = frame.chain[-1][1:]
     assert wire_type == "AudioRef"
-    assert props == {"src": "", "title": "take-01.mp3", "autoplay": False, "loop": False}
+    assert props == {
+        "src": "",
+        "title": "take-01.mp3",
+        "autoplay": False,
+        "loop": False,
+        "download": "",
+    }
     assert frame.payload == {"src": "/a.mp3"}
 
 
@@ -119,6 +127,7 @@ def test_audio_set_and_setters():
         (audio.set_title("roar"), {"title": "roar"}),
         (audio.set_autoplay(True), {"autoplay": True}),
         (audio.set_loop(True), {"loop": True}),
+        (audio.set_download("/a.mp3?download=1"), {"download": "/a.mp3?download=1"}),
     ]
     for term, payload in cases:
         [frame] = _frames(term)

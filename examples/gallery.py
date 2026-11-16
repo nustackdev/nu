@@ -8,9 +8,10 @@ leaves the selection.
 
 The log is what the grid shows: one arm per item, kept in step with the log
 (``ReconcileLatestEach``). An arm draws its tile, the image, video or player
-with a delete button, and listens to that button. A click drops the blob and
-the log entry; the log moving ends the arm, and the tile goes with it. The
-browser reads each tile from the blob mount, a video in ranges as it plays.
+with a download link, and a delete button it listens to. A click drops the
+blob and the log entry; the log moving ends the arm, and the tile goes with
+it. The browser reads each tile from the blob mount, a video in ranges as it
+plays.
 
 Run it and open http://localhost:8095:
 
@@ -65,18 +66,18 @@ class State(nu.Shape):
 
 def media(cell: ui.ItemRef, bid: nu.Nu, mime: nu.Nu) -> nu.Nu:
     """The blob in ``cell``, drawn by the kind its mime names."""
-    src = MOUNT.url(bid)
+    src, saved = MOUNT.url(bid), MOUNT.url(bid, download=True)
     kind = nu.Str(mime).split("/")[0]
     image = cell.to(ui.ImageRef.slot(fit="cover", aspect="4/3", radius="md", zoom=True))
     video = cell.to(ui.VideoRef.slot(aspect="16/9", radius="md"))
     sound = cell.to(ui.AudioRef)
     return nu.IfDo(
         nu.Eq(kind, "image"),
-        image.init() >> image.set_src(src),
+        image.init() >> image.set_src(src) >> image.set_download(saved),
         nu.IfDo(
             nu.Eq(kind, "video"),
-            video.init() >> video.set_src(src),
-            sound.init() >> sound.set_src(src),
+            video.init() >> video.set_src(src) >> video.set_download(saved),
+            sound.init() >> sound.set_src(src) >> sound.set_download(saved),
         ),
     )
 

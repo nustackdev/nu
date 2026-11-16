@@ -12,6 +12,7 @@
 // for `aria-valuetext`, arrows, page keys, home and end.
 
 import {
+	Download,
 	Maximize,
 	Minimize,
 	Pause,
@@ -398,6 +399,35 @@ export function MediaFullscreenButton({
 	);
 }
 
+/**
+ * A link that saves the media. `href` is what the server hands out for a
+ * download (a blob's `?download=1` url), so the file name is the server's.
+ */
+export function MediaDownloadButton({
+	href,
+	variant = "ghost",
+	size = "sm",
+	tipSide = "top",
+	...props
+}: { href: string } & Omit<IconButtonProps, "aria-label" | "asChild" | "children">) {
+	return (
+		<IconButton
+			asChild
+			variant={variant}
+			size={size}
+			aria-label="Download"
+			tip="Download"
+			tipSide={tipSide}
+			data-slot="media-download"
+			{...props}
+		>
+			<a href={href} download>
+				<Download />
+			</a>
+		</IconButton>
+	);
+}
+
 // ---------------------------------------------------------------------------
 // The bar
 
@@ -405,14 +435,17 @@ export interface MediaControlsProps extends React.ComponentProps<"div"> {
 	media: MediaApi;
 	/** Draws the full screen toggle when given. */
 	fullscreen?: { active: boolean; onToggle: () => void };
+	/** Draws a download link to this url when given. */
+	download?: string;
 	/** The speed menu opened or closed: a player keeps its bar up meanwhile. */
 	onMenuOpenChange?: (open: boolean) => void;
 }
 
-/** Scrub bar over a row of play, volume, time, speed and full screen. */
+/** Scrub bar over a row of play, volume, time, speed, download and full screen. */
 export function MediaControls({
 	media,
 	fullscreen,
+	download,
 	onMenuOpenChange,
 	className,
 	...props
@@ -440,6 +473,7 @@ export function MediaControls({
 					<MediaTime time={media.time} duration={media.duration} className="ml-1.5" />
 					<div className="flex-1" />
 					<MediaRate media={media} onOpenChange={onMenuOpenChange} />
+					{download ? <MediaDownloadButton href={download} /> : null}
 					{fullscreen ? <MediaFullscreenButton {...fullscreen} /> : null}
 				</div>
 			</div>

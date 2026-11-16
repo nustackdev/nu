@@ -249,6 +249,7 @@ def test_image_setters_merge_one_key():
     assert _payload(handle.set_radius("lg")) == {"radius": "lg"}
     assert _payload(handle.set_aspect("4/3")) == {"aspect": "4/3"}
     assert _payload(handle.set_zoom(True)) == {"zoom": True}
+    assert _payload(handle.set_download("/a.png?download=1")) == {"download": "/a.png?download=1"}
 
 
 def test_image_zoom_off_by_default():

@@ -1,7 +1,7 @@
 // ImageRef -- display-only image by url with alt and fit mode.
 //
 // Server-owned. A write is a partial merge of {src, alt, fit, width, height,
-// radius, aspect} into the node's props, which is the default store
+// radius, aspect, zoom, download} into the node's props, which is the default store
 // behaviour, so there is no handler. The fit and radius whitelists, the
 // aspect spelling and the nullable-int coercion on width/height happen at
 // read time. Composes the kit Image primitive; empty src renders the
@@ -19,10 +19,16 @@
 // width, height and aspect props set it as above, and with no height and no
 // aspect it is 320px tall and as wide as its container. `fit` does not apply,
 // the viewer always opens fitted.
+//
+// `download`, a url, adds a download link: in the viewer's cluster, or as a
+// chip over a plain image's corner, shown on hover and focus.
 
 import type { CSSProperties } from "react";
 import { Image } from "../../components/ui/image";
 import { ImageViewer } from "../../components/ui/image-viewer";
+import { MediaDownloadButton } from "../../components/ui/media-controls";
+import { TooltipProvider } from "../../components/ui/tooltip";
+import { cn } from "../../lib/utils";
 import {
 	type NodeEntry,
 	type NodeProps,
@@ -62,6 +68,7 @@ function ImageView({ path }: NodeProps) {
 	const radius = useEnumProp(path, "radius", RADII, "none");
 	const aspect = normAspect(useStringProp(path, "aspect"));
 	const zoom = useBoolProp(path, "zoom");
+	const download = useStringProp(path, "download") || undefined;
 	const style: CSSProperties = {};
 	if (width != null) style.width = `${width}px`;
 	if (height != null) style.height = `${height}px`;
@@ -72,20 +79,43 @@ function ImageView({ path }: NodeProps) {
 				alt={alt}
 				radius={radius}
 				aspectRatio={height == null ? aspect : undefined}
+				download={download}
 				style={style}
 			/>
 		);
 	}
 	if (aspect != null && width == null) style.width = "100%";
-	return (
+	const image = (
 		<Image
 			src={src || undefined}
 			alt={alt}
 			fit={fit}
 			radius={radius}
 			aspectRatio={aspect}
-			style={style}
+			style={download ? { ...style, width: style.width && "100%" } : style}
 		/>
+	);
+	if (!download || !src) return image;
+	return (
+		<TooltipProvider>
+			<div
+				data-slot="image-download"
+				className="group/image relative w-fit max-w-full"
+				style={{ width: style.width }}
+			>
+				{image}
+				<MediaDownloadButton
+					href={download}
+					variant="secondary"
+					tipSide="bottom"
+					className={cn(
+						"absolute top-2 right-2 shadow-raised",
+						"opacity-0 transition-opacity duration-fast ease-out",
+						"group-hover/image:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100",
+					)}
+				/>
+			</div>
+		</TooltipProvider>
 	);
 }
 

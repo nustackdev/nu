@@ -14,6 +14,12 @@ it names::
     Clip.video.set(files.url(bid), poster=files.url(still))
     Clip.take.set_src(files.url(audio_bid))
 
+``download`` is a url that saves the media (a blob mount's
+``url(bid, download=True)``): a download link in the player's controls, the
+image viewer's cluster, or a chip over a plain image's corner::
+
+    Clip.video.set_download(files.url(bid, download=True))
+
 ``AudioRef`` draws the sound's waveform when its source allows a CORS fetch,
 a plain scrub bar when it does not. Autoplay only starts muted in most
 browsers.
@@ -72,6 +78,7 @@ class ImageRef(LeafRef):
         radius: ImageRadius | None = None,
         aspect: str = "",
         zoom: bool = False,
+        download: str = "",
     ) -> Self:
         return super().slot(
             src=src,
@@ -82,6 +89,7 @@ class ImageRef(LeafRef):
             radius=radius,
             aspect=aspect,
             zoom=zoom,
+            download=download,
         )
 
     def set_src(self, url: StrArg) -> Nu:
@@ -108,6 +116,10 @@ class ImageRef(LeafRef):
 
     def set_zoom(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(zoom=flag))
+
+    def set_download(self, url: StrArg) -> Nu:
+        """The url a download link saves; "" drops the link."""
+        return Write(self, Dict.of(download=url))
 
     def set(
         self,
@@ -158,6 +170,7 @@ class VideoRef(LeafRef):
         autoplay: bool = False,
         loop: bool = False,
         muted: bool = False,
+        download: str = "",
     ) -> Self:
         return super().slot(
             src=src,
@@ -170,6 +183,7 @@ class VideoRef(LeafRef):
             autoplay=autoplay,
             loop=loop,
             muted=muted,
+            download=download,
         )
 
     def set_src(self, url: StrArg) -> Nu:
@@ -198,6 +212,10 @@ class VideoRef(LeafRef):
 
     def set_muted(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(muted=flag))
+
+    def set_download(self, url: StrArg) -> Nu:
+        """The url the transport's download link saves; "" drops the link."""
+        return Write(self, Dict.of(download=url))
 
     def set(
         self,
@@ -239,8 +257,9 @@ class AudioRef(LeafRef):
         title: str = "",
         autoplay: bool = False,
         loop: bool = False,
+        download: str = "",
     ) -> Self:
-        return super().slot(src=src, title=title, autoplay=autoplay, loop=loop)
+        return super().slot(src=src, title=title, autoplay=autoplay, loop=loop, download=download)
 
     def set_src(self, url: StrArg) -> Nu:
         return Write(self, Dict.of(src=url))
@@ -253,6 +272,10 @@ class AudioRef(LeafRef):
 
     def set_loop(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(loop=flag))
+
+    def set_download(self, url: StrArg) -> Nu:
+        """The url the row's download link saves; "" drops the link."""
+        return Write(self, Dict.of(download=url))
 
     def set(
         self,
