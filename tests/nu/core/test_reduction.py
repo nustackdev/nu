@@ -1,16 +1,22 @@
-"""Structural tests for the reduction atoms.
+"""Tests for the reduction atoms, and for reductions on the write side.
 
-Reductions consume a stream child and the stream runtime is not wired yet, so
-these stay structural: compile a reduction over a stream source and assert the
-node is SCALAR over a STREAM child, and a clean reduction validates against
-the law set. No eval.
+The core folds are QueryReductions: compile one over a stream source and the
+node is SCALAR over a STREAM child, a clean one validates, and each folds as
+its Python builtin does. Two test-only atoms, an ActionReduction and a
+CommandReduction, fold a stream in slot 1 into one write to a real ref, sync
+and async, to show a write can fold a stream as a read does.
 """
 
 from __future__ import annotations
 
+import asyncio
+
 import pytest
 
+import nu
+import nu.mem as nm
 from nu.core import Iter
+from nu.core._stream import aiter_any, sync_iter
 from nu.core.reduction import (
     AllOf,
     AnyOf,
@@ -22,7 +28,8 @@ from nu.core.reduction import (
     Min,
     Sum,
 )
-from nu.lang import LAWS, Attr, Cardinality, Literal, gate
+from nu.engine.structure import Declared
+from nu.lang import LAWS, ActionReduction, Attr, Cardinality, CommandReduction, Literal, gate
 from nu.lang.helpers import compile, validate
 
 
@@ -123,3 +130,96 @@ def test_first_of_an_empty_stream_raises_or_takes_a_default():
         run(First(Iter(Literal([]))))
     assert run(First(Iter(Literal([])), Literal("d")))[0] == "d"
     assert run(Last(Iter(Literal([])), Literal("d")))[0] == "d"
+
+
+# --- reductions that write -----------------------------------------------
+
+
+class Log(nu.Shape):
+    entries = nm.ListRef.slot(object)
+
+
+class AppendTotal(ActionReduction):
+    """Appends the total of the stream in slot 1 to the list in slot 0; yields it."""
+
+    _mutates = Declared(value=frozenset({0}), name="mutates")
+    _reduces = Declared(value=1, name="reduces")
+
+    def _compile(self, nid, children):
+        target, stream = children
+
+        def thunk(rt):
+            total = sum(sync_iter(stream(rt)))
+            target(rt).append(total)
+            return total
+
+        return thunk
+
+    def _acompile(self, nid, children):
+        target, stream = children
+
+        async def athunk(rt):
+            total = 0
+            async for v in aiter_any(await stream(rt)):
+                total += v
+            (await target(rt)).append(total)
+            return total
+
+        return athunk
+
+
+class AppendAll(CommandReduction):
+    """Appends the whole stream in slot 1 to the list in slot 0, as one entry."""
+
+    _mutates = Declared(value=frozenset({0}), name="mutates")
+    _reduces = Declared(value=1, name="reduces")
+
+    def _compile(self, nid, children):
+        target, stream = children
+
+        def thunk(rt):
+            target(rt).append(tuple(sync_iter(stream(rt))))
+
+        return thunk
+
+    def _acompile(self, nid, children):
+        target, stream = children
+
+        async def athunk(rt):
+            items = tuple([v async for v in aiter_any(await stream(rt))])
+            (await target(rt)).append(items)
+
+        return athunk
+
+
+def _run(term, ctx, mode):
+    if mode == "sync":
+        return nu.run(term, ctx)[0]
+    return asyncio.run(nu.arun(term, ctx))[0]
+
+
+@pytest.mark.parametrize("mode", ["sync", "async"])
+def test_an_action_reduction_writes_the_folded_value_once(mode):
+    data: dict = {"entries": []}
+    ctx = nu.Context().bind(dict, data, Log)
+    total = _run(AppendTotal(Log.entries, nu.Iter([1, 2, 3])), ctx, mode)
+    assert total == 6
+    assert data["entries"] == [6]
+
+
+@pytest.mark.parametrize("mode", ["sync", "async"])
+def test_a_command_reduction_writes_the_folded_stream_once(mode):
+    data: dict = {"entries": []}
+    ctx = nu.Context().bind(dict, data, Log)
+    out = _run(
+        AppendAll(Log.entries, nu.Map(nu.Iter([1, 2, 3]), nu.Mul(nu.context.Attr("item"), 10))),
+        ctx,
+        mode,
+    )
+    assert out is None
+    assert data["entries"] == [(10, 20, 30)]
+
+
+def test_a_write_reduction_over_a_scalar_is_refused():
+    verdict = gate(compile(AppendTotal(Log.entries, Literal(1))), *LAWS)
+    assert any(v.law == "reduction_takes_stream" for v in verdict)

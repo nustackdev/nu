@@ -31,7 +31,6 @@ __all__ = [
     "cardinality_is",
     "child_paths",
     "has_children",
-    "no_child_yields",
     "no_composition_effect",
     "of_sort",
 ]
@@ -80,15 +79,5 @@ def no_composition_effect(effect: Effect) -> Predicate:
     return Predicate(
         lambda program, path: all(
             eff is not effect for _, eff in program.attr(path, Attr.COMPOSITION_EFFECTS)
-        )
-    )
-
-
-def no_child_yields(cardinality: Cardinality) -> Predicate:
-    """Holds when no direct child resolves its cardinality to ``cardinality``."""
-    return Predicate(
-        lambda program, path: all(
-            program.attr(child, Attr.CHILD_CARDINALITY) is not cardinality
-            for child in child_paths(program, path)
         )
     )

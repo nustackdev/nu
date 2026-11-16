@@ -1,6 +1,6 @@
 """Slot-role attributes: which slot indices play what role in a node.
 
-Two declared per-slot columns, both structural metadata like ``sort`` but
+Three declared per-slot columns, all structural metadata like ``sort`` but
 per-slot.
 
 ``param_slots`` is a Control concern. A Control's slot 0 is its parameter (a
@@ -19,6 +19,11 @@ and outside the effect system - because the slot is never evaluated, no READ
 arises to suppress. Generic passes (effect walk, load annotation, inline) read
 this column to leave those slots unevaluated while still recursing into them.
 Most kinds keep the empty default.
+
+``reduces`` names the one slot a reduction folds a stream through, an index,
+or None on every node that is no reduction. It is the only slot of a scalar
+or void consumer the cardinality laws let a stream into; ``Reduction`` in
+``nu.lang.kinds`` declares it.
 """
 
 from __future__ import annotations
@@ -34,4 +39,5 @@ __all__ = ["ATTRIBUTES"]
 ATTRIBUTES: tuple[Attribute, ...] = (
     Declared(value=frozenset(), name=Attr.PARAM_SLOTS),
     Declared(value=frozenset(), name=Attr.STRUCTURAL),
+    Declared(value=None, name=Attr.REDUCES),
 )

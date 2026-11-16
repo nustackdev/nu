@@ -48,7 +48,7 @@ def reduce(
         >>> nu.run(nustd.functools.reduce(nu.Int(nu.Attr("acc")) * 10 + nu.Attr("item"), [1, 2, 3]))[0]
         123
     """
-    # A Reduction requires a stream source; Iter lifts the iterable to one.
+    # A QueryReduction requires a stream source; Iter lifts the iterable to one.
     if initializer is UNSET:
         return Object(Reduce(Iter(iterable), function))
     return Object(Reduce(Iter(iterable), function, initial=initializer))

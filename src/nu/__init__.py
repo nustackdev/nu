@@ -96,18 +96,21 @@ from .prog import Eval, LoadNu, Program
 # Language essentials, curated to the building blocks of a Nu program:
 #   - the root kind (``Nu``, ``TypedNu``);
 #   - the kind hierarchy (``Ref``, ``Interaction``, ``Query`` / ``ScalarQuery``
-#     / ``StreamQuery`` / ``Reduction``, ``Command``, ``Action`` /
-#     ``ScalarAction`` / ``StreamAction``, ``Flow`` / ``Strategy`` /
-#     ``Control``, ``Span`` / ``Bracket`` / ``Policy``);
+#     / ``StreamQuery``, ``Command``, ``Action`` / ``ScalarAction`` /
+#     ``StreamAction``, ``Flow`` / ``Strategy`` / ``Control``, ``Span`` /
+#     ``Bracket`` / ``Policy``), and the reduction role (``Reduction`` and
+#     its ``QueryReduction``, ``ActionReduction``, ``CommandReduction``);
 #   - the argument aliases used in kind signatures (``Arg`` and the typed
 #     ``*Arg`` aliases).
 from .lang import (
     Action,
+    ActionReduction,
     Arg,
     BoolArg,
     Bracket,
     BytesArg,
     Command,
+    CommandReduction,
     Context,
     Control,
     DictArg,
@@ -123,6 +126,7 @@ from .lang import (
     Nu,
     Policy,
     Query,
+    QueryReduction,
     Reduction,
     Ref,
     Runtime,

@@ -10,6 +10,7 @@ from __future__ import annotations
 import pytest
 from _support.law_terms import Cmd, FlowS, Q, R
 
+from nu.lang import ActionReduction, CommandReduction, QueryReduction
 from nu.lang.attributes import Attr, Sort
 from nu.lang.attributes.sort import MATRIX, matrix_sort, subsort
 from nu.lang.helpers import compile as nu_compile
@@ -36,7 +37,6 @@ def test_subsort_is_reflexive(sort: Sort) -> None:
         (Sort.SPAN, Sort.INTERACTION),
         (Sort.SCALAR_QUERY, Sort.QUERY),
         (Sort.STREAM_QUERY, Sort.QUERY),
-        (Sort.REDUCTION, Sort.SCALAR_QUERY),
         (Sort.SCALAR_COMMAND, Sort.COMMAND),
         (Sort.SCALAR_ACTION, Sort.ACTION),
         (Sort.STREAM_ACTION, Sort.ACTION),
@@ -55,7 +55,6 @@ def test_subsort_holds_for_direct_parent(sort: Sort, parent: Sort) -> None:
     [
         Sort.SCALAR_QUERY,
         Sort.STREAM_QUERY,
-        Sort.REDUCTION,
         Sort.SCALAR_COMMAND,
         Sort.SCALAR_ACTION,
         Sort.STREAM_ACTION,
@@ -69,10 +68,21 @@ def test_subsort_walks_chain_to_root(leaf: Sort) -> None:
     assert subsort(leaf, Sort.INTERACTION)
 
 
-def test_subsort_reduction_descends_through_scalar_query_and_query() -> None:
-    assert subsort(Sort.REDUCTION, Sort.SCALAR_QUERY)
-    assert subsort(Sort.REDUCTION, Sort.QUERY)
-    assert subsort(Sort.REDUCTION, Sort.INTERACTION)
+def test_reduction_is_no_sort() -> None:
+    # A reduction is a slot role any scalar-out kind can carry, not a node kind.
+    assert "reduction" not in {s.value for s in Sort}
+
+
+@pytest.mark.parametrize(
+    ("base", "sort"),
+    [
+        (QueryReduction, Sort.SCALAR_QUERY),
+        (ActionReduction, Sort.SCALAR_ACTION),
+        (CommandReduction, Sort.SCALAR_COMMAND),
+    ],
+)
+def test_reduction_bases_keep_their_kinds_sort(base: type, sort: Sort) -> None:
+    assert base._attributes["sort"].value is sort
 
 
 def test_subsort_ref_does_not_descend_from_interaction() -> None:
@@ -108,7 +118,6 @@ def test_subsort_false_for_siblings(sort: Sort, sibling: Sort) -> None:
         (Sort.REF, Sort.REF),
         (Sort.SCALAR_QUERY, Sort.SCALAR_QUERY),
         (Sort.STREAM_QUERY, Sort.STREAM_QUERY),
-        (Sort.REDUCTION, Sort.SCALAR_QUERY),
         (Sort.SCALAR_COMMAND, Sort.SCALAR_COMMAND),
         (Sort.SCALAR_ACTION, Sort.SCALAR_ACTION),
         (Sort.STREAM_ACTION, Sort.STREAM_ACTION),
@@ -120,10 +129,6 @@ def test_subsort_false_for_siblings(sort: Sort, sibling: Sort) -> None:
 )
 def test_matrix_sort_folds_leaf_to_matrix_row(sort: Sort, expected: Sort) -> None:
     assert matrix_sort(sort) is expected
-
-
-def test_matrix_sort_folds_reduction_to_scalar_query() -> None:
-    assert matrix_sort(Sort.REDUCTION) is Sort.SCALAR_QUERY
 
 
 @pytest.mark.parametrize(

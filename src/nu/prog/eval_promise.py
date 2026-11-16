@@ -57,8 +57,7 @@ def check_promise(inner_program: Program, promise: dict[str, Any]) -> None:
         # SORT is Declared; not stored in the attrs column store.
         actual = inner_program.attr((), Attr.SORT)
         expected = promise["sort"]
-        # Sort match is exact or subsort ancestor: promise=SCALAR_QUERY accepts
-        # SCALAR_QUERY and REDUCTION (subsort). Interior sorts (INTERACTION,
+        # Sort match is exact or subsort ancestor: interior sorts (INTERACTION,
         # QUERY, ...) accept any descendant. Use subsort to reflect the tree.
         from nu.lang.attributes.sort import subsort
 

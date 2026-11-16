@@ -1,8 +1,9 @@
 """Reduction atoms: Python's stream-to-scalar builtins.
 
 Maps Python's builtins that fold an iterable down to one value onto Nu
-Reductions (a ScalarQuery with a stream child - they bridge the REFUSED cell of
-the cardinality matrix by naming the fold). Pure compute over the source.
+QueryReductions: reads whose slot 0 takes a stream and folds it to one value.
+Naming the fold is what lets a stream into a scalar consumer; any other slot
+stays scalar. Pure compute over the source.
 
 Builtins covered (Python -> Nu):
 
@@ -18,18 +19,18 @@ or the whole drain of a stream.
 core-adjacent (borderline). It is deferred to ``nustd``, not declared here:
 core stays the 1:1 map of native builtins.
 
-Every atom is EVALUABLE: each ``Reduction`` defines ``compile`` (sync) and
+Every atom is EVALUABLE: each ``QueryReduction`` defines ``compile`` (sync) and
 ``acompile`` (async) returning a thunk that drains its stream child to a scalar,
 with no NULL handling of its own.
 
-Sorts: all ScalarQuery / Reduction (Q-scalar over Q-stream).
+Sorts: all ScalarQuery, via QueryReduction (Q-scalar over Q-stream in slot 0).
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.lang import Reduction
+from nu.lang import QueryReduction
 from nu.lang.sentinels import UNSET
 
 from ._stream import aiter_any, sync_iter
@@ -53,7 +54,7 @@ __all__ = [
 ]
 
 
-class Sum(Reduction):
+class Sum(QueryReduction):
     """The sum of every item in its stream child (``sum``).
 
     Args:
@@ -93,7 +94,7 @@ class Sum(Reduction):
         return athunk
 
 
-class Min(Reduction):
+class Min(QueryReduction):
     """The smallest item in its stream child (``min``).
 
     Args:
@@ -135,7 +136,7 @@ class Min(Reduction):
         return athunk
 
 
-class Max(Reduction):
+class Max(QueryReduction):
     """The largest item in its stream child (``max``).
 
     Args:
@@ -177,7 +178,7 @@ class Max(Reduction):
         return athunk
 
 
-class AnyOf(Reduction):
+class AnyOf(QueryReduction):
     """True if any item in its stream child is truthy (``any``).
 
     Args:
@@ -219,7 +220,7 @@ class AnyOf(Reduction):
         return athunk
 
 
-class AllOf(Reduction):
+class AllOf(QueryReduction):
     """True if every item in its stream child is truthy (``all``).
 
     Args:
@@ -261,7 +262,7 @@ class AllOf(Reduction):
         return athunk
 
 
-class Count(Reduction):
+class Count(QueryReduction):
     """The number of items in its stream child (``len`` over a stream).
 
     Args:
@@ -301,7 +302,7 @@ class Count(Reduction):
         return athunk
 
 
-class First(Reduction):
+class First(QueryReduction):
     """The first item of its stream child.
 
     Args:
@@ -355,7 +356,7 @@ class First(Reduction):
         return athunk
 
 
-class Last(Reduction):
+class Last(QueryReduction):
     """The last item of its stream child.
 
     Args:
@@ -414,7 +415,7 @@ class Last(Reduction):
         return athunk
 
 
-class Collect(Reduction):
+class Collect(QueryReduction):
     """Drains its stream child into one list value.
 
     Args:

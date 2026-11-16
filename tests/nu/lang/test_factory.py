@@ -16,9 +16,11 @@ from nu.engine.structure import Declared
 from nu.factory import InteractionFactory, host
 from nu.lang import (
     NULL,
+    ActionReduction,
     Command,
+    CommandReduction,
     Literal,
-    Reduction,
+    QueryReduction,
     ScalarQuery,
     Span,
     StreamQuery,
@@ -48,7 +50,7 @@ def test_pre_wrapped_attribute_passes_through() -> None:
 
 
 def test_rejects_unsupported_base() -> None:
-    for bad in (StreamQuery, Reduction, Span):
+    for bad in (StreamQuery, QueryReduction, ActionReduction, CommandReduction, Span):
         with pytest.raises(TypeError):
             InteractionFactory(bad, "X", lambda: 0)
 

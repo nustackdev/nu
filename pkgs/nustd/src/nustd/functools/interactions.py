@@ -1,7 +1,7 @@
 """functools interactions - the fold.
 
 ``reduce`` is the one ``functools`` member that is a runtime value operation, so
-it is the only atom here. It is a ``Reduction`` (scalar-over-stream), hand-written
+it is the only atom here. It is a ``QueryReduction`` (scalar-over-stream), hand-written
 e2e like core's folds (``Sum`` ...) since folds are a hot path.
 
 It is higher-order: the reducer is a Nu query child. Each step binds the
@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 
 from nu.context.attrs.binders import bind
 from nu.core._stream import aiter_any, sync_iter
-from nu.lang import Reduction
+from nu.lang import QueryReduction
 from nu.lang.sentinels import UNSET
 
 
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 __all__ = ["Reduce"]
 
 
-class Reduce(Reduction):
+class Reduce(QueryReduction):
     """``functools.reduce(function, iterable[, initializer])``.
 
     Children: ``[source, function, acc_key, item_key, (initial)]``. Folds the

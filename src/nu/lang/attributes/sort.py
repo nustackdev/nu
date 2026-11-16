@@ -65,7 +65,6 @@ class Sort(StrEnum):
     QUERY = "query"
     SCALAR_QUERY = "scalar_query"
     STREAM_QUERY = "stream_query"
-    REDUCTION = "reduction"
     COMMAND = "command"
     SCALAR_COMMAND = "scalar_command"
     ACTION = "action"
@@ -89,7 +88,6 @@ _PARENT: dict[Sort, Sort] = {
     Sort.SPAN: Sort.INTERACTION,
     Sort.SCALAR_QUERY: Sort.QUERY,
     Sort.STREAM_QUERY: Sort.QUERY,
-    Sort.REDUCTION: Sort.SCALAR_QUERY,
     Sort.SCALAR_COMMAND: Sort.COMMAND,
     Sort.SCALAR_ACTION: Sort.ACTION,
     Sort.STREAM_ACTION: Sort.ACTION,
@@ -131,8 +129,7 @@ _MATRIX_SORTS: tuple[Sort, ...] = (
 def matrix_sort(sort: Sort) -> Sort | None:
     """Resolve ``sort`` to the matrix sort it slot-fits as, or None.
 
-    A Reduction slot-fits as a ScalarQuery, anything under Command as a
-    ScalarCommand, and so on. An interior sort with no matrix row yields None.
+    Anything under Command slot-fits as a ScalarCommand, and so on. An interior sort with no matrix row yields None.
     """
     for candidate in _MATRIX_SORTS:
         if subsort(sort, candidate):

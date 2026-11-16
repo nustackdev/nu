@@ -1,12 +1,22 @@
 """The Nu kind taxonomy: the user-facing Term classes that declare each sort.
 
 A taxonomy of ``Nu`` subclasses. The leaves (``Ref``, ``ScalarQuery``,
-``StreamQuery``, ``Reduction``, ``Command``, ``ScalarAction``,
-``StreamAction``, ``Strategy``, ``Control``, ``Bracket``, ``Policy``) carry
-the sort and cardinality bindings concrete nodes use. The interiors
-(``Interaction``, ``Query``, ``Action``, ``Flow``, ``Span``) are abstract
-groupings for ``subsort`` queries and for the dispatch surface
-``Interaction._eval`` / ``_aeval``.
+``StreamQuery``, ``Command``, ``ScalarAction``, ``StreamAction``,
+``Strategy``, ``Control``, ``Bracket``, ``Policy``) carry the sort and
+cardinality bindings concrete nodes use. The interiors (``Interaction``,
+``Query``, ``Action``, ``Flow``, ``Span``) are abstract groupings for
+``subsort`` queries and for the dispatch surface ``Interaction._eval`` /
+``_aeval``.
+
+A reduction is not a kind. A kind says whether a node mutates and what it
+gives out; a reduction says what one of its slots takes in: a stream, folded
+to whatever the kind gives out. So ``Reduction`` is a mixin that declares
+``reduces``, the index of that slot, and each scalar-out kind has its own
+reduction base: ``QueryReduction`` reads and yields one value,
+``ActionReduction`` writes and yields one value, ``CommandReduction`` writes
+and yields nothing. Each keeps its kind's sort, cardinality and composition
+rules; the cardinality laws read ``reduces`` to let the stream into that
+one slot.
 
 "Kind" is the Python class of a Term (Ref, Interaction, ...); "sort" is the
 attribute concern naming the structural category. This module sits on top
@@ -31,13 +41,16 @@ V_co = TypeVar("V_co", covariant=True)
 
 __all__ = [
     "Action",
+    "ActionReduction",
     "Bracket",
     "Command",
+    "CommandReduction",
     "Control",
     "Flow",
     "Interaction",
     "Policy",
     "Query",
+    "QueryReduction",
     "Reduction",
     "Ref",
     "ScalarAction",
@@ -108,12 +121,6 @@ class StreamQuery(Query[V_co], Generic[V_co]):  # PEP 695 has no variance marker
     _cardinality = Declared(value=Cardinality.STREAM, name="cardinality")
 
 
-class Reduction(ScalarQuery[V_co], Generic[V_co]):  # PEP 695 has no variance markers
-    """A ScalarQuery that folds a stream child down to one value."""
-
-    _sort = Declared(value=Sort.REDUCTION, name="sort")
-
-
 class Command(Interaction[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """A mutating Interaction. Yields nothing; its only sub-shape is scalar."""
 
@@ -179,3 +186,37 @@ class Policy(Span[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """A Span that governs a body's execution on failure."""
 
     _sort = Declared(value=Sort.POLICY, name="sort")
+
+
+# --- reductions: a slot role, not a kind -------------------------------------
+
+
+class Reduction(Interaction[V_co], Generic[V_co]):  # PEP 695 has no variance markers
+    """Abstract: an Interaction with one slot that takes a stream and folds it.
+
+    Declares ``reduces``, the index of that slot, 0 by default; a subclass
+    moves it by redeclaring ``_reduces``. Carries no sort or cardinality of
+    its own: mix it with a scalar-out kind, through ``QueryReduction``,
+    ``ActionReduction`` or ``CommandReduction``. Every other slot of the node
+    stays scalar.
+    """
+
+    _reduces = Declared(value=0, name="reduces")
+
+
+class QueryReduction(Reduction[V_co], ScalarQuery[V_co]):
+    """A ScalarQuery that folds a stream down to one value (``Sum``, ``Collect``)."""
+
+
+class ActionReduction(Reduction[V_co], ScalarAction[V_co]):
+    """A ScalarAction that folds a stream into one write and yields one value.
+
+    A blob store fed a stream of pieces that yields the new id.
+    """
+
+
+class CommandReduction(Reduction[V_co], Command[V_co]):
+    """A Command that folds a stream into one write and yields nothing.
+
+    Appending a whole stream to a log in one write.
+    """

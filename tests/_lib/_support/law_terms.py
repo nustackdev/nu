@@ -20,11 +20,13 @@ from __future__ import annotations
 
 from nu.engine.structure import Declared
 from nu.lang import (
+    ActionReduction,
     Bracket,
     Command,
+    CommandReduction,
     Control,
     Policy,
-    Reduction,
+    QueryReduction,
     Ref,
     ScalarAction,
     ScalarQuery,
@@ -37,8 +39,10 @@ from nu.lang import (
 __all__ = [
     "R2",
     "Act",
+    "ActRed",
     "Brk",
     "Cmd",
+    "CmdRed",
     "FlowC",
     "FlowS",
     "Pol",
@@ -58,8 +62,8 @@ class Stream(StreamQuery):
     """A bare StreamQuery. Yields a stream, declares no effects."""
 
 
-class Red(Reduction):
-    """A bare Reduction. Folds a stream child to a scalar."""
+class Red(QueryReduction):
+    """A bare QueryReduction. Folds the stream in slot 0 to a scalar."""
 
 
 class Cmd(Command):
@@ -72,6 +76,20 @@ class Act(ScalarAction):
     """A bare ScalarAction. Slot 0 is the Ref it writes; yields a value."""
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
+
+
+class ActRed(ActionReduction):
+    """A bare ActionReduction. Writes the Ref in slot 0, folds the stream in slot 1."""
+
+    _mutates = Declared(value=frozenset({0}), name="mutates")
+    _reduces = Declared(value=1, name="reduces")
+
+
+class CmdRed(CommandReduction):
+    """A bare CommandReduction. Writes the Ref in slot 0, folds the stream in slot 1."""
+
+    _mutates = Declared(value=frozenset({0}), name="mutates")
+    _reduces = Declared(value=1, name="reduces")
 
 
 class StreamAct(StreamAction):
