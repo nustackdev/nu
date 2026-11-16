@@ -24,6 +24,7 @@ export {
 	AlertTitle,
 	alertVariants,
 } from "./components/ui/alert";
+export { Audio, type AudioProps } from "./components/ui/audio";
 export { Autocomplete, type AutocompleteProps } from "./components/ui/autocomplete";
 export { Avatar, AvatarFallback, AvatarImage } from "./components/ui/avatar";
 export { Badge, badgeVariants } from "./components/ui/badge";
@@ -538,6 +539,7 @@ export {
 	spokenTime,
 	timeAt,
 } from "./lib/media/model";
+export { loadPeaks, PEAK_BUCKETS } from "./lib/media/peaks";
 export {
 	type MediaApi,
 	type MediaKeyOptions,
