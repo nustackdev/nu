@@ -12,10 +12,25 @@
 // the box to a ratio while the image loads and after ("16/9", "1:1", "4 / 3",
 // or a bare number like 1.5); with it the image takes its container's width,
 // since a ratio needs one side to come from somewhere.
+//
+// `zoom` draws the kit ImageViewer instead: wheel, pinch, drag, double click
+// and keys to zoom and pan, a quiet control cluster on hover, a full window
+// view. The viewer is a box the image moves inside, so it needs a size: the
+// width, height and aspect props set it as above, and with no height and no
+// aspect it is 320px tall and as wide as its container. `fit` does not apply,
+// the viewer always opens fitted.
 
 import type { CSSProperties } from "react";
 import { Image } from "../../components/ui/image";
-import { type NodeEntry, type NodeProps, useEnumProp, useProp, useStringProp } from "../../tree";
+import { ImageViewer } from "../../components/ui/image-viewer";
+import {
+	type NodeEntry,
+	type NodeProps,
+	useBoolProp,
+	useEnumProp,
+	useProp,
+	useStringProp,
+} from "../../tree";
 
 type Fit = "contain" | "cover" | "fill" | "none" | "scale-down";
 type Radius = "none" | "sm" | "md" | "lg" | "full";
@@ -46,9 +61,21 @@ function ImageView({ path }: NodeProps) {
 	const height = asNullableInt(useProp<unknown>(path, "height", null));
 	const radius = useEnumProp(path, "radius", RADII, "none");
 	const aspect = normAspect(useStringProp(path, "aspect"));
+	const zoom = useBoolProp(path, "zoom");
 	const style: CSSProperties = {};
 	if (width != null) style.width = `${width}px`;
 	if (height != null) style.height = `${height}px`;
+	if (zoom) {
+		return (
+			<ImageViewer
+				src={src || undefined}
+				alt={alt}
+				radius={radius}
+				aspectRatio={height == null ? aspect : undefined}
+				style={style}
+			/>
+		);
+	}
 	if (aspect != null && width == null) style.width = "100%";
 	return (
 		<Image

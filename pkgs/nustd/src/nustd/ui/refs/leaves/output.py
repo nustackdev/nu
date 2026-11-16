@@ -483,6 +483,12 @@ class ImageRef(LeafRef):
     `radius` is the corner scale (none unless set). `aspect` holds the box to a ratio, spelled "16/9", "1:1"
     or a bare number like "1.5"; with one the image takes its container's
     width unless `width` says otherwise.
+
+    `zoom` turns the image into a viewer: wheel, pinch, drag, double click and
+    keys zoom and pan it, with a small control cluster and a full window view.
+    The viewer is a box, sized by `width`, `height` and `aspect`; with no
+    height and no aspect it is 320px tall and as wide as its container. Past
+    1:1 it draws hard pixels, so small or model-sized images stay crisp.
     """
 
     _wire_type = "ImageRef"
@@ -498,6 +504,7 @@ class ImageRef(LeafRef):
         height: int | None = None,
         radius: Radius | None = None,
         aspect: str = "",
+        zoom: bool = False,
     ) -> Self:
         return super().slot(
             src=src,
@@ -507,6 +514,7 @@ class ImageRef(LeafRef):
             height=height,
             radius=radius,
             aspect=aspect,
+            zoom=zoom,
         )
 
     def set_src(self, url: StrArg) -> Nu:
@@ -530,6 +538,9 @@ class ImageRef(LeafRef):
 
     def set_aspect(self, ratio: StrArg) -> Nu:
         return Write(self, Dict.of(aspect=ratio))
+
+    def set_zoom(self, flag: BoolArg) -> Nu:
+        return Write(self, Dict.of(zoom=flag))
 
     def set(
         self,
