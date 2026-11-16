@@ -33,7 +33,7 @@
 // echoes what the program did; a person's pick, drop, paste or remove does.
 
 import { type NodeHandler, OPS, type Path } from "@nustackdev/ui-core";
-import type { FileState } from "../../components/ui/file-drop";
+import type { FileState } from "../../components/ui/file-input";
 import { postBlob, type Transfer, type TransferResult } from "../../lib/transfer";
 import { nodeAt, pathKey, tree } from "../../tree";
 import { resetInput } from "./control";

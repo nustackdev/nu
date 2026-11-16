@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Polish the file input: hint line, single file swap, safe drops outside it
 - Move upload logic into its own ui package; nudle only assembles it
 - An example searches a picked csv; an end to end test drives uploads
 - File pickers in the kit hold browser handles and answer program reads

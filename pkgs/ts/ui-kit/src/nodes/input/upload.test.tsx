@@ -136,7 +136,7 @@ function pickFiles(...files: File[]) {
 }
 
 function dropFiles(...files: File[]) {
-	const zone = host.querySelector('[data-slot="file-drop"]');
+	const zone = host.querySelector('[data-slot="file-input"]');
 	if (!zone) throw new Error("no drop zone");
 	const ev = new Event("drop", { bubbles: true, cancelable: true });
 	Object.defineProperty(ev, "dataTransfer", { value: { files } });
@@ -160,7 +160,7 @@ describe("UploadFileRef: the selection", () => {
 		put(["n", "UploadFileRef", { label: "Data" }]);
 		draw(["n"]);
 		expect(read(["n"])).toBeNull();
-		const zone = host.querySelector("button[data-slot='file-drop']");
+		const zone = host.querySelector("button[data-slot='file-input']");
 		const label = host.querySelector("label");
 		expect(label?.getAttribute("for")).toBe(zone?.id);
 		pickFiles(file("orders.csv", 10));
@@ -189,6 +189,22 @@ describe("UploadFileRef: the selection", () => {
 		expect(host.querySelectorAll('[data-slot="file-row"]')).toHaveLength(1);
 	});
 
+	it("draws the picked file in the zone's place, with Replace and remove", () => {
+		put(["n", "UploadFileRef", { label: "Data" }]);
+		draw(["n"]);
+		pickFiles(file("a.csv", 1));
+		expect(host.querySelector("button[data-slot='file-input']")).toBeNull();
+		const replace = host.querySelector<HTMLButtonElement>('button[aria-label="Replace a.csv"]');
+		expect(host.querySelector("label")?.getAttribute("for")).toBe(replace?.id);
+		dropFiles(file("b.csv", 2));
+		expect(one()).toMatchObject({ name: "b.csv" });
+		const remove = host.querySelector<HTMLButtonElement>('button[aria-label="Remove b.csv"]');
+		act(() => remove?.click());
+		expect(valueAt(["n"])).toBeNull();
+		expect(changes()).toBe(3);
+		expect(host.querySelector("button[data-slot='file-input']")).not.toBeNull();
+	});
+
 	it("refuses a file over max_size at pick, with a message", () => {
 		picked("UploadFileRef", { max_size: 5 }, file("big.csv", 9));
 		expect(valueAt(["n"])).toBeUndefined();
@@ -196,8 +212,8 @@ describe("UploadFileRef: the selection", () => {
 		const message = host.querySelector('[data-slot="field-error"]');
 		expect(message?.textContent).toContain("big.csv");
 		expect(message?.textContent).toContain("5 B");
-		const zone = host.querySelector("button[data-slot='file-drop']");
-		expect(zone?.getAttribute("aria-describedby")).toBe(message?.id);
+		const zone = host.querySelector("button[data-slot='file-input']");
+		expect(zone?.getAttribute("aria-describedby")?.split(" ")).toContain(message?.id);
 	});
 
 	it("checks accept on a drop", () => {
@@ -264,7 +280,7 @@ describe("UploadFilesRef: the selection", () => {
 	it("takes a paste on the focused zone", () => {
 		put(["n", "UploadFilesRef", {}]);
 		draw(["n"]);
-		const zone = host.querySelector('[data-slot="file-drop"]');
+		const zone = host.querySelector('[data-slot="file-input"]');
 		const ev = new Event("paste", { bubbles: true, cancelable: true });
 		Object.defineProperty(ev, "clipboardData", { value: { files: [file("p.csv", 4)] } });
 		act(() => {
@@ -324,6 +340,50 @@ describe("UploadFilesRef: the selection", () => {
 		dispatch(["n"], "remove_file", { key: a.key });
 		expect((valueAt(["n"]) as { name: string }[]).map((v) => v.name)).toEqual(["b.csv"]);
 		expect(changes()).toBe(1);
+	});
+});
+
+describe("the zone", () => {
+	function stray(type: "dragover" | "drop", at: Element): Event {
+		const ev = new Event(type, { bubbles: true, cancelable: true });
+		Object.defineProperty(ev, "dataTransfer", {
+			value: { types: ["Files"], files: [file("s.csv", 1)], dropEffect: "" },
+		});
+		act(() => {
+			at.dispatchEvent(ev);
+		});
+		return ev;
+	}
+
+	it("hints what it takes, out of the name and in the description", () => {
+		put(["n", "UploadFileRef", { accept: ".csv,text/csv", max_size: 20_000_000 }]);
+		draw(["n"]);
+		const zone = host.querySelector("button[data-slot='file-input']");
+		const hint = [...(zone?.querySelectorAll("[id]") ?? [])].find((el) =>
+			el.textContent?.includes("CSV, up to 20 MB"),
+		);
+		expect(hint).toBeTruthy();
+		expect(zone?.getAttribute("aria-describedby")?.split(" ")).toContain(hint?.id);
+	});
+
+	it("cancels a file dropped beside it, only while one is mounted", () => {
+		put(["n", "UploadFilesRef", {}]);
+		draw(["n"]);
+		expect(stray("dragover", document.body).defaultPrevented).toBe(true);
+		expect(stray("drop", document.body).defaultPrevented).toBe(true);
+		act(() => root.unmount());
+		root = createRoot(host);
+		expect(stray("drop", document.body).defaultPrevented).toBe(false);
+	});
+
+	it("cancels a drop on a disabled zone without taking it", () => {
+		put(["n", "UploadFilesRef", { disabled: true }]);
+		draw(["n"]);
+		const zone = host.querySelector("button[data-slot='file-input']");
+		if (!zone) throw new Error("no zone");
+		expect(stray("dragover", zone).defaultPrevented).toBe(true);
+		expect(stray("drop", zone).defaultPrevented).toBe(true);
+		expect(valueAt(["n"])).toBeUndefined();
 	});
 });
 
