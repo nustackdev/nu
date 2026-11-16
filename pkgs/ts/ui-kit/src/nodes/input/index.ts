@@ -27,6 +27,7 @@ import { TagInputRef } from "./tag-input";
 import { TextAreaRef } from "./text-area";
 import { TimePickerRef } from "./time-picker";
 import { ToggleRef } from "./toggle";
+import { UploadFileRef, UploadFilesRef } from "./upload";
 
 const entries: Record<string, NodeEntry> = {
 	InputRef,
@@ -54,6 +55,8 @@ const entries: Record<string, NodeEntry> = {
 	ToggleRef,
 	SketchRef,
 	ColorPickerRef,
+	UploadFileRef,
+	UploadFilesRef,
 };
 
 /** Every input type, each with the focus op and bare-control errors (./chrome.tsx). */

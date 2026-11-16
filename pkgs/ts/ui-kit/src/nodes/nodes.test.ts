@@ -9,7 +9,7 @@ import { nodeEntries } from ".";
 
 describe("node registry", () => {
 	it("ships every type", () => {
-		expect(Object.keys(nodeEntries)).toHaveLength(81);
+		expect(Object.keys(nodeEntries)).toHaveLength(83);
 	});
 
 	it("names the page section by its wire type", () => {
