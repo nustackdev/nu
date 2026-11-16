@@ -1,6 +1,7 @@
 """Nu blob fabric: write-once bytes under an id, stored and read in streams.
 
-The fabric stores and returns, nothing else: no http, no urls.
+The fabric stores and returns, nothing else. Serving a store over http is
+``nustd.blob.http``'s: ``BlobMount`` says where, ``serve_blobs`` serves.
 
 Surface:
     - StoreRef(name): a named store; its terms are ``put``, ``new_id``,
@@ -72,6 +73,7 @@ if TYPE_CHECKING:
 # The Nu layer loads on first access, so the plain layers stay plain: a
 # process that only drives a backend never imports Nu's engine.
 _LAZY = {
+    "http": "http",
     "BlobDelete": "interactions",
     "BlobFabric": "fabric",
     "BlobGet": "interactions",
@@ -93,7 +95,7 @@ def __getattr__(name: str) -> object:
     if name not in _LAZY:
         raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
     module = importlib.import_module(f".{_LAZY[name]}", __name__)
-    value = getattr(module, name)
+    value = module if name == "http" else getattr(module, name)
     globals()[name] = value
     return value
 

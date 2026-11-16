@@ -26,6 +26,7 @@ from nustd.blob import (
     StoreRef,
 )
 from nustd.blob._base import check_id
+from nustd.blob.http import BlobMount
 
 
 DATA = bytes(range(256)) * 40  # 10240 bytes, every offset distinct mod 256
@@ -240,13 +241,16 @@ def test_every_argument_may_be_a_term(media, run):
         lambda bid: Dict.of(
             meta=Media.meta(bid),
             has=Media.has(bid),
+            url=BlobMount("/media").url(bid),
             part=nu.Collect(Media.open(bid, nu.Add(10, 10), nu.Add(30, 10), nu.Add(5, 5))),
         ),
     )
     out = run(media(term))
+    bid = out["meta"]["id"]
     assert out["meta"]["mime"] == "image/png"
     assert out["meta"]["name"] == "cat.png"
     assert out["has"] is True
+    assert out["url"] == f"/media/{bid}"
     assert out["part"] == [DATA[20:30], DATA[30:40]]
 
 

@@ -59,7 +59,8 @@ class StoreRef(FabricRef):
           mutating atoms land their write through.
         - ``exists()`` asks whether a backend is bound; ``has(id)`` asks
           whether a blob is stored.
-        - The store knows nothing about urls.
+        - The store knows nothing about urls. Serving a store over http is
+          the web layer's, which says where (``nustd.blob.http.BlobMount``).
 
     Yields:
         The bound ``BlobFabric``, or NULL when nothing is bound for the name.
