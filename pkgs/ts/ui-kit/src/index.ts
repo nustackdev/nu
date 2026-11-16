@@ -223,6 +223,7 @@ export {
 } from "./components/ui/icon";
 export { IconButton, iconButtonVariants } from "./components/ui/icon-button";
 export { Image } from "./components/ui/image";
+export { ImageViewer, type ImageViewerProps } from "./components/ui/image-viewer";
 export { InlineEdit, type InlineEditProps } from "./components/ui/inline-edit";
 export { Input, inputVariants } from "./components/ui/input";
 export {

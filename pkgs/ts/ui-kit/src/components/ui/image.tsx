@@ -7,7 +7,7 @@ import type * as React from "react";
 
 import { cn } from "../../lib/utils";
 
-const RADIUS_CLASS = {
+export const RADIUS_CLASS = {
 	none: "rounded-none",
 	sm: "rounded-sm",
 	md: "rounded-md",

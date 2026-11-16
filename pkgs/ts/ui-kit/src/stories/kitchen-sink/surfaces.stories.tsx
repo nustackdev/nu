@@ -19,6 +19,7 @@ import { DataTable, type DataTableColumn, type DataTableRow } from "../../compon
 import { Heading } from "../../components/ui/heading";
 import { IconButton } from "../../components/ui/icon-button";
 import { Image } from "../../components/ui/image";
+import { ImageViewer } from "../../components/ui/image-viewer";
 import { JsonView } from "../../components/ui/json-view";
 import { List, ListItem } from "../../components/ui/list";
 import { Markdown } from "../../components/ui/markdown";
@@ -317,6 +318,15 @@ function Data() {
 					radius="lg"
 					className="w-24"
 					aspectRatio="1 / 1"
+				/>
+			</Row>
+			<Row label="ImageViewer">
+				<ImageViewer
+					src={IMAGE_SRC}
+					alt="Gradient sample"
+					radius="md"
+					className="w-64 border border-border-subtle"
+					aspectRatio="16 / 9"
 				/>
 			</Row>
 			<Row label="Avatar">
