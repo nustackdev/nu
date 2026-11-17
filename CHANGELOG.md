@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- The streaming agent example reads cleanly: text flows inline, tool calls shown briefly
 - Notifications an agent sends outside ACP are ignored instead of logged as errors
 - A fresh install keeps the queue library on a version its queues work with
 - Three examples ask Claude Code and Codex questions, alone, streamed and side by side
