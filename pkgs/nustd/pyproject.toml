@@ -51,7 +51,7 @@ kv = [
     "virtuals-py>=0.2.2",
 ]
 queue = [
-    "janus>=2.0.0",
+    "janus>=2.0,<2.1",
 ]
 # `nustd.ws_server` is the bare connection lifecycle: no wire format, no SPA.
 ws_server = [
