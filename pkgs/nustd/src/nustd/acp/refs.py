@@ -52,8 +52,8 @@ class AgentRef(FabricRef):
     """An ACP Agent: the ``AcpFabric`` bound under its name, and the terms that reach it.
 
     The name is the tag a preset binds under, so several Agents live in one
-    tree without meeting. Every term builds a fresh ref under the same name,
-    so one ``AgentRef`` held in a module serves any number of trees.
+    tree without meeting. Every term holds this ref itself, so one
+    ``AgentRef`` held in a module serves any number of terms and trees.
 
     Args:
         name: the Agent's name, any non-empty ``str``.
@@ -90,10 +90,6 @@ class AgentRef(FabricRef):
         """The Agent's name, the tag its fabric binds under."""
         return self._payload["agent"]
 
-    def _fresh(self) -> AgentRef:
-        """A new ref under the same name, for one more term to hold."""
-        return AgentRef(self.name)
-
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         fabric = children[0]
         name = self.name
@@ -120,21 +116,21 @@ class AgentRef(FabricRef):
 
     def __getitem__(self, session_id: StrArg) -> SessionRef:
         """One of the Agent's Sessions, by the id ``new_session`` gave."""
-        return SessionRef(self._fresh(), session_id)
+        return SessionRef(self, session_id)
 
     # --- terms --------------------------------------------------------------
 
     def initialization(self) -> AcpInitialization:
         """What the Agent said about itself at setup; see ``AcpInitialization``."""
-        return AcpInitialization(self._fresh())
+        return AcpInitialization(self)
 
     def authenticate(self, method_id: StrArg) -> AcpAuthenticate:
         """Run one of the Agent's ``auth_methods``; see ``AcpAuthenticate``."""
-        return AcpAuthenticate(self._fresh(), method_id)
+        return AcpAuthenticate(self, method_id)
 
     def logout(self) -> AcpLogout:
         """Log the Agent out."""
-        return AcpLogout(self._fresh())
+        return AcpLogout(self)
 
     def new_session(
         self,
@@ -152,7 +148,7 @@ class AgentRef(FabricRef):
             additional_directories: more roots beside ``cwd``.
             system_prompt: a ``str`` to append, or ACP's ``{mode, content}``.
         """
-        return AcpNewSession(self._fresh(), cwd, mcp_servers, additional_directories, system_prompt)
+        return AcpNewSession(self, cwd, mcp_servers, additional_directories, system_prompt)
 
     def list_sessions(self, *, cwd: StrArg | None = None) -> AcpListSessions:
         """Every Session the Agent keeps, one dict each; see ``AcpListSessions``.
@@ -160,7 +156,7 @@ class AgentRef(FabricRef):
         Args:
             cwd: only those under this directory; None lists all.
         """
-        return AcpListSessions(self._fresh(), cwd)
+        return AcpListSessions(self, cwd)
 
     def exists(self) -> Bool:
         """Whether a fabric is bound under this Agent's name, as a ``Bool``.
@@ -171,7 +167,7 @@ class AgentRef(FabricRef):
         """
         from nu.forms.primitives import Bool
 
-        return Bool(_AgentBound(self._fresh()))
+        return Bool(_AgentBound(self))
 
 
 class SessionRef(Ref):
@@ -185,8 +181,8 @@ class SessionRef(Ref):
         - A Session is usable on the connection after ``new_session``,
           ``load`` or ``resume``, as in ACP; before that the Agent answers
           -32002 and the term raises ``AcpError``.
-        - Every term builds a fresh ref, so one ``SessionRef`` can be held
-          and reused across trees.
+        - Every term holds this ref itself, so one ``SessionRef`` can be
+          held and reused across terms and trees.
 
     Yields:
         ``(fabric, session_id)``, or NULL when nothing is bound for the
@@ -206,10 +202,6 @@ class SessionRef(Ref):
     def agent(self) -> AgentRef:
         """The Agent this Session belongs to."""
         return self._children[0]  # type: ignore[return-value]
-
-    def _fresh(self) -> SessionRef:
-        """A new ref to the same Session, for one more term to hold."""
-        return SessionRef(self.agent._fresh(), self._children[1])  # type: ignore[arg-type]
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         agent, session_id = children
@@ -240,7 +232,7 @@ class SessionRef(Ref):
         system_prompt: object = None,
     ) -> AcpLoad:
         """Restore the Session: its replayed updates, then ``{modes, config_options}``; see ``AcpLoad``."""
-        return AcpLoad(self._fresh(), cwd, mcp_servers, additional_directories, system_prompt)
+        return AcpLoad(self, cwd, mcp_servers, additional_directories, system_prompt)
 
     def resume(
         self,
@@ -251,7 +243,7 @@ class SessionRef(Ref):
         system_prompt: object = None,
     ) -> AcpResume:
         """Restore the Session without a replay; see ``AcpResume``."""
-        return AcpResume(self._fresh(), cwd, mcp_servers, additional_directories, system_prompt)
+        return AcpResume(self, cwd, mcp_servers, additional_directories, system_prompt)
 
     def prompt(self, prompt: object) -> AcpPrompt:
         """One Prompt Turn, streamed; see ``AcpPrompt``.
@@ -259,35 +251,35 @@ class SessionRef(Ref):
         Args:
             prompt: a ``str``, or a list of ACP Content Block dicts.
         """
-        return AcpPrompt(self._fresh(), prompt)
+        return AcpPrompt(self, prompt)
 
     def cancel(self) -> AcpCancel:
         """Stop the running Prompt Turn; pending permission requests are answered ``cancelled``."""
-        return AcpCancel(self._fresh())
+        return AcpCancel(self)
 
     def answer_permission(self, request: object, option_id: StrArg) -> AcpAnswerPermission:
         """Answer the permission request ``request`` with ``option_id``; see ``AcpAnswerPermission``."""
-        return AcpAnswerPermission(self._fresh(), request, option_id)
+        return AcpAnswerPermission(self, request, option_id)
 
     def set_mode(self, mode_id: StrArg) -> AcpSetMode:
         """Switch the Session's mode."""
-        return AcpSetMode(self._fresh(), mode_id)
+        return AcpSetMode(self, mode_id)
 
     def set_config_option(self, config_id: StrArg, value: object) -> AcpSetConfigOption:
         """Set one config option and yield the complete ``config_options``."""
-        return AcpSetConfigOption(self._fresh(), config_id, value)
+        return AcpSetConfigOption(self, config_id, value)
 
     def close(self) -> AcpClose:
         """End the Session on this connection; the Agent keeps its history."""
-        return AcpClose(self._fresh())
+        return AcpClose(self)
 
     def delete(self) -> AcpDelete:
         """Remove the Session from the Agent's list."""
-        return AcpDelete(self._fresh())
+        return AcpDelete(self)
 
     def updates(self) -> AcpUpdates:
         """Everything the Agent says about the Session from now on; see ``AcpUpdates``."""
-        return AcpUpdates(self._fresh())
+        return AcpUpdates(self)
 
 
 class _AgentBound(ScalarQuery):
