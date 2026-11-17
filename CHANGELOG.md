@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Three examples ask Claude Code and Codex questions, alone, streamed and side by side
 - A scripted fake agent tests prompts, permissions and cancels without spending a token
 - Coding agents like Claude Code and Codex run as one fabric over ACP
 - Mic and camera capture: record a take in the browser, read it like an upload
