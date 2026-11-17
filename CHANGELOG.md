@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- The mic take and the audio player fit narrow columns, dropping extras first
 - Mic and camera capture: record a take in the browser, read it like an upload
 - Recordings made in the tab play with a known length, so their players seek
 - Segmented controls and tabs show the picked option clearly in both themes
