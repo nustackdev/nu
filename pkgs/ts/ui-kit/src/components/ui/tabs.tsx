@@ -9,7 +9,7 @@
 // TabsList variants:
 //   line       underline under active trigger. Fleet-flavored default.
 //   pill       press wash chip behind active. Reads as segmented navigation.
-//   segmented  unified sunken bg with a raised surface pill on active.
+//   segmented  one press-wash track (like every kit track) with a raised surface pill on active.
 
 import { cva, type VariantProps } from "class-variance-authority";
 import { Tabs as TabsPrimitive } from "radix-ui";
@@ -28,7 +28,7 @@ const tabsListVariants = cva(
 				line: "border-b border-border-subtle gap-1",
 				pill: "gap-1",
 				segmented:
-					"bg-bg-sunken border border-border-default rounded-md p-1 gap-1",
+					"bg-bg-press border border-border-default rounded-md p-1 gap-1",
 			},
 		},
 		defaultVariants: {

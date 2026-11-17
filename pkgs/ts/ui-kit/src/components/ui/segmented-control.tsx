@@ -8,14 +8,16 @@ import { cn } from "../../lib/utils";
 // Radix RadioGroup underneath, so it is a radiogroup to assistive tech and
 // the keyboard: Tab enters on the picked segment, arrows move the pick, Tab
 // leaves (a11y.md §3 RadioGroup). The look is the segmented Tabs list: a
-// sunken track with the picked segment raised on a surface pill, so a
-// segmented filter and segmented tabs read as one family. The track is the
+// track with the picked segment raised on a surface pill, so a segmented
+// filter and segmented tabs read as one family. The track is the press
+// wash, the same as every track in the kit (switch off, slider, progress),
+// which keeps the surface pill plain to see in both themes. The track is the
 // height of an input of the same size, so it sits in a form row flush.
 
 const segmentedControlVariants = cva(
 	[
 		"inline-flex items-stretch gap-0.5 rounded-md p-0.5",
-		"bg-bg-sunken border border-border-default",
+		"bg-bg-press border border-border-default",
 		"aria-invalid:border-status-danger",
 	].join(" "),
 	{
