@@ -253,6 +253,9 @@ class AcpFabric:
                 )
             except OSError as exc:
                 raise AcpError("spawn", f"cannot start {self.command[0]!r}: {exc}") from exc
+            # The SDK takes no fallback for an unrouted notification, so its
+            # private dispatch is wrapped; done before the receive loop first runs.
+            conn._conn._handler = _quiet(conn._conn._handler)
             self._conn = conn
             self._proc = proc
             self._watchers = [
@@ -866,6 +869,28 @@ def _error(method: str, exc: RequestError) -> AcpError:
     elif data:
         message += f": {data}"
     return AcpError(method, message, code=exc.code, data=data)
+
+
+def _quiet(
+    handler: Callable[[str, object, bool], Awaitable[object]],
+) -> Callable[[str, object, bool], Awaitable[object]]:
+    """The SDK's dispatch, with a notification it has no route for dropped at debug.
+
+    Agents push notifications outside ACP v1 (``auth/status_update``); the
+    SDK would log each at ERROR. A notification wants no answer, so dropping
+    it loses nothing. A request it has no route for is still refused.
+    """
+
+    async def dispatch(method: str, params: object, is_notification: bool) -> object:
+        try:
+            return await handler(method, params, is_notification)
+        except RequestError as exc:
+            if not is_notification or exc.code != _NO_METHOD:
+                raise
+            log.debug("ignored notification %s from the agent", method)
+            return None
+
+    return dispatch
 
 
 async def _idempotent(call: Awaitable[None]) -> None:
