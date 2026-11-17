@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Recordings made in the tab play with a known length, so their players seek
 - Segmented controls and tabs show the picked option clearly in both themes
 - A Popover tucks settings behind a button, floating so nothing around it moves
 - A Field can sit on one row and carry small actions beside its label

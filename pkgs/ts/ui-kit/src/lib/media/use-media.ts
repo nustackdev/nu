@@ -145,11 +145,30 @@ export function useMedia(): MediaApi {
 				frame = requestAnimationFrame(tick);
 			}
 		};
+		// A take MediaRecorder made (Chrome's webm) has no duration in its
+		// header: the element says Infinity until it has read to the end. A seek
+		// far past the end makes it look, then the playhead goes back to 0. Only
+		// for a blob in the tab: a live stream's Infinity is its real duration.
+		let probing = false;
+		const probe = () => {
+			if (el.duration !== Number.POSITIVE_INFINITY || !el.currentSrc.startsWith("blob:")) return;
+			probing = true;
+			el.currentTime = Number.MAX_SAFE_INTEGER;
+		};
+		const probed = () => {
+			if (!probing || !Number.isFinite(el.duration)) return;
+			probing = false;
+			el.currentTime = 0;
+		};
+		el.addEventListener("loadedmetadata", probe);
+		el.addEventListener("durationchange", probed);
 		for (const name of EVENTS) el.addEventListener(name, onEvent);
 		sync();
 		if (!el.paused) frame = requestAnimationFrame(tick);
 		return () => {
 			cancelAnimationFrame(frame);
+			el.removeEventListener("loadedmetadata", probe);
+			el.removeEventListener("durationchange", probed);
 			for (const name of EVENTS) el.removeEventListener(name, onEvent);
 		};
 	}, [el]);
