@@ -12,7 +12,7 @@ One import, then dot-access::
 Two kinds of thing live here, side by side.
 
 **Fabrics** (``kv``, ``blob``, ``queue``, ``ui``, ``ws_server``, ``service``,
-``llm``, ``cc``, ``http``, ``proxy``, ``mp``, ``mp_pool``, ``cluster``,
+``llm``, ``cc``, ``acp``, ``http``, ``proxy``, ``mp``, ``mp_pool``, ``cluster``,
 ``valkey``) back a Shape with somewhere real to live: a store, a blob store, a
 browser, a process pool, a model, a private notification server. Each
 is heavy and pulls a large tree behind it (storage backends, the UI runtime,
@@ -70,6 +70,7 @@ from . import (
 # go-to-definition despite never being bound at import time.
 if TYPE_CHECKING:
     from . import (
+        acp,
         blob,
         cc,
         cluster,
@@ -91,6 +92,7 @@ if TYPE_CHECKING:
 _LAZY = {
     # Imports without lmdb: the files backend needs none, and the lmdb one
     # raises naming the extra when it opens.
+    "acp": "acp",
     "blob": "blob",
     "cc": "cc",
     "cluster": "cluster",
