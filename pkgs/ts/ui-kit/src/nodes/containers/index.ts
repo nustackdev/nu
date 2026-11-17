@@ -20,6 +20,7 @@ import { List } from "./list";
 import { Modal } from "./modal";
 import { NavList } from "./nav-list";
 import { PageSection } from "./page-section";
+import { Popover } from "./popover";
 import { Row } from "./row";
 import { Sheet } from "./sheet";
 import { Table, TableRow } from "./table";
@@ -42,6 +43,7 @@ export const containerEntries: Record<string, NodeEntry> = {
 	Line,
 	Collapsible,
 	Sheet,
+	Popover,
 	PageSection,
 	NavList,
 	Table,

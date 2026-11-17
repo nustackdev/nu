@@ -12,6 +12,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- A Popover tucks settings behind a button, floating so nothing around it moves
+- A Field can sit on one row and carry small actions beside its label
 - Volume level floats above the mute button, so the player row never shifts
 
 ## 0.8.0 - 2026-11-16

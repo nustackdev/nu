@@ -15,19 +15,32 @@
 // The control is the first (and only expected) child in the tree. Extra
 // children do not draw; a notice names them (the server refuses a second
 // control where it is built). In a Form's values a Field stands for its
-// control (`wraps`). Layout (`layout.tsx`): the size props, `scroll`, and
+// control (`wraps`), never its `actions`.
+//
+// `actions` is a named child drawn at the end of the label row (the kit
+// Field's `action`), in a row flow: an icon button, or a Popover of the
+// field's settings. It sits outside the field's wiring, so an input in it is
+// not the control, takes no label from it, and is not the field's value.
+//
+// `inline` draws it as one row: label in a left column `label_width` px
+// wide (80 unless set), control, then actions; help and error under the
+// control. Stacked inline fields line up into two columns.
+// Layout (`layout.tsx`): the size props, `scroll`, and
 // `gap` (1) between label, control and help.
 
 import { Field as FieldChrome } from "../../components/ui/field";
 import { Text } from "../../components/ui/text";
 import { cn } from "../../lib/utils";
 import {
+	ACTIONS_SLOT,
 	FlowProvider,
 	type NodeEntry,
 	type NodeProps,
 	NodeView,
+	SlotView,
 	useBoolProp,
 	useChildren,
+	useNumberProp,
 	useStringProp,
 } from "../../tree";
 import { useDisabledScope } from "../input/control";
@@ -44,9 +57,13 @@ function FieldView({ path }: NodeProps) {
 	const check = useStringProp(path, "check");
 	const error = given || check;
 	const required = useBoolProp(path, "required");
+	const inline = useBoolProp(path, "inline");
+	const labelWidth = useNumberProp(path, "label_width", 80);
 	const scoped = useDisabledScope();
 	const disabled = useBoolProp(path, "disabled") || scoped;
-	const children = useChildren(path);
+	const all = useChildren(path);
+	const hasActions = all.includes(ACTIONS_SLOT);
+	const children = all.filter((s) => s !== ACTIONS_SLOT);
 	const layout = useLayout(path, DEFAULTS);
 	const child = children[0];
 
@@ -57,7 +74,10 @@ function FieldView({ path }: NodeProps) {
 			error={error}
 			required={required}
 			disabled={disabled}
-			className={cn("flex flex-col", gapClass(layout), layout.scroll)}
+			inline={inline}
+			labelWidth={labelWidth}
+			action={hasActions ? <SlotView path={path} segment={ACTIONS_SLOT} flow="row" /> : undefined}
+			className={cn(!inline && "flex flex-col", !inline && gapClass(layout), layout.scroll)}
 			style={layout.size}
 		>
 			{child ? (

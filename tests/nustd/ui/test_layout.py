@@ -59,6 +59,7 @@ EVERY = [
     ui.TabsRef,
     ui.AccordionRef,
     ui.CollapsibleRef,
+    ui.PopoverRef,
     ui.NavListRef,
     ui.TableRef,
 ]
@@ -125,6 +126,7 @@ def test_an_unknown_layout_name_fails_loud(ref):
         ui.FormRef,
         ui.FieldsetRef,
         ui.CollapsibleRef,
+        ui.PopoverRef,
         ui.NavListRef,
     ],
 )

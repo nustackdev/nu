@@ -143,3 +143,46 @@ describe("Sheet", () => {
 		expect(sent).toEqual([]);
 	});
 });
+
+describe("Popover", () => {
+	// The panel portals to <body>, out of `host`.
+	const trigger = () => host.querySelector("button") as HTMLButtonElement;
+	const panel = () => document.querySelector("[data-node=popover]") as HTMLElement | null;
+
+	it("draws an icon trigger named by its tooltip, and no panel while closed", () => {
+		mount("p", "Popover", { icon: "settings-2", tooltip: "Settings", open: false });
+		expect(trigger().getAttribute("aria-label")).toBe("Settings");
+		expect(trigger().getAttribute("aria-expanded")).toBe("false");
+		expect(panel()).toBeNull();
+	});
+
+	it("draws a labelled trigger when it has a label", () => {
+		mount("p", "Popover", { label: "Options", open: false });
+		expect(trigger().textContent).toBe("Options");
+	});
+
+	it("opens on a click, shows its body and notifies", () => {
+		mount("p", "Popover", { icon: "settings-2", tooltip: "Settings", open: false });
+		act(() => {
+			trigger().dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0 }));
+			trigger().click();
+		});
+		expect(panel()?.textContent).toContain("inside the body");
+		expect(sent.at(-1)).toEqual({
+			op: OPS.notify,
+			ref: ["p"],
+			payload: { open: true },
+			id: undefined,
+		});
+		expect(tree.getState().getIn(["p"])?.props.open).toBe(true);
+	});
+
+	it("opens and closes from a server write without notifying, at its width", () => {
+		mount("p", "Popover", { icon: "settings-2", open: false, width: 360 });
+		write("p", { open: true });
+		expect(panel()?.style.width).toBe("360px");
+		expect(panel()?.textContent).toContain("inside the body");
+		write("p", { open: false });
+		expect(sent).toEqual([]);
+	});
+});

@@ -86,6 +86,7 @@ KIND = {
     "Modal": DictCollectionRef,
     "NavList": DictCollectionRef,
     "PageSection": DictCollectionRef,
+    "Popover": DictCollectionRef,
     "Row": DictCollectionRef,
     "Sheet": DictCollectionRef,
     "Tabs": DictCollectionRef,

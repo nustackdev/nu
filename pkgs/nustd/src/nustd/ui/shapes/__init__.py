@@ -17,7 +17,7 @@ Anything a Shape declares can also be built from Refs alone; see
 - input_group: InputGroup, a field and its buttons on one line.
 - line:   Line, slots that run inline.
 - chrome: Card, Tabs, Modal, Accordion, Form, Fieldset, Field.
-- disclosure: Collapsible, Sheet.
+- disclosure: Collapsible, Popover, Sheet.
 - list:   List, one item per slot.
 - page:   PageSection, NavList.
 """
@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from .chrome import Accordion, Card, Field, Fieldset, Form, Modal, Tabs
 from .container import Container
-from .disclosure import Collapsible, Sheet
+from .disclosure import Collapsible, Popover, Sheet
 from .flow import Column, Row
 from .grid import Grid
 from .input_group import InputGroup
@@ -51,6 +51,7 @@ __all__ = [
     "Modal",
     "NavList",
     "PageSection",
+    "Popover",
     "Row",
     "Sheet",
     "Tabs",

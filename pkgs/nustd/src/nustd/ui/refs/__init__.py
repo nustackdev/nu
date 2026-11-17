@@ -17,7 +17,7 @@ Layout under ``refs/``:
   (base, the counterpart of ``LeafRef``); container (``ContainerRef``, the page frame); flow (``ColumnRef``, ``RowRef``); grid (``GridRef``); line
   (``LineRef``); chrome (``CardRef``, ``TabsRef``, ``ModalRef``, ``AccordionRef``, ``FormRef``,
   ``FieldsetRef``, ``FieldRef``); disclosure (``CollapsibleRef``,
-  ``SheetRef``); page (``PageSectionRef``, ``NavListRef``); table
+  ``PopoverRef``, ``SheetRef``); page (``PageSectionRef``, ``NavListRef``); table
   (``TableRef``, a content table of places, ``t[r, c]``, and its
   ``TableRowRef``); and ``ListRef``, whose items are its plain strings and
   then any child node.
@@ -95,6 +95,7 @@ from .collections import (
     ModalRef,
     NavListRef,
     PageSectionRef,
+    PopoverRef,
     RowRef,
     ShapeCollectionRef,
     SheetRef,
@@ -236,6 +237,7 @@ from nustd.ui.shapes import (
     Modal,
     NavList,
     PageSection,
+    Popover,
     Row,
     Sheet,
     Tabs,
@@ -332,6 +334,8 @@ __all__ = [
     "PageSectionRef",
     "PathChanged",
     "PieChart",
+    "Popover",
+    "PopoverRef",
     "ProgressRef",
     "RadarChart",
     "RadioGroupRef",

@@ -12,6 +12,17 @@ import { cn } from "../../lib/utils";
 // onto the real element, so `aria-invalid`, `aria-describedby` and `required`
 // land on the input and never on a wrapper. Outside a Field the hook returns
 // null and the control draws on its own props.
+//
+// `action` sits at the end of the label row: small controls about the field
+// rather than its value (an icon button, a settings popover). It is drawn
+// outside `FieldContext`, so an input inside it is never wired as the
+// field's control.
+//
+// `inline` lays the field out as one row, inspector style: the label in a
+// fixed column on the left (`labelWidth`, 80px unless set), the control
+// filling the middle, the action at the end, help and error under the
+// control. Rows of inline fields line their labels and controls up in two
+// clean columns, the dense settings look of a panel or popover.
 
 export type FieldState = {
 	/** The control's id; `Label` points here. */
@@ -43,6 +54,12 @@ export interface FieldProps extends React.ComponentProps<"div"> {
 	error?: React.ReactNode;
 	required?: boolean;
 	disabled?: boolean;
+	/** Drawn at the end of the label row, outside the field's wiring. */
+	action?: React.ReactNode;
+	/** One row: label left, control, then action. */
+	inline?: boolean;
+	/** The inline label column's width in px. */
+	labelWidth?: number;
 }
 
 /**
@@ -56,8 +73,12 @@ export function Field({
 	error,
 	required = false,
 	disabled = false,
+	action,
+	inline = false,
+	labelWidth = 80,
 	className,
 	children,
+	style,
 	...props
 }: FieldProps) {
 	const auto = React.useId();
@@ -82,19 +103,78 @@ export function Field({
 		}),
 		[id, hasHelp, hasError, hasLabel, required, disabled],
 	);
+	const label_ = hasLabel ? (
+		<Label
+			id={`${id}-label`}
+			htmlFor={id}
+			required={required}
+			invalid={hasError}
+			disabled={disabled}
+			className="min-w-0 flex-1 truncate"
+		>
+			{label}
+		</Label>
+	) : null;
+	const action_ = action ? (
+		<FieldContext.Provider value={null}>
+			<div data-slot="field-action" className="flex shrink-0 items-center gap-1">
+				{action}
+			</div>
+		</FieldContext.Provider>
+	) : null;
+	if (inline) {
+		return (
+			<FieldContext.Provider value={state}>
+				<div
+					data-slot="field"
+					data-inline=""
+					className={cn(
+						"grid items-center gap-x-2 gap-y-1",
+						action_
+							? "grid-cols-[var(--field-label)_minmax(0,1fr)_auto]"
+							: "grid-cols-[var(--field-label)_minmax(0,1fr)]",
+						className,
+					)}
+					style={{ "--field-label": `${labelWidth}px`, ...style } as React.CSSProperties}
+					{...props}
+				>
+					<div data-slot="field-head" className="flex min-w-0">
+						{label_}
+					</div>
+					<div data-slot="field-control" className="min-w-0">
+						{children}
+					</div>
+					{action_}
+					{hasHelp ? (
+						<FieldHelp id={state.helpId} className="col-start-2 -col-end-1">
+							{help}
+						</FieldHelp>
+					) : null}
+					{hasError ? (
+						<FieldError id={state.errorId} className="col-start-2 -col-end-1">
+							{error}
+						</FieldError>
+					) : null}
+				</div>
+			</FieldContext.Provider>
+		);
+	}
 	return (
 		<FieldContext.Provider value={state}>
-			<div data-slot="field" className={cn("flex flex-col gap-1", className)} {...props}>
-				{hasLabel ? (
-					<Label
-						id={`${id}-label`}
-						htmlFor={id}
-						required={required}
-						invalid={hasError}
-						disabled={disabled}
+			<div
+				data-slot="field"
+				className={cn("flex flex-col gap-1", className)}
+				style={style}
+				{...props}
+			>
+				{hasLabel || action ? (
+					<div
+						data-slot="field-head"
+						className="flex min-w-0 items-center gap-2 [&>[data-slot=field-action]]:-my-1"
 					>
-						{label}
-					</Label>
+						{label_ ?? <span className="flex-1" />}
+						{action_}
+					</div>
 				) : null}
 				{children}
 				{hasHelp ? <FieldHelp id={state.helpId}>{help}</FieldHelp> : null}

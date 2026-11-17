@@ -56,6 +56,7 @@ import {
 } from "react";
 import { useFieldControl } from "../../components/ui/field";
 import {
+	ACTIONS_SLOT,
 	type InputSpec,
 	nodeAt,
 	pathKey,
@@ -297,11 +298,17 @@ function inputValue(path: Path): { value: unknown } | undefined {
 		return { value: spec.read ? spec.read(node.props) : (node.props.value ?? null) };
 	}
 	if (entry?.wraps) {
-		const first = node.children.keys().next();
-		return first.done ? undefined : inputValue([...path, first.value]);
+		const control = wrapped(node.children.keys());
+		return control === undefined ? undefined : inputValue([...path, control]);
 	}
 	const nested = gather(path);
 	return Object.keys(nested).length ? { value: nested } : undefined;
+}
+
+/** The control a wrapper (a Field) stands for: its first child that is not its `actions`. */
+function wrapped(segments: Iterable<string>): string | undefined {
+	for (const s of segments) if (s !== ACTIONS_SLOT) return s;
+	return undefined;
 }
 
 /** The `reset` op every input answers: back to its seed. */
@@ -544,8 +551,8 @@ export function applyErrors(path: Path, errors: unknown): Path | null {
 		if (entry?.input || entry?.wraps) {
 			// A Field stands for its one control: the error is the Field's, the
 			// focus goes to the control.
-			const first = node.children.keys().next();
-			const control = entry.input ? at : first.done ? null : [...at, first.value];
+			const inner = wrapped(node.children.keys());
+			const control = entry.input ? at : inner === undefined ? null : [...at, inner];
 			const message = typeof errs === "string" ? errs : "";
 			if ((node.props.error ?? "") !== message) tree.getState().setProps(at, { error: message });
 			if (message && control) named.push(control);

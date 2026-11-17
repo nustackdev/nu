@@ -34,7 +34,7 @@ from ..vocab import Target
 from ..vocab import set_href as _set_href
 from .base import DictCollectionRef, ShapeCollectionRef
 from .flow import FLOW_CHILDREN, STACK
-from .layout import SIZE, ChildLayout, SizeLayout, StackLayout, choice
+from .layout import SIZE, ChildLayout, SizeLayout, StackLayout, choice, px
 from .named import ACTIONS, CONTROL, FOOTER, MEDIA, actions_ref, footer_ref, media_ref
 
 
@@ -284,34 +284,54 @@ class FieldLayout(SizeLayout, total=False):
 
 
 class FieldRef(ShapeCollectionRef):
-    """Label + one control + help / error text.
+    """Label + one control + help / error text, and actions at the label's end.
 
-    ``field.control`` is the control: the one slot its Shape declares, or a
-    bare child at ``control`` whose kind ``.to`` names
-    (``field.control.to(InputRef)``). A Field holds that one child and no
+    ``field.control`` is the control: the one slot its Shape declares besides
+    ``actions``, or a bare child at ``control`` whose kind ``.to`` names
+    (``field.control.to(InputRef)``). A Field holds that one control and no
     other, so a second one is refused where it is built.
+
+    ``field.actions`` is the end of the label row, for small controls about
+    the field rather than its value: an icon button, a Popover of settings
+    (``field.actions.to(PopoverRef.slot(icon="settings-2"))``). The Shape's
+    ``actions`` slot, or a Row there. It sits outside the field's wiring: an
+    input in it is never the field's control nor named by its label.
+
+    ``inline=True`` draws it as one row, inspector style: the label in a left
+    column ``label_width`` px wide (80 unless set), the control, then the
+    actions, help and error under the control. Stacked inline fields line up
+    into two columns, the dense look of a settings panel.
     """
 
     _wire_type = "Field"
-    _parts: ClassVar[frozenset[str]] = frozenset({CONTROL})
+    _parts: ClassVar[frozenset[str]] = frozenset({CONTROL, ACTIONS})
     _layout: ClassVar[frozenset[str]] = SIZE | {"gap"}
+
+    def _control_slot(self) -> tuple[str, Any] | None:
+        """The Shape's control slot by name, the first that is not ``actions``."""
+        slots = getattr(self._payload.get("section_cls"), "_slots", {})
+        return next(((k, v) for k, v in slots.items() if k != ACTIONS), None)
 
     @property
     def control(self) -> Ref:
         """The one control: the Shape's slot, or a bare child at ``control``."""
-        section_cls = self._payload.get("section_cls")
-        slots = getattr(section_cls, "_slots", {})
-        if slots:
-            slot = next(iter(slots.values()))
-            return slot.create_ref(owner_shape=section_cls, parent_ref=self)
+        found = self._control_slot()
+        if found is not None:
+            section_cls = self._payload.get("section_cls")
+            return found[1].create_ref(owner_shape=section_cls, parent_ref=self)
         return child_at(self, CONTROL)
+
+    @property
+    def actions(self) -> Ref:
+        """The label row's end: the Shape's ``actions`` slot, or a Row there."""
+        return actions_ref(self, gap=1)
 
     def _admit(self, address: object) -> None:
         super()._admit(address)
-        if not isinstance(address, str):
+        if not isinstance(address, str) or address == ACTIONS:
             return
-        slots = getattr(self._payload.get("section_cls"), "_slots", {})
-        place = next(iter(slots), CONTROL)
+        found = self._control_slot()
+        place = CONTROL if found is None else found[0]
         if address != place:
             msg = (
                 f"Field holds one control, at {place!r}, not {address!r}; reach it as"
@@ -327,14 +347,22 @@ class FieldRef(ShapeCollectionRef):
         help: str = "",
         error: str = "",
         required: bool = False,
+        inline: bool = False,
+        label_width: int | None = None,
         **layout: Unpack[FieldLayout],
     ) -> Self:
         """Declare it as a slot; ``gap`` (1) spaces label, control and help."""
+        props: dict[str, object] = {}
+        if inline:
+            props["inline"] = True
+        if label_width is not None:
+            props["label_width"] = px("FieldRef", "label_width", label_width)
         return super().slot(
             label=label,
             help=help,
             error=error,
             required=bool(required),
+            **props,
             **cls._laid_out(layout),
         )
 

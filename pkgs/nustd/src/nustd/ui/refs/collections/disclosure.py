@@ -6,6 +6,9 @@
 - ``SheetRef``: an edge drawer, Modal's sibling for inspectors and side
   panels. The server owns open state; the tab sends ``{open: false}`` when
   the user dismisses it.
+- ``PopoverRef``: a button that opens a small floating panel anchored to
+  it, for settings that should take no room until asked for. The tab owns
+  open state while the user clicks, like Collapsible.
 
 Open vs closed is the thing each one carries, so each has a ``set()`` for
 it, the way Modal does. Every other child is open-ended composition: build
@@ -33,8 +36,11 @@ if TYPE_CHECKING:
     from nu.lang.args import BoolArg, StrArg
     from nustd.ui.core import Ref, Section
 
+    from ..leaves.input import Variant
+    from ..vocab import ControlSize
 
-__all__ = ["CollapsibleRef", "SheetRef"]
+
+__all__ = ["CollapsibleRef", "PopoverRef", "SheetRef"]
 
 
 def _open_title(open: object, title: object) -> dict[str, object]:
@@ -139,6 +145,83 @@ class SheetRef(ChildLayout, DictCollectionRef):
 
     def set(self, open: BoolArg = UNSET, title: StrArg = UNSET) -> Nu:
         return Write(self, Dict.of(**_open_title(open, title)))
+
+    def on_change(self) -> Changed:
+        return Changed(self)
+
+
+PopoverSide = Literal["top", "right", "bottom", "left"]
+PopoverEdge = Literal["start", "center", "end"]
+_POPOVER_SIDES = ("top", "right", "bottom", "left")
+_POPOVER_EDGES = ("start", "center", "end")
+
+
+class PopoverRef(ChildLayout, DictCollectionRef):
+    """A button that opens a small panel floating beside it, children as its body.
+
+    The trigger wears a button's look: ``label``, ``icon`` (a lucide name),
+    ``tooltip``, ``variant`` and ``size`` read as ``ButtonRef``'s do, so an
+    empty label draws a square icon button. ``title`` heads the panel. The panel sits on ``side`` of it,
+    its ``edge`` (start, center, end) lined up with the trigger's, and takes
+    no room in the flow: nothing around it
+    moves when it opens. Escape, a click outside or the trigger close it.
+
+    The user opens and closes it in the tab, which sends ``{open: bool}`` as
+    a notify; ``on_change()`` takes those. ``set(open=...)`` opens or closes
+    it from the server. The panel is ``width`` wide (288px unless set) and
+    its body speaks the layers of a Column (``layout``): ``gap`` (3),
+    ``padding``, ``justify``, ``align``, ``divided``, and the per child maps.
+    """
+
+    _wire_type = "Popover"
+    _layout: ClassVar[frozenset[str]] = STACK
+    _children: ClassVar[tuple[str, ...]] = FLOW_CHILDREN
+
+    @classmethod
+    def slot(
+        cls,
+        item: type[Section] | type[Ref] | Slot | None = None,
+        /,
+        *,
+        label: str = "",
+        icon: str = "",
+        tooltip: str = "",
+        title: str = "",
+        variant: Variant = "ghost",
+        size: ControlSize = "sm",
+        side: PopoverSide = "bottom",
+        edge: PopoverEdge = "end",
+        open: bool = False,
+        **layout: Unpack[StackLayout],
+    ) -> Self:
+        return super().slot(
+            item,
+            label=label,
+            icon=icon,
+            tooltip=tooltip,
+            title=title,
+            variant=variant,
+            size=size,
+            side=one_of("PopoverRef", "side", side, _POPOVER_SIDES),
+            edge=one_of("PopoverRef", "edge", edge, _POPOVER_EDGES),
+            open=bool(open),
+            **cls._laid_out(layout),
+        )
+
+    def set_open(self, flag: BoolArg) -> Nu:
+        return Write(self, Dict.of(open=flag))
+
+    def set_label(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(label=text))
+
+    def set_tooltip(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(tooltip=text))
+
+    def set_title(self, text: StrArg) -> Nu:
+        return Write(self, Dict.of(title=text))
+
+    def set(self, open: BoolArg = UNSET) -> Nu:
+        return Write(self, Dict.of(**({} if open is UNSET else {"open": open})))
 
     def on_change(self) -> Changed:
         return Changed(self)

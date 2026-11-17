@@ -9,7 +9,7 @@
 - line:   LineRef, children that run inline like a paragraph.
 - chrome: CardRef, TabsRef, ModalRef, AccordionRef, FormRef, FieldsetRef,
           FieldRef.
-- disclosure: CollapsibleRef, SheetRef.
+- disclosure: CollapsibleRef, PopoverRef, SheetRef.
 - list:   ListRef, string items first, then any child as an item.
 - page:   PageSectionRef (a titled part of a page), NavListRef (a sidebar
           list or a top bar).
@@ -22,7 +22,7 @@
 from .base import CollectionRef, DictCollectionRef, ListCollectionRef, ShapeCollectionRef
 from .chrome import AccordionRef, CardRef, FieldRef, FieldsetRef, FormRef, ModalRef, TabsRef
 from .container import ContainerRef
-from .disclosure import CollapsibleRef, SheetRef
+from .disclosure import CollapsibleRef, PopoverRef, SheetRef
 from .flow import ColumnRef, RowRef
 from .grid import GridRef
 from .input_group import InputGroupRef
@@ -51,6 +51,7 @@ __all__ = [
     "ModalRef",
     "NavListRef",
     "PageSectionRef",
+    "PopoverRef",
     "RowRef",
     "ShapeCollectionRef",
     "SheetRef",

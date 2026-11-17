@@ -90,6 +90,23 @@ function signup() {
 const inputs = () => Array.from(host.querySelectorAll("input")) as HTMLInputElement[];
 
 describe("Form checks", () => {
+	it("takes a Field's control for its value, never what sits in its actions", () => {
+		put(
+			["f", "Form", {}],
+			["name", "Field", { label: "Name" }],
+			["actions", "Popover", { icon: "settings-2", tooltip: "Settings" }],
+			["min", "NumberInputRef", { value: 3 }],
+		);
+		put(["f", "Form", {}], ["name", "Field", {}], ["control", "InputRef", { value: "" }]);
+		put(["f", "Form", {}], ["save", "ButtonRef", { label: "Save", submit: true }]);
+		draw(["f"]);
+		const [name] = inputs();
+		expect(host.querySelector(`label[for="${name.id}"]`)?.textContent).toContain("Name");
+		type(name, "Ada");
+		enter(name);
+		expect(formSubmits()).toEqual([{ event: "submit", values: { name: "Ada" }, button: "save" }]);
+	});
+
 	it("drops a submit with a required field empty, shows it on the Field and focuses it", () => {
 		signup();
 		const [name] = inputs();

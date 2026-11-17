@@ -22,6 +22,7 @@ from nustd.ui.refs.collections.chrome import (
     ModalRef,
     TabsRef,
 )
+from nustd.ui.refs.collections.named import ACTIONS
 
 
 if TYPE_CHECKING:
@@ -85,13 +86,16 @@ class Card(Section):
 
 
 class Field(Section):
-    """Label, exactly one child input slot, help and error. Props as ``FieldRef.slot``."""
+    """Label, exactly one child input slot, help and error. Props as ``FieldRef.slot``.
+
+    An ``actions`` slot besides it draws at the end of the label row.
+    """
 
     _ref_cls = FieldRef
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
-        slot_count = len(getattr(cls, "_slots", {}))
+        slot_count = len([k for k in getattr(cls, "_slots", {}) if k != ACTIONS])
         if slot_count != 1:
             raise RuntimeError(
                 f"Field {cls.__name__} declares {slot_count} child slots; "

@@ -1,4 +1,4 @@
-"""Disclosure Shapes -- Collapsible and Sheet.
+"""Disclosure Shapes -- Collapsible, Popover and Sheet.
 
 Each is a Section over its container Ref (``nustd.ui.refs.collections.disclosure``):
 the Ref carries ``set()``, ``on_change()``, the slot defaults and the wire
@@ -9,10 +9,10 @@ subclass and drive open state off the bound Ref (``page.details.set(open=True)``
 from __future__ import annotations
 
 from nustd.ui.core import Section
-from nustd.ui.refs.collections.disclosure import CollapsibleRef, SheetRef
+from nustd.ui.refs.collections.disclosure import CollapsibleRef, PopoverRef, SheetRef
 
 
-__all__ = ["Collapsible", "Sheet"]
+__all__ = ["Collapsible", "Popover", "Sheet"]
 
 
 class Collapsible(Section):
@@ -33,6 +33,26 @@ class Collapsible(Section):
     """
 
     _ref_cls = CollapsibleRef
+
+
+class Popover(Section):
+    """A button opening a floating panel of its slots. Props as ``PopoverRef.slot``.
+
+    As a Shape::
+
+        class Settings(nustd.ui.Popover):
+            min = nustd.ui.NumberInputRef.slot(label="Min")
+
+        class Home(nustd.ui.Column):
+            settings = Settings.slot(icon="settings-2", tooltip="Settings")
+
+    Refs alone, no Shape::
+
+        pop = PopoverRef("settings", parent_ref=row, props={"icon": "settings-2"})
+        TextRef("note", parent_ref=pop).set("tucked away")
+    """
+
+    _ref_cls = PopoverRef
 
 
 class Sheet(Section):

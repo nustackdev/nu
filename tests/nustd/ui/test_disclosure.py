@@ -237,3 +237,93 @@ def test_sheet_boot_chain_on_a_page():
     ]
     assert chains[0][0][2]["open"] is True
     assert chains[0][0][2]["title"] == "Edit host"
+
+
+# --- Popover -----------------------------------------------------------------
+
+
+def test_popover_wire_type_and_slot_defaults():
+    from nustd.ui import Popover, PopoverRef
+
+    assert PopoverRef._wire_type == "Popover"
+    assert _wire_type_of(Popover) == "Popover"
+    assert PopoverRef.slot().props == {
+        "label": "",
+        "icon": "",
+        "tooltip": "",
+        "title": "",
+        "variant": "ghost",
+        "size": "sm",
+        "side": "bottom",
+        "edge": "end",
+        "open": False,
+    }
+    assert PopoverRef.slot(open=1).props["open"] is True
+    assert Popover.slot(icon="settings-2").props == PopoverRef.slot(icon="settings-2").props
+
+
+def test_popover_refuses_a_side_or_edge_it_does_not_have():
+    from nustd.ui import PopoverRef
+
+    with pytest.raises(ValueError, match="side"):
+        PopoverRef.slot(side="middle")
+    with pytest.raises(ValueError, match="edge"):
+        PopoverRef.slot(edge="top")
+
+
+def test_popover_open_and_trigger_writes():
+    from nustd.ui import PopoverRef
+
+    ref = PopoverRef("p")
+    frames = _frames(
+        ref.set(open=True) >> ref.set_open(False) >> ref.set_label("x") >> ref.set_tooltip("y")
+    )
+    assert [f.payload for f in frames] == [
+        {"open": True},
+        {"open": False},
+        {"label": "x"},
+        {"tooltip": "y"},
+    ]
+    assert isinstance(ref.on_change(), Changed)
+
+
+def test_popover_body_lands_under_it():
+    from nustd.ui import ColumnRef, PopoverRef, TextRef
+
+    col = ColumnRef("col")
+    pop = PopoverRef("settings", parent_ref=col, props={"icon": "settings-2"})
+    [frame] = _frames(TextRef("t", parent_ref=pop).set("tucked away"))
+    assert _chain(frame) == [("col", "Column"), ("settings", "Popover"), ("t", "TextRef")]
+
+
+# --- a Field's actions ---------------------------------------------------------
+
+
+def test_field_actions_is_a_part_beside_the_control():
+    from nustd.ui import FieldRef, InputRef, PopoverRef, RowRef
+
+    field = FieldRef("f")
+    assert isinstance(field.actions, RowRef)
+    pop = field.actions.to(PopoverRef.slot(icon="settings-2"))
+    assert isinstance(pop, PopoverRef)
+    assert isinstance(field.control.to(InputRef.slot()), InputRef)
+    with pytest.raises(TypeError, match="one control"):
+        InputRef("other", parent_ref=field)
+
+
+def test_a_field_shape_may_declare_actions_besides_its_control():
+    from nustd.ui import Field, FieldRef, InputRef, PopoverRef
+
+    class Named(Field):
+        actions = PopoverRef.slot(icon="settings-2")
+        value = InputRef.slot()
+
+    ref = FieldRef("f", section_cls=Named)
+    assert isinstance(ref.control, InputRef)
+    assert isinstance(ref.actions, PopoverRef)
+    with pytest.raises(RuntimeError, match="exactly one"):
+
+        class Two(Field):
+            actions = PopoverRef.slot()
+            a = InputRef.slot()
+            b = InputRef.slot()

@@ -357,6 +357,21 @@ describe("Field", () => {
 		expect(host.querySelector("[data-slot=field-help]")?.textContent).toBe("As released");
 	});
 
+	it("draws its actions at the label row's end, outside its wiring", () => {
+		put(
+			["f", "Field", { label: "Title" }],
+			["actions", "ButtonRef", { icon: "settings-2", tooltip: "Settings" }],
+		);
+		put(["f", "Field", {}], ["control", "InputRef", { value: "" }]);
+		draw(["f"]);
+		const input = host.querySelector("input") as HTMLInputElement;
+		expect(host.querySelector("label")?.getAttribute("for")).toBe(input.id);
+		const action = host.querySelector("[data-slot=field-head] [data-slot=field-action] button");
+		expect(action?.getAttribute("aria-label")).toBe("Settings");
+		expect(action?.id).not.toBe(input.id);
+		expect(host.textContent).not.toContain("a Field holds one control");
+	});
+
 	it("names a radio group by its label", () => {
 		put(
 			["f", "Field", { label: "Genre" }],

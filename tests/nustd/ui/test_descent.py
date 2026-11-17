@@ -43,6 +43,7 @@ BODY = [
     ui.ModalRef,
     ui.SheetRef,
     ui.CollapsibleRef,
+    ui.PopoverRef,
     ui.FormRef,
     ui.FieldsetRef,
     ui.NavListRef,
