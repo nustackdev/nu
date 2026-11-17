@@ -298,6 +298,33 @@ async def test_delete_drops_the_session_from_the_list_and_twice_is_fine():
     assert [s["session_id"] for s in log["a"]] == ["k0", "k2", "k3", "k4"]
 
 
+Old = Agent["old"]
+
+
+async def test_one_ref_serves_every_term_of_a_tree_through_a_rewrite():
+    """One module-level Session ref in many terms, across parallel arms, survives a rewrite pass."""
+    body = nu.Sequential(
+        Old.resume(),
+        nu.ParallelAsync(
+            log_all(Old.prompt("hello"), Log.a),
+            log_all(Agent.list_sessions(), Log.b),
+            Log.c.append(Agent.initialization()),
+        ),
+        Old.set_mode("plan"),
+        log_all(Old.prompt("stats"), Log.c),
+    )
+    assert sum(node is Old for node in nu.tree.preorder(body)) == 4
+    assert sum(node is Agent for node in nu.tree.preorder(body)) == 6
+    rebuilt = nu.tree.map_nodes(body, lambda node: node)
+    assert rebuilt is not body
+    _, log = await run(rebuilt)
+    assert texts(log["a"]) == ["hel", "lo"]
+    assert log["a"][-1] == {"stop_reason": "end_turn"}
+    assert [s["session_id"] for s in log["b"]] == ["k0", "k1", "k2", "k3", "k4"]
+    assert log["c"][0]["agent_info"] == {"name": "fake", "version": "1.0"}
+    assert stats_of(log["c"])["modes"] == {"old": "plan"}
+
+
 # --- modes and config ----------------------------------------------------------------
 
 

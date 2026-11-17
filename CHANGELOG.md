@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- One blob store or agent ref now serves many terms without copying itself
 - The streaming agent example reads cleanly: text flows inline, tool calls shown briefly
 - Notifications an agent sends outside ACP are ignored instead of logged as errors
 - A fresh install keeps the queue library on a version its queues work with

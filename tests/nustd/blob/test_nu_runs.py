@@ -389,6 +389,35 @@ def test_two_refs_of_one_name_are_one_store(kind, tmp_path, run):
     assert run(term) == b"x"
 
 
+def test_one_ref_serves_every_term_of_a_tree_through_a_rewrite(media, run):
+    """One module-level ref in many terms, across parallel arms, survives a rewrite pass."""
+    src, a, b = "0" * 32, "a" * 32, "b" * 32
+    writes = media(
+        nu.Sequential(
+            Media.put(b"shared", blob_id=src),
+            nu.Parallel(
+                Media.put(Media.get(src), blob_id=a, mime="text/plain"),
+                Media.put_stream(Media.open(src, 1, 4), blob_id=b),
+            ),
+            Media.delete(src),
+        )
+    )
+    assert sum(node is Media for node in nu.tree.preorder(writes)) == 6
+    rebuilt = nu.tree.map_nodes(writes, lambda node: node)
+    assert rebuilt is not writes
+    run(nustd.kv.auto_flow_atomic(rebuilt))
+
+    reads = Dict.of(
+        a=Media.get(a),
+        mime=Dict(Media.meta(a))["mime"],
+        b=Media.get(b),
+        gone=nu.Not(Media.has(src)),
+        bound=Media.exists(),
+    )
+    out = run(media(reads))
+    assert out == {"a": b"shared", "mime": "text/plain", "b": b"har", "gone": True, "bound": True}
+
+
 # --- lifecycle --------------------------------------------------------------------
 
 

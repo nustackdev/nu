@@ -96,13 +96,10 @@ def test_exists_asks_whether_a_backend_is_bound():
     assert not isinstance(term, BlobHas)
 
 
-def test_each_term_holds_a_fresh_ref_under_the_name():
-    first, second = Media.get(BID), Media.get(BID)
-    ref = first._children[0]
-    assert isinstance(ref, StoreRef)
-    assert ref.name == "media"
-    assert ref is not Media
-    assert ref is not second._children[0]
+def test_each_term_holds_the_ref_it_was_built_from():
+    first, second = Media.get(BID), Media.has(BID)
+    assert first._children[0] is Media
+    assert second._children[0] is Media
 
 
 def test_atoms_take_a_store_ref_directly():

@@ -47,8 +47,8 @@ class StoreRef(FabricRef):
     """A named blob store: the ``BlobFabric`` bound under its name, and the terms that reach it.
 
     The name is the tag a backend binds under, so several stores live in one
-    tree without meeting. Every term builds a fresh ref under the same name,
-    so one ``StoreRef`` held in a module serves any number of trees.
+    tree without meeting. Every term holds this ref itself, so one
+    ``StoreRef`` held in a module serves any number of terms and trees.
 
     Args:
         name: the store's name, any non-empty ``str``.
@@ -85,10 +85,6 @@ class StoreRef(FabricRef):
     def name(self) -> str:
         """The store's name, the tag its backend binds under."""
         return self._payload["store"]
-
-    def _fresh(self) -> StoreRef:
-        """A new ref under the same name, for one more term to hold."""
-        return StoreRef(self.name)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         fabric = children[0]
@@ -136,7 +132,7 @@ class StoreRef(FabricRef):
             name: the file name a download offers.
         """
         _check_given_id(blob_id)
-        return BlobPut(self._fresh(), source, blob_id, mime, name)
+        return BlobPut(self, source, blob_id, mime, name)
 
     def put_stream(
         self,
@@ -157,16 +153,16 @@ class StoreRef(FabricRef):
             name: the file name a download offers.
         """
         _check_given_id(blob_id)
-        return BlobPutStream(self._fresh(), source, blob_id, mime, name)
+        return BlobPutStream(self, source, blob_id, mime, name)
 
     def new_id(self) -> BlobNewId:
         """A fresh id, minted at run time, for a put inside a block that can retry."""
-        return BlobNewId(self._fresh())
+        return BlobNewId(self)
 
     def get(self, blob_id: StrArg) -> BlobGet:
         """The blob's bytes, whole."""
         _check_given_id(blob_id)
-        return BlobGet(self._fresh(), blob_id)
+        return BlobGet(self, blob_id)
 
     def open(
         self,
@@ -184,22 +180,22 @@ class StoreRef(FabricRef):
             step: bytes per piece.
         """
         _check_given_id(blob_id)
-        return BlobOpen(self._fresh(), blob_id, start, end, step)
+        return BlobOpen(self, blob_id, start, end, step)
 
     def meta(self, blob_id: StrArg) -> BlobMeta:
         """The blob's ``{id, size, mime, name, created_at}``."""
         _check_given_id(blob_id)
-        return BlobMeta(self._fresh(), blob_id)
+        return BlobMeta(self, blob_id)
 
     def has(self, blob_id: StrArg) -> BlobHas:
         """Whether a whole blob sits under the id."""
         _check_given_id(blob_id)
-        return BlobHas(self._fresh(), blob_id)
+        return BlobHas(self, blob_id)
 
     def delete(self, blob_id: StrArg) -> BlobDelete:
         """Remove the blob; a missing one is a no-op."""
         _check_given_id(blob_id)
-        return BlobDelete(self._fresh(), blob_id)
+        return BlobDelete(self, blob_id)
 
     def exists(self) -> Bool:
         """Whether a backend is bound under this store's name, as a ``Bool``.
@@ -210,7 +206,7 @@ class StoreRef(FabricRef):
         """
         from nu.forms.primitives import Bool
 
-        return Bool(_StoreBound(self._fresh()))
+        return Bool(_StoreBound(self))
 
 
 def _check_given_id(blob_id: object) -> None:
