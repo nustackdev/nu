@@ -7,8 +7,7 @@
 //   asking     Record busy, "Waiting for the microphone…" (the browser's prompt is up)
 //   recording  a red dot that pulses, the time, a level meter, pause, stop, cancel
 //   paused     the dot still, the time held, resume, stop, cancel
-//   take       the kit Audio row playing the take, Record again, Delete; on a
-//              narrow control the actions wrap under the player, in the same box
+//   take       the kit Audio row playing the take; Record again and Delete under it
 //   blocked    Record (as "Try again" when trying can help), the reason under the row
 //
 // Nothing opens on mount: the first click on Record asks for the microphone,
@@ -120,6 +119,9 @@ const FRAME: Record<Size, string> = {
 };
 
 const BUTTON: Record<Size, "sm" | "md" | "lg"> = { sm: "sm", md: "md", lg: "lg" };
+
+/** The take's actions under the box: a step smaller, as the camera's are. */
+const BAR: Record<Size, "xs" | "sm" | "md"> = { sm: "xs", md: "sm", lg: "md" };
 
 function limit(raw: number | null | undefined): number | null {
 	return typeof raw === "number" && Number.isFinite(raw) && raw > 0 ? raw : null;
@@ -410,7 +412,7 @@ export function MicCapture({
 				<DropdownMenuTrigger asChild>
 					<IconButton
 						variant="ghost"
-						size={button}
+						size={take && !recording ? BAR[size] : button}
 						aria-label={`Microphone, ${names.find((n) => n.id === current)?.name ?? ""}`}
 						tip="Microphone"
 						disabled={disabled || status === "asking"}
@@ -432,6 +434,7 @@ export function MicCapture({
 		) : null;
 
 	let row: React.ReactNode;
+	let actions: React.ReactNode = null;
 	if (recording) {
 		const paused = status === "paused";
 		row = (
@@ -493,21 +496,23 @@ export function MicCapture({
 			</span>
 		);
 	} else if (take) {
-		// The player wants the width for its waveform: beside its actions when
-		// the control is wide, above them (one box, two lines) when it is not.
+		// The box holds the player alone; the take's actions sit under it as
+		// plain buttons, as the camera's Retake and Delete sit under its frame.
 		row = (
-			<>
-				<div className="min-w-0 grow basis-full @xl/mic:basis-0" inert={disabled || undefined}>
-					<Audio src={url} label="Recording" className={size === "lg" ? "h-10" : "h-8"} />
-				</div>
-				<div
-					data-slot="mic-capture-take"
-					className="flex w-full items-center justify-end gap-1 @xl/mic:w-auto @xl/mic:shrink-0"
-				>
+			<div className="min-w-0 flex-1" inert={disabled || undefined}>
+				<Audio src={url} label="Recording" className={size === "lg" ? "h-10" : "h-8"} />
+			</div>
+		);
+		actions = (
+			<div
+				data-slot="mic-capture-take"
+				className="mt-1 flex flex-wrap items-center justify-end gap-2"
+			>
+				<div className="flex items-center">
 					<Button
 						ref={main}
-						variant="ghost"
-						size={button}
+						variant="secondary"
+						size={BAR[size]}
 						disabled={disabled || noTry}
 						loading={status === "asking"}
 						autoFocus={autoFocus}
@@ -518,18 +523,18 @@ export function MicCapture({
 						Record again
 					</Button>
 					{menu}
-					<IconButton
-						variant="ghost"
-						size={button}
-						aria-label="Delete recording"
-						tip="Delete"
-						disabled={disabled || status === "asking"}
-						onClick={discard}
-					>
-						<Trash2 aria-hidden />
-					</IconButton>
 				</div>
-			</>
+				<Button
+					variant="ghost"
+					size={BAR[size]}
+					aria-label="Delete recording"
+					disabled={disabled || status === "asking"}
+					onClick={discard}
+				>
+					<Trash2 aria-hidden />
+					Delete
+				</Button>
+			</div>
 		);
 	} else {
 		row = (
@@ -564,13 +569,13 @@ export function MicCapture({
 			<div
 				data-slot="mic-capture"
 				data-status={status}
-				className={cn("@container/mic flex flex-col gap-1", className)}
+				className={cn("flex flex-col gap-1", className)}
 			>
 				<div
 					ref={root}
 					data-slot="mic-capture-row"
 					className={cn(
-						"flex w-full min-w-0 flex-wrap items-center rounded-md border bg-bg-surface",
+						"flex w-full min-w-0 items-center rounded-md border bg-bg-surface",
 						"transition-[border-color,background-color] duration-fast ease-out",
 						FRAME[size],
 						disabled
@@ -584,6 +589,7 @@ export function MicCapture({
 				>
 					{row}
 				</div>
+				{actions}
 				{reason ? (
 					<p
 						id={reasonId}
