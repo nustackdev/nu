@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Coding agents like Claude Code and Codex run as one fabric over ACP
 - Mic and camera capture: record a take in the browser, read it like an upload
 - Segmented controls and tabs show the picked option clearly in both themes
 - A Popover tucks settings behind a button, floating so nothing around it moves
