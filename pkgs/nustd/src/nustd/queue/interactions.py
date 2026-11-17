@@ -39,11 +39,15 @@ __all__ = [
 ]
 
 
+# janus 2.1 dropped the ShutDown and QueueShutDown aliases; take them when present.
 _SHUTDOWN_EXCS: tuple[type[BaseException], ...] = (
-    janus.ShutDown,
     janus.SyncQueueShutDown,
     janus.AsyncQueueShutDown,
-    janus.QueueShutDown,
+    *(
+        exc
+        for name in ("ShutDown", "QueueShutDown")
+        if (exc := getattr(janus, name, None)) is not None
+    ),
 )
 
 

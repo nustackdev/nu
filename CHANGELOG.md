@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Queues work on both janus 2.0 and 2.1, so the version cap is relaxed
 - One blob store or agent ref now serves many terms without copying itself
 - The streaming agent example reads cleanly: text flows inline, tool calls shown briefly
 - Notifications an agent sends outside ACP are ignored instead of logged as errors
