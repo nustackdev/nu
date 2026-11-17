@@ -47,7 +47,7 @@ def serve(
     upload_root: str | os.PathLike[str] | None = None,
     upload_cap: int | None = None,
     host: str = "127.0.0.1",
-    port: int = 8080,
+    port: int | None = None,
     log_level: str = "warning",
     open_browser: bool = True,
     ready_timeout: float = 10.0,
@@ -88,7 +88,8 @@ def serve(
         upload_cap: the most bytes one uploaded file may carry. None, the
             default, takes any size the disk holds.
         host: uvicorn bind host.
-        port: uvicorn bind port.
+        port: the port to bind; taken, the server raises ``PortTaken``
+            on the way up. None takes the first free one from 8080.
         log_level: uvicorn log level. The default silences uvicorn's own
             chatter so only the ready / stopped banner is printed.
         open_browser: open the bound URL once the server signals ready.

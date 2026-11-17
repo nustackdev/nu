@@ -25,7 +25,7 @@ def listen(
     static: str | None = None,
     routes: Sequence[BaseRoute] = (),
     host: str = "127.0.0.1",
-    port: int = 8080,
+    port: int | None = None,
     log_level: str = "warning",
     banner: str = "ws server",
     open_browser: bool = True,
@@ -47,7 +47,8 @@ def listen(
         routes: extra Starlette routes, served after ``/ws`` and before the
             SPA mount. Opaque to the server.
         host: uvicorn bind host.
-        port: uvicorn bind port.
+        port: the port to bind; taken, the server raises ``PortTaken``
+            on the way up. None takes the first free one from 8080.
         log_level: uvicorn log level. Default silences uvicorn's info chatter
             so only our own ready/stopped banner is printed.
         banner: what the ready and stopped lines call this server.

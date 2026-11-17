@@ -13,12 +13,17 @@ The two halves it does own:
   process-local, it dies with the process, and the fold reads it directly.
 - one ordered channel announcing every move of that book, which is what wakes
   the fold.
+
+The port: a given one is bound as is, and a taken one is a short
+``PortTaken`` before uvicorn starts. None takes the first free one from 8080.
 """
 
 from __future__ import annotations
 
 import asyncio
+import errno
 import importlib
+import socket
 import sys
 import uuid
 import warnings
@@ -42,7 +47,51 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Context
 
 
-__all__ = ["SessionProtocol", "WebServer"]
+__all__ = ["DEFAULT_PORT", "PortTaken", "SessionProtocol", "WebServer"]
+
+
+#: Where the search for a free port starts when none is given, and how far it goes.
+DEFAULT_PORT = 8080
+_SCAN = 100
+
+
+class PortTaken(OSError):  # noqa: N818
+    """The port asked for is in use, or none in the scanned range is free."""
+
+    def __init__(self, message: str) -> None:
+        super().__init__(errno.EADDRINUSE, message)
+
+    def __str__(self) -> str:
+        return self.strerror or ""
+
+
+def _bindable(host: str, port: int) -> bool:
+    """Whether uvicorn could bind ``host:port`` now, probed as it binds it."""
+    infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM, flags=socket.AI_PASSIVE)
+    family, kind, proto, _, address = infos[0]
+    with socket.socket(family, kind, proto) as s:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            s.bind(address)
+        except OSError as e:
+            if e.errno in (errno.EADDRINUSE, errno.EACCES):
+                return False
+            raise
+    return True
+
+
+def _pick_port(host: str, port: int | None) -> int:
+    """The port to serve on: ``port`` if free, else PortTaken; None, the first free from 8080."""
+    if port is not None:
+        if not _bindable(host, port):
+            msg = f"Port {port} on {host} is taken. Pass another port, or none for a free one."
+            raise PortTaken(msg)
+        return port
+    for candidate in range(DEFAULT_PORT, DEFAULT_PORT + _SCAN):
+        if _bindable(host, candidate):
+            return candidate
+    msg = f"No free port on {host} in {DEFAULT_PORT}-{DEFAULT_PORT + _SCAN - 1}. Pass one."
+    raise PortTaken(msg)
 
 
 class SessionProtocol(Protocol):
@@ -229,6 +278,8 @@ class WebServer:
         routes: extra Starlette routes, mounted after ``/ws`` and before the
             SPA mount so they win over its index.html fallback. The server
             serves them as given and knows nothing about what they do.
+        port: the port to bind; taken, ``asetup`` raises ``PortTaken``.
+            None takes the first free one from 8080.
         log_level: uvicorn log level. Defaults to ``"warning"`` -- we print
             our own ready/stopped banner.
         banner: what the ready and stopped lines call this server.
@@ -254,7 +305,7 @@ class WebServer:
         static: str | None = None,
         routes: Sequence[BaseRoute] = (),
         host: str = "127.0.0.1",
-        port: int = 8080,
+        port: int | None = None,
         log_level: str = "warning",
         banner: str = "ws server",
         open_browser: bool = True,
@@ -283,8 +334,11 @@ class WebServer:
 
         A boot failure surfaces here instead of hanging: if the serve task
         finishes before ``server.started`` flips, we re-raise its exception.
+        The port is settled first, so a taken one is ``PortTaken`` and not
+        uvicorn's traceback.
         """
         del ctx
+        self._port = _pick_port(self._host, self._port)
         config = uvicorn.Config(
             self._build_app(),
             host=self._host,

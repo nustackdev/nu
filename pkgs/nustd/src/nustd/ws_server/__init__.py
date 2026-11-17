@@ -19,7 +19,7 @@ slot. The lifetime of an arm is the lifetime of a socket, in both directions.
 from __future__ import annotations
 
 from .driver import run_once, session_for, sessions_fold
-from .fabric import SessionProtocol, WebServer
+from .fabric import DEFAULT_PORT, PortTaken, SessionProtocol, WebServer
 from .interactions import (
     SID_ATTR,
     LiveSessions,
@@ -33,9 +33,11 @@ from .ref import ServerRef
 
 
 __all__ = [
+    "DEFAULT_PORT",
     "SID_ATTR",
     "LiveSessions",
     "MarkSessionDone",
+    "PortTaken",
     "ServerRef",
     "SessionDone",
     "SessionFor",
