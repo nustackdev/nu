@@ -421,9 +421,10 @@ def _leaf_widgets(*, needs_on_change: bool = False):
     return out
 
 
-# A program cannot put a file in a picker: the upload inputs' set raises by
-# design (test_upload_refs pins it), so they are out of the write sweep.
-_SET_WIDGETS = [(cls, mod) for cls, mod in _leaf_widgets() if mod != "upload"]
+# A program cannot put a file in a picker or a take in a recorder: the upload
+# and capture inputs' set raises by design (test_upload_refs and
+# test_capture_refs pin it), so they are out of the write sweep.
+_SET_WIDGETS = [(cls, mod) for cls, mod in _leaf_widgets() if mod not in ("upload", "capture")]
 _CHANGED_WIDGETS = _leaf_widgets(needs_on_change=True)
 
 

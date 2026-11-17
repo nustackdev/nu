@@ -31,6 +31,10 @@
 //
 // Program side moves (a reset, a `remove_file`) send no change, as no input
 // echoes what the program did; a person's pick, drop, paste or remove does.
+//
+// Capture nodes (MicCaptureRef, CameraCaptureRef) keep their take here too:
+// a recorded Blob wrapped as a File, with its duration and size as `meta`,
+// so every command and read above works on a take unchanged.
 
 import { type NodeHandler, OPS, type Path } from "@nustackdev/ui-core";
 import type { FileState } from "../../components/ui/file-input";
@@ -70,6 +74,8 @@ type Handle = {
 	/** The last progress sent: when, and how far. */
 	reportedAt: number;
 	reported: number;
+	/** Extra fields for the value: a capture's duration, width, height. */
+	meta: Record<string, unknown>;
 };
 
 /** At most one progress notify per file per this many ms. */
@@ -106,6 +112,7 @@ function mintKey(): string {
 
 function entry(h: Handle): FileValue {
 	return {
+		...h.meta,
 		key: h.key,
 		name: h.file.name,
 		mime: h.file.type,
@@ -141,10 +148,16 @@ function release(h: Handle): void {
 
 /**
  * Take files a person handed over: new handles, appended, or in place of
- * what was there when `replace`. Returns the new value; the caller sends the
- * change.
+ * what was there when `replace`. `meta` goes into each file's value beside
+ * the file fields (a capture's take adds duration, width, height). Returns
+ * the new value; the caller sends the change.
  */
-export function addFiles(path: Path, files: File[], replace: boolean): unknown {
+export function addFiles(
+	path: Path,
+	files: File[],
+	replace: boolean,
+	meta: Record<string, unknown> = {},
+): unknown {
 	const b = book(path);
 	if (replace) {
 		for (const h of b.values()) release(h);
@@ -165,9 +178,15 @@ export function addFiles(path: Path, files: File[], replace: boolean): unknown {
 			slices: new Set(),
 			reportedAt: Number.NEGATIVE_INFINITY,
 			reported: 0,
+			meta: { ...meta },
 		});
 	}
 	return filesValue(path);
+}
+
+/** The file a key names, for a preview in the tab; null when there is none. */
+export function fileOf(path: Path, key: string): File | null {
+	return books.get(pathKey(path))?.get(key)?.file ?? null;
 }
 
 /** Drop one file. Returns the new value. */

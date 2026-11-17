@@ -3,6 +3,7 @@
 import type { NodeEntry } from "../../tree";
 import { AutocompleteRef } from "./autocomplete";
 import { ButtonRef } from "./button";
+import { CameraCaptureRef } from "./camera-capture";
 import { CheckboxRef } from "./checkbox";
 import { CheckboxGroupRef } from "./checkbox-group";
 import { withInputChrome } from "./chrome";
@@ -14,6 +15,7 @@ import { DateTimePickerRef } from "./date-time-picker";
 import { InlineEditRef } from "./inline-edit";
 import { InputRef } from "./input";
 import { MarkdownRef } from "./markdown";
+import { MicCaptureRef } from "./mic-capture";
 import { MultiSelectRef } from "./multi-select";
 import { NumberInputRef } from "./number-input";
 import { RadioGroupRef } from "./radio-group";
@@ -57,6 +59,8 @@ const entries: Record<string, NodeEntry> = {
 	ColorPickerRef,
 	UploadFileRef,
 	UploadFilesRef,
+	MicCaptureRef,
+	CameraCaptureRef,
 };
 
 /** Every input type, each with the focus op and bare-control errors (./chrome.tsx). */

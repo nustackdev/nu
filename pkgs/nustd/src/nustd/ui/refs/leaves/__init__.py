@@ -19,6 +19,8 @@
 - inline_edit: InlineEditRef, text that edits in place.
 - upload: UploadFile, UploadFiles and the entry UploadedFile, picked files
           read on demand, plus the upload errors from nustd.ui.uploads.
+- capture: MicCapture and CameraCapture, takes recorded in the browser and
+          read on demand as uploads are.
 - chart:  Chart, an ECharts option, and the typed builders over it
           (LineChart, BarChart, PieChart, HeatmapChart, ...).
 """
@@ -35,6 +37,7 @@ from nustd.ui.uploads.errors import (
 )
 
 from .base import LeafRef
+from .capture import CameraCaptureRef, MicCaptureRef
 from .chart import (
     AreaChart,
     BarChart,
@@ -124,6 +127,7 @@ __all__ = [
     "BreadcrumbRef",
     "ButtonRef",
     "CalendarHeatmapRef",
+    "CameraCaptureRef",
     "CandlestickChart",
     "Chart",
     "CheckboxGroupRef",
@@ -157,6 +161,7 @@ __all__ = [
     "LineChart",
     "LinkRef",
     "MarkdownRef",
+    "MicCaptureRef",
     "MultiSelectRef",
     "NavItemRef",
     "NoFile",

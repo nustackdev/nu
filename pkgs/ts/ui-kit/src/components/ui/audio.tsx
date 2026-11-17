@@ -11,6 +11,9 @@
 //
 // `download` ends the row with a download link.
 //
+// The row fits its container: under 20rem it drops the speed menu, under
+// 18rem the volume too, so play, the waveform and the time always show.
+//
 // The row takes focus and owns the transport keys like Video, with `,` and
 // `.` stepping a tenth of a second while paused. It draws no box of its own:
 // rows stack into a list with lines between them, like any dense list.
@@ -187,7 +190,7 @@ export function Audio({
 				aria-keyshortcuts="Space K J L ArrowLeft ArrowRight M"
 				{...keys}
 				className={cn(
-					"flex h-10 w-full min-w-0 items-center gap-2 rounded-md px-1",
+					"@container/audio flex h-10 w-full min-w-0 items-center gap-2 rounded-md px-1",
 					"cursor-default select-none outline-hidden",
 					"focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
 					className,
@@ -234,8 +237,13 @@ export function Audio({
 					</span>
 				)}
 				<MediaTime time={media.time} duration={media.duration} />
-				<MediaVolume media={media} glyphClassName="text-text-primary" />
-				<MediaRate media={media} />
+				{/* A narrow row keeps play, the waveform and the time: speed goes first, then volume. */}
+				<span className="flex shrink-0 @max-2xs/audio:hidden">
+					<MediaVolume media={media} glyphClassName="text-text-primary" />
+				</span>
+				<span className="flex shrink-0 @max-xs/audio:hidden">
+					<MediaRate media={media} />
+				</span>
 				{download ? <MediaDownloadButton href={download} className="text-text-primary" /> : null}
 			</div>
 		</TooltipProvider>

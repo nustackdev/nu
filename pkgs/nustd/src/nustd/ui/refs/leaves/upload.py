@@ -99,19 +99,20 @@ class _FileReads:
         return Discard(self)  # type: ignore[arg-type]
 
 
-class _UploadInput(InputLeaf):
-    """What both upload inputs are: a picker and a drop zone. Abstract.
+class _FileInput(InputLeaf):
+    """What every input holding a file handle is: upload or capture. Abstract.
 
-    The value is the selection, never bytes. A program cannot put a file in
-    a picker (browsers forbid it), so ``set`` raises when the tree is built
-    and the slot takes no ``value=``; ``reset()`` clears the selection.
-    ``on_change`` hears the selection only (pick, drop, paste, remove,
-    reset); ``on_progress`` and ``on_upload`` hear the pulls.
+    The value is the file's metadata, never bytes, and the bytes stay in the
+    browser until a read asks. A program cannot put a file in (browsers
+    forbid it), so ``set`` raises when the tree is built and the slot takes
+    no ``value=``; ``reset()`` clears it. ``on_change`` hears the person's
+    moves only; ``on_progress`` and ``on_upload`` hear the pulls.
     """
 
     def set(self, *_: object, **__: object) -> NoReturn:
         msg = (
-            f"{type(self).__name__}.set: a program cannot put a file in a picker; reset() clears it"
+            f"{type(self).__name__}.set: a program cannot put a file in a picker"
+            " or a take in a recorder; reset() clears it"
         )
         raise TypeError(msg)
 
@@ -136,6 +137,14 @@ class _UploadInput(InputLeaf):
         code of a failure, "" when landed. Pulls only, never slices.
         """
         return Changed(self, UPLOAD)
+
+
+class _UploadInput(_FileInput):
+    """What both upload inputs are: a picker and a drop zone. Abstract.
+
+    ``on_change`` hears the selection only (pick, drop, paste, remove,
+    reset).
+    """
 
     def set_accept(self, accept: StrArg) -> Nu:
         """Which files the picker offers and a drop takes: ``.csv``, ``image/*``, ..."""
