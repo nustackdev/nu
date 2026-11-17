@@ -12,6 +12,7 @@
 import { Tooltip as TooltipPrimitive } from "radix-ui";
 import * as React from "react";
 
+import { usePortalContainer } from "../../lib/portal";
 import { cn } from "../../lib/utils";
 
 // Content box geometry, for OverflowTooltip to size a tooltip before it opens.
@@ -103,7 +104,7 @@ function TooltipContent({
 	...props
 }: React.ComponentProps<typeof TooltipPrimitive.Content>) {
 	return (
-		<TooltipPrimitive.Portal>
+		<TooltipPrimitive.Portal container={usePortalContainer()}>
 			<TooltipPrimitive.Content
 				data-slot="tooltip-content"
 				sideOffset={sideOffset}
@@ -126,4 +127,4 @@ function TooltipContent({
 	);
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };
+export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };

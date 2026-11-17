@@ -7,12 +7,15 @@
 //
 // The transport (media-controls.tsx) sits at the bottom on a scrim. It shows
 // while paused, while the pointer moves, while a control has keyboard focus
-// or the speed menu is open, and fades out once playback runs idle; the
-// cursor goes with it. The frame is a dark stage in both themes, the way a
-// screen is, and the controls sit in an `.on-media` subtree: white glyphs on
+// or the speed menu or volume panel is open, and fades out once playback
+// runs idle; the cursor goes with it. The frame is a dark stage in both
+// themes, the way a screen is, and the controls sit in an `.on-media` subtree: white glyphs on
 // a fixed Dusk scrim, the played run in Afterglow, the same over any picture
 // in either theme. With nothing to play (no source, or one that failed) it
 // is a plain sunken well in the page's theme.
+//
+// In full screen the browser shows only the frame, so the speed menu and the
+// tooltips, which portal to the page body, portal into the frame instead.
 //
 // The frame takes focus and owns the transport keys (lib/media/model.ts
 // `keyCommand`): space or k, j l and the arrows, `,` and `.` to step one
@@ -26,6 +29,7 @@
 import { VideoOff } from "lucide-react";
 import * as React from "react";
 import { useMedia, useMediaKeys } from "../../lib/media/use-media";
+import { PortalContainerContext } from "../../lib/portal";
 import { cn } from "../../lib/utils";
 import { EmptyState } from "./empty-state";
 import { MediaControls } from "./media-controls";
@@ -208,16 +212,18 @@ export function Video({
 						"data-shown:opacity-100 has-focus-visible:opacity-100",
 					)}
 				>
-					<MediaControls
-						media={media}
-						fullscreen={
-							fullscreen.supported
-								? { active: fullscreen.active, onToggle: fullscreen.toggle }
-								: undefined
-						}
-						download={download}
-						onMenuOpenChange={setMenuOpen}
-					/>
+					<PortalContainerContext.Provider value={fullscreen.active ? frame.current : null}>
+						<MediaControls
+							media={media}
+							fullscreen={
+								fullscreen.supported
+									? { active: fullscreen.active, onToggle: fullscreen.toggle }
+									: undefined
+							}
+							download={download}
+							onMenuOpenChange={setMenuOpen}
+						/>
+					</PortalContainerContext.Provider>
 				</div>
 			) : null}
 		</div>

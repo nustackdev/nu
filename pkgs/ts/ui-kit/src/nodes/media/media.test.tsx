@@ -7,7 +7,8 @@ import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fileGlyph, fileName, fileType } from "../../components/ui/file";
-import { Scrubber } from "../../components/ui/media-controls";
+import { MediaControls, Scrubber } from "../../components/ui/media-controls";
+import { EMPTY_SNAPSHOT, type MediaApi, type MediaSnapshot } from "../../lib/media/use-media";
 import { NodeView, tree } from "../../tree";
 import "..";
 import { normAspect } from "./image";
@@ -336,5 +337,113 @@ describe("Scrubber", () => {
 		expect(s.tabIndex).toBe(-1);
 		expect(s.getAttribute("aria-disabled")).toBe("true");
 		expect(s.getAttribute("aria-valuetext")).toBe("unknown");
+	});
+});
+
+describe("MediaVolume", () => {
+	/** A transport with no element: volume and mute you can watch. */
+	function Harness({ onMenu }: { onMenu?: (open: boolean) => void }) {
+		const [s, setS] = useState<MediaSnapshot>({ ...EMPTY_SNAPSHOT, ready: true, duration: 60 });
+		const set = (patch: Partial<MediaSnapshot>) => setS((p) => ({ ...p, ...patch }));
+		const media: MediaApi = {
+			...s,
+			ref: () => {},
+			el: null,
+			play: () => {},
+			pause: () => {},
+			toggle: () => {},
+			seek: () => {},
+			seekBy: () => {},
+			seekFraction: () => {},
+			setVolume: (v) => set({ volume: v, muted: v <= 0 }),
+			setMuted: (muted) => set({ muted }),
+			toggleMute: () => set({ muted: !s.muted }),
+			setRate: () => {},
+		};
+		return <MediaControls media={media} onMenuOpenChange={onMenu} />;
+	}
+
+	const box = () => slot("media-volume") as HTMLElement;
+	const mute = () => box().querySelector("button") as HTMLButtonElement;
+	const panel = () => slot("media-volume-panel");
+	const thumb = () => panel()?.querySelector<HTMLElement>("[role=slider]") ?? null;
+	const fire = (el: Element, type: string, init: PointerEventInit = {}) =>
+		act(() => {
+			el.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerType: "mouse", ...init }));
+		});
+	const key = (el: Element, k: string) =>
+		act(() => {
+			el.dispatchEvent(new KeyboardEvent("keydown", { key: k, bubbles: true, cancelable: true }));
+		});
+	const wait = (ms: number) =>
+		act(async () => {
+			await new Promise((r) => setTimeout(r, ms));
+		});
+
+	it("is shut at rest, with nothing beside the button to grow", () => {
+		act(() => root.render(<Harness />));
+		expect(panel()).toBeNull();
+		expect(box().children).toHaveLength(1);
+		expect(mute().getAttribute("aria-label")).toBe("Mute");
+	});
+
+	it("floats a vertical level over the button on hover and keeps the bar up", async () => {
+		const menu = vi.fn();
+		act(() => root.render(<Harness onMenu={menu} />));
+		fire(mute(), "pointerover");
+		expect(panel()).not.toBeNull();
+		// Portalled into its own box: right after the button in tab order.
+		expect(box().contains(panel())).toBe(true);
+		expect(panel()?.getAttribute("data-side")).toBe("top");
+		expect(thumb()?.getAttribute("aria-orientation")).toBe("vertical");
+		expect(thumb()?.getAttribute("aria-valuetext")).toBe("100%");
+		expect(slot("media-volume-level")?.textContent).toBe("100%");
+		expect(menu).toHaveBeenLastCalledWith(true);
+
+		// A click still mutes, and the panel stays.
+		act(() => mute().click());
+		expect(mute().getAttribute("aria-label")).toBe("Unmute");
+		expect(slot("media-volume-level")?.textContent).toBe("0%");
+		expect(panel()).not.toBeNull();
+
+		// Leaving waits a moment, so the pointer can cross into the panel.
+		fire(mute(), "pointerout", { relatedTarget: document.body });
+		expect(panel()).not.toBeNull();
+		fire(panel() as Element, "pointerover", { relatedTarget: document.body });
+		await wait(200);
+		expect(panel()).not.toBeNull();
+		fire(panel() as Element, "pointerout", { relatedTarget: document.body });
+		await wait(200);
+		expect(panel()).toBeNull();
+		expect(menu).toHaveBeenLastCalledWith(false);
+	});
+
+	it("opens on keyboard focus, steps on the arrows, shuts on Escape", async () => {
+		act(() => root.render(<Harness />));
+		act(() => mute().focus());
+		expect(panel()).not.toBeNull();
+		const t = thumb() as HTMLElement;
+		act(() => t.focus());
+		key(t, "ArrowDown");
+		expect(slot("media-volume-level")?.textContent).toBe("95%");
+		key(t, "Escape");
+		await wait(0);
+		expect(panel()).toBeNull();
+		expect(document.activeElement).toBe(mute());
+		// Back on the button, still shut until focus leaves and comes back.
+		act(() => mute().blur());
+		act(() => mute().focus());
+		expect(panel()).not.toBeNull();
+	});
+
+	it("does not hold the panel up for a focus a click gave", async () => {
+		act(() => root.render(<Harness />));
+		fire(mute(), "pointerover");
+		fire(mute(), "pointerdown");
+		act(() => mute().focus());
+		fire(mute(), "pointerup");
+		fire(mute(), "pointerout", { relatedTarget: document.body });
+		await wait(200);
+		expect(panel()).toBeNull();
 	});
 });

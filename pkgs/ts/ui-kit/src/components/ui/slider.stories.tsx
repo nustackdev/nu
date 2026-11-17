@@ -41,6 +41,14 @@ export const Matrix: StoryObj = {
 							<div className="mb-2 font-mono text-xs text-text-muted">disabled</div>
 							<Slider defaultValue={[40]} disabled />
 						</div>
+						<div>
+							<div className="mb-2 font-mono text-xs text-text-muted">vertical</div>
+							<div className="flex h-24 gap-6">
+								{SIZES.map((s) => (
+									<Slider key={s} size={s} orientation="vertical" defaultValue={[60]} />
+								))}
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>

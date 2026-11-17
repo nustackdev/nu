@@ -10,6 +10,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Volume level floats above the mute button, so the player row never shifts
+
 ## 0.8.0 - 2026-11-16
 
 - Release nu 0.8.0

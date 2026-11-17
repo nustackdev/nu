@@ -9,6 +9,7 @@
 import { Popover as PopoverPrimitive } from "radix-ui";
 import type * as React from "react";
 
+import { usePortalContainer } from "../../lib/portal";
 import { cn } from "../../lib/utils";
 
 function Popover({
@@ -52,10 +53,14 @@ function PopoverContent({
 	className,
 	align = "center",
 	sideOffset = 4,
+	container,
 	...props
-}: React.ComponentProps<typeof PopoverPrimitive.Content>) {
+}: React.ComponentProps<typeof PopoverPrimitive.Content> & {
+	/** Portal into this element rather than the body (or a full screen surface). */
+	container?: HTMLElement | null;
+}) {
 	return (
-		<PopoverPrimitive.Portal>
+		<PopoverPrimitive.Portal container={usePortalContainer(container)}>
 			<PopoverPrimitive.Content
 				data-slot="popover-content"
 				align={align}

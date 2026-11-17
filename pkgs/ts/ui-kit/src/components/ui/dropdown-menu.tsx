@@ -10,6 +10,7 @@ import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import { Check, ChevronRight, Circle } from "lucide-react";
 import type * as React from "react";
 
+import { usePortalContainer } from "../../lib/portal";
 import { cn } from "../../lib/utils";
 import { Shortcut } from "./shortcut";
 
@@ -101,7 +102,7 @@ function DropdownMenuContent({
 	...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
 	return (
-		<DropdownMenuPrimitive.Portal>
+		<DropdownMenuPrimitive.Portal container={usePortalContainer()}>
 			<DropdownMenuPrimitive.Content
 				data-slot="dropdown-menu-content"
 				sideOffset={sideOffset}

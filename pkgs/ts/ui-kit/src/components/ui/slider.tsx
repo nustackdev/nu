@@ -7,8 +7,6 @@ import { cn } from "../../lib/utils";
 const sliderVariants = cva(
 	[
 		"relative flex touch-none select-none items-center",
-		"data-[orientation=horizontal]:w-full data-[orientation=horizontal]:h-5",
-		"data-[orientation=vertical]:h-full data-[orientation=vertical]:w-5 data-[orientation=vertical]:flex-col",
 		"disabled:opacity-50 disabled:pointer-events-none",
 	].join(" "),
 	{
@@ -18,9 +16,16 @@ const sliderVariants = cva(
 				md: "",
 				lg: "",
 			},
+			// Plain classes, not data-orientation variants, so a caller's `h-20` on a
+			// vertical slider (or `w-40` on a horizontal one) wins the merge.
+			orientation: {
+				horizontal: "w-full h-5",
+				vertical: "h-full w-5 flex-col",
+			},
 		},
 		defaultVariants: {
 			size: "md",
+			orientation: "horizontal",
 		},
 	},
 );
@@ -38,8 +43,10 @@ const sliderThumbSizes = {
 } as const;
 
 export interface SliderProps
-	extends Omit<React.ComponentProps<typeof SliderPrimitive.Root>, "size">,
-		VariantProps<typeof sliderVariants> {
+	extends Omit<React.ComponentProps<typeof SliderPrimitive.Root>, "size" | "orientation">,
+		Omit<VariantProps<typeof sliderVariants>, "orientation"> {
+	/** Horizontal fills its row's width, vertical its parent's height; a size class in `className` wins. */
+	orientation?: "horizontal" | "vertical";
 	/** Props for every thumb, the element with `role="slider"`: where aria and an id go. */
 	thumbProps?: React.ComponentProps<typeof SliderPrimitive.Thumb>;
 	/** One accessible name per thumb, in order (a range's low and high). */
@@ -55,6 +62,7 @@ export function Slider({
 	max = 100,
 	thumbProps,
 	thumbLabels,
+	orientation = "horizontal",
 	...props
 }: SliderProps) {
 	// Thumb count comes from the initial value shape; a single-thumb slider
@@ -63,7 +71,8 @@ export function Slider({
 	return (
 		<SliderPrimitive.Root
 			data-slot="slider"
-			className={cn(sliderVariants({ size }), className)}
+			className={cn(sliderVariants({ size, orientation }), className)}
+			orientation={orientation}
 			defaultValue={defaultValue}
 			value={value}
 			min={min}

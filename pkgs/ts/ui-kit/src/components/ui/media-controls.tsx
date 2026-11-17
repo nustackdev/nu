@@ -48,6 +48,7 @@ import {
 } from "./dropdown-menu";
 import { IconButton, type IconButtonProps } from "./icon-button";
 import { Kbd } from "./kbd";
+import { Popover, PopoverAnchor, PopoverContent } from "./popover";
 import { Slider } from "./slider";
 import { TooltipProvider } from "./tooltip";
 
@@ -286,56 +287,176 @@ export function MediaTime({
 }
 
 /**
- * Mute, and a volume slider that opens beside it on hover or focus: the level
- * is there when you reach for it and out of the way otherwise.
+ * How long the volume panel stays after the pointer leaves the button or the
+ * panel: time to cross the gap between them.
+ */
+const VOLUME_CLOSE_MS = 150;
+
+/**
+ * Mute, and the level in a panel that floats above it on hover or keyboard
+ * focus: there when you reach for it, out of the way otherwise, and never
+ * moving the row. A click on the button still mutes; the panel does not trap
+ * focus, Tab goes from the button into the slider and on out of it.
+ *
+ * The panel portals into the control's own box, so it sits right after the
+ * button in tab order and inside the player in full screen, and it takes the
+ * roles of the surface it is on (the media chip over a video).
  */
 export function MediaVolume({
 	media,
 	className,
 	glyphClassName,
+	onOpenChange,
 }: {
 	media: MediaApi;
 	className?: string;
 	/** On the mute button: a row on the page surface lifts it off the ghost rest. */
 	glyphClassName?: string;
+	/** The panel opened or closed: a player keeps its bar up meanwhile. */
+	onOpenChange?: (open: boolean) => void;
 }) {
 	const level = media.muted ? 0 : media.volume;
+	const percent = Math.round(level * 100);
 	const Glyph = level === 0 ? VolumeX : level < 0.5 ? Volume1 : Volume2;
 	const label = level === 0 ? "Unmute" : "Mute";
+
+	const [box, setBox] = React.useState<HTMLDivElement | null>(null);
+	const button = React.useRef<HTMLButtonElement>(null);
+	const [open, setOpen] = React.useState(false);
+	// `quiet`: put away with Escape, it stays shut until the pointer and focus
+	// have both left, so handing focus back to the button does not reopen it.
+	const live = React.useRef({
+		open: false,
+		hovered: false,
+		focused: false,
+		pressed: false,
+		quiet: false,
+	});
+	const closing = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+	const report = React.useRef(onOpenChange);
+	report.current = onOpenChange;
+
+	const show = React.useCallback((next: boolean) => {
+		clearTimeout(closing.current);
+		if (live.current.open === next) return;
+		live.current.open = next;
+		setOpen(next);
+		report.current?.(next);
+	}, []);
+	// Close soon, unless the pointer or keyboard focus is back by then.
+	const settle = () => {
+		clearTimeout(closing.current);
+		closing.current = setTimeout(() => {
+			if (!live.current.hovered && !live.current.focused) show(false);
+		}, VOLUME_CLOSE_MS);
+	};
+	// An open panel tells the player it closed when the control goes away.
+	React.useEffect(
+		() => () => {
+			clearTimeout(closing.current);
+			if (live.current.open) report.current?.(false);
+		},
+		[],
+	);
+
 	return (
-		<div data-slot="media-volume" className={cn("group/volume flex items-center", className)}>
-			<IconButton
-				variant="ghost"
-				size="sm"
-				aria-label={label}
-				tip={tip(label, "M")}
-				tipSide="top"
-				className={glyphClassName}
-				onClick={media.toggleMute}
-			>
-				<Glyph />
-			</IconButton>
+		<Popover open={open} onOpenChange={(next) => !next && show(false)}>
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: hover and focus watched around a button and its panel, not a control of its own */}
 			<div
-				className={cn(
-					"w-0 overflow-hidden opacity-0",
-					"transition-[width,opacity] duration-fast ease-out",
-					"group-hover/volume:w-20 group-hover/volume:opacity-100",
-					"group-focus-within/volume:w-20 group-focus-within/volume:opacity-100",
-				)}
+				ref={setBox}
+				data-slot="media-volume"
+				data-state={open ? "open" : "closed"}
+				className={cn("flex items-center", className)}
+				onPointerEnter={() => {
+					live.current.hovered = true;
+					if (!live.current.quiet) show(true);
+				}}
+				onPointerLeave={(e) => {
+					live.current.hovered = false;
+					if (!live.current.focused) live.current.quiet = false;
+					// A tap leaves as soon as the finger lifts: the panel stays for the
+					// next touch, and a tap elsewhere puts it away.
+					if (e.pointerType !== "touch") settle();
+				}}
+				// A focus that comes from a press is the pointer's, already handled by
+				// hover: it must not hold the panel up after the pointer leaves.
+				onPointerDown={() => {
+					live.current.pressed = true;
+				}}
+				onPointerUp={() => {
+					live.current.pressed = false;
+				}}
+				onPointerCancel={() => {
+					live.current.pressed = false;
+				}}
+				onFocus={() => {
+					if (live.current.pressed) return;
+					live.current.focused = true;
+					if (!live.current.quiet) show(true);
+				}}
+				onBlur={(e) => {
+					if (box?.contains(e.relatedTarget as Node | null)) return;
+					live.current.focused = false;
+					if (!live.current.hovered) live.current.quiet = false;
+					settle();
+				}}
 			>
-				<Slider
-					size="sm"
-					className="w-20 px-2"
-					min={0}
-					max={100}
-					step={5}
-					value={[Math.round(level * 100)]}
-					onValueChange={([v]) => media.setVolume(v / 100)}
-					thumbLabels={["Volume"]}
-					thumbProps={{ "aria-valuetext": `${Math.round(level * 100)}%` }}
-				/>
+				<PopoverAnchor asChild>
+					<IconButton
+						ref={button}
+						variant="ghost"
+						size="sm"
+						aria-label={label}
+						tip={tip(label, "M")}
+						// The panel takes the top; the hint goes beside it.
+						tipSide="right"
+						className={glyphClassName}
+						onClick={media.toggleMute}
+					>
+						<Glyph />
+					</IconButton>
+				</PopoverAnchor>
+				<PopoverContent
+					container={box}
+					side="top"
+					aria-label="Volume"
+					data-slot="media-volume-panel"
+					className="flex w-auto flex-col items-center gap-2 p-3"
+					onOpenAutoFocus={(e) => e.preventDefault()}
+					onCloseAutoFocus={(e) => e.preventDefault()}
+					// The button is outside the panel but part of the control: pressing it
+					// mutes and leaves the panel up.
+					onInteractOutside={(e) => {
+						if (box?.contains(e.target as Node | null)) e.preventDefault();
+					}}
+					// Escape from the slider hands focus back to the button, not the page.
+					onEscapeKeyDown={() => {
+						live.current.quiet = true;
+						if (box?.contains(document.activeElement)) button.current?.focus();
+					}}
+				>
+					<span
+						aria-hidden="true"
+						data-slot="media-volume-level"
+						className="w-[4ch] text-center font-mono text-xs leading-none tabular-nums text-text-secondary"
+					>
+						{percent}%
+					</span>
+					<Slider
+						size="sm"
+						orientation="vertical"
+						className="h-20"
+						min={0}
+						max={100}
+						step={5}
+						value={[percent]}
+						onValueChange={([v]) => media.setVolume(v / 100)}
+						thumbLabels={["Volume"]}
+						thumbProps={{ "aria-valuetext": `${percent}%` }}
+					/>
+				</PopoverContent>
 			</div>
-		</div>
+		</Popover>
 	);
 }
 
@@ -437,7 +558,7 @@ export interface MediaControlsProps extends React.ComponentProps<"div"> {
 	fullscreen?: { active: boolean; onToggle: () => void };
 	/** Draws a download link to this url when given. */
 	download?: string;
-	/** The speed menu opened or closed: a player keeps its bar up meanwhile. */
+	/** The speed menu or the volume panel opened or closed: a player keeps its bar up meanwhile. */
 	onMenuOpenChange?: (open: boolean) => void;
 }
 
@@ -450,6 +571,15 @@ export function MediaControls({
 	className,
 	...props
 }: MediaControlsProps) {
+	// Up while either floating piece is: one closing must not drop the bar
+	// while the other is still open.
+	const up = React.useRef({ rate: false, volume: false });
+	const report = (which: "rate" | "volume") => (open: boolean) => {
+		const was = up.current.rate || up.current.volume;
+		up.current[which] = open;
+		const now = up.current.rate || up.current.volume;
+		if (now !== was) onMenuOpenChange?.(now);
+	};
 	// Its own tooltip provider, like Timeline: the bar works dropped anywhere.
 	return (
 		<TooltipProvider>
@@ -469,10 +599,10 @@ export function MediaControls({
 				/>
 				<div className="flex items-center gap-0.5">
 					<MediaPlayButton media={media} />
-					<MediaVolume media={media} />
+					<MediaVolume media={media} onOpenChange={report("volume")} />
 					<MediaTime time={media.time} duration={media.duration} className="ml-1.5" />
 					<div className="flex-1" />
-					<MediaRate media={media} onOpenChange={onMenuOpenChange} />
+					<MediaRate media={media} onOpenChange={report("rate")} />
 					{download ? <MediaDownloadButton href={download} /> : null}
 					{fullscreen ? <MediaFullscreenButton {...fullscreen} /> : null}
 				</div>
