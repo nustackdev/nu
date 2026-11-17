@@ -152,7 +152,11 @@ function readValue(empty: () => unknown) {
 	return (props: Record<string, unknown>) => props.value ?? empty();
 }
 
-function entryFor(component: NodeEntry["component"], empty: () => unknown): NodeEntry {
+/**
+ * The registry entry of a node whose value is files in the handle map: the
+ * upload nodes, and the capture nodes with their own view.
+ */
+export function uploadEntry(component: NodeEntry["component"], empty: () => unknown): NodeEntry {
 	const read = readValue(empty);
 	return {
 		component,
@@ -166,6 +170,6 @@ function entryFor(component: NodeEntry["component"], empty: () => unknown): Node
 	};
 }
 
-export const UploadFileRef: NodeEntry = entryFor(UploadFileView, () => null);
+export const UploadFileRef: NodeEntry = uploadEntry(UploadFileView, () => null);
 
-export const UploadFilesRef: NodeEntry = entryFor(UploadFilesView, () => []);
+export const UploadFilesRef: NodeEntry = uploadEntry(UploadFilesView, () => []);
