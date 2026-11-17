@@ -1,8 +1,9 @@
 """ACP fabric, streamed: watch a Prompt Turn as it happens, tool calls and all.
 
-Every Session Update prints as it lands, then the stop reason. The bind
-answers permission requests with the agent's allow-once option, so the turn
-runs unattended. Requires the `acp` extra, Node and a Claude login.
+The agent's text prints as it streams, each tool call once as it starts and
+once as it ends, then the stop reason. The bind answers permission requests
+with the agent's allow-once option, so the turn runs unattended. Requires the
+`acp` extra, Node and a Claude login.
 
     python examples/acp_stream.py
 """
@@ -18,19 +19,17 @@ Claude = nustd.acp.AgentRef("claude")
 
 
 @nu.host
-def line(item: dict) -> str:
+def piece(item: dict) -> str:
     kind = item.get("session_update")
     if kind == "agent_message_chunk":
         return item["content"].get("text", "")
     if kind == "tool_call":
-        return f"  > {item.get('kind', 'other')}: {item['title']}"
-    if kind == "tool_call_update" and item.get("status"):
-        return f"  < {item['tool_call_id']} {item['status']}"
-    if kind == "usage_update":
-        return f"  [{item['used']:,} / {item['size']:,} tokens]"
+        return f"\n  > {item.get('kind', 'other')}: {item['title']}\n"
+    if kind == "tool_call_update" and item.get("status") in ("completed", "failed"):
+        return f"  < {item['status']}\n"
     if "stop_reason" in item:
-        return f"done: {item['stop_reason']}"
-    return f"  [{kind}]"
+        return f"\ndone: {item['stop_reason']}\n"
+    return ""
 
 
 app = nu.With(
@@ -39,7 +38,7 @@ app = nu.With(
         nu.Dict(Claude.new_session())["session_id"],
         lambda sid: nu.ForEachDo(
             Claude[sid].prompt("write hello.txt saying hi, then list the directory"),
-            lambda item: nu.print(line(item)),
+            lambda item: nu.print(piece(item), end="", flush=True),
         ),
     ),
 )
