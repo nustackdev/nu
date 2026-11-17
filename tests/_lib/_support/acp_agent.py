@@ -14,8 +14,10 @@ The prompt's text picks what a turn does:
 - ``slow``: sleeps 0.2s, then ``end_turn``.
 - ``probe``: a chunk with how many prompts were running on the Session as it began.
 - ``later``: ``end_turn``, then 50ms after the response a ``session_info_update``.
-- ``client``: calls ``fs/read_text_file``, ``terminal/create`` and an extension on the
-  Client, then a chunk with the JSON-RPC error code each got.
+- ``noise``: ``hello``, with an ``auth/status_update`` and an unknown ``_x/thing``
+  notification sent around the chunks, as real adapters push.
+- ``client``: calls ``fs/read_text_file``, ``terminal/create``, an unknown method and
+  an extension on the Client, then a chunk with the JSON-RPC error code each got.
 - ``late``: a ``go`` chunk, then 0.2s later a permission request, then a chunk with
   its outcome; a cancel sent on ``go`` crosses the request on the wire.
 - ``stubborn``: an ``ignoring`` chunk, then holds the turn through any cancel.
@@ -37,7 +39,6 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-import subprocess
 import sys
 from typing import Any
 
@@ -214,6 +215,11 @@ class FakeAgent:
         if text == "hello":
             await self.send(session_id, chunk("hel"))
             await self.send(session_id, chunk("lo"))
+        elif text == "noise":
+            await self.conn._conn.send_notification("auth/status_update", {"status": "ok"})
+            await self.send(session_id, chunk("hel"))
+            await self.conn._conn.send_notification("_x/thing", {})
+            await self.send(session_id, chunk("lo"))
         elif text in ("perm", "perm-reject"):
             await self.send(
                 session_id,
@@ -264,6 +270,7 @@ class FakeAgent:
             for method, params in (
                 ("fs/read_text_file", {"path": "/a"}),
                 ("terminal/create", {"command": "ls"}),
+                ("auth/status_update", {}),
                 ("_x/ping", {}),
             ):
                 try:
@@ -292,8 +299,11 @@ class FakeAgent:
             await asyncio.sleep(30)
         elif text == "orphan":
             # A child that keeps the Agent's stdout open after the Agent is gone.
-            child = subprocess.Popen(
-                [sys.executable, "-c", "import time; time.sleep(30)"], stdin=subprocess.DEVNULL
+            child = await asyncio.create_subprocess_exec(
+                sys.executable,
+                "-c",
+                "import time; time.sleep(30)",
+                stdin=asyncio.subprocess.DEVNULL,
             )
             await self.send(session_id, chunk(f"orphan:{child.pid}"))
             await asyncio.sleep(0.05)

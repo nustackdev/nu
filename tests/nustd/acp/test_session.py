@@ -336,7 +336,10 @@ async def test_updates_fan_out_to_every_reader_inside_and_between_turns():
         first, second = fabric.updates(sid), fabric.updates(sid)
         turns = [item async for item in fabric.prompt(sid, "hello")]
         turns += [item async for item in fabric.prompt(sid, "later")]
-        heard = [[await asyncio.wait_for(anext(r), 5) for _ in range(3)] for r in (first, second)]
+        # A loop, not a nested comprehension: Python 3.10 refuses await in the inner one.
+        heard = []
+        for reader in (first, second):
+            heard.append([await asyncio.wait_for(anext(reader), 5) for _ in range(3)])
         kinds = ["agent_message_chunk", "agent_message_chunk", "session_info_update"]
         assert [u["session_update"] for u in heard[0]] == kinds
         assert heard[0] == heard[1]

@@ -6,10 +6,11 @@ subprocess and talks ACP v1 to it over stdio. No real coding agent runs.
 
 from __future__ import annotations
 
+import logging
 import sys
 
 import pytest
-from _support.acp_fixtures import FAKE, Agent, Log, bound, run, stats_of
+from _support.acp_fixtures import FAKE, Agent, Log, bound, run, stats_of, texts
 
 import nu
 import nustd.acp
@@ -236,7 +237,20 @@ async def test_the_client_refuses_what_it_does_not_implement():
     body = nu.let(new_sid(), lambda sid: nu.ForEachDo(Agent[sid].prompt("client"), Log.a.append))
     _, log = await run(body)
     codes = stats_of(log["a"])
-    assert codes == {"fs/read_text_file": -32601, "terminal/create": -32601, "_x/ping": -32601}
+    assert codes == {
+        "fs/read_text_file": -32601,
+        "terminal/create": -32601,
+        "auth/status_update": -32601,
+        "_x/ping": -32601,
+    }
+
+
+async def test_notifications_the_client_does_not_handle_are_dropped_quietly(caplog):
+    body = nu.let(new_sid(), lambda sid: nu.ForEachDo(Agent[sid].prompt("noise"), Log.a.append))
+    _, log = await run(body)
+    assert texts(log["a"]) == ["hel", "lo"]
+    assert log["a"][-1] == {"stop_reason": "end_turn"}
+    assert [r for r in caplog.records if r.levelno >= logging.WARNING] == []
 
 
 async def test_exists_reads_the_named_binding():
