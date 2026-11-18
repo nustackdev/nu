@@ -5,10 +5,16 @@
 // a program drew on), the common states (disabled, readonly, required,
 // invalid through a Field) on every input, and a Form that submits on Enter
 // or its submit button and not on Cancel, and one that checks its fields
-// before it sends, with a disabled Fieldset in it.
+// before it sends, with a disabled Fieldset in it. The send key on each
+// multi-line input (shift+Enter by default, or Enter), with what it last
+// sent under it, and a CodeRef in diff mode: a change with highlighting, a
+// new file, and a long file whose unchanged runs fold.
 
+import type { TreeFrame } from "@nustackdev/ui-core";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { NodeStage, sinkParameters, step } from "./harness";
+import { useEffect } from "react";
+import { tree } from "../../tree";
+import { type NodeSeed, NodeStage, sinkParameters, step } from "./harness";
 
 const meta: Meta = {
 	title: "Refs/Inputs",
@@ -498,7 +504,7 @@ export const FormSubmit: Story = {
 							label: "Notes",
 							value: "",
 							rows: 2,
-							placeholder: "cmd+Enter submits",
+							placeholder: "shift+Enter submits",
 						}),
 					],
 					[form, actions, step("cancel", "ButtonRef", { label: "Cancel", variant: "secondary" })],
@@ -537,6 +543,188 @@ export const FormChecks: Story = {
 					[form, plan, step("upgrade", "ButtonRef", { label: "Upgrade", variant: "secondary" })],
 					[form, step("go", "ButtonRef", { label: "Sign up", submit: true })],
 				]}
+			/>
+		);
+	},
+};
+
+const DIFF_BEFORE = `def total(rows):
+    out = 0
+    for row in rows:
+        out += row.price
+    return out
+
+
+def average(rows):
+    return total(rows) / len(rows)
+
+
+def cheapest(rows):
+    return min(rows, key=lambda r: r.price)
+
+
+def dearest(rows):
+    return max(rows, key=lambda r: r.price)
+`;
+
+const DIFF_AFTER = DIFF_BEFORE.replace(
+	"    out = 0\n    for row in rows:\n        out += row.price\n    return out\n",
+	"    return sum(row.price for row in rows)\n",
+).replace(
+	"    return total(rows) / len(rows)\n",
+	"    return total(rows) / len(rows) if rows else 0.0\n",
+);
+
+// A long module where two edits sit far apart, so the runs between, before
+// and after them fold.
+const LONG_BEFORE = Array.from(
+	{ length: 24 },
+	(_, i) => `def step_${i}(x):\n    """Step ${i} of the pipeline."""\n    return x + ${i}\n\n`,
+).join("");
+
+const LONG_AFTER = LONG_BEFORE.replace("    return x + 3\n", "    return (x + 3) * 2\n").replace(
+	'    """Step 19 of the pipeline."""\n',
+	'    """Step 19 of the pipeline, now logged."""\n    log.debug("step 19", x)\n',
+);
+
+const NEW_FILE = `#!/bin/sh
+set -eu
+uv sync
+uv run pytest -q
+`;
+
+export const CodeDiff: Story = {
+	render: () => {
+		const col = step("inputs-diff", "Column", { gap: 6 });
+		const caption = (seg: string, value: string) =>
+			step(seg, "TextRef", { value, size: "xs", tone: "muted", mono: true });
+		return (
+			<NodeStage
+				root="inputs-diff"
+				label="CodeRef with an original: a read-only unified diff, unchanged runs folded"
+				chains={[
+					[col, caption("c-lang", "python, a function rewritten and a line changed")],
+					[
+						col,
+						step("diff", "CodeRef", {
+							value: DIFF_AFTER,
+							original: DIFF_BEFORE,
+							language: "python",
+							line_numbers: true,
+						}),
+					],
+					[col, caption("c-new", 'a new file: original=""')],
+					[
+						col,
+						step("new", "CodeRef", {
+							value: NEW_FILE,
+							original: "",
+							language: "shell",
+							line_numbers: true,
+						}),
+					],
+					[col, caption("c-long", "~100 lines, two edits far apart, the runs around them folded")],
+					[
+						col,
+						step("long", "CodeRef", {
+							value: LONG_AFTER,
+							original: LONG_BEFORE,
+							language: "python",
+							line_numbers: true,
+						}),
+					],
+				]}
+			/>
+		);
+	},
+};
+
+// Stands in for the program while a story is mounted: every submit under
+// `root` lands as the text of the `sent` leaf in the grid cell it came from.
+function useEchoSubmits(root: string): void {
+	useEffect(() => {
+		const store = tree.getState();
+		store.setSender((frame: TreeFrame) => {
+			const payload = frame.payload as { event?: string; value?: unknown } | null;
+			if (frame.ref?.[0] !== root || payload?.event !== "submit") return;
+			// root (the grid) / cell / ...: the echo sits in the cell.
+			const at = [...frame.ref.slice(0, 2), "sent"];
+			store.setProps(at, { value: `last sent: ${JSON.stringify(payload.value)}` });
+		});
+		return () => store.setSender(null);
+	}, [root]);
+}
+
+function EchoStage(s: NodeSeed & { label?: string }) {
+	useEchoSubmits(s.root);
+	return <NodeStage {...s} />;
+}
+
+const SEND_KEYS = [
+	["shift+enter", "shift+Enter sends"],
+	["enter", "Enter sends"],
+] as const;
+
+export const SendKey: Story = {
+	render: () => {
+		const root = "inputs-send-key";
+		const grid = step(root, "Grid", {
+			max_columns: 3,
+			min_cell_width: 200,
+			gap: 4,
+			align: "start",
+		});
+		const chains = SEND_KEYS.flatMap(([key, hint]) => {
+			const on = key === "enter" ? { submit_on: "enter" } : {};
+			const cell = (kind: string) => step(`${kind}-${key}`, "Column", { gap: 2 });
+			const caption = (kind: string) =>
+				step("caption", "TextRef", {
+					value: `${kind}, submit_on=${key === "enter" ? '"enter"' : "default"}`,
+					size: "xs",
+					tone: "muted",
+					mono: true,
+				});
+			const sent = step("sent", "TextRef", {
+				value: "last sent: nothing yet",
+				size: "xs",
+				tone: "secondary",
+				mono: true,
+			});
+			const ta = cell("textarea");
+			const code = cell("code");
+			const md = cell("markdown");
+			return [
+				[grid, ta, caption("TextAreaRef")],
+				[grid, ta, step("field", "TextAreaRef", { value: "", rows: 3, placeholder: hint, ...on })],
+				[grid, ta, sent],
+				[grid, code, caption("CodeRef")],
+				[
+					grid,
+					code,
+					step("field", "CodeRef", {
+						value: `# ${hint}\nprint("hi")\n`,
+						language: "python",
+						readonly: false,
+						min_height: 96,
+						...on,
+					}),
+				],
+				[grid, code, sent],
+				[grid, md, caption("MarkdownRef")],
+				[
+					grid,
+					md,
+					step("box", "Card", { variant: "outline", size: "sm" }),
+					step("field", "MarkdownRef", { value: "", readonly: false, placeholder: hint, ...on }),
+				],
+				[grid, md, sent],
+			];
+		});
+		return (
+			<EchoStage
+				root={root}
+				label="each input's send key, default (shift+Enter) on the first row and Enter on the second; what it sent shows under it"
+				chains={chains}
 			/>
 		);
 	},

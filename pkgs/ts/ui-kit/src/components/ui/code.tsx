@@ -5,6 +5,10 @@
 // copy affordance in the top-right corner. `readOnly={false}` turns the same
 // block into an editor, so a sample and an editable buffer never look apart.
 //
+// `original` turns a block into a unified diff of `value` against it: removed
+// lines above the ones that replaced them, unchanged runs folded, always
+// read-only. The copy button copies `value`, the new text.
+//
 // The source is `value`, or string children when there is no `value`. Font is
 // JetBrains Mono; colors come from the `--syntax-*` tokens, so the `.dark`
 // flip restyles every block with no observer. Unknown languages render plain.
@@ -18,6 +22,7 @@ import type * as React from "react";
 import { useCallback, useState } from "react";
 
 import { CodeMirrorView } from "../../lib/code/view";
+import type { SubmitOn } from "../../lib/keyboard";
 import { codeBox } from "../../lib/recipes";
 import { cn } from "../../lib/utils";
 
@@ -29,6 +34,11 @@ export interface CodeProps extends Omit<React.HTMLAttributes<HTMLElement>, "onCh
 	language?: string;
 	/** The source. Falls back to string children. */
 	value?: string;
+	/**
+	 * Block only. The old text: set, the block shows `value` as a diff against
+	 * it and is read-only. `""` diffs against nothing; unset is no diff.
+	 */
+	original?: string;
 	/** Block only. On by default: a block reads unless told it may be edited. */
 	readOnly?: boolean;
 	/** Block only. Defaults to on while editable, off while read-only. */
@@ -38,10 +48,12 @@ export interface CodeProps extends Omit<React.HTMLAttributes<HTMLElement>, "onCh
 	/** Block only. Height bounds in px; the block grows between them. 0 is no bound. */
 	minHeight?: number;
 	maxHeight?: number;
-	/** Block only. Fires on cmd+enter and on blur, and only when the text changed. */
+	/** Block only. Fires on the send key and on blur, and only when the text changed. */
 	onCommit?: (source: string) => void;
-	/** cmd+enter in the editor, after its commit. */
+	/** The send key in the editor, after its commit. */
 	onSubmit?: () => void;
+	/** Block only. Which key sends: shift+Enter (default) or Enter. */
+	submitOn?: SubmitOn;
 	/** Block only. Whether the buffer differs from `value`, on every keystroke. */
 	onDirty?: (dirty: boolean) => void;
 	/** Block only. The live CodeMirror view on mount, null on teardown. */
@@ -55,31 +67,36 @@ function Code({
 	copyable = false,
 	language,
 	value,
-	readOnly = true,
+	original,
+	readOnly: readOnlyProp = true,
 	lineNumbers,
 	wrap,
 	minHeight,
 	maxHeight,
 	onCommit,
 	onSubmit,
+	submitOn,
 	onDirty,
 	onView,
 	children,
 	...props
 }: CodeProps) {
 	if (block) {
+		const readOnly = readOnlyProp || original != null;
 		const source = value ?? (typeof children === "string" ? children : "");
 		return (
 			<div
 				data-slot="code-block"
 				data-language={language || undefined}
 				data-editable={readOnly ? undefined : ""}
+				data-diff={original != null ? "" : undefined}
 				className={cn(codeBox, className)}
 				{...props}
 			>
 				<CodeMirrorView
 					value={source}
 					language={language}
+					original={original}
 					readOnly={readOnly}
 					lineNumbers={lineNumbers}
 					wrap={wrap}
@@ -87,6 +104,7 @@ function Code({
 					maxHeight={maxHeight}
 					onCommit={onCommit}
 					onSubmit={onSubmit}
+					submitOn={submitOn}
 					onDirty={onDirty}
 					onView={onView}
 				/>

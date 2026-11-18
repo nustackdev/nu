@@ -281,10 +281,11 @@ describe("null empties", () => {
 });
 
 describe("Code and Markdown readonly", () => {
-	it("are read-only unless told otherwise, and only an editor is gathered", () => {
+	it("are read-only unless told otherwise, and only an editor is gathered, never a diff", () => {
 		put(["f", "Form", {}], ["shown", "CodeRef", { value: "a" }]);
 		put(["f", "Form", {}], ["typed", "CodeRef", { value: "b", readonly: false }]);
 		put(["f", "Form", {}], ["doc", "MarkdownRef", { value: "c", readonly: true }]);
+		put(["f", "Form", {}], ["diff", "CodeRef", { value: "d", original: "", readonly: false }]);
 		draw(["f"]);
 		dispatch(["f"], OPS.read, null, "r");
 		expect(sent.at(-1)?.payload).toEqual({ typed: "b" });

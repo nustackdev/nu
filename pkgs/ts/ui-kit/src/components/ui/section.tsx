@@ -1,4 +1,5 @@
-// Section primitive. Top-level page grouping with title + description.
+// Section primitive. Top-level page grouping with title + description, or a
+// header line the caller composes in their place.
 // Design refs:
 //   primitives.md    §Section (semantic <section>, title + description + actions)
 //   typography.md    §Headings (h3 = 2xl / semibold), §Body prose secondary text
@@ -31,6 +32,10 @@ export interface SectionProps
 	// the built-in HTMLAttributes `title: string`.
 	title?: React.ReactNode;
 	description?: React.ReactNode;
+	// Drawn in place of title + description when set: a heading line the
+	// caller composes. Its box takes the width beside the actions and lets
+	// its content shrink, so a one-line text in it can truncate.
+	header?: React.ReactNode;
 	actions?: React.ReactNode;
 }
 
@@ -39,6 +44,7 @@ export function Section({
 	size,
 	title,
 	description,
+	header,
 	actions,
 	children,
 	...props
@@ -46,17 +52,31 @@ export function Section({
 	// A Section without a title/description still renders a semantic <section>
 	// so screen readers get the landmark. The header block only paints when
 	// there is something to show.
-	const hasHeader = Boolean(title || description || actions);
+	const hasHeader = Boolean(header || title || description || actions);
 	return (
 		<section data-slot="section" className={cn(sectionVariants({ size }), className)} {...props}>
 			{hasHeader && (
-				<div data-slot="section-header" className="flex items-start justify-between gap-4">
-					<div className="flex flex-col gap-1">
-						{title && (
-							<h2 className="text-2xl font-semibold leading-tight text-text-primary">{title}</h2>
-						)}
-						{description && <p className="text-sm text-text-secondary">{description}</p>}
-					</div>
+				<div
+					data-slot="section-header"
+					className={cn(
+						"flex justify-between gap-4",
+						// A composed header line centres with the actions; a title over a
+						// description keeps the actions on the title's line.
+						header ? "items-center" : "items-start",
+					)}
+				>
+					{header ? (
+						<div data-slot="section-heading" className="min-w-0 flex-1">
+							{header}
+						</div>
+					) : (
+						<div className="flex flex-col gap-1">
+							{title && (
+								<h2 className="text-2xl font-semibold leading-tight text-text-primary">{title}</h2>
+							)}
+							{description && <p className="text-sm text-text-secondary">{description}</p>}
+						</div>
+					)}
 					{actions && (
 						<div data-slot="section-actions" className="flex items-center gap-2 shrink-0">
 							{actions}

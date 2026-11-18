@@ -1,9 +1,9 @@
 // Refs/Looks: the looks a page is built from, as a program draws them. Text
 // tones, sizes and clamps; heading sizes with an eyebrow and a subtitle;
 // button looks, sizes and button links; link variants inline in a Line; card
-// surfaces, a link card, a media card and a grid of plan cards whose footer
-// actions line up at the bottom; tabs strips, empty states, brand badges and
-// box grounds.
+// surfaces, a link card, a media card, a card whose header is a Row of its
+// own and a grid of plan cards whose footer actions line up at the bottom;
+// tabs strips, empty states, brand badges and box grounds.
 
 import type { ChainStep } from "@nustackdev/ui-core";
 import type { Meta, StoryObj } from "@storybook/react-vite";
@@ -219,10 +219,28 @@ export const Cards: Story = {
 			...link,
 			step("t", "TextRef", { value: LONG, lines: 3, tone: "secondary" }),
 		]);
+		// A header child in place of the title: avatar, a name cut to one line, a badge.
+		const owned = [...more, step("owned", "Card", { title: "never drawn" })];
+		const head = [...owned, step("header", "Row", { gap: 2, grow: { name: 1 } })];
+		chains.push(
+			owned,
+			[...head, step("avatar", "AvatarRef", { name: "Ada Lovelace", size: "sm" })],
+			[
+				...head,
+				step("name", "TextRef", {
+					value: "Ada Lovelace, analytical engine programs and notes",
+					weight: "semibold",
+					lines: 1,
+				}),
+			],
+			[...head, step("role", "BadgeRef", { label: "owner" })],
+			[...owned, step("actions", "ButtonRef", { icon: "ellipsis", variant: "ghost", size: "sm" })],
+			[...owned, step("t", "TextRef", { value: LONG, lines: 2, tone: "secondary" })],
+		);
 		return (
 			<NodeStage
 				root="looks-cards"
-				label="Card media / action / footer slots, variants, href; footers line up across a stretched grid row"
+				label="Card media / header / action / footer slots, variants, href; footers line up across a stretched grid row"
 				chains={chains}
 			/>
 		);

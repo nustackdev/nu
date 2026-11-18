@@ -158,6 +158,7 @@ export {
 	DialogHeader,
 	DialogOverlay,
 	DialogTitle,
+	DialogTitleBox,
 	DialogTrigger,
 	dialogContentVariants,
 } from "./components/ui/dialog";
@@ -292,6 +293,7 @@ export {
 } from "./components/ui/popover";
 export { Progress, progressVariants } from "./components/ui/progress";
 export { Prose } from "./components/ui/prose";
+export { Quote, QuoteContent, QuoteHeader } from "./components/ui/quote";
 export {
 	RadioGroup,
 	RadioGroupItem,
@@ -356,6 +358,7 @@ export {
 	SheetFooter,
 	SheetHeader,
 	SheetTitle,
+	SheetTitleBox,
 	SheetTrigger,
 	sheetContentVariants,
 } from "./components/ui/sheet";

@@ -2,7 +2,7 @@
 //
 // Events. Every notify an input sends names its event: `{event: "change"}`
 // when a value is committed, `{event: "submit", value}` when the person asks
-// to send it (Enter in a single-line field, cmd/ctrl+Enter in a multi-line
+// to send it (Enter in a single-line field, shift+Enter in a multi-line
 // one), carrying the value sent, so `clear_on_submit` loses nothing. The
 // Python side filters on it: `on_change()` hears changes, `on_submit()` hears
 // submits. A button sends `{event: "click"}`.
@@ -20,11 +20,15 @@
 // invalid and required, and draws its own label only when the Field draws
 // none.
 //
-// Forms. Enter inside a Form asks the form to submit (`requestSubmit`, with
-// the form's first submit button as submitter, the way a browser's implicit
-// submission picks it), so Enter in any single-line field submits whatever
-// the field count. The Form node gathers the values (`gather`) and a reset
-// puts every input back to its seed (`resetInput`).
+// Forms. A send key inside a Form asks the form to submit (`requestSubmit`,
+// with the form's first submit button as submitter, the way a browser's
+// implicit submission picks it), so Enter in any single-line field submits
+// whatever the field count, and so does shift+Enter in a text area, a
+// code editor or a markdown editor. One key fires both submits: the input's
+// own first (`useSubmit`), then the form's, and only after both does
+// `clear_on_submit` (the input's or the form's) empty anything. The Form
+// node gathers the values (`gather`) and a reset puts every input back to
+// its seed (`resetInput`).
 //
 // Checks. A Form checks its inputs before it submits (`validateUnder`):
 // required, min, max, max_length, pattern and the email / url formats. The
@@ -201,9 +205,31 @@ export function useCommit(path: Path): Commit {
 		[key, setValue, send],
 	);
 
+	const fire = useSubmit(path);
 	const submit = useCallback(
 		(from?: Element | null) => {
 			commit();
+			fire(from);
+		},
+		[commit, fire],
+	);
+
+	return { edit, commit, pick, submit };
+}
+
+/**
+ * The send itself, for a node whose commit is its own (the code and markdown
+ * editors commit through their engine first). Sends `{event: "submit",
+ * value}`, asks the Form around `from` to submit, then clears the input if
+ * it has `clear_on_submit`. So one send key fires the input's own submit
+ * and its Form's, in that order, and a Form that clears hears the value
+ * before it goes.
+ */
+export function useSubmit(path: Path): (from?: Element | null) => void {
+	const send = useSend(path);
+	const key = pathKey(path);
+	return useCallback(
+		(from?: Element | null) => {
 			// The submit carries what was sent, so a field that clears on submit
 			// (or anything the program would otherwise read back) needs no read.
 			send(OPS.notify, { event: EVENTS.submit, value: submitted(path) });
@@ -211,10 +237,8 @@ export function useCommit(path: Path): Commit {
 			if (nodeAt(path)?.props.clear_on_submit) resetInput(path);
 		},
 		// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
-		[key, commit, send],
+		[key, send],
 	);
-
-	return { edit, commit, pick, submit };
 }
 
 /** What a submit sends as `value`: the input's value as a form would gather it. */

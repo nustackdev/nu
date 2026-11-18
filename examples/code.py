@@ -4,8 +4,8 @@ Three things worth watching, and the right pane is the proof for all of them
 because it is drawn from what the program read, not from what the browser is
 holding.
 
-- **The round trip.** Type, then cmd+enter or click away. Commits land on
-  blur and on cmd+enter, not on every keystroke, so a read between commits
+- **The round trip.** Type, then shift+Enter or click away. Commits land on
+  blur and on shift+Enter, not on every keystroke, so a read between commits
   sees the last committed text.
 - **Language is a prop.** Pick another from the dropdown and the highlighting
   changes under the same text. Each grammar is its own lazy chunk, so the

@@ -1,6 +1,6 @@
 """Form: one submit with every value in it, checks, errors, a disabled fieldset.
 
-Enter in Title or Year, cmd/ctrl+Enter in Notes, or a click on Save submits
+Enter in Title or Year, shift+Enter in Notes, or a click on Save submits
 the form once, and the reaction reads the values from the payload: no read
 per field. Cancel is a plain button and never submits. Title is required, so
 an empty one stops the submit in the browser and the Field says why. A title
@@ -24,7 +24,7 @@ class YearField(ui.Field):
 
 
 class NotesField(ui.Field):
-    input = ui.TextAreaRef.slot(rows=2, placeholder="cmd+Enter sends")
+    input = ui.TextAreaRef.slot(rows=2, placeholder="shift+Enter sends")
 
 
 class Details(ui.Fieldset):

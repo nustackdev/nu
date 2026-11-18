@@ -1,6 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { MoreHorizontal } from "lucide-react";
+import { Badge } from "./badge";
 import { Button } from "./button";
+import { IconButton } from "./icon-button";
 import { Section } from "./section";
+import { StatusDot } from "./status-dot";
 
 export const Default: StoryObj = {
 	render: () => (
@@ -47,6 +51,27 @@ export const Matrix: StoryObj = {
 
 			<Section size="lg" title="Roomy section" description="size=lg opens vertical breathing room.">
 				<div className="text-sm text-text-primary">Roomy body.</div>
+			</Section>
+
+			<Section
+				header={
+					<div className="flex min-w-0 items-center gap-2">
+						<StatusDot tone="ok" />
+						<h2 className="min-w-0 flex-1 truncate text-2xl font-semibold leading-tight text-text-primary">
+							Hosts in eu-central and us-east, a header line far too long for the room it has
+						</h2>
+						<Badge>12</Badge>
+					</div>
+				}
+				actions={
+					<IconButton size="sm" variant="ghost" aria-label="More">
+						<MoreHorizontal />
+					</IconButton>
+				}
+			>
+				<div className="text-sm text-text-primary">
+					header in place of title + description; it truncates, the actions stay put.
+				</div>
 			</Section>
 		</div>
 	),

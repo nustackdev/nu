@@ -12,6 +12,14 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Collapsible and accordion open smoothly, no flash of content or jump at the end
+- Section and card actions line up with a composed header instead of its top
+- Storybook shows container headers side by side, multi-line send keys and code diffs
+- Multi-line inputs send on shift+Enter or Enter, one switch, and submit their forms
+- Code blocks show a read-only diff against older text, unchanged lines folded
+- Collapsible and accordion rows take a header that holds controls without toggling
+- Cards, sections, dialogs, sheets and popovers take a composed header instead of a title
+- A Quote container frames citations, notes and traces under a header line
 - The nudle server picks a free port by default and refuses a taken one cleanly
 - Queues work on both janus 2.0 and 2.1, so the version cap is relaxed
 - One blob store or agent ref now serves many terms without copying itself

@@ -1,10 +1,14 @@
 // Card -- card-styled Section. Media on top, header (title + subtitle, with
 // actions on its right rail), body (vertical stack of children), footer.
 //
-// Children are the node's own children in the tree. Three segments are the
+// Children are the node's own children in the tree. Four segments are the
 // card's named slots and draw in their place instead of in the body, the way
 // a Tabs body is the child at its tab's id:
 //   media   full-bleed on top (an image), above the header
+//   header  the header line in place of `title` and `subtitle` (a Row of an
+//           avatar, a name, a badge). The card only places it: a box that
+//           takes the width beside the actions and lets its child shrink
+//           (`min-w-0`), so a one-line Text in it cuts with an ellipsis
 //   actions the header's right rail, in a row flow so a Button, a Badge or
 //           a Row of them sits at its own size (same key as a Section's)
 //   footer  the bottom row (a button, a row of them); pinned to the card's
@@ -63,8 +67,9 @@ import {
 } from "./layout";
 
 const MEDIA = "media";
+const HEADER = "header";
 const FOOTER = "footer";
-const SLOTS: ReadonlySet<string> = new Set([MEDIA, ACTIONS_SLOT, FOOTER]);
+const SLOTS: ReadonlySet<string> = new Set([MEDIA, HEADER, ACTIONS_SLOT, FOOTER]);
 
 const VARIANTS = ["default", "elevated", "sunken", "outline", "plain", "accent", "brand"] as const;
 const SIZES = ["sm", "md", "lg"] as const;
@@ -86,9 +91,10 @@ function CardView({ path }: NodeProps) {
 	const layout = useLayout(path, DEFAULTS);
 
 	const hasMedia = children.includes(MEDIA);
+	const hasHeader = children.includes(HEADER);
 	const hasActions = children.includes(ACTIONS_SLOT);
 	const hasFooter = children.includes(FOOTER);
-	const showHeader = title !== "" || subtitle !== "" || hasActions;
+	const showHeader = title !== "" || subtitle !== "" || hasHeader || hasActions;
 	const showFooter = caption !== "" || hasFooter;
 
 	const inner = (
@@ -100,10 +106,18 @@ function CardView({ path }: NodeProps) {
 			) : null}
 			{showHeader ? (
 				<CardHeader>
-					{title !== "" ? <CardTitle>{title}</CardTitle> : null}
-					{subtitle !== "" ? <CardDescription>{subtitle}</CardDescription> : null}
+					{hasHeader ? (
+						<div data-slot="card-header-part" className="min-w-0">
+							<SlotView path={path} segment={HEADER} />
+						</div>
+					) : (
+						<>
+							{title !== "" ? <CardTitle>{title}</CardTitle> : null}
+							{subtitle !== "" ? <CardDescription>{subtitle}</CardDescription> : null}
+						</>
+					)}
 					{hasActions ? (
-						<CardAction>
+						<CardAction className={hasHeader ? "row-span-1 self-center" : undefined}>
 							<SlotView path={path} segment={ACTIONS_SLOT} flow="row" />
 						</CardAction>
 					) : null}

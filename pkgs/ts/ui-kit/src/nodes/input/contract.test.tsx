@@ -162,14 +162,15 @@ describe("InputRef commits", () => {
 });
 
 describe("TextAreaRef submit keys", () => {
-	it("keeps Enter a newline and submits on cmd/ctrl+Enter", () => {
+	it("keeps Enter a newline and submits on shift+Enter", () => {
 		put(["n", "TextAreaRef", { value: "" }]);
 		draw(["n"]);
 		const area = host.querySelector("textarea") as HTMLTextAreaElement;
 		type(area, "hi");
 		key(area, "Enter");
-		expect(notifies()).toEqual([]);
 		key(area, "Enter", { ctrlKey: true });
+		expect(notifies()).toEqual([]);
+		key(area, "Enter", { shiftKey: true });
 		expect(notifies()).toEqual([
 			{ ref: ["n"], payload: { event: "change" } },
 			{ ref: ["n"], payload: { event: "submit" } },

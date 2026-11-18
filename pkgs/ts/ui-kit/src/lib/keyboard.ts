@@ -45,3 +45,12 @@ export function useKeyScope<E extends HTMLElement = HTMLElement>(
 	}, []);
 	return { tabIndex: 0, onKeyDown };
 }
+
+/**
+ * Which key sends a multi-line input: shift+Enter (Enter is the newline) or
+ * Enter (shift+Enter is the newline, the chat composer). Cmd/ctrl+Enter is
+ * never a send: it is left for the app around the input.
+ */
+export type SubmitOn = "shift+enter" | "enter";
+
+export const SUBMIT_ON = ["shift+enter", "enter"] as const;

@@ -19,7 +19,9 @@ import { IconButton } from "./icon-button";
 // content decides height and scroll. The wire's word, as on Modal.
 const dialogContentVariants = cva(
 	[
-		"fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4",
+		// One column that may shrink below its content, so a long one-line
+		// title cuts instead of widening the dialog past its max width.
+		"fixed left-1/2 top-1/2 z-50 grid w-full max-w-lg grid-cols-[minmax(0,1fr)] -translate-x-1/2 -translate-y-1/2 gap-4",
 		"bg-bg-elevated text-text-primary border border-border-default rounded-lg shadow-modal",
 		"p-6",
 		// Motion tokens per motion.md §3 Dialog.
@@ -130,7 +132,7 @@ function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
 	return (
 		<div
 			data-slot="dialog-header"
-			className={cn("flex flex-col gap-1.5 text-left", className)}
+			className={cn("flex min-w-0 flex-col gap-1.5 text-left", className)}
 			{...props}
 		/>
 	);
@@ -153,6 +155,18 @@ function DialogTitle({ className, ...props }: React.ComponentProps<typeof Dialog
 			className={cn("text-2xl font-semibold leading-tight text-text-primary", className)}
 			{...props}
 		/>
+	);
+}
+
+// The dialog's title as a plain box the caller fills: a header line made of
+// other parts (an icon, a name, a badge) in place of a string. It is still
+// Radix's Title, so the dialog is named by its text, but it brings no type
+// of its own, and it takes the width while letting its content shrink.
+function DialogTitleBox({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+	return (
+		<DialogPrimitive.Title asChild>
+			<div data-slot="dialog-title-box" className={cn("min-w-0", className)} {...props} />
+		</DialogPrimitive.Title>
 	);
 }
 
@@ -179,6 +193,7 @@ export {
 	DialogOverlay,
 	DialogPortal,
 	DialogTitle,
+	DialogTitleBox,
 	DialogTrigger,
 	dialogContentVariants,
 };

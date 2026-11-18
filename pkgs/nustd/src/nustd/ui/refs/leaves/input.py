@@ -17,7 +17,8 @@ The contract every input shares (``InputLeaf``):
   sent when a value is committed and only when it moved (blur, Enter, a
   pick, a toggle, a release); ``on_submit()`` hears ``{event: "submit",
   value}``, sent when the person asks to send (Enter in a single-line field,
-  cmd/ctrl+Enter in a multi-line one) with the value sent, so the reaction
+  shift+Enter in a multi-line one, or Enter with ``submit_on="enter"``;
+  cmd/ctrl+Enter is never a send, it is the app's) with the value sent, so the reaction
   needs no read back and ``clear_on_submit`` loses nothing. Enter that
   changed the value sends the change first, then the submit;
 - the common props: ``label``, ``disabled``, ``readonly``, ``required``,
@@ -131,11 +132,27 @@ class InputLeaf(LeafRef):
         return Write(self, Dict.of(required=flag))
 
 
+#: Which key sends a multi-line input. ``"shift+enter"``: shift+Enter sends,
+#: Enter is the newline. ``"enter"``: the chat composer, Enter sends and
+#: shift+Enter is the newline. Cmd/ctrl+Enter never sends: it is the app's.
+SubmitOn = Literal["shift+enter", "enter"]
+
+_SUBMIT_ON: tuple[str, ...] = get_args(SubmitOn)
+
+
+def _submit_on(owner: str, value: object) -> str:
+    """``value`` when it names a send key, else fail loud with the choices."""
+    if value not in _SUBMIT_ON:
+        msg = f"{owner} submit_on is one of {', '.join(_SUBMIT_ON)}, not {value!r}"
+        raise ValueError(msg)
+    return value  # type: ignore[return-value]
+
+
 class _Submits:
     """Mixin: the input has a send key, heard by ``on_submit()``."""
 
     def on_submit(self) -> Changed:
-        """The person asked to send: Enter, or cmd/ctrl+Enter in a multi-line field.
+        """The person asked to send: Enter, or a multi-line field's send key.
 
         The payload is ``{event: "submit", value}``, the value sent: read it
         there (``lambda sub: save(sub["value"])``), not off the input, which
@@ -425,17 +442,33 @@ class CodeRef(_Submits, InputLeaf):
     Read-only it renders a highlighted block with a copy button. With
     `readonly=False` the same view becomes an editor: the server seeds the text
     with `set`, reads it back through `Ref` like any input Ref, and subscribes
-    with `on_change()`. The browser commits on cmd+enter and on blur, not on
-    every keystroke, so a read between commits sees the last committed text
-    and not what is under the caret. cmd+enter also submits (`on_submit()`).
-    One engine for both modes, so flipping `readonly` never changes how the
-    code looks. A disabled `Fieldset` or `Form` around it makes it read-only.
+    with `on_change()`. The browser commits on the send key and on blur, not
+    on every keystroke, so a read between commits sees the last committed
+    text and not what is under the caret. The send key also submits
+    (`on_submit()`, the text sent as ``sub["value"]``) and submits the `Form`
+    around it, this editor's text in its values. It is shift+Enter with Enter
+    the newline, or the other way round with `submit_on="enter"`, as on every
+    multi-line input. `clear_on_submit` puts the seed back after each submit. One engine for
+    both modes, so flipping `readonly` never changes how the code looks. A
+    disabled `Fieldset` or `Form` around it makes it read-only.
 
     Last actor wins, same as `MarkdownRef`. A `set` from the server replaces
     the buffer outright, a notify from the browser replaces the server's
     copy, and there is no merge.
 
+    Diff mode: give it an `original` and the view shows `value` as a unified
+    diff against that old text, removed lines above the lines that replaced
+    them, added and removed lines washed, long unchanged runs folded behind a
+    bar that opens them. Highlighting stays on. A diff is read-only whatever
+    `readonly` says, and a `Form` does not gather it. `""` is a diff against
+    nothing (every line added); `None`, the default, is no diff. A new text on
+    either side redraws the diff in place: `set(new, original=old)` moves
+    both at once, `set_original(old)` just the old side, and
+    `set_original(None)` turns the diff off.
+
     Args:
+        original: the old text `value` is compared against. `None` is no
+            diff.
         language: a language name or alias (`python`, `sql`, `markdown`,
             `shell`, `yaml`, `ts`, `json`, ...). Anything unknown renders
             unhighlighted rather than failing.
@@ -445,6 +478,7 @@ class CodeRef(_Submits, InputLeaf):
         show_copy: the copy button, shown only while read-only.
         min_height, max_height: pixels. The view grows with its content
             between the bounds, then scrolls. `None` is no bound.
+        submit_on: the send key, `"shift+enter"` or `"enter"`.
     """
 
     _wire_type = "CodeRef"
@@ -454,6 +488,7 @@ class CodeRef(_Submits, InputLeaf):
         cls,
         *,
         value: str = "",
+        original: str | None = None,
         language: str = "",
         readonly: bool = True,
         line_numbers: bool | None = None,
@@ -461,9 +496,12 @@ class CodeRef(_Submits, InputLeaf):
         show_copy: bool = True,
         min_height: int | None = None,
         max_height: int | None = None,
+        submit_on: SubmitOn = "shift+enter",
+        clear_on_submit: bool = False,
     ) -> Self:
         return super().slot(
             value=value,
+            original=original,
             language=language,
             readonly=bool(readonly),
             line_numbers=line_numbers,
@@ -471,10 +509,19 @@ class CodeRef(_Submits, InputLeaf):
             show_copy=show_copy,
             min_height=min_height,
             max_height=max_height,
+            submit_on=_submit_on("CodeRef", submit_on),
+            clear_on_submit=bool(clear_on_submit),
         )
 
-    def set(self, value: StrArg) -> Nu:
-        return Write(self, value)
+    def set(self, value: StrArg, original: StrArg | None = UNSET) -> Nu:
+        # Scalar shortcut: just the text when the old side stays put. Both
+        # sides in one write, so a diff never draws against a stale original.
+        if original is UNSET:
+            return Write(self, value)
+        return Write(self, Dict.of(value=value, original=original))
+
+    def set_original(self, text: StrArg | None) -> Nu:
+        return Write(self, Dict.of(original=text))
 
     def set_language(self, name: StrArg) -> Nu:
         return Write(self, Dict.of(language=name))
@@ -555,7 +602,7 @@ class NumberInputRef(_Nullable, _Submits, _Placeholder, InputLeaf):
         return Write(self, Dict.of(**payload))
 
 
-class MarkdownRef(_Placeholder, InputLeaf):
+class MarkdownRef(_Submits, _Placeholder, InputLeaf):
     """A markdown document, read-only by default. Value is the markdown, both ways.
 
     The browser never shows the source. Read-only it renders the document;
@@ -563,8 +610,16 @@ class MarkdownRef(_Placeholder, InputLeaf):
     server writes the source with `set`, reads it back through `Ref` like any
     input Ref, and subscribes with `on_change()`. The browser notifies back
     on a quiet moment or on blur. One engine for both modes, so a document
-    looks the same whether or not you can type in it. A document saves
-    itself, so it has no send key and no `on_submit()`.
+    looks the same whether or not you can type in it.
+
+    The send key saves at once and submits (`on_submit()`, the markdown sent
+    as ``sub["value"]``), and submits the `Form` around it, this document's
+    text in its values: an editable document is a composer as much as a page.
+    It is shift+Enter with Enter breaking the line, or with
+    `submit_on="enter"` the other way round, shift+Enter then doing what
+    Enter would (a new list item, the cell below). It sends from a table too;
+    inside a code fence both keys stay the fence's. `clear_on_submit` puts
+    the seed back after each submit.
 
     The dialect: paragraphs, headings, bullet, numbered and checkbox lists,
     quotes, code fences, GFM pipe tables, rules, images, bold, italic, inline
@@ -588,8 +643,16 @@ class MarkdownRef(_Placeholder, InputLeaf):
         value: str = "",
         placeholder: str = "",
         readonly: bool = True,
+        submit_on: SubmitOn = "shift+enter",
+        clear_on_submit: bool = False,
     ) -> Self:
-        return super().slot(value=value, placeholder=placeholder, readonly=bool(readonly))
+        return super().slot(
+            value=value,
+            placeholder=placeholder,
+            readonly=bool(readonly),
+            submit_on=_submit_on("MarkdownRef", submit_on),
+            clear_on_submit=bool(clear_on_submit),
+        )
 
     def set(self, value: StrArg) -> Nu:
         return Write(self, value)
@@ -1086,15 +1149,12 @@ class TagInputRef(_Submits, _Placeholder, InputLeaf):
         return Write(self, value)
 
 
-SubmitOn = Literal["mod+enter", "enter"]
-
-
 class TextAreaRef(_Submits, _Placeholder, InputLeaf):
     """Multi-line text input whose value lives in the browser.
 
-    Blur commits. cmd/ctrl+Enter commits and submits, plain Enter is a
+    Blur commits. shift+Enter commits and submits, plain Enter is a
     newline. `submit_on="enter"` makes it a chat composer: Enter submits and
-    shift+Enter is the newline. Focus stays in the field after a submit, and
+    shift+Enter is the newline, the same switch every multi-line input takes. Focus stays in the field after a submit, and
     `clear_on_submit` empties it for the next message.
 
     `auto_resize=True` maps to the primitive's `field-sizing: content` mode.
@@ -1114,7 +1174,7 @@ class TextAreaRef(_Submits, _Placeholder, InputLeaf):
         max_length: int | None = None,
         auto_resize: bool = False,
         mono: bool = False,
-        submit_on: SubmitOn = "mod+enter",
+        submit_on: SubmitOn = "shift+enter",
         clear_on_submit: bool = False,
         label: str = "",
         disabled: bool = False,
@@ -1130,7 +1190,7 @@ class TextAreaRef(_Submits, _Placeholder, InputLeaf):
             max_length=max_length,
             auto_resize=auto_resize,
             mono=mono,
-            submit_on=submit_on,
+            submit_on=_submit_on("TextAreaRef", submit_on),
             clear_on_submit=bool(clear_on_submit),
             **_common(
                 label=label,

@@ -27,7 +27,7 @@
 // EmptyStateRef, ImageRef, VideoRef, AudioRef, FileRef, HeadingRef, PageLinkRef (but an inline one), and
 // the containers Card, Form, Fieldset, Field, Tabs, Accordion, Column,
 // Row, ListRef, PageSection, NavList (Grid, Line, Select, Skeleton,
-// Collapsible set their own). Content:
+// Collapsible, Quote set their own). Content:
 // everything else, including TextRef, LinkRef, BadgeRef, KbdRef, ShortcutRef,
 // StatusDotRef, IconRef, NavItemRef,
 // ButtonRef, CheckboxRef, SwitchRef, RadioGroupRef, StatRef, GaugeRef,
@@ -44,9 +44,10 @@
 //
 // The row sizes one child against its kind through its per child maps,
 // keyed by segment: `grow` is a true ratio of the free width (a grown child
-// starts from 0, so 1 and 2 draw 1:2; in a wrapping row a grown fill child
-// keeps 240px as its narrowest, so it still wraps), `basis` the width a
-// child starts from, `align_self`, and `sticky` ("left" / "right").
+// starts from 0 and may shrink to it, so 1 and 2 draw 1:2 and a one-line
+// text grown in a header cuts with an ellipsis; in a wrapping row a grown
+// fill child keeps 240px as its narrowest, so it still wraps), `basis` the
+// width a child starts from, `align_self`, and `sticky` ("left" / "right").
 
 import { asOrder, ORDER_PROP, orderHandlers } from "@nustackdev/ui-core";
 import { type CSSProperties, createContext, useContext, useMemo, useState } from "react";
@@ -130,7 +131,10 @@ function RowCell({ path, children }: CellProps) {
 			data-fill={fill ? "" : undefined}
 			className={cn(
 				"flex flex-col",
-				fill && "min-w-0 self-stretch *:grow",
+				// A grown child starts from 0, so its content does not hold it wider:
+				// a one-line text in it cuts with an ellipsis instead.
+				(fill || weight !== undefined) && "min-w-0",
+				fill && "self-stretch *:grow",
 				stretch && "*:grow",
 				self && SELF[self],
 			)}

@@ -33,9 +33,20 @@ from nustd.ui.core.interactions import Changed, Reset, Send, Write
 from ..vocab import Target
 from ..vocab import set_href as _set_href
 from .base import DictCollectionRef, ShapeCollectionRef
-from .flow import FLOW_CHILDREN, STACK
+from .flow import FLOW_CHILDREN, STACK, RowRef
 from .layout import SIZE, ChildLayout, SizeLayout, StackLayout, choice, px
-from .named import ACTIONS, CONTROL, FOOTER, MEDIA, actions_ref, footer_ref, media_ref
+from .named import (
+    ACTIONS,
+    CONTROL,
+    FOOTER,
+    HEADER,
+    MEDIA,
+    actions_ref,
+    footer_ref,
+    header_ref,
+    media_ref,
+    part_ref,
+)
 
 
 if TYPE_CHECKING:
@@ -45,7 +56,7 @@ if TYPE_CHECKING:
     from nu.lang import Nu
     from nu.lang.args import Arg, BoolArg, ListArg, StrArg
     from nu.lang.runtime import Runtime
-    from nustd.ui.core import Ref, Section
+    from nustd.ui.core import ItemRef, Ref, Section
 
     from .layout import Check
 
@@ -61,8 +72,16 @@ __all__ = [
 ]
 
 
+# An Accordion section's header child sits at this prefix plus the section id.
+_SECTION_HEADER = f"{HEADER}:"
+
+
 def _normalize_sections(items: object) -> list[dict[str, str]]:
-    """Coerce a sections list to the canonical [{id, label}, ...] shape."""
+    """Coerce a sections list to the canonical [{id, label}, ...] shape.
+
+    An id under the header prefix is refused: its body would sit at the key
+    of another section's header.
+    """
     if not isinstance(items, list):
         return []
     out: list[dict[str, str]] = []
@@ -71,12 +90,14 @@ def _normalize_sections(items: object) -> list[dict[str, str]]:
             continue
         sid = item.get("id")
         label = item.get("label")
-        out.append(
-            {
-                "id": "" if sid is None else str(sid),
-                "label": "" if label is None else str(label),
-            },
-        )
+        sid = "" if sid is None else str(sid)
+        if sid.startswith(_SECTION_HEADER):
+            msg = (
+                f"AccordionRef section id {sid!r} starts with {_SECTION_HEADER!r}, the key"
+                f" a section's header takes; pick another id"
+            )
+            raise ValueError(msg)
+        out.append({"id": sid, "label": "" if label is None else str(label)})
     return out
 
 
@@ -115,6 +136,14 @@ class AccordionRef(DictCollectionRef):
     The tab owns open state, the server owns the section list. ``acc["id"]``
     is the body of section ``id``; an id the declared ``sections`` does not
     list is refused, since it would never draw.
+
+    A section's ``label`` is shorthand for a header that is one line of
+    text. ``acc.header("id")`` is a Row at ``header:id`` that takes its place
+    in the trigger row when it exists, for a header with a badge or a button
+    in it. A click on the row's text or empty space toggles the section; a
+    control in the header does its own thing. Like a body, a header for an id
+    the declared ``sections`` does not list is refused, and no section id
+    may start with ``header:``.
     """
 
     _wire_type = "Accordion"
@@ -123,7 +152,24 @@ class AccordionRef(DictCollectionRef):
 
     def _admit(self, address: object) -> None:
         super()._admit(address)
+        if isinstance(address, str) and address.startswith(_SECTION_HEADER):
+            address = address[len(_SECTION_HEADER) :]
         _admit_paired(self, address, "sections", "section")
+
+    def _child(self, key: object) -> ItemRef:
+        if isinstance(key, str) and key.startswith(_SECTION_HEADER):
+            sid = key[len(_SECTION_HEADER) :]
+            msg = (
+                f"{self._owner_name()}[{key!r}] is a section's header; reach it as .header({sid!r})"
+            )
+            raise ValueError(msg)
+        return super()._child(key)
+
+    def header(self, section_id: str, **row_props: object) -> Ref:
+        """The header of section ``section_id``: a Row at ``header:<id>``, drawn in place of its label."""
+        return part_ref(
+            self, f"{_SECTION_HEADER}{section_id}", RowRef.slot(**{"gap": 2, **row_props})
+        )
 
     @classmethod
     def slot(
@@ -185,14 +231,19 @@ _CARD_SIZES = ("sm", "md", "lg")
 class CardRef(ChildLayout, DictCollectionRef):
     """A surface: media, a header with actions, the body, a footer.
 
-    Three child keys are the card's own places, not body: ``media`` draws
-    full-bleed on top (an image), ``actions`` on the header's right rail (a
-    badge, an icon button, a Row of them) and ``footer`` along the bottom
-    edge (a button, a Row of them). ``card.media``, ``card.actions`` and
-    ``card.footer`` answer with those children; declare them as slots with
-    those names on a Shape, or build under them with ``parent_ref=``. The
-    footer is pinned to the bottom, so a Grid row of cards lines its footers
-    up whatever each body holds. Every other child is the body.
+    Four child keys are the card's own places, not body: ``media`` draws
+    full-bleed on top (an image), ``header`` as the header line in place of
+    ``title`` and ``subtitle`` (a Row of an avatar, a name and a badge),
+    ``actions`` on the header's right rail (a badge, an icon button, a Row
+    of them) and ``footer`` along the bottom edge (a button, a Row of them).
+    ``card.media``, ``card.header``, ``card.actions`` and ``card.footer``
+    answer with those children; declare them as slots with those names on a
+    Shape, or build under them with ``parent_ref=``. The strings stay the
+    shorthand for a plain heading; a header child is for anything more. The
+    card only places it, full width beside the actions and free to shrink, so
+    a ``TextRef(lines=1)`` in it cuts with an ellipsis. The footer is pinned
+    to the bottom, so a Grid row of cards lines its footers up whatever each
+    body holds. Every other child is the body.
 
     ``caption`` (``set_caption``) is a quiet line of text along the bottom,
     drawn under a footer child when there is one.
@@ -215,7 +266,7 @@ class CardRef(ChildLayout, DictCollectionRef):
     """
 
     _wire_type = "Card"
-    _parts: ClassVar[frozenset[str]] = frozenset({MEDIA, ACTIONS, FOOTER})
+    _parts: ClassVar[frozenset[str]] = frozenset({MEDIA, HEADER, ACTIONS, FOOTER})
     _layout: ClassVar[frozenset[str]] = STACK
     _children: ClassVar[tuple[str, ...]] = FLOW_CHILDREN
     _family: ClassVar[Mapping[str, Check]] = {
@@ -252,6 +303,11 @@ class CardRef(ChildLayout, DictCollectionRef):
     def media(self) -> Ref:
         """The full-bleed top: the Shape's ``media`` slot, or a Column there."""
         return media_ref(self)
+
+    @property
+    def header(self) -> Ref:
+        """The header line, in place of the title: the Shape's ``header`` slot, or a Row there."""
+        return header_ref(self)
 
     @property
     def actions(self) -> Ref:
@@ -417,8 +473,12 @@ class FormRef(ChildLayout, DictCollectionRef):
 
     ``on_submit()`` hears one ``{event: "submit", values, button}`` per
     submit: Enter in any single-line input inside, a click on a button
-    declared ``submit=True``, or cmd/ctrl+Enter in a multi-line one. Every
-    other button is a plain one, so a Cancel in a form never submits.
+    declared ``submit=True``, or shift+Enter in a multi-line one (a
+    ``TextAreaRef``, or a ``CodeRef`` or ``MarkdownRef`` with
+    ``readonly=False``), where plain Enter stays a newline. A key that
+    submits the form fires the input's own ``on_submit()`` first, then the
+    form's. Every other button is a plain one, so a Cancel in a form never
+    submits.
     ``values`` is every input under the form in one snapshot, nested the way
     the slots are and keyed by slot name, a Field standing for its control::
 
@@ -528,6 +588,13 @@ class _SetErrors(Send):
 class ModalRef(ChildLayout, DictCollectionRef):
     """Dialog overlay. Open vs closed is the thing it carries, so it has a `set()`.
 
+    ``title`` heads the dialog. For more than a string (an icon, a name and
+    a badge), build a ``header`` child: ``modal.header`` is the Shape's
+    ``header`` slot or a Row there, drawn in the title's place with the close
+    button kept beside it, and the dialog is named by its text. The modal
+    only places it, full width and free to shrink. Every other child is the
+    body.
+
     The dialog is ``width`` wide (512px unless set; a page width name reads,
     ``width="prose"``) and never grows past the window: a tall body scrolls
     inside it, the title stays put. The body speaks the layers of a Column
@@ -536,6 +603,7 @@ class ModalRef(ChildLayout, DictCollectionRef):
     """
 
     _wire_type = "Modal"
+    _parts: ClassVar[frozenset[str]] = frozenset({HEADER})
     _layout: ClassVar[frozenset[str]] = STACK
     _children: ClassVar[tuple[str, ...]] = FLOW_CHILDREN
 
@@ -557,6 +625,11 @@ class ModalRef(ChildLayout, DictCollectionRef):
             dismissible=bool(dismissible),
             **cls._laid_out(layout),
         )
+
+    @property
+    def header(self) -> Ref:
+        """The header line, in place of the title: the Shape's ``header`` slot, or a Row there."""
+        return header_ref(self)
 
     def set_open(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(open=flag))

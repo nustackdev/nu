@@ -15,12 +15,21 @@
 // and runs every row flush to its edges: the trigger wash fills the row, the
 // focus ring sits inside it, and trigger text and content share one inset.
 // Never pad the items of a boxed accordion; the trigger and content own it.
+//
+// `AccordionTrigger` takes a `header` in place of children when the row's
+// content may hold controls (a badge with a link, a button, a switch). Then
+// the row is a `TriggerRow` (trigger-row.tsx): the trigger keeps only the
+// chevron, named by the header box, and a click on the row's text or empty
+// space clicks it. The trigger stays first in the DOM, so Tab reaches it
+// before the header's controls, and is drawn at the end like the plain one.
 
 import { ChevronDown } from "lucide-react";
 import { Accordion as AccordionPrimitive } from "radix-ui";
 import type * as React from "react";
+import { useId } from "react";
 import { cn } from "../../lib/utils";
 import { CLIP_WHILE_MOVING, useClipWhileMoving } from "./collapsible";
+import { rowTriggerProps, TriggerRow, TriggerRowHeader } from "./trigger-row";
 
 export function Accordion({
 	className,
@@ -54,11 +63,58 @@ export function AccordionItem({
 	);
 }
 
+// A boxed row runs flush, so its ring sits inside it, as the plain trigger's does.
+const BOXED_ROW = [
+	"group-data-[variant=boxed]/accordion:rounded-none",
+	"group-data-[variant=boxed]/accordion:ring-inset",
+	"group-data-[variant=boxed]/accordion:has-[[data-row-trigger]:focus-visible]:ring-offset-0",
+];
+
+function Chevron() {
+	return (
+		<ChevronDown
+			aria-hidden
+			className={cn(
+				"size-4 text-text-secondary shrink-0",
+				"transition-transform duration-fast ease-out",
+				"group-data-[state=open]:rotate-180",
+			)}
+		/>
+	);
+}
+
 export function AccordionTrigger({
 	className,
 	children,
+	header,
 	...props
-}: React.ComponentProps<typeof AccordionPrimitive.Trigger>) {
+}: React.ComponentProps<typeof AccordionPrimitive.Trigger> & {
+	/** The row's content when it may hold controls; replaces `children`. */
+	header?: React.ReactNode;
+}) {
+	const headerId = useId();
+	if (header != null) {
+		return (
+			<TriggerRow className={cn("rounded-md px-3 py-3", BOXED_ROW, className)}>
+				<AccordionPrimitive.Header className="order-last flex shrink-0">
+					<AccordionPrimitive.Trigger
+						data-slot="accordion-trigger"
+						{...rowTriggerProps}
+						aria-labelledby={headerId}
+						className={cn(
+							"group flex items-center rounded-sm outline-hidden cursor-default",
+							"disabled:pointer-events-none disabled:opacity-50",
+							"[&_svg]:pointer-events-none",
+						)}
+						{...props}
+					>
+						<Chevron />
+					</AccordionPrimitive.Trigger>
+				</AccordionPrimitive.Header>
+				<TriggerRowHeader id={headerId}>{header}</TriggerRowHeader>
+			</TriggerRow>
+		);
+	}
 	return (
 		<AccordionPrimitive.Header className="flex">
 			<AccordionPrimitive.Trigger
@@ -78,14 +134,7 @@ export function AccordionTrigger({
 				{...props}
 			>
 				{children}
-				<ChevronDown
-					aria-hidden
-					className={cn(
-						"size-4 text-text-secondary shrink-0",
-						"transition-transform duration-fast ease-out",
-						"group-data-[state=open]:rotate-180",
-					)}
-				/>
+				<Chevron />
 			</AccordionPrimitive.Trigger>
 		</AccordionPrimitive.Header>
 	);
@@ -96,10 +145,11 @@ export function AccordionContent({
 	children,
 	onAnimationStart,
 	onAnimationEnd,
+	ref,
 	...props
 }: React.ComponentProps<typeof AccordionPrimitive.Content>) {
 	// Clips only while the height moves (or closed), as a Collapsible does.
-	const moving = useClipWhileMoving(onAnimationStart, onAnimationEnd);
+	const moving = useClipWhileMoving(onAnimationStart, onAnimationEnd, ref);
 	return (
 		<AccordionPrimitive.Content
 			data-slot="accordion-content"

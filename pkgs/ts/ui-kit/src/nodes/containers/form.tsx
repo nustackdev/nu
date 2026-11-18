@@ -1,7 +1,7 @@
 // Form -- a semantic <form> that stacks its children and owns submit.
 //
 // A native submit (Enter in a single-line input, a click on a `submit`
-// button, cmd+Enter in a multi-line one) sends one notify on the form's path:
+// button, shift+Enter in a multi-line one) sends one notify on the form's path:
 // `{event: "submit", values, button}`. `values` is a snapshot of every input
 // under the form, nested the way the tree is and keyed by segment, a Field
 // standing for its control (./../input/control.ts `gather`). `button` is the

@@ -31,7 +31,7 @@ from nustd.ui.core import Write
 from .base import DictCollectionRef
 from .flow import FLOW_CHILDREN, STACK
 from .layout import SIZE, SPACE, ChildLayout, SpaceLayout, StackLayout, choice
-from .named import ACTIONS, actions_ref
+from .named import ACTIONS, HEADER, actions_ref, header_ref
 
 
 if TYPE_CHECKING:
@@ -59,8 +59,12 @@ class PageSectionRef(ChildLayout, DictCollectionRef):
 
     The child at key ``"actions"`` draws on the header's right, at its own
     size, a Button or a Row of them; ``section.actions`` is that Row, ready
-    to put buttons in. Every other child is the body. No header draws with
-    no title, description or actions.
+    to put buttons in. The child at key ``"header"`` draws in place of the
+    title and description, for a heading that is more than a string (an
+    icon, a name, a badge); ``section.header`` is the Shape's ``header``
+    slot or a Row there. The section only places it, full width beside the
+    actions and free to shrink. Every other child is the body. No header
+    draws with no title, description, header or actions.
 
     Surface: ``size`` is the preset for the section's look, the space
     between header and body (``md`` 24, ``lg`` 32 px), changed at run time
@@ -71,7 +75,7 @@ class PageSectionRef(ChildLayout, DictCollectionRef):
     """
 
     _wire_type = "PageSection"
-    _parts: ClassVar[frozenset[str]] = frozenset({ACTIONS})
+    _parts: ClassVar[frozenset[str]] = frozenset({HEADER, ACTIONS})
     _layout: ClassVar[frozenset[str]] = STACK
     _children: ClassVar[tuple[str, ...]] = FLOW_CHILDREN
     _family: ClassVar[Mapping[str, Check]] = {"size": choice(*_SECTION_SIZES)}
@@ -93,6 +97,11 @@ class PageSectionRef(ChildLayout, DictCollectionRef):
             description=description,
             **cls._laid_out({**layout, "size": size}),
         )
+
+    @property
+    def header(self) -> Ref:
+        """The header line, in place of the title: the Shape's ``header`` slot, or a Row there."""
+        return header_ref(self)
 
     @property
     def actions(self) -> Ref:

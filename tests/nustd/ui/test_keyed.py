@@ -87,6 +87,7 @@ KIND = {
     "NavList": DictCollectionRef,
     "PageSection": DictCollectionRef,
     "Popover": DictCollectionRef,
+    "Quote": DictCollectionRef,
     "Row": DictCollectionRef,
     "Sheet": DictCollectionRef,
     "Tabs": DictCollectionRef,

@@ -15,7 +15,8 @@ the Ref carries the chrome methods, the slot defaults and the wire type, and
     usage = Usage.slot(title="Usage", description="Last 30 days")
     sidebar = Sidebar.slot(label="Workspace")
 
-A slot named ``actions`` draws on the section header's right, not the body.
+A slot named ``actions`` draws on the section header's right, and one named
+``header`` in place of the title and description, not in the body.
 """
 
 from __future__ import annotations
@@ -30,8 +31,9 @@ __all__ = ["NavList", "PageSection"]
 class PageSection(Section):
     """A titled part of a page, its slots the body. Props as ``PageSectionRef.slot``.
 
-    A slot named ``actions`` draws on the header's right instead of the body;
-    ``section.actions`` reaches it.
+    A slot named ``actions`` draws on the header's right instead of the body,
+    one named ``header`` in place of the title and description;
+    ``section.actions`` and ``section.header`` reach them.
     """
 
     _ref_cls = PageSectionRef

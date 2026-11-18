@@ -6,6 +6,11 @@
 // `NodeChildren`. A section with no matching child renders empty; a child no
 // section names is not drawn, and a notice under the sections names it.
 //
+// A section's header: the child at `header:<id>`, when there is one, is its
+// trigger row's content in place of `label` (see the primitive's `header`).
+// A header key for a listed id is not a stray; one for an id no section has
+// is named in the notice like a stray body.
+//
 // The tab owns `open` (toggle locally first, then notify); the server owns
 // the section list. One `write` op multiplexes chrome updates by payload key:
 //   {sections: [...]}  -> replace section list
@@ -30,6 +35,7 @@ import {
 	type NodeEntry,
 	type NodeProps,
 	NodeView,
+	SlotView,
 	useBoolProp,
 	useChildren,
 	useListProp,
@@ -42,6 +48,9 @@ import { Unpaired } from "./unpaired";
 type Section = { id: string; label: string };
 
 const DEFAULTS: LayoutDefaults = {};
+
+/** The child key of a section's header: this prefix plus the section id. */
+const HEADER = "header:";
 
 function normalizeSections(raw: unknown): Section[] {
 	if (!Array.isArray(raw)) return [];
@@ -74,7 +83,7 @@ function AccordionView({ path }: NodeProps) {
 	const sections = normalizeSections(rawSections);
 	const bodies = new Set(children);
 	const ids = new Set(sections.map((s) => s.id));
-	const stray = children.filter((s) => !ids.has(s));
+	const stray = children.filter((s) => !ids.has(s.startsWith(HEADER) ? s.slice(HEADER.length) : s));
 	const openRaw = normalizeOpen(rawOpen);
 	// multi=false with multiple ids: keep the first, drop the rest.
 	const open = !multi && openRaw.length > 1 ? [openRaw[0]] : openRaw;
@@ -107,7 +116,11 @@ function AccordionView({ path }: NodeProps) {
 			>
 				{sections.map((s, i) => (
 					<AccordionItem key={`${i}-${s.id}`} value={s.id}>
-						<AccordionTrigger>{s.label}</AccordionTrigger>
+						{bodies.has(HEADER + s.id) ? (
+							<AccordionTrigger header={<SlotView path={path} segment={HEADER + s.id} />} />
+						) : (
+							<AccordionTrigger>{s.label}</AccordionTrigger>
+						)}
 						<AccordionContent>
 							{bodies.has(s.id) ? (
 								<FlowProvider flow="block">

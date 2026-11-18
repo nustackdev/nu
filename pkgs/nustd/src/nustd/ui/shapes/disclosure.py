@@ -50,6 +50,10 @@ class Popover(Section):
 
         pop = PopoverRef("settings", parent_ref=row, props={"icon": "settings-2"})
         TextRef("note", parent_ref=pop).set("tucked away")
+
+    Slots named ``header`` and ``trigger`` draw in the panel's head and inside
+    the trigger button instead of the body; ``popover.header`` and
+    ``popover.trigger`` reach them. The trigger's content is display only.
     """
 
     _ref_cls = PopoverRef
@@ -72,6 +76,9 @@ class Sheet(Section):
 
         sheet = SheetRef("inspector", parent_ref=col, props={"title": "Edit host"})
         TextRef("note", parent_ref=sheet).set("hello") >> sheet.set(open=True)
+
+    A slot named ``header`` draws in the title's place instead of the body;
+    ``sheet.header`` reaches it.
     """
 
     _ref_cls = SheetRef

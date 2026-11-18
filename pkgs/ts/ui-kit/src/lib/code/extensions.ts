@@ -83,7 +83,9 @@ export function codeEditing({
 		keys.length ? Prec.highest(keymap.of(keys)) : [],
 		keymap.of([
 			...closeBracketsKeymap,
-			...defaultKeymap,
+			// Cmd/ctrl+Enter is the app's, not the editor's: CodeMirror's own
+			// (insert a blank line) is dropped so the key passes through.
+			...defaultKeymap.filter((b) => b.key !== "Mod-Enter"),
 			...searchKeymap,
 			...(undoable ? historyKeymap : []),
 			...completionKeymap,
