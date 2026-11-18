@@ -22,7 +22,7 @@
 // changes one child's entries: a name left out stays, null drops it.
 //
 // A stack (Column, and every container whose body stacks: Container, Card,
-// Modal, Sheet, PageSection, Form, Fieldset, Collapsible) draws its
+// Modal, Sheet, PageSection, Form, Fieldset, Collapsible, Quote) draws its
 // children through `StackChildren`, so the maps and `divided` read the same
 // in all of them.
 

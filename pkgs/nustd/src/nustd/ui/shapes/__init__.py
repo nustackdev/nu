@@ -20,6 +20,7 @@ Anything a Shape declares can also be built from Refs alone; see
 - disclosure: Collapsible, Popover, Sheet.
 - list:   List, one item per slot.
 - page:   PageSection, NavList.
+- quote:  Quote, a header line over quoted slots.
 """
 
 from __future__ import annotations
@@ -33,6 +34,7 @@ from .input_group import InputGroup
 from .line import Line
 from .list import List
 from .page import NavList, PageSection
+from .quote import Quote
 
 
 __all__ = [
@@ -52,6 +54,7 @@ __all__ = [
     "NavList",
     "PageSection",
     "Popover",
+    "Quote",
     "Row",
     "Sheet",
     "Tabs",

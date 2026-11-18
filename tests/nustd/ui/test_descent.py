@@ -44,6 +44,7 @@ BODY = [
     ui.SheetRef,
     ui.CollapsibleRef,
     ui.PopoverRef,
+    ui.QuoteRef,
     ui.FormRef,
     ui.FieldsetRef,
     ui.NavListRef,

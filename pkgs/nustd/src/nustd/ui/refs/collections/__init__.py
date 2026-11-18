@@ -11,6 +11,7 @@
           FieldRef.
 - disclosure: CollapsibleRef, PopoverRef, SheetRef.
 - list:   ListRef, string items first, then any child as an item.
+- quote:  QuoteRef, a header line over a body, drawn as quoted.
 - page:   PageSectionRef (a titled part of a page), NavListRef (a sidebar
           list or a top bar).
 - table:  TableRef, a content table of places, t[r, c]; TableRowRef, one row.
@@ -29,6 +30,7 @@ from .input_group import InputGroupRef
 from .line import LineRef
 from .list import ListRef
 from .page import NavListRef, PageSectionRef
+from .quote import QuoteRef
 from .table import TableRef, TableRowRef
 
 
@@ -52,6 +54,7 @@ __all__ = [
     "NavListRef",
     "PageSectionRef",
     "PopoverRef",
+    "QuoteRef",
     "RowRef",
     "ShapeCollectionRef",
     "SheetRef",

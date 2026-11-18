@@ -29,9 +29,11 @@ __all__ = [
     "ACTIONS",
     "CONTROL",
     "FOOTER",
+    "HEADER",
     "MEDIA",
     "actions_ref",
     "footer_ref",
+    "header_ref",
     "media_ref",
     "part_ref",
 ]
@@ -48,6 +50,9 @@ FOOTER = "footer"
 
 #: The child key a Field draws its one control at, when no Shape names it.
 CONTROL = "control"
+
+#: The child key a container draws as its header line, in place of a string title.
+HEADER = "header"
 
 # A row of small controls: buttons, badges, icon buttons, centred on the line.
 _ROW_PROPS = {"gap": 2}
@@ -79,3 +84,8 @@ def footer_ref(ref: Ref, **row_props: object) -> Ref:
 def media_ref(ref: Ref, **column_props: object) -> Ref:
     """The media under ``ref``: its Shape's ``media`` slot, or a gapless Column there."""
     return part_ref(ref, MEDIA, ColumnRef.slot(**{"gap": 0, **column_props}))
+
+
+def header_ref(ref: Ref, **row_props: object) -> Ref:
+    """The header under ``ref``: its Shape's ``header`` slot, or a Row there."""
+    return part_ref(ref, HEADER, RowRef.slot(**{**_ROW_PROPS, **row_props}))

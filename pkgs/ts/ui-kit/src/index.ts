@@ -292,6 +292,7 @@ export {
 } from "./components/ui/popover";
 export { Progress, progressVariants } from "./components/ui/progress";
 export { Prose } from "./components/ui/prose";
+export { Quote, QuoteContent, QuoteHeader } from "./components/ui/quote";
 export {
 	RadioGroup,
 	RadioGroupItem,

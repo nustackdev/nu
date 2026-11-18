@@ -27,7 +27,7 @@
 // EmptyStateRef, ImageRef, VideoRef, AudioRef, FileRef, HeadingRef, PageLinkRef (but an inline one), and
 // the containers Card, Form, Fieldset, Field, Tabs, Accordion, Column,
 // Row, ListRef, PageSection, NavList (Grid, Line, Select, Skeleton,
-// Collapsible set their own). Content:
+// Collapsible, Quote set their own). Content:
 // everything else, including TextRef, LinkRef, BadgeRef, KbdRef, ShortcutRef,
 // StatusDotRef, IconRef, NavItemRef,
 // ButtonRef, CheckboxRef, SwitchRef, RadioGroupRef, StatRef, GaugeRef,
