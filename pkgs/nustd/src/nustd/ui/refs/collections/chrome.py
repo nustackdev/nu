@@ -33,7 +33,7 @@ from nustd.ui.core.interactions import Changed, Reset, Send, Write
 from ..vocab import Target
 from ..vocab import set_href as _set_href
 from .base import DictCollectionRef, ShapeCollectionRef
-from .flow import FLOW_CHILDREN, STACK
+from .flow import FLOW_CHILDREN, STACK, RowRef
 from .layout import SIZE, ChildLayout, SizeLayout, StackLayout, choice, px
 from .named import (
     ACTIONS,
@@ -45,6 +45,7 @@ from .named import (
     footer_ref,
     header_ref,
     media_ref,
+    part_ref,
 )
 
 
@@ -55,7 +56,7 @@ if TYPE_CHECKING:
     from nu.lang import Nu
     from nu.lang.args import Arg, BoolArg, ListArg, StrArg
     from nu.lang.runtime import Runtime
-    from nustd.ui.core import Ref, Section
+    from nustd.ui.core import ItemRef, Ref, Section
 
     from .layout import Check
 
@@ -71,8 +72,16 @@ __all__ = [
 ]
 
 
+# An Accordion section's header child sits at this prefix plus the section id.
+_SECTION_HEADER = f"{HEADER}:"
+
+
 def _normalize_sections(items: object) -> list[dict[str, str]]:
-    """Coerce a sections list to the canonical [{id, label}, ...] shape."""
+    """Coerce a sections list to the canonical [{id, label}, ...] shape.
+
+    An id under the header prefix is refused: its body would sit at the key
+    of another section's header.
+    """
     if not isinstance(items, list):
         return []
     out: list[dict[str, str]] = []
@@ -81,12 +90,14 @@ def _normalize_sections(items: object) -> list[dict[str, str]]:
             continue
         sid = item.get("id")
         label = item.get("label")
-        out.append(
-            {
-                "id": "" if sid is None else str(sid),
-                "label": "" if label is None else str(label),
-            },
-        )
+        sid = "" if sid is None else str(sid)
+        if sid.startswith(_SECTION_HEADER):
+            msg = (
+                f"AccordionRef section id {sid!r} starts with {_SECTION_HEADER!r}, the key"
+                f" a section's header takes; pick another id"
+            )
+            raise ValueError(msg)
+        out.append({"id": sid, "label": "" if label is None else str(label)})
     return out
 
 
@@ -125,6 +136,14 @@ class AccordionRef(DictCollectionRef):
     The tab owns open state, the server owns the section list. ``acc["id"]``
     is the body of section ``id``; an id the declared ``sections`` does not
     list is refused, since it would never draw.
+
+    A section's ``label`` is shorthand for a header that is one line of
+    text. ``acc.header("id")`` is a Row at ``header:id`` that takes its place
+    in the trigger row when it exists, for a header with a badge or a button
+    in it. A click on the row's text or empty space toggles the section; a
+    control in the header does its own thing. Like a body, a header for an id
+    the declared ``sections`` does not list is refused, and no section id
+    may start with ``header:``.
     """
 
     _wire_type = "Accordion"
@@ -133,7 +152,24 @@ class AccordionRef(DictCollectionRef):
 
     def _admit(self, address: object) -> None:
         super()._admit(address)
+        if isinstance(address, str) and address.startswith(_SECTION_HEADER):
+            address = address[len(_SECTION_HEADER) :]
         _admit_paired(self, address, "sections", "section")
+
+    def _child(self, key: object) -> ItemRef:
+        if isinstance(key, str) and key.startswith(_SECTION_HEADER):
+            sid = key[len(_SECTION_HEADER) :]
+            msg = (
+                f"{self._owner_name()}[{key!r}] is a section's header; reach it as .header({sid!r})"
+            )
+            raise ValueError(msg)
+        return super()._child(key)
+
+    def header(self, section_id: str, **row_props: object) -> Ref:
+        """The header of section ``section_id``: a Row at ``header:<id>``, drawn in place of its label."""
+        return part_ref(
+            self, f"{_SECTION_HEADER}{section_id}", RowRef.slot(**{"gap": 2, **row_props})
+        )
 
     @classmethod
     def slot(

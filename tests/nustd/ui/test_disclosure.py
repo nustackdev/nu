@@ -139,6 +139,38 @@ def test_collapsible_alone_holds_children():
     assert frame.chain[1][2] == {"title": "Details", "open": False}
 
 
+def test_collapsible_header_is_a_row_part():
+    from nustd.ui import ButtonRef, CollapsibleRef, RowRef
+
+    details = CollapsibleRef("details", props={"title": "Details"})
+    assert type(details.header) is RowRef
+    [frame] = _frames(details.header["go"].to(ButtonRef).init())
+    assert _chain(frame) == [("details", "Collapsible"), ("header", "Row"), ("go", "ButtonRef")]
+    assert frame.chain[1][2]["gap"] == 2
+    with pytest.raises(ValueError, match=r"reach it as \.header"):
+        details["header"]
+
+
+def test_collapsible_header_is_the_shape_slot():
+    from nustd.ui import Collapsible, Column, Row, TextRef
+
+    class Head(Row):
+        name = TextRef.slot(value="read_file")
+
+    class Call(Collapsible):
+        header = Head.slot(gap=1)
+        out = TextRef.slot()
+
+    class Home(Column):
+        call = Call.slot()
+
+    assert Home.call.header._payload["segment"] == "header"
+    chains = boot_chains((), Home)
+    assert [("call", "Collapsible"), ("header", "Row"), ("name", "TextRef")] in [
+        [lvl[:2] for lvl in c] for c in chains
+    ]
+
+
 def test_collapsible_refuses_unknown_props():
     from nustd.ui import CollapsibleRef
 

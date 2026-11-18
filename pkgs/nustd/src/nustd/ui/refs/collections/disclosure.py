@@ -2,7 +2,8 @@
 
 - ``CollapsibleRef``: one titled region that folds, simpler than Accordion.
   The tab owns open state while the user clicks (like Accordion) and sends a
-  notify on each toggle; the server can still open or close it.
+  notify on each toggle; the server can still open or close it. Its title
+  is a string, or a ``header`` child (a Row of anything) in its place.
 - ``SheetRef``: an edge drawer, Modal's sibling for inspectors and side
   panels. The server owns open state; the tab sends ``{open: false}`` when
   the user dismisses it.
@@ -67,9 +68,17 @@ class CollapsibleRef(ChildLayout, DictCollectionRef):
     the server. The body speaks the layers of a Column (``layout``):
     ``gap`` (3), ``padding``, ``justify``, ``align``, ``divided``, and the
     per child maps.
+
+    ``title`` is shorthand for a header that is one line of text. For more
+    (a status dot, a badge, a button) build the ``header`` child instead:
+    ``coll.header`` is the Shape's ``header`` slot, or a Row there. When it
+    exists it is the trigger row's content and ``title`` is not drawn. A
+    click on the row's text or empty space toggles; a control in the header
+    does its own thing and leaves the region as it is.
     """
 
     _wire_type = "Collapsible"
+    _parts: ClassVar[frozenset[str]] = frozenset({HEADER})
     _layout: ClassVar[frozenset[str]] = STACK
     _children: ClassVar[tuple[str, ...]] = FLOW_CHILDREN
 
@@ -84,6 +93,11 @@ class CollapsibleRef(ChildLayout, DictCollectionRef):
         **layout: Unpack[StackLayout],
     ) -> Self:
         return super().slot(item, title=title, open=bool(open), **cls._laid_out(layout))
+
+    @property
+    def header(self) -> Ref:
+        """The trigger row's content: the Shape's ``header`` slot, or a Row there."""
+        return header_ref(self)
 
     def set_open(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(open=flag))

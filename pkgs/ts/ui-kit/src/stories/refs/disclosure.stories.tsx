@@ -1,11 +1,13 @@
 // Refs/Disclosure: the containers that open and close over their children,
 // as a program draws them. A Collapsible folds a region in place, open and
-// closed, with a Card as its body. A Sheet slides in from the right over the
-// page with a Form as its body, once with a string title and once with a Row
-// at `header` in its place. A Modal headed by a Row, and a Popover whose
-// trigger is an avatar and a name in one button and whose panel is headed by
-// a Row. The overlays portal to <body>, so each renders alone in a hidden
-// story that the visible one frames once per theme.
+// closed, with a Card as its body; with a header child its trigger row holds
+// anything (a status dot, a truncating name, a badge, a button), and an
+// Accordion section takes one the same way. A Sheet slides in from the right
+// over the page with a Form as its body, once with a string title and once
+// with a Row at `header` in its place. A Modal headed by a Row, and a Popover
+// whose trigger is an avatar and a name in one button and whose panel is
+// headed by a Row. The overlays portal to <body>, so each renders alone in a
+// hidden story that the visible one frames once per theme.
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { FramePair, NodeSolo, NodeStage, SinkPage, sinkParameters, step } from "./harness";
@@ -36,6 +38,71 @@ export const Collapsible: Story = {
 					[col, open, card, step("status", "BadgeRef", { label: "healthy", variant: "ok" })],
 					[col, open, card, step("note", "TextRef", { value: "Last deploy 12 minutes ago." })],
 					[col, closed, step("hidden", "TextRef", { value: "Folded away." })],
+				]}
+			/>
+		);
+	},
+};
+
+// A header Row: a status dot, a name that grows and truncates, a badge and a
+// button. A click on the name or the empty space toggles; the button does not.
+function headerRow(seg: string, name: string, tone: string, badge: string) {
+	const row = step(seg, "Row", { gap: 2, grow: { name: 1 } });
+	return [
+		[row, step("dot", "StatusDotRef", { tone })],
+		[row, step("name", "TextRef", { value: name, lines: 1, weight: "medium" })],
+		[row, step("state", "BadgeRef", { label: badge })],
+		[row, step("open", "ButtonRef", { label: "Open", variant: "ghost", size: "sm" })],
+	];
+}
+
+export const CollapsibleHeader: Story = {
+	parameters: sinkParameters,
+	render: () => {
+		const col = step("disclosure-collapsible-header", "Column", { gap: 2 });
+		const done = step("done", "Collapsible", { open: true });
+		const busy = step("busy", "Collapsible", { open: false });
+		return (
+			<NodeStage
+				root="disclosure-collapsible-header"
+				label="header rows with controls; the row toggles, the button does not"
+				chains={[
+					...headerRow("header", "read_file src/nu/lang/runtime.py", "ok", "done").map((c) => [
+						col,
+						done,
+						...c,
+					]),
+					[col, done, step("out", "TextRef", { value: "212 lines read.", tone: "muted" })],
+					...headerRow("header", "run_tests tests/nustd/ui", "warn", "running").map((c) => [
+						col,
+						busy,
+						...c,
+					]),
+					[col, busy, step("out", "TextRef", { value: "Folded away." })],
+				]}
+			/>
+		);
+	},
+};
+
+export const AccordionHeader: Story = {
+	parameters: sinkParameters,
+	render: () => {
+		const acc = step("disclosure-accordion-header", "Accordion", {
+			sections: [
+				{ id: "build", label: "Build" },
+				{ id: "deploy", label: "Deploy" },
+			],
+			open: ["build"],
+		});
+		return (
+			<NodeStage
+				root="disclosure-accordion-header"
+				label="one section with a header row, one with its plain label"
+				chains={[
+					...headerRow("header:build", "Build web-03", "ok", "passed").map((c) => [acc, ...c]),
+					[acc, step("build", "TextRef", { value: "Built in 42s." })],
+					[acc, step("deploy", "TextRef", { value: "Not deployed yet." })],
 				]}
 			/>
 		);

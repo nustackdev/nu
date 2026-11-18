@@ -225,6 +225,35 @@ def test_accordion_refuses_an_unknown_section():
         acc["s2"]
 
 
+def test_accordion_header_is_a_row_at_its_section():
+    acc = ui.AccordionRef("a", props={"sections": [{"id": "s1", "label": "One"}]})
+    head = acc.header("s1")
+    assert type(head) is ui.RowRef
+    frames = _frames(head["n"].to(ui.TextRef).set("x"))
+    assert _chain(frames[0]) == [("a", "Accordion"), ("header:s1", "Row"), ("n", "TextRef")]
+    assert frames[0].chain[1][2]["gap"] == 2
+    assert acc.header("s1", gap=1)._payload["props"]["gap"] == 1
+    assert type(ui.TextRef("header:s1", parent_ref=acc)) is ui.TextRef
+
+
+def test_accordion_refuses_a_header_for_an_unknown_section():
+    acc = ui.AccordionRef("a", props={"sections": [{"id": "s1", "label": "One"}]})
+    with pytest.raises(ValueError, match="no section id"):
+        acc.header("s2")
+    with pytest.raises(ValueError, match="no section id"):
+        ui.RowRef("header:s2", parent_ref=acc)
+    with pytest.raises(ValueError, match=r"reach it as \.header\('s1'\)"):
+        acc["header:s1"]
+    assert type(ui.AccordionRef("b").header("later")) is ui.RowRef
+
+
+def test_accordion_refuses_a_section_id_under_the_header_prefix():
+    with pytest.raises(ValueError, match="takes; pick another id"):
+        ui.AccordionRef.slot(sections=[{"id": "header:x", "label": "X"}])
+    with pytest.raises(ValueError, match="pick another id"):
+        ui.AccordionRef("a").set_sections([{"id": "header:x", "label": "X"}])
+
+
 def test_a_tabs_shape_still_builds_its_slots():
     class Panes(ui.Tabs):
         one = ui.TextRef.slot()

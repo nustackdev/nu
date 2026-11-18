@@ -86,6 +86,149 @@ describe("Collapsible", () => {
 	});
 });
 
+// A header Row under `seg` at `key`: a line of text and a button in it.
+function header(seg: string, type: string, key: string) {
+	act(() => {
+		tree.getState().write([
+			[seg, type],
+			[key, "Row"],
+			["name", "TextRef", { value: "read_file" }],
+		]);
+		tree.getState().write([
+			[seg, type],
+			[key, "Row"],
+			["go", "ButtonRef", { label: "Open" }],
+		]);
+	});
+}
+
+const rowTrigger = () => host.querySelector("[data-row-trigger]") as HTMLButtonElement;
+const headerBox = () => host.querySelector("[data-slot=trigger-row-header]") as HTMLElement;
+const headerText = () =>
+	[...headerBox().querySelectorAll("*")].find(
+		(el) => el.children.length === 0 && el.textContent === "read_file",
+	) as HTMLElement;
+const headerButton = () => headerBox().querySelector("button") as HTMLButtonElement;
+
+describe("Collapsible header", () => {
+	const body = () => host.textContent?.includes("inside the body") ?? false;
+
+	it("draws the header in place of the title, chevron kept", () => {
+		mount("c", "Collapsible", { title: "Details", open: false });
+		header("c", "Collapsible", "header");
+		expect(host.textContent).not.toContain("Details");
+		expect(headerBox().textContent).toContain("read_file");
+		expect(rowTrigger().querySelector("svg")).not.toBeNull();
+		expect(rowTrigger().contains(headerButton())).toBe(false);
+		expect(body()).toBe(false);
+	});
+
+	it("names the trigger by the header box", () => {
+		mount("c", "Collapsible", { title: "Details", open: false });
+		header("c", "Collapsible", "header");
+		expect(rowTrigger().getAttribute("aria-labelledby")).toBe(headerBox().id);
+		expect(rowTrigger().getAttribute("aria-expanded")).toBe("false");
+		act(() => rowTrigger().click());
+		const content = host.querySelector("[data-slot=collapsible-content]") as HTMLElement;
+		expect(rowTrigger().getAttribute("aria-controls")).toBe(content.id);
+	});
+
+	it("toggles and notifies on a click on the row's text", () => {
+		mount("c", "Collapsible", { title: "Details", open: false });
+		header("c", "Collapsible", "header");
+		act(() => headerText().click());
+		expect(body()).toBe(true);
+		expect(sent).toEqual([{ op: OPS.notify, ref: ["c"], payload: { open: true }, id: undefined }]);
+		act(() => rowTrigger().click());
+		expect(body()).toBe(false);
+		expect(sent.at(-1)?.payload).toEqual({ open: false });
+	});
+
+	it("lets a button in the header click without toggling", () => {
+		mount("c", "Collapsible", { title: "Details", open: false });
+		header("c", "Collapsible", "header");
+		act(() => headerButton().click());
+		expect(body()).toBe(false);
+		expect(sent.map((f) => f.ref)).toEqual([["c", "header", "go"]]);
+	});
+
+	it("keeps one focusable trigger, first in the row, for Space and Enter", () => {
+		mount("c", "Collapsible", { title: "Details", open: false });
+		header("c", "Collapsible", "header");
+		const row = host.querySelector("[data-slot=trigger-row]") as HTMLElement;
+		const trigger = rowTrigger();
+		// A native button: the browser turns Space and Enter into its click,
+		// which Radix toggles on. jsdom does not, so the click stands in.
+		expect(trigger.tagName).toBe("BUTTON");
+		expect(trigger.getAttribute("type")).toBe("button");
+		expect(row.querySelector("button")).toBe(trigger);
+		trigger.focus();
+		expect(document.activeElement).toBe(trigger);
+		act(() => trigger.click());
+		expect(trigger.getAttribute("aria-expanded")).toBe("true");
+		expect(document.activeElement).toBe(trigger);
+	});
+
+	it("keeps the header out of the body", () => {
+		mount("c", "Collapsible", { title: "Details", open: true });
+		header("c", "Collapsible", "header");
+		const content = host.querySelector("[data-slot=collapsible-content]");
+		expect(content?.textContent).not.toContain("read_file");
+		expect(content?.textContent).toContain("inside the body");
+	});
+});
+
+describe("Accordion header", () => {
+	const sections = [
+		{ id: "one", label: "One" },
+		{ id: "two", label: "Two" },
+	];
+	const regions = () =>
+		[...host.querySelectorAll("[role=region][data-state=open]")].map((r) => r.textContent);
+
+	function mountAcc() {
+		act(() => {
+			tree.getState().write([["a", "Accordion", { sections, open: [] }]]);
+			tree.getState().write([
+				["a", "Accordion"],
+				["one", "TextRef", { value: "first" }],
+			]);
+		});
+		header("a", "Accordion", "header:one");
+		act(() => root.render(<NodeView path={["a"]} />));
+	}
+
+	it("draws a section's header in place of its label, the others keep theirs", () => {
+		mountAcc();
+		expect(headerBox().textContent).toContain("read_file");
+		expect(host.textContent).not.toContain("One");
+		expect(host.textContent).toContain("Two");
+		expect(rowTrigger().getAttribute("aria-labelledby")).toBe(headerBox().id);
+		expect(rowTrigger().closest("h3")).not.toBeNull();
+	});
+
+	it("does not list a header key as a stray", () => {
+		mountAcc();
+		expect(host.textContent).not.toContain("not drawn");
+	});
+
+	it("names a header for an id no section has", () => {
+		mountAcc();
+		header("a", "Accordion", "header:nope");
+		expect(host.textContent).toContain('"header:nope" not drawn, no section has that id');
+	});
+
+	it("toggles on the row's text and notifies, not on a button in the header", () => {
+		mountAcc();
+		act(() => headerButton().click());
+		expect(regions()).toEqual([]);
+		expect(sent.map((f) => f.ref)).toEqual([["a", "header:one", "go"]]);
+		act(() => headerText().click());
+		expect(regions()).toEqual(["first"]);
+		expect(sent.at(-1)).toEqual({ op: OPS.notify, ref: ["a"], payload: ["one"], id: undefined });
+	});
+});
+
 describe("Sheet", () => {
 	// The sheet portals to <body>, out of `host`.
 	const content = () => document.querySelector("[data-slot=sheet-content]") as HTMLElement | null;

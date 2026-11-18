@@ -16,20 +16,30 @@
 // the content is a flex column that may shrink, so a region capped by
 // `max_height` / `height` scrolls its body under the trigger. It has no
 // intrinsic width, so it fills.
+//
+// A `header` child, when there is one, is the trigger row's content in place
+// of `title`, and the body skips it. It may hold controls, so it cannot sit
+// in the trigger <button>: the row is a `TriggerRow` (components/ui), the
+// trigger keeps only the chevron and takes its name from the header box,
+// and a click on the row's text or empty space clicks the trigger. A control
+// in the header does its own thing and does not toggle.
 
 import { OPS } from "@nustackdev/ui-core";
 import { ChevronRight } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useId } from "react";
 import {
 	CollapsibleContent,
 	Collapsible as CollapsiblePrimitive,
 	CollapsibleTrigger,
 } from "../../components/ui/collapsible";
+import { rowTriggerProps, TriggerRow, TriggerRowHeader } from "../../components/ui/trigger-row";
 import { cn } from "../../lib/utils";
 import {
 	type NodeEntry,
 	type NodeProps,
+	SlotView,
 	useBoolProp,
+	useChildren,
 	useSend,
 	useSetProps,
 	useStringProp,
@@ -37,6 +47,26 @@ import {
 import { childHandlers, type LayoutDefaults, Stack, useLayout } from "./layout";
 
 const DEFAULTS: LayoutDefaults = { gap: 3, justify: "start", align: "stretch" };
+const HEADER = "header";
+const SLOTS: ReadonlySet<string> = new Set([HEADER]);
+
+const ROW = "rounded-md px-2 py-3";
+const TITLE = "text-base font-medium text-text-primary";
+const FOCUS =
+	"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas";
+
+function Chevron() {
+	return (
+		<ChevronRight
+			aria-hidden
+			className={cn(
+				"pointer-events-none size-4 shrink-0 text-text-secondary",
+				"transition-transform duration-fast ease-out",
+				"group-data-[state=open]:rotate-90",
+			)}
+		/>
+	);
+}
 
 function CollapsibleView({ path }: NodeProps) {
 	const open = useBoolProp(path, "open");
@@ -44,6 +74,8 @@ function CollapsibleView({ path }: NodeProps) {
 	const setProps = useSetProps(path);
 	const send = useSend(path);
 	const layout = useLayout(path, DEFAULTS);
+	const hasHeader = useChildren(path).includes(HEADER);
+	const headerId = useId();
 
 	const onOpenChange = useCallback(
 		(next: boolean) => {
@@ -61,28 +93,37 @@ function CollapsibleView({ path }: NodeProps) {
 			className="flex flex-col"
 			style={layout.size}
 		>
-			<CollapsibleTrigger
-				aria-label={title ? undefined : "Toggle section"}
-				className={cn(
-					"group flex w-full items-center gap-2 rounded-md px-2 py-3 text-left",
-					"text-base font-medium text-text-primary",
-					"transition-colors duration-fast ease-out",
-					"hover:bg-bg-hover active:bg-bg-press",
-					"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas",
-				)}
-			>
-				<ChevronRight
-					aria-hidden
+			{hasHeader ? (
+				<TriggerRow className={ROW}>
+					<CollapsibleTrigger
+						{...rowTriggerProps}
+						aria-labelledby={headerId}
+						className="group flex shrink-0 items-center rounded-sm outline-hidden"
+					>
+						<Chevron />
+					</CollapsibleTrigger>
+					<TriggerRowHeader id={headerId}>
+						<SlotView path={path} segment={HEADER} />
+					</TriggerRowHeader>
+				</TriggerRow>
+			) : (
+				<CollapsibleTrigger
+					aria-label={title ? undefined : "Toggle section"}
 					className={cn(
-						"pointer-events-none size-4 shrink-0 text-text-secondary",
-						"transition-transform duration-fast ease-out",
-						"group-data-[state=open]:rotate-90",
+						"group flex w-full items-center gap-2 text-left",
+						ROW,
+						TITLE,
+						"transition-colors duration-fast ease-out",
+						"hover:bg-bg-hover active:bg-bg-press",
+						FOCUS,
 					)}
-				/>
-				<span className="min-w-0 truncate">{title}</span>
-			</CollapsibleTrigger>
+				>
+					<Chevron />
+					<span className="min-w-0 truncate">{title}</span>
+				</CollapsibleTrigger>
+			)}
 			<CollapsibleContent className="data-[state=open]:flex data-[state=open]:min-h-0 data-[state=open]:flex-col">
-				<Stack path={path} layout={{ ...layout, size: undefined }} className="pt-2" />
+				<Stack path={path} layout={{ ...layout, size: undefined }} className="pt-2" skip={SLOTS} />
 			</CollapsibleContent>
 		</CollapsiblePrimitive>
 	);
