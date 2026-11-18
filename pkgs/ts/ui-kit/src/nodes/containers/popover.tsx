@@ -7,8 +7,18 @@
 // The trigger wears a Button's look off the same props a ButtonRef sends
 // (`label`, `icon`, `tooltip`, `variant`, `size`), so an empty label draws a
 // square icon button named by its tooltip. `title` heads the panel, a
-// quiet line over the body. `side` puts the panel on that
-// side of it and `edge` (start, center, end) lines their edges up.
+// quiet line over the body. `side` puts the panel on that side of it and
+// `edge` (start, center, end) lines their edges up.
+//
+// Two segments are the popover's own places, not body:
+//   header   heads the panel in place of `title`, in a box that takes the
+//            width and lets its child shrink; the panel is named by it
+//   trigger  drawn inside the trigger button in place of `label` and
+//            `icon`, in the same Button look (variant, size, tooltip), so
+//            an avatar and a name are one button. Display only: a control
+//            in there would be a button inside a button. The button is
+//            named by `tooltip`, else `title`, else "Open"
+// Python names them `popover.header` and `popover.trigger`.
 //
 // The tab owns `open` while the user clicks, the way Collapsible does: a
 // toggle updates the local prop first, then ships a `notify` with
@@ -22,7 +32,7 @@
 // child maps). A body taller than the room left on screen scrolls.
 
 import { OPS } from "@nustackdev/ui-core";
-import { useCallback } from "react";
+import { useCallback, useId } from "react";
 import { Button } from "../../components/ui/button";
 import { IconButton } from "../../components/ui/icon-button";
 import {
@@ -43,7 +53,9 @@ import {
 	FlowProvider,
 	type NodeEntry,
 	type NodeProps,
+	SlotView,
 	useBoolProp,
+	useChildren,
 	useEnumProp,
 	useSend,
 	useSetProps,
@@ -56,6 +68,9 @@ import { overlayStyle } from "./modal";
 const SIDES = ["top", "right", "bottom", "left"] as const;
 const EDGES = ["start", "center", "end"] as const;
 const DEFAULTS: LayoutDefaults = { gap: 3, justify: "start", align: "stretch" };
+const HEADER = "header";
+const TRIGGER = "trigger";
+const SLOTS: ReadonlySet<string> = new Set([HEADER, TRIGGER]);
 
 function PopoverView({ path }: NodeProps) {
 	const open = useBoolProp(path, "open");
@@ -70,6 +85,10 @@ function PopoverView({ path }: NodeProps) {
 	const scoped = useDisabledScope();
 	const disabled = useBoolProp(path, "disabled") || scoped;
 	const layout = useLayout(path, DEFAULTS);
+	const segments = useChildren(path);
+	const hasHeader = segments.includes(HEADER);
+	const hasTrigger = segments.includes(TRIGGER);
+	const headerId = useId();
 	const setProps = useSetProps(path);
 	const send = useSend(path);
 
@@ -84,7 +103,18 @@ function PopoverView({ path }: NodeProps) {
 	const Icon = iconFor(iconName);
 	const iconOnly = Boolean(Icon) && label === "";
 	const name = title || tooltip || label || iconName || "Open";
-	const trigger = iconOnly ? (
+	const trigger = hasTrigger ? (
+		<Button
+			className="shrink-0"
+			variant={variant}
+			size={size}
+			disabled={disabled}
+			aria-label={tooltip || title || "Open"}
+			type="button"
+		>
+			<SlotView path={path} segment={TRIGGER} flow="row" />
+		</Button>
+	) : iconOnly ? (
 		<IconButton
 			className="shrink-0"
 			variant={variant}
@@ -120,14 +150,19 @@ function PopoverView({ path }: NodeProps) {
 				data-node="popover"
 				side={side}
 				align={edge}
-				aria-label={name}
+				aria-label={hasHeader ? undefined : name}
+				aria-labelledby={hasHeader ? headerId : undefined}
 				className={cn(
 					"flex max-h-(--radix-popover-content-available-height) flex-col",
 					!layout.scroll && "overflow-y-auto",
 				)}
 				style={overlayStyle(layout, [])}
 			>
-				{title ? (
+				{hasHeader ? (
+					<div id={headerId} data-slot="popover-header" className="mb-3 min-w-0">
+						<SlotView path={path} segment={HEADER} />
+					</div>
+				) : title ? (
 					<div data-slot="popover-title" className="mb-3 text-sm font-medium text-text-primary">
 						{title}
 					</div>
@@ -137,6 +172,7 @@ function PopoverView({ path }: NodeProps) {
 					<Stack
 						path={path}
 						layout={{ ...layout, size: undefined, padSet: false, padding: undefined }}
+						skip={SLOTS}
 					/>
 				</FlowProvider>
 			</PopoverContent>

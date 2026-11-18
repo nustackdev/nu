@@ -2,7 +2,12 @@
 // for inspectors and side panels.
 //
 // Server-owned `open` / `title`, plus `side` and `dismissible`, all plain
-// props merged by the default `write`. Layout (`layout.tsx`): a left or right
+// props merged by the default `write`. The child at segment "header" draws
+// in the title's place, for a heading that is more than a string; the sheet
+// only places it, in a box that takes the width and lets its child shrink,
+// kept clear of the close button. That box is the sheet's labelled title,
+// so the sheet is named by its text. Python names it `sheet.header`; every
+// other child is the body. Layout (`layout.tsx`): a left or right
 // sheet is `width` wide (440px unless set), a top or bottom one `height` tall
 // (320px unless set); `padding` replaces its pad, and the body speaks a
 // stack's layers (`gap` 4, `justify`, `align`, `divided`, the per child
@@ -24,12 +29,15 @@ import {
 	SheetHeader,
 	Sheet as SheetPrimitive,
 	SheetTitle,
+	SheetTitleBox,
 } from "../../components/ui/sheet";
 import { cn } from "../../lib/utils";
 import {
 	type NodeEntry,
 	type NodeProps,
+	SlotView,
 	useBoolProp,
+	useChildren,
 	useEnumProp,
 	useSend,
 	useSetProps,
@@ -47,6 +55,8 @@ import { overlayStyle } from "./modal";
 
 const SIDES = ["left", "right", "top", "bottom"] as const;
 const DEFAULTS: LayoutDefaults = { gap: 4, justify: "start", align: "stretch" };
+const HEADER = "header";
+const SLOTS: ReadonlySet<string> = new Set([HEADER]);
 
 function SheetView({ path }: NodeProps) {
 	const open = useBoolProp(path, "open");
@@ -54,6 +64,7 @@ function SheetView({ path }: NodeProps) {
 	const side = useEnumProp(path, "side", SIDES, "right");
 	const layout = useLayout(path, DEFAULTS);
 	const dismissible = useBoolProp(path, "dismissible", true);
+	const hasHeader = useChildren(path).includes(HEADER);
 	const send = useSend(path);
 	const setProps = useSetProps(path);
 
@@ -81,8 +92,14 @@ function SheetView({ path }: NodeProps) {
 				style={overlayStyle(layout, ["width", "height"])}
 			>
 				{/* Radix needs a title to name the dialog; an untitled sheet keeps one for screen readers. */}
-				<SheetHeader className={cn(!title && "sr-only", dismissible && "pr-8")}>
-					<SheetTitle>{title || "Sheet"}</SheetTitle>
+				<SheetHeader className={cn(!title && !hasHeader && "sr-only", dismissible && "pr-8")}>
+					{hasHeader ? (
+						<SheetTitleBox>
+							<SlotView path={path} segment={HEADER} />
+						</SheetTitleBox>
+					) : (
+						<SheetTitle>{title || "Sheet"}</SheetTitle>
+					)}
 				</SheetHeader>
 				<div
 					className={cn(
@@ -92,7 +109,7 @@ function SheetView({ path }: NodeProps) {
 					)}
 					style={flowStyle({ ...layout, size: undefined })}
 				>
-					<StackChildren path={path} layout={layout} />
+					<StackChildren path={path} layout={layout} skip={SLOTS} />
 				</div>
 			</SheetContent>
 		</SheetPrimitive>

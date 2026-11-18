@@ -76,8 +76,9 @@ class Accordion(Section):
 class Card(Section):
     """Card-styled box around its slots. Props as ``CardRef.slot``.
 
-    Slots named ``media``, ``actions`` and ``footer`` draw in the card's own
-    places (top, header rail, bottom edge) instead of the body; ``card.media``,
+    Slots named ``media``, ``header``, ``actions`` and ``footer`` draw in the
+    card's own places (top, header line in place of the title, header rail,
+    bottom edge) instead of the body; ``card.media``, ``card.header``,
     ``card.actions`` and ``card.footer`` reach them. ``caption=`` is a line of
     text along the bottom.
     """
@@ -116,7 +117,11 @@ class Form(Section):
 
 
 class Modal(Section):
-    """Dialog overlay with its slots as the body. Props as ``ModalRef.slot``."""
+    """Dialog overlay with its slots as the body. Props as ``ModalRef.slot``.
+
+    A slot named ``header`` draws in the title's place instead of the body;
+    ``modal.header`` reaches it.
+    """
 
     _ref_cls = ModalRef
 

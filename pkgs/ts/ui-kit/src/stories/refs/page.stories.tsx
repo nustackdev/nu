@@ -1,5 +1,6 @@
 // Refs/Page: the parts a page is made of, as a program draws them. A titled
-// PageSection with actions in its header, a sidebar and a top bar of nav
+// PageSection with actions in its header, one whose header is a Row of its
+// own (icon, heading, count), a sidebar and a top bar of nav
 // items, a feature list of framed icons, pages linked as rows, as tiles and
 // inline as mentions, a Spacer pushing a toolbar's end, and a page capped
 // and centered by its Container.
@@ -64,6 +65,37 @@ export const SectionWithActions: Story = {
 						...statCard("tokens", "Tokens", "today", "842k", "+ 3%"),
 						...statCard("errors", "Errors", "today", "0.9%", "- 0.2 pp"),
 					),
+				]}
+			/>
+		);
+	},
+};
+
+export const SectionWithHeader: Story = {
+	render: () => {
+		const root = "page-section-header";
+		const sec = [step(root, "PageSection", { title: "never drawn", gap: 3 })];
+		const head = [...sec, step("header", "Row", { gap: 2 })];
+		return (
+			<NodeStage
+				root={root}
+				label="Section: a Row at `header` in place of the title (icon, heading, badge), actions kept"
+				chains={[
+					sec,
+					...under(
+						head,
+						[step("icon", "IconRef", { name: "server", tone: "secondary" })],
+						[step("heading", "HeadingRef", { label: "Hosts", level: 2 })],
+						[step("count", "BadgeRef", { label: "12" })],
+					),
+					[...sec, step("actions", "ButtonRef", { label: "Add host", icon: "plus" })],
+					[
+						...sec,
+						step("note", "TextRef", {
+							value: "Every machine the cluster schedules on.",
+							tone: "secondary",
+						}),
+					],
 				]}
 			/>
 		);

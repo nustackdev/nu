@@ -26,8 +26,9 @@ from nu.lang.sentinels import UNSET
 from nustd.ui.core.interactions import Changed, Write
 
 from .base import DictCollectionRef
-from .flow import FLOW_CHILDREN, STACK
+from .flow import FLOW_CHILDREN, STACK, RowRef
 from .layout import ChildLayout, StackLayout, one_of
+from .named import HEADER, header_ref, part_ref
 
 
 if TYPE_CHECKING:
@@ -40,7 +41,11 @@ if TYPE_CHECKING:
     from ..vocab import ControlSize
 
 
-__all__ = ["CollapsibleRef", "PopoverRef", "SheetRef"]
+__all__ = ["TRIGGER", "CollapsibleRef", "PopoverRef", "SheetRef"]
+
+
+#: The child key a Popover draws inside its trigger button, in place of label and icon.
+TRIGGER = "trigger"
 
 
 def _open_title(open: object, title: object) -> dict[str, object]:
@@ -100,7 +105,11 @@ _SIDES = ("left", "right", "top", "bottom")
 class SheetRef(ChildLayout, DictCollectionRef):
     """Drawer that slides in from an edge over the page, children as its body.
 
-    Server-owned ``open`` and ``title``. When ``dismissible`` is true the user
+    Server-owned ``open`` and ``title``. For a heading that is more than a
+    string, build a ``header`` child: ``sheet.header`` is the Shape's
+    ``header`` slot or a Row there, drawn in the title's place with the close
+    button kept beside it, and the sheet is named by its text. The sheet only
+    places it, full width and free to shrink. When ``dismissible`` is true the user
     can close it (backdrop, Esc, the close button) and the tab sends
     ``{open: false}``, which ``on_change()`` takes. Like Modal, the sheet
     stays open until the program writes ``open=False`` back, so a program
@@ -113,6 +122,7 @@ class SheetRef(ChildLayout, DictCollectionRef):
     """
 
     _wire_type = "Sheet"
+    _parts: ClassVar[frozenset[str]] = frozenset({HEADER})
     _layout: ClassVar[frozenset[str]] = STACK
     _children: ClassVar[tuple[str, ...]] = FLOW_CHILDREN
 
@@ -136,6 +146,11 @@ class SheetRef(ChildLayout, DictCollectionRef):
             dismissible=bool(dismissible),
             **cls._laid_out(layout),
         )
+
+    @property
+    def header(self) -> Ref:
+        """The header line, in place of the title: the Shape's ``header`` slot, or a Row there."""
+        return header_ref(self)
 
     def set_open(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(open=flag))
@@ -161,10 +176,19 @@ class PopoverRef(ChildLayout, DictCollectionRef):
 
     The trigger wears a button's look: ``label``, ``icon`` (a lucide name),
     ``tooltip``, ``variant`` and ``size`` read as ``ButtonRef``'s do, so an
-    empty label draws a square icon button. ``title`` heads the panel. The panel sits on ``side`` of it,
-    its ``edge`` (start, center, end) lined up with the trigger's, and takes
-    no room in the flow: nothing around it
+    empty label draws a square icon button. ``title`` heads the panel. The
+    panel sits on ``side`` of it, its ``edge`` (start, center, end) lined up
+    with the trigger's, and takes no room in the flow: nothing around it
     moves when it opens. Escape, a click outside or the trigger close it.
+
+    Two child keys are the popover's own places, not body. ``header`` heads
+    the panel in place of ``title``; ``trigger`` is drawn inside the trigger
+    button in place of ``label`` and ``icon``, in the same button look, so
+    an avatar and a name open the panel as one button. ``popover.header`` and
+    ``popover.trigger`` are the Shape's slots of those names, or a Row there.
+    The trigger's content is display only (an avatar, text, a badge, an
+    icon): a control inside a button is two targets in one. The button is
+    named by ``tooltip``, else ``title``, else "Open".
 
     The user opens and closes it in the tab, which sends ``{open: bool}`` as
     a notify; ``on_change()`` takes those. ``set(open=...)`` opens or closes
@@ -174,6 +198,7 @@ class PopoverRef(ChildLayout, DictCollectionRef):
     """
 
     _wire_type = "Popover"
+    _parts: ClassVar[frozenset[str]] = frozenset({HEADER, TRIGGER})
     _layout: ClassVar[frozenset[str]] = STACK
     _children: ClassVar[tuple[str, ...]] = FLOW_CHILDREN
 
@@ -207,6 +232,16 @@ class PopoverRef(ChildLayout, DictCollectionRef):
             open=bool(open),
             **cls._laid_out(layout),
         )
+
+    @property
+    def header(self) -> Ref:
+        """The panel's header, in place of the title: the Shape's ``header`` slot, or a Row there."""
+        return header_ref(self)
+
+    @property
+    def trigger(self) -> Ref:
+        """The trigger button's content: the Shape's ``trigger`` slot, or a Row there."""
+        return part_ref(self, TRIGGER, RowRef.slot(gap=2))
 
     def set_open(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(open=flag))

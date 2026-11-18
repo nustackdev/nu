@@ -35,7 +35,17 @@ from ..vocab import set_href as _set_href
 from .base import DictCollectionRef, ShapeCollectionRef
 from .flow import FLOW_CHILDREN, STACK
 from .layout import SIZE, ChildLayout, SizeLayout, StackLayout, choice, px
-from .named import ACTIONS, CONTROL, FOOTER, MEDIA, actions_ref, footer_ref, media_ref
+from .named import (
+    ACTIONS,
+    CONTROL,
+    FOOTER,
+    HEADER,
+    MEDIA,
+    actions_ref,
+    footer_ref,
+    header_ref,
+    media_ref,
+)
 
 
 if TYPE_CHECKING:
@@ -185,14 +195,19 @@ _CARD_SIZES = ("sm", "md", "lg")
 class CardRef(ChildLayout, DictCollectionRef):
     """A surface: media, a header with actions, the body, a footer.
 
-    Three child keys are the card's own places, not body: ``media`` draws
-    full-bleed on top (an image), ``actions`` on the header's right rail (a
-    badge, an icon button, a Row of them) and ``footer`` along the bottom
-    edge (a button, a Row of them). ``card.media``, ``card.actions`` and
-    ``card.footer`` answer with those children; declare them as slots with
-    those names on a Shape, or build under them with ``parent_ref=``. The
-    footer is pinned to the bottom, so a Grid row of cards lines its footers
-    up whatever each body holds. Every other child is the body.
+    Four child keys are the card's own places, not body: ``media`` draws
+    full-bleed on top (an image), ``header`` as the header line in place of
+    ``title`` and ``subtitle`` (a Row of an avatar, a name and a badge),
+    ``actions`` on the header's right rail (a badge, an icon button, a Row
+    of them) and ``footer`` along the bottom edge (a button, a Row of them).
+    ``card.media``, ``card.header``, ``card.actions`` and ``card.footer``
+    answer with those children; declare them as slots with those names on a
+    Shape, or build under them with ``parent_ref=``. The strings stay the
+    shorthand for a plain heading; a header child is for anything more. The
+    card only places it, full width beside the actions and free to shrink, so
+    a ``TextRef(lines=1)`` in it cuts with an ellipsis. The footer is pinned
+    to the bottom, so a Grid row of cards lines its footers up whatever each
+    body holds. Every other child is the body.
 
     ``caption`` (``set_caption``) is a quiet line of text along the bottom,
     drawn under a footer child when there is one.
@@ -215,7 +230,7 @@ class CardRef(ChildLayout, DictCollectionRef):
     """
 
     _wire_type = "Card"
-    _parts: ClassVar[frozenset[str]] = frozenset({MEDIA, ACTIONS, FOOTER})
+    _parts: ClassVar[frozenset[str]] = frozenset({MEDIA, HEADER, ACTIONS, FOOTER})
     _layout: ClassVar[frozenset[str]] = STACK
     _children: ClassVar[tuple[str, ...]] = FLOW_CHILDREN
     _family: ClassVar[Mapping[str, Check]] = {
@@ -252,6 +267,11 @@ class CardRef(ChildLayout, DictCollectionRef):
     def media(self) -> Ref:
         """The full-bleed top: the Shape's ``media`` slot, or a Column there."""
         return media_ref(self)
+
+    @property
+    def header(self) -> Ref:
+        """The header line, in place of the title: the Shape's ``header`` slot, or a Row there."""
+        return header_ref(self)
 
     @property
     def actions(self) -> Ref:
@@ -528,6 +548,13 @@ class _SetErrors(Send):
 class ModalRef(ChildLayout, DictCollectionRef):
     """Dialog overlay. Open vs closed is the thing it carries, so it has a `set()`.
 
+    ``title`` heads the dialog. For more than a string (an icon, a name and
+    a badge), build a ``header`` child: ``modal.header`` is the Shape's
+    ``header`` slot or a Row there, drawn in the title's place with the close
+    button kept beside it, and the dialog is named by its text. The modal
+    only places it, full width and free to shrink. Every other child is the
+    body.
+
     The dialog is ``width`` wide (512px unless set; a page width name reads,
     ``width="prose"``) and never grows past the window: a tall body scrolls
     inside it, the title stays put. The body speaks the layers of a Column
@@ -536,6 +563,7 @@ class ModalRef(ChildLayout, DictCollectionRef):
     """
 
     _wire_type = "Modal"
+    _parts: ClassVar[frozenset[str]] = frozenset({HEADER})
     _layout: ClassVar[frozenset[str]] = STACK
     _children: ClassVar[tuple[str, ...]] = FLOW_CHILDREN
 
@@ -557,6 +585,11 @@ class ModalRef(ChildLayout, DictCollectionRef):
             dismissible=bool(dismissible),
             **cls._laid_out(layout),
         )
+
+    @property
+    def header(self) -> Ref:
+        """The header line, in place of the title: the Shape's ``header`` slot, or a Row there."""
+        return header_ref(self)
 
     def set_open(self, flag: BoolArg) -> Nu:
         return Write(self, Dict.of(open=flag))

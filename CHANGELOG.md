@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Cards, sections, dialogs, sheets and popovers take a composed header instead of a title
 - A Quote container frames citations, notes and traces under a header line
 - The nudle server picks a free port by default and refuses a taken one cleanly
 - Queues work on both janus 2.0 and 2.1, so the version cap is relaxed

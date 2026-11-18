@@ -5,7 +5,15 @@
 // `open`, `title` and `dismissible` are plain props: the default `write`
 // merges them and the coercions below handle nil at read time, so there is
 // no handler here. There is no trigger slot: the opener is some other node
-// that writes `open`, so every child renders in the dialog body.
+// that writes `open`.
+//
+// The child at segment "header" draws in the title's place, for a heading
+// that is more than a string (an icon, a name, a badge). The modal only
+// places it: a box that takes the width and lets its child shrink, kept
+// clear of the close button, and the dialog's labelled title, so the dialog
+// is named by its text. Python names it `modal.header`. Every other child
+// renders in the dialog body. With neither, a hidden "Dialog" title still
+// names it.
 //
 // Composes the kit Dialog primitive (Radix Dialog under the hood). Overlay +
 // content pick up motion + backdrop tint from the primitive; we own the
@@ -27,12 +35,20 @@
 
 import { OPS } from "@nustackdev/ui-core";
 import { type CSSProperties, useCallback } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../components/ui/dialog";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogTitleBox,
+} from "../../components/ui/dialog";
 import { cn } from "../../lib/utils";
 import {
 	type NodeEntry,
 	type NodeProps,
+	SlotView,
 	useBoolProp,
+	useChildren,
 	useSend,
 	useSetProps,
 	useStringProp,
@@ -49,6 +65,8 @@ import {
 } from "./layout";
 
 const DEFAULTS: LayoutDefaults = { gap: 4, justify: "start", align: "stretch" };
+const HEADER = "header";
+const SLOTS: ReadonlySet<string> = new Set([HEADER]);
 
 /**
  * An overlay's size and pad as a style, less the props the primitive takes
@@ -69,6 +87,7 @@ function ModalView({ path }: NodeProps) {
 	const layout = useLayout(path, DEFAULTS);
 	const title = useStringProp(path, "title");
 	const dismissible = useBoolProp(path, "dismissible", true);
+	const hasHeader = useChildren(path).includes(HEADER);
 	const send = useSend(path);
 	const setProps = useSetProps(path);
 
@@ -88,15 +107,21 @@ function ModalView({ path }: NodeProps) {
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent
 				showClose={dismissible}
+				aria-describedby={undefined}
 				className="flex max-h-[calc(100dvh-2rem)] flex-col"
 				width={layout.size?.width}
 				style={overlayStyle(layout, ["width"])}
 			>
-				{title ? (
-					<DialogHeader>
-						<DialogTitle>{title}</DialogTitle>
-					</DialogHeader>
-				) : null}
+				{/* Radix needs a title to name the dialog; an untitled one keeps one for screen readers. */}
+				<DialogHeader className={cn(!title && !hasHeader && "sr-only", dismissible && "pr-8")}>
+					{hasHeader ? (
+						<DialogTitleBox>
+							<SlotView path={path} segment={HEADER} />
+						</DialogTitleBox>
+					) : (
+						<DialogTitle>{title || "Dialog"}</DialogTitle>
+					)}
+				</DialogHeader>
 				<div
 					data-slot="modal-body"
 					className={cn(
@@ -106,7 +131,7 @@ function ModalView({ path }: NodeProps) {
 					)}
 					style={flowStyle({ ...layout, size: undefined })}
 				>
-					<StackChildren path={path} layout={layout} />
+					<StackChildren path={path} layout={layout} skip={SLOTS} />
 				</div>
 			</DialogContent>
 		</Dialog>

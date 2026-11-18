@@ -179,6 +179,17 @@ function SheetTitle({ className, ...props }: React.ComponentProps<typeof SheetPr
 	);
 }
 
+// The sheet's title as a plain box the caller fills, the same as
+// DialogTitleBox: named by its text, no type of its own, full width with its
+// content free to shrink.
+function SheetTitleBox({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+	return (
+		<SheetPrimitive.Title asChild>
+			<div data-slot="sheet-title-box" className={cn("min-w-0", className)} {...props} />
+		</SheetPrimitive.Title>
+	);
+}
+
 function SheetDescription({
 	className,
 	...props
@@ -202,6 +213,7 @@ export {
 	SheetOverlay,
 	SheetPortal,
 	SheetTitle,
+	SheetTitleBox,
 	SheetTrigger,
 	sheetContentVariants,
 };

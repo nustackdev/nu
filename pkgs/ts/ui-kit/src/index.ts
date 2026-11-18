@@ -158,6 +158,7 @@ export {
 	DialogHeader,
 	DialogOverlay,
 	DialogTitle,
+	DialogTitleBox,
 	DialogTrigger,
 	dialogContentVariants,
 } from "./components/ui/dialog";
@@ -357,6 +358,7 @@ export {
 	SheetFooter,
 	SheetHeader,
 	SheetTitle,
+	SheetTitleBox,
 	SheetTrigger,
 	sheetContentVariants,
 } from "./components/ui/sheet";
