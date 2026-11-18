@@ -5,6 +5,10 @@
 // copy affordance in the top-right corner. `readOnly={false}` turns the same
 // block into an editor, so a sample and an editable buffer never look apart.
 //
+// `original` turns a block into a unified diff of `value` against it: removed
+// lines above the ones that replaced them, unchanged runs folded, always
+// read-only. The copy button copies `value`, the new text.
+//
 // The source is `value`, or string children when there is no `value`. Font is
 // JetBrains Mono; colors come from the `--syntax-*` tokens, so the `.dark`
 // flip restyles every block with no observer. Unknown languages render plain.
@@ -29,6 +33,11 @@ export interface CodeProps extends Omit<React.HTMLAttributes<HTMLElement>, "onCh
 	language?: string;
 	/** The source. Falls back to string children. */
 	value?: string;
+	/**
+	 * Block only. The old text: set, the block shows `value` as a diff against
+	 * it and is read-only. `""` diffs against nothing; unset is no diff.
+	 */
+	original?: string;
 	/** Block only. On by default: a block reads unless told it may be edited. */
 	readOnly?: boolean;
 	/** Block only. Defaults to on while editable, off while read-only. */
@@ -55,7 +64,8 @@ function Code({
 	copyable = false,
 	language,
 	value,
-	readOnly = true,
+	original,
+	readOnly: readOnlyProp = true,
 	lineNumbers,
 	wrap,
 	minHeight,
@@ -68,18 +78,21 @@ function Code({
 	...props
 }: CodeProps) {
 	if (block) {
+		const readOnly = readOnlyProp || original != null;
 		const source = value ?? (typeof children === "string" ? children : "");
 		return (
 			<div
 				data-slot="code-block"
 				data-language={language || undefined}
 				data-editable={readOnly ? undefined : ""}
+				data-diff={original != null ? "" : undefined}
 				className={cn(codeBox, className)}
 				{...props}
 			>
 				<CodeMirrorView
 					value={source}
 					language={language}
+					original={original}
 					readOnly={readOnly}
 					lineNumbers={lineNumbers}
 					wrap={wrap}

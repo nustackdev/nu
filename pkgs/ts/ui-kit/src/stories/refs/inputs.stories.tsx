@@ -5,7 +5,7 @@
 // a program drew on), the common states (disabled, readonly, required,
 // invalid through a Field) on every input, and a Form that submits on Enter
 // or its submit button and not on Cancel, and one that checks its fields
-// before it sends, with a disabled Fieldset in it.
+// before it sends, with a disabled Fieldset in it, and a CodeRef in diff mode.
 
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { NodeStage, sinkParameters, step } from "./harness";
@@ -540,4 +540,51 @@ export const FormChecks: Story = {
 			/>
 		);
 	},
+};
+
+const DIFF_BEFORE = `def total(rows):
+    out = 0
+    for row in rows:
+        out += row.price
+    return out
+
+
+def average(rows):
+    return total(rows) / len(rows)
+
+
+def cheapest(rows):
+    return min(rows, key=lambda r: r.price)
+
+
+def dearest(rows):
+    return max(rows, key=lambda r: r.price)
+`;
+
+const DIFF_AFTER = DIFF_BEFORE.replace(
+	"    out = 0\n    for row in rows:\n        out += row.price\n    return out\n",
+	"    return sum(row.price for row in rows)\n",
+).replace(
+	"    return total(rows) / len(rows)\n",
+	"    return total(rows) / len(rows) if rows else 0.0\n",
+);
+
+export const CodeDiff: Story = {
+	render: () => (
+		<NodeStage
+			root="inputs-diff"
+			label="CodeRef with an original: a read-only unified diff, unchanged runs folded"
+			chains={[
+				[
+					step("inputs-diff", "Column", { gap: 2 }),
+					step("diff", "CodeRef", {
+						value: DIFF_AFTER,
+						original: DIFF_BEFORE,
+						language: "python",
+						line_numbers: true,
+					}),
+				],
+			]}
+		/>
+	),
 };

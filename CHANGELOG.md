@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Code blocks show a read-only diff against older text, unchanged lines folded
 - Collapsible and accordion rows take a header that holds controls without toggling
 - Cards, sections, dialogs, sheets and popovers take a composed header instead of a title
 - A Quote container frames citations, notes and traces under a header line

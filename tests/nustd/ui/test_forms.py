@@ -413,3 +413,21 @@ def test_code_and_markdown_readonly():
     assert "editable" not in CodeRef.slot().props
     handle = _mount(CodeRef.slot())
     assert _frames(handle.set_readonly(False))[0].payload == {"readonly": False}
+
+
+def test_code_diff_mode():
+    """`original` turns CodeRef into a diff: None is off, "" diffs against
+    nothing, and the setters move either side or both in one write."""
+    assert CodeRef.slot().props["original"] is None
+    assert CodeRef.slot(original="").props["original"] == ""
+    seeded = CodeRef.slot(value="b\n", original="a\n", language="python").props
+    assert (seeded["value"], seeded["original"]) == ("b\n", "a\n")
+
+    handle = _mount(CodeRef.slot(original="a\n"))
+    assert _frames(handle.set("b\n"))[0].payload == "b\n"
+    assert _frames(handle.set("c\n", original="b\n"))[0].payload == {
+        "value": "c\n",
+        "original": "b\n",
+    }
+    assert _frames(handle.set_original("x\n"))[0].payload == {"original": "x\n"}
+    assert _frames(handle.set_original(None))[0].payload == {"original": None}

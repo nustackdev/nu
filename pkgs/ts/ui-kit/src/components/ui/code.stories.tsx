@@ -96,6 +96,40 @@ export function Save() {
 	),
 };
 
+// The old side of the diff stories: PYTHON before a small refactor, so the
+// diff shows a changed line, an added one and a removed one, with the long
+// unchanged middle folded.
+const PYTHON_BEFORE = PYTHON.replace("    watched: bool = False\n", "")
+	.replace("year: int = 0", "year: int")
+	.replace("def fib(n: int) -> int:", "def fib(n):")
+	.replace("print([fib(i) for i in range(10)], None, True)", "print(fib(10))");
+
+/** A unified diff: old text in `original`, new in `value`, always read-only. */
+export const Diff: StoryObj = {
+	render: () => {
+		const [after, setAfter] = useState(PYTHON);
+		return (
+			<div className="p-8 max-w-3xl space-y-6">
+				<div>
+					<div className={label}>diff, unchanged runs folded</div>
+					<Code block language="python" original={PYTHON_BEFORE} value={after} />
+				</div>
+				<div>
+					<div className={label}>diff against nothing: a new file</div>
+					<Code block language="sh" original="" value={SAMPLES.shell} />
+				</div>
+				<button
+					type="button"
+					className="text-sm text-accent-text underline"
+					onClick={() => setAfter((v) => `${v}\nprint("done")\n`)}
+				>
+					Append a line to the new side
+				</button>
+			</div>
+		);
+	},
+};
+
 type Args = {
 	language: keyof typeof SAMPLES;
 	readOnly: boolean;

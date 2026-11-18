@@ -77,6 +77,44 @@ export const kitTheme = EditorView.theme({
 	".cm-completionMatchedText": { textDecoration: "none", color: "var(--accent-text)" },
 });
 
+// A diff's colors (lib/code/view.tsx, `original` set). Added lines take the
+// good wash and removed lines the wrong one, each with its line color under
+// the exact characters that changed, so the eye finds the edit inside a long
+// line. Status roles rather than the merge package's own greens and reds, so
+// both themes stay on the palette. Every selector carries the merge view's
+// own class on top, which outranks the package's base theme.
+export const kitDiffTheme = EditorView.theme({
+	"&.cm-merge-b .cm-content .cm-changedLine": {
+		backgroundColor: "var(--status-ok-wash)",
+	},
+	"&.cm-merge-b .cm-content .cm-changedText": {
+		background: "var(--status-ok-line)",
+	},
+	"&.cm-merge-b .cm-content .cm-deletedChunk": {
+		backgroundColor: "var(--status-danger-wash)",
+		paddingLeft: "0",
+	},
+	"&.cm-merge-b .cm-content .cm-deletedChunk .cm-deletedLine": { padding: "0 12px" },
+	"&.cm-merge-b .cm-content .cm-deletedChunk .cm-deletedText": {
+		background: "var(--status-danger-line)",
+	},
+	"&.cm-merge-b .cm-gutters .cm-changedLineGutter": { background: "var(--status-ok)" },
+	"&.cm-merge-b .cm-gutters .cm-deletedLineGutter": { background: "var(--status-danger)" },
+	// The fold bar: a quiet wash with a count, a hover step like every row.
+	"&.cm-merge-b .cm-content .cm-collapsedLines": {
+		padding: "2px 12px",
+		color: "var(--text-muted)",
+		background: "var(--bg-hover)",
+		fontFamily: "var(--font-display)",
+		fontSize: "var(--text-xs)",
+		transition: "background-color var(--duration-fast) ease-out",
+	},
+	"&.cm-merge-b .cm-content .cm-collapsedLines:hover": {
+		color: "var(--text-secondary)",
+		background: "var(--bg-press)",
+	},
+});
+
 export const kitHighlight = HighlightStyle.define([
 	{
 		tag: [

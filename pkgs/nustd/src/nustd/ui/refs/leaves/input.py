@@ -435,7 +435,19 @@ class CodeRef(_Submits, InputLeaf):
     the buffer outright, a notify from the browser replaces the server's
     copy, and there is no merge.
 
+    Diff mode: give it an `original` and the view shows `value` as a unified
+    diff against that old text, removed lines above the lines that replaced
+    them, added and removed lines washed, long unchanged runs folded behind a
+    bar that opens them. Highlighting stays on. A diff is read-only whatever
+    `readonly` says, and a `Form` does not gather it. `""` is a diff against
+    nothing (every line added); `None`, the default, is no diff. A new text on
+    either side redraws the diff in place: `set(new, original=old)` moves
+    both at once, `set_original(old)` just the old side, and
+    `set_original(None)` turns the diff off.
+
     Args:
+        original: the old text `value` is compared against. `None` is no
+            diff.
         language: a language name or alias (`python`, `sql`, `markdown`,
             `shell`, `yaml`, `ts`, `json`, ...). Anything unknown renders
             unhighlighted rather than failing.
@@ -454,6 +466,7 @@ class CodeRef(_Submits, InputLeaf):
         cls,
         *,
         value: str = "",
+        original: str | None = None,
         language: str = "",
         readonly: bool = True,
         line_numbers: bool | None = None,
@@ -464,6 +477,7 @@ class CodeRef(_Submits, InputLeaf):
     ) -> Self:
         return super().slot(
             value=value,
+            original=original,
             language=language,
             readonly=bool(readonly),
             line_numbers=line_numbers,
@@ -473,8 +487,15 @@ class CodeRef(_Submits, InputLeaf):
             max_height=max_height,
         )
 
-    def set(self, value: StrArg) -> Nu:
-        return Write(self, value)
+    def set(self, value: StrArg, original: StrArg | None = UNSET) -> Nu:
+        # Scalar shortcut: just the text when the old side stays put. Both
+        # sides in one write, so a diff never draws against a stale original.
+        if original is UNSET:
+            return Write(self, value)
+        return Write(self, Dict.of(value=value, original=original))
+
+    def set_original(self, text: StrArg | None) -> Nu:
+        return Write(self, Dict.of(original=text))
 
     def set_language(self, name: StrArg) -> Nu:
         return Write(self, Dict.of(language=name))

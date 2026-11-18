@@ -6,13 +6,18 @@
 // and a disabled Fieldset or Form around it makes it read-only too. Renders the kit's `Code` block,
 // one engine either way, so flipping the flag never changes how the code looks.
 //
+// `original` set (a string, "" included) makes it a diff: `value` shown as a
+// unified diff against the old text, read-only whatever `readonly` says, and
+// never gathered by a Form since nobody types into it. Nil turns the diff off.
+// A write to either text redraws the diff in the same view.
+//
 // Commit moments (cmd+enter, blur, only when the text changed): the node's
 // `value` prop updates locally, then `{event: "change"}` goes out and the
 // server reads back. cmd+enter also sends `{event: "submit"}` after its
 // commit, and asks an enclosing Form to submit (./control.ts). A server-initiated write
 // replaces the source, and needs a handler for the InputRef reason: nil must
 // land as "" so the view never sees null and a following read answers "". The
-// map form merges {value, language, readonly, line_numbers, wrap, show_copy,
+// map form merges {value, original, language, readonly, line_numbers, wrap, show_copy,
 // min_height, max_height} the way the store merges everything else.
 
 import { OPS } from "@nustackdev/ui-core";
@@ -34,6 +39,9 @@ import { EVENTS, requestFormSubmit, resetHandler, submitted, useDisabledScope } 
 function CodeView({ path }: NodeProps) {
 	const value = useStringProp(path, "value");
 	const language = useStringProp(path, "language");
+	// Raw, not useStringProp: "" is a diff against nothing, nil is no diff.
+	const raw = useProps(path).original;
+	const original = typeof raw === "string" ? raw : undefined;
 	const scoped = useDisabledScope();
 	const readOnly = useBoolProp(path, "readonly", true) || scoped;
 	// Nil means "follow the mode": numbered while editable, bare while reading.
@@ -70,6 +78,7 @@ function CodeView({ path }: NodeProps) {
 			block
 			value={value}
 			language={language}
+			original={original}
 			readOnly={readOnly}
 			lineNumbers={numbers == null ? undefined : Boolean(numbers)}
 			wrap={wrap}
@@ -85,7 +94,10 @@ function CodeView({ path }: NodeProps) {
 export const CodeRef: NodeEntry = {
 	component: CodeView,
 	fill: true,
-	input: { empty: "", gathered: (props) => props.readonly === false },
+	input: {
+		empty: "",
+		gathered: (props) => props.readonly === false && typeof props.original !== "string",
+	},
 	handlers: {
 		reset: resetHandler,
 		write: (ctx, payload) =>

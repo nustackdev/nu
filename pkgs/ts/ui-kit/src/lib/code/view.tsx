@@ -18,6 +18,21 @@
 // `onDirty` is the live read in between, for a host that wants to show an
 // unsaved marker.
 //
+// ## Diff
+//
+// Given an `original`, the view shows `value` as a unified diff against it
+// (@codemirror/merge): removed lines as blocks above the lines that replaced
+// them, added lines washed, runs of unchanged lines folded behind a bar you
+// click to open. Highlighting stays on both sides. A diff is always read-only
+// and carries no accept or reject buttons: it shows a change, it does not
+// merge one.
+//
+// The merge extension sits in its own compartment like every other setting,
+// but it fills that compartment twice when either text moves: empty, then
+// fresh. Its fields only initialise when they join the state, so a single
+// reconfigure would keep the old original, and the folds are worked out once,
+// from the first diff. Emptying first makes the next diff a clean one.
+//
 // ## What is deliberately not here
 //
 // Nothing about neighbours. No arrow-out into a next block, no escape-to-
@@ -29,6 +44,7 @@
 // surface around it. The extension sets themselves live in ./extensions.ts,
 // shared with the markdown editor's code fences.
 
+import { unifiedMergeView } from "@codemirror/merge";
 import {
 	Annotation,
 	Compartment,
@@ -41,12 +57,19 @@ import type * as React from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { codeBase, codeEditing, codeGutter, codeReading } from "./extensions";
 import { loadLanguage } from "./languages";
+import { kitDiffTheme } from "./theme";
 
 export type CodeMirrorViewProps = {
 	/** The source. Owned by whoever renders this. */
 	value: string;
 	/** A language name or alias (`python`, `ts`, `sql`, `shell`). Unknown renders plain. */
 	language?: string;
+	/**
+	 * The text `value` is compared against. Set, the view is a unified diff
+	 * of the two, and read-only whatever `readOnly` says. `""` is a diff
+	 * against nothing (every line added); unset is no diff.
+	 */
+	original?: string;
 	/** On by default: a code view reads unless told it may be edited. */
 	readOnly?: boolean;
 	/** Defaults to on while editable, off while read-only. */
@@ -90,10 +113,23 @@ function editing(commit: () => void, submit: () => void): Extension {
 	});
 }
 
+/** The unified diff of the doc against `original`: folded, no chunk buttons. */
+function diffAgainst(original: string): Extension {
+	return [
+		unifiedMergeView({
+			original,
+			mergeControls: false,
+			collapseUnchanged: { margin: 3, minSize: 4 },
+		}),
+		kitDiffTheme,
+	];
+}
+
 export function CodeMirrorView({
 	value,
 	language = "",
-	readOnly = true,
+	original,
+	readOnly: readOnlyProp = true,
 	lineNumbers: numbered,
 	wrap = false,
 	minHeight = 0,
@@ -108,11 +144,15 @@ export function CodeMirrorView({
 	const viewRef = useRef<EditorView | null>(null);
 	/** The buffer changed since the last commit or inbound value. Gates inbound writes. */
 	const dirtyRef = useRef(false);
+	/** The diff compartment holds a merge view. */
+	const armedRef = useRef(false);
 	// The view binds its listeners once, so everything they read goes through
 	// a ref rather than a closed-over prop.
-	const cb = useRef({ value, onCommit, onSubmit, onDirty, onView });
-	cb.current = { value, onCommit, onSubmit, onDirty, onView };
+	const cb = useRef({ value, original, onCommit, onSubmit, onDirty, onView });
+	cb.current = { value, original, onCommit, onSubmit, onDirty, onView };
 
+	const diffing = original != null;
+	const readOnly = readOnlyProp || diffing;
 	const showNumbers = numbered ?? !readOnly;
 
 	const slots = useRef({
@@ -120,6 +160,7 @@ export function CodeMirrorView({
 		language: new Compartment(),
 		gutter: new Compartment(),
 		wrap: new Compartment(),
+		diff: new Compartment(),
 	}).current;
 
 	const commit = useCallback(() => {
@@ -151,6 +192,7 @@ export function CodeMirrorView({
 					slots.language.of([]),
 					slots.gutter.of(showNumbers ? codeGutter : []),
 					slots.wrap.of(wrap ? EditorView.lineWrapping : []),
+					slots.diff.of([]),
 					codeBase,
 					EditorView.updateListener.of((u) => {
 						if (u.docChanged && u.transactions.some((tr) => !tr.annotation(inbound))) {
@@ -203,16 +245,39 @@ export function CodeMirrorView({
 		});
 	}, [wrap, slots]);
 
+	// -- diff --------------------------------------------------------------
+	//
+	// Runs after the inbound value above, so a write that moves both texts
+	// lands the new doc first and then diffs it once. Emptied, then filled
+	// fresh: see "Diff" in the header.
+	const armDiff = useCallback(() => {
+		const view = viewRef.current;
+		const against = cb.current.original;
+		// A plain code view never had a diff, so it pays nothing here.
+		if (!view || (against == null && !armedRef.current)) return;
+		view.dispatch({ effects: slots.diff.reconfigure([]) });
+		armedRef.current = against != null;
+		if (against != null) view.dispatch({ effects: slots.diff.reconfigure(diffAgainst(against)) });
+	}, [slots]);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: either text moving redraws the diff.
+	useEffect(() => {
+		armDiff();
+	}, [original, value, armDiff]);
+
 	useEffect(() => {
 		let live = true;
 		loadLanguage(language).then((support) => {
 			if (!live) return;
 			viewRef.current?.dispatch({ effects: slots.language.reconfigure(support ?? []) });
+			// Removed lines take their highlighting from the language when they
+			// are drawn, so a diff drawn before the language landed is redrawn.
+			if (cb.current.original != null) armDiff();
 		});
 		return () => {
 			live = false;
 		};
-	}, [language, slots]);
+	}, [language, slots, armDiff]);
 
 	const bounds = {
 		"--nu-code-min": minHeight > 0 ? `${minHeight}px` : "0",
