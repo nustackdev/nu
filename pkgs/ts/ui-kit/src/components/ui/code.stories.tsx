@@ -162,7 +162,7 @@ function Playground({ language, readOnly, lineNumbers, wrap, copyable, maxHeight
 			<p className="text-sm text-text-muted">
 				{readOnly
 					? "Read-only. Flip readOnly in the controls; the same view becomes an editor."
-					: `Editable. Cmd+enter or click away to commit. Commits so far: ${commits}.`}
+					: `Editable. Shift+Enter or click away to commit. Commits so far: ${commits}.`}
 			</p>
 		</div>
 	);

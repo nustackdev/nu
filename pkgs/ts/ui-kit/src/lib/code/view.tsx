@@ -13,8 +13,13 @@
 //
 // ## Saving
 //
-// Not every keystroke. Cmd+enter is the deliberate save and blur is the
+// Not every keystroke. The send key is the deliberate save and blur is the
 // accidental one, and a commit that round-trips to the same text is dropped.
+// The send key then submits (`onSubmit`): shift+Enter with Enter the newline,
+// or the other way round with `submitOn="enter"`. Cmd/ctrl+Enter does
+// nothing here; it passes through to the app. Whatever
+// the owner does with `value` in that submit (puts the declared text back,
+// say) lands in the document.
 // `onDirty` is the live read in between, for a host that wants to show an
 // unsaved marker.
 //
@@ -44,6 +49,7 @@
 // surface around it. The extension sets themselves live in ./extensions.ts,
 // shared with the markdown editor's code fences.
 
+import { insertNewlineAndIndent } from "@codemirror/commands";
 import { unifiedMergeView } from "@codemirror/merge";
 import {
 	Annotation,
@@ -54,7 +60,8 @@ import {
 } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import type * as React from "react";
-import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useReducer, useRef } from "react";
+import type { SubmitOn } from "../keyboard";
 import { codeBase, codeEditing, codeGutter, codeReading } from "./extensions";
 import { loadLanguage } from "./languages";
 import { kitDiffTheme } from "./theme";
@@ -79,10 +86,12 @@ export type CodeMirrorViewProps = {
 	/** Height bounds in px. The view grows with its content between them; 0 is no bound. */
 	minHeight?: number;
 	maxHeight?: number;
-	/** Persist. Fires on cmd+enter and on blur, and only when the text changed. */
+	/** Persist. Fires on the send key and on blur, and only when the text changed. */
 	onCommit?: (source: string) => void;
-	/** The deliberate send: cmd+enter, after its commit. */
+	/** The deliberate send, after its commit. */
 	onSubmit?: () => void;
+	/** Which key sends: shift+Enter (the default, Enter is the newline) or Enter. */
+	submitOn?: SubmitOn;
 	/** Whether the buffer differs from `value`, on every keystroke. */
 	onDirty?: (dirty: boolean) => void;
 	className?: string;
@@ -96,18 +105,24 @@ export type CodeMirrorViewProps = {
 /** Marks a transaction as the inbound value landing, not a keystroke. */
 const inbound = Annotation.define<boolean>();
 
-/** The editing set, with this view's own undo stack and its deliberate-save key. */
-function editing(commit: () => void, submit: () => void): Extension {
+/**
+ * The editing set, with this view's own undo stack and its send key. `mode`
+ * is read on each press, so a `submitOn` change needs no rebuild: the send
+ * key commits then submits, the other one is the newline.
+ */
+function editing(commit: () => void, submit: () => void, mode: () => SubmitOn): Extension {
+	const send = () => {
+		commit();
+		submit();
+		return true;
+	};
 	return codeEditing({
 		history: true,
 		keys: [
+			{ key: "Enter", run: () => (mode() === "enter" ? send() : false) },
 			{
-				key: "Mod-Enter",
-				run: () => {
-					commit();
-					submit();
-					return true;
-				},
+				key: "Shift-Enter",
+				run: (view) => (mode() === "enter" ? insertNewlineAndIndent(view) : send()),
 			},
 		],
 	});
@@ -136,6 +151,7 @@ export function CodeMirrorView({
 	maxHeight = 0,
 	onCommit,
 	onSubmit,
+	submitOn = "shift+enter",
 	onDirty,
 	className,
 	onView,
@@ -148,8 +164,8 @@ export function CodeMirrorView({
 	const armedRef = useRef(false);
 	// The view binds its listeners once, so everything they read goes through
 	// a ref rather than a closed-over prop.
-	const cb = useRef({ value, original, onCommit, onSubmit, onDirty, onView });
-	cb.current = { value, original, onCommit, onSubmit, onDirty, onView };
+	const cb = useRef({ value, original, onCommit, onSubmit, submitOn, onDirty, onView });
+	cb.current = { value, original, onCommit, onSubmit, submitOn, onDirty, onView };
 
 	const diffing = original != null;
 	const readOnly = readOnlyProp || diffing;
@@ -172,10 +188,18 @@ export function CodeMirrorView({
 		cb.current.onCommit?.(next);
 	}, []);
 
-	const submit = useCallback(() => cb.current.onSubmit?.(), []);
+	// A submit can put the value back (`clear_on_submit`) in the same tick
+	// that its commit moved it, and the two land as one render where `value`
+	// never changed, so the inbound effect below would not run and the typed
+	// text would stay. The bump makes it look again once that render is in.
+	const [submits, bump] = useReducer((n: number) => n + 1, 0);
+	const submit = useCallback(() => {
+		cb.current.onSubmit?.();
+		bump();
+	}, []);
 
 	const modeFor = useCallback(
-		(ro: boolean) => (ro ? codeReading : editing(commit, submit)),
+		(ro: boolean) => (ro ? codeReading : editing(commit, submit, () => cb.current.submitOn)),
 		[commit, submit],
 	);
 
@@ -221,6 +245,7 @@ export function CodeMirrorView({
 	// Last actor wins, but not mid-keystroke: an inbound value never yanks text
 	// out from under someone with uncommitted edits. Once the buffer is clean
 	// the server's copy is the truth and gets adopted, caret or no caret.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: a submit asks for a fresh look.
 	useEffect(() => {
 		const view = viewRef.current;
 		if (!view || dirtyRef.current) return;
@@ -229,7 +254,7 @@ export function CodeMirrorView({
 			changes: { from: 0, to: view.state.doc.length, insert: value },
 			annotations: [inbound.of(true), Transaction.addToHistory.of(false)],
 		});
-	}, [value]);
+	}, [value, submits]);
 
 	useEffect(() => {
 		viewRef.current?.dispatch({ effects: slots.mode.reconfigure(modeFor(readOnly)) });

@@ -22,6 +22,7 @@ import type * as React from "react";
 import { useCallback, useState } from "react";
 
 import { CodeMirrorView } from "../../lib/code/view";
+import type { SubmitOn } from "../../lib/keyboard";
 import { codeBox } from "../../lib/recipes";
 import { cn } from "../../lib/utils";
 
@@ -47,10 +48,12 @@ export interface CodeProps extends Omit<React.HTMLAttributes<HTMLElement>, "onCh
 	/** Block only. Height bounds in px; the block grows between them. 0 is no bound. */
 	minHeight?: number;
 	maxHeight?: number;
-	/** Block only. Fires on cmd+enter and on blur, and only when the text changed. */
+	/** Block only. Fires on the send key and on blur, and only when the text changed. */
 	onCommit?: (source: string) => void;
-	/** cmd+enter in the editor, after its commit. */
+	/** The send key in the editor, after its commit. */
 	onSubmit?: () => void;
+	/** Block only. Which key sends: shift+Enter (default) or Enter. */
+	submitOn?: SubmitOn;
 	/** Block only. Whether the buffer differs from `value`, on every keystroke. */
 	onDirty?: (dirty: boolean) => void;
 	/** Block only. The live CodeMirror view on mount, null on teardown. */
@@ -72,6 +75,7 @@ function Code({
 	maxHeight,
 	onCommit,
 	onSubmit,
+	submitOn,
 	onDirty,
 	onView,
 	children,
@@ -100,6 +104,7 @@ function Code({
 					maxHeight={maxHeight}
 					onCommit={onCommit}
 					onSubmit={onSubmit}
+					submitOn={submitOn}
 					onDirty={onDirty}
 					onView={onView}
 				/>

@@ -498,7 +498,7 @@ export const FormSubmit: Story = {
 							label: "Notes",
 							value: "",
 							rows: 2,
-							placeholder: "cmd+Enter submits",
+							placeholder: "shift+Enter submits",
 						}),
 					],
 					[form, actions, step("cancel", "ButtonRef", { label: "Cancel", variant: "secondary" })],

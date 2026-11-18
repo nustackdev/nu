@@ -11,30 +11,35 @@
 // never gathered by a Form since nobody types into it. Nil turns the diff off.
 // A write to either text redraws the diff in the same view.
 //
-// Commit moments (cmd+enter, blur, only when the text changed): the node's
-// `value` prop updates locally, then `{event: "change"}` goes out and the
-// server reads back. cmd+enter also sends `{event: "submit"}` after its
-// commit, and asks an enclosing Form to submit (./control.ts). A server-initiated write
-// replaces the source, and needs a handler for the InputRef reason: nil must
-// land as "" so the view never sees null and a following read answers "". The
-// map form merges {value, original, language, readonly, line_numbers, wrap, show_copy,
-// min_height, max_height} the way the store merges everything else.
+// Commit moments (the send key, blur, only when the text changed): the
+// node's `value` prop updates locally, then `{event: "change"}` goes out and
+// the server reads back. The send key also sends `{event: "submit", value}`
+// after its commit, asks an enclosing Form to submit, and with
+// `clear_on_submit` puts the declared value back, the editor's document
+// included (./control.ts `useSubmit`). `submit_on` picks the key, shift+Enter
+// (default, Enter the newline) or Enter, the same switch as every multi-line
+// input. A server-initiated write replaces the source, and needs a handler
+// for the InputRef reason: nil must land as "" so the view never sees null
+// and a following read answers "". The map form merges {value, original,
+// language, readonly, line_numbers, wrap, show_copy, min_height, max_height,
+// submit_on, clear_on_submit} the way the store merges everything else.
 
 import { OPS } from "@nustackdev/ui-core";
 import { useCallback } from "react";
 import { Code } from "../../components/ui/code";
+import { SUBMIT_ON } from "../../lib/keyboard";
 import {
 	type NodeEntry,
 	type NodeProps,
-	pathKey,
 	useBoolProp,
+	useEnumProp,
 	useNumberProp,
 	useProps,
 	useSend,
 	useSetValue,
 	useStringProp,
 } from "../../tree";
-import { EVENTS, requestFormSubmit, resetHandler, submitted, useDisabledScope } from "./control";
+import { EVENTS, resetHandler, useDisabledScope, useSubmit } from "./control";
 
 function CodeView({ path }: NodeProps) {
 	const value = useStringProp(path, "value");
@@ -44,6 +49,7 @@ function CodeView({ path }: NodeProps) {
 	const original = typeof raw === "string" ? raw : undefined;
 	const scoped = useDisabledScope();
 	const readOnly = useBoolProp(path, "readonly", true) || scoped;
+	const submitOn = useEnumProp(path, "submit_on", SUBMIT_ON, "shift+enter");
 	// Nil means "follow the mode": numbered while editable, bare while reading.
 	const numbers = useProps(path).line_numbers;
 	const wrap = useBoolProp(path, "wrap");
@@ -52,7 +58,6 @@ function CodeView({ path }: NodeProps) {
 	const maxHeight = useNumberProp(path, "max_height", 0);
 	const setValue = useSetValue(path);
 	const send = useSend(path);
-	const key = pathKey(path);
 
 	const commit = useCallback(
 		(source: string) => {
@@ -64,14 +69,8 @@ function CodeView({ path }: NodeProps) {
 		[setValue, send],
 	);
 
-	const submit = useCallback(
-		() => {
-			send(OPS.notify, { event: EVENTS.submit, value: submitted(path) });
-			requestFormSubmit(document.activeElement);
-		},
-		// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
-		[key, send],
-	);
+	const fire = useSubmit(path);
+	const submit = useCallback(() => fire(document.activeElement), [fire]);
 
 	return (
 		<Code
@@ -87,6 +86,7 @@ function CodeView({ path }: NodeProps) {
 			maxHeight={maxHeight}
 			onCommit={commit}
 			onSubmit={submit}
+			submitOn={submitOn}
 		/>
 	);
 }

@@ -473,8 +473,12 @@ class FormRef(ChildLayout, DictCollectionRef):
 
     ``on_submit()`` hears one ``{event: "submit", values, button}`` per
     submit: Enter in any single-line input inside, a click on a button
-    declared ``submit=True``, or cmd/ctrl+Enter in a multi-line one. Every
-    other button is a plain one, so a Cancel in a form never submits.
+    declared ``submit=True``, or shift+Enter in a multi-line one (a
+    ``TextAreaRef``, or a ``CodeRef`` or ``MarkdownRef`` with
+    ``readonly=False``), where plain Enter stays a newline. A key that
+    submits the form fires the input's own ``on_submit()`` first, then the
+    form's. Every other button is a plain one, so a Cancel in a form never
+    submits.
     ``values`` is every input under the form in one snapshot, nested the way
     the slots are and keyed by slot name, a Field standing for its control::
 

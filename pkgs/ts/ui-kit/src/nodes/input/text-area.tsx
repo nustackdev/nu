@@ -1,7 +1,7 @@
 // TextAreaRef -- multi-line text input. Browser is source of truth.
 //
 // User types: the node's `value` prop updates immediately (controlled). Blur
-// commits. cmd/ctrl+Enter commits, then submits, and plain Enter is a newline.
+// commits. shift+Enter commits, then submits, and plain Enter is a newline.
 // `submit_on="enter"` turns it into a chat composer: Enter submits and
 // shift+Enter is the newline. Focus stays put either way. See ./control.ts.
 //
@@ -15,10 +15,12 @@
 
 import { Label } from "../../components/ui/field";
 import { TextArea } from "../../components/ui/text-area";
+import { SUBMIT_ON } from "../../lib/keyboard";
 import {
 	type NodeEntry,
 	type NodeProps,
 	useBoolProp,
+	useEnumProp,
 	useNumberProp,
 	useProp,
 	useStringProp,
@@ -31,7 +33,7 @@ function TextAreaView({ path }: NodeProps) {
 	const maxLength = useProp<number | null>(path, "max_length", null);
 	const autoResize = useBoolProp(path, "auto_resize");
 	const mono = useBoolProp(path, "mono");
-	const submitOn = useStringProp(path, "submit_on", "mod+enter");
+	const submitOn = useEnumProp(path, "submit_on", SUBMIT_ON, "shift+enter");
 	const c = useControl(path);
 	const { edit, commit, submit } = useCommit(path);
 
@@ -63,8 +65,8 @@ function TextAreaView({ path }: NodeProps) {
 				onBlur={commit}
 				onKeyDown={(e) => {
 					if (!isEnter(e)) return;
-					const mod = e.metaKey || e.ctrlKey;
-					const sends = submitOn === "enter" ? !e.shiftKey : mod;
+					if (e.metaKey || e.ctrlKey || e.altKey) return;
+					const sends = submitOn === "enter" ? !e.shiftKey : e.shiftKey;
 					if (!sends) return;
 					e.preventDefault();
 					submit(e.currentTarget);

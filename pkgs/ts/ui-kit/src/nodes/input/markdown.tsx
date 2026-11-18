@@ -8,12 +8,19 @@
 // engine either way, so what a document looks like never depends on whether
 // you can type in it.
 //
-// Commit moments (a quiet moment, blur): the node's `value` prop updates
-// locally, then a notify goes out and the server reads back. A server-initiated
-// write replaces the source, and needs a handler for the InputRef reason: nil
-// must land as "" so the editor never sees null and a following read answers
-// "". The map form merges {value, placeholder, readonly} the way the store
-// merges everything else.
+// Commit moments (a quiet moment, blur, the send key): the node's `value`
+// prop updates locally, then a notify goes out and the server reads back.
+// The send key then sends, the way a text area does (./control.ts
+// `useSubmit`): `{event: "submit", value}` with the text just saved, an
+// enclosing Form asked to submit, and with `clear_on_submit` the declared
+// value put back, the editor's document included. `submit_on` picks the key,
+// shift+Enter (default, Enter breaks the line) or Enter (shift+Enter breaks
+// it), the same switch as the text area and the code editor. A code fence
+// keeps both keys (../../lib/markdown/editor.tsx). A server-initiated write
+// replaces the source, and needs a handler for the InputRef reason: nil must
+// land as "" so the editor never sees null and a following read answers "".
+// The map form merges {value, placeholder, readonly, submit_on,
+// clear_on_submit} the way the store merges everything else.
 //
 // Last actor wins. No OT, no CRDT: two people in one node clobber each other,
 // and that is the contract, not a gap.
@@ -75,17 +82,19 @@ import { OPS, type Path } from "@nustackdev/ui-core";
 import type { EditorView } from "prosemirror-view";
 import { useCallback, useRef } from "react";
 import { Markdown } from "../../components/ui/markdown";
+import { SUBMIT_ON } from "../../lib/keyboard";
 import type { MarkdownHandle } from "../../lib/markdown/handle";
 import {
 	type NodeEntry,
 	type NodeProps,
 	pathKey,
 	useBoolProp,
+	useEnumProp,
 	useSend,
 	useSetValue,
 	useStringProp,
 } from "../../tree";
-import { EVENTS, useDisabledScope } from "./control";
+import { EVENTS, useDisabledScope, useSubmit } from "./control";
 
 /** A mounted markdown editor: its handle while it takes commands, null while read-only. */
 export type MarkdownEntry = { handle: MarkdownHandle | null };
@@ -222,6 +231,7 @@ function MarkdownView({ path }: NodeProps) {
 	const hint = useStringProp(path, "placeholder");
 	const scoped = useDisabledScope();
 	const readOnly = useBoolProp(path, "readonly", true) || scoped;
+	const submitOn = useEnumProp(path, "submit_on", SUBMIT_ON, "shift+enter");
 	const setValue = useSetValue(path);
 	const send = useSend(path);
 	const key = pathKey(path);
@@ -240,6 +250,9 @@ function MarkdownView({ path }: NodeProps) {
 		},
 		[key, setValue, send],
 	);
+
+	const fire = useSubmit(path);
+	const submit = useCallback(() => fire(document.activeElement), [fire]);
 
 	const stored = useCallback(
 		(fn: () => void, lost?: () => void) => whenRead(path, fn, lost),
@@ -264,6 +277,8 @@ function MarkdownView({ path }: NodeProps) {
 			placeholder={hint}
 			readOnly={readOnly}
 			onCommit={commit}
+			onSubmit={submit}
+			submitOn={submitOn}
 			onView={onView}
 			onHandle={onHandle}
 			stored={stored}

@@ -6,7 +6,7 @@
 // (lib/markdown) for both, so a document looks the same whether or not you
 // can type in it. Headings, lists and tables carry the element recipes
 // (lib/recipes.ts) from the schema; the rest of the styling is `Prose`. This
-// adds only the engine.
+// adds only the engine. Editable, the send key saves and sends (`onSubmit`, `submitOn`).
 
 import type * as React from "react";
 
@@ -15,7 +15,7 @@ import { Prose } from "./prose";
 
 export interface MarkdownProps
 	extends Omit<ProseEditorProps, "onCommit" | "readOnly" | "className">,
-		Omit<React.HTMLAttributes<HTMLDivElement>, "placeholder"> {
+		Omit<React.HTMLAttributes<HTMLDivElement>, "placeholder" | "onSubmit"> {
 	/** On by default: a document reads unless told it may be edited. */
 	readOnly?: boolean;
 	/** Fires on a quiet moment and on blur, only when the document changed. */
@@ -27,6 +27,8 @@ function Markdown({
 	placeholder,
 	readOnly = true,
 	onCommit,
+	onSubmit,
+	submitOn,
 	schema,
 	onView,
 	onHandle,
@@ -41,6 +43,8 @@ function Markdown({
 				placeholder={placeholder}
 				readOnly={readOnly}
 				onCommit={onCommit ?? noop}
+				onSubmit={onSubmit}
+				submitOn={submitOn}
 				schema={schema}
 				onView={onView}
 				onHandle={onHandle}

@@ -204,14 +204,15 @@ def test_reset_ships_a_reset_frame_with_the_chain():
 
 
 def test_submit_inputs():
-    for cls in (InputRef, NumberInputRef, DatePickerRef, TagInputRef, TextAreaRef, CodeRef):
+    multi_line = (TextAreaRef, CodeRef, MarkdownRef)
+    for cls in (InputRef, NumberInputRef, DatePickerRef, TagInputRef, *multi_line):
         assert hasattr(cls, "on_submit"), cls.__name__
     assert hasattr(InlineEditRef, "on_submit")
     for cls in (TimePickerRef, DateTimePickerRef, DateRangePickerRef):
         assert hasattr(cls, "on_submit"), cls.__name__
     assert hasattr(ColorPickerRef, "on_submit")
     assert not hasattr(RangeSliderRef, "on_submit")
-    for cls in (MarkdownRef, CheckboxRef, SwitchRef, SelectRef, SliderRef, SketchRef):
+    for cls in (CheckboxRef, SwitchRef, SelectRef, SliderRef, SketchRef):
         assert not hasattr(cls, "on_submit"), cls.__name__
 
 
@@ -219,7 +220,37 @@ def test_textarea_submit_on_and_clear_on_submit():
     props = TextAreaRef.slot(submit_on="enter", clear_on_submit=True).props
     assert props["submit_on"] == "enter"
     assert props["clear_on_submit"] is True
-    assert TextAreaRef.slot().props["submit_on"] == "mod+enter"
+    assert TextAreaRef.slot().props["submit_on"] == "shift+enter"
+
+
+def test_multiline_inputs_share_the_send_key_switch():
+    for cls, extra in (
+        (TextAreaRef, {}),
+        (CodeRef, {"readonly": False}),
+        (MarkdownRef, {"readonly": False}),
+    ):
+        assert cls.slot(**extra).props["submit_on"] == "shift+enter", cls.__name__
+        assert cls.slot(submit_on="enter", **extra).props["submit_on"] == "enter", cls.__name__
+        with pytest.raises(ValueError, match="submit_on"):
+            cls.slot(submit_on="mod+enter", **extra)
+
+
+def test_editors_clear_on_submit():
+    for cls in (CodeRef, MarkdownRef):
+        assert cls.slot(readonly=False, clear_on_submit=True).props["clear_on_submit"] is True
+        assert cls.slot().props["clear_on_submit"] is False
+
+
+def test_markdown_on_submit_hears_submits_only():
+    w, out = _pair(MarkdownRef.slot(readonly=False))
+    writes = _react(
+        w.on_submit(),
+        ("page", "sec", "w"),
+        [{"event": "change"}, {"event": "submit", "value": "hi\n"}],
+        _Tab(),
+        out,
+    )
+    assert len(writes) == 1
 
 
 def _pair(widget):

@@ -30,6 +30,17 @@
 // go out and the frames come in (see ../../nodes/input/markdown.tsx). This
 // editor adopts whatever inbound value it is handed while clean.
 //
+// ## Submit
+//
+// The send key is the deliberate send (`onSubmit`): it saves now, quiet
+// moment or not, so the owner hears the latest text before the send, then
+// submits. Shift+Enter by default, Enter breaking the line as ever; with
+// `submitOn="enter"` the two swap, shift+Enter doing whatever Enter would.
+// It sends from a paragraph, a list or a table alike; inside a code fence
+// both keys stay the fence's own. Cmd+Enter is never a send: it leaves a
+// table or a fence, and is otherwise the host's (`break`) to bind. Whatever the owner does with `value`
+// in the send (puts the declared text back, say) lands in the document.
+//
 // ## Read-only
 //
 // The same view with editing off, which is how a document is displayed: one
@@ -60,9 +71,10 @@ import { DOMSerializer, type Node as PMNode } from "prosemirror-model";
 import { liftListItem, sinkListItem, splitListItem } from "prosemirror-schema-list";
 import { type Command, EditorState, type Transaction } from "prosemirror-state";
 import { EditorView, type NodeView } from "prosemirror-view";
-import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useReducer, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { Checkbox } from "../../components/ui/checkbox";
+import type { SubmitOn } from "../keyboard";
 import { cn } from "../utils";
 import { codeFences } from "./fence";
 import { createHandle, type MarkdownHandle } from "./handle";
@@ -151,6 +163,10 @@ export type ProseEditorProps = {
 	readOnly?: boolean;
 	/** Persist. Only fires when the document actually changed. */
 	onCommit: (source: string) => void;
+	/** The deliberate send, after its commit. Editable only. */
+	onSubmit?: () => void;
+	/** Which key sends: shift+Enter (the default, Enter breaks the line) or Enter. */
+	submitOn?: SubmitOn;
 	/** Swap the document dialect. Defaults to the kit's own. */
 	schema?: ProseSchema;
 	className?: string;
@@ -180,6 +196,8 @@ export function ProseEditor({
 	placeholder: hint = "",
 	readOnly = false,
 	onCommit,
+	onSubmit,
+	submitOn = "shift+enter",
 	schema = proseSchema,
 	className,
 	onView,
@@ -193,8 +211,18 @@ export function ProseEditor({
 	/** Pending autosave. */
 	const saveTimer = useRef<number | null>(null);
 	/** Props change identity every render; the view binds once. */
-	const cb = useRef({ value, onCommit, readOnly, hint, onView, onHandle, stored });
-	cb.current = { value, onCommit, readOnly, hint, onView, onHandle, stored };
+	const cb = useRef({
+		value,
+		onCommit,
+		onSubmit,
+		submitOn,
+		readOnly,
+		hint,
+		onView,
+		onHandle,
+		stored,
+	});
+	cb.current = { value, onCommit, onSubmit, submitOn, readOnly, hint, onView, onHandle, stored };
 	/** The handle, while the view is up; announced through `onHandle` only while editable. */
 	const handleRef = useRef<MarkdownHandle | null>(null);
 	const announcedRef = useRef(false);
@@ -272,6 +300,21 @@ export function ProseEditor({
 		cb.current.onHandle?.(editable ? handle : null);
 	}, []);
 
+	// A send can put the value back (`clear_on_submit`) in the same tick that
+	// its commit moved it, and the two land as one render where `value` never
+	// changed, so the inbound effect below would not run and the typed text
+	// would stay. The bump makes it look again once that render is in.
+	const [submits, bump] = useReducer((n: number) => n + 1, 0);
+
+	const submit = useCallback((): boolean => {
+		const send = cb.current.onSubmit;
+		if (!send || cb.current.readOnly) return false;
+		commit();
+		send();
+		bump();
+		return true;
+	}, [commit]);
+
 	const queueSave = useCallback(() => {
 		if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
 		saveTimer.current = window.setTimeout(() => {
@@ -306,6 +349,16 @@ export function ProseEditor({
 			splitListItem(nodeType.taskItem, { checked: false }),
 			baseKeymap.Enter,
 		);
+
+		// The send key, ahead of every other binding of Enter: in "enter" mode
+		// Enter sends and shift+Enter does what Enter would (a new list item,
+		// the cell below, a new paragraph). With no send to make (read-only,
+		// nobody listening) the key falls through to its usual job.
+		const send = keymap({
+			Enter: () => cb.current.submitOn === "enter" && submit(),
+			"Shift-Enter": (state, dispatch, view) =>
+				cb.current.submitOn === "enter" ? enter(state, dispatch, view) : submit(),
+		});
 
 		const editing = keymap({
 			Enter: enter,
@@ -353,6 +406,7 @@ export function ProseEditor({
 			plugins: [
 				proseInputRules(schema),
 				...fences.plugins,
+				send,
 				editing,
 				keymap(baseKeymap),
 				history(),
@@ -369,7 +423,7 @@ export function ProseEditor({
 				gapCursor(),
 				// It handles arrows and clicks in tables broadly, after everyone else.
 				...tables.plugins,
-				// Last of all: what nobody above wanted is the host's to hear.
+				// What nobody above wanted is the host's to hear.
 				contract.plugin,
 			],
 		});
@@ -431,7 +485,7 @@ export function ProseEditor({
 			view.destroy();
 		};
 		// The view is built once per schema and driven imperatively from here on.
-	}, [commit, saved, hold, announce, queueSave, schema]);
+	}, [commit, saved, hold, announce, queueSave, submit, schema]);
 
 	// -- inbound value -----------------------------------------------------
 	//
@@ -439,6 +493,7 @@ export function ProseEditor({
 	// text out from under someone who has uncommitted edits. Once the document
 	// is clean the server's copy is the truth and gets adopted, caret or no
 	// caret.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: a send asks for a fresh look.
 	useEffect(() => {
 		const view = viewRef.current;
 		if (!view || dirtyRef.current) return;
@@ -448,7 +503,7 @@ export function ProseEditor({
 		tr.setMeta("addToHistory", false);
 		tr.setMeta(INBOUND, true);
 		view.dispatch(tr);
-	}, [value]);
+	}, [value, submits]);
 
 	// `editable` and `attributes` read through `cb`, so a read-only flip only
 	// needs a nudge to re-evaluate them and redraw the hint. The host hears
