@@ -56,7 +56,15 @@ export function Section({
 	return (
 		<section data-slot="section" className={cn(sectionVariants({ size }), className)} {...props}>
 			{hasHeader && (
-				<div data-slot="section-header" className="flex items-start justify-between gap-4">
+				<div
+					data-slot="section-header"
+					className={cn(
+						"flex justify-between gap-4",
+						// A composed header line centres with the actions; a title over a
+						// description keeps the actions on the title's line.
+						header ? "items-center" : "items-start",
+					)}
+				>
 					{header ? (
 						<div data-slot="section-heading" className="min-w-0 flex-1">
 							{header}

@@ -117,7 +117,7 @@ function CardView({ path }: NodeProps) {
 						</>
 					)}
 					{hasActions ? (
-						<CardAction>
+						<CardAction className={hasHeader ? "row-span-1 self-center" : undefined}>
 							<SlotView path={path} segment={ACTIONS_SLOT} flow="row" />
 						</CardAction>
 					) : null}
