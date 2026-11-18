@@ -145,10 +145,11 @@ export function AccordionContent({
 	children,
 	onAnimationStart,
 	onAnimationEnd,
+	ref,
 	...props
 }: React.ComponentProps<typeof AccordionPrimitive.Content>) {
 	// Clips only while the height moves (or closed), as a Collapsible does.
-	const moving = useClipWhileMoving(onAnimationStart, onAnimationEnd);
+	const moving = useClipWhileMoving(onAnimationStart, onAnimationEnd, ref);
 	return (
 		<AccordionPrimitive.Content
 			data-slot="accordion-content"

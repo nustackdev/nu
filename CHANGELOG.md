@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Collapsible and accordion open smoothly, no flash of content or jump at the end
 - Section and card actions line up with a composed header instead of its top
 - Storybook shows container headers side by side, multi-line send keys and code diffs
 - Multi-line inputs send on shift+Enter or Enter, one switch, and submit their forms
