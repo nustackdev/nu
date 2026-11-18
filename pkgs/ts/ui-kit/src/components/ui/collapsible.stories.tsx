@@ -80,7 +80,24 @@ export const Header: StoryObj = {
 	),
 };
 
-export const Matrix = Default;
+export const Matrix: StoryObj = {
+	render: () => (
+		<div className="p-8 space-y-8 max-w-md">
+			<div>
+				<div className="mb-3 font-mono text-xs uppercase tracking-widest text-text-muted">
+					trigger
+				</div>
+				<Sample />
+			</div>
+			<div>
+				<div className="mb-3 font-mono text-xs uppercase tracking-widest text-text-muted">
+					header row
+				</div>
+				<SampleHeader />
+			</div>
+		</div>
+	),
+};
 
 const meta: Meta = {
 	title: "UI/Collapsible",

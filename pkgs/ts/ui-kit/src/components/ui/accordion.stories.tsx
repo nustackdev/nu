@@ -74,6 +74,12 @@ export const Matrix: StoryObj = {
 				</div>
 				<SampleMultiple />
 			</div>
+			<div>
+				<div className="mb-3 font-mono text-xs uppercase tracking-widest text-text-muted">
+					header row
+				</div>
+				<SampleHeader />
+			</div>
 		</div>
 	),
 };

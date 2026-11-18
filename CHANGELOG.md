@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Storybook shows container headers side by side, multi-line send keys and code diffs
 - Multi-line inputs send on shift+Enter or Enter, one switch, and submit their forms
 - Code blocks show a read-only diff against older text, unchanged lines folded
 - Collapsible and accordion rows take a header that holds controls without toggling

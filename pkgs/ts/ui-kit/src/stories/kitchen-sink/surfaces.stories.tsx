@@ -32,9 +32,11 @@ import {
 	PanelHeader,
 	PanelTitle,
 } from "../../components/ui/panel";
+import { Quote, QuoteContent, QuoteHeader } from "../../components/ui/quote";
 import { Section } from "../../components/ui/section";
 import { Separator } from "../../components/ui/separator";
 import { Stat, StatDelta, StatLabel, StatValue } from "../../components/ui/stat";
+import { StatusDot } from "../../components/ui/status-dot";
 import {
 	Table,
 	TableBody,
@@ -136,6 +138,40 @@ function Containers() {
 					</CardHeader>
 					<CardContent className="pb-4" />
 				</Card>
+			</Row>
+			<Row label="Card header" className="items-stretch">
+				<Card className="w-72">
+					<CardHeader>
+						<div className="flex min-w-0 items-center gap-2">
+							<StatusDot tone="ok" />
+							<Text as="span" size="sm" weight="medium" className="min-w-0 flex-1 truncate">
+								web-03.eu-central.cluster.internal
+							</Text>
+							<Badge variant="ok">healthy</Badge>
+						</div>
+						<CardAction>
+							<IconButton variant="ghost" size="sm" aria-label="More">
+								<MoreHorizontal />
+							</IconButton>
+						</CardAction>
+					</CardHeader>
+					<CardContent className="pb-4">
+						<Text size="sm" tone="secondary">
+							A header line in place of the title.
+						</Text>
+					</CardContent>
+				</Card>
+			</Row>
+			<Row label="Quote">
+				<Quote className="max-w-md">
+					<QuoteHeader>RFC 9110, section 9.2.2</QuoteHeader>
+					<QuoteContent>
+						<Text size="sm">
+							A request method is idempotent if the effect of several identical requests is the same
+							as the effect of one.
+						</Text>
+					</QuoteContent>
+				</Quote>
 			</Row>
 			<Row label="Panel" className="items-stretch">
 				{PANEL_VARIANTS.map((variant) => (
