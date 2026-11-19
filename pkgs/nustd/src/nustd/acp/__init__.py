@@ -21,7 +21,9 @@ Surface:
 as the Agent sends them, then ``{"stop_reason": ...}``. Permission requests
 are answered by the bind's policy (``reject_once`` by default); under
 ``permissions="ask"`` they are yielded too (``{"request_permission": id,
-...}``) and wait for ``answer_permission``. Async only: run with ``nu.arun``.
+...}``) and wait for ``answer_permission``. ``updates`` yields the same
+items, each turn's ``{"stop_reason": ...}`` included, in and out of turns.
+Async only: run with ``nu.arun``.
 
 Example::
 

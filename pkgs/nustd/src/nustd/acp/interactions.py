@@ -359,6 +359,8 @@ class AcpPrompt(StreamAction):
         - Image, audio and embedded resource blocks need the Agent's
           ``prompt_capabilities``; without them the term raises before the
           prompt is sent.
+        - ``updates()`` readers get the same items, the turn's end included,
+          so an arm that folds ``updates()`` can drain this stream unread.
 
     Yields:
         Session Updates (``{"session_update": ...}``) and permission requests
@@ -561,12 +563,19 @@ class AcpUpdates(StreamQuery):
           prompt.
         - Every reader gets every item; a prompt stream open on the Session
           gets the turn's items too.
+        - Each Prompt Turn's end comes in wire order, after the turn's last
+          update, so one reader can fold whole turns without the prompt
+          stream. A turn the Agent answered with a JSON-RPC error ends with
+          ``{"stop_reason": None, "error": AcpError}``; one with no answer
+          (the connection gone, or dropped past its wind-down) ends nowhere.
         - Starts listening when the term runs. Items sent before that are
           not replayed.
         - Raises ``AcpError`` if the Agent process dies.
 
     Yields:
-        Session Updates and permission requests, as ``prompt`` yields them.
+        Session Updates and permission requests, as ``prompt`` yields them,
+        and each Prompt Turn's ``{stop_reason}``, the item ``prompt`` yields
+        last.
 
     Example:
         nu.ForEachDo(Claude[sid].updates(), lambda u: Log.append(u))

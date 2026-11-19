@@ -158,6 +158,29 @@ class _Session:
         for queue in self.subscribers:
             queue.put_nowait(item)
 
+    def ended(self, request: asyncio.Future) -> None:
+        """A Prompt Turn's request is done: its end, to every ``updates()`` reader.
+
+        Run as the request's done callback, the same point the turn's own
+        stream learns its end, so it lands after the turn's last update. A
+        stop reason goes as ``{"stop_reason": ...}``, the item the prompt
+        stream yields last; an error the Agent answered with as
+        ``{"stop_reason": None, "error": AcpError}``. A request with no answer
+        (dropped, or the connection gone) publishes nothing: a lost connection
+        ends every reader on its own.
+        """
+        if request.cancelled():
+            return
+        exc = request.exception()
+        if exc is None:
+            item: dict[str, Any] = _response(request.result(), "stop_reason")
+        elif isinstance(exc, AcpError) and exc.code is not None:
+            item = {"stop_reason": None, "error": exc}
+        else:
+            return
+        for queue in self.subscribers:
+            queue.put_nowait(item)
+
     def cancel(self) -> None:
         """Answer every pending request ``cancelled``, and every later one until the turn ends."""
         self.cancelled = True
@@ -596,7 +619,7 @@ class AcpFabric(Fabric):
         await _idempotent(self._rpc("session/delete", conn.delete_session(session_id=session_id)))
 
     def updates(self, session_id: str) -> AsyncIterator[dict[str, Any]]:
-        """Every Session Update and permission request for the Session from now on.
+        """Every Session Update, permission request and Prompt Turn end for the Session from now on.
 
         Listens from the call, not from the first pull, so an arm started
         beside a prompt hears the whole turn.
@@ -642,6 +665,8 @@ class AcpFabric(Fabric):
             request = asyncio.ensure_future(start())
             request.add_done_callback(lambda _: items.put_nowait(_END))
             request.add_done_callback(_retrieved)
+            if method == "session/prompt":
+                request.add_done_callback(state.ended)
             try:
                 while (item := await items.get()) is not _END:
                     if isinstance(item, _Closed):

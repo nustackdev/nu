@@ -366,15 +366,51 @@ async def test_updates_fan_out_to_every_reader_inside_and_between_turns():
         # A loop, not a nested comprehension: Python 3.10 refuses await in the inner one.
         heard = []
         for reader in (first, second):
-            heard.append([await asyncio.wait_for(anext(reader), 5) for _ in range(3)])
-        kinds = ["agent_message_chunk", "agent_message_chunk", "session_info_update"]
-        assert [u["session_update"] for u in heard[0]] == kinds
+            heard.append([await asyncio.wait_for(anext(reader), 5) for _ in range(5)])
+        kinds = [u.get("session_update", "end") for u in heard[0]]
+        assert kinds == [
+            "agent_message_chunk",
+            "agent_message_chunk",
+            "end",
+            "end",
+            "session_info_update",
+        ]
         assert heard[0] == heard[1]
-        # The responses belong to the prompt streams, never to updates().
-        assert [t["stop_reason"] for t in turns if "stop_reason" in t] == ["end_turn", "end_turn"]
+        # The prompt streams are unchanged: their items, then the stop reason last.
+        assert turns == [*heard[0][:3], {"stop_reason": "end_turn"}]
         await first.aclose()
         await second.aclose()
         assert fabric._sessions[sid].subscribers == set()
+    finally:
+        await fabric.acleanup()
+
+
+async def test_updates_hear_a_turns_end_after_its_last_update():
+    fabric, sid = await _fabric()
+    try:
+        heard = fabric.updates(sid)
+        stream = fabric.prompt(sid, "hello")
+        # Read without the prompt stream's end: updates() has the turn's end on its own.
+        items = [await asyncio.wait_for(anext(stream), 5) for _ in range(2)]
+        got = [await asyncio.wait_for(anext(heard), 5) for _ in range(3)]
+        assert got == [*items, {"stop_reason": "end_turn"}]
+        assert await anext(stream) == {"stop_reason": "end_turn"}
+        await stream.aclose()
+        await heard.aclose()
+    finally:
+        await fabric.acleanup()
+
+
+async def test_updates_hear_a_failed_turn_end_with_its_error():
+    fabric, _ = await _fabric()
+    try:
+        heard = fabric.updates("nope")
+        with pytest.raises(AcpError) as caught:
+            [item async for item in fabric.prompt("nope", "hello")]
+        end = await asyncio.wait_for(anext(heard), 5)
+        assert end == {"stop_reason": None, "error": caught.value}
+        assert end["error"].code == -32002
+        await heard.aclose()
     finally:
         await fabric.acleanup()
 
