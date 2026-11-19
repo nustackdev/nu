@@ -55,7 +55,7 @@ class _Rig:
     def __init__(self, root: Path, cap: int | None = 1 << 20) -> None:
         self.server = WebServer(session_cls=_Session)
         bracket, routes = uploads(root, cap=cap)
-        self.area: UploadArea = config(bracket)["kwargs"]["area"]
+        self.area: UploadArea = bracket.area
         self.ctx = Context().bind(WebServer, self.server)
         self.area.setup(self.ctx)
         self.app = Starlette(routes=routes)
@@ -268,7 +268,7 @@ def test_a_total_over_the_cap_is_refused_before_reading(tmp_path: Path):
 
 def test_no_cap_by_default_takes_any_total(tmp_path: Path):
     bracket, _ = uploads(tmp_path / "area")
-    assert config(bracket)["kwargs"]["area"].cap is None
+    assert bracket.area.cap is None
     r = _Rig(tmp_path / "area", cap=None)
     try:
         with TestClient(r.app) as c:
@@ -623,7 +623,7 @@ def test_the_default_root_is_fixed_at_build_and_made_at_setup(
 ):
     monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
     bracket, _ = uploads()
-    area: UploadArea = config(bracket)["kwargs"]["area"]
+    area: UploadArea = bracket.area
     assert area.root.parent == tmp_path
     assert area.root.name.startswith("nu-uploads-")
     assert not area.root.exists()
@@ -647,13 +647,22 @@ async def test_the_bracket_binds_the_area_and_tears_it_down(tmp_path: Path):
     server = WebServer(session_cls=_Session)
     ctx = Context().bind(WebServer, server)
     bound, _ = await nu.arun(nu.With(bracket, body=FabricRef(UploadArea)), ctx)
-    assert bound is config(bracket)["kwargs"]["area"]
+    assert bound is bracket.area
     assert not bound.root.exists()
+
+
+def test_the_bracket_opens_the_area_under_the_sync_runner_too(tmp_path: Path):
+    bracket, _ = uploads(tmp_path / "area")
+    server = WebServer(session_cls=_Session)
+    ctx = Context().bind(WebServer, server)
+    exists, _ = nu.run(nu.With(bracket, body=FabricRef(UploadArea).exists()), ctx)
+    assert exists is True
+    assert not bracket.area.root.exists()
 
 
 async def test_upload_view_binds_the_tab_view(tmp_path: Path):
     bracket, _ = uploads(tmp_path / "area")
-    area: UploadArea = config(bracket)["kwargs"]["area"]
+    area: UploadArea = bracket.area
     server = WebServer(session_cls=_Session)
     sid = uuid.uuid4().hex
     ctx = Context({"sid": sid}).bind(WebServer, server)
@@ -701,13 +710,13 @@ def test_serve_always_mounts_the_intake(tmp_path: Path):
     )
     paths = [r.path for r in _routes_of(tree)]
     assert f"{UPLOAD_PREFIX}/{{sid}}" in paths
-    area = config(tree.brackets[1])["kwargs"]["area"]
+    area = tree.brackets[1].area
     assert area.root == (tmp_path / "up").absolute()
     assert area.cap == 7
 
 
 def test_serve_defaults_to_a_temp_root_and_no_cap():
     tree = serve(nu.Str("x"), static=None, open_browser=False)
-    area = config(tree.brackets[1])["kwargs"]["area"]
+    area = tree.brackets[1].area
     assert area.root.name.startswith("nu-uploads-")
     assert area.cap is None

@@ -29,8 +29,7 @@ if TYPE_CHECKING:
 
     from starlette.routing import BaseRoute
 
-    from nu.context.fabric import Provide
-    from nu.lang import Nu
+    from nu.lang import Bracket, Nu
     from nustd.blob import BlobBackend
     from nustd.blob.http import BlobMount
 
@@ -110,7 +109,7 @@ def serve(
     """
     blob_brackets, blob_routes = serve_blobs(blobs) if blobs else ([], [])
     arm = run_once(program)
-    upload_brackets: list[Provide] = []
+    upload_brackets: list[Bracket] = []
     upload_routes: Sequence[BaseRoute] = ()
     if uploads:
         upload_area, upload_routes = upload_pair(upload_root, cap=upload_cap)

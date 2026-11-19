@@ -6,10 +6,10 @@ and nothing else: its tab's sid, the intake url the browser posts to, and the
 file a token names. ``UploadView`` is exactly that, bound on the Context for
 one tab.
 
-- ``UploadArea``, a fabric opened by a ``Provide`` bracket. It only manages
-  the folder: one dir per tab under its root, one file per pull or slice,
-  each tab's dir swept when its connection closes, the whole root removed
-  when the server stops. It never opens a socket and never reads a file.
+- ``UploadArea``, a fabric opened by the bracket ``uploads`` returns. It
+  only manages the folder: one dir per tab under its root, one file per
+  pull or slice, each tab's dir swept when its connection closes, the whole
+  root removed when the server stops. It never opens a socket and never reads a file.
 - ``UploadView``, the resolve only view the refs read. A worker drawing over
   a pipe builds one from the same root, so the refs cannot tell where they
   run.

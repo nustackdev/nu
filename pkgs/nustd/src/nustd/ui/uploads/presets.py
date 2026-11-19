@@ -12,11 +12,10 @@ from __future__ import annotations
 
 import tempfile
 import uuid
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
-from nu.context.fabric import Fabric, Provide
 from nu.lang import Bracket
 
 from .area import _PREFIX, UploadArea, UploadView
@@ -24,11 +23,11 @@ from .area import _PREFIX, UploadArea, UploadView
 
 if TYPE_CHECKING:
     import os
-    from collections.abc import AsyncIterator
+    from collections.abc import AsyncIterator, Iterator
 
     from starlette.routing import Route
 
-    from nu.lang import Nu, StrArg
+    from nu.lang import Literal, Nu, StrArg
     from nu.lang.runtime import Context
 
 
@@ -40,22 +39,52 @@ __all__ = ["UploadViewFor", "upload_view", "uploads"]
 _SID_ATTR = "sid"
 
 
-class _Held(Fabric):
-    """``Provide`` builds its fabric from a class; this one hands back the area built already.
+class _OpenArea(Bracket):
+    """Open an area built already: set it up, bind it under ``UploadArea``, clean it up.
 
-    ``__new__`` returns the given area, so ``Provide`` sets up, binds and
-    cleans up that area itself, not an instance of this class.
+    ``uploads`` builds the area at tree build time, since its route needs the
+    same instance before any server is up. This bracket is what opens that
+    one instance for the body, through the area's own fabric lifecycle:
+    ``setup`` / ``cleanup`` under ``nu.run``, ``asetup`` / ``acleanup`` under
+    ``nu.arun``. Cleanup only runs when setup completed.
+
+    Args:
+        area: the area to open. A config child, carried as given.
+        body: the tree that runs with the area bound.
     """
 
-    def __new__(cls, area: UploadArea) -> UploadArea:  # type: ignore[misc]
-        return area
+    def __init__(self, area: UploadArea, body: Nu | None = None) -> None:
+        super().__init__(body, area)
+
+    @property
+    def area(self) -> UploadArea:
+        """The area this bracket opens, the same instance its route writes to."""
+        return cast("UploadArea", cast("Literal", self._children[1]).value)
+
+    @contextmanager
+    def _open(self, ctx: Context, area: UploadArea) -> Iterator[None]:
+        area.setup(ctx)
+        try:
+            with ctx.fabrics.bind(UploadArea, area):
+                yield
+        finally:
+            area.cleanup()
+
+    @asynccontextmanager
+    async def _aopen(self, ctx: Context, area: UploadArea) -> AsyncIterator[None]:
+        await area.asetup(ctx)
+        try:
+            with ctx.fabrics.bind(UploadArea, area):
+                yield
+        finally:
+            await area.acleanup()
 
 
 def uploads(
     root: str | os.PathLike[str] | None = None,
     *,
     cap: int | None = None,
-) -> tuple[Provide, list[Route]]:
+) -> tuple[_OpenArea, list[Route]]:
     """The temp area's bracket and its intake route, sharing one area.
 
     The root is fixed here, when the tree is built, not when the bracket
@@ -75,7 +104,7 @@ def uploads(
     Returns:
         ``(bracket, routes)``. The bracket goes in the ``nu.With`` after the
         ws server's (it follows that server's connections); the routes go in
-        that server's ``routes=``.
+        that server's ``routes=``. ``bracket.area`` is the area both share.
 
     Example:
         bracket, routes = uploads()
@@ -92,7 +121,7 @@ def uploads(
     from .intake import _route
 
     area = UploadArea(root, cap)
-    return Provide(_Held, {"area": area}, bind_as=UploadArea), [_route(area)]
+    return _OpenArea(area), [_route(area)]
 
 
 # ---- the program side -------------------------------------------------------

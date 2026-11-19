@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- The uploads area opens through a small bracket of its own, no constructor tricks
 - Fix the valkey shutdown test whose subprocess script provided a plain class
 - Kind declarations stay bare; the bracket lifecycle lives in its own module
 - Provided fabrics subclass one base with default lifecycle; plain classes are refused
