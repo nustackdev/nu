@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from nu.context import FabricRef
-from nu.lang import Literal, Nu, Ref, ScalarQuery
+from nu.lang import Nu, Ref, ScalarQuery
 from nu.lang.null import Null, is_null
 
 from .fabric import AcpFabric
@@ -40,9 +40,10 @@ __all__ = ["AgentRef", "SessionRef", "agent_name"]
 
 
 def agent_name(agent: object) -> str | Nu:
-    """The agent's name: an ``AgentRef``'s own, a non-empty ``str``, or a term computing it.
+    """The agent's name: an ``AgentRef``'s name term, a non-empty ``str``, or a term computing it.
 
-    A term is returned as given; its value is checked when it is evaluated.
+    A term is returned as given, never looked into; its value is checked when it
+    is evaluated.
     """
     if isinstance(agent, AgentRef):
         return agent.name
@@ -93,10 +94,9 @@ class AgentRef(FabricRef):
         super().__init__(None, agent_name(name))
 
     @property
-    def name(self) -> str | Nu:
-        """The Agent's name, the tag its fabric binds under; the term itself when computed."""
-        child = self._children[1]
-        return cast("str", child.value) if isinstance(child, Literal) else cast("Nu", child)
+    def name(self) -> Nu:
+        """The Agent's name, the tag its fabric binds under: the name child, a term."""
+        return self._children[1]
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         fabric, name_of = children[0], children[1]

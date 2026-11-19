@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from nu.context import FabricRef
-from nu.lang import Literal, Nu, ScalarQuery
+from nu.lang import Nu, ScalarQuery
 from nu.lang.null import Null, is_null
 
 from ._base import check_id
@@ -35,9 +35,10 @@ __all__ = ["StoreRef", "store_name"]
 
 
 def store_name(store: object) -> str | Nu:
-    """The store's name: a ``StoreRef``'s own, a non-empty ``str``, or a term computing it.
+    """The store's name: a ``StoreRef``'s name term, a non-empty ``str``, or a term computing it.
 
-    A term is returned as given; its value is checked when it is evaluated.
+    A term is returned as given, never looked into; its value is checked when it
+    is evaluated.
     """
     if isinstance(store, StoreRef):
         return store.name
@@ -89,10 +90,9 @@ class StoreRef(FabricRef):
         super().__init__(None, store_name(name))
 
     @property
-    def name(self) -> str | Nu:
-        """The store's name, the tag its backend binds under; the term itself when computed."""
-        child = self._children[1]
-        return cast("str", child.value) if isinstance(child, Literal) else cast("Nu", child)
+    def name(self) -> Nu:
+        """The store's name, the tag its backend binds under: the name child, a term."""
+        return self._children[1]
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         fabric, name_of = children[0], children[1]

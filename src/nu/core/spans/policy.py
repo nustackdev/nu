@@ -38,7 +38,7 @@ from nu.core._stream import aiter_any, sync_iter
 from nu.core.flows import Noop
 from nu.core.flows.parallel._scheduling import _settle
 from nu.engine.structure import Declared
-from nu.lang import Attr, Cardinality, Literal, Nu, Policy
+from nu.lang import Attr, Cardinality, Nu, Policy
 from nu.lang.sentinels import UNSET, Unset
 
 
@@ -469,10 +469,8 @@ class Retry(Policy):
         error_key: StrArg | None = None,
         attempt_key: StrArg | None = None,
     ) -> None:
-        # A literal cap is refused now; a computed one is checked when it runs.
-        if isinstance(max_delay, Literal):
-            _max_delay(max_delay.value)
-        elif not isinstance(max_delay, Nu):
+        # A plain cap is refused now; a term (computed or not) is checked when it runs.
+        if not isinstance(max_delay, Nu):
             _max_delay(max_delay)
         hooks = (
             ("on_attempt_fail", on_attempt_fail),

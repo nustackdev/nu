@@ -98,31 +98,20 @@ def check_schedule(
     return check_after(owner, after), check_every(owner, every)
 
 
-def _literal(term: object) -> tuple[bool, object]:
-    """Whether ``term`` is known at build time, and its value when it is."""
-    if isinstance(term, Literal):
-        return True, term.value
-    if isinstance(term, Nu):
-        return False, None
-    return True, term
-
-
 def schedule_terms(owner: str, after: object, every: object) -> tuple[object, object]:
     """``after`` and ``every`` as the child terms a level flow holds.
 
-    A literal (a raw value or a ``Literal``) is checked now and kept
-    normalised, so a schedule that cannot run is refused at build time. Any
-    other term is kept as given and checked by ``read_schedule`` when it runs.
+    A plain value is checked now and kept normalised, so a schedule that
+    cannot run is refused at build time. A term is kept as given, never looked
+    into, and checked by ``read_schedule`` when it runs.
 
     Raises:
-        ValueError: a literal schedule that cannot run.
+        ValueError: a plain schedule that cannot run.
     """
-    known, value = _literal(after)
-    if known:
-        after = Literal(check_after(owner, value))
-    known, value = _literal(every)
-    if known:
-        every = Literal(check_every(owner, value))
+    if not isinstance(after, Nu):
+        after = Literal(check_after(owner, after))
+    if not isinstance(every, Nu):
+        every = Literal(check_every(owner, every))
     return after, every
 
 

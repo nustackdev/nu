@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Store and agent names come back as terms; run one to read its value
 - Blob server takes its own plain backend; computed config stays with the tree
 - Ref tags and names, proxy, provide and log config can all be computed
 - Terms stay frozen after construction; config sits in the tree, computable like any value

@@ -175,30 +175,20 @@ class _LifecycleBracket(Bracket):
     def _config_values(self, ctx: Context) -> tuple[object, ...]:
         """Evaluate the config children against ``ctx``, sync.
 
-        A Literal gives its value directly; any other child is compiled and
-        run on ``ctx`` as a program of its own.
+        Each child is compiled and run on ``ctx`` as a program of its own;
+        none is looked into, a Literal runs like any other term.
         """
         from nu.lang.helpers import compile as compile_term
         from nu.lang.helpers.evaluation import eval as eval_program
-        from nu.lang.literal import Literal
 
-        return tuple(
-            c.value if isinstance(c, Literal) else eval_program(compile_term(c), ctx)[0]
-            for c in self._children[1:]
-        )
+        return tuple(eval_program(compile_term(c), ctx)[0] for c in self._children[1:])
 
     async def _aconfig_values(self, ctx: Context) -> tuple[object, ...]:
         """Async sibling of :meth:`_config_values`."""
         from nu.lang.helpers import compile as compile_term
         from nu.lang.helpers.evaluation import aeval
-        from nu.lang.literal import Literal
 
-        values = []
-        for c in self._children[1:]:
-            values.append(
-                c.value if isinstance(c, Literal) else (await aeval(compile_term(c), ctx))[0]
-            )
-        return tuple(values)
+        return tuple([(await aeval(compile_term(c), ctx))[0] for c in self._children[1:]])
 
     @contextmanager
     def _enter(self, ctx: Context) -> Iterator[None]:

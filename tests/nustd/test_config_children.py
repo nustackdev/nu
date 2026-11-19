@@ -145,6 +145,25 @@ def test_an_agent_ref_name_can_be_read_from_the_tree() -> None:
     assert nu.run(nu.Frame(Opts, agent, tag="claude"), ctx)[0] == "claude-agent"
 
 
+def test_a_store_ref_preset_binds_under_its_computed_name(tmp_path) -> None:
+    # The preset tags the bind with the ref's own name child, so one program
+    # binds and reads back under the same computed name.
+    store = nustd.blob.StoreRef(Opts.tag)
+    app = nu.With(
+        nustd.blob.files(store, tmp_path / "files"),
+        body=nu.let(store.put(b"hi"), lambda bid: store.get(bid)),
+    )
+    assert nu.run(nu.Frame(Opts, app, tag="media"))[0] == b"hi"
+
+
+def test_an_agent_ref_preset_tags_its_bind_with_the_name_child() -> None:
+    agent = nustd.acp.AgentRef(Opts.tag)
+    spec = nustd.acp.claude(agent, cwd="/srv")
+    tags = nu.tree.children(spec)[3]
+    assert nu.tree.children(tags)[0] is agent.name
+    assert nu.run(nu.Frame(Opts, tags, tag="claude"))[0] == ("claude",)
+
+
 def test_a_proxy_option_can_be_computed() -> None:
     class Nav:
         pass

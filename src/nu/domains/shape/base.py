@@ -100,6 +100,10 @@ class StructuredRef(Ref):
 
         Read off ``children[1]``, so it is never stored twice. A computed
         address (a Ref, an expression) comes back as the term itself.
+
+        Build time only: the ui key builders, ``same_place`` and messages read
+        it to name a place. A run never reads it; it runs the address child
+        (``_address``, the substrates' path walks).
         """
         address = self._children[1]
         return address.value if isinstance(address, Literal) else address

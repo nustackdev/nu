@@ -94,7 +94,7 @@ class JQueueRef(RefBase[janus.Queue[T]], JQueue[T], Generic[T]):
         address, capacity = children[1], children[2]
 
         def thunk(rt: Runtime) -> janus.Queue[T]:
-            parent = self._fetch_parent(rt)
+            parent = self._fetch_parent(rt, nid)
             if not isinstance(parent, dict):
                 msg = f"JQueueRef parent must be a dict, got {type(parent).__name__}"
                 raise TypeError(msg)
@@ -112,7 +112,7 @@ class JQueueRef(RefBase[janus.Queue[T]], JQueue[T], Generic[T]):
         address, capacity = children[1], children[2]
 
         async def athunk(rt: Runtime) -> janus.Queue[T]:
-            parent = self._fetch_parent(rt)
+            parent = self._parent_container(rt, await self._aresolve_path(rt, nid))
             if not isinstance(parent, dict):
                 msg = f"JQueueRef parent must be a dict, got {type(parent).__name__}"
                 raise TypeError(msg)

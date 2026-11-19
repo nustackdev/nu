@@ -48,14 +48,16 @@ def test_is_a_fabric_ref_over_the_blob_fabric():
     assert StoreRef.fabric is BlobFabric
 
 
-def test_name():
-    assert Media.name == "media"
-    assert Pics.name == "pics-v1"
+def test_name_is_the_name_child():
+    # The name is a term, the ref's own child; its value comes from running it.
+    assert Media.name is nu.tree.children(Media)[1]
+    assert nu.run(Media.name)[0] == "media"
+    assert nu.run(Pics.name)[0] == "pics-v1"
 
 
 @pytest.mark.parametrize("name", ["Media", "a b", ".hidden", "a/b", "кот"])
 def test_any_non_empty_str_is_a_name(name):
-    assert StoreRef(name).name == name
+    assert nu.run(StoreRef(name).name)[0] == name
 
 
 @pytest.mark.parametrize("bad", ["", None, 42, b"media", StoreRef])
@@ -65,7 +67,7 @@ def test_name_that_is_no_non_empty_str_is_refused(bad):
 
 
 def test_store_name_takes_a_ref_or_its_name():
-    assert store_name(Media) == "media"
+    assert store_name(Media) is Media.name
     assert store_name("pics") == "pics"
     with pytest.raises(TypeError, match="non-empty str"):
         store_name("")

@@ -194,11 +194,16 @@ async def test_async_max_delay_is_a_child_term(waits: list) -> None:
     assert waits == [3.0, 3.0]
 
 
-def test_negative_literal_max_delay_raises_at_build() -> None:
+def test_negative_plain_max_delay_raises_at_build() -> None:
     with pytest.raises(ValueError, match="Retry: max_delay must not be negative"):
         Retry(FlakyAction(1), max_attempts=2, max_delay=-1.0)
+
+
+async def test_async_negative_literal_max_delay_raises_when_run() -> None:
+    # A term is a child like any other: Retry does not look inside it at build.
+    retry = Retry(FlakyAction(1), max_attempts=2, max_delay=Literal(-1.0))
     with pytest.raises(ValueError, match="Retry: max_delay must not be negative"):
-        Retry(FlakyAction(1), max_attempts=2, max_delay=Literal(-1.0))
+        await arun(retry)
 
 
 async def test_async_negative_computed_max_delay_raises_when_run() -> None:

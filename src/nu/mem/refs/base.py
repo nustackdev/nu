@@ -122,16 +122,6 @@ class RefBase(StructuredRef, Generic[T]):
 
     # --- path building -------------------------------------------------------
 
-    def _parent_path(self) -> tuple:
-        """Static segments of the parent chain, root-first (excludes self)."""
-        segs: list[object] = []
-        ref = self._parent
-        while ref is not None:
-            segs.append(ref._segment)
-            ref = ref._parent
-        segs.reverse()
-        return tuple(segs)
-
     def _hint(self, path: tuple) -> str:
         """The dotted path a NULL read names, eg ``User.tags.0``."""
         shape = self._root_shape
@@ -285,10 +275,18 @@ class RefBase(StructuredRef, Generic[T]):
         if isinstance(cur, dict) and path[-1] in cur:
             del cur[path[-1]]
 
-    def _fetch_parent(self, rt: Runtime) -> object:
-        """Navigate to the parent container, auto-creating intermediate dicts."""
+    def _fetch_parent(self, rt: Runtime, nid: int) -> object:
+        """The parent container of this ref's slot, auto-creating intermediate dicts.
+
+        Every level's address is run, so a computed key above the leaf
+        resolves like any other.
+        """
+        return self._parent_container(rt, self._resolve_path(rt, nid))
+
+    def _parent_container(self, rt: Runtime, path: tuple) -> object:
+        """The container holding ``path[-1]``, auto-creating intermediate dicts."""
         cur = self._root_data(rt)
-        for k in self._parent_path():
+        for k in path[:-1]:
             if isinstance(cur, dict) and k not in cur:
                 cur[k] = {}
             cur = cur[k]  # type: ignore[index]
