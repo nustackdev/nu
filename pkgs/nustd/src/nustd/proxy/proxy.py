@@ -25,8 +25,8 @@ from __future__ import annotations
 from contextlib import asynccontextmanager, contextmanager
 from typing import TYPE_CHECKING, cast
 
-from nu.core.spans.bracket import _LifecycleBracket
 from nu.forms.collections.abc.mapping_interactions import DictOf
+from nu.lang import Bracket
 
 from .client import InvisiblesClient
 
@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 __all__ = ["InvisiblesProxy"]
 
 
-class InvisiblesProxy(_LifecycleBracket):
+class InvisiblesProxy(Bracket):
     """Runs its body against a remote fabric as if the fabric were local.
 
     Connects to an ``InvisiblesServer``, takes the root fabric it serves, and

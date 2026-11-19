@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from nu.context.fabric import Provide
-from nu.core.spans.bracket import _LifecycleBracket
+from nu.lang import Bracket
 
 from .area import _PREFIX, UploadArea, UploadView
 
@@ -92,7 +92,7 @@ def uploads(
 # ---- the program side -------------------------------------------------------
 
 
-class UploadViewFor(_LifecycleBracket):
+class UploadViewFor(Bracket):
     """Bind this arm's ``UploadView``: the area, seen from one tab.
 
     Reads the sid the fold parked on the Context and binds the area's view

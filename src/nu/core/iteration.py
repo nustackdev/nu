@@ -26,8 +26,7 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import ScalarAction, StreamQuery
-
-from ._stream import aiter_any, sync_iter
+from nu.lang._stream import aiter_any, sync_iter
 
 
 if TYPE_CHECKING:

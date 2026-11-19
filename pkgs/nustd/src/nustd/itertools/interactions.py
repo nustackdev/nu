@@ -30,8 +30,8 @@ import operator
 from typing import TYPE_CHECKING
 
 from nu.context.attrs.binders import bind
-from nu.core._stream import aiter_any, sync_iter
 from nu.lang import ScalarQuery, StreamQuery
+from nu.lang._stream import aiter_any, sync_iter
 from nu.lang.sentinels import UNSET
 
 

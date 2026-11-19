@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Write a bracket by subclassing the base and overriding its open hooks
 - LLM is a plain fabric now: chat and chat_stream hang off its ref
 - Drop the Claude Code fabric; acp drives Claude Code and other coding agents
 - Rename the worker pool fabric to nustd.mp; imports and the extra change

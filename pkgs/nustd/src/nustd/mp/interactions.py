@@ -71,6 +71,7 @@ from typing import TYPE_CHECKING
 from nu.engine.structure import Declared
 from nu.lang import (
     Attr,
+    Bracket,
     Cardinality,
     Command,
     Literal,
@@ -89,7 +90,6 @@ from .resources import WorkerPool
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Callable, Iterator
 
-    from nu.core.spans.bracket import _LifecycleBracket
     from nu.lang.runtime import Runtime
 
 
@@ -123,9 +123,7 @@ def _init_node(init: object) -> object:
     carried as a value instead, exactly like ``Eval``'s carrier. Any other Nu
     is taken as the carrier as-is, so the bracket can come from a Ref.
     """
-    from nu.core.spans.bracket import _LifecycleBracket as _Bracket
-
-    if isinstance(init, _Bracket):
+    if isinstance(init, Bracket):
         return Literal(init)
     return init
 
@@ -210,7 +208,7 @@ class Launch(ScalarAction):
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def __init__(self, pool: Nu | None = None, init: _LifecycleBracket | Nu | None = None) -> None:
+    def __init__(self, pool: Nu | None = None, init: Bracket | Nu | None = None) -> None:
         super().__init__(_pool_node(pool), _init_node(init))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

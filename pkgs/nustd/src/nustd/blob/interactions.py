@@ -31,9 +31,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.core._stream import aiter_any, sync_iter
 from nu.engine.structure import Declared
 from nu.lang import ActionReduction, Command, Nu, ScalarAction, ScalarQuery, StreamQuery
+from nu.lang._stream import aiter_any, sync_iter
 from nu.lang.null import is_null
 
 from ._base import new_id

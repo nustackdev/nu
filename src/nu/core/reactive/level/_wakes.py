@@ -24,8 +24,8 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
-from nu.core._stream import aiter_any
 from nu.lang import Literal, Nu
+from nu.lang._stream import aiter_any
 
 
 if TYPE_CHECKING:

@@ -21,7 +21,7 @@ import ray
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
-    from nu.core.spans.bracket import _LifecycleBracket
+    from nu.lang import Bracket
     from nu.lang.runtime import Context
 
 
@@ -101,7 +101,7 @@ class RayService:
     so drivers can do other work while the actor future is in flight.
     Fleets can boot in parallel via ``ProvideDict(..., parallel=True)``.
 
-    ``init`` is a ``_LifecycleBracket`` shipped to the actor. The actor
+    ``init`` is a ``Bracket`` shipped to the actor. The actor
     enters its ``_aopen(Context())`` on start and holds the resulting
     Context live for the actor's lifetime; on shutdown the bracket tears
     down LIFO. Use ``With(*brackets)`` to compose multiple ``Provide``
@@ -119,7 +119,7 @@ class RayService:
         self,
         ctx_builder: Callable[[], Context | Awaitable[Context]] | None = None,
         *,
-        init: _LifecycleBracket | None = None,
+        init: Bracket | None = None,
         node: str | None = None,
         actor_name: str | None = None,
         num_cpus: float | None = None,

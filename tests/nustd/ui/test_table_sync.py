@@ -15,7 +15,7 @@ import pytest
 import nu
 import nustd.kv
 import nustd.ui
-from nu.core.spans.bracket import _LifecycleBracket
+from nu.lang import Bracket
 from nustd.ui.table import values
 
 
@@ -230,7 +230,7 @@ async def _read(ctx, term):
     return out["v"]
 
 
-class _Hold(_LifecycleBracket):
+class _Hold(Bracket):
     """Hands the Context its body runs in to the test, so tabs can share its store."""
 
     def __init__(self, body: nu.Nu, *, into: asyncio.Future) -> None:

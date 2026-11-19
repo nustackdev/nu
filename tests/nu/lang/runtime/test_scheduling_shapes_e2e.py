@@ -23,9 +23,9 @@ from _support.async_atoms import (
     SyncOnlyAction,
     recording,
 )
-from _support.passthrough_span import PassBracket
 
 from nu.core.flows import AnyN, Parallel, Race
+from nu.lang import Bracket
 from nu.lang.helpers import arun
 
 
@@ -84,13 +84,13 @@ async def test_nested_parallel_places_each_inner_child_correctly() -> None:
 
 
 async def test_parallel_under_span_preserves_per_child_placement() -> None:
-    # A passthrough Bracket wrapping each child must not perturb the child's
+    # A bare Bracket wrapping each child must not perturb the child's
     # scheduling classification: the async-only body still runs on the loop,
     # the sync-only body still offloads to a worker thread.
     loop = _this_thread()
     tree = Parallel(
-        PassBracket(AsyncOnlyAction("io")),
-        PassBracket(SyncOnlyAction("cpu")),
+        Bracket(AsyncOnlyAction("io")),
+        Bracket(SyncOnlyAction("cpu")),
     )
     ran: dict = {}
     await arun(tree, recording(ran), max_parallel=2)

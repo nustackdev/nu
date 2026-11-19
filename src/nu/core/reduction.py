@@ -31,9 +31,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.lang import QueryReduction
+from nu.lang._stream import aiter_any, sync_iter
 from nu.lang.sentinels import UNSET
-
-from ._stream import aiter_any, sync_iter
 
 
 if TYPE_CHECKING:

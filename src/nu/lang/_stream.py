@@ -1,4 +1,4 @@
-"""Shared stream-iteration helpers for the core atoms.
+"""Shared stream-iteration helpers for stream thunks (core atoms, the Bracket base).
 
 A stream atom's thunk returns an iterator. Sources build one, lenses (Map /
 Filter) wrap one, folds (Sum / Collect) drain one. These helpers bridge the

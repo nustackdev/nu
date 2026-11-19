@@ -30,8 +30,7 @@ from .resources import WorkerPool
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from nu.core.spans.bracket import _LifecycleBracket
-    from nu.lang import Nu
+    from nu.lang import Bracket, Nu
 
 
 __all__ = ["pool"]
@@ -39,7 +38,7 @@ __all__ = ["pool"]
 
 def pool(
     *,
-    init: _LifecycleBracket | None = None,
+    init: Bracket | None = None,
     name: str = "nu",
     grace: float = 5.0,
     spares: int = 0,

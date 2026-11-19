@@ -26,8 +26,7 @@ from .resources import WorkerPool
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from nu.core.spans.bracket import _LifecycleBracket
-    from nu.lang import Nu
+    from nu.lang import Bracket, Nu
     from nu.lang.runtime import Runtime
 
     from .interactions import (
@@ -120,7 +119,7 @@ class PoolRef(FabricRef):
     # The interactions import this module, so every import below is lazy -
     # the same shape nu's own Form mixins use for the same reason.
 
-    def launch(self, init: _LifecycleBracket | Nu | None = None) -> Launch:
+    def launch(self, init: Bracket | Nu | None = None) -> Launch:
         """A ``Launch`` on this pool: hand out a worker, yield its id."""
         from .interactions import Launch
 

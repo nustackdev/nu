@@ -11,7 +11,7 @@ from __future__ import annotations
 from contextlib import nullcontext
 from typing import TYPE_CHECKING
 
-from nu.core._stream import aiter_any
+from nu.lang._stream import aiter_any
 
 
 if TYPE_CHECKING:

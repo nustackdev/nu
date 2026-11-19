@@ -13,7 +13,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
-from nu.core.spans.bracket import _LifecycleBracket
+from nu.lang import Bracket
 
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 __all__ = ["Frame"]
 
 
-class Frame(_LifecycleBracket):
+class Frame(Bracket):
     """Runs ``body`` with a fresh dict as the mem store for ``shape``.
 
     On entry the frame binds a new empty dict under ``shape`` and writes

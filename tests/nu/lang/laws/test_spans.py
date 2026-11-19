@@ -124,7 +124,7 @@ def test_span_subclass_keeps_body_at_slot_zero(cls: type) -> None:
 
     The transparency walks in ``_resolve_cardinality``, ``_slot_fit_sort``,
     ``_effective_sort``, ``has_body``, ``cardinality_matches_body``, and
-    ``_LifecycleBracket._compile`` all hard-code ``children[0]``. A subclass
+    ``Bracket._compile`` all hard-code ``children[0]``. A subclass
     that declared ``_param_slots`` including 0 would silently break every
     one of those walks. Guard the invariant here.
     """

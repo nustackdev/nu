@@ -22,7 +22,7 @@ import ray
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Iterator
 
-    from nu.core.spans.bracket import _LifecycleBracket
+    from nu.lang import Bracket
     from nu.lang.runtime import Context
 
 
@@ -42,7 +42,7 @@ class _RayServiceActor:
 
     async def start(
         self,
-        init: _LifecycleBracket | None,
+        init: Bracket | None,
         ctx_builder: Callable[[], Context | Awaitable[Context]] | None,
     ) -> None:
         """Build this actor's Context.

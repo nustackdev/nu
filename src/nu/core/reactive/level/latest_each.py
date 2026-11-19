@@ -10,10 +10,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.context.attrs.binders import bind
-from nu.core._stream import aiter_any
 from nu.core.flows.parallel._scheduling import _spawn_arm
 from nu.engine.structure import Declared
 from nu.lang import Control
+from nu.lang._stream import aiter_any
 from nu.lang.attributes.execution import ExecOrder
 
 from .._arms import ArmBook

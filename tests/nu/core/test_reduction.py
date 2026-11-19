@@ -16,7 +16,6 @@ import pytest
 import nu
 import nu.mem as nm
 from nu.core import Iter
-from nu.core._stream import aiter_any, sync_iter
 from nu.core.reduction import (
     AllOf,
     AnyOf,
@@ -30,6 +29,7 @@ from nu.core.reduction import (
 )
 from nu.engine.structure import Declared
 from nu.lang import LAWS, ActionReduction, Attr, Cardinality, CommandReduction, Literal, gate
+from nu.lang._stream import aiter_any, sync_iter
 from nu.lang.helpers import compile, validate
 
 

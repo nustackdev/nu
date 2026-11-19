@@ -102,7 +102,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Coroutine, Iterator
     from multiprocessing.connection import Connection
 
-    from nu.core.spans.bracket import _LifecycleBracket
+    from nu.lang import Bracket
     from nu.lang.runtime import Context
 
 
@@ -418,7 +418,7 @@ def _pump(conn: Connection, loop: asyncio.AbstractEventLoop, inbox: asyncio.Queu
             return
 
 
-async def _run(conn: Connection, init: _LifecycleBracket | None) -> None:
+async def _run(conn: Connection, init: Bracket | None) -> None:
     """Build the Context from ``init``, then serve requests until stop/EOF."""
     from nu.lang.runtime import Context
 

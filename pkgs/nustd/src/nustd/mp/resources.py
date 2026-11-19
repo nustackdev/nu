@@ -85,7 +85,7 @@ if TYPE_CHECKING:
     from multiprocessing.connection import Connection
     from multiprocessing.context import BaseContext, Process
 
-    from nu.core.spans.bracket import _LifecycleBracket
+    from nu.lang import Bracket
     from nu.lang.runtime import Context
 
 
@@ -1002,7 +1002,7 @@ class WorkerPool:
     def __init__(
         self,
         *,
-        init: _LifecycleBracket | None = None,
+        init: Bracket | None = None,
         name: str = "nu",
         grace: float = 5.0,
         spares: int = 0,
@@ -1190,7 +1190,7 @@ class WorkerPool:
 
     # --- launch ------------------------------------------------------------
 
-    def launch(self, init: _LifecycleBracket | None = None) -> int:
+    def launch(self, init: Bracket | None = None) -> int:
         """A worker ready to take requests: a warm spare when there is one, else a fresh spawn.
 
         ``init`` overrides the pool's bracket for this worker only, and a
@@ -1219,7 +1219,7 @@ class WorkerPool:
         self._refill()
         return wid
 
-    def _launch_cold(self, init: _LifecycleBracket | None, *, spare: bool = False) -> int:
+    def _launch_cold(self, init: Bracket | None, *, spare: bool = False) -> int:
         """Spawn a worker, register it, wait for ``ready``, return its id.
 
         A ``spare`` counts as warming from its id on, so ``workers`` never
@@ -1241,7 +1241,7 @@ class WorkerPool:
                     self._warming.discard(wid)
             raise
 
-    def _bring_up(self, wid: int, bracket: _LifecycleBracket | None) -> int:
+    def _bring_up(self, wid: int, bracket: Bracket | None) -> int:
         """``_launch_cold``'s rest, once the id is taken and counted as launching."""
         try:
             handle = self._spawn(wid, bracket)
@@ -1284,7 +1284,7 @@ class WorkerPool:
             handle.kill_now(hint)
             handle.wait_exit(self.grace)
 
-    def _spawn(self, wid: int, bracket: _LifecycleBracket | None) -> _WorkerHandle:
+    def _spawn(self, wid: int, bracket: Bracket | None) -> _WorkerHandle:
         """Start worker ``wid``'s process and hand back its handle.
 
         Spawned with SIGINT and SIGTERM masked, and not as a daemon process,
@@ -1480,7 +1480,7 @@ class WorkerPool:
 
     # --- async twins -------------------------------------------------------
 
-    async def alaunch(self, init: _LifecycleBracket | None = None) -> int:
+    async def alaunch(self, init: Bracket | None = None) -> int:
         """Async ``launch``: a spare at once, else spawn + wait for READY off-thread.
 
         Cancelling the await does not stop the thread, so the launch runs
@@ -1500,7 +1500,7 @@ class WorkerPool:
                 self._kill_nowait(wid)
             raise
 
-    def _launch_into(self, landing: _Landing, init: _LifecycleBracket | None) -> int:
+    def _launch_into(self, landing: _Landing, init: Bracket | None) -> int:
         """``launch`` on a thread, handing the id over through ``landing``."""
         wid = self._launch_cold(init)
         if not landing.land(wid):

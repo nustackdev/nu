@@ -11,9 +11,8 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
-from nu.core.spans.bracket import _LifecycleBracket
 from nu.engine.structure import Declared
-from nu.lang import Command, ScalarQuery
+from nu.lang import Bracket, Command, ScalarQuery
 from nu.lang.null import is_null
 
 from .fabric import WebServer
@@ -136,7 +135,7 @@ class MarkSessionDone(Command):
         return athunk
 
 
-class SessionFor(_LifecycleBracket):
+class SessionFor(Bracket):
     """Bind the ws transport of the connection this arm belongs to.
 
     Reads the sid off the Context the fold branched for this arm, looks the

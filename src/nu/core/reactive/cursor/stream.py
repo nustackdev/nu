@@ -10,8 +10,8 @@ from contextlib import aclosing
 from typing import TYPE_CHECKING
 
 from nu.context.attrs.binders import bind
-from nu.core._stream import aiter_any
 from nu.lang import StreamQuery
+from nu.lang._stream import aiter_any
 
 from .._body import async_only
 from ..level._wakes import Wakes, read_schedule, schedule_terms

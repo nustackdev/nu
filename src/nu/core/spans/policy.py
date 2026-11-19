@@ -34,11 +34,11 @@ from contextlib import ExitStack
 from typing import TYPE_CHECKING, cast
 
 from nu.context.attrs.binders import bind
-from nu.core._stream import aiter_any, sync_iter
 from nu.core.flows import Noop
 from nu.core.flows.parallel._scheduling import _settle
 from nu.engine.structure import Declared
 from nu.lang import Attr, Cardinality, Nu, Policy
+from nu.lang._stream import aiter_any, sync_iter
 from nu.lang.sentinels import UNSET, Unset
 
 

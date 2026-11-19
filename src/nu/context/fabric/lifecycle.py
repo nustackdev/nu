@@ -1,7 +1,7 @@
 """``Provide`` brackets: construct + bind fabrics for the body's duration.
 
 The tree carries a *class* plus a *spec* (kwargs, list of kwargs, or dict of
-kwargs) as config children after the body (see ``nu.core.spans.bracket``).
+kwargs) as config children after the body (see ``nu.Bracket``).
 Every config value is a child: a plain value becomes its Literal, a term is
 kept as given, and a spec given as a mapping (or a list or mapping of them)
 is built field by field, so any single field, tag or option can be computed
@@ -34,7 +34,8 @@ Tag knobs (all optional, they compose):
 
 The ecosystem is open: ``ProvideSharded``, ``ProvideRoundRobin``,
 ``ProvideReplicated``, ``ProvideLazy``, etc. all follow the same shape - each
-is a Bracket subclass; the engine sees them as regular lifecycle spans.
+is a ``nu.Bracket`` subclass that overrides ``_open`` / ``_aopen`` (no-ops on
+the base); the engine sees them as regular lifecycle spans.
 
 Both sync and async runs are supported natively via the two open methods
 (``_open`` and ``_aopen``). Under the async runtime the bracket prefers
@@ -55,7 +56,7 @@ from __future__ import annotations
 from contextlib import AsyncExitStack, ExitStack, asynccontextmanager, contextmanager
 from typing import TYPE_CHECKING, cast
 
-from nu.core.spans.bracket import _LifecycleBracket
+from nu.lang import Bracket
 from nu.lang.nu import Nu
 
 
@@ -211,7 +212,7 @@ def _bind(
 # =========================================================================
 
 
-class Provide(_LifecycleBracket):
+class Provide(Bracket):
     """Constructs one fabric and binds it on the Context for the body's duration.
 
     This is how a stateful Nu program gets its state: nothing in the tree
@@ -340,7 +341,7 @@ class Provide(_LifecycleBracket):
 # =========================================================================
 
 
-class ProvideList(_LifecycleBracket):
+class ProvideList(Bracket):
     """Constructs a fleet of one class and binds each member under its index.
 
     The list shape of :class:`Provide`: one instance per spec, bound at
@@ -455,7 +456,7 @@ class ProvideList(_LifecycleBracket):
 # =========================================================================
 
 
-class ProvideDict(_LifecycleBracket):
+class ProvideDict(Bracket):
     """Constructs a fleet of one class and binds each member under its own key.
 
     The mapping shape of :class:`Provide`: same as :class:`ProvideList` but
@@ -593,7 +594,7 @@ class ProvideDict(_LifecycleBracket):
 # =========================================================================
 
 
-class With(_LifecycleBracket):
+class With(Bracket):
     """Enters several lifecycle brackets around one body, tearing down in reverse.
 
     Python's ``with A, B, C: body``, in the tree. Each bracket is opened in
@@ -637,30 +638,30 @@ class With(_LifecycleBracket):
 
     def __init__(
         self,
-        *brackets: _LifecycleBracket,
+        *brackets: Bracket,
         body: Nu | None = None,
     ) -> None:
         inner: object = body
         for b in reversed(brackets):
-            if not isinstance(b, _LifecycleBracket):
-                msg = f"With takes lifecycle brackets, got {type(b).__name__}"
+            if not isinstance(b, Bracket):
+                msg = f"With takes brackets, got {type(b).__name__}"
                 raise TypeError(msg)
             inner = b._rebody(inner)
         super().__init__(inner)
         self.n_brackets = len(brackets)
 
-    def _walk(self) -> tuple[tuple[_LifecycleBracket, ...], object]:
+    def _walk(self) -> tuple[tuple[Bracket, ...], object]:
         """The cascade's brackets, outermost first, and the body under the last."""
-        layers: list[_LifecycleBracket] = []
+        layers: list[Bracket] = []
         node: object = self._children[0]
         for _ in range(self.n_brackets):
-            layer = cast("_LifecycleBracket", node)
+            layer = cast("Bracket", node)
             layers.append(layer)
             node = layer._inner()
         return tuple(layers), node
 
     @property
-    def brackets(self) -> tuple[_LifecycleBracket, ...]:
+    def brackets(self) -> tuple[Bracket, ...]:
         """The brackets of the cascade, outermost first, as they sit in the tree."""
         return self._walk()[0]
 
