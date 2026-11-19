@@ -20,6 +20,9 @@ Wire-up:
   A plain class is checked at construction, a computed one when it runs.
 - ``msg`` is any Nu expression yielding a value (typically a str). A NULL
   message still raises, though the exception cannot render it as text.
+- A ``msg`` that yields an exception, or the error a ``TryCatch`` catch
+  reads, is raised as it is, Python's ``raise err``: a catch that only
+  cleans up hands the very error on, its type and fields intact.
 """
 
 from __future__ import annotations
@@ -52,9 +55,12 @@ class Raise(Control):
         - ``exc_cls`` is a child, evaluated on every run: a plain class is
           checked here, a computed one when it runs.
         - A raise is never skipped.
+        - ``msg`` yielding an exception, or a caught error, raises that
+          exception itself; ``exc_cls`` is not used then.
 
     Yields:
-        Never returns normally; raises ``exc_cls(msg)``.
+        Never returns normally; raises ``exc_cls(msg)``, or the exception
+        ``msg`` yields.
 
     Example:
         >>> try:
@@ -62,6 +68,14 @@ class Raise(Control):
         ... except ValueError as e:
         ...     print(e)
         boom
+
+        A catch that cleans up, then hands the error on as it came:
+
+        >>> try:
+        ...     nu.run(nu.TryCatch(nu.Div(1, 0), catch=lambda err: nu.Raise(err)))
+        ... except ZeroDivisionError as e:
+        ...     print(type(e).__name__)
+        ZeroDivisionError
     """
 
     _param_slots = Declared(value=frozenset({0, 1}), name="param_slots")
@@ -76,6 +90,7 @@ class Raise(Control):
 
         def thunk(rt: Runtime) -> None:
             msg = msg_t(rt)
+            _raise_as_is(msg)
             raise _exc_class(exc_t(rt))(msg)
 
         return thunk
@@ -85,9 +100,20 @@ class Raise(Control):
 
         async def athunk(rt: Runtime) -> None:
             msg = await msg_t(rt)
+            _raise_as_is(msg)
             raise _exc_class(await exc_t(rt))(msg)
 
         return athunk
+
+
+def _raise_as_is(msg: object) -> None:
+    """Raise ``msg`` itself when it is an exception, or the one a caught error carries."""
+    from nu.core.spans.policy import CaughtError
+
+    if isinstance(msg, CaughtError):
+        raise msg.exception
+    if isinstance(msg, BaseException):
+        raise msg
 
 
 def _exc_class(value: object) -> type[BaseException]:
