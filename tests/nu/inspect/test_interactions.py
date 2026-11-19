@@ -57,8 +57,8 @@ def test_a_keyword_tail_renders_starred_in_the_call_and_the_args() -> None:
 
 
 def test_a_ref_render_lists_its_declaration_classmethod() -> None:
-    text = render("nustd.cc.StreamRef")
-    assert "StreamRef.method(...)" in text
+    text = render("nustd.llm.ChatRef")
+    assert "ChatRef.method(...)" in text
 
 
 def test_the_module_docstring_is_parsed_once_and_opens_the_render() -> None:

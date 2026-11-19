@@ -49,7 +49,6 @@ dot-access: `import nustd`, then `nustd.kv`, `nustd.ui`, `nustd.uuid`.
 | `nustd.blob`    | `nustd[blob]`    | Write-once blobs on LMDB or files     |
 | `nustd.ui`      | `nustd[ui]`      | The nudle web UI runtime              |
 | `nustd.llm`     | `nustd[llm]`     | LLM calls                             |
-| `nustd.cc`      | `nustd[cc]`      | Claude Agent SDK sessions             |
 | `nustd.acp`     | `nustd[acp]`     | Coding agents over ACP v1             |
 | `nustd.http`    | `nustd[http]`    | HTTP client atoms                     |
 | `nustd.proxy`   | `nustd[proxy]`   | Remote objects over invisibles        |

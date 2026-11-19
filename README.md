@@ -159,7 +159,7 @@ nu.run(app)
 
 ### And more
 
-HTTP, remote fabrics over the network, Python objects as Refs, Claude Code sessions, local worker pools, websocket servers. Same model, same shape. See [all of nustd](#nustd).
+HTTP, remote fabrics over the network, Python objects as Refs, coding agent sessions, local worker pools, websocket servers. Same model, same shape. See [all of nustd](#nustd).
 
 ## Quickstart
 
@@ -201,7 +201,6 @@ Fabrics. Bind one and every Ref inside the bracket reaches a real system.
 | [`nustd.cluster`](https://nustack.dev/docs/nustd/reference/cluster) | Run trees across a Ray cluster | `cluster` |
 | [`nustd.mp`](https://nustack.dev/docs/nustd/reference/mp) | Run trees in local worker processes | `mp` |
 | [`nustd.llm`](https://nustack.dev/docs/nustd/reference/llm) | OpenAI-compatible chat, seven providers | `llm` |
-| [`nustd.cc`](https://nustack.dev/docs/nustd/reference/cc) | Claude Code sessions as Refs | `cc` |
 | [`nustd.http`](https://nustack.dev/docs/nustd/reference/http) | HTTP calls | `http` |
 | [`nustd.proxy`](https://nustack.dev/docs/nustd/reference/proxy) | Any fabric, used from another process | `proxy` |
 | [`nustd.service`](https://nustack.dev/docs/nustd/reference/service) | Python objects as Refs | - |

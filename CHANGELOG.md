@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Drop the Claude Code fabric; acp drives Claude Code and other coding agents
 - Rename the worker pool fabric to nustd.mp; imports and the extra change
 - Drop the single-process mp fabric; the worker pool covers everything it did
 - Switch labels, parallel modes, error filters and other run-time config can be computed

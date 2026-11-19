@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from nu.inspect import BuilderRecord, CallRecord, RefRecord, parse_ref, verify_ref
 from nu.mem.refs.items import IntRef, ItemRef, StrRef
-from nustd.cc.refs import PromptRef, StreamRef
 from nustd.llm.refs import ChatRef
 
 
@@ -65,7 +64,7 @@ def test_a_shape_slot_declaration_is_on_the_ref_record() -> None:
 
 
 def test_a_service_endpoint_declaration_is_on_the_ref_record() -> None:
-    for cls in (ChatRef, PromptRef, StreamRef):
+    for cls in (ChatRef,):
         record = _declaration(cls, "method")
         assert record.binding == "classmethod"
         assert record.spelling == f"{cls.__name__}.method(...)"
@@ -80,5 +79,5 @@ def test_declarations_sit_beside_the_term_builders() -> None:
 
 
 def test_declaration_docstrings_are_clean_by_the_shared_laws() -> None:
-    for cls in (StrRef, ChatRef, PromptRef, StreamRef):
+    for cls in (StrRef, ChatRef):
         assert verify_ref(cls) == []
