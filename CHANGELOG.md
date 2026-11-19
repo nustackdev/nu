@@ -2,16 +2,17 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.8.0
-- **nustd** (fabrics) — 0.8.0
-- **nudle** — 0.1.14
+- **nucore** (kernel) — 0.9.0
+- **nustd** (fabrics) — 0.9.0
+- **nudle** — 0.1.15
 - **ui-core** — 0.2.4
-- **ui-kit** — 0.4.6
+- **ui-kit** — 0.4.7
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.9.0 - 2026-11-20
 
+- Release nu 0.9.0
 - Agent commands are readable without the ACP SDK, so hosts load without it
 - Retry can name errors it never retries, and its hooks see the exception
 - A catch can hand its error on as it came, type and fields intact
