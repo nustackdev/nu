@@ -69,7 +69,15 @@ if TYPE_CHECKING:
     from .refs import AgentRef, SessionRef
 
 
-# Everything here stands on the ACP SDK, so it loads on first access, and a
+#: The commands the presets spawn. Plain data, so a program can name an Agent's
+#: command without the ACP SDK installed.
+CLAUDE = ("npx", "-y", "@agentclientprotocol/claude-agent-acp")
+CODEX = ("npx", "-y", "@agentclientprotocol/codex-acp")
+GEMINI = ("gemini", "--acp")
+OPENCODE = ("opencode", "acp")
+
+
+# Everything else here stands on the ACP SDK, so it loads on first access, and a
 # missing SDK is named as the extra that brings it.
 _LAZY = {
     "AcpAnswerPermission": "interactions",
@@ -121,6 +129,10 @@ def __dir__() -> list[str]:
 
 
 __all__ = [
+    "CLAUDE",
+    "CODEX",
+    "GEMINI",
+    "OPENCODE",
     "PERMISSIONS",
     "AcpAnswerPermission",
     "AcpAuthenticate",

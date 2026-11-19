@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from nu.context.fabric import Provide
 from nu.lang import Nu
 
+from . import CLAUDE, CODEX, GEMINI, OPENCODE
 from .fabric import DEFAULT_PERMISSIONS, PERMISSIONS, AcpFabric
 from .refs import agent_name
 
@@ -18,13 +19,6 @@ if TYPE_CHECKING:
 
 
 __all__ = ["CLAUDE", "CODEX", "GEMINI", "OPENCODE", "bind", "claude", "codex", "gemini", "opencode"]
-
-
-#: The commands the presets spawn.
-CLAUDE = ("npx", "-y", "@agentclientprotocol/claude-agent-acp")
-CODEX = ("npx", "-y", "@agentclientprotocol/codex-acp")
-GEMINI = ("gemini", "--acp")
-OPENCODE = ("opencode", "acp")
 
 
 def bind(
