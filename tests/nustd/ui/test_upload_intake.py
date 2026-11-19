@@ -720,3 +720,13 @@ def test_serve_defaults_to_a_temp_root_and_no_cap():
     area = tree.brackets[1].area
     assert area.root.name.startswith("nu-uploads-")
     assert area.cap is None
+
+
+def test_uploads_pickle_for_another_process(tmp_path):
+    """The area's bracket and its route ship to a worker: no lock or handle in them pickles badly."""
+    import cloudpickle
+
+    bracket, routes = uploads(tmp_path)
+    copied_bracket, copied_routes = cloudpickle.loads(cloudpickle.dumps((bracket, routes)))
+    assert [r.path for r in copied_routes] == [r.path for r in routes]
+    assert type(copied_bracket) is type(bracket)

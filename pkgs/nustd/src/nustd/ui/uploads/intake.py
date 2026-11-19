@@ -76,11 +76,38 @@ def same_origin(request: Request) -> bool:
     return parts.scheme in ("http", "https") and parts.netloc.lower() == host.strip().lower()
 
 
+class _PieceLocks:
+    """One lock per upload token, so a file takes one piece at a time.
+
+    A retry can reach the server while the piece it repeats is still
+    streaming in. The locks are made on first use and held weakly, so a
+    finished upload's lock goes with its last request. A copy (a route
+    shipped to another process) starts with none: a lock belongs to the
+    loop that serves the requests.
+    """
+
+    def __init__(self) -> None:
+        self._locks: weakref.WeakValueDictionary[str, asyncio.Lock] | None = None
+
+    def __call__(self, token: str) -> asyncio.Lock:
+        """The lock of ``token``, made when it has none."""
+        if self._locks is None:
+            self._locks = weakref.WeakValueDictionary()
+        lock = self._locks.get(token)
+        if lock is None:
+            lock = self._locks[token] = asyncio.Lock()
+        return lock
+
+    def __getstate__(self) -> dict[str, object]:
+        return {}
+
+    def __setstate__(self, state: dict[str, object]) -> None:
+        self._locks = None
+
+
 def _route(area: UploadArea) -> Route:
     """``POST /_nu/upload/{sid}``: a whole body or one piece of it, answered with its token."""
-    # One piece of a file at a time: a retry can reach the server while the
-    # piece it repeats is still streaming in.
-    locks: weakref.WeakValueDictionary[str, asyncio.Lock] = weakref.WeakValueDictionary()
+    locks = _PieceLocks()
 
     async def intake(request: Request) -> Response:
         if not same_origin(request):
@@ -109,10 +136,7 @@ def _route(area: UploadArea) -> Route:
         offset = _count(query.get("offset"))
         if offset is None or offset > total:
             return _plain("offset is a byte count within total", 400)
-        lock = locks.get(token)
-        if lock is None:
-            lock = locks[token] = asyncio.Lock()
-        async with lock:
+        async with locks(token):
             return await _piece(request, area, sid, token, offset, total)
 
     return Route(f"{UPLOAD_PREFIX}/{{sid}}", intake, methods=["POST"], name="nu_upload")
