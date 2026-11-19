@@ -14,22 +14,34 @@ from pathlib import PurePath, PurePosixPath
 from typing import TYPE_CHECKING, NoReturn, cast
 
 from nu.context import FabricRef
-from nu.lang import Nu, ScalarQuery
+from nu.lang import Literal, Nu, ScalarQuery
 from nu.lang.null import Null, is_null
 from nu.lang.sentinels import UNSET
 
 from .fabric import STEP, FsFabric
 from .interactions import (
+    FsAppend,
+    FsAppendStream,
+    FsCopy,
     FsDigest,
     FsHas,
     FsLines,
     FsList,
+    FsMakeTemp,
+    FsMkdir,
+    FsMove,
     FsOpen,
     FsReadBytes,
     FsReadText,
+    FsRemove,
+    FsRemoveIfHolds,
     FsStat,
+    FsTouch,
     FsUsage,
     FsWhere,
+    FsWriteBytes,
+    FsWriteStream,
+    FsWriteText,
 )
 
 
@@ -176,6 +188,82 @@ class FsRef(FabricRef):
     def lines(self, p: object, encoding: object = "utf-8") -> FsLines:
         """The file's lines as a lazy stream; see ``FsLines``."""
         return FsLines(self, p, encoding)
+
+    # --- writes -------------------------------------------------------------
+
+    def write_text(
+        self, p: object, text: object, *, exclusive: object = False, mode: object = None
+    ) -> FsWriteText:
+        """Write the file's text whole, atomically; see ``FsWriteText``."""
+        return FsWriteText(self, p, text, exclusive, mode)
+
+    def write_bytes(
+        self, p: object, data: object, *, exclusive: object = False, mode: object = None
+    ) -> FsWriteBytes:
+        """Write the file's bytes whole, atomically; see ``FsWriteBytes``."""
+        return FsWriteBytes(self, p, data, exclusive, mode)
+
+    def write_stream(
+        self, p: object, pieces: object, *, exclusive: object = False
+    ) -> FsWriteStream:
+        """Write a stream of pieces to the file, moved in when drained; see ``FsWriteStream``."""
+        return FsWriteStream(self, p, pieces, exclusive)
+
+    def append(self, p: object, text: object) -> FsAppend:
+        """Add text to the end of the file; see ``FsAppend``."""
+        return FsAppend(self, p, text)
+
+    def append_stream(self, p: object, lines: object) -> FsAppendStream:
+        """Add a stream of lines to the end of the file; see ``FsAppendStream``."""
+        return FsAppendStream(self, p, lines)
+
+    def mkdir(self, *ps: object, mode: object = None) -> FsMkdir:
+        """Make each dir with its parents; see ``FsMkdir``."""
+        return FsMkdir(self, *ps, mode=mode)
+
+    def remove(self, *ps: object, tree: object = False) -> FsRemove:
+        """Remove each path, a missing one skipped; see ``FsRemove``."""
+        return FsRemove(self, *ps, tree=tree)
+
+    def remove_if_holds(self, p: object, text: object) -> FsRemoveIfHolds:
+        """Remove the file only while it holds ``text``; see ``FsRemoveIfHolds``."""
+        return FsRemoveIfHolds(self, p, text)
+
+    def move(self, src: object, dst: object, *, overwrite: object = False) -> FsMove:
+        """Move ``src`` to ``dst``, ``"dir/"`` meaning into it; see ``FsMove``."""
+        return FsMove(self, src, self._own(dst), overwrite)
+
+    def copy(
+        self, src: object, dst: object, *, overwrite: object = False, verify: object = False
+    ) -> FsCopy:
+        """Copy the file ``src`` to ``dst``; see ``FsCopy``."""
+        return FsCopy(self, src, self._own(dst), overwrite, verify)
+
+    def touch(self, p: object) -> FsTouch:
+        """Make the file when missing and set its mtime; see ``FsTouch``."""
+        return FsTouch(self, p)
+
+    def make_temp(self, prefix: object = "tmp-", dir: object = ".") -> FsMakeTemp:
+        """Make a fresh dir in the mount and yield its path; see ``FsMakeTemp``."""
+        return FsMakeTemp(self, prefix, dir)
+
+    def _own(self, p: object) -> object:
+        """A path argument, a ``FileRef`` on this mount taken as its path."""
+        if not isinstance(p, FileRef):
+            return p
+        if not _same_mount(self, p.fs):
+            raise ValueError(f"{p!r} is on another mount; move and copy stay within one")
+        return p.p
+
+
+def _same_mount(a: FsRef, b: FsRef) -> bool:
+    """Whether two refs name one mount; a computed tag is taken at its word."""
+    if a is b:
+        return True
+    ta, tb = a.tag, b.tag
+    if isinstance(ta, Literal) and isinstance(tb, Literal):
+        return ta.value == tb.value
+    return True
 
 
 def _lookup(rt: Runtime, fabric: object, tag: object) -> object:
@@ -341,6 +429,60 @@ class FileRef:
     def lines(self, encoding: object = "utf-8") -> FsLines:
         """The file's lines as a lazy stream; see ``FsLines``."""
         return FsLines(self._fs, self._path, encoding)
+
+    # --- writes -------------------------------------------------------------
+
+    def write_text(
+        self, text: object, *, exclusive: object = False, mode: object = None
+    ) -> FsWriteText:
+        """Write the file's text whole, atomically; see ``FsWriteText``."""
+        return FsWriteText(self._fs, self._path, text, exclusive, mode)
+
+    def write_bytes(
+        self, data: object, *, exclusive: object = False, mode: object = None
+    ) -> FsWriteBytes:
+        """Write the file's bytes whole, atomically; see ``FsWriteBytes``."""
+        return FsWriteBytes(self._fs, self._path, data, exclusive, mode)
+
+    def write_stream(self, pieces: object, *, exclusive: object = False) -> FsWriteStream:
+        """Write a stream of pieces to the file, moved in when drained; see ``FsWriteStream``."""
+        return FsWriteStream(self._fs, self._path, pieces, exclusive)
+
+    def append(self, text: object) -> FsAppend:
+        """Add text to the end of the file; see ``FsAppend``."""
+        return FsAppend(self._fs, self._path, text)
+
+    def append_stream(self, lines: object) -> FsAppendStream:
+        """Add a stream of lines to the end of the file; see ``FsAppendStream``."""
+        return FsAppendStream(self._fs, self._path, lines)
+
+    def mkdir(self, *, mode: object = None) -> FsMkdir:
+        """Make this dir with its parents; see ``FsMkdir``."""
+        return FsMkdir(self._fs, self._path, mode=mode)
+
+    def remove(self, *, tree: object = False) -> FsRemove:
+        """Remove this path, a no-op when missing; see ``FsRemove``."""
+        return FsRemove(self._fs, self._path, tree=tree)
+
+    def remove_if_holds(self, text: object) -> FsRemoveIfHolds:
+        """Remove the file only while it holds ``text``; see ``FsRemoveIfHolds``."""
+        return FsRemoveIfHolds(self._fs, self._path, text)
+
+    def move(self, dst: object, *, overwrite: object = False) -> FsMove:
+        """Move this entry to ``dst``, ``"dir/"`` meaning into it; see ``FsMove``."""
+        return self._fs.move(self._path, dst, overwrite=overwrite)
+
+    def copy(self, dst: object, *, overwrite: object = False, verify: object = False) -> FsCopy:
+        """Copy this file to ``dst``; see ``FsCopy``."""
+        return self._fs.copy(self._path, dst, overwrite=overwrite, verify=verify)
+
+    def touch(self) -> FsTouch:
+        """Make the file when missing and set its mtime; see ``FsTouch``."""
+        return FsTouch(self._fs, self._path)
+
+    def make_temp(self, prefix: object = "tmp-") -> FsMakeTemp:
+        """Make a fresh dir inside this one and yield its path; see ``FsMakeTemp``."""
+        return FsMakeTemp(self._fs, prefix, self._path)
 
 
 def _path_value(p: object) -> object:

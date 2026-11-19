@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- fs mounts write files atomically, append, move, copy and remove inside the mount
 - Add an fs fabric that mounts a dir and reads files, listings and streams inside it
 - Add a json stdlib mirror so file text parses and serializes inside trees
 - Sync runs refuse fabrics with only async setup; refusals name the actual bracket

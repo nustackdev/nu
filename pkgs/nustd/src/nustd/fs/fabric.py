@@ -25,9 +25,13 @@ raises ``FsEscape``.
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import errno
+import fcntl
 import fnmatch
 import hashlib
 import os
+import secrets
 import shutil
 import stat as st
 import tempfile
@@ -45,7 +49,7 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Context
 
 
-__all__ = ["FOLLOW", "KINDS", "STEP", "FsFabric"]
+__all__ = ["FOLLOW", "HELD", "KINDS", "STEP", "FsFabric", "Part"]
 
 
 #: Bytes per piece a stream reads, unless told otherwise.
@@ -56,6 +60,17 @@ FOLLOW = frozenset({"inside", "never", "any"})
 
 #: What an entry's ``kind`` can be.
 KINDS = frozenset({"file", "dir", "link", "other"})
+
+#: The lock files this process holds, by absolute path. A POSIX lock is the
+#: process's, and closing any descriptor on the file drops it, so code here
+#: that would open one of these checks the set first.
+HELD: set[str] = set()
+
+#: ``lockf`` errnos meaning another process holds the lock.
+TAKEN = frozenset({errno.EACCES, errno.EAGAIN})
+
+#: ``lockf`` errnos meaning the file system cannot lock at all.
+NO_LOCKS = frozenset({errno.ENOLCK, errno.EOPNOTSUPP, errno.ENOTSUP, errno.EINVAL})
 
 
 class FsFabric(Fabric):
@@ -293,6 +308,276 @@ class FsFabric(Fabric):
             h.update(piece)
         return h.hexdigest()
 
+    # --- writes -------------------------------------------------------------
+
+    def write(
+        self, p: object, data: object, *, exclusive: bool = False, mode: int | None = None
+    ) -> None:
+        """Write ``data`` to the file whole: a temp in the same dir, fsynced, then moved in.
+
+        A reader sees the old bytes or the new ones, never half. Exclusive,
+        the temp is linked in, so a taken name raises ``FileExistsError`` and
+        is left as it was.
+        """
+        self.writable()
+        buf = as_bytes(data)
+        full = self._target(p)
+        if exclusive and os.path.lexists(full):
+            raise FileExistsError(f"{_shown(p)} is taken")
+        fd, temp = _temp(full)
+        try:
+            try:
+                _write_all(fd, buf)
+                _settle(fd, full, mode)
+            finally:
+                os.close(fd)
+        except BaseException:
+            Path(temp).unlink(missing_ok=True)
+            raise
+        _commit(temp, full, exclusive=exclusive, shown=_shown(p))
+
+    def open_part(self, p: object, *, exclusive: bool = False, mode: int | None = None) -> Part:
+        """A ``Part`` filling ``p.part`` beside ``p``, moved in place on ``commit``."""
+        self.writable()
+        full = self._target(p)
+        if exclusive and os.path.lexists(full):
+            raise FileExistsError(f"{_shown(p)} is taken")
+        part = full + ".part"
+        fd = os.open(part, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o666)
+        return Part(fd, part, full, exclusive=exclusive, mode=mode, shown=_shown(p))
+
+    def append(self, p: object, data: object) -> None:
+        """Add ``data`` to the end of the file, made when missing, in one ``O_APPEND`` write."""
+        self.writable()
+        buf = as_bytes(data)
+        fd = self.open_append(p)
+        try:
+            _write_all(fd, buf)
+        finally:
+            os.close(fd)
+
+    def open_append(self, p: object) -> int:
+        """An ``O_APPEND`` descriptor on the file, made with its parents when missing."""
+        self.writable()
+        full = self._target(p)
+        return os.open(full, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o666)
+
+    def mkdir(self, *ps: object, mode: int | None = None) -> None:
+        """Make each dir with its parents; one already there is left as it is."""
+        self.writable()
+        for p in ps:
+            full = Path(self.resolve(p))
+            if mode is None:
+                full.mkdir(parents=True, exist_ok=True)
+            else:
+                full.mkdir(mode=mode, parents=True, exist_ok=True)
+
+    def remove(self, *ps: object, tree: bool = False) -> None:
+        """Remove each path; a missing one is a no-op, a dir needs ``tree`` unless empty."""
+        self.writable()
+        for p in ps:
+            full = self._entry_path(p, "remove")
+            try:
+                info = os.lstat(full)
+            except (FileNotFoundError, NotADirectoryError):
+                continue
+            if not st.S_ISDIR(info.st_mode):
+                Path(full).unlink(missing_ok=True)
+            elif tree:
+                shutil.rmtree(full)
+            else:
+                Path(full).rmdir()
+
+    def remove_if_holds(self, p: object, text: str) -> None:
+        """Remove the file only while it holds exactly ``text``, the check under its lock.
+
+        A missing file is a no-op. When another process holds the file's lock
+        the file is live and is left alone.
+        """
+        self.writable()
+        want = as_bytes(text)
+        if not split(p):
+            raise PermissionError("refusing to remove the mount itself")
+        # The file is opened and read, so its last part is checked too.
+        full = self.resolve(p)
+        if full in HELD:
+            # This process holds the lock: a second descriptor, closed,
+            # would drop it, so check and remove without one.
+            _unlink_if(full, want)
+            return
+        try:
+            fd = os.open(full, os.O_RDWR)
+        except (FileNotFoundError, NotADirectoryError):
+            return
+        try:
+            try:
+                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError as exc:
+                if exc.errno in TAKEN:
+                    return
+                if exc.errno not in NO_LOCKS:
+                    raise
+            _unlink_if(full, want)
+        finally:
+            os.close(fd)
+
+    def move(self, src: object, dst: object, *, overwrite: bool = False) -> None:
+        """Move ``src`` to ``dst``; a ``dst`` ending in ``/`` means into that dir.
+
+        Without ``overwrite`` a taken ``dst`` raises ``FileExistsError``. Across
+        devices the entry is copied, then the source removed.
+        """
+        self.writable()
+        source = self._entry_path(src, "move")
+        if not os.path.lexists(source):
+            raise FileNotFoundError(f"nothing at {_shown(src)} to move")
+        target = self._destination(src, dst)
+        if overwrite:
+            try:
+                Path(source).replace(target)
+            except OSError as exc:
+                if exc.errno != errno.EXDEV:
+                    raise
+                _move_across(source, target)
+            return
+        if os.path.lexists(target):
+            raise FileExistsError(f"{_shown(dst)} is taken")
+        if not Path(source).is_dir() or Path(source).is_symlink():
+            try:
+                os.link(source, target, follow_symlinks=False)
+            except FileExistsError:
+                raise FileExistsError(f"{_shown(dst)} is taken") from None
+            except OSError:
+                pass  # no hard links here: the check above is the guard
+            else:
+                Path(source).unlink()
+                return
+        try:
+            Path(source).rename(target)
+        except OSError as exc:
+            if exc.errno != errno.EXDEV:
+                raise
+            _move_across(source, target)
+
+    def copy(
+        self, src: object, dst: object, *, overwrite: bool = False, verify: bool = False
+    ) -> None:
+        """Copy the file ``src`` to ``dst``, data and metadata, through a temp moved in whole.
+
+        A ``dst`` ending in ``/`` means into that dir. ``verify`` compares the
+        sha256 of the two before the copy is moved in.
+        """
+        self.writable()
+        source = self.resolve(src)
+        if Path(source).is_dir():
+            raise IsADirectoryError(f"{_shown(src)} is a directory; copy copies files")
+        target = self._destination(src, dst)
+        if not overwrite and os.path.lexists(target):
+            raise FileExistsError(f"{_shown(dst)} is taken")
+        fd, temp = _temp(target)
+        os.close(fd)
+        try:
+            shutil.copy2(source, temp)
+            if verify and _sha256(source) != _sha256(temp):
+                raise OSError(errno.EIO, f"copy of {_shown(src)} does not match its source")
+        except BaseException:
+            Path(temp).unlink(missing_ok=True)
+            raise
+        _commit(temp, target, exclusive=not overwrite, shown=_shown(dst))
+
+    def touch(self, p: object) -> None:
+        """Make the file when missing, with its parents, and set its mtime to now."""
+        self.writable()
+        Path(self._target(p)).touch()
+
+    def make_temp(self, prefix: str = "tmp-", where: object = ".") -> PurePosixPath:
+        """Make a fresh dir under ``where`` and give its path in the mount."""
+        self.writable()
+        base = Path(self.resolve(where))
+        base.mkdir(parents=True, exist_ok=True)
+        return self.relative(tempfile.mkdtemp(prefix=prefix, dir=base))
+
+    # --- write helpers ------------------------------------------------------
+
+    def _target(self, p: object) -> str:
+        """The file ``p`` names, checked, its parents made; a dir there is refused."""
+        full = self.resolve(p)
+        if not split(p):
+            raise IsADirectoryError("the mount itself is a directory, not a file")
+        if Path(full).is_dir():
+            raise IsADirectoryError(f"{_shown(p)} is a directory")
+        Path(full).parent.mkdir(parents=True, exist_ok=True)
+        return full
+
+    def _entry_path(self, p: object, verb: str) -> str:
+        """The entry ``p`` names, its last part unfollowed; the mount itself is refused."""
+        if not split(p):
+            raise PermissionError(f"refusing to {verb} the mount itself")
+        return self.resolve(p, leaf=False)
+
+    def _destination(self, src: object, dst: object) -> str:
+        """Where ``dst`` puts ``src``: into the dir for a trailing ``/``, parents made."""
+        into = isinstance(dst, str) and dst.endswith("/")
+        if into:
+            folder = Path(self.resolve(dst))
+            folder.mkdir(parents=True, exist_ok=True)
+            name = split(src)[-1:] or ("",)
+            target = str(folder / name[0])
+            self.resolve(self.relative(target), leaf=False)
+            return target
+        if not split(dst):
+            raise IsADirectoryError(
+                "the mount itself is a directory; end dst with '/' to move into it"
+            )
+        target = self.resolve(dst, leaf=False)
+        Path(target).parent.mkdir(parents=True, exist_ok=True)
+        return target
+
+
+class Part:
+    """A file filling at ``<p>.part``, moved over ``p`` whole when the stream is drained.
+
+    Plain sync methods; an async run calls each in a thread.
+    """
+
+    def __init__(
+        self, fd: int, part: str, full: str, *, exclusive: bool, mode: int | None, shown: str
+    ) -> None:
+        self.fd = fd
+        self.part = part
+        self.full = full
+        self.exclusive = exclusive
+        self.mode = mode
+        self.shown = shown
+
+    def write(self, piece: object) -> None:
+        """Add one piece."""
+        _write_all(self.fd, as_bytes(piece))
+
+    def commit(self) -> None:
+        """Fsync, close and move the part in place."""
+        try:
+            _settle(self.fd, self.full, self.mode)
+        except BaseException:
+            self.abort()
+            raise
+        os.close(self.fd)
+        if self.exclusive:
+            try:
+                os.link(self.part, self.full)
+            except FileExistsError:
+                raise FileExistsError(f"{self.shown} is taken") from None
+            finally:
+                Path(self.part).unlink(missing_ok=True)
+        else:
+            Path(self.part).replace(self.full)
+
+    def abort(self) -> None:
+        """Close and remove the part, leaving ``p`` as it was."""
+        with contextlib.suppress(OSError):
+            os.close(self.fd)
+        Path(self.part).unlink(missing_ok=True)
+
 
 # --- helpers ----------------------------------------------------------------
 
@@ -369,6 +654,85 @@ def clamp(start: int, end: int | None, size: int) -> tuple[int, int]:
     start = min(start, size)
     end = size if end is None else min(end, size)
     return start, max(start, end)
+
+
+def as_bytes(data: object) -> bytes | memoryview:
+    """``data`` as bytes to write: ``bytes``-like as given, ``str`` as UTF-8."""
+    if isinstance(data, str):
+        return data.encode("utf-8")
+    if isinstance(data, (bytes, bytearray)):
+        return bytes(data)
+    if isinstance(data, memoryview):
+        return data
+    raise TypeError(f"fs writes take str or bytes, got {type(data).__name__}")
+
+
+def _temp(full: str) -> tuple[int, str]:
+    """A fresh temp file beside ``full``, ``.<name>.<token>.tmp``, open for writing."""
+    head, name = os.path.split(full)
+    while True:
+        temp = os.path.join(head, f".{name}.{secrets.token_hex(6)}.tmp")  # noqa: PTH118 - str paths
+        try:
+            return os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o666), temp
+        except FileExistsError:
+            continue
+
+
+def _write_all(fd: int, data: bytes | memoryview) -> None:
+    view = memoryview(data)
+    while view:
+        done = os.write(fd, view)
+        view = view[done:]
+
+
+def _settle(fd: int, full: str, mode: int | None) -> None:
+    """Set the new file's mode (given, else the one it replaces) and fsync it."""
+    if mode is None:
+        with contextlib.suppress(OSError):
+            mode = st.S_IMODE(Path(full).stat().st_mode)
+    if mode is not None:
+        os.fchmod(fd, mode)
+    os.fsync(fd)
+
+
+def _commit(temp: str, full: str, *, exclusive: bool, shown: str) -> None:
+    """Move ``temp`` over ``full``: replace, or link so a taken name refuses."""
+    try:
+        if exclusive:
+            try:
+                os.link(temp, full)
+            except FileExistsError:
+                raise FileExistsError(f"{shown} is taken") from None
+        else:
+            Path(temp).replace(full)
+    finally:
+        Path(temp).unlink(missing_ok=True)
+
+
+def _unlink_if(full: str, want: bytes | memoryview) -> None:
+    try:
+        held = Path(full).read_bytes()
+    except (FileNotFoundError, NotADirectoryError):
+        return
+    if held == bytes(want):
+        Path(full).unlink(missing_ok=True)
+
+
+def _sha256(full: str) -> str:
+    h = hashlib.sha256()
+    for piece in _pieces(full, 0, None, STEP):
+        h.update(piece)
+    return h.hexdigest()
+
+
+def _move_across(source: str, target: str) -> None:
+    """Move to another device: copy the entry, then remove the source."""
+    if Path(source).is_dir() and not Path(source).is_symlink():
+        shutil.copytree(source, target, symlinks=True)
+        shutil.rmtree(source)
+    else:
+        shutil.copy2(source, target, follow_symlinks=False)
+        Path(source).unlink()
 
 
 def _pieces(full: str, start: int, end: int | None, step: int) -> Iterator[bytes]:
