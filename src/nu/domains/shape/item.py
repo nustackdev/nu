@@ -162,7 +162,7 @@ class ItemRef(ItemForm, StructuredRef):
         # A plain key was wrapped in a Literal when this ref was built; hand the
         # new one the key itself, so it is built exactly as this one was.
         address = self._children[1]
-        if type(address) is Literal:
+        if type(address) is Literal and address.factory is None:
             address = address.value
         ref = slot.create_ref(
             owner_shape=self._owner_shape,

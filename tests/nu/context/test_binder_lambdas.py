@@ -14,12 +14,13 @@ import asyncio
 from typing import TYPE_CHECKING
 
 import pytest
+from _support.policy_atoms import Sink
 
 import nu
 import nustd
 from nu.core.reactive.cursor.stream import Stream
 from nu.engine.structure import Declared
-from nu.lang import NULL, Context, Literal, ScalarAction, wire
+from nu.lang import NULL, Context, ScalarAction, wire
 from nustd.functools.interactions import Reduce
 
 
@@ -38,21 +39,21 @@ class Record(ScalarAction):
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
     def __init__(self, value: object, log: list) -> None:
-        super().__init__(value, Literal(log))
+        super().__init__(value, Sink(log))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        value, log = children[0], self._children[1].value
+        value, sink = children
 
         def thunk(rt: Runtime) -> None:
-            log.append(value(rt))
+            sink(rt).append(value(rt))
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        value, log = children[0], self._children[1].value
+        value, sink = children
 
         async def athunk(rt: Runtime) -> None:
-            log.append(await value(rt))
+            (await sink(rt)).append(await value(rt))
 
         return athunk
 

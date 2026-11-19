@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import pytest
 
+import nu
+import nu.mem as nm
 from nu.forms import (
     Bool,
     Bytes,
@@ -203,8 +205,12 @@ def test_async_mirrors_sync():
     async def go():
         assert await aval(Int(5) + 3) == 8
         assert await aval(Str("hi").upper()) == "HI"
-        # append is a Command: yields nothing (None) on the async path too.
+        # append is a Command: yields nothing (None) on the async path too,
+        # and lands on the stored list.
         assert await aval(List([1, 2]).append(3)) is None
+        ctx, _ = _holding(seq=[1, 2])
+        await nu.arun(Held.seq.append(3), ctx)
+        assert (await nu.arun(nu.ToList(Held.seq), ctx))[0] == [1, 2, 3]
         assert await aval(Dict({"a": 1}).get_item("a")) == 1
         assert await aval(Set({1, 2}).union(Literal({3}))) == {1, 2, 3}
 
@@ -222,12 +228,48 @@ def test_dict_has_no_ordering_comparisons():
     assert val(Dict.of(a=1) == Dict.of(a=1)) is True
 
 
+class _Bin:
+    """A collection the test owns: not a builtin, so a Literal hands it out as is."""
+
+    def __init__(self) -> None:
+        self.cleared = 0
+
+    def clear(self) -> None:
+        self.cleared += 1
+
+
+class Held(nu.Shape):
+    coll = nm.ObjectRef.slot()
+    seq = nm.ListRef.slot(int)
+    table = nm.DictRef.slot(int)
+    bag = nm.SetRef.slot(int)
+
+
+def _holding(**data: object) -> tuple[nu.Context, dict]:
+    """A context whose mem store is a dict the test keeps, seeded with ``data``."""
+    return Context().bind(dict, data, Held), data
+
+
+def test_mutation_commands_land_on_the_value_a_ref_holds():
+    # The commands write the stored collection, and the next read sees it.
+    ctx, _ = _holding(seq=[1, 2], table={"a": 1}, bag={1, 2})
+    nu.run(Held.seq.append(3) >> Held.seq.insert(0, 9), ctx)
+    nu.run(Held.table.set_item("b", 2) >> Held.table.del_item("a"), ctx)
+    nu.run(Held.bag.add(3) >> Held.bag.discard(1), ctx)
+    assert nu.run(nu.ToList(Held.seq), ctx)[0] == [9, 1, 2, 3]
+    assert nu.run(nu.ToDict(Held.table), ctx)[0] == {"b": 2}
+    assert nu.run(nu.ToSet(Held.bag), ctx)[0] == {2, 3}
+
+
 def test_clear_calls_the_collection_clear():
     """Clear calls ``clear()`` as is: a mutable collection empties, anything else raises its own error."""
     from nu.forms.collections.abc import Clear
 
-    held = {"a": 1}
+    held = _Bin()
     eval(compile(Clear(Literal(held))), Context())
-    assert held == {}
+    assert held.cleared == 1
+    table = {"a": 1}
+    eval(compile(Clear(Held.coll)), _holding(coll=table)[0])
+    assert table == {}
     with pytest.raises(AttributeError, match="clear"):
         eval(compile(Clear(Literal((1, 2)))), Context())

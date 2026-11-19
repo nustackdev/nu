@@ -152,9 +152,15 @@ def _ref_label(node: Ref) -> str:
 
 def _literal_label(node: Literal) -> str:
     cls = type(node).__name__
-    if not children(node):
+    if node.factory is None:
         return f"{cls}({node.value!r})"
-    return cls
+    keys = "".join(f", {k}" for k in node.keys)
+    return f"{cls}(factory={_callable_name(node.factory)}{keys})"
+
+
+def _callable_name(fn: object) -> str:
+    """A factory as written: its qualified name, else its repr."""
+    return getattr(fn, "__qualname__", None) or repr(fn)
 
 
 def _default_label(node: Nu, *, color: bool = True) -> str:
@@ -280,7 +286,13 @@ def render_repr(nu: Nu) -> str:
         'Add(1, 2)'
     """
     if isinstance(nu, Literal):
-        return repr(nu.value)
+        if nu.factory is None:
+            return repr(nu.value)
+        kwargs = "".join(
+            f", {k}={render_repr(cast('Nu', child))}"
+            for k, child in zip(nu.keys, children(nu), strict=True)
+        )
+        return f"Literal(factory={_callable_name(nu.factory)}{kwargs})"
 
     name = type(nu).__name__
 

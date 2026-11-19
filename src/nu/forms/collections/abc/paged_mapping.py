@@ -44,7 +44,8 @@ class PagedMapping(ABC):
         ...         start = 0 if before is None else keys.index(before) + 1
         ...         return keys[start:][:limit]
         >>> _ = nu.forms.collections.abc.PagedMapping.register(Paged)
-        >>> nu.run(nu.Dict(nu.Literal(Paged(a=1, b=2, c=3))).keys(after="a", limit=1))[0]
+        >>> view = nu.Literal(factory=Paged, a=1, b=2, c=3)
+        >>> nu.run(nu.Dict(view).keys(after="a", limit=1))[0]
         ['b']
     """
 

@@ -11,6 +11,7 @@ import asyncio
 from typing import TYPE_CHECKING
 
 import pytest
+from _support.policy_atoms import Sink
 from _support.reactive import Body, Feed, start, stop, until
 
 import nu
@@ -24,7 +25,7 @@ from nu.core.reactive.event import (
     ReactWhile,
 )
 from nu.engine.structure import Declared
-from nu.lang import Context, Literal, ScalarAction
+from nu.lang import Context, ScalarAction
 from nu.lang.helpers import arun
 
 
@@ -83,7 +84,7 @@ class _Record(ScalarAction):
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
     def __init__(self, value: object, log: list) -> None:
-        super().__init__(value, Literal(log))
+        super().__init__(value, Sink(log))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
@@ -93,10 +94,10 @@ class _Record(ScalarAction):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        value, log = children[0], self._children[1].value
+        value, sink = children
 
         async def athunk(rt: Runtime) -> None:
-            log.append(await value(rt))
+            (await sink(rt)).append(await value(rt))
 
         return athunk
 

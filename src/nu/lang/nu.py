@@ -61,7 +61,8 @@ class Nu(Term[Runtime, V_co], Generic[V_co]):  # PEP 695 has no variance markers
 
     def __init__(self, *children: object) -> None:
         # Auto-wrap any non-Nu child as Literal so `Add(1, 2)` reads the same as
-        # `Add(Literal(1), Literal(2))`. The import is lazy because `Literal`
+        # `Add(Literal(1), Literal(2))`, through the same checks (a container
+        # holding a term raises, an unhashable instance warns). The import is lazy because `Literal`
         # subclasses `ScalarQuery`, which subclasses this class - a real cycle,
         # not a layering choice. Skipped entirely when every child is already a
         # Nu (the common case, and what lets a childless Ref - e.g. the stdio

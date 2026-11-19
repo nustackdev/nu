@@ -106,7 +106,9 @@ class StructuredRef(Ref):
         (``_address``, the substrates' path walks).
         """
         address = self._children[1]
-        return address.value if isinstance(address, Literal) else address
+        if isinstance(address, Literal) and address.factory is None:
+            return address.value
+        return address
 
     @property
     def _root_shape(self) -> type[Shape] | None:

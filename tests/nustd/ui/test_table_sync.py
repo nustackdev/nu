@@ -233,13 +233,13 @@ async def _read(ctx, term):
 class _Hold(_LifecycleBracket):
     """Hands the Context its body runs in to the test, so tabs can share its store."""
 
-    def __init__(self, body: nu.Nu, *, into: list) -> None:
-        # The list is the test's, handed in as config: the bracket never holds it.
+    def __init__(self, body: nu.Nu, *, into: asyncio.Future) -> None:
+        # The future is the test's, handed in as config: the bracket never holds it.
         super().__init__(body, nu.Literal(into))
 
     @asynccontextmanager
     async def _aopen(self, ctx, into):
-        into.append(ctx)
+        into.set_result(ctx)
         yield
 
 
@@ -252,13 +252,12 @@ class _Store:
         self.ctx = None
 
     async def open(self) -> _Store:
-        held: list = []
+        held: asyncio.Future = asyncio.get_running_loop().create_future()
         body = _seed() >> _Hold(nu.Delay(3600), into=held)
         self.arms.append(
             asyncio.create_task(nu.arun(nu.With(nustd.kv.memory_navigator(), body=body)))
         )
-        assert await _settle(lambda: held)
-        self.ctx = held[0]
+        self.ctx = await asyncio.wait_for(held, 5)
         return self
 
     async def tab(self, *, quiet: bool = True) -> _Tab:

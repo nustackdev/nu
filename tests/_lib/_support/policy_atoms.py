@@ -4,6 +4,8 @@ Each is a mutating atom that counts its own calls or records into an external
 log or a declared name, so retry loops, hooks, and timeout cancellation are
 all observable from a test. A counter or log is never kept on the term: it is
 a live object held as data in a ``Literal`` child, the term only reads it.
+A log is the test's list behind a ``Sink``: a plain list in a Literal would be
+copied on every run, so the record would never reach the test.
 """
 
 from __future__ import annotations
@@ -21,7 +23,20 @@ if TYPE_CHECKING:
 
     from nu.lang.runtime import Runtime
 
-__all__ = ["FlakyAction", "FlakyStream", "RecordAction", "SlowAction"]
+__all__ = ["FlakyAction", "FlakyStream", "RecordAction", "Sink", "SlowAction"]
+
+
+class Sink:
+    """The test's list behind an object a Literal hands out as is (hashable by identity).
+
+    A recorder takes it as a child and gets it by running that child.
+    """
+
+    def __init__(self, log: list) -> None:
+        self.log = log
+
+    def append(self, item: object) -> None:
+        self.log.append(item)
 
 
 class FlakyAction(ScalarAction):
@@ -69,25 +84,25 @@ class RecordAction(ScalarAction):
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
     def __init__(self, log: list, tag: str = "rec") -> None:
-        super().__init__(Literal(log))
+        super().__init__(Sink(log))
         self._tag = tag
 
-    def _run(self, rt: Runtime) -> object:
-        self._children[0].value.append(
-            (
-                self._tag,
-                rt.ctx.attrs.get("attempt", None),
-                rt.ctx.attrs.get("error", None),
-            ),
-        )
-        return None
+    def _entry(self, rt: Runtime) -> tuple:
+        return (self._tag, rt.ctx.attrs.get("attempt", None), rt.ctx.attrs.get("error", None))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        return self._run
+        (sink,) = children
+
+        def thunk(rt: Runtime) -> object:
+            sink(rt).append(self._entry(rt))
+
+        return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        (sink,) = children
+
         async def athunk(rt: Runtime) -> object:
-            return self._run(rt)
+            (await sink(rt)).append(self._entry(rt))
 
         return athunk
 

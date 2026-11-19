@@ -441,7 +441,7 @@ def sync(
 
         # Every read below needs its containers there: a table no one wrote
         # yet starts empty rather than failing its first paint.
-        seeds = [rows.init(nu.Literal({})), order.init(nu.Literal([]))]
+        seeds = [rows.init(nu.Literal(factory=dict)), order.init(nu.Literal(factory=list))]
         if columns is not None:
             seeds.append(
                 nu.IfDo(

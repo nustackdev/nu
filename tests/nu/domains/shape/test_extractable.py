@@ -12,6 +12,7 @@ import asyncio
 import pytest
 
 import nu
+import nu.mem
 from nu.domains.shape.extractable import Extractable
 
 
@@ -65,8 +66,13 @@ def test_a_subclass_is_extracted():
 
 
 def test_a_plain_read_comes_back_as_it_is():
+    # Extract does not copy a plain read: the dict a ref holds comes back itself.
+    class Port(nu.Shape):
+        meta = nu.mem.ObjectRef.slot()
+
     data = {"a": 1}
-    assert nu.run(nu.Dict(nu.Literal(data)).extract())[0] is data
+    ctx = nu.Context().bind(dict, {"meta": data}, Port)
+    assert nu.run(nu.Dict(Port.meta).extract(), ctx)[0] is data
 
 
 def test_an_unregistered_value_is_not_probed():
