@@ -142,15 +142,14 @@ import nu
 import nustd
 
 
-class Bot(nu.Service):
-    chat = nustd.llm.ChatRef.method(temperature=0.7)
-
+llm = nustd.llm.LLMRef()
 
 # ask the model
-op = Bot.chat(prompt="one-line haiku about rust")
+op = llm.chat(prompt="one-line haiku about rust")
 
-app = nu.With(
-    nustd.llm.ollama(Bot, host="localhost", model="qwen2.5:7b"),
+app = nustd.llm.ollama(
+    model="qwen2.5:7b",
+    temperature=0.7,
     body=nu.print(nu.str(nu.dict(op)["text"])),
 )
 

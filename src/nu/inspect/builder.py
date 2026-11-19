@@ -77,7 +77,7 @@ def resolve_methods(cls: type, *, skip: frozenset[str] = frozenset()) -> tuple[C
     term, but they are still written by hand, and the Ref's record is the only
     place that says how: the Shape and Service records describe what was
     declared, not how to declare it. They come out as ``classmethod`` calls,
-    ``ChatRef.method(**defaults)``, so a reader can tell them from the term
+    ``GETRef.method(path, **defaults)``, so a reader can tell them from the term
     builders.
     """
     bindings = walk_bindings(cls, stop=Nu, skip=skip)

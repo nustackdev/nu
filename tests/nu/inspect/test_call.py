@@ -55,17 +55,21 @@ def test_a_free_function_call_form_carries_its_qualifier() -> None:
 
 
 def test_a_keyword_tail_is_kept_in_the_call_form() -> None:
-    from nustd.llm.presets import bind
+    from nustd.llm.presets import endpoint
 
     record = parse_call(
-        bind, name="bind", path="nustd.llm.bind", owner="", binding="function", qualifier="llm"
+        endpoint,
+        name="endpoint",
+        path="nustd.llm.endpoint",
+        owner="",
+        binding="function",
+        qualifier="llm",
     )
-    assert record.call == "llm.bind(service_cls, **defaults)"
-    assert [(a.name, a.keyword_variadic) for a in record.args] == [
-        ("service_cls", False),
-        ("defaults", True),
-    ]
-    assert record.args[1].text
+    assert record.call.startswith("llm.endpoint(base_url, ")
+    assert record.call.endswith(", **defaults)")
+    assert (record.args[0].name, record.args[0].keyword_variadic) == ("base_url", False)
+    assert (record.args[-1].name, record.args[-1].keyword_variadic) == ("defaults", True)
+    assert record.args[-1].text
 
 
 # --- the catalogue --------------------------------------------------------

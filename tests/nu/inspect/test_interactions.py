@@ -51,14 +51,14 @@ def test_a_free_function_renders_as_a_call_not_as_an_empty_module() -> None:
 
 
 def test_a_keyword_tail_renders_starred_in_the_call_and_the_args() -> None:
-    text = render("nustd.llm.bind")
-    assert "llm.bind(service_cls, **defaults)" in text
+    text = render("nustd.llm.endpoint")
+    assert "**defaults)" in text
     assert "    **defaults: " in text
 
 
 def test_a_ref_render_lists_its_declaration_classmethod() -> None:
-    text = render("nustd.llm.ChatRef")
-    assert "ChatRef.method(...)" in text
+    text = render("nustd.http.GETRef")
+    assert "GETRef.method(...)" in text
 
 
 def test_the_module_docstring_is_parsed_once_and_opens_the_render() -> None:

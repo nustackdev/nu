@@ -1,91 +1,62 @@
-"""ChatRef: Ref addressing a chat/completions endpoint on a Service.
+"""``LLMRef``: the fabric ref that resolves the ``LLMFabric`` bound on ctx.
 
-Mirrors the nustd.http verb refs: `.method(**defaults)` returns a Method
-declaration that the ServiceMeta descriptor unwraps at class access, and
-calling the Ref with kwargs produces a Chat interaction.
+A plain ``FabricRef``: the address is the fabric type, so the read is the
+untagged binding, same as ``nustd.valkey.ValkeyRef``. It also carries this
+fabric's fluent surface: ``LLMRef().chat(prompt=...)`` and
+``Chat(LLMRef(), prompt=...)`` build the same term, and ``chat_stream`` does
+the same for ``ChatStream``.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.domains.service import Method, MethodRef
-from nu.forms import Dict
+from nu.context import FabricRef
 
-from .interactions import Chat
+from .fabric import LLMFabric
 
 
 if TYPE_CHECKING:
-    from nu.lang import Nu
+    from .interactions import Chat, ChatStream
 
 
-__all__ = ["ChatRef"]
+__all__ = ["LLMRef"]
 
 
-class ChatRef(MethodRef):
-    """Addresses an OpenAI-compatible chat/completions endpoint on a Service.
-
-    Written in a Service class body, one Ref per endpoint the Service talks
-    to. The Ref names no host, key or model of its own: which endpoint it
-    reaches is decided at run time by whichever ``LLMFabric`` was provided
-    for the owning Service class, so the same declaration can be pointed at
-    Ollama, OpenRouter or a self-hosted vLLM without being rewritten.
+class LLMRef(FabricRef):
+    """The ``LLMFabric`` bound on the Context.
 
     Notes:
-        - Resolution is by owning Service class, so two Services in one
-          program can hold ChatRefs against different providers.
-        - The endpoint path is fixed at ``/v1/chat/completions``; only the
-          base URL varies per provider.
-        - Nothing here is checked against a provider's schema. Unknown keys
-          travel into the request body and the provider decides.
+        - Reading it is a lookup and nothing else; no request is sent.
+        - The methods are a convenience over the constructors, each returning
+          the same term the matching ``Chat(...)`` / ``ChatStream(...)`` call
+          would.
+
+    Yields:
+        The bound ``LLMFabric``. NULL when nothing is bound.
 
     Example:
-        class Bot(nu.Service):
-            chat = nustd.llm.ChatRef.method(temperature=0.7)
-        app = nu.With(
-            nustd.llm.ollama(Bot, host="red", model="qwen2.5:7b-instruct"),
-            body=nu.print(nu.dict(Bot.chat(prompt="haiku about rust"))["text"]),
+        llm = nustd.llm.LLMRef()
+        app = nustd.llm.ollama(
+            host="red",
+            model="qwen2.5:7b-instruct",
+            body=nu.print(nu.dict(llm.chat(prompt="haiku about rust"))["text"]),
         )
         nu.run(app)
     """
 
-    @classmethod
-    def method(cls, **defaults: object) -> ChatRef:  # type: ignore[override]
-        """Declare a chat endpoint whose defaults every call through it inherits.
+    fabric = LLMFabric
 
-        Args:
-            **defaults: request-body keys the endpoint always sends
-                (``model``, ``temperature``, ``max_tokens``, ``stop``, ...).
-                A per-call kwarg of the same name wins.
+    # The interactions import this module, so the imports below are lazy.
 
-        Notes:
-            - Annotated as returning the Ref, but at run time it returns a
-              ``Method`` declaration that the ServiceMeta descriptor unwraps
-              at class access. The lie makes ``Bot.chat`` type-check as a
-              ChatRef.
-            - Three layers can set ``model``: the bind, these defaults, and
-              the call, innermost winning. If it is still empty when the
-              call runs, the fabric raises.
-        """
-        return Method(cls, defaults=defaults)  # type: ignore[return-value]
+    def chat(self, **kwargs: object) -> Chat:
+        """A ``Chat`` on this endpoint: one chat/completions call, yield the reply."""
+        from .interactions import Chat
 
-    def __call__(self, **kwargs: object) -> Nu:
-        """Build a Chat interaction over one turn's request body.
+        return Chat(self, **kwargs)
 
-        Args:
-            **kwargs: either ``prompt=`` (sugar for one user message) or
-                ``messages=`` (a full role/content list), plus any request
-                body keys to override the endpoint defaults for this call.
+    def chat_stream(self, **kwargs: object) -> ChatStream:
+        """A ``ChatStream`` on this endpoint: the reply's text deltas as they arrive."""
+        from .interactions import ChatStream
 
-        Notes:
-            - Takes only keywords: ``prompt=`` (sugar for one user message)
-              or ``messages=`` (a role/content list), plus any request-body
-              keys overriding the endpoint defaults for this call.
-            - Exactly one of ``prompt`` or ``messages`` is needed; with
-              neither, the call raises when it runs, not when it is built.
-            - ``messages`` wins when both are given, and ``prompt`` is
-              dropped.
-            - Every kwarg is captured into a ``Dict`` child, so the values
-              may themselves be Nu terms resolved at evaluation.
-        """
-        return Chat(self, Dict.of(**kwargs))
+        return ChatStream(self, **kwargs)

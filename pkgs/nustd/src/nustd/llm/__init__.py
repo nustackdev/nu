@@ -2,22 +2,23 @@
 
 Surface:
     - LLMFabric: httpx client for a chat/completions endpoint (base_url + api_key + model).
-    - ChatRef: MethodRef for a chat endpoint on a Service.
-    - Chat: the interaction produced when a ChatRef is called.
-    - bind(service_cls, **kw): generic Provide.
+    - LLMRef: the fabric ref; ``.chat(...)`` / ``.chat_stream(...)`` build on it.
+    - Chat / ChatStream: one chat/completions call, whole or streamed.
+    - endpoint(base_url, ...): the generic preset.
     - ollama / openai / openrouter / groq / cerebras / xai / vllm: convenience presets.
 
-Prefer `nu.arun` — LLM calls are network-bound and block the event loop under
+Prefer `nu.arun`: LLM calls are network-bound and block the event loop under
 sync. Sync is fine for one-off scripts.
 
 Example (ollama on the red machine)::
 
-    class Bot(nu.Service):
-        chat = nustd.llm.ChatRef.method(temperature=0.7)
+    llm = nustd.llm.LLMRef()
 
-    app = nu.With(
-        nustd.llm.ollama(Bot, host="red", model="qwen2.5:7b-instruct"),
-        body=nu.print(nu.dict(Bot.chat(prompt="haiku about rust"))["text"]),
+    app = nustd.llm.ollama(
+        host="red",
+        model="qwen2.5:7b-instruct",
+        temperature=0.7,
+        body=nu.print(nu.dict(llm.chat(prompt="haiku about rust"))["text"]),
     )
     nu.run(app)
 """
@@ -25,17 +26,18 @@ Example (ollama on the red machine)::
 from __future__ import annotations
 
 from .fabric import LLMFabric
-from .interactions import Chat
-from .presets import bind, cerebras, groq, ollama, openai, openrouter, vllm, xai
-from .refs import ChatRef
+from .interactions import Chat, ChatStream
+from .presets import cerebras, endpoint, groq, ollama, openai, openrouter, vllm, xai
+from .refs import LLMRef
 
 
 __all__ = [
     "Chat",
-    "ChatRef",
+    "ChatStream",
     "LLMFabric",
-    "bind",
+    "LLMRef",
     "cerebras",
+    "endpoint",
     "groq",
     "ollama",
     "openai",
