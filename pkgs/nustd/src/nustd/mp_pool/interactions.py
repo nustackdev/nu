@@ -115,7 +115,7 @@ def _pool_node(pool: Nu | None) -> Nu:
     return PoolRef() if pool is None else pool
 
 
-def _init_node(init: object) -> Nu:
+def _init_node(init: object) -> object:
     """The init slot: a carrier yielding a bracket (or None for the pool default).
 
     A bracket is itself a Nu term, so passing one directly would make it a
@@ -127,7 +127,7 @@ def _init_node(init: object) -> Nu:
 
     if isinstance(init, _Bracket):
         return Literal(init)
-    return init if isinstance(init, Nu) else Literal(init)
+    return init
 
 
 def _require_pool(value: object) -> WorkerPool:

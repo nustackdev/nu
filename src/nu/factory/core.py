@@ -25,7 +25,7 @@ Yield semantics follow the base:
 
 Arguments. Children passed positionally land as positional args to the
 callable; children passed by keyword land as keyword args. The split is
-recorded in the atom's payload so ``compile`` can rebuild the call::
+recorded in the atom's fields so ``compile`` can rebuild the call::
 
     DateOf(2026, 6, 30)            -> date(2026, 6, 30)
     DatetimeReplace(dt, hour=9)    -> datetime.replace(dt, hour=9)

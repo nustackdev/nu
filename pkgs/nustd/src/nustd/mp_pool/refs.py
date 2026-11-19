@@ -3,8 +3,8 @@
 A ``FabricRef`` with an optional tag, the shape ``nustd.cluster``'s
 ``RayServiceRef`` has: ``PoolRef()`` reads the untagged pool, ``PoolRef("gpu")``
 the one a ``pool(..., tags=("gpu",))`` bound, so two pools can live in one
-scope. The tag is the address, so it is a field; nothing a caller computes at
-run time goes there.
+scope. The tag is a config child after the fabric type, so it can be computed
+(``PoolRef(Cfg.pool_tag)``).
 
 It also carries this fabric's fluent surface. ``PoolRef().launch()`` and
 ``Launch(PoolRef())`` build the same term; the methods exist so a pool ref
@@ -52,7 +52,8 @@ class PoolRef(FabricRef):
 
     Args:
         tag: the tag the pool was bound under (``pool(..., tags=(tag,))`` or
-            ``Provide(WorkerPool, ..., tag=tag)``). Omit it for the untagged
+            ``Provide(WorkerPool, ..., tag=tag)``), or a term yielding it,
+            evaluated each time the ref is read. Omit it for the untagged
             pool.
 
     Notes:
@@ -86,19 +87,17 @@ class PoolRef(FabricRef):
     fabric = WorkerPool
 
     def __init__(self, tag: object = UNSET) -> None:
-        super().__init__()
-        self._tag: object = tag
-
-    def _tags(self) -> tuple[object, ...]:
-        tag = self._tag
-        return () if tag is UNSET else (tag,)
+        # Children: [fabric, tag]. The tag is always present, Literal(UNSET)
+        # when omitted, so the tagless read is a value like any other.
+        super().__init__(None, tag)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        fabric = children[0]
-        tags = self._tags()
+        fabric, tag = children[0], children[1]
 
         def thunk(rt: Runtime) -> object:
             f = fabric(rt)
+            raw = tag(rt)
+            tags = () if raw is UNSET else (raw,)
             if rt.ctx.fabrics.has(f, *tags):
                 return rt.ctx.fabrics.get(f, *tags)
             return Null(f.__qualname__)
@@ -106,11 +105,12 @@ class PoolRef(FabricRef):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        fabric = children[0]
-        tags = self._tags()
+        fabric, tag = children[0], children[1]
 
         async def athunk(rt: Runtime) -> object:
             f = await fabric(rt)
+            raw = await tag(rt)
+            tags = () if raw is UNSET else (raw,)
             if rt.ctx.fabrics.has(f, *tags):
                 return rt.ctx.fabrics.get(f, *tags)
             return Null(f.__qualname__)

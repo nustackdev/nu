@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
-from nu.lang import Literal, Ref
+from nu.lang import Ref
 
 
 if TYPE_CHECKING:
@@ -20,10 +20,11 @@ __all__ = ["MethodRef"]
 class MethodRef(Ref):
     """A Ref addressing a Method on a Service.
 
-    The address (``name``, ``owner_service``) is its fields. Any extra config
-    the declaration carries (a path, a verb, call defaults) is its one child,
-    a ``Literal`` dict, so the ref evaluates to ``{name, owner_service,
-    **config}``.
+    Childless. The address (``name``, ``owner_service``) and any extra
+    config the declaration carries (a path, a verb, call defaults) are its
+    fields: the service class sets them once, they describe the method
+    rather than a value the tree computes. The ref evaluates to a fresh
+    ``{name, owner_service, **config}`` each time.
     """
 
     def __init__(
@@ -33,9 +34,10 @@ class MethodRef(Ref):
         owner_service: type | None = None,
         **config: object,
     ) -> None:
-        super().__init__(Literal(dict(config)))
+        super().__init__()
         self._name: str = name
         self._owner_service: type | None = owner_service
+        self._config: dict[str, object] = dict(config)
 
     @classmethod
     def method(cls, **kwargs: object) -> Method:
@@ -44,24 +46,24 @@ class MethodRef(Ref):
 
         return Method(cls, **kwargs)
 
-    def _snapshot(self, config: object) -> dict[str, object]:
-        """The name, the owning service and the extra config, as one dict."""
-        return {"name": self._name, "owner_service": self._owner_service, **cast("dict", config)}
+    def _snapshot(self) -> dict[str, object]:
+        """The name, the owning service and the extra config, as one fresh dict."""
+        return {"name": self._name, "owner_service": self._owner_service, **self._config}
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Evaluate to a snapshot of the address and its extra config."""
-        config_thunk = children[0]
+        snapshot = self._snapshot
 
         def thunk(rt: Runtime) -> dict:
-            return self._snapshot(config_thunk(rt))
+            return snapshot()
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Async sibling of _compile."""
-        config_thunk = children[0]
+        snapshot = self._snapshot
 
         async def athunk(rt: Runtime) -> dict:
-            return self._snapshot(await config_thunk(rt))
+            return snapshot()
 
         return athunk

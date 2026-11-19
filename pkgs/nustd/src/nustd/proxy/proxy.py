@@ -23,16 +23,16 @@ Extra client kwargs (``transport``, ``timeout``, ``max_retries``,
 from __future__ import annotations
 
 from contextlib import asynccontextmanager, contextmanager
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from nu.core.spans.bracket import _LifecycleBracket
-from nu.lang.literal import Literal
+from nu.forms.collections.abc.mapping_interactions import DictOf
 
 from .client import InvisiblesClient
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator, Iterator, Mapping
+    from collections.abc import AsyncIterator, Callable, Iterator, Mapping
 
     from nu.lang import Nu
     from nu.lang.runtime import Context
@@ -56,6 +56,9 @@ class InvisiblesProxy(_LifecycleBracket):
         body: what runs while the connection is open.
 
     Notes:
+        - Every option (``target``, ``address``, ``tag`` and the client
+          knobs) is a config child, evaluated on entry, so each can be
+          computed or read from a store.
         - Async only. A sync run raises, because connecting is lifecycle work
           the sync path refuses to do.
         - Two things land on the context, both under ``tag``: the remote root
@@ -86,31 +89,30 @@ class InvisiblesProxy(_LifecycleBracket):
 
     def __init__(
         self,
-        target: type,
+        target: type | Nu,
         body: Nu | None = None,
         *,
-        address: str,
+        address: str | Nu,
         tag: object = None,
-        transport: str = "tcp",
-        timeout: float = 5.0,
-        max_retries: int = 3,
-        bg_serve: bool = False,
-        buffered_iteration: bool = True,
+        transport: str | Nu = "tcp",
+        timeout: float | Nu = 5.0,
+        max_retries: int | Nu = 3,
+        bg_serve: bool | Nu = False,
+        buffered_iteration: bool | Nu = True,
     ) -> None:
-        # Children: [body, target, tag, client_kwargs].
+        # Children: [body, target, tag, client_kwargs]; each client kwarg is
+        # a child of its own, so any one can be computed.
         super().__init__(
             body,
-            Literal(target),
-            Literal(tag),
-            Literal(
-                {
-                    "address": address,
-                    "transport": transport,
-                    "timeout": timeout,
-                    "max_retries": max_retries,
-                    "bg_serve": bg_serve,
-                    "buffered_iteration": buffered_iteration,
-                }
+            target,
+            tag,
+            cast("Callable[..., Nu]", DictOf)(
+                address=address,
+                transport=transport,
+                timeout=timeout,
+                max_retries=max_retries,
+                bg_serve=bg_serve,
+                buffered_iteration=buffered_iteration,
             ),
         )
 

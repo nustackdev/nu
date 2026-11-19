@@ -61,7 +61,7 @@ class Facet(Enum):
     """How a fetched View hands its contents back: unfaceted, lazy, or eager.
 
     NONE returns the View as the Navigator opened it. A ViewRef with no facet
-    on its payload reads as LAZY, so LAZY is the effective default.
+    in its fields reads as LAZY, so LAZY is the effective default.
     """
 
     NONE = "none"

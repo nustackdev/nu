@@ -1,10 +1,12 @@
 """``Provide`` brackets: construct + bind fabrics for the body's duration.
 
 The tree carries a *class* plus a *spec* (kwargs, list of kwargs, or dict of
-kwargs) as config children after the body (see ``nu.core.spans.bracket``):
-a Literal by default, any term when the value is computed or read from a
-store. On entry each bracket evaluates them, constructs its fabric(s), runs
-setup, binds on ctx. On exit teardown fires in reverse (LIFO), so an outer fabric is still
+kwargs) as config children after the body (see ``nu.core.spans.bracket``).
+Every config value is a child: a plain value becomes its Literal, a term is
+kept as given, and a spec given as a mapping (or a list or mapping of them)
+is built field by field, so any single field, tag or option can be computed
+or read from a store. On entry each bracket evaluates them, constructs its
+fabric(s), runs setup, binds on ctx. On exit teardown fires in reverse (LIFO), so an outer fabric is still
 live while inner ones tear down.
 
 Three primitives, one per attach shape:
@@ -54,7 +56,6 @@ from contextlib import AsyncExitStack, ExitStack, asynccontextmanager, contextma
 from typing import TYPE_CHECKING, cast
 
 from nu.core.spans.bracket import _LifecycleBracket
-from nu.lang.literal import Literal
 from nu.lang.nu import Nu
 
 
@@ -135,9 +136,56 @@ def _merge_tags(tag: object, tags: Sequence[object]) -> tuple[object, ...]:
     return seq if tag is None else (tag, *seq)
 
 
-def _child(value: object) -> Nu:
-    """A config child: a term stays as given, anything else becomes its Literal."""
-    return value if isinstance(value, Nu) else Literal(value)
+def _forms() -> tuple[Callable[..., Nu], Callable[..., Nu], Callable[..., Nu]]:
+    """The ``DictOf``, ``ListOf`` and ``TupleOf`` atoms config specs are built from.
+
+    Lazy: the forms package sits above this one.
+    """
+    from nu.forms.collections.abc.mapping_interactions import DictOf
+    from nu.forms.collections.abc.sequence_interactions import ListOf, TupleOf
+
+    return cast(
+        "tuple[Callable[..., Nu], Callable[..., Nu], Callable[..., Nu]]", (DictOf, ListOf, TupleOf)
+    )
+
+
+def _kwargs_child(kwargs: Mapping[str, object] | Nu | None) -> Nu:
+    """A kwargs child: a term stays as given, a mapping is built from its fields.
+
+    Each field is its own child, so one field can be computed while the rest
+    stay plain. None gives the empty mapping.
+    """
+    if isinstance(kwargs, Nu):
+        return kwargs
+    dict_of, _, _ = _forms()
+    return dict_of(**(kwargs or {}))
+
+
+def _tuple_child(items: Sequence[object] | Nu) -> Nu:
+    """A tag tuple child: a term stays as given, else each item is its own child."""
+    if isinstance(items, Nu):
+        return items
+    _, _, tuple_of = _forms()
+    return tuple_of(*items)
+
+
+def _list_specs_child(specs: Sequence[Mapping[str, object] | Nu] | Nu) -> Nu:
+    """ProvideList specs: a term stays as given, else a list of kwargs children."""
+    if isinstance(specs, Nu):
+        return specs
+    _, list_of, _ = _forms()
+    return list_of(*(_kwargs_child(s) for s in specs))
+
+
+def _dict_specs_child(specs: Mapping[object, Mapping[str, object] | Nu] | Nu) -> Nu:
+    """ProvideDict specs: a term stays as given, else a dict of key to kwargs children.
+
+    Built from ``(key, kwargs)`` pairs, since a key is any tag, not only a str.
+    """
+    if isinstance(specs, Nu):
+        return specs
+    dict_of, list_of, tuple_of = _forms()
+    return dict_of(list_of(*(tuple_of(k, _kwargs_child(v)) for k, v in specs.items())))
 
 
 def _bind_key(cls: type, bind_as: type | None) -> type:
@@ -178,12 +226,17 @@ class Provide(_LifecycleBracket):
         cls: the fabric class to construct. Also the key it binds under,
             unless ``bind_as`` or the class's own ``_nu_bind_as`` overrides
             that.
-        kwargs: passed straight to the constructor. A mapping, or a term
-            that yields one (computed, or read from a store) and is
-            evaluated on entry.
+        kwargs: passed straight to the constructor. A mapping whose values
+            may each be a term, or a term that yields the whole mapping
+            (computed, or read from a store); evaluated on entry.
         body: the tree that runs with the fabric bound.
 
     Notes:
+        - Every config value is a child, so any of them can be computed: a
+          term given for ``cls``, a tag, ``predicate``, ``bind_as``, the
+          whole kwargs or one kwargs value is evaluated on entry. A term the
+          fabric should receive as data (a worker's ``init`` bracket) is
+          quoted: ``{"init": nu.Literal(bracket)}``.
         - ``tag=`` is sugar for a one-element ``tags=``; both fold into the
           same tuple, and a tagged binding is read back by a Ref that carries
           the same tag. Resolution falls back from more tags to fewer, so a
@@ -221,23 +274,23 @@ class Provide(_LifecycleBracket):
 
     def __init__(
         self,
-        cls: type,
+        cls: type | Nu,
         kwargs: Mapping[str, object] | Nu | None = None,
         body: Nu | None = None,
         *,
         tag: object = None,
         tags: Sequence[object] = (),
-        predicate: Callable | None = None,
-        bind_as: type | None = None,
+        predicate: Callable | Nu | None = None,
+        bind_as: type | Nu | None = None,
     ) -> None:
         # Children: [body, cls, kwargs, tags, predicate, bind_as].
         super().__init__(
             body,
-            Literal(cls),
-            kwargs if isinstance(kwargs, Nu) else Literal(dict(kwargs or {})),
-            Literal(_merge_tags(tag, tags)),
-            Literal(predicate),
-            _child(bind_as),
+            cls,
+            _kwargs_child(kwargs),
+            _tuple_child(_merge_tags(tag, tags)),
+            predicate,
+            bind_as,
         )
 
     @contextmanager
@@ -298,7 +351,8 @@ class ProvideList(_LifecycleBracket):
     Args:
         cls: the fabric class every member is constructed from.
         specs: one kwargs mapping per instance, in the order they are built.
-            A sequence, or a term that yields one, evaluated on entry.
+            A sequence (each mapping, or any of its values, may be a term),
+            or a term that yields the whole sequence; evaluated on entry.
         body: the tree that runs with the whole fleet bound.
 
     Notes:
@@ -326,24 +380,24 @@ class ProvideList(_LifecycleBracket):
 
     def __init__(
         self,
-        cls: type,
-        specs: Sequence[Mapping[str, object]] | Nu,
+        cls: type | Nu,
+        specs: Sequence[Mapping[str, object] | Nu] | Nu,
         body: Nu | None = None,
         *,
-        base_tag: int = 0,
-        extra_tags: Sequence[object] = (),
-        predicate: Callable | None = None,
-        bind_as: type | None = None,
+        base_tag: int | Nu = 0,
+        extra_tags: Sequence[object] | Nu = (),
+        predicate: Callable | Nu | None = None,
+        bind_as: type | Nu | None = None,
     ) -> None:
         # Children: [body, cls, specs, base_tag, extra_tags, predicate, bind_as].
         super().__init__(
             body,
-            Literal(cls),
-            specs if isinstance(specs, Nu) else Literal([dict(s) for s in specs]),
-            _child(base_tag),
-            Literal(tuple(extra_tags)),
-            Literal(predicate),
-            _child(bind_as),
+            cls,
+            _list_specs_child(specs),
+            base_tag,
+            _tuple_child(extra_tags),
+            predicate,
+            bind_as,
         )
 
     @contextmanager
@@ -411,7 +465,8 @@ class ProvideDict(_LifecycleBracket):
     Args:
         cls: the fabric class every member is constructed from.
         specs: a mapping of key to kwargs. Each key becomes the tag its
-            instance binds under. A mapping, or a term that yields one,
+            instance binds under. A mapping (each key, kwargs mapping or
+            value may be a term), or a term that yields the whole mapping;
             evaluated on entry.
         body: the tree that runs with the whole fleet bound.
 
@@ -442,24 +497,24 @@ class ProvideDict(_LifecycleBracket):
 
     def __init__(
         self,
-        cls: type,
-        specs: Mapping[object, Mapping[str, object]] | Nu,
+        cls: type | Nu,
+        specs: Mapping[object, Mapping[str, object] | Nu] | Nu,
         body: Nu | None = None,
         *,
-        extra_tags: Sequence[object] = (),
-        predicate: Callable | None = None,
-        bind_as: type | None = None,
-        parallel: bool = False,
+        extra_tags: Sequence[object] | Nu = (),
+        predicate: Callable | Nu | None = None,
+        bind_as: type | Nu | None = None,
+        parallel: bool | Nu = False,
     ) -> None:
         # Children: [body, cls, specs, extra_tags, predicate, bind_as, parallel].
         super().__init__(
             body,
-            Literal(cls),
-            specs if isinstance(specs, Nu) else Literal({k: dict(v) for k, v in specs.items()}),
-            Literal(tuple(extra_tags)),
-            Literal(predicate),
-            _child(bind_as),
-            _child(parallel),
+            cls,
+            _dict_specs_child(specs),
+            _tuple_child(extra_tags),
+            predicate,
+            bind_as,
+            parallel,
         )
 
     @contextmanager

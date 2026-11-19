@@ -6,7 +6,7 @@ bracket, the same way ``nustd.mp``'s one process is, because everything that
 talks to it (a kv stack's publisher and observer) is bound inside that bracket
 and a server stopped mid-body would pull the floor out from under them.
 
-The server address is a **child**, never payload, so it can come from any Ref
+The server address is a **child**, never a field, so it can come from any Ref
 or query.
 
 ==========  =========  ===========

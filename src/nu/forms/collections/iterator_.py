@@ -52,7 +52,7 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
           `sorted` drain it into a concrete collection.
         - No `==` / `!=`: an iterator has no value to compare, so both
           raise. Drain it first: `it.to_list() == [...]`.
-        - An element type rides on the payload as ``type_info`` when the
+        - An element type rides in the ``type_info`` field when the
           source declared one (a typed collection ref opened with `.iter()`).
           The item `first`/`last`/`min`/`max` read takes that type's form,
           and every op whose items are still the source's (`filter`,
@@ -95,7 +95,7 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
 
     # ---- static overloads: narrow the item type on first() -------------
     #
-    # Runtime dispatch reads the payload; here we tell mypy which concrete
+    # Runtime dispatch reads the type info; here we tell mypy which concrete
     # Form to expect based on ``T``, as ``List.__getitem__`` does.
 
     @overload

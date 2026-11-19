@@ -98,7 +98,7 @@ def test_descriptor_requires_a_class():
 # --- MethodRef config -------------------------------------------------------
 
 
-def test_methodref_extra_kwargs_land_in_its_config_child():
+def test_methodref_extra_kwargs_land_in_its_config_field():
     class Custom(MethodRef):
         pass
 
@@ -106,9 +106,13 @@ def test_methodref_extra_kwargs_land_in_its_config_child():
         one = Custom.method(path="/x", extra=42)
 
     ref = S.one
-    (config,) = ref._children
-    assert config.value == {"path": "/x", "extra": 42}
-    assert nu.run(ref)[0] == {"name": "one", "owner_service": S, "path": "/x", "extra": 42}
+    # Declaration config is structure the service class sets: a field, no children.
+    assert nu.tree.children(ref) == ()
+    assert nu.tree.fields(ref)["_config"] == {"path": "/x", "extra": 42}
+    first, second = nu.run(ref)[0], nu.run(ref)[0]
+    assert first == {"name": "one", "owner_service": S, "path": "/x", "extra": 42}
+    # Each evaluation hands out a fresh dict, so a reader cannot change the next one.
+    assert first is not second
 
 
 def test_method_factory_captures_ref_class_and_kwargs():

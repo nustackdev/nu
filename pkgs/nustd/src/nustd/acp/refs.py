@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from nu.context import FabricRef
-from nu.lang import Ref, ScalarQuery
+from nu.lang import Literal, Nu, Ref, ScalarQuery
 from nu.lang.null import Null, is_null
 
 from .fabric import AcpFabric
@@ -39,10 +39,15 @@ if TYPE_CHECKING:
 __all__ = ["AgentRef", "SessionRef", "agent_name"]
 
 
-def agent_name(agent: object) -> str:
-    """The agent's name: an ``AgentRef``'s own, or a non-empty ``str`` as given."""
+def agent_name(agent: object) -> str | Nu:
+    """The agent's name: an ``AgentRef``'s own, a non-empty ``str``, or a term computing it.
+
+    A term is returned as given; its value is checked when it is evaluated.
+    """
     if isinstance(agent, AgentRef):
         return agent.name
+    if isinstance(agent, Nu):
+        return agent
     if isinstance(agent, str) and agent:
         return agent
     raise TypeError(f"an ACP agent is an AgentRef or its name, a non-empty str, got {agent!r}")
@@ -56,7 +61,8 @@ class AgentRef(FabricRef):
     ``AgentRef`` held in a module serves any number of terms and trees.
 
     Args:
-        name: the Agent's name, any non-empty ``str``.
+        name: the Agent's name, any non-empty ``str``, or a term yielding
+            one, evaluated each time the ref is read.
 
     Notes:
         - Reading it is a lookup and nothing else: the bound ``AcpFabric``,
@@ -81,21 +87,23 @@ class AgentRef(FabricRef):
 
     fabric = AcpFabric
 
-    def __init__(self, name: str) -> None:
-        super().__init__()
-        self._agent: str = agent_name(name)
+    def __init__(self, name: str | Nu) -> None:
+        # Children: [fabric, name]. A plain name is checked here, a computed
+        # one each time it is evaluated.
+        super().__init__(None, agent_name(name))
 
     @property
-    def name(self) -> str:
-        """The Agent's name, the tag its fabric binds under."""
-        return self._agent
+    def name(self) -> str | Nu:
+        """The Agent's name, the tag its fabric binds under; the term itself when computed."""
+        child = self._children[1]
+        return cast("str", child.value) if isinstance(child, Literal) else cast("Nu", child)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        fabric = children[0]
-        name = self.name
+        fabric, name_of = children[0], children[1]
 
         def thunk(rt: Runtime) -> object:
             f = fabric(rt)
+            name = cast("str", agent_name(name_of(rt)))
             if rt.ctx.fabrics.has(f, name):
                 return rt.ctx.fabrics.get(f, name)
             return Null(name)
@@ -103,11 +111,11 @@ class AgentRef(FabricRef):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        fabric = children[0]
-        name = self.name
+        fabric, name_of = children[0], children[1]
 
         async def athunk(rt: Runtime) -> object:
             f = await fabric(rt)
+            name = cast("str", agent_name(await name_of(rt)))
             if rt.ctx.fabrics.has(f, name):
                 return rt.ctx.fabrics.get(f, name)
             return Null(name)

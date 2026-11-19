@@ -26,11 +26,11 @@ __all__ = [
 ]
 
 
-def _split(payload: dict, args: dict) -> tuple[str, dict]:
+def _split(snap: dict, args: dict) -> tuple[str, dict]:
     """Pull `prompt` out; merge endpoint defaults under call overrides."""
     call = dict(args)
     prompt = call.pop("prompt")
-    merged = {**payload.get("defaults", {}), **call}
+    merged = {**snap.get("defaults", {}), **call}
     return str(prompt), merged
 
 
@@ -43,9 +43,9 @@ def compile_call(children: tuple[Callable, ...]) -> Callable:
     ref_thunk, args_thunk = children
 
     def thunk(rt: Runtime) -> object:
-        payload = ref_thunk(rt)
-        prompt, overrides = _split(payload, args_thunk(rt))
-        fabric = rt.ctx.fabrics.get(CCFabric, payload["owner_service"])
+        snap = ref_thunk(rt)
+        prompt, overrides = _split(snap, args_thunk(rt))
+        fabric = rt.ctx.fabrics.get(CCFabric, snap["owner_service"])
         handle = _session(rt)
         if handle is None:
             return asyncio.run(fabric.aprompt(prompt, **overrides))
@@ -59,9 +59,9 @@ def acompile_call(children: tuple[Callable, ...]) -> Callable:
     ref_thunk, args_thunk = children
 
     async def athunk(rt: Runtime) -> object:
-        payload = await ref_thunk(rt)
-        prompt, overrides = _split(payload, await args_thunk(rt))
-        fabric = rt.ctx.fabrics.get(CCFabric, payload["owner_service"])
+        snap = await ref_thunk(rt)
+        prompt, overrides = _split(snap, await args_thunk(rt))
+        fabric = rt.ctx.fabrics.get(CCFabric, snap["owner_service"])
         handle = _session(rt)
         if handle is None:
             return await fabric.aprompt(prompt, **overrides)
@@ -75,9 +75,9 @@ def compile_stream(children: tuple[Callable, ...]) -> Callable:
     ref_thunk, args_thunk = children
 
     def thunk(rt: Runtime) -> object:
-        payload = ref_thunk(rt)
-        prompt, overrides = _split(payload, args_thunk(rt))
-        fabric = rt.ctx.fabrics.get(CCFabric, payload["owner_service"])
+        snap = ref_thunk(rt)
+        prompt, overrides = _split(snap, args_thunk(rt))
+        fabric = rt.ctx.fabrics.get(CCFabric, snap["owner_service"])
         handle = _session(rt)
         if handle is None:
             return bridged(lambda: fabric.astream(prompt, **overrides))
@@ -91,9 +91,9 @@ def acompile_stream(children: tuple[Callable, ...]) -> Callable:
     ref_thunk, args_thunk = children
 
     async def athunk(rt: Runtime) -> object:
-        payload = await ref_thunk(rt)
-        prompt, overrides = _split(payload, await args_thunk(rt))
-        fabric = rt.ctx.fabrics.get(CCFabric, payload["owner_service"])
+        snap = await ref_thunk(rt)
+        prompt, overrides = _split(snap, await args_thunk(rt))
+        fabric = rt.ctx.fabrics.get(CCFabric, snap["owner_service"])
         handle = _session(rt)
         if handle is None:
             return fabric.astream(prompt, **overrides)

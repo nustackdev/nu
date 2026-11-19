@@ -278,10 +278,10 @@ def test_the_atoms_carry_no_caller_value_in_a_field():
         held = nu.tree.fields(atom)
         assert 7 not in [v for v in held.values() if not isinstance(v, nu.Nu)]
         assert set(held) <= {"carry"}
-    # The pool ref holds its tag, which is the address, not a caller value.
-    assert nu.tree.fields(PoolRef()) == {"_tag": UNSET}
-    assert nu.tree.fields(PoolRef("a")) == {"_tag": "a"}
-    assert len(nu.tree.children(PoolRef())) == 1
+    # The pool ref's tag is a config child after the fabric type, so it can be computed.
+    assert nu.tree.fields(PoolRef()) == {}
+    assert nu.tree.children(PoolRef())[1].value is UNSET
+    assert nu.tree.children(PoolRef("a"))[1].value == "a"
 
 
 def test_the_worker_id_is_still_a_child_of_dispatch():

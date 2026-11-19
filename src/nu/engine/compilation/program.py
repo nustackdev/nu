@@ -10,8 +10,8 @@ buckets:
 - **thunks** -- ``thunks[nid]``, ``athunks[nid]``. Per-node closures emitted
   from each Term's ``compile`` / ``acompile`` hook.
 
-The hot path reads columns by nid; path-keyed sugar (``term``, ``kind``,
-``payload``, ``parent``, ``walk``, ``attr``) is cold-path.
+The hot path reads columns by nid; path-keyed sugar (``walk``, ``attr``) is
+cold-path.
 
 Construction goes through :func:`nu.engine.compilation.compile`. Calling
 ``Program(term, schema)`` directly returns an empty shell -- all columns

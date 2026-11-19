@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Ref tags and names, proxy, provide and log config can all be computed
 - Terms stay frozen after construction; config sits in the tree, computable like any value
 - Random samples take a seed instead of a generator, so reruns repeat exactly
 - Collapsible and accordion open smoothly, no flash of content or jump at the end

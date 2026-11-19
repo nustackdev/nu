@@ -129,7 +129,7 @@ class StdioRef(Ref):
 
     Notes:
         - Unlike a Context ``Attr`` there is no address child: the stream
-          name is an intrinsic constant carried in the payload.
+          name is an intrinsic constant carried in a field.
         - The read thunk self-yields the stream handle; ``_write`` appends
           text and ``readline`` consumes one line. Both route through a
           bound ``StdioBackend`` when present, else the real ``sys`` stream.

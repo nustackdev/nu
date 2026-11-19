@@ -13,7 +13,7 @@ import janus
 from typing_extensions import Self
 
 from nu.domains.shape import Slot
-from nu.lang import Literal
+from nu.lang import Literal, Nu
 from nu.mem.refs import RefBase
 
 from .form import JQueue
@@ -74,13 +74,18 @@ class JQueueRef(RefBase[janus.Queue[T]], JQueue[T], Generic[T]):
         *,
         parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
-        capacity: int | None = None,
+        capacity: int | Nu | None = None,
         item_type: type[T] = object,  # type: ignore[assignment]
         **kwargs: object,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape, **kwargs)
-        # Capacity is a value the queue works with: a child after the address.
-        self._children = (*self._children, Literal(capacity))
+        # Capacity is a value the queue works with: a child after the address,
+        # so it can be computed. Appended here, past the ref base's own init,
+        # so it is lifted by hand.
+        self._children = (
+            *self._children,
+            capacity if isinstance(capacity, Nu) else Literal(capacity),
+        )
         self._item_type: type = item_type
         """The Python type the queue is meant to carry."""
 
@@ -124,13 +129,14 @@ class JQueueRef(RefBase[janus.Queue[T]], JQueue[T], Generic[T]):
     def slot(
         cls,
         *,
-        capacity: int | None = None,
+        capacity: int | Nu | None = None,
         item_type: type = object,
     ) -> Self:
         """Declare a queue slot in a Shape class body.
 
         Args:
-            capacity: how many items may wait before ``put`` blocks.
+            capacity: how many items may wait before ``put`` blocks, or a
+                term yielding it, evaluated when the queue is first created.
                 Unbounded when absent.
             item_type: the Python type the queue is meant to carry.
 

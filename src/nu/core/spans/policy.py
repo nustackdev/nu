@@ -13,7 +13,7 @@ The atoms:
   and per-attempt hooks (async path).
 - ``Timeout`` - bound the body by a wall-clock limit (async-only).
 
-Conventions (see ``AUTHORING.md``): structure lives in the tree, not ``payload``
+Conventions (see ``AUTHORING.md``): structure lives in the tree, not in fields
 (an absent optional branch is a ``Noop`` slot, and the node records in a
 field which branches were given, so a ``Noop`` passed on purpose still
 runs; names are ``StrArg`` children;

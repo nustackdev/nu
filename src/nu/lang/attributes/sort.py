@@ -177,7 +177,7 @@ _ANY = _VALUE | _WORK
 # The composition matrix: each parent sort mapped to the child sorts it holds.
 # A value-producing parent holds values; a Strategy holds work; the parents
 # that take a body (Control, Bracket, Policy) hold anything. Action's slots
-# need values (the payload, the address) like Command's do, in either cardinality.
+# need values (the written value, the address) like Command's do, in either cardinality.
 MATRIX: dict[Sort, frozenset[Sort]] = {
     Sort.REF: _VALUE | _UNIVERSAL,
     Sort.SCALAR_QUERY: _VALUE | _UNIVERSAL,

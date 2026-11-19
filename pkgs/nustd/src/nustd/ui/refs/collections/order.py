@@ -27,7 +27,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.forms import List as ListOf
-from nu.lang import Literal, Nu
+from nu.lang import Nu
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import ItemRef, Send, check_key
 
@@ -67,11 +67,11 @@ class _PlacedOp(Send):
     the anchor is None (the end). The anchor is always the last child.
     """
 
-    def __init__(self, ref: Ref, key: object, anchor: str | None, value: object) -> None:
+    def __init__(self, ref: Ref, key: object, anchor: str | Nu | None, value: object) -> None:
         if anchor is None:
-            super().__init__(ref, key, Literal(anchor))
+            super().__init__(ref, key, anchor)
         else:
-            super().__init__(ref, key, value, Literal(anchor))
+            super().__init__(ref, key, value, anchor)
 
     def _frame_payload(self, values: list[object]) -> object:
         *values, anchor = values

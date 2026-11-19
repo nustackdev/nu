@@ -32,7 +32,7 @@ that: where the source comes from is the child's business, and the child is
 what differs between substrates.
 
 Construction takes no ``.of()``. The ``nustd`` Forms use classmethods
-because their payloads need parsing atoms to build; ``Program`` does not.
+because their children need parsing atoms to build; ``Program`` does not.
 ``TypedNu.__init__`` wraps a single child and ``Nu`` auto-wraps a non-Term
 child into a ``Literal``, so ``Program(SOURCE)`` with a bare ``str`` is
 already the right node.

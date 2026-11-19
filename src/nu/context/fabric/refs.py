@@ -48,13 +48,16 @@ class FabricRef(_ContextRef):
         address: the fabric type to resolve. Defaults to the class's own
             ``fabric`` attribute; a subclass with neither raises at
             construction.
+        config: children after the address, for a subclass that reads more
+            than the type (a tag, a name); each may be a term.
 
     Notes:
         - This base reads the untagged binding only. Context resolution falls
           back from more tags to fewer, never the other way, so an instance
           bound under ``Provide(..., tag="a")`` is not reachable here. A
-          subclass that wants tags stores them itself and forwards them to
-          ``ctx.get`` (see ``nustd.cluster.refs.RayServiceRef``).
+          subclass that wants tags carries them as children after the
+          address and forwards their values to ``ctx.get`` (see
+          ``nustd.cluster.refs.RayServiceRef``).
         - A binding holding NULL and no binding at all read the same, so use
           ``.exists()`` when the difference matters.
         - The fabric axis is for the long-lived, typed things - storage
@@ -77,13 +80,13 @@ class FabricRef(_ContextRef):
 
     fabric: ClassVar[type | None] = None
 
-    def __init__(self, address: object = None) -> None:
+    def __init__(self, address: object = None, *config: object) -> None:
         if address is None:
             address = type(self).fabric
             if address is None:
                 msg = f"{type(self).__name__} has no bound fabric; pass one or set `fabric`"
                 raise TypeError(msg)
-        super().__init__(address)
+        super().__init__(address, *config)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         fabric = children[0]

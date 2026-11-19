@@ -1,7 +1,7 @@
 """Shared wire logic for the 5 HTTP interactions: path formatting + compile thunks.
 
 `compile_call` / `acompile_call` build the sync/async thunks used by every
-interaction's `_compile` / `_acompile`. They read the endpoint payload from
+interaction's `_compile` / `_acompile`. They read the endpoint snapshot from
 child 0, the call kwargs from child 1, look up the tagged HttpFabric on the
 runtime context, and dispatch the request.
 """
@@ -47,11 +47,11 @@ def compile_call(children: tuple[Callable, ...]) -> Callable:
     ref_thunk, args_thunk = children
 
     def thunk(rt: Runtime) -> object:
-        payload = ref_thunk(rt)
+        snap = ref_thunk(rt)
         args = args_thunk(rt)
-        verb = payload["verb"]
-        path, wire = _split_kwargs(verb, payload["path"], payload["defaults"], args)
-        fabric = rt.ctx.fabrics.get(HttpFabric, payload["owner_service"])
+        verb = snap["verb"]
+        path, wire = _split_kwargs(verb, snap["path"], snap["defaults"], args)
+        fabric = rt.ctx.fabrics.get(HttpFabric, snap["owner_service"])
         return fabric.request(verb, path, **wire)
 
     return thunk
@@ -62,11 +62,11 @@ def acompile_call(children: tuple[Callable, ...]) -> Callable:
     ref_thunk, args_thunk = children
 
     async def athunk(rt: Runtime) -> object:
-        payload = await ref_thunk(rt)
+        snap = await ref_thunk(rt)
         args = await args_thunk(rt)
-        verb = payload["verb"]
-        path, wire = _split_kwargs(verb, payload["path"], payload["defaults"], args)
-        fabric = rt.ctx.fabrics.get(HttpFabric, payload["owner_service"])
+        verb = snap["verb"]
+        path, wire = _split_kwargs(verb, snap["path"], snap["defaults"], args)
+        fabric = rt.ctx.fabrics.get(HttpFabric, snap["owner_service"])
         return await fabric.arequest(verb, path, **wire)
 
     return athunk

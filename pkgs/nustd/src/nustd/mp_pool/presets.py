@@ -22,6 +22,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.context.fabric import Provide
+from nu.lang import Literal
 
 from .resources import WorkerPool
 
@@ -70,8 +71,9 @@ def pool(
             preset inside a ``With``.
 
     Notes:
-        - Kwargs are payload, frozen when the tree is built, like any
-          ``Provide``'s.
+        - Every knob is a config child of the ``Provide``, so each can be
+          computed. ``init`` is a bracket the workers open, not run here,
+          so it is quoted as a Literal.
         - Under ``nu.arun`` the close runs on the loop without blocking it;
           under ``nu.run`` it blocks the calling thread, never longer than
           ``grace`` plus a moment.
@@ -84,7 +86,8 @@ def pool(
         nu.run(mp_pool.pool(name="cells", spares=1, body=tree))
     """
     kwargs = {
-        "init": init,
+        # A term handed to the pool as data, not evaluated in this tree.
+        "init": Literal(init),
         "name": name,
         "grace": grace,
         "spares": spares,

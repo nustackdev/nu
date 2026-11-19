@@ -12,6 +12,7 @@ import asyncio
 from typing import ClassVar
 
 import pytest
+from _support.brackets import config
 
 import nu
 from nu.context import FabricRef, Provide, ProvideDict, ProvideList
@@ -379,13 +380,22 @@ class Cfg(nu.Shape):
     runs = nu.IntRef.slot()
 
 
-def test_provide_config_sits_after_the_body_as_literals():
+def test_provide_config_sits_after_the_body_as_children():
     body = FabricRef(Counter)
     bracket = Provide(Counter, {"name": "a"}, body, tag="t")
-    head, *config = nu.tree.children(bracket)
+    head, cls, kwargs, tags, predicate, bind_as = nu.tree.children(bracket)
     assert head is body
-    assert all(isinstance(c, nu.Literal) for c in config)
-    assert [c.value for c in config] == [Counter, {"name": "a"}, ("t",), None, None]
+    assert [c.value for c in (cls, predicate, bind_as)] == [Counter, None, None]
+    # kwargs and tags are built field by field, each one a child of its own.
+    assert [c.value for c in nu.tree.children(kwargs)] == ["a"]
+    assert [c.value for c in nu.tree.children(tags)] == ["t"]
+    assert config(bracket) == {
+        "cls": Counter,
+        "kwargs": {"name": "a"},
+        "tags": ("t",),
+        "predicate": None,
+        "bind_as": None,
+    }
 
 
 def test_provide_kwargs_come_from_a_mem_read():
@@ -439,3 +449,55 @@ def test_one_bracket_with_config_used_twice_in_one_program(runner: str):
     tree = nu.Frame(Cfg, program, first={"name": "a"}, second={"name": "b"})
     run(tree) if runner == "sync" else asyncio.run(arun(tree))
     assert Counter.events == [("setup", "a"), ("close", "a"), ("setup", "b"), ("close", "b")]
+
+
+def test_provide_one_kwargs_field_comes_from_a_mem_read():
+    tree = nu.Frame(
+        Cfg, Provide(Counter, {"name": Cfg.first["name"]}, FabricRef(Counter)), first={"name": "f"}
+    )
+    value, _ = run(tree)
+    assert value.name == "f"
+
+
+async def test_provide_one_kwargs_field_comes_from_a_mem_read_async():
+    tree = nu.Frame(
+        Cfg, Provide(Counter, {"name": Cfg.first["name"]}, FabricRef(Counter)), first={"name": "f"}
+    )
+    value, _ = await arun(tree)
+    assert value.name == "f"
+
+
+def test_provide_a_computed_tag_binds_under_its_value():
+    tree = Provide(Counter, {"name": "t"}, FabricRef(Counter).exists(), tag=Cfg.first["k"])
+    value, _ = run(nu.Frame(Cfg, tree, first={"k": "computed"}))
+    # Bound under the computed tag only, so the tagless read does not reach it.
+    assert value is False
+    assert Counter.events == [("setup", "t"), ("close", "t")]
+
+
+def test_provide_list_one_spec_field_is_computed():
+    specs = [{"name": "plain"}, {"name": nu.Add("com", "puted")}]
+    value, _ = run(ProvideList(Counter, specs, nu.Add(1, 2)))
+    assert value == 3
+    assert [n for kind, n in Counter.events if kind == "setup"] == ["plain", "computed"]
+
+
+def test_provide_dict_one_spec_field_is_computed():
+    tree = nu.Frame(
+        Cfg,
+        ProvideDict(Counter, {"a": {"name": Cfg.first["name"]}, "b": {"name": "b"}}, nu.Add(1, 2)),
+        first={"name": "from-mem"},
+    )
+    value, _ = run(tree)
+    assert value == 3
+    assert [n for kind, n in Counter.events if kind == "setup"] == ["from-mem", "b"]
+
+
+def test_provide_a_term_quoted_in_kwargs_reaches_the_fabric_as_data():
+    class Holds:
+        def __init__(self, term: object) -> None:
+            self.term = term
+
+    held = nu.Add(1, 2)
+    value, _ = run(Provide(Holds, {"term": nu.Literal(held)}, FabricRef(Holds)))
+    assert value.term is held

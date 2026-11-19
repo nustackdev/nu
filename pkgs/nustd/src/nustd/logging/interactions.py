@@ -22,7 +22,8 @@ import logging
 from typing import TYPE_CHECKING, cast
 
 from nu.engine.structure import Declared
-from nu.lang import Command, Literal, Nu, Ref
+from nu.forms.collections.abc.mapping_interactions import DictOf
+from nu.lang import Command, Nu, Ref
 from nu.lang.null import is_null
 
 
@@ -112,9 +113,9 @@ class Log(Command):
     ``logger`` is the logger name; both are children so a tree rewrite can
     retarget them. ``msg`` is the format string and ``*args`` are the
     ``%``-substitution values, resolved at eval time. ``extra`` is always the
-    last child, a ``Literal`` dict (empty when none was given) or any Nu
-    yielding one, so the args are ``children[4:-1]`` and the extra is
-    ``children[-1]``.
+    last child: a mapping is built field by field (each value may be a term,
+    empty when none was given), or any Nu yields the whole dict. So the args
+    are ``children[4:-1]`` and the extra is ``children[-1]``.
 
     A ``msg`` or ``arg`` that reads as NULL raises before anything is
     logged, as any write does. Give a value that may be missing a default
@@ -131,7 +132,9 @@ class Log(Command):
         *args: object,
         extra: dict[str, object] | Nu | None = None,
     ) -> None:
-        extra_node = extra if isinstance(extra, Nu) else Literal(dict(extra) if extra else {})
+        extra_node = (
+            extra if isinstance(extra, Nu) else cast("Callable[..., Nu]", DictOf)(**(extra or {}))
+        )
         super().__init__(LOGGING, level, logger, msg, *args, extra_node)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
