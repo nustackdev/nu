@@ -61,8 +61,13 @@ def test_react_latest_each_mirrors_react_latest_metadata():
     body = _Sensor.n.set(_Sensor.n + 1)
     each = compile(ReactLatestEach(_Sensor.n.on_change(), body))
     latest = compile(ReactLatest(_Sensor.n.on_change(), body))
-    for attr in (Attr.PARAM_SLOTS, Attr.REQUIRES_ASYNC):
-        assert each.attr(each.root, attr) == latest.attr(latest.root, attr)
+    assert each.attr(each.root, Attr.REQUIRES_ASYNC) == latest.attr(
+        latest.root, Attr.REQUIRES_ASYNC
+    )
+    # ReactLatest's params also take its trailing ``initial`` child.
+    assert each.attr(each.root, Attr.PARAM_SLOTS) | {3} == latest.attr(
+        latest.root, Attr.PARAM_SLOTS
+    )
 
 
 def test_react_latest_each_sync_thunk_raises():

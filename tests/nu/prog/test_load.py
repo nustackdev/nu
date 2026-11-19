@@ -152,6 +152,23 @@ def test_a_tagged_brace_is_selected_by_tag() -> None:
     assert nu.run(tree)[0] is False
 
 
+def test_the_brace_tag_can_be_computed() -> None:
+    tree = nu.Provide(
+        PyBrace,
+        {"python": sys.executable},
+        nu.Provide(
+            PyBrace,
+            {"python": sys.executable},
+            nu.Eq(
+                nu.Eval(LoadNu(PID, brace=nu.context.Attr("which"))),
+                nu.Eval(LoadNu(PID)),
+            ),
+            tag="second",
+        ),
+    )
+    assert nu.run(tree, nu.Context(attrs={"which": "second"}))[0] is False
+
+
 def test_one_child_serves_many_loads_inside_one_provide() -> None:
     tree = venv_brace(
         nu.And(
@@ -336,6 +353,22 @@ def test_eval_drives_the_rewritten_term() -> None:
 async def test_the_rewrite_runs_on_the_async_path() -> None:
     term, _ = await nu.arun(LoadNu(HELLO, rewrite=swapped))
     assert nu.run(term)[0] == "swapped"
+
+
+def test_the_rewrite_can_be_computed() -> None:
+    ctx = nu.Context(attrs={"rewrite": swapped})
+    term, _ = nu.run(LoadNu(HELLO, rewrite=nu.context.Attr("rewrite")), ctx)
+    assert nu.run(term)[0] == "swapped"
+
+
+def test_the_whole_scope_can_be_computed() -> None:
+    ctx = nu.Context(attrs={"scope": {"who": "you"}})
+    term, _ = nu.run(LoadNu(GREETING, scope=nu.context.Attr("scope")), ctx)
+    assert nu.run(term)[0] == "hello you"
+
+
+def test_load_has_no_fields() -> None:
+    assert nu.tree.fields(LoadNu(HELLO, scope={"a": 1}, brace="x", rewrite=swapped)) == {}
 
 
 def test_a_nested_load_runs_under_an_outer_rewrite() -> None:

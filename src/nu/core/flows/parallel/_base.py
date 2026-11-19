@@ -1,4 +1,4 @@
-"""Shared base for the Parallel / Race / AnyN kinds.
+"""Shared base for the Parallel kinds.
 
 Owns the ``(child, "threaded"|"async")`` tuple-parsing constructor and the
 class-level ``_FORCE_MODE`` slot the Threaded/Async variants override.
@@ -10,36 +10,76 @@ cycle forms during ``nu.lang`` initialization.
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, cast
+
 from nu.lang.nu import Nu
 
 
-__all__ = ["_ParallelBase"]
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable, Sequence
+
+
+__all__ = ["_ParallelBase", "checked_modes"]
 
 
 _VALID_MODES = ("threaded", "async")
 
 
+def _check_mode(mode: object) -> None:
+    """Refuse a mode that is neither ``"threaded"`` nor ``"async"``."""
+    if not isinstance(mode, str) or mode not in _VALID_MODES:
+        msg = f"Parallel child mode must be 'threaded' or 'async'; got {mode!r}"
+        raise ValueError(msg)
+
+
+def checked_modes(modes: object, n_arms: int) -> tuple[str | None, ...]:
+    """The per-arm modes a run computed: one per arm, each None or a valid mode.
+
+    Raises:
+        TypeError: the modes child did not yield a sequence.
+        ValueError: a mode is not ``"threaded"`` / ``"async"`` / None, or the
+            count is not one per arm.
+    """
+    try:
+        out: tuple[str | None, ...] = tuple(cast("Iterable[str | None]", modes))
+    except TypeError:
+        msg = f"Parallel modes must be a sequence, got {modes!r}"
+        raise TypeError(msg) from None
+    if len(out) != n_arms:
+        msg = f"Parallel: {len(out)} modes for {n_arms} children"
+        raise ValueError(msg)
+    for mode in out:
+        if mode is not None:
+            _check_mode(mode)
+    return out
+
+
 class _ParallelBase(Nu):
-    """Mixin for Parallel / Race / AnyN and their forced-mode variants.
+    """Mixin for Parallel and its forced-mode variants.
 
     Args:
-        *items: each item is a ``Nu`` child, or a ``(child, "threaded" |
-            "async")`` tuple pinning that one child's placement.
+        *items: each item is a ``Nu`` child, or a ``(child, mode)`` tuple
+            pinning that one child's placement, where ``mode`` is
+            ``"threaded"``, ``"async"``, or any Nu computing one of them.
 
     Notes:
-        - Parses ``items`` into children plus a per-slot mode tuple stored on
-          ``self.parallel_modes``, one entry per child (``None``
-          for an unpinned child).
+        - Children: ``[*arms]``, or ``[*arms, modes]`` once any arm is pinned.
+          ``modes`` is one child yielding a mode per arm (``None`` for an
+          unpinned one), evaluated on every run, so a mode can come from a
+          ref or a kv read. ``n_arms`` is the field that splits the arms from
+          it; it is None, the class default, when every child is an arm.
+        - A plain string mode is checked here; a computed one when it runs.
         - ``_FORCE_MODE`` is ``None`` on the smart kinds; the
           Threaded/Async subclasses set it to ``"threaded"`` / ``"async"``
           to pin every child at once, overriding per-child modes.
     """
 
     _FORCE_MODE: str | None = None
+    n_arms: int | None = None
 
     def __init__(self, *items: object) -> None:
         children: list[Nu] = []
-        modes: list[str | None] = []
+        modes: list[object] = []
         for item in items:
             if isinstance(item, tuple):
                 if len(item) != 2 or not isinstance(item[0], Nu):
@@ -48,9 +88,8 @@ class _ParallelBase(Nu):
                     )
                     raise TypeError(msg)
                 child, mode = item
-                if not isinstance(mode, str) or mode not in _VALID_MODES:
-                    msg = f"Parallel child mode must be 'threaded' or 'async'; got {mode!r}"
-                    raise ValueError(msg)
+                if not isinstance(mode, Nu):
+                    _check_mode(mode)
                 children.append(child)
                 modes.append(mode)
             elif isinstance(item, Nu):
@@ -62,5 +101,20 @@ class _ParallelBase(Nu):
                     f"(Nu, 'threaded'|'async') tuple; got {item!r}"
                 )
                 raise TypeError(msg)
-        super().__init__(*children)
-        self.parallel_modes = tuple(modes)
+        if all(mode is None for mode in modes):
+            super().__init__(*children)
+            return
+        from nu.forms.collections.abc.sequence_interactions import TupleOf
+
+        super().__init__(*children, cast("Callable[..., Nu]", TupleOf)(*modes))
+        self.n_arms = len(children)
+
+    def _arms(self, nids: Sequence[int]) -> Sequence[int]:
+        """The arm slots of ``nids`` (this node's child nids), the modes child left out."""
+        return nids if self.n_arms is None else nids[: self.n_arms]
+
+    def _config_slots(self) -> frozenset[int]:
+        """The modes child's slot, past the arms, when there is one."""
+        if self.n_arms is None:
+            return frozenset()
+        return frozenset({self.n_arms})

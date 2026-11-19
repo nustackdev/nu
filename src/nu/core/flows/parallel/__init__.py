@@ -9,8 +9,8 @@ constructor-only. Only ``Parallel`` has forced-mode variants:
 
 Parallel placement precedence per child: the parent's ``_FORCE_MODE`` (from
 ``ParallelThreaded`` / ``ParallelAsync``) wins first; then a per-child override
-passed as ``(child, "threaded"|"async")``; otherwise the smart choice off
-``Attr.ON_LOOP``. Example::
+passed as ``(child, "threaded"|"async")``, the mode a string or any Nu computing
+one, evaluated each run; otherwise the smart choice off ``Attr.ON_LOOP``. Example::
 
     Parallel(io_child, (cpu_child, "threaded"))   # smart + one override
     ParallelAsync(io_a, io_b)                     # every child on the loop

@@ -203,23 +203,40 @@ class AccordionRef(DictCollectionRef):
 
 
 class _SetSectionStr(Send):
-    """Send a string to a container's chrome, under an op named at construction.
+    """Send a string to a container's chrome; each subclass ships its own op.
 
-    One class serves the three card chrome ops ("set_title", "set_subtitle",
-    "set_caption"): the op is a field and the frame ships under it.
-    The frame carries the chain like every other send, so a Card nobody booted
-    (a nested Section, a nuspace cell) comes into being and then takes it.
+    One subclass per card chrome op ("set_title", "set_subtitle",
+    "set_caption"): which string it sets is the kind of the node, so it is
+    the class, not a field. The frame carries the chain like every other
+    send, so a Card nobody booted (a nested Section, a nuspace cell) comes
+    into being and then takes it.
     """
 
-    def __init__(self, ref: Ref, op: str, value: Arg[Any]) -> None:
-        super().__init__(ref, value)
-        self.op = op
+    _op: ClassVar[str] = ""
 
     def _frame_op(self) -> object:
-        return self.op
+        return self._op
 
     def _frame_payload(self, values: list[object]) -> object:
         return values[0]
+
+
+class _SetTitle(_SetSectionStr):
+    """A container's title, ``set_title`` on the wire."""
+
+    _op = "set_title"
+
+
+class _SetSubtitle(_SetSectionStr):
+    """A container's subtitle, ``set_subtitle`` on the wire."""
+
+    _op = "set_subtitle"
+
+
+class _SetCaption(_SetSectionStr):
+    """A container's caption, ``set_caption`` on the wire."""
+
+    _op = "set_caption"
 
 
 CardVariant = Literal["default", "elevated", "sunken", "outline", "plain", "accent", "brand"]
@@ -320,13 +337,13 @@ class CardRef(ChildLayout, DictCollectionRef):
         return footer_ref(self)
 
     def set_title(self, text: StrArg) -> Nu:
-        return _SetSectionStr(self, "set_title", text)
+        return _SetTitle(self, text)
 
     def set_subtitle(self, text: StrArg) -> Nu:
-        return _SetSectionStr(self, "set_subtitle", text)
+        return _SetSubtitle(self, text)
 
     def set_caption(self, text: StrArg) -> Nu:
-        return _SetSectionStr(self, "set_caption", text)
+        return _SetCaption(self, text)
 
     def set_href(self, url: StrArg, target: Target | StrArg = UNSET) -> Nu:
         """Point the card somewhere; an empty url makes it a plain card again."""

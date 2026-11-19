@@ -129,8 +129,8 @@ def test_validate_passes(name):
 
 
 def _body(node: nu.Nu) -> object:
-    """The body a Dispatch holds as data: the value of its last, Literal child."""
-    held = nu.tree.children(node)[-1]
+    """The body a Dispatch holds as data: the value of its third, Literal child."""
+    held = nu.tree.children(node)[2]
     assert isinstance(held, nu.Literal)
     return held.value
 

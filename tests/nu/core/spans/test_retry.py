@@ -189,7 +189,7 @@ async def test_async_jitter_applies_after_the_cap(
 async def test_async_max_delay_is_a_child_term(waits: list) -> None:
     cap = Add(Literal(1), Literal(2))
     retry = Retry(FlakyAction(2), max_attempts=3, delay=8.0, max_delay=cap)
-    assert nu.tree.children(retry)[-1] is cap  # a child, not payload
+    assert nu.tree.children(retry)[13] is cap  # a child, before the errors filter
     await arun(retry)
     assert waits == [3.0, 3.0]
 

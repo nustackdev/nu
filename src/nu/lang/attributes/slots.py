@@ -9,7 +9,12 @@ body (*mutating children*: Command, Action, or Flow). ``param_slots`` names
 which slot indices are parameter slots on each Control kind (e.g. ``If`` and
 ``While`` declare ``frozenset({0})``). Other Flow kinds (Strategy) and non-Flow
 kinds keep the empty default. Laws that distinguish body from parameter
-(``flow_body_is_mutator``, ``control_param_is_yielder``) read this column.
+(``flow_body_is_mutator``, ``control_param_is_yielder``) read this column,
+joined with the node's ``_config_slots()``: the slots of config children whose
+place depends on the node's own structure (a ``Parallel``'s modes child after
+a variable run of arms), which a per-kind constant cannot name. The
+composition matrix leaves config slots out: a config child is a value the node
+runs for itself, not an operand.
 
 ``structural`` names the slot indices a kind fills with address *structure*
 rather than a value to evaluate - a hierarchical Ref's parent (``children[0]``),

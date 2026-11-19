@@ -9,8 +9,9 @@ from three sources with this precedence:
 
 1. ``force`` (class-level override from ``ParallelThreaded`` / ``ParallelAsync``
    and friends) - applied to every child.
-2. ``per_child`` (an aligned tuple of ``"threaded"`` / ``"async"`` / ``None``
-   given at construction via ``(child, "threaded")`` tuples).
+2. ``per_child`` (an aligned tuple of ``"threaded"`` / ``"async"`` / ``None``,
+   evaluated each run from the Parallel's modes child, which
+   ``(child, "threaded")`` tuples build).
 3. ``Attr.ON_LOOP`` - the smart choice folded from the child's subtree.
 
 ``merge`` / ``amerge`` stay mode-agnostic - stream fan-in has no

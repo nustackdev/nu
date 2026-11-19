@@ -142,9 +142,10 @@ def InteractionFactory(  # noqa: N802 -- a class factory; reads as a class at th
 
     def init_method(self: Nu, *args: object, **kwargs: object) -> None:
         Nu.__init__(self, *args, *kwargs.values())
-        # Underscore-named: the base may be a Form (``Object``) whose
-        # ``__getattr__`` a public field would shadow.
-        self._npos = len(args)
+        # The keyword names are structure: they say which trailing child is
+        # which parameter. The positional count follows from them. Underscore-
+        # named: the base may be a Form (``Object``) whose ``__getattr__`` a
+        # public field would shadow.
         self._kwkeys = tuple(kwargs.keys())
 
     namespace["__init__"] = init_method
@@ -156,8 +157,8 @@ def InteractionFactory(  # noqa: N802 -- a class factory; reads as a class at th
             nid: int,
             children: tuple[Callable[[Runtime], object], ...],
         ) -> Callable[[Runtime], object]:
-            npos = cast("int", getattr(self, "_npos", len(children)))
             kwkeys = cast("tuple[str, ...]", getattr(self, "_kwkeys", ()))
+            npos = len(children) - len(kwkeys)
             return call_thunk(fn, children[:npos], kwkeys, children[npos:], void=is_command)
 
         namespace["_compile"] = compile_method
@@ -167,8 +168,8 @@ def InteractionFactory(  # noqa: N802 -- a class factory; reads as a class at th
         nid: int,
         children: tuple[Callable[[Runtime], object], ...],
     ) -> Callable[[Runtime], object]:
-        npos = cast("int", self._npos)  # type: ignore[attr-defined]
         kwkeys = cast("tuple[str, ...]", self._kwkeys)  # type: ignore[attr-defined]
+        npos = len(children) - len(kwkeys)
         return call_athunk(fn, children[:npos], kwkeys, children[npos:], void=is_command)
 
     namespace["_acompile"] = acompile_method

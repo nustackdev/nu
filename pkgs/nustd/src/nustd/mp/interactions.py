@@ -64,6 +64,8 @@ class Teleport(Policy):
           of the worker's Context for that one execution, so loop
           variables bound by ``Map`` or ``Filter`` reach the body. Without
           it the body sees only what the worker's Context already holds.
+          ``carry`` is the last child, evaluated each run, so it can be
+          computed.
         - The body resolves its refs against the worker's Context, built in
           the child by the ``MpWorker``'s ``init`` bracket or
           ``ctx_builder``. Anything bound around the Teleport in the
@@ -100,16 +102,15 @@ class Teleport(Policy):
         )
     """
 
-    def __init__(self, body: Nu, *, target: object = UNSET, carry: bool = False) -> None:
-        super().__init__(body, target)
-        self.carry = carry
+    def __init__(self, body: Nu, *, target: object = UNSET, carry: object = False) -> None:
+        super().__init__(body, target, carry)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body_term = self._children[0]
-        carry = self.carry
 
         def thunk(rt: Runtime) -> object:
             target = children[1](rt)
+            carry = children[2](rt)
             tag: tuple[object, ...] = () if target is UNSET else (target,)
             worker = rt.ctx.fabrics.get(MpWorker, *tag)
             attrs = dict(rt.ctx.attrs.items()) if carry else None
@@ -122,10 +123,10 @@ class Teleport(Policy):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body_term = self._children[0]
-        carry = self.carry
 
         async def athunk(rt: Runtime) -> object:
             target = await children[1](rt)
+            carry = await children[2](rt)
             tag: tuple[object, ...] = () if target is UNSET else (target,)
             worker = rt.ctx.fabrics.get(MpWorker, *tag)
             attrs = dict(rt.ctx.attrs.items()) if carry else None

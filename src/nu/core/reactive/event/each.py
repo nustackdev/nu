@@ -77,13 +77,12 @@ class ReactEach(Control):
         body, (changed_key,) = bind("ReactEach", body, changed_key=changed_key)
         names = () if changed_key is None else (changed_key,)
         super().__init__(change, body, *names)
-        self.has_changed_key = changed_key is not None
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return async_only("ReactEach")
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        has_ck = self.has_changed_key
+        has_ck = len(children) > 2  # [change, body, changed_key?]
         body = children[1]
 
         async def athunk(rt: Runtime) -> None:

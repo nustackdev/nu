@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
     from starlette.routing import Route
 
-    from nu.lang import Nu
+    from nu.lang import Nu, StrArg
     from nu.lang.runtime import Context
 
 
@@ -101,16 +101,16 @@ class UploadViewFor(_LifecycleBracket):
 
     Args:
         body: the tree that runs with the view bound.
-        sid_attr: the attr the fold parked this arm's session id under.
+        sid_attr: the attr the fold parked this arm's session id under: a
+            str, or any Nu yielding one. A config child, evaluated on entry.
     """
 
-    def __init__(self, body: Nu | None = None, *, sid_attr: str = _SID_ATTR) -> None:
-        super().__init__(body)
-        self.sid_attr = sid_attr
+    def __init__(self, body: Nu | None = None, *, sid_attr: StrArg = _SID_ATTR) -> None:
+        super().__init__(body, sid_attr)
 
     @asynccontextmanager
-    async def _aopen(self, ctx: Context) -> AsyncIterator[None]:
-        attr = self.sid_attr
+    async def _aopen(self, ctx: Context, sid_attr: str) -> AsyncIterator[None]:
+        attr = sid_attr
         sid = ctx.attrs.get(attr, None)
         if sid is None:
             msg = f"UploadViewFor found no {attr!r} on the Context; it runs inside the fold"

@@ -307,7 +307,8 @@ class Teleport(Policy):
           child, so anything else there would make the node present as a ref.
         - The body resolves its refs against the worker's Context.
           ``carry=True`` copies the caller's ``ctx.attrs`` across for that one
-          execution.
+          execution. ``carry`` is the last child, evaluated each run, so it
+          can be computed.
         - The sync path blocks the calling thread for the reply; the async
           path holds no thread, the pool's reader wakes it.
         - A stream-rooted body evaluates to an async generator, which cannot
@@ -338,19 +339,18 @@ class Teleport(Policy):
         body: Nu | None = None,
         worker: object = None,
         *,
-        carry: bool = False,
+        carry: object = False,
     ) -> None:
-        super().__init__(body, _pool_node(pool), worker)
-        self.carry = carry
+        super().__init__(body, _pool_node(pool), worker, carry)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the sync teleport thunk."""
         body_term = self._children[0]
-        carry = self.carry
 
         def thunk(rt: Runtime) -> object:
             pool = _require_pool(children[1](rt))
             wid = children[2](rt)
+            carry = children[3](rt)
             attrs = dict(rt.ctx.attrs.items()) if carry else None
             result = pool.teleport(wid, body_term, attrs=attrs)
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
@@ -362,11 +362,11 @@ class Teleport(Policy):
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the async teleport thunk."""
         body_term = self._children[0]
-        carry = self.carry
 
         async def athunk(rt: Runtime) -> object:
             pool = _require_pool(await children[1](rt))
             wid = await children[2](rt)
+            carry = await children[3](rt)
             attrs = dict(rt.ctx.attrs.items()) if carry else None
             result = await pool.ateleport(wid, body_term, attrs=attrs)
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
@@ -414,7 +414,7 @@ class Dispatch(ScalarAction):
         pool: the node yielding the ``WorkerPool``. Defaults to the untagged
             ``PoolRef``.
         body: the tree to run in the worker. Kept as ``Literal(body)`` in
-            the last slot, captured as a term, never evaluated in the caller.
+            the third slot, captured as a term, never evaluated in the caller.
         worker: the node yielding the worker id. Any Nu - the id is still a
             child, so it can be a ``Literal``, a mem slot or a query.
 
@@ -433,6 +433,7 @@ class Dispatch(ScalarAction):
           visible there. ``carry=True`` binds the caller's ``ctx.attrs`` on a
           branch of the worker's Context for that one body, so loop
           variables bound by ``Map`` or ``Filter`` reach it.
+          ``carry`` is the last child, evaluated each run.
         - Everything crossing the pipe goes through cloudpickle, so the body
           term may hold closures and locally defined classes.
         - Several bodies can be dispatched to one worker; they run as
@@ -459,19 +460,18 @@ class Dispatch(ScalarAction):
         body: Nu | None = None,
         worker: object = None,
         *,
-        carry: bool = False,
+        carry: object = False,
     ) -> None:
-        super().__init__(_pool_node(pool), worker, Literal(_dispatch_body(body)))
-        self.carry = carry
+        super().__init__(_pool_node(pool), worker, Literal(_dispatch_body(body)), carry)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the sync dispatch thunk."""
-        carry = self.carry
 
         def thunk(rt: Runtime) -> object:
             pool = _require_pool(children[0](rt))
             wid = children[1](rt)
             body_term = children[2](rt)
+            carry = children[3](rt)
             attrs = dict(rt.ctx.attrs.items()) if carry else None
             return pool.dispatch(wid, body_term, attrs=attrs)
 
@@ -479,12 +479,12 @@ class Dispatch(ScalarAction):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the async dispatch thunk."""
-        carry = self.carry
 
         async def athunk(rt: Runtime) -> object:
             pool = _require_pool(await children[0](rt))
             wid = await children[1](rt)
             body_term = await children[2](rt)
+            carry = await children[3](rt)
             attrs = dict(rt.ctx.attrs.items()) if carry else None
             return await pool.adispatch(wid, body_term, attrs=attrs)
 

@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Switch labels, parallel modes, error filters and other run-time config can be computed
 - Literal hands each run fresh native containers, and builds values per run from a factory
 - Store and agent names come back as terms; run one to read its value
 - Blob server takes its own plain backend; computed config stays with the tree

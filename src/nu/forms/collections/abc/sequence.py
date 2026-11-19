@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
     from nu.forms.collections.iterator_ import Iterator
     from nu.forms.primitives import Int
-    from nu.lang import Arg, IntArg
+    from nu.lang import Arg, BoolArg, IntArg
 
 
 __all__ = [
@@ -330,13 +330,13 @@ class MutableSequenceForm(
 
         return DelIndex(self, index)
 
-    def remove(self, value: Arg[ElementT], *, missing_ok: bool = False) -> Any:  # noqa: ANN401
+    def remove(self, value: Arg[ElementT], *, missing_ok: BoolArg = False) -> Any:  # noqa: ANN401
         """Remove the first occurrence of value.
 
         Args:
             value: the element to remove.
-            missing_ok: when ``True``, an absent value is a no-op. A plain
-                Python bool fixed at construction, not a Nu value.
+            missing_ok: when ``True``, an absent value is a no-op. A bool, or any
+                Nu yielding one, evaluated each run.
 
         Notes:
             - Mutates self and needs a Ref on the left; it can't run

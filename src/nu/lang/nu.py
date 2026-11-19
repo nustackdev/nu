@@ -75,6 +75,20 @@ class Nu(Term[Runtime, V_co], Generic[V_co]):  # PEP 695 has no variance markers
             wrapped = tuple(c if isinstance(c, Nu) else Literal(c) for c in children)
         super().__init__(*wrapped)
 
+    # --- slot roles -----------------------------------------------------
+
+    def _config_slots(self) -> frozenset[int]:
+        """The slots holding this node's own config, when their place varies.
+
+        A config child is a value the node runs for itself (a ``Parallel``'s
+        per-arm modes), not an operand or a body. Where its slot is fixed by
+        the kind, the kind declares it in ``param_slots``; this covers a
+        variadic node whose config follows a run of operands, so its slots
+        are known only from the node's own structural fields. The Flow laws
+        treat these slots as parameters. Most nodes have none.
+        """
+        return frozenset()
+
     # --- display --------------------------------------------------------
     #
     # Both forms come from ``nu.lang.render`` and nothing else: no Nu subclass

@@ -16,6 +16,7 @@ from .._body import async_only, changed, drain_body
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from nu.lang import BoolArg
     from nu.lang.runtime import Runtime
 
 __all__ = ["ReactLatest"]
@@ -38,8 +39,9 @@ class ReactLatest(Control):
             the next change is what ends it.
         changed_key: name the changed key is bound under while each run of
             a tree body lasts; a lambda mints its own.
-        initial: run the body once straight away, before any notification.
-            That run binds no key, so the body sees whatever the caller
+        initial: run the body once straight away, before any notification:
+            a bool, or any Nu yielding one, evaluated when the flow starts
+            (the last child). That run binds no key, so the body sees whatever the caller
             seeded under ``changed_key``, or an unbound name (a lambda's key
             reads NULL).
 
@@ -76,7 +78,7 @@ class ReactLatest(Control):
 
     _mutates = Declared(value=frozenset(), name="mutates")
     _requires_async = Declared(value=True, name="requires_async")
-    _param_slots = Declared(value=frozenset({0, 2}), name="param_slots")
+    _param_slots = Declared(value=frozenset({0, 2, 3}), name="param_slots")
 
     def __init__(
         self,
@@ -84,23 +86,18 @@ class ReactLatest(Control):
         body: object,
         *,
         changed_key: object = None,
-        initial: bool = False,
+        initial: BoolArg = False,
     ) -> None:
         body, (changed_key,) = bind("ReactLatest", body, changed_key=changed_key)
-        has_changed_key = changed_key is not None
-        if changed_key is not None:
-            super().__init__(change, body, changed_key)
-        else:
-            super().__init__(change, body)
-        self.has_changed_key = has_changed_key
-        self.initial = bool(initial)
+        names = () if changed_key is None else (changed_key,)
+        super().__init__(change, body, *names, initial)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return async_only("ReactLatest")
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        has_ck = self.has_changed_key
-        initial = self.initial
+        has_ck = len(children) > 3  # [change, body, changed_key?, initial]
+        initial_t = children[-1]
         body = children[1]
 
         async def athunk(rt: Runtime) -> None:
@@ -125,6 +122,7 @@ class ReactLatest(Control):
 
             running: asyncio.Task | None = None
             getter: asyncio.Task | None = None
+            initial = await initial_t(rt)
             sub = await children[0](rt)
             sub.bind(on_change)
             try:

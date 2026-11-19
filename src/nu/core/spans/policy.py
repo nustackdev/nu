@@ -16,8 +16,8 @@ The atoms:
 Conventions (see ``AUTHORING.md``): structure lives in the tree, not in fields
 (an absent optional branch is a ``Noop`` slot, and the node records in a
 field which branches were given, so a ``Noop`` passed on purpose still
-runs; names are ``StrArg`` children;
-numeric knobs are returning children); ``ctx.attrs`` is the one inter-Nu channel
+runs; names are ``StrArg`` children; numeric knobs and the ``errors`` filter
+are returning children, evaluated on every run, so they can be computed); ``ctx.attrs`` is the one inter-Nu channel
 (the caught error and the attempt count are ``let``-bound there for the
 handler that reads them, and only for as long as it runs; a handler written as
 a lambda gets refs to them as its parameters); async-only atoms
@@ -31,7 +31,7 @@ import asyncio
 import itertools
 import random
 from contextlib import ExitStack
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from nu.context.attrs.binders import bind
 from nu.core._stream import aiter_any, sync_iter
@@ -51,11 +51,30 @@ if TYPE_CHECKING:
 __all__ = ["CaughtError", "Retry", "Timeout", "TryCatch"]
 
 
-def _errors(errors: tuple[type[Exception], ...] | type[Exception] | Unset) -> tuple | None:
-    """The error filter as the thunks read it: a tuple, or None for any exception."""
-    if errors is UNSET:
+def _errors(errors: object) -> tuple[type[Exception], ...] | None:
+    """The error filter as the thunks read it: a tuple, or None for any exception.
+
+    Takes what an ``errors`` child yields (None, one exception class, or a
+    tuple of them) and, at construction, the raw argument (UNSET too).
+
+    Raises:
+        TypeError: something other than exception classes.
+    """
+    if errors is UNSET or errors is None:
         return None
-    return errors if isinstance(errors, tuple) else (errors,)
+    out = errors if isinstance(errors, tuple) else (errors,)
+    for cls in out:
+        if not (isinstance(cls, type) and issubclass(cls, BaseException)):
+            msg = f"errors must be exception classes, got {errors!r}"
+            raise TypeError(msg)
+    return cast("tuple[type[Exception], ...]", out)
+
+
+def _errors_child(errors: object) -> object:
+    """The ``errors`` argument as its child: a term as given, a plain filter checked first."""
+    if isinstance(errors, Nu):
+        return errors
+    return _errors(errors)
 
 
 def _slot(branch: object) -> object:
@@ -188,9 +207,11 @@ class TryCatch(Policy):
         try: b / finally: f                TryCatch(b, finally_=f)
         try: b / except E: h / finally: f  TryCatch(b, errors=E, catch=h, finally_=f)
 
-    Children (fixed): ``[body, catch, finally_, error_key]``. A branch left
-    out is a ``Noop`` slot, and a field records which were given: a
-    given branch runs whatever it is, ``Noop`` included. ``catch`` runs with
+    Children (fixed): ``[body, catch, finally_, error_key, errors]``. A
+    branch left out is a ``Noop`` slot, and the ``given`` field records which
+    were given: a given branch runs whatever it is, ``Noop`` included. Which
+    branches exist is structure, read at compile time to shape the thunk;
+    ``errors`` is a value, evaluated on every run before the body. ``catch`` runs with
     the caught error bound at ``error_key`` for as long as it runs, a stream
     catch for its whole drain; ``finally_`` runs after, on success or failure
     alike.
@@ -201,9 +222,10 @@ class TryCatch(Policy):
             over the caught error, or a tree. Left out, nothing is caught,
             as a ``try`` with no ``except``.
         finally_: runs after, regardless of outcome. Optional.
-        errors: the exception type(s) ``catch`` handles. Left out, any
-            exception; an unmatched one propagates past this node untouched.
-            Needs ``catch``: there is nothing to filter for without one.
+        errors: the exception type(s) ``catch`` handles, or any Nu yielding
+            them. Left out, any exception; an unmatched one propagates past
+            this node untouched. Needs ``catch``: there is nothing to filter
+            for without one.
         error_key: where the caught exception (a :class:`CaughtError`) lands
             in the attrs fabric for a tree ``catch`` to read. Defaults to
             ``"error"``; a lambda mints its own.
@@ -232,7 +254,7 @@ class TryCatch(Policy):
         body: Nu,
         catch: Nu | Callable | Unset = UNSET,
         finally_: Flow | Command | Span | Unset = UNSET,
-        errors: tuple[type[Exception], ...] | type[Exception] | Unset = UNSET,
+        errors: tuple[type[Exception], ...] | type[Exception] | Nu | Unset = UNSET,
         error_key: StrArg | None = None,
     ) -> None:
         if errors is not UNSET and catch is UNSET:
@@ -251,8 +273,8 @@ class TryCatch(Policy):
             _slot(UNSET if catch is UNSET else bound),
             _slot(finally_),
             "error" if error_key is None else error_key,
+            _errors_child(errors),
         )
-        self.errors = _errors(errors)
         self.given = given
 
     def _branches(
@@ -267,7 +289,7 @@ class TryCatch(Policy):
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body, catch, finally_ = self._branches(children)
         error_key = children[3]
-        errors = self.errors
+        errors_t = children[4]
 
         if catch is None and finally_ is None:
             return body  # nothing to wrap: the body is the whole behaviour
@@ -275,6 +297,7 @@ class TryCatch(Policy):
         if catch is not None and finally_ is not None:
 
             def thunk(rt: Runtime) -> object:
+                errors = _errors(errors_t(rt))
                 if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
                     return _guard(rt, body, catch, finally_, error_key, errors)
                 try:
@@ -292,6 +315,7 @@ class TryCatch(Policy):
         if catch is not None:
 
             def thunk(rt: Runtime) -> object:
+                errors = _errors(errors_t(rt))
                 if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
                     return _guard(rt, body, catch, None, error_key, errors)
                 try:
@@ -305,7 +329,7 @@ class TryCatch(Policy):
 
         def thunk(rt: Runtime) -> object:  # finally_ only
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
-                return _guard(rt, body, None, finally_, error_key, errors)
+                return _guard(rt, body, None, finally_, error_key, None)
             try:
                 return body(rt)
             finally:
@@ -316,7 +340,7 @@ class TryCatch(Policy):
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body, catch, finally_ = self._branches(children)
         error_key = children[3]
-        errors = self.errors
+        errors_t = children[4]
 
         if catch is None and finally_ is None:
             return body
@@ -324,6 +348,7 @@ class TryCatch(Policy):
         if catch is not None and finally_ is not None:
 
             async def athunk(rt: Runtime) -> object:
+                errors = _errors(await errors_t(rt))
                 if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
                     return _aguard(rt, body, catch, finally_, error_key, errors)
                 try:
@@ -341,6 +366,7 @@ class TryCatch(Policy):
         if catch is not None:
 
             async def athunk(rt: Runtime) -> object:
+                errors = _errors(await errors_t(rt))
                 if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
                     return _aguard(rt, body, catch, None, error_key, errors)
                 try:
@@ -354,7 +380,7 @@ class TryCatch(Policy):
 
         async def athunk(rt: Runtime) -> object:  # finally_ only
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
-                return _aguard(rt, body, None, finally_, error_key, errors)
+                return _aguard(rt, body, None, finally_, error_key, None)
             try:
                 return await body(rt)
             finally:
@@ -401,8 +427,9 @@ class Retry(Policy):
             (async only).
         max_delay: the ceiling on the grown wait, in seconds. ``None``, the
             default, leaves it uncapped (async only).
-        errors: the exception type(s) that trigger a retry. Left out, any
-            exception; an unmatched one propagates unretried.
+        errors: the exception type(s) that trigger a retry, or any Nu
+            yielding them. Left out, any exception; an unmatched one
+            propagates unretried.
         on_attempt_fail: runs after a failed attempt that still has retries
             left (async only): ``lambda err, attempt: ...`` or a tree.
             Optional.
@@ -462,7 +489,7 @@ class Retry(Policy):
         backoff: FloatArg = 1.0,
         jitter: FloatArg = 0.0,
         max_delay: FloatArg | None = None,
-        errors: tuple[type[Exception], ...] | type[Exception] | Unset = UNSET,
+        errors: tuple[type[Exception], ...] | type[Exception] | Nu | Unset = UNSET,
         on_attempt_fail: Flow | Command | Span | Unset = UNSET,
         on_success: Flow | Command | Span | Unset = UNSET,
         on_fail: Flow | Command | Span | Unset = UNSET,
@@ -503,8 +530,8 @@ class Retry(Policy):
             "error" if ofl_error is None else ofl_error,
             "attempt" if ofl_attempt is None else ofl_attempt,
             max_delay,
+            _errors_child(errors),
         )
-        self.errors = _errors(errors)
         self.given = given
 
     def _hooks(
@@ -520,10 +547,11 @@ class Retry(Policy):
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body = children[0]
         max_attempts_q = children[1]
-        errors = self.errors
+        errors_t = children[14]
 
         def thunk(rt: Runtime) -> object:
             attempts = _attempts(max_attempts_q(rt))
+            errors = _errors(errors_t(rt))
             if attempts is None:
                 msg = (
                     "Retry: max_attempts=None needs the async runtime, where retries "
@@ -551,10 +579,11 @@ class Retry(Policy):
         max_delay_q = children[13]
         oaf, osc, ofl = self._hooks(children)
         oaf_error, oaf_attempt, osc_attempt, ofl_error, ofl_attempt = children[8:13]
-        errors = self.errors
+        errors_t = children[14]
 
         async def athunk(rt: Runtime) -> object:
             attempts = _attempts(await max_attempts_q(rt))
+            errors = _errors(await errors_t(rt))
             waits = _waits(
                 float(await delay_q(rt)),
                 float(await backoff_q(rt)),

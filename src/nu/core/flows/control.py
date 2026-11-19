@@ -22,9 +22,9 @@ Its reactive twin, ``ReconcileLatestEach``, keeps the fan-out open against a
 change subscription and lives with the other reactive flows in
 ``nu.core.reactive``.
 
-Each atom emits a thunk via ``compile`` / ``acompile`` and stays immutable -
-construction config that must survive ``evolve`` lives in fields
-(``SwitchDo``'s match keys), never as mutable per-run state.
+Each atom emits a thunk via ``compile`` / ``acompile`` and stays immutable.
+Fields hold only what is known before the program runs (``SwitchDo``'s case
+count); everything a run reads, its match keys included, is a child.
 """
 
 from __future__ import annotations
@@ -34,6 +34,7 @@ import time
 from typing import TYPE_CHECKING
 
 from nu.context.attrs.binders import bind
+from nu.core._cases import case_labels, checked_labels
 from nu.core._stream import aiter_any, sync_iter
 from nu.engine.structure import Declared
 from nu.lang import Control
@@ -486,9 +487,11 @@ class SwitchDo(Control):
             to run nothing on a miss.
 
     Notes:
-        - The case keys are intrinsic constants of the switch, not children:
-          they are fields, so they survive ``evolve``, and are
-          paired by position with the case bodies.
+        - Children: ``[selector, labels, *bodies, default?]``. ``labels`` is
+          one param child yielding the case keys in order, so a key can be a
+          computed term (a ref, a kv read), evaluated on every run after the
+          selector. The case count is a field: it splits the children into
+          bodies and the default before the program runs.
         - Keys are checked in the order ``cases`` was given, first equal match
           wins; a later duplicate key is unreachable.
         - ``selector`` is evaluated once per run, before any key comparison.
@@ -498,7 +501,7 @@ class SwitchDo(Control):
         2
     """
 
-    _param_slots = Declared(value=frozenset({0}), name="param_slots")
+    _param_slots = Declared(value=frozenset({0, 1}), name="param_slots")
 
     def __init__(
         self,
@@ -509,19 +512,19 @@ class SwitchDo(Control):
         bodies = list(cases.values())
         if default is not None:
             bodies.append(default)
-        super().__init__(selector, *bodies)
-        self.keys = tuple(cases.keys())
-        self.has_default = default is not None
+        super().__init__(selector, case_labels(cases), *bodies)
+        self.n_cases = len(cases)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        selector = children[0]
-        bodies = children[1:]
-        keys = self.keys
-        has_default = self.has_default
+        selector, labels_t = children[0], children[1]
+        bodies = children[2:]
+        n_cases = self.n_cases
+        has_default = len(bodies) > n_cases
 
         def thunk(rt: Runtime) -> None:
             value = selector(rt)
-            for i, key in enumerate(keys):
+            labels = checked_labels(labels_t(rt), n_cases, "SwitchDo")
+            for i, key in enumerate(labels):
                 if key == value:
                     bodies[i](rt)
                     return
@@ -531,14 +534,15 @@ class SwitchDo(Control):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        selector = children[0]
-        bodies = children[1:]
-        keys = self.keys
-        has_default = self.has_default
+        selector, labels_t = children[0], children[1]
+        bodies = children[2:]
+        n_cases = self.n_cases
+        has_default = len(bodies) > n_cases
 
         async def athunk(rt: Runtime) -> None:
             value = await selector(rt)
-            for i, key in enumerate(keys):
+            labels = checked_labels(await labels_t(rt), n_cases, "SwitchDo")
+            for i, key in enumerate(labels):
                 if key == value:
                     await bodies[i](rt)
                     return

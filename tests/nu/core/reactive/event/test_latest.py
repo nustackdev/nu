@@ -38,8 +38,9 @@ def test_react_latest_is_control():
 def test_react_latest_constructs():
     change = ItemRef("sub")
     body = ItemRef("body")
-    assert len(nu.tree.children(ReactLatest(change, body))) == 2
-    assert len(nu.tree.children(ReactLatest(change, body, changed_key=ItemRef("k")))) == 3
+    # [change, body, changed_key?, initial]: initial is a config child, last.
+    assert len(nu.tree.children(ReactLatest(change, body))) == 3
+    assert len(nu.tree.children(ReactLatest(change, body, changed_key=ItemRef("k")))) == 4
 
 
 # ---------------------------------------------------------------------------
@@ -64,8 +65,13 @@ def test_react_latest_mirrors_react_every_metadata():
     body = _Sensor.n.set(_Sensor.n + 1)
     latest = compile(ReactLatest(_Sensor.n.on_change(), body))
     forever = compile(ReactEvery(_Sensor.n.on_change(), body))
-    for attr in (Attr.PARAM_SLOTS, Attr.REQUIRES_ASYNC):
-        assert latest.attr(latest.root, attr) == forever.attr(forever.root, attr)
+    assert latest.attr(latest.root, Attr.REQUIRES_ASYNC) == forever.attr(
+        forever.root, Attr.REQUIRES_ASYNC
+    )
+    # ReactLatest's params also take its trailing ``initial`` child.
+    assert latest.attr(latest.root, Attr.PARAM_SLOTS) == forever.attr(
+        forever.root, Attr.PARAM_SLOTS
+    ) | {3}
 
 
 def test_react_latest_sync_thunk_raises():

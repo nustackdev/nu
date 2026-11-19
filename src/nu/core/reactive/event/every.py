@@ -59,18 +59,16 @@ class ReactEvery(Control):
         changed_key: object = None,
     ) -> None:
         body, (changed_key,) = bind("ReactEvery", body, changed_key=changed_key)
-        has_changed_key = changed_key is not None
         if changed_key is not None:
             super().__init__(change, body, changed_key)
         else:
             super().__init__(change, body)
-        self.has_changed_key = has_changed_key
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return async_only("ReactEvery")
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        has_ck = self.has_changed_key
+        has_ck = len(children) > 2  # [change, body, changed_key?]
 
         async def athunk(rt: Runtime) -> None:
             loop = asyncio.get_running_loop()

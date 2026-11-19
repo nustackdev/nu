@@ -75,9 +75,11 @@ def fields(node: Term) -> dict[str, object]:
     """The node's fields: what it holds besides its children.
 
     Every instance attribute a kind sets in ``__init__`` (a Literal's
-    ``value``, a Ref's ``owner_shape``, a Raise's ``exc_cls``). Fields are
-    frozen by convention, so the returned dict is a fresh snapshot; changing
-    it does not change the node. Build a variant with ``node.evolve(**fields)``.
+    ``value``, a Ref's ``owner_shape``, a Switch's case count). A field is
+    what has to be known before the program runs: what a law, an attribute
+    rule, a rewrite or the compile reads, or what makes the node the kind it
+    is. Everything a run reads is a child. Fields are frozen, so the
+    returned dict is a fresh snapshot; changing it does not change the node. Build a variant with ``node.evolve(**fields)``.
 
     Example:
         >>> nu.tree.fields(nu.Literal(42))
