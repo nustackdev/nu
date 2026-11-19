@@ -52,9 +52,9 @@ def status_line(label: str, worker: object) -> nu.Nu:
 def demo() -> None:
     tree = nustd.mp.pool(
         name="cells",  # ps shows each worker as nu:cells-{id}
-        # Every worker comes up holding one Ticks dict, so the resident body
+        # Every worker comes up holding one Ticks frame, so the resident body
         # and the teleports that read it see the same one.
-        init=nu.Provide(dict, {}, tag=Ticks),
+        init=nu.Frame(Ticks, None),
         spares=1,  # one warm worker kept on a shelf for launches; it fills in the background
         grace=5.0,  # the whole budget for stopping a worker, and for the close
         # Launch yields the worker's id; let holds it for the rest.

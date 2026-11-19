@@ -18,6 +18,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu.context.fabric import Fabric
 from virtuals._backends.publishers.mem import InMemoryPublisher as _InMemoryPublisher
 
 from .transport import InMemoryTransport
@@ -30,7 +31,7 @@ if TYPE_CHECKING:
 __all__ = ["InMemoryPublisher", "RedisPublisher"]
 
 
-class InMemoryPublisher(_InMemoryPublisher):
+class InMemoryPublisher(_InMemoryPublisher, Fabric):
     """In-process publisher. Reads the shared ``InMemoryTransport`` from ctx.
 
     ``transport_tags`` names the tags its stack's transport is bound under.
@@ -51,24 +52,16 @@ class InMemoryPublisher(_InMemoryPublisher):
         """Disconnect the publisher."""
         self.disconnect()
 
-    async def asetup(self, ctx: Context) -> None:
-        """Async shim: setup is sync work."""
-        self.setup(ctx)
 
-    async def acleanup(self) -> None:
-        """Async shim: cleanup is sync work."""
-        self.cleanup()
-
-
-class RedisPublisher:
+class RedisPublisher(Fabric):
     """Inter-process publisher via Redis pub/sub. Lazy-imports ``redis``.
 
-    ``_nu_async_only = True`` because a Redis connect + pub/sub subscribe
+    ``async_only = True`` because a Redis connect + pub/sub subscribe
     is real network IO we don't want blocking a sync runtime. Use
     ``nu.arun`` for any tree that includes this publisher.
     """
 
-    _nu_async_only = True
+    async_only = True
 
     def __init__(
         self,

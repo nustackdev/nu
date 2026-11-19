@@ -2,7 +2,7 @@
 
 Exposes its root fabric as a transparent proxy.
 
-FabricLifecycle. On ``asetup`` connects with retry, fetches the remote root
+An ``async_only`` ``Fabric``. On ``asetup`` connects with retry, fetches the remote root
 fabric handle, exposes it as ``.root``. On ``acleanup`` closes the
 connection.
 
@@ -23,6 +23,7 @@ from invisibles.core.consts import HANDLE_GET_ROOT
 from invisibles.netkit import SyncConnector
 from invisibles.netkit.framing import LengthPrefixedFraming
 from invisibles.netkit.transports import TCPTransport, UnixSocketTransport
+from nu.context.fabric import Fabric
 
 
 if TYPE_CHECKING:
@@ -32,8 +33,14 @@ if TYPE_CHECKING:
 __all__ = ["InvisiblesClient"]
 
 
-class InvisiblesClient:
-    """Connects to an ``InvisiblesServer`` and exposes its root as ``.root``."""
+class InvisiblesClient(Fabric):
+    """Connects to an ``InvisiblesServer`` and exposes its root as ``.root``.
+
+    ``async_only``: the connect-with-retry runs in ``asetup``, so the sync
+    runner refuses it.
+    """
+
+    async_only = True
 
     def __init__(
         self,

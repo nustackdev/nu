@@ -74,6 +74,7 @@ from multiprocessing import resource_tracker as _tracker
 from multiprocessing.connection import wait as _wait_fds
 from typing import TYPE_CHECKING
 
+from nu.context.fabric import Fabric
 from nu.lang import wire
 
 from ._exits import ExitWatch
@@ -937,7 +938,7 @@ class _Landing:
             return self._wid
 
 
-class WorkerPool:
+class WorkerPool(Fabric):
     """N worker processes owned by one bracket; the fleet itself is the fabric.
 
     Provided once at the top of a tree, usually through the ``pool(...)``
@@ -1047,10 +1048,6 @@ class WorkerPool:
     def setup(self, ctx: Context) -> None:
         """Start filling the spares shelf, if there is one. Nothing else to build."""
         self._refill()
-
-    async def asetup(self, ctx: Context) -> None:
-        """Async lifecycle. The shelf fills on threads either way."""
-        self.setup(ctx)
 
     def cleanup(self) -> None:
         """Stop every worker at once, launches and stops in flight included, within ``grace``.

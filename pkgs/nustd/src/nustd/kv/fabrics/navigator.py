@@ -1,6 +1,6 @@
 """``Navigator`` Nu fabric wrapping ``virtuals.Navigator``.
 
-FabricLifecycle. Reads the storage from ctx (by ``storage_type`` - defaults
+A ``Fabric``. Reads the storage from ctx (by ``storage_type`` - defaults
 to ``RocksDBStorage``) and initializes the parent ``Navigator`` against it.
 ``root_view`` picks the top-level view type.
 """
@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu.context.fabric import Fabric
 from virtuals import Navigator as _Navigator
 from virtuals.views import DictView
 
@@ -22,8 +23,8 @@ if TYPE_CHECKING:
 __all__ = ["Navigator"]
 
 
-class Navigator(_Navigator):
-    """FabricLifecycle Navigator. Reads its storage from ctx during setup.
+class Navigator(_Navigator, Fabric):
+    """Fabric Navigator. Reads its storage from ctx during setup.
 
     ``storage_tags`` targets a specific storage binding when multiple shards
     are bound under the same ``storage_type`` with distinct tags. Empty for
@@ -58,11 +59,3 @@ class Navigator(_Navigator):
     def cleanup(self) -> None:
         """Mark closed. The storage teardown is handled by its own bracket."""
         self._opened = False
-
-    async def asetup(self, ctx: Context) -> None:
-        """Async shim: setup is sync work."""
-        self.setup(ctx)
-
-    async def acleanup(self) -> None:
-        """Async shim: cleanup is sync work."""
-        self.cleanup()

@@ -31,6 +31,8 @@ import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from nu.context.fabric import Fabric
+
 
 if TYPE_CHECKING:
     import os
@@ -171,7 +173,7 @@ _PREFIX = "nu-uploads-"
 _PART = ".part"
 
 
-class UploadArea:
+class UploadArea(Fabric):
     """The temp area of one ui server: a folder of files the tabs posted.
 
     Opened by the bracket ``uploads`` returns, inside the ws server's own

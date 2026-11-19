@@ -16,7 +16,7 @@ from nu.lang import Context
 from nu.lang.helpers import arun, run
 
 
-class Counter:
+class Counter(nu.Fabric):
     """Trivial fabric; setup/cleanup log to a shared list."""
 
     events: ClassVar[list[tuple[str, str]]] = []
@@ -40,10 +40,10 @@ def _reset_events() -> None:
 
 
 def test_with_stacks_provides_and_yields_body_result():
-    class A:
+    class A(nu.Fabric):
         pass
 
-    class B:
+    class B(nu.Fabric):
         pass
 
     tree = With(Provide(A, {}), Provide(B, {}), body=FabricRef(B))
@@ -52,7 +52,7 @@ def test_with_stacks_provides_and_yields_body_result():
 
 
 def test_with_no_brackets_just_runs_body():
-    class Store:
+    class Store(nu.Fabric):
         pass
 
     tree = With(Provide(Store, {}), body=FabricRef(Store))
@@ -82,11 +82,11 @@ def test_with_teardown_is_lifo():
 def test_with_ctx_accumulates_inner_reads_outer_via_ctx_get():
     """A later bracket's setup can read an earlier bracket's binding."""
 
-    class Codec:
+    class Codec(nu.Fabric):
         def __init__(self, kind: str) -> None:
             self.kind = kind
 
-    class Storage:
+    class Storage(nu.Fabric):
         def __init__(self) -> None:
             self.codec_kind: str | None = None
 
@@ -103,14 +103,14 @@ def test_with_ctx_accumulates_inner_reads_outer_via_ctx_get():
 
 
 def test_with_composes_provide_provide_list_provide_dict():
-    class A:
+    class A(nu.Fabric):
         pass
 
-    class B:
+    class B(nu.Fabric):
         def __init__(self, i: int) -> None:
             self.i = i
 
-    class C:
+    class C(nu.Fabric):
         def __init__(self, k: str) -> None:
             self.k = k
 
@@ -128,7 +128,7 @@ def test_with_composes_provide_provide_list_provide_dict():
 
 
 def test_with_partial_setup_failure_tears_down_already_entered():
-    class Flaky:
+    class Flaky(nu.Fabric):
         events: ClassVar[list[str]] = []
 
         def __init__(self, name: str, boom: bool = False) -> None:
@@ -159,7 +159,7 @@ def test_with_partial_setup_failure_tears_down_already_entered():
 
 
 def test_with_preserves_bracket_tags():
-    class Store:
+    class Store(nu.Fabric):
         def __init__(self, name: str) -> None:
             self.name = name
 
@@ -188,7 +188,7 @@ def test_with_preserves_bracket_tags():
 
 
 async def test_with_async_prefers_asetup_lifo_acleanup():
-    class Async:
+    class Async(nu.Fabric):
         events: ClassVar[list[str]] = []
 
         def __init__(self, name: str) -> None:

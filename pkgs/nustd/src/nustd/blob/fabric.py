@@ -5,6 +5,8 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
+from nu.context.fabric import Fabric
+
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -17,7 +19,7 @@ if TYPE_CHECKING:
 __all__ = ["BlobFabric"]
 
 
-class BlobFabric:
+class BlobFabric(Fabric):
     """A blob backend held open for the span of a ``Provide``.
 
     The tree carries the backend class and its options, not an instance: the

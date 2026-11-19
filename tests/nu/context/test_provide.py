@@ -20,7 +20,7 @@ from nu.lang import Context
 from nu.lang.helpers import arun, run
 
 
-class Counter:
+class Counter(nu.Fabric):
     """Trivial fabric; setup/cleanup log to a shared list."""
 
     events: ClassVar[list[tuple[str, str]]] = []
@@ -55,7 +55,7 @@ def test_provide_teardown_fires_lifo_on_exit():
 
 
 def test_provide_tag_sugar_binds_under_that_tag():
-    class Store:
+    class Store(nu.Fabric):
         pass
 
     bracket = Provide(Store, {}, FabricRef(Store), tag="alpha")
@@ -66,7 +66,7 @@ def test_provide_tag_sugar_binds_under_that_tag():
 
 
 def test_provide_tags_multi_bind_requires_full_tag_set():
-    class Store:
+    class Store(nu.Fabric):
         pass
 
     # Multi-tag is AND: the lookup key is the full frozenset of tags.
@@ -86,7 +86,7 @@ def test_provide_tags_multi_bind_requires_full_tag_set():
 
 
 def test_provide_tag_and_tags_compose_into_one_tuple():
-    class Store:
+    class Store(nu.Fabric):
         pass
 
     bracket = Provide(Store, {}, FabricRef(Store), tag="primary", tags=("gpu",))
@@ -99,7 +99,7 @@ def test_provide_tag_and_tags_compose_into_one_tuple():
 
 
 def test_provide_predicate_forwards_to_ctx_bind():
-    class Store:
+    class Store(nu.Fabric):
         def __init__(self) -> None:
             self.owner = "unset"
 
@@ -122,7 +122,7 @@ def test_provide_predicate_forwards_to_ctx_bind():
 
 
 def test_provide_list_binds_each_by_index():
-    class Store:
+    class Store(nu.Fabric):
         def __init__(self, i: int) -> None:
             self.i = i
 
@@ -135,7 +135,7 @@ def test_provide_list_binds_each_by_index():
 
 
 def test_provide_list_extra_tags_share_across_fleet():
-    class Store:
+    class Store(nu.Fabric):
         def __init__(self, i: int) -> None:
             self.i = i
 
@@ -162,7 +162,7 @@ def test_provide_list_teardown_is_lifo():
 
 
 def test_provide_list_partial_setup_failure_tears_down_completed():
-    class Flaky:
+    class Flaky(nu.Fabric):
         events: ClassVar[list[str]] = []
 
         def __init__(self, i: int, boom: bool = False) -> None:
@@ -191,7 +191,7 @@ def test_provide_list_partial_setup_failure_tears_down_completed():
 
 
 def test_provide_dict_binds_each_by_key():
-    class Store:
+    class Store(nu.Fabric):
         def __init__(self, name: str) -> None:
             self.name = name
 
@@ -207,7 +207,7 @@ def test_provide_dict_binds_each_by_key():
 
 
 def test_provide_dict_extra_tags_share_across_fleet():
-    class Store:
+    class Store(nu.Fabric):
         def __init__(self, name: str) -> None:
             self.name = name
 
@@ -228,7 +228,7 @@ async def test_provide_dict_parallel_failure_cancels_siblings_and_tears_down_the
     # and the one whose setup already finished gets its teardown.
     events: list[str] = []
 
-    class Member:
+    class Member(nu.Fabric):
         def __init__(self, k: str) -> None:
             self.k = k
 
@@ -264,7 +264,7 @@ async def test_provide_dict_parallel_failure_cancels_siblings_and_tears_down_the
 
 
 async def test_provide_prefers_asetup_when_defined():
-    class AsyncStore:
+    class AsyncStore(nu.Fabric):
         events: ClassVar[list[str]] = []
 
         def __init__(self) -> None:
@@ -285,11 +285,11 @@ async def test_provide_prefers_asetup_when_defined():
 
 
 def test_inner_provide_reads_outer_binding_via_ctx_get():
-    class Codec:
+    class Codec(nu.Fabric):
         def __init__(self, kind: str) -> None:
             self.kind = kind
 
-    class Storage:
+    class Storage(nu.Fabric):
         def __init__(self) -> None:
             self.codec_kind: str | None = None
 
@@ -301,23 +301,23 @@ def test_inner_provide_reads_outer_binding_via_ctx_get():
     assert isinstance(value, Storage) and value.codec_kind == "json"
 
 
-# --- async-only marker + sync-setup safety net ---------------------------
+# --- async-only marker, sync fallback, the Fabric base check -------------
 
 
 def test_provide_refuses_async_only_marker_under_sync_open():
-    class AsyncOnly:
-        _nu_async_only = True
+    class AsyncOnly(nu.Fabric):
+        async_only = True
 
         async def asetup(self, ctx: Context) -> None: ...
         async def acleanup(self) -> None: ...
 
-    with pytest.raises(RuntimeError, match="_nu_async_only"):
+    with pytest.raises(RuntimeError, match="async_only"):
         run(Provide(AsyncOnly, {}, FabricRef(AsyncOnly)))
 
 
 async def test_provide_async_only_marker_does_not_gate_arun():
-    class AsyncOnly:
-        _nu_async_only = True
+    class AsyncOnly(nu.Fabric):
+        async_only = True
         events: ClassVar[list[str]] = []
 
         async def asetup(self, ctx: Context) -> None:
@@ -331,18 +331,57 @@ async def test_provide_async_only_marker_does_not_gate_arun():
     assert AsyncOnly.events == ["asetup", "acleanup"]
 
 
-def test_provide_raises_when_instance_has_only_asetup():
-    class HalfAsync:
-        async def asetup(self, ctx: Context) -> None: ...
-        async def acleanup(self) -> None: ...
+async def test_provide_async_runner_falls_back_to_sync_lifecycle():
+    class SyncOnly(nu.Fabric):
+        events: ClassVar[list[str]] = []
 
-    with pytest.raises(RuntimeError, match="no sync setup"):
-        run(Provide(HalfAsync, {}, FabricRef(HalfAsync)))
+        def setup(self, ctx: Context) -> None:
+            SyncOnly.events.append("setup")
+
+        def cleanup(self) -> None:
+            SyncOnly.events.append("cleanup")
+
+    SyncOnly.events.clear()
+    await arun(Provide(SyncOnly, {}, FabricRef(SyncOnly)))
+    assert SyncOnly.events == ["setup", "cleanup"]
+
+
+def test_provide_refuses_a_class_that_is_not_a_fabric_at_build():
+    class Plain:
+        pass
+
+    with pytest.raises(TypeError, match=r"subclass nu\.Fabric"):
+        Provide(Plain, {}, FabricRef(Plain))
+    with pytest.raises(TypeError, match=r"subclass nu\.Fabric"):
+        ProvideList(Plain, [{}], FabricRef(Plain))
+    with pytest.raises(TypeError, match=r"subclass nu\.Fabric"):
+        ProvideDict(Plain, {"a": {}}, FabricRef(Plain))
+
+
+async def test_provide_refuses_a_computed_class_that_is_not_a_fabric_at_open():
+    class Plain:
+        pass
+
+    bracket = Provide(nu.Literal(Plain), {}, FabricRef(Plain))
+    with pytest.raises(TypeError, match=r"subclass nu\.Fabric"):
+        run(bracket)
+    with pytest.raises(TypeError, match=r"subclass nu\.Fabric"):
+        await arun(bracket)
+
+
+def test_fabric_ref_refuses_a_named_class_that_is_not_a_fabric():
+    class Plain:
+        pass
+
+    with pytest.raises(TypeError, match=r"nu\.Fabric subclass"):
+
+        class PlainRef(FabricRef):
+            fabric = Plain
 
 
 def test_provide_list_refuses_async_only_marker_under_sync_open():
-    class AsyncOnly:
-        _nu_async_only = True
+    class AsyncOnly(nu.Fabric):
+        async_only = True
 
         def __init__(self, i: int) -> None:
             self.i = i
@@ -350,13 +389,13 @@ def test_provide_list_refuses_async_only_marker_under_sync_open():
         async def asetup(self, ctx: Context) -> None: ...
         async def acleanup(self) -> None: ...
 
-    with pytest.raises(RuntimeError, match="_nu_async_only"):
+    with pytest.raises(RuntimeError, match="async_only"):
         run(ProvideList(AsyncOnly, [{"i": 0}], FabricRef(AsyncOnly)))
 
 
 def test_provide_dict_refuses_async_only_marker_under_sync_open():
-    class AsyncOnly:
-        _nu_async_only = True
+    class AsyncOnly(nu.Fabric):
+        async_only = True
 
         def __init__(self, k: str) -> None:
             self.k = k
@@ -364,7 +403,7 @@ def test_provide_dict_refuses_async_only_marker_under_sync_open():
         async def asetup(self, ctx: Context) -> None: ...
         async def acleanup(self) -> None: ...
 
-    with pytest.raises(RuntimeError, match="_nu_async_only"):
+    with pytest.raises(RuntimeError, match="async_only"):
         run(ProvideDict(AsyncOnly, {"a": {"k": "a"}}, FabricRef(AsyncOnly)))
 
 
@@ -425,7 +464,7 @@ def test_provide_list_specs_come_from_a_computation():
 def test_provide_stream_body_with_computed_config_spans_the_drain():
     seen: list[str] = []
 
-    class Live:
+    class Live(nu.Fabric):
         def __init__(self, name: str) -> None:
             self.name = name
 
@@ -494,7 +533,7 @@ def test_provide_dict_one_spec_field_is_computed():
 
 
 def test_provide_a_term_quoted_in_kwargs_reaches_the_fabric_as_data():
-    class Holds:
+    class Holds(nu.Fabric):
         def __init__(self, term: object) -> None:
             self.term = term
 

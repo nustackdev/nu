@@ -1,8 +1,8 @@
 """``InvisiblesServer``: host a bound fabric over TCP / Unix socket.
 
-FabricLifecycle. On ``asetup`` reads the root fabric from ctx by ``target``
+A ``Fabric``. On ``setup`` reads the root fabric from ctx by ``target``
 type + tag, starts a background netkit server on ``address``, and serves it
-via the invisibles protocol. On ``acleanup`` stops the server.
+via the invisibles protocol. On ``cleanup`` stops the server.
 
 Pure transport - no new refs, no new interactions. The server just exposes
 whatever bound fabric you name.
@@ -50,6 +50,7 @@ from invisibles.netkit.executors import SimpleExecutor
 from invisibles.netkit.executors.threaded import ThreadedExecutor
 from invisibles.netkit.framing import LengthPrefixedFraming
 from invisibles.netkit.transports import TCPListener, UnixSocketListener
+from nu.context.fabric import Fabric
 
 
 if TYPE_CHECKING:
@@ -72,7 +73,7 @@ def _framing_factory(transport: object) -> LengthPrefixedFraming:
     return LengthPrefixedFraming(transport, max_frame_size=1024 * 1024)
 
 
-class InvisiblesServer:
+class InvisiblesServer(Fabric):
     """Serves the bound ``target`` fabric on ``address`` over invisibles."""
 
     def __init__(
@@ -172,14 +173,6 @@ class InvisiblesServer:
         if self._dispatcher is not None:
             self._dispatcher.shutdown()
             self._dispatcher = None
-
-    async def asetup(self, ctx: Context) -> None:
-        """Async shim: setup is sync work."""
-        self.setup(ctx)
-
-    async def acleanup(self) -> None:
-        """Async shim: cleanup is sync work."""
-        self.cleanup()
 
     @staticmethod
     def _parse_tcp_address(address: str) -> tuple[str, int]:

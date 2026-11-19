@@ -21,6 +21,7 @@ import threading
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
+from nu.context.fabric import Fabric
 from nu.core.reactive import ObserverProtocol
 
 
@@ -118,7 +119,7 @@ class HostedSubscription:
             self.close()
 
 
-class HostedObserver:
+class HostedObserver(Fabric):
     """An ``ObserverProtocol`` whose subscribers may be other processes.
 
     Forwards to whichever observer this process bound and hands back a
@@ -144,14 +145,6 @@ class HostedObserver:
         for sub in open_subs:
             sub.close()
         self._inner = None
-
-    async def asetup(self, ctx: Context) -> None:
-        """Async shim: setup is sync work."""
-        self.setup(ctx)
-
-    async def acleanup(self) -> None:
-        """Async shim: cleanup is sync work."""
-        self.cleanup()
 
     def subscribe(self, options: Any) -> HostedSubscription:  # noqa: ANN401 -- backend-defined
         """Subscribe on the real observer, hand back a hosted handle."""

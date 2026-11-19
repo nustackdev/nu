@@ -36,7 +36,7 @@ any query. Here ``nu.let`` holds the launched worker's id for the body::
     POOL = PoolRef()
     prog = pool(
         name="cells",
-        init=nu.Provide(dict, {}, tag=Ticks),
+        init=nu.Frame(Ticks, None),
         spares=2,
         body=nu.let(POOL.launch(), lambda w: nu.Sequential(
             POOL.dispatch(ticker, w),

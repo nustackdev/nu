@@ -356,8 +356,8 @@ async def test_navigator_async_lifecycle():
 
 
 def test_redis_observer_has_async_only_marker():
-    assert RedisObserver._nu_async_only is True
+    assert RedisObserver.async_only is True
 
 
 def test_redis_publisher_has_async_only_marker():
-    assert RedisPublisher._nu_async_only is True
+    assert RedisPublisher.async_only is True

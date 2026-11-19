@@ -1,4 +1,4 @@
-"""nustd.kv.fabrics - ``FabricLifecycle`` classes for the virtuals stack.
+"""nustd.kv.fabrics - ``Fabric`` classes for the virtuals stack.
 
 Nu-tree provisioning for the virtuals concepts:
 

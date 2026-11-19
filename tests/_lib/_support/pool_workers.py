@@ -56,7 +56,7 @@ __all__ = [
 ]
 
 
-class Marker:
+class Marker(nu.Fabric):
     """A trivial fabric a worker can be brought up holding, to prove ``init`` ran.
 
     Bound on the child's Context by an ``init`` bracket; a teleported
@@ -70,7 +70,7 @@ class Marker:
         """Nothing to build; the instance is the whole fabric."""
 
 
-class IgnoreTerm:
+class IgnoreTerm(nu.Fabric):
     """A fabric whose setup makes the worker ignore SIGTERM, so a kill has to escalate.
 
     Brought up through ``init``: the worker's main thread runs the bracket,
@@ -138,7 +138,7 @@ class Spin(ScalarQuery):
         return athunk
 
 
-class Touch:
+class Touch(nu.Fabric):
     """A fabric whose teardown writes ``path``: proof that init teardown ran in a worker."""
 
     def __init__(self, path: str) -> None:
@@ -165,7 +165,7 @@ class SlowTouch(Touch):
         super().cleanup()
 
 
-class CrashInInit:
+class CrashInInit(nu.Fabric):
     """A fabric whose setup starts ``sleep`` in the worker's group, notes its pid, then exits hard.
 
     The worker dies before ``ready``: what the parent can still sweep then
@@ -316,7 +316,7 @@ class NestedSpawn(ScalarQuery):
         return athunk
 
 
-class SlowInit:
+class SlowInit(nu.Fabric):
     """A fabric whose setup takes ``seconds``: a worker that stays ``starting`` that long."""
 
     def __init__(self, seconds: float) -> None:

@@ -46,6 +46,8 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from nu.context.fabric import Fabric
+
 
 if TYPE_CHECKING:
     from nu.lang.runtime import Context
@@ -220,7 +222,7 @@ def _conf_value(value: object) -> str:
 # --- the fabric -------------------------------------------------------------
 
 
-class ValkeyServer:
+class ValkeyServer(Fabric):
     """A private Valkey server for one data dir, owned by one bracket.
 
     Provided once near the top of a tree, around whatever talks to it::
@@ -368,10 +370,6 @@ class ValkeyServer:
         except BaseException:
             self.cleanup()
             raise
-
-    async def acleanup(self) -> None:
-        """Async lifecycle, deliberately with no await points (see ``WorkerPool``)."""
-        self.cleanup()
 
     # --- internals -------------------------------------------------------
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from _support.pool_workers import Marker
 
 import nu
 from nu.lang.attributes import Cardinality, Sort
@@ -46,7 +47,7 @@ def _provided(body: nu.Nu) -> nu.Nu:
 TREES = {
     "launch": _provided(Scratch.w.set(Launch())),
     "launch_with_init": _provided(
-        Scratch.w.set(Launch(init=nu.Provide(dict, {}))),
+        Scratch.w.set(Launch(init=nu.Provide(Marker, {}))),
     ),
     "dispatch": _provided(Dispatch(body=RESIDENT, worker=Scratch.w)),
     "dispatch_job_id": _provided(Scratch.j.set(Dispatch(body=RESIDENT, worker=Scratch.w))),
@@ -262,7 +263,7 @@ def test_the_fluent_dispatch_still_keeps_its_body_as_data():
 def test_the_atoms_carry_no_caller_value_in_a_field():
     """The design constraint: ids, targets and the body are children."""
     atoms = [
-        Launch(init=nu.Provide(dict, {})),
+        Launch(init=nu.Provide(Marker, {})),
         Dispatch(body=RESIDENT, worker=7),
         Teleport(body=nu.Add(1, 2), worker=7),
         Cancel(worker=7, job=7),

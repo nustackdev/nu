@@ -13,9 +13,8 @@ out the Interactions over them. The Context fabric has two axes:
   ``.exists()``, a ``Bool`` over ``FabricExists``. Provisioning brackets
   ``Provide`` / ``ProvideList`` / ``ProvideDict`` install fabrics into the
   Context for a body's duration.
-  Protocols ``Fabric`` (empty marker; every ctx-bound thing satisfies it) and
-  ``FabricLifecycle(Fabric)`` (with optional setup / cleanup) describe the
-  contract.
+  A provided fabric subclasses ``Fabric``, the base class carrying setup /
+  cleanup with no-op defaults.
 
 The read on the attrs axis is the Ref's dual role; only existence needs an
 explicit query. Other concrete fabrics (``nu.mem`` in the kernel, the rest in
@@ -30,7 +29,6 @@ from .attrs import Attr, AttrExists
 from .fabric import (
     Fabric,
     FabricExists,
-    FabricLifecycle,
     FabricRef,
     Provide,
     ProvideDict,
@@ -44,7 +42,6 @@ __all__ = [
     "AttrExists",
     "Fabric",
     "FabricExists",
-    "FabricLifecycle",
     "FabricRef",
     "Provide",
     "ProvideDict",

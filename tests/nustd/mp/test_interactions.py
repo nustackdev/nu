@@ -104,7 +104,7 @@ async def test_provide_launch_teleport_round_trip_async():
 def test_provide_teardown_kills_the_worker_it_launched():
     seen: list[int] = []
 
-    class _Spy(WorkerPool):
+    class _Spy(WorkerPool, nu.Fabric):
         def launch(self, init=None):
             wid = super().launch(init)
             seen.append(self._workers[wid].proc.pid)
@@ -323,7 +323,7 @@ async def test_a_let_runs_on_a_worker(ctx):
 
 
 def test_an_init_holding_a_local_class_reaches_the_worker(ctx):
-    class Greeter:
+    class Greeter(nu.Fabric):
         pass
 
     bound = nu.context.FabricRef(Greeter).exists()

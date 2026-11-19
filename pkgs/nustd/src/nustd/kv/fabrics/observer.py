@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu.context.fabric import Fabric
 from nu.core.reactive import ObserverProtocol
 from virtuals._backends.observers.mem import InMemoryObserver as _InMemoryObserver
 
@@ -37,7 +38,7 @@ if TYPE_CHECKING:
 __all__ = ["InMemoryObserver", "RedisObserver"]
 
 
-class InMemoryObserver(_InMemoryObserver):
+class InMemoryObserver(_InMemoryObserver, Fabric):
     """In-process observer. Reads the shared ``InMemoryTransport`` from ctx.
 
     Binds under ``ObserverProtocol`` so ``nu.core.reactive`` queries can
@@ -61,19 +62,11 @@ class InMemoryObserver(_InMemoryObserver):
         """Disconnect the observer."""
         self.disconnect()
 
-    async def asetup(self, ctx: Context) -> None:
-        """Async shim: setup is sync work."""
-        self.setup(ctx)
 
-    async def acleanup(self) -> None:
-        """Async shim: cleanup is sync work."""
-        self.cleanup()
-
-
-class RedisObserver:
+class RedisObserver(Fabric):
     """Inter-process observer via Redis pub/sub. Lazy-imports ``redis``.
 
-    ``_nu_async_only = True`` because a Redis connect + pub/sub subscribe
+    ``async_only = True`` because a Redis connect + pub/sub subscribe
     is real network IO we don't want blocking a sync runtime. Use
     ``nu.arun`` for any tree that includes this observer.
 
@@ -81,7 +74,7 @@ class RedisObserver:
     resolve "the observer" without knowing the backend.
     """
 
-    _nu_async_only = True
+    async_only = True
     _nu_bind_as = ObserverProtocol
 
     def __init__(

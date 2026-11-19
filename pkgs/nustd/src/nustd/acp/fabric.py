@@ -30,6 +30,8 @@ from acp.schema import (
     TextContentBlock,
 )
 
+from nu.context.fabric import Fabric
+
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Awaitable, Callable, Mapping, Sequence
@@ -164,7 +166,7 @@ class _Session:
                 pending.answer.set_result(None)
 
 
-class AcpFabric:
+class AcpFabric(Fabric):
     """One Agent process and the ACP v1 connection to it, open for the span of a ``Provide``.
 
     The fabric is the ACP Client: it spawns the Agent on enter, sends
@@ -201,7 +203,7 @@ class AcpFabric:
           ``AcpError`` code -32601 naming the capability.
     """
 
-    _nu_async_only = True
+    async_only = True
 
     def __init__(
         self,

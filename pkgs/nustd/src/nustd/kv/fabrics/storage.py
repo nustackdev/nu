@@ -1,8 +1,8 @@
 """Nu fabrics wrapping virtuals storage backends.
 
-``FabricLifecycle`` classes over the virtuals storage backends: parent
-``__init__`` deferred to ``asetup`` so ``Codec`` and Publisher come from
-ctx. ``acleanup`` runs the storage's ``close``.
+``Fabric`` classes over the virtuals storage backends: parent
+``__init__`` deferred to ``setup`` so ``Codec`` and Publisher come from
+ctx. ``cleanup`` runs the storage's ``close``.
 
 Backends: ``InMemoryStorage`` (ephemeral), ``RocksDBStorage`` (persistent,
 transactional), ``LMDBStorage`` (memory-mapped, MVCC), ``SQLiteStorage``
@@ -24,6 +24,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from nu.context.fabric import Fabric
 from virtuals.storages.mem import InMemoryStorage as _InMemoryStorage
 
 from .codec import Codec
@@ -53,8 +54,8 @@ def _resolve_publisher(
     return ctx.fabrics.get(publisher_type, *tags)
 
 
-class InMemoryStorage(_InMemoryStorage):
-    """FabricLifecycle wrapper over ``virtuals.InMemoryStorage``.
+class InMemoryStorage(_InMemoryStorage, Fabric):
+    """Fabric wrapper over ``virtuals.InMemoryStorage``.
 
     Deps read from ctx at setup: ``Codec`` and a publisher of
     ``publisher_type`` (default ``InMemoryPublisher``). Pass
@@ -83,26 +84,18 @@ class InMemoryStorage(_InMemoryStorage):
         """Close the backing store."""
         self.close()
 
-    async def asetup(self, ctx: Context) -> None:
-        """Async shim: setup is sync work."""
-        self.setup(ctx)
 
-    async def acleanup(self) -> None:
-        """Async shim: cleanup is sync work."""
-        self.cleanup()
-
-
-class RocksDBStorage:
-    """FabricLifecycle wrapper over ``virtuals.storages.rocksdb.RocksDBStorage``.
+class RocksDBStorage(Fabric):
+    """Fabric wrapper over ``virtuals.storages.rocksdb.RocksDBStorage``.
 
     Lazy-loaded to avoid a hard ``rdbpy`` dep at import time (same shape as
-    ``LMDBStorage``). The backing storage is constructed inside ``asetup``
+    ``LMDBStorage``). The backing storage is constructed inside ``setup``
     so importing ``nustd.kv.fabrics`` never touches the ``rdbpy`` module.
     Instance attribute access delegates to the backing storage once open.
 
     Config kwargs (``path``, ``read_only``, ``secondary_path``,
     ``secondary_refresh_interval``, ``disable_wal``, ``options``) go to the
-    backing constructor at ``asetup`` time. Deps (``Codec``, publisher) come
+    backing constructor at ``setup`` time. Deps (``Codec``, publisher) come
     from ctx.
     """
 
@@ -155,14 +148,6 @@ class RocksDBStorage:
             self._backing.close()
             self._backing = None
 
-    async def asetup(self, ctx: Context) -> None:
-        """Async shim: setup is sync work."""
-        self.setup(ctx)
-
-    async def acleanup(self) -> None:
-        """Async shim: cleanup is sync work."""
-        self.cleanup()
-
     def __getattr__(self, name: str) -> object:
         # Delegate storage-protocol access to the backing instance.
         if name.startswith("_"):
@@ -173,11 +158,11 @@ class RocksDBStorage:
         return getattr(self._backing, name)
 
 
-class LMDBStorage:
-    """FabricLifecycle wrapper over ``virtuals.storages.lmdb.LMDBStorage``.
+class LMDBStorage(Fabric):
+    """Fabric wrapper over ``virtuals.storages.lmdb.LMDBStorage``.
 
     Lazy-loaded to avoid a hard ``lmdb`` dep at import time (same shape as
-    ``RedisPublisher``). The backing storage is constructed inside ``asetup``
+    ``RedisPublisher``). The backing storage is constructed inside ``setup``
     so importing ``nustd.kv.fabrics`` never touches the ``lmdb`` module.
     Instance attribute access delegates to the backing storage once open.
 
@@ -234,14 +219,6 @@ class LMDBStorage:
             self._backing.close()
             self._backing = None
 
-    async def asetup(self, ctx: Context) -> None:
-        """Async shim: setup is sync work."""
-        self.setup(ctx)
-
-    async def acleanup(self) -> None:
-        """Async shim: cleanup is sync work."""
-        self.cleanup()
-
     def __getattr__(self, name: str) -> object:
         # Delegate storage-protocol access to the backing instance.
         if name.startswith("_"):
@@ -252,8 +229,8 @@ class LMDBStorage:
         return getattr(self._backing, name)
 
 
-class SQLiteStorage:
-    """FabricLifecycle wrapper over ``virtuals.storages.sqlite.SQLiteStorage``.
+class SQLiteStorage(Fabric):
+    """Fabric wrapper over ``virtuals.storages.sqlite.SQLiteStorage``.
 
     Same lazy shape as ``LMDBStorage``: the backing storage is constructed in
     ``setup``, and instance attribute access delegates to it once open. SQLite
@@ -315,14 +292,6 @@ class SQLiteStorage:
         if self._backing is not None:
             self._backing.close()
             self._backing = None
-
-    async def asetup(self, ctx: Context) -> None:
-        """Async shim: setup is sync work."""
-        self.setup(ctx)
-
-    async def acleanup(self) -> None:
-        """Async shim: cleanup is sync work."""
-        self.cleanup()
 
     def __getattr__(self, name: str) -> object:
         # Delegate storage-protocol access to the backing instance.

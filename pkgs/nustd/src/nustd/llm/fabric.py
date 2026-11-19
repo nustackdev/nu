@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING
 
 import httpx
 
+from nu.context.fabric import Fabric
+
 
 if TYPE_CHECKING:
     from nu.lang.runtime import Context
@@ -19,7 +21,7 @@ if TYPE_CHECKING:
 __all__ = ["LLMFabric"]
 
 
-class LLMFabric:
+class LLMFabric(Fabric):
     """One OpenAI-compatible endpoint: its config and its sync + async clients.
 
     Holds no request logic; the interactions build the body, send it through

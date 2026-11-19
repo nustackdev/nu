@@ -7,7 +7,7 @@ that is not the only one in scope, and ``body`` for the tree itself::
     POOL = mp.PoolRef()
     prog = mp.pool(
         name="cells",
-        init=nu.Provide(dict, {}, tag=Ticks),
+        init=nu.Frame(Ticks, None),
         spares=2,
         grace=5.0,
         body=nu.let(POOL.launch(), lambda w: POOL.stop(w)),

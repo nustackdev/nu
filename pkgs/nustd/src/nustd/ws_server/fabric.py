@@ -37,6 +37,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.routing import Mount, WebSocketRoute
 from starlette.staticfiles import StaticFiles
 
+from nu.context.fabric import Fabric
+
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -263,7 +265,7 @@ class _Channel:
         self._subs = [s for s in self._subs if s is not sub]
 
 
-class WebServer:
+class WebServer(Fabric):
     """Boot a ws server for the body's duration; bind it; stop it on the way out.
 
     Owns the sockets and nothing else -- there is no ``app`` kwarg, the program
@@ -296,7 +298,7 @@ class WebServer:
 
     # Uvicorn is booted on a task and readiness is awaited, so there is no
     # sync variant: a `Provide(WebServer, ...)` refuses to enter a sync tree.
-    _nu_async_only = True
+    async_only = True
 
     def __init__(
         self,

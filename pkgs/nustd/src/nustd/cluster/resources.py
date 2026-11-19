@@ -5,8 +5,7 @@ init on cleanup. ``RayService`` spawns one ``_RayServiceActor`` per bracket
 and holds it live for the body's duration - the parent side of the remote
 Nu execution.
 
-Both implement the async resource lifecycle (``asetup`` / ``acleanup``) so
-they slot straight into ``Provide`` / ``ProvideList`` / ``ProvideDict`` and
+Both are ``nu.Fabric`` subclasses, so they slot straight into ``Provide`` / ``ProvideList`` / ``ProvideDict`` and
 tear down LIFO with the rest of the tree.
 """
 
@@ -16,6 +15,8 @@ import contextlib
 from typing import TYPE_CHECKING
 
 import ray
+
+from nu.context.fabric import Fabric
 
 
 if TYPE_CHECKING:
@@ -28,7 +29,7 @@ if TYPE_CHECKING:
 __all__ = ["RayCluster", "RayService"]
 
 
-class RayCluster:
+class RayCluster(Fabric):
     """A handle on a ray cluster; provisions the local ``ray.init`` if needed.
 
     On ``setup``: if ``ray.is_initialized()`` is already true (someone else
@@ -38,7 +39,7 @@ class RayCluster:
 
     Sync and async both supported: ``ray.init`` / ``ray.shutdown`` are
     blocking sync calls, so ``setup`` / ``cleanup`` carry the whole body and
-    ``asetup`` / ``acleanup`` are thin shims over them. Either runner works.
+    the base's ``asetup`` / ``acleanup`` call them. Either runner works.
 
     Typical use in the tree::
 
@@ -77,16 +78,8 @@ class RayCluster:
                 ray.shutdown()
             self._owns_init = False
 
-    async def asetup(self, ctx: Context) -> None:
-        """Async shim: setup is sync work."""
-        self.setup(ctx)
 
-    async def acleanup(self) -> None:
-        """Async shim: cleanup is sync work."""
-        self.cleanup()
-
-
-class RayService:
+class RayService(Fabric):
     """A remote Nu execution service backed by a ``_RayServiceActor``.
 
     On ``setup`` / ``asetup``: spawn a ray actor (optionally pinned to a

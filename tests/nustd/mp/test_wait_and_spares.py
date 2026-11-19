@@ -8,7 +8,7 @@ import signal
 import time
 
 import pytest
-from _support.pool_workers import HoldAfterHangup
+from _support.pool_workers import HoldAfterHangup, Marker
 
 import nu
 from nustd.mp import (
@@ -204,7 +204,7 @@ def test_spares_fill_launch_takes_one_and_the_shelf_refills():
         assert taken not in pool._shelf
 
         # An init of its own is never a spare.
-        cold = pool.launch(nu.Provide(dict, {}))
+        cold = pool.launch(nu.Provide(Marker, {}))
         assert cold not in shelf and cold not in pool._shelf
         pids = [pool.status(w).pid for w in [*pool.workers(), *pool._shelf]]
     finally:

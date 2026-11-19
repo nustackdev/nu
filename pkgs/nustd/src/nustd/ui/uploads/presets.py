@@ -16,7 +16,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from nu.context.fabric import Provide
+from nu.context.fabric import Fabric, Provide
 from nu.lang import Bracket
 
 from .area import _PREFIX, UploadArea, UploadView
@@ -40,9 +40,15 @@ __all__ = ["UploadViewFor", "upload_view", "uploads"]
 _SID_ATTR = "sid"
 
 
-def _held(area: UploadArea) -> UploadArea:
-    """``Provide`` builds its fabric from a class; this hands back the one built already."""
-    return area
+class _Held(Fabric):
+    """``Provide`` builds its fabric from a class; this one hands back the area built already.
+
+    ``__new__`` returns the given area, so ``Provide`` sets up, binds and
+    cleans up that area itself, not an instance of this class.
+    """
+
+    def __new__(cls, area: UploadArea) -> UploadArea:  # type: ignore[misc]
+        return area
 
 
 def uploads(
@@ -86,7 +92,7 @@ def uploads(
     from .intake import _route
 
     area = UploadArea(root, cap)
-    return Provide(_held, {"area": area}, bind_as=UploadArea), [_route(area)]
+    return Provide(_Held, {"area": area}, bind_as=UploadArea), [_route(area)]
 
 
 # ---- the program side -------------------------------------------------------

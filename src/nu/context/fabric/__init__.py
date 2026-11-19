@@ -1,8 +1,8 @@
 """The fabric axis of the Context: bindings, existence, and lifecycle.
 
-- ``Fabric`` - empty marker protocol. Every ctx-bound thing is a Fabric.
-- ``FabricLifecycle(Fabric)`` - a Fabric with optional setup / cleanup
-  (sync + async, all optional). What ``Provide`` installs into ctx.
+- ``Fabric`` - the base class of every provided fabric: setup / cleanup
+  (sync + async) with no-op defaults, and the ``async_only`` flag. What
+  ``Provide`` installs into ctx must subclass it.
 - ``FabricRef`` - Ref that self-yields a Fabric bound on the Context, or
   ``NULL`` when nothing is bound. Subclass and set ``fabric = SomeFabric``
   to name a typed binding.
@@ -12,15 +12,15 @@
   a fabric on entry, bind it on ctx, and tear down in reverse on exit.
 
 Both sync and async lifecycles are supported natively - the async runtime
-prefers ``asetup`` / ``acleanup`` when defined and falls back to sync
-``setup`` / ``cleanup``. The Nu tree is the DI system: an inner fabric
+calls ``asetup`` / ``acleanup``, which default to the sync ``setup`` /
+``cleanup``. The Nu tree is the DI system: an inner fabric
 reads its deps from ctx during its own setup.
 """
 
 from __future__ import annotations
 
+from .base import Fabric
 from .lifecycle import Provide, ProvideDict, ProvideList, With
-from .protocol import Fabric, FabricLifecycle
 from .queries import FabricExists
 from .refs import FabricRef
 
@@ -28,7 +28,6 @@ from .refs import FabricRef
 __all__ = [
     "Fabric",
     "FabricExists",
-    "FabricLifecycle",
     "FabricRef",
     "Provide",
     "ProvideDict",

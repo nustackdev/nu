@@ -27,7 +27,7 @@ from starlette.requests import ClientDisconnect
 from starlette.responses import JSONResponse, Response, StreamingResponse
 from starlette.routing import Route
 
-from nu.context.fabric import Provide
+from nu.context.fabric import Fabric, Provide
 from nustd.blob import STEP, BlobBackend, BlobNotFound, BlobTooLarge
 from nustd.blob._base import check_id
 
@@ -145,7 +145,7 @@ def _no_backend(mount: BlobMount, value: object) -> str:
     return f"{mount!r} needs a blob backend, got {value!r}: {hint}"
 
 
-class HeldOpen:
+class HeldOpen(Fabric):
     """A blob backend open for the span of its bracket: what a mount's routes read.
 
     The routes are built with the backend before any bracket runs, so this

@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 
 import httpx
 
+from nu.context.fabric import Fabric
+
 
 if TYPE_CHECKING:
     from nu.lang.runtime import Context
@@ -13,7 +15,7 @@ if TYPE_CHECKING:
 __all__ = ["HttpFabric"]
 
 
-class HttpFabric:
+class HttpFabric(Fabric):
     """Holds a sync httpx.Client and an async httpx.AsyncClient.
 
     Bound on ctx via Provide. Sync client opens on `setup`, async on `asetup`.

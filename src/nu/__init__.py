@@ -50,7 +50,6 @@ from .context import (
     AttrExists,
     Fabric,
     FabricExists,
-    FabricLifecycle,
     FabricRef,
     Provide,
     ProvideDict,

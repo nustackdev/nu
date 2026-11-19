@@ -40,7 +40,7 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 
-class Handle:
+class Handle(nu.Fabric):
     """A fabric an arm provides and a sibling looks for."""
 
 

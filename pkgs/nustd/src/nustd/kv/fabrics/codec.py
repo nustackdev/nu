@@ -2,7 +2,7 @@
 
 Codecs are stateless immutables - key + value serialization pair. Instances
 are cheap to construct, no setup or teardown needed. That makes ``Codec`` a
-bare ``Fabric`` (not ``FabricLifecycle``) - the constructor does all the
+``Fabric`` with no lifecycle of its own - the constructor does all the
 work; ``Provide`` binds the instance on ctx and inner Storage / Observer
 fabrics read it via ``ctx.fabrics.get(Codec)``.
 
@@ -17,6 +17,7 @@ Preset kwargs helpers are provided for the four common combos - binary
 
 from __future__ import annotations
 
+from nu.context.fabric import Fabric
 from virtuals.tkv.codec.codec import Codec as _Codec
 
 
@@ -29,7 +30,7 @@ __all__ = [
 ]
 
 
-class Codec(_Codec):
+class Codec(_Codec, Fabric):
     """Nu-fabric codec.
 
     Same as ``virtuals.tkv.codec.Codec`` with an explicit constructor for

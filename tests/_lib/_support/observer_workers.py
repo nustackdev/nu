@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 __all__ = ["Reactor", "Rebinder", "child_main", "unbind_child_main"]
 
 
-class Reactor:
+class Reactor(nu.Fabric):
     """Subscribes on whatever observer is bound and reports every key it hears.
 
     A fabric rather than a term because subscribing wants the Context, and a
@@ -55,7 +55,7 @@ class Reactor:
         self.out.put(("key", tuple(key)))
 
 
-class Rebinder:
+class Rebinder(nu.Fabric):
     """Binds two receivers, unbinds one, and reports whichever still fires.
 
     The far side of the socket is the whole point. ``unbind`` has to reach the
