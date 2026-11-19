@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "nustd"
 version = "0.8.0"
-description = "Batteries for nu: the fabrics (kv, blob, queue, service, llm, cc, acp, http, proxy, mp_pool, cluster, valkey, ws_server, ui) and the standard library, imported as nustd."
+description = "Batteries for nu: the fabrics (kv, blob, queue, service, llm, cc, acp, http, proxy, mp, cluster, valkey, ws_server, ui) and the standard library, imported as nustd."
 readme = "README.md"
 license = "Apache-2.0"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
@@ -44,8 +44,8 @@ classifiers = [
 
 # One extra per fabric; name matches the `nu.<fabric>` import path.
 # `nustd` and `nustd.service` need nothing beyond the kernel, so they have no
-# extra. `mp_pool` is stdlib multiprocessing -- the extra exists only so
-# `nustd[mp_pool]` is not an error.
+# extra. `mp` is stdlib multiprocessing -- the extra exists only so
+# `nustd[mp]` is not an error.
 [project.optional-dependencies]
 kv = [
     "virtuals-py>=0.2.2",
@@ -87,7 +87,7 @@ cc = [
 acp = [
     "agent-client-protocol>=1.0,<1.1",
 ]
-mp_pool = []
+mp = []
 # `nustd.valkey` spawns the Valkey server binary this wheel bundles.
 valkey = [
     "valkeylite>=9.1.2",
@@ -112,7 +112,7 @@ all = [
     "nustd[llm]",
     "nustd[cc]",
     "nustd[acp]",
-    "nustd[mp_pool]",
+    "nustd[mp]",
     "nustd[valkey]",
     "nustd[blob]",
     "nustd[blob_s3]",

@@ -1,6 +1,6 @@
 """The reason ``nustd.valkey`` exists: kv change notifications across processes.
 
-A private Valkey server, two ``mp_pool`` workers, each holding its own
+A private Valkey server, two ``mp`` workers, each holding its own
 ``sqlite_navigator_redis`` stack on the same SQLite file and pointed at the
 server by ``url_for(data_dir)``. A write in worker A has to wake a resident
 reaction in worker B.
@@ -18,7 +18,7 @@ from _support.valkey_shapes import B_BODY, B_INIT, READ_LAST, READ_WAKES, a_burs
 
 import nu
 import nustd
-from nustd.mp_pool import PoolRef, WorkerPool
+from nustd.mp import PoolRef, WorkerPool
 from nustd.valkey import ValkeyServer, socket_path_for, url_for
 
 

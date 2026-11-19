@@ -53,7 +53,7 @@ dot-access: `import nustd`, then `nustd.kv`, `nustd.ui`, `nustd.uuid`.
 | `nustd.acp`     | `nustd[acp]`     | Coding agents over ACP v1             |
 | `nustd.http`    | `nustd[http]`    | HTTP client atoms                     |
 | `nustd.proxy`   | `nustd[proxy]`   | Remote objects over invisibles        |
-| `nustd.mp_pool` | `nustd[mp_pool]` | Multiprocessing workers               |
+| `nustd.mp`      | `nustd[mp]`      | Multiprocessing workers               |
 | `nustd.cluster` | `nustd[cluster]` | Ray                                   |
 
 The standard library sits at the same level, one module per Python stdlib

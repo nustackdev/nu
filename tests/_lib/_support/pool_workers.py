@@ -1,4 +1,4 @@
-"""Helpers for the ``nustd.mp_pool`` tests that have to survive a ``spawn``.
+"""Helpers for the ``nustd.mp`` tests that have to survive a ``spawn``.
 
 Under the default ``spawn`` start method a worker's ``init`` bracket is pickled
 into the child, and a class is pickled *by reference*. Anything a test wants a

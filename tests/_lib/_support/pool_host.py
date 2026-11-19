@@ -28,7 +28,7 @@ import time
 
 import nu
 from _support.pool_workers import Block, Sleeper, Spin
-from nustd.mp_pool import WorkerPool
+from nustd.mp import WorkerPool
 
 
 def _say(**fields: object) -> None:

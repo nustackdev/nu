@@ -1,6 +1,6 @@
 """Shapes and trees for the ``nustd.valkey`` integration test.
 
-Two ``mp_pool`` workers each bind a ``sqlite_navigator_redis`` stack on one
+Two ``mp`` workers each bind a ``sqlite_navigator_redis`` stack on one
 file. Worker B runs a resident reaction to ``Store.value``; worker A writes
 it. The trees are teleported or dispatched to spawned workers, and the Shape
 classes they name are pickled by reference, so they live here rather than in

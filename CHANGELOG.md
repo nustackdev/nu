@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Rename the worker pool fabric to nustd.mp; imports and the extra change
 - Drop the single-process mp fabric; the worker pool covers everything it did
 - Switch labels, parallel modes, error filters and other run-time config can be computed
 - Literal hands each run fresh native containers, and builds values per run from a factory
@@ -187,7 +188,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 - Anonymous nudle telemetry respects Do Not Track and CI, and sends only known events
 - Private Valkey servers die with their owner, even when cleanup is interrupted
 - Examples check existence with exists(), so every example imports again
-- Rebuild mp_pool so workers never outlive the pool or host, with stop and status
+- Rebuild mp so workers never outlive the pool or host, with stop and status
 - Parallel waits for every branch to unwind on cancel or error, none left running
 - Rename reactive flows to one grid and add per-key, per-id and while variants
 - Finished arms stay finished until their id returns; arm errors end the flow
@@ -453,7 +454,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 - Add nu.kv.served_observer and nu.kv.proxy_observer: a process's change feed over a socket
 - Add nu.ForEachParAsync: fan a body over a runtime-sized list, one loop task per element
 - Make nu.And and nu.Or short-circuit, so they work as guards
-- Add nu.mp_pool: the worker pool as a fabric, with Launch/Dispatch/Teleport/Kill/Alive/Running/Workers over ids that are always children, never payload; Dispatch is a VOID Command carrying its body in payload, which no tree pass reaches; PoolRef is a plain FabricRef carrying the fluent form of every interaction
+- Add nu.mp: the worker pool as a fabric, with Launch/Dispatch/Teleport/Kill/Alive/Running/Workers over ids that are always children, never payload; Dispatch is a VOID Command carrying its body in payload, which no tree pass reaches; PoolRef is a plain FabricRef carrying the fluent form of every interaction
 - Collapse nu.mp.MpWorkerRef onto plain FabricRef: drop the payload-stored tag and its `_compile`/`_acompile` overrides
 - Render an argument default as its repr so a call form is valid Python: `Filter(source, predicate, key='item')`, not `key=item`
 - Extend nu.inspect for generated reference docs: drop the receiver from a method's args, put a rendered call form on the interaction and call records, carry annotation/keyword-only/has-default on Arg, hoist kind/sort/cardinality/abstract onto the builder kinds, add module and aliases to every record, and add the module kind plus catalogue_calls so nu.std renders

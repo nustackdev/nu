@@ -36,7 +36,7 @@ from _support.pool_workers import (
 )
 
 import nu
-from nustd.mp_pool import (
+from nustd.mp import (
     Interrupted,
     UnknownWorker,
     WorkerGone,

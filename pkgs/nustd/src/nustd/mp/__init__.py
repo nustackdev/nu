@@ -1,4 +1,4 @@
-"""nustd.mp_pool - the pool of worker processes, as one fabric.
+"""nustd.mp - the pool of worker processes, as one fabric.
 
 **The pool itself is the fabric.** One
 ``Provide`` at the top of a tree owns N worker processes, and because the

@@ -21,7 +21,7 @@ import pytest
 from _support.pool_workers import RESIDENT, Block, IgnoreTerm, Stubborn
 
 import nu
-from nustd.mp_pool import PoolClosed, WorkerGone, WorkerPool, resources
+from nustd.mp import PoolClosed, WorkerGone, WorkerPool, resources
 
 
 pytestmark = pytest.mark.slow

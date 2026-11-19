@@ -1,4 +1,4 @@
-"""Resource-level tests for ``nustd.mp_pool.WorkerPool``. Real processes, no mocks."""
+"""Resource-level tests for ``nustd.mp.WorkerPool``. Real processes, no mocks."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ import pytest
 from _support.pool_workers import RESIDENT, Marker
 
 import nu
-from nustd.mp_pool import UnknownWorker, WorkerGone, WorkerPool, WorkerStatus
+from nustd.mp import UnknownWorker, WorkerGone, WorkerPool, WorkerStatus
 
 
 pytestmark = pytest.mark.slow

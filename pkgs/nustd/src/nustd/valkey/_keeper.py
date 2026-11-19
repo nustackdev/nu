@@ -17,7 +17,7 @@ stdout, then waits. It stops the server, SIGTERM then SIGKILL after
 
 Whatever signal mask the owner's thread had, the keeper clears its own and
 starts the server with none blocked: a server spawned with SIGTERM blocked
-ignores every stop request, which is how servers leaked from mp_pool workers.
+ignores every stop request, which is how servers leaked from mp workers.
 
 The server is the keeper's child, so the pid it signals cannot have been
 reused: it is not reaped until the keeper waits on it. If the server exits
@@ -98,7 +98,7 @@ def main(argv: list[str]) -> int:
     signal.set_wakeup_fd(wake_w)
     signal.signal(signal.SIGCHLD, lambda _signum, _frame: None)
     # A signal mask survives fork and exec. Spawned from a thread that blocks
-    # SIGTERM and SIGINT (mp_pool's quiet threads do), the keeper and the
+    # SIGTERM and SIGINT (mp's quiet threads do), the keeper and the
     # server would both hold every stop request pending forever. Clear it,
     # handlers first so a pending stop lands on them.
     signal.pthread_sigmask(signal.SIG_SETMASK, ())

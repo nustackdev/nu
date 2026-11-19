@@ -256,7 +256,7 @@ OWNER = textwrap.dedent(
 
     s = ValkeyServer(data_dir=data_dir)
     if mode == "masked":
-        # spawned from a thread that blocks SIGINT and SIGTERM, as mp_pool's are
+        # spawned from a thread that blocks SIGINT and SIGTERM, as mp's are
         signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT, signal.SIGTERM})
     if mode == "interrupted-startup":
         def interrupted(deadline):

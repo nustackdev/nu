@@ -81,7 +81,7 @@ class PoolRef(FabricRef):
 
     Example:
         pool = PoolRef()
-        mp_pool.pool(name="cells", body=nu.let(pool.launch(), lambda w: pool.stop(w)))
+        mp.pool(name="cells", body=nu.let(pool.launch(), lambda w: pool.stop(w)))
     """
 
     fabric = WorkerPool

@@ -1,11 +1,11 @@
-"""Presets over ``nustd.mp_pool``: the bracket that stands a pool up.
+"""Presets over ``nustd.mp``: the bracket that stands a pool up.
 
 ``pool(...)`` is the ``Provide`` a program puts around the tree that uses the
 workers. Every ``WorkerPool`` knob is a keyword here, plus ``tags`` for a pool
 that is not the only one in scope, and ``body`` for the tree itself::
 
-    POOL = mp_pool.PoolRef()
-    prog = mp_pool.pool(
+    POOL = mp.PoolRef()
+    prog = mp.pool(
         name="cells",
         init=nu.Provide(dict, {}, tag=Ticks),
         spares=2,
@@ -14,7 +14,7 @@ that is not the only one in scope, and ``body`` for the tree itself::
     )
 
 Leaving the bracket stops every worker still up, all at once, within
-``grace``. It is re-exported at package level as ``nustd.mp_pool.pool``.
+``grace``. It is re-exported at package level as ``nustd.mp.pool``.
 """
 
 from __future__ import annotations
@@ -83,7 +83,7 @@ def pool(
         yields whatever ``body`` yields.
 
     Example:
-        nu.run(mp_pool.pool(name="cells", spares=1, body=tree))
+        nu.run(mp.pool(name="cells", spares=1, body=tree))
     """
     kwargs = {
         # A term handed to the pool as data, not evaluated in this tree.

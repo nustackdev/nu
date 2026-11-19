@@ -421,7 +421,7 @@ async def test_react_latest_runs_are_isolated() -> None:
 
 
 def test_worker_request_seeds_names_on_its_own_branch() -> None:
-    from nustd.mp_pool._worker import _exec_context as exec_context
+    from nustd.mp._worker import _exec_context as exec_context
 
     worker = Context()
     with worker.fabrics.bind(Parent, Parent()):
@@ -438,7 +438,7 @@ def test_worker_request_seeds_names_on_its_own_branch() -> None:
 
 
 def test_worker_request_without_names_still_gets_a_branch() -> None:
-    from nustd.mp_pool._worker import _exec_context as exec_context
+    from nustd.mp._worker import _exec_context as exec_context
 
     worker = Context()
     with exec_context(worker, None) as ctx:
@@ -447,7 +447,7 @@ def test_worker_request_without_names_still_gets_a_branch() -> None:
 
 
 def test_worker_handoff_runs_a_tree_against_the_seeded_names() -> None:
-    from nustd.mp_pool._worker import _exec_context
+    from nustd.mp._worker import _exec_context
 
     with _exec_context(Context(), {"x": 41}) as ctx:
         value, _ = run(x + 1, ctx)

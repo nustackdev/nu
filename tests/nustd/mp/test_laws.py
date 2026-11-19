@@ -1,4 +1,4 @@
-"""The law gate over ``nustd.mp_pool`` trees. No processes: this is compile-time only."""
+"""The law gate over ``nustd.mp`` trees. No processes: this is compile-time only."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import pytest
 import nu
 from nu.lang.attributes import Cardinality, Sort
 from nu.lang.sentinels import UNSET
-from nustd.mp_pool import (
+from nustd.mp import (
     Cancel,
     Dispatch,
     Interrupt,

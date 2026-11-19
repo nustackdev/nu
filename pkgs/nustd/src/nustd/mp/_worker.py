@@ -160,7 +160,7 @@ _serving = _Serving()
 # True inside a body, and in every task a body starts (a task copies the
 # context it was created in), so a signal handler can tell a sync stretch of
 # a body's sub-task holding the loop from the loop's own bookkeeping.
-_IN_BODY: contextvars.ContextVar[bool] = contextvars.ContextVar("nu_mp_pool_in_body", default=False)
+_IN_BODY: contextvars.ContextVar[bool] = contextvars.ContextVar("nu_mp_in_body", default=False)
 
 
 def _portable(exc: BaseException) -> BaseException:

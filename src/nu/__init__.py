@@ -90,7 +90,7 @@ from .domains.service import Method, Service
 # beside them because it is the Form you write that pair with - it sits with
 # the other Forms on the flat surface, not with the machinery. The brace
 # resource and the error types stay at ``nu.prog.*``, the same way
-# ``nustd.mp_pool.WorkerPool`` does.
+# ``nustd.mp.WorkerPool`` does.
 from .prog import Eval, LoadNu, Program
 
 # Language essentials, curated to the building blocks of a Nu program:

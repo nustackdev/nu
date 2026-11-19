@@ -1,6 +1,6 @@
-"""nustd.mp_pool: the pool of worker processes as one fabric.
+"""nustd.mp: the pool of worker processes as one fabric.
 
-nustd.mp_pool is the fabric of the fleet: one pool(...) owns N workers, and the
+nustd.mp is the fabric of the fleet: one pool(...) owns N workers, and the
 interactions address them by id. Every id is a child, never payload, so it
 can come from a Ref, a mem slot or any query.
 
@@ -16,14 +16,14 @@ compose in an Interaction's slots. That means the body is not part of the
 tree: no walker, rewrite, analysis or render reaches it. Apply whatever
 passes a body needs to the body itself, before the Dispatch is built.
 
-Run me: python examples/mp_pool.py
+Run me: python examples/mp.py
 """
 
 import nu
 import nustd
 
 
-POOL = nustd.mp_pool.PoolRef()
+POOL = nustd.mp.PoolRef()
 
 
 class Ticks(nu.Shape):
@@ -50,7 +50,7 @@ def status_line(label: str, worker: object) -> nu.Nu:
 
 
 def demo() -> None:
-    tree = nustd.mp_pool.pool(
+    tree = nustd.mp.pool(
         name="cells",  # ps shows each worker as nu:cells-{id}
         # Every worker comes up holding one Ticks dict, so the resident body
         # and the teleports that read it see the same one.

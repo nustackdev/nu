@@ -1,4 +1,4 @@
-"""The interactions of the ``nustd.mp_pool`` fabric: the worker toolkit.
+"""The interactions of the ``nustd.mp`` fabric: the worker toolkit.
 
 Ten atoms over one ``WorkerPool``, policy-free, each with a sync and an async
 thunk that never blocks the event loop:
@@ -441,7 +441,7 @@ class Dispatch(ScalarAction):
           rather than awaiting will starve its siblings, which is a property
           of the body, not of the pool.
         - An exception from a dispatched body has nobody to raise at: it is
-          logged (``logging``, logger ``nustd.mp_pool``) and kept on the
+          logged (``logging``, logger ``nustd.mp``) and kept on the
           worker's ``Status`` as ``errors``. The job id leaves the status's
           ``jobs`` when the body ends, however it ends.
 

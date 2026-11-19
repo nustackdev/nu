@@ -37,7 +37,7 @@ from _support.pool_workers import (
 )
 
 import nu
-from nustd.mp_pool import (
+from nustd.mp import (
     Cancel,
     Dispatch,
     Interrupt,
@@ -52,7 +52,7 @@ from nustd.mp_pool import (
     Workers,
     resources,
 )
-from nustd.mp_pool import (
+from nustd.mp import (
     pool as pool_preset,
 )
 
@@ -491,7 +491,7 @@ async def test_dispatch_yields_a_job_id_that_cancel_takes(tmp_path):
 
 def test_a_dispatched_bodys_error_is_logged_and_kept_on_status(pool, caplog):
     w = pool.launch()
-    with caplog.at_level(logging.ERROR, logger="nustd.mp_pool"):
+    with caplog.at_level(logging.ERROR, logger="nustd.mp"):
         job = pool.dispatch(w, nu.Div(1, 0))
         assert _wait(lambda: pool.status(w).errors != ())
     ((failed, exc),) = pool.status(w).errors

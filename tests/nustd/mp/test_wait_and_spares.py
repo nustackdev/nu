@@ -11,7 +11,7 @@ import pytest
 from _support.pool_workers import HoldAfterHangup
 
 import nu
-from nustd.mp_pool import (
+from nustd.mp import (
     Kill,
     Launch,
     PoolRef,
@@ -22,7 +22,7 @@ from nustd.mp_pool import (
     WorkerPool,
     WorkerStatus,
 )
-from nustd.mp_pool import (
+from nustd.mp import (
     pool as pool_preset,
 )
 

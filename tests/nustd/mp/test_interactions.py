@@ -1,4 +1,4 @@
-"""Tree-level tests for the ``nustd.mp_pool`` atoms. Real processes, no mocks.
+"""Tree-level tests for the ``nustd.mp`` atoms. Real processes, no mocks.
 
 Two drive styles are used on purpose:
 
@@ -18,7 +18,7 @@ import pytest
 from _support.pool_workers import RESIDENT
 
 import nu
-from nustd.mp_pool import (
+from nustd.mp import (
     Dispatch,
     Kill,
     Launch,
@@ -29,7 +29,7 @@ from nustd.mp_pool import (
     Workers,
     WorkerStatus,
 )
-from nustd.mp_pool import (
+from nustd.mp import (
     pool as pool_preset,
 )
 

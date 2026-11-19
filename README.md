@@ -126,7 +126,7 @@ app = nu.Provide(
 asyncio.run(nu.arun(app))
 ```
 
-Powered by [Ray](https://github.com/ray-project/ray). For local processes, `nustd.mp_pool` takes the same shape.
+Powered by [Ray](https://github.com/ray-project/ray). For local processes, `nustd.mp` takes the same shape.
 
 ### LLM calls
 
@@ -199,7 +199,7 @@ Fabrics. Bind one and every Ref inside the bracket reaches a real system.
 | `nustd.blob` | Images, video and other large bytes, stored once and streamed by range | `blob` |
 | [`nustd.ui`](https://nustack.dev/docs/nustd/reference/ui) | Live web UI | `ui` |
 | [`nustd.cluster`](https://nustack.dev/docs/nustd/reference/cluster) | Run trees across a Ray cluster | `cluster` |
-| [`nustd.mp_pool`](https://nustack.dev/docs/nustd/reference/mp_pool) | Run trees in local worker processes | `mp_pool` |
+| [`nustd.mp`](https://nustack.dev/docs/nustd/reference/mp) | Run trees in local worker processes | `mp` |
 | [`nustd.llm`](https://nustack.dev/docs/nustd/reference/llm) | OpenAI-compatible chat, seven providers | `llm` |
 | [`nustd.cc`](https://nustack.dev/docs/nustd/reference/cc) | Claude Code sessions as Refs | `cc` |
 | [`nustd.http`](https://nustack.dev/docs/nustd/reference/http) | HTTP calls | `http` |

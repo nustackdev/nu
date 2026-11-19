@@ -99,7 +99,7 @@ __all__ = [
 ]
 
 
-log = logging.getLogger("nustd.mp_pool")
+log = logging.getLogger("nustd.mp")
 
 # The ladder, as shares of ``grace``: polite until the first rung, then each
 # signal at its mark. Fixed on purpose; only ``grace`` is a knob.

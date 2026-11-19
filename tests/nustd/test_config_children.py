@@ -21,8 +21,8 @@ from nustd.blob.fabric import BlobFabric
 from nustd.cluster.refs import RayServiceRef
 from nustd.cluster.resources import RayService
 from nustd.logging import Log
-from nustd.mp_pool import PoolRef
-from nustd.mp_pool.resources import WorkerPool
+from nustd.mp import PoolRef
+from nustd.mp.resources import WorkerPool
 from nustd.proxy import InvisiblesProxy
 
 

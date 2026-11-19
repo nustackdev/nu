@@ -1,7 +1,7 @@
 """``ValkeyRef``: the fabric ref that resolves the ``ValkeyServer`` bound on ctx.
 
 A plain ``FabricRef``: the address is the fabric type, so the read is the
-untagged binding, same as ``nustd.mp_pool.PoolRef``. It also carries this
+untagged binding, same as ``nustd.mp.PoolRef``. It also carries this
 fabric's fluent surface: ``ValkeyRef().url()`` and ``Url(ValkeyRef())`` build
 the same term.
 """
