@@ -42,8 +42,8 @@ when the bracket is built, a computed one when it opens. Both sync and async
 runs are supported natively via the two open methods (``_open`` and
 ``_aopen``). Under the async runtime the bracket calls ``asetup`` /
 ``acleanup`` (which default to the sync pair); under the sync runtime it calls
-``setup`` / ``cleanup``, and refuses a fabric marked ``async_only`` before
-constructing it.
+``setup`` / ``cleanup``, and refuses before constructing it a fabric marked
+``async_only`` or one that overrides only the async half of its lifecycle.
 """
 
 from __future__ import annotations
@@ -77,41 +77,55 @@ def _construct(cls: type[Fabric], kwargs: Mapping[str, object]) -> Fabric:
     return cls(**kwargs)
 
 
-def _require_fabric(cls: object) -> None:
+def _require_fabric(cls: object, bracket: str) -> None:
     """Refuse a class that is not a ``nu.Fabric`` subclass.
 
     Run at build time when the class is given as a plain value, and again when
     the bracket opens, which is the first time a computed class is known.
+    ``bracket`` is the refusing bracket's class name, so the message names
+    ``ProvideList`` / ``ProvideDict`` / a subclass rather than ``Provide``.
     """
     if not (isinstance(cls, type) and issubclass(cls, Fabric)):
         name = getattr(cls, "__qualname__", None) or repr(cls)
-        msg = f"Provide takes a Fabric class, got {name}; subclass nu.Fabric"
+        msg = f"{bracket} takes a Fabric class, got {name}; subclass nu.Fabric"
         raise TypeError(msg)
 
 
+def _overrides(cls: type[Fabric], name: str) -> bool:
+    """Whether ``cls`` replaces the ``Fabric`` default of lifecycle method ``name``."""
+    return getattr(cls, name) is not getattr(Fabric, name)
+
+
 def _refuse_async_only(cls: type[Fabric]) -> None:
-    """Sync path guard: refuse a fabric marked ``async_only``.
+    """Sync path guard: refuse a fabric the sync runner cannot drive.
 
     Called before instance construction so a mis-provisioned tree fails at
     the leaf ``Provide`` with a clear message, instead of half-building an
-    instance whose ``asetup`` we can't drive.
+    instance whose ``asetup`` we can't drive. Two shapes are refused: one
+    marked ``async_only``, and one that overrides ``asetup`` (or
+    ``acleanup``) while keeping the no-op sync twin, which would otherwise
+    run under ``nu.run`` with its lifecycle silently skipped.
     """
     if cls.async_only:
         msg = f"{cls.__name__} requires the async runner (nu.arun); it is async_only"
         raise RuntimeError(msg)
+    for sync, aio in (("setup", "asetup"), ("cleanup", "acleanup")):
+        if _overrides(cls, aio) and not _overrides(cls, sync):
+            msg = f"{cls.__name__} has no sync {sync}; use nu.arun or add {sync}()"
+            raise RuntimeError(msg)
 
 
-def _sync_class(cls: object) -> type[Fabric]:
-    """The class a sync open constructs: a Fabric that is not ``async_only``."""
-    _require_fabric(cls)
+def _sync_class(cls: object, bracket: str) -> type[Fabric]:
+    """The class a sync open constructs: a Fabric the sync runner can drive."""
+    _require_fabric(cls, bracket)
     fabric = cast("type[Fabric]", cls)
     _refuse_async_only(fabric)
     return fabric
 
 
-def _async_class(cls: object) -> type[Fabric]:
+def _async_class(cls: object, bracket: str) -> type[Fabric]:
     """The class an async open constructs: any Fabric."""
-    _require_fabric(cls)
+    _require_fabric(cls, bracket)
     return cast("type[Fabric]", cls)
 
 
@@ -252,7 +266,8 @@ class Provide(Bracket):
           opens; anything else raises ``TypeError``.
         - Under ``nu.arun`` the bracket calls ``asetup`` / ``acleanup``,
           which default to the sync pair; under ``nu.run`` it calls
-          ``setup`` / ``cleanup``, and a fabric marked ``async_only`` is
+          ``setup`` / ``cleanup``, and a fabric marked ``async_only``, or
+          one overriding ``asetup`` / ``acleanup`` without the sync twin, is
           refused before it is even constructed.
         - Teardown only reaches instances whose setup completed, so a setup
           that raises does not leave a half-open fabric to be cleaned up.
@@ -282,7 +297,7 @@ class Provide(Bracket):
         bind_as: type | Nu | None = None,
     ) -> None:
         if not isinstance(cls, Nu):
-            _require_fabric(cls)
+            _require_fabric(cls, type(self).__name__)
         # Children: [body, cls, kwargs, tags, predicate, bind_as].
         super().__init__(
             body,
@@ -303,7 +318,7 @@ class Provide(Bracket):
         predicate: Callable | None,
         bind_as: type | None,
     ) -> Iterator[None]:
-        cls = _sync_class(cls)
+        cls = _sync_class(cls, type(self).__name__)
         instance = _construct(cls, kwargs)
         setup_done: list[Fabric] = []
         try:
@@ -324,7 +339,7 @@ class Provide(Bracket):
         predicate: Callable | None,
         bind_as: type | None,
     ) -> AsyncIterator[None]:
-        cls = _async_class(cls)
+        cls = _async_class(cls, type(self).__name__)
         instance = _construct(cls, kwargs)
         setup_done: list[Fabric] = []
         try:
@@ -391,7 +406,7 @@ class ProvideList(Bracket):
         bind_as: type | Nu | None = None,
     ) -> None:
         if not isinstance(cls, Nu):
-            _require_fabric(cls)
+            _require_fabric(cls, type(self).__name__)
         # Children: [body, cls, specs, base_tag, extra_tags, predicate, bind_as].
         super().__init__(
             body,
@@ -414,7 +429,7 @@ class ProvideList(Bracket):
         predicate: Callable | None,
         bind_as: type | None,
     ) -> Iterator[None]:
-        cls = _sync_class(cls)
+        cls = _sync_class(cls, type(self).__name__)
         bind_as = _bind_key(cls, bind_as)
         setup_done: list[Fabric] = []
         try:
@@ -439,7 +454,7 @@ class ProvideList(Bracket):
         predicate: Callable | None,
         bind_as: type | None,
     ) -> AsyncIterator[None]:
-        cls = _async_class(cls)
+        cls = _async_class(cls, type(self).__name__)
         bind_as = _bind_key(cls, bind_as)
         setup_done: list[Fabric] = []
         try:
@@ -511,7 +526,7 @@ class ProvideDict(Bracket):
         parallel: bool | Nu = False,
     ) -> None:
         if not isinstance(cls, Nu):
-            _require_fabric(cls)
+            _require_fabric(cls, type(self).__name__)
         # Children: [body, cls, specs, extra_tags, predicate, bind_as, parallel].
         super().__init__(
             body,
@@ -534,7 +549,7 @@ class ProvideDict(Bracket):
         bind_as: type | None,
         parallel: bool,
     ) -> Iterator[None]:
-        cls = _sync_class(cls)
+        cls = _sync_class(cls, type(self).__name__)
         bind_as = _bind_key(cls, bind_as)
         setup_done: list[Fabric] = []
         try:
@@ -559,7 +574,7 @@ class ProvideDict(Bracket):
         bind_as: type | None,
         parallel: bool,
     ) -> AsyncIterator[None]:
-        cls = _async_class(cls)
+        cls = _async_class(cls, type(self).__name__)
         import asyncio
 
         from nu.core.flows.parallel._scheduling import _join_all

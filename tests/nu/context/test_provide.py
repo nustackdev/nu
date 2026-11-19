@@ -350,11 +350,11 @@ def test_provide_refuses_a_class_that_is_not_a_fabric_at_build():
     class Plain:
         pass
 
-    with pytest.raises(TypeError, match=r"subclass nu\.Fabric"):
+    with pytest.raises(TypeError, match=r"^Provide takes a Fabric class.*subclass nu\.Fabric"):
         Provide(Plain, {}, FabricRef(Plain))
-    with pytest.raises(TypeError, match=r"subclass nu\.Fabric"):
+    with pytest.raises(TypeError, match=r"^ProvideList takes a Fabric class"):
         ProvideList(Plain, [{}], FabricRef(Plain))
-    with pytest.raises(TypeError, match=r"subclass nu\.Fabric"):
+    with pytest.raises(TypeError, match=r"^ProvideDict takes a Fabric class"):
         ProvideDict(Plain, {"a": {}}, FabricRef(Plain))
 
 
@@ -367,6 +367,9 @@ async def test_provide_refuses_a_computed_class_that_is_not_a_fabric_at_open():
         run(bracket)
     with pytest.raises(TypeError, match=r"subclass nu\.Fabric"):
         await arun(bracket)
+    fleet = ProvideList(nu.Literal(Plain), [{}], FabricRef(Plain))
+    with pytest.raises(TypeError, match=r"^ProvideList takes a Fabric class"):
+        await arun(fleet)
 
 
 def test_fabric_ref_refuses_a_named_class_that_is_not_a_fabric():
@@ -377,6 +380,58 @@ def test_fabric_ref_refuses_a_named_class_that_is_not_a_fabric():
 
         class PlainRef(FabricRef):
             fabric = Plain
+
+
+def test_provide_refuses_an_async_only_setup_under_sync_open():
+    class AsyncSetup(nu.Fabric):
+        events: ClassVar[list[str]] = []
+
+        def __init__(self) -> None:
+            AsyncSetup.events.append("init")
+
+        async def asetup(self, ctx: Context) -> None: ...
+
+    with pytest.raises(RuntimeError, match=r"AsyncSetup has no sync setup; use nu\.arun"):
+        run(Provide(AsyncSetup, {}, FabricRef(AsyncSetup)))
+    assert AsyncSetup.events == []
+
+
+def test_provide_refuses_an_async_only_cleanup_under_sync_open():
+    class AsyncCleanup(nu.Fabric):
+        def setup(self, ctx: Context) -> None: ...
+        async def acleanup(self) -> None: ...
+
+    with pytest.raises(RuntimeError, match=r"AsyncCleanup has no sync cleanup; use nu\.arun"):
+        run(Provide(AsyncCleanup, {}, FabricRef(AsyncCleanup)))
+    with pytest.raises(RuntimeError, match="no sync cleanup"):
+        run(ProvideList(AsyncCleanup, [{}], FabricRef(AsyncCleanup)))
+    with pytest.raises(RuntimeError, match="no sync cleanup"):
+        run(ProvideDict(AsyncCleanup, {"a": {}}, FabricRef(AsyncCleanup)))
+
+
+def test_provide_runs_a_fabric_with_both_halves_under_sync_open():
+    class Both(nu.Fabric):
+        events: ClassVar[list[str]] = []
+
+        def setup(self, ctx: Context) -> None:
+            Both.events.append("setup")
+
+        async def asetup(self, ctx: Context) -> None:
+            Both.events.append("asetup")
+
+    run(Provide(Both, {}, FabricRef(Both)))
+    assert Both.events == ["setup"]
+
+
+async def test_provide_runs_an_async_only_setup_under_arun():
+    class AsyncSetup(nu.Fabric):
+        events: ClassVar[list[str]] = []
+
+        async def asetup(self, ctx: Context) -> None:
+            AsyncSetup.events.append("asetup")
+
+    await arun(Provide(AsyncSetup, {}, FabricRef(AsyncSetup)))
+    assert AsyncSetup.events == ["asetup"]
 
 
 def test_provide_list_refuses_async_only_marker_under_sync_open():

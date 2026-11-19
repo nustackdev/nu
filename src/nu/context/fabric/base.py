@@ -18,7 +18,9 @@ what it needs:
 A fabric with sync lifecycle overrides ``setup`` / ``cleanup`` and runs under
 both runners. One whose lifecycle has to await overrides ``asetup`` /
 ``acleanup`` and sets ``async_only = True``, so the sync runner refuses it
-before it is constructed instead of skipping its setup.
+before it is constructed instead of skipping its setup. One that overrides
+``asetup`` (or ``acleanup``) without the sync twin is refused the same way,
+marked or not.
 
 ``setup`` receives the outer ctx - everything bound by enclosing ``Provide``
 brackets is already visible. That is the dependency-injection channel: an
@@ -70,7 +72,8 @@ class Fabric:
     Notes:
         - Under ``nu.arun`` the bracket calls ``asetup`` / ``acleanup``;
           their defaults call the sync pair. Under ``nu.run`` it calls
-          ``setup`` / ``cleanup``.
+          ``setup`` / ``cleanup``, and refuses a subclass that overrides
+          ``asetup`` / ``acleanup`` but not the matching sync method.
     """
 
     async_only: ClassVar[bool] = False

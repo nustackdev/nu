@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Sync runs refuse fabrics with only async setup; refusals name the actual bracket
 - The uploads area opens through a small bracket of its own, no constructor tricks
 - Fix the valkey shutdown test whose subprocess script provided a plain class
 - Kind declarations stay bare; the bracket lifecycle lives in its own module
