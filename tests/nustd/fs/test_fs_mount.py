@@ -187,6 +187,49 @@ def test_each_run_gets_its_own_tmp(go):
     assert go(app) != go(app)
 
 
+# --- tmp with a lambda body -------------------------------------------------
+
+
+def _isdir(path: str) -> bool:
+    return Path(path).is_dir()
+
+
+isdir = cast("Callable[..., nu.Nu]", nu.host(_isdir))
+
+
+def test_tmp_lambda_gets_the_path(go):
+    where, there = go(fs.tmp(prefix="fs-root-", body=lambda root: nu.List.of(root, isdir(root))))
+    assert Path(where).is_absolute()
+    assert Path(where).name.startswith("fs-root-")
+    assert there is True
+    assert not Path(where).exists()
+
+
+def test_tmp_lambda_path_is_the_mount(go):
+    assert go(fs.tmp(body=lambda root: nu.Eq(root, plain.where()))) is True
+
+
+def test_tmp_lambda_on_a_tagged_mount(go):
+    scratch = fs.FsRef("scratch")
+    app = fs.tmp(tag="scratch", body=lambda root: nu.Eq(root, scratch.where()))
+    assert go(app) is True
+
+
+def test_tmp_root_key_binds_a_tree_body(go):
+    app = fs.tmp(root_key="root", body=nu.Eq(nu.Attr("root"), plain.where()))
+    assert go(app) is True
+
+
+def test_tmp_lambda_and_root_key_are_refused():
+    with pytest.raises(ValueError, match="root_key"):
+        fs.tmp(root_key="root", body=lambda root: root)
+
+
+def test_tmp_lambda_travels_on_the_wire(go):
+    app = wire.loads(wire.dumps(fs.tmp(body=lambda root: isdir(root))))
+    assert go(app) is True
+
+
 # --- pickling ---------------------------------------------------------------
 
 
