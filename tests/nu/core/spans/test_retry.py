@@ -218,3 +218,111 @@ async def test_async_stream_waits_between_attempts(waits: list) -> None:
     )
     assert items == [1]
     assert waits == [1.0, 2.0]
+
+
+# --- except_errors: what is never retried ---------------------------------
+
+
+class Gate(nu.Shape):
+    """The flag a computed exclusion reads."""
+
+    flag = nu.BoolRef.slot()
+
+
+def test_sync_excluded_error_raises_on_the_first_attempt() -> None:
+    flaky = FlakyAction(5)
+    with pytest.raises(ValueError, match="flaky 0"):
+        run(Retry(flaky, max_attempts=3, except_errors=ValueError))
+    assert next(flaky.calls) == 1  # one attempt only
+
+
+def test_sync_an_error_outside_the_exclusion_still_retries() -> None:
+    flaky = FlakyAction(2)
+    value, _ = run(Retry(flaky, max_attempts=3, except_errors=KeyError))
+    assert value == "flaky"
+    assert next(flaky.calls) == 3
+
+
+def test_sync_exclusion_wins_over_a_matching_errors_filter() -> None:
+    flaky = FlakyAction(5)
+    with pytest.raises(ValueError, match="flaky 0"):
+        run(Retry(flaky, max_attempts=3, errors=ValueError, except_errors=ValueError))
+    assert next(flaky.calls) == 1
+
+
+def test_sync_stream_excluded_error_raises_on_the_first_attempt() -> None:
+    with pytest.raises(ValueError, match="fs 0"):
+        collect(compile(Retry(FlakyStream(1, [1]), max_attempts=3, except_errors=ValueError)))
+
+
+async def test_async_excluded_error_raises_unretried_and_without_hooks() -> None:
+    flaky, log = FlakyAction(5), []
+    retry = Retry(
+        flaky,
+        max_attempts=3,
+        except_errors=ValueError,
+        on_attempt_fail=RecordAction(log, "af"),
+        on_fail=RecordAction(log, "fail"),
+    )
+    with pytest.raises(ValueError, match="flaky 0"):
+        await arun(retry)
+    assert next(flaky.calls) == 1
+    assert log == []  # on_fail does not swallow an excluded error
+
+
+async def test_async_an_error_outside_the_exclusion_still_retries() -> None:
+    value, _ = await arun(Retry(FlakyAction(2), max_attempts=3, except_errors=KeyError))
+    assert value == "flaky"
+
+
+async def test_async_exclusion_wins_over_a_matching_errors_filter() -> None:
+    flaky = FlakyAction(5)
+    with pytest.raises(ValueError, match="flaky 0"):
+        await arun(Retry(flaky, max_attempts=None, errors=ValueError, except_errors=ValueError))
+    assert next(flaky.calls) == 1
+
+
+async def test_async_stream_excluded_error_raises_on_the_first_attempt() -> None:
+    retry = Retry(FlakyStream(1, [1]), max_attempts=3, except_errors=(KeyError, ValueError))
+    with pytest.raises(ValueError, match="fs 0"):
+        await acollect(compile(retry))
+
+
+def test_exclusion_is_computed() -> None:
+    excluded = nu.If(Gate.flag, ValueError, KeyError)
+    retry = Retry(FlakyAction(1), max_attempts=2, except_errors=excluded)
+    assert nu.tree.children(retry)[15] is excluded  # appended after the errors filter
+    with pytest.raises(ValueError, match="flaky 0"):
+        run(nu.Frame(Gate, retry, flag=True))
+    value, _ = run(
+        nu.Frame(Gate, Retry(FlakyAction(1), max_attempts=2, except_errors=excluded), flag=False)
+    )
+    assert value == "flaky"
+
+
+async def test_exclusion_is_computed_on_the_async_path() -> None:
+    excluded = nu.If(Gate.flag, ValueError, KeyError)
+    with pytest.raises(ValueError, match="flaky 0"):
+        await arun(
+            nu.Frame(Gate, Retry(FlakyAction(1), max_attempts=2, except_errors=excluded), flag=True)
+        )
+
+
+def test_a_non_exception_exclusion_is_refused_at_build() -> None:
+    with pytest.raises(TypeError, match="must be exception classes"):
+        Retry(FlakyAction(1), except_errors=int)  # type: ignore[arg-type]
+
+
+async def test_async_hooks_read_the_exception_as_a_catch_does() -> None:
+    seen: list = []
+    hook = nu.host(seen.append, name="Seen")
+    retry = Retry(
+        FlakyAction(5),
+        max_attempts=2,
+        on_attempt_fail=lambda err, attempt: hook(nu.GetAttr(err, "exception")),
+        on_fail=lambda err, attempt: hook(err),
+    )
+    await arun(retry)
+    assert isinstance(seen[0], ValueError)
+    assert seen[1] == "flaky 1"
+    assert isinstance(seen[1].exception, ValueError)

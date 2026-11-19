@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Retry can name errors it never retries, and its hooks see the exception
 - A catch can hand its error on as it came, type and fields intact
 - Agent binds take their command, cwd and policy computed, read from a store
 - ACP update readers hear each turn's end in order, so one stream folds turns

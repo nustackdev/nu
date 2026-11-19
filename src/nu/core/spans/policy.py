@@ -9,14 +9,14 @@ the wrapper to the body's resolved cardinality.
 The atoms:
 
 - ``TryCatch`` - try / catch / finally with a typed error filter.
-- ``Retry`` - re-run the body on failure, with backoff, jitter, a typed filter,
-  and per-attempt hooks (async path).
+- ``Retry`` - re-run the body on failure, with backoff, jitter, a typed filter
+  and an exclusion from it, and per-attempt hooks (async path).
 - ``Timeout`` - bound the body by a wall-clock limit (async-only).
 
 Conventions (see ``AUTHORING.md``): structure lives in the tree, not in fields
 (an absent optional branch is a ``Noop`` slot, and the node records in a
 field which branches were given, so a ``Noop`` passed on purpose still
-runs; names are ``StrArg`` children; numeric knobs and the ``errors`` filter
+runs; names are ``StrArg`` children; numeric knobs and the ``errors`` / ``except_errors`` filters
 are returning children, evaluated on every run, so they can be computed); ``ctx.attrs`` is the one inter-Nu channel
 (the caught error and the attempt count are ``let``-bound there for the
 handler that reads them, and only for as long as it runs; a handler written as
@@ -403,14 +403,15 @@ async def _arun_hook(rt: Runtime, hook: Callable, lets: dict) -> None:
 class Retry(Policy):
     """Re-runs the body on a matching failure, up to ``max_attempts`` times.
 
-    Sync runs a bare retry: ``max_attempts`` and ``errors`` only, no delay,
-    backoff, jitter or hooks. Async runs the full policy: ``delay`` grows by
-    ``backoff`` each attempt up to ``max_delay``, ``jitter`` decorrelates
-    the wait, and ``on_attempt_fail`` / ``on_success`` / ``on_fail`` fire
-    with the attempt count and error bound. A hook is a lambda over what it
-    can see (``lambda err, attempt: ...`` for a failure, ``lambda attempt:
-    ...`` for success, where there is no error), or a tree reading them
-    under ``error_key`` / ``attempt_key``. A stream body is retried by
+    Sync runs a bare retry: ``max_attempts``, ``errors`` and
+    ``except_errors`` only, no delay, backoff, jitter or hooks. Async runs
+    the full policy: ``delay`` grows by ``backoff`` each attempt up to
+    ``max_delay``, ``jitter`` decorrelates the wait, and
+    ``on_attempt_fail`` / ``on_success`` / ``on_fail`` fire with the
+    attempt count and error bound. A hook is a lambda over what it can see
+    (``lambda err, attempt: ...`` for a failure, ``lambda attempt: ...``
+    for success, where there is no error), or a tree reading them under
+    ``error_key`` / ``attempt_key``. A stream body is retried by
     atomic re-evaluation - drained fresh each attempt, emitted only on
     success, bounded streams only - and the stream path skips the
     per-attempt hooks but waits the same delays.
@@ -419,7 +420,8 @@ class Retry(Policy):
         body: the Term to re-run.
         max_attempts: the ceiling on attempts, including the first. ``None``
             retries without end, until the body succeeds, an error outside
-            ``errors`` is raised, or the caller cancels (async only).
+            ``errors`` or inside ``except_errors`` is raised, or the caller
+            cancels (async only).
         delay: the wait before the first retry, in seconds (async only).
         backoff: the multiplier applied to ``delay`` after each attempt
             (async only).
@@ -430,6 +432,11 @@ class Retry(Policy):
         errors: the exception type(s) that trigger a retry, or any Nu
             yielding them. Left out, any exception; an unmatched one
             propagates unretried.
+        except_errors: the exception type(s) never retried, or any Nu
+            yielding them. A match propagates at once, unretried and
+            without hooks, even when ``errors`` matches it too or is left
+            out: ``errors`` says what to retry, this carves out what not
+            to. Left out, nothing is excluded.
         on_attempt_fail: runs after a failed attempt that still has retries
             left (async only): ``lambda err, attempt: ...`` or a tree.
             Optional.
@@ -439,8 +446,10 @@ class Retry(Policy):
             (async only): ``lambda err, attempt: ...`` or a tree. Optional:
             left out, the last error is re-raised; given, even a ``Noop``,
             it is not.
-        error_key: where the failing attempt's error message lands in the
-            attrs fabric for a tree hook to read. Defaults to ``"error"``.
+        error_key: where the failing attempt's error lands in the attrs
+            fabric for a tree hook to read: a :class:`CaughtError`, its
+            message carrying the exception, as ``TryCatch``'s catch reads
+            it. Defaults to ``"error"``.
         attempt_key: where the attempt number (from 1) lands in the attrs
             fabric for a tree hook to read. Defaults to ``"attempt"``.
 
@@ -478,6 +487,10 @@ class Retry(Policy):
         A supervisor that never gives up, backing off to at most a minute::
 
             nu.Retry(serve, max_attempts=None, delay=1.0, backoff=2.0, max_delay=60.0)
+
+        One that retries anything but a refusal::
+
+            nu.Retry(serve, max_attempts=None, delay=1.0, except_errors=Refused)
     """
 
     def __init__(
@@ -495,6 +508,7 @@ class Retry(Policy):
         on_fail: Flow | Command | Span | Unset = UNSET,
         error_key: StrArg | None = None,
         attempt_key: StrArg | None = None,
+        except_errors: tuple[type[Exception], ...] | type[Exception] | Nu | Unset = UNSET,
     ) -> None:
         # A plain cap is refused now; a term (computed or not) is checked when it runs.
         if not isinstance(max_delay, Nu):
@@ -531,6 +545,7 @@ class Retry(Policy):
             "attempt" if ofl_attempt is None else ofl_attempt,
             max_delay,
             _errors_child(errors),
+            _errors_child(except_errors),
         )
         self.given = given
 
@@ -547,11 +562,12 @@ class Retry(Policy):
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body = children[0]
         max_attempts_q = children[1]
-        errors_t = children[14]
+        errors_t, excluded_t = children[14], children[15]
 
         def thunk(rt: Runtime) -> object:
             attempts = _attempts(max_attempts_q(rt))
             errors = _errors(errors_t(rt))
+            excluded = _errors(excluded_t(rt))
             if attempts is None:
                 msg = (
                     "Retry: max_attempts=None needs the async runtime, where retries "
@@ -566,7 +582,7 @@ class Retry(Policy):
                         return iter(list(sync_iter(body(rt))))  # drain fresh per attempt
                     return body(rt)
                 except Exception as exc:
-                    if errors is not None and not isinstance(exc, errors):
+                    if not _retries(exc, errors, excluded):
                         raise
                     last = exc
             raise last  # type: ignore[misc]  # attempts >= 1, so last is set
@@ -579,11 +595,12 @@ class Retry(Policy):
         max_delay_q = children[13]
         oaf, osc, ofl = self._hooks(children)
         oaf_error, oaf_attempt, osc_attempt, ofl_error, ofl_attempt = children[8:13]
-        errors_t = children[14]
+        errors_t, excluded_t = children[14], children[15]
 
         async def athunk(rt: Runtime) -> object:
             attempts = _attempts(await max_attempts_q(rt))
             errors = _errors(await errors_t(rt))
+            excluded = _errors(await excluded_t(rt))
             waits = _waits(
                 float(await delay_q(rt)),
                 float(await backoff_q(rt)),
@@ -597,7 +614,7 @@ class Retry(Policy):
                     try:
                         return aiter_any([v async for v in aiter_any(await body(rt))])
                     except Exception as exc:
-                        if errors is not None and not isinstance(exc, errors):
+                        if not _retries(exc, errors, excluded):
                             raise
                         if attempt == attempts:
                             raise
@@ -615,19 +632,30 @@ class Retry(Policy):
                         await _arun_hook(rt, osc, {osc_ak: attempt})
                     return result
                 except Exception as exc:
-                    if errors is not None and not isinstance(exc, errors):
+                    if not _retries(exc, errors, excluded):
                         raise
                     if attempt == attempts:
                         if ofl is not None:
-                            await _arun_hook(rt, ofl, {ofl_ek: str(exc), ofl_ak: attempt})
+                            await _arun_hook(rt, ofl, {ofl_ek: CaughtError(exc), ofl_ak: attempt})
                             return None
                         raise
                     if oaf is not None:
-                        await _arun_hook(rt, oaf, {oaf_ek: str(exc), oaf_ak: attempt})
+                        await _arun_hook(rt, oaf, {oaf_ek: CaughtError(exc), oaf_ak: attempt})
                 await asyncio.sleep(next(waits))
             return None  # unreachable: the last attempt returns or raises
 
         return athunk
+
+
+def _retries(
+    exc: Exception,
+    errors: tuple[type[Exception], ...] | None,
+    excluded: tuple[type[Exception], ...] | None,
+) -> bool:
+    """Whether Retry takes another attempt at ``exc``: matched by ``errors``, not by ``except_errors``."""
+    if excluded is not None and isinstance(exc, excluded):
+        return False
+    return errors is None or isinstance(exc, errors)
 
 
 def _attempts(value: object) -> int | None:
