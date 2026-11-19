@@ -13,7 +13,7 @@ Two kinds of thing live here, side by side.
 
 **Fabrics** (``kv``, ``blob``, ``fs``, ``queue``, ``ui``, ``ws_server``, ``service``,
 ``llm``, ``acp``, ``http``, ``proxy``, ``mp``, ``cluster``,
-``valkey``) back a Shape with somewhere real to live: a store, a blob store, a
+``valkey``, ``webbrowser``) back a Shape with somewhere real to live: a store, a blob store, a
 browser, a process pool, a model, a private notification server. Each
 is heavy and pulls a large tree behind it (storage backends, the UI runtime,
 RPC, ray), so they load on first attribute access, not on ``import nustd``.
@@ -84,6 +84,7 @@ if TYPE_CHECKING:
         service,
         ui,
         valkey,
+        webbrowser,
         ws_server,
     )
 
@@ -107,6 +108,7 @@ _LAZY = {
     # Imports without its backend: a worker only building the URL needs no
     # binary. Starting a server without the extra raises and names it.
     "valkey": None,
+    "webbrowser": None,
     "ws_server": "ws_server",
 }
 

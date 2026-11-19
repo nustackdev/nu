@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add a webbrowser fabric that opens a tab once a local server answers
 - fs locks a file across processes and machines, and holds marker files for a span
 - fs mounts write files atomically, append, move, copy and remove inside the mount
 - Add an fs fabric that mounts a dir and reads files, listings and streams inside it
