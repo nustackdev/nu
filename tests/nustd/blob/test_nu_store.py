@@ -106,7 +106,7 @@ def test_each_term_holds_the_ref_it_was_built_from():
 def test_atoms_take_a_store_ref_directly():
     term = BlobGet(StoreRef("media"), BID)
     assert isinstance(term._children[0], StoreRef)
-    assert term._children[0].name == "media"
+    assert nu.run(term._children[0].name)[0] == "media"
 
 
 @pytest.mark.parametrize("store", [StoreRef, "media", None], ids=["class", "name", "none"])
