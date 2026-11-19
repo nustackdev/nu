@@ -4,6 +4,7 @@
 
 - ``nu``         - the ``Nu`` base class.
 - ``kinds``      - the kind taxonomy (``Ref`` / ``Interaction`` / ``ScalarQuery`` / ...).
+- ``bracket``    - ``Bracket``, the lifecycle base every bracket subclasses.
 - ``args``       - argument type aliases (``IntArg``, ``StrArg``, ...) for kind signatures.
 - ``null``       - ``NULL``, the value an absent context read gives, and ``is_null``.
 - ``sentinels``  - ``UNSET``, the internal argument marker.
@@ -56,11 +57,11 @@ from .attributes import (
     matrix_sort,
     subsort,
 )
+from .bracket import Bracket
 from .forms import Form, TypedNu, TypedNuStream
 from .kinds import (
     Action,
     ActionReduction,
-    Bracket,
     Command,
     CommandReduction,
     Control,

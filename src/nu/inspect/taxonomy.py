@@ -5,10 +5,11 @@ or a Ref, so the four answers are the same four questions for all three and
 they are derived once here rather than per kind.
 
 None of it is written by hand. ``kind`` is the most specific
-``nu.lang.kinds`` base in the MRO; ``sort`` and ``cardinality`` are read off
-the class's ``_attributes``, which the kind declaration fills in; ``abstract``
-is membership of the taxonomy itself, which is what tells ``Query`` apart
-from an atom that happens to have written nothing down.
+``nu.lang.kinds`` base in the MRO (``Bracket`` standing in for its private
+kind); ``sort`` and ``cardinality`` are read off the class's
+``_attributes``, which the kind declaration fills in; ``abstract`` is
+membership of the taxonomy itself, which is what tells ``Query`` apart from
+an atom that happens to have written nothing down.
 """
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ from __future__ import annotations
 from typing import Any
 
 from nu.lang import kinds
+from nu.lang.bracket import Bracket
 
 
 __all__ = [
@@ -28,9 +30,12 @@ __all__ = [
 
 
 # The taxonomy bases themselves, in export order. A class that *is* one of
-# these is a rung of the ladder rather than something a person composes.
-KIND_CLASSES: tuple[type, ...] = tuple(
-    getattr(kinds, name) for name in kinds.__all__ if isinstance(getattr(kinds, name), type)
+# these is a rung of the ladder rather than something a person composes. The
+# Bracket kind is declared private in ``kinds``; its public face is the
+# implementation in ``nu.lang.bracket``, so that is the rung named here.
+KIND_CLASSES: tuple[type, ...] = (
+    *(getattr(kinds, name) for name in kinds.__all__ if isinstance(getattr(kinds, name), type)),
+    Bracket,
 )
 
 
