@@ -1,8 +1,6 @@
 """nustd.mp_pool - the pool of worker processes, as one fabric.
 
-``nustd.mp`` is the fabric of ONE process: its whole lifecycle is the
-``With`` / ``Provide`` bracket and it stays purely declarative.
-``nustd.mp_pool`` is the sibling where **the pool itself is the fabric**. One
+**The pool itself is the fabric.** One
 ``Provide`` at the top of a tree owns N worker processes, and because the
 fabric spans many processes it legitimately owns interactions over them -
 launch a worker, run a tree on worker id X, interrupt, stop or kill it, read

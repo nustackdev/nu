@@ -1,8 +1,8 @@
 """``_pool_worker_main``: entry point running inside every pool worker process.
 
 The child owns a Nu ``Context`` (built from the ``init`` bracket it was handed
-at spawn) and a duplex ``Pipe`` back to the parent. Unlike ``nustd.mp``'s worker
-it does **not** serialize one request at a time: every request becomes its own
+at spawn) and a duplex ``Pipe`` back to the parent. It does **not** serialize
+one request at a time: every request becomes its own
 asyncio task, so a resident body dispatched with ``Dispatch`` keeps running
 while the loop goes back to reading the pipe.
 

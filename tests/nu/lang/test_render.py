@@ -139,7 +139,7 @@ def test_no_nu_subclass_overrides_the_display_dunders() -> None:
         "nu.mem",
         "nustd.kv",
         "nustd.proxy",
-        "nustd.mp",
+        "nustd.mp_pool",
     ):
         importlib.import_module(mod)
 

@@ -420,15 +420,9 @@ async def test_react_latest_runs_are_isolated() -> None:
 # --- worker handoff -----------------------------------------------------------
 
 
-def _worker_exec_contexts() -> list[Callable]:
-    from nustd.mp._worker import _exec_context as mp_exec
-    from nustd.mp_pool._worker import _exec_context as pool_exec
+def test_worker_request_seeds_names_on_its_own_branch() -> None:
+    from nustd.mp_pool._worker import _exec_context as exec_context
 
-    return [mp_exec, pool_exec]
-
-
-@pytest.mark.parametrize("exec_context", _worker_exec_contexts())
-def test_worker_request_seeds_names_on_its_own_branch(exec_context: Callable) -> None:
     worker = Context()
     with worker.fabrics.bind(Parent, Parent()):
         with exec_context(worker, {"x": 1}) as one, exec_context(worker, {"x": 2}) as two:
@@ -443,8 +437,9 @@ def test_worker_request_seeds_names_on_its_own_branch(exec_context: Callable) ->
         assert worker.fabrics.has(Handle) is False
 
 
-@pytest.mark.parametrize("exec_context", _worker_exec_contexts())
-def test_worker_request_without_names_still_gets_a_branch(exec_context: Callable) -> None:
+def test_worker_request_without_names_still_gets_a_branch() -> None:
+    from nustd.mp_pool._worker import _exec_context as exec_context
+
     worker = Context()
     with exec_context(worker, None) as ctx:
         assert ctx is not worker
@@ -452,7 +447,7 @@ def test_worker_request_without_names_still_gets_a_branch(exec_context: Callable
 
 
 def test_worker_handoff_runs_a_tree_against_the_seeded_names() -> None:
-    from nustd.mp._worker import _exec_context
+    from nustd.mp_pool._worker import _exec_context
 
     with _exec_context(Context(), {"x": 41}) as ctx:
         value, _ = run(x + 1, ctx)

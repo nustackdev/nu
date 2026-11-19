@@ -2,7 +2,7 @@
 
 Two reads over one ``ValkeyServer``: ``Url`` and ``Ping``. Starting and
 stopping are not interactions. The server's whole lifecycle is its ``Provide``
-bracket, the same way ``nustd.mp``'s one process is, because everything that
+bracket, because everything that
 talks to it (a kv stack's publisher and observer) is bound inside that bracket
 and a server stopped mid-body would pull the floor out from under them.
 

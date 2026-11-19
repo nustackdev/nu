@@ -18,7 +18,7 @@ import nu.context.fabric.lifecycle as _ctx_lifecycle  # noqa: F401
 import nu.core.spans.bracket as _spans_bracket  # noqa: F401
 import nu.core.spans.policy as _spans_policy  # noqa: F401
 import nustd.kv.interactions.atomicity as _kv_atomicity  # noqa: F401
-import nustd.mp.interactions as _mp_interactions  # noqa: F401
+import nustd.mp_pool.interactions as _mp_interactions  # noqa: F401
 import nustd.proxy.proxy as _proxy  # noqa: F401
 from nu.engine.compilation import UnknownAttributeError
 from nu.engine.structure import Declared

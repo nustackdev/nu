@@ -207,12 +207,11 @@ def test_cleanup_reaps_every_worker():
 
 
 async def test_acleanup_reaps_under_cancellation():
-    """The measured ``nustd.mp`` bug, which this pool must not have.
+    """Cleanup survives the enclosing task being cancelled.
 
-    ``MpWorker.acleanup`` is ``asyncio.to_thread(self.cleanup)``: when the
-    enclosing task is cancelled the await raises immediately and the cleanup
-    thread is abandoned, so the tree completes with the child still alive.
-    ``WorkerPool.acleanup`` does its work inline with no await points, so a
+    An ``acleanup`` that is ``asyncio.to_thread(self.cleanup)`` abandons the
+    cleanup thread when the enclosing task is cancelled, so the tree completes
+    with the child still alive. ``WorkerPool.acleanup`` does its work inline with no await points, so a
     cancellation cannot land inside it.
     """
     bracket = nu.Provide(WorkerPool, {"name": "nu-test-cancel"})

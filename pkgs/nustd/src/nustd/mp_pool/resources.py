@@ -1,7 +1,6 @@
 """``WorkerPool``: the fabric that owns N worker processes.
 
-Where ``nustd.mp.MpWorker`` is the fabric of *one* process - its whole lifecycle
-is the ``Provide`` bracket - ``WorkerPool`` is the fabric of the *fleet*. One
+``WorkerPool`` is the fabric of the *fleet*. One
 ``Provide`` at the top of a tree owns ``{id -> process}``, and because the
 fabric spans many processes it legitimately carries interactions over them:
 launch one, run a tree on one, interrupt, stop or kill one, read its status.

@@ -1,6 +1,5 @@
 """nustd.mp_pool: the pool of worker processes as one fabric.
 
-nustd.mp is the fabric of ONE process, and its whole lifecycle is the bracket.
 nustd.mp_pool is the fabric of the fleet: one pool(...) owns N workers, and the
 interactions address them by id. Every id is a child, never payload, so it
 can come from a Ref, a mem slot or any query.
