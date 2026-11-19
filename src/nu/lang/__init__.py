@@ -79,7 +79,7 @@ from .kinds import (
     StreamQuery,
 )
 from .laws import LAWS
-from .literal import Literal
+from .literal import Literal, MutableLiteralWarning
 from .nu import Nu
 from .null import NULL, Null, is_null
 from .runtime import Context, Runtime
@@ -126,6 +126,7 @@ __all__ = [
     "Law",
     "ListArg",
     "Literal",
+    "MutableLiteralWarning",
     "NoneArg",
     "Nu",
     "Null",

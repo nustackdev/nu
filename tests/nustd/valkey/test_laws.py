@@ -47,9 +47,9 @@ def test_the_fluent_form_puts_the_receiver_in_the_server_slot():
     assert type(ref.ping()) is Ping
 
 
-def test_the_atoms_carry_no_caller_value_in_payload():
+def test_the_atoms_carry_no_caller_value_in_a_field():
     for atom in (Url(), Ping()):
-        assert not nu.tree.payload(atom)
+        assert not nu.tree.fields(atom)
 
 
 def test_building_the_preset_starts_nothing():

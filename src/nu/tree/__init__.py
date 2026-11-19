@@ -2,13 +2,13 @@
 
 The generic metaprogramming toolkit (Layer 2): a top-level package built
 on ``lang``, domain-free. Every helper operates on the Term structure
-(``._children`` / ``._with_children``) and the ``lang`` kinds (Flow / Ref /
+(``._children`` / ``.evolve``) and the ``lang`` kinds (Flow / Ref /
 Effect) -- it knows no domain or fabric.
 
 Five modules:
 
 - ``walk``    -- lazy traversals (preorder / postorder / bfs / leaves / ancestors).
-- ``query``   -- read-only inspection (children / payload / find / find_first /
+- ``query``   -- read-only inspection (children / fields / find / find_first /
   count / size / depth / equal).
 - ``rewrite`` -- generic Nu -> Nu transforms (map_nodes / replace / wrap / unwrap / ...).
 - ``effects`` -- pre-compile effect analysis (is_pure / reads / writes / fabrics / touches_fabric).
@@ -33,7 +33,7 @@ from .effects import (
     writes,
 )
 from .flow import is_flow, wrap_flow_children, wrap_flows
-from .query import children, count, depth, equal, find, find_first, payload, size
+from .query import children, count, depth, equal, fields, find, find_first, size
 from .rewrite import (
     Transform,
     apply,
@@ -62,6 +62,7 @@ __all__ = [
     "depth",
     "equal",
     "fabrics",
+    "fields",
     "find",
     "find_first",
     "graft",
@@ -74,7 +75,6 @@ __all__ = [
     "map_children",
     "map_nodes",
     "node_effects",
-    "payload",
     "postorder",
     "preorder",
     "prune",

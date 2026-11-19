@@ -96,11 +96,11 @@ class Set(
         """Wrap operand as an elem-typed Form when known; Object otherwise.
 
         Notes:
-            - A Set carrying a `TypeInfo` on its payload (a result of a
+            - A Set carrying a `TypeInfo` in its `type_info` field (a result of a
               typed set ref, like `SetRef.slot(str).union(...)`) dispatches
               the element to its concrete Form, as `List` does.
         """
-        ti = self._payload.get("type_info")
+        ti = self._type_info
         if ti is not None and ti.elem is not None:
             return ti.elem.to_form()(operand)  # type: ignore[return-value]
         from ..primitives import Object

@@ -2,8 +2,8 @@
 
 Transforms are ``Nu -> Nu`` functions that change tree shape. All
 operations are non-mutating (return new trees) and domain-free -- they
-touch only ``._children`` and ``._with_children``, so they apply to any
-Term tree. Child reconstruction goes through ``with_children``, so
+touch only ``._children`` and ``.evolve``, so they apply to any
+Term tree. Child reconstruction goes through ``evolve``, so
 there is no type dispatch.
 """
 
@@ -58,13 +58,13 @@ def apply(root: Nu, *transforms: Transform) -> Nu:
 
 
 def map_children(node: Nu, fn: Callable[[Nu], Nu]) -> Nu:
-    """Apply fn to each direct child, reconstruct via ``with_children``.
+    """Apply fn to each direct child, reconstruct via ``evolve``.
 
     Shallow (one level). For deep transforms, use ``map_nodes``.
     """
     if not node._children:
         return node
-    return node._with_children(*(fn(c) for c in node._children))
+    return node.evolve(children=(fn(c) for c in node._children))
 
 
 def map_nodes(
@@ -84,10 +84,10 @@ def map_nodes(
         node = fn(root)
         if not node._children:
             return node
-        return node._with_children(*(map_nodes(c, fn, order) for c in node._children))
+        return node.evolve(children=(map_nodes(c, fn, order) for c in node._children))
     # bottom_up
     if root._children:
-        root = root._with_children(*(map_nodes(c, fn, order) for c in root._children))
+        root = root.evolve(children=(map_nodes(c, fn, order) for c in root._children))
     return fn(root)
 
 
@@ -133,7 +133,7 @@ def unwrap(
                 new_children.append(processed._children[0])
             else:
                 new_children.append(processed)
-        return node._with_children(*new_children)
+        return node.evolve(children=new_children)
 
     return _process(root)
 
@@ -164,7 +164,7 @@ def prune(root: Nu, pred: Callable[[Nu], bool]) -> Nu | None:
         n is o for n, o in zip(new_children, root._children, strict=True)
     ):
         return root
-    return root._with_children(*new_children)
+    return root.evolve(children=new_children)
 
 
 def conditional_wrap(
@@ -191,4 +191,4 @@ def conditional_wrap(
         else:
             new_children.append(conditional_wrap(child, pred, wrapper))
 
-    return root._with_children(*new_children)
+    return root.evolve(children=new_children)

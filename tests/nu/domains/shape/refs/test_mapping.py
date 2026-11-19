@@ -48,9 +48,8 @@ class StubMappingRef(ReactiveMappingRef):
         return ItemRef(address, parent_ref=self, owner_shape=self._owner_shape)
 
 
-def _declared(ref, key, value):
-    ref._payload["type_info"] = TypeInfo(type(ref), key=TypeInfo(key), elem=TypeInfo(value))
-    return ref
+def _declared(cls, name, key, value):
+    return cls(name, type_info=TypeInfo(cls, key=TypeInfo(key), elem=TypeInfo(value)))
 
 
 def test_mapping_ref_subscript_needs_a_substrate():
@@ -86,7 +85,7 @@ def test_mapping_ref_different_keys_produce_different_refs():
 
 
 def test_mapping_ref_value_results_take_the_declared_value_form():
-    m = _declared(MutableMappingRef("my_map"), str, int)
+    m = _declared(MutableMappingRef, "my_map", str, int)
     assert type(m.get_item("a", 0)) is Int
     assert type(m.pop("a")) is Int
     assert type(m.setdefault("a", 0)) is Int
@@ -99,19 +98,19 @@ def test_mapping_ref_undeclared_value_results_are_object():
 
 
 def test_mapping_ref_collection_results_carry_the_declaration():
-    m = _declared(MutableMappingRef("my_map"), str, int)
+    m = _declared(MutableMappingRef, "my_map", str, int)
     assert type(m.get_item("a")) is Int
     assert not hasattr(m, "copy")
-    items = nu.tree.payload(m.items())["type_info"]
+    items = m.items()._type_info
     assert (items.key, items.elem) == (TypeInfo(str), TypeInfo(int))
-    assert nu.tree.payload(m.keys())["type_info"].elem == TypeInfo(str)
-    assert nu.tree.payload(m.values())["type_info"].elem == TypeInfo(int)
+    assert m.keys()._type_info.elem == TypeInfo(str)
+    assert m.values()._type_info.elem == TypeInfo(int)
     assert isinstance(m.keys(), DictKeys)
     assert isinstance(m.values(), DictValues)
 
 
 def test_mapping_ref_element_results_take_the_declared_key_form():
-    m = _declared(MappingRef("my_map"), str, int)
+    m = _declared(MappingRef, "my_map", str, int)
     assert type(m._wrap_element_result(nu.Literal("k"))) is Str
 
 
@@ -242,17 +241,17 @@ def test_plain_mapping_refs_have_no_reversed_reads():
 
 
 def test_ordered_mapping_ref_reads_back_to_front_typed_by_the_declaration():
-    m = _declared(ReactiveOrderedMappingRef("m"), str, int)
+    m = _declared(ReactiveOrderedMappingRef, "m", str, int)
     assert isinstance(nu.tree.children(m.reversed_keys())[0], ReversedKeys)
     assert isinstance(nu.tree.children(m.keys(limit=2))[0], KeysPage)
     assert isinstance(nu.tree.children(m.reversed_keys(before="a"))[0], ReversedKeysPage)
-    assert nu.tree.payload(m.reversed_keys())["type_info"].elem == TypeInfo(str)
-    assert nu.tree.payload(m.reversed_values())["type_info"].elem == TypeInfo(int)
+    assert m.reversed_keys()._type_info.elem == TypeInfo(str)
+    assert m.reversed_values()._type_info.elem == TypeInfo(int)
     assert isinstance(m.reversed_keys(), nu.Iterator)
     assert isinstance(m.reversed_items(), nu.Iterator)
     assert isinstance(m.keys(limit=2), nu.List)
-    assert nu.tree.payload(m.keys(limit=2))["type_info"].elem == TypeInfo(str)
-    assert nu.tree.payload(m.reversed_keys(before="a"))["type_info"].elem == TypeInfo(str)
+    assert m.keys(limit=2)._type_info.elem == TypeInfo(str)
+    assert m.reversed_keys(before="a")._type_info.elem == TypeInfo(str)
     assert isinstance(m.on_change(), OnChange)
     assert isinstance(m.on_children_change(), OnChildrenChange)
 

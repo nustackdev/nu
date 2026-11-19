@@ -16,9 +16,9 @@ import socket
 import time
 
 import pytest
+from _support.brackets import config
 from _support.observer_workers import child_main, unbind_child_main
 
-import nu
 from nu.context.fabric import With
 from nu.core.reactive import ObserverProtocol
 from nu.lang import Context
@@ -114,17 +114,17 @@ def _drain(out, kind: str, timeout: float = 20.0):
 def test_served_observer_provides_the_hosted_observer_and_a_server():
     bracket = served_observer("127.0.0.1:19000")
     assert isinstance(bracket, With)
-    brackets = nu.tree.payload(bracket)["brackets"]
-    assert [nu.tree.payload(b)["cls"] for b in brackets] == [HostedObserver, InvisiblesServer]
-    assert nu.tree.payload(brackets[1])["kwargs"]["target"] is HostedObserver
+    brackets = bracket.brackets
+    assert [config(b)["cls"] for b in brackets] == [HostedObserver, InvisiblesServer]
+    assert config(brackets[1])["kwargs"]["target"] is HostedObserver
 
 
 def test_proxy_observer_is_a_proxy_bound_under_the_protocol():
     bracket = proxy_observer("127.0.0.1:19000")
     assert isinstance(bracket, InvisiblesProxy)
-    assert nu.tree.payload(bracket)["target"] is ObserverProtocol
+    assert config(bracket)["target"] is ObserverProtocol
     # The far side calls back into this process, so it has to be serving.
-    assert nu.tree.payload(bracket)["client_kwargs"]["bg_serve"] is True
+    assert config(bracket)["kwargs"]["bg_serve"] is True
 
 
 # --- the feature ------------------------------------------------------------

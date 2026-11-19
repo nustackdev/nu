@@ -8,6 +8,7 @@ The server itself serves no endpoint of its own beyond ``/ws``.
 from __future__ import annotations
 
 import pytest
+from _support.brackets import config
 from starlette.responses import JSONResponse, PlainTextResponse
 from starlette.routing import Route, WebSocketRoute
 from starlette.testclient import TestClient
@@ -62,6 +63,6 @@ def test_extra_routes_win_over_the_spa_fallback():
 
 def test_listen_threads_routes_into_the_constructor():
     route = Route("/api/ping", _ping)
-    kwargs = listen(session_cls=_Session, routes=[route])._payload["kwargs"]
+    kwargs = config(listen(session_cls=_Session, routes=[route]))["kwargs"]
     assert kwargs["routes"] == (route,)
     assert WebServer(**kwargs)._routes == (route,)

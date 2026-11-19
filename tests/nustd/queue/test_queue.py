@@ -7,7 +7,7 @@ import threading
 
 import pytest
 
-from nu import Context, Shape, arun, run
+from nu import Context, DictRef, Shape, StrRef, arun, run
 from nustd.queue import JQueueRef, QueueClosed
 
 
@@ -17,6 +17,15 @@ class BufShape(Shape):
 
 class UnboundedBuf(Shape):
     queue = JQueueRef.slot(item_type=int)
+
+
+class Lane(Shape):
+    queue = JQueueRef.slot(item_type=int)
+
+
+class Lanes(Shape):
+    by = DictRef.slot(Lane)
+    which = StrRef.slot()
 
 
 @pytest.fixture
@@ -54,6 +63,19 @@ def test_vivifies_in_backing_dict(ctx: tuple[Context, dict]) -> None:
     run(BufShape.queue.put(1), c)
     assert "queue" in data
     assert type(data["queue"]).__name__ == "Queue"
+
+
+def test_a_queue_under_a_computed_key_lands_at_its_value() -> None:
+    # The parent path is run, never read off the tree: the key is its value.
+    data: dict = {"which": "a"}
+    run(Lanes.by[Lanes.which].queue.put(1), Context().bind(dict, data, Lanes))
+    assert type(data["by"]["a"]["queue"]).__name__ == "Queue"
+
+
+async def test_async_queue_under_a_computed_key_lands_at_its_value() -> None:
+    data: dict = {"which": "b"}
+    await arun(Lanes.by[Lanes.which].queue.put(1), Context().bind(dict, data, Lanes))
+    assert type(data["by"]["b"]["queue"]).__name__ == "Queue"
 
 
 def test_unbounded_default(unbounded_ctx: Context) -> None:

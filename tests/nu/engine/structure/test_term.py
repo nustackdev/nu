@@ -1,17 +1,27 @@
 """Unit tests for ``nu.engine.structure.term``.
 
-Covers :class:`Term` -- its construction shape, ``with_children`` variant,
-``payload``, ``__repr__``, the not-implemented ``eval``/``aeval`` defaults --
-and :class:`TermMeta`'s attribute collection across the MRO.
+Covers :class:`Term` -- its construction shape, ``evolve`` variants, fields,
+the freeze after construction, ``__repr__``, the not-implemented
+``eval``/``aeval`` defaults -- and :class:`TermMeta`'s attribute collection
+across the MRO.
 """
 
 from __future__ import annotations
+
+import copy
+import pickle
+from typing import TypeVar
 
 import pytest
 from _support.terms import HeavyNode, Leaf, Node
 
 import nu
-from nu.engine.structure import Declared, Term
+from nu.engine import Runtime
+from nu.engine.structure import Declared, FrozenTermError, Term
+from nu.lang import wire
+
+
+V = TypeVar("V")
 
 
 # --- TermMeta: attribute collection ---------------------------------------
@@ -63,39 +73,183 @@ def test_a_leaf_has_no_children():
     assert nu.tree.children(Leaf()) == ()
 
 
-def test_payload_defaults_to_an_empty_dict():
-    assert nu.tree.payload(Leaf()) == {}
+def test_a_bare_term_holds_its_children_and_no_fields():
+    assert vars(Leaf()) == {"_children": (), "_frozen": True}
+    assert nu.tree.fields(Leaf()) == {}
 
 
-def test_each_instance_gets_its_own_payload():
-    a, b = Leaf(), Leaf()
-    nu.tree.payload(a)["k"] = "v"
-    assert nu.tree.payload(b) == {}
+# --- Term: evolve ---------------------------------------------------------
 
 
-# --- Term: with_children --------------------------------------------------
-
-
-def test_with_children_returns_a_new_term_of_the_same_kind():
+def test_evolve_returns_a_new_term_of_the_same_kind():
     original = Node(Leaf(), Leaf())
-    variant = original._with_children(Leaf())
+    variant = original.evolve(children=(Leaf(),))
     assert type(variant) is Node
     assert variant is not original
 
 
-def test_with_children_replaces_the_children_tuple():
+def test_evolve_replaces_the_children_tuple():
     a, b, c = Leaf(), Leaf(), Leaf()
     original = Node(a, b)
-    variant = original._with_children(c)
+    variant = original.evolve(children=(c,))
     assert nu.tree.children(variant) == (c,)
     assert nu.tree.children(original) == (a, b)
 
 
-def test_with_children_shares_the_payload_object():
-    original = Node()
-    nu.tree.payload(original)["k"] = "v"
-    variant = original._with_children(Leaf())
-    assert nu.tree.payload(variant) is nu.tree.payload(original)
+def test_evolve_shares_field_values_by_reference():
+    held = {"k": "v"}
+    original = nu.Literal(held)
+    variant = original.evolve(children=())
+    assert variant is not original
+    assert variant.value is held
+
+
+class Boxed(Term):
+    def __init__(self, *children: Term, size: int = 0, tag: str = "") -> None:
+        super().__init__(*children)
+        self.size = size
+        self.tag = tag
+
+
+def test_evolve_without_arguments_is_an_equal_copy():
+    original = Boxed(Leaf(), size=3)
+    variant = original.evolve()
+    assert variant is not original
+    assert nu.tree.equal(variant, original)
+
+
+def test_evolve_overrides_fields_and_keeps_the_rest():
+    original = Boxed(Leaf(), size=3, tag="a")
+    variant = original.evolve(size=4)
+    assert nu.tree.fields(variant) == {"size": 4, "tag": "a"}
+    assert nu.tree.fields(original) == {"size": 3, "tag": "a"}
+    assert nu.tree.children(variant) == nu.tree.children(original)
+
+
+def test_evolve_takes_children_and_fields_together():
+    a, b = Leaf(), Leaf()
+    variant = Boxed(a, size=1).evolve(children=[b], tag="z")
+    assert nu.tree.children(variant) == (b,)
+    assert nu.tree.fields(variant) == {"size": 1, "tag": "z"}
+
+
+def test_equal_tells_fields_apart():
+    assert nu.tree.equal(Boxed(size=1), Boxed(size=1))
+    assert not nu.tree.equal(Boxed(size=1), Boxed(size=2))
+
+
+def test_a_term_with_fields_pickles_round_trip():
+    original = Boxed(Leaf(), size=5, tag="t")
+    for back in (pickle.loads(pickle.dumps(original)), wire.loads(wire.dumps(original))):  # noqa: S301 -- own bytes
+        assert nu.tree.equal(back, original)
+
+
+# --- Term: frozen after construction -------------------------------------
+
+
+class Sized(Boxed):
+    """A subclass whose ``__init__`` runs the base's, then writes over it."""
+
+    def __init__(self, *children: Term, size: int = 0) -> None:
+        super().__init__(*children, size=size, tag="sized")
+        self.size = size * 2
+        self._children = (*self._children, Leaf())
+
+
+def test_setting_a_field_after_construction_raises():
+    term = Boxed(size=1)
+    with pytest.raises(FrozenTermError, match="evolve"):
+        term.size = 2
+    with pytest.raises(FrozenTermError):
+        term.new_field = 1
+    assert nu.tree.fields(term) == {"size": 1, "tag": ""}
+
+
+def test_replacing_children_after_construction_raises():
+    term = Node(Leaf())
+    with pytest.raises(FrozenTermError):
+        term._children = ()
+
+
+def test_deleting_a_field_after_construction_raises():
+    term = Boxed(size=1)
+    with pytest.raises(FrozenTermError):
+        del term.size
+    assert term.size == 1
+
+
+def test_frozen_term_error_is_an_attribute_error():
+    assert issubclass(FrozenTermError, AttributeError)
+
+
+def test_a_subclass_init_writes_freely_until_the_outermost_init_returns():
+    term = Sized(Leaf(), size=3)
+    assert nu.tree.fields(term) == {"size": 6, "tag": "sized"}
+    assert len(nu.tree.children(term)) == 2
+    with pytest.raises(FrozenTermError):
+        term.size = 1
+
+
+def test_a_generic_term_constructs_through_its_alias():
+    # typing sets ``__orig_class__`` after construction and swallows the
+    # AttributeError, so the alias neither fails nor leaks a field.
+    class Typed(Term[Runtime, V]):
+        pass
+
+    term = Typed[int](Leaf())
+    assert len(nu.tree.children(term)) == 1
+    assert nu.tree.fields(term) == {}
+    with pytest.raises(FrozenTermError):
+        term.size = 1
+
+
+def test_evolve_builds_a_frozen_variant_and_leaves_the_original():
+    original = Boxed(Leaf(), size=3, tag="a")
+    variant = original.evolve(children=(), size=4)
+    assert nu.tree.fields(original) == {"size": 3, "tag": "a"}
+    assert len(nu.tree.children(original)) == 1
+    with pytest.raises(FrozenTermError):
+        variant.size = 5
+    assert variant.size == 4
+
+
+def _local_boxed() -> Term:
+    class Local(Term):
+        def __init__(self, size: int) -> None:
+            super().__init__()
+            self.size = size
+
+    return Local(7)
+
+
+@pytest.mark.parametrize(
+    "round_trip",
+    [
+        copy.copy,
+        copy.deepcopy,
+        lambda t: pickle.loads(pickle.dumps(t)),  # noqa: S301 -- own bytes
+        lambda t: wire.loads(wire.dumps(t)),
+    ],
+    ids=["copy", "deepcopy", "pickle", "cloudpickle"],
+)
+def test_copies_and_unpickled_terms_stay_frozen(round_trip):
+    back = round_trip(Boxed(Leaf(), size=5, tag="t"))
+    assert back.size == 5
+    with pytest.raises(FrozenTermError):
+        back.size = 6
+
+
+def test_a_term_of_a_local_class_crosses_the_wire_frozen():
+    back = wire.loads(wire.dumps(_local_boxed()))
+    assert back.size == 7
+    with pytest.raises(FrozenTermError):
+        back.size = 8
+
+
+def test_a_bare_instance_never_constructed_is_not_frozen():
+    bare = Boxed.__new__(Boxed)
+    bare._children = ()
+    assert nu.tree.children(bare) == ()
 
 
 # --- Term: repr -----------------------------------------------------------

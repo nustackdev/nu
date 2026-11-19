@@ -22,7 +22,7 @@ the item (``lambda x: x > 1``): it runs once, at construction, with a ref to
 the item and returns the child tree, and the name is minted for it. Given as a
 plain tree instead, the child reads the item with ``Attr(<name>)`` under an
 explicit name, itself a **child** (a ``Literal`` or a Ref computed elsewhere,
-never an opaque payload). The item is bound with ``ctx.attrs.let`` for the
+never an opaque field). The item is bound with ``ctx.attrs.let`` for the
 evaluation of that one item, so it shadows an outer name of the same spelling
 and never outlives the item.
 """
@@ -32,9 +32,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.context.attrs.binders import bind
-from nu.engine import Term
 from nu.lang import ScalarQuery, StreamQuery
-from nu.lang.literal import Literal
 
 from ._stream import aiter_any, sync_iter
 
@@ -284,8 +282,7 @@ class SortBy(StreamQuery):
         item: StrArg | None = None,
     ) -> None:
         key, (item,) = bind("SortBy", key, item=item)
-        reverse_node = reverse if isinstance(reverse, Term) else Literal(reverse)
-        super().__init__(source, key, reverse_node, "item" if item is None else item)
+        super().__init__(source, key, reverse, "item" if item is None else item)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, key_expr, reverse_t, item_t = children

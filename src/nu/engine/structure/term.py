@@ -1,8 +1,9 @@
 """Term: the primitive node of an engine description, and its metaclass.
 
-A Term is layer 0's node: a kind (its class), an ordered tuple of child
-Terms, and an opaque payload. It is pure immutable construction data with
-no parent and no position; an application is a Term-rooted DAG.
+A Term is layer 0's node: a kind (its class), its fields (plain instance
+attributes set once in ``__init__``), and an ordered tuple of child Terms.
+It is pure immutable construction data with no parent and no position; an
+application is a Term-rooted DAG.
 
 The :class:`TermMeta` metaclass collects :class:`Attribute` declarations off
 the class body, populating the per-class :attr:`Term._attributes` mapping.
@@ -30,24 +31,39 @@ the PEP 695 inline form, since PEP 695 has no explicit variance syntax.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar
+import copy
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 from .attribute import Attribute, Declared
 
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable, Callable
+    from collections.abc import Awaitable, Callable, Iterable
     from typing import ClassVar
 
     from typing_extensions import Self
 
     from nu.engine.evaluation import Runtime
 
-__all__ = ["Term", "TermMeta"]
+__all__ = ["FrozenTermError", "Term", "TermMeta"]
 
 
 R_contra = TypeVar("R_contra", bound="Runtime", contravariant=True)
 V_co = TypeVar("V_co", covariant=True)
+
+_FROZEN = "_frozen"
+"""Instance ``__dict__`` key :class:`TermMeta` sets once construction returns."""
+
+
+class FrozenTermError(AttributeError):
+    """Raised on writing or deleting an attribute of a constructed Term.
+
+    Fields are set in ``__init__`` and never after; a variant is built with
+    :meth:`Term.evolve`. Subclasses ``AttributeError`` (as dataclasses'
+    ``FrozenInstanceError`` does) so code that probes with ``setattr`` under
+    ``except AttributeError`` (typing setting ``__orig_class__`` on a generic
+    instance) keeps working.
+    """
 
 
 class TermMeta(type):
@@ -78,9 +94,22 @@ class TermMeta(type):
         cls._attributes = attributes  # type: ignore
         return cls
 
+    def __call__(cls, *args: object, **kwargs: object) -> Any:  # noqa: ANN401 -- Any keeps __init__'s signature for type checkers
+        """Construct as usual, then freeze the instance.
+
+        Fires once, after the outermost ``__init__`` returns, so a subclass
+        ``__init__`` calling ``super().__init__`` (or reassigning a field the
+        base set) still writes freely. The flag lives in the instance
+        ``__dict__``, so copies and unpickled Terms arrive frozen.
+        """
+        instance = super().__call__(*args, **kwargs)
+        if isinstance(instance, Term):
+            instance.__dict__[_FROZEN] = True
+        return instance
+
 
 class Term(Generic[R_contra, V_co], metaclass=TermMeta):  # PEP 695 has no variance markers
-    """Pure immutable construction data: a kind, children, and a payload.
+    """Pure immutable construction data: a kind, fields, and children.
 
     A description is a DAG of Terms. Constructing one builds a nested
     immutable value and nothing else -- no store, no evaluation, no checks.
@@ -110,18 +139,36 @@ class Term(Generic[R_contra, V_co], metaclass=TermMeta):  # PEP 695 has no varia
 
     def __init__(self, *children: Term) -> None:
         self._children: tuple[Term, ...] = children
-        self._payload: dict[str, object] = {}
 
     # --- construction -------------------------------------------------------
 
-    def _with_children(self, *children: Term) -> Self:
-        """Return a variant of this Term with different children.
+    def __setattr__(self, name: str, value: object) -> None:
+        if _FROZEN in self.__dict__:
+            msg = f"cannot set {name!r} on a constructed {type(self).__name__}; use evolve()"
+            raise FrozenTermError(msg)
+        object.__setattr__(self, name, value)
 
-        The original is untouched; the variant shares the same payload.
+    def __delattr__(self, name: str) -> None:
+        if _FROZEN in self.__dict__:
+            msg = f"cannot delete {name!r} on a constructed {type(self).__name__}; use evolve()"
+            raise FrozenTermError(msg)
+        object.__delattr__(self, name)
+
+    def evolve(self, children: Iterable[Term] | None = None, **fields: object) -> Self:
+        """Return a variant of this Term: same kind, some children or fields replaced.
+
+        A shallow copy of this Term with ``children`` (when given) as its new
+        child tuple and each keyword overriding the field of that name. The
+        original is untouched. Fields not overridden are shared by reference
+        with the original, which is safe since fields are never written after
+        ``__init__``. The variant is frozen like the original: the copy
+        carries the flag, and the overrides go past the guard here only.
         """
-        variant = object.__new__(type(self))
-        variant._children = children
-        variant._payload = self._payload
+        variant = copy.copy(self)
+        if children is not None:
+            object.__setattr__(variant, "_children", tuple(children))
+        for name, value in fields.items():
+            object.__setattr__(variant, name, value)
         return variant
 
     # --- compile hooks ------------------------------------------------------

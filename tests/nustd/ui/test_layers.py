@@ -80,11 +80,11 @@ class _NoteRef(LeafRef):
 
 def test_props_go_through_the_refs_own_slot():
     box = _BoxRef("b", props={"gap": "2"})
-    assert box._payload["props"] == {"gap": 2, "tone": "plain"}
+    assert box._props == {"gap": 2, "tone": "plain"}
 
 
 def test_no_props_leaves_the_payload_alone():
-    assert "props" not in _BoxRef("b")._payload
+    assert _BoxRef("b")._props is None
 
 
 def test_unknown_prop_is_refused_by_the_slot_signature():

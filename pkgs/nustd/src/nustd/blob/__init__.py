@@ -9,13 +9,12 @@ Surface:
       asks whether a backend is bound.
     - lmdb(store, path), files(store, root), s3(store, bucket=...): bind a
       backend under a store's name for the span of a tree.
-    - backend_of(spec): the backend such a binding builds, for use outside a
-      tree, unopened.
     - BlobPut, BlobPutStream, BlobNewId, BlobGet, BlobOpen, BlobMeta, BlobHas, BlobDelete:
       the interactions those terms build; BlobFabric beneath them.
     - BlobBackend: the protocol every backend keeps, sync plus async twins.
     - BlobInfo, BlobNotFound, BlobExists, BlobTooLarge: what calls give and raise.
-    - LMDBBackend, FilesBackend, S3Backend: the backends, plain Python, no Nu.
+    - LMDBBackend, FilesBackend, S3Backend: the backends, plain Python, no Nu:
+      what code outside a tree takes, such as the server ``serve_blobs`` builds.
 
 Example::
 
@@ -68,7 +67,7 @@ if TYPE_CHECKING:
         BlobPut,
         BlobPutStream,
     )
-    from .presets import backend_of, files, lmdb, s3
+    from .presets import files, lmdb, s3
     from .store import StoreRef
 
 
@@ -86,7 +85,6 @@ _LAZY = {
     "BlobPut": "interactions",
     "BlobPutStream": "interactions",
     "StoreRef": "store",
-    "backend_of": "presets",
     "files": "presets",
     "lmdb": "presets",
     "s3": "presets",
@@ -129,7 +127,6 @@ __all__ = [
     "S3Backend",
     "Source",
     "StoreRef",
-    "backend_of",
     "files",
     "http",
     "lmdb",

@@ -62,7 +62,7 @@ async def _run(
     async with stack:
         if init is not None:
             ctx = Context()
-            await stack.enter_async_context(init._aopen(ctx))
+            await stack.enter_async_context(init._aenter(ctx))
         elif ctx_builder is not None:
             result = ctx_builder()
             if asyncio.iscoroutine(result):

@@ -15,13 +15,27 @@ import nu.mem as nm
 
 class Seen(nu.Shape):
     log = nm.ListRef.slot(object)
+    rows = nm.ListRef.slot(object)
+
+
+class _Row:
+    """A user object: no builtin container, so nothing on the way copies it."""
 
 
 def test_a_loop_hands_the_item_through_as_it_is() -> None:
-    row = {"id": 1}
+    row = _Row()
     term = nu.Collect(nu.Map(nu.Iter([row]), nu.context.Attr("item")))
     assert nu.run(term)[0][0] is row
     assert asyncio.run(nu.arun(term))[0][0] is row
+
+
+def test_a_loop_over_a_ref_hands_the_stored_items_through() -> None:
+    row = {"id": 1}
+    data: dict = {"rows": [row]}
+    ctx = nu.Context().bind(dict, data, Seen)
+    term = nu.Collect(nu.Map(nu.Iter(Seen.rows), nu.context.Attr("item")))
+    assert nu.run(term, ctx)[0][0] is row
+    assert asyncio.run(nu.arun(term, ctx))[0][0] is row
 
 
 def test_a_range_loop_hands_over_plain_ints() -> None:

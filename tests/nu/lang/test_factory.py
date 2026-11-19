@@ -165,11 +165,9 @@ def test_command_thunk_returns_none_and_calls_fn() -> None:
         side_effect,
         mutates=frozenset({0}),
     )
-    # A Command must wrap a Ref in slot 0; for a unit check we drive the
-    # built thunk directly. compile() gives us back a (rt) -> None thunk.
-    instance = Touch.__new__(Touch)
-    instance._children = ()
-    instance._payload = {}
+    # A Command must wrap a Ref in slot 0 to run in a tree; for a unit check we
+    # build it childless and drive its thunk directly, a (rt) -> None thunk.
+    instance = Touch()
     thunk = instance._compile(0, ())
     assert thunk(rt=None) is None
     assert calls == [()]

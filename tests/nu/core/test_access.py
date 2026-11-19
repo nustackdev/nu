@@ -10,10 +10,11 @@ off a value, not a fabric write (that is a Ref's ``set``).
 from __future__ import annotations
 
 import asyncio
-from types import SimpleNamespace
 
 import pytest
 
+import nu
+import nu.mem as nm
 from nu.core.access import (
     Contains,
     DelAttr,
@@ -39,6 +40,36 @@ def _eval(term: object) -> object:
 async def _aeval(term: object) -> object:
     value, _ = await aeval(compile(term))
     return value
+
+
+class _Grid:
+    """A keyed target the test owns: not a builtin container, so a Literal hands it out as is."""
+
+    def __init__(self, **items: object) -> None:
+        self.items = items
+
+    def __setitem__(self, key: str, value: object) -> None:
+        self.items[key] = value
+
+    def __delitem__(self, key: str) -> None:
+        del self.items[key]
+
+
+class Held(nu.Shape):
+    grid = nm.ObjectRef.slot()
+
+
+def _holding(grid: dict) -> tuple[nu.Context, dict]:
+    """A context whose mem store is the test's dict, with ``grid`` in its slot."""
+    data: dict = {"grid": grid}
+    return nu.Context().bind(dict, data, Held), data
+
+
+class _Thing:
+    """A plain object with attributes, hashable by identity."""
+
+    def __init__(self, **attrs: object) -> None:
+        self.__dict__.update(attrs)
 
 
 # --- reads: evaluation ---------------------------------------------------
@@ -111,29 +142,38 @@ def test_a_null_operand_runs_the_plain_python_op():
 # Commands mutate in place and return None (matching Python's ``x[k] = v``).
 
 
-def test_set_item_mutates_dict_returns_none():
-    grid = {"a": 1}
+def test_set_item_mutates_its_target_in_place_returns_none():
+    grid = _Grid(a=1)
     out = _eval(SetItem(Literal(grid), Literal("b"), Literal(2)))
     assert out is None
-    assert grid == {"a": 1, "b": 2}
+    assert grid.items == {"a": 1, "b": 2}
 
 
-def test_del_item_removes_key_returns_none():
-    grid = {"a": 1, "b": 2}
+def test_del_item_removes_the_key_in_place_returns_none():
+    grid = _Grid(a=1, b=2)
     out = _eval(DelItem(Literal(grid), Literal("a")))
     assert out is None
-    assert grid == {"b": 2}
+    assert grid.items == {"b": 2}
+
+
+def test_item_writes_land_on_the_dict_a_ref_holds():
+    # The ref hands out the stored dict itself, so the write lands in the store.
+    grid = {"a": 1, "b": 2}
+    ctx, data = _holding(grid)
+    nu.run(SetItem(Held.grid, "c", 3) >> DelItem(Held.grid, "a"), ctx)
+    assert data["grid"] is grid
+    assert grid == {"b": 2, "c": 3}
 
 
 def test_set_attr_mutates_object_returns_none():
-    obj = SimpleNamespace(x=1)
+    obj = _Thing(x=1)
     out = _eval(SetAttr(Literal(obj), Literal("y"), Literal(2)))
     assert out is None
     assert obj.y == 2
 
 
 def test_del_attr_removes_attribute_returns_none():
-    obj = SimpleNamespace(x=1, y=2)
+    obj = _Thing(x=1, y=2)
     out = _eval(DelAttr(Literal(obj), Literal("y")))
     assert out is None
     assert not hasattr(obj, "y")
@@ -154,20 +194,24 @@ def test_del_attr_removes_attribute_returns_none():
     ],
 )
 def test_an_empty_operand_makes_a_write_raise(write):
-    grid = {"a": 1}
+    grid = _Grid(a=1)
     with pytest.raises(ValueError, match="NULL"):
         _eval(write(grid))
     # A refused write leaves the value untouched.
-    assert grid == {"a": 1}
+    assert grid.items == {"a": 1}
 
 
 # --- writes: async mirrors sync ------------------------------------------
 
 
 def test_async_writes_mirror_sync():
-    grid = {"a": 1}
+    grid = _Grid(a=1)
     assert asyncio.run(_aeval(SetItem(Literal(grid), Literal("b"), Literal(2)))) is None
-    assert grid == {"a": 1, "b": 2}
-    obj = SimpleNamespace()
+    assert grid.items == {"a": 1, "b": 2}
+    stored = {"a": 1}
+    ctx, _ = _holding(stored)
+    asyncio.run(nu.arun(SetItem(Held.grid, "b", 2) >> DelItem(Held.grid, "a"), ctx))
+    assert stored == {"b": 2}
+    obj = _Thing()
     assert asyncio.run(_aeval(SetAttr(Literal(obj), Literal("z"), Literal(9)))) is None
     assert obj.z == 9

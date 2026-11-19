@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 __all__ = ["acompile_call", "compile_call"]
 
 
-def _split(payload: dict, args: dict) -> tuple[list[dict], dict]:
+def _split(snap: dict, args: dict) -> tuple[list[dict], dict]:
     """Merge defaults + call args, pull messages out (or synthesize from `prompt`)."""
     call = dict(args)
     prompt = call.pop("prompt", None)
@@ -26,7 +26,7 @@ def _split(payload: dict, args: dict) -> tuple[list[dict], dict]:
             msg = "LLM call needs `prompt=...` or `messages=[...]`"
             raise ValueError(msg)
         messages = [{"role": "user", "content": str(prompt)}]
-    merged = {**payload.get("defaults", {}), **call}
+    merged = {**snap.get("defaults", {}), **call}
     return list(messages), merged
 
 
@@ -35,10 +35,10 @@ def compile_call(children: tuple[Callable, ...]) -> Callable:
     ref_thunk, args_thunk = children
 
     def thunk(rt: Runtime) -> object:
-        payload = ref_thunk(rt)
+        snap = ref_thunk(rt)
         args = args_thunk(rt)
-        messages, overrides = _split(payload, args)
-        fabric = rt.ctx.fabrics.get(LLMFabric, payload["owner_service"])
+        messages, overrides = _split(snap, args)
+        fabric = rt.ctx.fabrics.get(LLMFabric, snap["owner_service"])
         return fabric.chat(messages, **overrides)
 
     return thunk
@@ -49,10 +49,10 @@ def acompile_call(children: tuple[Callable, ...]) -> Callable:
     ref_thunk, args_thunk = children
 
     async def athunk(rt: Runtime) -> object:
-        payload = await ref_thunk(rt)
+        snap = await ref_thunk(rt)
         args = await args_thunk(rt)
-        messages, overrides = _split(payload, args)
-        fabric = rt.ctx.fabrics.get(LLMFabric, payload["owner_service"])
+        messages, overrides = _split(snap, args)
+        fabric = rt.ctx.fabrics.get(LLMFabric, snap["owner_service"])
         return await fabric.achat(messages, **overrides)
 
     return athunk

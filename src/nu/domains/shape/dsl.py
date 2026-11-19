@@ -2,10 +2,10 @@
 
 ``Slot`` is the factory, ``ShapeMeta`` collects slots at class-definition time,
 and ``SlotDescriptor`` hands out a fresh ref on every class access. A slot may
-also declare what its ref holds; that declaration rides on the ref's payload as
-``type_info``, and it is the one place a ref's declared types live. Slot props
-land on ``_payload["props"]`` the same way, so a ref can see what its slot
-declared.
+also declare what its ref holds; that declaration is handed to the ref's
+constructor as ``type_info``, and it is the one place a ref's declared types
+live. Slot props are handed over the same way (``slot_props``), so a ref can see
+what its slot declared.
 
 A slot is written two ways, and both give the same ref with the same typing:
 
@@ -81,21 +81,20 @@ class Slot(Generic[_RefT]):
         ``address`` is the slot's own name unless given: ``ItemRef.to`` builds
         a slot spec at the address it re-kinds, which is no slot name at all.
         """
-        ref = self.ref_cls(  # type: ignore[call-arg]
+        kwargs = dict(self.kwargs)
+        ti = self._resolve_type_info()
+        if ti is not None:
+            kwargs["type_info"] = ti
+        if self.props:
+            # Already normalized by the ref class's ``slot()``: handed over as
+            # they are, so the ref does not normalize them a second time.
+            kwargs["slot_props"] = dict(self.props)
+        return self.ref_cls(  # type: ignore[call-arg]
             self.name if address is None else address,
             owner_shape=owner_shape,
             parent_ref=parent_ref,
-            **self.kwargs,
+            **kwargs,
         )
-        ti = self._resolve_type_info()
-        if ti is not None:
-            ref._payload["type_info"] = ti
-        if self.props:
-            # Payload, not an attribute: ``Term._with_children`` carries it
-            # across a tree rewrite, so the props a slot declared survive
-            # re-rooting and stay reachable from the ref itself.
-            ref._payload["props"] = dict(self.props)
-        return ref
 
     def _resolve_type_info(self) -> TypeInfo | None:
         """What the slot declares its ref holds: explicit, else read off the annotation.

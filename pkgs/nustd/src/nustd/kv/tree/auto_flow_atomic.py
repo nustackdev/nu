@@ -102,21 +102,21 @@ def _walk(node: Nu, pass_scope: Hashable | None, enclosing: tuple) -> Nu:
         new_children = tuple(_walk(c, pass_scope, inner) for c in nu.tree.children(node))
         if all(n is o for n, o in zip(new_children, nu.tree.children(node), strict=True)):
             return node
-        return node._with_children(*new_children)
+        return node.evolve(children=new_children)
 
     if not nu.tree.children(node):
         return node
 
     new_children = tuple(_walk(c, pass_scope, enclosing) for c in nu.tree.children(node))
     changed = any(n is not o for n, o in zip(new_children, nu.tree.children(node), strict=True))
-    new_node = node._with_children(*new_children) if changed else node
+    new_node = node.evolve(children=new_children) if changed else node
 
     if isinstance(new_node, Flow):
         wrapped = tuple(
             _wrap_flow_child(c, pass_scope, enclosing) for c in nu.tree.children(new_node)
         )
         if any(w is not c for w, c in zip(wrapped, nu.tree.children(new_node), strict=True)):
-            return new_node._with_children(*wrapped)
+            return new_node.evolve(children=wrapped)
 
     return new_node
 

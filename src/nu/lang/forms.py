@@ -43,6 +43,7 @@ if TYPE_CHECKING:
 
     from nu.forms import Bool
     from nu.lang.runtime import Runtime
+    from nu.lang.typeinfo import TypeInfo
 
 
 __all__ = [
@@ -137,8 +138,11 @@ class TypedNu(ScalarQuery[T_co], Generic[T_co]):  # PEP 695 has no variance mark
     runtime effect.
     """
 
-    def __init__(self, *children: object) -> None:
+    def __init__(self, *children: object, type_info: TypeInfo | None = None) -> None:
         super().__init__(*children)
+        self._type_info: TypeInfo | None = type_info
+        """The declared types this value carries (a typed collection's key and
+        element), so its own ops stay typed. None when nothing is declared."""
 
     @property
     def _source(self) -> Any:  # noqa: ANN401
@@ -171,8 +175,11 @@ class TypedNuStream(StreamQuery[T_co], Generic[T_co]):  # PEP 695 has no varianc
     tag is for the fluent surface only; it has no runtime effect.
     """
 
-    def __init__(self, *children: object) -> None:
+    def __init__(self, *children: object, type_info: TypeInfo | None = None) -> None:
         super().__init__(*children)
+        self._type_info: TypeInfo | None = type_info
+        """The declared types this value carries (a typed collection's key and
+        element), so its own ops stay typed. None when nothing is declared."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (only,) = children

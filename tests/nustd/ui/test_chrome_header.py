@@ -63,7 +63,7 @@ def test_header_is_a_row_at_the_header_key(name, wire):
     # The string title rides along as the shorthand; the header replaces it on screen.
     assert frame.chain[1][2]["title"] == "Plain"
     # The same row as the actions rail: a line of small parts, centred.
-    assert frame.chain[2][2] == ui.CardRef("c").actions._payload["props"]
+    assert frame.chain[2][2] == ui.CardRef("c").actions._props
 
 
 @pytest.mark.parametrize(("name", "_wire"), _HOSTS)

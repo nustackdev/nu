@@ -130,7 +130,7 @@ def test_values_carry_the_value_type(ctx):
     run(Bag.names["a"].set("gor"), ctx)
     values = Bag.names.values()
     assert type(values) is DictValues
-    assert nu.tree.payload(values)["type_info"].elem == TypeInfo(str)
+    assert values._type_info.elem == TypeInfo(str)
     assert sorted(run(values.to_list(), ctx)[0]) == ["gor"]
 
 
@@ -158,7 +158,7 @@ def test_stream_ops_keep_the_element_type_while_the_items_are_the_sources(ctx):
     drained = Bag.tags.iter().to_list()
     assert type(drained.first_elem()) is Str
     assert run(drained.first_elem().upper(), ctx)[0] == "X"
-    assert nu.tree.payload(Bag.tags.iter().to_set())["type_info"].elem == TypeInfo(str)
+    assert Bag.tags.iter().to_set()._type_info.elem == TypeInfo(str)
     assert type(Bag.tags.iter().map(nu.context.Attr("item")).first()) is Object
 
 
@@ -174,8 +174,8 @@ def test_undeclared_results_are_object():
 def test_slot_and_annotation_declare_the_same_ref(name):
     by_slot, by_annotation = getattr(Bag, name), getattr(Spelled, name)
     assert type(by_slot) is type(by_annotation)
-    assert nu.tree.payload(by_slot)["type_info"] == nu.tree.payload(by_annotation)["type_info"]
-    assert nu.tree.payload(by_slot)["type_marker"] is nu.tree.payload(by_annotation)["type_marker"]
+    assert by_slot._type_info == by_annotation._type_info
+    assert by_slot._type_marker is by_annotation._type_marker
 
 
 def test_slot_and_annotation_descend_alike():

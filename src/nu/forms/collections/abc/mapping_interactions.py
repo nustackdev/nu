@@ -416,22 +416,21 @@ class Merge(ScalarQuery):
 class DeleteItem(Command):
     """Delete entry by key: del mapping[key]. Mutates slot 0; returns nothing.
 
-    An absent key raises whatever the mapping's own ``del`` raises. With the
-    construction-time ``missing_ok`` flag (carried in the payload) set, a
-    ``KeyError`` from that ``del`` is a no-op.
+    An absent key raises whatever the mapping's own ``del`` raises. With
+    ``missing_ok`` truthy, a ``KeyError`` from that ``del`` is a no-op.
+    Children ``[target, key, missing_ok]``: the flag is a child, evaluated
+    on every run, so it can be computed.
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
     _creates = Declared(value=frozenset(), name="creates")
     """Acts on an absent container as on an empty one, and leaves it absent."""
 
-    def __init__(self, target: object, key: object, *, missing_ok: bool = False) -> None:
-        super().__init__(target, key)
-        self._payload = {**self._payload, "missing_ok": missing_ok}
+    def __init__(self, target: object, key: object, *, missing_ok: object = False) -> None:
+        super().__init__(target, key, missing_ok)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        target_t, key_t = children
-        missing_ok = bool(self._payload["missing_ok"])
+        target_t, key_t, missing_ok_t = children
 
         def thunk(rt: Runtime) -> None:
             target = target_t(rt)
@@ -443,14 +442,13 @@ class DeleteItem(Command):
             try:
                 del target[key]
             except KeyError:
-                if not missing_ok:
+                if not missing_ok_t(rt):
                     raise
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        target_t, key_t = children
-        missing_ok = bool(self._payload["missing_ok"])
+        target_t, key_t, missing_ok_t = children
 
         async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)
@@ -462,7 +460,7 @@ class DeleteItem(Command):
             try:
                 del target[key]
             except KeyError:
-                if not missing_ok:
+                if not await missing_ok_t(rt):
                     raise
 
         return athunk

@@ -35,10 +35,10 @@ class _AsyncOnly(StreamQuery):
 class _Src(StreamQuery):
     def __init__(self, items: tuple) -> None:
         super().__init__()
-        self._payload = {"items": tuple(items)}
+        self._items = tuple(items)
 
     def _compile(self, nid, children):
-        items = self._payload["items"]
+        items = self._items
 
         def thunk(rt):
             def gen():
@@ -49,7 +49,7 @@ class _Src(StreamQuery):
         return thunk
 
     def _acompile(self, nid, children):
-        items = self._payload["items"]
+        items = self._items
 
         async def athunk(rt):
             async def agen():

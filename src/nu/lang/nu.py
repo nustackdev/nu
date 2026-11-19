@@ -61,7 +61,8 @@ class Nu(Term[Runtime, V_co], Generic[V_co]):  # PEP 695 has no variance markers
 
     def __init__(self, *children: object) -> None:
         # Auto-wrap any non-Nu child as Literal so `Add(1, 2)` reads the same as
-        # `Add(Literal(1), Literal(2))`. The import is lazy because `Literal`
+        # `Add(Literal(1), Literal(2))`, through the same checks (a container
+        # holding a term raises, an unhashable instance warns). The import is lazy because `Literal`
         # subclasses `ScalarQuery`, which subclasses this class - a real cycle,
         # not a layering choice. Skipped entirely when every child is already a
         # Nu (the common case, and what lets a childless Ref - e.g. the stdio
@@ -73,6 +74,20 @@ class Nu(Term[Runtime, V_co], Generic[V_co]):  # PEP 695 has no variance markers
 
             wrapped = tuple(c if isinstance(c, Nu) else Literal(c) for c in children)
         super().__init__(*wrapped)
+
+    # --- slot roles -----------------------------------------------------
+
+    def _config_slots(self) -> frozenset[int]:
+        """The slots holding this node's own config, when their place varies.
+
+        A config child is a value the node runs for itself (a ``Parallel``'s
+        per-arm modes), not an operand or a body. Where its slot is fixed by
+        the kind, the kind declares it in ``param_slots``; this covers a
+        variadic node whose config follows a run of operands, so its slots
+        are known only from the node's own structural fields. The Flow laws
+        treat these slots as parameters. Most nodes have none.
+        """
+        return frozenset()
 
     # --- display --------------------------------------------------------
     #

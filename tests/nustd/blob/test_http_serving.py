@@ -18,6 +18,7 @@ import httpx
 import pytest
 from _support import blob_fixtures
 from _support.blob_workers import BUCKET
+from _support.brackets import config
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.routing import Mount
@@ -25,7 +26,7 @@ from starlette.testclient import TestClient
 
 import nu
 import nustd.blob
-from nustd.blob import BlobFabric, FilesBackend, LMDBBackend
+from nustd.blob import FilesBackend, LMDBBackend
 from nustd.blob.http import BlobMount
 from nustd.blob.http.serving import (
     CACHE_CONTROL,
@@ -755,23 +756,20 @@ def test_step_must_be_positive(tmp_path):
 
 def _held(bracket):
     """The backend a ``HeldOpen`` bracket opens."""
-    assert bracket._payload["cls"] is HeldOpen
-    return bracket._payload["kwargs"]["backend"]
+    assert config(bracket)["cls"] is HeldOpen
+    return config(bracket)["kwargs"]["backend"]
 
 
 def test_serve_blobs_brackets_and_routes_each_mount(tmp_path):
     files = BlobMount("/files")
     pics = BlobMount("/pics", max_upload=10)
-    brackets, served = serve_blobs(
-        {
-            files: nustd.blob.files("files", tmp_path / "files"),
-            pics: nustd.blob.lmdb("pics", tmp_path / "pics"),
-        }
-    )
+    given = [FilesBackend(tmp_path / "files"), LMDBBackend(tmp_path / "pics")]
+    brackets, served = serve_blobs({files: given[0], pics: given[1]})
     assert len(brackets) == 2
     assert [r.path for r in served] == ["/files/{blob_id}", "/files", "/pics/{blob_id}", "/pics"]
     held = [_held(bracket) for bracket in brackets]
-    assert [type(b) for b in held] == [FilesBackend, LMDBBackend]
+    assert all(h is g for h, g in zip(held, given, strict=True))
+    assert not (tmp_path / "files").exists()  # not opened by serve_blobs
     for b in held:
         b.open()
     try:
@@ -799,24 +797,34 @@ class _Opens(FilesBackend):
         super().close()
 
 
-def _opens_spec(name, root):
-    return nu.Provide(BlobFabric, {"backend": _Opens, "options": {"root": str(root)}}, tag=name)
-
-
 @pytest.mark.parametrize("mode", ["sync", "async"])
 def test_held_open_spans_the_tree(tmp_path, mode):
     """Each mount's bracket opens its backend before the body and closes it after."""
     _Opens.events.clear()
     brackets, _ = serve_blobs(
         {
-            BlobMount("/files"): _opens_spec("files", tmp_path / "files"),
-            BlobMount("/pics"): _opens_spec("pics", tmp_path / "pics"),
+            BlobMount("/files"): _Opens(tmp_path / "files"),
+            BlobMount("/pics"): _Opens(tmp_path / "pics"),
         }
     )
     term = nu.With(*brackets, body=nu.Literal(1))
     out = nu.run(term)[0] if mode == "sync" else asyncio.run(nu.arun(term))[0]
     assert out == 1
     assert _Opens.events == ["open", "open", "close", "close"]
+
+
+def test_one_backend_under_two_mounts_is_held_open_once(tmp_path):
+    """Two mounts may serve one store, each with its own rules; it opens and closes once."""
+    _Opens.events.clear()
+    shared = _Opens(tmp_path / "files")
+    brackets, served = serve_blobs(
+        {BlobMount("/files"): shared, BlobMount("/small", max_upload=1): shared}
+    )
+    assert len(brackets) == 1
+    assert _held(brackets[0]) is shared
+    assert [r.path for r in served] == ["/files/{blob_id}", "/files", "/small/{blob_id}", "/small"]
+    nu.run(nu.With(*brackets, body=nu.Literal(1)))
+    assert _Opens.events == ["open", "close"]
 
 
 def test_held_open_opens_and_closes_its_backend(tmp_path):
@@ -836,21 +844,28 @@ def test_held_open_opens_and_closes_its_backend(tmp_path):
 
 def test_serve_blobs_refuses_a_key_that_is_no_mount(tmp_path):
     with pytest.raises(TypeError, match="BlobMount"):
-        serve_blobs({"/files": nustd.blob.files("files", tmp_path)})
+        serve_blobs({"/files": FilesBackend(tmp_path)})
 
 
 def test_serve_blobs_refuses_two_stores_at_one_path(tmp_path):
     blobs = {
-        BlobMount("/files"): nustd.blob.files("a", tmp_path / "a"),
-        BlobMount("/files"): nustd.blob.files("b", tmp_path / "b"),
+        BlobMount("/files"): FilesBackend(tmp_path / "a"),
+        BlobMount("/files"): FilesBackend(tmp_path / "b"),
     }
     with pytest.raises(ValueError, match="two stores mounted at '/files'"):
         serve_blobs(blobs)
 
 
-def test_serve_blobs_refuses_what_is_no_spec(tmp_path):
-    with pytest.raises(TypeError, match="blob spec"):
-        serve_blobs({BlobMount("/files"): FilesBackend(tmp_path)})
+def test_serve_blobs_refuses_a_spec(tmp_path):
+    """The server takes a backend; the spec is the tree's."""
+    with pytest.raises(TypeError, match="takes a backend"):
+        serve_blobs({BlobMount("/files"): nustd.blob.files("files", tmp_path)})
+
+
+@pytest.mark.parametrize("bad", [None, "/var/blobs", FilesBackend], ids=["none", "str", "class"])
+def test_serve_blobs_refuses_what_is_no_backend(bad):
+    with pytest.raises(TypeError, match="needs a blob backend"):
+        serve_blobs({BlobMount("/files"): bad})
 
 
 def test_serve_blobs_is_exported():

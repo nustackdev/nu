@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 
     from nu.context.fabric import Provide
     from nu.lang import Nu
+    from nustd.blob import BlobBackend
     from nustd.blob.http import BlobMount
 
 
@@ -42,7 +43,7 @@ def serve(
     *,
     static: str | None = "nudle",
     routes: Sequence[BaseRoute] = (),
-    blobs: Mapping[BlobMount, Provide] | None = None,
+    blobs: Mapping[BlobMount, BlobBackend] | None = None,
     uploads: bool = True,
     upload_root: str | os.PathLike[str] | None = None,
     upload_cap: int | None = None,
@@ -74,11 +75,13 @@ def serve(
         routes: extra Starlette routes for the server, served after nudle's
             own ``/api/telemetry-config`` and upload intake, and before the
             SPA mount.
-        blobs: blob stores to serve too, each mount to the spec of its store
-            (``nustd.blob.lmdb``, ``files`` or ``s3``): the server takes
-            reads and uploads under each mount and holds each store open
-            while it runs. The program binds the same specs to reach the
-            stores. None serves no blobs.
+        blobs: blob stores to serve too, each mount to the backend of its
+            store, not open yet (``nustd.blob.LMDBBackend``, ``FilesBackend``
+            or ``S3Backend``): the server takes reads and uploads under each
+            mount and holds each backend open while it runs. The program
+            binds its own spec (``nustd.blob.lmdb``, ``files`` or ``s3``)
+            with the same path or bucket to reach the same store. None
+            serves no blobs.
         uploads: mount the upload intake and its temp area, and bind each
             arm its tab's view of it. False mounts no route, opens no area
             and binds no view, so the upload refs cannot read.

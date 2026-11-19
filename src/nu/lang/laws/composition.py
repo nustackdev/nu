@@ -12,7 +12,7 @@ attributes.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from nu.engine import Law, predicate
 from nu.lang.attributes import MATRIX, Attr, Sort, matrix_sort, subsort
@@ -27,6 +27,7 @@ from .predicates import (
 
 if TYPE_CHECKING:
     from nu.engine import Path, Program
+    from nu.lang import Nu
 
 
 __all__ = ["LAWS"]
@@ -48,11 +49,18 @@ def _slot_fit_sort(program: Program, path: Path) -> Sort | None:
 
 
 def _rejected_child(program: Program, path: Path) -> Path | None:
-    """The first child the node's composition matrix row rejects, if any."""
+    """The first child the node's composition matrix row rejects, if any.
+
+    Config slots (``Nu._config_slots``) are left out: a config child is a
+    value the node runs for itself, not an operand it composes.
+    """
     row = matrix_sort(program.attr(path, Attr.SORT))
     if row is None:
         return None
-    for child in child_paths(program, path):
+    config = cast("Nu", program.terms[program.id_of[path]])._config_slots()
+    for slot, child in enumerate(child_paths(program, path)):
+        if slot in config:
+            continue
         fit = _slot_fit_sort(program, child)
         if fit is not None and fit not in MATRIX[row]:
             return child
@@ -93,9 +101,16 @@ def _effective_sort(program: Program, path: Path) -> Sort:
     return _effective_sort(program, body[0]) if body else sort
 
 
+def _param_slots(program: Program, path: Path) -> frozenset[int]:
+    """The node's param slots: the kind's declared ones plus its config slots."""
+    declared: frozenset[int] = program.attr(path, Attr.PARAM_SLOTS)
+    config: frozenset[int] = cast("Nu", program.terms[program.id_of[path]])._config_slots()
+    return declared | config if config else declared
+
+
 def _non_mutating_body(program: Program, path: Path) -> Path | None:
     """The first direct body-slot child that is not a mutating child."""
-    param_slots: frozenset[int] = program.attr(path, Attr.PARAM_SLOTS)
+    param_slots = _param_slots(program, path)
     for slot, child in enumerate(child_paths(program, path)):
         if slot in param_slots:
             continue
@@ -107,7 +122,7 @@ def _non_mutating_body(program: Program, path: Path) -> Path | None:
 
 def _non_yielding_param(program: Program, path: Path) -> Path | None:
     """The first direct param-slot child that is not a yielding child."""
-    param_slots: frozenset[int] = program.attr(path, Attr.PARAM_SLOTS)
+    param_slots = _param_slots(program, path)
     for slot, child in enumerate(child_paths(program, path)):
         if slot not in param_slots:
             continue

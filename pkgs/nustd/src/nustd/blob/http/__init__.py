@@ -13,11 +13,13 @@ a program builds urls with it in any process, server or not::
 The server half is ``serve_blobs`` (``nustd.blob.http.serving``, loaded on
 first use, as it needs Starlette): the routes over each mount, and the
 brackets holding each store's backend open while the server runs.
-``nustd.ui.serve`` takes the same pairs as ``blobs=``::
+``nustd.ui.serve`` takes the same pairs as ``blobs=``. The server runs outside
+any tree, so it takes a plain backend; a tree binds a spec. Write the config
+once for each, and the same path is the same store::
 
-    spec = nustd.blob.lmdb(Files, ".store/files")
-    nustd.ui.serve(program, blobs={files: spec})   # the server: GET and POST under /files
-    nu.With(spec, body=...)                         # a run: the same store
+    backend = nustd.blob.LMDBBackend(".store/files")
+    nustd.ui.serve(program, blobs={files: backend})        # the server: GET and POST under /files
+    nu.With(nustd.blob.lmdb(Files, ".store/files"), body=...)   # a run: the same store
 """
 
 from __future__ import annotations

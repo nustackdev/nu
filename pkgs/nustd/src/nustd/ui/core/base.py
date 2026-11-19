@@ -32,6 +32,7 @@ if TYPE_CHECKING:
     from nu.domains.shape.dsl import Shape
     from nu.lang import Nu
     from nu.lang.runtime import Runtime
+    from nu.lang.typeinfo import TypeInfo
 
 
 __all__ = ["ItemRef", "Ref"]
@@ -74,7 +75,7 @@ def _level_type(term: object) -> str | None:
     """
     if type(term) is ItemRef:
         return None
-    section_cls = getattr(term, "_payload", {}).get("section_cls")
+    section_cls = getattr(term, "_section_cls", None)
     return _wire_type_of(section_cls if section_cls is not None else type(term))
 
 
@@ -107,18 +108,24 @@ class Ref(StructuredRef):
         parent_ref: Ref | None = None,
         owner_shape: type[Shape] | None = None,
         props: Mapping[str, object] | None = None,
+        type_info: TypeInfo | None = None,
+        slot_props: Mapping[str, object] | None = None,
     ) -> None:
         if isinstance(parent_ref, Ref):
             parent_ref._admit(address)
-        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
-        # State lives in ``payload`` (part of the Term identity) so the base
-        # ``Term._with_children`` carries it across a tree rewrite -- no override.
-        self._payload["segment"] = address
-        if props is not None:
+        super().__init__(
+            address, parent_ref=parent_ref, owner_shape=owner_shape, type_info=type_info
+        )
+        if slot_props is None and props is not None:
             # A Ref built alone carries what its slot would have declared: the
             # same normalizer and the same defaults, so the browser cannot tell
             # ``RowRef("r", parent_ref=card, props=...)`` from a declared slot.
-            self._payload["props"] = dict(type(self).slot(**props).props)
+            slot_props = type(self).slot(**props).props
+        self._props: dict[str, object] | None = dict(slot_props) if slot_props is not None else None
+        """The props this Ref's slot declared, normalized; None when it declared none.
+
+        ``slot_props`` are taken as they are (a slot normalized them already),
+        ``props`` go through the ref class's own ``slot()`` first."""
 
     def _admit(self, address: object) -> None:
         """Refuse a child at ``address`` this Ref cannot hold, by raising.
@@ -144,7 +151,7 @@ class Ref(StructuredRef):
 
     def _segment_repr(self) -> str:
         """``ref[key]`` for messages: the key this Ref was built at, when it is a plain one."""
-        segment = self._payload.get("segment")
+        segment = self._segment
         return f"ref[{segment!r}]" if isinstance(segment, (str, int)) else "this child"
 
     # --- wire-path resolution ------------------------------------------------
@@ -186,7 +193,7 @@ class Ref(StructuredRef):
             kids = rt.program.children[cur]
             term = rt.program.terms[cur]
             segment = str(await rt.aeval(kids[1]))
-            props = dict(getattr(term, "_payload", {}).get("props") or {})
+            props = dict(getattr(term, "_props", None) or {})
             levels.append((segment, _level_type(term), props))
             parent = kids[0]
             if not isinstance(rt.program.terms[parent], StructuredRef):

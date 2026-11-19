@@ -69,11 +69,16 @@ OP_HIDE = "hide"
 OP_DISPLAY = "display"
 
 
+def _op_name(class_name: str) -> str:
+    """An interaction class name as the op it ships as, snake_case (``SetRow`` -> ``set_row``)."""
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", class_name).lower()
+
+
 def _op_of(op_or_interaction: object) -> str:
     """The op an interaction ships as: its class name in snake_case (``SetRow`` -> ``set_row``)."""
     if isinstance(op_or_interaction, str):
         return op_or_interaction
-    return re.sub(r"(?<!^)(?=[A-Z])", "_", type(op_or_interaction).__name__).lower()
+    return _op_name(type(op_or_interaction).__name__)
 
 
 class Frame:

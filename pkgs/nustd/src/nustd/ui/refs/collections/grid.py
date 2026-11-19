@@ -254,7 +254,7 @@ class GridRef(ChildLayout, Ordered, DictCollectionRef):
         """The cell at row ``r``, column ``c`` of a placed grid, the same as ``grid[r, c]``."""
         self._require_placed()
         owner = self._owner_name()
-        return child_at(self, place(owner, r, c), self._payload.get("item"))
+        return child_at(self, place(owner, r, c), self._item)
 
     def _require_placed(self) -> None:
         if not self._placed():
@@ -267,7 +267,7 @@ class GridRef(ChildLayout, Ordered, DictCollectionRef):
             raise TypeError(msg)
 
     def _placed(self) -> bool:
-        props = self._payload.get("props") or {}
+        props = self._props or {}
         return bool(props.get("cols"))
 
     def set_layout(self, **props: object) -> Nu:

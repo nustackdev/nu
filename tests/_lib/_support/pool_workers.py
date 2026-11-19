@@ -92,17 +92,17 @@ class Block(ScalarQuery):
 
     def __init__(self, seconds: float) -> None:
         super().__init__()
-        self._payload = {"seconds": seconds}
+        self._seconds = seconds
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
-            time.sleep(self._payload["seconds"])
+            time.sleep(self._seconds)
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
-            time.sleep(self._payload["seconds"])  # blocking is the point
+            time.sleep(self._seconds)  # blocking is the point
 
         return athunk
 
@@ -116,11 +116,11 @@ class Spin(ScalarQuery):
 
     def __init__(self, seconds: float) -> None:
         super().__init__()
-        self._payload = {"seconds": seconds}
+        self._seconds = seconds
 
     def _spin(self) -> float:
         start = time.monotonic()
-        deadline = start + self._payload["seconds"]
+        deadline = start + self._seconds
         while time.monotonic() < deadline:
             pass
         return time.monotonic() - start
@@ -188,17 +188,17 @@ class Shell(ScalarQuery):
 
     def __init__(self, cmd: str) -> None:
         super().__init__()
-        self._payload = {"cmd": cmd}
+        self._cmd = cmd
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
-            return os.system(self._payload["cmd"])  # noqa: S605
+            return os.system(self._cmd)  # noqa: S605
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
-            return os.system(self._payload["cmd"])  # noqa: S605
+            return os.system(self._cmd)  # noqa: S605
 
         return athunk
 
@@ -208,17 +208,17 @@ class Die(ScalarQuery):
 
     def __init__(self, code: int) -> None:
         super().__init__()
-        self._payload = {"code": code}
+        self._code = code
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
-            os._exit(self._payload["code"])
+            os._exit(self._code)
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
-            os._exit(self._payload["code"])
+            os._exit(self._code)
 
         return athunk
 
@@ -232,13 +232,14 @@ class Guarded(ScalarQuery):
 
     def __init__(self, path: str, seconds: float) -> None:
         super().__init__()
-        self._payload = {"path": path, "seconds": seconds}
+        self._path = path
+        self._seconds = seconds
 
     def _run(self) -> None:
         try:
-            time.sleep(self._payload["seconds"])
+            time.sleep(self._seconds)
         finally:
-            Path(self._payload["path"]).write_text("finally ran")
+            Path(self._path).write_text("finally ran")
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
@@ -262,10 +263,10 @@ class Sleeper(ScalarQuery):
 
     def __init__(self, seconds: float) -> None:
         super().__init__()
-        self._payload = {"seconds": seconds}
+        self._seconds = seconds
 
     def _start(self) -> int:
-        proc = subprocess.Popen(["/bin/sleep", str(self._payload["seconds"])])  # noqa: S603
+        proc = subprocess.Popen(["/bin/sleep", str(self._seconds)])  # noqa: S603
         return proc.pid
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -335,10 +336,10 @@ class Stubborn(ScalarQuery):
 
     def __init__(self, seconds: float) -> None:
         super().__init__()
-        self._payload = {"seconds": seconds}
+        self._seconds = seconds
 
     def _spin(self) -> None:
-        deadline = time.monotonic() + self._payload["seconds"]
+        deadline = time.monotonic() + self._seconds
         while time.monotonic() < deadline:
             try:
                 while time.monotonic() < deadline:
@@ -368,7 +369,8 @@ class AGuarded(ScalarQuery):
 
     def __init__(self, path: str, seconds: float) -> None:
         super().__init__()
-        self._payload = {"path": path, "seconds": seconds}
+        self._path = path
+        self._seconds = seconds
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
@@ -380,9 +382,9 @@ class AGuarded(ScalarQuery):
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
             try:
-                await asyncio.sleep(self._payload["seconds"])
+                await asyncio.sleep(self._seconds)
             finally:
-                Path(self._payload["path"]).write_text("finally ran")
+                Path(self._path).write_text("finally ran")
 
         return athunk
 
@@ -398,12 +400,12 @@ class ForkSleeper(ScalarQuery):
 
     def __init__(self, seconds: float) -> None:
         super().__init__()
-        self._payload = {"seconds": seconds}
+        self._seconds = seconds
 
     def _fork(self) -> int:
         pid = os.fork()
         if pid == 0:
-            time.sleep(self._payload["seconds"])
+            time.sleep(self._seconds)
             os._exit(0)
         return pid
 
@@ -429,14 +431,14 @@ class HoldAfterHangup(ScalarQuery):
 
     def __init__(self, seconds: float) -> None:
         super().__init__()
-        self._payload = {"seconds": seconds}
+        self._seconds = seconds
 
     def _run(self) -> None:
         for obj in gc.get_objects():
             if isinstance(obj, Connection) and not obj.closed:
                 with socket.socket(fileno=os.dup(obj.fileno())) as sock:
                     sock.shutdown(socket.SHUT_RDWR)
-        time.sleep(self._payload["seconds"])
+        time.sleep(self._seconds)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:

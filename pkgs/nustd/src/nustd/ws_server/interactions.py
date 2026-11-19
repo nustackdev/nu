@@ -22,7 +22,7 @@ from .fabric import WebServer
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Callable
 
-    from nu.lang import Nu
+    from nu.lang import Nu, StrArg
     from nu.lang.runtime import Context, Runtime
 
 
@@ -147,16 +147,16 @@ class SessionFor(_LifecycleBracket):
 
     Args:
         body: the tree that runs with the session bound.
-        sid_attr: the attr the fold parked this arm's session id under.
+        sid_attr: the attr the fold parked this arm's session id under: a
+            str, or any Nu yielding one. A config child, evaluated on entry.
     """
 
-    def __init__(self, body: Nu | None = None, *, sid_attr: str = SID_ATTR) -> None:
-        super().__init__(body)
-        self._payload["sid_attr"] = sid_attr
+    def __init__(self, body: Nu | None = None, *, sid_attr: StrArg = SID_ATTR) -> None:
+        super().__init__(body, sid_attr)
 
     @asynccontextmanager
-    async def _aopen(self, ctx: Context) -> AsyncIterator[None]:
-        attr = self._payload["sid_attr"]
+    async def _aopen(self, ctx: Context, sid_attr: str) -> AsyncIterator[None]:
+        attr = sid_attr
         sid = ctx.attrs.get(attr, None)
         if sid is None:
             msg = f"SessionFor found no {attr!r} on the Context; it runs inside the fold"

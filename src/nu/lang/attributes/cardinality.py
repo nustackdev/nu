@@ -63,7 +63,7 @@ def _own_cardinality(program: Program, path: Path) -> Cardinality:
     sort = program.attr(path, Attr.SORT)
     if sort == Sort.DYNAMIC:
         nid = program.id_of[path]
-        promise = program.terms[nid]._payload.get("dyn_promise") or {}
+        promise = getattr(program.terms[nid], "dyn_promise", None) or {}
         pinned = promise.get("cardinality")
         if pinned is not None:
             return pinned

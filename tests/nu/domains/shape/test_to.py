@@ -22,7 +22,7 @@ def test_to_a_bare_class_keeps_parent_and_address():
     as_int = item.to(nu.IntRef)
     assert type(as_int) is nu.IntRef
     assert as_int._parent is item._parent
-    assert nu.tree.payload(nu.tree.children(as_int)[1]) == {"value": "a"}
+    assert nu.tree.fields(nu.tree.children(as_int)[1]) == {"value": "a"}
     assert as_int._owner_shape is item._owner_shape
     assert as_int._root_shape is State
 
@@ -37,14 +37,14 @@ def test_to_a_slot_spec_carries_its_declaration():
     spec = nu.DictRef.slot(int)
     as_dict = State.anything["a"].to(spec)
     assert type(as_dict) is nu.DictRef
-    assert as_dict._payload["type_info"] is spec._resolve_type_info()
+    assert as_dict._type_info is spec._resolve_type_info()
     assert type(as_dict["k"]) is nu.IntRef
 
 
 def test_to_drops_the_old_kind_declaration():
     item = State.anything["a"]
-    assert "type_info" in item._payload
-    assert "type_info" not in item.to(nu.IntRef)._payload
+    assert item._type_info is not None
+    assert item.to(nu.IntRef)._type_info is None
 
 
 def test_to_leaves_the_spec_reusable():

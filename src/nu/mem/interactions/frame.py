@@ -75,11 +75,11 @@ class Frame(_LifecycleBracket):
             msg = f"Frame over {shape.__name__}: {unknown} are not slots of {shape.__name__}"
             raise TypeError(msg)
         super().__init__(body, *(getattr(shape, key).set(value) for key, value in initial.items()))
-        self._payload["shape"] = shape
+        self.shape = shape
 
     @contextmanager
     def _open(self, ctx: Context) -> Iterator[None]:
-        with ctx.fabrics.bind(dict, {}, self._payload["shape"]):
+        with ctx.fabrics.bind(dict, {}, self.shape):
             yield
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

@@ -30,14 +30,14 @@ __all__ = [
 ]
 
 
-def _lookup(rt: Runtime, payload: dict) -> tuple[object, str]:
-    fabric: ServiceFabric = rt.ctx.fabrics.get(ServiceFabric, payload["owner_service"])
-    attr = payload.get("target_attr") or payload["name"]
+def _lookup(rt: Runtime, snap: dict) -> tuple[object, str]:
+    fabric: ServiceFabric = rt.ctx.fabrics.get(ServiceFabric, snap["owner_service"])
+    attr = snap.get("target_attr") or snap["name"]
     return fabric.resolve(attr), attr
 
 
-def _merge(payload: dict, kwargs: dict) -> dict:
-    defaults = payload.get("defaults") or {}
+def _merge(snap: dict, kwargs: dict) -> dict:
+    defaults = snap.get("defaults") or {}
     return {**defaults, **kwargs}
 
 
@@ -46,10 +46,10 @@ def compile_scalar(children: tuple[Callable, ...]) -> Callable:
     ref_thunk, args_thunk = children
 
     def thunk(rt: Runtime) -> object:
-        payload = ref_thunk(rt)
+        snap = ref_thunk(rt)
         kwargs = args_thunk(rt)
-        fn, name = _lookup(rt, payload)
-        result = fn(**_merge(payload, kwargs))
+        fn, name = _lookup(rt, snap)
+        result = fn(**_merge(snap, kwargs))
         if inspect.isawaitable(result):
             msg = f"Service scalar '{name}' returned an awaitable under nu.run; use nu.arun"
             raise RuntimeError(msg)
@@ -63,10 +63,10 @@ def acompile_scalar(children: tuple[Callable, ...]) -> Callable:
     ref_thunk, args_thunk = children
 
     async def athunk(rt: Runtime) -> object:
-        payload = await ref_thunk(rt)
+        snap = await ref_thunk(rt)
         kwargs = await args_thunk(rt)
-        fn, _ = _lookup(rt, payload)
-        result = fn(**_merge(payload, kwargs))
+        fn, _ = _lookup(rt, snap)
+        result = fn(**_merge(snap, kwargs))
         if inspect.isawaitable(result):
             return await result
         return result
@@ -79,10 +79,10 @@ def compile_void(children: tuple[Callable, ...]) -> Callable:
     ref_thunk, args_thunk = children
 
     def thunk(rt: Runtime) -> None:
-        payload = ref_thunk(rt)
+        snap = ref_thunk(rt)
         kwargs = args_thunk(rt)
-        fn, name = _lookup(rt, payload)
-        result = fn(**_merge(payload, kwargs))
+        fn, name = _lookup(rt, snap)
+        result = fn(**_merge(snap, kwargs))
         if inspect.isawaitable(result):
             msg = f"Service command '{name}' returned an awaitable under nu.run; use nu.arun"
             raise RuntimeError(msg)
@@ -96,10 +96,10 @@ def acompile_void(children: tuple[Callable, ...]) -> Callable:
     ref_thunk, args_thunk = children
 
     async def athunk(rt: Runtime) -> None:
-        payload = await ref_thunk(rt)
+        snap = await ref_thunk(rt)
         kwargs = await args_thunk(rt)
-        fn, _ = _lookup(rt, payload)
-        result = fn(**_merge(payload, kwargs))
+        fn, _ = _lookup(rt, snap)
+        result = fn(**_merge(snap, kwargs))
         if inspect.isawaitable(result):
             await result
         return None
@@ -112,10 +112,10 @@ def compile_stream(children: tuple[Callable, ...]) -> Callable:
     ref_thunk, args_thunk = children
 
     def thunk(rt: Runtime) -> object:
-        payload = ref_thunk(rt)
+        snap = ref_thunk(rt)
         kwargs = args_thunk(rt)
-        fn, name = _lookup(rt, payload)
-        result = fn(**_merge(payload, kwargs))
+        fn, name = _lookup(rt, snap)
+        result = fn(**_merge(snap, kwargs))
         if inspect.isasyncgen(result):
             msg = f"Service stream '{name}' returned an async generator under nu.run; use nu.arun"
             raise RuntimeError(msg)
@@ -129,10 +129,10 @@ def acompile_stream(children: tuple[Callable, ...]) -> Callable:
     ref_thunk, args_thunk = children
 
     async def athunk(rt: Runtime) -> object:
-        payload = await ref_thunk(rt)
+        snap = await ref_thunk(rt)
         kwargs = await args_thunk(rt)
-        fn, _ = _lookup(rt, payload)
-        result = fn(**_merge(payload, kwargs))
+        fn, _ = _lookup(rt, snap)
+        result = fn(**_merge(snap, kwargs))
         if inspect.isasyncgen(result):
             return result
 

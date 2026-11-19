@@ -46,7 +46,7 @@ PagedMapping.register(_Paged)
 
 
 def _paged() -> Dict:
-    return Dict(Literal(_Paged(a=1, b=2, c=3, d=4)))
+    return Dict(Literal(factory=_Paged, a=1, b=2, c=3, d=4))
 
 
 def test_no_args_builds_the_plain_reads():
@@ -124,7 +124,7 @@ def test_a_mapping_with_paged_keys_but_not_registered_raises():
             return iter(())
 
     with pytest.raises(TypeError, match="PagedMapping"):
-        nu.run(Dict(Literal(Unregistered(a=1))).keys(limit=1))
+        nu.run(Dict(Literal(factory=Unregistered, a=1)).keys(limit=1))
 
 
 def test_a_kv_dict_pages_through_its_view():
@@ -185,7 +185,7 @@ def _null_pages(d):
 def test_a_null_cursor_or_limit_raises_before_the_mapping_is_called():
     _Recording.seen = []
     ctx = nu.Context().bind(dict, {}, _Cursor)
-    for page in _null_pages(Dict(Literal(_Recording()))):
+    for page in _null_pages(Dict(Literal(factory=_Recording))):
         with pytest.raises(ValueError, match="read NULL"):
             nu.run(page, ctx)
     assert _Recording.seen == []
@@ -194,7 +194,7 @@ def test_a_null_cursor_or_limit_raises_before_the_mapping_is_called():
 def test_a_null_cursor_or_limit_raises_async():
     _Recording.seen = []
     ctx = nu.Context().bind(dict, {}, _Cursor)
-    for page in _null_pages(Dict(Literal(_Recording()))):
+    for page in _null_pages(Dict(Literal(factory=_Recording))):
         with pytest.raises(ValueError, match="read NULL"):
             asyncio.run(nu.arun(page, ctx))
     assert _Recording.seen == []

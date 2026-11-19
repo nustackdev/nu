@@ -44,7 +44,7 @@ def path(node):
     segs = []
     while isinstance(node, StructuredRef):
         seg = nu.tree.children(node)[1]
-        segs.append(nu.tree.payload(seg)["value"] if isinstance(seg, Literal) else seg)
+        segs.append(nu.tree.fields(seg)["value"] if isinstance(seg, Literal) else seg)
         node = nu.tree.children(node)[0]
     segs.reverse()
     return tuple(segs), node
@@ -79,7 +79,7 @@ def test_the_source_chain_is_untouched():
     source.with_parent(State.cells["c1"])
     assert path(source)[0] == ("entries", "x", "value")
     assert nu.shape.root_shape(source) is Board
-    assert not nu.tree.payload(source).get("placed")
+    assert not source._placed
 
 
 def test_an_index_that_is_a_ref_stays_as_it_is():

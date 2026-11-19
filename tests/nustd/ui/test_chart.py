@@ -42,9 +42,7 @@ def _run(term: nu.Nu) -> list:
 
 def _built(slot):
     """The Ref a slot makes, under a column, carrying the slot's props."""
-    ref = slot.ref_cls("chart", parent_ref=ColumnRef("c"))
-    ref._payload["props"] = dict(slot.props)
-    return ref
+    return slot.ref_cls("chart", parent_ref=ColumnRef("c"), slot_props=slot.props)
 
 
 def _patch(slot, data):

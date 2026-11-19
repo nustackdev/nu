@@ -1,8 +1,8 @@
 """Recursive type info for shape slots.
 
-``TypeInfo`` is the runtime carrier for an annotation-derived type. Refs stash
-it on their payload; wrappers read it to pick the child ref/form on subscript
-or attribute descent.
+``TypeInfo`` is the runtime carrier for an annotation-derived type. Refs and
+value forms hold it in their ``type_info`` field; wrappers read it to pick the
+child ref/form on subscript or attribute descent.
 
 A Shape slot annotation is one of:
 

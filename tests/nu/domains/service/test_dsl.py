@@ -85,8 +85,8 @@ def test_descriptor_ref_carries_name_and_owner_service():
         one = MethodRef.method()
 
     ref = S.one
-    assert nu.tree.payload(ref)["name"] == "one"
-    assert nu.tree.payload(ref)["owner_service"] is S
+    assert ref._name == "one"
+    assert ref._owner_service is S
 
 
 def test_descriptor_requires_a_class():
@@ -95,10 +95,10 @@ def test_descriptor_requires_a_class():
         desc.__get__(None, None)
 
 
-# --- MethodRef payload ------------------------------------------------------
+# --- MethodRef config -------------------------------------------------------
 
 
-def test_methodref_extra_kwargs_land_in_payload():
+def test_methodref_extra_kwargs_land_in_its_config_field():
     class Custom(MethodRef):
         pass
 
@@ -106,8 +106,13 @@ def test_methodref_extra_kwargs_land_in_payload():
         one = Custom.method(path="/x", extra=42)
 
     ref = S.one
-    assert nu.tree.payload(ref)["path"] == "/x"
-    assert nu.tree.payload(ref)["extra"] == 42
+    # Declaration config is structure the service class sets: a field, no children.
+    assert nu.tree.children(ref) == ()
+    assert nu.tree.fields(ref)["_config"] == {"path": "/x", "extra": 42}
+    first, second = nu.run(ref)[0], nu.run(ref)[0]
+    assert first == {"name": "one", "owner_service": S, "path": "/x", "extra": 42}
+    # Each evaluation hands out a fresh dict, so a reader cannot change the next one.
+    assert first is not second
 
 
 def test_method_factory_captures_ref_class_and_kwargs():

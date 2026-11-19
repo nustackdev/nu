@@ -11,6 +11,7 @@ import asyncio
 from typing import TYPE_CHECKING
 
 import pytest
+from _support.policy_atoms import Sink
 from _support.reactive import Body, Feed, start, stop, until
 
 import nu
@@ -83,8 +84,7 @@ class _Record(ScalarAction):
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
     def __init__(self, value: object, log: list) -> None:
-        super().__init__(value)
-        self._payload["log"] = log
+        super().__init__(value, Sink(log))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
@@ -94,10 +94,10 @@ class _Record(ScalarAction):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        log, (value,) = self._payload["log"], children
+        value, sink = children
 
         async def athunk(rt: Runtime) -> None:
-            log.append(await value(rt))
+            (await sink(rt)).append(await value(rt))
 
         return athunk
 

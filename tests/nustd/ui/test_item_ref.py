@@ -99,7 +99,7 @@ def test_to_a_bare_class():
     text = cell.to(ui.TextRef)
     assert type(text) is ui.TextRef
     assert text._parent is cell._parent
-    assert nu.tree.payload(text)["segment"] == "a"
+    assert text._segment == "a"
 
 
 def test_to_a_slot_spec_with_props():
@@ -107,8 +107,8 @@ def test_to_a_slot_spec_with_props():
         ui.DataTableRef.slot(columns=["x"], density="compact")
     )
     assert type(table) is ui.DataTableRef
-    assert table._payload["props"]["columns"] == [{"key": "x"}]
-    assert table._payload["props"]["density"] == "compact"
+    assert table._props["columns"] == [{"key": "x"}]
+    assert table._props["density"] == "compact"
 
 
 def test_to_a_section_spec_navigates_its_slots():

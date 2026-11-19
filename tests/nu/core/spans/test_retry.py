@@ -43,7 +43,7 @@ def test_sync_retries_then_succeeds() -> None:
     flaky = FlakyAction(1)
     value, _ = run(Retry(flaky, max_attempts=3))
     assert value == "flaky"
-    assert next(flaky._payload["calls"]) == 2  # failed once, then succeeded
+    assert next(flaky.calls) == 2  # failed once, then succeeded
 
 
 def test_sync_exhausts_attempts_and_raises() -> None:
@@ -116,7 +116,7 @@ async def test_async_unbounded_retries_until_success() -> None:
     flaky = FlakyAction(25)
     value, _ = await arun(Retry(flaky, max_attempts=None))
     assert value == "flaky"
-    assert next(flaky._payload["calls"]) == 26  # 25 failures, then the success
+    assert next(flaky.calls) == 26  # 25 failures, then the success
 
 
 async def test_async_unbounded_runs_until_cancelled() -> None:
@@ -127,7 +127,7 @@ async def test_async_unbounded_runs_until_cancelled() -> None:
     task.cancel()
     with pytest.raises(asyncio.CancelledError):
         await task
-    assert next(flaky._payload["calls"]) > 3
+    assert next(flaky.calls) > 3
 
 
 async def test_async_unbounded_still_lets_an_unmatched_error_through() -> None:
@@ -189,16 +189,21 @@ async def test_async_jitter_applies_after_the_cap(
 async def test_async_max_delay_is_a_child_term(waits: list) -> None:
     cap = Add(Literal(1), Literal(2))
     retry = Retry(FlakyAction(2), max_attempts=3, delay=8.0, max_delay=cap)
-    assert nu.tree.children(retry)[-1] is cap  # a child, not payload
+    assert nu.tree.children(retry)[13] is cap  # a child, before the errors filter
     await arun(retry)
     assert waits == [3.0, 3.0]
 
 
-def test_negative_literal_max_delay_raises_at_build() -> None:
+def test_negative_plain_max_delay_raises_at_build() -> None:
     with pytest.raises(ValueError, match="Retry: max_delay must not be negative"):
         Retry(FlakyAction(1), max_attempts=2, max_delay=-1.0)
+
+
+async def test_async_negative_literal_max_delay_raises_when_run() -> None:
+    # A term is a child like any other: Retry does not look inside it at build.
+    retry = Retry(FlakyAction(1), max_attempts=2, max_delay=Literal(-1.0))
     with pytest.raises(ValueError, match="Retry: max_delay must not be negative"):
-        Retry(FlakyAction(1), max_attempts=2, max_delay=Literal(-1.0))
+        await arun(retry)
 
 
 async def test_async_negative_computed_max_delay_raises_when_run() -> None:

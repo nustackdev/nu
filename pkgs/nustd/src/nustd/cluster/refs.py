@@ -9,8 +9,9 @@ interactions are ``Teleport`` (execute a tree there). Both refs subclass
 - ``RayServiceRef(*tag)`` reads the ``RayService`` bound at that tag. Tags
   are arbitrary hashable positional args - a plain string for a singleton
   (``RayServiceRef("ledger-main")``), a tuple for a keyed fleet
-  (``RayServiceRef(("ledger", 0))``), etc. The tag is stored in payload and
-  forwarded verbatim to ``ctx.fabrics.get(RayService, *tag)``.
+  (``RayServiceRef(("ledger", 0))``), etc. The tag is a config child after
+  the fabric type, so it can be computed; its value is forwarded verbatim to
+  ``ctx.fabrics.get(RayService, tag)``.
 """
 
 from __future__ import annotations
@@ -59,7 +60,8 @@ class RayServiceRef(FabricRef):
     """The ``RayService`` bound at ``tag`` on the Context.
 
     Args:
-        tag: the address the service was bound under. Omit for the untagged
+        tag: the address the service was bound under, or a term yielding
+            it, evaluated each time the ref is read. Omit for the untagged
             singleton.
 
     Notes:
@@ -87,16 +89,17 @@ class RayServiceRef(FabricRef):
     fabric = RayService
 
     def __init__(self, tag: object = UNSET) -> None:
-        super().__init__()
-        self._payload["tag"] = tag
+        # Children: [service, tag]. The tag is always present, Literal(UNSET)
+        # when omitted, so the untagged read is a value like any other.
+        super().__init__(None, tag)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        service = children[0]
-        raw = self._payload["tag"]
-        tag: tuple[object, ...] = () if raw is UNSET else (raw,)
+        service, tag_of = children[0], children[1]
 
         def thunk(rt: Runtime) -> object:
             svc = service(rt)
+            raw = tag_of(rt)
+            tag: tuple[object, ...] = () if raw is UNSET else (raw,)
             return (
                 rt.ctx.fabrics.get(svc, *tag)
                 if rt.ctx.fabrics.has(svc, *tag)
@@ -106,12 +109,12 @@ class RayServiceRef(FabricRef):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        service = children[0]
-        raw = self._payload["tag"]
-        tag: tuple[object, ...] = () if raw is UNSET else (raw,)
+        service, tag_of = children[0], children[1]
 
         async def athunk(rt: Runtime) -> object:
             svc = await service(rt)
+            raw = await tag_of(rt)
+            tag: tuple[object, ...] = () if raw is UNSET else (raw,)
             return (
                 rt.ctx.fabrics.get(svc, *tag)
                 if rt.ctx.fabrics.has(svc, *tag)

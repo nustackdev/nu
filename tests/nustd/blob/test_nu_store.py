@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from _support.brackets import config
 
 import nu
 import nustd
@@ -21,7 +22,6 @@ from nustd.blob import (
     LMDBBackend,
     S3Backend,
     StoreRef,
-    backend_of,
 )
 from nustd.blob.store import store_name
 
@@ -35,11 +35,10 @@ Pics = StoreRef("pics-v1")
 def test_registered_as_a_lazy_fabric():
     assert "blob" in dir(nustd)
     assert nustd.blob.StoreRef is StoreRef
-    assert nustd.blob.backend_of is backend_of
 
 
 def test_old_surface_is_gone():
-    for gone in ("Store", "URL_PREFIX", "routes"):
+    for gone in ("Store", "URL_PREFIX", "routes", "backend_of"):
         assert not hasattr(nustd.blob, gone)
         assert gone not in nustd.blob.__all__
 
@@ -49,14 +48,16 @@ def test_is_a_fabric_ref_over_the_blob_fabric():
     assert StoreRef.fabric is BlobFabric
 
 
-def test_name():
-    assert Media.name == "media"
-    assert Pics.name == "pics-v1"
+def test_name_is_the_name_child():
+    # The name is a term, the ref's own child; its value comes from running it.
+    assert Media.name is nu.tree.children(Media)[1]
+    assert nu.run(Media.name)[0] == "media"
+    assert nu.run(Pics.name)[0] == "pics-v1"
 
 
 @pytest.mark.parametrize("name", ["Media", "a b", ".hidden", "a/b", "кот"])
 def test_any_non_empty_str_is_a_name(name):
-    assert StoreRef(name).name == name
+    assert nu.run(StoreRef(name).name)[0] == name
 
 
 @pytest.mark.parametrize("bad", ["", None, 42, b"media", StoreRef])
@@ -66,7 +67,7 @@ def test_name_that_is_no_non_empty_str_is_refused(bad):
 
 
 def test_store_name_takes_a_ref_or_its_name():
-    assert store_name(Media) == "media"
+    assert store_name(Media) is Media.name
     assert store_name("pics") == "pics"
     with pytest.raises(TypeError, match="non-empty str"):
         store_name("")
@@ -105,7 +106,7 @@ def test_each_term_holds_the_ref_it_was_built_from():
 def test_atoms_take_a_store_ref_directly():
     term = BlobGet(StoreRef("media"), BID)
     assert isinstance(term._children[0], StoreRef)
-    assert term._children[0].name == "media"
+    assert nu.run(term._children[0].name)[0] == "media"
 
 
 @pytest.mark.parametrize("store", [StoreRef, "media", None], ids=["class", "name", "none"])
@@ -148,7 +149,7 @@ def test_malformed_str_id_is_refused_at_build(build):
 def test_build_mints_nothing():
     # The id is minted when the put runs; the tree holds no id at all.
     term = Media.put(b"x")
-    assert term._children[2]._payload["value"] is None
+    assert term._children[2].value is None
 
 
 def test_kinds():
@@ -175,8 +176,8 @@ def test_preset_binds_under_the_store_name(store, tmp_path):
         nustd.blob.files(store, tmp_path / "files"),
         nustd.blob.s3(store, bucket="b"),
     ):
-        assert spec._payload["cls"] is BlobFabric
-        assert spec._payload["tags"] == ("media",)
+        assert config(spec)["cls"] is BlobFabric
+        assert config(spec)["tags"] == ("media",)
 
 
 def test_a_str_name_reaches_the_same_store(tmp_path):
@@ -197,52 +198,30 @@ def test_preset_refuses_what_is_no_store(bad, tmp_path):
         nustd.blob.s3(bad, bucket="b")
 
 
-def test_backend_of_lmdb(tmp_path):
+def test_lmdb_preset_carries_its_options(tmp_path):
     spec = nustd.blob.lmdb(
         Media, tmp_path / "env", map_size=1 << 24, max_readers=16, writemap=False
     )
-    backend = backend_of(spec)
-    assert type(backend) is LMDBBackend
-    assert backend._env is None
-    assert backend.map_size == 1 << 24
-    assert backend.max_readers == 16
-    assert backend.writemap is False
-    assert not (tmp_path / "env").exists()  # not opened
+    kwargs = config(spec)["kwargs"]
+    assert kwargs["backend"] is LMDBBackend
+    assert kwargs["options"] == {
+        "path": str(tmp_path / "env"),
+        "map_size": 1 << 24,
+        "max_readers": 16,
+        "writemap": False,
+    }
 
 
-def test_backend_of_files(tmp_path):
-    backend = backend_of(nustd.blob.files(Media, tmp_path / "files"))
-    assert type(backend) is FilesBackend
-    assert backend.root == tmp_path / "files"
-    assert not (tmp_path / "files").exists()  # not opened
+def test_files_preset_carries_its_root(tmp_path):
+    kwargs = config(nustd.blob.files(Media, tmp_path / "files"))["kwargs"]
+    assert kwargs["backend"] is FilesBackend
+    assert kwargs["options"] == {"root": str(tmp_path / "files")}
 
 
-def test_backend_of_s3():
+def test_s3_preset_carries_its_options():
     spec = nustd.blob.s3(Media, bucket="media", prefix="space/", endpoint_url="http://s3.test")
-    backend = backend_of(spec)
-    assert type(backend) is S3Backend
-    assert backend.bucket == "media"
-    assert backend.prefix == "space/"
-    assert backend.endpoint_url == "http://s3.test"
-    assert backend._client is None  # not opened
-
-
-def test_backend_of_builds_a_new_backend_each_call(tmp_path):
-    spec = nustd.blob.files(Media, tmp_path)
-    assert backend_of(spec) is not backend_of(spec)
-
-
-@pytest.mark.parametrize(
-    "bad",
-    [
-        None,
-        "media",
-        Media,
-        {"backend": FilesBackend, "options": {}},
-        nu.Provide(dict, {}, tag="media"),
-    ],
-    ids=["none", "str", "ref", "dict", "other-provide"],
-)
-def test_backend_of_refuses_what_is_no_spec(bad):
-    with pytest.raises(TypeError, match="a blob spec"):
-        backend_of(bad)
+    kwargs = config(spec)["kwargs"]
+    assert kwargs["backend"] is S3Backend
+    assert kwargs["options"]["bucket"] == "media"
+    assert kwargs["options"]["prefix"] == "space/"
+    assert kwargs["options"]["endpoint_url"] == "http://s3.test"

@@ -13,6 +13,7 @@ import janus
 from typing_extensions import Self
 
 from nu.domains.shape import Slot
+from nu.lang import Literal, Nu
 from nu.mem.refs import RefBase
 
 from .form import JQueue
@@ -73,34 +74,34 @@ class JQueueRef(RefBase[janus.Queue[T]], JQueue[T], Generic[T]):
         *,
         parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
-        capacity: int | None = None,
+        capacity: int | Nu | None = None,
         item_type: type[T] = object,  # type: ignore[assignment]
+        **kwargs: object,
     ) -> None:
-        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
-        self._payload["capacity"] = capacity
-        self._payload["item_type"] = item_type
-
-    @property
-    def _capacity(self) -> int | None:
-        return self._payload.get("capacity")  # type: ignore[return-value]
-
-    @property
-    def _item_type(self) -> type:
-        return self._payload.get("item_type", object)  # type: ignore[return-value]
+        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape, **kwargs)
+        # Capacity is a value the queue works with: a child after the address,
+        # so it can be computed. Appended here, past the ref base's own init,
+        # so it is lifted by hand.
+        self._children = (
+            *self._children,
+            capacity if isinstance(capacity, Nu) else Literal(capacity),
+        )
+        self._item_type: type = item_type
+        """The Python type the queue is meant to carry."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the sync read thunk that vivifies and yields the queue."""
-        address = children[1]
+        address, capacity = children[1], children[2]
 
         def thunk(rt: Runtime) -> janus.Queue[T]:
-            parent = self._fetch_parent(rt)
+            parent = self._fetch_parent(rt, nid)
             if not isinstance(parent, dict):
                 msg = f"JQueueRef parent must be a dict, got {type(parent).__name__}"
                 raise TypeError(msg)
             addr = address(rt)
             q = parent.get(addr)
             if q is None:
-                q = janus.Queue(maxsize=self._capacity or 0)
+                q = janus.Queue(maxsize=capacity(rt) or 0)
                 parent[addr] = q
             return q
 
@@ -108,17 +109,17 @@ class JQueueRef(RefBase[janus.Queue[T]], JQueue[T], Generic[T]):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the async read thunk that vivifies and yields the queue."""
-        address = children[1]
+        address, capacity = children[1], children[2]
 
         async def athunk(rt: Runtime) -> janus.Queue[T]:
-            parent = self._fetch_parent(rt)
+            parent = self._parent_container(rt, await self._aresolve_path(rt, nid))
             if not isinstance(parent, dict):
                 msg = f"JQueueRef parent must be a dict, got {type(parent).__name__}"
                 raise TypeError(msg)
             addr = await address(rt)
             q = parent.get(addr)
             if q is None:
-                q = janus.Queue(maxsize=self._capacity or 0)
+                q = janus.Queue(maxsize=(await capacity(rt)) or 0)
                 parent[addr] = q
             return q
 
@@ -128,13 +129,14 @@ class JQueueRef(RefBase[janus.Queue[T]], JQueue[T], Generic[T]):
     def slot(
         cls,
         *,
-        capacity: int | None = None,
+        capacity: int | Nu | None = None,
         item_type: type = object,
     ) -> Self:
         """Declare a queue slot in a Shape class body.
 
         Args:
-            capacity: how many items may wait before ``put`` blocks.
+            capacity: how many items may wait before ``put`` blocks, or a
+                term yielding it, evaluated when the queue is first created.
                 Unbounded when absent.
             item_type: the Python type the queue is meant to carry.
 

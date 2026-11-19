@@ -14,7 +14,7 @@ from nu.tree import ancestors, bfs, leaves, postorder, preorder
 
 def _vals(nodes):
     """Leaf values in iteration order; branches collapse to 'S'."""
-    return [nu.tree.payload(n)["value"] if isinstance(n, Literal) else "S" for n in nodes]
+    return [nu.tree.fields(n)["value"] if isinstance(n, Literal) else "S" for n in nodes]
 
 
 def _tree():

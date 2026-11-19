@@ -59,13 +59,11 @@ class Reduce(QueryReduction):
         names = ("acc" if acc_key is None else acc_key, "item" if item_key is None else item_key)
         if initial is UNSET:
             super().__init__(source, function, *names)
-            self._payload = {"has_initial": False}
         else:
             super().__init__(source, function, *names, initial)
-            self._payload = {"has_initial": True}
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        has_initial = self._payload["has_initial"]
+        has_initial = len(children) > 4  # [source, function, acc_key, item_key, initial?]
         source, function, acc_t, item_t = children[0], children[1], children[2], children[3]
         initial_t = children[4] if has_initial else None
 
@@ -92,7 +90,7 @@ class Reduce(QueryReduction):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        has_initial = self._payload["has_initial"]
+        has_initial = len(children) > 4  # [source, function, acc_key, item_key, initial?]
         source, function, acc_t, item_t = children[0], children[1], children[2], children[3]
         initial_t = children[4] if has_initial else None
 

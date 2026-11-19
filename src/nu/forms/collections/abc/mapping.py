@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 
     from nu.forms.collections.iterator_ import Iterator
     from nu.forms.collections.list_ import List
-    from nu.lang import Arg, Nu
+    from nu.lang import Arg, BoolArg, Nu
     from nu.lang.sentinels import Unset
 
 
@@ -253,13 +253,13 @@ class MutableMappingForm(
 
         return SetItem(self, key, value)
 
-    def del_item(self, key: Arg[KeyT], *, missing_ok: bool = False) -> Any:  # noqa: ANN401
+    def del_item(self, key: Arg[KeyT], *, missing_ok: BoolArg = False) -> Any:  # noqa: ANN401
         """Delete the entry at key: del mapping[key].
 
         Args:
             key: the key to delete.
-            missing_ok: when ``True``, an absent key is a no-op. A plain
-                Python bool fixed at construction, not a Nu value.
+            missing_ok: when ``True``, an absent key is a no-op. A bool, or any
+                Nu yielding one, evaluated each run.
 
         Notes:
             - Mutating Command: mutates slot 0 in place, yields nothing.

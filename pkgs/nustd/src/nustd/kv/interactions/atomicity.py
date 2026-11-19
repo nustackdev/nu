@@ -19,8 +19,7 @@ shared across every execution of the program that holds it.
 ``scope`` is a plain data attribute, not part of the lifecycle: a shape tag
 that says which Navigator this boundary is for. In a sharded setup, several
 Navigators sit on the ctx under different tags, and the tag routes the bracket
-to the right one. It also rides the atom's payload rather than an instance
-attribute, so a tree rewrite carries it through.
+to the right one. It is a field of the atom, so a tree rewrite carries it through.
 """
 
 from __future__ import annotations
@@ -176,17 +175,15 @@ class Snapshot(_CoreSnapshot):
 
     def __init__(self, *children: Nu, scope: Hashable | None = None) -> None:
         super().__init__(_wrap_body(children))
-        # Carry the scope tag in payload so Term._with_children (used by the
-        # bottom-up rewrite in auto_flow_atomic) preserves it across rebuilds.
-        # An instance attribute on the base scope-property path would break
-        # payload propagation; keeping it in payload lets rewrites carry it
-        # cleanly (see `_LifecycleBracket._open` for the lifecycle method).
-        self._payload = {"scope": scope}
+        # A field: Term.evolve (used by the bottom-up rewrite in
+        # auto_flow_atomic) copies it across rebuilds. Underscore-named so the
+        # public ``scope`` stays a read-only property.
+        self._scope: Hashable | None = scope
 
     @property
     def scope(self) -> Hashable | None:
         """Shape tag for atomic routing."""
-        return self._payload["scope"]
+        return self._scope
 
     @contextmanager
     def _open(self, ctx: Context) -> Iterator[None]:
@@ -250,17 +247,17 @@ class Transaction(_CoreTransaction):
 
     def __init__(self, *children: Nu, scope: Hashable | None = None) -> None:
         super().__init__(_wrap_body(children))
-        # See Snapshot.__init__ for why scope lives in payload, not on self.
-        self._payload = {"scope": scope}
+        # See Snapshot.__init__.
+        self._scope: Hashable | None = scope
 
     @property
     def scope(self) -> Hashable | None:
         """Shape tag for atomic routing."""
-        return self._payload["scope"]
+        return self._scope
 
     @contextmanager
     def _open(
-        self, ctx: Context, slots: dict[int, WriteSlotProtocol] | None = None
+        self, ctx: Context, *, slots: dict[int, WriteSlotProtocol] | None = None
     ) -> Iterator[None]:
         """Provide a transaction, opened on first use, for the body; commit on clean exit, abort on error.
 
@@ -318,7 +315,7 @@ class Transaction(_CoreTransaction):
                     continue
                 slots[key] = await storage.areserve_write_slot()
                 owned.append(slots[key])
-            with fabrics.bind(_HeldWriteSlots, slots), self._open(ctx, slots):
+            with fabrics.bind(_HeldWriteSlots, slots), self._open(ctx, slots=slots):
                 yield
         finally:
             for slot in owned:

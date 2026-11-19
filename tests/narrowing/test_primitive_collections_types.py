@@ -50,7 +50,7 @@ assert_type(Blob.raw_tuple, PrimitiveTupleRef)
 
 
 # Static overloads on List.__getitem__ + runtime dispatch via
-# _payload["type_info"] flip these from Any to the elem's Form.
+# _type_info flip these from Any to the elem's Form.
 assert_type(Blob.tags[0], Str)
 assert_type(Blob.scores[0], Int)
 assert_type(Blob.meta["k"], Int)

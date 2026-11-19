@@ -12,6 +12,13 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Switch labels, parallel modes, error filters and other run-time config can be computed
+- Literal hands each run fresh native containers, and builds values per run from a factory
+- Store and agent names come back as terms; run one to read its value
+- Blob server takes its own plain backend; computed config stays with the tree
+- Ref tags and names, proxy, provide and log config can all be computed
+- Terms stay frozen after construction; config sits in the tree, computable like any value
+- Random samples take a seed instead of a generator, so reruns repeat exactly
 - Collapsible and accordion open smoothly, no flash of content or jump at the end
 - Section and card actions line up with a composed header instead of its top
 - Storybook shows container headers side by side, multi-line send keys and code diffs

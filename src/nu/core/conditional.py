@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from nu.core._cases import case_labels, checked_labels
 from nu.lang import ScalarQuery
 
 
@@ -87,8 +88,11 @@ class Switch(ScalarQuery):
             raise KeyError on no match instead, like a dict lookup.
 
     Notes:
-        - The case keys are intrinsic constants, kept in the payload rather
-          than as children, so they survive ``with_children`` unchanged.
+        - Children: ``[selector, labels, *values, default?]``. ``labels`` is
+          one child yielding the case keys in order, so a key can be a
+          computed term (a ref, a kv read) and is evaluated on every run. The
+          case count is a field: it is what splits the children before the
+          program runs.
         - Keys are matched by equality against the selector value, in the
           mapping's iteration order; the first match wins.
         - Short-circuits: only the matching case value (or the default) is
@@ -117,19 +121,19 @@ class Switch(ScalarQuery):
         values = list(cases.values())
         if default is not None:
             values.append(default)
-        super().__init__(selector, *values)
-        self._payload["keys"] = tuple(cases.keys())
-        self._payload["has_default"] = default is not None
+        super().__init__(selector, case_labels(cases), *values)
+        self.n_cases = len(cases)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        selector = children[0]
-        values = children[1:]
-        keys = self._payload["keys"]
-        has_default = self._payload["has_default"]
+        selector, labels_t = children[0], children[1]
+        values = children[2:]
+        n_cases = self.n_cases
+        has_default = len(values) > n_cases
 
         def thunk(rt: Runtime) -> object:
             s = selector(rt)
-            for i, key in enumerate(keys):
+            labels = checked_labels(labels_t(rt), n_cases, "Switch")
+            for i, key in enumerate(labels):
                 if key == s:
                     return values[i](rt)
             if has_default:
@@ -139,14 +143,15 @@ class Switch(ScalarQuery):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        selector = children[0]
-        values = children[1:]
-        keys = self._payload["keys"]
-        has_default = self._payload["has_default"]
+        selector, labels_t = children[0], children[1]
+        values = children[2:]
+        n_cases = self.n_cases
+        has_default = len(values) > n_cases
 
         async def athunk(rt: Runtime) -> object:
             s = await selector(rt)
-            for i, key in enumerate(keys):
+            labels = checked_labels(await labels_t(rt), n_cases, "Switch")
+            for i, key in enumerate(labels):
                 if key == s:
                     return await values[i](rt)
             if has_default:

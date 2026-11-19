@@ -18,20 +18,26 @@ __all__ = ["MethodRef"]
 
 
 class MethodRef(Ref):
-    """A Ref addressing a Method on a Service. Leaf: address rides in _payload."""
+    """A Ref addressing a Method on a Service.
+
+    Childless. The address (``name``, ``owner_service``) and any extra
+    config the declaration carries (a path, a verb, call defaults) are its
+    fields: the service class sets them once, they describe the method
+    rather than a value the tree computes. The ref evaluates to a fresh
+    ``{name, owner_service, **config}`` each time.
+    """
 
     def __init__(
         self,
         *,
         name: str,
         owner_service: type | None = None,
-        **payload: object,
+        **config: object,
     ) -> None:
         super().__init__()
-        self._payload["name"] = name
-        self._payload["owner_service"] = owner_service
-        for k, v in payload.items():
-            self._payload[k] = v
+        self._name: str = name
+        self._owner_service: type | None = owner_service
+        self._config: dict[str, object] = dict(config)
 
     @classmethod
     def method(cls, **kwargs: object) -> Method:
@@ -40,20 +46,24 @@ class MethodRef(Ref):
 
         return Method(cls, **kwargs)
 
+    def _snapshot(self) -> dict[str, object]:
+        """The name, the owning service and the extra config, as one fresh dict."""
+        return {"name": self._name, "owner_service": self._owner_service, **self._config}
+
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        """Evaluate to a snapshot of _payload."""
-        snapshot = dict(self._payload)
+        """Evaluate to a snapshot of the address and its extra config."""
+        snapshot = self._snapshot
 
         def thunk(rt: Runtime) -> dict:
-            return snapshot
+            return snapshot()
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Async sibling of _compile."""
-        snapshot = dict(self._payload)
+        snapshot = self._snapshot
 
         async def athunk(rt: Runtime) -> dict:
-            return snapshot
+            return snapshot()
 
         return athunk

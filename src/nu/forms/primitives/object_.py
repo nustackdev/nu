@@ -928,12 +928,12 @@ class Object(Form, TypedNu[Any]):
             - Names starting with `_` are never intercepted; they fall
               through to Python's normal lookup, raising `AttributeError`
               if genuinely missing. That keeps engine-private state
-              (`_payload`, `_children`, `_source`, ...) from being
+              (`_children`, `_source`, ...) from being
               accidentally captured as a tree node.
             - Only names Object does not define descend. These are Object's
               own methods and reach the method, never the value's attribute:
               `and_`, `bitand`, `bitnot`, `bitor`, `bitxor`, `bool_`,
-              `contains`, `difference`, `fallback`, `has_attr`,
+              `contains`, `difference`, `evolve`, `fallback`, `has_attr`,
               `intersection`, `is_`, `is_null`, `iter`, `len`, `lshift`,
               `merge`, `not_`, `or_`, `rshift`,
               `symmetric_difference`, `union`. To read a value attribute

@@ -5,7 +5,7 @@ task-119 typing discipline: bare Ref class -> auto-slot; parametric Ref
 class -> auto-slot whose type arguments are its declaration, the same one an
 explicit ``.slot(...)`` makes; bare Shape subclass without an explicit ``.slot()`` -> hard error; anything
 else -> legacy path (explicit ``= <Ref>.slot(T)`` assignment). All paths
-stamp a recursive ``TypeInfo`` onto the created ref's ``_payload``.
+stamp a recursive ``TypeInfo`` onto the created ref's ``_type_info`` field.
 """
 
 from __future__ import annotations
@@ -62,12 +62,12 @@ def test_bare_ref_annotation_synthesizes_slot() -> None:
 
 def test_bare_ref_annotation_stamps_type_info_on_ref() -> None:
     ref = LeafShape.n
-    assert nu.tree.payload(ref)["type_info"] == TypeInfo(IntRef)
+    assert ref._type_info == TypeInfo(IntRef)
 
 
 def test_multiple_bare_refs_all_synthesize() -> None:
     assert LeafShape._slots["label"].ref_cls is StrRef
-    assert nu.tree.payload(LeafShape.label)["type_info"] == TypeInfo(StrRef)
+    assert LeafShape.label._type_info == TypeInfo(StrRef)
 
 
 # --- parametric Ref synthesis --------------------------------------------
@@ -85,7 +85,7 @@ def test_primitive_list_ref_synthesizes_with_no_kwargs() -> None:
 
 def test_primitive_list_ref_stamps_recursive_type_info() -> None:
     ref = ListHolder.tags
-    assert nu.tree.payload(ref)["type_info"] == TypeInfo(PrimitiveListRef, elem=TypeInfo(str))
+    assert ref._type_info == TypeInfo(PrimitiveListRef, elem=TypeInfo(str))
 
 
 class DictHolder(nu.Shape):
@@ -93,7 +93,7 @@ class DictHolder(nu.Shape):
 
 
 def test_primitive_dict_ref_stamps_key_and_elem() -> None:
-    info = nu.tree.payload(DictHolder.meta)["type_info"]
+    info = DictHolder.meta._type_info
     assert info == TypeInfo(PrimitiveDictRef, key=TypeInfo(str), elem=TypeInfo(int))
 
 
@@ -107,7 +107,7 @@ def test_explicit_slot_declaration_wins_over_a_python_annotation() -> None:
     slot = DecomposedListHolder._slots["nums"]
     assert slot.ref_cls is ListRef
     assert slot.kwargs == {}
-    info = nu.tree.payload(DecomposedListHolder.nums)["type_info"]
+    info = DecomposedListHolder.nums._type_info
     assert info == TypeInfo(ListRef, elem=TypeInfo(int))
 
 
@@ -122,7 +122,7 @@ def test_shapes_dict_ref_synthesizes_with_no_kwargs() -> None:
 
 
 def test_shapes_dict_ref_stamps_recursive_type_info() -> None:
-    info = nu.tree.payload(ShapesDictHolder.by_id)["type_info"]
+    info = ShapesDictHolder.by_id._type_info
     assert info == TypeInfo(DictRef, key=TypeInfo(int), elem=TypeInfo(LeafShape))
 
 
@@ -137,7 +137,7 @@ def test_shapes_list_ref_synthesizes_with_no_kwargs() -> None:
 
 
 def test_shapes_list_ref_stamps_type_info_with_shape_elem() -> None:
-    info = nu.tree.payload(ShapesListHolder.rows)["type_info"]
+    info = ShapesListHolder.rows._type_info
     assert info == TypeInfo(ListRef, elem=TypeInfo(LeafShape))
 
 
@@ -152,7 +152,7 @@ def test_kh57_ref_synthesizes_with_no_kwargs() -> None:
 
 
 def test_kh57_ref_stamps_recursive_type_info() -> None:
-    info = nu.tree.payload(Kh57Holder.entries)["type_info"]
+    info = Kh57Holder.entries._type_info
     assert info == TypeInfo(Kh57Ref, elem=TypeInfo(int))
 
 
@@ -161,7 +161,7 @@ class Kh57ShapesHolder(nu.Shape):
 
 
 def test_kh57_shapes_ref_stamps_type_info_with_shape_elem() -> None:
-    info = nu.tree.payload(Kh57ShapesHolder.points)["type_info"]
+    info = Kh57ShapesHolder.points._type_info
     assert info == TypeInfo(Kh57Ref, elem=TypeInfo(LeafShape))
 
 
@@ -176,7 +176,7 @@ def test_ordered_dict_ref_synthesizes_with_no_kwargs() -> None:
 
 
 def test_ordered_dict_ref_stamps_recursive_type_info() -> None:
-    info = nu.tree.payload(OrderedHolder.cells)["type_info"]
+    info = OrderedHolder.cells._type_info
     assert info == TypeInfo(OrderedDictRef, key=TypeInfo(str), elem=TypeInfo(bool))
 
 
@@ -185,7 +185,7 @@ class OrderedShapesHolder(nu.Shape):
 
 
 def test_ordered_dict_shapes_ref_stamps_type_info_with_shape_elem() -> None:
-    info = nu.tree.payload(OrderedShapesHolder.rows)["type_info"]
+    info = OrderedShapesHolder.rows._type_info
     assert info == TypeInfo(OrderedDictRef, key=TypeInfo(int), elem=TypeInfo(LeafShape))
 
 
@@ -227,7 +227,7 @@ def test_bare_shape_annotation_with_assignment_stamps_shape_type_info() -> None:
     class RelHolder(nu.Shape):
         rel: LeafShape = ShapeRef.slot(LeafShape)
 
-    info = nu.tree.payload(RelHolder.rel)["type_info"]
+    info = RelHolder.rel._type_info
     assert info == TypeInfo(LeafShape)
 
 
@@ -236,7 +236,7 @@ def test_bare_shape_annotation_with_assignment_stamps_shape_type_info() -> None:
 
 def test_legacy_python_typed_annotation_takes_the_slot_declaration() -> None:
     ref = LegacyPythonTyped.tags
-    assert nu.tree.payload(ref)["type_info"] == TypeInfo(ListRef, elem=TypeInfo(str))
+    assert ref._type_info == TypeInfo(ListRef, elem=TypeInfo(str))
 
 
 # --- the two spellings agree ---------------------------------------------
@@ -265,14 +265,13 @@ class Spelled(nu.Shape):
 def test_slot_and_annotation_declare_the_same_ref(by_slot: str, by_annotation: str) -> None:
     a, b = getattr(Spelled, by_slot), getattr(Spelled, by_annotation)
     assert type(a) is type(b)
-    assert nu.tree.payload(a)["type_info"] == nu.tree.payload(b)["type_info"]
-    unnamed = lambda ref: {k: v for k, v in nu.tree.payload(ref).items() if k != "segment"}  # noqa: E731
-    assert unnamed(a) == unnamed(b)
+    assert a._type_info == b._type_info
+    assert nu.tree.fields(a) == nu.tree.fields(b)
 
 
 def test_no_annotation_no_type_info() -> None:
     ref = Bare.n
-    assert "type_info" not in nu.tree.payload(ref)
+    assert ref._type_info is None
 
 
 # --- union / optional in annotations ------------------------------------
@@ -283,7 +282,7 @@ class OptionalHolder(nu.Shape):
 
 
 def test_optional_collapses_to_inner_ref() -> None:
-    info = nu.tree.payload(OptionalHolder.maybe)["type_info"]
+    info = OptionalHolder.maybe._type_info
     assert info == TypeInfo(IntRef)
 
 
@@ -294,7 +293,7 @@ class UnionHolder(nu.Shape):
 
 
 def test_non_trivial_union_collapses_to_any() -> None:
-    info = nu.tree.payload(UnionHolder.either)["type_info"]
+    info = UnionHolder.either._type_info
     assert info == TypeInfo(Any)
 
 

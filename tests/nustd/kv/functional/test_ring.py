@@ -55,8 +55,8 @@ LINES = Exec.cell_runs["r1"].lines
 
 
 def test_the_slot_carries_its_capacity() -> None:
-    assert CellRun.out._payload["type_marker"] is RingView.of(3)
-    assert CellRun.lines._payload["type_marker"] is RingView.of(2)
+    assert CellRun.out._type_marker is RingView.of(3)
+    assert CellRun.lines._type_marker is RingView.of(2)
 
 
 @pytest.mark.parametrize(

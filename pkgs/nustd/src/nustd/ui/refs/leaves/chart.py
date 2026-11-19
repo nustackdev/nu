@@ -326,10 +326,13 @@ class Chart(LeafRef):
         parent_ref: Any = None,
         owner_shape: Any = None,
         props: Mapping[str, object] | None = None,
+        **kwargs: Any,
     ) -> None:
         # A chart built alone still carries its slot's option on the chain: the
         # browser has nothing else to draw it from.
-        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape, props=props or {})
+        super().__init__(
+            address, parent_ref=parent_ref, owner_shape=owner_shape, props=props or {}, **kwargs
+        )
 
     @classmethod
     def slot(
@@ -348,7 +351,7 @@ class Chart(LeafRef):
 
     def _declared(self) -> dict[str, Any]:
         """The props this chart's slot declared."""
-        props = self._payload.get("props")
+        props = self._props
         return dict(props) if props is not None else dict(type(self).slot().props)
 
     @classmethod

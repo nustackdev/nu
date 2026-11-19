@@ -13,7 +13,7 @@ from .walk import preorder
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping
+    from collections.abc import Callable
 
     from nu.lang import Nu
 
@@ -23,9 +23,9 @@ __all__ = [
     "count",
     "depth",
     "equal",
+    "fields",
     "find",
     "find_first",
-    "payload",
     "size",
 ]
 
@@ -67,30 +67,42 @@ def children(node: Nu) -> tuple[Nu, ...]:
     return node._children
 
 
-def payload(node: Nu) -> Mapping[str, object]:
-    """The node's construction data: what it holds besides its children.
+_NOT_FIELDS = frozenset({"_children", "_frozen"})
+"""Instance attributes that are not fields: the child tuple and the freeze flag."""
 
-    Read-only by contract. A rewrite that keeps a node's payload shares it,
-    so two variants of one node report the same mapping.
+
+def fields(node: Term) -> dict[str, object]:
+    """The node's fields: what it holds besides its children.
+
+    Every instance attribute a kind sets in ``__init__`` (a Literal's
+    ``value``, a Ref's ``owner_shape``, a Switch's case count). A field is
+    what has to be known before the program runs: what a law, an attribute
+    rule, a rewrite or the compile reads, or what makes the node the kind it
+    is. Everything a run reads is a child. Fields are frozen, so the
+    returned dict is a fresh snapshot; changing it does not change the node. Build a variant with ``node.evolve(**fields)``.
+
+    Example:
+        >>> nu.tree.fields(nu.Literal(42))
+        {'value': 42}
     """
-    return node._payload
+    return {k: v for k, v in vars(node).items() if k not in _NOT_FIELDS}
 
 
 def equal(a: object, b: object) -> bool:
-    """Structural equality: same kinds, same payloads, same children, recursively.
+    """Structural equality: same kinds, same fields, same children, recursively.
 
     The explicit spelling of "these two trees are the same program". ``==`` on
     a term builds a comparison term (on a Form) or raises (on a bare term), so
-    it never answers this. Plain values in payloads compare by type and
-    ``==``; terms anywhere inside them (a body held in a payload, a case
-    table) compare structurally.
+    it never answers this. Plain values in fields compare by type and ``==``;
+    terms anywhere inside them (a Literal holding a body, a case table)
+    compare structurally.
     """
     if a is b:
         return True
     if type(a) is not type(b):
         return False
     if isinstance(a, Term) and isinstance(b, Term):
-        return equal(a._children, b._children) and equal(a._payload, b._payload)
+        return equal(a._children, b._children) and equal(fields(a), fields(b))
     if isinstance(a, dict) and isinstance(b, dict):
         return a.keys() == b.keys() and all(equal(a[k], b[k]) for k in a)
     if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):

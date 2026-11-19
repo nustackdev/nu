@@ -48,4 +48,6 @@ def test_non_nu_non_tuple_child_rejected() -> None:
 def test_mixed_tuple_and_plain_construction_ok() -> None:
     # Sanity: mixing bare and tuple forms constructs without error.
     tree = Parallel((_set("a", 1), "async"), _set("b", 2))
-    assert nu.tree.payload(tree)["parallel_modes"] == ("async", None)
+    # [*arms, modes]: the modes are one child past the arms, split by n_arms.
+    assert tree.n_arms == 2
+    assert nu.run(nu.tree.children(tree)[2])[0] == ("async", None)

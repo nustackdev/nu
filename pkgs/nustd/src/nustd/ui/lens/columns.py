@@ -163,7 +163,7 @@ def _kind_of(ref_cls: type) -> str:
 
 def _holds_shapes(ref: StructuredRef) -> bool:
     """True when a collection declares a Shape as its value, so each row is a door."""
-    declared = nu.tree.payload(ref).get("type_info")
+    declared = ref._type_info
     return declared is not None and declared.elem is not None and declared.elem.is_shape
 
 
@@ -199,7 +199,7 @@ def _descend(prefix: StructuredRef | None, shape_cls: type[Shape], cursor: tuple
             msg = f"{seg!r}: a value has nothing under it"
             raise KeyError(msg)
         if isinstance(ref, ShapeRef):
-            ref = _slot(nu.tree.payload(ref)["shape_type"], seg, ref)
+            ref = _slot(ref._shape_type, seg, ref)
         elif isinstance(ref, SequenceRef):
             # A position is an int and a wire segment is a string, always.
             ref = ref[int(seg)]
@@ -362,7 +362,7 @@ def _column_term(
     except Exception as exc:
         return _broken(f"{'.'.join(cursor)}: {exc!r}")
     if isinstance(ref, ShapeRef):
-        return _shape_term(nu.tree.payload(ref)["shape_type"], ref)
+        return _shape_term(ref._shape_type, ref)
     if isinstance(ref, MappingRef):
         return _mapping_term(ref, max_rows)
     if isinstance(ref, SequenceRef):

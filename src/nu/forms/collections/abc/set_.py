@@ -31,7 +31,7 @@ from .collection import CollectionForm
 
 if TYPE_CHECKING:
     from nu.forms.primitives import Bool
-    from nu.lang import Arg, Nu
+    from nu.lang import Arg, BoolArg, Nu
 
 
 __all__ = [
@@ -340,13 +340,13 @@ class MutableSetForm(
 
         return AddCmd(self, value)
 
-    def remove(self, value: Arg[ElementT], *, missing_ok: bool = False) -> Any:  # noqa: ANN401
+    def remove(self, value: Arg[ElementT], *, missing_ok: BoolArg = False) -> Any:  # noqa: ANN401
         """Remove value from self.
 
         Args:
             value: the element to remove.
-            missing_ok: when ``True``, an absent value is a no-op. A plain
-                Python bool fixed at construction, not a Nu value.
+            missing_ok: when ``True``, an absent value is a no-op. A bool, or any
+                Nu yielding one, evaluated each run.
 
         Notes:
             - By default raises at evaluation time when value is absent,

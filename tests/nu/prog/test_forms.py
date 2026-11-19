@@ -234,7 +234,8 @@ def test_without_on_error_a_construction_failure_propagates() -> None:
 def test_on_error_wraps_in_a_trycatch() -> None:
     tree = Program(BROKEN).run(on_error=nu.Literal("caught"))
     assert isinstance(tree, nu.TryCatch)
-    assert nu.tree.payload(tree)["errors"] == (ConstructionError,)
+    # The filter is the last child, run like any other.
+    assert nu.run(nu.tree.children(tree)[-1])[0] == (ConstructionError,)
 
 
 def test_on_error_branch_runs_and_forwards_its_value() -> None:

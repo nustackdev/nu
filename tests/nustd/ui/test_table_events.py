@@ -129,7 +129,7 @@ def _echo(change) -> nu.Nu:
 
 
 def test_slot_defaults():
-    props = nu.tree.payload(ShelfPage.table)["props"]
+    props = ShelfPage.table._props
     assert props == {
         "columns": [{"key": "title"}],
         "label": "Table",
@@ -154,7 +154,7 @@ def test_slot_takes_mapping_columns_and_copies_them():
         table = DataTableRef.slot(columns=["title", column])
 
     column["kind"] = "text"
-    props = nu.tree.payload(Mixed.table)["props"]
+    props = Mixed.table._props
     assert props["columns"] == [{"key": "title"}, {"key": "year", "kind": "number"}]
 
 
@@ -299,7 +299,7 @@ def test_columns_editable_is_a_slot_flag():
     class Columns(Column):
         table = DataTableRef.slot(columns=["a"], columns_editable=True)
 
-    assert nu.tree.payload(Columns.table)["props"]["columns_editable"] is True
+    assert Columns.table._props["columns_editable"] is True
 
 
 def test_a_column_rename_reads_its_fields():

@@ -15,6 +15,7 @@ import uuid
 from typing import TYPE_CHECKING
 
 import pytest
+from _support.brackets import config
 from starlette.applications import Starlette
 from starlette.testclient import TestClient
 
@@ -54,7 +55,7 @@ class _Rig:
     def __init__(self, root: Path, cap: int | None = 1 << 20) -> None:
         self.server = WebServer(session_cls=_Session)
         bracket, routes = uploads(root, cap=cap)
-        self.area: UploadArea = bracket._payload["kwargs"]["area"]
+        self.area: UploadArea = config(bracket)["kwargs"]["area"]
         self.ctx = Context().bind(WebServer, self.server)
         self.area.setup(self.ctx)
         self.app = Starlette(routes=routes)
@@ -267,7 +268,7 @@ def test_a_total_over_the_cap_is_refused_before_reading(tmp_path: Path):
 
 def test_no_cap_by_default_takes_any_total(tmp_path: Path):
     bracket, _ = uploads(tmp_path / "area")
-    assert bracket._payload["kwargs"]["area"].cap is None
+    assert config(bracket)["kwargs"]["area"].cap is None
     r = _Rig(tmp_path / "area", cap=None)
     try:
         with TestClient(r.app) as c:
@@ -622,7 +623,7 @@ def test_the_default_root_is_fixed_at_build_and_made_at_setup(
 ):
     monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
     bracket, _ = uploads()
-    area: UploadArea = bracket._payload["kwargs"]["area"]
+    area: UploadArea = config(bracket)["kwargs"]["area"]
     assert area.root.parent == tmp_path
     assert area.root.name.startswith("nu-uploads-")
     assert not area.root.exists()
@@ -646,13 +647,13 @@ async def test_the_bracket_binds_the_area_and_tears_it_down(tmp_path: Path):
     server = WebServer(session_cls=_Session)
     ctx = Context().bind(WebServer, server)
     bound, _ = await nu.arun(nu.With(bracket, body=FabricRef(UploadArea)), ctx)
-    assert bound is bracket._payload["kwargs"]["area"]
+    assert bound is config(bracket)["kwargs"]["area"]
     assert not bound.root.exists()
 
 
 async def test_upload_view_binds_the_tab_view(tmp_path: Path):
     bracket, _ = uploads(tmp_path / "area")
-    area: UploadArea = bracket._payload["kwargs"]["area"]
+    area: UploadArea = config(bracket)["kwargs"]["area"]
     server = WebServer(session_cls=_Session)
     sid = uuid.uuid4().hex
     ctx = Context({"sid": sid}).bind(WebServer, server)
@@ -690,8 +691,8 @@ def test_a_view_refuses_a_climbing_sid(tmp_path: Path):
 
 
 def _routes_of(tree: nu.With) -> list:
-    listen_bracket = tree._payload["brackets"][0]
-    return list(listen_bracket._payload["kwargs"]["routes"])
+    listen_bracket = tree.brackets[0]
+    return list(config(listen_bracket)["kwargs"]["routes"])
 
 
 def test_serve_always_mounts_the_intake(tmp_path: Path):
@@ -700,13 +701,13 @@ def test_serve_always_mounts_the_intake(tmp_path: Path):
     )
     paths = [r.path for r in _routes_of(tree)]
     assert f"{UPLOAD_PREFIX}/{{sid}}" in paths
-    area = tree._payload["brackets"][1]._payload["kwargs"]["area"]
+    area = config(tree.brackets[1])["kwargs"]["area"]
     assert area.root == (tmp_path / "up").absolute()
     assert area.cap == 7
 
 
 def test_serve_defaults_to_a_temp_root_and_no_cap():
     tree = serve(nu.Str("x"), static=None, open_browser=False)
-    area = tree._payload["brackets"][1]._payload["kwargs"]["area"]
+    area = config(tree.brackets[1])["kwargs"]["area"]
     assert area.root.name.startswith("nu-uploads-")
     assert area.cap is None

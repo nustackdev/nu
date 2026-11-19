@@ -14,7 +14,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.engine import Declared
-from nu.lang import NULL, Ref
+from nu.lang import NULL, Literal, Ref
 from nu.lang.null import is_null
 
 
@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 
     from nu.domains.shape.dsl import Shape
     from nu.lang.runtime import Runtime
+    from nu.lang.typeinfo import TypeInfo
 
 __all__ = ["ANCHOR", "Anchor", "StructuredRef", "root_shape"]
 
@@ -64,18 +65,21 @@ class StructuredRef(Ref):
         *,
         parent_ref: StructuredRef | None = None,
         owner_shape: type[Shape] | None = None,
+        type_info: TypeInfo | None = None,
     ) -> None:
         parent = parent_ref if parent_ref is not None else ANCHOR
         super().__init__(parent, address)
-        # All navigation metadata rides in ``payload``: part of the Term's
-        # ``(kind, children, payload)`` identity, so the base
-        # :class:`Term._with_children` (which shares ``payload``) carries it
-        # across a tree rewrite. No per-subclass ``with_children`` override, and
-        # nothing user-facing lives on ``__dict__``.
-        self._payload["owner_shape"] = owner_shape
-        self._payload["root_shape"] = (
-            parent_ref._root_shape if parent_ref is not None else owner_shape
-        )
+        # Fields are underscore-named: a public attribute would shadow a slot of
+        # the same name on the refs that navigate by ``__getattr__``.
+        self._owner_shape: type[Shape] | None = owner_shape
+        """Shape class that directly owns this slot."""
+        self._type_info: TypeInfo | None = type_info
+        """What the slot declared this ref holds; None when nothing is declared."""
+
+    #: Set (via ``evolve``) on every spine node ``with_parent`` placed. A placed
+    #: chain and a fresh one both bottom out at ANCHOR, so the mark is the only
+    #: way to tell. A class default, so an unplaced ref carries no field for it.
+    _placed: bool = False
 
     # --- navigation (all private: inner mechanics, never user-facing) ---------
 
@@ -91,14 +95,33 @@ class StructuredRef(Ref):
         return p if isinstance(p, StructuredRef) else None
 
     @property
-    def _owner_shape(self) -> type[Shape] | None:
-        """Shape class that directly owns this slot."""
-        return self._payload.get("owner_shape")  # type: ignore[return-value]
+    def _segment(self) -> object:
+        """This ref's address as given: a Literal's value, else the address term.
+
+        Read off ``children[1]``, so it is never stored twice. A computed
+        address (a Ref, an expression) comes back as the term itself.
+
+        Build time only: the ui key builders, ``same_place`` and messages read
+        it to name a place. A run never reads it; it runs the address child
+        (``_address``, the substrates' path walks).
+        """
+        address = self._children[1]
+        if isinstance(address, Literal) and address.factory is None:
+            return address.value
+        return address
 
     @property
     def _root_shape(self) -> type[Shape] | None:
-        """Root Shape for this Ref chain (resolved at construction)."""
-        return self._payload.get("root_shape")  # type: ignore[return-value]
+        """Root Shape for this Ref chain: the owner shape of the chain's top ref.
+
+        Computed by walking ``children[0]`` up to :data:`ANCHOR`, so a chain
+        spliced or placed under another ref routes to that ref's root with no
+        bookkeeping.
+        """
+        node = self
+        while isinstance(parent := node._children[0], StructuredRef):
+            node = parent
+        return node._owner_shape
 
     # --- declaration -----------------------------------------------------------
 

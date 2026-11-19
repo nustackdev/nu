@@ -15,15 +15,13 @@ Because the fabric spans many processes, these are declarative statements
 about its contents rather than imperative escapes - the same way
 ``ref.set()`` is a statement about a mem fabric.
 
-**No caller value is payload.** Every worker id, job id, pool address, the
-``init`` override, the stop ``grace`` and the wait ``timeout`` are children,
-so any of them can come from a ``Ref``, a mem slot or any query.
-``nustd.mp.Teleport`` keeps its target in ``self._payload``, which pins it at
-construction time; that is the mistake this fabric exists not to repeat.
+**Every caller value is a child.** Every worker id, job id, pool address,
+the ``init`` override, the stop ``grace`` and the wait ``timeout`` are
+children, so any of them can come from a ``Ref``, a mem slot or any query.
 
-The one thing that *is* payload is ``Dispatch``'s body, and it is payload for
-a structural reason, not a shortcut. See the warning on that class: a body in
-payload is not part of the tree, so no walker reaches it.
+``Dispatch``'s body is a child too, but held as data: it sits in a
+``Literal`` at the tail, so the tree treats it as a value and never as part
+of the program around it. See the warning on that class.
 
 Slot order, which is what the laws read:
 
@@ -31,7 +29,7 @@ Slot order, which is what the laws read:
 atom        slots                      sort          mutates
 ==========  =========================  ============  ====================
 Launch      (pool, init)               ScalarAction  {0}
-Dispatch    (pool, worker)             ScalarAction  {0}
+Dispatch    (pool, worker, body)       ScalarAction  {0}
 Teleport    (body, pool, worker)       Policy        -
 Cancel      (pool, worker, job)        Command       {0}
 Interrupt   (pool, worker)             Command       {0}
@@ -42,15 +40,15 @@ Wait        (pool, worker, timeout)    ScalarQuery   -
 Workers     (pool,)                    StreamQuery   -
 ==========  =========================  ============  ====================
 
-``Dispatch`` carries its body in ``_payload["body"]``; ``Teleport`` carries
-its body as ``children[0]``. The asymmetry is intended:
+``Dispatch`` carries its body as a ``Literal`` in its last slot; ``Teleport``
+carries its body as ``children[0]``. The asymmetry is intended:
 
 - ``Cancel``, ``Interrupt`` and ``Kill`` are VOID mutators, so ``ref_slots``
   requires the mutation slot to hold a Ref. The pool ref is slot 0 in all of
   them, and in every other mutator too.
 - A resident body is typically a Flow (``ForeverDo``, ``ReactEvery``), and a
   Flow in an Interaction's composition row does not compose, so
-  ``Dispatch``'s body cannot be a child - hence the payload.
+  ``Dispatch``'s body cannot be a live child - hence the ``Literal``.
 - ``Teleport`` is a Span, and Span transparency resolves both sort and
   cardinality from ``children[0]``. Its body therefore *has* to be slot 0 or
   the node would present itself to its parent as a scalar ref. The
@@ -60,7 +58,7 @@ its body as ``children[0]``. The asymmetry is intended:
 .. warning::
 
    A ``Dispatch`` body is not part of the tree it sits in. Tree walkers,
-   rewrites, analyses and renders all traverse ``_children``, and payload is
+   rewrites, analyses and renders all stop at a ``Literal``, whose value is
    opaque to every one of them, so a dispatched body is silently skipped by
    whatever pass runs over the enclosing tree. Any pass the body needs must
    be applied by the caller, to the body, before the ``Dispatch`` is built.
@@ -117,7 +115,7 @@ def _pool_node(pool: Nu | None) -> Nu:
     return PoolRef() if pool is None else pool
 
 
-def _init_node(init: object) -> Nu:
+def _init_node(init: object) -> object:
     """The init slot: a carrier yielding a bracket (or None for the pool default).
 
     A bracket is itself a Nu term, so passing one directly would make it a
@@ -129,7 +127,7 @@ def _init_node(init: object) -> Nu:
 
     if isinstance(init, _Bracket):
         return Literal(init)
-    return init if isinstance(init, Nu) else Literal(init)
+    return init
 
 
 def _require_pool(value: object) -> WorkerPool:
@@ -309,7 +307,8 @@ class Teleport(Policy):
           child, so anything else there would make the node present as a ref.
         - The body resolves its refs against the worker's Context.
           ``carry=True`` copies the caller's ``ctx.attrs`` across for that one
-          execution.
+          execution. ``carry`` is the last child, evaluated each run, so it
+          can be computed.
         - The sync path blocks the calling thread for the reply; the async
           path holds no thread, the pool's reader wakes it.
         - A stream-rooted body evaluates to an async generator, which cannot
@@ -340,19 +339,18 @@ class Teleport(Policy):
         body: Nu | None = None,
         worker: object = None,
         *,
-        carry: bool = False,
+        carry: object = False,
     ) -> None:
-        super().__init__(body, _pool_node(pool), worker)
-        self._payload["carry"] = carry
+        super().__init__(body, _pool_node(pool), worker, carry)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the sync teleport thunk."""
         body_term = self._children[0]
-        carry = self._payload["carry"]
 
         def thunk(rt: Runtime) -> object:
             pool = _require_pool(children[1](rt))
             wid = children[2](rt)
+            carry = children[3](rt)
             attrs = dict(rt.ctx.attrs.items()) if carry else None
             result = pool.teleport(wid, body_term, attrs=attrs)
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
@@ -364,11 +362,11 @@ class Teleport(Policy):
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the async teleport thunk."""
         body_term = self._children[0]
-        carry = self._payload["carry"]
 
         async def athunk(rt: Runtime) -> object:
             pool = _require_pool(await children[1](rt))
             wid = await children[2](rt)
+            carry = await children[3](rt)
             attrs = dict(rt.ctx.attrs.items()) if carry else None
             result = await pool.ateleport(wid, body_term, attrs=attrs)
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
@@ -393,9 +391,10 @@ class Dispatch(ScalarAction):
 
     .. warning::
 
-       **The body is payload, so it is not part of the tree.** Every pass Nu
-       has - every walker, rewrite, analysis and the box-tree render -
-       traverses ``_children``, and payload is opaque to all of them. A
+       **The body is held as data, so it is not part of the tree.** It is
+       the value of a ``Literal`` child, and every pass Nu has - every
+       walker, rewrite, analysis and the box-tree render - stops at a
+       ``Literal``. A
        dispatched body is therefore invisible to whatever runs over the tree
        that contains the ``Dispatch``, and will be silently skipped rather
        than reported as unsupported.
@@ -414,8 +413,8 @@ class Dispatch(ScalarAction):
     Args:
         pool: the node yielding the ``WorkerPool``. Defaults to the untagged
             ``PoolRef``.
-        body: the tree to run in the worker. Kept in ``_payload["body"]``,
-            captured as a term, never evaluated in the caller.
+        body: the tree to run in the worker. Kept as ``Literal(body)`` in
+            the third slot, captured as a term, never evaluated in the caller.
         worker: the node yielding the worker id. Any Nu - the id is still a
             child, so it can be a ``Literal``, a mem slot or a query.
 
@@ -425,14 +424,16 @@ class Dispatch(ScalarAction):
           the ack, or the ack did not come within the pool's
           ``ack_timeout``) could never cancel the body, so it is cancelled
           for them.
-        - The body is not a child because a resident body is usually a Flow,
-          which does not compose in an Interaction's slots.
+        - The body is a ``Literal`` child, not a live one, because a resident
+          body is usually a Flow, which does not compose in an
+          Interaction's slots.
         - The body resolves its refs against the *worker's* Context, built in
           the child by the pool's (or the launch's) ``init`` bracket.
           Anything bound around the Dispatch in the caller's tree is not
           visible there. ``carry=True`` binds the caller's ``ctx.attrs`` on a
           branch of the worker's Context for that one body, so loop
           variables bound by ``Map`` or ``Filter`` reach it.
+          ``carry`` is the last child, evaluated each run.
         - Everything crossing the pipe goes through cloudpickle, so the body
           term may hold closures and locally defined classes.
         - Several bodies can be dispatched to one worker; they run as
@@ -459,25 +460,18 @@ class Dispatch(ScalarAction):
         body: Nu | None = None,
         worker: object = None,
         *,
-        carry: bool = False,
+        carry: object = False,
     ) -> None:
-        super().__init__(_pool_node(pool), worker)
-        # Payload is shared by every ``_with_children`` variant of this term.
-        # That is safe here precisely because a Nu term is immutable: the body
-        # cannot be mutated through one variant and seen from another. The
-        # cost is the other half of the same fact - a rewrite that rebuilds
-        # the children carries the *original* body across untouched.
-        self._payload["body"] = _dispatch_body(body)
-        self._payload["carry"] = carry
+        super().__init__(_pool_node(pool), worker, Literal(_dispatch_body(body)), carry)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the sync dispatch thunk."""
-        body_term = self._payload["body"]
-        carry = self._payload["carry"]
 
         def thunk(rt: Runtime) -> object:
             pool = _require_pool(children[0](rt))
             wid = children[1](rt)
+            body_term = children[2](rt)
+            carry = children[3](rt)
             attrs = dict(rt.ctx.attrs.items()) if carry else None
             return pool.dispatch(wid, body_term, attrs=attrs)
 
@@ -485,12 +479,12 @@ class Dispatch(ScalarAction):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the async dispatch thunk."""
-        body_term = self._payload["body"]
-        carry = self._payload["carry"]
 
         async def athunk(rt: Runtime) -> object:
             pool = _require_pool(await children[0](rt))
             wid = await children[1](rt)
+            body_term = await children[2](rt)
+            carry = await children[3](rt)
             attrs = dict(rt.ctx.attrs.items()) if carry else None
             return await pool.adispatch(wid, body_term, attrs=attrs)
 

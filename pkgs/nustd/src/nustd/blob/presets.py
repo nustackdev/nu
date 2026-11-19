@@ -15,11 +15,10 @@ from .store import store_name
 
 
 if TYPE_CHECKING:
-    from .protocol import BlobBackend
     from .store import StoreRef
 
 
-__all__ = ["backend_of", "files", "lmdb", "s3"]
+__all__ = ["files", "lmdb", "s3"]
 
 
 def lmdb(
@@ -121,25 +120,3 @@ def s3(
         "part_size": part_size,
     }
     return Provide(BlobFabric, {"backend": S3Backend, "options": options}, tag=store_name(store))
-
-
-def backend_of(spec: Provide) -> BlobBackend:
-    """A new backend, not open yet, built as the binding ``spec`` makes builds one.
-
-    For serving a store outside a tree, such as a web server's routes: give
-    them the same spec the tree binds, so both reach one store. An LMDB env
-    opened twice in one process is one env, shared.
-
-    Args:
-        spec: what ``lmdb``, ``files`` or ``s3`` gave.
-
-    Example:
-        spec = nustd.blob.lmdb(Media, ".store/media")
-        backend = nustd.blob.backend_of(spec)
-        backend.open()
-    """
-    payload = getattr(spec, "_payload", None)
-    if not isinstance(spec, Provide) or payload is None or payload.get("cls") is not BlobFabric:
-        raise TypeError(f"a blob spec is what nustd.blob.lmdb, files or s3 gives, got {spec!r}")
-    kwargs = payload["kwargs"]
-    return kwargs["backend"](**dict(kwargs.get("options") or {}))

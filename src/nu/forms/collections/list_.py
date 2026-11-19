@@ -103,14 +103,14 @@ class List(
 
         Notes:
             - When the wrapping Form carries an annotation-derived
-              `TypeInfo` on its payload (i.e. it's a Ref like
+              `TypeInfo` in its `type_info` field (i.e. it's a Ref like
               `PrimitiveListRef[str]`), dispatch the elem to its concrete
               Form (`Str` here).
-            - Plain value-node `List`s (no payload) fall back to `Object` -
+            - Plain value-node `List`s (no type info) fall back to `Object` -
               the honest terminal for value-Form descent without
               narrowing context.
         """
-        ti = self._payload.get("type_info")
+        ti = self._type_info
         if ti is not None and ti.elem is not None:
             form_cls = ti.elem.to_form()
             return form_cls(operand)  # type: ignore[return-value]

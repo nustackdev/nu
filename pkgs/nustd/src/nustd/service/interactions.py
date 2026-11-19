@@ -8,7 +8,7 @@ ServiceCommand       (Command)       — mutating void call, yields nothing.
 
 Each takes the same two children: the endpoint Ref and a Dict of call kwargs.
 None of them is written by hand — calling the matching MethodRef builds it.
-Dispatch is shared: the Ref payload names the owning Service, that class is the
+Dispatch is shared: the Ref's snapshot names the owning Service, that class is the
 tag the ``ServiceFabric`` is looked up under on the context, the target
 attribute is fetched off it, and the endpoint defaults are merged under the
 call kwargs. What differs across the five is the kind they declare, whether
@@ -49,7 +49,7 @@ class ServiceQuery(ScalarQuery):
     """Calls a read-only endpoint on the bound Python object for its value.
 
     Args:
-        ref: the endpoint Ref. Its payload names the owning Service, the target
+        ref: the endpoint Ref. Its snapshot names the owning Service, the target
             attribute, and the endpoint defaults.
         args: a Dict of call kwargs, merged over those defaults.
 
@@ -86,7 +86,7 @@ class ServiceStreamQuery(StreamQuery):
     """Calls a read-only endpoint on the bound Python object for its items.
 
     Args:
-        ref: the endpoint Ref. Its payload names the owning Service, the target
+        ref: the endpoint Ref. Its snapshot names the owning Service, the target
             attribute, and the endpoint defaults.
         args: a Dict of call kwargs, merged over those defaults.
 
@@ -124,7 +124,7 @@ class ServiceAction(ScalarAction):
     """Calls a mutating endpoint on the bound Python object for its value.
 
     Args:
-        ref: the endpoint Ref. Its payload names the owning Service, the target
+        ref: the endpoint Ref. Its snapshot names the owning Service, the target
             attribute, and the endpoint defaults.
         args: a Dict of call kwargs, merged over those defaults.
 
@@ -161,7 +161,7 @@ class ServiceStreamAction(StreamAction):
     """Calls a mutating endpoint on the bound Python object for its items.
 
     Args:
-        ref: the endpoint Ref. Its payload names the owning Service, the target
+        ref: the endpoint Ref. Its snapshot names the owning Service, the target
             attribute, and the endpoint defaults.
         args: a Dict of call kwargs, merged over those defaults.
 
@@ -198,7 +198,7 @@ class ServiceCommand(Command):
     """Calls a mutating endpoint on the bound Python object for effect only.
 
     Args:
-        ref: the endpoint Ref. Its payload names the owning Service, the target
+        ref: the endpoint Ref. Its snapshot names the owning Service, the target
             attribute, and the endpoint defaults.
         args: a Dict of call kwargs, merged over those defaults.
 

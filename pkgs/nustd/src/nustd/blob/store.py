@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from nu.context import FabricRef
-from nu.lang import ScalarQuery
+from nu.lang import Nu, ScalarQuery
 from nu.lang.null import Null, is_null
 
 from ._base import check_id
@@ -34,10 +34,16 @@ if TYPE_CHECKING:
 __all__ = ["StoreRef", "store_name"]
 
 
-def store_name(store: object) -> str:
-    """The store's name: a ``StoreRef``'s own, or a non-empty ``str`` as given."""
+def store_name(store: object) -> str | Nu:
+    """The store's name: a ``StoreRef``'s name term, a non-empty ``str``, or a term computing it.
+
+    A term is returned as given, never looked into; its value is checked when it
+    is evaluated.
+    """
     if isinstance(store, StoreRef):
         return store.name
+    if isinstance(store, Nu):
+        return store
     if isinstance(store, str) and store:
         return store
     raise TypeError(f"a blob store is a StoreRef or its name, a non-empty str, got {store!r}")
@@ -51,7 +57,8 @@ class StoreRef(FabricRef):
     ``StoreRef`` held in a module serves any number of terms and trees.
 
     Args:
-        name: the store's name, any non-empty ``str``.
+        name: the store's name, any non-empty ``str``, or a term yielding
+            one, evaluated each time the ref is read.
 
     Notes:
         - Reading it is a lookup and nothing else: the bound ``BlobFabric``,
@@ -77,21 +84,22 @@ class StoreRef(FabricRef):
 
     fabric = BlobFabric
 
-    def __init__(self, name: str) -> None:
-        super().__init__()
-        self._payload["store"] = store_name(name)
+    def __init__(self, name: str | Nu) -> None:
+        # Children: [fabric, name]. A plain name is checked here, a computed
+        # one each time it is evaluated.
+        super().__init__(None, store_name(name))
 
     @property
-    def name(self) -> str:
-        """The store's name, the tag its backend binds under."""
-        return self._payload["store"]
+    def name(self) -> Nu:
+        """The store's name, the tag its backend binds under: the name child, a term."""
+        return self._children[1]
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        fabric = children[0]
-        name = self.name
+        fabric, name_of = children[0], children[1]
 
         def thunk(rt: Runtime) -> object:
             f = fabric(rt)
+            name = cast("str", store_name(name_of(rt)))
             if rt.ctx.fabrics.has(f, name):
                 return rt.ctx.fabrics.get(f, name)
             return Null(name)
@@ -99,11 +107,11 @@ class StoreRef(FabricRef):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        fabric = children[0]
-        name = self.name
+        fabric, name_of = children[0], children[1]
 
         async def athunk(rt: Runtime) -> object:
             f = await fabric(rt)
+            name = cast("str", store_name(await name_of(rt)))
             if rt.ctx.fabrics.has(f, name):
                 return rt.ctx.fabrics.get(f, name)
             return Null(name)

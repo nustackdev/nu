@@ -48,3 +48,15 @@ def test_an_init_holding_a_local_class_reaches_the_worker() -> None:
         assert asyncio.run(worker.aexecute(bound)) is True
     finally:
         worker.cleanup()
+
+
+def test_the_target_is_a_child_so_it_can_be_computed() -> None:
+    body = nu.Add(1, 2)
+    assert nu.tree.children(Teleport(body, target=1))[1].value == 1
+    pick = nu.Add(0, 1)  # target computed in the tree: the second worker
+    tree = nu.ProvideList(
+        MpWorker,
+        [{"name": "nu-test-mp-t0"}, {"name": "nu-test-mp-t1"}],
+        Teleport(nu.mem.let(41, lambda n: nu.Add(n, 1)), target=pick),
+    )
+    assert nu.run(tree)[0] == 42

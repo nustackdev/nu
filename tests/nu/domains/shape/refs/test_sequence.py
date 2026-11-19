@@ -35,9 +35,8 @@ class StubSequenceRef(ReactiveSequenceRef):
         return ItemRef(address, parent_ref=self, owner_shape=self._owner_shape)
 
 
-def _declared(ref, value):
-    ref._payload["type_info"] = TypeInfo(type(ref), elem=TypeInfo(value))
-    return ref
+def _declared(cls, name, value):
+    return cls(name, type_info=TypeInfo(cls, elem=TypeInfo(value)))
 
 
 def test_sequence_ref_subscript_needs_a_substrate():
@@ -80,7 +79,7 @@ def test_sequence_ref_string_index_is_accepted():
 
 
 def test_sequence_ref_element_results_take_the_declared_value_form():
-    s = _declared(MutableSequenceRef("my_seq"), str)
+    s = _declared(MutableSequenceRef, "my_seq", str)
     assert type(s.first_elem()) is Str
     assert type(s.last_elem()) is Str
     assert type(s.pop()) is Str
@@ -92,7 +91,7 @@ def test_sequence_ref_undeclared_element_results_are_object():
 
 
 def test_sequence_ref_slice_carries_the_declared_element_type():
-    s = _declared(SequenceRef("my_seq"), int)
+    s = _declared(SequenceRef, "my_seq", int)
     sliced = s[0:2]
     assert type(sliced) is List
     assert type(sliced.first_elem()) is Int

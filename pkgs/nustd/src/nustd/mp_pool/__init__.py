@@ -32,7 +32,7 @@ host, the event loop never blocks, every pending request gets an answer, and
 every worker has a pid and a status, readable after it is gone.
 
 Everything is Nu. Every worker id, job id and the ``init`` override is a
-**child**, never payload, so a target can come from a ``Ref``, a mem slot or
+**child**, never a field, so a target can come from a ``Ref``, a mem slot or
 any query. Here ``nu.let`` holds the launched worker's id for the body::
 
     POOL = PoolRef()
@@ -48,10 +48,10 @@ any query. Here ``nu.let`` holds the launched worker's id for the body::
         )),
     )
 
-The one exception to "no payload" is a ``Dispatch`` body, which has to be
-payload because a Flow does not compose in an Interaction's slots. The
-consequence is worth knowing before you rely on it: a body in payload is not
-part of the tree, so no walker, rewrite, analysis or render reaches it, and
+The one exception is a ``Dispatch`` body, which is quoted as a ``Literal``
+child because a Flow does not compose in an Interaction's slots. The
+consequence is worth knowing before you rely on it: a quoted body is data,
+not part of the live tree, so no walker, rewrite, analysis or render reaches it, and
 the caller has to apply whatever passes it needs (``nustd.kv.auto_flow_atomic``
 among them) to the body itself before building the ``Dispatch``.
 

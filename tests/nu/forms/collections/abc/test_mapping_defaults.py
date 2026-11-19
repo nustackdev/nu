@@ -18,7 +18,13 @@ from nu.lang.literal import Literal
 
 
 class _Recording(dict):
-    """A dict that records how its ``get`` / ``pop`` were called."""
+    """A dict that records how its ``get`` / ``pop`` were called.
+
+    The test watches this one object across runs, so it is hashable by
+    identity: a Literal hands it out as is.
+    """
+
+    __hash__ = object.__hash__
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)

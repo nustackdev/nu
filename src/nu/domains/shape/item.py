@@ -14,7 +14,6 @@ from nu.lang import Literal
 from .base import StructuredRef
 from .dsl import Slot
 from .form import SlotForm
-from .rewrite import _PLACED
 
 
 if TYPE_CHECKING:
@@ -163,18 +162,17 @@ class ItemRef(ItemForm, StructuredRef):
         # A plain key was wrapped in a Literal when this ref was built; hand the
         # new one the key itself, so it is built exactly as this one was.
         address = self._children[1]
-        if type(address) is Literal:
-            address = address._payload["value"]
+        if type(address) is Literal and address.factory is None:
+            address = address.value
         ref = slot.create_ref(
             owner_shape=self._owner_shape,
             parent_ref=self._parent,
             address=address,
         )
-        # A chain placed by ``with_parent`` stays placed: its root routes to
-        # the scope it was placed under, not to its owner Shape.
-        ref._payload["root_shape"] = self._root_shape  # type: ignore[attr-defined]
-        if self._payload.get(_PLACED):
-            ref._payload[_PLACED] = True  # type: ignore[attr-defined]
+        # Same parent, so the root shape comes along on its own. A chain placed
+        # by ``with_parent`` stays placed.
+        if self._placed:
+            ref = ref.evolve(_placed=True)
         return ref  # type: ignore[return-value]
 
 

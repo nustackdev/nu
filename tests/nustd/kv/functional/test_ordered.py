@@ -343,7 +343,7 @@ def test_read_is_ordered_view_and_mutable_mapping(ctx) -> None:
 
 
 def test_slot_carries_view_class() -> None:
-    assert nu.tree.payload(Plane.cells)["type_marker"] is FractionalIndexedDictView
+    assert Plane.cells._type_marker is FractionalIndexedDictView
 
 
 def test_view_path_roundtrips_by_value() -> None:
@@ -357,6 +357,6 @@ def test_facet_switch_returns_clone(ctx) -> None:
     ref = Plane.cells
     eager = ref.eager
     lazy = ref.lazy
-    assert nu.tree.payload(eager)["facet"] is Facet.EAGER
-    assert nu.tree.payload(lazy).get("facet", Facet.LAZY) is Facet.LAZY
-    assert nu.tree.payload(eager)["segment"] == nu.tree.payload(ref)["segment"]
+    assert eager._facet is Facet.EAGER
+    assert lazy._facet is Facet.LAZY
+    assert eager._segment == ref._segment

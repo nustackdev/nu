@@ -47,7 +47,7 @@ class _RayServiceActor:
     ) -> None:
         """Build this actor's Context.
 
-        Prefers ``init`` (a lifecycle bracket): enters its ``_aopen`` on a
+        Prefers ``init`` (a lifecycle bracket): enters it (``_aenter``) on a
         fresh ``Context()`` and keeps the exit stack open, so what the bracket
         provides stays live on that Context until ``shutdown``.
 
@@ -61,7 +61,7 @@ class _RayServiceActor:
             await stack.__aenter__()
             ctx = Context()
             try:
-                await stack.enter_async_context(init._aopen(ctx))
+                await stack.enter_async_context(init._aenter(ctx))
             except BaseException:
                 await stack.__aexit__(None, None, None)
                 raise

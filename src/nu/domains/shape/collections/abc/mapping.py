@@ -33,7 +33,7 @@ from ...collection import (
     MutableCollectionForm,
     ReactiveCollectionForm,
     form_of,
-    holding,
+    holds,
 )
 
 
@@ -74,23 +74,23 @@ class MappingForm(CollectionForm, _MappingForm):
 
         from nu.forms import Iterator
 
-        return holding(Iterator(operand), PyIterator, elem=self._declared.key)
+        return Iterator(operand, type_info=holds(PyIterator, elem=self._declared.key))
 
     def _wrap_keys_result(self, operand: Nu) -> DictKeys:
         from nu.forms import DictKeys
 
-        return holding(DictKeys(operand), set, elem=self._declared.key)
+        return DictKeys(operand, type_info=holds(set, elem=self._declared.key))
 
     def _wrap_values_result(self, operand: Nu) -> DictValues:
         from nu.forms import DictValues
 
-        return holding(DictValues(operand), list, elem=self._declared.elem)
+        return DictValues(operand, type_info=holds(list, elem=self._declared.elem))
 
     def _wrap_items_result(self, operand: Nu) -> DictItems:
         from nu.forms import DictItems
 
         declared = self._declared
-        return holding(DictItems(operand), dict, key=declared.key, elem=declared.elem)
+        return DictItems(operand, type_info=holds(dict, key=declared.key, elem=declared.elem))
 
 
 class MutableMappingForm(MutableCollectionForm, MappingForm, _MutableMappingForm):
@@ -110,13 +110,13 @@ class OrderedMappingForm(MappingForm, _OrderedMappingForm):
 
         from nu.forms import Iterator
 
-        return holding(Iterator(operand), PyIterator, elem=self._declared.elem)
+        return Iterator(operand, type_info=holds(PyIterator, elem=self._declared.elem))
 
     def _wrap_keys_page(self, operand: Nu) -> List:
         """A page of keys: a List carrying the declared key type on."""
         from nu.forms import List
 
-        return holding(List(operand), list, elem=self._declared.key)
+        return List(operand, type_info=holds(list, elem=self._declared.key))
 
 
 class MutableOrderedMappingForm(MutableMappingForm, OrderedMappingForm, _MutableOrderedMappingForm):

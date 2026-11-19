@@ -185,7 +185,7 @@ async def test_foreach_par_cancel_lets_every_arm_finish_its_cleanup() -> None:
 
     async def arm(rt: Runtime) -> None:
         name = rt.ctx.attrs.get("item")
-        await _slow_unwind(log, name, {"a": 0.0, "b": 0.05, "c": 0.1}[name])._payload["fn"](rt)
+        await _slow_unwind(log, name, {"a": 0.0, "b": 0.05, "c": 0.1}[name])._fn(rt)
 
     task = start(ForEachParAsync(Iter(Literal(["a", "b", "c"])), Body(arm)))
     await until(lambda: len(log) == 3)

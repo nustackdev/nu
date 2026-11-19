@@ -20,7 +20,7 @@ from nu.lang.attributes.execution import ExecOrder
 from nu.lang.kinds import Strategy
 
 from . import _scheduling
-from ._base import _ParallelBase
+from ._base import _ParallelBase, checked_modes
 
 
 if TYPE_CHECKING:
@@ -68,24 +68,28 @@ class Parallel(_ParallelBase, Strategy):
     _exec_order = Declared(value=ExecOrder.PARALLEL, name="exec_order")
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        per_child = self._payload.get("parallel_modes")
         force = self._FORCE_MODE
+        n_arms = self.n_arms
+        modes_t = None if n_arms is None else children[n_arms]
 
         def thunk(rt: Runtime) -> None:
-            _scheduling.eval_parallel(
-                rt, rt.program.children[nid], per_child=per_child, force=force
-            )
+            per_child = None if modes_t is None else checked_modes(modes_t(rt), n_arms)  # type: ignore[arg-type]
+            arms = self._arms(rt.program.children[nid])
+            _scheduling.eval_parallel(rt, arms, per_child=per_child, force=force)
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        per_child = self._payload.get("parallel_modes")
         force = self._FORCE_MODE
+        n_arms = self.n_arms
+        modes_t = None if n_arms is None else children[n_arms]
 
         async def athunk(rt: Runtime) -> None:
-            await _scheduling.aeval_parallel(
-                rt, rt.program.children[nid], per_child=per_child, force=force
+            per_child = (
+                None if modes_t is None else checked_modes(await modes_t(rt), n_arms)  # type: ignore[arg-type]
             )
+            arms = self._arms(rt.program.children[nid])
+            await _scheduling.aeval_parallel(rt, arms, per_child=per_child, force=force)
 
         return athunk
 

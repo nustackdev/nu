@@ -32,10 +32,10 @@ class ConstCarrier(ScalarQuery):
 
     def __init__(self, term: Nu) -> None:
         super().__init__()
-        self._payload["inner"] = term
+        self._inner = term
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        inner = self._payload["inner"]
+        inner = self._inner
 
         def thunk(rt: Runtime) -> object:
             return inner
@@ -43,7 +43,7 @@ class ConstCarrier(ScalarQuery):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        inner = self._payload["inner"]
+        inner = self._inner
 
         async def athunk(rt: Runtime) -> object:
             return inner
@@ -58,10 +58,10 @@ class AsyncOnlyCarrier(ScalarQuery):
 
     def __init__(self, term: Nu) -> None:
         super().__init__()
-        self._payload["inner"] = term
+        self._inner = term
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        inner = self._payload["inner"]
+        inner = self._inner
 
         def thunk(rt: Runtime) -> object:
             return inner
@@ -69,7 +69,7 @@ class AsyncOnlyCarrier(ScalarQuery):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        inner = self._payload["inner"]
+        inner = self._inner
 
         async def athunk(rt: Runtime) -> object:
             return inner
@@ -84,10 +84,10 @@ class SyncOnlyCarrier(ScalarQuery):
 
     def __init__(self, term: Nu) -> None:
         super().__init__()
-        self._payload["inner"] = term
+        self._inner = term
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        inner = self._payload["inner"]
+        inner = self._inner
 
         def thunk(rt: Runtime) -> object:
             return inner
@@ -95,7 +95,7 @@ class SyncOnlyCarrier(ScalarQuery):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        inner = self._payload["inner"]
+        inner = self._inner
 
         async def athunk(rt: Runtime) -> object:
             return inner

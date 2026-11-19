@@ -2,7 +2,7 @@
 
 An Eval's carrier resolves to a Nu term whose shape is unknown at outer
 compile time. A *promise* pins any subset of ``{sort, cardinality,
-has_async_only_atom, has_sync_only_atom}`` on the payload; the runtime
+has_async_only_atom, has_sync_only_atom}`` in the Eval's fields; the runtime
 validates the inner tree's actual attributes against each pinned field
 and raises :class:`EvalPromiseError` on mismatch.
 """
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 __all__ = ["PROMISE_FIELDS", "PROMISE_KEY", "EvalPromiseError", "check_promise"]
 
 
-# Payload key holding the promise dict on an Eval term. The string is shared
+# Field holding the promise dict on an Eval term. The name is shared
 # vocabulary with ``nu.lang.attributes.cardinality`` (which reads the promise's
 # cardinality field to refine CHILD_CARDINALITY without importing Eval).
 PROMISE_KEY = "dyn_promise"

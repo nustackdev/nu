@@ -14,7 +14,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
-import nu
 from nu.domains.shape.base import StructuredRef
 from nu.lang.null import Null
 from nu.lang.typeinfo import TypeInfo
@@ -82,11 +81,12 @@ class RefBase(StructuredRef, Generic[T]):
         *,
         parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
+        type_info: TypeInfo | None = None,
         **kwargs: object,
     ) -> None:
-        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
-        # raw static segment, in payload so it rides base with_children
-        self._payload["segment"] = address
+        super().__init__(
+            address, parent_ref=parent_ref, owner_shape=owner_shape, type_info=type_info
+        )
 
     def _wrap_item_ref(self, address: object) -> StructuredRef:
         """The child at ``address``: the mem ref for the value this container declared.
@@ -99,13 +99,17 @@ class RefBase(StructuredRef, Generic[T]):
         from .containers import LEAVES, ShapeRef
         from .items import ItemRef, ObjectRef
 
-        declared: TypeInfo = self._payload.get("type_info") or TypeInfo.any()  # type: ignore[assignment]
+        declared: TypeInfo = self._type_info or TypeInfo.any()
         value = declared.elem or TypeInfo.any()
         held = value.py_type
         child: StructuredRef
         if value.is_shape:
             child = ShapeRef(
-                address, shape_type=held, parent_ref=self, owner_shape=self._owner_shape
+                address,
+                shape_type=held,
+                parent_ref=self,
+                owner_shape=self._owner_shape,
+                type_info=value,
             )
         else:
             leaf = (
@@ -113,21 +117,10 @@ class RefBase(StructuredRef, Generic[T]):
                 if isinstance(held, type) and issubclass(held, ItemRef)
                 else LEAVES.get(held, ObjectRef)
             )
-            child = leaf(address, parent_ref=self, owner_shape=self._owner_shape)
-        child._payload["type_info"] = value
+            child = leaf(address, parent_ref=self, owner_shape=self._owner_shape, type_info=value)
         return child
 
     # --- path building -------------------------------------------------------
-
-    def _parent_path(self) -> tuple:
-        """Static segments of the parent chain, root-first (excludes self)."""
-        segs: list[object] = []
-        ref = self._parent
-        while ref is not None:
-            segs.append(nu.tree.payload(ref).get("segment"))  # type: ignore[attr-defined]
-            ref = ref._parent
-        segs.reverse()
-        return tuple(segs)
 
     def _hint(self, path: tuple) -> str:
         """The dotted path a NULL read names, eg ``User.tags.0``."""
@@ -246,7 +239,12 @@ class RefBase(StructuredRef, Generic[T]):
         cur[path[-1]] = value  # type: ignore[index]
 
     def _write(self, rt: Runtime, value: object, nid: int) -> None:
-        """Write ``value`` through this ref, vivifying intermediate dicts."""
+        """Write ``value`` through this ref, vivifying intermediate dicts.
+
+        The value is stored as given. A container written in the program
+        reaches here as a fresh copy (a Literal copies plain containers each
+        time it is evaluated), so a later item write never reaches the tree.
+        """
         value = self._lower(value)
         self._store(rt, self._resolve_path(rt, nid), value)
 
@@ -277,10 +275,18 @@ class RefBase(StructuredRef, Generic[T]):
         if isinstance(cur, dict) and path[-1] in cur:
             del cur[path[-1]]
 
-    def _fetch_parent(self, rt: Runtime) -> object:
-        """Navigate to the parent container, auto-creating intermediate dicts."""
+    def _fetch_parent(self, rt: Runtime, nid: int) -> object:
+        """The parent container of this ref's slot, auto-creating intermediate dicts.
+
+        Every level's address is run, so a computed key above the leaf
+        resolves like any other.
+        """
+        return self._parent_container(rt, self._resolve_path(rt, nid))
+
+    def _parent_container(self, rt: Runtime, path: tuple) -> object:
+        """The container holding ``path[-1]``, auto-creating intermediate dicts."""
         cur = self._root_data(rt)
-        for k in self._parent_path():
+        for k in path[:-1]:
             if isinstance(cur, dict) and k not in cur:
                 cur[k] = {}
             cur = cur[k]  # type: ignore[index]

@@ -185,7 +185,7 @@ def sync(
 
         ui = nustd.ui.table.sync(App.home.table, Sheet.rows, Sheet.order, Sheet.columns, sort=Sheet.sort)
     """
-    props = nu.tree.payload(table).get("props", {})
+    props = table._props or {}
     slot_columns = columns_of(props.get("columns") or [])
     field = str(props.get("row_key") or KEY_FIELD)
     scope = root_shape(rows)
@@ -441,7 +441,7 @@ def sync(
 
         # Every read below needs its containers there: a table no one wrote
         # yet starts empty rather than failing its first paint.
-        seeds = [rows.init(nu.Literal({})), order.init(nu.Literal([]))]
+        seeds = [rows.init(nu.Literal(factory=dict)), order.init(nu.Literal(factory=list))]
         if columns is not None:
             seeds.append(
                 nu.IfDo(

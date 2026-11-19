@@ -5,7 +5,7 @@ testable here:
 
 - navigation (``section.field`` via ``__getattr__`` -> ``Slot.create_ref``) is
   pure structure;
-- ``with_children`` survival (metadata riding a tree rewrite) is pure structure;
+- ``evolve`` survival (metadata riding a tree rewrite) is pure structure;
 - wire-path resolution + frame emission run through ``nu.arun`` against a *fake*
   ``WsSession`` that just records the ``Frame`` it is handed, no websocket,
   no browser.
@@ -68,23 +68,23 @@ def test_section_navigation_unknown_slot_raises():
         _ = ref.nope
 
 
-# --- with_children survival (the migration's risk point) --------------------
+# --- evolve survival (the migration's risk point) --------------------
 
 
-def test_with_children_preserves_section_state():
+def test_evolve_preserves_section_state():
     ref = SectionRef("panel", section_cls=Panel, owner_shape=Panel)
-    variant = ref._with_children(*nu.tree.children(ref))
+    variant = ref.evolve(children=nu.tree.children(ref))
     assert type(variant) is SectionRef
-    assert nu.tree.payload(variant)["segment"] == nu.tree.payload(ref)["segment"]
-    assert nu.tree.payload(variant)["section_cls"] is Panel
+    assert variant._segment == ref._segment
+    assert variant._section_cls is Panel
     assert variant._owner_shape is Panel
 
 
-def test_with_children_preserves_leaf_segment():
+def test_evolve_preserves_leaf_segment():
     child = SectionRef("panel", section_cls=Panel, owner_shape=Panel).label
-    variant = child._with_children(*nu.tree.children(child))
+    variant = child.evolve(children=nu.tree.children(child))
     assert type(variant) is TextRef
-    assert nu.tree.payload(variant)["segment"] == nu.tree.payload(child)["segment"]
+    assert variant._segment == child._segment
 
 
 # --- wire path resolution + frame emission (through a fake session) ---------

@@ -43,10 +43,10 @@ class Peek(ScalarAction):
 
     def __init__(self, fn: Callable[[Attributes], object]) -> None:
         super().__init__()
-        self._payload["fn"] = fn
+        self._fn = fn
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        fn = self._payload["fn"]
+        fn = self._fn
 
         def thunk(rt: Runtime) -> object:
             fn(rt.ctx.attrs)
@@ -54,7 +54,7 @@ class Peek(ScalarAction):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        fn = self._payload["fn"]
+        fn = self._fn
 
         async def athunk(rt: Runtime) -> object:
             fn(rt.ctx.attrs)
@@ -67,10 +67,10 @@ class Probe(ScalarQuery):
 
     def __init__(self, fn: Callable[[Attributes], object]) -> None:
         super().__init__()
-        self._payload["fn"] = fn
+        self._fn = fn
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        fn = self._payload["fn"]
+        fn = self._fn
 
         def thunk(rt: Runtime) -> object:
             return fn(rt.ctx.attrs)
@@ -78,7 +78,7 @@ class Probe(ScalarQuery):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        fn = self._payload["fn"]
+        fn = self._fn
 
         async def athunk(rt: Runtime) -> object:
             return fn(rt.ctx.attrs)
@@ -92,8 +92,7 @@ class Park(ScalarQuery):
     _requires_async = Declared(value=True, name="requires_async")
 
     def __init__(self, arrived: asyncio.Event) -> None:
-        super().__init__()
-        self._payload["arrived"] = arrived
+        super().__init__(Literal(arrived))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
@@ -103,7 +102,7 @@ class Park(ScalarQuery):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        arrived = self._payload["arrived"]
+        arrived = self._children[0].value
 
         async def athunk(rt: Runtime) -> object:
             arrived.set()

@@ -25,7 +25,7 @@ Yield semantics follow the base:
 
 Arguments. Children passed positionally land as positional args to the
 callable; children passed by keyword land as keyword args. The split is
-recorded in the atom's payload so ``compile`` can rebuild the call::
+recorded in the atom's fields so ``compile`` can rebuild the call::
 
     DateOf(2026, 6, 30)            -> date(2026, 6, 30)
     DatetimeReplace(dt, hour=9)    -> datetime.replace(dt, hour=9)
@@ -51,6 +51,10 @@ The callable always receives resolved values, never the children's terms: a
 ref child arrives as the value it holds, so a factory atom cannot write a
 ref. Writes go through the ref's own interactions.
 
+The thunks come from ``nu.lang.call``, the mechanism ``Literal(factory=f,
+**kwargs)`` runs on too: a factory atom fixes the callable per class, a
+factory Literal carries it as a field.
+
 Note: IDEs and static type checkers see the return as ``type[B]`` where ``B``
 is the base; they cannot show a docstring or signature specific to the
 synthesised class. Hand-write the class when IDE discoverability matters.
@@ -62,6 +66,7 @@ import inspect
 from typing import TYPE_CHECKING, TypeVar, cast
 
 from nu.engine.structure import Attribute, Declared
+from nu.lang.call import call_athunk, call_thunk
 from nu.lang.kinds import (
     Command,
     Flow,
@@ -122,7 +127,6 @@ def InteractionFactory(  # noqa: N802 -- a class factory; reads as a class at th
 
     is_async = inspect.iscoroutinefunction(fn) or inspect.isasyncgenfunction(fn)
     is_command = issubclass(base, Command)
-    void_value: object = None  # commands yield nothing
 
     namespace: dict[str, object] = {}
     for attr_name, value in attributes.items():
@@ -138,7 +142,11 @@ def InteractionFactory(  # noqa: N802 -- a class factory; reads as a class at th
 
     def init_method(self: Nu, *args: object, **kwargs: object) -> None:
         Nu.__init__(self, *args, *kwargs.values())
-        self._payload = {"npos": len(args), "kwkeys": tuple(kwargs.keys())}
+        # The keyword names are structure: they say which trailing child is
+        # which parameter. The positional count follows from them. Underscore-
+        # named: the base may be a Form (``Object``) whose ``__getattr__`` a
+        # public field would shadow.
+        self._kwkeys = tuple(kwargs.keys())
 
     namespace["__init__"] = init_method
 
@@ -149,24 +157,9 @@ def InteractionFactory(  # noqa: N802 -- a class factory; reads as a class at th
             nid: int,
             children: tuple[Callable[[Runtime], object], ...],
         ) -> Callable[[Runtime], object]:
-            npos = cast("int", self._payload.get("npos", len(children)))
-            kwkeys = cast("tuple[str, ...]", self._payload.get("kwkeys", ()))
-            pos_ts = children[:npos]
-            kw_ts = children[npos:]
-
-            def thunk(rt: Runtime) -> object:
-                args: list[object] = []
-                for ct in pos_ts:
-                    v = ct(rt)
-                    args.append(v)
-                kwargs: dict[str, object] = {}
-                for k, kt in zip(kwkeys, kw_ts, strict=True):
-                    v = kt(rt)
-                    kwargs[k] = v
-                result = fn(*args, **kwargs)
-                return void_value if is_command else result
-
-            return thunk
+            kwkeys = cast("tuple[str, ...]", getattr(self, "_kwkeys", ()))
+            npos = len(children) - len(kwkeys)
+            return call_thunk(fn, children[:npos], kwkeys, children[npos:], void=is_command)
 
         namespace["_compile"] = compile_method
 
@@ -175,26 +168,9 @@ def InteractionFactory(  # noqa: N802 -- a class factory; reads as a class at th
         nid: int,
         children: tuple[Callable[[Runtime], object], ...],
     ) -> Callable[[Runtime], object]:
-        npos = cast("int", self._payload["npos"])
-        kwkeys = cast("tuple[str, ...]", self._payload["kwkeys"])
-        pos_ts = children[:npos]
-        kw_ts = children[npos:]
-
-        async def athunk(rt: Runtime) -> object:
-            args: list[object] = []
-            for ct in pos_ts:
-                v = await ct(rt)  # type: ignore[misc]
-                args.append(v)
-            kwargs: dict[str, object] = {}
-            for k, kt in zip(kwkeys, kw_ts, strict=True):
-                v = await kt(rt)  # type: ignore[misc]
-                kwargs[k] = v
-            result = fn(*args, **kwargs)
-            if inspect.isawaitable(result):
-                result = await result
-            return void_value if is_command else result
-
-        return athunk
+        kwkeys = cast("tuple[str, ...]", self._kwkeys)  # type: ignore[attr-defined]
+        npos = len(children) - len(kwkeys)
+        return call_athunk(fn, children[:npos], kwkeys, children[npos:], void=is_command)
 
     namespace["_acompile"] = acompile_method
     namespace["__doc__"] = f"Built atom calling {getattr(fn, '__qualname__', fn)!r}."

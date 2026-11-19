@@ -323,21 +323,20 @@ class Extend(Command):
 class RemoveValue(Command):
     """Remove first occurrence of value: seq.remove(value). Mutates slot 0; returns nothing.
 
-    ``missing_ok`` is a construction-time flag carried in the payload: when
-    set, an absent value is a no-op instead of raising ``ValueError``.
+    With ``missing_ok`` truthy, an absent value is a no-op instead of raising
+    ``ValueError``. Children ``[target, value, missing_ok]``: the flag is a
+    child, evaluated on every run, so it can be computed.
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
     _creates = Declared(value=frozenset(), name="creates")
     """Acts on an absent container as on an empty one, and leaves it absent."""
 
-    def __init__(self, target: object, value: object, *, missing_ok: bool = False) -> None:
-        super().__init__(target, value)
-        self._payload = {**self._payload, "missing_ok": missing_ok}
+    def __init__(self, target: object, value: object, *, missing_ok: object = False) -> None:
+        super().__init__(target, value, missing_ok)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        target_t, value_t = children
-        missing_ok = bool(self._payload["missing_ok"])
+        target_t, value_t, missing_ok_t = children
 
         def thunk(rt: Runtime) -> None:
             target = target_t(rt)
@@ -346,15 +345,14 @@ class RemoveValue(Command):
             value = value_t(rt)
             if is_null(value):
                 raise ValueError("cannot write with a NULL operand")
-            if missing_ok and value not in target:
+            if missing_ok_t(rt) and value not in target:
                 return
             target.remove(value)
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        target_t, value_t = children
-        missing_ok = bool(self._payload["missing_ok"])
+        target_t, value_t, missing_ok_t = children
 
         async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)
@@ -363,7 +361,7 @@ class RemoveValue(Command):
             value = await value_t(rt)
             if is_null(value):
                 raise ValueError("cannot write with a NULL operand")
-            if missing_ok and value not in target:
+            if await missing_ok_t(rt) and value not in target:
                 return
             target.remove(value)
 

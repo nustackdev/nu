@@ -96,10 +96,10 @@ class _Probe(ScalarQuery):
 
     def __init__(self, fn: Callable[[Runtime], None]) -> None:
         super().__init__()
-        self._payload["fn"] = fn
+        self._fn = fn
 
     def _compile(self, nid: int, children: tuple) -> Callable:
-        fn = self._payload["fn"]
+        fn = self._fn
 
         def thunk(rt: Runtime) -> bool:
             fn(rt)
@@ -108,7 +108,7 @@ class _Probe(ScalarQuery):
         return thunk
 
     def _acompile(self, nid: int, children: tuple) -> Callable:
-        fn = self._payload["fn"]
+        fn = self._fn
 
         async def athunk(rt: Runtime) -> bool:
             fn(rt)

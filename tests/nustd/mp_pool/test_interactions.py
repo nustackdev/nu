@@ -242,6 +242,16 @@ def test_dispatch_carries_caller_attrs_when_asked(pool):
     assert pool.status(wid).errors == ()
 
 
+def test_teleport_carry_can_be_computed(pool):
+    ctx = nu.Context(attrs={"seed": 7, "carry": True}).bind(WorkerPool, pool)
+    tree = nu.mem.Frame(
+        Local,
+        Teleport(body=nu.context.Attr("seed"), worker=W, carry=nu.context.Attr("carry")),
+        w=Launch(),
+    )
+    assert nu.run(tree, ctx)[0] == 7
+
+
 # --- the reads --------------------------------------------------------------
 
 

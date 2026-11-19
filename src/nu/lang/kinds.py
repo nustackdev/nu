@@ -88,7 +88,7 @@ class Interaction(Nu[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     Concrete sub-kinds implement ``_eval`` / ``_aeval`` to drive execution.
     Both receive the per-execution ``Runtime`` and the node's ``nid`` (its
     integer position in the attributed program); they recurse via
-    ``rt.eval(child_nid)`` and reach for ``self._children`` / ``self._payload``
+    ``rt.eval(child_nid)`` and reach for ``self._children`` and their own fields
     directly. Attribute reads use ``rt.program.attrs[name][nid]``.
     """
 

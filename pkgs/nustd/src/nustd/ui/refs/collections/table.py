@@ -47,7 +47,7 @@ row erases or hides at once), while the grid places a cell at one segment
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Literal
+from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from typing_extensions import Self, Unpack
 
@@ -100,9 +100,14 @@ class TableRowRef(CollectionRef):
 
     _wire_type = "TableRow"
 
+    def __init__(self, address: object, *, cell: Slot | None = None, **kwargs: Any) -> None:
+        super().__init__(address, **kwargs)
+        self._cell: Slot | None = cell
+        """The table's cell spec, every cell of this row's default kind; None builds bare cells."""
+
     def __getitem__(self, col: object) -> ItemRef:
         _position(self._table_name(), col)
-        return child_at(self, col, self._payload.get("cell"))
+        return child_at(self, col, self._cell)
 
     def cell(self, col: IntArg) -> ItemRef:
         """The cell at column ``col``, the same as ``row[col]``."""
@@ -134,8 +139,8 @@ class TableRef(ChildLayout, Laid, CollectionRef):
         "density": choice(*DENSITIES),
     }
 
-    # The cell spec rides the payload (as a GridRef's item does), so it
-    # survives a tree rewrite and the rows read it off the table.
+    # The cell spec is a field (as a GridRef's item is), so it survives a
+    # tree rewrite, and each row is built carrying it.
     _takes_item: ClassVar[bool] = True
 
     def __init__(
@@ -147,6 +152,7 @@ class TableRef(ChildLayout, Laid, CollectionRef):
         parent_ref: Ref | None = None,
         owner_shape: type[Section] | None = None,
         props: Mapping[str, object] | None = None,
+        **kwargs: Any,
     ) -> None:
         super().__init__(
             address,
@@ -154,8 +160,10 @@ class TableRef(ChildLayout, Laid, CollectionRef):
             parent_ref=parent_ref,
             owner_shape=owner_shape,
             props=props,
+            **kwargs,
         )
-        self._payload["item"] = as_spec("TableRef", item)
+        self._item: Slot | None = as_spec("TableRef", item)
+        """Every cell's default kind; None builds bare cells."""
 
     @classmethod
     def slot(
@@ -193,9 +201,7 @@ class TableRef(ChildLayout, Laid, CollectionRef):
         if not isinstance(row, TableRowRef) or not same_place(row._parent, self):
             msg = f"{self._owner_name()} takes one of its own cells or (r, c), not {child!r}"
             raise ValueError(msg)
-        return place(
-            self._owner_name(), row._payload["segment"], child._payload["segment"], header=HEADER
-        )
+        return place(self._owner_name(), row._segment, child._segment, header=HEADER)
 
     # --- descent -------------------------------------------------------------
 
@@ -224,9 +230,7 @@ class TableRef(ChildLayout, Laid, CollectionRef):
         return self._row_at(HEADER)
 
     def _row_at(self, key: object) -> TableRowRef:
-        row = TableRowRef(key, parent_ref=self)
-        row._payload["cell"] = self._payload.get("item")
-        return row
+        return TableRowRef(key, parent_ref=self, cell=self._item)
 
     # --- chrome --------------------------------------------------------------
 
