@@ -1,14 +1,50 @@
-"""A mem write stores its own copy of plain containers.
+"""A Literal hands out a fresh copy of plain mutable containers each evaluation.
 
 Setting a slot from a Literal dict used to store the Literal's own dict, so
 an item write through the slot changed the term and carried into the next
-run. The same held for lists, sets and nested containers, and for a dict the
-caller passed in.
+run: a mutable default argument. The same held for lists, sets and nested
+containers, and for a dict the caller passed in. The copy is made where the
+program's value comes out, on evaluation, so every consumer is covered.
 """
 
 from __future__ import annotations
 
+import asyncio
+
 import nu
+
+
+def test_each_evaluation_gives_a_new_container() -> None:
+    lit = nu.Literal({"a": [1]})
+    first, second = nu.run(lit)[0], nu.run(lit)[0]
+    assert first == second == {"a": [1]}
+    assert first is not lit.value
+    assert first is not second
+    assert first["a"] is not lit.value["a"]
+
+
+def test_the_async_path_copies_too() -> None:
+    lit = nu.Literal([1, 2])
+    out = asyncio.run(nu.arun(lit))[0]
+    assert out == [1, 2]
+    assert out is not lit.value
+
+
+def test_containers_inside_a_tuple_are_copied() -> None:
+    inner: list = [1]
+    out = nu.run(nu.Literal((inner, 2)))[0]
+    assert out == ([1], 2)
+    assert out[0] is not inner
+
+
+def test_everything_else_is_handed_out_as_is() -> None:
+    class Bag(list):
+        pass
+
+    obj, bag, term = object(), Bag([1]), nu.Literal(1)
+    plain = (1, "s", b"b", frozenset({1}))
+    for value in (obj, bag, term, plain, ValueError):
+        assert nu.run(nu.Literal(value))[0] is value
 
 
 class Cfg(nu.Shape):

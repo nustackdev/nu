@@ -37,15 +37,22 @@ class Literal(ScalarQuery):
 
     Args:
         value: the Python value to carry. Held as-is in the ``value`` field,
-            never evaluated or copied. Anything goes: numbers, dicts, classes,
+            never evaluated. Anything goes: numbers, dicts, classes,
             functions, live objects, even a term (held as data, not run).
 
     Notes:
         - Any tree builder that gets a raw Python value where a term is
           expected wraps it in a Literal automatically.
+        - Each evaluation hands out a fresh copy of plain mutable containers
+          (exact ``dict``, ``list``, ``set``, ``bytearray``, nested, also
+          inside tuples), so nothing a run does to the value reaches the
+          program: the trap of a mutable default argument, closed at the
+          source. Everything else (scalars, live objects, terms, classes,
+          subclasses of the builtins) is handed out as is.
 
     Yields:
-        ``value``, unchanged, every time.
+        ``value`` every time; a fresh copy when it holds plain mutable
+        containers.
 
     Example:
         >>> nu.run(nu.Literal(42))[0]
@@ -64,6 +71,13 @@ class Literal(ScalarQuery):
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         value = self.value
 
+        if _holds_mutable(value):
+
+            def fresh_thunk(rt: Runtime) -> object:
+                return _fresh(value)
+
+            return fresh_thunk
+
         def thunk(rt: Runtime) -> object:
             return value
 
@@ -72,7 +86,44 @@ class Literal(ScalarQuery):
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         value = self.value
 
+        if _holds_mutable(value):
+
+            async def fresh_athunk(rt: Runtime) -> object:
+                return _fresh(value)
+
+            return fresh_athunk
+
         async def athunk(rt: Runtime) -> object:
             return value
 
         return athunk
+
+
+_MUTABLE = (dict, list, set, bytearray)
+"""Plain mutable containers a Literal copies on evaluation (exact types only)."""
+
+
+def _holds_mutable(value: object) -> bool:
+    """Whether ``value`` is, or holds inside tuples / frozensets, a plain mutable container."""
+    t = type(value)
+    if t in _MUTABLE:
+        return True
+    if t is tuple or t is frozenset:
+        return any(_holds_mutable(v) for v in value)  # type: ignore[attr-defined]
+    return False
+
+
+def _fresh(value: object) -> object:
+    """A copy of ``value``'s plain mutable containers, nested; anything else as is."""
+    t = type(value)
+    if t is dict:
+        return {k: _fresh(v) for k, v in value.items()}  # type: ignore[attr-defined]
+    if t is list:
+        return [_fresh(v) for v in value]  # type: ignore[attr-defined]
+    if t is set:
+        return set(value)  # type: ignore[call-overload]
+    if t is bytearray:
+        return bytearray(value)  # type: ignore[arg-type]
+    if t is tuple and _holds_mutable(value):
+        return tuple(_fresh(v) for v in value)  # type: ignore[attr-defined]
+    return value
