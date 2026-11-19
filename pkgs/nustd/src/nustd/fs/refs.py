@@ -25,6 +25,7 @@ from .interactions import (
     FsCopy,
     FsDigest,
     FsHas,
+    FsHeld,
     FsLines,
     FsList,
     FsMakeTemp,
@@ -83,6 +84,9 @@ class FsRef(FabricRef):
           this mount carrying the same verbs.
         - ``exists()`` asks whether a mount is bound; ``has(p)`` asks whether
           something sits at ``p``.
+        - Writes declare ``mutates`` on this ref, but the engine does not
+          order two of them in one ``Parallel``; guard a file that must not
+          see interleaved writes with ``fs.Lock``.
 
     Yields:
         The bound ``FsFabric``, or NULL when nothing is bound under the tag.
@@ -169,6 +173,10 @@ class FsRef(FabricRef):
     def digest(self, p: object, algo: object = "sha256") -> FsDigest:
         """The hex digest of the file; see ``FsDigest``."""
         return FsDigest(self, p, algo)
+
+    def held(self, p: object) -> FsHeld:
+        """Who holds the lock on ``p``, or None; see ``FsHeld``."""
+        return FsHeld(self, p)
 
     def list(
         self,
@@ -415,6 +423,10 @@ class FileRef:
     def digest(self, algo: object = "sha256") -> FsDigest:
         """The hex digest of the file; see ``FsDigest``."""
         return FsDigest(self._fs, self._path, algo)
+
+    def held(self) -> FsHeld:
+        """Who holds the lock on this file, or None; see ``FsHeld``."""
+        return FsHeld(self._fs, self._path)
 
     def list(
         self, *, pattern: object = "*", recursive: object = False, kind: object = None

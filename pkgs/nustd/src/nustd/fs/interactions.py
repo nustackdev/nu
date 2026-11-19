@@ -14,6 +14,7 @@ FsHas        (ref, p, kind)                        ScalarQuery  -
 FsUsage      (ref,)                                ScalarQuery  -
 FsWhere      (ref, p)                              ScalarQuery  -
 FsDigest     (ref, p, algo)                        ScalarQuery  -
+FsHeld       (ref, p)                              ScalarQuery  -
 FsList       (ref, p, pattern, recursive, kind)    StreamQuery  -
 FsOpen       (ref, p, start, end, step)            StreamQuery  -
 FsLines      (ref, p, encoding)                    StreamQuery  -
@@ -36,10 +37,11 @@ FsTouch          (ref, p)                              Command           {0}
 FsMakeTemp       (ref, prefix, dir)                    ScalarAction      {0}
 ===============  ====================================  ================  =======
 
-Every write lands on slot 0, the mount's ``FsRef``, so the effect checks
-order the writes to one mount, and a read only mount raises ``FsReadOnly``
-when one runs. ``FsWriteStream`` and ``FsAppendStream`` fold a stream term
-in slot 2 into one write.
+Every write declares ``mutates`` on slot 0, the mount's ``FsRef``, and a
+read only mount raises ``FsReadOnly`` when one runs. The engine does not
+order two writes in one ``Parallel``: under an async run they overlap, so
+writes that must not interleave go under an ``fs.Lock``. ``FsWriteStream``
+and ``FsAppendStream`` fold a stream term in slot 2 into one write.
 
 Paths are relative to the mount, a ``str``, a ``PurePath`` or a term
 yielding one (a ``nustd.pathlib.Path``); see ``FsFabric`` for the checks.
@@ -76,6 +78,7 @@ __all__ = [
     "FsCopy",
     "FsDigest",
     "FsHas",
+    "FsHeld",
     "FsLines",
     "FsList",
     "FsMakeTemp",
@@ -440,6 +443,51 @@ class FsWhere(ScalarQuery):
         async def athunk(rt: Runtime) -> str:
             fabric = fabric_of(await ref(rt))
             return await asyncio.to_thread(fabric.where, await p(rt))
+
+        return athunk
+
+
+class FsHeld(ScalarQuery):
+    """Who holds the lock on a file, probed without taking it.
+
+    Args:
+        ref: the mount slot, an ``FsRef``.
+        p: the lock file's path in the mount, as ``fs.Lock`` was given it.
+
+    Notes:
+        - A lock this process holds is answered from its own table; any
+          other is probed with a shared ``lockf``, which a holder's
+          exclusive lock refuses. Nothing is taken and no holder is
+          disturbed.
+        - A lock file whose holder is gone (released, or the process died)
+          reads as None, though the file stays naming its last holder.
+        - A file system that cannot lock reads as None.
+
+    Yields:
+        The holder's record ``{host, pid, what, taken_at}``, ``{}`` for a
+        holder that left none, or None when nobody holds it.
+
+    Example:
+        data.held("jobs/index.lock")
+    """
+
+    def __init__(self, ref: object, p: object) -> None:
+        super().__init__(ref_node(ref), p)
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref, p = children
+
+        def thunk(rt: Runtime) -> object:
+            return fabric_of(ref(rt)).held(p(rt))
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref, p = children
+
+        async def athunk(rt: Runtime) -> object:
+            fabric = fabric_of(await ref(rt))
+            return await asyncio.to_thread(fabric.held, await p(rt))
 
         return athunk
 
@@ -1237,7 +1285,7 @@ class FsMakeTemp(ScalarAction):
         The new dir's ``PurePosixPath`` relative to the mount.
 
     Example:
-        nu.let(data.make_temp("job-"), lambda d: data.write_text(d / "in.txt", "..."))
+        nu.let(data.make_temp("job-"), lambda d: (data.file(d) / "in.txt").write_text("..."))
     """
 
     _mutates = _WRITES

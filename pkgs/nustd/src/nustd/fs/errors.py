@@ -3,13 +3,14 @@
 A missing file is ``FileNotFoundError``, a taken name ``FileExistsError``, a
 dir where a file was asked for ``IsADirectoryError`` and the other way
 ``NotADirectoryError``: the built-ins, as ``os`` raises them. The three here
-are the states only a mount has.
+are the states only a mount has, and the warning a lock gives when the
+file system cannot lock at all.
 """
 
 from __future__ import annotations
 
 
-__all__ = ["FsEscape", "FsLocked", "FsReadOnly"]
+__all__ = ["FsEscape", "FsLockWarning", "FsLocked", "FsReadOnly"]
 
 
 class FsEscape(PermissionError):  # noqa: N818 - a state, not an error kind
@@ -39,3 +40,10 @@ class FsLocked(BlockingIOError):  # noqa: N818 - a state, not an error kind
 
     def __reduce__(self) -> tuple[type[FsLocked], tuple[str, dict[str, object]]]:
         return (FsLocked, (str(self.args[0]) if self.args else "", self.holder))
+
+
+class FsLockWarning(UserWarning):
+    """A lock not taken because the file system cannot lock (``ENOLCK``, ``EOPNOTSUPP``).
+
+    The body runs anyway, unguarded: a warning, not a refusal.
+    """

@@ -566,8 +566,44 @@ def test_write_trees_travel_on_the_wire(go, root):
     assert not (root / "w2").exists()
 
 
-def test_parallel_writes_to_one_mount(go, root):
-    body = nu.Parallel(data.write_text("p1.txt", "1"), data.write_text("p2.txt", "2"))
-    go(on(root, body))
+@pytest.mark.parametrize(
+    ("mode", "max_parallel", "seen"),
+    [
+        ("sync", 1, "serial"),
+        ("sync", 4, "overlap"),
+        ("async", 1, "overlap"),
+        ("async", 4, "overlap"),
+    ],
+)
+def test_parallel_writes_to_one_mount_are_not_serialized(
+    root, monkeypatch, mode, max_parallel, seen
+):
+    """What the engine does today with two writes to one mount in a Parallel.
+
+    Both declare ``mutates`` on the same ``FsRef``, yet nothing orders them:
+    a sync run is serial only because ``max_parallel=1`` runs arms in turn,
+    and an async run overlaps them even then, each write in its own thread.
+    Writes to one file that must not interleave take an ``fs.Lock``.
+    """
+    import asyncio
+    import time
+
+    real = fabric_mod.FsFabric.write
+    spans = []
+
+    def slow(self, *args, **kwargs):
+        began = time.monotonic()
+        time.sleep(0.2)
+        spans.append((began, time.monotonic()))
+        return real(self, *args, **kwargs)
+
+    monkeypatch.setattr(fabric_mod.FsFabric, "write", slow)
+    term = on(root, nu.Parallel(data.write_text("p1.txt", "1"), data.write_text("p2.txt", "2")))
+    if mode == "sync":
+        nu.run(term, max_parallel=max_parallel)
+    else:
+        asyncio.run(nu.arun(term, max_parallel=max_parallel))
+    (_, first_end), (second_start, _) = sorted(spans)
+    assert ("overlap" if second_start < first_end else "serial") == seen
     assert (root / "p1.txt").read_text() == "1"
     assert (root / "p2.txt").read_text() == "2"

@@ -20,6 +20,11 @@ follow      a symlink on the path is
 
 An absolute path, a ``..`` past the mount, or a symlink the rule refuses
 raises ``FsEscape``.
+
+Locks are ``fcntl.lockf`` record locks, never ``flock``, so NFS carries them
+across machines. A POSIX lock belongs to the process and any descriptor on
+the file, closed, drops it, so the locks this process holds sit in ``HELD``
+and every lock op here checks it before opening the file.
 """
 
 from __future__ import annotations
@@ -30,17 +35,22 @@ import errno
 import fcntl
 import fnmatch
 import hashlib
+import json
 import os
 import secrets
 import shutil
+import socket
 import stat as st
 import tempfile
+import threading
+import time
+import warnings
 from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING
 
 from nu.context.fabric import Fabric
 
-from .errors import FsEscape, FsReadOnly
+from .errors import FsEscape, FsLocked, FsLockWarning, FsReadOnly
 
 
 if TYPE_CHECKING:
@@ -61,10 +71,13 @@ FOLLOW = frozenset({"inside", "never", "any"})
 #: What an entry's ``kind`` can be.
 KINDS = frozenset({"file", "dir", "link", "other"})
 
-#: The lock files this process holds, by absolute path. A POSIX lock is the
-#: process's, and closing any descriptor on the file drops it, so code here
-#: that would open one of these checks the set first.
-HELD: set[str] = set()
+#: The lock files this process holds, by absolute path, each with its holder
+#: record. A POSIX lock is the process's, and closing any descriptor on the
+#: file drops it, so code here that would open one of these checks this first.
+HELD: dict[str, dict[str, object]] = {}
+
+#: Guards ``HELD`` between the threads of one process taking locks at once.
+_HELD_GUARD = threading.Lock()
 
 #: ``lockf`` errnos meaning another process holds the lock.
 TAKEN = frozenset({errno.EACCES, errno.EAGAIN})
@@ -391,8 +404,8 @@ class FsFabric(Fabric):
     def remove_if_holds(self, p: object, text: str) -> None:
         """Remove the file only while it holds exactly ``text``, the check under its lock.
 
-        A missing file is a no-op. When another process holds the file's lock
-        the file is live and is left alone.
+        A missing file is a no-op. When a process, this one included, holds
+        the file's lock the file is live and is left alone.
         """
         self.writable()
         want = as_bytes(text)
@@ -400,26 +413,27 @@ class FsFabric(Fabric):
             raise PermissionError("refusing to remove the mount itself")
         # The file is opened and read, so its last part is checked too.
         full = self.resolve(p)
-        if full in HELD:
-            # This process holds the lock: a second descriptor, closed,
-            # would drop it, so check and remove without one.
-            _unlink_if(full, want)
-            return
-        try:
-            fd = os.open(full, os.O_RDWR)
-        except (FileNotFoundError, NotADirectoryError):
-            return
-        try:
+        with _HELD_GUARD:
+            if full in HELD:
+                return
             try:
-                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except OSError as exc:
-                if exc.errno in TAKEN:
-                    return
-                if exc.errno not in NO_LOCKS:
-                    raise
-            _unlink_if(full, want)
-        finally:
-            os.close(fd)
+                fd = os.open(full, os.O_RDWR)
+            except (FileNotFoundError, NotADirectoryError):
+                return
+            try:
+                try:
+                    fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except OSError as exc:
+                    if exc.errno in TAKEN:
+                        return
+                    if exc.errno not in NO_LOCKS:
+                        raise
+                # Read through the locked descriptor: a second one, closed,
+                # would drop the lock.
+                if _read_fd(fd) == bytes(want):
+                    Path(full).unlink(missing_ok=True)
+            finally:
+                os.close(fd)
 
     def move(self, src: object, dst: object, *, overwrite: bool = False) -> None:
         """Move ``src`` to ``dst``; a ``dst`` ending in ``/`` means into that dir.
@@ -496,6 +510,102 @@ class FsFabric(Fabric):
         base = Path(self.resolve(where))
         base.mkdir(parents=True, exist_ok=True)
         return self.relative(tempfile.mkdtemp(prefix=prefix, dir=base))
+
+    # --- locks --------------------------------------------------------------
+
+    def held(self, p: object) -> dict[str, object] | None:
+        """The holder record of the lock on ``p``, or None when nobody holds it. Takes nothing.
+
+        A lock this process holds is answered from ``HELD``. Any other is
+        probed with a shared ``lockf`` on a read only descriptor, which
+        conflicts only with a holder's exclusive one; a holder that left no
+        record reads as ``{}``.
+        """
+        full = self.resolve(p)
+        # Under the guard: a lock taken in another thread between the look
+        # at HELD and the close of the probe would be dropped by the close.
+        with _HELD_GUARD:
+            if full in HELD:
+                return dict(HELD[full])
+            try:
+                fd = os.open(full, os.O_RDONLY)
+            except (FileNotFoundError, NotADirectoryError):
+                return None
+            try:
+                try:
+                    fcntl.lockf(fd, fcntl.LOCK_SH | fcntl.LOCK_NB)
+                except OSError as exc:
+                    if exc.errno in TAKEN:
+                        return record_of(_read_fd(fd))
+                    if exc.errno in NO_LOCKS:
+                        return None
+                    raise
+                fcntl.lockf(fd, fcntl.LOCK_UN)
+                return None
+            finally:
+                os.close(fd)
+
+    def lock(self, p: object, what: str = "") -> tuple[str, int | None]:
+        """Take the exclusive lock on ``p`` without waiting, and write who holds it.
+
+        Returns:
+            ``(full, fd)``, for ``unlock``. ``fd`` is None when the file
+            system cannot lock: a ``FsLockWarning`` is raised as a warning
+            and nothing is held.
+
+        Raises:
+            FsLocked: another process, or this one, holds it.
+        """
+        self.writable()
+        full = self._target(p)
+        with _HELD_GUARD:
+            if full in HELD:
+                record = dict(HELD[full])
+                raise FsLocked(told(_shown(p), record) + " (this process)", record)
+            fd = os.open(full, os.O_RDWR | os.O_CREAT, 0o644)
+            try:
+                fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError as exc:
+                if exc.errno in TAKEN:
+                    record = record_of(_read_fd(fd))
+                    os.close(fd)
+                    raise FsLocked(told(_shown(p), record), record) from None
+                os.close(fd)
+                if exc.errno not in NO_LOCKS:
+                    raise
+                warnings.warn(
+                    f"could not lock {_shown(p)} ({exc}); going on without the lock",
+                    FsLockWarning,
+                    stacklevel=2,
+                )
+                return full, None
+            record: dict[str, object] = {
+                "host": socket.gethostname(),
+                "pid": os.getpid(),
+                "what": what,
+                "taken_at": time.time(),
+            }
+            try:
+                os.ftruncate(fd, 0)
+                _write_all(fd, (json.dumps(record) + "\n").encode("utf-8"))
+            except BaseException:
+                with contextlib.suppress(OSError):
+                    fcntl.lockf(fd, fcntl.LOCK_UN)
+                os.close(fd)
+                raise
+            HELD[full] = record
+        return full, fd
+
+    @staticmethod
+    def unlock(full: str, fd: int | None) -> None:
+        """Release a lock ``lock`` took. The file stays, naming its last holder."""
+        if fd is None:
+            return
+        with _HELD_GUARD:
+            HELD.pop(full, None)
+            with contextlib.suppress(OSError):
+                fcntl.lockf(fd, fcntl.LOCK_UN)
+            os.close(fd)
 
     # --- write helpers ------------------------------------------------------
 
@@ -709,13 +819,34 @@ def _commit(temp: str, full: str, *, exclusive: bool, shown: str) -> None:
         Path(temp).unlink(missing_ok=True)
 
 
-def _unlink_if(full: str, want: bytes | memoryview) -> None:
+def _read_fd(fd: int) -> bytes:
+    """All of an open file's bytes, read from its start without moving the offset."""
+    size = os.fstat(fd).st_size
+    out = bytearray()
+    while len(out) < size:
+        piece = os.pread(fd, size - len(out), len(out))
+        if not piece:
+            break
+        out += piece
+    return bytes(out)
+
+
+def record_of(raw: bytes) -> dict[str, object]:
+    """A lock file's holder record, ``{host, pid, what, taken_at}``; ``{}`` when it says nothing."""
     try:
-        held = Path(full).read_bytes()
-    except (FileNotFoundError, NotADirectoryError):
-        return
-    if held == bytes(want):
-        Path(full).unlink(missing_ok=True)
+        found = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError):
+        return {}
+    return found if isinstance(found, dict) else {}
+
+
+def told(shown: str, record: dict[str, object]) -> str:
+    """A refusal naming the holder: ``'a.lock' is locked for 'indexer' on red, pid 1234``."""
+    what = record.get("what")
+    guarding = f" for {what!r}" if what else ""
+    if "pid" not in record:
+        return f"{shown} is locked{guarding} by a process that left no record"
+    return f"{shown} is locked{guarding} on {record.get('host')}, pid {record.get('pid')}"
 
 
 def _sha256(full: str) -> str:

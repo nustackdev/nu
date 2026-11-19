@@ -92,7 +92,7 @@ def tmp(
 
     Example:
         scratch = fs.FsRef()
-        fs.tmp(body=nu.Sequential(scratch.write_text("a.txt", "hi"), scratch.read_text("a.txt")))
+        fs.tmp(body=nu.Sequential(scratch.write_text("a.txt", "hi"), scratch.copy("a.txt", "b.txt")))
     """
     options: Mapping[str, object] = {"temp": True, "prefix": prefix, "keep": keep}
     return Provide(FsFabric, options, body, tags=_tags(tag))
