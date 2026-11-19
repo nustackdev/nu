@@ -422,7 +422,7 @@ def same_place(a: object, b: object) -> bool:
             return True
         if type(a) is not type(b):
             return False
-        sa, sb = a._payload.get("segment"), b._payload.get("segment")  # type: ignore[attr-defined]
+        sa, sb = a._segment, b._segment  # type: ignore[attr-defined]
         if isinstance(sa, Nu) or isinstance(sb, Nu):
             if sa is not sb:
                 return False

@@ -23,7 +23,7 @@ change subscription and lives with the other reactive flows in
 ``nu.core.reactive``.
 
 Each atom emits a thunk via ``compile`` / ``acompile`` and stays immutable -
-construction config that must survive ``with_children`` lives in ``payload``
+construction config that must survive ``evolve`` lives in fields
 (``SwitchDo``'s match keys), never as mutable per-run state.
 """
 
@@ -487,7 +487,7 @@ class SwitchDo(Control):
 
     Notes:
         - The case keys are intrinsic constants of the switch, not children:
-          they live in ``payload`` so they survive ``with_children``, and are
+          they are fields, so they survive ``evolve``, and are
           paired by position with the case bodies.
         - Keys are checked in the order ``cases`` was given, first equal match
           wins; a later duplicate key is unreachable.
@@ -510,14 +510,14 @@ class SwitchDo(Control):
         if default is not None:
             bodies.append(default)
         super().__init__(selector, *bodies)
-        self._payload["keys"] = tuple(cases.keys())
-        self._payload["has_default"] = default is not None
+        self.keys = tuple(cases.keys())
+        self.has_default = default is not None
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         selector = children[0]
         bodies = children[1:]
-        keys = self._payload["keys"]
-        has_default = self._payload["has_default"]
+        keys = self.keys
+        has_default = self.has_default
 
         def thunk(rt: Runtime) -> None:
             value = selector(rt)
@@ -533,8 +533,8 @@ class SwitchDo(Control):
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         selector = children[0]
         bodies = children[1:]
-        keys = self._payload["keys"]
-        has_default = self._payload["has_default"]
+        keys = self.keys
+        has_default = self.has_default
 
         async def athunk(rt: Runtime) -> None:
             value = await selector(rt)

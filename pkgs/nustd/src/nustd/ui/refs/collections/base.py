@@ -37,7 +37,7 @@ How each container sizes, spaces and arranges is the four layers of
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from typing_extensions import Self
 
@@ -113,11 +113,10 @@ class CollectionRef(SectionRef):
         if not same_place(child._parent, self):
             msg = f"{self._owner_name()} takes a child of its own or a key, not {child!r}"
             raise ValueError(msg)
-        return child._payload["segment"]
+        return child._segment
 
     def _owner_name(self) -> str:
-        section_cls = self._payload.get("section_cls")
-        return (section_cls or type(self)).__name__
+        return (self._section_cls or type(self)).__name__
 
 
 class _ItemCollectionRef(Laid, CollectionRef):
@@ -126,8 +125,8 @@ class _ItemCollectionRef(Laid, CollectionRef):
     ``ref[key]`` is the child at ``key``: built from ``item`` when the
     container has one, else a bare ``ItemRef`` whose kind ``.to`` names at
     the use site. ``item`` is a Section class, a ref class or a
-    ``Kind.slot(**props)`` spec. It rides the payload as a spec, as
-    ``section_cls`` does, so it survives a tree rewrite. No class is made
+    ``Kind.slot(**props)`` spec. It is a field of the ref, as
+    ``section_cls`` is, so it survives a tree rewrite. No class is made
     for it.
 
     Which keys a kind takes is three class settings: ``_positions`` (int
@@ -147,6 +146,7 @@ class _ItemCollectionRef(Laid, CollectionRef):
         parent_ref: Ref | None = None,
         owner_shape: type[Section] | None = None,
         props: Mapping[str, object] | None = None,
+        **kwargs: Any,
     ) -> None:
         super().__init__(
             address,
@@ -154,8 +154,10 @@ class _ItemCollectionRef(Laid, CollectionRef):
             parent_ref=parent_ref,
             owner_shape=owner_shape,
             props=props,
+            **kwargs,
         )
-        self._payload["item"] = as_spec(type(self).__name__, item)
+        self._item: Slot | None = as_spec(type(self).__name__, item)
+        """The spec ``ref[key]`` children are built from; None builds bare children."""
 
     @classmethod
     def slot(cls, item: type[Section] | type[Ref] | Slot | None = None, /, **props: object) -> Self:
@@ -176,7 +178,7 @@ class _ItemCollectionRef(Laid, CollectionRef):
 
     def _wrap_item_ref(self, address: object) -> ItemRef:
         """The child at ``address``: from the ``item`` spec, or bare. Core's descent hook."""
-        return child_at(self, address, self._payload.get("item"))
+        return child_at(self, address, self._item)
 
 
 class DictCollectionRef(_ItemCollectionRef):

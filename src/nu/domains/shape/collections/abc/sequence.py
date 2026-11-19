@@ -24,7 +24,7 @@ from ...collection import (
     MutableCollectionForm,
     ReactiveCollectionForm,
     form_of,
-    holding,
+    holds,
 )
 
 
@@ -56,13 +56,13 @@ class SequenceForm(CollectionForm, _SequenceForm):
 
         from nu.forms import Iterator
 
-        return holding(Iterator(operand), PyIterator, elem=self._declared.elem)
+        return Iterator(operand, type_info=holds(PyIterator, elem=self._declared.elem))
 
     def _wrap_sliceable_result(self, operand: Nu) -> Nu:
         """A slice: a List carrying the declared element type on. A row narrows it to its own type."""
         from nu.forms import List
 
-        return holding(List(operand), list, elem=self._declared.elem)
+        return List(operand, type_info=holds(list, elem=self._declared.elem))
 
 
 class MutableSequenceForm(MutableCollectionForm, SequenceForm, _MutableSequenceForm):

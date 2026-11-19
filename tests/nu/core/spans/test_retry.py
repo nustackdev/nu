@@ -43,7 +43,7 @@ def test_sync_retries_then_succeeds() -> None:
     flaky = FlakyAction(1)
     value, _ = run(Retry(flaky, max_attempts=3))
     assert value == "flaky"
-    assert next(flaky._payload["calls"]) == 2  # failed once, then succeeded
+    assert next(flaky.calls) == 2  # failed once, then succeeded
 
 
 def test_sync_exhausts_attempts_and_raises() -> None:
@@ -116,7 +116,7 @@ async def test_async_unbounded_retries_until_success() -> None:
     flaky = FlakyAction(25)
     value, _ = await arun(Retry(flaky, max_attempts=None))
     assert value == "flaky"
-    assert next(flaky._payload["calls"]) == 26  # 25 failures, then the success
+    assert next(flaky.calls) == 26  # 25 failures, then the success
 
 
 async def test_async_unbounded_runs_until_cancelled() -> None:
@@ -127,7 +127,7 @@ async def test_async_unbounded_runs_until_cancelled() -> None:
     task.cancel()
     with pytest.raises(asyncio.CancelledError):
         await task
-    assert next(flaky._payload["calls"]) > 3
+    assert next(flaky.calls) > 3
 
 
 async def test_async_unbounded_still_lets_an_unmatched_error_through() -> None:

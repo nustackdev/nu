@@ -36,13 +36,13 @@ def test_literal_dot_only_for_non_literal_query() -> None:
     assert not out.startswith("●")
 
 
-def test_ref_label_shows_payload() -> None:
+def test_ref_label_shows_fields() -> None:
     out = render_str(STDOUT, as_="plain")
     assert out == "StdioRef(stream='stdout')"
 
 
 def test_ref_label_shows_owner_shape() -> None:
-    # A structured (Shape) Ref shows its owning Shape, not a payload hint.
+    # A structured (Shape) Ref shows its owning Shape, not a field hint.
     from nu.domains.shape import Shape, Slot
     from nu.domains.shape.item import ItemRef
 
@@ -95,7 +95,11 @@ def test_custom_label_callable() -> None:
 
 def test_repr_is_the_one_line_constructor_form() -> None:
     assert render_repr(Add(1, 2)) == "Add(1, 2)"
-    assert render_repr(Sequential(Add(1, 2), Print("x"))) == "Sequential(Add(1, 2), Print('x'))"
+    # Print's sep / end / flush are its last three children, so they show.
+    assert (
+        render_repr(Sequential(Add(1, 2), Print("x")))
+        == "Sequential(Add(1, 2), Print('x', ' ', '\\n', False))"
+    )
 
 
 def test_repr_unwraps_a_literal_to_its_bare_value() -> None:
@@ -103,8 +107,8 @@ def test_repr_unwraps_a_literal_to_its_bare_value() -> None:
     assert render_repr(Literal("hi")) == "'hi'"
 
 
-def test_repr_surfaces_payload_on_a_childless_term() -> None:
-    # A childless atom keeps everything it is in the payload; without it the
+def test_repr_surfaces_fields_on_a_childless_term() -> None:
+    # A childless atom keeps everything it is in its fields; without them the
     # stdio singletons would repr as a bare class name.
     assert render_repr(STDOUT) == "StdioRef(stream='stdout')"
 

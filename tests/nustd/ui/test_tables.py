@@ -61,7 +61,7 @@ def test_item_is_the_default_cell_kind():
     t = ui.TableRef("t", item=ui.TextRef.slot(tone="muted"))
     cell = t[3, 0]
     assert type(cell) is ui.TextRef
-    assert cell._payload["props"]["tone"] == "muted"
+    assert cell._props["tone"] == "muted"
     assert type(t.header[0]) is ui.TextRef
     (frame,) = _frames(cell.set("x"))
     assert frame.ref == ("t", "3", "0")

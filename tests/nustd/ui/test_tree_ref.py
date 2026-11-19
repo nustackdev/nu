@@ -81,7 +81,7 @@ def _echo(change: Changed) -> nu.Nu:
 
 
 def test_slot_seeds_the_chrome():
-    props = nu.tree.payload(FilesPage.tree)["props"]
+    props = FilesPage.tree._props
     assert props == {"label": "Files", "nodes": [], "editable": True, "draggable": True}
 
 
@@ -147,8 +147,8 @@ def test_a_filtered_subscription_unbinds_and_closes_through():
     assert sub.closed
 
 
-def test_event_rides_as_a_child_not_payload():
+def test_event_rides_as_a_child_not_a_field():
     change = FilesApp.files.tree.on_rename()
     assert len(nu.tree.children(change)) == 2
-    assert "event" not in nu.tree.payload(change)
+    assert "event" not in nu.tree.fields(change)
     assert len(nu.tree.children(FilesApp.files.tree.on_change())) == 1

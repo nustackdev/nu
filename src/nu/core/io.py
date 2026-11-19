@@ -140,10 +140,11 @@ class StdioRef(Ref):
 
     def __init__(self, name: str) -> None:
         super().__init__()
-        self._payload = {"stream": name}
+        self._stream: str = name
+        """Which stdio stream this ref names: ``stdin``, ``stdout`` or ``stderr``."""
 
     def _resolve_stream(self, rt: Runtime) -> IO:
-        return _stream_for(rt.ctx, cast("str", self._payload["stream"]))
+        return _stream_for(rt.ctx, self._stream)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> IO:
@@ -193,9 +194,9 @@ class Print(Command):
           stdout fabric and yields nothing.
         - Slot 0 is the IO Ref it writes through, declared in ``mutates``;
           every other slot binds in read role.
-        - ``sep`` / ``end`` / ``flush`` are captured at construction and
-          ride in :attr:`_payload` as static Python values, never resolved
-          as Nu terms.
+        - Children are ``[ref, *values, sep, end, flush]``: the three
+          options are always the last three children, so any of them can
+          be computed (a plain value becomes a ``Literal``).
         - Prints with Python's ``print``, so a NULL value raises TypeError
           (NULL has no string form).
 
@@ -217,25 +218,18 @@ class Print(Command):
         end: str = "\n",
         flush: bool = False,
     ) -> None:
-        super().__init__(ref, *values)
-        # sep/end/flush are static Python values, carried in payload -- unlike
-        # values, they never resolve at eval time.
-        self._payload = dict(self._payload)
-        self._payload["sep"] = sep
-        self._payload["end"] = end
-        self._payload["flush"] = flush
+        super().__init__(ref, *values, sep, end, flush)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = cast("StdioRef", self._children[0])
-        value_thunks = children[1:]
-        sep = str(self._payload["sep"])
-        end = str(self._payload["end"])
-        flush = bool(self._payload["flush"])
+        value_thunks = children[1:-3]
+        sep_t, end_t, flush_t = children[-3:]
 
         def thunk(rt: Runtime) -> None:
             parts: list[str] = []
             for vt in value_thunks:
                 parts.append(str(vt(rt)))
+            sep, end, flush = str(sep_t(rt)), str(end_t(rt)), bool(flush_t(rt))
             stream = ref._resolve_stream(rt)
             stream.write(sep.join(parts) + end)
             if flush:
@@ -245,15 +239,14 @@ class Print(Command):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = cast("StdioRef", self._children[0])
-        value_thunks = children[1:]
-        sep = str(self._payload["sep"])
-        end = str(self._payload["end"])
-        flush = bool(self._payload["flush"])
+        value_thunks = children[1:-3]
+        sep_t, end_t, flush_t = children[-3:]
 
         async def athunk(rt: Runtime) -> None:
             parts: list[str] = []
             for vt in value_thunks:
                 parts.append(str(await vt(rt)))
+            sep, end, flush = str(await sep_t(rt)), str(await end_t(rt)), bool(await flush_t(rt))
             stream = ref._resolve_stream(rt)
             stream.write(sep.join(parts) + end)
             if flush:

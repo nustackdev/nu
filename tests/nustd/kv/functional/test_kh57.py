@@ -1,18 +1,15 @@
-# ruff: noqa: S311 - seeded Random is exactly what deterministic tests need
 """Functional tests for Kh57Ref — sparse int-keyed map with range sampling.
 
 Verifies:
 - Roundtrip put/get/delete through the ref.
 - Iteration in original int-key order.
-- .sample() returns n items, deterministic with seeded rng, respects range.
+- .sample() returns n items, deterministic with a seed, respects range.
 - Stability under append outside the queried range.
 - .range() yields items in ascending int-key order.
 - Lazy/eager facet switching.
 """
 
 from __future__ import annotations
-
-import random
 
 import pytest
 
@@ -95,24 +92,35 @@ def test_sample_deterministic_with_seeded_rng(ctx) -> None:
     _load_range(ctx, range(5_000))
     from nustd.kv.interactions.kh57 import Kh57Sample
 
-    q1 = Kh57Sample(Ledger.entries, 100, 0, 5_000, rng=random.Random(42))
-    q2 = Kh57Sample(Ledger.entries, 100, 0, 5_000, rng=random.Random(42))
+    q1 = Kh57Sample(Ledger.entries, 100, 0, 5_000, seed=42)
+    q2 = Kh57Sample(Ledger.entries, 100, 0, 5_000, seed=42)
     s1 = run(q1, ctx)[0]
     s2 = run(q2, ctx)[0]
     assert s1 == s2
+
+
+def test_a_seeded_sample_holds_no_state_across_runs(ctx) -> None:
+    # The random source is made per evaluation, never kept on the term, so
+    # one term run twice draws the same sample.
+    _load_range(ctx, range(5_000))
+    from nustd.kv.interactions.kh57 import Kh57Sample
+
+    q = Kh57Sample(Ledger.entries, 100, 0, 5_000, seed=42)
+    fields_before = nu.tree.fields(q)
+    assert run(q, ctx)[0] == run(q, ctx)[0]
+    assert nu.tree.fields(q) == fields_before
 
 
 def test_sample_stability_under_out_of_range_append(ctx) -> None:
     _load_range(ctx, range(1, 10_001))
     from nustd.kv.interactions.kh57 import Kh57Sample
 
-    # Fresh seeded rng per run so the rng state does not drift.
-    q1 = Kh57Sample(Ledger.entries, 50, 1_000, 2_000, rng=random.Random(0))
+    q1 = Kh57Sample(Ledger.entries, 50, 1_000, 2_000, seed=0)
     s1 = run(q1, ctx)[0]
     # Append keys outside the queried range [1000, 2000).
     for k in range(10_001, 20_001):
         run(Ledger.entries.set_item(k, k * 2), ctx)
-    q2 = Kh57Sample(Ledger.entries, 50, 1_000, 2_000, rng=random.Random(0))
+    q2 = Kh57Sample(Ledger.entries, 50, 1_000, 2_000, seed=0)
     s2 = run(q2, ctx)[0]
     assert set(s1) == set(s2)
 
@@ -185,7 +193,7 @@ def test_facet_switch_returns_clone(ctx) -> None:
     ref = Ledger.entries
     eager = ref.eager
     lazy = ref.lazy
-    assert nu.tree.payload(eager)["facet"] is Facet.EAGER
-    assert nu.tree.payload(lazy).get("facet", Facet.LAZY) is Facet.LAZY
+    assert eager._facet is Facet.EAGER
+    assert lazy._facet is Facet.LAZY
     # switching preserves the shape / address
-    assert nu.tree.payload(eager)["segment"] == nu.tree.payload(ref)["segment"]
+    assert eager._segment == ref._segment

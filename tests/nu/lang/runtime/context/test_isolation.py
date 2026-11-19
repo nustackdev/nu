@@ -55,13 +55,13 @@ class _SyncFn(ScalarAction):
 
     def __init__(self, fn: Callable) -> None:
         super().__init__()
-        self._payload["fn"] = fn
+        self._fn = fn
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        return self._payload["fn"]
+        return self._fn
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        fn = self._payload["fn"]
+        fn = self._fn
 
         async def athunk(rt: Runtime) -> object:
             return fn(rt)
@@ -82,7 +82,7 @@ class _AsyncFn(_SyncFn):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        return self._payload["fn"]
+        return self._fn
 
 
 def _Fn(fn: Callable) -> ScalarAction:  # noqa: N802 (reads as the atom it builds)

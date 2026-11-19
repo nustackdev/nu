@@ -319,7 +319,7 @@ class Remove(Command):
     """Remove element from set: s.remove(value). Mutates the set; returns nothing.
 
     Raises KeyError if the element is absent (Python parity), unless the
-    construction-time ``missing_ok`` flag (carried in the payload) is set,
+    construction-time ``missing_ok`` flag (a field) is set,
     which makes an absent element a no-op.
     """
 
@@ -329,11 +329,11 @@ class Remove(Command):
 
     def __init__(self, target: object, value: object, *, missing_ok: bool = False) -> None:
         super().__init__(target, value)
-        self._payload = {**self._payload, "missing_ok": missing_ok}
+        self.missing_ok = missing_ok
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, value_t = children
-        missing_ok = bool(self._payload["missing_ok"])
+        missing_ok = bool(self.missing_ok)
 
         def thunk(rt: Runtime) -> None:
             target = target_t(rt)
@@ -350,7 +350,7 @@ class Remove(Command):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, value_t = children
-        missing_ok = bool(self._payload["missing_ok"])
+        missing_ok = bool(self.missing_ok)
 
         async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)

@@ -92,15 +92,15 @@ class ReactLatest(Control):
             super().__init__(change, body, changed_key)
         else:
             super().__init__(change, body)
-        self._payload["has_changed_key"] = has_changed_key
-        self._payload["initial"] = bool(initial)
+        self.has_changed_key = has_changed_key
+        self.initial = bool(initial)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return async_only("ReactLatest")
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        has_ck = self._payload["has_changed_key"]
-        initial = self._payload["initial"]
+        has_ck = self.has_changed_key
+        initial = self.initial
         body = children[1]
 
         async def athunk(rt: Runtime) -> None:

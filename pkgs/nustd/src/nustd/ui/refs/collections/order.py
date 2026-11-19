@@ -27,7 +27,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.forms import List as ListOf
-from nu.lang import Nu
+from nu.lang import Literal, Nu
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import ItemRef, Send, check_key
 
@@ -63,24 +63,23 @@ def _segment(key: object) -> object:
 class _PlacedOp(Send):
     """A child op that names a place: ``at`` a position, or ``before``/``after`` a key.
 
-    Which one rides the payload (``_payload["anchor"]``, so it survives a
-    tree rewrite); none means the end.
+    Children ``[ref, key, value, anchor]``, or ``[ref, key, anchor]`` when
+    the anchor is None (the end). The anchor is always the last child.
     """
 
     def __init__(self, ref: Ref, key: object, anchor: str | None, value: object) -> None:
         if anchor is None:
-            super().__init__(ref, key)
+            super().__init__(ref, key, Literal(anchor))
         else:
-            super().__init__(ref, key, value)
-        self._payload["anchor"] = anchor
+            super().__init__(ref, key, value, Literal(anchor))
 
     def _frame_payload(self, values: list[object]) -> object:
+        *values, anchor = values
         payload: dict[str, object] = {"key": str(values[0])}
-        anchor = self._payload.get("anchor")
         if anchor == "at":
             payload["at"] = int(values[1])  # type: ignore[call-overload]
         elif anchor is not None:
-            payload[anchor] = str(values[1])
+            payload[str(anchor)] = str(values[1])
         return payload
 
 

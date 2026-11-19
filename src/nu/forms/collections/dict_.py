@@ -122,7 +122,7 @@ class Dict(
         ``Dict`` s (no payload) fall back to ``Object`` - the honest
         terminal for value-Form descent without narrowing context.
         """
-        ti = self._payload.get("type_info")
+        ti = self._type_info
         if ti is not None and ti.elem is not None:
             form_cls = ti.elem.to_form()
             return form_cls(operand)  # type: ignore[return-value]

@@ -22,7 +22,7 @@ from .attribute import (
 )
 from .exceptions import CycleError, NotFinalizedError
 from .schema import Schema
-from .term import Term, TermMeta
+from .term import FrozenTermError, Term, TermMeta
 from .types import RuleFn
 
 
@@ -31,6 +31,7 @@ __all__ = [
     "Computed",
     "CycleError",
     "Declared",
+    "FrozenTermError",
     "Inherited",
     "NotFinalizedError",
     "RuleFn",

@@ -90,8 +90,8 @@ def test_has_write_on_fabric_false_for_read_only_query():
 
 def _tag(node):
     """Wrap a node in a Literal to mark it was visited."""
-    # We use with_children to produce a structural variant; we track by identity.
-    return node._with_children(*nu.tree.children(node))
+    # We use evolve to produce a structural variant; we track by identity.
+    return node.evolve(children=nu.tree.children(node))
 
 
 def test_wrap_flows_calls_wrapper_on_outermost_flow():

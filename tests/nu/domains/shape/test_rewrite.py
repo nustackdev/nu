@@ -1,7 +1,7 @@
 """Tests for nu.shape.rewrite: re-rooting bare ref chains under a new parent.
 
 Pure structural -- blueprint refs, never compiled. Covers the splice itself,
-the exemption predicate, the payload copy, root_shape, recursion into every
+the exemption predicate, root_shape, recursion into every
 child (addresses and Eval carriers included), and identity preservation.
 """
 
@@ -35,7 +35,7 @@ def path(node):
         segs.append(nu.tree.children(node)[1])
         node = nu.tree.children(node)[0]
     segs.reverse()
-    return tuple(nu.tree.payload(s)["value"] if isinstance(s, Literal) else s for s in segs)
+    return tuple(nu.tree.fields(s)["value"] if isinstance(s, Literal) else s for s in segs)
 
 
 def chain_root(node):
@@ -73,10 +73,10 @@ def test_the_source_chain_is_untouched():
     assert path(source) == ("form", "inp")
 
 
-def test_the_source_payload_is_not_aliased():
+def test_the_source_keeps_its_root_shape():
     source = ref("inp")
     reroot(source, under())
-    assert nu.tree.payload(source)["root_shape"] is Block
+    assert source._root_shape is Block
 
 
 def test_a_ref_buried_under_a_flow_is_reached():
@@ -129,7 +129,7 @@ def test_only_the_claimed_chains_are_left_alone():
     out = reroot(
         Sequential(ref("inp", parent=mine), ref("tick", parent=theirs)),
         under(),
-        rooted=lambda r: nu.tree.payload(nu.tree.children(r)[1])["value"] == "other",
+        rooted=lambda r: nu.tree.fields(nu.tree.children(r)[1])["value"] == "other",
     )
     kept, spliced = nu.tree.children(out)[1], nu.tree.children(out)[0]
     assert path(spliced) == ("page", "sections", "form", "inp")
@@ -148,7 +148,7 @@ def test_an_address_inside_an_exempt_chain_is_still_judged_on_its_own():
     out = reroot(
         ref(ref("cursor"), parent=ref("form")),
         under(),
-        rooted=lambda r: nu.tree.payload(nu.tree.children(r)[1])["value"] == "form",
+        rooted=lambda r: nu.tree.fields(nu.tree.children(r)[1])["value"] == "form",
     )
     # the spine was claimed, the address is its own chain and was not
     assert path(nu.tree.children(out)[0]) == ("form",)

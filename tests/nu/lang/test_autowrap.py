@@ -17,7 +17,7 @@ from nu.lang.helpers import run
 def test_int_child_is_wrapped() -> None:
     term = Add(1, 2)
     assert all(isinstance(c, Literal) for c in nu.tree.children(term))
-    assert [nu.tree.payload(c)["value"] for c in nu.tree.children(term)] == [1, 2]
+    assert [nu.tree.fields(c)["value"] for c in nu.tree.children(term)] == [1, 2]
 
 
 def test_term_child_is_left_alone() -> None:
@@ -35,12 +35,12 @@ def test_autowrap_runs_end_to_end() -> None:
 def test_none_is_wrapped() -> None:
     term = Add(None)
     assert isinstance(nu.tree.children(term)[0], Literal)
-    assert nu.tree.payload(nu.tree.children(term)[0])["value"] is None
+    assert nu.tree.fields(nu.tree.children(term)[0])["value"] is None
 
 
 def test_string_is_wrapped() -> None:
     term = Add("hi")
-    assert nu.tree.payload(nu.tree.children(term)[0])["value"] == "hi"
+    assert nu.tree.fields(nu.tree.children(term)[0])["value"] == "hi"
 
 
 def test_callable_is_wrapped_as_value() -> None:
@@ -48,13 +48,13 @@ def test_callable_is_wrapped_as_value() -> None:
         return 1
 
     term = Add(f)
-    assert nu.tree.payload(nu.tree.children(term)[0])["value"] is f
+    assert nu.tree.fields(nu.tree.children(term)[0])["value"] is f
 
 
 def test_empty_is_wrapped() -> None:
     term = Add(NULL, 1)
     assert all(isinstance(c, Literal) for c in nu.tree.children(term))
-    assert is_null(nu.tree.payload(nu.tree.children(term)[0])["value"])
+    assert is_null(nu.tree.fields(nu.tree.children(term)[0])["value"])
 
 
 def test_mixed_children_are_wrapped_individually() -> None:

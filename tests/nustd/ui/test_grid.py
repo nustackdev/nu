@@ -237,7 +237,7 @@ def test_placed_cell_by_method_and_computed_place():
     from nustd.ui import GridRef, TextRef
 
     g = GridRef("g", props={"cols": 2})
-    assert g.cell(0, 1)._payload["segment"] == "0,1"
+    assert g.cell(0, 1)._segment == "0,1"
     [frame] = _frames(g[nu.Int(2), 1].to(TextRef).set("x"))
     assert frame.ref == ("g", "2,1")
 

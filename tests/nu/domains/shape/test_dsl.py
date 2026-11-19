@@ -113,7 +113,7 @@ def test_shape_ref_slot_navigation():
 
     ref = Outer.inner
     assert isinstance(ref, ShapeRef)
-    assert nu.tree.payload(ref)["shape_type"] is Inner
+    assert ref._shape_type is Inner
 
 
 # ---------------------------------------------------------------------------

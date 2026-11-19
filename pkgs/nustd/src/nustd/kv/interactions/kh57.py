@@ -16,6 +16,7 @@ Neither is written directly in normal use. ``Kh57Ref.sample`` and
 
 from __future__ import annotations
 
+import random
 from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery
@@ -23,7 +24,6 @@ from nu.lang.null import is_null
 
 
 if TYPE_CHECKING:
-    import random
     from collections.abc import Callable
 
     from nu.lang import IntArg, Nu
@@ -38,6 +38,11 @@ __all__ = [
 
 def _child_nid(rt: Runtime, nid: int, slot: int) -> int:
     return rt.program.children[nid][slot]
+
+
+def _rng(seed: int | None) -> random.Random | None:
+    """The random source for one evaluation: fresh from ``seed``, None for the module one."""
+    return None if seed is None else random.Random(seed)  # noqa: S311 - sampling, not crypto
 
 
 def _refuse_null(op: str, **args: object) -> None:
@@ -67,9 +72,11 @@ class Kh57Sample(ScalarQuery):
     Notes:
         - ``n``, ``begin`` and ``end`` are children, so each may be a Ref
           read at run time; a raw value is wrapped as a Literal.
-        - The keyword-only ``rng`` picks the random source; seed it to make
-          a run reproducible. It is not a child: it rides the atom's
-          payload, so a tree rewrite carries it, but it cannot be computed.
+        - The keyword-only ``seed`` makes the sample reproducible. It is the
+          last child, so it may be computed too. Each evaluation draws from a
+          fresh ``random.Random(seed)``, so a seeded sample depends only on
+          the seed and the data; without a seed the module random source is
+          used.
         - The sample is stable under appends outside the queried range: rows
           landing above ``end`` do not disturb what a fixed window returns.
         - Bounds are evaluated after the container is opened, so a missing
@@ -98,41 +105,37 @@ class Kh57Sample(ScalarQuery):
         begin: IntArg | None = None,
         end: IntArg | None = None,
         *,
-        rng: random.Random | None = None,
+        seed: IntArg | None = None,
     ) -> None:
-        super().__init__(ref, n, begin, end)
-        # rng rides in _payload so Term._with_children (which shares payload
-        # across a tree rewrite) carries it. Storing on __dict__ would lose
-        # it on the first auto_flow_atomic pass.
-        self._payload["rng"] = rng
+        super().__init__(ref, n, begin, end, seed)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
-        _ref_thunk, n_thunk, begin_thunk, end_thunk = children
-        rng = self._payload.get("rng")
+        _ref_thunk, n_thunk, begin_thunk, end_thunk, seed_thunk = children
 
         def thunk(rt: Runtime) -> object:
             view = ref._fetch(rt, _child_nid(rt, nid, 0))
             n = n_thunk(rt)
             begin = begin_thunk(rt)
             end = end_thunk(rt)
-            _refuse_null("sample", n=n, begin=begin, end=end)
-            return view.sample(n, begin, end, rng=rng)
+            seed = seed_thunk(rt)
+            _refuse_null("sample", n=n, begin=begin, end=end, seed=seed)
+            return view.sample(n, begin, end, rng=_rng(seed))
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = self._children[0]
-        _ref_thunk, n_thunk, begin_thunk, end_thunk = children
-        rng = self._payload.get("rng")
+        _ref_thunk, n_thunk, begin_thunk, end_thunk, seed_thunk = children
 
         async def athunk(rt: Runtime) -> object:
             view = await ref._afetch(rt, _child_nid(rt, nid, 0))
             n = await n_thunk(rt)
             begin = await begin_thunk(rt)
             end = await end_thunk(rt)
-            _refuse_null("sample", n=n, begin=begin, end=end)
-            return view.sample(n, begin, end, rng=rng)
+            seed = await seed_thunk(rt)
+            _refuse_null("sample", n=n, begin=begin, end=end, seed=seed)
+            return view.sample(n, begin, end, rng=_rng(seed))
 
         return athunk
 

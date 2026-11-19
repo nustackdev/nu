@@ -298,7 +298,7 @@ def test_placed_grid_keys_maps_by_place():
 
 def test_props_on_the_constructor_go_through_the_slot():
     row = ui.RowRef("r", props={"grow": {"main": 2}, "scroll": "x"})
-    assert row._payload["props"] == {"grow": {"main": 2}, "scroll": "x"}
+    assert row._props == {"grow": {"main": 2}, "scroll": "x"}
 
 
 # --- run time ----------------------------------------------------------------

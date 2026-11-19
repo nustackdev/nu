@@ -64,7 +64,7 @@ def part_ref(ref: Ref, key: str, default: Slot | None) -> Ref:
     ``default`` is a spec (``RowRef.slot(gap=2)``), or None for a bare child
     whose kind ``.to`` names. Either way ``.to`` re-kinds the part in place.
     """
-    section_cls = ref._payload.get("section_cls")
+    section_cls = getattr(ref, "_section_cls", None)
     slots = getattr(section_cls, "_slots", {})
     if key in slots:
         return slots[key].create_ref(owner_shape=section_cls, parent_ref=ref)

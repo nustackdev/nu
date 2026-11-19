@@ -106,11 +106,11 @@ class UploadViewFor(_LifecycleBracket):
 
     def __init__(self, body: Nu | None = None, *, sid_attr: str = _SID_ATTR) -> None:
         super().__init__(body)
-        self._payload["sid_attr"] = sid_attr
+        self.sid_attr = sid_attr
 
     @asynccontextmanager
     async def _aopen(self, ctx: Context) -> AsyncIterator[None]:
-        attr = self._payload["sid_attr"]
+        attr = self.sid_attr
         sid = ctx.attrs.get(attr, None)
         if sid is None:
             msg = f"UploadViewFor found no {attr!r} on the Context; it runs inside the fold"

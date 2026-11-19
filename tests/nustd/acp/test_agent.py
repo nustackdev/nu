@@ -11,6 +11,7 @@ import sys
 
 import pytest
 from _support.acp_fixtures import FAKE, Agent, Log, bound, run, stats_of, texts
+from _support.brackets import config
 
 import nu
 import nustd.acp
@@ -286,7 +287,7 @@ def test_the_fabric_refuses_the_sync_runner_on_its_own():
 )
 def test_presets_are_the_command_and_the_name(preset, command):
     spec = preset(Agent, cwd="/srv", permissions="allow_once")
-    payload = spec._payload
+    payload = config(spec)
     assert payload["cls"] is AcpFabric
     assert payload["tags"] == ("fake",)
     assert payload["kwargs"]["command"] == command

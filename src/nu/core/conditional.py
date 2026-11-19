@@ -87,8 +87,8 @@ class Switch(ScalarQuery):
             raise KeyError on no match instead, like a dict lookup.
 
     Notes:
-        - The case keys are intrinsic constants, kept in the payload rather
-          than as children, so they survive ``with_children`` unchanged.
+        - The case keys are intrinsic constants, kept as fields rather
+          than as children, so they survive ``evolve`` unchanged.
         - Keys are matched by equality against the selector value, in the
           mapping's iteration order; the first match wins.
         - Short-circuits: only the matching case value (or the default) is
@@ -118,14 +118,14 @@ class Switch(ScalarQuery):
         if default is not None:
             values.append(default)
         super().__init__(selector, *values)
-        self._payload["keys"] = tuple(cases.keys())
-        self._payload["has_default"] = default is not None
+        self.keys = tuple(cases.keys())
+        self.has_default = default is not None
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         selector = children[0]
         values = children[1:]
-        keys = self._payload["keys"]
-        has_default = self._payload["has_default"]
+        keys = self.keys
+        has_default = self.has_default
 
         def thunk(rt: Runtime) -> object:
             s = selector(rt)
@@ -141,8 +141,8 @@ class Switch(ScalarQuery):
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         selector = children[0]
         values = children[1:]
-        keys = self._payload["keys"]
-        has_default = self._payload["has_default"]
+        keys = self.keys
+        has_default = self.has_default
 
         async def athunk(rt: Runtime) -> object:
             s = await selector(rt)

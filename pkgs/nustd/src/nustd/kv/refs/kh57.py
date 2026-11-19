@@ -104,7 +104,7 @@ class Kh57Ref(_MappingDescent[int, V], ReactiveMappingRef, ViewRef[dict[int, V]]
             - Each argument is a child, so any of them may be an expression
               or a ref read at run time.
             - Draws from the unseeded module random source. Build the
-              Kh57Sample atom directly with its ``rng`` argument when a run
+              Kh57Sample atom directly with its ``seed`` argument when a run
               has to be reproducible.
             - Stable under appends outside the queried range.
 

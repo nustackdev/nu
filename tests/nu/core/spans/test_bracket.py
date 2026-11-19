@@ -242,3 +242,55 @@ async def test_transaction_rolls_back_on_failure_async() -> None:
     with pytest.raises(ValueError, match="boom"):
         await arun(Rec(BoomAction("boom")))
     assert events == ["open", "rollback"]
+
+
+# --- config children --------------------------------------------------------
+
+
+def _configured(seen: list) -> type[Transaction]:
+    """A bracket with two config children after the body: ``[body, label, scale]``."""
+
+    class Configured(Transaction):
+        def __init__(self, body: object, label: object, scale: object) -> None:
+            super().__init__(body, label, scale)
+
+        @contextmanager
+        def _open(self, ctx, label, scale):
+            seen.append(("open", label, scale))
+            yield
+            seen.append(("close", label))
+
+    return Configured
+
+
+def test_config_children_reach_open_evaluated_in_order() -> None:
+    seen: list = []
+    value, _ = run(_configured(seen)(Literal(7), "a", Add(2, 3)))
+    assert value == 7
+    assert seen == [("open", "a", 5), ("close", "a")]
+
+
+async def test_config_children_reach_aopen_through_the_default() -> None:
+    seen: list = []
+    value, _ = await arun(_configured(seen)(Literal(7), "a", Add(2, 3)))
+    assert value == 7
+    assert seen == [("open", "a", 5), ("close", "a")]
+
+
+def test_config_children_open_a_stream_body_around_the_whole_drain() -> None:
+    seen: list = []
+    items, _ = collect(compile(_configured(seen)(Iter(Literal([1, 2])), "s", 1)))
+    assert items == [1, 2]
+    assert seen == [("open", "s", 1), ("close", "s")]
+
+
+def test_config_children_leave_the_body_in_the_transparent_slot() -> None:
+    program = compile(_configured([])(Iter(Literal([1, 2])), "s", 1))
+    assert program.attr(program.root, Attr.CHILD_CARDINALITY) is Cardinality.STREAM
+
+
+def test_enter_opens_a_bracket_with_its_config_outside_a_tree() -> None:
+    seen: list = []
+    with _configured(seen)(Literal(None), "x", Add(1, 1))._enter(nu.Context()):
+        assert seen == [("open", "x", 2)]
+    assert seen[-1] == ("close", "x")

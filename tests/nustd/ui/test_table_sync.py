@@ -234,12 +234,12 @@ class _Hold(_LifecycleBracket):
     """Hands the Context its body runs in to the test, so tabs can share its store."""
 
     def __init__(self, body: nu.Nu, *, into: list) -> None:
-        super().__init__(body)
-        self._payload["into"] = into
+        # The list is the test's, handed in as config: the bracket never holds it.
+        super().__init__(body, nu.Literal(into))
 
     @asynccontextmanager
-    async def _aopen(self, ctx):
-        self._payload["into"].append(ctx)
+    async def _aopen(self, ctx, into):
+        into.append(ctx)
         yield
 
 

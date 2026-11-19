@@ -101,7 +101,7 @@ def check_schedule(
 def _literal(term: object) -> tuple[bool, object]:
     """Whether ``term`` is known at build time, and its value when it is."""
     if isinstance(term, Literal):
-        return True, term._payload["value"]
+        return True, term.value
     if isinstance(term, Nu):
         return False, None
     return True, term

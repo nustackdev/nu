@@ -323,7 +323,7 @@ class Extend(Command):
 class RemoveValue(Command):
     """Remove first occurrence of value: seq.remove(value). Mutates slot 0; returns nothing.
 
-    ``missing_ok`` is a construction-time flag carried in the payload: when
+    ``missing_ok`` is a construction-time flag, a field: when
     set, an absent value is a no-op instead of raising ``ValueError``.
     """
 
@@ -333,11 +333,11 @@ class RemoveValue(Command):
 
     def __init__(self, target: object, value: object, *, missing_ok: bool = False) -> None:
         super().__init__(target, value)
-        self._payload = {**self._payload, "missing_ok": missing_ok}
+        self.missing_ok = missing_ok
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, value_t = children
-        missing_ok = bool(self._payload["missing_ok"])
+        missing_ok = bool(self.missing_ok)
 
         def thunk(rt: Runtime) -> None:
             target = target_t(rt)
@@ -354,7 +354,7 @@ class RemoveValue(Command):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, value_t = children
-        missing_ok = bool(self._payload["missing_ok"])
+        missing_ok = bool(self.missing_ok)
 
         async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)

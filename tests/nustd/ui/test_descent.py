@@ -232,7 +232,7 @@ def test_accordion_header_is_a_row_at_its_section():
     frames = _frames(head["n"].to(ui.TextRef).set("x"))
     assert _chain(frames[0]) == [("a", "Accordion"), ("header:s1", "Row"), ("n", "TextRef")]
     assert frames[0].chain[1][2]["gap"] == 2
-    assert acc.header("s1", gap=1)._payload["props"]["gap"] == 1
+    assert acc.header("s1", gap=1)._props["gap"] == 1
     assert type(ui.TextRef("header:s1", parent_ref=acc)) is ui.TextRef
 
 
@@ -284,7 +284,7 @@ def test_field_control_is_the_shape_slot():
         f = Email.slot(label="Email")
 
     assert type(Page.f.control) is ui.InputRef
-    assert Page.f.control._payload["segment"] == "email"
+    assert Page.f.control._segment == "email"
 
 
 def test_field_holds_one_control():

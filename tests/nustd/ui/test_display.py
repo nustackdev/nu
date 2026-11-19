@@ -89,7 +89,7 @@ def test_slot_defaults_seed_the_boot_chain(cls, defaults):
 
 def test_props_keyword_normalizes_through_slot():
     ref = AvatarRef("a", props={"name": "Ada Lovelace"})
-    assert ref._payload["props"] == {"src": "", "name": "Ada Lovelace", "size": "md"}
+    assert ref._props == {"src": "", "name": "Ada Lovelace", "size": "md"}
     with pytest.raises(TypeError):
         AvatarRef("a", props={"shape": "square"})
 

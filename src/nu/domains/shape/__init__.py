@@ -30,7 +30,7 @@ shape Form mixins.
 from __future__ import annotations
 
 from .base import StructuredRef, root_shape
-from .collection import MutableCollectionForm, ReactiveCollectionForm, holding
+from .collection import MutableCollectionForm, ReactiveCollectionForm, holds
 from .collections import (
     DictRef,
     FrozenSetRef,
@@ -141,7 +141,7 @@ __all__ = [
     "StrRef",
     "StructuredRef",
     "TupleRef",
-    "holding",
+    "holds",
     "reroot",
     "rerooter",
     "root_shape",

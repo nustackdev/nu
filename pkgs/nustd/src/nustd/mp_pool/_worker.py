@@ -437,7 +437,7 @@ async def _run(conn: Connection, init: _LifecycleBracket | None) -> None:
             ctx = Context()
             try:
                 if init is not None:
-                    await stack.enter_async_context(init._aopen(ctx))
+                    await stack.enter_async_context(init._aenter(ctx))
             except (SystemExit, KeyboardInterrupt, asyncio.CancelledError):
                 raise  # going down; the parent reads the EOF as gone
             except BaseException as exc:

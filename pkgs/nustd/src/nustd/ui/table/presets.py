@@ -185,7 +185,7 @@ def sync(
 
         ui = nustd.ui.table.sync(App.home.table, Sheet.rows, Sheet.order, Sheet.columns, sort=Sheet.sort)
     """
-    props = nu.tree.payload(table).get("props", {})
+    props = table._props or {}
     slot_columns = columns_of(props.get("columns") or [])
     field = str(props.get("row_key") or KEY_FIELD)
     scope = root_shape(rows)

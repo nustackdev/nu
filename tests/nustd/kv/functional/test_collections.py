@@ -15,7 +15,6 @@ from collections.abc import ItemsView, KeysView, ValuesView
 
 import pytest
 
-import nu
 from nu import (
     Contains,
     Context,
@@ -100,11 +99,11 @@ class TestFacets:
     """Facet switching on ViewRef."""
 
     def test_default_facet_is_lazy(self):
-        assert nu.tree.payload(Portfolio.metadata).get("facet", Facet.LAZY) is Facet.LAZY
+        assert Portfolio.metadata._facet is Facet.LAZY
 
     def test_eager_property(self):
         eager = Portfolio.metadata.eager
-        assert nu.tree.payload(eager).get("facet", Facet.LAZY) is Facet.EAGER
+        assert eager._facet is Facet.EAGER
 
     def test_lazy_property_noop(self):
         ref = Portfolio.metadata
@@ -113,18 +112,18 @@ class TestFacets:
 
     def test_eager_lazy_roundtrip(self):
         ref = Portfolio.metadata.eager.lazy
-        assert nu.tree.payload(ref).get("facet", Facet.LAZY) is Facet.LAZY
+        assert ref._facet is Facet.LAZY
 
     def test_lazy_eager_roundtrip(self):
         ref = Portfolio.metadata.lazy.eager
-        assert nu.tree.payload(ref).get("facet", Facet.LAZY) is Facet.EAGER
+        assert ref._facet is Facet.EAGER
 
     def test_eager_is_copy_not_same(self):
         ref = Portfolio.metadata
         eager = ref.eager
         assert eager is not ref
-        assert nu.tree.payload(eager).get("facet", Facet.LAZY) is Facet.EAGER
-        assert nu.tree.payload(ref).get("facet", Facet.LAZY) is Facet.LAZY
+        assert eager._facet is Facet.EAGER
+        assert ref._facet is Facet.LAZY
 
     def test_eager_eager_is_noop(self):
         eager1 = Portfolio.metadata.eager
@@ -132,12 +131,12 @@ class TestFacets:
         assert eager2 is eager1
 
     def test_facet_on_list_ref(self):
-        assert nu.tree.payload(Portfolio.tags).get("facet", Facet.LAZY) is Facet.LAZY
-        assert nu.tree.payload(Portfolio.tags.eager).get("facet", Facet.LAZY) is Facet.EAGER
+        assert Portfolio.tags._facet is Facet.LAZY
+        assert Portfolio.tags.eager._facet is Facet.EAGER
 
     def test_facet_on_set_ref(self):
-        assert nu.tree.payload(Portfolio.members).get("facet", Facet.LAZY) is Facet.LAZY
-        assert nu.tree.payload(Portfolio.members.eager).get("facet", Facet.LAZY) is Facet.EAGER
+        assert Portfolio.members._facet is Facet.LAZY
+        assert Portfolio.members.eager._facet is Facet.EAGER
 
 
 class TestFacetsOnRead:

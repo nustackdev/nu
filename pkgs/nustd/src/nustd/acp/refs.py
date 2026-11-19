@@ -83,12 +83,12 @@ class AgentRef(FabricRef):
 
     def __init__(self, name: str) -> None:
         super().__init__()
-        self._payload["agent"] = agent_name(name)
+        self._agent: str = agent_name(name)
 
     @property
     def name(self) -> str:
         """The Agent's name, the tag its fabric binds under."""
-        return self._payload["agent"]
+        return self._agent
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         fabric = children[0]

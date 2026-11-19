@@ -85,7 +85,7 @@ async def _aeval(term: object) -> object:
     return value
 
 
-def test_literal_yields_its_payload():
+def test_literal_yields_its_value():
     assert _eval(Literal(42)) == 42
 
 

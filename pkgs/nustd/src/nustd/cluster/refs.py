@@ -9,7 +9,7 @@ interactions are ``Teleport`` (execute a tree there). Both refs subclass
 - ``RayServiceRef(*tag)`` reads the ``RayService`` bound at that tag. Tags
   are arbitrary hashable positional args - a plain string for a singleton
   (``RayServiceRef("ledger-main")``), a tuple for a keyed fleet
-  (``RayServiceRef(("ledger", 0))``), etc. The tag is stored in payload and
+  (``RayServiceRef(("ledger", 0))``), etc. The tag is stored as a field and
   forwarded verbatim to ``ctx.fabrics.get(RayService, *tag)``.
 """
 
@@ -88,11 +88,11 @@ class RayServiceRef(FabricRef):
 
     def __init__(self, tag: object = UNSET) -> None:
         super().__init__()
-        self._payload["tag"] = tag
+        self._tag: object = tag
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         service = children[0]
-        raw = self._payload["tag"]
+        raw = self._tag
         tag: tuple[object, ...] = () if raw is UNSET else (raw,)
 
         def thunk(rt: Runtime) -> object:
@@ -107,7 +107,7 @@ class RayServiceRef(FabricRef):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         service = children[0]
-        raw = self._payload["tag"]
+        raw = self._tag
         tag: tuple[object, ...] = () if raw is UNSET else (raw,)
 
         async def athunk(rt: Runtime) -> object:

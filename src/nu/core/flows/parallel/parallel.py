@@ -68,7 +68,7 @@ class Parallel(_ParallelBase, Strategy):
     _exec_order = Declared(value=ExecOrder.PARALLEL, name="exec_order")
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        per_child = self._payload.get("parallel_modes")
+        per_child = self.parallel_modes
         force = self._FORCE_MODE
 
         def thunk(rt: Runtime) -> None:
@@ -79,7 +79,7 @@ class Parallel(_ParallelBase, Strategy):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        per_child = self._payload.get("parallel_modes")
+        per_child = self.parallel_modes
         force = self._FORCE_MODE
 
         async def athunk(rt: Runtime) -> None:

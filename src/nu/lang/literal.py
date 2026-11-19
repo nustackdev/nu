@@ -1,6 +1,6 @@
 """Literal: wraps a raw Python value as a Nu term.
 
-The trivial Query - an irreducible leaf that carries a value in its payload
+The trivial Query - an irreducible leaf that carries a value as its one field
 and yields it once, pure (no effects). Most non-Ref leaves in a Nu program are
 Literals.
 
@@ -10,10 +10,10 @@ every non-Nu child in one, so ``Add(1, 2)`` reads the same as
 ``Add(Literal(1), Literal(2))``. The language cannot construct a tree without
 it.
 
-Sorts: ScalarQuery (Q). No children: the value lives entirely in the payload.
+Sorts: ScalarQuery (Q). No children: the value lives entirely in the ``value`` field.
 
 Each atom defines ``compile`` (sync hot path) and ``acompile`` (async hot
-path). Both return a thunk that closes over the payload value and returns it,
+path). Both return a thunk that closes over the value and returns it,
 ignoring the Runtime.
 """
 
@@ -36,8 +36,9 @@ class Literal(ScalarQuery):
     """A constant value wrapped as a term.
 
     Args:
-        value: the Python value to carry. Held as-is in the payload, never
-            evaluated or copied.
+        value: the Python value to carry. Held as-is in the ``value`` field,
+            never evaluated or copied. Anything goes: numbers, dicts, classes,
+            functions, live objects, even a term (held as data, not run).
 
     Notes:
         - Any tree builder that gets a raw Python value where a term is
@@ -53,12 +54,15 @@ class Literal(ScalarQuery):
         'hi'
     """
 
+    value: object
+    """The carried Python value, as given."""
+
     def __init__(self, value: object) -> None:
         super().__init__()
-        self._payload = {"value": value}
+        self.value = value
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        value = self._payload["value"]
+        value = self.value
 
         def thunk(rt: Runtime) -> object:
             return value
@@ -66,7 +70,7 @@ class Literal(ScalarQuery):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        value = self._payload["value"]
+        value = self.value
 
         async def athunk(rt: Runtime) -> object:
             return value

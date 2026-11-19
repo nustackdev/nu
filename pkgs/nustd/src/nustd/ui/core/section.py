@@ -20,13 +20,13 @@ like everything else.
 
 Children by key or index: ``Grid.slot(SpeciesCard)`` declares an item
 template on the slot, and ``ref["lion"]`` is a SpeciesCard there. The
-template rides the Ref's payload; whether a container takes one is its kind
+template is a field of the Ref; whether a container takes one is its kind
 (see ``refs.collections.base``).
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from typing_extensions import Self
 
@@ -63,19 +63,23 @@ class SectionRef(ItemRef):
         parent_ref: Ref | None = None,
         owner_shape: type[Section] | None = None,
         props: Mapping[str, object] | None = None,
+        **kwargs: Any,
     ) -> None:
-        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape, props=props)
-        self._payload["section_cls"] = section_cls
+        super().__init__(
+            address, parent_ref=parent_ref, owner_shape=owner_shape, props=props, **kwargs
+        )
+        self._section_cls: type[Section] | None = section_cls
+        """The Section whose slots attribute access walks into; None for a bare container."""
 
     def __getattr__(self, name: str) -> object:
-        # Only called when normal attribute lookup fails. Map to a child
-        # slot on the bound Section class. Read payload straight off __dict__
-        # so this never recurses back through __getattr__.
-        payload = self.__dict__.get("_payload") or {}
-        section_cls = payload.get("section_cls")
+        # Only called when normal attribute lookup fails. Map to a child slot
+        # on the bound Section class. A private name is never a slot: refusing
+        # it first keeps a missing field (mid ``__init__``, or while copy and
+        # pickle probe a bare instance) from recursing back in here.
+        if name.startswith("_"):
+            raise AttributeError(name)
+        section_cls = self.__dict__.get("_section_cls")
         if section_cls is None:
-            if name.startswith("_"):
-                raise AttributeError(name)
             raise AttributeError(
                 f"'{type(self).__name__}' object has no attribute '{name}'"
                 " (it carries no Shape, so it has no slots to navigate; reach"

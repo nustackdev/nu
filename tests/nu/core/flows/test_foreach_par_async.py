@@ -42,7 +42,7 @@ class ArmAsync(ScalarAction):
 
     def __init__(self, fn: Callable) -> None:
         super().__init__()
-        self._payload["fn"] = fn
+        self._fn = fn
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
@@ -52,7 +52,7 @@ class ArmAsync(ScalarAction):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        fn = self._payload["fn"]
+        fn = self._fn
 
         async def athunk(rt: Runtime) -> object:
             return await fn(rt.ctx.attrs)

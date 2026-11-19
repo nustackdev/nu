@@ -13,6 +13,7 @@ from typing import ClassVar
 
 import pytest
 
+import nu
 from nu.context import FabricRef, Provide, ProvideDict, ProvideList
 from nu.lang import Context
 from nu.lang.helpers import arun, run
@@ -58,7 +59,7 @@ def test_provide_tag_sugar_binds_under_that_tag():
 
     bracket = Provide(Store, {}, FabricRef(Store), tag="alpha")
     ctx = Context()
-    with bracket._open(ctx):
+    with bracket._enter(ctx):
         assert ctx.fabrics.has(Store, "alpha")
         assert not ctx.fabrics.has(Store, "beta")
 
@@ -73,7 +74,7 @@ def test_provide_tags_multi_bind_requires_full_tag_set():
     # matching a more-specific binding.
     bracket = Provide(Store, {}, FabricRef(Store), tags=("gpu", "worker"))
     ctx = Context()
-    with bracket._open(ctx):
+    with bracket._enter(ctx):
         inst = ctx.fabrics.get(Store, "gpu", "worker")
         assert inst is not None
         # A more-specific request falls back to this binding as the closest match.
@@ -89,7 +90,7 @@ def test_provide_tag_and_tags_compose_into_one_tuple():
 
     bracket = Provide(Store, {}, FabricRef(Store), tag="primary", tags=("gpu",))
     ctx = Context()
-    with bracket._open(ctx):
+    with bracket._enter(ctx):
         inst = ctx.fabrics.get(Store, "primary", "gpu")
         assert inst is not None
         # Order of tags at lookup does not matter (frozenset).
@@ -108,7 +109,7 @@ def test_provide_predicate_forwards_to_ctx_bind():
 
     bracket = Provide(Store, {}, FabricRef(Store), predicate=match_site)
     ctx = Context()
-    with bracket._open(ctx):
+    with bracket._enter(ctx):
         # A predicate binding resolves only against data.
         assert not ctx.fabrics.has(Store)  # no data kwargs -> nothing to match
         assert ctx.fabrics.get(Store, site=3) is not None
@@ -126,7 +127,7 @@ def test_provide_list_binds_each_by_index():
 
     bracket = ProvideList(Store, [{"i": 0}, {"i": 1}, {"i": 2}], FabricRef(Store), base_tag=10)
     ctx = Context()
-    with bracket._open(ctx):
+    with bracket._enter(ctx):
         assert ctx.fabrics.get(Store, 10).i == 0
         assert ctx.fabrics.get(Store, 11).i == 1
         assert ctx.fabrics.get(Store, 12).i == 2
@@ -139,7 +140,7 @@ def test_provide_list_extra_tags_share_across_fleet():
 
     bracket = ProvideList(Store, [{"i": 0}, {"i": 1}], FabricRef(Store), extra_tags=("worker",))
     ctx = Context()
-    with bracket._open(ctx):
+    with bracket._enter(ctx):
         # index + shared extra tag both address the same binding.
         assert ctx.fabrics.get(Store, 0, "worker").i == 0
         assert ctx.fabrics.get(Store, 1, "worker").i == 1
@@ -199,7 +200,7 @@ def test_provide_dict_binds_each_by_key():
         FabricRef(Store),
     )
     ctx = Context()
-    with bracket._open(ctx):
+    with bracket._enter(ctx):
         assert ctx.fabrics.get(Store, "gpu").name == "g"
         assert ctx.fabrics.get(Store, "cpu").name == "c"
 
@@ -216,7 +217,7 @@ def test_provide_dict_extra_tags_share_across_fleet():
         extra_tags=("shard",),
     )
     ctx = Context()
-    with bracket._open(ctx):
+    with bracket._enter(ctx):
         assert ctx.fabrics.get(Store, "gpu", "shard").name == "g"
         assert ctx.fabrics.get(Store, "cpu", "shard").name == "c"
 
@@ -364,3 +365,77 @@ def test_provide_dict_refuses_async_only_marker_under_sync_open():
 
     with pytest.raises(RuntimeError, match="_nu_async_only"):
         run(ProvideDict(AsyncOnly, {"a": {"k": "a"}}, FabricRef(AsyncOnly)))
+
+
+# --- config is children ----------------------------------------------------
+
+
+class Cfg(nu.Shape):
+    """Mem slots a tree reads a Provide's config from."""
+
+    kwargs = nu.DictRef.slot(nu.StrRef)
+    first = nu.DictRef.slot(nu.StrRef)
+    second = nu.DictRef.slot(nu.StrRef)
+    runs = nu.IntRef.slot()
+
+
+def test_provide_config_sits_after_the_body_as_literals():
+    body = FabricRef(Counter)
+    bracket = Provide(Counter, {"name": "a"}, body, tag="t")
+    head, *config = nu.tree.children(bracket)
+    assert head is body
+    assert all(isinstance(c, nu.Literal) for c in config)
+    assert [c.value for c in config] == [Counter, {"name": "a"}, ("t",), None, None]
+
+
+def test_provide_kwargs_come_from_a_mem_read():
+    tree = nu.Frame(
+        Cfg, Provide(Counter, Cfg.kwargs, FabricRef(Counter)), kwargs={"name": "from-mem"}
+    )
+    value, _ = run(tree)
+    assert value.name == "from-mem"
+    assert Counter.events == [("setup", "from-mem"), ("close", "from-mem")]
+
+
+async def test_provide_kwargs_come_from_a_mem_read_async():
+    tree = nu.Frame(
+        Cfg, Provide(Counter, Cfg.kwargs, FabricRef(Counter)), kwargs={"name": "from-mem"}
+    )
+    value, _ = await arun(tree)
+    assert value.name == "from-mem"
+
+
+def test_provide_list_specs_come_from_a_computation():
+    specs = nu.Collect(nu.Iter([{"name": "x"}, {"name": "y"}]))
+    value, _ = run(ProvideList(Counter, specs, nu.Add(1, 2)))
+    assert value == 3
+    assert [n for kind, n in Counter.events if kind == "setup"] == ["x", "y"]
+
+
+def test_provide_stream_body_with_computed_config_spans_the_drain():
+    seen: list[str] = []
+
+    class Live:
+        def __init__(self, name: str) -> None:
+            self.name = name
+
+        def setup(self, ctx: Context) -> None:
+            seen.append("setup")
+
+        def cleanup(self) -> None:
+            seen.append("close")
+
+    tree = nu.Frame(Cfg, Provide(Live, Cfg.kwargs, nu.Iter([1, 2, 3])), kwargs={"name": "s"})
+    assert nu.collect(nu.validate(nu.compile(tree)))[0] == [1, 2, 3]
+    assert seen == ["setup", "close"]
+
+
+@pytest.mark.parametrize("runner", ["sync", "async"])
+def test_one_bracket_with_config_used_twice_in_one_program(runner: str):
+    # T = Provide(...); foo >> T >> smth >> T. One term, two places; its config
+    # is evaluated at each, so each place opens with what the tree holds then.
+    t = Provide(Counter, Cfg.kwargs, Cfg.runs.set(Cfg.runs + 1))
+    program = Cfg.runs.set(0) >> Cfg.kwargs.set(Cfg.first) >> t >> Cfg.kwargs.set(Cfg.second) >> t
+    tree = nu.Frame(Cfg, program, first={"name": "a"}, second={"name": "b"})
+    run(tree) if runner == "sync" else asyncio.run(arun(tree))
+    assert Counter.events == [("setup", "a"), ("close", "a"), ("setup", "b"), ("close", "b")]

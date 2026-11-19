@@ -26,13 +26,13 @@ no ceremony. Binding one is how a subtree opts into a different interpreter,
 and ``brace=`` picks among several bound braces by tag, the same single
 hashable tag ``Teleport`` takes.
 
-Children and payload
---------------------
+Children and fields
+-------------------
 
 ``[source, entry, filename, *scope_values]``, with the scope *names* in
-payload. Anything Nu-computable is a child, and a source address, an entry
+a field. Anything Nu-computable is a child, and a source address, an entry
 point name and a scope value are all things a program can compute (a section
-path read from kv is the motivating case). What stays in payload is the one
+path read from kv is the motivating case). What stays a field is the one
 thing that is not a value at all: which slot carries which name. That is
 structure, in the same sense ``TryCatch.errors`` is - it shapes the call,
 it is not a value the call computes.
@@ -120,7 +120,7 @@ class LoadNu(ScalarQuery):
         - Source, entry, filename and every scope value are children, so all
           four are computable: reading the source out of kv at an address
           the program itself worked out is the same node with a different
-          child. Only the mapping from slot to scope name lives in payload,
+          child. Only the mapping from slot to scope name is a field,
           because it shapes the call rather than being a value the call
           computes.
         - The brace is resolved off ``rt.ctx`` at evaluation, by
@@ -190,13 +190,13 @@ class LoadNu(ScalarQuery):
     ) -> None:
         names = tuple(scope) if scope else ()
         super().__init__(source, entry, filename, *(scope[n] for n in names))
-        self._payload["scope_names"] = names
-        self._payload["brace"] = brace
-        self._payload["rewrite"] = rewrite
+        self.scope_names = names
+        self.brace = brace
+        self.rewrite = rewrite
 
     def _brace_of(self, rt: Runtime) -> PyBrace:
         """The bound brace, or the shared in-process one."""
-        raw = self._payload["brace"]
+        raw = self.brace
         tag: tuple[object, ...] = () if raw is UNSET else (raw,)
         if rt.ctx.fabrics.has(PyBrace, *tag):
             return rt.ctx.fabrics.get(PyBrace, *tag)
@@ -206,7 +206,7 @@ class LoadNu(ScalarQuery):
         """Unwrap a construct result, turning a Diagnostic into a raise, then rewrite."""
         if isinstance(result, Diagnostic):
             raise ConstructionError(result)
-        rewrite: Transform | None = self._payload["rewrite"]  # type: ignore[assignment]
+        rewrite = self.rewrite
         if rewrite is None:
             return result  # type: ignore[return-value]
         return rewrite(result)  # type: ignore[arg-type]
@@ -214,7 +214,7 @@ class LoadNu(ScalarQuery):
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, entry, filename = children[0], children[1], children[2]
         values = children[3:]
-        names = self._payload["scope_names"]
+        names = self.scope_names
         _self = self
 
         def thunk(rt: Runtime) -> object:
@@ -228,7 +228,7 @@ class LoadNu(ScalarQuery):
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, entry, filename = children[0], children[1], children[2]
         values = children[3:]
-        names = self._payload["scope_names"]
+        names = self.scope_names
         _self = self
 
         async def athunk(rt: Runtime) -> object:

@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, TypeVar
 
 from nu.forms import FrozenSet, Set
 
-from ..collection import MutableCollectionForm, ReactiveCollectionForm, holding
+from ..collection import MutableCollectionForm, ReactiveCollectionForm, holds
 from .abc.set_ import MutableSetRef, ReactiveSetForm, SetLikeRef
 
 
@@ -37,7 +37,7 @@ class SetRef(MutableSetRef, Set[T]):
     """Set slot ref. A set has no keys, so there is no descent."""
 
     def _wrap_set_result(self, operand: Nu) -> Set[T]:
-        return holding(Set(operand), set, elem=self._declared.elem)
+        return Set(operand, type_info=holds(set, elem=self._declared.elem))
 
 
 class ReactiveSetRef(ReactiveSetForm, SetRef[T]):
@@ -51,7 +51,7 @@ class FrozenSetRef(MutableCollectionForm, SetLikeRef, FrozenSet[T]):
     """Frozenset slot ref. No descent."""
 
     def _wrap_set_result(self, operand: Nu) -> FrozenSet[T]:
-        return holding(FrozenSet(operand), frozenset, elem=self._declared.elem)
+        return FrozenSet(operand, type_info=holds(frozenset, elem=self._declared.elem))
 
 
 class ReactiveFrozenSetRef(ReactiveCollectionForm, FrozenSetRef[T]):

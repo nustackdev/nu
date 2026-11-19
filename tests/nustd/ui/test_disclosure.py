@@ -164,7 +164,7 @@ def test_collapsible_header_is_the_shape_slot():
     class Home(Column):
         call = Call.slot()
 
-    assert Home.call.header._payload["segment"] == "header"
+    assert Home.call.header._segment == "header"
     chains = boot_chains((), Home)
     assert [("call", "Collapsible"), ("header", "Row"), ("name", "TextRef")] in [
         [lvl[:2] for lvl in c] for c in chains

@@ -270,7 +270,7 @@ class Init(_ChainCommand):
         super().__init__(ref)
 
     def _frames(self, chain: Chain) -> list[Frame]:
-        section_cls = self._children[0]._payload.get("section_cls")
+        section_cls = getattr(self._children[0], "_section_cls", None)
         chains = [chain, *(boot_chains(chain, section_cls) if section_cls else ())]
         return [Frame(OP_INIT, ref=[seg for seg, _, _ in c], chain=c) for c in chains]
 

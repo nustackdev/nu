@@ -780,15 +780,15 @@ class Accumulate(StreamQuery):
         func, (acc_key, item_key) = bind("Accumulate", func, acc_key=acc_key, item_key=item_key)
         if func is None:
             super().__init__(source)
-            self._payload = {"has_func": False}
+            self.has_func = False
         else:
             acc_key = "acc" if acc_key is None else acc_key
             item_key = "item" if item_key is None else item_key
             super().__init__(source, func, acc_key, item_key)
-            self._payload = {"has_func": True}
+            self.has_func = True
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        has_func = self._payload["has_func"]
+        has_func = self.has_func
         source = children[0]
         func = children[1] if has_func else None
         acc_t = children[2] if has_func else None
@@ -819,7 +819,7 @@ class Accumulate(StreamQuery):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        has_func = self._payload["has_func"]
+        has_func = self.has_func
         source = children[0]
         func = children[1] if has_func else None
         acc_t = children[2] if has_func else None
@@ -915,13 +915,13 @@ class GroupBy(StreamQuery):
         key, (name,) = bind("GroupBy", key, name=name)
         if key is None:
             super().__init__(source)
-            self._payload = {"has_key": False}
+            self.has_key = False
         else:
             super().__init__(source, key, "item" if name is None else name)
-            self._payload = {"has_key": True}
+            self.has_key = True
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        has_key = self._payload["has_key"]
+        has_key = self.has_key
         source = children[0]
         key_fn = children[1] if has_key else None
         name_t = children[2] if has_key else None
@@ -944,7 +944,7 @@ class GroupBy(StreamQuery):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        has_key = self._payload["has_key"]
+        has_key = self.has_key
         source = children[0]
         key_fn = children[1] if has_key else None
         name_t = children[2] if has_key else None

@@ -49,15 +49,15 @@ def _add(ctx, ref, ids) -> None:
 
 
 def test_the_slot_lays_out_a_log() -> None:
-    assert History.removed._payload["type_marker"] is LogIndexedDictView
-    assert History.steps._payload["type_marker"] is EagerLogIndexedDictView
-    assert History.noted._payload["type_marker"] is LogIndexedDictView
+    assert History.removed._type_marker is LogIndexedDictView
+    assert History.steps._type_marker is EagerLogIndexedDictView
+    assert History.noted._type_marker is LogIndexedDictView
     assert isinstance(History.noted, LogDictRef)
 
 
 def test_the_view_is_a_mutable_mapping(ctx) -> None:
     _add(ctx, History.removed, ["a"])
-    view = run(History.removed._with_facet(Facet.NONE), ctx)[0]
+    view = run(History.removed.evolve(_facet=Facet.NONE), ctx)[0]
     assert isinstance(view, LogIndexedDictViewBase)
     assert isinstance(view, MutableMapping)
 

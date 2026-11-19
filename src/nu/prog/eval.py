@@ -40,7 +40,7 @@ from nu.lang.attributes import Attr, Cardinality, Sort
 from nu.lang.kinds import Interaction
 from nu.lang.nu import Nu
 
-from .eval_promise import PROMISE_FIELDS, PROMISE_KEY, EvalPromiseError, check_promise
+from .eval_promise import PROMISE_FIELDS, EvalPromiseError, check_promise
 
 
 if TYPE_CHECKING:
@@ -130,6 +130,8 @@ class Eval(Interaction):
 
     def __init__(self, carrier: Nu, *, promise: dict[str, Any] | None = None) -> None:
         super().__init__(carrier)
+        self.dyn_promise: dict[str, Any] | None = None
+        """What the carried tree is promised to be; None when nothing is promised."""
         if promise is not None:
             unknown = set(promise) - PROMISE_FIELDS
             if unknown:
@@ -138,10 +140,10 @@ class Eval(Interaction):
                     f"allowed: {sorted(PROMISE_FIELDS)!r}"
                 )
                 raise ValueError(msg)
-            self._payload[PROMISE_KEY] = dict(promise)
+            self.dyn_promise = dict(promise)
 
     def _promise(self) -> dict[str, Any]:
-        return self._payload.get(PROMISE_KEY) or {}
+        return self.dyn_promise or {}
 
     def _resolve_inner(self, rt: Runtime, inner: object, promise: dict[str, Any]) -> object:
         """Compile ``inner``, validate against ``promise``, return the inner program."""

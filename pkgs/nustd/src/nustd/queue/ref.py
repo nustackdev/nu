@@ -13,6 +13,7 @@ import janus
 from typing_extensions import Self
 
 from nu.domains.shape import Slot
+from nu.lang import Literal
 from nu.mem.refs import RefBase
 
 from .form import JQueue
@@ -75,22 +76,17 @@ class JQueueRef(RefBase[janus.Queue[T]], JQueue[T], Generic[T]):
         owner_shape: type[Shape] | None = None,
         capacity: int | None = None,
         item_type: type[T] = object,  # type: ignore[assignment]
+        **kwargs: object,
     ) -> None:
-        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
-        self._payload["capacity"] = capacity
-        self._payload["item_type"] = item_type
-
-    @property
-    def _capacity(self) -> int | None:
-        return self._payload.get("capacity")  # type: ignore[return-value]
-
-    @property
-    def _item_type(self) -> type:
-        return self._payload.get("item_type", object)  # type: ignore[return-value]
+        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape, **kwargs)
+        # Capacity is a value the queue works with: a child after the address.
+        self._children = (*self._children, Literal(capacity))
+        self._item_type: type = item_type
+        """The Python type the queue is meant to carry."""
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the sync read thunk that vivifies and yields the queue."""
-        address = children[1]
+        address, capacity = children[1], children[2]
 
         def thunk(rt: Runtime) -> janus.Queue[T]:
             parent = self._fetch_parent(rt)
@@ -100,7 +96,7 @@ class JQueueRef(RefBase[janus.Queue[T]], JQueue[T], Generic[T]):
             addr = address(rt)
             q = parent.get(addr)
             if q is None:
-                q = janus.Queue(maxsize=self._capacity or 0)
+                q = janus.Queue(maxsize=capacity(rt) or 0)
                 parent[addr] = q
             return q
 
@@ -108,7 +104,7 @@ class JQueueRef(RefBase[janus.Queue[T]], JQueue[T], Generic[T]):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         """Build the async read thunk that vivifies and yields the queue."""
-        address = children[1]
+        address, capacity = children[1], children[2]
 
         async def athunk(rt: Runtime) -> janus.Queue[T]:
             parent = self._fetch_parent(rt)
@@ -118,7 +114,7 @@ class JQueueRef(RefBase[janus.Queue[T]], JQueue[T], Generic[T]):
             addr = await address(rt)
             q = parent.get(addr)
             if q is None:
-                q = janus.Queue(maxsize=self._capacity or 0)
+                q = janus.Queue(maxsize=(await capacity(rt)) or 0)
                 parent[addr] = q
             return q
 

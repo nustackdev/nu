@@ -169,7 +169,6 @@ def test_command_thunk_returns_none_and_calls_fn() -> None:
     # built thunk directly. compile() gives us back a (rt) -> None thunk.
     instance = Touch.__new__(Touch)
     instance._children = ()
-    instance._payload = {}
     thunk = instance._compile(0, ())
     assert thunk(rt=None) is None
     assert calls == [()]

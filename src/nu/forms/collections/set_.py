@@ -100,7 +100,7 @@ class Set(
               typed set ref, like `SetRef.slot(str).union(...)`) dispatches
               the element to its concrete Form, as `List` does.
         """
-        ti = self._payload.get("type_info")
+        ti = self._type_info
         if ti is not None and ti.elem is not None:
             return ti.elem.to_form()(operand)  # type: ignore[return-value]
         from ..primitives import Object

@@ -64,13 +64,13 @@ class ReactEvery(Control):
             super().__init__(change, body, changed_key)
         else:
             super().__init__(change, body)
-        self._payload["has_changed_key"] = has_changed_key
+        self.has_changed_key = has_changed_key
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return async_only("ReactEvery")
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        has_ck = self._payload["has_changed_key"]
+        has_ck = self.has_changed_key
 
         async def athunk(rt: Runtime) -> None:
             loop = asyncio.get_running_loop()

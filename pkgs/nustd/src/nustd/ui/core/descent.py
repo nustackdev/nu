@@ -108,7 +108,7 @@ def check_key(
 
 def child_at(parent: Ref, key: object, spec: Slot | None = None) -> ItemRef:
     """The child of ``parent`` at ``key``: built from ``spec``, or bare when there is none."""
-    section_cls = parent._payload.get("section_cls")
+    section_cls = getattr(parent, "_section_cls", None)
     if spec is None:
         return ItemRef(key, parent_ref=parent, owner_shape=section_cls)
     return spec.create_ref(owner_shape=section_cls, parent_ref=parent, address=key)  # type: ignore[return-value]

@@ -271,9 +271,9 @@ def test_sketch_slot_normalizes_seed_elements():
 
 def test_sketch_standalone_carries_slot_props():
     pad = SketchRef("pad", props={"width": 140, "controls": []})
-    assert pad._payload["props"]["width"] == 140
-    assert pad._payload["props"]["controls"] == []
-    assert pad._payload["props"]["value"] == []
+    assert pad._props["width"] == 140
+    assert pad._props["controls"] == []
+    assert pad._props["value"] == []
 
 
 def test_sketch_set_writes_the_elements():

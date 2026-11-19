@@ -80,7 +80,8 @@ class Teleport(Policy):
         - ``target`` is the tag the ``RayService`` was bound under, passed
           verbatim to ``ctx.get``: omit it for a bare ``Provide``, the index
           for ``ProvideList``, the key for ``ProvideDict``. ``None`` is a
-          usable tag, distinct from omitting it.
+          usable tag, distinct from omitting it. It is the node's second
+          child, so any Nu can compute it; a plain value is a ``Literal``.
         - ``carry=True`` binds the caller's ``ctx.attrs`` on a branch
           of the actor's Context for that one execution, so loop
           variables bound by ``Map`` or ``Filter`` reach the body. Without
@@ -122,9 +123,8 @@ class Teleport(Policy):
     _requires_async = Declared(value=True, name="requires_async")
 
     def __init__(self, body: Nu, *, target: object = UNSET, carry: bool = False) -> None:
-        super().__init__(body)
-        self._payload["target"] = target
-        self._payload["carry"] = carry
+        super().__init__(body, target)
+        self.carry = carry
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
@@ -135,11 +135,11 @@ class Teleport(Policy):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body_term = self._children[0]
-        target = self._payload["target"]
-        carry = self._payload["carry"]
-        tag: tuple[object, ...] = () if target is UNSET else (target,)
+        carry = self.carry
 
         async def athunk(rt: Runtime) -> object:
+            target = await children[1](rt)
+            tag: tuple[object, ...] = () if target is UNSET else (target,)
             service = rt.ctx.fabrics.get(RayService, *tag)
             attrs = dict(rt.ctx.attrs.items()) if carry else None
             result = await service.aexecute(body_term, attrs=attrs)

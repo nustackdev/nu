@@ -62,10 +62,10 @@ class RunsAnywhereAction(ScalarAction):
 
     def __init__(self, name: str) -> None:
         super().__init__()
-        self._payload["name"] = name
+        self._name = name
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        name = self._payload["name"]
+        name = self._name
 
         def thunk(rt: Runtime) -> object:
             _record(rt, name)
@@ -74,7 +74,7 @@ class RunsAnywhereAction(ScalarAction):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        name = self._payload["name"]
+        name = self._name
 
         async def athunk(rt: Runtime) -> object:
             _record(rt, name)
@@ -91,7 +91,7 @@ class AsyncOnlyAction(ScalarAction):
 
     def __init__(self, name: str) -> None:
         super().__init__()
-        self._payload["name"] = name
+        self._name = name
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
@@ -101,7 +101,7 @@ class AsyncOnlyAction(ScalarAction):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        name = self._payload["name"]
+        name = self._name
 
         async def athunk(rt: Runtime) -> object:
             await asyncio.sleep(0)  # genuinely touch the loop
@@ -121,10 +121,10 @@ class BoomAction(ScalarAction):
 
     def __init__(self, name: str) -> None:
         super().__init__()
-        self._payload["name"] = name
+        self._name = name
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        name = self._payload["name"]
+        name = self._name
 
         def thunk(rt: Runtime) -> object:
             raise ValueError(name)
@@ -132,7 +132,7 @@ class BoomAction(ScalarAction):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        name = self._payload["name"]
+        name = self._name
 
         async def athunk(rt: Runtime) -> object:
             raise ValueError(name)
@@ -148,10 +148,10 @@ class SyncOnlyAction(ScalarAction):
 
     def __init__(self, name: str) -> None:
         super().__init__()
-        self._payload["name"] = name
+        self._name = name
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        name = self._payload["name"]
+        name = self._name
 
         def thunk(rt: Runtime) -> object:
             _record(rt, name)
@@ -179,8 +179,8 @@ class SleepAndRecordAction(ScalarAction):
 
     def __init__(self, name: str, delay: float = 0.5) -> None:
         super().__init__()
-        self._payload["name"] = name
-        self._payload["delay"] = delay
+        self._name = name
+        self._delay = delay
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
@@ -190,8 +190,8 @@ class SleepAndRecordAction(ScalarAction):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        name = self._payload["name"]
-        delay = self._payload["delay"]
+        name = self._name
+        delay = self._delay
 
         async def athunk(rt: Runtime) -> object:
             await asyncio.sleep(delay)

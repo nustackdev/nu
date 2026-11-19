@@ -27,7 +27,7 @@ from nu.engine.structure import Declared
 from nu.lang import ScalarQuery, StreamQuery
 from nu.lang.null import is_null
 from nustd.ui.core import EVENT, Frame, Send, Session
-from nustd.ui.core.protocol import _op_of
+from nustd.ui.core.protocol import _op_name
 
 from .area import UploadView
 from .errors import UploadRefused, _check_answer
@@ -217,10 +217,10 @@ class _UploadCommand(Send):
     @classmethod
     def op(cls) -> str:
         """The wire op this command ships as: its class name in snake case."""
-        return _op_of(object.__new__(cls))
+        return _op_name(cls.__name__)
 
     @classmethod
-    def _payload(cls, key: object, view: UploadView | None, values: list[object]) -> dict:
+    def _wire_payload(cls, key: object, view: UploadView | None, values: list[object]) -> dict:
         payload: dict[str, Any] = {"key": key}
         if cls._rid:
             payload["rid"] = uuid.uuid4().hex
@@ -247,7 +247,7 @@ class _UploadCommand(Send):
         session = rt.ctx.fabrics.get(Session)
         view = _view(rt)
         chain, key = await ref._aupload_target(rt, ref_nid)  # type: ignore[attr-defined]
-        payload = cls._payload(key, view, values)
+        payload = cls._wire_payload(key, view, values)
         note = await _ask(session, chain, cls.op(), payload, event)
         return note, view, _where(chain, key)
 
@@ -267,7 +267,7 @@ class _UploadCommand(Send):
             view = _view(rt) if cls._url else None
             chain, key = await ref._aupload_target(rt, ref_nid)  # type: ignore[attr-defined]
             path = tuple(seg for seg, _, _ in chain)
-            payload = cls._payload(key, view, values)
+            payload = cls._wire_payload(key, view, values)
             await session.send(Frame(cls.op(), ref=path, payload=payload, chain=chain))
 
         return athunk

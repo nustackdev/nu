@@ -138,7 +138,10 @@ def InteractionFactory(  # noqa: N802 -- a class factory; reads as a class at th
 
     def init_method(self: Nu, *args: object, **kwargs: object) -> None:
         Nu.__init__(self, *args, *kwargs.values())
-        self._payload = {"npos": len(args), "kwkeys": tuple(kwargs.keys())}
+        # Underscore-named: the base may be a Form (``Object``) whose
+        # ``__getattr__`` a public field would shadow.
+        self._npos = len(args)
+        self._kwkeys = tuple(kwargs.keys())
 
     namespace["__init__"] = init_method
 
@@ -149,8 +152,8 @@ def InteractionFactory(  # noqa: N802 -- a class factory; reads as a class at th
             nid: int,
             children: tuple[Callable[[Runtime], object], ...],
         ) -> Callable[[Runtime], object]:
-            npos = cast("int", self._payload.get("npos", len(children)))
-            kwkeys = cast("tuple[str, ...]", self._payload.get("kwkeys", ()))
+            npos = cast("int", getattr(self, "_npos", len(children)))
+            kwkeys = cast("tuple[str, ...]", getattr(self, "_kwkeys", ()))
             pos_ts = children[:npos]
             kw_ts = children[npos:]
 
@@ -175,8 +178,8 @@ def InteractionFactory(  # noqa: N802 -- a class factory; reads as a class at th
         nid: int,
         children: tuple[Callable[[Runtime], object], ...],
     ) -> Callable[[Runtime], object]:
-        npos = cast("int", self._payload["npos"])
-        kwkeys = cast("tuple[str, ...]", self._payload["kwkeys"])
+        npos = cast("int", self._npos)  # type: ignore[attr-defined]
+        kwkeys = cast("tuple[str, ...]", self._kwkeys)  # type: ignore[attr-defined]
         pos_ts = children[:npos]
         kw_ts = children[npos:]
 

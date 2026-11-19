@@ -6,6 +6,7 @@ import os
 from typing import TYPE_CHECKING
 
 from nu.context.fabric import Provide
+from nu.lang.runtime import Context
 
 from .backends import FilesBackend, LMDBBackend, S3Backend
 from .backends.lmdb import DEFAULT_MAP_SIZE, DEFAULT_MAX_READERS, DEFAULT_WRITEMAP
@@ -138,8 +139,11 @@ def backend_of(spec: Provide) -> BlobBackend:
         backend = nustd.blob.backend_of(spec)
         backend.open()
     """
-    payload = getattr(spec, "_payload", None)
-    if not isinstance(spec, Provide) or payload is None or payload.get("cls") is not BlobFabric:
+    if not isinstance(spec, Provide):
         raise TypeError(f"a blob spec is what nustd.blob.lmdb, files or s3 gives, got {spec!r}")
-    kwargs = payload["kwargs"]
+    # Resolve the spec's config the way the bracket does on entry, so a
+    # computed kwargs child reaches the same backend the tree would build.
+    cls, kwargs, *_ = spec._config_values(Context())
+    if cls is not BlobFabric:
+        raise TypeError(f"a blob spec is what nustd.blob.lmdb, files or s3 gives, got {spec!r}")
     return kwargs["backend"](**dict(kwargs.get("options") or {}))

@@ -3,7 +3,7 @@
 A ``FabricRef`` with an optional tag, the shape ``nustd.cluster``'s
 ``RayServiceRef`` has: ``PoolRef()`` reads the untagged pool, ``PoolRef("gpu")``
 the one a ``pool(..., tags=("gpu",))`` bound, so two pools can live in one
-scope. The tag is the address, so it is payload; nothing a caller computes at
+scope. The tag is the address, so it is a field; nothing a caller computes at
 run time goes there.
 
 It also carries this fabric's fluent surface. ``PoolRef().launch()`` and
@@ -87,10 +87,10 @@ class PoolRef(FabricRef):
 
     def __init__(self, tag: object = UNSET) -> None:
         super().__init__()
-        self._payload["tag"] = tag
+        self._tag: object = tag
 
     def _tags(self) -> tuple[object, ...]:
-        tag = self._payload["tag"]
+        tag = self._tag
         return () if tag is UNSET else (tag,)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

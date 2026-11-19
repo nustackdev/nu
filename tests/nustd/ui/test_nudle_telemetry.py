@@ -13,6 +13,7 @@ import json
 import socket
 
 import pytest
+from _support.brackets import config
 from starlette.routing import Route
 from starlette.testclient import TestClient
 
@@ -145,8 +146,8 @@ def test_serve_mounts_the_route_first():
 
     extra = Route("/api/extra", lambda request: None)
     tree = nustd.ui.serve(nu.Int(0), routes=[extra])
-    server, _uploads = tree._payload["brackets"]
-    paths = [r.path for r in server._payload["kwargs"]["routes"]]
+    server, _uploads = tree.brackets
+    paths = [r.path for r in config(server)["kwargs"]["routes"]]
     assert paths == ["/api/telemetry-config", "/_nu/upload/{sid}", "/api/extra"]
 
 

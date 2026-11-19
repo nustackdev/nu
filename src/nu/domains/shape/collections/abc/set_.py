@@ -27,7 +27,7 @@ from ...collection import (
     MutableCollectionForm,
     ReactiveCollectionForm,
     form_of,
-    holding,
+    holds,
 )
 
 
@@ -58,13 +58,13 @@ class SetLikeForm(CollectionForm, _SetLikeForm):
 
         from nu.forms import Iterator
 
-        return holding(Iterator(operand), PyIterator, elem=self._declared.elem)
+        return Iterator(operand, type_info=holds(PyIterator, elem=self._declared.elem))
 
     def _wrap_set_result(self, operand: Nu) -> _SetLikeForm:
         """Set algebra: a Set carrying the declared element type on. A row narrows it to its own type."""
         from nu.forms import Set
 
-        return holding(Set(operand), set, elem=self._declared.elem)
+        return Set(operand, type_info=holds(set, elem=self._declared.elem))
 
 
 class MutableSetForm(MutableCollectionForm, SetLikeForm, _MutableSetForm):

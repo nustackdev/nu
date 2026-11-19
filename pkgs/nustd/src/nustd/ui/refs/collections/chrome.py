@@ -117,7 +117,7 @@ def _admit_paired(ref: Ref, address: object, prop: str, what: str) -> None:
     """
     if not isinstance(address, str):
         return
-    declared = (ref._payload.get("props") or {}).get(prop)
+    declared = (ref._props or {}).get(prop)
     if not isinstance(declared, list) or not declared:
         return
     ids = [e.get("id") for e in declared if isinstance(e, dict)]
@@ -206,17 +206,17 @@ class _SetSectionStr(Send):
     """Send a string to a container's chrome, under an op named at construction.
 
     One class serves the three card chrome ops ("set_title", "set_subtitle",
-    "set_caption"): the op rides in the payload and the frame ships under it.
+    "set_caption"): the op is a field and the frame ships under it.
     The frame carries the chain like every other send, so a Card nobody booted
     (a nested Section, a nuspace cell) comes into being and then takes it.
     """
 
     def __init__(self, ref: Ref, op: str, value: Arg[Any]) -> None:
         super().__init__(ref, value)
-        self._payload["op"] = op
+        self.op = op
 
     def _frame_op(self) -> object:
-        return self._payload["op"]
+        return self.op
 
     def _frame_payload(self, values: list[object]) -> object:
         return values[0]
@@ -365,7 +365,7 @@ class FieldRef(ShapeCollectionRef):
 
     def _control_slot(self) -> tuple[str, Any] | None:
         """The Shape's control slot by name, the first that is not ``actions``."""
-        slots = getattr(self._payload.get("section_cls"), "_slots", {})
+        slots = getattr(self._section_cls, "_slots", {})
         return next(((k, v) for k, v in slots.items() if k != ACTIONS), None)
 
     @property
@@ -373,8 +373,7 @@ class FieldRef(ShapeCollectionRef):
         """The one control: the Shape's slot, or a bare child at ``control``."""
         found = self._control_slot()
         if found is not None:
-            section_cls = self._payload.get("section_cls")
-            return found[1].create_ref(owner_shape=section_cls, parent_ref=self)
+            return found[1].create_ref(owner_shape=self._section_cls, parent_ref=self)
         return child_at(self, CONTROL)
 
     @property

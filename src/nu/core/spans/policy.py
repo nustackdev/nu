@@ -14,8 +14,8 @@ The atoms:
 - ``Timeout`` - bound the body by a wall-clock limit (async-only).
 
 Conventions (see ``AUTHORING.md``): structure lives in the tree, not ``payload``
-(an absent optional branch is a ``Noop`` slot, and the node records in its
-payload which branches were given, so a ``Noop`` passed on purpose still
+(an absent optional branch is a ``Noop`` slot, and the node records in a
+field which branches were given, so a ``Noop`` passed on purpose still
 runs; names are ``StrArg`` children;
 numeric knobs are returning children); ``ctx.attrs`` is the one inter-Nu channel
 (the caught error and the attempt count are ``let``-bound there for the
@@ -189,7 +189,7 @@ class TryCatch(Policy):
         try: b / except E: h / finally: f  TryCatch(b, errors=E, catch=h, finally_=f)
 
     Children (fixed): ``[body, catch, finally_, error_key]``. A branch left
-    out is a ``Noop`` slot, and the payload records which were given: a
+    out is a ``Noop`` slot, and a field records which were given: a
     given branch runs whatever it is, ``Noop`` included. ``catch`` runs with
     the caught error bound at ``error_key`` for as long as it runs, a stream
     catch for its whole drain; ``finally_`` runs after, on success or failure
@@ -252,14 +252,14 @@ class TryCatch(Policy):
             _slot(finally_),
             "error" if error_key is None else error_key,
         )
-        self._payload["errors"] = _errors(errors)
-        self._payload["given"] = given
+        self.errors = _errors(errors)
+        self.given = given
 
     def _branches(
         self, children: tuple[Callable, ...]
     ) -> tuple[Callable, Callable | None, Callable | None]:
         """Resolve ``(body, catch, finally_)`` thunks; a branch not given reads None."""
-        given = self._payload["given"]
+        given = self.given
         catch = children[1] if "catch" in given else None
         finally_ = children[2] if "finally_" in given else None
         return children[0], catch, finally_
@@ -267,7 +267,7 @@ class TryCatch(Policy):
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body, catch, finally_ = self._branches(children)
         error_key = children[3]
-        errors = self._payload["errors"]
+        errors = self.errors
 
         if catch is None and finally_ is None:
             return body  # nothing to wrap: the body is the whole behaviour
@@ -316,7 +316,7 @@ class TryCatch(Policy):
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body, catch, finally_ = self._branches(children)
         error_key = children[3]
-        errors = self._payload["errors"]
+        errors = self.errors
 
         if catch is None and finally_ is None:
             return body
@@ -471,7 +471,7 @@ class Retry(Policy):
     ) -> None:
         # A literal cap is refused now; a computed one is checked when it runs.
         if isinstance(max_delay, Literal):
-            _max_delay(max_delay._payload["value"])
+            _max_delay(max_delay.value)
         elif not isinstance(max_delay, Nu):
             _max_delay(max_delay)
         hooks = (
@@ -506,14 +506,14 @@ class Retry(Policy):
             "attempt" if ofl_attempt is None else ofl_attempt,
             max_delay,
         )
-        self._payload["errors"] = _errors(errors)
-        self._payload["given"] = given
+        self.errors = _errors(errors)
+        self.given = given
 
     def _hooks(
         self, children: tuple[Callable, ...]
     ) -> tuple[Callable | None, Callable | None, Callable | None]:
         """Resolve ``(on_attempt_fail, on_success, on_fail)`` thunks; a hook not given reads None."""
-        given = self._payload["given"]
+        given = self.given
         oaf = children[5] if "on_attempt_fail" in given else None
         osc = children[6] if "on_success" in given else None
         ofl = children[7] if "on_fail" in given else None
@@ -522,7 +522,7 @@ class Retry(Policy):
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body = children[0]
         max_attempts_q = children[1]
-        errors = self._payload["errors"]
+        errors = self.errors
 
         def thunk(rt: Runtime) -> object:
             attempts = _attempts(max_attempts_q(rt))
@@ -553,7 +553,7 @@ class Retry(Policy):
         max_delay_q = children[13]
         oaf, osc, ofl = self._hooks(children)
         oaf_error, oaf_attempt, osc_attempt, ofl_error, ofl_attempt = children[8:13]
-        errors = self._payload["errors"]
+        errors = self.errors
 
         async def athunk(rt: Runtime) -> object:
             attempts = _attempts(await max_attempts_q(rt))
@@ -678,14 +678,14 @@ class Timeout(Policy):
         self, timeout: FloatArg, body: Nu, on_timeout: Flow | Command | Span | Unset = UNSET
     ) -> None:
         super().__init__(body, timeout, _slot(on_timeout))
-        self._payload["given"] = frozenset() if on_timeout is UNSET else frozenset({"on_timeout"})
+        self.given = frozenset() if on_timeout is UNSET else frozenset({"on_timeout"})
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return _async_backstop("Timeout")
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         body, timeout_q = children[0], children[1]
-        on_timeout = children[2] if "on_timeout" in self._payload["given"] else None
+        on_timeout = children[2] if "on_timeout" in self.given else None
 
         async def athunk(rt: Runtime) -> object:
             timeout = float(await timeout_q(rt))

@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, TypeVar
 
 from nu.forms import Dict
 
-from ..collection import holding
+from ..collection import holds
 from .abc.mapping import MutableOrderedMappingRef, ReactiveOrderedMappingRef
 
 
@@ -40,7 +40,7 @@ class DictRef(MutableOrderedMappingRef, Dict[K, V]):  # type: ignore[misc]
 
     def _wrap_mapping_result(self, operand: Nu) -> Dict[K, V]:
         declared = self._declared
-        return holding(Dict(operand), dict, key=declared.key, elem=declared.elem)
+        return Dict(operand, type_info=holds(dict, key=declared.key, elem=declared.elem))
 
 
 class ReactiveDictRef(ReactiveOrderedMappingRef, DictRef[K, V]):  # type: ignore[misc]

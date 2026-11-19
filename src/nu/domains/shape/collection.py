@@ -12,9 +12,8 @@ a descent lands on is the fabric's business, not this module's.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 
-from nu.lang import Form
 from nu.lang.typeinfo import TypeInfo
 
 from .form import SlotForm
@@ -33,20 +32,18 @@ if TYPE_CHECKING:
         SetCmd,
     )
     from nu.forms import Bool
-    from nu.lang import ScalarQuery
+    from nu.lang import Form, ScalarQuery
 
 
 __all__ = [
     "CollectionForm",
     "MutableCollectionForm",
     "ReactiveCollectionForm",
-    "holding",
+    "holds",
 ]
 
 
 _UNDECLARED = TypeInfo.any()
-
-_F = TypeVar("_F", bound=Form)
 
 
 def form_of(declared: TypeInfo | None) -> type[Form]:
@@ -54,13 +51,17 @@ def form_of(declared: TypeInfo | None) -> type[Form]:
     return (declared or _UNDECLARED).to_form()
 
 
-def holding(
-    result: _F, py_type: type, *, key: TypeInfo | None = None, elem: TypeInfo | None = None
-) -> _F:
-    """``result`` carrying the declared key and element types, so its own ops stay typed."""
-    if key is not None or elem is not None:
-        result._payload["type_info"] = TypeInfo(py_type, key=key, elem=elem)  # type: ignore[attr-defined]
-    return result
+def holds(
+    py_type: type, *, key: TypeInfo | None = None, elem: TypeInfo | None = None
+) -> TypeInfo | None:
+    """The ``type_info`` a collection result carries so its own ops stay typed.
+
+    None when neither the key nor the element type is declared. Passed to the
+    result form's constructor: ``List(operand, type_info=holds(list, elem=e))``.
+    """
+    if key is None and elem is None:
+        return None
+    return TypeInfo(py_type, key=key, elem=elem)
 
 
 class CollectionForm(SlotForm):
@@ -69,7 +70,7 @@ class CollectionForm(SlotForm):
     @property
     def _declared(self) -> TypeInfo:
         """What the slot declared this collection holds; nothing known when undeclared."""
-        return self._payload.get("type_info") or _UNDECLARED  # type: ignore[attr-defined, no-any-return]
+        return self._type_info or _UNDECLARED  # type: ignore[attr-defined, no-any-return]
 
     def exists(self) -> Bool:
         """Whether this collection slot holds a value, as a ``Bool``.

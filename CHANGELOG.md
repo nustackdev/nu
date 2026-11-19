@@ -12,6 +12,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Terms stay frozen after construction; config sits in the tree, computable like any value
+- Random samples take a seed instead of a generator, so reruns repeat exactly
 - Collapsible and accordion open smoothly, no flash of content or jump at the end
 - Section and card actions line up with a composed header instead of its top
 - Storybook shows container headers side by side, multi-line send keys and code diffs

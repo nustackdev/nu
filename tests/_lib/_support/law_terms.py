@@ -125,7 +125,7 @@ class R(Ref):
 
     def __init__(self, name: str = "x") -> None:
         super().__init__()
-        self._payload = {"name": name}
+        self._name = name
 
 
 class R2(Ref):
@@ -137,4 +137,4 @@ class R2(Ref):
 
     def __init__(self, name: str = "y") -> None:
         super().__init__()
-        self._payload = {"name": name}
+        self._name = name

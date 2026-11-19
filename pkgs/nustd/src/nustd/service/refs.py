@@ -55,8 +55,9 @@ class QueryRef(MethodRef):
         - Nothing resolves while the Service class body runs. The attribute is
           fetched off the ``ServiceFabric`` bound for the owning Service at the
           moment the interaction evaluates, so a wrong name fails at run.
-        - The address travels as Ref payload, not as children: target attribute
-          name, owning Service class, and the endpoint defaults.
+        - The address travels on the Ref: the owning Service class as a field,
+          the target attribute name and the endpoint defaults in its config
+          child.
         - Read-only, so the Ref binds as READ in the effect walk and the
           endpoint is never reported as writing the fabric.
         - The target method may be plain or ``async def``; an awaitable return

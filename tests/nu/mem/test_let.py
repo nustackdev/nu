@@ -142,7 +142,7 @@ def test_two_builds_are_equal_trees() -> None:
 
 
 def _shape(term: nu.Nu) -> type:
-    return nu.tree.payload(term)["shape"]
+    return term.shape
 
 
 def test_nested_lets_never_share_a_shape() -> None:

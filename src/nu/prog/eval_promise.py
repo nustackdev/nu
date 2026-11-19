@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 __all__ = ["PROMISE_FIELDS", "PROMISE_KEY", "EvalPromiseError", "check_promise"]
 
 
-# Payload key holding the promise dict on an Eval term. The string is shared
+# Field holding the promise dict on an Eval term. The name is shared
 # vocabulary with ``nu.lang.attributes.cardinality`` (which reads the promise's
 # cardinality field to refine CHILD_CARDINALITY without importing Eval).
 PROMISE_KEY = "dyn_promise"

@@ -28,7 +28,7 @@ class _ParallelBase(Nu):
 
     Notes:
         - Parses ``items`` into children plus a per-slot mode tuple stored on
-          ``self._payload["parallel_modes"]``, one entry per child (``None``
+          ``self.parallel_modes``, one entry per child (``None``
           for an unpinned child).
         - ``_FORCE_MODE`` is ``None`` on the smart kinds; the
           Threaded/Async subclasses set it to ``"threaded"`` / ``"async"``
@@ -63,4 +63,4 @@ class _ParallelBase(Nu):
                 )
                 raise TypeError(msg)
         super().__init__(*children)
-        self._payload["parallel_modes"] = tuple(modes)
+        self.parallel_modes = tuple(modes)

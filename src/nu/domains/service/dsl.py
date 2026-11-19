@@ -33,7 +33,7 @@ __all__ = ["Method", "MethodDescriptor", "Service", "ServiceMeta"]
 
 
 class Method:
-    """Declaration factory: a MethodRef class + its payload kwargs."""
+    """Declaration factory: a MethodRef class + its config kwargs."""
 
     def __init__(
         self,

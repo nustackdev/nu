@@ -32,7 +32,7 @@ def _passes(state: dict, log: list) -> Body:
 def _schedule(term: object) -> tuple:
     """The literal ``after`` and ``every`` children a level flow holds, as values."""
     *_, after, every = nu.tree.children(term)
-    return after._payload["value"], every._payload["value"]
+    return after.value, every.value
 
 
 def test_schedule_defaults_and_normalisation() -> None:
@@ -61,10 +61,10 @@ async def test_no_rechecks_run_unless_asked() -> None:
     await stop(task)
 
 
-def test_the_schedule_is_children_not_payload() -> None:
+def test_the_schedule_is_children_not_fields() -> None:
     term = Reconcile(AttrRef("feed"), nu.Noop(), after=nu.Literal([0.2]), every=AttrRef("every"))
-    assert "after" not in term._payload
-    assert "every" not in term._payload
+    assert "after" not in nu.tree.fields(term)
+    assert "every" not in nu.tree.fields(term)
     assert _schedule(Reconcile(AttrRef("feed"), nu.Noop(), after=nu.Literal([0.2])))[0] == (0.2,)
 
 

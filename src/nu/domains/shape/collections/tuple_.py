@@ -16,7 +16,7 @@ from typing_extensions import TypeVarTuple, Unpack
 
 from nu.forms import Tuple
 
-from ..collection import MutableCollectionForm, ReactiveCollectionForm, holding
+from ..collection import MutableCollectionForm, ReactiveCollectionForm, holds
 from .abc.sequence import SequenceRef
 
 
@@ -34,7 +34,7 @@ class TupleRef(MutableCollectionForm, SequenceRef, Tuple[Unpack[Ts]]):
     """Tuple slot ref: ``ref[i]`` descends to the element's child ref."""
 
     def _wrap_sliceable_result(self, operand: Nu) -> Tuple:
-        return holding(Tuple(operand), tuple, elem=self._declared.elem)
+        return Tuple(operand, type_info=holds(tuple, elem=self._declared.elem))
 
 
 class ReactiveTupleRef(ReactiveCollectionForm, TupleRef[Unpack[Ts]]):

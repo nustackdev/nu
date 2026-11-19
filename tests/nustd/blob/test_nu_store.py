@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from _support.brackets import config
 
 import nu
 import nustd
@@ -148,7 +149,7 @@ def test_malformed_str_id_is_refused_at_build(build):
 def test_build_mints_nothing():
     # The id is minted when the put runs; the tree holds no id at all.
     term = Media.put(b"x")
-    assert term._children[2]._payload["value"] is None
+    assert term._children[2].value is None
 
 
 def test_kinds():
@@ -175,8 +176,8 @@ def test_preset_binds_under_the_store_name(store, tmp_path):
         nustd.blob.files(store, tmp_path / "files"),
         nustd.blob.s3(store, bucket="b"),
     ):
-        assert spec._payload["cls"] is BlobFabric
-        assert spec._payload["tags"] == ("media",)
+        assert config(spec)["cls"] is BlobFabric
+        assert config(spec)["tags"] == ("media",)
 
 
 def test_a_str_name_reaches_the_same_store(tmp_path):

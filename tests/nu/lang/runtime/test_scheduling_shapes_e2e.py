@@ -261,7 +261,7 @@ async def test_parallel_error_surfaces_and_sibling_wrote_nothing() -> None:
 
         def __init__(self, name: str) -> None:
             super().__init__()
-            self._payload["name"] = name
+            self._name = name
 
         def _compile(self, nid, children):
             def thunk(rt):
@@ -271,7 +271,7 @@ async def test_parallel_error_surfaces_and_sibling_wrote_nothing() -> None:
             return thunk
 
         def _acompile(self, nid, children):
-            name = self._payload["name"]
+            name = self._name
 
             async def athunk(rt):
                 import asyncio

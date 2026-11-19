@@ -78,13 +78,13 @@ class ReactWhile(Control):
         pair = (condition_key,) if condition_key is body_key else (condition_key, body_key)
         names = tuple(name for name in pair if name is not None)
         super().__init__(change, condition, body, *names)
-        self._payload["key_names"] = len(names)
+        self.key_names = len(names)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return async_only("ReactWhile")
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        name_slots = children[3 : 3 + self._payload["key_names"]]
+        name_slots = children[3 : 3 + self.key_names]
 
         async def athunk(rt: Runtime) -> None:
             names = [await slot(rt) for slot in name_slots]

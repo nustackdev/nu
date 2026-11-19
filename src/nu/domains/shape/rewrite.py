@@ -38,11 +38,10 @@ Two things to get right
   dynamic index that is itself a ref (``Shop.orders[Cursor.current]``) is a
   chain like any other, and leaving it alone resolves it against the old
   root while the spine around it moved.
-- ``root_shape`` is rebuilt on every node. It no longer contributes to an
-  address, but it is still the tag that routes a write to a navigator and
-  scopes ``auto_flow_atomic``, so a spliced chain has to pick up the tag of
-  the parent it landed under. Stale is invisible under a default navigator
-  and wrong under a tagged one.
+- ``root_shape`` is computed from the chain (the owner shape of its top
+  ref), so a spliced chain picks up the tag of the parent it landed under
+  with nothing to rebuild. It is the tag that routes a write to a navigator
+  and scopes ``auto_flow_atomic``.
 """
 
 from __future__ import annotations
@@ -62,10 +61,6 @@ if TYPE_CHECKING:
 
 
 __all__ = ["reroot", "rerooter", "with_parent"]
-
-#: Payload mark on every spine node ``with_parent`` placed. A placed chain and a
-#: fresh one both bottom out at ANCHOR, so the mark is the only way to tell.
-_PLACED = "placed"
 
 
 def reroot(
@@ -96,9 +91,8 @@ def reroot(
           inside it is a separate chain and gets its own answer.
         - Subtrees that come back unchanged are returned by identity, so an
           already-rooted term is the same object it went in as.
-        - Payload is copied per rebuilt node rather than shared, because
-          ``_with_children`` aliases the dict and writing ``root_shape``
-          into it would corrupt the chain the snippet still holds.
+        - Every rebuilt node is a new term via ``evolve``; the source
+          chain the snippet still holds is never written to.
 
     Returns:
         The rewritten tree. ``root`` itself is untouched.
@@ -125,16 +119,9 @@ def reroot(
         else:
             parent = under
         rest = tuple(walk(c) for c in kids[1:])
-        scope = parent._root_shape if isinstance(parent, StructuredRef) else node._root_shape
-        if (
-            parent is head
-            and scope is node._root_shape
-            and all(new is old for new, old in zip(rest, kids[1:], strict=True))
-        ):
+        if parent is head and all(new is old for new, old in zip(rest, kids[1:], strict=True)):
             return node
-        variant = node._with_children(parent, *rest)
-        variant._payload = {**node._payload, "root_shape": scope}
-        return variant
+        return node.evolve(children=(parent, *rest))
 
     def walk(node: Nu) -> Nu:
         if isinstance(node, StructuredRef):
@@ -145,7 +132,7 @@ def reroot(
         kids = tuple(walk(c) for c in old)
         if all(new is was for new, was in zip(kids, old, strict=True)):
             return node
-        return node._with_children(*kids)
+        return node.evolve(children=kids)
 
     return walk(root)
 
@@ -220,17 +207,14 @@ def with_parent(ref: StructuredRef, parent: StructuredRef) -> StructuredRef:
     if not isinstance(parent, StructuredRef):
         msg = f"with_parent: the parent must be a shape ref, got {type(parent).__name__}"
         raise TypeError(msg)
-    scope = parent._root_shape
 
     def spine(node: StructuredRef) -> StructuredRef:
-        if node._payload.get(_PLACED):
+        if node._placed:
             msg = f"with_parent: {type(node).__name__} chain already has a parent"
             raise ValueError(msg)
         kids = children(node)
         head = kids[0]
         placed_head = spine(head) if isinstance(head, StructuredRef) else parent
-        variant = node._with_children(placed_head, *kids[1:])
-        variant._payload = {**node._payload, "root_shape": scope, _PLACED: True}
-        return variant  # type: ignore[return-value]
+        return node.evolve(children=(placed_head, *kids[1:]), _placed=True)  # type: ignore[return-value]
 
     return spine(ref)

@@ -417,7 +417,7 @@ class DeleteItem(Command):
     """Delete entry by key: del mapping[key]. Mutates slot 0; returns nothing.
 
     An absent key raises whatever the mapping's own ``del`` raises. With the
-    construction-time ``missing_ok`` flag (carried in the payload) set, a
+    construction-time ``missing_ok`` flag (a field) set, a
     ``KeyError`` from that ``del`` is a no-op.
     """
 
@@ -427,11 +427,11 @@ class DeleteItem(Command):
 
     def __init__(self, target: object, key: object, *, missing_ok: bool = False) -> None:
         super().__init__(target, key)
-        self._payload = {**self._payload, "missing_ok": missing_ok}
+        self.missing_ok = missing_ok
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, key_t = children
-        missing_ok = bool(self._payload["missing_ok"])
+        missing_ok = bool(self.missing_ok)
 
         def thunk(rt: Runtime) -> None:
             target = target_t(rt)
@@ -450,7 +450,7 @@ class DeleteItem(Command):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         target_t, key_t = children
-        missing_ok = bool(self._payload["missing_ok"])
+        missing_ok = bool(self.missing_ok)
 
         async def athunk(rt: Runtime) -> None:
             target = await target_t(rt)

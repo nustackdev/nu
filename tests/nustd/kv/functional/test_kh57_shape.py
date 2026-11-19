@@ -1,4 +1,3 @@
-# ruff: noqa: S311 - seeded Random is exactly what deterministic tests need
 """Functional tests for Kh57Ref — sparse int-keyed map of shapes.
 
 Mirrors :mod:`test_kh57` but for shape-valued kh57 maps: descent to sub-fields
@@ -6,8 +5,6 @@ via ``ref[k].field``, sample/range over shape rows, iteration order.
 """
 
 from __future__ import annotations
-
-import random
 
 import pytest
 
@@ -111,8 +108,8 @@ def test_sample_deterministic_with_seeded_rng(ctx) -> None:
     _load_series(ctx, range(1_000))
     from nustd.kv.interactions.kh57 import Kh57Sample
 
-    q1 = Kh57Sample(Series.points, 25, 0, 1_000, rng=random.Random(7))
-    q2 = Kh57Sample(Series.points, 25, 0, 1_000, rng=random.Random(7))
+    q1 = Kh57Sample(Series.points, 25, 0, 1_000, seed=7)
+    q2 = Kh57Sample(Series.points, 25, 0, 1_000, seed=7)
     s1 = run(q1, ctx)[0]
     s2 = run(q2, ctx)[0]
     assert [k for k, _ in s1] == [k for k, _ in s2]

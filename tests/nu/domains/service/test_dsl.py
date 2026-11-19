@@ -85,8 +85,8 @@ def test_descriptor_ref_carries_name_and_owner_service():
         one = MethodRef.method()
 
     ref = S.one
-    assert nu.tree.payload(ref)["name"] == "one"
-    assert nu.tree.payload(ref)["owner_service"] is S
+    assert ref._name == "one"
+    assert ref._owner_service is S
 
 
 def test_descriptor_requires_a_class():
@@ -95,10 +95,10 @@ def test_descriptor_requires_a_class():
         desc.__get__(None, None)
 
 
-# --- MethodRef payload ------------------------------------------------------
+# --- MethodRef config -------------------------------------------------------
 
 
-def test_methodref_extra_kwargs_land_in_payload():
+def test_methodref_extra_kwargs_land_in_its_config_child():
     class Custom(MethodRef):
         pass
 
@@ -106,8 +106,9 @@ def test_methodref_extra_kwargs_land_in_payload():
         one = Custom.method(path="/x", extra=42)
 
     ref = S.one
-    assert nu.tree.payload(ref)["path"] == "/x"
-    assert nu.tree.payload(ref)["extra"] == 42
+    (config,) = ref._children
+    assert config.value == {"path": "/x", "extra": 42}
+    assert nu.run(ref)[0] == {"name": "one", "owner_service": S, "path": "/x", "extra": 42}
 
 
 def test_method_factory_captures_ref_class_and_kwargs():

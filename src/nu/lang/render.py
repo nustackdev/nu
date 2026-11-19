@@ -40,7 +40,7 @@ from typing import Literal as TLiteral
 
 from nu.lang.kinds import Action, Command, Flow, Query, Ref, Span
 from nu.lang.literal import Literal
-from nu.tree import children, payload
+from nu.tree import children, fields
 
 
 if TYPE_CHECKING:
@@ -123,10 +123,19 @@ def _category_color(node: Nu) -> str:
 # -- Labels -------------------------------------------------------------------
 
 
+def _data(node: Nu) -> dict[str, object]:
+    """What the node holds besides its children: its fields.
+
+    A ref keeps its fields underscore-named (so they never shadow a slot it
+    navigates to); they show here under their plain name.
+    """
+    return {k.removeprefix("_"): v for k, v in fields(node).items()}
+
+
 def _ref_label(node: Ref) -> str:
     cls = type(node).__name__
 
-    # A structured (Shape) Ref carries its owning Shape, not a payload - surface
+    # A structured (Shape) Ref carries its owning Shape - surface
     # it as ``ItemRef[Order]`` so the tree shows which Shape a slot belongs to.
     owner = getattr(node, "_owner_shape", None)
     if owner is None:
@@ -134,7 +143,7 @@ def _ref_label(node: Ref) -> str:
     if owner is not None:
         return f"{cls}[{getattr(owner, '__name__', owner)}]"
 
-    data = payload(node) or {}
+    data = _data(node)
     if data:
         hint = ", ".join(f"{k}={v!r}" for k, v in data.items())
         return f"{cls}({hint})"
@@ -144,7 +153,7 @@ def _ref_label(node: Ref) -> str:
 def _literal_label(node: Literal) -> str:
     cls = type(node).__name__
     if not children(node):
-        return f"{cls}({payload(node).get('value')!r})"
+        return f"{cls}({node.value!r})"
     return cls
 
 
@@ -271,11 +280,11 @@ def render_repr(nu: Nu) -> str:
         'Add(1, 2)'
     """
     if isinstance(nu, Literal):
-        return repr(payload(nu).get("value"))
+        return repr(nu.value)
 
     name = type(nu).__name__
 
-    # A structured (Shape) Ref carries its owning Shape rather than a payload.
+    # A structured (Shape) Ref carries its owning Shape; show it in the name.
     owner = getattr(nu, "_owner_shape", None) or getattr(nu, "_root_shape", None)
     if owner is not None:
         name = f"{name}[{getattr(owner, '__name__', owner)}]"
@@ -284,12 +293,12 @@ def render_repr(nu: Nu) -> str:
         inner = ", ".join(render_repr(cast("Nu", child)) for child in children(nu))
         return f"{name}({inner})"
 
-    # A childless term keeps everything it is in its payload (the stdio
-    # singletons, the Provide family), so surface it as keywords - otherwise
+    # A childless term keeps everything it is in its fields (the stdio
+    # singletons, the Provide family), so surface them as keywords - otherwise
     # those render as a bare class name that says nothing. Terms with children
-    # show only the children: their payload is settings, and repeating it turns
-    # every traceback into a wall of defaults.
-    data = payload(nu) or {}
+    # show only the children: their fields are settings, and repeating them
+    # turns every traceback into a wall of defaults.
+    data = _data(nu)
     if data:
         return f"{name}({', '.join(f'{k}={v!r}' for k, v in data.items())})"
     return name

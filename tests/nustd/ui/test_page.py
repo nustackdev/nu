@@ -262,7 +262,7 @@ def test_card_actions_is_a_row_at_the_same_key_as_a_section():
     assert frame.ref == ("page", "plan", "actions", "buy")
     assert _chain(frame)[1:3] == [("plan", "Card"), ("actions", "Row")]
     section = PageSectionRef("s")
-    assert card.actions._payload["segment"] == section.actions._payload["segment"] == "actions"
+    assert card.actions._segment == section.actions._segment == "actions"
 
 
 def test_a_card_shape_actions_slot_wins_over_the_default_row():
@@ -377,14 +377,14 @@ def test_card_named_children_land_at_their_keys():
     ]
     # The footer child and the caption prop live side by side.
     assert frames[1].chain[0][2]["caption"] == "note"
-    assert frames[1].chain[1][2] == CardRef("x").actions._payload["props"]
-    assert card.actions._payload["segment"] == ACTIONS
+    assert frames[1].chain[1][2] == CardRef("x").actions._props
+    assert card.actions._segment == ACTIONS
 
 
 def test_card_and_section_actions_rows_carry_the_same_props():
     from nustd.ui.refs import CardRef, PageSectionRef
 
-    assert CardRef("c").actions._payload["props"] == PageSectionRef("s").actions._payload["props"]
+    assert CardRef("c").actions._props == PageSectionRef("s").actions._props
 
 
 def test_a_card_shape_media_and_footer_slots_win_over_the_defaults():

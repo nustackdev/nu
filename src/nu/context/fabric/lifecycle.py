@@ -1,8 +1,10 @@
 """``Provide`` brackets: construct + bind fabrics for the body's duration.
 
 The tree carries a *class* plus a *spec* (kwargs, list of kwargs, or dict of
-kwargs). On entry each bracket constructs its fabric(s), runs setup, binds on
-ctx. On exit teardown fires in reverse (LIFO), so an outer fabric is still
+kwargs) as config children after the body (see ``nu.core.spans.bracket``):
+a Literal by default, any term when the value is computed or read from a
+store. On entry each bracket evaluates them, constructs its fabric(s), runs
+setup, binds on ctx. On exit teardown fires in reverse (LIFO), so an outer fabric is still
 live while inner ones tear down.
 
 Three primitives, one per attach shape:
@@ -49,16 +51,17 @@ run - an async-only fabric fails at setup with a clear error.
 from __future__ import annotations
 
 from contextlib import AsyncExitStack, ExitStack, asynccontextmanager, contextmanager
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from nu.core.spans.bracket import _LifecycleBracket
+from nu.lang.literal import Literal
+from nu.lang.nu import Nu
 
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Callable, Iterator, Mapping, Sequence
     from contextlib import AbstractContextManager
 
-    from nu.lang import Nu
     from nu.lang.runtime import Context
 
 
@@ -132,6 +135,16 @@ def _merge_tags(tag: object, tags: Sequence[object]) -> tuple[object, ...]:
     return seq if tag is None else (tag, *seq)
 
 
+def _child(value: object) -> Nu:
+    """A config child: a term stays as given, anything else becomes its Literal."""
+    return value if isinstance(value, Nu) else Literal(value)
+
+
+def _bind_key(cls: type, bind_as: type | None) -> type:
+    """The type an instance binds under: ``bind_as``, else ``cls._nu_bind_as``, else ``cls``."""
+    return bind_as or getattr(cls, "_nu_bind_as", None) or cls
+
+
 def _bind(
     ctx: Context,
     cls: type,
@@ -165,8 +178,9 @@ class Provide(_LifecycleBracket):
         cls: the fabric class to construct. Also the key it binds under,
             unless ``bind_as`` or the class's own ``_nu_bind_as`` overrides
             that.
-        kwargs: passed straight to the constructor. Plain Python values, not
-            Nu terms; this is a payload, not a child.
+        kwargs: passed straight to the constructor. A mapping, or a term
+            that yields one (computed, or read from a store) and is
+            evaluated on entry.
         body: the tree that runs with the fabric bound.
 
     Notes:
@@ -208,7 +222,7 @@ class Provide(_LifecycleBracket):
     def __init__(
         self,
         cls: type,
-        kwargs: Mapping[str, object] | None = None,
+        kwargs: Mapping[str, object] | Nu | None = None,
         body: Nu | None = None,
         *,
         tag: object = None,
@@ -216,46 +230,53 @@ class Provide(_LifecycleBracket):
         predicate: Callable | None = None,
         bind_as: type | None = None,
     ) -> None:
-        super().__init__(body)
-        self._payload["cls"] = cls
-        self._payload["kwargs"] = dict(kwargs or {})
-        self._payload["tags"] = _merge_tags(tag, tags)
-        self._payload["predicate"] = predicate
-        self._payload["bind_as"] = bind_as
+        # Children: [body, cls, kwargs, tags, predicate, bind_as].
+        super().__init__(
+            body,
+            Literal(cls),
+            kwargs if isinstance(kwargs, Nu) else Literal(dict(kwargs or {})),
+            Literal(_merge_tags(tag, tags)),
+            Literal(predicate),
+            _child(bind_as),
+        )
 
     @contextmanager
-    def _open(self, ctx: Context) -> Iterator[None]:
-        cls = self._payload["cls"]
+    def _open(
+        self,
+        ctx: Context,
+        cls: type,
+        kwargs: Mapping[str, object],
+        tags: Sequence[object],
+        predicate: Callable | None,
+        bind_as: type | None,
+    ) -> Iterator[None]:
         _refuse_async_only(cls)
-        kwargs = self._payload["kwargs"]
-        tags = self._payload["tags"]
-        predicate = self._payload["predicate"]
-        bind_as = self._payload.get("bind_as") or getattr(cls, "_nu_bind_as", None) or cls
-
         instance = _construct(cls, kwargs)
         setup_done: list[object] = []
         try:
             _setup(instance, ctx)
             setup_done.append(instance)
-            with _bind(ctx, bind_as, instance, tags, predicate):
+            with _bind(ctx, _bind_key(cls, bind_as), instance, tags, predicate):
                 yield
         finally:
             _teardown(setup_done)
 
     @asynccontextmanager
-    async def _aopen(self, ctx: Context) -> AsyncIterator[None]:
-        cls = self._payload["cls"]
-        kwargs = self._payload["kwargs"]
-        tags = self._payload["tags"]
-        predicate = self._payload["predicate"]
-        bind_as = self._payload.get("bind_as") or getattr(cls, "_nu_bind_as", None) or cls
-
+    async def _aopen(
+        self,
+        ctx: Context,
+        cls: type,
+        kwargs: Mapping[str, object],
+        tags: Sequence[object],
+        predicate: Callable | None,
+        bind_as: type | None,
+    ) -> AsyncIterator[None]:
         instance = _construct(cls, kwargs)
         setup_done: list[object] = []
         try:
             await _asetup(instance, ctx)
             setup_done.append(instance)
-            with _bind(ctx, bind_as, instance, tags, predicate):
+            with _bind(ctx, _bind_key(cls, bind_as), instance, tags, predicate):
                 yield
         finally:
             await _ateardown(setup_done)
@@ -277,6 +298,7 @@ class ProvideList(_LifecycleBracket):
     Args:
         cls: the fabric class every member is constructed from.
         specs: one kwargs mapping per instance, in the order they are built.
+            A sequence, or a term that yields one, evaluated on entry.
         body: the tree that runs with the whole fleet bound.
 
     Notes:
@@ -305,7 +327,7 @@ class ProvideList(_LifecycleBracket):
     def __init__(
         self,
         cls: type,
-        specs: Sequence[Mapping[str, object]],
+        specs: Sequence[Mapping[str, object]] | Nu,
         body: Nu | None = None,
         *,
         base_tag: int = 0,
@@ -313,24 +335,30 @@ class ProvideList(_LifecycleBracket):
         predicate: Callable | None = None,
         bind_as: type | None = None,
     ) -> None:
-        super().__init__(body)
-        self._payload["cls"] = cls
-        self._payload["specs"] = [dict(s) for s in specs]
-        self._payload["base_tag"] = base_tag
-        self._payload["extra_tags"] = tuple(extra_tags)
-        self._payload["predicate"] = predicate
-        self._payload["bind_as"] = bind_as
+        # Children: [body, cls, specs, base_tag, extra_tags, predicate, bind_as].
+        super().__init__(
+            body,
+            Literal(cls),
+            specs if isinstance(specs, Nu) else Literal([dict(s) for s in specs]),
+            _child(base_tag),
+            Literal(tuple(extra_tags)),
+            Literal(predicate),
+            _child(bind_as),
+        )
 
     @contextmanager
-    def _open(self, ctx: Context) -> Iterator[None]:
-        cls = self._payload["cls"]
+    def _open(
+        self,
+        ctx: Context,
+        cls: type,
+        specs: Sequence[Mapping[str, object]],
+        base: int,
+        extra: Sequence[object],
+        predicate: Callable | None,
+        bind_as: type | None,
+    ) -> Iterator[None]:
         _refuse_async_only(cls)
-        specs = self._payload["specs"]
-        base = self._payload["base_tag"]
-        extra = self._payload["extra_tags"]
-        predicate = self._payload["predicate"]
-        bind_as = self._payload.get("bind_as") or getattr(cls, "_nu_bind_as", None) or cls
-
+        bind_as = _bind_key(cls, bind_as)
         setup_done: list[object] = []
         try:
             with ExitStack() as provided:
@@ -344,14 +372,17 @@ class ProvideList(_LifecycleBracket):
             _teardown(setup_done)
 
     @asynccontextmanager
-    async def _aopen(self, ctx: Context) -> AsyncIterator[None]:
-        cls = self._payload["cls"]
-        specs = self._payload["specs"]
-        base = self._payload["base_tag"]
-        extra = self._payload["extra_tags"]
-        predicate = self._payload["predicate"]
-        bind_as = self._payload.get("bind_as") or getattr(cls, "_nu_bind_as", None) or cls
-
+    async def _aopen(
+        self,
+        ctx: Context,
+        cls: type,
+        specs: Sequence[Mapping[str, object]],
+        base: int,
+        extra: Sequence[object],
+        predicate: Callable | None,
+        bind_as: type | None,
+    ) -> AsyncIterator[None]:
+        bind_as = _bind_key(cls, bind_as)
         setup_done: list[object] = []
         try:
             with ExitStack() as provided:
@@ -380,7 +411,8 @@ class ProvideDict(_LifecycleBracket):
     Args:
         cls: the fabric class every member is constructed from.
         specs: a mapping of key to kwargs. Each key becomes the tag its
-            instance binds under.
+            instance binds under. A mapping, or a term that yields one,
+            evaluated on entry.
         body: the tree that runs with the whole fleet bound.
 
     Notes:
@@ -411,7 +443,7 @@ class ProvideDict(_LifecycleBracket):
     def __init__(
         self,
         cls: type,
-        specs: Mapping[object, Mapping[str, object]],
+        specs: Mapping[object, Mapping[str, object]] | Nu,
         body: Nu | None = None,
         *,
         extra_tags: Sequence[object] = (),
@@ -419,23 +451,30 @@ class ProvideDict(_LifecycleBracket):
         bind_as: type | None = None,
         parallel: bool = False,
     ) -> None:
-        super().__init__(body)
-        self._payload["cls"] = cls
-        self._payload["specs"] = {k: dict(v) for k, v in specs.items()}
-        self._payload["extra_tags"] = tuple(extra_tags)
-        self._payload["predicate"] = predicate
-        self._payload["bind_as"] = bind_as
-        self._payload["parallel"] = parallel
+        # Children: [body, cls, specs, extra_tags, predicate, bind_as, parallel].
+        super().__init__(
+            body,
+            Literal(cls),
+            specs if isinstance(specs, Nu) else Literal({k: dict(v) for k, v in specs.items()}),
+            Literal(tuple(extra_tags)),
+            Literal(predicate),
+            _child(bind_as),
+            _child(parallel),
+        )
 
     @contextmanager
-    def _open(self, ctx: Context) -> Iterator[None]:
-        cls = self._payload["cls"]
+    def _open(
+        self,
+        ctx: Context,
+        cls: type,
+        specs: Mapping[object, Mapping[str, object]],
+        extra: Sequence[object],
+        predicate: Callable | None,
+        bind_as: type | None,
+        parallel: bool,
+    ) -> Iterator[None]:
         _refuse_async_only(cls)
-        specs = self._payload["specs"]
-        extra = self._payload["extra_tags"]
-        predicate = self._payload["predicate"]
-        bind_as = self._payload.get("bind_as") or getattr(cls, "_nu_bind_as", None) or cls
-
+        bind_as = _bind_key(cls, bind_as)
         setup_done: list[object] = []
         try:
             with ExitStack() as provided:
@@ -449,18 +488,21 @@ class ProvideDict(_LifecycleBracket):
             _teardown(setup_done)
 
     @asynccontextmanager
-    async def _aopen(self, ctx: Context) -> AsyncIterator[None]:
+    async def _aopen(
+        self,
+        ctx: Context,
+        cls: type,
+        specs: Mapping[object, Mapping[str, object]],
+        extra: Sequence[object],
+        predicate: Callable | None,
+        bind_as: type | None,
+        parallel: bool,
+    ) -> AsyncIterator[None]:
         import asyncio
 
         from nu.core.flows.parallel._scheduling import _join_all
 
-        cls = self._payload["cls"]
-        specs = self._payload["specs"]
-        extra = self._payload["extra_tags"]
-        predicate = self._payload["predicate"]
-        bind_as = self._payload.get("bind_as") or getattr(cls, "_nu_bind_as", None) or cls
-        parallel = self._payload.get("parallel", False)
-
+        bind_as = _bind_key(cls, bind_as)
         setup_done: list[object] = []
         try:
             with ExitStack() as provided:
@@ -503,19 +545,24 @@ class With(_LifecycleBracket):
     order and each provides on the same Context, so a later bracket's setup
     sees everything the earlier ones bound. The body runs with all of them
     provided, and on exit teardown fires in reverse. What it buys is flatness:
-    stacking peers at one level instead of the
-    ``Provide(a, kw, Provide(b, kw, Provide(c, kw, body)))`` cascade.
+    stacking peers at one level instead of writing the
+    ``Provide(a, kw, Provide(b, kw, Provide(c, kw, body)))`` cascade by hand.
 
     Args:
         *brackets: the lifecycle brackets to enter, in order.
         body: the tree that runs with all of them open.
 
     Notes:
-        - Each bracket is used as a spec, not as a subtree: ``With`` re-enters
-          its open/close and ignores whatever sits in that bracket's own body
-          slot, so passing a body to a nested bracket has no effect.
+        - ``With`` builds that cascade for you: its one child is the first
+          bracket, whose body slot holds the second, and so on down to
+          ``body``. Each bracket is a real node of the tree, so its config
+          children are evaluated on entry and effects and laws see it.
+        - Each bracket is used as a spec: ``With`` puts the next layer into
+          its body slot, so a body passed to a nested bracket is replaced.
+          The brackets given are not changed; the cascade holds variants.
         - Composes anything with the lifecycle shape - ``Provide``,
-          ``ProvideList``, ``ProvideDict``, ``InvisiblesProxy`` and the rest.
+          ``ProvideList``, ``ProvideDict``, ``InvisiblesProxy``, another
+          ``With`` and the rest.
         - A bracket whose setup raises unwinds the ones already entered
           before the error propagates.
 
@@ -538,19 +585,46 @@ class With(_LifecycleBracket):
         *brackets: _LifecycleBracket,
         body: Nu | None = None,
     ) -> None:
-        super().__init__(body)
-        self._payload["brackets"] = tuple(brackets)
+        inner: object = body
+        for b in reversed(brackets):
+            if not isinstance(b, _LifecycleBracket):
+                msg = f"With takes lifecycle brackets, got {type(b).__name__}"
+                raise TypeError(msg)
+            inner = b._rebody(inner)
+        super().__init__(inner)
+        self.n_brackets = len(brackets)
+
+    def _walk(self) -> tuple[tuple[_LifecycleBracket, ...], object]:
+        """The cascade's brackets, outermost first, and the body under the last."""
+        layers: list[_LifecycleBracket] = []
+        node: object = self._children[0]
+        for _ in range(self.n_brackets):
+            layer = cast("_LifecycleBracket", node)
+            layers.append(layer)
+            node = layer._inner()
+        return tuple(layers), node
+
+    @property
+    def brackets(self) -> tuple[_LifecycleBracket, ...]:
+        """The brackets of the cascade, outermost first, as they sit in the tree."""
+        return self._walk()[0]
+
+    def _inner(self) -> object:
+        return self._walk()[1]
+
+    def _rebody(self, body: object) -> With:
+        return With(*self.brackets, body=body)
 
     @contextmanager
-    def _open(self, ctx: Context) -> Iterator[None]:
+    def _enter(self, ctx: Context) -> Iterator[None]:
         with ExitStack() as stack:
-            for b in self._payload["brackets"]:
-                stack.enter_context(b._open(ctx))
+            for b in self.brackets:
+                stack.enter_context(b._enter(ctx))
             yield
 
     @asynccontextmanager
-    async def _aopen(self, ctx: Context) -> AsyncIterator[None]:
+    async def _aenter(self, ctx: Context) -> AsyncIterator[None]:
         async with AsyncExitStack() as stack:
-            for b in self._payload["brackets"]:
-                await stack.enter_async_context(b._aopen(ctx))
+            for b in self.brackets:
+                await stack.enter_async_context(b._aenter(ctx))
             yield

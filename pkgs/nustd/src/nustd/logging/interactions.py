@@ -8,8 +8,8 @@ and hierarchy are the configuration surface. There is no separate Nu backend
 to bind: users configure via ``logging.basicConfig(...)`` or attached handlers
 exactly the way any Python program does.
 
-Slot layout is ``[LOGGING, level, logger, msg, *args]`` with the structured
-``extra`` dict carried in ``_payload``. Slot 0 is declared WRITE, so effect
+Slot layout is ``[LOGGING, level, logger, msg, *args, extra]``: the
+structured ``extra`` dict is always the last child. Slot 0 is declared WRITE, so effect
 tracking preserves order across log statements. Two logs in a Sequential
 emit in order rather than getting parallelized as pure Queries. ``*args`` are
 Nu-interpolable; they participate in the ``%`` formatting of ``msg`` at
@@ -22,7 +22,7 @@ import logging
 from typing import TYPE_CHECKING, cast
 
 from nu.engine.structure import Declared
-from nu.lang import Command, Ref
+from nu.lang import Command, Literal, Nu, Ref
 from nu.lang.null import is_null
 
 
@@ -107,12 +107,14 @@ LOGGING = LoggingRef()
 class Log(Command):
     r"""Writes one leveled record through Python's ``logging`` module.
 
-    Children: ``[LOGGING, level, logger, msg, *args]``. ``level`` is a name
-    (``"info"``, ``"warning"``, ...) or an int (``logging.INFO``); ``logger``
-    is the logger name; both are children so a tree rewrite can retarget them.
-    ``msg`` is the format string and ``*args`` are the ``%``-substitution
-    values, resolved at eval time. Structured ``extra`` fields ride in
-    :attr:`_payload` (static Python values captured at construction).
+    Children: ``[LOGGING, level, logger, msg, *args, extra]``. ``level`` is a
+    name (``"info"``, ``"warning"``, ...) or an int (``logging.INFO``);
+    ``logger`` is the logger name; both are children so a tree rewrite can
+    retarget them. ``msg`` is the format string and ``*args`` are the
+    ``%``-substitution values, resolved at eval time. ``extra`` is always the
+    last child, a ``Literal`` dict (empty when none was given) or any Nu
+    yielding one, so the args are ``children[4:-1]`` and the extra is
+    ``children[-1]``.
 
     A ``msg`` or ``arg`` that reads as NULL raises before anything is
     logged, as any write does. Give a value that may be missing a default
@@ -127,18 +129,15 @@ class Log(Command):
         logger: object,
         msg: object,
         *args: object,
-        extra: dict[str, object] | None = None,
+        extra: dict[str, object] | Nu | None = None,
     ) -> None:
-        super().__init__(LOGGING, level, logger, msg, *args)
-        # extra is a static Python dict; dynamic fields belong in `msg` via %-args.
-        self._payload = dict(self._payload)
-        self._payload["extra"] = dict(extra) if extra else {}
+        extra_node = extra if isinstance(extra, Nu) else Literal(dict(extra) if extra else {})
+        super().__init__(LOGGING, level, logger, msg, *args, extra_node)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = cast("LoggingRef", self._children[0])
         level_thunk, logger_thunk, msg_thunk = children[1], children[2], children[3]
-        arg_thunks = children[4:]
-        extra: dict[str, object] = cast("dict[str, object]", self._payload["extra"])
+        arg_thunks, extra_thunk = children[4:-1], children[-1]
 
         def thunk(rt: Runtime) -> None:
             msg = msg_thunk(rt)
@@ -152,6 +151,7 @@ class Log(Command):
                 args.append(v)
             level = _to_level(level_thunk(rt))
             logger_name = str(logger_thunk(rt))
+            extra = extra_thunk(rt)
             record = (level, logger_name, msg, tuple(args), extra)
             ref._write(rt, record, rt.program.children[nid][0])
 
@@ -160,8 +160,7 @@ class Log(Command):
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         ref = cast("LoggingRef", self._children[0])
         level_thunk, logger_thunk, msg_thunk = children[1], children[2], children[3]
-        arg_thunks = children[4:]
-        extra: dict[str, object] = cast("dict[str, object]", self._payload["extra"])
+        arg_thunks, extra_thunk = children[4:-1], children[-1]
 
         async def athunk(rt: Runtime) -> None:
             msg = await msg_thunk(rt)
@@ -175,6 +174,7 @@ class Log(Command):
                 args.append(v)
             level = _to_level(await level_thunk(rt))
             logger_name = str(await logger_thunk(rt))
+            extra = await extra_thunk(rt)
             record = (level, logger_name, msg, tuple(args), extra)
             await ref._awrite(rt, record, rt.program.children[nid][0])
 

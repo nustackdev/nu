@@ -23,7 +23,6 @@ from enum import Enum
 from logging import getLogger
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
-import nu
 from nu.domains.shape.base import StructuredRef
 from nu.lang.null import Null, is_null
 from nu.lang.typeinfo import TypeInfo
@@ -148,8 +147,8 @@ def _refuse_container_value(owner: type, value: object) -> None:
 class _VirtualsRefBase(StructuredRef, Generic[T]):
     """Shared virtuals navigation: path building off the parent chain + Navigator.
 
-    Each ref stores its raw static address in payload as ``"segment"``; a
-    container also stores its View class as ``"type_marker"``, and a leaf has
+    Each ref's address is ``children[1]`` (read back as ``_segment``); a
+    container also stores its View class as ``_type_marker``, and a leaf has
     none. The full path is ``((addr, marker), ...)`` root-first.
     """
 
@@ -162,8 +161,8 @@ class _VirtualsRefBase(StructuredRef, Generic[T]):
         **kwargs: object,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape, **kwargs)
-        # raw static segment, in payload so it rides base with_children
-        self._payload["segment"] = address
+        self._type_marker: type[View] | None = None
+        """The view class a container level opens as; None for a leaf."""
 
     # --- path building -------------------------------------------------------
 
@@ -172,8 +171,8 @@ class _VirtualsRefBase(StructuredRef, Generic[T]):
 
         Walks the on-tree parent chain via ``rt.program.children`` (``[0]`` =
         structural parent, ``[1]`` = this level's address), evaluating each
-        level's address child and reading its ``"type_marker"`` off the term
-        payload (None for a leaf). Because the parent lives on the tree, a
+        level's address child and reading its ``_type_marker`` field (None for
+        a leaf). Because the parent lives on the tree, a
         *dynamic* parent key resolves here like any other child - no
         static-segment shortcut needed.
         """
@@ -182,7 +181,7 @@ class _VirtualsRefBase(StructuredRef, Generic[T]):
         while True:
             kids = rt.program.children[cur]
             term = rt.program.terms[cur]
-            segs.append((rt.eval(kids[1]), nu.tree.payload(term).get("type_marker")))  # type: ignore[attr-defined]
+            segs.append((rt.eval(kids[1]), term._type_marker))
             parent = kids[0]
             if not isinstance(rt.program.terms[parent], StructuredRef):
                 break  # parent is the ANCHOR -> chain root
@@ -197,7 +196,7 @@ class _VirtualsRefBase(StructuredRef, Generic[T]):
         while True:
             kids = rt.program.children[cur]
             term = rt.program.terms[cur]
-            segs.append((await rt.aeval(kids[1]), nu.tree.payload(term).get("type_marker")))  # type: ignore[attr-defined]
+            segs.append((await rt.aeval(kids[1]), term._type_marker))
             parent = kids[0]
             if not isinstance(rt.program.terms[parent], StructuredRef):
                 break
@@ -262,7 +261,9 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
         **kwargs: object,
     ) -> None:
         super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape, **kwargs)
-        self._payload["type_marker"] = view_type or self._default_view
+        self._type_marker = view_type or self._default_view
+        self._facet: Facet = Facet.LAZY
+        """How a read switches the fetched view: lazy (the default) or eager."""
 
     @classmethod
     def _slot_kwargs_from_type_args(cls, args: tuple) -> dict[str, object]:
@@ -286,13 +287,17 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
         from .containers import LEAVES, ShapeRef
         from .items import ItemRef, ObjectRef
 
-        declared: TypeInfo = self._payload.get("type_info") or TypeInfo.any()  # type: ignore[assignment]
+        declared: TypeInfo = self._type_info or TypeInfo.any()
         value = declared.elem or TypeInfo.any()
         held = value.py_type
         child: StructuredRef
         if value.is_shape:
             child = ShapeRef(
-                address, shape_type=held, parent_ref=self, owner_shape=self._owner_shape
+                address,
+                shape_type=held,
+                parent_ref=self,
+                owner_shape=self._owner_shape,
+                type_info=value,
             )
         else:
             leaf = (
@@ -300,16 +305,8 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
                 if isinstance(held, type) and issubclass(held, ItemRef)
                 else LEAVES.get(held, ObjectRef)
             )
-            child = leaf(address, parent_ref=self, owner_shape=self._owner_shape)
-        child._payload["type_info"] = value
+            child = leaf(address, parent_ref=self, owner_shape=self._owner_shape, type_info=value)
         return child
-
-    def _with_facet(self, facet: Facet) -> ViewRef[T]:
-        """A faceted variant: same tree, fresh payload with the facet overridden."""
-        variant = object.__new__(type(self))
-        variant._children = self._children
-        variant._payload = {**self._payload, "facet": facet}
-        return variant
 
     @property
     def lazy(self) -> ViewRef[T]:
@@ -320,11 +317,7 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
               eager facet picked up earlier in a chain.
             - Returns the ref unchanged when it is already lazy.
         """
-        return (
-            self
-            if self._payload.get("facet", Facet.LAZY) is Facet.LAZY
-            else self._with_facet(Facet.LAZY)
-        )
+        return self if self._facet is Facet.LAZY else self.evolve(_facet=Facet.LAZY)
 
     @property
     def eager(self) -> ViewRef[T]:
@@ -334,16 +327,12 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
             - Still a handle, not the value: ``extract()`` is the value read.
             - Nested containers come back extracted rather than as child
               Views, so the whole subtree is read out of storage.
-            - The facet rides the ref's payload, so it applies to the ops
+            - The facet is a field of the ref, so it applies to the ops
               written on it, not to the refs descended from it.
             - Returns the ref unchanged when it is already eager, and leaves
               the view alone when its view class has no facets.
         """
-        return (
-            self
-            if self._payload.get("facet", Facet.LAZY) is Facet.EAGER
-            else self._with_facet(Facet.EAGER)
-        )
+        return self if self._facet is Facet.EAGER else self.evolve(_facet=Facet.EAGER)
 
     def _facet_name(self) -> str | None:
         """The facet a fetched view is switched to: ``"eager"``, ``"lazy"``, or None.
@@ -351,10 +340,10 @@ class ViewRef(_VirtualsRefBase[T], Generic[T]):
         Decided from the declared view class, so a view without facets is
         handed back as opened, with no call on it. None also for Facet.NONE.
         """
-        view_class = self._payload.get("type_marker")
+        view_class = self._type_marker
         if not (isinstance(view_class, type) and issubclass(view_class, Faceted)):
             return None
-        facet = self._payload.get("facet", Facet.LAZY)
+        facet = self._facet
         return None if facet is Facet.NONE else facet.value
 
     def _facet_applier(self) -> Callable[[View], View]:

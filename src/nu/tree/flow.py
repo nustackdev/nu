@@ -56,7 +56,7 @@ def wrap_flows(
         new_children = tuple(_walk(c) for c in node._children)
         if all(n is o for n, o in zip(new_children, node._children, strict=True)):
             return node
-        return node._with_children(*new_children)
+        return node.evolve(children=new_children)
 
     return _walk(tree)
 
@@ -92,11 +92,11 @@ def wrap_flow_children(
         if all(n is o for n, o in zip(new_children, node._children, strict=True)):
             new_node = node
         else:
-            new_node = node._with_children(*new_children)
+            new_node = node.evolve(children=new_children)
         if isinstance(new_node, Flow):
             wrapped = tuple(wrapper(c) for c in new_node._children)
             if any(w is not c for w, c in zip(wrapped, new_node._children, strict=True)):
-                return new_node._with_children(*wrapped)
+                return new_node.evolve(children=wrapped)
         return new_node
 
     return _walk(tree)

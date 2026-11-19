@@ -128,9 +128,16 @@ def test_validate_passes(name):
     nu.validate(nu.compile(TREES[name]))
 
 
+def _body(node: nu.Nu) -> object:
+    """The body a Dispatch holds as data: the value of its last, Literal child."""
+    held = nu.tree.children(node)[-1]
+    assert isinstance(held, nu.Literal)
+    return held.value
+
+
 def test_dispatching_a_query_is_allowed():
     """A dispatched body's value is dropped by design, whatever it yields."""
-    assert nu.tree.payload(Dispatch(body=nu.Add(1, 2), worker=Scratch.w))["body"] is not None
+    assert _body(Dispatch(body=nu.Add(1, 2), worker=Scratch.w)) is not None
 
 
 def test_dispatching_a_non_nu_body_is_refused():
@@ -196,9 +203,9 @@ def test_each_verb_has_its_sort(node, sort, mutates):
     ],
 )
 def test_a_flow_body_is_accepted_and_the_tree_still_validates(body):
-    """The whole point of the payload: a Flow body a Command could not hold."""
+    """The whole point of the Literal: a Flow body a Command could not hold."""
     node = Dispatch(body=body, worker=Scratch.w)
-    assert nu.tree.payload(node)["body"] is body
+    assert _body(node) is body
     nu.validate(nu.compile(_provided(node)))
 
 
@@ -206,15 +213,8 @@ def test_a_flow_body_is_accepted_and_the_tree_still_validates(body):
 
 
 def _same_shape(a: nu.Nu, b: nu.Nu) -> bool:
-    """Structural equality by class, payload and child shape, recursively."""
-    return (
-        type(a) is type(b)
-        and nu.tree.payload(a) == nu.tree.payload(b)
-        and len(nu.tree.children(a)) == len(nu.tree.children(b))
-        and all(
-            _same_shape(x, y) for x, y in zip(nu.tree.children(a), nu.tree.children(b), strict=True)
-        )
-    )
+    """Structural equality by class, fields and children, recursively."""
+    return nu.tree.equal(a, b)
 
 
 FLUENT = [
@@ -252,15 +252,15 @@ def test_the_fluent_form_puts_the_receiver_in_the_pool_slot():
     assert nu.tree.children(ref.teleport(RESIDENT, 7))[1] is ref
 
 
-def test_the_fluent_dispatch_still_keeps_its_body_in_payload():
-    assert nu.tree.payload(PoolRef().dispatch(RESIDENT, 7))["body"] is RESIDENT
+def test_the_fluent_dispatch_still_keeps_its_body_as_data():
+    assert _body(PoolRef().dispatch(RESIDENT, 7)) is RESIDENT
 
 
-# --- children vs payload ----------------------------------------------------
+# --- children vs fields -----------------------------------------------------
 
 
-def test_the_atoms_carry_no_caller_value_in_payload():
-    """The design constraint: ids and targets are children, the body excepted."""
+def test_the_atoms_carry_no_caller_value_in_a_field():
+    """The design constraint: ids, targets and the body are children."""
     atoms = [
         Launch(init=nu.Provide(dict, {})),
         Dispatch(body=RESIDENT, worker=7),
@@ -275,27 +275,28 @@ def test_the_atoms_carry_no_caller_value_in_payload():
     ]
     for atom in atoms:
         # A body is a term, and `==` on a term builds a comparison: skip them.
-        assert 7 not in [v for v in nu.tree.payload(atom).values() if not isinstance(v, nu.Nu)]
-        assert set(nu.tree.payload(atom)) <= {"carry", "body"}
+        held = nu.tree.fields(atom)
+        assert 7 not in [v for v in held.values() if not isinstance(v, nu.Nu)]
+        assert set(held) <= {"carry"}
     # The pool ref holds its tag, which is the address, not a caller value.
-    assert nu.tree.payload(PoolRef()) == {"tag": UNSET}
-    assert nu.tree.payload(PoolRef("a")) == {"tag": "a"}
+    assert nu.tree.fields(PoolRef()) == {"_tag": UNSET}
+    assert nu.tree.fields(PoolRef("a")) == {"_tag": "a"}
     assert len(nu.tree.children(PoolRef())) == 1
 
 
 def test_the_worker_id_is_still_a_child_of_dispatch():
-    """Only the body moved to payload. The id has to stay computable."""
+    """The body sits after the id, held as data. The id has to stay computable."""
     node = Dispatch(body=RESIDENT, worker=Scratch.w)
     assert isinstance(nu.tree.children(node)[0], PoolRef)
     assert isinstance(nu.tree.children(node)[1], nu.mem.ObjectRef)
 
 
 def test_a_rewrite_carries_the_body_across_unchanged():
-    """``_with_children`` shares the payload; a Nu term is immutable, so that is safe."""
+    """``evolve`` keeps the Literal child, so the body crosses as the same object."""
     node = Dispatch(body=RESIDENT, worker=7)
-    variant = node._with_children(*nu.tree.children(node))
-    assert nu.tree.payload(variant)["body"] is RESIDENT
-    assert nu.tree.payload(variant) is nu.tree.payload(node)
+    variant = node.evolve(children=nu.tree.children(node))
+    assert _body(variant) is RESIDENT
+    assert nu.tree.children(variant)[-1] is nu.tree.children(node)[-1]
 
 
 def test_no_walker_reaches_a_dispatched_body():
@@ -304,5 +305,6 @@ def test_no_walker_reaches_a_dispatched_body():
     program = nu.compile(tree)
     assert not any(t is RESIDENT for t in program.terms)
     assert not any(isinstance(t, nu.ForeverDo) for t in program.terms)
-    # And it does not show in the render either.
-    assert "ForeverDo" not in str(tree)
+    # The render shows it only as a Literal's value, never as a node of its own.
+    assert "Literal(ForeverDo(" in str(tree)
+    assert "── ForeverDo" not in str(tree)

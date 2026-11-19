@@ -10,6 +10,7 @@ from typing import ClassVar
 
 import pytest
 
+import nu
 from nu.context import FabricRef, Provide, ProvideDict, ProvideList, With
 from nu.lang import Context
 from nu.lang.helpers import arun, run
@@ -178,7 +179,7 @@ def test_with_preserves_bracket_tags():
         Provide(Store, {"name": "cache"}, tag="cache"),
     )
     ctx = Context()
-    with bracket._open(ctx):
+    with bracket._enter(ctx):
         assert ctx.fabrics.get(Store).name == "primary"
         assert ctx.fabrics.get(Store, "cache").name == "cache"
 
@@ -210,3 +211,64 @@ async def test_with_async_prefers_asetup_lifo_acleanup():
     closes = [n[7:] for n in Async.events if n.startswith("aclose:")]
     assert setups == ["a", "b", "c"]
     assert closes == ["c", "b", "a"]
+
+
+# --- brackets are children -------------------------------------------------
+
+
+def test_with_brackets_are_real_nodes_of_the_tree():
+    a = Provide(Counter, {"name": "a"})
+    b = Provide(Counter, {"name": "b"})
+    body = FabricRef(Counter)
+    tree = With(a, b, body=body)
+
+    outer, inner = tree.brackets
+    assert nu.tree.children(tree)[0] is outer
+    assert nu.tree.children(outer)[0] is inner
+    assert nu.tree.children(inner)[0] is body
+    assert len(nu.tree.find(tree, lambda n: isinstance(n, Provide))) == 2
+    # The brackets given are specs: the cascade holds variants, they keep their own body slot.
+    assert outer is not a
+    assert isinstance(nu.tree.children(a)[0], nu.Literal)
+    assert nu.tree.children(outer)[1:] == nu.tree.children(a)[1:]
+
+
+def test_with_nests_inside_with_in_order():
+    tree = With(
+        With(Provide(Counter, {"name": "a"}), Provide(Counter, {"name": "b"})),
+        Provide(Counter, {"name": "c"}),
+        body=FabricRef(Counter),
+    )
+    value, _ = run(tree)
+    assert value.name == "c"  # the innermost untagged binding shadows the outer ones
+    assert Counter.events == [
+        ("setup", "a"),
+        ("setup", "b"),
+        ("setup", "c"),
+        ("close", "c"),
+        ("close", "b"),
+        ("close", "a"),
+    ]
+
+
+def test_with_bracket_config_reads_the_tree():
+    class Cfg(nu.Shape):
+        kwargs = nu.DictRef.slot(nu.StrRef)
+
+    tree = nu.Frame(
+        Cfg,
+        With(Provide(Counter, Cfg.kwargs), body=FabricRef(Counter)),
+        kwargs={"name": "from-mem"},
+    )
+    value, _ = run(tree)
+    assert value.name == "from-mem"
+    assert nu.tree.reads(tree)
+
+
+def test_with_enter_opens_every_layer_outside_a_tree():
+    spec = With(With(Provide(Counter, {"name": "a"})), Provide(Counter, {"name": "b"}, tag="b"))
+    ctx = Context()
+    with spec._enter(ctx):
+        assert ctx.fabrics.get(Counter).name == "a"
+        assert ctx.fabrics.get(Counter, "b").name == "b"
+    assert Counter.events == [("setup", "a"), ("setup", "b"), ("close", "b"), ("close", "a")]

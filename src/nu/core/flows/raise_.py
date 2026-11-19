@@ -14,7 +14,7 @@ message) and no body slots. That leaves the sort semantics clean:
 
 Wire-up:
 
-- ``exc_cls`` is a plain Python class captured in the atom's payload -- the
+- ``exc_cls`` is a plain Python class held as a field of the atom -- the
   exception type is a structural detail of the tree, not run-time data.
 - ``msg`` is any Nu expression yielding a value (typically a str). A NULL
   message still raises, though the exception cannot render it as text.
@@ -47,7 +47,7 @@ class Raise(Control):
     Notes:
         - A leaf Control: one param slot (the msg), no body slots, so
           ``flow_body_is_mutator`` is trivially satisfied.
-        - ``exc_cls`` is a plain Python class captured in the payload, not a
+        - ``exc_cls`` is a plain Python class held as a field, not a
           child - the exception type is a structural detail of the tree, not
           run-time data.
         - A raise is never skipped.
@@ -67,11 +67,11 @@ class Raise(Control):
 
     def __init__(self, msg: Nu, *, exc_cls: type[BaseException] = RuntimeError) -> None:
         super().__init__(msg)
-        self._payload["exc_cls"] = exc_cls
+        self.exc_cls = exc_cls
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (msg_t,) = children
-        exc_cls: type[BaseException] = self._payload["exc_cls"]
+        exc_cls: type[BaseException] = self.exc_cls
 
         def thunk(rt: Runtime) -> None:
             msg = msg_t(rt)
@@ -81,7 +81,7 @@ class Raise(Control):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         (msg_t,) = children
-        exc_cls: type[BaseException] = self._payload["exc_cls"]
+        exc_cls: type[BaseException] = self.exc_cls
 
         async def athunk(rt: Runtime) -> None:
             msg = await msg_t(rt)

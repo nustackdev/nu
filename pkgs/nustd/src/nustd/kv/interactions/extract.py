@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import nu
 from nu.lang import ScalarQuery
 from nu.lang.null import Null
 from virtuals.container import ContainerNotFoundError
@@ -41,7 +40,7 @@ def _extractor(ref: ViewRef) -> Callable[[ViewBase], object]:
     A view class with facets reads through its eager facet, so nested
     containers come back extracted; any other view extracts as it is.
     """
-    view_class = nu.tree.payload(ref).get("type_marker")  # type: ignore[attr-defined]
+    view_class = ref._type_marker
     if isinstance(view_class, type) and issubclass(view_class, Faceted):
         return lambda view: view.eager.extract()  # type: ignore[attr-defined]
     return lambda view: view.extract()  # type: ignore[attr-defined]

@@ -72,15 +72,15 @@ class ReactOnce(Control):
         if changed_key is not None:
             children.append(changed_key)
         super().__init__(*children)
-        self._payload["has_body"] = body is not None
-        self._payload["has_changed_key"] = changed_key is not None
+        self.has_body = body is not None
+        self.has_changed_key = changed_key is not None
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return async_only("ReactOnce")
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        has_body = self._payload["has_body"]
-        ck_idx = 2 if self._payload["has_changed_key"] else None
+        has_body = self.has_body
+        ck_idx = 2 if self.has_changed_key else None
 
         async def athunk(rt: Runtime) -> None:
             changed_key_name = await children[ck_idx](rt) if ck_idx is not None else None

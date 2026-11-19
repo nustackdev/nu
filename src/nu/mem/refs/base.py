@@ -14,7 +14,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
-import nu
 from nu.domains.shape.base import StructuredRef
 from nu.lang.null import Null
 from nu.lang.typeinfo import TypeInfo
@@ -82,11 +81,12 @@ class RefBase(StructuredRef, Generic[T]):
         *,
         parent_ref: RefBase | None = None,
         owner_shape: type[Shape] | None = None,
+        type_info: TypeInfo | None = None,
         **kwargs: object,
     ) -> None:
-        super().__init__(address, parent_ref=parent_ref, owner_shape=owner_shape)
-        # raw static segment, in payload so it rides base with_children
-        self._payload["segment"] = address
+        super().__init__(
+            address, parent_ref=parent_ref, owner_shape=owner_shape, type_info=type_info
+        )
 
     def _wrap_item_ref(self, address: object) -> StructuredRef:
         """The child at ``address``: the mem ref for the value this container declared.
@@ -99,13 +99,17 @@ class RefBase(StructuredRef, Generic[T]):
         from .containers import LEAVES, ShapeRef
         from .items import ItemRef, ObjectRef
 
-        declared: TypeInfo = self._payload.get("type_info") or TypeInfo.any()  # type: ignore[assignment]
+        declared: TypeInfo = self._type_info or TypeInfo.any()
         value = declared.elem or TypeInfo.any()
         held = value.py_type
         child: StructuredRef
         if value.is_shape:
             child = ShapeRef(
-                address, shape_type=held, parent_ref=self, owner_shape=self._owner_shape
+                address,
+                shape_type=held,
+                parent_ref=self,
+                owner_shape=self._owner_shape,
+                type_info=value,
             )
         else:
             leaf = (
@@ -113,8 +117,7 @@ class RefBase(StructuredRef, Generic[T]):
                 if isinstance(held, type) and issubclass(held, ItemRef)
                 else LEAVES.get(held, ObjectRef)
             )
-            child = leaf(address, parent_ref=self, owner_shape=self._owner_shape)
-        child._payload["type_info"] = value
+            child = leaf(address, parent_ref=self, owner_shape=self._owner_shape, type_info=value)
         return child
 
     # --- path building -------------------------------------------------------
@@ -124,7 +127,7 @@ class RefBase(StructuredRef, Generic[T]):
         segs: list[object] = []
         ref = self._parent
         while ref is not None:
-            segs.append(nu.tree.payload(ref).get("segment"))  # type: ignore[attr-defined]
+            segs.append(ref._segment)
             ref = ref._parent
         segs.reverse()
         return tuple(segs)
@@ -246,13 +249,18 @@ class RefBase(StructuredRef, Generic[T]):
         cur[path[-1]] = value  # type: ignore[index]
 
     def _write(self, rt: Runtime, value: object, nid: int) -> None:
-        """Write ``value`` through this ref, vivifying intermediate dicts."""
-        value = self._lower(value)
+        """Write ``value`` through this ref, vivifying intermediate dicts.
+
+        The store keeps its own copy of plain containers (see :func:`owned`),
+        so a later item write never reaches the written object: a Literal's
+        value, or the caller's dict.
+        """
+        value = owned(self._lower(value))
         self._store(rt, self._resolve_path(rt, nid), value)
 
     async def _awrite(self, rt: Runtime, value: object, nid: int) -> None:
         """Async sibling of :meth:`write`."""
-        value = await self._alower(value)
+        value = owned(await self._alower(value))
         self._store(rt, await self._aresolve_path(rt, nid), value)
 
     def _erase(self, rt: Runtime, nid: int) -> None:
@@ -285,6 +293,27 @@ class RefBase(StructuredRef, Generic[T]):
                 cur[k] = {}
             cur = cur[k]  # type: ignore[index]
         return cur
+
+
+def owned(value: object) -> object:
+    """A copy of ``value``'s plain containers for the store to own, nested; anything else as is.
+
+    Exact ``dict``, ``list``, ``set`` and ``tuple`` are rebuilt level by level,
+    so nothing the store later mutates in place is shared with the written
+    object. Without it, setting a slot from a Literal dict stored the
+    Literal's own dict, and an item write through the slot changed the term
+    and carried into the next run. Other values (live objects, subclasses of
+    the builtins) are stored by reference.
+    """
+    if type(value) is dict:
+        return {k: owned(v) for k, v in value.items()}
+    if type(value) is list:
+        return [owned(v) for v in value]
+    if type(value) is set:
+        return set(value)
+    if type(value) is tuple:
+        return tuple(owned(v) for v in value)
+    return value
 
 
 def repr_seg(seg: object) -> str:

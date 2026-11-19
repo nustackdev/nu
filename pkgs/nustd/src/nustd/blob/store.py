@@ -79,12 +79,12 @@ class StoreRef(FabricRef):
 
     def __init__(self, name: str) -> None:
         super().__init__()
-        self._payload["store"] = store_name(name)
+        self._store: str = store_name(name)
 
     @property
     def name(self) -> str:
         """The store's name, the tag its backend binds under."""
-        return self._payload["store"]
+        return self._store
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         fabric = children[0]

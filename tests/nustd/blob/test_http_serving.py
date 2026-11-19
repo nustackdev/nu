@@ -18,6 +18,7 @@ import httpx
 import pytest
 from _support import blob_fixtures
 from _support.blob_workers import BUCKET
+from _support.brackets import config
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.routing import Mount
@@ -755,8 +756,8 @@ def test_step_must_be_positive(tmp_path):
 
 def _held(bracket):
     """The backend a ``HeldOpen`` bracket opens."""
-    assert bracket._payload["cls"] is HeldOpen
-    return bracket._payload["kwargs"]["backend"]
+    assert config(bracket)["cls"] is HeldOpen
+    return config(bracket)["kwargs"]["backend"]
 
 
 def test_serve_blobs_brackets_and_routes_each_mount(tmp_path):

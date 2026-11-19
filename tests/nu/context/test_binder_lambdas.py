@@ -19,7 +19,7 @@ import nu
 import nustd
 from nu.core.reactive.cursor.stream import Stream
 from nu.engine.structure import Declared
-from nu.lang import NULL, Context, ScalarAction, wire
+from nu.lang import NULL, Context, Literal, ScalarAction, wire
 from nustd.functools.interactions import Reduce
 
 
@@ -38,11 +38,10 @@ class Record(ScalarAction):
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
     def __init__(self, value: object, log: list) -> None:
-        super().__init__(value)
-        self._payload["log"] = log
+        super().__init__(value, Literal(log))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        log, (value,) = self._payload["log"], children
+        value, log = children[0], self._children[1].value
 
         def thunk(rt: Runtime) -> None:
             log.append(value(rt))
@@ -50,7 +49,7 @@ class Record(ScalarAction):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        log, (value,) = self._payload["log"], children
+        value, log = children[0], self._children[1].value
 
         async def athunk(rt: Runtime) -> None:
             log.append(await value(rt))
@@ -351,7 +350,7 @@ async def test_react_still_takes_a_plain_body_and_binds_nothing() -> None:
 def test_stream_binds_the_key_its_lambda_reads() -> None:
     stream = Stream(nu.Literal(None), lambda key: nu.Iter(nu.List.of(key)))
     _advance, _change, body, key, _log_key, _after, _every = stream._children
-    assert str(nu.tree.payload(key)["value"]).startswith("key@")
+    assert str(nu.tree.fields(key)["value"]).startswith("key@")
     assert nu.tree.equal(body, nu.Iter(nu.List.of(nu.Attr(key))))
 
 
@@ -402,7 +401,7 @@ def test_a_lambda_owns_its_names_across_builds() -> None:
 
     first, second = build(), build()
     assert nu.tree.equal(first._children[2], second._children[2])
-    assert str(nu.tree.payload(first._children[2])["value"]).startswith("x@")
+    assert str(nu.tree.fields(first._children[2])["value"]).startswith("x@")
 
 
 def test_same_line_same_parameter_nested_keeps_apart() -> None:
