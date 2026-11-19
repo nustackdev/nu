@@ -11,7 +11,7 @@ One import, then dot-access::
 
 Two kinds of thing live here, side by side.
 
-**Fabrics** (``kv``, ``blob``, ``queue``, ``ui``, ``ws_server``, ``service``,
+**Fabrics** (``kv``, ``blob``, ``fs``, ``queue``, ``ui``, ``ws_server``, ``service``,
 ``llm``, ``acp``, ``http``, ``proxy``, ``mp``, ``cluster``,
 ``valkey``) back a Shape with somewhere real to live: a store, a blob store, a
 browser, a process pool, a model, a private notification server. Each
@@ -74,6 +74,7 @@ if TYPE_CHECKING:
         acp,
         blob,
         cluster,
+        fs,
         http,
         kv,
         llm,
@@ -94,6 +95,7 @@ _LAZY = {
     "acp": "acp",
     "blob": "blob",
     "cluster": "cluster",
+    "fs": None,
     "http": "http",
     "kv": "kv",
     "llm": "llm",
