@@ -18,7 +18,7 @@ browser, a process pool, a model, a private notification server. Each
 is heavy and pulls a large tree behind it (storage backends, the UI runtime,
 RPC, ray), so they load on first attribute access, not on ``import nustd``.
 
-**The standard library** (``uuid``, ``datetime``, ``decimal``, ``math`` ...)
+**The standard library** (``uuid``, ``datetime``, ``decimal``, ``math``, ``json`` ...)
 mirrors Python's stdlib module by module. A value type is a **Form** - the
 typed access surface you call methods on. Its operations are **interactions**:
 reused from ``nu.core`` where they already exist (comparison, attribute reads,
@@ -54,6 +54,7 @@ from . import (
     fractions,
     functools,
     itertools,
+    json,
     logging,
     math,
     pathlib,
@@ -141,6 +142,7 @@ __all__ = sorted(
         "fractions",
         "functools",
         "itertools",
+        "json",
         "logging",
         "math",
         "pathlib",

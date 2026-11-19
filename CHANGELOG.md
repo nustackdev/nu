@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Add a json stdlib mirror so file text parses and serializes inside trees
 - Sync runs refuse fabrics with only async setup; refusals name the actual bracket
 - The uploads area opens through a small bracket of its own, no constructor tricks
 - Fix the valkey shutdown test whose subprocess script provided a plain class
