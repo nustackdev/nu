@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Fix the valkey shutdown test whose subprocess script provided a plain class
 - Kind declarations stay bare; the bracket lifecycle lives in its own module
 - Provided fabrics subclass one base with default lifecycle; plain classes are refused
 - Write a bracket by subclassing the base and overriding its open hooks

@@ -241,15 +241,13 @@ OWNER = textwrap.dedent(
     if mode == "bracket":
         # Ctrl-C reaches the owner while a nu bracket holds the server.
         import subprocess
-        class Report:
+        class Report(nu.Fabric):
             def setup(self, ctx):
                 pid = open(os.path.join(data_dir, "valkey.pid")).read().strip()
                 keeper = subprocess.run(
                     ["ps", "-o", "ppid=", "-p", pid], capture_output=True, text=True
                 ).stdout.strip()
                 print(pid, keeper, flush=True)
-            async def asetup(self, ctx):
-                self.setup(ctx)
         import asyncio
         asyncio.run(nu.arun(nu.With(server(data_dir), nu.Provide(Report, {}), body=nu.Park())))
         sys.exit(0)
