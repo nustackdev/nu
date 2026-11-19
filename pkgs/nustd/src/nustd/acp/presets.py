@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.context.fabric import Provide
+from nu.lang import Nu
 
 from .fabric import DEFAULT_PERMISSIONS, PERMISSIONS, AcpFabric
 from .refs import agent_name
@@ -27,13 +28,13 @@ OPENCODE = ("opencode", "acp")
 
 
 def bind(
-    agent: AgentRef | str,
+    agent: AgentRef | str | Nu,
     *,
-    command: Sequence[str],
-    cwd: str | None = None,
-    mcp_servers: Sequence[Mapping[str, object]] | None = None,
-    env: Mapping[str, str] | None = None,
-    permissions: str = DEFAULT_PERMISSIONS,
+    command: Sequence[str] | Nu,
+    cwd: str | Nu | None = None,
+    mcp_servers: Sequence[Mapping[str, object]] | Nu | None = None,
+    env: Mapping[str, str] | Nu | None = None,
+    permissions: str | Nu = DEFAULT_PERMISSIONS,
 ) -> Provide:
     """Run any ACP Agent under ``agent``'s name: spawned on enter, stopped on exit.
 
@@ -63,6 +64,9 @@ def bind(
 
     Notes:
         - Async only: run the tree with ``nu.arun``.
+        - Any argument may be a term, such as a slot read from a store: it
+          is evaluated when the bracket opens, and its value is checked
+          then, by the fabric, the same as a plain one is checked here.
         - The Agent's capabilities gate what is sent: a method, argument or
           Content Block it did not advertise raises ``AcpError`` (-32601)
           before anything goes out.
@@ -70,27 +74,31 @@ def bind(
     Example:
         nu.With(nustd.acp.bind(Goose, command=["goose", "acp"]), body=...)
     """
-    if isinstance(command, str) or not command:
+    if not isinstance(command, Nu) and (isinstance(command, str) or not command):
         raise TypeError(f"command is the Agent's argv, a non-empty list of str, got {command!r}")
-    if permissions not in PERMISSIONS:
+    if not isinstance(permissions, Nu) and permissions not in PERMISSIONS:
         raise ValueError(f"permissions is one of {', '.join(PERMISSIONS)}, got {permissions!r}")
     spec = {
-        "command": [str(part) for part in command],
-        "cwd": None if cwd is None else str(cwd),
-        "mcp_servers": None if mcp_servers is None else [dict(s) for s in mcp_servers],
-        "env": None if env is None else dict(env),
+        "command": command if isinstance(command, Nu) else [str(part) for part in command],
+        "cwd": cwd if cwd is None or isinstance(cwd, Nu) else str(cwd),
+        "mcp_servers": (
+            mcp_servers
+            if mcp_servers is None or isinstance(mcp_servers, Nu)
+            else [dict(s) for s in mcp_servers]
+        ),
+        "env": env if env is None or isinstance(env, Nu) else dict(env),
         "permissions": permissions,
     }
     return Provide(AcpFabric, spec, tag=agent_name(agent))
 
 
 def claude(
-    agent: AgentRef | str,
+    agent: AgentRef | str | Nu,
     *,
-    cwd: str | None = None,
-    mcp_servers: Sequence[Mapping[str, object]] | None = None,
-    env: Mapping[str, str] | None = None,
-    permissions: str = DEFAULT_PERMISSIONS,
+    cwd: str | Nu | None = None,
+    mcp_servers: Sequence[Mapping[str, object]] | Nu | None = None,
+    env: Mapping[str, str] | Nu | None = None,
+    permissions: str | Nu = DEFAULT_PERMISSIONS,
 ) -> Provide:
     """Claude Code, through the ``claude-agent-acp`` adapter; see ``bind`` for the kwargs.
 
@@ -104,12 +112,12 @@ def claude(
 
 
 def codex(
-    agent: AgentRef | str,
+    agent: AgentRef | str | Nu,
     *,
-    cwd: str | None = None,
-    mcp_servers: Sequence[Mapping[str, object]] | None = None,
-    env: Mapping[str, str] | None = None,
-    permissions: str = DEFAULT_PERMISSIONS,
+    cwd: str | Nu | None = None,
+    mcp_servers: Sequence[Mapping[str, object]] | Nu | None = None,
+    env: Mapping[str, str] | Nu | None = None,
+    permissions: str | Nu = DEFAULT_PERMISSIONS,
 ) -> Provide:
     """Codex, through the ``codex-acp`` adapter; see ``bind`` for the kwargs.
 
@@ -123,12 +131,12 @@ def codex(
 
 
 def gemini(
-    agent: AgentRef | str,
+    agent: AgentRef | str | Nu,
     *,
-    cwd: str | None = None,
-    mcp_servers: Sequence[Mapping[str, object]] | None = None,
-    env: Mapping[str, str] | None = None,
-    permissions: str = DEFAULT_PERMISSIONS,
+    cwd: str | Nu | None = None,
+    mcp_servers: Sequence[Mapping[str, object]] | Nu | None = None,
+    env: Mapping[str, str] | Nu | None = None,
+    permissions: str | Nu = DEFAULT_PERMISSIONS,
 ) -> Provide:
     """Gemini CLI, which speaks ACP itself; see ``bind`` for the kwargs."""
     return bind(
@@ -137,12 +145,12 @@ def gemini(
 
 
 def opencode(
-    agent: AgentRef | str,
+    agent: AgentRef | str | Nu,
     *,
-    cwd: str | None = None,
-    mcp_servers: Sequence[Mapping[str, object]] | None = None,
-    env: Mapping[str, str] | None = None,
-    permissions: str = DEFAULT_PERMISSIONS,
+    cwd: str | Nu | None = None,
+    mcp_servers: Sequence[Mapping[str, object]] | Nu | None = None,
+    env: Mapping[str, str] | Nu | None = None,
+    permissions: str | Nu = DEFAULT_PERMISSIONS,
 ) -> Provide:
     """OpenCode, which speaks ACP itself; see ``bind`` for the kwargs."""
     return bind(

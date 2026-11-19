@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Agent binds take their command, cwd and policy computed, read from a store
 - ACP update readers hear each turn's end in order, so one stream folds turns
 - The upload route pickles, so a web tree can be shipped to a worker
 - Add a webbrowser fabric that opens a tab once a local server answers

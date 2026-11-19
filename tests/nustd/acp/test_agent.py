@@ -96,6 +96,25 @@ async def test_new_session_takes_the_bind_defaults_and_call_overrides(tmp_path):
     assert stats["mcp"] == {"s1": ["tools"], "s2": [], "s3": ["tools"]}
 
 
+async def test_bind_takes_its_command_and_cwd_as_terms(tmp_path):
+    """A bind computed in the tree: command and cwd come from mem, read when the bracket opens."""
+
+    class Conf(nu.Shape):
+        command = nu.ListRef.slot(str)
+        cwd = nu.StrRef.slot()
+
+    spawn = nustd.acp.bind(Agent, command=Conf.command, cwd=Conf.cwd)
+    body = nu.ForEachDo(
+        Agent[nu.Dict(Agent.new_session())["session_id"]].prompt("stats"), Log.a.append
+    )
+    data: dict[str, list] = {"a": [], "b": [], "c": []}
+    ctx = (
+        nu.Context().bind(dict, data, Log).bind(dict, {"command": FAKE, "cwd": str(tmp_path)}, Conf)
+    )
+    await nu.arun(nu.With(spawn, body=body), ctx)
+    assert stats_of(data["a"])["cwd"] == {"s1": str(tmp_path)}
+
+
 async def test_new_session_sends_a_system_prompt_raw(tmp_path):
     override = {"mode": "append", "content": [{"type": "text", "text": "be terse"}]}
     body = nu.Sequential(
