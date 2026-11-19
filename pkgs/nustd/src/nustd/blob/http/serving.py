@@ -3,10 +3,17 @@
 Plain Starlette over plain backends: a request reads the backend directly,
 no tree runs. Needs Starlette, which comes with ``nustd[ws_server]``.
 
-``serve_blobs`` is the usual entry: for each mount and the spec of the store
-it serves, the routes and the bracket holding the backend open. Put the
+``serve_blobs`` is the usual entry: for each mount and the backend of the
+store it serves, the routes and the bracket holding the backend open. Put the
 brackets around the server in a ``nu.With`` and hand it the routes;
 ``nustd.ui.serve(blobs=...)`` does both.
+
+The server runs outside any tree, so it takes plain Python: a backend
+(``nustd.blob.LMDBBackend``, ``FilesBackend``, ``S3Backend``), not the spec a
+tree binds (``nustd.blob.lmdb``, ``files``, ``s3``). A program that both
+serves a store and runs trees on it writes the config twice, once for each;
+the same path or bucket is the same store, and an LMDB env opened twice in
+one process is one env, shared.
 """
 
 from __future__ import annotations
@@ -21,7 +28,7 @@ from starlette.responses import JSONResponse, Response, StreamingResponse
 from starlette.routing import Route
 
 from nu.context.fabric import Provide
-from nustd.blob import STEP, BlobNotFound, BlobTooLarge, backend_of
+from nustd.blob import STEP, BlobBackend, BlobNotFound, BlobTooLarge
 from nustd.blob._base import check_id
 
 from . import BlobMount
@@ -33,7 +40,7 @@ if TYPE_CHECKING:
     from starlette.requests import Request
 
     from nu.lang.runtime import Context
-    from nustd.blob import BlobBackend, BlobInfo
+    from nustd.blob import BlobInfo
 
 
 __all__ = [
@@ -78,38 +85,64 @@ class _UploadTooLarge(Exception):  # noqa: N818 - a state, not an error kind
     """The upload passed the routes' size cap."""
 
 
-def serve_blobs(blobs: Mapping[BlobMount, Provide]) -> tuple[list[Provide], list[Route]]:
-    """The routes for each mount, over its store, and the brackets holding each store open.
+def serve_blobs(blobs: Mapping[BlobMount, BlobBackend]) -> tuple[list[Provide], list[Route]]:
+    """The routes for each mount, over its backend, and the brackets holding each backend open.
 
     Put every bracket before the server in a ``nu.With``, so each store is
-    open while the server answers, and hand the server the routes. One spec
-    is what a tree binds too (``nu.With(spec, ...)``), so the server and the
-    runs reach one store.
+    open while the server answers, and hand the server the routes. A tree
+    that reaches the same store binds its own spec with the same config
+    (``nu.With(nustd.blob.lmdb(Files, path), ...)``): the same path or bucket
+    is the same store.
 
     Args:
-        blobs: each mount, to the spec of the store it serves: what
-            ``nustd.blob.lmdb``, ``files`` or ``s3`` gives.
+        blobs: each mount, to the backend of the store it serves, not open
+            yet: a ``nustd.blob.LMDBBackend``, ``FilesBackend`` or
+            ``S3Backend``, or any ``BlobBackend``. One backend may sit under
+            several mounts (say, each with its own upload rules); it gets one
+            bracket, so it opens and closes once.
 
     Returns:
         ``(brackets, routes)``.
 
+    Raises:
+        TypeError: a key is no ``BlobMount``, or a value is no backend, such
+            as the spec a tree binds.
+        ValueError: two mounts sit at one path.
+
     Example:
-        brackets, served = serve_blobs({files: nustd.blob.lmdb(Files, ".store/files")})
+        files = nustd.blob.http.BlobMount("/files")
+        brackets, served = serve_blobs({files: nustd.blob.LMDBBackend(".store/files")})
         nu.With(*brackets, nustd.ws_server.listen(..., routes=served), body=...)
     """
     brackets: list[Provide] = []
     served: list[Route] = []
     seen: set[str] = set()
-    for mount, spec in blobs.items():
+    held: set[int] = set()
+    for mount, backend in blobs.items():
         if not isinstance(mount, BlobMount):
             raise TypeError(f"a blob mount is a nustd.blob.http.BlobMount, got {mount!r}")
         if mount.at in seen:
             raise ValueError(f"two stores mounted at {mount.at!r}")
         seen.add(mount.at)
-        backend = backend_of(spec)
-        brackets.append(Provide(HeldOpen, {"backend": backend}))
+        # A class has the protocol's methods too, so it would pass the check.
+        if isinstance(backend, type) or not isinstance(backend, BlobBackend):
+            raise TypeError(_no_backend(mount, backend))
+        if id(backend) not in held:
+            held.add(id(backend))
+            brackets.append(Provide(HeldOpen, {"backend": backend}))
         served += routes(mount, backend)
     return brackets, served
+
+
+def _no_backend(mount: BlobMount, value: object) -> str:
+    """Why ``value`` cannot serve ``mount``, with what to pass instead."""
+    hint = (
+        "the server takes a backend, such as nustd.blob.LMDBBackend(path); "
+        "the spec (nustd.blob.lmdb, files, s3) is what a tree binds"
+    )
+    if isinstance(value, Provide):
+        return f"{mount!r} got a tree's spec: {hint}"
+    return f"{mount!r} needs a blob backend, got {value!r}: {hint}"
 
 
 class HeldOpen:

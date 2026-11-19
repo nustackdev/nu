@@ -54,7 +54,10 @@ PAGE = App.home
 
 Media = nustd.blob.StoreRef("media")
 MOUNT = nustd.blob.http.BlobMount("/media")
+# The config twice, on purpose: the tree binds a spec, the server (outside
+# the tree) takes a plain backend. The same root is the same store.
 SPEC = nustd.blob.files(Media, ".dbgallery/gallery/blobs")
+BACKEND = nustd.blob.FilesBackend(".dbgallery/gallery/blobs")
 
 
 class State(nu.Shape):
@@ -178,7 +181,7 @@ app = nu.With(
     SPEC,
     body=ui.serve(
         ui.boot(App.title, App.home) >> (items | uploads),
-        blobs={MOUNT: SPEC},
+        blobs={MOUNT: BACKEND},
         port=8095,
     ),
 )

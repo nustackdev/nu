@@ -6,7 +6,6 @@ import os
 from typing import TYPE_CHECKING
 
 from nu.context.fabric import Provide
-from nu.lang.runtime import Context
 
 from .backends import FilesBackend, LMDBBackend, S3Backend
 from .backends.lmdb import DEFAULT_MAP_SIZE, DEFAULT_MAX_READERS, DEFAULT_WRITEMAP
@@ -16,11 +15,10 @@ from .store import store_name
 
 
 if TYPE_CHECKING:
-    from .protocol import BlobBackend
     from .store import StoreRef
 
 
-__all__ = ["backend_of", "files", "lmdb", "s3"]
+__all__ = ["files", "lmdb", "s3"]
 
 
 def lmdb(
@@ -122,28 +120,3 @@ def s3(
         "part_size": part_size,
     }
     return Provide(BlobFabric, {"backend": S3Backend, "options": options}, tag=store_name(store))
-
-
-def backend_of(spec: Provide) -> BlobBackend:
-    """A new backend, not open yet, built as the binding ``spec`` makes builds one.
-
-    For serving a store outside a tree, such as a web server's routes: give
-    them the same spec the tree binds, so both reach one store. An LMDB env
-    opened twice in one process is one env, shared.
-
-    Args:
-        spec: what ``lmdb``, ``files`` or ``s3`` gave.
-
-    Example:
-        spec = nustd.blob.lmdb(Media, ".store/media")
-        backend = nustd.blob.backend_of(spec)
-        backend.open()
-    """
-    if not isinstance(spec, Provide):
-        raise TypeError(f"a blob spec is what nustd.blob.lmdb, files or s3 gives, got {spec!r}")
-    # Resolve the spec's config the way the bracket does on entry, so a
-    # computed kwargs child reaches the same backend the tree would build.
-    cls, kwargs, *_ = spec._config_values(Context())
-    if cls is not BlobFabric:
-        raise TypeError(f"a blob spec is what nustd.blob.lmdb, files or s3 gives, got {spec!r}")
-    return kwargs["backend"](**dict(kwargs.get("options") or {}))

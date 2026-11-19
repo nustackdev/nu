@@ -22,7 +22,6 @@ from nustd.blob import (
     LMDBBackend,
     S3Backend,
     StoreRef,
-    backend_of,
 )
 from nustd.blob.store import store_name
 
@@ -36,11 +35,10 @@ Pics = StoreRef("pics-v1")
 def test_registered_as_a_lazy_fabric():
     assert "blob" in dir(nustd)
     assert nustd.blob.StoreRef is StoreRef
-    assert nustd.blob.backend_of is backend_of
 
 
 def test_old_surface_is_gone():
-    for gone in ("Store", "URL_PREFIX", "routes"):
+    for gone in ("Store", "URL_PREFIX", "routes", "backend_of"):
         assert not hasattr(nustd.blob, gone)
         assert gone not in nustd.blob.__all__
 
@@ -198,52 +196,30 @@ def test_preset_refuses_what_is_no_store(bad, tmp_path):
         nustd.blob.s3(bad, bucket="b")
 
 
-def test_backend_of_lmdb(tmp_path):
+def test_lmdb_preset_carries_its_options(tmp_path):
     spec = nustd.blob.lmdb(
         Media, tmp_path / "env", map_size=1 << 24, max_readers=16, writemap=False
     )
-    backend = backend_of(spec)
-    assert type(backend) is LMDBBackend
-    assert backend._env is None
-    assert backend.map_size == 1 << 24
-    assert backend.max_readers == 16
-    assert backend.writemap is False
-    assert not (tmp_path / "env").exists()  # not opened
+    kwargs = config(spec)["kwargs"]
+    assert kwargs["backend"] is LMDBBackend
+    assert kwargs["options"] == {
+        "path": str(tmp_path / "env"),
+        "map_size": 1 << 24,
+        "max_readers": 16,
+        "writemap": False,
+    }
 
 
-def test_backend_of_files(tmp_path):
-    backend = backend_of(nustd.blob.files(Media, tmp_path / "files"))
-    assert type(backend) is FilesBackend
-    assert backend.root == tmp_path / "files"
-    assert not (tmp_path / "files").exists()  # not opened
+def test_files_preset_carries_its_root(tmp_path):
+    kwargs = config(nustd.blob.files(Media, tmp_path / "files"))["kwargs"]
+    assert kwargs["backend"] is FilesBackend
+    assert kwargs["options"] == {"root": str(tmp_path / "files")}
 
 
-def test_backend_of_s3():
+def test_s3_preset_carries_its_options():
     spec = nustd.blob.s3(Media, bucket="media", prefix="space/", endpoint_url="http://s3.test")
-    backend = backend_of(spec)
-    assert type(backend) is S3Backend
-    assert backend.bucket == "media"
-    assert backend.prefix == "space/"
-    assert backend.endpoint_url == "http://s3.test"
-    assert backend._client is None  # not opened
-
-
-def test_backend_of_builds_a_new_backend_each_call(tmp_path):
-    spec = nustd.blob.files(Media, tmp_path)
-    assert backend_of(spec) is not backend_of(spec)
-
-
-@pytest.mark.parametrize(
-    "bad",
-    [
-        None,
-        "media",
-        Media,
-        {"backend": FilesBackend, "options": {}},
-        nu.Provide(dict, {}, tag="media"),
-    ],
-    ids=["none", "str", "ref", "dict", "other-provide"],
-)
-def test_backend_of_refuses_what_is_no_spec(bad):
-    with pytest.raises(TypeError, match="a blob spec"):
-        backend_of(bad)
+    kwargs = config(spec)["kwargs"]
+    assert kwargs["backend"] is S3Backend
+    assert kwargs["options"]["bucket"] == "media"
+    assert kwargs["options"]["prefix"] == "space/"
+    assert kwargs["options"]["endpoint_url"] == "http://s3.test"
