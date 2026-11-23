@@ -10,6 +10,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- README trimmed to a calm intro, two examples and the main fabrics
+
 ## 0.9.0 - 2026-11-20
 
 - Release nu 0.9.0
