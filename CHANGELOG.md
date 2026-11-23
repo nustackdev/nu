@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- READMEs say what nu is plainly and list every nustd module accurately
 - README trimmed to a calm intro, two examples and the main fabrics
 
 ## 0.9.0 - 2026-11-20

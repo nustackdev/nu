@@ -5,12 +5,17 @@
 
   [![Python](https://img.shields.io/badge/python-%3E%3D%203.10-blue)](https://pypi.org/project/nucore/)
   [![PyPI](https://img.shields.io/pypi/v/nucore?color=yellow)](https://pypi.org/project/nucore/)
+  [![Downloads](https://img.shields.io/pypi/dw/nucore?color=green)](https://pypi.org/project/nucore/)
   [![License](https://img.shields.io/badge/license-Apache%202.0-orange.svg)](LICENSE.md)
+
   [![Discord](https://img.shields.io/badge/discord-join-5865F2?logo=discord&logoColor=white)](https://discord.gg/tCa8YE7XVr)
+  [![X](https://img.shields.io/twitter/follow/nustackdev?style=social)](https://x.com/nustackdev)
+
+  [About](#about) · [Examples](#examples) · [Install](#install) · [Docs](https://nustack.dev/docs/nu) · [Tutorial](https://nustack.dev/docs/nu/tutorials/your-first-app)
 
 </div>
 
-nu is a Python programming model where every resource is a Ref and interactions are first-class.
+nu is a Python programming model for apps that span many systems. Every resource is a Ref, wherever it lives: a database row, a UI widget, an LLM endpoint, a remote worker. Interactions with Refs are first-class primitives you compose into programs.
 
 ## About
 
@@ -58,7 +63,7 @@ class Home(nustd.ui.Column):
     hello = nustd.ui.TextRef.slot()
 
 
-op = nustd.ui.boot(Home.hello) >> Home.hello.set("Hello, browser.")
+op = Home.hello.set("Hello, browser.")
 
 asyncio.run(nu.arun(nustd.ui.serve(op)))
 ```
@@ -77,31 +82,33 @@ pip install "nustd[all]"
 
 | Module | What it binds | Extra |
 | --- | --- | --- |
-| [`nustd.kv`](https://nustack.dev/docs/nustd/reference/kv) | Persistent state over RocksDB, LMDB or SQLite, sharded by name | `kv` |
-| `nustd.blob` | Images, video and other large bytes, stored once and streamed by range. Local or S3 | `blob` |
-| [`nustd.ui`](https://nustack.dev/docs/nustd/reference/ui) | Live web UI: text, tables, charts, forms, 50+ components | `ui` |
-| [`nustd.mp`](https://nustack.dev/docs/nustd/reference/mp), [`nustd.cluster`](https://nustack.dev/docs/nustd/reference/cluster) | Local worker processes or a Ray cluster: send any tree to any worker | `mp`, `cluster` |
+| [`nustd.kv`](https://nustack.dev/docs/nustd/reference/kv) | Persistent state over RocksDB, LMDB or SQLite, with transactions and change notifications | `kv` |
+| `nustd.blob` | Write-once bytes, stored and streamed by range. On LMDB, plain files or S3 | `blob` |
+| [`nustd.ui`](https://nustack.dev/docs/nustd/reference/ui) | Widgets as Refs, rendered in the browser and kept live | `ui` |
+| [`nustd.mp`](https://nustack.dev/docs/nustd/reference/mp), [`nustd.cluster`](https://nustack.dev/docs/nustd/reference/cluster) | Local worker processes or a Ray cluster: run any tree on any worker | `mp`, `cluster` |
 | [`nustd.proxy`](https://nustack.dev/docs/nustd/reference/proxy) | Any fabric, used from another process | `proxy` |
 | `nustd.acp` | Coding agents (Claude Code, Codex, Gemini) over the Agent Client Protocol | `acp` |
 | [`nustd.llm`](https://nustack.dev/docs/nustd/reference/llm) | OpenAI-compatible chat: OpenAI, Ollama, vLLM, OpenRouter, Groq, xAI, Cerebras | `llm` |
 
-Plus Python's standard library in the same shape: `math`, `random`, `time`, `datetime`, `itertools`, `functools`, `json`, `pathlib`, `uuid`, `decimal` and more. Same names and call signatures, but a call returns a tree that composes into the rest of the program.
+Plus Python's standard library in the same shape: `math`, `random`, `time`, `datetime`, `itertools`, `functools`, `json`, `pathlib`, `uuid`, `decimal` and more. Same names and call signatures, but a call returns a tree that composes into the rest of the program. Every module in the [nustd README](pkgs/nustd).
 
-Full list in the [nustd reference](https://nustack.dev/docs/nustd).
+## The stack
 
-## Where nu fits
-
-nu is one layer of nustack. Under it sits the [interaction model](https://github.com/nustackdev/interaction-model), the language-agnostic spec nu implements. On top of it runs [nuspace](https://github.com/nustackdev/nuspace), a computational space made of small nu programs.
-
-## Docs
-
-- [Your first app](https://nustack.dev/docs/nu/tutorials/your-first-app)
-- [nu docs](https://nustack.dev/docs/nu): tutorials, how-tos and the full reference
-- [nustd reference](https://nustack.dev/docs/nustd)
+nu is the Python implementation of the [interaction model](https://github.com/nustackdev/interaction-model). [nuspace](https://github.com/nustackdev/nuspace) is what we build with it: a computational space where everything, the space included, is a nu program.
 
 ## Community
 
-[Discord](https://discord.gg/tCa8YE7XVr) · [X @nustackdev](https://x.com/nustackdev) · [Issues](https://github.com/nustackdev/nu/issues)
+- [Discord](https://discord.gg/tCa8YE7XVr): ask questions, share what you build with nu
+- [X @nustackdev](https://x.com/nustackdev): releases and work in progress
+- [Issues](https://github.com/nustackdev/nu/issues): bugs and feature requests
+
+Building on nu? Add the badge:
+
+[![nu](https://img.shields.io/badge/built%20with-nu-%237A4CE0)](https://github.com/nustackdev/nu)
+
+```md
+[![nu](https://img.shields.io/badge/built%20with-nu-%237A4CE0)](https://github.com/nustackdev/nu)
+```
 
 ## License
 
