@@ -31,9 +31,9 @@ class InlineEditRef(Moves, Submits, _Placeholder, InputLeaf):
     A click, Enter or Space opens the editor with the text selected. Enter
     saves and submits (a change when the text moved, then ``on_submit()``),
     a blur saves (a change when it moved), Escape cancels and puts the text
-    back. The value lands when the edit is saved, so a read while the editor
-    is open sees the saved text; ``on_input()`` hears each keystroke with
-    the text in the editor as ``value``. A ``required`` one saved empty is a cancel.
+    back. The value lands when the edit is saved; a read while the editor
+    is open sees the text in it, and ``on_input()`` hears each keystroke
+    with that text as ``value``. A ``required`` one saved empty is a cancel.
 
     ``error`` is a line of error text under it, and turns the editor red;
     ``set_error("")`` clears it. Inside a ``Field`` the Field's error does

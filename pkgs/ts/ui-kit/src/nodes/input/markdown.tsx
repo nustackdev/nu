@@ -11,8 +11,9 @@
 // Commit moments (a quiet moment, blur, the send key): the node's `value`
 // prop updates locally, then `{event: "change", value}` goes out with the
 // text. Between saves each edit sends `{event: "input", value}` with the
-// document as markdown, serialized only when someone listens; `value` (and so
-// a read) keeps the last save.
+// document as markdown, serialized only when someone listens; `value` keeps
+// the last save. A read answers what the editor shows, the edits included
+// (./draft.ts), the same text an input event carries.
 // The send key then sends, the way a text area does (./control.ts
 // `useSubmit`): `{event: "submit", value}` with the text just saved, an
 // enclosing Form asked to submit, and with `clear_on_submit` the declared
@@ -41,7 +42,10 @@
 // earlier save of its own, not the latest, is a stale echo and leaves `value`
 // alone. And a read that arrives while a save has gone out and not been read
 // back yet is answered with that save, whatever has landed in `value`
-// meanwhile, since that save is what the read was provoked by. Nothing is
+// meanwhile, since that save is what the read was provoked by. With no save
+// waiting, a read mid-edit answers the editor's text, and that text joins
+// the saves kept: a program that writes it back has its echo told apart the
+// same way once a later save is on the screen. Nothing is
 // held back: a program's write that is not one of these echoes lands at
 // once, so a program that never writes the text back works as it always did.
 //
@@ -83,7 +87,7 @@
 
 import { OPS, type Path } from "@nustackdev/ui-core";
 import type { EditorView } from "prosemirror-view";
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Markdown } from "../../components/ui/markdown";
 import { SUBMIT_ON } from "../../lib/keyboard";
 import type { MarkdownHandle } from "../../lib/markdown/handle";
@@ -99,6 +103,7 @@ import {
 	useStringProp,
 } from "../../tree";
 import { EVENTS, useDisabledScope, useSubmit } from "./control";
+import { clearDraft, draftAt, setDraft } from "./draft";
 
 /** A mounted markdown editor: its handle while it takes commands, null while read-only. */
 export type MarkdownEntry = { handle: MarkdownHandle | null };
@@ -242,10 +247,14 @@ function MarkdownView({ path }: NodeProps) {
 	/** This editor's place in the table; set while it is mounted. */
 	const registration = useRef<MarkdownRegistration | null>(null);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
+	useEffect(() => () => clearDraft(path), [key]);
+
 	const commit = useCallback(
 		(source: string) => {
 			// Local first, so the read the notify provokes answers with the text
 			// that provoked it.
+			clearDraft(path);
 			setValue(source);
 			const s = savesOf(path);
 			s.texts = [...s.texts.slice(1 - SAVES_KEPT), source];
@@ -258,6 +267,7 @@ function MarkdownView({ path }: NodeProps) {
 	// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
 	const edit = useCallback(
 		(read: () => string) => {
+			setDraft(path, read);
 			if (isWatched(path, EVENTS.input)) emit(EVENTS.input, { value: read() });
 		},
 		[key, emit],
@@ -330,7 +340,16 @@ export const MarkdownRef: NodeEntry = {
 			// read is for, whatever landed in `value` since.
 			const s = saves.get(pathKey(ctx.path));
 			const pending = s?.unread ? s.texts[s.texts.length - 1] : undefined;
-			ctx.send(OPS.read, pending ?? ctx.node.props.value ?? null, ctx.frame.id);
+			// Else the editor's text, edits included, kept with the saves so
+			// its echo is known for one of ours.
+			const draft = pending === undefined ? draftAt(ctx.path) : undefined;
+			if (draft !== undefined) {
+				const own = savesOf(ctx.path);
+				if (own.texts[own.texts.length - 1] !== draft) {
+					own.texts = [...own.texts.slice(1 - SAVES_KEPT), draft];
+				}
+			}
+			ctx.send(OPS.read, pending ?? draft ?? ctx.node.props.value ?? null, ctx.frame.id);
 			if (!s?.unread) return;
 			s.unread = false;
 			const waiting = [...s.waiting.keys()];

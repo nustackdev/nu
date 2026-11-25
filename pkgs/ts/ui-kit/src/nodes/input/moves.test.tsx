@@ -273,6 +273,48 @@ describe("editors send input per edit", () => {
 	});
 });
 
+describe("editors answer a read with the text they show", () => {
+	const read = (id: string, payload: unknown = null) => {
+		act(() => tree.getState().dispatch({ op: OPS.read, ref: ["n"], payload, id }));
+		return sent.find((f) => f.id === id);
+	};
+
+	it("CodeRef: the edits before the commit, the commit after", () => {
+		mount("CodeRef", { value: "a", readonly: false });
+		const cm = CMView.findFromDOM(host.querySelector(".cm-editor") as HTMLElement) as CMView;
+		act(() => {
+			cm.focus();
+			cm.dispatch({ changes: { from: 1, insert: "b" } });
+		});
+		expect(tree.getState().getIn(["n"])?.props.value).toBe("a");
+		expect(read("r1")?.payload).toBe("ab");
+		act(() => {
+			runScopeHandlers(
+				cm,
+				new KeyboardEvent("keydown", { key: "Enter", shiftKey: true }),
+				"editor",
+			);
+		});
+		expect(tree.getState().getIn(["n"])?.props.value).toBe("ab");
+		expect(read("r2")?.payload).toBe("ab");
+	});
+
+	it("CodeRef: refuses a field it does not have", () => {
+		mount("CodeRef", { value: "a", readonly: false });
+		expect(read("r1", { field: "nope" })?.op).toBe("error");
+	});
+
+	it("InlineEditRef: the text in the open editor, the saved text after Escape", () => {
+		mount("InlineEditRef", { value: "Notes" });
+		act(() => host.querySelector<HTMLButtonElement>("button")?.click());
+		const input = host.querySelector("input") as HTMLInputElement;
+		type(input, "Idea");
+		expect(read("r1")?.payload).toBe("Idea");
+		key(input, "Escape");
+		expect(read("r2")?.payload).toBe("Notes");
+	});
+});
+
 describe("discrete inputs", () => {
 	it("send a change with the value and no input", () => {
 		mount("CheckboxRef", { value: false, label: "Done" });

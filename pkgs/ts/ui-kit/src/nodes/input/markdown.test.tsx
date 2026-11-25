@@ -76,6 +76,35 @@ const payloads = () =>
 const notifies = () => payloads().filter((p) => p.event !== "input").length;
 
 describe("MarkdownRef saves", () => {
+	it("answers a read mid-edit with the editor's text, before any save", () => {
+		const doc = mount("a\n");
+		act(() => {
+			doc.focus("end");
+			doc.type("b");
+		});
+		expect(value()).toBe("a\n");
+		dispatch(OPS.read, null, "r1");
+		expect(answered("r1")).toBe("ab\n");
+		act(() => doc.commit());
+		dispatch(OPS.read, null, "r2");
+		expect(answered("r2")).toBe("ab\n");
+	});
+
+	it("knows the echo of a text it handed a read once a later save is on the screen", () => {
+		const doc = mount("a\n");
+		act(() => {
+			doc.focus("end");
+			doc.type("b");
+		});
+		dispatch(OPS.read, null, "r1");
+		expect(answered("r1")).toBe("ab\n");
+		save(doc, "c");
+		// The program wrote back what it read, and it lands after the save.
+		dispatch(OPS.write, "ab\n");
+		expect(value()).toBe("abc\n");
+		expect(doc.markdown()).toBe("abc\n");
+	});
+
 	it("sets the value locally and notifies, and answers the read with it", () => {
 		const doc = mount("a\n");
 		save(doc, "b");

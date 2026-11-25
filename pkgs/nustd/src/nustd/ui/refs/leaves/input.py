@@ -452,9 +452,9 @@ class CodeRef(Moves, Submits, InputLeaf):
     `readonly=False` the same view becomes an editor: the server seeds the text
     with `set`, reads it back through `Ref` like any input Ref, and subscribes
     with `on_change()`. The browser commits on the send key and on blur, not
-    on every keystroke, so a read between commits sees the last committed
-    text and not what is under the caret. `on_input()` hears each keystroke
-    with the text under the caret as ``value``. The send key also submits
+    on every keystroke, while a read sees the text as it stands, edits not
+    committed yet included. `on_input()` hears each keystroke with that text
+    as ``value``. The send key also submits
     (`on_submit()`, the text sent as ``sub["value"]``) and submits the `Form`
     around it, this editor's text in its values. It is shift+Enter with Enter
     the newline, or the other way round with `submit_on="enter"`, as on every
@@ -634,8 +634,9 @@ class MarkdownRef(Moves, Submits, _Placeholder, InputLeaf):
     server writes the source with `set`, reads it back through `Ref` like any
     input Ref, and subscribes with `on_change()`. The browser notifies back
     on a quiet moment or on blur. `on_input()` hears each edit with the
-    document's markdown as ``value``, so a read between saves still sees the
-    last save. One engine for both modes, so a document
+    document's markdown as ``value``, and a read between saves sees that
+    same text, edits not saved yet included. A read right after a save
+    answers that save. One engine for both modes, so a document
     looks the same whether or not you can type in it.
 
     The send key saves at once and submits (`on_submit()`, the markdown sent

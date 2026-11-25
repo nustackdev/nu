@@ -8,10 +8,10 @@
 // back. Enter and Escape hand focus back to the text; a blur leaves it
 // where the click went.
 //
-// The value lands in the store when the edit is saved, not per keystroke: a
-// read while the editor is open sees the saved text, which is what an
-// Escape would leave. Each keystroke still sends `{event: "input", value}`
-// with the text in the editor, and a save `{event: "change", value}`. A required one saved empty is a cancel.
+// The value lands in the store when the edit is saved, not per keystroke,
+// so Escape has the saved text to put back. A read while the editor is open
+// answers the text in it (./draft.ts), the same text each keystroke sends as
+// `{event: "input", value}`; a save sends `{event: "change", value}`. A required one saved empty is a cancel.
 //
 // `error` draws a kit FieldError under the text and turns the editor red
 // (the text at rest stays plain, the error line says it);
@@ -23,7 +23,14 @@ import { useEffect, useId, useRef, useState } from "react";
 import { FieldError, Label } from "../../components/ui/field";
 import { InlineEdit } from "../../components/ui/inline-edit";
 import { cn } from "../../lib/utils";
-import { type NodeEntry, type NodeProps, useEmit, useProp, useStringProp } from "../../tree";
+import {
+	type NodeEntry,
+	type NodeProps,
+	pathKey,
+	useEmit,
+	useProp,
+	useStringProp,
+} from "../../tree";
 import {
 	asText,
 	EVENTS,
@@ -33,6 +40,7 @@ import {
 	useControl,
 	valueWrite,
 } from "./control";
+import { clearDraft, readDraft, setDraft } from "./draft";
 
 // The text at rest and the editor share one height and one text size per
 // control size, so opening the editor does not move the line.
@@ -74,7 +82,11 @@ function InlineEditView({ path }: NodeProps) {
 	const labelledBy = c.labelledBy ?? (c.label ? labelId : undefined);
 	const locked = c.disabled || c.readOnly;
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
+	useEffect(() => () => clearDraft(path), [pathKey(path)]);
+
 	const close = (back: boolean) => {
+		clearDraft(path);
 		refocus.current = back;
 		setEditing(false);
 	};
@@ -121,7 +133,11 @@ function InlineEditView({ path }: NodeProps) {
 							required: c.required,
 							placeholder: c.placeholder,
 							maxLength: maxLength ?? undefined,
-							onChange: (e) => emit(EVENTS.input, { value: e.currentTarget.value }),
+							onChange: (e) => {
+								const text = e.currentTarget.value;
+								setDraft(path, () => text);
+								emit(EVENTS.input, { value: text });
+							},
 						}}
 					/>
 				</span>
@@ -169,6 +185,7 @@ export const InlineEditRef: NodeEntry = {
 	fill: true,
 	input: { empty: "", ownsError: true },
 	handlers: {
+		read: readDraft,
 		write: valueWrite(asText),
 		reset: resetHandler,
 	},

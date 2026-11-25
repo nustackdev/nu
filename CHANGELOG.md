@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Code, markdown and inline edit reads return the text typed, not the last save
 - Examples follow the new events, live slider added, table seeds and bad reads fixed
 - Alerts, empty states, waterfalls and uploads use the shared event names and reads
 - Inputs report live movement, and tabs, modals, trees and tables read back
