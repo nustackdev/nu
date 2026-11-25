@@ -8,12 +8,23 @@ This package holds only the nodes, their constructors, and the atoms only those
 constructors build.
 
 Primitive nodes live in ``primitives``, collection nodes (with the dict views
-and ``Iterator``) in ``collections``. ``Form``, the kind, lives in ``nu.lang``
-and is re-exported here for convenience.
+and ``Iterator``) in ``collections``, the abstract forms of the type-like
+``collections.abc`` layers (``Mapping``, ``Sequence``, ...) in ``abc``.
+``Form``, the kind, lives in ``nu.lang`` and is re-exported here for
+convenience.
 """
 
 from nu.lang import Form
 
+from .abc import (
+    AbstractSet,
+    Collection,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    MutableSet,
+    Sequence,
+)
 from .collections import (
     Dict,
     DictItems,
@@ -38,8 +49,10 @@ from .primitives import (
 
 
 __all__ = [
+    "AbstractSet",
     "Bool",
     "Bytes",
+    "Collection",
     "Dict",
     "DictItems",
     "DictKeys",
@@ -50,9 +63,14 @@ __all__ = [
     "Int",
     "Iterator",
     "List",
+    "Mapping",
+    "MutableMapping",
+    "MutableSequence",
+    "MutableSet",
     "None_",
     "NullForm",
     "Object",
+    "Sequence",
     "Set",
     "Str",
     "Tuple",

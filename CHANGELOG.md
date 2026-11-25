@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Values typed only as an abstract mapping, sequence or set get their own forms
 - Methods move to their own package so refs share them without pulling form nodes
 - Form implementation gets its own module beside brackets, surfaces get theirs
 - Warn when a stream sits where nothing consumes it, since streams are lazy

@@ -203,15 +203,24 @@ def _parametric_ref(ref_cls: type, args: tuple, hints: dict[str, object]) -> Typ
 
 
 def _form_for(py_type: object) -> type[Form]:
+    import collections.abc as cabc
+
     from nu.forms import (
+        AbstractSet,
         Bool,
         Bytes,
+        Collection,
         Dict,
         Float,
         FrozenSet,
         Int,
         List,
+        Mapping,
+        MutableMapping,
+        MutableSequence,
+        MutableSet,
         Object,
+        Sequence,
         Set,
         Str,
         Tuple,
@@ -228,7 +237,18 @@ def _form_for(py_type: object) -> type[Form]:
         set: Set,
         frozenset: FrozenSet,
         tuple: Tuple,
+        cabc.Collection: Collection,
+        cabc.Sequence: Sequence,
+        cabc.MutableSequence: MutableSequence,
+        cabc.Mapping: Mapping,
+        cabc.MutableMapping: MutableMapping,
+        cabc.Set: AbstractSet,
+        cabc.MutableSet: MutableSet,
     }
+    # ``typing.Mapping`` and ``collections.abc.Mapping[str, int]`` read as their ABC.
+    origin = typing.get_origin(py_type)
+    if isinstance(origin, type) and origin.__module__ == "collections.abc":
+        py_type = origin
     return mapping.get(py_type, Object)  # type: ignore[arg-type]
 
 

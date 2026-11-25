@@ -116,6 +116,18 @@ NOT_SLOT_VALUES = {
     forms.NullForm,  # the absence of a value
 }
 
+#: Abstract forms over an ABC surface: their row is that surface's ABC row (or,
+#: for ``Collection``, the capability itself), so they add none of their own.
+ABSTRACT_FORMS = {
+    forms.Collection: fabc.CollectionSurface,
+    forms.Sequence: fabc.SequenceSurface,
+    forms.MutableSequence: fabc.MutableSequenceSurface,
+    forms.Mapping: fabc.MappingSurface,
+    forms.MutableMapping: fabc.MutableMappingSurface,
+    forms.AbstractSet: fabc.SetLikeSurface,
+    forms.MutableSet: fabc.MutableSetSurface,
+}
+
 #: The single-method ABCs ``CollectionSurface`` is built from; ``CollectionSurface`` is
 #: the read capability itself, so they have no row of their own.
 CAPABILITY_FRAGMENTS = {
@@ -144,8 +156,14 @@ def _all_forms() -> set[type]:
 
 def test_every_form_has_a_row() -> None:
     covered = {form for _, form, _ in CELLS} | ABC_WITHOUT_REF
-    missing = _all_forms() - covered - NOT_SLOT_VALUES - CAPABILITY_FRAGMENTS
+    missing = _all_forms() - covered - NOT_SLOT_VALUES - CAPABILITY_FRAGMENTS - set(ABSTRACT_FORMS)
     assert not missing, f"forms with no shape row: {sorted(c.__name__ for c in missing)}"
+
+
+@pytest.mark.parametrize(("form", "surface"), ABSTRACT_FORMS.items(), ids=lambda c: c.__name__)
+def test_each_abstract_form_rides_an_abc_row(form: type, surface: type) -> None:
+    assert surface in form.__bases__
+    assert surface in CAPABILITY_FRAGMENTS or any(surface in row for row in ABC_ROWS.values())
 
 
 @pytest.mark.parametrize(("ref", "form", "capability"), CELLS, ids=CELL_IDS)
