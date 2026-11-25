@@ -332,6 +332,26 @@ describe("DataTableRef, dict columns and rows", () => {
 		expect(cell("b", "title").closest("tr")?.getAttribute("aria-selected")).toBe("true");
 	});
 
+	it("keeps a seeded selection until the rows land", () => {
+		mount({
+			columns: ["id", "title"],
+			rows: [],
+			row_key: "id",
+			selection: "multi",
+			selected: ["b"],
+		});
+		expect(props().selected).toEqual(["b"]);
+		dispatch(OPS.write, {
+			rows: [
+				{ id: "a", title: "A" },
+				{ id: "b", title: "B" },
+			],
+		});
+		dispatch(OPS.read, null, "r4");
+		expect(sent.find((f) => f.op === OPS.read)?.payload).toEqual(["b"]);
+		expect(cell("b", "title").closest("tr")?.getAttribute("aria-selected")).toBe("true");
+	});
+
 	it("reads a selection the person made", () => {
 		mount({
 			columns: ["id", "title"],

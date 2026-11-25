@@ -153,7 +153,7 @@ on_move = nu.ReactEvery(
 
 # The catch-all: every event, whatever it is, into the activity list.
 on_any = nu.ReactEvery(
-    TREE.on_change(),
+    TREE.on_event(),
     lambda ev: LOG.append(nu.Str(ev["event"]) + "  " + nu.Str(ev["key"])),
 )
 

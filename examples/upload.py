@@ -1,10 +1,10 @@
 """Upload - search a csv the person picks, and list a few picked files.
 
 Picking a file moves no bytes. The csv block reads the first 4 KiB the moment
-a file is picked (`get_slice`), shows its header row and makes the columns of
+a file is picked (`slice`), shows its header row and makes the columns of
 the table from it, then pulls the whole file to the server in the background.
 Typing a query and pressing Enter (or leaving the field) reads the file
-(`get_bytes`, from the server's copy once it landed) and shows the rows that
+(`bytes`, from the server's copy once it landed) and shows the rows that
 contain the query. The files block takes several files and lists their names
 and sizes straight from the value: it never reads a byte.
 
@@ -89,7 +89,7 @@ def picked() -> nu.Nu:
     return nu.IfDo(
         nu.IsNull(CSV.file),
         CSV.header.set("No file yet") >> CSV.status.set("") >> CSV.rows.clear(),
-        nu.let(CSV.file.get_slice(0, 4096), show_header) >> CSV.file.pull(),
+        nu.let(CSV.file.slice(0, 4096), show_header) >> CSV.file.pull(),
     )
 
 
@@ -122,7 +122,7 @@ csv = (
     | nu.ReactEvery(CSV.file.on_upload(), landed)
     | nu.ReactEvery(
         CSV.query.on_change(),
-        lambda _: nu.IfDo(nu.IsNull(CSV.file), nu.Noop(), nu.let(CSV.file.get_bytes(), search)),
+        lambda _: nu.IfDo(nu.IsNull(CSV.file), nu.Noop(), nu.let(CSV.file.bytes(), search)),
     )
 )
 

@@ -27,6 +27,8 @@ import inspect
 import pkgutil
 from typing import ClassVar
 
+import pytest
+
 import nu
 import nustd.ui as ui
 from nu import Context, Shape
@@ -38,6 +40,7 @@ from nustd.ui.core import (
     EVENT,
     INPUT,
     OP_BATCH,
+    OP_ERROR,
     OP_READ,
     OP_UNWATCH,
     OP_WATCH,
@@ -371,6 +374,22 @@ def test_ws_read_frame_payload_is_field_or_null():
     asyncio.run(run())
     payloads = [decode(raw).payload for raw in ws.sent]
     assert payloads == [None, {"field": "expanded"}]
+
+
+def test_ws_read_of_a_field_the_node_lacks_raises():
+    session = WsSession(_Ws())  # type: ignore[arg-type]
+    refusal = {"code": "payload_invalid", "message": 'TreeRef has no read "nope"'}
+
+    async def run():
+        task = asyncio.create_task(session.aread(("t",), "nope"))
+        while not session._pending:
+            await asyncio.sleep(0)
+        [rid] = session._pending
+        session._dispatch(decode(encode(Frame(OP_ERROR, ref=("t",), payload=refusal, id=rid))))
+        with pytest.raises(LookupError, match="payload_invalid at t"):
+            await task
+
+    asyncio.run(run())
 
 
 def test_ws_subscribe_takes_an_event():

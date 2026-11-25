@@ -128,7 +128,7 @@
 // order `selected` holds them, [] for none.
 
 import { getNode, type NodeHandler, type Path, type Props } from "@nustackdev/ui-core";
-import { useCallback, useEffect, useLayoutEffect, useMemo } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import {
 	DataTable,
 	type DataTableColumn,
@@ -460,8 +460,12 @@ function TableView({ path }: NodeProps) {
 		const keys = rawSelected.map(str).filter((k) => indexOf.has(k));
 		return keys.length ? keys : NO_KEYS;
 	}, [rawSelected, indexOf]);
+	// A table the server fills after it draws has no rows at first: keep a
+	// seeded selection until rows land, or the seed is gone before they do.
+	const hadRows = useRef(false);
+	if (rows.length) hadRows.current = true;
 	useEffect(() => {
-		if (selected.length !== rawSelected.length) setProps({ selected });
+		if (hadRows.current && selected.length !== rawSelected.length) setProps({ selected });
 	}, [selected, rawSelected, setProps]);
 	const indexes = useCallback(
 		(keys: readonly string[]) => keys.map((k) => indexOf.get(k) ?? -1),

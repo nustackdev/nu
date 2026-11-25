@@ -318,6 +318,12 @@ class WsSession(Session):
                 fut.set_result(frame.payload)
             return
         if frame.op == OP_ERROR:
+            # A refused read (a field the node does not have) answers with the
+            # read's id: fail that read, so the program raises where it asked.
+            fut = self._pending.get(frame.id) if frame.id is not None else None
+            if fut is not None and not fut.done():
+                fut.set_exception(LookupError(_refusal(frame)))
+                return
             self._on_error(frame)
             return
         # Unknown inbound op: ignored.
@@ -333,13 +339,18 @@ class WsSession(Session):
         time the refusal lands: the log is where it surfaces. A host that wants
         more overrides this.
         """
-        payload = frame.payload if isinstance(frame.payload, dict) else {}
-        code = payload.get("code", "error")
-        message = payload.get("message", frame.payload)
-        _log.error("nustd.ui browser refused %s at %s: %s", code, "/".join(frame.ref), message)
+        _log.error("nustd.ui browser refused %s", _refusal(frame))
 
     def _fail_pending(self) -> None:
         for fut in self._pending.values():
             if not fut.done():
                 fut.set_exception(ConnectionError("ui session closed"))
         self._pending.clear()
+
+
+def _refusal(frame: Frame) -> str:
+    """What an ``error`` frame says, as one line: its code, where, and its message."""
+    payload = frame.payload if isinstance(frame.payload, dict) else {}
+    code = payload.get("code", "error")
+    message = payload.get("message", frame.payload)
+    return f"{code} at {'/'.join(frame.ref)}: {message}"
