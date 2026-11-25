@@ -233,7 +233,7 @@ def _render_class(cls: type, path: str) -> str:
         return _render_declaration(parse_shape(cls, path=path), kind="SHAPE")
     if is_service(cls):
         return _render_declaration(parse_service(cls, path=path), kind="SERVICE")
-    # Order matters: Refs inherit Nu, Forms inherit Interaction, so the most
+    # Order matters: Refs inherit Nu, Forms inherit Interaction (a Span), so the most
     # specific dispatch wins - Ref before Form before Interaction.
     if issubclass(cls, Ref):
         record = parse_ref(cls, path=path)

@@ -59,7 +59,7 @@ assert_type(anyval >= 10, Bool)
 assert_type(anyval <= 100, Bool)
 
 
-# --- Sentinel checks (inherited from Form) ---------------------------
+# --- Sentinel checks (inherited from Surface) ------------------------
 
 
 assert_type(anyval.is_null(), Bool)

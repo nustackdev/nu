@@ -303,7 +303,7 @@ class SetRef(ReactiveSetRef[T], ViewRef[set[T]], Generic[T]):
           by storage rather than by reading the set out.
         - Elements have no addresses of their own to descend into: a set has
           no keys, so there is no element ref and no subscript.
-        - The declared value types what comes out: ``pop`` is its form, and
+        - The declared value types what comes out: ``pop`` yields its form, and
           the set algebra (``union``, ``intersection``, ...) yields a Set
           carrying it on. The in-place variants (``update``,
           ``difference_update``, ...) are the ones that write.

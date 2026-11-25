@@ -104,10 +104,11 @@ def parse_interaction(
 def catalogue(module: ModuleType) -> tuple[InteractionRecord, ...]:
     """A record per interaction the module exports, in export order.
 
-    Forms and Refs are excluded. Both are Interaction subclasses by
-    inheritance, so a naive check reports every Form twice - once here and
-    once in the Form catalogue - and the three catalogues stop partitioning
-    the module. Same most-specific-wins dispatch ``Inspect`` uses on a single
+    Forms and Refs are excluded. A Form is an Interaction subclass (a Span),
+    so a naive check reports every Form twice - once here and once in the
+    Form catalogue - and the three catalogues stop partitioning the module.
+    The Ref check is a guard for a Ref that mixes in an Interaction of its
+    own. Same most-specific-wins dispatch ``Inspect`` uses on a single
     class.
     """
     name = module.__name__

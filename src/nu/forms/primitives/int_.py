@@ -1,6 +1,6 @@
 """Int - integer interface.
 
-Int = Form[int] + arithmetic + comparison + logical + bitwise.
+Int = IntSurface (arithmetic + comparison + logical + bitwise) on a ``Form[int]`` node.
 Handles int/float promotion: int op float -> Float.
 """
 

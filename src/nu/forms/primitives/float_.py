@@ -1,6 +1,6 @@
 """Float - float interface.
 
-Float = Form[float] + arithmetic + comparison + logical.
+Float = FloatSurface (arithmetic + comparison + logical) on a ``Form[float]`` node.
 """
 
 from __future__ import annotations

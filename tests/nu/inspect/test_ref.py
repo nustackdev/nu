@@ -19,7 +19,7 @@ def test_a_ref_is_a_builder_record_dispatch_tagged() -> None:
     assert record.name == "IntRef"
 
 
-def test_typed_refs_carry_the_form_operator_surface() -> None:
+def test_typed_refs_carry_the_value_operator_surface() -> None:
     spellings = {m.spelling for m in parse_ref(IntRef).methods}
     assert "a + b" in spellings
     assert ".set(...)" in spellings

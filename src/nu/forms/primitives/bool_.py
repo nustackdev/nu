@@ -1,6 +1,6 @@
 """Bool - boolean interface.
 
-Bool = Form[bool] + logical + comparison.
+Bool = BoolSurface (logical + comparison) on a ``Form[bool]`` node.
 """
 
 from __future__ import annotations

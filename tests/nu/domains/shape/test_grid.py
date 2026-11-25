@@ -44,7 +44,7 @@ def _surface(form: type) -> type:
 # rows
 # ---------------------------------------------------------------------------
 
-#: ABC forms, read tier first, and the capability base of each tier.
+#: ABC surfaces, read tier first, and the capability base of each tier.
 ABC_ROWS: dict[str, tuple[type, ...]] = {
     "Mapping": (fabc.MappingSurface, fabc.MutableMappingSurface, fabc.ReactiveMappingSurface),
     "OrderedMapping": (
@@ -170,9 +170,9 @@ def test_package_exports_every_ref() -> None:
         assert ref.__name__ in shape.__all__
 
 
-def test_no_shape_only_forms_beside_the_refs() -> None:
+def test_no_shape_only_surfaces_beside_the_refs() -> None:
     # Built-in and primitive rows are refs only; the ABC rows keep their
-    # shape forms, which ShapeRef and the built-in refs build on.
+    # shape surfaces, which ShapeRef and the built-in refs build on.
     from nu.domains.shape.collections import dict_, list_, set_, tuple_
     from nu.domains.shape.primitives import bool_, bytes_, float_, int_, object_, str_
 
@@ -188,16 +188,16 @@ def test_no_shape_only_forms_beside_the_refs() -> None:
 
 
 @pytest.mark.parametrize(("ref", "form", "capability"), CELLS, ids=CELL_IDS)
-def test_each_ref_is_its_form_under_its_capability(ref: type, form: type, capability: type) -> None:
+def test_each_ref_carries_its_surface_under_its_capability(
+    ref: type, form: type, capability: type
+) -> None:
     assert issubclass(ref, _surface(form)), (ref, form)
     assert issubclass(ref, capability), (ref, capability)
     assert issubclass(ref, StructuredRef), ref
 
 
 @pytest.mark.parametrize(("ref", "form", "capability"), CELLS, ids=CELL_IDS)
-def test_the_slot_capability_wins_over_the_value_form(
-    ref: type, form: type, capability: type
-) -> None:
+def test_the_slot_capability_wins_over_the_surface(ref: type, form: type, capability: type) -> None:
     # A ref shares its form's surface, never the form node: it stays a fabric
     # read with no passthrough to shadow. The capability precedes the surface,
     # so ``set`` and the watches act on the slot.
