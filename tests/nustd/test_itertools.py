@@ -20,6 +20,8 @@ import operator
 
 import pytest
 
+import nu
+import nustd
 from nu.context import Attr
 from nu.core import Collect
 from nu.lang import Context
@@ -349,3 +351,55 @@ async def test_loop_vars_are_scoped_to_each_item_async(build: object, expected: 
     assert value == expected
     assert ctx.attrs.get("item") == "outer item"
     assert ctx.attrs.get("acc") == "outer acc"
+
+
+# --- stream detection and chaining ------------------------------------------
+
+
+class _Pop(nu.Service):
+    """A mutating stream endpoint, so ``pop()`` builds a stream action."""
+
+    pop = nustd.service.StreamActionRef.method()
+
+
+class _Stack:
+    def __init__(self) -> None:
+        self.items = [1, 2, 3]
+
+    def pop(self):
+        while self.items:
+            yield self.items.pop()
+
+
+@pytest.mark.parametrize(
+    "build",
+    [
+        lambda: nu.List.of(1, 2, 3).iter(),
+        lambda: nu.Snapshot(nu.List.of(1, 2, 3).iter()),
+        lambda: _Pop.pop(),
+        lambda: chain([1], [2, 3]),
+    ],
+    ids=["iterator_form", "snapshot_over_stream", "stream_action", "itertools_result"],
+)
+def test_a_stream_argument_is_reused_not_reopened(build: object) -> None:
+    from nustd.itertools.functions import _stream
+
+    term = build()
+    assert _stream(term) is term
+
+
+def test_a_snapshot_over_a_stream_feeds_an_itertools_member() -> None:
+    assert mat(pairwise(nu.Snapshot(nu.List.of(1, 2, 3).iter()))) == [(1, 2), (2, 3)]
+
+
+def test_a_stream_action_feeds_an_itertools_member() -> None:
+    stack = _Stack()
+    app = nu.With(nustd.service.bind(_Pop, target=stack), body=pairwise(_Pop.pop()).to_list())
+    assert run(app)[0] == [(3, 2), (2, 1)]
+    assert stack.items == []
+
+
+def test_an_itertools_result_keeps_chaining() -> None:
+    doubled = islice(count(), 4).map(lambda x: nu.Int(x) * 2)
+    assert run(doubled.to_list())[0] == [0, 2, 4, 6]
+    assert run(chain([1, 2], [3]).sum())[0] == 6
