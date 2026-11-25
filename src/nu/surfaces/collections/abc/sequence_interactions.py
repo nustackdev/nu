@@ -12,7 +12,6 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
-from nu.factory.host import host
 from nu.lang import Command, ScalarAction, ScalarQuery
 from nu.lang.null import is_null
 
@@ -33,33 +32,12 @@ __all__ = [
     "IndexOf",
     "Insert",
     "Last",
-    "ListCreate",
-    "ListOf",
     "Pop",
     "RemoveValue",
     "Reverse",
     "SetIndex",
     "Sort",
-    "TupleCreate",
-    "TupleOf",
 ]
-
-
-# =============================================================================
-# SEQUENCE CONSTRUCTORS
-# =============================================================================
-
-# Empty list: deterministic (always []), but each eval must yield a *fresh*
-# mutable object - a future fold/CSE pass must not alias two ListCreate results.
-ListCreate = host(list, name="ListCreate")
-# Empty tuple: deterministic and immutable (sharing one () is fine).
-TupleCreate = host(tuple, name="TupleCreate")
-# Tuple from positional items: TupleOf(a, b) evaluates each child expression and
-# packs the values into a fresh tuple. Sibling to DictOf.
-TupleOf = host(lambda *items: items, name="TupleOf")
-# List from positional items: sibling to TupleOf; each eval yields a fresh
-# mutable list.
-ListOf = host(lambda *items: list(items), name="ListOf")
 
 
 # =============================================================================

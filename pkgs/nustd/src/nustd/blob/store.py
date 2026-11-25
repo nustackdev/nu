@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from nu.context import FabricRef
-from nu.forms import Iterator
 from nu.lang import Nu, ScalarQuery
 from nu.lang.null import Null, is_null
 
@@ -27,6 +26,7 @@ from .protocol import STEP
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from nu.forms import Iterator
     from nu.forms.primitives import Bool
     from nu.lang import IntArg, StrArg
     from nu.lang.runtime import Runtime
@@ -188,6 +188,8 @@ class StoreRef(FabricRef):
             end: one past the last byte; None for the end of the blob.
             step: bytes per piece.
         """
+        from nu.forms import Iterator
+
         _check_given_id(blob_id)
         return Iterator(BlobOpen(self, blob_id, start, end, step))
 

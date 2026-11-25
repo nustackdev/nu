@@ -13,7 +13,7 @@ from nu.lang import Surface
 
 
 if TYPE_CHECKING:
-    from nu.forms.primitives import Bool
+    from nu.forms import Bool
 
 
 __all__ = [
@@ -51,6 +51,6 @@ class ContainerSurface(Surface):
             False
         """
         from nu.core import Contains
-        from nu.forms.primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Contains(self, item))

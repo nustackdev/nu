@@ -14,16 +14,12 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
     from nu.context import Attr
-    from nu.forms.primitives import Bool, Bytes, Float, Int, Object, Str
+    from nu.forms import Bool, Bytes, Float, Int, Iterator, List, Object, Set, Str, Tuple
     from nu.lang import Arg, IntArg, Nu, StrArg
-
-    from .list_ import List
-    from .set_ import Set
-    from .tuple_ import Tuple
 
 
 __all__ = [
-    "Iterator",
+    "IteratorSurface",
 ]
 
 
@@ -57,7 +53,7 @@ class IteratorSurface(Surface, Generic[T]):
 
     def _item(self, operand: Nu) -> Form:
         """``operand`` (one of this stream's items) in the declared element's form."""
-        from nu.forms.primitives import Object
+        from nu.forms import Object
 
         elem = self._declared_elem
         form_cls = elem.to_form() if elem is not None else Object
@@ -133,6 +129,7 @@ class IteratorSurface(Surface, Generic[T]):
             [2, 3]
         """
         from nu.core import Map
+        from nu.forms import Iterator
 
         return Iterator(Map(self, transform, key))
 
@@ -166,6 +163,7 @@ class IteratorSurface(Surface, Generic[T]):
             [2, 3]
         """
         from nu.core import Filter
+        from nu.forms import Iterator
 
         return Iterator(Filter(self, predicate, key), type_info=self._holding(PyIterator))
 
@@ -182,7 +180,7 @@ class IteratorSurface(Surface, Generic[T]):
             2
         """
         from nu.core import Count
-        from nu.forms.primitives import Int
+        from nu.forms import Int
 
         return Int(Count(self))
 
@@ -210,7 +208,7 @@ class IteratorSurface(Surface, Generic[T]):
             True
         """
         from nu.core import Sum
-        from nu.forms.primitives import Float, Int, Object
+        from nu.forms import Float, Int, Object
 
         elem = self._declared_elem
         py_type = elem.py_type if elem is not None else None
@@ -295,7 +293,7 @@ class IteratorSurface(Surface, Generic[T]):
             True
         """
         from nu.core import AnyOf
-        from nu.forms.primitives import Bool
+        from nu.forms import Bool
 
         return Bool(AnyOf(self))
 
@@ -314,7 +312,7 @@ class IteratorSurface(Surface, Generic[T]):
             True
         """
         from nu.core import AllOf
-        from nu.forms.primitives import Bool
+        from nu.forms import Bool
 
         return Bool(AllOf(self))
 
@@ -383,6 +381,7 @@ class IteratorSurface(Surface, Generic[T]):
             ['ccc', 'bb', 'a']
         """
         from nu.core import SortBy
+        from nu.forms import Iterator
 
         return Iterator(SortBy(self, key, reverse, item), type_info=self._holding(PyIterator))
 
@@ -400,6 +399,7 @@ class IteratorSurface(Surface, Generic[T]):
             [1, 2, 3]
         """
         from nu.core import Unique
+        from nu.forms import Iterator
 
         return Iterator(Unique(self), type_info=self._holding(PyIterator))
 
@@ -417,6 +417,7 @@ class IteratorSurface(Surface, Generic[T]):
             [3, 2, 1]
         """
         from nu.core import Reversed
+        from nu.forms import Iterator
 
         return Iterator(Reversed(self), type_info=self._holding(PyIterator))
 
@@ -434,6 +435,7 @@ class IteratorSurface(Surface, Generic[T]):
             [(1, 'a'), (2, 'b')]
         """
         from nu.core import Enumerate
+        from nu.forms import Iterator
 
         if start is None:
             return Iterator(Enumerate(self))
@@ -458,6 +460,7 @@ class IteratorSurface(Surface, Generic[T]):
             [(1, 'a'), (2, 'b')]
         """
         from nu.core import Zip
+        from nu.forms import Iterator
 
         return Iterator(Zip(self, *others))
 
@@ -475,6 +478,7 @@ class IteratorSurface(Surface, Generic[T]):
             [1, 2, 3]
         """
         from nu.core import Flatten
+        from nu.forms import Iterator
 
         return Iterator(Flatten(self))
 
@@ -489,8 +493,7 @@ class IteratorSurface(Surface, Generic[T]):
             [1, 2]
         """
         from nu.core import Collect
-
-        from .list_ import List
+        from nu.forms import List
 
         return List(Collect(self), type_info=self._holding(list))
 
@@ -508,8 +511,7 @@ class IteratorSurface(Surface, Generic[T]):
             {1, 2}
         """
         from nu.core import Collect, ToSet
-
-        from .set_ import Set
+        from nu.forms import Set
 
         return Set(ToSet(Collect(self)), type_info=self._holding(set))
 
@@ -524,8 +526,7 @@ class IteratorSurface(Surface, Generic[T]):
             (1, 2)
         """
         from nu.core import Collect, ToTuple
-
-        from .tuple_ import Tuple
+        from nu.forms import Tuple
 
         return Tuple(ToTuple(Collect(self)))
 
@@ -544,41 +545,6 @@ class IteratorSurface(Surface, Generic[T]):
             [1, 2, 3]
         """
         from nu.core import Collect, Sorted
-
-        from .list_ import List
+        from nu.forms import List
 
         return List(Sorted(Collect(self)), type_info=self._holding(list))
-
-
-class Iterator(IteratorSurface[T], Form[PyIterator[T]], Generic[T]):
-    """Lazy stream over another form's elements.
-
-    Opened by `.iter()` on an IterableSurface, which wraps the source in
-    a stream-shaped `Iter` term. A term of this shape produces its items one
-    at a time rather than as a single value, so it sits wherever a stream
-    goes: `nu.ForEachDo`, `nu.Map`, `nu.Collect`, and the itertools.
-
-    Notes:
-        - Stream-shaped, not scalar. Its surface is stream operations:
-          `map`, `filter`, `sort_by`, `unique`, `reversed`, `enumerate`,
-          `zip` and `flatten` stay streams; `count`, `sum`, `min`, `max`,
-          `any`, `all`, `first` and `last` fold it to one value that keeps
-          chaining (`.sum() > 10`); `to_list`, `to_set`, `to_tuple` and
-          `sorted` drain it into a concrete collection.
-        - No `==` / `!=`: an iterator has no value to compare, so both
-          raise. Drain it first: `it.to_list() == [...]`.
-        - An element type rides in the ``type_info`` field when the
-          source declared one (a typed collection ref opened with `.iter()`).
-          The item `first`/`last`/`min`/`max` read takes that type's form,
-          and every op whose items are still the source's (`filter`,
-          `sort_by`, `unique`, `reversed`, `to_list`, `to_set`, `sorted`)
-          carries it on. `map`, `enumerate`, `zip` and `flatten` do not:
-          they make new items.
-
-    Yields:
-        Its items in order, one per pull, until exhausted.
-
-    Example:
-        >>> nu.run(nu.List.of(1, 2, 3).iter().to_list())[0]
-        [1, 2, 3]
-    """

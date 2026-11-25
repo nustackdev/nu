@@ -31,19 +31,17 @@ it in the appropriate interaction.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from nu.lang import Form, Surface
+from nu.lang import Surface
 
 
 if TYPE_CHECKING:
-    from ..collections.iterator_ import Iterator
-    from .bool_ import Bool
-    from .int_ import Int
+    from nu.forms import Bool, Int, Iterator, Object
 
 
 __all__ = [
-    "Object",
+    "ObjectSurface",
 ]
 
 
@@ -69,6 +67,7 @@ class ObjectSurface(Surface):
             5
         """
         from nu.core import Add
+        from nu.forms import Object
 
         return Object(Add(self, other))
 
@@ -90,6 +89,7 @@ class ObjectSurface(Surface):
             5
         """
         from nu.core import Add
+        from nu.forms import Object
 
         return Object(Add(other, self))
 
@@ -107,6 +107,7 @@ class ObjectSurface(Surface):
             7
         """
         from nu.core import Sub
+        from nu.forms import Object
 
         return Object(Sub(self, other))
 
@@ -127,6 +128,7 @@ class ObjectSurface(Surface):
             7
         """
         from nu.core import Sub
+        from nu.forms import Object
 
         return Object(Sub(other, self))
 
@@ -144,6 +146,7 @@ class ObjectSurface(Surface):
             42
         """
         from nu.core import Mul
+        from nu.forms import Object
 
         return Object(Mul(self, other))
 
@@ -164,6 +167,7 @@ class ObjectSurface(Surface):
             12
         """
         from nu.core import Mul
+        from nu.forms import Object
 
         return Object(Mul(other, self))
 
@@ -179,6 +183,7 @@ class ObjectSurface(Surface):
             at evaluation time when neither operand supports `@`.
         """
         from nu.core import MatMul
+        from nu.forms import Object
 
         return Object(MatMul(self, other))
 
@@ -197,6 +202,7 @@ class ObjectSurface(Surface):
             at evaluation time when neither operand supports `@`.
         """
         from nu.core import MatMul
+        from nu.forms import Object
 
         return Object(MatMul(other, self))
 
@@ -219,6 +225,7 @@ class ObjectSurface(Surface):
             3.5
         """
         from nu.core import Div
+        from nu.forms import Object
 
         return Object(Div(self, other))
 
@@ -241,6 +248,7 @@ class ObjectSurface(Surface):
             2.5
         """
         from nu.core import Div
+        from nu.forms import Object
 
         return Object(Div(other, self))
 
@@ -261,6 +269,7 @@ class ObjectSurface(Surface):
             3
         """
         from nu.core import FloorDiv
+        from nu.forms import Object
 
         return Object(FloorDiv(self, other))
 
@@ -282,6 +291,7 @@ class ObjectSurface(Surface):
             -4
         """
         from nu.core import FloorDiv
+        from nu.forms import Object
 
         return Object(FloorDiv(other, self))
 
@@ -302,6 +312,7 @@ class ObjectSurface(Surface):
             1
         """
         from nu.core import Mod
+        from nu.forms import Object
 
         return Object(Mod(self, other))
 
@@ -323,6 +334,7 @@ class ObjectSurface(Surface):
             2
         """
         from nu.core import Mod
+        from nu.forms import Object
 
         return Object(Mod(other, self))
 
@@ -340,6 +352,7 @@ class ObjectSurface(Surface):
             1024
         """
         from nu.core import Pow
+        from nu.forms import Object
 
         return Object(Pow(self, other))
 
@@ -360,6 +373,7 @@ class ObjectSurface(Surface):
             1024
         """
         from nu.core import Pow
+        from nu.forms import Object
 
         return Object(Pow(other, self))
 
@@ -374,6 +388,7 @@ class ObjectSurface(Surface):
             -4
         """
         from nu.core import Neg
+        from nu.forms import Object
 
         return Object(Neg(self))
 
@@ -392,6 +407,7 @@ class ObjectSurface(Surface):
             -4
         """
         from nu.core import Pos
+        from nu.forms import Object
 
         return Object(Pos(self))
 
@@ -406,6 +422,7 @@ class ObjectSurface(Surface):
             4
         """
         from nu.core import Abs
+        from nu.forms import Object
 
         return Object(Abs(self))
 
@@ -429,8 +446,7 @@ class ObjectSurface(Surface):
             True
         """
         from nu.core import Gt
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Gt(self, other))
 
@@ -449,8 +465,7 @@ class ObjectSurface(Surface):
             False
         """
         from nu.core import Lt
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Lt(self, other))
 
@@ -469,8 +484,7 @@ class ObjectSurface(Surface):
             True
         """
         from nu.core import Ge
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Ge(self, other))
 
@@ -489,8 +503,7 @@ class ObjectSurface(Surface):
             True
         """
         from nu.core import Le
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Le(self, other))
 
@@ -512,8 +525,7 @@ class ObjectSurface(Surface):
             True
         """
         from nu.core import Eq
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Eq(self, other))
 
@@ -534,8 +546,7 @@ class ObjectSurface(Surface):
             True
         """
         from nu.core import Ne
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Ne(self, other))
 
@@ -558,8 +569,7 @@ class ObjectSurface(Surface):
             True
         """
         from nu.core import Is
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Is(self, other))
 
@@ -587,8 +597,7 @@ class ObjectSurface(Surface):
             False
         """
         from nu.core import And
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(And(self, other))
 
@@ -612,8 +621,7 @@ class ObjectSurface(Surface):
             True
         """
         from nu.core import Or
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Or(self, other))
 
@@ -632,8 +640,7 @@ class ObjectSurface(Surface):
             True
         """
         from nu.core import Not
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Not(self))
 
@@ -652,8 +659,7 @@ class ObjectSurface(Surface):
             True
         """
         from nu.core import ToBool
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(ToBool(self))
 
@@ -682,6 +688,7 @@ class ObjectSurface(Surface):
             8
         """
         from nu.core import BitAnd
+        from nu.forms import Object
 
         return Object(BitAnd(self, other))
 
@@ -703,6 +710,7 @@ class ObjectSurface(Surface):
             14
         """
         from nu.core import BitOr
+        from nu.forms import Object
 
         return Object(BitOr(self, other))
 
@@ -720,6 +728,7 @@ class ObjectSurface(Surface):
             6
         """
         from nu.core import BitXor
+        from nu.forms import Object
 
         return Object(BitXor(self, other))
 
@@ -734,6 +743,7 @@ class ObjectSurface(Surface):
             -6
         """
         from nu.core import BitNot
+        from nu.forms import Object
 
         return Object(BitNot(self))
 
@@ -753,6 +763,7 @@ class ObjectSurface(Surface):
             16
         """
         from nu.core import LShift
+        from nu.forms import Object
 
         return Object(LShift(self, other))
 
@@ -776,6 +787,7 @@ class ObjectSurface(Surface):
             4
         """
         from nu.core import RShift
+        from nu.forms import Object
 
         return Object(RShift(self, other))
 
@@ -792,6 +804,8 @@ class ObjectSurface(Surface):
             >>> sorted(nu.run(nu.Object({1, 2}).union({2, 3}))[0])
             [1, 2, 3]
         """
+        from nu.forms import Object
+
         from ..collections.abc.set_interactions import Union
 
         return Object(Union(self, other))
@@ -809,6 +823,8 @@ class ObjectSurface(Surface):
             >>> nu.run(nu.Object({1, 2, 3}).intersection({2, 4}))[0]
             {2}
         """
+        from nu.forms import Object
+
         from ..collections.abc.set_interactions import Intersection
 
         return Object(Intersection(self, other))
@@ -826,6 +842,8 @@ class ObjectSurface(Surface):
             >>> nu.run(nu.Object({1, 2, 3}).difference({2}))[0]
             {1, 3}
         """
+        from nu.forms import Object
+
         from ..collections.abc.set_interactions import Difference
 
         return Object(Difference(self, other))
@@ -843,6 +861,8 @@ class ObjectSurface(Surface):
             >>> nu.run(nu.Object({1, 2}).symmetric_difference({2, 3}))[0]
             {1, 3}
         """
+        from nu.forms import Object
+
         from ..collections.abc.set_interactions import SymmetricDifference
 
         return Object(SymmetricDifference(self, other))
@@ -861,6 +881,8 @@ class ObjectSurface(Surface):
             >>> nu.run(nu.Object({"a": 1}).merge({"b": 2}))[0]
             {'a': 1, 'b': 2}
         """
+        from nu.forms import Object
+
         from ..collections.abc.mapping_interactions import Merge
 
         return Object(Merge(self, other))
@@ -889,6 +911,7 @@ class ObjectSurface(Surface):
             [1, 2]
         """
         from nu.core import GetItem, Slice
+        from nu.forms import Object
 
         if isinstance(key, slice):
             key = Slice(key.start, key.stop, key.step)
@@ -927,6 +950,8 @@ class ObjectSurface(Surface):
             >>> nu.run(nu.Object(Obj()).x)[0]
             5
         """
+        from nu.forms import Object
+
         if name.startswith("_"):
             msg = f"{type(self).__name__!r} object has no attribute {name!r}"
             raise AttributeError(msg)
@@ -959,8 +984,7 @@ class ObjectSurface(Surface):
             3
         """
         from nu.core import Len
-
-        from .int_ import Int
+        from nu.forms import Int
 
         return Int(Len(self))
 
@@ -982,8 +1006,7 @@ class ObjectSurface(Surface):
             True
         """
         from nu.core import Contains
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Contains(self, item))
 
@@ -1001,8 +1024,7 @@ class ObjectSurface(Surface):
             An Iterator over self's elements.
         """
         from nu.core import Iter
-
-        from ..collections.iterator_ import Iterator
+        from nu.forms import Iterator
 
         return Iterator(Iter(self))
 
@@ -1026,35 +1048,6 @@ class ObjectSurface(Surface):
             True
         """
         from nu.core import HasAttr
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(HasAttr(self, name))
-
-
-class Object(ObjectSurface, Form[Any]):
-    """The interface every term has. Full operator surface, no promise about the runtime type.
-
-    Arithmetic, bitwise, subscript, and attribute descent are all
-    absorbing: the result of any of them is another Object, since the
-    concrete type isn't known until evaluation. Comparison and logical
-    operators are the exception - they still yield Bool, because "is
-    this true" is a well-typed question even when the operand type
-    isn't.
-
-    Notes:
-        - Typed as `Form[Any]`, not `Form[object]`. That lets an
-          Object value slot into any narrow Arg position (IntArg, StrArg,
-          ...), so `intref + objval` resolves through Int's `__add__`
-          and lands as Int instead of falling through to Object's `__radd__`.
-        - `&`, `|` and `>>` compose flows (Race, Parallel, Sequential)
-          like on every term. Bit, set and merge operations are named
-          methods (`bitand`, `union`, `merge`, ...).
-        - There's no `__call__`. A callable value in a Nu tree goes
-          through an interaction (built via `host` or hand-written),
-          not raw Python call dispatch.
-
-    Example:
-        >>> nu.run(nu.Object(6) * nu.Object(7))[0]
-        42
-    """

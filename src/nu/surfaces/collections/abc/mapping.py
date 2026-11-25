@@ -31,8 +31,7 @@ from .collection import CollectionSurface
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from nu.forms.collections.iterator_ import Iterator
-    from nu.forms.collections.list_ import List
+    from nu.forms import Iterator, List
     from nu.lang import Arg, BoolArg, Nu
     from nu.lang.sentinels import Unset
 
@@ -453,19 +452,19 @@ class OrderedMappingSurface(
 
     def _wrap_values_stream(self, operand: Nu) -> Iterator[ValueT]:
         """Wrap a stream term over self's values as an Iterator. Override to type the values."""
-        from nu.forms.collections.iterator_ import Iterator
+        from nu.forms import Iterator
 
         return Iterator(operand)
 
     def _wrap_items_stream(self, operand: Nu) -> Iterator[tuple[KeyT, ValueT]]:
         """Wrap a stream term over self's ``(key, value)`` pairs as an Iterator."""
-        from nu.forms.collections.iterator_ import Iterator
+        from nu.forms import Iterator
 
         return Iterator(operand)
 
     def _wrap_keys_page(self, operand: Nu) -> List[KeyT]:
         """Wrap a term yielding one page of keys as a List. Override to type the keys."""
-        from nu.forms.collections.list_ import List
+        from nu.forms import List
 
         return List(operand)
 

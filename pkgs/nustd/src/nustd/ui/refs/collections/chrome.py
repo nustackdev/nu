@@ -25,7 +25,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from typing_extensions import Self, Unpack
 
-from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import child_at
 from nustd.ui.core.interactions import Changed, Reset, Send, Write
@@ -53,6 +52,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
 
     from nu.domains.shape import Slot
+    from nu.forms import Dict
     from nu.lang import Nu
     from nu.lang.args import Arg, BoolArg, ListArg, StrArg
     from nu.lang.runtime import Runtime
@@ -191,10 +191,14 @@ class AccordionRef(DictCollectionRef):
         )
 
     def set_sections(self, items: ListArg[dict[str, str]]) -> Nu:
+        from nu.forms import Dict
+
         value = _normalize_sections(items) if isinstance(items, list) else items
         return Write(self, Dict.of(sections=value))
 
     def set_open(self, ids: ListArg[str]) -> Nu:
+        from nu.forms import Dict
+
         value = _normalize_open(ids) if isinstance(ids, list) else ids
         return Write(self, Dict.of(open=value))
 
@@ -439,15 +443,23 @@ class FieldRef(ShapeCollectionRef):
         )
 
     def set_label(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(label=text))
 
     def set_help(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(help=text))
 
     def set_error(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(error=text))
 
     def set_required(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(required=flag))
 
 
@@ -478,9 +490,13 @@ class FieldsetRef(ChildLayout, DictCollectionRef):
         return super().slot(item, legend=legend, disabled=bool(disabled), **cls._laid_out(layout))
 
     def set_legend(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(legend=text))
 
     def set_disabled(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(disabled=flag))
 
 
@@ -564,6 +580,8 @@ class FormRef(ChildLayout, DictCollectionRef):
 
     def values(self) -> Dict:
         """Every input under the form, nested by slot name, in one read."""
+        from nu.forms import Dict
+
         return Dict(self)
 
     def reset(self) -> Nu:
@@ -572,13 +590,19 @@ class FormRef(ChildLayout, DictCollectionRef):
 
     def set_busy(self, flag: BoolArg) -> Nu:
         """Busy drops submits and spins the submit buttons; ``busy_on_submit`` sets it."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(busy=flag))
 
     def set_title(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(title=text))
 
     def set_disabled(self, flag: BoolArg) -> Nu:
         """Disable every input and button in the form, and drop its submits."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(disabled=flag))
 
     def set_errors(self, errors: Arg[Any]) -> Nu:
@@ -648,12 +672,18 @@ class ModalRef(ChildLayout, DictCollectionRef):
         return header_ref(self)
 
     def set_open(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(open=flag))
 
     def set_title(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(title=text))
 
     def set(self, open: BoolArg = UNSET, title: StrArg = UNSET) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {}
         if open is not UNSET:
             payload["open"] = open

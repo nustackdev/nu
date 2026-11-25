@@ -17,14 +17,14 @@ from itertools import pairwise
 import pytest
 
 import nu.domains.shape as shape
-from nu import forms
+from nu import forms, surfaces
 from nu.domains.shape import collection as cap
 from nu.domains.shape import item
 from nu.domains.shape.base import StructuredRef
 from nu.domains.shape.collections import abc as sabc
 from nu.domains.shape.form import SlotSurface
-from nu.forms.collections import abc as fabc
 from nu.lang import Form
+from nu.surfaces.collections import abc as fabc
 
 
 def _ref_name(form: type) -> str:
@@ -36,7 +36,7 @@ def _ref_name(form: type) -> str:
 def _surface(form: type) -> type:
     """The surface a ref of this row mixes in: the value form's, or the ABC surface itself."""
     if issubclass(form, Form):
-        return getattr(forms, f"{form.__name__}Surface")
+        return getattr(surfaces, f"{form.__name__}Surface")
     return form
 
 
@@ -130,7 +130,7 @@ CAPABILITY_FRAGMENTS = {
 def _all_forms() -> set[type]:
     """Every value form ``nu.forms`` exports (built-in, primitive) and every ABC surface."""
     found = set()
-    for module, base in ((forms, forms.Form), (fabc, forms.Surface)):
+    for module, base in ((forms, forms.Form), (fabc, surfaces.Surface)):
         for value in vars(module).values():
             if inspect.isclass(value) and issubclass(value, base) and value is not base:
                 found.add(value)
@@ -161,7 +161,7 @@ def test_each_ref_is_named_after_its_form(ref: type, form: type, capability: typ
 def test_abc_reactive_set_has_no_ref() -> None:
     assert not hasattr(sabc, "ReactiveSetRef")
     assert shape.ReactiveSetRef is shape.collections.ReactiveSetRef
-    assert issubclass(shape.ReactiveSetRef, forms.SetSurface)
+    assert issubclass(shape.ReactiveSetRef, surfaces.SetSurface)
 
 
 def test_package_exports_every_ref() -> None:

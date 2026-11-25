@@ -4,21 +4,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, TypeVar
 
-from nu.lang import Form
-
 from .abc import MutableSetSurface, SetLikeSurface
-from .abc.set_interactions import FrozenSetCreate, FrozenSetOf, SetCreate, SetOf
 
 
 if TYPE_CHECKING:
-    from nu.lang import Arg, FrozenSetArg, Nu, SetArg
-
-    from ..primitives import Bool, Object
+    from nu.forms import Bool, FrozenSet, Object, Set
+    from nu.lang import FrozenSetArg, Nu, SetArg
 
 
 __all__ = [
-    "FrozenSet",
-    "Set",
+    "FrozenSetSurface",
+    "SetSurface",
 ]
 
 
@@ -34,6 +30,8 @@ class SetSurface(MutableSetSurface[set[T], T, "Set[T]", "Object"], Generic[T]):
         Yields:
             The operand wrapped as Set.
         """
+        from nu.forms import Set
+
         return Set(operand)
 
     def _wrap_element_result(self, operand: Nu) -> Object:
@@ -47,7 +45,7 @@ class SetSurface(MutableSetSurface[set[T], T, "Set[T]", "Object"], Generic[T]):
         ti = self._type_info
         if ti is not None and ti.elem is not None:
             return ti.elem.to_form()(operand)  # type: ignore[return-value]
-        from ..primitives import Object
+        from nu.forms import Object
 
         return Object(operand)
 
@@ -91,8 +89,7 @@ class SetSurface(MutableSetSurface[set[T], T, "Set[T]", "Object"], Generic[T]):
             True
         """
         from nu.core import Eq
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Eq(self, other))
 
@@ -113,8 +110,7 @@ class SetSurface(MutableSetSurface[set[T], T, "Set[T]", "Object"], Generic[T]):
             True
         """
         from nu.core import Ne
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Ne(self, other))
 
@@ -137,65 +133,9 @@ class SetSurface(MutableSetSurface[set[T], T, "Set[T]", "Object"], Generic[T]):
             False
         """
         from nu.core import Is
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Is(self, other))
-
-
-class Set(SetSurface[T], Form[set[T]], Generic[T]):
-    """Set interface. Mutable set + comparable.
-
-    Notes:
-        - Iteration order is arbitrary, matching Python's `set`. Don't rely
-          on insertion order surviving a round trip.
-        - `>`, `<`, `>=`, `<=` are subset/superset relations, not size
-          comparisons: `a > b` means a is a proper superset of b, not that
-          a has more elements. They come from the shared set base.
-        - The named algebra (`union`, `issubset`, ...) and in-place
-          updates (`update`, `*_update`) come from the shared set bases:
-          Nu's spelling of the Set ABC operators, since `&`, `|` and `>>`
-          compose flows on a set like on every term and `-` / `^` are not
-          defined. Only `copy` is set-only and lives here.
-
-    Example:
-        >>> nu.run(nu.Set.of(1, 2, 3))[0]
-        {1, 2, 3}
-    """
-
-    @classmethod
-    def create(cls) -> Set[T]:
-        """Build a fresh empty set.
-
-        Yields:
-            An empty Set.
-
-        Example:
-            >>> nu.run(nu.Set.create())[0]
-            set()
-        """
-        return cls(SetCreate())
-
-    @classmethod
-    def of(cls, *items: Arg) -> Set:
-        """Build a set from positional item expressions.
-
-        Args:
-            *items: expressions to evaluate and fold into the set, in any
-                order.
-
-        Notes:
-            - Sibling to `List.of` / `Tuple.of`. Duplicate values collapse,
-              same as Python `set` construction.
-
-        Yields:
-            A fresh Set holding the evaluated items.
-
-        Example:
-            >>> nu.run(nu.Set.of(1, 2, 2, 3))[0]
-            {1, 2, 3}
-        """
-        return cls(SetOf(*items))
 
 
 class FrozenSetSurface(SetLikeSurface[frozenset[T], T, "FrozenSet[T]", "Object"], Generic[T]):
@@ -207,6 +147,8 @@ class FrozenSetSurface(SetLikeSurface[frozenset[T], T, "FrozenSet[T]", "Object"]
         Yields:
             The operand wrapped as FrozenSet.
         """
+        from nu.forms import FrozenSet
+
         return FrozenSet(operand)
 
     def _wrap_element_result(self, operand: Nu) -> Object:
@@ -215,7 +157,7 @@ class FrozenSetSurface(SetLikeSurface[frozenset[T], T, "FrozenSet[T]", "Object"]
         Yields:
             The operand wrapped as Object.
         """
-        from ..primitives import Object
+        from nu.forms import Object
 
         return Object(operand)
 
@@ -259,8 +201,7 @@ class FrozenSetSurface(SetLikeSurface[frozenset[T], T, "FrozenSet[T]", "Object"]
             True
         """
         from nu.core import Eq
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Eq(self, other))
 
@@ -281,8 +222,7 @@ class FrozenSetSurface(SetLikeSurface[frozenset[T], T, "FrozenSet[T]", "Object"]
             True
         """
         from nu.core import Ne
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Ne(self, other))
 
@@ -305,59 +245,6 @@ class FrozenSetSurface(SetLikeSurface[frozenset[T], T, "FrozenSet[T]", "Object"]
             False
         """
         from nu.core import Is
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Is(self, other))
-
-
-class FrozenSet(FrozenSetSurface[T], Form[frozenset[T]], Generic[T]):
-    """FrozenSet interface. Immutable set + comparable.
-
-    Notes:
-        - Iteration order is arbitrary, matching Python's `frozenset`.
-        - `>`, `<`, `>=`, `<=` are subset/superset relations, not size
-          comparisons. The named algebra (`union`, `issubset`, ...) comes
-          from the shared set base; only `copy` lives here. Set algebra is
-          named only: `&`, `|` and `>>` compose flows.
-        - No `add`/`remove`/`update`/... unlike `Set`: a FrozenSet can't be
-          mutated in place.
-
-    Example:
-        >>> nu.run(nu.FrozenSet.of(1, 2, 3))[0]
-        frozenset({1, 2, 3})
-    """
-
-    @classmethod
-    def create(cls) -> FrozenSet[T]:
-        """Build an empty frozenset.
-
-        Yields:
-            An empty FrozenSet.
-
-        Example:
-            >>> nu.run(nu.FrozenSet.create())[0]
-            frozenset()
-        """
-        return cls(FrozenSetCreate())
-
-    @classmethod
-    def of(cls, *items: Arg) -> FrozenSet:
-        """Build a frozenset from positional item expressions.
-
-        Args:
-            *items: expressions to evaluate and fold into the frozenset, in
-                any order.
-
-        Notes:
-            - Sibling to `Set.of`. Duplicate values collapse, same as
-              Python `frozenset` construction.
-
-        Yields:
-            A fresh FrozenSet holding the evaluated items.
-
-        Example:
-            >>> nu.run(nu.FrozenSet.of(1, 2, 2, 3))[0]
-            frozenset({1, 2, 3})
-        """
-        return cls(FrozenSetOf(*items))

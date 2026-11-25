@@ -8,18 +8,21 @@ one spec. Everything else, descent and typing included, is a ``DictRef``.
 
 from __future__ import annotations
 
-from typing import Generic
+from typing import TYPE_CHECKING, Generic
 
 from typing_extensions import TypeVar
 
 from nu.domains.shape import Slot
-from nu.forms import Object
 from nu.lang.sentinels import UNSET
 from nu.lang.typeinfo import TypeInfo
 from virtuals.views import LogIndexedDictView, LogIndexedDictViewBase
 
 from .base import _refuse_container_value
 from .containers import DictRef, _require_view
+
+
+if TYPE_CHECKING:
+    from nu.forms import Object
 
 
 __all__ = [
@@ -120,6 +123,7 @@ class LogDictRef(DictRef[K, V], Generic[K, V]):
             run(Indexes.removed.first(), ctx)
             run(Indexes.removed.first(default=nu.NullForm()), ctx)
         """
+        from nu.forms import Object
         from nustd.kv.interactions.ordered import OrderedFirst
 
         return Object(OrderedFirst(self, default))
@@ -142,6 +146,7 @@ class LogDictRef(DictRef[K, V], Generic[K, V]):
         Example:
             run(Indexes.removed.last(), ctx)
         """
+        from nu.forms import Object
         from nustd.kv.interactions.ordered import OrderedLast
 
         return Object(OrderedLast(self, default))

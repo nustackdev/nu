@@ -14,7 +14,6 @@ from pathlib import PurePath, PurePosixPath
 from typing import TYPE_CHECKING, NoReturn, cast
 
 from nu.context import FabricRef
-from nu.forms import Iterator
 from nu.lang import Literal, Nu, ScalarQuery
 from nu.lang.null import Null, is_null
 from nu.lang.sentinels import UNSET
@@ -50,6 +49,7 @@ from .interactions import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from nu.forms import Iterator
     from nu.forms.primitives import Bool
     from nu.lang.runtime import Runtime
     from nustd.pathlib import Path
@@ -188,16 +188,22 @@ class FsRef(FabricRef):
         kind: object = None,
     ) -> Iterator:
         """The entries of the dir ``p``, a lazy stream; see ``FsList``."""
+        from nu.forms import Iterator
+
         return Iterator(FsList(self, p, pattern, recursive, kind))
 
     def open(
         self, p: object, start: object = 0, end: object = None, step: object = STEP
     ) -> Iterator:
         """The file's bytes as a lazy stream of pieces; see ``FsOpen``."""
+        from nu.forms import Iterator
+
         return Iterator(FsOpen(self, p, start, end, step))
 
     def lines(self, p: object, encoding: object = "utf-8") -> Iterator:
         """The file's lines as a lazy stream; see ``FsLines``."""
+        from nu.forms import Iterator
+
         return Iterator(FsLines(self, p, encoding))
 
     # --- writes -------------------------------------------------------------
@@ -435,14 +441,20 @@ class FileRef:
         self, *, pattern: object = "*", recursive: object = False, kind: object = None
     ) -> Iterator:
         """The entries of this dir, a lazy stream; see ``FsList``."""
+        from nu.forms import Iterator
+
         return Iterator(FsList(self._fs, self._path, pattern, recursive, kind))
 
     def open(self, start: object = 0, end: object = None, step: object = STEP) -> Iterator:
         """The file's bytes as a lazy stream of pieces; see ``FsOpen``."""
+        from nu.forms import Iterator
+
         return Iterator(FsOpen(self._fs, self._path, start, end, step))
 
     def lines(self, encoding: object = "utf-8") -> Iterator:
         """The file's lines as a lazy stream; see ``FsLines``."""
+        from nu.forms import Iterator
+
         return Iterator(FsLines(self._fs, self._path, encoding))
 
     # --- writes -------------------------------------------------------------

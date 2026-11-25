@@ -33,8 +33,7 @@ from .sliceable import SliceableSurface
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
-    from nu.forms.collections.iterator_ import Iterator
-    from nu.forms.primitives import Int
+    from nu.forms import Int, Iterator
     from nu.lang import Arg, BoolArg, IntArg
 
 
@@ -155,7 +154,7 @@ class SequenceSurface(
             1
 
         """
-        from nu.forms.primitives import Int
+        from nu.forms import Int
 
         from .sequence_interactions import IndexOf
 
@@ -174,7 +173,7 @@ class SequenceSurface(
             >>> nu.run(nu.List.of(1, 2, 2, 3).count(2))[0]
             2
         """
-        from nu.forms.primitives import Int
+        from nu.forms import Int
 
         from .sequence_interactions import Count
 

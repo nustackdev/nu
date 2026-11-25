@@ -12,7 +12,7 @@ from __future__ import annotations
 import pytest
 
 import nu
-from nu.forms.collections.abc import (
+from nu.surfaces.collections.abc import (
     MutableSequenceSurface,
     MutableSetSurface,
     SequenceSurface,

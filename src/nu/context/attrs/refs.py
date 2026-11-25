@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.forms.primitives import Bool, ObjectSurface
 from nu.lang.null import NULL, Null
+from nu.surfaces.primitives import ObjectSurface
 
 from .._refs import _ContextRef
 
@@ -18,6 +18,7 @@ from .._refs import _ContextRef
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from nu.forms import Bool
     from nu.lang.runtime import Runtime
 
 
@@ -91,6 +92,8 @@ class Attr(_ContextRef, ObjectSurface):
             >>> nu.run(nu.context.Attr("total").exists().not_())[0]
             True
         """
+        from nu.forms import Bool
+
         from .interactions import AttrExists
 
         return Bool(AttrExists(self))

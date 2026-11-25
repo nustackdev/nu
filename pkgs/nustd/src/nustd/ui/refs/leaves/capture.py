@@ -21,7 +21,6 @@ from typing import TYPE_CHECKING, Literal
 
 from typing_extensions import Self
 
-from nu.forms import Dict
 from nustd.ui.core import Changed, Write
 
 from .input import _common, _Nullable
@@ -102,6 +101,8 @@ class _CaptureInput(_Nullable, _FileReads, _FileInput):
 
     def set_max_duration(self, seconds: IntArg | None) -> Nu:
         """The longest take, in seconds; recording stops itself there. None for no limit."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(max_duration=seconds))
 
 
@@ -238,8 +239,12 @@ class CameraCaptureRef(_CaptureInput):
 
     def set_mode(self, mode: CameraMode | StrArg) -> Nu:
         """Photo or video. A take already kept stays."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(mode=mode))
 
     def set_facing(self, facing: CameraFacing | StrArg) -> Nu:
         """The camera the next open asks for: ``user`` or ``environment``."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(facing=facing))

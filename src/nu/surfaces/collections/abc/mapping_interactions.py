@@ -13,7 +13,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from nu.engine.structure import Declared
-from nu.factory.host import host
 from nu.lang import Command, ScalarAction, ScalarQuery, StreamQuery
 from nu.lang.null import is_null
 from nu.lang.sentinels import UNSET
@@ -31,8 +30,6 @@ __all__ = [
     "ContainsKey",
     "Copy",
     "DeleteItem",
-    "DictCreate",
-    "DictOf",
     "DictPop",
     "Get",
     "Items",
@@ -49,18 +46,6 @@ __all__ = [
     "Update",
     "Values",
 ]
-
-
-# =============================================================================
-# MAPPING CONSTRUCTORS
-# =============================================================================
-
-# Empty dict: deterministic (always {}), but each eval must yield a *fresh*
-# mutable object - a future fold/CSE pass must not alias two DictCreate results.
-DictCreate = host(dict, name="DictCreate")
-# Dict from named fields: DictOf(a=x, b=y) evaluates each field expression and
-# zips names back into a fresh dict.
-DictOf = host(dict, name="DictOf")
 
 
 # =============================================================================

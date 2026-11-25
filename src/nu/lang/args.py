@@ -30,7 +30,7 @@ from typing_extensions import TypeAliasType, TypeVarTuple
 
 
 if TYPE_CHECKING:
-    from nu.forms.primitives.object_ import Object
+    from nu.forms.primitives import Object
 
     from .nu import Nu
     from .null import Null

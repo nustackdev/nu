@@ -29,7 +29,6 @@ from typing import TYPE_CHECKING, ClassVar
 
 from typing_extensions import Self
 
-from nu.forms import Dict
 from nustd.ui.core import Changed, Write
 
 from .base import LeafRef
@@ -79,14 +78,20 @@ class TreeRef(LeafRef):
 
     def set(self, nodes: ListArg[dict]) -> Nu:
         """Replace every node. Open rows and the selection stay where they still apply."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(nodes=nodes))
 
     def set_selected(self, key: StrArg) -> Nu:
         """Select a row; "" selects none."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(selected=key))
 
     def set_expanded(self, keys: ListArg[str]) -> Nu:
         """Open exactly these rows."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(expanded=keys))
 
     # --- browser -> server ---------------------------------------------------

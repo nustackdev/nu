@@ -4,7 +4,7 @@ A Shape declares slots; each slot is a ref blueprint that a fabric completes
 with its own storage. A fabric supplies only how a path is read and written,
 and which of its refs a descent lands on.
 
-The blueprints form a grid laid out like ``nu.forms``. Every ``nu.forms`` type
+The blueprints form a grid laid out like ``nu.surfaces``. Every ``nu.surfaces`` type
 has a row, and a row is named after its form: ``Surface`` swapped for ``Ref``
 (``MappingSurface`` -> ``MappingRef``), or ``Ref`` appended (``Dict`` -> ``DictRef``).
 
@@ -18,7 +18,7 @@ has a row, and a row is named after its form: ``Surface`` swapped for ``Ref``
   capability (exists, extract, set, erase, init); the reactive ref
   (``ReactiveDictRef``, ``ReactiveIntRef``...) adds the watches.
 
-Each ref is composed directly: the ``nu.forms`` surface (``DictSurface``, never
+Each ref is composed directly: the ``nu.surfaces`` surface (``DictSurface``, never
 the ``Dict`` form node), the slot capability base and ``StructuredRef``. A fabric ref picks one and adds its fabric base; the
 fabrics name theirs the same way, so they import this package qualified
 (``shape.DictRef``).

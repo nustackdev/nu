@@ -1,7 +1,7 @@
 """Set row: an unordered collection of unique elements in a shape fabric, at the ABC level.
 
 Three form tiers over ``SetLikeSurface`` (the ``collections.abc.Set`` form). A
-tier is the capability base first, then the tier below, then the ``nu.forms``
+tier is the capability base first, then the tier below, then the ``nu.surfaces``
 set ABC of that tier, so the shape typing and slot ops win over the plain
 form's. Every result is typed by what the slot declared: an element reads as
 the declared value's form, and set algebra carries the declared element type
@@ -17,9 +17,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.forms.collections.abc.set_ import MutableSetSurface as _MutableSetSurface
-from nu.forms.collections.abc.set_ import ReactiveSetSurface as _ReactiveSetSurface
-from nu.forms.collections.abc.set_ import SetLikeSurface as _SetLikeSurface
+from nu.surfaces.collections.abc.set_ import MutableSetSurface as _MutableSetSurface
+from nu.surfaces.collections.abc.set_ import ReactiveSetSurface as _ReactiveSetSurface
+from nu.surfaces.collections.abc.set_ import SetLikeSurface as _SetLikeSurface
 
 from ...base import StructuredRef
 from ...collection import (

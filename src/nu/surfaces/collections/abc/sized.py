@@ -13,7 +13,7 @@ from nu.lang import Surface
 
 
 if TYPE_CHECKING:
-    from nu.forms.primitives import Int
+    from nu.forms import Int
 
 
 __all__ = [
@@ -40,6 +40,6 @@ class SizedSurface(Surface):
             3
         """
         from nu.core import Len
-        from nu.forms.primitives import Int
+        from nu.forms import Int
 
         return Int(Len(self))

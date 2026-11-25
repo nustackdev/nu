@@ -27,7 +27,7 @@ def case_labels(cases: Mapping[object, object]) -> Nu:
     A plain key is wrapped as a ``Literal``; a key that is a Nu term stays one
     and is computed on every run.
     """
-    from nu.forms.collections.abc.sequence_interactions import TupleOf
+    from nu.forms.collections_interactions import TupleOf
 
     return cast("Callable[..., Nu]", TupleOf)(*cases.keys())
 

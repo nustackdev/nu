@@ -4,17 +4,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.lang import Form, Surface
+from nu.lang import Surface
 
 
 if TYPE_CHECKING:
+    from nu.forms import Bool
     from nu.lang import NoneArg
-
-    from .bool_ import Bool
 
 
 __all__ = [
-    "None_",
+    "NoneSurface",
 ]
 
 
@@ -44,8 +43,7 @@ class NoneSurface(Surface):
             False
         """
         from nu.core import And
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(And(self, other))
 
@@ -68,8 +66,7 @@ class NoneSurface(Surface):
             False
         """
         from nu.core import Or
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Or(self, other))
 
@@ -87,8 +84,7 @@ class NoneSurface(Surface):
             True
         """
         from nu.core import Not
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Not(self))
 
@@ -107,8 +103,7 @@ class NoneSurface(Surface):
             False
         """
         from nu.core import ToBool
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(ToBool(self))
 
@@ -131,8 +126,7 @@ class NoneSurface(Surface):
             True
         """
         from nu.core import Eq
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Eq(self, other))
 
@@ -150,38 +144,6 @@ class NoneSurface(Surface):
             True
         """
         from nu.core import Ne
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Ne(self, other))
-
-
-class None_(NoneSurface, Form[None]):  # noqa: N801
-    """None interface. Logical only.
-
-    Notes:
-        - Wraps Python's `None`. It's the typical return of an effect-only
-          Command, one that runs for a side effect and yields nothing
-          meaningful (`sleep`, `inc`, `dec`).
-        - `==` / `!=` build an `Eq` / `Ne` term like every other Form, so
-          `x == nu.None_()` asks whether x yields None at run time. There is
-          no `is_`.
-        - NULL is not None: NULL is an address that holds nothing, None is a
-          stored value, and ``NULL == None`` is False.
-
-    Example:
-        >>> nu.run(nu.None_())[0] is None
-        True
-    """
-
-    def __init__(self, source: object = None) -> None:
-        """Wrap source as a None_ term.
-
-        Args:
-            source: the value to wrap. Defaults to `None`.
-
-        Example:
-            >>> nu.run(nu.None_())[0] is None
-            True
-        """
-        super().__init__(source)

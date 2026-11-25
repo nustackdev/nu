@@ -4,27 +4,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
 
-from nu.lang import Form
-
 from .abc import MutableSequenceSurface
-from .abc.sequence_interactions import ListCreate, ListOf
 
 
 if TYPE_CHECKING:
-    from nu.lang import Arg, IntArg, ListArg, Nu
-
-    from ..primitives import (
-        Bool,
-        Bytes,
-        Float,
-        Int,
-        Object,
-        Str,
-    )
+    from nu.forms import Bool, Bytes, Float, Int, List, Object, Str
+    from nu.lang import IntArg, ListArg, Nu
 
 
 __all__ = [
-    "List",
+    "ListSurface",
 ]
 
 
@@ -36,6 +25,8 @@ class ListSurface(MutableSequenceSurface[list[T], T, "List[T]", "Object"], Gener
 
     def _wrap_sliceable_result(self, operand: Nu) -> List:
         """Wrap operand as List for slice results."""
+        from nu.forms import List
+
         return List(operand)
 
     def _wrap_element_result(self, operand: Nu) -> Object:
@@ -54,7 +45,7 @@ class ListSurface(MutableSequenceSurface[list[T], T, "List[T]", "Object"], Gener
         if ti is not None and ti.elem is not None:
             form_cls = ti.elem.to_form()
             return form_cls(operand)  # type: ignore[return-value]
-        from ..primitives import Object
+        from nu.forms import Object
 
         return Object(operand)
 
@@ -162,6 +153,7 @@ class ListSurface(MutableSequenceSurface[list[T], T, "List[T]", "Object"], Gener
             [1, 2, 3, 4]
         """
         from nu.core import Add
+        from nu.forms import List
 
         return List(Add(self, other))
 
@@ -184,6 +176,7 @@ class ListSurface(MutableSequenceSurface[list[T], T, "List[T]", "Object"], Gener
             [1, 2, 3, 4]
         """
         from nu.core import Add
+        from nu.forms import List
 
         return List(Add(other, self))
 
@@ -201,6 +194,7 @@ class ListSurface(MutableSequenceSurface[list[T], T, "List[T]", "Object"], Gener
             [1, 2, 1, 2, 1, 2]
         """
         from nu.core import Mul
+        from nu.forms import List
 
         return List(Mul(self, n))
 
@@ -222,6 +216,7 @@ class ListSurface(MutableSequenceSurface[list[T], T, "List[T]", "Object"], Gener
             [1, 2, 1, 2, 1, 2]
         """
         from nu.core import Mul
+        from nu.forms import List
 
         return List(Mul(n, self))
 
@@ -243,8 +238,7 @@ class ListSurface(MutableSequenceSurface[list[T], T, "List[T]", "Object"], Gener
             True
         """
         from nu.core import Gt
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Gt(self, other))
 
@@ -262,8 +256,7 @@ class ListSurface(MutableSequenceSurface[list[T], T, "List[T]", "Object"], Gener
             True
         """
         from nu.core import Lt
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Lt(self, other))
 
@@ -281,8 +274,7 @@ class ListSurface(MutableSequenceSurface[list[T], T, "List[T]", "Object"], Gener
             True
         """
         from nu.core import Ge
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Ge(self, other))
 
@@ -300,8 +292,7 @@ class ListSurface(MutableSequenceSurface[list[T], T, "List[T]", "Object"], Gener
             True
         """
         from nu.core import Le
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Le(self, other))
 
@@ -322,8 +313,7 @@ class ListSurface(MutableSequenceSurface[list[T], T, "List[T]", "Object"], Gener
             True
         """
         from nu.core import Eq
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Eq(self, other))
 
@@ -344,8 +334,7 @@ class ListSurface(MutableSequenceSurface[list[T], T, "List[T]", "Object"], Gener
             True
         """
         from nu.core import Ne
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Ne(self, other))
 
@@ -369,66 +358,6 @@ class ListSurface(MutableSequenceSurface[list[T], T, "List[T]", "Object"], Gener
             False
         """
         from nu.core import Is
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Is(self, other))
-
-
-class List(ListSurface[T], Form[list[T]], Generic[T]):
-    """List interface. Mutable sequence + comparable.
-
-    Notes:
-        - `+` concatenates and `*` repeats, matching Python's list
-          operators. There's no other arithmetic.
-        - Comparison operators compare element-by-element, Python list
-          ordering, and yield Bool. Chained comparisons like `a > b > c`
-          do not build a single term; write them as `And(a > b, b > c)`.
-        - Indexing with an out-of-range int raises at evaluation time,
-          matching Python. Slicing never raises; out-of-range bounds clamp
-          like Python slicing.
-        - `sort` and `copy` are list-only; the rest of the mutable
-          sequence surface (`set_at`, `del_at`, `append`, `extend`, ...)
-          comes from the shared mutable-sequence base.
-        - No subscript write/delete and no in-place `+=` / `*=`: as
-          statements they drop or rebind the term. Use `set_at`, `del_at`
-          and `extend`.
-
-    Example:
-        >>> nu.run(nu.List.of(1, 2) + nu.List.of(3, 4))[0]
-        [1, 2, 3, 4]
-    """
-
-    @classmethod
-    def create(cls) -> List[T]:
-        """Yield a fresh empty list.
-
-        Yields:
-            An empty list.
-
-        Example:
-            >>> nu.run(nu.List.create())[0]
-            []
-        """
-        return cls(ListCreate())
-
-    @classmethod
-    def of(cls, *items: Arg) -> List:
-        """Yield a list from positional item expressions.
-
-        Args:
-            items: the item expressions, packed into the list in order.
-                Each may be a Nu expression or a plain literal.
-
-        Notes:
-            - Sibling to `Tuple.of`, same evaluation shape, different
-              wrapping.
-
-        Yields:
-            The list `[<items[0]>, <items[1]>, ...]`.
-
-        Example:
-            >>> nu.run(nu.List.of(1, 2, 3))[0]
-            [1, 2, 3]
-        """
-        return cls(ListOf(*items))

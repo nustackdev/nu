@@ -14,13 +14,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar
 
-from nu.forms import FrozenSet, FrozenSetSurface, Set, SetSurface
+from nu.surfaces import FrozenSetSurface, SetSurface
 
 from ..collection import MutableCollectionSurface, ReactiveCollectionSurface, holds
 from .abc.set_ import MutableSetRef, ReactiveSetSurface, SetLikeRef
 
 
 if TYPE_CHECKING:
+    from nu.forms import FrozenSet, Set
     from nu.lang import Nu
 
 
@@ -37,6 +38,8 @@ class SetRef(MutableSetRef, SetSurface[T]):
     """Set slot ref. A set has no keys, so there is no descent."""
 
     def _wrap_set_result(self, operand: Nu) -> Set[T]:
+        from nu.forms import Set
+
         return Set(operand, type_info=holds(set, elem=self._declared.elem))
 
 
@@ -51,6 +54,8 @@ class FrozenSetRef(MutableCollectionSurface, SetLikeRef, FrozenSetSurface[T]):
     """Frozenset slot ref. No descent."""
 
     def _wrap_set_result(self, operand: Nu) -> FrozenSet[T]:
+        from nu.forms import FrozenSet
+
         return FrozenSet(operand, type_info=holds(frozenset, elem=self._declared.elem))
 
 

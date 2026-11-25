@@ -38,7 +38,6 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from typing_extensions import Self
 
-from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Write
 
@@ -156,6 +155,8 @@ class TimelineRef(LeafRef):
     ) -> Nu:
         """Ship the lanes whole; the window and the total change only when passed."""
         # A literal list is normalized here; a term rides as is.
+        from nu.forms import Dict
+
         payload: dict[str, object] = {
             "lanes": _normalize_lanes(lanes) if isinstance(lanes, (list, tuple)) else lanes
         }
@@ -169,10 +170,14 @@ class TimelineRef(LeafRef):
 
     def set_window(self, start: FloatArg | datetime, end: FloatArg | datetime) -> Nu:
         """Move the window, the lanes as they are."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(start=_ms(start), end=_ms(end)))
 
     def set_legend(self, names: DictArg[str, str]) -> Nu:
         """Rename the tones; a tone left out goes unlisted."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(legend=names))
 
     def set_more(
@@ -183,6 +188,8 @@ class TimelineRef(LeafRef):
         target: Target | StrArg = UNSET,
     ) -> Nu:
         """Reword the more row; an empty text drops its link."""
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"more_label": label}
         if text is not UNSET:
             payload["more_text"] = text
@@ -194,4 +201,6 @@ class TimelineRef(LeafRef):
 
     def set_note(self, text: StrArg) -> Nu:
         """The quiet line under the lanes; empty hides it."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(note=text))

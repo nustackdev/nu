@@ -19,7 +19,6 @@ from typing import TYPE_CHECKING, Any
 
 from typing_extensions import Self
 
-from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Write
 
@@ -203,6 +202,8 @@ class DateRangePickerRef(_Submits, _Placeholder, InputLeaf):
         )
 
     def set(self, value: Any = UNSET, *, start: StrArg = UNSET, end: StrArg = UNSET) -> Nu:  # type: ignore[override]
+        from nu.forms import Dict
+
         if value is UNSET:
             value = Dict.of(start="" if start is UNSET else start, end="" if end is UNSET else end)
         return Write(self, Dict.of(value=value))

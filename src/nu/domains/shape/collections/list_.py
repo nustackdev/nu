@@ -14,13 +14,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar
 
-from nu.forms import List, ListSurface
+from nu.surfaces import ListSurface
 
 from ..collection import holds
 from .abc.sequence import MutableSequenceRef, ReactiveSequenceRef
 
 
 if TYPE_CHECKING:
+    from nu.forms import List
     from nu.lang import Nu
 
 
@@ -38,6 +39,8 @@ class ListRef(MutableSequenceRef, ListSurface[T]):  # type: ignore[misc]
     """List slot ref: ``ref[i]`` descends to the element's child ref."""
 
     def _wrap_sliceable_result(self, operand: Nu) -> List[T]:
+        from nu.forms import List
+
         return List(operand, type_info=holds(list, elem=self._declared.elem))
 
 

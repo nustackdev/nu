@@ -236,7 +236,7 @@ class LoadNu(ScalarQuery):
 
 def _scope_child(scope: Mapping[str, object] | Nu | None) -> Nu:
     """The scope as its child: a term as given, a mapping as a ``DictOf`` of its values."""
-    from nu.forms.collections.abc.mapping_interactions import DictOf
+    from nu.forms.collections_interactions import DictOf
     from nu.lang.nu import Nu
 
     if isinstance(scope, Nu):

@@ -12,7 +12,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Generic, TypeVar
 
 from nu.domains.shape import ReactiveMappingRef, Slot
-from nu.forms import Object
 from nu.lang.typeinfo import TypeInfo
 from virtuals.views import Kh57View, Kh57ViewBase
 
@@ -21,6 +20,7 @@ from .containers import _MappingDescent, _require_view
 
 
 if TYPE_CHECKING:
+    from nu.forms import Object
     from nu.lang import IntArg
 
 
@@ -114,6 +114,7 @@ class Kh57Ref(_MappingDescent[int, V], ReactiveMappingRef, ViewRef[dict[int, V]]
         Example:
             run(Ledger.entries.sample(100, begin=0, end=10_000), ctx)
         """
+        from nu.forms import Object
         from nustd.kv.interactions.kh57 import Kh57Sample
 
         return Object(Kh57Sample(self, n, begin, end))
@@ -144,6 +145,7 @@ class Kh57Ref(_MappingDescent[int, V], ReactiveMappingRef, ViewRef[dict[int, V]]
         Example:
             run(Ledger.entries.range(0, 100), ctx)
         """
+        from nu.forms import Object
         from nustd.kv.interactions.kh57 import Kh57Range
 
         return Object(Kh57Range(self, begin, end))

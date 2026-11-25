@@ -23,7 +23,6 @@ from typing import TYPE_CHECKING, ClassVar, Literal
 
 from typing_extensions import Self, Unpack
 
-from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Append, Write
 
@@ -90,6 +89,8 @@ class ListRef(Ordered, DictCollectionRef):
         variant: ListVariant | StrArg = UNSET,
         start: IntArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"items": items}
         if variant is not UNSET:
             payload["variant"] = variant
@@ -98,10 +99,14 @@ class ListRef(Ordered, DictCollectionRef):
         return Write(self, Dict.of(**payload))
 
     def set_variant(self, name: ListVariant | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(variant=name))
 
     def append(self, item: StrArg) -> Nu:
         return Append(self, item)
 
     def clear(self) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(items=[]))

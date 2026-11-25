@@ -4,31 +4,30 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, TypeVar, overload
 
-from nu.lang import Form
-
 from .abc import MutableOrderedMappingSurface
-from .abc.mapping_interactions import DictCreate, DictOf
 
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from nu.lang import Arg, DictArg, Nu
-
-    from ..primitives import (
+    from nu.forms import (
         Bool,
         Bytes,
+        Dict,
+        DictItems,
+        DictKeys,
+        DictValues,
         Float,
         Int,
+        List,
         Object,
         Str,
     )
-    from .list_ import List
-    from .views import DictItems, DictKeys, DictValues
+    from nu.lang import Arg, DictArg, Nu
 
 
 __all__ = [
-    "Dict",
+    "DictSurface",
 ]
 
 
@@ -43,19 +42,19 @@ class DictSurface(
 
     def _wrap_keys_result(self, operand: Nu) -> DictKeys:
         """Wrap operand as DictKeys."""
-        from .views import DictKeys
+        from nu.forms import DictKeys
 
         return DictKeys(operand)
 
     def _wrap_values_result(self, operand: Nu) -> DictValues:
         """Wrap operand as DictValues."""
-        from .views import DictValues
+        from nu.forms import DictValues
 
         return DictValues(operand)
 
     def _wrap_items_result(self, operand: Nu) -> DictItems:
         """Wrap operand as DictItems."""
-        from .views import DictItems
+        from nu.forms import DictItems
 
         return DictItems(operand)
 
@@ -72,7 +71,7 @@ class DictSurface(
         if ti is not None and ti.elem is not None:
             form_cls = ti.elem.to_form()
             return form_cls(operand)  # type: ignore[return-value]
-        from ..primitives import Object
+        from nu.forms import Object
 
         return Object(operand)
 
@@ -116,6 +115,8 @@ class DictSurface(
 
     def _wrap_mapping_result(self, operand: Nu) -> Dict[K, V]:
         """Wrap operand as Dict."""
+        from nu.forms import Dict
+
         return Dict(operand)
 
     @overload  # type: ignore[override]
@@ -240,7 +241,7 @@ class DictSurface(
 
     def _wrap_element_result(self, operand: Nu) -> Object:
         """Wrap operand as Object element."""
-        from ..primitives import Object
+        from nu.forms import Object
 
         return Object(operand)
 
@@ -266,8 +267,7 @@ class DictSurface(
             True
         """
         from nu.core import Eq
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Eq(self, other))
 
@@ -288,8 +288,7 @@ class DictSurface(
             True
         """
         from nu.core import Ne
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Ne(self, other))
 
@@ -316,62 +315,6 @@ class DictSurface(
             False
         """
         from nu.core import Is
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Is(self, other))
-
-
-class Dict(DictSurface[K, V], Form[dict[K, V]], Generic[K, V]):
-    """Dict interface. Mutable ordered mapping, compared by value with `==` only.
-
-    Notes:
-        - Keys preserve insertion order, matching Python's `dict`.
-        - No ordering comparisons (`>`, `<`, `>=`, `<=`), as on Python's
-          `dict`: building one raises `TypeError`. Use `==`/`!=` for
-          content comparison.
-        - `is_` tests object identity. Each evaluation of a `Dict.of`/
-          `Dict.create` expression builds a fresh dict, so comparing two
-          separately-built dicts with `is_` is False even when their
-          contents match, unlike Python's small-string interning for Str.
-        - `copy`, `merge` and `merge_update` are dict-only; the rest of
-          the surface comes from the shared mutable ordered-mapping base.
-        - Merging is named: `merge` and `merge_update`. `&`, `|` and `>>`
-          compose flows on a Dict like on every term.
-
-    Example:
-        >>> nu.run(nu.Dict.of(a=1, b=2))[0]
-        {'a': 1, 'b': 2}
-    """
-
-    @classmethod
-    def create(cls) -> Dict[K, V]:
-        """Fresh empty dict.
-
-        Yields:
-            A new, empty dict. Never a sentinel.
-
-        Example:
-            >>> nu.run(nu.Dict.create())[0]
-            {}
-        """
-        return cls(DictCreate())
-
-    @classmethod
-    def of(cls, **fields: Arg) -> Dict[str, V]:
-        """Dict built from named field expressions.
-
-        Args:
-            fields: keyword arguments, each evaluated in the current
-                context and zipped back in by name: `a=x, b=y` builds
-                `{"a": <x>, "b": <y>}`. Values may be Nu expressions or
-                plain literals.
-
-        Yields:
-            The assembled dict.
-
-        Example:
-            >>> nu.run(nu.Dict.of(a=1, b=2))[0]
-            {'a': 1, 'b': 2}
-        """
-        return cls(DictOf(**fields))

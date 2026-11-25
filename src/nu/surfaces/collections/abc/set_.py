@@ -30,7 +30,7 @@ from .collection import CollectionSurface
 
 
 if TYPE_CHECKING:
-    from nu.forms.primitives import Bool
+    from nu.forms import Bool
     from nu.lang import Arg, BoolArg, Nu
 
 
@@ -177,7 +177,7 @@ class SetLikeSurface(
             >>> nu.run(nu.Set({1, 2, 3}).issubset({1, 2, 3, 4}))[0]
             True
         """
-        from nu.forms.primitives import Bool
+        from nu.forms import Bool
 
         from .set_interactions import IsSubset
 
@@ -197,7 +197,7 @@ class SetLikeSurface(
             >>> nu.run(nu.Set({1, 2, 3}).issuperset({1, 2}))[0]
             True
         """
-        from nu.forms.primitives import Bool
+        from nu.forms import Bool
 
         from .set_interactions import IsSuperset
 
@@ -218,7 +218,7 @@ class SetLikeSurface(
             True
         """
         from nu.core import Gt
-        from nu.forms.primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Gt(self, other))
 
@@ -237,7 +237,7 @@ class SetLikeSurface(
             True
         """
         from nu.core import Lt
-        from nu.forms.primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Lt(self, other))
 
@@ -255,7 +255,7 @@ class SetLikeSurface(
             True
         """
         from nu.core import Ge
-        from nu.forms.primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Ge(self, other))
 
@@ -273,7 +273,7 @@ class SetLikeSurface(
             True
         """
         from nu.core import Le
-        from nu.forms.primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Le(self, other))
 
@@ -291,7 +291,7 @@ class SetLikeSurface(
             >>> nu.run(nu.Set({1, 2, 3}).isdisjoint({9, 10}))[0]
             True
         """
-        from nu.forms.primitives import Bool
+        from nu.forms import Bool
 
         from .set_interactions import IsDisjoint
 

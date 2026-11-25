@@ -22,7 +22,6 @@ from typing import TYPE_CHECKING, ClassVar, Literal
 
 from typing_extensions import Self, Unpack
 
-from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core.interactions import Changed, Write
 
@@ -100,12 +99,18 @@ class CollapsibleRef(ChildLayout, DictCollectionRef):
         return header_ref(self)
 
     def set_open(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(open=flag))
 
     def set_title(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(title=text))
 
     def set(self, open: BoolArg = UNSET, title: StrArg = UNSET) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(**_open_title(open, title)))
 
     def on_change(self) -> Changed:
@@ -167,12 +172,18 @@ class SheetRef(ChildLayout, DictCollectionRef):
         return header_ref(self)
 
     def set_open(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(open=flag))
 
     def set_title(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(title=text))
 
     def set(self, open: BoolArg = UNSET, title: StrArg = UNSET) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(**_open_title(open, title)))
 
     def on_change(self) -> Changed:
@@ -258,18 +269,28 @@ class PopoverRef(ChildLayout, DictCollectionRef):
         return part_ref(self, TRIGGER, RowRef.slot(gap=2))
 
     def set_open(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(open=flag))
 
     def set_label(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(label=text))
 
     def set_tooltip(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(tooltip=text))
 
     def set_title(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(title=text))
 
     def set(self, open: BoolArg = UNSET) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(**({} if open is UNSET else {"open": open})))
 
     def on_change(self) -> Changed:

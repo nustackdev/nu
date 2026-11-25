@@ -41,7 +41,6 @@ from typing import TYPE_CHECKING, Any, Literal, get_args
 
 from typing_extensions import Self
 
-from nu.forms import Dict
 from nu.lang.null import NULL
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Changed, Focus, Reset, Write
@@ -120,15 +119,23 @@ class InputLeaf(LeafRef):
         return Changed(self, CHANGE)
 
     def set_label(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(label=text))
 
     def set_disabled(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(disabled=flag))
 
     def set_readonly(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(readonly=flag))
 
     def set_required(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(required=flag))
 
 
@@ -172,6 +179,8 @@ class _Placeholder:
     """Mixin: the input shows a placeholder while empty."""
 
     def set_placeholder(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(placeholder=text))  # type: ignore[arg-type]
 
 
@@ -235,24 +244,38 @@ class ButtonRef(LeafRef):
         return Changed(self, CLICK)
 
     def set_label(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(label=text))
 
     def set_variant(self, name: Variant | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(variant=name))
 
     def set_disabled(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(disabled=flag))
 
     def set_loading(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(loading=flag))
 
     def set_icon(self, name: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(icon=name))
 
     def set_tooltip(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(tooltip=text))
 
     def set_size(self, name: ControlSize | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(size=name))
 
     def set_href(self, url: StrArg, target: Target | StrArg = UNSET) -> Nu:
@@ -267,6 +290,8 @@ class ButtonRef(LeafRef):
         icon: StrArg = UNSET,
         tooltip: StrArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"label": label}
         if variant is not UNSET:
             payload["variant"] = variant
@@ -516,14 +541,20 @@ class CodeRef(_Submits, InputLeaf):
     def set(self, value: StrArg, original: StrArg | None = UNSET) -> Nu:
         # Scalar shortcut: just the text when the old side stays put. Both
         # sides in one write, so a diff never draws against a stale original.
+        from nu.forms import Dict
+
         if original is UNSET:
             return Write(self, value)
         return Write(self, Dict.of(value=value, original=original))
 
     def set_original(self, text: StrArg | None) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(original=text))
 
     def set_language(self, name: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(language=name))
 
 
@@ -571,12 +602,18 @@ class NumberInputRef(_Nullable, _Submits, _Placeholder, InputLeaf):
         )
 
     def set_min(self, value: FloatArg | None) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(min=value))
 
     def set_max(self, value: FloatArg | None) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(max=value))
 
     def set_step(self, value: FloatArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(step=value))
 
     def set(
@@ -588,6 +625,8 @@ class NumberInputRef(_Nullable, _Submits, _Placeholder, InputLeaf):
         label: StrArg = UNSET,
     ) -> Nu:
         # Scalar shortcut: just the number when no extra kwargs are passed.
+        from nu.forms import Dict
+
         if min is UNSET and max is UNSET and step is UNSET and label is UNSET:
             return Write(self, value)
         payload: dict[str, object] = {"value": value}
@@ -675,6 +714,8 @@ def _normalize_options(opts: object) -> list[dict[str, str]]:
 
 def _options_write(ref: InputLeaf, opts: object) -> Nu:
     """The ``set_options`` write: a literal list normalized here, a term as it is."""
+    from nu.forms import Dict
+
     if isinstance(opts, list):
         payload: object = {"options": _normalize_options(opts)}
     else:
@@ -774,6 +815,8 @@ class SelectRef(_Nullable, _Placeholder, InputLeaf):
         return _options_write(self, opts)
 
     def set_searchable(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(searchable=flag))
 
 
@@ -1035,15 +1078,23 @@ class SliderRef(InputLeaf):
         )
 
     def set_min(self, value: FloatArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(min=value))
 
     def set_max(self, value: FloatArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(max=value))
 
     def set_step(self, value: FloatArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(step=value))
 
     def set_show_value(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(show_value=flag))
 
     def set(
@@ -1056,6 +1107,8 @@ class SliderRef(InputLeaf):
         show_value: BoolArg = UNSET,
     ) -> Nu:
         # Scalar shortcut: just the number when no extra kwargs are passed.
+        from nu.forms import Dict
+
         if all(x is UNSET for x in (min, max, step, label, show_value)):
             return Write(self, value)
         payload: dict[str, object] = {"value": value}
@@ -1247,6 +1300,8 @@ class ToggleRef(InputLeaf):
         return Write(self, value)
 
     def set_icon(self, name: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(icon=name))
 
 

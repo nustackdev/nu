@@ -2,27 +2,22 @@
 
 from __future__ import annotations
 
-from collections.abc import ItemsView, KeysView, ValuesView
+from collections.abc import ItemsView, KeysView
 from typing import TYPE_CHECKING, Generic, NoReturn, TypeVar
-
-from nu.lang import Form
 
 from .abc import CollectionSurface
 from .abc.set_ import SetLikeSurface
 
 
 if TYPE_CHECKING:
+    from nu.forms import List, Object, Set
     from nu.lang import Nu
-
-    from ..primitives import Object
-    from .list_ import List
-    from .set_ import Set
 
 
 __all__ = [
-    "DictItems",
-    "DictKeys",
-    "DictValues",
+    "DictItemsSurface",
+    "DictKeysSurface",
+    "DictValuesSurface",
 ]
 
 
@@ -35,13 +30,13 @@ class DictKeysSurface(SetLikeSurface[KeysView[K], K, "Set[K]", "Object"], Generi
 
     def _wrap_set_result(self, operand: Nu) -> Set[K]:
         """Wrap operand as Set."""
-        from .set_ import Set
+        from nu.forms import Set
 
         return Set(operand)
 
     def _wrap_element_result(self, operand: Nu) -> Object:
         """Wrap operand as Object element."""
-        from ..primitives import Object
+        from nu.forms import Object
 
         return Object(operand)
 
@@ -57,8 +52,7 @@ class DictKeysSurface(SetLikeSurface[KeysView[K], K, "Set[K]", "Object"], Generi
             ['a', 'b']
         """
         from nu.core import ToList
-
-        from .list_ import List
+        from nu.forms import List
 
         return List(ToList(self))
 
@@ -74,33 +68,9 @@ class DictKeysSurface(SetLikeSurface[KeysView[K], K, "Set[K]", "Object"], Generi
             True
         """
         from nu.core import ToSet
-
-        from .set_ import Set
+        from nu.forms import Set
 
         return Set(ToSet(self))
-
-
-class DictKeys(DictKeysSurface[K], Form[KeysView[K]], Generic[K]):
-    """View of a Dict's keys, produced by `dict.keys()`.
-
-    Notes:
-        - Set-like, as Python's `KeysView` is: the subset comparisons
-          (`<`, `<=`, `>`, `>=`), `isdisjoint`, and the named algebra
-          (`union`, `intersection`, `difference`, ...) work on it
-          directly. The named methods are Nu's spelling of the `| & - ^`
-          operators, which Nu reserves or leaves undefined.
-        - Lazy and live: it holds no keys of its own, it re-reads the
-          backing Dict on every evaluation. Mutate the Dict and the view
-          reflects it on the next `nu.run`.
-        - Iterable, sized (`len()`), and supports `contains`.
-
-    Example:
-        >>> keys = nu.Dict({"a": 1, "b": 2}).keys()
-        >>> nu.run(keys.len())[0]
-        2
-        >>> nu.run(keys.contains("a"))[0]
-        True
-    """
 
 
 _VALUES_EQ_HINT = (
@@ -114,7 +84,7 @@ class DictValuesSurface(CollectionSurface[V, "List[V]", "Object"], Generic[V]):
 
     def _wrap_element_result(self, operand: Nu) -> Object:
         """Wrap operand as Object element."""
-        from ..primitives import Object
+        from nu.forms import Object
 
         return Object(operand)
 
@@ -136,8 +106,7 @@ class DictValuesSurface(CollectionSurface[V, "List[V]", "Object"], Generic[V]):
             [1, 2]
         """
         from nu.core import ToList
-
-        from .list_ import List
+        from nu.forms import List
 
         return List(ToList(self))
 
@@ -156,34 +125,9 @@ class DictValuesSurface(CollectionSurface[V, "List[V]", "Object"], Generic[V]):
             True
         """
         from nu.core import ToSet
-
-        from .set_ import Set
+        from nu.forms import Set
 
         return Set(ToSet(self))
-
-
-class DictValues(DictValuesSurface[V], Form[ValuesView[V]], Generic[V]):
-    """View of a Dict's values, produced by `dict.values()`.
-
-    Notes:
-        - Not set-like: values can repeat and aren't required to be
-          hashable, so there's no `union`/`intersection` here,
-          unlike `DictKeys` and `DictItems`. Just Collection: iterable,
-          sized (`len()`), and `contains`.
-        - Lazy and live: it holds no values of its own, it re-reads the
-          backing Dict on every evaluation. Mutate the Dict and the view
-          reflects it on the next `nu.run`.
-        - No `==` / `!=`: Python compares values views by identity, never
-          by content, so both raise. Compare a snapshot instead:
-          `values.to_list() == [...]`.
-
-    Example:
-        >>> values = nu.Dict({"a": 1, "b": 2}).values()
-        >>> nu.run(values.len())[0]
-        2
-        >>> nu.run(values.contains(1))[0]
-        True
-    """
 
 
 class DictItemsSurface(
@@ -193,13 +137,13 @@ class DictItemsSurface(
 
     def _wrap_set_result(self, operand: Nu) -> Set[tuple[K, V]]:
         """Wrap operand as Set."""
-        from .set_ import Set
+        from nu.forms import Set
 
         return Set(operand)
 
     def _wrap_element_result(self, operand: Nu) -> Object:
         """Wrap operand as Object element."""
-        from ..primitives import Object
+        from nu.forms import Object
 
         return Object(operand)
 
@@ -216,8 +160,7 @@ class DictItemsSurface(
             [('a', 1), ('b', 2)]
         """
         from nu.core import ToList
-
-        from .list_ import List
+        from nu.forms import List
 
         return List(ToList(self))
 
@@ -236,30 +179,6 @@ class DictItemsSurface(
             True
         """
         from nu.core import ToSet
-
-        from .set_ import Set
+        from nu.forms import Set
 
         return Set(ToSet(self))
-
-
-class DictItems(DictItemsSurface[K, V], Form[ItemsView[K, V]], Generic[K, V]):
-    """View of a Dict's `(key, value)` pairs, produced by `dict.items()`.
-
-    Notes:
-        - Set-like, as Python's `ItemsView` is when the values are
-          hashable: the subset comparisons, `isdisjoint`, and the named
-          algebra (`union`, `intersection`, ...) work on it directly, Nu's
-          spelling of the `| & - ^` operators.
-        - Lazy and live: it holds no items of its own, it re-reads the
-          backing Dict on every evaluation. Mutate the Dict and the view
-          reflects it on the next `nu.run`.
-        - Iterable, sized (`len()`), and supports `contains` with a
-          `(key, value)` tuple.
-
-    Example:
-        >>> items = nu.Dict({"a": 1, "b": 2}).items()
-        >>> nu.run(items.len())[0]
-        2
-        >>> nu.run(items.contains(("a", 1)))[0]
-        True
-    """

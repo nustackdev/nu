@@ -2,7 +2,7 @@
 
 Two rows, ``Mapping`` and ``OrderedMapping`` (Mapping + Reversible), each in
 three tiers. A tier is the capability base first, then the tier below, then the
-``nu.forms`` mapping ABC of that tier, so the shape typing and slot ops win
+``nu.surfaces`` mapping ABC of that tier, so the shape typing and slot ops win
 over the plain form's. Every result is typed by what the slot declared: a value
 reads as the declared value's form, and keys, values and items carry the
 declared types on.
@@ -16,14 +16,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.forms.collections.abc.mapping import MappingSurface as _MappingSurface
-from nu.forms.collections.abc.mapping import MutableMappingSurface as _MutableMappingSurface
-from nu.forms.collections.abc.mapping import (
+from nu.surfaces.collections.abc.mapping import MappingSurface as _MappingSurface
+from nu.surfaces.collections.abc.mapping import MutableMappingSurface as _MutableMappingSurface
+from nu.surfaces.collections.abc.mapping import (
     MutableOrderedMappingSurface as _MutableOrderedMappingSurface,
 )
-from nu.forms.collections.abc.mapping import OrderedMappingSurface as _OrderedMappingSurface
-from nu.forms.collections.abc.mapping import ReactiveMappingSurface as _ReactiveMappingSurface
-from nu.forms.collections.abc.mapping import (
+from nu.surfaces.collections.abc.mapping import OrderedMappingSurface as _OrderedMappingSurface
+from nu.surfaces.collections.abc.mapping import ReactiveMappingSurface as _ReactiveMappingSurface
+from nu.surfaces.collections.abc.mapping import (
     ReactiveOrderedMappingSurface as _ReactiveOrderedMappingSurface,
 )
 

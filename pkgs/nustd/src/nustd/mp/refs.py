@@ -17,7 +17,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.context import FabricRef
-from nu.forms import Iterator
 from nu.lang.null import Null
 from nu.lang.sentinels import UNSET
 
@@ -27,6 +26,7 @@ from .resources import WorkerPool
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from nu.forms import Iterator
     from nu.lang import Bracket, Nu
     from nu.lang.runtime import Runtime
 
@@ -127,6 +127,8 @@ class PoolRef(FabricRef):
 
     def workers(self) -> Iterator:
         """A ``Workers`` stream over this pool: every live worker handed out."""
+        from nu.forms import Iterator
+
         from .interactions import Workers
 
         return Iterator(Workers(self))

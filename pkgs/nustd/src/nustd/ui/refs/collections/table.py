@@ -51,7 +51,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from typing_extensions import Self, Unpack
 
-from nu.forms import Dict
 from nustd.ui.core import ItemRef, Ref, Write, as_spec, check_key, child_at
 from nustd.ui.core.places import place, place_of, plain_place
 
@@ -236,4 +235,6 @@ class TableRef(ChildLayout, Laid, CollectionRef):
 
     def set_columns(self, columns: ListArg[object]) -> Nu:
         """Replace the column records; header cells with content keep it."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(columns=normalize_columns("TableRef", columns)))

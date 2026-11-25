@@ -4,21 +4,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from nu.lang import Form, Surface
+from nu.lang import Surface
 
 
 if TYPE_CHECKING:
+    from nu.forms import Bool, Bytes, Int, List, Str, Tuple
     from nu.lang import BoolArg, DictArg, IntArg, StrArg
-
-    from ..collections.list_ import List
-    from ..collections.tuple_ import Tuple
-    from .bool_ import Bool
-    from .bytes_ import Bytes
-    from .int_ import Int
 
 
 __all__ = [
-    "Str",
+    "StrSurface",
 ]
 
 
@@ -43,6 +38,7 @@ class StrSurface(Surface):
             'foobar'
         """
         from nu.core import Add
+        from nu.forms import Str
 
         return Str(Add(self, other))
 
@@ -65,6 +61,7 @@ class StrSurface(Surface):
             'foobar'
         """
         from nu.core import Add
+        from nu.forms import Str
 
         return Str(Add(other, self))
 
@@ -100,6 +97,7 @@ class StrSurface(Surface):
             'ell'
         """
         from nu.core import GetItem, Slice
+        from nu.forms import Str
 
         if isinstance(key, slice):
             return Str(GetItem(self, Slice(key.start, key.stop, key.step)))
@@ -120,8 +118,7 @@ class StrSurface(Surface):
             3
         """
         from nu.core import Len
-
-        from .int_ import Int
+        from nu.forms import Int
 
         return Int(Len(self))
 
@@ -142,8 +139,7 @@ class StrSurface(Surface):
             True
         """
         from nu.core import Contains
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Contains(self, item))
 
@@ -165,8 +161,7 @@ class StrSurface(Surface):
             True
         """
         from nu.core import Gt
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Gt(self, other))
 
@@ -184,8 +179,7 @@ class StrSurface(Surface):
             True
         """
         from nu.core import Lt
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Lt(self, other))
 
@@ -203,8 +197,7 @@ class StrSurface(Surface):
             True
         """
         from nu.core import Ge
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Ge(self, other))
 
@@ -222,8 +215,7 @@ class StrSurface(Surface):
             True
         """
         from nu.core import Le
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Le(self, other))
 
@@ -244,8 +236,7 @@ class StrSurface(Surface):
             True
         """
         from nu.core import Eq
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Eq(self, other))
 
@@ -266,8 +257,7 @@ class StrSurface(Surface):
             True
         """
         from nu.core import Ne
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Ne(self, other))
 
@@ -292,8 +282,7 @@ class StrSurface(Surface):
             True
         """
         from nu.core import Is
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Is(self, other))
 
@@ -321,8 +310,7 @@ class StrSurface(Surface):
             False
         """
         from nu.core import And
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(And(self, other))
 
@@ -345,8 +333,7 @@ class StrSurface(Surface):
             True
         """
         from nu.core import Or
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Or(self, other))
 
@@ -365,8 +352,7 @@ class StrSurface(Surface):
             True
         """
         from nu.core import Not
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Not(self))
 
@@ -385,8 +371,7 @@ class StrSurface(Surface):
             True
         """
         from nu.core import ToBool
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(ToBool(self))
 
@@ -404,6 +389,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("Hello World").upper())[0]
             'HELLO WORLD'
         """
+        from nu.forms import Str
+
         from .str_interactions import Upper
 
         return Str(Upper(self))
@@ -418,6 +405,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("Hello World").lower())[0]
             'hello world'
         """
+        from nu.forms import Str
+
         from .str_interactions import Lower
 
         return Str(Lower(self))
@@ -432,6 +421,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("hello world").title())[0]
             'Hello World'
         """
+        from nu.forms import Str
+
         from .str_interactions import Title
 
         return Str(Title(self))
@@ -450,6 +441,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("hello world").capitalize())[0]
             'Hello world'
         """
+        from nu.forms import Str
+
         from .str_interactions import Capitalize
 
         return Str(Capitalize(self))
@@ -464,6 +457,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("Hello World").swapcase())[0]
             'hELLO wORLD'
         """
+        from nu.forms import Str
+
         from .str_interactions import SwapCase
 
         return Str(SwapCase(self))
@@ -482,6 +477,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("Straße").casefold())[0]
             'strasse'
         """
+        from nu.forms import Str
+
         from .str_interactions import Casefold
 
         return Str(Casefold(self))
@@ -507,6 +504,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("xxhixx").strip("x"))[0]
             'hi'
         """
+        from nu.forms import Str
+
         from .str_interactions import Strip
 
         return Str(Strip(self, chars))
@@ -525,6 +524,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("  hi  ").lstrip())[0]
             'hi  '
         """
+        from nu.forms import Str
+
         from .str_interactions import LStrip
 
         return Str(LStrip(self, chars))
@@ -543,6 +544,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("  hi  ").rstrip())[0]
             '  hi'
         """
+        from nu.forms import Str
+
         from .str_interactions import RStrip
 
         return Str(RStrip(self, chars))
@@ -569,7 +572,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("a,b,c").split(",", 1))[0]
             ['a', 'b,c']
         """
-        from ..collections.list_ import List
+        from nu.forms import List
+
         from .str_interactions import Split
 
         return List(Split(self, sep, maxsplit))
@@ -593,7 +597,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("a,b,c").rsplit(",", 1))[0]
             ['a,b', 'c']
         """
-        from ..collections.list_ import List
+        from nu.forms import List
+
         from .str_interactions import RSplit
 
         return List(RSplit(self, sep, maxsplit))
@@ -612,7 +617,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("a\nb\nc").splitlines())[0]
             ['a', 'b', 'c']
         """
-        from ..collections.list_ import List
+        from nu.forms import List
+
         from .str_interactions import SplitLines
 
         return List(SplitLines(self, keepends))
@@ -635,7 +641,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("a,b,c").partition(","))[0]
             ('a', ',', 'b,c')
         """
-        from ..collections.tuple_ import Tuple
+        from nu.forms import Tuple
+
         from .str_interactions import Partition
 
         return Tuple(Partition(self, sep))
@@ -658,7 +665,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("a,b,c").rpartition(","))[0]
             ('a,b', ',', 'c')
         """
-        from ..collections.tuple_ import Tuple
+        from nu.forms import Tuple
+
         from .str_interactions import RPartition
 
         return Tuple(RPartition(self, sep))
@@ -686,7 +694,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("hello world").find("z"))[0]
             -1
         """
-        from .int_ import Int
+        from nu.forms import Int
+
         from .str_interactions import Find
 
         return Int(Find(self, sub, start, end))
@@ -707,7 +716,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("hello world").rfind("o"))[0]
             7
         """
-        from .int_ import Int
+        from nu.forms import Int
+
         from .str_interactions import RFind
 
         return Int(RFind(self, sub, start, end))
@@ -732,7 +742,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("hello world").index("o"))[0]
             4
         """
-        from .int_ import Int
+        from nu.forms import Int
+
         from .str_interactions import Index
 
         return Int(Index(self, sub, start, end))
@@ -757,7 +768,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("hello world").rindex("o"))[0]
             7
         """
-        from .int_ import Int
+        from nu.forms import Int
+
         from .str_interactions import RIndex
 
         return Int(RIndex(self, sub, start, end))
@@ -775,7 +787,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("banana").count_substring("an"))[0]
             2
         """
-        from .int_ import Int
+        from nu.forms import Int
+
         from .str_interactions import CountSubstring
 
         return Int(CountSubstring(self, sub))
@@ -797,7 +810,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("hello").startswith("he"))[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .str_interactions import StartsWith
 
         return Bool(StartsWith(self, prefix))
@@ -815,7 +829,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("hello").endswith("lo"))[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .str_interactions import EndsWith
 
         return Bool(EndsWith(self, suffix))
@@ -831,7 +846,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("123").isdigit())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .str_interactions import IsDigit
 
         return Bool(IsDigit(self))
@@ -847,7 +863,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("abc").isalpha())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .str_interactions import IsAlpha
 
         return Bool(IsAlpha(self))
@@ -863,7 +880,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("abc123").isalnum())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .str_interactions import IsAlnum
 
         return Bool(IsAlnum(self))
@@ -879,7 +897,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("   ").isspace())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .str_interactions import IsSpace
 
         return Bool(IsSpace(self))
@@ -899,7 +918,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("123").isnumeric())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .str_interactions import IsNumeric
 
         return Bool(IsNumeric(self))
@@ -919,7 +939,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("123").isdecimal())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .str_interactions import IsDecimal
 
         return Bool(IsDecimal(self))
@@ -935,7 +956,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("my_var").isidentifier())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .str_interactions import IsIdentifier
 
         return Bool(IsIdentifier(self))
@@ -955,7 +977,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("abc").isprintable())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .str_interactions import IsPrintable
 
         return Bool(IsPrintable(self))
@@ -971,7 +994,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("Hello World").istitle())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .str_interactions import IsTitle
 
         return Bool(IsTitle(self))
@@ -987,7 +1011,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("ABC").isupper())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .str_interactions import IsUpper
 
         return Bool(IsUpper(self))
@@ -1003,7 +1028,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("abc").islower())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .str_interactions import IsLower
 
         return Bool(IsLower(self))
@@ -1022,7 +1048,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("").isascii())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .str_interactions import IsAscii
 
         return Bool(IsAscii(self))
@@ -1049,6 +1076,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("hi").center(6, "*"))[0]
             '**hi**'
         """
+        from nu.forms import Str
+
         from .str_interactions import Center
 
         return Str(Center(self, width, fillchar))
@@ -1071,6 +1100,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("hi").ljust(6, "*"))[0]
             'hi****'
         """
+        from nu.forms import Str
+
         from .str_interactions import LJust
 
         return Str(LJust(self, width, fillchar))
@@ -1093,6 +1124,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("hi").rjust(6, "*"))[0]
             '****hi'
         """
+        from nu.forms import Str
+
         from .str_interactions import RJust
 
         return Str(RJust(self, width, fillchar))
@@ -1116,6 +1149,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("-42").zfill(5))[0]
             '-0042'
         """
+        from nu.forms import Str
+
         from .str_interactions import ZFill
 
         return Str(ZFill(self, width))
@@ -1133,6 +1168,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("a\tb").expandtabs(4))[0]
             'a   b'
         """
+        from nu.forms import Str
+
         from .str_interactions import ExpandTabs
 
         return Str(ExpandTabs(self, tabsize))
@@ -1160,6 +1197,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("hello world").replace("o", "0", 1))[0]
             'hell0 world'
         """
+        from nu.forms import Str
+
         from .str_interactions import Replace
 
         return Str(Replace(self, old, new, count))
@@ -1178,6 +1217,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("hello.txt").removeprefix("hello"))[0]
             '.txt'
         """
+        from nu.forms import Str
+
         from .str_interactions import RemovePrefix
 
         return Str(RemovePrefix(self, prefix))
@@ -1196,6 +1237,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("hello.txt").removesuffix(".txt"))[0]
             'hello'
         """
+        from nu.forms import Str
+
         from .str_interactions import RemoveSuffix
 
         return Str(RemoveSuffix(self, suffix))
@@ -1217,6 +1260,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("hello").translate({104: 72}))[0]
             'Hello'
         """
+        from nu.forms import Str
+
         from .str_interactions import Translate
 
         return Str(Translate(self, table))
@@ -1242,6 +1287,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("{name} is {age}").format_map({"name": "Nu", "age": 1}))[0]
             'Nu is 1'
         """
+        from nu.forms import Str
+
         from .str_interactions import FormatMap
 
         return Str(FormatMap(self, mapping))
@@ -1267,7 +1314,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str("hello").encode())[0]
             b'hello'
         """
-        from .bytes_ import Bytes
+        from nu.forms import Bytes
+
         from .str_interactions import Encode
 
         return Bytes(Encode(self, encoding))
@@ -1292,28 +1340,8 @@ class StrSurface(Surface):
             >>> nu.run(nu.Str(", ").join(["a", "b", "c"]))[0]
             'a, b, c'
         """
+        from nu.forms import Str
+
         from .str_interactions import Join
 
         return Str(Join(self, iterable))
-
-
-class Str(StrSurface, Form[str]):
-    """String interface. Addable + sliceable + comparable + logical + string methods.
-
-    Notes:
-        - `+` concatenates; there's no numeric arithmetic on Str.
-        - Comparison operators compare lexicographically, Python str
-          ordering, and yield Bool. Chained comparisons like `a > b > c`
-          do not build a single term; write them as `And(a > b, b > c)`.
-        - Logical operators are the named forms `and_`, `or_`, `not_`, and
-          coerce by truthiness: the empty string is False, every other
-          string is True.
-        - Failures (a search that finds nothing with `index`/`rindex`, a
-          wrong type, a multi-character `fillchar`, an unencodable
-          character, a missing `format_map` key, an out-of-range index)
-          raise, matching Python.
-
-    Example:
-        >>> nu.run(nu.Str("ab") + nu.Str("cd"))[0]
-        'abcd'
-    """

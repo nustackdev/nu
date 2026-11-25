@@ -6,20 +6,16 @@ from typing import TYPE_CHECKING, Generic
 
 from typing_extensions import TypeVarTuple, Unpack
 
-from nu.lang import Form
-
 from .abc import SequenceSurface
-from .abc.sequence_interactions import TupleCreate, TupleOf
 
 
 if TYPE_CHECKING:
-    from nu.lang import Arg, IntArg, Nu, TupleArg
-
-    from ..primitives import Bool, Object
+    from nu.forms import Bool, Object, Tuple
+    from nu.lang import IntArg, Nu, TupleArg
 
 
 __all__ = [
-    "Tuple",
+    "TupleSurface",
 ]
 
 
@@ -33,11 +29,13 @@ class TupleSurface(
 
     def _wrap_sliceable_result(self, operand: Nu) -> Tuple:
         """Wrap operand as Tuple for slice results."""
+        from nu.forms import Tuple
+
         return Tuple(operand)
 
     def _wrap_element_result(self, operand: Nu) -> Object:
         """Wrap operand as Object element."""
-        from ..primitives import Object
+        from nu.forms import Object
 
         return Object(operand)
 
@@ -59,6 +57,7 @@ class TupleSurface(
             (1, 2, 3, 4)
         """
         from nu.core import Add
+        from nu.forms import Tuple
 
         return Tuple(Add(self, other))
 
@@ -81,6 +80,7 @@ class TupleSurface(
             (1, 2, 3, 4)
         """
         from nu.core import Add
+        from nu.forms import Tuple
 
         return Tuple(Add(other, self))
 
@@ -98,6 +98,7 @@ class TupleSurface(
             (1, 2, 1, 2, 1, 2)
         """
         from nu.core import Mul
+        from nu.forms import Tuple
 
         return Tuple(Mul(self, n))
 
@@ -118,6 +119,7 @@ class TupleSurface(
             (1, 2, 1, 2)
         """
         from nu.core import Mul
+        from nu.forms import Tuple
 
         return Tuple(Mul(n, self))
 
@@ -143,8 +145,7 @@ class TupleSurface(
             True
         """
         from nu.core import Gt
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Gt(self, other))
 
@@ -166,8 +167,7 @@ class TupleSurface(
             True
         """
         from nu.core import Lt
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Lt(self, other))
 
@@ -185,8 +185,7 @@ class TupleSurface(
             True
         """
         from nu.core import Ge
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Ge(self, other))
 
@@ -204,8 +203,7 @@ class TupleSurface(
             True
         """
         from nu.core import Le
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Le(self, other))
 
@@ -227,8 +225,7 @@ class TupleSurface(
             True
         """
         from nu.core import Eq
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Eq(self, other))
 
@@ -249,8 +246,7 @@ class TupleSurface(
             True
         """
         from nu.core import Ne
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Ne(self, other))
 
@@ -273,62 +269,6 @@ class TupleSurface(
             False
         """
         from nu.core import Is
-
-        from ..primitives import Bool
+        from nu.forms import Bool
 
         return Bool(Is(self, other))
-
-
-class Tuple(TupleSurface[Unpack[Ts]], Form[tuple[Unpack[Ts]]], Generic[Unpack[Ts]]):
-    """Tuple interface. Immutable sequence + comparable.
-
-    Notes:
-        - No mutation methods: no `append`, `insert`, `pop`, `remove`. Every
-          op that would change contents yields a new Tuple instead, unlike
-          List which mutates in place.
-        - Arity is fixed at construction; there's no way to grow or shrink
-          one after `of`/`create`.
-        - Indexing with an out-of-range int raises at evaluation time,
-          matching Python. Slicing never raises, bounds are clamped.
-        - `+` and `*` concatenate and repeat like List's, but always
-          produce a new Tuple.
-        - Slicing yields Tuple; `iter` and `reversed` yield a stream.
-
-    Example:
-        >>> nu.run(nu.Tuple.of(1, 2, 3))[0]
-        (1, 2, 3)
-    """
-
-    @classmethod
-    def create(cls) -> Tuple[Unpack[Ts]]:
-        """Empty tuple.
-
-        Yields:
-            `()`.
-
-        Example:
-            >>> nu.run(nu.Tuple.create())[0]
-            ()
-        """
-        return cls(TupleCreate())
-
-    @classmethod
-    def of(cls, *items: Arg) -> Tuple:
-        """Tuple built from positional item expressions.
-
-        Args:
-            items: the expressions to evaluate and pack, in order.
-
-        Notes:
-            - Each argument is evaluated in the current context and packed:
-              `Tuple.of(x, y, z)` yields `(<x>, <y>, <z>)`. Sibling to
-              `List.of` and `Dict.of`.
-
-        Yields:
-            The packed tuple.
-
-        Example:
-            >>> nu.run(nu.Tuple.of(1, 2, 3))[0]
-            (1, 2, 3)
-        """
-        return cls(TupleOf(*items))

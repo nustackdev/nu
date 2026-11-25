@@ -22,7 +22,7 @@ from nu.lang import Surface
 
 
 if TYPE_CHECKING:
-    from nu.forms.collections.iterator_ import Iterator
+    from nu.forms import Iterator
     from nu.lang import Nu
 
 
@@ -81,7 +81,7 @@ class IterableSurface(Surface, Generic[ElementT, CollectionResultT, ElementResul
             - The one hook for streams: `iter` and `reversed` both route
               through it. Override to type the elements a stream carries.
         """
-        from nu.forms.collections.iterator_ import Iterator
+        from nu.forms import Iterator
 
         return Iterator(operand)
 

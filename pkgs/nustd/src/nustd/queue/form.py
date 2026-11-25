@@ -10,7 +10,8 @@ from typing import TYPE_CHECKING, Generic, NoReturn, TypeVar
 
 import janus
 
-from nu.forms import Form, Surface
+from nu.forms import Form
+from nu.surfaces import Surface
 
 
 if TYPE_CHECKING:

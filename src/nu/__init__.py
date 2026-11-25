@@ -12,6 +12,7 @@ Or reach a subpackage by dot-access:
 
     import nu
     nu.forms.Int        nu.core.Add
+    nu.surfaces.IntSurface
     nu.core.flows.Sequential     nu.core.spans.Retry
     nu.shape.Shape      nu.tree.map_nodes
     nu.mem.IntRef       nu.context.Attr
@@ -38,7 +39,7 @@ del _version, PackageNotFoundError
 
 # Subpackage namespaces for dot-access.
 # Early group: pure layers with no dependency on the flat root surface.
-from . import context, core, engine, factory, forms, inspect, lang, prog, tree
+from . import context, core, engine, factory, forms, inspect, lang, prog, surfaces, tree
 from .domains import shape
 
 # The mem fabric builds on the shape domain and the forms, so it comes after.
@@ -60,6 +61,7 @@ from .core import *
 from .core.flows import *
 from .core.spans import *
 from .forms import *
+from .surfaces import *
 
 # Shape DSL only; fabric atoms (Load, SetCmd, ...) stay at nu.shape.*.
 from .domains.shape import Shape, Slot

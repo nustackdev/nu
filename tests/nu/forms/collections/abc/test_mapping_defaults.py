@@ -12,9 +12,9 @@ import asyncio
 import pytest
 
 import nu
-from nu.forms.collections.abc.mapping_interactions import DictPop, Get
 from nu.lang import is_null
 from nu.lang.literal import Literal
+from nu.surfaces.collections.abc.mapping_interactions import DictPop, Get
 
 
 class _Recording(dict):

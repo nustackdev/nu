@@ -14,14 +14,14 @@ import pytest
 
 import nu
 from nu.forms import Dict, Iterator, List
-from nu.forms.collections.abc import PagedMapping
-from nu.forms.collections.abc.mapping_interactions import (
+from nu.lang.literal import Literal
+from nu.surfaces.collections.abc import PagedMapping
+from nu.surfaces.collections.abc.mapping_interactions import (
     Keys,
     KeysPage,
     ReversedKeys,
     ReversedKeysPage,
 )
-from nu.lang.literal import Literal
 
 
 class _Paged(dict):

@@ -12,7 +12,7 @@ import inspect
 import pytest
 
 import nu
-from nu.forms.collections.abc import (
+from nu.surfaces.collections.abc import (
     MappingSurface,
     MutableMappingSurface,
     MutableOrderedMappingSurface,

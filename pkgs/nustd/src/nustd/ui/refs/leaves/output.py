@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any, Literal
 
 from typing_extensions import Self
 
-from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Changed, Write
 
@@ -53,15 +52,23 @@ class AlertRef(LeafRef):
         return super().slot(variant=variant, title=title, body=body, dismissible=dismissible)
 
     def set_variant(self, name: Variant | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(variant=one_of("AlertRef", "variant", name, Variant)))
 
     def set_title(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(title=text))
 
     def set_body(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(body=text))
 
     def set_dismissible(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(dismissible=flag))
 
     def set(
@@ -71,6 +78,8 @@ class AlertRef(LeafRef):
         variant: Variant | StrArg = UNSET,
         dismissible: BoolArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"title": title}
         if body is not UNSET:
             payload["body"] = body
@@ -108,12 +117,18 @@ class BadgeRef(LeafRef):
         return super().slot(label=label, variant=variant, size=size)
 
     def set_label(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(label=text))
 
     def set_variant(self, name: BadgeVariant | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(variant=one_of("BadgeRef", "variant", name, BadgeVariant)))
 
     def set_size(self, name: BadgeSize | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(size=name))
 
     def set(
@@ -121,6 +136,8 @@ class BadgeRef(LeafRef):
         label: StrArg,
         variant: BadgeVariant | StrArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"label": label}
         if variant is not UNSET:
             payload["variant"] = one_of("BadgeRef", "variant", variant, BadgeVariant)
@@ -140,9 +157,13 @@ class DividerRef(LeafRef):
         return super().slot(label=label, align=align)
 
     def set_label(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(label=text))
 
     def set_align(self, side: TextAlign | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(align=side))
 
     def set(
@@ -150,6 +171,8 @@ class DividerRef(LeafRef):
         label: StrArg,
         align: TextAlign | StrArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"label": label}
         if align is not UNSET:
             payload["align"] = align
@@ -195,21 +218,31 @@ class EmptyStateRef(LeafRef):
         )
 
     def set_label(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(label=text))
 
     def set_description(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(description=text))
 
     def set_size(self, name: EmptySize | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(size=name))
 
     def set_icon(self, name: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(icon=name))
 
     def set_action(
         self, label: StrArg, href: StrArg = UNSET, target: Target | StrArg = UNSET
     ) -> Nu:
         """Relabel the way out; an empty label hides it."""
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"action": label}
         if href is not UNSET:
             payload["action_href"] = href
@@ -222,6 +255,8 @@ class EmptyStateRef(LeafRef):
         label: StrArg,
         description: StrArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"label": label}
         if description is not UNSET:
             payload["description"] = description
@@ -255,12 +290,18 @@ class GaugeRef(LeafRef):
         return super().slot(value=value, caption=caption, variant=variant)
 
     def set_value(self, value: FloatArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(value=value))
 
     def set_caption(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(caption=text))
 
     def set_variant(self, variant: GaugeVariant | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(variant=one_of("GaugeRef", "variant", variant, GaugeVariant)))
 
     def set(
@@ -269,6 +310,8 @@ class GaugeRef(LeafRef):
         caption: StrArg = UNSET,
         variant: GaugeVariant | StrArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"value": value}
         if caption is not UNSET:
             payload["caption"] = caption
@@ -330,12 +373,18 @@ class CalendarHeatmapRef(LeafRef):
         )
 
     def set_end(self, day: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(end=day))
 
     def set_title(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(title=text))
 
     def set_tone(self, tone: CalendarTone | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(tone=tone))
 
     def set(
@@ -344,6 +393,8 @@ class CalendarHeatmapRef(LeafRef):
         end: StrArg = UNSET,
         title: StrArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"values": values}
         if end is not UNSET:
             payload["end"] = end
@@ -390,24 +441,38 @@ class HeadingRef(LeafRef):
         )
 
     def set_label(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(label=text))
 
     def set_level(self, n: IntArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(level=n))
 
     def set_align(self, side: TextAlign | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(align=side))
 
     def set_size(self, name: HeadingSize | StrArg | None) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(size=name))
 
     def set_tone(self, name: HeadingTone | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(tone=name))
 
     def set_eyebrow(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(eyebrow=text))
 
     def set_subtitle(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(subtitle=text))
 
     def set(
@@ -416,6 +481,8 @@ class HeadingRef(LeafRef):
         level: IntArg = UNSET,
         align: TextAlign | StrArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"label": label}
         if level is not UNSET:
             payload["level"] = level
@@ -445,15 +512,23 @@ class HtmlRef(LeafRef):
         return super().slot(html=html, title=title, height=height, bordered=bordered)
 
     def set_html(self, doc: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(html=doc))
 
     def set_title(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(title=text))
 
     def set_height(self, px: IntArg | None) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(height=px))
 
     def set_bordered(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(bordered=flag))
 
     def set(
@@ -463,6 +538,8 @@ class HtmlRef(LeafRef):
         height: IntArg = UNSET,
         bordered: BoolArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"html": html}
         if title is not UNSET:
             payload["title"] = title
@@ -502,21 +579,33 @@ class JsonViewerRef(LeafRef):
         )
 
     def set_value(self, value: Arg[Any]) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(value=value))
 
     def set_expand_depth(self, depth: IntArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(expand_depth=depth))
 
     def set_theme(self, name: Theme | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(theme=name))
 
     def set_copyable(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(copyable=flag))
 
     def set_sortable(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(sortable=flag))
 
     def set_max_height(self, px: IntArg | None) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(max_height=px))
 
     def set(
@@ -528,6 +617,8 @@ class JsonViewerRef(LeafRef):
         sortable: BoolArg = UNSET,
         max_height: IntArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"value": value}
         if expand_depth is not UNSET:
             payload["expand_depth"] = expand_depth
@@ -585,21 +676,33 @@ class LinkRef(LeafRef):
         return _set_href(self, url, target)
 
     def set_label(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(label=text))
 
     def set_target(self, name: Target | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(target=name))
 
     def set_external(self, flag: BoolArg | None) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(external=flag))
 
     def set_variant(self, name: LinkVariant | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(variant=name))
 
     def set_icon(self, name: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(icon=name))
 
     def set_arrow(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(arrow=flag))
 
     def set(
@@ -611,6 +714,8 @@ class LinkRef(LeafRef):
     ) -> Nu:
         # Sentinel-based kwargs so callers can pass `external=None` (auto)
         # without conflating it with "do not touch this field".
+        from nu.forms import Dict
+
         payload: dict[str, object] = {}
         if href is not UNSET:
             payload["href"] = href
@@ -639,12 +744,18 @@ class ProgressRef(LeafRef):
         return super().slot(value=value, caption=caption, indeterminate=indeterminate)
 
     def set_value(self, value: FloatArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(value=value))
 
     def set_caption(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(caption=text))
 
     def set_indeterminate(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(indeterminate=flag))
 
     def set(
@@ -653,6 +764,8 @@ class ProgressRef(LeafRef):
         caption: StrArg = UNSET,
         indeterminate: BoolArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"value": value}
         if caption is not UNSET:
             payload["caption"] = caption
@@ -681,15 +794,23 @@ class StatRef(LeafRef):
         return super().slot(label=label, value=value, delta=delta, trend=trend)
 
     def set_label(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(label=text))
 
     def set_value(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(value=text))
 
     def set_delta(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(delta=text))
 
     def set_trend(self, name: Trend | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(trend=name))
 
     def set(
@@ -699,6 +820,8 @@ class StatRef(LeafRef):
         delta: StrArg = UNSET,
         trend: Trend | StrArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"value": value}
         if label is not UNSET:
             payload["label"] = label
@@ -725,9 +848,13 @@ class StatusDotRef(LeafRef):
         return super().slot(tone=tone, label=label, pulse=pulse)
 
     def set_label(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(label=text))
 
     def set_pulse(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(pulse=flag))
 
     def set(
@@ -736,6 +863,8 @@ class StatusDotRef(LeafRef):
         label: StrArg = UNSET,
         pulse: BoolArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"tone": one_of("StatusDotRef", "tone", tone, StatusTone)}
         if label is not UNSET:
             payload["label"] = label
@@ -782,12 +911,18 @@ class StatusSquaresRef(LeafRef):
         )
 
     def set_max_items(self, n: IntArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(max_items=n))
 
     def set_labels(self, labels: DictArg[str, str]) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(labels=labels))
 
     def set_total(self, when: SquaresTotal | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(total=when))
 
     def set(
@@ -796,6 +931,8 @@ class StatusSquaresRef(LeafRef):
         max_items: IntArg = UNSET,
         total: SquaresTotal | StrArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"counts": counts}
         if max_items is not UNSET:
             payload["max_items"] = max_items
@@ -831,9 +968,13 @@ class RelativeTimeRef(LeafRef):
         return super().slot(ts=_epoch_ms(ts), mode=mode)
 
     def set_mode(self, mode: RelativeTimeMode | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(mode=mode))
 
     def set(self, ts: FloatArg, mode: RelativeTimeMode | StrArg = UNSET) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"ts": ts}
         if mode is not UNSET:
             payload["mode"] = mode
@@ -862,9 +1003,13 @@ class KbdRef(LeafRef):
         return super().slot(label=label, variant=variant, size=size)
 
     def set_variant(self, name: KbdVariant | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(variant=name))
 
     def set_size(self, name: KbdSize | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(size=name))
 
     def set(
@@ -873,6 +1018,8 @@ class KbdRef(LeafRef):
         variant: KbdVariant | StrArg = UNSET,
         size: KbdSize | StrArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"label": label}
         if variant is not UNSET:
             payload["variant"] = variant
@@ -904,9 +1051,13 @@ class ShortcutRef(LeafRef):
         return super().slot(keys=list(keys or []), variant=variant, size=size)
 
     def set_variant(self, name: KbdVariant | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(variant=name))
 
     def set_size(self, name: KbdSize | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(size=name))
 
     def set(
@@ -915,6 +1066,8 @@ class ShortcutRef(LeafRef):
         variant: KbdVariant | StrArg = UNSET,
         size: KbdSize | StrArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"keys": keys}
         if variant is not UNSET:
             payload["variant"] = variant
@@ -967,24 +1120,38 @@ class TextRef(LeafRef):
         return super().slot(value=value, **props)
 
     def set(self, value: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(value=value))
 
     def set_tone(self, name: Tone | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(tone=name))
 
     def set_size(self, name: TextSize | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(size=name))
 
     def set_weight(self, name: TextWeight | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(weight=name))
 
     def set_align(self, side: TextAlign | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(align=side))
 
     def set_mono(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(mono=flag))
 
     def set_lines(self, n: IntArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(lines=n))
 
 

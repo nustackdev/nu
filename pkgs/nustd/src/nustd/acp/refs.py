@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from nu.context import FabricRef
-from nu.forms import Iterator
 from nu.lang import Nu, Ref, ScalarQuery
 from nu.lang.null import Null, is_null
 
@@ -32,6 +31,7 @@ from .interactions import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from nu.forms import Iterator
     from nu.forms.primitives import Bool
     from nu.lang import StrArg
     from nu.lang.runtime import Runtime
@@ -165,6 +165,8 @@ class AgentRef(FabricRef):
         Args:
             cwd: only those under this directory; None lists all.
         """
+        from nu.forms import Iterator
+
         return Iterator(AcpListSessions(self, cwd))
 
     def exists(self) -> Bool:
@@ -241,6 +243,8 @@ class SessionRef(Ref):
         system_prompt: object = None,
     ) -> Iterator:
         """Restore the Session: its replayed updates, then ``{modes, config_options}``; see ``AcpLoad``."""
+        from nu.forms import Iterator
+
         return Iterator(AcpLoad(self, cwd, mcp_servers, additional_directories, system_prompt))
 
     def resume(
@@ -260,6 +264,8 @@ class SessionRef(Ref):
         Args:
             prompt: a ``str``, or a list of ACP Content Block dicts.
         """
+        from nu.forms import Iterator
+
         return Iterator(AcpPrompt(self, prompt))
 
     def cancel(self) -> AcpCancel:
@@ -288,6 +294,8 @@ class SessionRef(Ref):
 
     def updates(self) -> Iterator:
         """Everything the Agent says about the Session from now on; see ``AcpUpdates``."""
+        from nu.forms import Iterator
+
         return Iterator(AcpUpdates(self))
 
 

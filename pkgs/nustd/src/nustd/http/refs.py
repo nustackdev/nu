@@ -16,7 +16,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.domains.service import Method, MethodRef
-from nu.forms import Dict
 
 from .interactions import HttpDelete, HttpGet, HttpPatch, HttpPost, HttpPut
 
@@ -90,6 +89,8 @@ class GETRef(MethodRef):
             An ``HttpGet`` over this Ref and the kwargs. Nothing is sent
             until the tree runs.
         """
+        from nu.forms import Dict
+
         return HttpGet(self, Dict.of(**kwargs))
 
 
@@ -155,6 +156,8 @@ class POSTRef(MethodRef):
             An ``HttpPost`` over this Ref and the kwargs. Nothing is sent
             until the tree runs.
         """
+        from nu.forms import Dict
+
         return HttpPost(self, Dict.of(**kwargs))
 
 
@@ -220,6 +223,8 @@ class PUTRef(MethodRef):
             An ``HttpPut`` over this Ref and the kwargs. Nothing is sent
             until the tree runs.
         """
+        from nu.forms import Dict
+
         return HttpPut(self, Dict.of(**kwargs))
 
 
@@ -285,6 +290,8 @@ class PATCHRef(MethodRef):
             An ``HttpPatch`` over this Ref and the kwargs. Nothing is sent
             until the tree runs.
         """
+        from nu.forms import Dict
+
         return HttpPatch(self, Dict.of(**kwargs))
 
 
@@ -349,4 +356,6 @@ class DELETERef(MethodRef):
             An ``HttpDelete`` over this Ref and the kwargs. Nothing is sent
             until the tree runs.
         """
+        from nu.forms import Dict
+
         return HttpDelete(self, Dict.of(**kwargs))

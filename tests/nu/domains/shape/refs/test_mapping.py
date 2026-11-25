@@ -29,12 +29,12 @@ from nu.domains.shape.interactions import (
 )
 from nu.domains.shape.item import ItemRef
 from nu.forms import DictKeys, DictValues, Int, Object, Str
-from nu.forms.collections.abc.mapping_interactions import (
+from nu.lang import TypeInfo
+from nu.surfaces.collections.abc.mapping_interactions import (
     KeysPage,
     ReversedKeys,
     ReversedKeysPage,
 )
-from nu.lang import TypeInfo
 
 
 class MyShape(Shape):

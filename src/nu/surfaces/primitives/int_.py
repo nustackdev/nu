@@ -8,18 +8,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from nu.lang import Form, Surface
+from nu.lang import Surface
 
 
 if TYPE_CHECKING:
+    from nu.forms import Bool, Float, Int
     from nu.lang import BoolArg, FloatArg, IntArg
-
-    from .bool_ import Bool
-    from .float_ import Float
 
 
 __all__ = [
-    "Int",
+    "IntSurface",
 ]
 
 
@@ -52,8 +50,9 @@ class IntSurface(Surface):
             3.5
         """
         from nu.core import Add
+        from nu.forms import Float, Int
 
-        from .float_ import Float, FloatSurface
+        from .float_ import FloatSurface
 
         if isinstance(other, (float, FloatSurface)):
             return Float(Add(self, other))
@@ -83,8 +82,7 @@ class IntSurface(Surface):
             7
         """
         from nu.core import Add
-
-        from .float_ import Float
+        from nu.forms import Float, Int
 
         if isinstance(other, float):
             return Float(Add(other, self))
@@ -109,8 +107,9 @@ class IntSurface(Surface):
             7
         """
         from nu.core import Sub
+        from nu.forms import Float, Int
 
-        from .float_ import Float, FloatSurface
+        from .float_ import FloatSurface
 
         if isinstance(other, (float, FloatSurface)):
             return Float(Sub(self, other))
@@ -141,8 +140,7 @@ class IntSurface(Surface):
             7
         """
         from nu.core import Sub
-
-        from .float_ import Float
+        from nu.forms import Float, Int
 
         if isinstance(other, float):
             return Float(Sub(other, self))
@@ -167,8 +165,9 @@ class IntSurface(Surface):
             42
         """
         from nu.core import Mul
+        from nu.forms import Float, Int
 
-        from .float_ import Float, FloatSurface
+        from .float_ import FloatSurface
 
         if isinstance(other, (float, FloatSurface)):
             return Float(Mul(self, other))
@@ -199,8 +198,7 @@ class IntSurface(Surface):
             12
         """
         from nu.core import Mul
-
-        from .float_ import Float
+        from nu.forms import Float, Int
 
         if isinstance(other, float):
             return Float(Mul(other, self))
@@ -230,8 +228,7 @@ class IntSurface(Surface):
             3.5
         """
         from nu.core import Div
-
-        from .float_ import Float
+        from nu.forms import Float
 
         return Float(Div(self, other))
 
@@ -255,8 +252,7 @@ class IntSurface(Surface):
             2.5
         """
         from nu.core import Div
-
-        from .float_ import Float
+        from nu.forms import Float
 
         return Float(Div(other, self))
 
@@ -288,8 +284,9 @@ class IntSurface(Surface):
             -4
         """
         from nu.core import FloorDiv
+        from nu.forms import Float, Int
 
-        from .float_ import Float, FloatSurface
+        from .float_ import FloatSurface
 
         if isinstance(other, (float, FloatSurface)):
             return Float(FloorDiv(self, other))
@@ -320,8 +317,7 @@ class IntSurface(Surface):
             -4
         """
         from nu.core import FloorDiv
-
-        from .float_ import Float
+        from nu.forms import Float, Int
 
         if isinstance(other, float):
             return Float(FloorDiv(other, self))
@@ -350,8 +346,9 @@ class IntSurface(Surface):
             2
         """
         from nu.core import Mod
+        from nu.forms import Float, Int
 
-        from .float_ import Float, FloatSurface
+        from .float_ import FloatSurface
 
         if isinstance(other, (float, FloatSurface)):
             return Float(Mod(self, other))
@@ -382,8 +379,7 @@ class IntSurface(Surface):
             2
         """
         from nu.core import Mod
-
-        from .float_ import Float
+        from nu.forms import Float, Int
 
         if isinstance(other, float):
             return Float(Mod(other, self))
@@ -413,8 +409,9 @@ class IntSurface(Surface):
             1024
         """
         from nu.core import Pow
+        from nu.forms import Float, Int
 
-        from .float_ import Float, FloatSurface
+        from .float_ import FloatSurface
 
         if isinstance(other, (float, FloatSurface)):
             return Float(Pow(self, other))
@@ -442,8 +439,7 @@ class IntSurface(Surface):
             1024
         """
         from nu.core import Pow
-
-        from .float_ import Float
+        from nu.forms import Float, Int
 
         if isinstance(other, float):
             return Float(Pow(other, self))
@@ -460,6 +456,7 @@ class IntSurface(Surface):
             -4
         """
         from nu.core import Neg
+        from nu.forms import Int
 
         return Int(Neg(self))
 
@@ -478,6 +475,7 @@ class IntSurface(Surface):
             -4
         """
         from nu.core import Pos
+        from nu.forms import Int
 
         return Int(Pos(self))
 
@@ -492,6 +490,7 @@ class IntSurface(Surface):
             4
         """
         from nu.core import Abs
+        from nu.forms import Int
 
         return Int(Abs(self))
 
@@ -514,8 +513,7 @@ class IntSurface(Surface):
             True
         """
         from nu.core import Gt
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Gt(self, other))
 
@@ -534,8 +532,7 @@ class IntSurface(Surface):
             False
         """
         from nu.core import Lt
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Lt(self, other))
 
@@ -554,8 +551,7 @@ class IntSurface(Surface):
             True
         """
         from nu.core import Ge
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Ge(self, other))
 
@@ -574,8 +570,7 @@ class IntSurface(Surface):
             True
         """
         from nu.core import Le
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Le(self, other))
 
@@ -597,8 +592,7 @@ class IntSurface(Surface):
             True
         """
         from nu.core import Eq
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Eq(self, other))
 
@@ -619,8 +613,7 @@ class IntSurface(Surface):
             True
         """
         from nu.core import Ne
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Ne(self, other))
 
@@ -647,8 +640,7 @@ class IntSurface(Surface):
             True
         """
         from nu.core import Is
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Is(self, other))
 
@@ -676,8 +668,7 @@ class IntSurface(Surface):
             False
         """
         from nu.core import And
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(And(self, other))
 
@@ -700,8 +691,7 @@ class IntSurface(Surface):
             True
         """
         from nu.core import Or
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Or(self, other))
 
@@ -720,8 +710,7 @@ class IntSurface(Surface):
             True
         """
         from nu.core import Not
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Not(self))
 
@@ -740,8 +729,7 @@ class IntSurface(Surface):
             True
         """
         from nu.core import ToBool
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(ToBool(self))
 
@@ -767,6 +755,7 @@ class IntSurface(Surface):
             8
         """
         from nu.core import BitAnd
+        from nu.forms import Int
 
         return Int(BitAnd(self, other))
 
@@ -788,6 +777,7 @@ class IntSurface(Surface):
             14
         """
         from nu.core import BitOr
+        from nu.forms import Int
 
         return Int(BitOr(self, other))
 
@@ -805,6 +795,7 @@ class IntSurface(Surface):
             6
         """
         from nu.core import BitXor
+        from nu.forms import Int
 
         return Int(BitXor(self, other))
 
@@ -822,6 +813,7 @@ class IntSurface(Surface):
             -6
         """
         from nu.core import BitNot
+        from nu.forms import Int
 
         return Int(BitNot(self))
 
@@ -845,6 +837,7 @@ class IntSurface(Surface):
             16
         """
         from nu.core import LShift
+        from nu.forms import Int
 
         return Int(LShift(self, other))
 
@@ -871,28 +864,6 @@ class IntSurface(Surface):
             4
         """
         from nu.core import RShift
+        from nu.forms import Int
 
         return Int(RShift(self, other))
-
-
-class Int(IntSurface, Form[int]):
-    """Integer interface. Full numeric + comparable + logical + bitwise.
-
-    Notes:
-        - Arithmetic against a Float or a Python float promotes the result to
-          Float. Everything else stays Int.
-        - Division `/` always yields Float regardless of operand type; use
-          `//` for integer floor division that stays Int.
-        - Comparison operators yield Bool. Chained comparisons like
-          `a > b > c` do not build a single term; write them as
-          `And(a > b, b > c)`.
-        - Logical operators are the named forms `and_`, `or_`, `not_`, and
-          bit operations are named too: `bitand`, `bitor`, `bitxor`,
-          `bitnot`, `lshift`, `rshift`. `&`, `|` and `>>` compose flows
-          (Race, Parallel, Sequential) on an Int like on every term, and
-          `^`, `~`, `<<` are not defined.
-
-    Example:
-        >>> nu.run(nu.Int(6) * nu.Int(7))[0]
-        42
-    """

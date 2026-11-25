@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 
 from typing_extensions import Self
 
-from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Write
 
@@ -112,21 +111,33 @@ class RangeSliderRef(InputLeaf):
         )
 
     def set_min(self, value: FloatArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(min=value))
 
     def set_max(self, value: FloatArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(max=value))
 
     def set_step(self, value: FloatArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(step=value))
 
     def set_marks(self, marks: Sequence[Mark]) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(marks=_normalize_marks(marks)))
 
     def set_format(self, template: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(format=template))
 
     def set_show_value(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(show_value=flag))
 
     def set(
@@ -138,6 +149,8 @@ class RangeSliderRef(InputLeaf):
         label: StrArg = UNSET,
     ) -> Nu:
         """Write the pair; with bounds, write them in the same frame."""
+        from nu.forms import Dict
+
         if isinstance(value, tuple):
             value = list(value)
         if all(x is UNSET for x in (min, max, step, label)):

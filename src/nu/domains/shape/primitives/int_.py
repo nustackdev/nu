@@ -8,7 +8,7 @@ names; ``ReactiveIntRef`` adds ``on_change``. The capability comes first, so
 
 from __future__ import annotations
 
-from nu.forms import IntSurface
+from nu.surfaces import IntSurface
 
 from ..item import MutableItemRef, ReactiveItemRef
 

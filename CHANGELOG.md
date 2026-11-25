@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Methods move to their own package so refs share them without pulling form nodes
 - Form implementation gets its own module beside brackets, surfaces get theirs
 - Warn when a stream sits where nothing consumes it, since streams are lazy
 - Type checking of refs and flows is back to its baseline after the split

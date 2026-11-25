@@ -7,15 +7,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.lang import Form, Surface
+from nu.lang import Surface
 
 
 if TYPE_CHECKING:
+    from nu.forms import Bool
     from nu.lang import BoolArg
 
 
 __all__ = [
-    "Bool",
+    "BoolSurface",
 ]
 
 
@@ -44,6 +45,7 @@ class BoolSurface(Surface):
             False
         """
         from nu.core import And
+        from nu.forms import Bool
 
         return Bool(And(self, other))
 
@@ -65,6 +67,7 @@ class BoolSurface(Surface):
             True
         """
         from nu.core import Or
+        from nu.forms import Bool
 
         return Bool(Or(self, other))
 
@@ -79,6 +82,7 @@ class BoolSurface(Surface):
             False
         """
         from nu.core import Not
+        from nu.forms import Bool
 
         return Bool(Not(self))
 
@@ -97,6 +101,7 @@ class BoolSurface(Surface):
             True
         """
         from nu.core import ToBool
+        from nu.forms import Bool
 
         return Bool(ToBool(self))
 
@@ -119,6 +124,7 @@ class BoolSurface(Surface):
             True
         """
         from nu.core import Gt
+        from nu.forms import Bool
 
         return Bool(Gt(self, other))
 
@@ -137,6 +143,7 @@ class BoolSurface(Surface):
             False
         """
         from nu.core import Lt
+        from nu.forms import Bool
 
         return Bool(Lt(self, other))
 
@@ -155,6 +162,7 @@ class BoolSurface(Surface):
             True
         """
         from nu.core import Ge
+        from nu.forms import Bool
 
         return Bool(Ge(self, other))
 
@@ -173,6 +181,7 @@ class BoolSurface(Surface):
             True
         """
         from nu.core import Le
+        from nu.forms import Bool
 
         return Bool(Le(self, other))
 
@@ -193,6 +202,7 @@ class BoolSurface(Surface):
             True
         """
         from nu.core import Eq
+        from nu.forms import Bool
 
         return Bool(Eq(self, other))
 
@@ -213,6 +223,7 @@ class BoolSurface(Surface):
             True
         """
         from nu.core import Ne
+        from nu.forms import Bool
 
         return Bool(Ne(self, other))
 
@@ -237,24 +248,6 @@ class BoolSurface(Surface):
             True
         """
         from nu.core import Is
+        from nu.forms import Bool
 
         return Bool(Is(self, other))
-
-
-class Bool(BoolSurface, Form[bool]):
-    """Boolean interface. Logical + comparable.
-
-    Notes:
-        - Logical operators are the named forms `and_`, `or_`, `not_`. Python
-          reserves `and`, `or`, `not` as keywords, so they cannot be method
-          names. `&`, `|` and `>>` compose flows (Race, Parallel,
-          Sequential) on a Bool like on every term.
-        - Short-circuits like Python: the right operand is only
-          evaluated when the left does not already decide the result.
-        - Comparison operators yield Bool too, treating False as less than
-          True.
-
-    Example:
-        >>> nu.run(nu.Bool(True).and_(nu.Bool(False)))[0]
-        False
-    """

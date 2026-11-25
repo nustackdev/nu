@@ -18,7 +18,6 @@ from typing import TYPE_CHECKING
 
 from typing_extensions import Self
 
-from nu.forms import Dict
 from nustd.ui.core import Changed, Write
 from nustd.ui.refs.leaves.base import LeafRef
 
@@ -78,6 +77,8 @@ class LensRef(LeafRef):
         than a delta, so a browser that missed a frame is never left holding a
         column it cannot be corrected on.
         """
+        from nu.forms import Dict
+
         return Write(self, Dict.of(cursor=cursor, columns=columns))
 
     def on_nav(self) -> Changed:

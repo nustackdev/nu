@@ -26,7 +26,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.forms import List as ListOf
 from nu.lang import Nu
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import ItemRef, Send, check_key
@@ -212,6 +211,8 @@ class Ordered:
         )
 
     def _keys(self, op: str, keys: object) -> object:
+        from nu.forms import List as ListOf
+
         if isinstance(keys, Nu):
             return keys
         if isinstance(keys, (str, bytes)) or not hasattr(keys, "__iter__"):

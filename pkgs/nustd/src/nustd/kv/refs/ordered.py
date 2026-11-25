@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any, Generic
 from typing_extensions import TypeVar
 
 from nu.domains.shape import Slot
-from nu.forms import Object
 from nu.lang import Nu
 from nu.lang.sentinels import UNSET
 from nu.lang.typeinfo import TypeInfo
@@ -23,6 +22,7 @@ from .containers import DictRef, _require_view
 
 
 if TYPE_CHECKING:
+    from nu.forms import Object
     from nu.lang import Arg
 
 
@@ -221,6 +221,7 @@ class OrderedDictRef(DictRef[K, V], Generic[K, V]):
             run(Plane.cells.first(), ctx)
             run(Plane.cells.first(default=nu.NullForm()), ctx)
         """
+        from nu.forms import Object
         from nustd.kv.interactions.ordered import OrderedFirst
 
         return Object(OrderedFirst(self, default))
@@ -243,6 +244,7 @@ class OrderedDictRef(DictRef[K, V], Generic[K, V]):
         Example:
             run(Plane.cells.last(), ctx)
         """
+        from nu.forms import Object
         from nustd.kv.interactions.ordered import OrderedLast
 
         return Object(OrderedLast(self, default))

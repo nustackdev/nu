@@ -4,23 +4,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from nu.lang import Form, Surface
+from nu.lang import Surface
 
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from nu.forms import Bool, Bytes, Int, List, Str, Tuple
     from nu.lang import BoolArg, BytesArg, IntArg, StrArg
-
-    from ..collections.list_ import List
-    from ..collections.tuple_ import Tuple
-    from .bool_ import Bool
-    from .int_ import Int
-    from .str_ import Str
 
 
 __all__ = [
-    "Bytes",
+    "BytesSurface",
 ]
 
 
@@ -45,6 +40,7 @@ class BytesSurface(Surface):
             b'foobar'
         """
         from nu.core import Add
+        from nu.forms import Bytes
 
         return Bytes(Add(self, other))
 
@@ -67,6 +63,7 @@ class BytesSurface(Surface):
             b'foobar'
         """
         from nu.core import Add
+        from nu.forms import Bytes
 
         return Bytes(Add(other, self))
 
@@ -98,8 +95,7 @@ class BytesSurface(Surface):
             b'el'
         """
         from nu.core import GetItem, Slice
-
-        from .int_ import Int
+        from nu.forms import Bytes, Int
 
         if isinstance(key, slice):
             return Bytes(GetItem(self, Slice(key.start, key.stop, key.step)))
@@ -120,8 +116,7 @@ class BytesSurface(Surface):
             3
         """
         from nu.core import Len
-
-        from .int_ import Int
+        from nu.forms import Int
 
         return Int(Len(self))
 
@@ -144,8 +139,7 @@ class BytesSurface(Surface):
             True
         """
         from nu.core import Contains
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Contains(self, item))
 
@@ -167,8 +161,7 @@ class BytesSurface(Surface):
             True
         """
         from nu.core import Gt
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Gt(self, other))
 
@@ -186,8 +179,7 @@ class BytesSurface(Surface):
             True
         """
         from nu.core import Lt
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Lt(self, other))
 
@@ -205,8 +197,7 @@ class BytesSurface(Surface):
             True
         """
         from nu.core import Ge
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Ge(self, other))
 
@@ -224,8 +215,7 @@ class BytesSurface(Surface):
             True
         """
         from nu.core import Le
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Le(self, other))
 
@@ -246,8 +236,7 @@ class BytesSurface(Surface):
             True
         """
         from nu.core import Eq
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Eq(self, other))
 
@@ -268,8 +257,7 @@ class BytesSurface(Surface):
             True
         """
         from nu.core import Ne
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Ne(self, other))
 
@@ -292,8 +280,7 @@ class BytesSurface(Surface):
             True
         """
         from nu.core import Is
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Is(self, other))
 
@@ -320,8 +307,7 @@ class BytesSurface(Surface):
             False
         """
         from nu.core import And
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(And(self, other))
 
@@ -344,8 +330,7 @@ class BytesSurface(Surface):
             True
         """
         from nu.core import Or
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Or(self, other))
 
@@ -363,8 +348,7 @@ class BytesSurface(Surface):
             True
         """
         from nu.core import Not
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Not(self))
 
@@ -383,8 +367,7 @@ class BytesSurface(Surface):
             True
         """
         from nu.core import ToBool
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(ToBool(self))
 
@@ -411,8 +394,9 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"hi there").decode())[0]
             'hi there'
         """
+        from nu.forms import Str
+
         from .bytes_interactions import Decode
-        from .str_ import Str
 
         return Str(Decode(self, encoding))
 
@@ -430,8 +414,9 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"\xff\x00").hex_())[0]
             'ff00'
         """
+        from nu.forms import Str
+
         from .bytes_interactions import Hex
-        from .str_ import Str
 
         return Str(Hex(self))
 
@@ -448,6 +433,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"Hi").upper())[0]
             b'HI'
         """
+        from nu.forms import Bytes
+
         from .bytes_interactions import BytesUpper
 
         return Bytes(BytesUpper(self))
@@ -465,6 +452,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"Hi").lower())[0]
             b'hi'
         """
+        from nu.forms import Bytes
+
         from .bytes_interactions import BytesLower
 
         return Bytes(BytesLower(self))
@@ -482,6 +471,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"  hi  ").strip())[0]
             b'hi'
         """
+        from nu.forms import Bytes
+
         from .bytes_interactions import BytesStrip
 
         return Bytes(BytesStrip(self, chars))
@@ -499,6 +490,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"  hi  ").lstrip())[0]
             b'hi  '
         """
+        from nu.forms import Bytes
+
         from .bytes_interactions import BytesLStrip
 
         return Bytes(BytesLStrip(self, chars))
@@ -516,6 +509,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"  hi  ").rstrip())[0]
             b'  hi'
         """
+        from nu.forms import Bytes
+
         from .bytes_interactions import BytesRStrip
 
         return Bytes(BytesRStrip(self, chars))
@@ -535,7 +530,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"a,b,c").split_bytes(b","))[0]
             [b'a', b'b', b'c']
         """
-        from ..collections.list_ import List
+        from nu.forms import List
+
         from .bytes_interactions import BytesSplit
 
         if sep is not None:
@@ -558,8 +554,9 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"abcabc").find_bytes(b"bc"))[0]
             1
         """
+        from nu.forms import Int
+
         from .bytes_interactions import BytesFind
-        from .int_ import Int
 
         return Int(BytesFind(self, sub, start, end))
 
@@ -576,8 +573,9 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"abcabc").count_bytes(b"bc"))[0]
             2
         """
+        from nu.forms import Int
+
         from .bytes_interactions import BytesCount
-        from .int_ import Int
 
         return Int(BytesCount(self, sub))
 
@@ -594,7 +592,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"hello").startswith(b"he"))[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .bytes_interactions import BytesStartsWith
 
         return Bool(BytesStartsWith(self, prefix))
@@ -612,7 +611,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"hello").endswith(b"lo"))[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .bytes_interactions import BytesEndsWith
 
         return Bool(BytesEndsWith(self, suffix))
@@ -633,6 +633,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"aXbXc").replace(b"X", b"-"))[0]
             b'a-b-c'
         """
+        from nu.forms import Bytes
+
         from .bytes_interactions import BytesReplace
 
         return Bytes(BytesReplace(self, old, new, count))
@@ -651,6 +653,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"prefoo").removeprefix(b"pre"))[0]
             b'foo'
         """
+        from nu.forms import Bytes
+
         from .bytes_interactions import BytesRemovePrefix
 
         return Bytes(BytesRemovePrefix(self, prefix))
@@ -669,6 +673,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"foobar").removesuffix(b"bar"))[0]
             b'foo'
         """
+        from nu.forms import Bytes
+
         from .bytes_interactions import BytesRemoveSuffix
 
         return Bytes(BytesRemoveSuffix(self, suffix))
@@ -690,6 +696,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"abc").translate(bytes.maketrans(b"ab", b"AB")))[0]
             b'ABc'
         """
+        from nu.forms import Bytes
+
         from .bytes_interactions import BytesTranslate
 
         return Bytes(BytesTranslate(self, table, delete))
@@ -708,6 +716,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"hello world").title())[0]
             b'Hello World'
         """
+        from nu.forms import Bytes
+
         from .bytes_interactions import BytesTitle
 
         return Bytes(BytesTitle(self))
@@ -722,6 +732,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"hello world").capitalize())[0]
             b'Hello world'
         """
+        from nu.forms import Bytes
+
         from .bytes_interactions import BytesCapitalize
 
         return Bytes(BytesCapitalize(self))
@@ -736,6 +748,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"Hello").swapcase())[0]
             b'hELLO'
         """
+        from nu.forms import Bytes
+
         from .bytes_interactions import BytesSwapCase
 
         return Bytes(BytesSwapCase(self))
@@ -765,7 +779,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"a,b,c").rsplit_bytes(b",", 1))[0]
             [b'a,b', b'c']
         """
-        from ..collections.list_ import List
+        from nu.forms import List
+
         from .bytes_interactions import BytesRSplit
 
         if sep is not None:
@@ -785,7 +800,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"a\nb\nc").splitlines())[0]
             [b'a', b'b', b'c']
         """
-        from ..collections.list_ import List
+        from nu.forms import List
+
         from .bytes_interactions import BytesSplitLines
 
         return List(BytesSplitLines(self, keepends))
@@ -804,7 +820,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"key=value").partition(b"="))[0]
             (b'key', b'=', b'value')
         """
-        from ..collections.tuple_ import Tuple
+        from nu.forms import Tuple
+
         from .bytes_interactions import BytesPartition
 
         return Tuple(BytesPartition(self, sep))
@@ -823,7 +840,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"a=b=c").rpartition(b"="))[0]
             (b'a=b', b'=', b'c')
         """
-        from ..collections.tuple_ import Tuple
+        from nu.forms import Tuple
+
         from .bytes_interactions import BytesRPartition
 
         return Tuple(BytesRPartition(self, sep))
@@ -848,8 +866,9 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"abcabc").rfind_bytes(b"bc"))[0]
             4
         """
+        from nu.forms import Int
+
         from .bytes_interactions import BytesRFind
-        from .int_ import Int
 
         return Int(BytesRFind(self, sub, start, end))
 
@@ -873,8 +892,9 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"abc").index_bytes(b"b"))[0]
             1
         """
+        from nu.forms import Int
+
         from .bytes_interactions import BytesIndex
-        from .int_ import Int
 
         return Int(BytesIndex(self, sub, start, end))
 
@@ -898,8 +918,9 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"abcabc").rindex_bytes(b"bc"))[0]
             4
         """
+        from nu.forms import Int
+
         from .bytes_interactions import BytesRIndex
-        from .int_ import Int
 
         return Int(BytesRIndex(self, sub, start, end))
 
@@ -920,7 +941,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"hello").isascii())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .bytes_interactions import BytesIsAscii
 
         return Bool(BytesIsAscii(self))
@@ -936,7 +958,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"123").isdigit())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .bytes_interactions import BytesIsDigit
 
         return Bool(BytesIsDigit(self))
@@ -952,7 +975,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"abc").isalpha())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .bytes_interactions import BytesIsAlpha
 
         return Bool(BytesIsAlpha(self))
@@ -968,7 +992,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"abc123").isalnum())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .bytes_interactions import BytesIsAlnum
 
         return Bool(BytesIsAlnum(self))
@@ -984,7 +1009,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"  ").isspace())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .bytes_interactions import BytesIsSpace
 
         return Bool(BytesIsSpace(self))
@@ -999,7 +1025,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"Hello World").istitle())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .bytes_interactions import BytesIsTitle
 
         return Bool(BytesIsTitle(self))
@@ -1014,7 +1041,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"ABC").isupper())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .bytes_interactions import BytesIsUpper
 
         return Bool(BytesIsUpper(self))
@@ -1029,7 +1057,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"abc").islower())[0]
             True
         """
-        from .bool_ import Bool
+        from nu.forms import Bool
+
         from .bytes_interactions import BytesIsLower
 
         return Bool(BytesIsLower(self))
@@ -1054,6 +1083,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"hi").center(6))[0]
             b'  hi  '
         """
+        from nu.forms import Bytes
+
         from .bytes_interactions import BytesCenter
 
         return Bytes(BytesCenter(self, width, fillbyte))
@@ -1074,6 +1105,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"hi").ljust(5))[0]
             b'hi   '
         """
+        from nu.forms import Bytes
+
         from .bytes_interactions import BytesLJust
 
         return Bytes(BytesLJust(self, width, fillbyte))
@@ -1094,6 +1127,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"hi").rjust(5))[0]
             b'   hi'
         """
+        from nu.forms import Bytes
+
         from .bytes_interactions import BytesRJust
 
         return Bytes(BytesRJust(self, width, fillbyte))
@@ -1116,6 +1151,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"42").zfill(5))[0]
             b'00042'
         """
+        from nu.forms import Bytes
+
         from .bytes_interactions import BytesZFill
 
         return Bytes(BytesZFill(self, width))
@@ -1137,6 +1174,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b"a\tb").expandtabs(4))[0]
             b'a   b'
         """
+        from nu.forms import Bytes
+
         from .bytes_interactions import BytesExpandTabs
 
         return Bytes(BytesExpandTabs(self, tabsize))
@@ -1159,25 +1198,8 @@ class BytesSurface(Surface):
             >>> nu.run(nu.Bytes(b",").join([b"a", b"b", b"c"]))[0]
             b'a,b,c'
         """
+        from nu.forms import Bytes
+
         from .bytes_interactions import BytesJoin
 
         return Bytes(BytesJoin(self, iterable))
-
-
-class Bytes(BytesSurface, Form[bytes]):
-    """Bytes interface. Sliceable + comparable + logical + bytes methods.
-
-    Notes:
-        - Indexing with `[]` yields Int, the byte's value 0-255. Slicing
-          with `[:]` yields Bytes.
-        - `decode` and `hex_` are the only two methods that leave bytes:
-          `decode` produces a Str, `hex_` produces a Str of hex digits.
-          Every other method stays in Bytes.
-        - Comparison operators yield Bool, ordering lexicographically by
-          byte value, same as Python's `bytes` ordering.
-        - Logical operators are the named forms `and_`, `or_`, `not_`.
-
-    Example:
-        >>> nu.run(nu.Bytes(b"hi") + nu.Bytes(b" there"))[0]
-        b'hi there'
-    """

@@ -1,94 +1,59 @@
-"""Native Form layer.
+"""Native Form nodes.
 
-A form is what a fabric location holds (an Int, a Str, a Dict, a ToList) and the
-fluent typed surface for building Nu over it. Each family is two classes: a
-``Surface`` that carries the methods (``StrSurface``) and the ``Form`` node, a
-Span over one body that mixes the surface in (``Str``). A ref mixes in the same
-surface without becoming a form (``StrRef``). ``Surface`` and the ``Form`` kind
-live in ``nu.lang`` (re-exported here for convenience); the NULL queries
-(``IsNull``, ``Fallback``) live in ``nu.core``.
+A form is what a fabric location holds (an Int, a Str, a Dict, a ToList): a
+Span over one body that mixes in the surface carrying its methods (``Str`` =
+``StrSurface`` on a ``Form[str]``). The surfaces, and the atoms their methods
+build, live in ``nu.surfaces``, shared with the refs that hold the same values.
+This package holds only the nodes, their constructors, and the atoms only those
+constructors build.
 
-Concrete primitive forms live in ``primitives/``, concrete collection forms in
-``collections/`` (with the abstract surfaces in ``collections/abc/``).
+Primitive nodes live in ``primitives``, collection nodes (with the dict views
+and ``Iterator``) in ``collections``. ``Form``, the kind, lives in ``nu.lang``
+and is re-exported here for convenience.
 """
 
-from nu.lang import Form, Surface
+from nu.lang import Form
 
 from .collections import (
     Dict,
     DictItems,
-    DictItemsSurface,
     DictKeys,
-    DictKeysSurface,
-    DictSurface,
     DictValues,
-    DictValuesSurface,
     FrozenSet,
-    FrozenSetSurface,
     Iterator,
-    IteratorSurface,
     List,
-    ListSurface,
     Set,
-    SetSurface,
     Tuple,
-    TupleSurface,
 )
 from .primitives import (
     Bool,
-    BoolSurface,
     Bytes,
-    BytesSurface,
     Float,
-    FloatSurface,
     Int,
-    IntSurface,
     None_,
-    NoneSurface,
     NullForm,
-    NullSurface,
     Object,
-    ObjectSurface,
     Str,
-    StrSurface,
 )
 
 
 __all__ = [
     "Bool",
-    "BoolSurface",
     "Bytes",
-    "BytesSurface",
     "Dict",
     "DictItems",
-    "DictItemsSurface",
     "DictKeys",
-    "DictKeysSurface",
-    "DictSurface",
     "DictValues",
-    "DictValuesSurface",
     "Float",
-    "FloatSurface",
     "Form",
     "FrozenSet",
-    "FrozenSetSurface",
     "Int",
-    "IntSurface",
     "Iterator",
-    "IteratorSurface",
     "List",
-    "ListSurface",
-    "NoneSurface",
     "None_",
     "NullForm",
-    "NullSurface",
     "Object",
-    "ObjectSurface",
     "Set",
-    "SetSurface",
     "Str",
-    "StrSurface",
-    "Surface",
     "Tuple",
-    "TupleSurface",
 ]

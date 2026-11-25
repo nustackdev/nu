@@ -7,17 +7,16 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.lang import Form, Surface
+from nu.lang import Surface
 
 
 if TYPE_CHECKING:
+    from nu.forms import Bool, Float
     from nu.lang import BoolArg, FloatArg, IntArg
-
-    from .bool_ import Bool
 
 
 __all__ = [
-    "Float",
+    "FloatSurface",
 ]
 
 
@@ -46,6 +45,7 @@ class FloatSurface(Surface):
             3.0
         """
         from nu.core import Add
+        from nu.forms import Float
 
         return Float(Add(self, other))
 
@@ -68,6 +68,7 @@ class FloatSurface(Surface):
             3.5
         """
         from nu.core import Add
+        from nu.forms import Float
 
         return Float(Add(other, self))
 
@@ -85,6 +86,7 @@ class FloatSurface(Surface):
             6.5
         """
         from nu.core import Sub
+        from nu.forms import Float
 
         return Float(Sub(self, other))
 
@@ -107,6 +109,7 @@ class FloatSurface(Surface):
             6.5
         """
         from nu.core import Sub
+        from nu.forms import Float
 
         return Float(Sub(other, self))
 
@@ -124,6 +127,7 @@ class FloatSurface(Surface):
             42.0
         """
         from nu.core import Mul
+        from nu.forms import Float
 
         return Float(Mul(self, other))
 
@@ -146,6 +150,7 @@ class FloatSurface(Surface):
             12.0
         """
         from nu.core import Mul
+        from nu.forms import Float
 
         return Float(Mul(other, self))
 
@@ -169,6 +174,7 @@ class FloatSurface(Surface):
             3.5
         """
         from nu.core import Div
+        from nu.forms import Float
 
         return Float(Div(self, other))
 
@@ -191,6 +197,7 @@ class FloatSurface(Surface):
             2.5
         """
         from nu.core import Div
+        from nu.forms import Float
 
         return Float(Div(other, self))
 
@@ -216,6 +223,7 @@ class FloatSurface(Surface):
             -4.0
         """
         from nu.core import FloorDiv
+        from nu.forms import Float
 
         return Float(FloorDiv(self, other))
 
@@ -238,6 +246,7 @@ class FloatSurface(Surface):
             -4.0
         """
         from nu.core import FloorDiv
+        from nu.forms import Float
 
         return Float(FloorDiv(other, self))
 
@@ -259,6 +268,7 @@ class FloatSurface(Surface):
             1.5
         """
         from nu.core import Mod
+        from nu.forms import Float
 
         return Float(Mod(self, other))
 
@@ -281,6 +291,7 @@ class FloatSurface(Surface):
             1.5
         """
         from nu.core import Mod
+        from nu.forms import Float
 
         return Float(Mod(other, self))
 
@@ -303,6 +314,7 @@ class FloatSurface(Surface):
             1024.0
         """
         from nu.core import Pow
+        from nu.forms import Float
 
         return Float(Pow(self, other))
 
@@ -323,6 +335,7 @@ class FloatSurface(Surface):
             1024.0
         """
         from nu.core import Pow
+        from nu.forms import Float
 
         return Float(Pow(other, self))
 
@@ -337,6 +350,7 @@ class FloatSurface(Surface):
             -4.5
         """
         from nu.core import Neg
+        from nu.forms import Float
 
         return Float(Neg(self))
 
@@ -355,6 +369,7 @@ class FloatSurface(Surface):
             -4.5
         """
         from nu.core import Pos
+        from nu.forms import Float
 
         return Float(Pos(self))
 
@@ -369,6 +384,7 @@ class FloatSurface(Surface):
             4.5
         """
         from nu.core import Abs
+        from nu.forms import Float
 
         return Float(Abs(self))
 
@@ -391,8 +407,7 @@ class FloatSurface(Surface):
             True
         """
         from nu.core import Gt
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Gt(self, other))
 
@@ -411,8 +426,7 @@ class FloatSurface(Surface):
             False
         """
         from nu.core import Lt
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Lt(self, other))
 
@@ -432,8 +446,7 @@ class FloatSurface(Surface):
             True
         """
         from nu.core import Ge
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Ge(self, other))
 
@@ -453,8 +466,7 @@ class FloatSurface(Surface):
             True
         """
         from nu.core import Le
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Le(self, other))
 
@@ -480,8 +492,7 @@ class FloatSurface(Surface):
             False
         """
         from nu.core import Eq
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Eq(self, other))
 
@@ -503,8 +514,7 @@ class FloatSurface(Surface):
             True
         """
         from nu.core import Ne
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Ne(self, other))
 
@@ -527,8 +537,7 @@ class FloatSurface(Surface):
             True
         """
         from nu.core import Is
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Is(self, other))
 
@@ -555,8 +564,7 @@ class FloatSurface(Surface):
             False
         """
         from nu.core import And
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(And(self, other))
 
@@ -579,8 +587,7 @@ class FloatSurface(Surface):
             True
         """
         from nu.core import Or
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Or(self, other))
 
@@ -598,8 +605,7 @@ class FloatSurface(Surface):
             True
         """
         from nu.core import Not
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(Not(self))
 
@@ -618,30 +624,6 @@ class FloatSurface(Surface):
             True
         """
         from nu.core import ToBool
-
-        from .bool_ import Bool
+        from nu.forms import Bool
 
         return Bool(ToBool(self))
-
-
-class Float(FloatSurface, Form[float]):
-    """Float interface. Numeric + comparable + logical.
-
-    Notes:
-        - Arithmetic against an Int, or a plain int or float, stays Float.
-          There's no promotion to track since Float is already the wider
-          type.
-        - Division `/` and floor division `//` both stay Float. Unlike Int,
-          where `/` promotes to Float but `//` stays Int, here every
-          arithmetic operator returns Float.
-        - Comparison operators yield Bool. Chained comparisons like
-          `a > b > c` do not build a single term; write them as
-          `And(a > b, b > c)`.
-        - `nan` compares False against everything, including itself, so
-          `Float(nan) == Float(nan)` is False.
-        - Logical operators are the named forms `and_`, `or_`, `not_`.
-
-    Example:
-        >>> nu.run(nu.Float(2.5) * nu.Float(4.0))[0]
-        10.0
-    """

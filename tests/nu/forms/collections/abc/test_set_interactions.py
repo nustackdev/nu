@@ -9,15 +9,15 @@ from __future__ import annotations
 
 import pytest
 
-from nu.forms.collections.abc.set_interactions import (
+from nu.lang import NULL
+from nu.lang.helpers import compile, eval
+from nu.lang.literal import Literal
+from nu.surfaces.collections.abc.set_interactions import (
     Difference,
     Intersection,
     SymmetricDifference,
     Union,
 )
-from nu.lang import NULL
-from nu.lang.helpers import compile, eval
-from nu.lang.literal import Literal
 
 
 def _eval(term: object) -> object:

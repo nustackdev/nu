@@ -20,7 +20,6 @@ from typing import TYPE_CHECKING, Literal
 
 from typing_extensions import Self
 
-from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Write
 
@@ -66,9 +65,13 @@ class IconRef(LeafRef):
         return super().slot(name=name, size=size, tone=tone, framed=bool(framed), label=label)
 
     def set(self, name: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(name=name))
 
     def set_tone(self, name: IconTone | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(tone=name))
 
 
@@ -135,6 +138,8 @@ class PageLinkRef(LeafRef):
         target: Target | StrArg = UNSET,
     ) -> Nu:
         """Point it at a page; only the fields passed change."""
+        from nu.forms import Dict
+
         fields = {
             "href": href,
             "title": title,
@@ -146,9 +151,13 @@ class PageLinkRef(LeafRef):
         return Write(self, Dict.of(**{k: v for k, v in fields.items() if v is not UNSET}))
 
     def set_meta(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(meta=text))
 
     def set_variant(self, name: PageLinkVariant | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(variant=name))
 
     def set_href(self, url: StrArg, target: Target | StrArg = UNSET) -> Nu:
@@ -197,10 +206,16 @@ class NavItemRef(LeafRef):
 
     def set_active(self, flag: BoolArg | None) -> Nu:
         """Pin it active or not; None goes back to following the tab."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(active=flag))
 
     def set_meta(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(meta=text))
 
     def set_label(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(label=text))

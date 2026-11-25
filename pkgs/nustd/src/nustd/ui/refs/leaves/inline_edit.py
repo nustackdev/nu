@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 
 from typing_extensions import Self
 
-from nu.forms import Dict
 from nustd.ui.core import Write
 
 from .input import InputLeaf, _common, _Placeholder, _Submits
@@ -78,4 +77,6 @@ class InlineEditRef(_Submits, _Placeholder, InputLeaf):
 
     def set_error(self, text: StrArg) -> Nu:
         """Show an error under the text; an empty one clears it."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(error=text))

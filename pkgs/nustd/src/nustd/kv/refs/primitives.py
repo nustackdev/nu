@@ -16,15 +16,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
 import nu
-from nu.forms import (
-    DictSurface,
-    FrozenSetSurface,
-    ListSurface,
-    SetSurface,
-    TupleSurface,
-)
 from nu.lang import Effect
 from nu.lang.null import is_null
+from nu.surfaces import DictSurface, FrozenSetSurface, ListSurface, SetSurface, TupleSurface
 
 from ..views import PrimitiveDictView, PrimitiveListView, PrimitiveSetView
 from .items import ItemRef

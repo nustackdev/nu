@@ -1,7 +1,7 @@
 """Primitive interfaces and interactions."""
 
-from .bool_ import Bool, BoolSurface
-from .bytes_ import Bytes, BytesSurface
+from .bool_ import BoolSurface
+from .bytes_ import BytesSurface
 from .bytes_interactions import (
     BytesCapitalize,
     BytesCenter,
@@ -44,12 +44,12 @@ from .bytes_interactions import (
     Decode,
     Hex,
 )
-from .float_ import Float, FloatSurface
-from .int_ import Int, IntSurface
-from .none_ import None_, NoneSurface
-from .null_ import NullForm, NullSurface
-from .object_ import Object, ObjectSurface
-from .str_ import Str, StrSurface
+from .float_ import FloatSurface
+from .int_ import IntSurface
+from .none_ import NoneSurface
+from .null_ import NullSurface
+from .object_ import ObjectSurface
+from .str_ import StrSurface
 from .str_interactions import (
     Capitalize,
     Casefold,
@@ -100,9 +100,7 @@ from .str_interactions import (
 
 
 __all__ = [
-    "Bool",
     "BoolSurface",
-    "Bytes",
     "BytesCapitalize",
     "BytesCenter",
     "BytesCount",
@@ -151,12 +149,10 @@ __all__ = [
     "EndsWith",
     "ExpandTabs",
     "Find",
-    "Float",
     "FloatSurface",
     "FormatMap",
     "Hex",
     "Index",
-    "Int",
     "IntSurface",
     "IsAlnum",
     "IsAlpha",
@@ -175,10 +171,7 @@ __all__ = [
     "LStrip",
     "Lower",
     "NoneSurface",
-    "None_",
-    "NullForm",
     "NullSurface",
-    "Object",
     "ObjectSurface",
     "Partition",
     "RFind",
@@ -193,7 +186,6 @@ __all__ = [
     "Split",
     "SplitLines",
     "StartsWith",
-    "Str",
     "StrSurface",
     "Strip",
     "SwapCase",

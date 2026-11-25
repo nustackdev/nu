@@ -146,7 +146,7 @@ class RingRef(SequenceRef, MutableCollectionSurface, ViewRef[list[T]], Generic[T
         Yields:
             Nothing (Command).
         """
-        from nu.forms.collections.abc.sequence_interactions import Append
+        from nu.surfaces.collections.abc.sequence_interactions import Append
 
         return Append(self, entry)
 
@@ -156,7 +156,7 @@ class RingRef(SequenceRef, MutableCollectionSurface, ViewRef[list[T]], Generic[T
         Yields:
             Nothing (Command).
         """
-        from nu.forms.collections.abc.sequence_interactions import Extend
+        from nu.surfaces.collections.abc.sequence_interactions import Extend
 
         return Extend(self, entries)
 
@@ -166,7 +166,7 @@ class RingRef(SequenceRef, MutableCollectionSurface, ViewRef[list[T]], Generic[T
         Yields:
             Nothing (Command).
         """
-        from nu.forms.collections.abc.shared_interactions import Clear
+        from nu.surfaces.collections.abc.shared_interactions import Clear
 
         return Clear(self)
 

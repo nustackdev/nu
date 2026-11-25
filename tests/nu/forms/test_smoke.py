@@ -263,7 +263,7 @@ def test_mutation_commands_land_on_the_value_a_ref_holds():
 
 def test_clear_calls_the_collection_clear():
     """Clear calls ``clear()`` as is: a mutable collection empties, anything else raises its own error."""
-    from nu.forms.collections.abc import Clear
+    from nu.surfaces.collections.abc import Clear
 
     held = _Bin()
     eval(compile(Clear(Literal(held))), Context())

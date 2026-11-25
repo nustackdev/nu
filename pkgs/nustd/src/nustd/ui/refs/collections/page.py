@@ -25,7 +25,6 @@ from typing import TYPE_CHECKING, ClassVar, Literal
 
 from typing_extensions import Self, Unpack
 
-from nu.forms import Dict
 from nustd.ui.core import Write
 
 from .base import DictCollectionRef
@@ -109,9 +108,13 @@ class PageSectionRef(ChildLayout, DictCollectionRef):
         return actions_ref(self)
 
     def set_title(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(title=text))
 
     def set_description(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(description=text))
 
 
@@ -144,4 +147,6 @@ class NavListRef(DictCollectionRef):
         return super().slot(item, label=label, **cls._laid_out({**layout, "variant": variant}))
 
     def set_label(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(label=text))

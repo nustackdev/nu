@@ -17,7 +17,6 @@ from typing import TYPE_CHECKING, Literal
 
 from typing_extensions import Self
 
-from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Write
 
@@ -51,12 +50,18 @@ class AvatarRef(LeafRef):
         return super().slot(src=src, name=name, size=size)
 
     def set_src(self, url: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(src=url))
 
     def set_name(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(name=text))
 
     def set_size(self, name: Size | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(size=name))
 
     def set(
@@ -66,6 +71,8 @@ class AvatarRef(LeafRef):
         name: StrArg = UNSET,
         size: Size | StrArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"src": src}
         if name is not UNSET:
             payload["name"] = name
@@ -114,6 +121,8 @@ class BreadcrumbRef(LeafRef):
     def set(self, items: ListArg[str] | ListArg[dict[str, str]]) -> Nu:
         # A literal list is normalized here; a term rides as is and the
         # browser reads strings and dicts alike.
+        from nu.forms import Dict
+
         crumbs = _normalize_crumbs(items) if isinstance(items, (list, tuple)) else items
         return Write(self, Dict.of(items=crumbs))
 
@@ -137,12 +146,18 @@ class SkeletonRef(LeafRef):
         return super().slot(lines=int(lines), shape=shape, height=int(height))
 
     def set_lines(self, n: IntArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(lines=n))
 
     def set_shape(self, name: SkeletonShape | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(shape=name))
 
     def set_height(self, px: IntArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(height=px))
 
 
@@ -160,9 +175,13 @@ class SpinnerRef(LeafRef):
         return super().slot(size=size, label=label)
 
     def set_size(self, name: Size | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(size=name))
 
     def set(self, label: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(label=label))
 
 
@@ -183,13 +202,19 @@ class StatusPillRef(LeafRef):
         return super().slot(tone=tone, label=label)
 
     def set_label(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(label=text))
 
     def set_tone(self, name: StatusTone | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(tone=one_of("StatusPillRef", "tone", name, StatusTone)))
 
     def set(self, label: StrArg, *, tone: StatusTone | StrArg = UNSET) -> Nu:
         # Tone first in the payload when given, as `StatusDotRef` ships it.
+        from nu.forms import Dict
+
         payload: dict[str, object] = {}
         if tone is not UNSET:
             payload["tone"] = one_of("StatusPillRef", "tone", tone, StatusTone)

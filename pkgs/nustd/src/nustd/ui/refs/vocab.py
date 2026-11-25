@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, get_args
 
-from nu.forms import Dict
 from nu.lang import Nu
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Write
@@ -66,6 +65,8 @@ def set_href(ref: Ref, url: StrArg, target: Target | StrArg = UNSET) -> Nu:
 
     An empty url takes the link away, so a Button or a Card is plain again.
     """
+    from nu.forms import Dict
+
     payload: dict[str, object] = {"href": url}
     if target is not UNSET:
         payload["target"] = target

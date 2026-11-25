@@ -104,7 +104,7 @@ class _ParallelBase(Nu):
         if all(mode is None for mode in modes):
             super().__init__(*children)
             return
-        from nu.forms.collections.abc.sequence_interactions import TupleOf
+        from nu.forms.collections_interactions import TupleOf
 
         super().__init__(*children, cast("Callable[..., Nu]", TupleOf)(*modes))
         self.n_arms = len(children)

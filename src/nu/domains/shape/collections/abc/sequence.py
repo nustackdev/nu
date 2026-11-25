@@ -1,7 +1,7 @@
 """Sequence row: an ordered collection in a shape fabric, at the ABC level.
 
 Three tiers. A tier is the capability base first, then the tier below, then
-the ``nu.forms`` sequence ABC of that tier, so the shape typing and slot ops win
+the ``nu.surfaces`` sequence ABC of that tier, so the shape typing and slot ops win
 over the plain form's. Every result is typed by what the slot declared: an
 element reads as the declared value's form, and a slice carries the declared
 element type on.
@@ -14,9 +14,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from nu.forms.collections.abc.sequence import MutableSequenceSurface as _MutableSequenceSurface
-from nu.forms.collections.abc.sequence import ReactiveSequenceSurface as _ReactiveSequenceSurface
-from nu.forms.collections.abc.sequence import SequenceSurface as _SequenceSurface
+from nu.surfaces.collections.abc.sequence import MutableSequenceSurface as _MutableSequenceSurface
+from nu.surfaces.collections.abc.sequence import ReactiveSequenceSurface as _ReactiveSequenceSurface
+from nu.surfaces.collections.abc.sequence import SequenceSurface as _SequenceSurface
 
 from ...base import StructuredRef
 from ...collection import (

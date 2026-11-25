@@ -25,7 +25,7 @@ from __future__ import annotations
 from contextlib import asynccontextmanager, contextmanager
 from typing import TYPE_CHECKING, cast
 
-from nu.forms.collections.abc.mapping_interactions import DictOf
+from nu.forms.collections_interactions import DictOf
 from nu.lang import Bracket
 
 from .client import InvisiblesClient

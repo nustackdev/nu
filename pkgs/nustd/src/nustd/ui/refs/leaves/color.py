@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Literal
 
 from typing_extensions import Self
 
-from nu.forms import Dict
 from nustd.ui.core import Write
 
 from .input import InputLeaf, _common, _Submits
@@ -106,7 +105,11 @@ class ColorPickerRef(_Submits, InputLeaf):
         return Write(self, value)
 
     def set_swatches(self, swatches: Sequence[str] | Palette | None) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(swatches=_swatches(swatches)))
 
     def set_show_hex(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(show_hex=flag))

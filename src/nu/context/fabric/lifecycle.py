@@ -152,8 +152,7 @@ def _forms() -> tuple[Callable[..., Nu], Callable[..., Nu], Callable[..., Nu]]:
 
     Lazy: the forms package sits above this one.
     """
-    from nu.forms.collections.abc.mapping_interactions import DictOf
-    from nu.forms.collections.abc.sequence_interactions import ListOf, TupleOf
+    from nu.forms.collections_interactions import DictOf, ListOf, TupleOf
 
     return cast(
         "tuple[Callable[..., Nu], Callable[..., Nu], Callable[..., Nu]]", (DictOf, ListOf, TupleOf)

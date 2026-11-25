@@ -20,7 +20,6 @@ from collections.abc import MutableSet
 from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
-from nu.factory.host import host
 from nu.lang import Command, ScalarAction, ScalarQuery
 from nu.lang.null import is_null
 
@@ -37,36 +36,18 @@ __all__ = [
     "Difference",
     "DifferenceUpdate",
     "Discard",
-    "FrozenSetCreate",
-    "FrozenSetOf",
     "Intersection",
     "IntersectionUpdate",
     "IsDisjoint",
     "IsSubset",
     "IsSuperset",
     "Remove",
-    "SetCreate",
-    "SetOf",
     "SetPop",
     "SetUpdate",
     "SymmetricDifference",
     "SymmetricDifferenceUpdate",
     "Union",
 ]
-
-
-# =============================================================================
-# SET CONSTRUCTORS
-# =============================================================================
-
-# Empty set: deterministic (always set()), but each eval must yield a *fresh*
-# mutable object - a future fold/CSE pass must not alias two SetCreate results.
-SetCreate = host(set, name="SetCreate")
-# Empty frozenset: deterministic and immutable (sharing one frozenset() is fine).
-FrozenSetCreate = host(frozenset, name="FrozenSetCreate")
-# Set / FrozenSet from positional items: siblings to TupleOf / ListOf.
-SetOf = host(lambda *items: set(items), name="SetOf")
-FrozenSetOf = host(lambda *items: frozenset(items), name="FrozenSetOf")
 
 
 def _as_set(value: object) -> object:

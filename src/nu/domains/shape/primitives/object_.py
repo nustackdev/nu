@@ -10,7 +10,7 @@ into the value.
 
 from __future__ import annotations
 
-from nu.forms import ObjectSurface
+from nu.surfaces import ObjectSurface
 
 from ..item import MutableItemRef, ReactiveItemRef
 

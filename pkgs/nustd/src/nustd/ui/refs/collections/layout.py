@@ -53,7 +53,6 @@ import re
 from collections.abc import Callable, Mapping
 from typing import Literal, TypedDict
 
-from nu.forms import Dict
 from nu.lang import Nu
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Ref, Send, Write
@@ -381,6 +380,8 @@ class ChildLayout:
         table cell, or the child itself (``row["k"]``, ``t[0, 1]``), read for
         its key. A child of another container is refused.
         """
+        from nu.forms import Dict
+
         cls = type(self)
         owner = self._owner_name()  # type: ignore[attr-defined]
         given = {
@@ -443,6 +444,8 @@ class Laid:
         ``size``...), checked the same way. A term passes as it is. A child's
         entries are ``set_child``'s.
         """
+        from nu.forms import Dict
+
         cls = type(self)
         owner = self._owner_name()  # type: ignore[attr-defined]
         takes = cls._layout | frozenset(cls._family)  # type: ignore[attr-defined]
