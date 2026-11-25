@@ -12,7 +12,9 @@
 // skips a label of its own. So an error turns the control red, and the Field
 // label is the control's accessible name.
 //
-// The control is the first (and only expected) child in the tree. Extra
+// The control is the first (and only expected) child in the tree. Until it
+// lands the Field draws its label alone: a program writes the Field before
+// its control, so an empty Field is a normal moment, not a mistake. Extra
 // children do not draw; a notice names them (the server refuses a second
 // control where it is built). In a Form's values a Field stands for its
 // control (`wraps`), never its `actions`.
@@ -29,7 +31,6 @@
 // `gap` (1) between label, control and help.
 
 import { Field as FieldChrome } from "../../components/ui/field";
-import { Text } from "../../components/ui/text";
 import { cn } from "../../lib/utils";
 import {
 	ACTIONS_SLOT,
@@ -84,11 +85,7 @@ function FieldView({ path }: NodeProps) {
 				<FlowProvider flow="block">
 					<NodeView path={[...path, child]} />
 				</FlowProvider>
-			) : (
-				<Text size="xs" tone="danger" mono>
-					no child under {path.join(" / ")}
-				</Text>
-			)}
+			) : null}
 			<Unpaired path={path} segments={children.slice(1)} why="a Field holds one control" />
 		</FieldChrome>
 	);
