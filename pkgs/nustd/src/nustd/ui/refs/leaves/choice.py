@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 
 from typing_extensions import Self
 
-from nustd.ui.core import Write
+from nustd.ui.core import Submits, Write
 
 from .input import (
     InputLeaf,
@@ -27,7 +27,6 @@ from .input import (
     _normalize_options,
     _options_write,
     _Placeholder,
-    _Submits,
 )
 
 
@@ -183,7 +182,7 @@ class MultiSelectRef(_Placeholder, InputLeaf):
         return _options_write(self, opts)
 
 
-class AutocompleteRef(_Submits, _Placeholder, InputLeaf):
+class AutocompleteRef(Submits, _Placeholder, InputLeaf):
     """Text input with a suggestion list; any text is a value.
 
     The value is the text, live in the browser, as on ``InputRef``: typing

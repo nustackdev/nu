@@ -1,25 +1,35 @@
 // Type registry for the tree store.
 //
-// One entry per Ref type, and it is three separable things: the React
-// component that draws the node, the handlers that answer inbound ops, and
-// an optional dispose for a node that holds a resource. State is the node's
+// One entry per Ref type, and it is four separable things: the React
+// component that draws the node, the handlers that answer inbound ops, the
+// reads that answer a server read per field (`reads`, `""` the main read,
+// `props.value` when unset), and an optional dispose for a node that holds a
+// resource. State is the node's
 // props, plain data, and the behaviour is looked up by type when a frame
 // arrives.
 
-import type { Behaviour, DisposeCtx, NodeHandler, Path } from "@nustackdev/ui-core";
+import {
+	type Behaviour,
+	type DisposeCtx,
+	type NodeHandler,
+	type Path,
+	type Props,
+	type Reads,
+	readNode,
+} from "@nustackdev/ui-core";
 import type { ComponentType } from "react";
 
 export type NodeProps = { path: Path };
 
 /**
  * What makes a node an input: it holds a value a Form gathers on submit and
- * a reset puts back. The value lives on `props.value` for every input.
+ * a reset puts back. The value lives on `props.value` for every input; what a
+ * read, a submit and a form snapshot carry is the entry's main read
+ * (`reads[""]`, see `mainRead`).
  */
 export type InputSpec = {
 	/** The value with no seed: what a reset lands when the slot declared none. */
 	empty: unknown | ((props: Record<string, unknown>) => unknown);
-	/** What a form snapshot carries for this node. Unset is `props.value`. */
-	read?: (props: Record<string, unknown>) => unknown;
 	/** Whether a form gathers this node at all (a read-only document does not). */
 	gathered?: (props: Record<string, unknown>) => boolean;
 	/**
@@ -29,6 +39,8 @@ export type InputSpec = {
 	ownsError?: boolean;
 };
 
+// `handlers`, `reads` and `dispose` come from core's `Behaviour`: the store
+// answers ops and reads through them with no React in the way.
 export type NodeEntry = Behaviour & {
 	component?: ComponentType<NodeProps>;
 	// The node has no intrinsic width (a chart, a table, an input), so a row
@@ -47,7 +59,7 @@ export type NodeEntry = Behaviour & {
 	wraps?: boolean;
 };
 
-export type { DisposeCtx, NodeHandler };
+export type { DisposeCtx, NodeHandler, Reads };
 
 export const registry: Record<string, NodeEntry> = {};
 
@@ -70,6 +82,20 @@ export function isFill(type: string | null, props: Record<string, unknown>): boo
 /** Whether a node of `type` takes the room its row has left. */
 export function isGrow(type: string | null): boolean {
 	return type ? registry[type]?.grow === true : false;
+}
+
+/** A node's main read (`reads[""]`, else `props.value`, else null). */
+export function mainRead(type: string | null, props: Props): unknown {
+	return readNode(type ? registry[type] : undefined, props)?.value ?? null;
+}
+
+/** One named read of a node, or undefined when its type declares no such field. */
+export function readOf(
+	type: string | null,
+	props: Props,
+	field: string,
+): { value: unknown } | undefined {
+	return readNode(type ? registry[type] : undefined, props, field);
 }
 
 export function componentFor(type: string | null): ComponentType<NodeProps> | undefined {

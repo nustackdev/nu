@@ -82,8 +82,17 @@ export const OPS = {
 	// shows it again. Every type takes them, none handles them.
 	hide: "hide",
 	display: "display",
+	// Payload `{field}` or null. Null (or no field) asks for the node's main
+	// read; a field names one of its other reads. See `Reads`.
 	read: "read",
 	notify: "notify",
+	// Server to browser, payload `{event}`: someone on the server listens
+	// for `event` on this ref (`*` for every event), or stopped listening.
+	watch: "watch",
+	unwatch: "unwatch",
+	// Browser to server, payload a list of `[ref, payload]` pairs in order:
+	// several notifies in one frame.
+	batch: "batch",
 } as const;
 
 export type NodeCtx = {
@@ -102,11 +111,43 @@ export type NodeHandler = (ctx: NodeCtx, payload: unknown) => void;
 
 export type DisposeCtx = { path: Path; node: Node };
 
-/** What a type contributes to the store: inbound ops and teardown. */
+/**
+ * What a read answers, per field, from the node's props. `""` is the main
+ * read (the ref itself on the server); any other key is a named read
+ * (`tree.expanded()` asks for `expanded`). A type with no `""` entry answers
+ * its main read with `props.value`.
+ */
+export type Reads = Record<string, (props: Props) => unknown>;
+
+/** What a type contributes to the store: inbound ops, reads and teardown. */
 export type Behaviour = {
 	handlers?: Record<string, NodeHandler>;
+	reads?: Reads;
 	dispose?: (ctx: DisposeCtx) => void;
 };
+
+/** The field a read frame asks for: `""` for the main read. */
+export function readField(payload: unknown): string {
+	if (!isPlainProps(payload)) return "";
+	const field = payload.field;
+	return typeof field === "string" ? field : "";
+}
+
+/**
+ * One field of a node, through its type's `reads`. Undefined when the type
+ * declares no such field; the main read always answers (`props.value`, or
+ * null, when the type declares none).
+ */
+export function readNode(
+	behaviour: Behaviour | undefined,
+	props: Props,
+	field = "",
+): { value: unknown } | undefined {
+	const reader = behaviour?.reads?.[field];
+	if (reader) return { value: reader(props) };
+	if (field === "") return { value: props.value ?? null };
+	return undefined;
+}
 
 export type Resolve = (type: string) => Behaviour | undefined;
 
@@ -430,12 +471,24 @@ export function createTreeStore(options: TreeStoreOptions = {}): TreeStore {
 					return;
 				}
 				if (frame.op === OPS.read) {
-					// The server is asking for our current value. Same id back
-					// so its future resolves.
+					// The server is asking for one field of the node, the main
+					// read when it names none. Same id back so its future
+					// resolves, a value or an error. A type whose read needs
+					// more than its props (a Form gathers its children) keeps a
+					// `read` handler, which answered above.
+					const field = readField(frame.payload);
+					const found = readNode(node.type ? resolve(node.type) : undefined, node.props, field);
+					if (found) {
+						api.send({ op: OPS.read, ref: frame.ref, payload: found.value, id: frame.id });
+						return;
+					}
 					api.send({
-						op: OPS.read,
+						op: OP_ERROR,
 						ref: frame.ref,
-						payload: node.props.value ?? null,
+						payload: {
+							code: "payload_invalid",
+							message: `${node.type ?? "untyped node"} has no read "${field}"`,
+						} satisfies ErrorPayload,
 						id: frame.id,
 					});
 					return;

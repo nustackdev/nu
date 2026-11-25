@@ -10,9 +10,9 @@ from typing import TYPE_CHECKING
 
 from typing_extensions import Self
 
-from nustd.ui.core import Write
+from nustd.ui.core import Submits, Write
 
-from .input import InputLeaf, _common, _Placeholder, _Submits
+from .input import InputLeaf, _common, _Placeholder
 
 
 if TYPE_CHECKING:
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 __all__ = ["InlineEditRef"]
 
 
-class InlineEditRef(_Submits, _Placeholder, InputLeaf):
+class InlineEditRef(Submits, _Placeholder, InputLeaf):
     """Text shown as plain text, edited in place. The value is the text.
 
     A click, Enter or Space opens the editor with the text selected. Enter

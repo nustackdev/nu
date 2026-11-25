@@ -281,7 +281,7 @@ def test_input_read_resolves_path_and_reads_session():
             super().__init__()
             self.reads: list[tuple[str, ...]] = []
 
-        async def aread(self, path: tuple[str, ...]) -> object:
+        async def aread(self, path: tuple[str, ...], field: str | None = None) -> object:
             self.reads.append(path)
             return "browser-value"
 
@@ -307,7 +307,7 @@ def test_markdown_round_trips_both_ways():
         doc = DocPage.slot()
 
     class ReadSession(_RecordingSession):
-        async def aread(self, path: tuple[str, ...]) -> object:
+        async def aread(self, path: tuple[str, ...], field: str | None = None) -> object:
             return "# edited\n\nby the browser\n"
 
     sess = ReadSession()
@@ -365,7 +365,7 @@ def test_code_round_trips_both_ways():
         src = SrcPage.slot()
 
     class ReadSession(_RecordingSession):
-        async def aread(self, path: tuple[str, ...]) -> object:
+        async def aread(self, path: tuple[str, ...], field: str | None = None) -> object:
             return "x = 2\n"
 
     sess = ReadSession()

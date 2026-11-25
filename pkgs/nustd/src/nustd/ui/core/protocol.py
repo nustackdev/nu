@@ -38,6 +38,7 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "OP_BATCH",
     "OP_DISPLAY",
     "OP_ERROR",
     "OP_HIDE",
@@ -45,10 +46,14 @@ __all__ = [
     "OP_NOTIFY",
     "OP_READ",
     "OP_REMOVE",
+    "OP_UNWATCH",
+    "OP_WATCH",
     "OP_WRITE",
+    "READ_FIELD",
     "Frame",
     "decode",
     "encode",
+    "read_payload",
 ]
 
 
@@ -67,6 +72,25 @@ OP_INIT = "init"
 # back. The chain lets a node nothing wrote yet be created hidden.
 OP_HIDE = "hide"
 OP_DISPLAY = "display"
+# Server -> browser, plain path, payload ``{event}``: someone listens to that
+# event on the node (``"*"`` for every event), so the browser sends it; and
+# no one does any more, so it stops. The browser keys them by path, so a
+# watch may land before the node is drawn.
+OP_WATCH = "watch"
+OP_UNWATCH = "unwatch"
+# Browser -> server, no ref: notifies queued together, payload a list of
+# ``[ref, payload]`` pairs in the order they happened. The server fires each
+# as if it had come as its own notify.
+OP_BATCH = "batch"
+
+#: The read frame payload's one field: which named field to read. A main read
+#: ships a null payload instead.
+READ_FIELD = "field"
+
+
+def read_payload(field: str | None) -> dict[str, str] | None:
+    """A read frame's payload: ``{field}`` for a named field, null for the main read."""
+    return None if field is None else {READ_FIELD: field}
 
 
 def _op_name(class_name: str) -> str:

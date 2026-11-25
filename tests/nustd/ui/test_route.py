@@ -45,10 +45,10 @@ class _History:
     async def send(self, frame: object) -> None:
         self.frames.append(frame)
 
-    async def aread(self, path: tuple[str, ...]) -> object:
+    async def aread(self, path: tuple[str, ...], field: str | None = None) -> object:
         return self.uri
 
-    def subscribe(self, path: tuple[str, ...]) -> _Sub:
+    def subscribe(self, path: tuple[str, ...], event: str | None = None) -> _Sub:
         sub = _Sub(self, path)
         self.subs.append(sub)
         return sub

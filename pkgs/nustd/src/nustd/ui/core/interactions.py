@@ -18,6 +18,7 @@ Changed, HeadingRef.set -> Write).
              to the value its slot declared
 - Changed -- subscribe to client-side notifications on a Ref, all of them
              or only one event's
+- ReadField -- round-trip read of one named field of a Ref's browser state
 
 A component with changes of its own (a table's one-row update, say) adds
 them as ``Send`` subclasses next to its Ref, each its own op, rather than as
@@ -37,6 +38,7 @@ from nu.lang.null import is_null
 
 from .base import check_creates
 from .chains import boot_chains
+from .events import EVENT
 from .protocol import OP_INIT, OP_REMOVE, Frame, _op_of
 from .session import Session
 
@@ -61,17 +63,12 @@ __all__ = [
     "Focus",
     "Hide",
     "Init",
+    "ReadField",
     "Remove",
     "Reset",
     "Send",
     "Write",
 ]
-
-
-#: The payload field a notify names its event in, for a Ref that sends more
-#: than one kind (a tree's select, rename, move). A Ref that uses it keeps the
-#: name for that and sends no field of its own under it.
-EVENT = "event"
 
 
 class Send(Command):
@@ -332,7 +329,10 @@ class Changed(ScalarQuery):
 
     A Ref that sends several kinds of notify names each in the payload's
     ``event`` field, and ``event`` here takes only that kind: the rest never
-    reach the callbacks. Left out, every notify on the Ref arrives.
+    reach the callbacks. Left out, every notify on the Ref arrives. The
+    session hears which event is asked for (``subscribe(path, event=...)``),
+    so it can ask the browser for that one only; the filter here stays, so a
+    session that sends everything still hands each callback its own kind.
 
     Args:
         ref: The Ref whose notifications to take.
@@ -361,10 +361,54 @@ class Changed(ScalarQuery):
             session = rt.ctx.fabrics.get(Session)
             ref_nid = rt.program.children[nid][0]
             path = await ref._aresolve_address(rt, ref_nid)
-            sub = session.subscribe(path)
-            if event_thunk is None:
+            event = None if event_thunk is None else str(await event_thunk(rt))
+            sub = session.subscribe(path, event=event)
+            if event is None:
                 return sub
-            return _Only(sub, str(await event_thunk(rt)))
+            return _Only(sub, event)
+
+        return athunk
+
+
+class ReadField(ScalarQuery):
+    """Round-trip read of one named field of a Ref's browser state.
+
+    What a Ref's named readers are built on (``tree.expanded()`` is
+    ``ReadField(tree, "expanded")``): the read frame carries ``{field}`` and
+    the browser answers with that field, where the Ref itself (the main read)
+    sends no field. Resolves the Ref's wire path but never evals the Ref
+    child, so reading a field is one round trip and not two. The answer goes
+    through the Ref's ``_lift_field`` when it has one, else comes back as
+    the browser sent it.
+
+    Args:
+        ref: The Ref whose field to read.
+        field: The field's name, as the browser's node declares it.
+    """
+
+    _requires_async = Declared(value=True, name="requires_async")
+
+    def __init__(self, ref: Ref, field: StrArg) -> None:
+        super().__init__(ref, field)
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> object:
+            raise RuntimeError("nustd.ui is async-only; use nu.arun")
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        ref: Ref = self._children[0]
+        field_thunk = children[1]
+        lift = getattr(ref, "_lift_field", None)
+
+        async def athunk(rt: Runtime) -> object:
+            session = rt.ctx.fabrics.get(Session)
+            ref_nid = rt.program.children[nid][0]
+            path = await ref._aresolve_address(rt, ref_nid)
+            field = str(await field_thunk(rt))
+            raw = await session.aread(path, field)
+            return raw if lift is None else lift(field, raw)
 
         return athunk
 

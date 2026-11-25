@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING, Literal
 
 from typing_extensions import Self
 
-from nustd.ui.core import Write
+from nustd.ui.core import Submits, Write
 
-from .input import InputLeaf, _common, _Submits
+from .input import InputLeaf, _common
 
 
 if TYPE_CHECKING:
@@ -48,7 +48,7 @@ def _swatches(swatches: Sequence[str] | Palette | None) -> list[str] | str | Non
     return [normalize_hex(s) for s in swatches]
 
 
-class ColorPickerRef(_Submits, InputLeaf):
+class ColorPickerRef(Submits, InputLeaf):
     """Color input whose ``#rrggbb`` value lives in the browser.
 
     A swatch trigger opens a popover with a saturation and brightness area, a

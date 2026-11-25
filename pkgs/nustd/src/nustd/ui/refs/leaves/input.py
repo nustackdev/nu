@@ -43,7 +43,7 @@ from typing_extensions import Self
 
 from nu.lang.null import NULL
 from nu.lang.sentinels import UNSET
-from nustd.ui.core import Changed, Focus, Reset, Write
+from nustd.ui.core import CHANGE, CLICK, SUBMIT, Changed, Changes, Focus, Reset, Submits, Write
 
 from ..vocab import ControlSize, Target
 from ..vocab import set_href as _set_href
@@ -56,14 +56,6 @@ if TYPE_CHECKING:
     from nu.lang import Nu
     from nu.lang.args import BoolArg, FloatArg, ListArg, StrArg
     from nu.lang.runtime import Runtime
-
-
-#: The event an input sends when a value is committed.
-CHANGE = "change"
-#: The event an input sends when the person asks to send what it holds.
-SUBMIT = "submit"
-#: The event a button sends on a click.
-CLICK = "click"
 
 
 Variant = Literal["primary", "secondary", "outline", "ghost", "soft", "danger", "link"]
@@ -89,19 +81,14 @@ def _common(
     }
 
 
-class InputLeaf(LeafRef):
+class InputLeaf(Changes, LeafRef):
     """What every input Ref is: a live value in the browser, read, written, heard.
 
-    Abstract. Reading the Ref is a round trip for the live value. ``set``
-    writes it, ``reset`` puts the slot's ``value=`` back, ``on_change`` hears
-    each committed change. The common props have their setters here.
+    Abstract. ``Changes`` makes it readable (reading the Ref is a round trip
+    for the live value) and heard committed (``on_change``). ``set`` writes
+    it, ``reset`` puts the slot's ``value=`` back. The common props have
+    their setters here.
     """
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        async def athunk(rt: Runtime) -> Any:
-            return await self._aread(rt, nid)
-
-        return athunk
 
     def set(self, value: Any) -> Nu:
         return Write(self, value)
@@ -113,10 +100,6 @@ class InputLeaf(LeafRef):
     def focus(self) -> Nu:
         """Move the keyboard focus to this input."""
         return Focus(self)
-
-    def on_change(self) -> Changed:
-        """Each committed change: blur, Enter, a pick, a toggle. Never per keystroke."""
-        return Changed(self, CHANGE)
 
     def set_label(self, text: StrArg) -> Nu:
         from nu.forms import Dict
@@ -153,19 +136,6 @@ def _submit_on(owner: str, value: object) -> str:
         msg = f"{owner} submit_on is one of {', '.join(_SUBMIT_ON)}, not {value!r}"
         raise ValueError(msg)
     return value  # type: ignore[return-value]
-
-
-class _Submits:
-    """Mixin: the input has a send key, heard by ``on_submit()``."""
-
-    def on_submit(self) -> Changed:
-        """The person asked to send: Enter, or a multi-line field's send key.
-
-        The payload is ``{event: "submit", value}``, the value sent: read it
-        there (``lambda sub: save(sub["value"])``), not off the input, which
-        ``clear_on_submit`` has emptied by then.
-        """
-        return Changed(self, SUBMIT)  # type: ignore[arg-type]
 
 
 class _Nullable:
@@ -337,7 +307,7 @@ class CheckboxRef(InputLeaf):
         return Write(self, value)
 
 
-class DatePickerRef(_Nullable, _Submits, _Placeholder, InputLeaf):
+class DatePickerRef(_Nullable, Submits, _Placeholder, InputLeaf):
     """Date input whose ISO yyyy-mm-dd value lives in the browser (NULL for none).
 
     A pick is a change. Enter on the closed picker submits; Space and the
@@ -385,7 +355,7 @@ InputType = Literal["text", "search", "email", "url", "tel", "password", "number
 _INPUT_TYPES: tuple[str, ...] = get_args(InputType)
 
 
-class InputRef(_Submits, _Placeholder, InputLeaf):
+class InputRef(Submits, _Placeholder, InputLeaf):
     """Text input whose value lives in the browser.
 
     A read sees what is under the caret. Blur commits (a change, when the
@@ -461,7 +431,7 @@ class InputRef(_Submits, _Placeholder, InputLeaf):
         return Write(self, value)
 
 
-class CodeRef(_Submits, InputLeaf):
+class CodeRef(Submits, InputLeaf):
     """Source code, read-only by default. Value is the text, both ways.
 
     Read-only it renders a highlighted block with a copy button. With
@@ -558,7 +528,7 @@ class CodeRef(_Submits, InputLeaf):
         return Write(self, Dict.of(language=name))
 
 
-class NumberInputRef(_Nullable, _Submits, _Placeholder, InputLeaf):
+class NumberInputRef(_Nullable, Submits, _Placeholder, InputLeaf):
     """Numeric input whose value lives in the browser (NULL while empty).
 
     Typing is local; blur, Enter, a stepper click or an arrow key commits.
@@ -641,7 +611,7 @@ class NumberInputRef(_Nullable, _Submits, _Placeholder, InputLeaf):
         return Write(self, Dict.of(**payload))
 
 
-class MarkdownRef(_Submits, _Placeholder, InputLeaf):
+class MarkdownRef(Submits, _Placeholder, InputLeaf):
     """A markdown document, read-only by default. Value is the markdown, both ways.
 
     The browser never shows the source. Read-only it renders the document;
@@ -1158,7 +1128,7 @@ class SwitchRef(InputLeaf):
         return Write(self, value)
 
 
-class TagInputRef(_Submits, _Placeholder, InputLeaf):
+class TagInputRef(Submits, _Placeholder, InputLeaf):
     """Multi-tag entry field whose committed list lives in the browser.
 
     Enter with text adds a tag (a change); Enter on an empty draft submits.
@@ -1202,7 +1172,7 @@ class TagInputRef(_Submits, _Placeholder, InputLeaf):
         return Write(self, value)
 
 
-class TextAreaRef(_Submits, _Placeholder, InputLeaf):
+class TextAreaRef(Submits, _Placeholder, InputLeaf):
     """Multi-line text input whose value lives in the browser.
 
     Blur commits. shift+Enter commits and submits, plain Enter is a

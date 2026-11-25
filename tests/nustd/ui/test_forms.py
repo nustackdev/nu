@@ -76,11 +76,11 @@ class _Tab:
     async def send(self, frame: object) -> None:
         self.frames.append(frame)
 
-    async def aread(self, path: tuple[str, ...]) -> object:
+    async def aread(self, path: tuple[str, ...], field: str | None = None) -> object:
         self.reads.append(path)
         return self.value
 
-    def subscribe(self, path):
+    def subscribe(self, path, event=None):
         return self.subs.setdefault(path, _Notifies())
 
     def notify(self, path, payload):

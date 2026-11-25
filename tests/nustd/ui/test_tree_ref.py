@@ -61,7 +61,7 @@ class _Session:
     async def send(self, frame: object) -> None:
         self.frames.append(frame)
 
-    def subscribe(self, path: tuple[str, ...]) -> _Sub:
+    def subscribe(self, path: tuple[str, ...], event: str | None = None) -> _Sub:
         self.subscribed.append(path)
         sub = _Sub(self.payloads)
         self.subs.append(sub)

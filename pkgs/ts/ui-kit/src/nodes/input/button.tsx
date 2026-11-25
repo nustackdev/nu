@@ -1,4 +1,4 @@
-// ButtonRef -- click trigger. Sends `{event: "click"}` on each click. No value.
+// ButtonRef -- click trigger. Emits `{event: "click"}` on each click. No value.
 //
 // `submit` makes it a form's submit button (`type="submit"`; every other
 // button is `type="button"`, so a Cancel in a Form never submits). Its name
@@ -26,7 +26,6 @@
 // the node brings its own. A button keeps its size in a Row (`shrink-0`): a
 // squeezed control is never what a crowded line wants.
 
-import { OPS } from "@nustackdev/ui-core";
 import type * as React from "react";
 import { Button } from "../../components/ui/button";
 import { IconButton } from "../../components/ui/icon-button";
@@ -43,8 +42,8 @@ import {
 	type NodeEntry,
 	type NodeProps,
 	useBoolProp,
+	useEmit,
 	useEnumProp,
-	useSend,
 	useStringProp,
 } from "../../tree";
 import { EVENTS, useDisabledScope, useForm } from "./control";
@@ -65,11 +64,11 @@ function ButtonView({ path }: NodeProps) {
 	const tooltip = useStringProp(path, "tooltip");
 	const href = useStringProp(path, "href");
 	const target = useStringProp(path, "target", "_self");
-	const send = useSend(path);
+	const emit = useEmit(path);
 	const Icon = iconFor(iconName);
 	const onClick = () => {
 		if (disabled || loading) return;
-		send(OPS.notify, { event: EVENTS.click });
+		emit(EVENTS.click);
 	};
 	const iconOnly = Boolean(Icon) && label === "";
 	const content = iconOnly ? (

@@ -124,10 +124,10 @@ class _Tab(Session):
         self.frames.append(frame)
         asyncio.get_running_loop().call_soon(self._handle, frame)
 
-    async def aread(self, path):
+    async def aread(self, path, field=None):
         return self.value
 
-    def subscribe(self, path):
+    def subscribe(self, path, event=None):
         sub = _Sub(self, tuple(path))
         self.subs.append(sub)
         return sub

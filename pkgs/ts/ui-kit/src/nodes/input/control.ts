@@ -1,11 +1,15 @@
 // The input contract, shared by every input node.
 //
-// Events. Every notify an input sends names its event: `{event: "change"}`
-// when a value is committed, `{event: "submit", value}` when the person asks
-// to send it (Enter in a single-line field, shift+Enter in a multi-line
-// one), carrying the value sent, so `clear_on_submit` loses nothing. The
-// Python side filters on it: `on_change()` hears changes, `on_submit()` hears
-// submits. A button sends `{event: "click"}`.
+// Events. Every notify an input sends names its event and goes out through
+// `useEmit` (tree/emit.ts): `{event: "change"}` when a value is committed,
+// `{event: "submit", value}` when the person asks to send it (Enter in a
+// single-line field, shift+Enter in a multi-line one), carrying the value
+// sent, so `clear_on_submit` loses nothing. The Python side filters on it:
+// `on_change()` hears changes, `on_submit()` hears submits. A button sends
+// `{event: "click"}`.
+//
+// Reads. What a read, a submit and a form snapshot carry is the entry's main
+// read (`reads[""]`, `props.value` when unset), through `mainRead`.
 //
 // Commits. A text-like input edits locally as you type (the store's `value`
 // prop, so a read sees what is under the caret) and commits on blur and on
@@ -47,7 +51,7 @@
 // under it (`DisabledScope`), on top of the control's own flag and its
 // Field's.
 
-import { type NodeHandler, OPS, type Path, type Props } from "@nustackdev/ui-core";
+import type { NodeHandler, Path, Props } from "@nustackdev/ui-core";
 import type * as React from "react";
 import {
 	createContext,
@@ -61,19 +65,21 @@ import {
 import { useFieldControl } from "../../components/ui/field";
 import {
 	ACTIONS_SLOT,
+	EVENTS,
 	type InputSpec,
+	mainRead,
 	nodeAt,
 	pathKey,
 	resolve,
 	tree,
 	useBoolProp,
+	useEmit,
 	useProp,
-	useSend,
 	useSetValue,
 	useStringProp,
 } from "../../tree";
 
-export const EVENTS = { change: "change", submit: "submit", click: "click" } as const;
+export { EVENTS };
 
 /** Kit input sizes. A control's `xs` (a button step) draws as `sm`. */
 export type InputSize = "sm" | "md" | "lg";
@@ -166,43 +172,40 @@ export type Commit = {
 
 /** One commit path per node, with the dirty check. */
 export function useCommit(path: Path): Commit {
-	const send = useSend(path);
+	const emit = useEmit(path);
 	const setValue = useSetValue(path);
 	const key = pathKey(path);
 	// The value the server last heard about, once an edit started; null while clean.
 	const base = useRef<{ value: unknown } | null>(null);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
 	const edit = useCallback(
 		(value: unknown) => {
 			if (base.current === null) base.current = { value: nodeAt(path)?.props.value };
 			setValue(value);
 			clearCheck(path);
 		},
-		// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
 		[key, setValue],
 	);
 
-	const commit = useCallback(
-		() => {
-			const started = base.current;
-			base.current = null;
-			if (started === null) return;
-			if (same(started.value, nodeAt(path)?.props.value)) return;
-			send(OPS.notify, { event: EVENTS.change });
-		},
-		// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
-		[key, send],
-	);
+	// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
+	const commit = useCallback(() => {
+		const started = base.current;
+		base.current = null;
+		if (started === null) return;
+		if (same(started.value, nodeAt(path)?.props.value)) return;
+		emit(EVENTS.change);
+	}, [key, emit]);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
 	const pick = useCallback(
 		(value: unknown) => {
 			base.current = null;
 			setValue(value);
 			clearCheck(path);
-			send(OPS.notify, { event: EVENTS.change });
+			emit(EVENTS.change);
 		},
-		// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
-		[key, setValue, send],
+		[key, setValue, emit],
 	);
 
 	const fire = useSubmit(path);
@@ -226,27 +229,26 @@ export function useCommit(path: Path): Commit {
  * before it goes.
  */
 export function useSubmit(path: Path): (from?: Element | null) => void {
-	const send = useSend(path);
+	const emit = useEmit(path);
 	const key = pathKey(path);
+	// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
 	return useCallback(
 		(from?: Element | null) => {
 			// The submit carries what was sent, so a field that clears on submit
 			// (or anything the program would otherwise read back) needs no read.
-			send(OPS.notify, { event: EVENTS.submit, value: submitted(path) });
+			emit(EVENTS.submit, { value: submitted(path) });
 			requestFormSubmit(from ?? null);
 			if (nodeAt(path)?.props.clear_on_submit) resetInput(path);
 		},
-		// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
-		[key, send],
+		[key, emit],
 	);
 }
 
 /** What a submit sends as `value`: the input's value as a form would gather it. */
 export function submitted(path: Path): unknown {
 	const node = nodeAt(path);
-	const spec = specOf(node?.type ?? null);
 	if (!node) return null;
-	return spec?.read ? spec.read(node.props) : (node.props.value ?? null);
+	return mainRead(node.type, node.props);
 }
 
 /** Enter that is not part of an IME composition. */
@@ -319,7 +321,7 @@ function inputValue(path: Path): { value: unknown } | undefined {
 	const spec = entry?.input;
 	if (spec) {
 		if (spec.gathered && !spec.gathered(node.props)) return undefined;
-		return { value: spec.read ? spec.read(node.props) : (node.props.value ?? null) };
+		return { value: mainRead(node.type, node.props) };
 	}
 	if (entry?.wraps) {
 		const control = wrapped(node.children.keys());
@@ -487,7 +489,7 @@ export function checkControl(path: Path): string {
 	if (!node || !spec) return "";
 	const p = node.props;
 	if (p.readonly) return "";
-	const value = spec.read ? spec.read(p) : (p.value ?? null);
+	const value = mainRead(node.type, p);
 	// A Field marked required makes its control required, as it draws it.
 	const at = errorTarget(path);
 	const required = Boolean(p.required) || (at !== path && Boolean(nodeAt(at)?.props.required));

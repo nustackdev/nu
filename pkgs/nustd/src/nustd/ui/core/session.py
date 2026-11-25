@@ -22,7 +22,7 @@ from collections import defaultdict
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Protocol
 
-from .protocol import OP_ERROR, OP_NOTIFY, OP_READ, Frame, decode, encode
+from .protocol import OP_ERROR, OP_NOTIFY, OP_READ, Frame, decode, encode, read_payload
 
 
 if TYPE_CHECKING:
@@ -38,7 +38,7 @@ Callback = Callable[[object], None]
 
 
 class Subscription(Protocol):
-    """Observer handle returned by ``session.subscribe(path)``.
+    """Observer handle returned by ``session.subscribe(path, event)``.
 
     Same shape as nu-kv's subscription handle: the session fires the bound
     callbacks when a ``notify`` frame lands for the subscribed path.
@@ -63,12 +63,22 @@ class Session(ABC):
         """Ship a Frame to the client."""
 
     @abstractmethod
-    async def aread(self, path: tuple[str, ...]) -> Any:
-        """Round-trip: ship a read frame, await the client's reply."""
+    async def aread(self, path: tuple[str, ...], field: str | None = None) -> Any:
+        """Round-trip: ship a read frame, await the client's reply.
+
+        ``field`` names one field of the node's state to read (a tree's
+        ``expanded``); left out, the read is the node's main state.
+        """
 
     @abstractmethod
-    def subscribe(self, path: tuple[str, ...]) -> Subscription:
-        """Register interest in change notifications for `path`."""
+    def subscribe(self, path: tuple[str, ...], event: str | None = None) -> Subscription:
+        """Register interest in change notifications for `path`.
+
+        ``event`` is the one event the subscriber wants, None for every event
+        the node sends. The callbacks still get every notify on the path: the
+        caller filters (``Changed`` does). A session may use ``event`` to ask
+        the browser for only what someone listens to.
+        """
 
 
 class WsSubscription:
@@ -144,20 +154,28 @@ class WsSession(Session):
         """Encode and ship one Frame on the ws."""
         await self._ws.send_bytes(encode(frame))
 
-    async def aread(self, path: tuple[str, ...]) -> Any:
-        """Round-trip read: ship a read frame, await the client's reply."""
+    async def aread(self, path: tuple[str, ...], field: str | None = None) -> Any:
+        """Round-trip read: ship a read frame, await the client's reply.
+
+        The frame's payload is ``{field}`` for a named field, null for the
+        main read.
+        """
         rid = uuid.uuid4().hex
         loop = asyncio.get_running_loop()
         fut: asyncio.Future[Any] = loop.create_future()
         self._pending[rid] = fut
         try:
-            await self.send(Frame(OP_READ, ref=path, payload=None, id=rid))
+            await self.send(Frame(OP_READ, ref=path, payload=read_payload(field), id=rid))
             return await fut
         finally:
             self._pending.pop(rid, None)
 
-    def subscribe(self, path: tuple[str, ...]) -> WsSubscription:
-        """Return a Subscription observing notify frames for ``path``."""
+    def subscribe(self, path: tuple[str, ...], event: str | None = None) -> WsSubscription:
+        """Return a Subscription observing notify frames for ``path``.
+
+        ``event`` is taken and not acted on yet: every notify on the path
+        reaches the subscription.
+        """
         sub = WsSubscription(self, path)
         self._subs[path].add(sub)
         return sub
