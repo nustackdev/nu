@@ -2,7 +2,7 @@
 
 ABC rows (Mapping, OrderedMapping, Sequence, SetLike) live in ``abc``; the
 built-in rows (``dict``, ``list``, ``set``, ``frozenset``, ``tuple``) live here,
-one module per ``nu.forms`` collection module, two refs each.
+one module per ``nu.surfaces`` collection module, two refs each.
 """
 
 from . import abc

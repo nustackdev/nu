@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.forms.primitives import Bool, Object
 from nu.lang.null import NULL, Null
+from nu.surfaces.primitives import ObjectSurface
 
 from .._refs import _ContextRef
 
@@ -18,13 +18,14 @@ from .._refs import _ContextRef
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from nu.forms import Bool
     from nu.lang.runtime import Runtime
 
 
 __all__ = ["Attr"]
 
 
-class Attr(_ContextRef, Object):
+class Attr(_ContextRef, ObjectSurface):
     """Reads the value an interaction handed its body under a name.
 
     A loop binds its item, a fold its accumulator, a catch the error, a retry
@@ -42,7 +43,7 @@ class Attr(_ContextRef, Object):
     Notes:
         - Read-only. Nothing in the tree binds or reassigns a name; state
           goes through a fabric (``nu.mem`` for local state).
-        - It carries the Object form, the surface every term has. Wrap the
+        - It carries the Object surface, the one every term has. Wrap the
           read in the form it needs: ``nu.Str(nu.Attr("item")).upper()``.
         - A name nothing bound and a name bound to NULL read the same, so
           reach for ``.exists()`` when the difference matters.
@@ -91,6 +92,8 @@ class Attr(_ContextRef, Object):
             >>> nu.run(nu.context.Attr("total").exists().not_())[0]
             True
         """
+        from nu.forms import Bool
+
         from .interactions import AttrExists
 
         return Bool(AttrExists(self))

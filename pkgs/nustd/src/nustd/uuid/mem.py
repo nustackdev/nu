@@ -16,7 +16,7 @@ from nu.core import ToStr
 from nu.domains.shape import SetCmd
 from nu.lang import Nu
 from nu.mem.refs import ItemRef
-from nustd.uuid.forms import UUID as UUIDForm
+from nustd.uuid.forms import UUIDSurface
 
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 __all__ = ["UUIDRef"]
 
 
-class UUIDRef(ItemRef, UUIDForm):
+class UUIDRef(ItemRef, UUIDSurface):
     """A UUID slot in the dict substrate, stored as its hyphenated string.
 
     Args:

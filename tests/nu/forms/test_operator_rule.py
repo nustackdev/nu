@@ -16,8 +16,8 @@ import nustd.datetime as ndt
 from nu.core import BitAnd, BitNot, BitOr, BitXor, LShift, RShift
 from nu.core.logical import And, Not, Or
 from nu.engine.validation import ValidationError
-from nu.forms.collections.abc.mapping_interactions import Merge, MergeUpdate
-from nu.forms.collections.abc.set_interactions import (
+from nu.surfaces.collections.abc.mapping_interactions import Merge, MergeUpdate
+from nu.surfaces.collections.abc.set_interactions import (
     Difference,
     Intersection,
     SymmetricDifference,

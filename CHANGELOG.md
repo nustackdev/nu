@@ -12,6 +12,16 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Values typed only as an abstract mapping, sequence or set get their own forms
+- Methods move to their own package so refs share them without pulling form nodes
+- Form implementation gets its own module beside brackets, surfaces get theirs
+- Warn when a stream sits where nothing consumes it, since streams are lazy
+- Type checking of refs and flows is back to its baseline after the split
+- Docstrings, comments and test names now say surface where they still said form
+- Regression tests keep pop and popitem working as chain steps, flow bodies and spans
+- Fabric stream reads like file lines or agent prompts now chain map and folds
+- Itertools accept any stream, wrapped or acting, and their results keep chaining
+- Forms become transparent wrappers, so mutating reads like pop compose in flows
 - READMEs say what nu is plainly and list every nustd module accurately
 - README trimmed to a calm intro, two examples and the main fabrics
 

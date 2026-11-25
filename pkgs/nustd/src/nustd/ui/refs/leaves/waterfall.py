@@ -21,7 +21,6 @@ from typing import TYPE_CHECKING, Any
 
 from typing_extensions import Self
 
-from nu.forms import Dict
 from nustd.ui.core import Changed, Write
 
 from .base import LeafRef
@@ -112,24 +111,36 @@ class WaterfallRef(LeafRef):
     def set(self, spans: ListArg[Span]) -> Nu:
         # A literal list is normalized here; a term rides as is and the
         # browser skips what it cannot read.
+        from nu.forms import Dict
+
         data = _normalize_spans(spans) if isinstance(spans, (list, tuple)) else spans
         return Write(self, Dict.of(spans=data))
 
     def set_window(self, start: FloatArg | None, end: FloatArg | None) -> Nu:
         """Fix the window in ms; ``None`` on either side fits it to the spans."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(start=_arg_ms(start), end=_arg_ms(end)))
 
     def set_now(self, now: FloatArg | None) -> Nu:
         """Where running spans stop, in ms; ``None`` is the window end."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(now=_arg_ms(now)))
 
     def set_max_rows(self, n: IntArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(max_rows=n))
 
     def set_selectable(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(selectable=flag))
 
     def set_selected(self, span_id: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(selected=span_id))
 
     # --- browser -> server ---------------------------------------------------

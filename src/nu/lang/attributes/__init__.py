@@ -15,7 +15,7 @@ from __future__ import annotations
 from nu.engine import Schema
 
 from . import cardinality, effects, execution, slots, sort
-from .cardinality import Cardinality
+from .cardinality import Cardinality, cardinality_of
 from .effects import Effect, EffectSet
 from .execution import ExecOrder
 from .names import Attr
@@ -31,6 +31,7 @@ __all__ = [
     "ExecOrder",
     "Sort",
     "build_schema",
+    "cardinality_of",
     "matrix_sort",
     "subsort",
 ]

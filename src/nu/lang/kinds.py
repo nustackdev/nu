@@ -2,15 +2,17 @@
 
 A taxonomy of ``Nu`` subclasses. The leaves (``Ref``, ``ScalarQuery``,
 ``StreamQuery``, ``Command``, ``ScalarAction``, ``StreamAction``,
-``Strategy``, ``Control``, ``_Bracket``, ``Policy``) carry the sort and
+``Strategy``, ``Control``, ``_Bracket``, ``Policy``, ``_Form``) carry the sort and
 cardinality bindings concrete nodes use. The interiors (``Interaction``,
 ``Query``, ``Action``, ``Flow``, ``Span``) are abstract groupings for
 ``subsort`` queries and for the dispatch surface ``Interaction._eval`` /
 ``_aeval``.
 
-This module declares kinds only, no implementations. ``_Bracket`` is the
-one kind that has a public implementation of its own: ``nu.lang.bracket``
-subclasses it into ``Bracket``, the lifecycle base every bracket extends.
+This module declares kinds only, no implementations. ``_Bracket`` and
+``_Form`` are the kinds that have a public implementation of their own:
+``nu.lang.bracket`` subclasses ``_Bracket`` into ``Bracket``, the lifecycle
+base every bracket extends, and ``nu.lang.form`` subclasses ``_Form`` into
+``Form``, the node every value form extends.
 
 A reduction is not a kind. A kind says whether a node mutates and what it
 gives out; a reduction says what one of its slots takes in: a stream, folded
@@ -189,6 +191,12 @@ class Policy(Span[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """A Span that governs a body's execution on failure."""
 
     _sort = Declared(value=Sort.POLICY, name="sort")
+
+
+class _Form(Span[V_co], Generic[V_co]):  # PEP 695 has no variance markers
+    """The Form kind: a Span that gives its body a typed surface (``nu.Form`` implements it)."""
+
+    _sort = Declared(value=Sort.FORM, name="sort")
 
 
 # --- reductions: a slot role, not a kind -------------------------------------

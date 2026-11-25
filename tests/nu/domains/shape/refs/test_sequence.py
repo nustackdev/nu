@@ -99,7 +99,7 @@ def test_sequence_ref_slice_carries_the_declared_element_type():
 
 
 def test_sequence_ref_slice_routes_to_slice_op():
-    # Slice subscript goes through SliceableForm.slice(), not _wrap_item_ref.
+    # Slice subscript goes through SliceableSurface.slice(), not _wrap_item_ref.
     # Without the slice guard, ref[:2] would return an ItemRef addressed by
     # a `slice` object, which is nonsense.
     from nu.core import GetItem, Slice

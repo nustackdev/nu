@@ -3,9 +3,10 @@
 Mirrors Python's ``itertools`` 1-1. Each function presents Python's argument
 order and returns the shape that matches the host:
 
-- every iterator-producing member -> the raw ``StreamQuery`` atom (compose
-  with ``Collect`` / ``Map`` / another itertools call; cardinality
-  laws line up because the atom honestly declares STREAM)
+- every iterator-producing member -> its stream atom in the ``Iterator``
+  form, so the result keeps chaining (``.map(...)``, ``.to_list()``) and
+  still composes with ``Collect`` / ``Map`` / another itertools call (a
+  form takes its body's cardinality, so the result is a stream)
 - ``tee`` -> ``Object`` (it returns a *tuple* of iterators, not a stream)
 
 This is a gap-fill: members Nu core already covers (``map`` / ``filter`` /
@@ -14,8 +15,9 @@ re-implemented here.
 
 Each function builds its interaction atom (lazily imported, like ``nustd.math``)
 and returns it. Iterable arguments are lifted into a stream child with
-``Iter`` (a scalar iterable), passed through when already a stream atom,
-or unwrapped when they're an ``Iterator`` wrapper. Higher-order members take
+``Iter`` when they yield one value (a list, a ``List``, a ref), and passed
+through when they already yield a stream (another itertools result, an
+``Iterator``, a ``Snapshot`` over a stream, a stream action). Higher-order members take
 their predicate or function the way Python does, as a lambda
 (``takewhile(lambda x: x < 3, xs)``). It runs once, at construction, with refs
 to what it is handed, so it builds the step and never computes with them in
@@ -29,8 +31,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from nu.core import Iter
-from nu.forms import Object
-from nu.lang import StreamQuery
+from nu.forms import Iterator, Object
+from nu.lang import Cardinality, cardinality_of
 
 
 if TYPE_CHECKING:
@@ -71,13 +73,14 @@ __all__ = [
 def _stream(iterable: Arg[Iterable]) -> Nu:
     """Lift an iterable argument into a STREAM child.
 
-    A ``StreamQuery`` (another itertools result, ``Iter``, ``Map``, an
-    ``Iterator`` form, ...) is already stream-shaped, so it's reused
-    directly - wrapping it in another ``Iter`` would feed a stream to a
-    scalar consumer. Any other iterable (a list, range, ``List``, raw
-    value) is opened with ``Iter``.
+    Asks the term's resolved cardinality, not its class: anything that
+    already yields a stream (another itertools result, ``Iter``, ``Map``, an
+    ``Iterator`` form, a ``Snapshot`` over a stream, a stream action) is
+    reused directly, since wrapping it in another ``Iter`` would feed a
+    stream to a scalar consumer. Any other iterable (a list, range, ``List``,
+    raw value) is opened with ``Iter``.
     """
-    if isinstance(iterable, StreamQuery):
+    if cardinality_of(iterable) is Cardinality.STREAM:
         return cast("Nu", iterable)
     return Iter(iterable)
 
@@ -85,121 +88,121 @@ def _stream(iterable: Arg[Iterable]) -> Nu:
 # --- infinite sources -------------------------------------------------------
 
 
-def count(start: IntArg = 0, step: IntArg = 1) -> Nu:
+def count(start: IntArg = 0, step: IntArg = 1) -> Iterator:
     """Count from ``start`` by ``step`` forever: mirrors ``itertools.count()``.
 
     Infinite - bound it with ``islice`` (or another short consumer).
     """
     from .interactions import Count
 
-    return Count(start, step)
+    return Iterator(Count(start, step))
 
 
-def cycle(iterable: Arg[Iterable]) -> Nu:
+def cycle(iterable: Arg[Iterable]) -> Iterator:
     """Repeat ``iterable`` endlessly: mirrors ``itertools.cycle()``."""
     from .interactions import Cycle
 
-    return Cycle(_stream(iterable))
+    return Iterator(Cycle(_stream(iterable)))
 
 
-def repeat(elem: object, times: IntArg | None = None) -> Nu:
+def repeat(elem: object, times: IntArg | None = None) -> Iterator:
     """Yield ``elem`` ``times`` times, or forever: mirrors ``itertools.repeat()``."""
     from .interactions import Repeat
 
     if times is None:
-        return Repeat(elem)
-    return Repeat(elem, times)
+        return Iterator(Repeat(elem))
+    return Iterator(Repeat(elem, times))
 
 
 # --- pure combinators -------------------------------------------------------
 
 
-def chain(*iterables: Arg[Iterable]) -> Nu:
+def chain(*iterables: Arg[Iterable]) -> Iterator:
     """Concatenate ``iterables`` end to end: mirrors ``itertools.chain()``."""
     from .interactions import Chain
 
-    return Chain(*(_stream(it) for it in iterables))
+    return Iterator(Chain(*(_stream(it) for it in iterables)))
 
 
-def chain_from_iterable(iterable: Arg[Iterable]) -> Nu:
+def chain_from_iterable(iterable: Arg[Iterable]) -> Iterator:
     """Flatten an iterable of iterables one level: ``itertools.chain.from_iterable()``."""
     from .interactions import ChainFromIterable
 
-    return ChainFromIterable(_stream(iterable))
+    return Iterator(ChainFromIterable(_stream(iterable)))
 
 
-def islice(iterable: Arg[Iterable], *args: IntArg) -> Nu:
+def islice(iterable: Arg[Iterable], *args: IntArg) -> Iterator:
     """Slice ``iterable`` lazily: mirrors ``itertools.islice()``.
 
     ``args`` is 1-3 ints: ``stop`` | ``start, stop`` | ``start, stop, step``.
     """
     from .interactions import Islice
 
-    return Islice(_stream(iterable), *args)
+    return Iterator(Islice(_stream(iterable), *args))
 
 
-def compress(data: Arg[Iterable], selectors: Arg[Iterable]) -> Nu:
+def compress(data: Arg[Iterable], selectors: Arg[Iterable]) -> Iterator:
     """Keep ``data`` items where ``selectors`` is truthy: ``itertools.compress()``."""
     from .interactions import Compress
 
-    return Compress(_stream(data), _stream(selectors))
+    return Iterator(Compress(_stream(data), _stream(selectors)))
 
 
-def pairwise(iterable: Arg[Iterable]) -> Nu:
+def pairwise(iterable: Arg[Iterable]) -> Iterator:
     """Yield overlapping consecutive pairs: mirrors ``itertools.pairwise()``."""
     from .interactions import Pairwise
 
-    return Pairwise(_stream(iterable))
+    return Iterator(Pairwise(_stream(iterable)))
 
 
-def batched(iterable: Arg[Iterable], n: IntArg) -> Nu:
+def batched(iterable: Arg[Iterable], n: IntArg) -> Iterator:
     """Yield tuples of up to ``n`` items: mirrors ``itertools.batched()``."""
     from .interactions import Batched
 
-    return Batched(_stream(iterable), n)
+    return Iterator(Batched(_stream(iterable), n))
 
 
-def zip_longest(*iterables: Arg[Iterable], fillvalue: object = None) -> Nu:
+def zip_longest(*iterables: Arg[Iterable], fillvalue: object = None) -> Iterator:
     """Zip to the longest, padding with ``fillvalue``: ``itertools.zip_longest()``."""
     from .interactions import ZipLongest
 
-    return ZipLongest(*(_stream(it) for it in iterables), fillvalue)
+    return Iterator(ZipLongest(*(_stream(it) for it in iterables), fillvalue))
 
 
-def product(*iterables: Arg[Iterable], repeat: IntArg = 1) -> Nu:
+def product(*iterables: Arg[Iterable], repeat: IntArg = 1) -> Iterator:
     """The cartesian product of ``iterables``: mirrors ``itertools.product()``."""
     from .interactions import Product
 
-    return Product(*(_stream(it) for it in iterables), repeat)
+    return Iterator(Product(*(_stream(it) for it in iterables), repeat))
 
 
-def permutations(iterable: Arg[Iterable], r: IntArg | None = None) -> Nu:
+def permutations(iterable: Arg[Iterable], r: IntArg | None = None) -> Iterator:
     """``r``-length ordered arrangements: mirrors ``itertools.permutations()``."""
     from .interactions import Permutations
 
     if r is None:
-        return Permutations(_stream(iterable))
-    return Permutations(_stream(iterable), r)
+        return Iterator(Permutations(_stream(iterable)))
+    return Iterator(Permutations(_stream(iterable), r))
 
 
-def combinations(iterable: Arg[Iterable], r: IntArg) -> Nu:
+def combinations(iterable: Arg[Iterable], r: IntArg) -> Iterator:
     """``r``-length sorted subsequences: mirrors ``itertools.combinations()``."""
     from .interactions import Combinations
 
-    return Combinations(_stream(iterable), r)
+    return Iterator(Combinations(_stream(iterable), r))
 
 
-def combinations_with_replacement(iterable: Arg[Iterable], r: IntArg) -> Nu:
+def combinations_with_replacement(iterable: Arg[Iterable], r: IntArg) -> Iterator:
     """``r``-length subsequences allowing repeats: ``combinations_with_replacement()``."""
     from .interactions import CombinationsWithReplacement
 
-    return CombinationsWithReplacement(_stream(iterable), r)
+    return Iterator(CombinationsWithReplacement(_stream(iterable), r))
 
 
 # --- higher-order -----------------------------------------------------------
 
 
-def takewhile(predicate: Step, iterable: Arg[Iterable]) -> Nu:
+def takewhile(predicate: Step, iterable: Arg[Iterable]) -> Iterator:
     """Yield while ``predicate`` holds, stop at the first falsy: ``itertools.takewhile()``.
 
     ``predicate`` is a lambda over the item, or a tree reading it via
@@ -211,10 +214,10 @@ def takewhile(predicate: Step, iterable: Arg[Iterable]) -> Nu:
     """
     from .interactions import TakeWhile
 
-    return TakeWhile(_stream(iterable), predicate)
+    return Iterator(TakeWhile(_stream(iterable), predicate))
 
 
-def dropwhile(predicate: Step, iterable: Arg[Iterable]) -> Nu:
+def dropwhile(predicate: Step, iterable: Arg[Iterable]) -> Iterator:
     """Skip while ``predicate`` holds, then yield the rest: ``itertools.dropwhile()``.
 
     ``predicate`` is a lambda over the item, or a tree reading it via
@@ -226,10 +229,10 @@ def dropwhile(predicate: Step, iterable: Arg[Iterable]) -> Nu:
     """
     from .interactions import DropWhile
 
-    return DropWhile(_stream(iterable), predicate)
+    return Iterator(DropWhile(_stream(iterable), predicate))
 
 
-def filterfalse(predicate: Step, iterable: Arg[Iterable]) -> Nu:
+def filterfalse(predicate: Step, iterable: Arg[Iterable]) -> Iterator:
     """Keep items where ``predicate`` is falsy: mirrors ``itertools.filterfalse()``.
 
     ``predicate`` is a lambda over the item, or a tree reading it via
@@ -241,10 +244,10 @@ def filterfalse(predicate: Step, iterable: Arg[Iterable]) -> Nu:
     """
     from .interactions import FilterFalse
 
-    return FilterFalse(_stream(iterable), predicate)
+    return Iterator(FilterFalse(_stream(iterable), predicate))
 
 
-def accumulate(iterable: Arg[Iterable], func: Step2 | None = None) -> Nu:
+def accumulate(iterable: Arg[Iterable], func: Step2 | None = None) -> Iterator:
     """Running accumulation: mirrors ``itertools.accumulate()``.
 
     Without ``func`` it is a running sum. With ``func``, a lambda over the
@@ -259,11 +262,11 @@ def accumulate(iterable: Arg[Iterable], func: Step2 | None = None) -> Nu:
     from .interactions import Accumulate
 
     if func is None:
-        return Accumulate(_stream(iterable))
-    return Accumulate(_stream(iterable), func)
+        return Iterator(Accumulate(_stream(iterable)))
+    return Iterator(Accumulate(_stream(iterable), func))
 
 
-def starmap(function: Step, iterable: Arg[Iterable]) -> Nu:
+def starmap(function: Step, iterable: Arg[Iterable]) -> Iterator:
     """Apply ``function`` to unpacked items: mirrors ``itertools.starmap()``.
 
     Each item is a tuple. ``function`` is a lambda over the whole tuple,
@@ -277,10 +280,10 @@ def starmap(function: Step, iterable: Arg[Iterable]) -> Nu:
     """
     from .interactions import StarMap
 
-    return StarMap(_stream(iterable), function)
+    return Iterator(StarMap(_stream(iterable), function))
 
 
-def groupby(iterable: Arg[Iterable], key: Step | None = None) -> Nu:
+def groupby(iterable: Arg[Iterable], key: Step | None = None) -> Iterator:
     """Group consecutive items by ``key``: mirrors ``itertools.groupby()``.
 
     Yields ``(key_value, tuple(group))`` pairs. ``key`` is a lambda over the
@@ -294,8 +297,8 @@ def groupby(iterable: Arg[Iterable], key: Step | None = None) -> Nu:
     from .interactions import GroupBy
 
     if key is None:
-        return GroupBy(_stream(iterable))
-    return GroupBy(_stream(iterable), key)
+        return Iterator(GroupBy(_stream(iterable)))
+    return Iterator(GroupBy(_stream(iterable), key))
 
 
 # --- tee --------------------------------------------------------------------

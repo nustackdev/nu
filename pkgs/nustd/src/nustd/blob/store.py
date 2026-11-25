@@ -26,6 +26,7 @@ from .protocol import STEP
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from nu.forms import Iterator
     from nu.forms.primitives import Bool
     from nu.lang import IntArg, StrArg
     from nu.lang.runtime import Runtime
@@ -178,7 +179,7 @@ class StoreRef(FabricRef):
         start: IntArg = 0,
         end: IntArg | None = None,
         step: IntArg = STEP,
-    ) -> BlobOpen:
+    ) -> Iterator:
         """A range of the blob as a lazy stream of byte pieces; see ``BlobOpen``.
 
         Args:
@@ -187,8 +188,10 @@ class StoreRef(FabricRef):
             end: one past the last byte; None for the end of the blob.
             step: bytes per piece.
         """
+        from nu.forms import Iterator
+
         _check_given_id(blob_id)
-        return BlobOpen(self, blob_id, start, end, step)
+        return Iterator(BlobOpen(self, blob_id, start, end, step))
 
     def meta(self, blob_id: StrArg) -> BlobMeta:
         """The blob's ``{id, size, mime, name, created_at}``."""

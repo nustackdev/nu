@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any, Literal
 from typing_extensions import Self
 
 from nu.domains.shape import Slot
-from nu.forms import Dict, List
 from nustd.ui.core import Append, Changed, Ref, Send, Write
 from nustd.ui.core.base import _wire_type_of
 
@@ -325,10 +324,14 @@ class DataTableRef(LeafRef):
 
     def set_rows(self, rows: ListArg[Any]) -> Nu:
         """Replace every row. The selection stays where its keys still apply."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(rows=rows))
 
     def clear(self) -> Nu:
         """Drop every row."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(rows=[]))
 
     def append(self, row: ListArg[Any] | DictArg[str, Any]) -> Nu:
@@ -343,6 +346,8 @@ class DataTableRef(LeafRef):
         ``set({"columns": columns, "rows": rows})``, since a second frame
         would show the old cells under the new headers until it lands.
         """
+        from nu.forms import Dict
+
         return Write(self, Dict.of(columns=_columns(columns)))
 
     # The row-level ops below each ship one frame of their own (``SetRow``,
@@ -370,6 +375,8 @@ class DataTableRef(LeafRef):
 
     def remove_row(self, key: StrArg) -> Nu:
         """Drop the row keyed ``key``; a key not shown is a no-op."""
+        from nu.forms import List
+
         return RemoveRows(self, List.of(key))
 
     def remove_rows(self, keys: ListArg[str]) -> Nu:
@@ -386,10 +393,14 @@ class DataTableRef(LeafRef):
 
     def set_sort(self, column: StrArg, direction: SortDirection | StrArg) -> Nu:
         """Show the arrows on ``column``; the rows are the server's to sort."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(sort_column=column, sort_direction=direction))
 
     def set_selected(self, keys: ListArg[str]) -> Nu:
         """Select exactly these rows, by key; [] selects none."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(selected=keys))
 
     # --- browser -> server ---------------------------------------------------

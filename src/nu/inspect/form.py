@@ -1,7 +1,8 @@
 """The form kind: record, parse, verify.
 
-A Form is a typed interface: the operator surface a value carries. ``Int``
-is a Form over ``int``, ``Str`` over ``str``. Every Form is a builder, so
+A Form is a value node: a Span over one body that carries its family's
+Surface, the operator methods a value offers. ``Int`` is the Form for
+``int``, ``Str`` for ``str``. Every Form is a builder, so
 FormRecord is a builder record; the kind exists so a catalogue can carry
 Forms and Refs alongside each other and a consumer can dispatch on the
 record's type.

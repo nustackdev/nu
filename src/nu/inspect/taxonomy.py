@@ -18,6 +18,7 @@ from typing import Any
 
 from nu.lang import kinds
 from nu.lang.bracket import Bracket
+from nu.lang.form import Form
 
 
 __all__ = [
@@ -31,11 +32,13 @@ __all__ = [
 
 # The taxonomy bases themselves, in export order. A class that *is* one of
 # these is a rung of the ladder rather than something a person composes. The
-# Bracket kind is declared private in ``kinds``; its public face is the
-# implementation in ``nu.lang.bracket``, so that is the rung named here.
+# Bracket and Form kinds are declared private in ``kinds``; their public faces
+# are the implementations in ``nu.lang.bracket`` and ``nu.lang.form``, so those
+# are the rungs named here.
 KIND_CLASSES: tuple[type, ...] = (
     *(getattr(kinds, name) for name in kinds.__all__ if isinstance(getattr(kinds, name), type)),
     Bracket,
+    Form,
 )
 
 

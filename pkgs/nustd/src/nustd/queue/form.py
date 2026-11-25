@@ -1,7 +1,7 @@
 """JQueue: typed surface for janus-backed queue refs.
 
-Pure TypedNu wrapper. Holds no state; methods build interaction trees
-against the wrapped Nu (typically a JQueueRef).
+A pure form: ``JQueueSurface`` holds the methods, which build interaction
+trees against the wrapped Nu, and ``JQueueRef`` shares them. Holds no state.
 """
 
 from __future__ import annotations
@@ -10,7 +10,8 @@ from typing import TYPE_CHECKING, Generic, NoReturn, TypeVar
 
 import janus
 
-from nu.forms import Form, TypedNu
+from nu.forms import Form
+from nu.surfaces import Surface
 
 
 if TYPE_CHECKING:
@@ -29,35 +30,8 @@ _EQ_HINT = (
 )
 
 
-class JQueue(Form, TypedNu[janus.Queue[T]], Generic[T]):
-    """The queue verbs, over any node that yields a janus queue.
-
-    Holds nothing itself: it wraps one Nu child, normally a ``JQueueRef``,
-    and every call on it builds an interaction over that child. A ref that
-    reads a queue therefore gets ``put``, ``get``, ``qsize`` and ``close``
-    just by mixing this in.
-
-    Args:
-        operand: the node yielding the queue to act on.
-
-    Notes:
-        - The calls do not touch the queue: they build a tree, and nothing
-          happens until it runs.
-        - No `==` / `!=`: a queue has no value to compare, so both raise.
-          Compare what comes out of it: `nu.Int(q.qsize()) == 0`.
-
-    Yields:
-        Whatever the wrapped child yields, unchanged; the surface adds calls,
-        not a value of its own.
-
-    Example:
-        >>> class Buf(nu.Shape):
-        ...     queue = nustd.queue.JQueueRef.slot(item_type=int)
-        >>> ctx = nu.Context().bind(dict, {}, Buf)
-        >>> _ = nu.run(Buf.queue.put(7), ctx)
-        >>> nu.run(Buf.queue.qsize(), ctx)[0]
-        1
-    """
+class JQueueSurface(Surface, Generic[T]):
+    """The methods of ``JQueue``, shared by the ``JQueue`` form and every ref that holds one."""
 
     def __eq__(self, other: object) -> NoReturn:
         raise TypeError(_EQ_HINT)
@@ -122,3 +96,34 @@ class JQueue(Form, TypedNu[janus.Queue[T]], Generic[T]):
         from .interactions import Close
 
         return Close(self)
+
+
+class JQueue(JQueueSurface[T], Form[janus.Queue[T]], Generic[T]):
+    """The queue verbs, over any node that yields a janus queue.
+
+    Holds nothing itself: it wraps one Nu child, normally a ``JQueueRef``,
+    and every call on it builds an interaction over that child. A ref that
+    reads a queue therefore gets ``put``, ``get``, ``qsize`` and ``close``
+    just by mixing this in.
+
+    Args:
+        operand: the node yielding the queue to act on.
+
+    Notes:
+        - The calls do not touch the queue: they build a tree, and nothing
+          happens until it runs.
+        - No `==` / `!=`: a queue has no value to compare, so both raise.
+          Compare what comes out of it: `nu.Int(q.qsize()) == 0`.
+
+    Yields:
+        Whatever the wrapped child yields, unchanged; the surface adds calls,
+        not a value of its own.
+
+    Example:
+        >>> class Buf(nu.Shape):
+        ...     queue = nustd.queue.JQueueRef.slot(item_type=int)
+        >>> ctx = nu.Context().bind(dict, {}, Buf)
+        >>> _ = nu.run(Buf.queue.put(7), ctx)
+        >>> nu.run(Buf.queue.qsize(), ctx)[0]
+        1
+    """

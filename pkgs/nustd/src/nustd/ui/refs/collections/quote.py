@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING, ClassVar
 
 from typing_extensions import Self, Unpack
 
-from nu.forms import Dict
 from nustd.ui.core.interactions import Write
 
 from .base import DictCollectionRef
@@ -72,4 +71,6 @@ class QuoteRef(ChildLayout, DictCollectionRef):
         return header_ref(self)
 
     def set_title(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(title=text))

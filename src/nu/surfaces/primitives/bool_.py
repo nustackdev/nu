@@ -1,0 +1,253 @@
+"""Bool - boolean interface.
+
+Bool = BoolSurface (logical + comparison) on a ``Form[bool]`` node.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from nu.lang import Surface
+
+
+if TYPE_CHECKING:
+    from nu.forms import Bool
+    from nu.lang import BoolArg
+
+
+__all__ = [
+    "BoolSurface",
+]
+
+
+class BoolSurface(Surface):
+    """The methods of ``Bool``, shared by the ``Bool`` form and every ref that holds one."""
+
+    # =========================================================================
+    # LOGICAL
+    # =========================================================================
+
+    def and_(self, other: BoolArg) -> Bool:
+        """Logical AND of self and other.
+
+        Args:
+            other: the value to AND with self. Any Bool or plain bool.
+
+        Notes:
+            - Short-circuits like Python: the right operand is only
+              evaluated when the left does not already decide the result.
+
+        Yields:
+            True when both operands are True, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Bool(True).and_(nu.Bool(False)))[0]
+            False
+        """
+        from nu.core import And
+        from nu.forms import Bool
+
+        return Bool(And(self, other))
+
+    def or_(self, other: BoolArg) -> Bool:
+        """Logical OR of self and other.
+
+        Args:
+            other: the value to OR with self. Any Bool or plain bool.
+
+        Notes:
+            - Short-circuits like Python: the right operand is only
+              evaluated when the left does not already decide the result.
+
+        Yields:
+            True when either operand is True, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Bool(False).or_(nu.Bool(True)))[0]
+            True
+        """
+        from nu.core import Or
+        from nu.forms import Bool
+
+        return Bool(Or(self, other))
+
+    def not_(self) -> Bool:
+        """Logical NOT of self.
+
+        Yields:
+            True when self is False, False when self is True.
+
+        Example:
+            >>> nu.run(nu.Bool(True).not_())[0]
+            False
+        """
+        from nu.core import Not
+        from nu.forms import Bool
+
+        return Bool(Not(self))
+
+    def bool_(self) -> Bool:
+        """Cast self to Bool.
+
+        Notes:
+            - Identity for a value that is already Bool. Kept for
+              consistency with `Int.bool_` and `Float.bool_`.
+
+        Yields:
+            self, unchanged.
+
+        Example:
+            >>> nu.run(nu.Bool(True).bool_())[0]
+            True
+        """
+        from nu.core import ToBool
+        from nu.forms import Bool
+
+        return Bool(ToBool(self))
+
+    # =========================================================================
+    # COMPARISON
+    # =========================================================================
+
+    def __gt__(self, other: BoolArg) -> Bool:
+        """Self strictly greater than other.
+
+        Args:
+            other: the value to compare against. Any Bool or plain bool,
+                with False less than True.
+
+        Yields:
+            True when self is True and other is False, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Bool(True) > nu.Bool(False))[0]
+            True
+        """
+        from nu.core import Gt
+        from nu.forms import Bool
+
+        return Bool(Gt(self, other))
+
+    def __lt__(self, other: BoolArg) -> Bool:
+        """Self strictly less than other.
+
+        Args:
+            other: the value to compare against. Any Bool or plain bool,
+                with False less than True.
+
+        Yields:
+            True when self is False and other is True, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Bool(True) < nu.Bool(False))[0]
+            False
+        """
+        from nu.core import Lt
+        from nu.forms import Bool
+
+        return Bool(Lt(self, other))
+
+    def __ge__(self, other: BoolArg) -> Bool:
+        """Self greater than or equal to other.
+
+        Args:
+            other: the value to compare against. Any Bool or plain bool,
+                with False less than True.
+
+        Yields:
+            True when self is at least other, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Bool(True) >= nu.Bool(True))[0]
+            True
+        """
+        from nu.core import Ge
+        from nu.forms import Bool
+
+        return Bool(Ge(self, other))
+
+    def __le__(self, other: BoolArg) -> Bool:
+        """Self less than or equal to other.
+
+        Args:
+            other: the value to compare against. Any Bool or plain bool,
+                with False less than True.
+
+        Yields:
+            True when self is at most other, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Bool(False) <= nu.Bool(True))[0]
+            True
+        """
+        from nu.core import Le
+        from nu.forms import Bool
+
+        return Bool(Le(self, other))
+
+    def __eq__(self, other: BoolArg) -> Bool:  # type: ignore[override]
+        """Self equal to other by value.
+
+        Args:
+            other: the value to compare against. Any Bool or plain bool.
+
+        Notes:
+            - Value equality, not identity. Use `is_` for identity.
+
+        Yields:
+            True when the values compare equal, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Bool(True) == True)[0]
+            True
+        """
+        from nu.core import Eq
+        from nu.forms import Bool
+
+        return Bool(Eq(self, other))
+
+    def __ne__(self, other: BoolArg) -> Bool:  # type: ignore[override]
+        """Self not equal to other by value.
+
+        Args:
+            other: the value to compare against. Any Bool or plain bool.
+
+        Notes:
+            - Value inequality, not identity. Use `is_` for identity.
+
+        Yields:
+            True when the values differ, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Bool(True) != nu.Bool(False))[0]
+            True
+        """
+        from nu.core import Ne
+        from nu.forms import Bool
+
+        return Bool(Ne(self, other))
+
+    def is_(self, other: BoolArg) -> Bool:
+        """Identity comparison: self is other.
+
+        Args:
+            other: the value to compare identity against.
+
+        Notes:
+            - Object identity, not value equality. For scalar comparison use
+              `==` instead.
+            - Python interns True and False, so any two Bool True values
+              test identical.
+
+        Yields:
+            True when self and other evaluate to the same Python object,
+            False otherwise.
+
+        Example:
+            >>> nu.run(nu.Bool(True).is_(True))[0]
+            True
+        """
+        from nu.core import Is
+        from nu.forms import Bool
+
+        return Bool(Is(self, other))

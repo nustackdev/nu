@@ -23,7 +23,7 @@ from __future__ import annotations
 from fractions import Fraction as _Fraction
 from typing import TYPE_CHECKING, TypeAlias
 
-from nu.lang import Form, TypedNu
+from nu.lang import Form, Surface
 
 
 if TYPE_CHECKING:
@@ -40,46 +40,12 @@ if TYPE_CHECKING:
 __all__ = ["Fraction"]
 
 
-class Fraction(Form, TypedNu[_Fraction]):
-    """``fractions.Fraction`` as a Form - an exact rational number.
-
-    Named ``Fraction`` to mirror ``from fractions import Fraction``. Build one
-    with ``Fraction.of(num, den)`` (or ``from_float`` / ``from_decimal`` /
-    ``from_str``); read its parts as properties; combine with arithmetic and
-    comparison operators.
-    """
+class FractionSurface(Surface):
+    """The methods of ``Fraction``, shared by the ``Fraction`` form and every ref that holds one."""
 
     # =========================================================================
     # CONSTRUCTORS (new atoms in interactions)
     # =========================================================================
-
-    @classmethod
-    def of(cls, numerator: IntArg, denominator: IntArg = 1) -> Fraction:
-        """Build a fraction from numerator and denominator: ``Fraction(n, d)``."""
-        from .interactions import FractionOf
-
-        return Fraction(FractionOf(numerator, denominator))
-
-    @classmethod
-    def from_float(cls, value: FloatArg) -> Fraction:
-        """The exact fraction equal to a float: ``Fraction.from_float(f)``."""
-        from .interactions import FractionFromFloat
-
-        return Fraction(FractionFromFloat(value))
-
-    @classmethod
-    def from_decimal(cls, value: DecimalArg) -> Fraction:
-        """The exact fraction equal to a Decimal: ``Fraction.from_decimal(d)``."""
-        from .interactions import FractionFromDecimal
-
-        return Fraction(FractionFromDecimal(value))
-
-    @classmethod
-    def from_str(cls, value: StrArg) -> Fraction:
-        """Parse a fraction string: ``Fraction(s)`` (e.g. ``"3/4"``, ``"1.5"``)."""
-        from .interactions import FractionFromStr
-
-        return Fraction(FractionFromStr(value))
 
     # =========================================================================
     # COMPONENT READS (reuse core GetAttr)
@@ -220,3 +186,41 @@ class Fraction(Form, TypedNu[_Fraction]):
         from nu.forms import Bool
 
         return Bool(Ne(self, other))
+
+
+class Fraction(FractionSurface, Form[_Fraction]):
+    """``fractions.Fraction`` as a Form - an exact rational number.
+
+    Named ``Fraction`` to mirror ``from fractions import Fraction``. Build one
+    with ``Fraction.of(num, den)`` (or ``from_float`` / ``from_decimal`` /
+    ``from_str``); read its parts as properties; combine with arithmetic and
+    comparison operators.
+    """
+
+    @classmethod
+    def of(cls, numerator: IntArg, denominator: IntArg = 1) -> Fraction:
+        """Build a fraction from numerator and denominator: ``Fraction(n, d)``."""
+        from .interactions import FractionOf
+
+        return Fraction(FractionOf(numerator, denominator))
+
+    @classmethod
+    def from_float(cls, value: FloatArg) -> Fraction:
+        """The exact fraction equal to a float: ``Fraction.from_float(f)``."""
+        from .interactions import FractionFromFloat
+
+        return Fraction(FractionFromFloat(value))
+
+    @classmethod
+    def from_decimal(cls, value: DecimalArg) -> Fraction:
+        """The exact fraction equal to a Decimal: ``Fraction.from_decimal(d)``."""
+        from .interactions import FractionFromDecimal
+
+        return Fraction(FractionFromDecimal(value))
+
+    @classmethod
+    def from_str(cls, value: StrArg) -> Fraction:
+        """Parse a fraction string: ``Fraction(s)`` (e.g. ``"3/4"``, ``"1.5"``)."""
+        from .interactions import FractionFromStr
+
+        return Fraction(FractionFromStr(value))

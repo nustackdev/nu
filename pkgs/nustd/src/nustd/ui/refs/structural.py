@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any
 from typing_extensions import Self
 
 from nu.engine.structure import Declared
-from nu.forms import Dict
 from nu.lang import ScalarQuery
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Changed, Session, Write
@@ -282,9 +281,13 @@ class HistoryRef(LeafRef):
         return Write(self, self._move("replace", uri, state))
 
     def back(self) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(action="back"))
 
     def forward(self) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(action="forward"))
 
     def set_query(self, values: Mapping[str, object] | None = None, /, **kv: object) -> Nu:
@@ -293,11 +296,15 @@ class HistoryRef(LeafRef):
         A None value drops its key; the path, hash and state stay. Keys that
         are no Python name go in ``values``: ``nav.set_query({"sort-by": "date"})``.
         """
+        from nu.forms import Dict
+
         merged = {**(values or {}), **kv}
         return Write(self, Dict.of(action="set_query", query=Dict.of(**merged)))
 
     @staticmethod
     def _move(action: str, uri: StrArg, state: object) -> Nu:
+        from nu.forms import Dict
+
         if state is UNSET:
             return Dict.of(action=action, uri=uri)
         return Dict.of(action=action, uri=uri, state=state)

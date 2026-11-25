@@ -4,7 +4,9 @@
 
 - ``nu``         - the ``Nu`` base class.
 - ``kinds``      - the kind taxonomy (``Ref`` / ``Interaction`` / ``ScalarQuery`` / ...).
+- ``surface``    - ``Surface``, the methods mixin a value ``Form`` and a typed Ref share.
 - ``bracket``    - ``Bracket``, the lifecycle base every bracket subclasses.
+- ``form``       - ``Form``, the node every value form extends.
 - ``args``       - argument type aliases (``IntArg``, ``StrArg``, ...) for kind signatures.
 - ``null``       - ``NULL``, the value an absent context read gives, and ``is_null``.
 - ``sentinels``  - ``UNSET``, the internal argument marker.
@@ -54,11 +56,12 @@ from .attributes import (
     ExecOrder,
     Sort,
     build_schema,
+    cardinality_of,
     matrix_sort,
     subsort,
 )
 from .bracket import Bracket
-from .forms import Form, TypedNu, TypedNuStream
+from .form import Form
 from .kinds import (
     Action,
     ActionReduction,
@@ -90,6 +93,7 @@ from .sentinels import (
     Unset,
     is_sentinel,
 )
+from .surface import Surface
 from .typeinfo import TypeInfo, value_type_for
 
 
@@ -149,10 +153,9 @@ __all__ = [
     "Strategy",
     "StreamAction",
     "StreamQuery",
+    "Surface",
     "TupleArg",
     "TypeInfo",
-    "TypedNu",
-    "TypedNuStream",
     "Unset",
     "Violation",
     "acollect",
@@ -161,6 +164,7 @@ __all__ = [
     "alast",
     "arun",
     "build_schema",
+    "cardinality_of",
     "collect",
     "compile",
     "eval",

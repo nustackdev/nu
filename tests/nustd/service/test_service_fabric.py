@@ -124,6 +124,13 @@ def test_stream_action_yields_and_mutates(app, target: Calculator):
     assert target.log == []
 
 
+def test_stream_reads_keep_chaining(app, target: Calculator):
+    target.log = [("a", ()), ("b", ())]
+    assert nu.run(app(Calc.squares(n=4).map(lambda x: nu.Int(x) + 1).to_list()))[0] == [1, 2, 5, 10]
+    assert nu.run(app(Calc.drain().count()))[0] == 2
+    assert target.log == []
+
+
 # --- defaults / target_attr wiring ------------------------------------------
 
 
@@ -180,3 +187,64 @@ def test_unknown_target_attribute_raises_at_call_time(app):
     )
     with pytest.raises(AttributeError):
         nu.run(tree)
+
+
+# --- an unpulled stream action warns -----------------------------------------
+
+
+def _unpulled(term) -> list:
+    from nu.engine import Severity, gate
+    from nu.lang.helpers import compile as nu_compile
+    from nu.lang.laws import LAWS
+
+    fired = [v for v in gate(nu_compile(term), *LAWS) if v.law == "stream_is_pulled"]
+    assert all(v.severity is Severity.WARNING for v in fired)
+    return fired
+
+
+def _wraps():
+    return {
+        "bare": lambda s: s,
+        "form": lambda s: nu.Iterator(s),
+        "snapshot": lambda s: nu.Snapshot(s),
+        "transaction": lambda s: nu.Transaction(nu.Iterator(s)),
+        "retry": lambda s: nu.Retry(s),
+    }
+
+
+UNPULLED = {
+    "chain": lambda s: Calc.bump(by=1) >> s,
+    "if_body": lambda s: Calc.bump(by=1) >> nu.IfDo(nu.Literal(True), s),
+    "loop_body": lambda s: nu.ForRangeDo(0, 2, s),
+    "parallel": lambda s: nu.Parallel(Calc.bump(by=1), s),
+}
+
+
+@pytest.mark.parametrize("wrap", list(_wraps()))
+@pytest.mark.parametrize("spot", list(UNPULLED))
+def test_a_stream_action_nothing_pulls_warns_once(spot, wrap, app, target):
+    term = UNPULLED[spot](_wraps()[wrap](Calc.drain()))
+    [v] = _unpulled(term)
+    assert "nothing pulls" in v.detail
+    nu.run(app(term))  # a warning does not block the run
+    if spot != "loop_body" and wrap != "retry":
+        assert target.log == [("bump", (1,))]  # bump ran, drain was never pulled
+    # Retry is the exception: it buffers its stream body per attempt, so drain
+    # runs, but what it yields is still dropped and the warning stands.
+
+
+PULLED = {
+    "collect": lambda: nu.Collect(Calc.drain()),
+    "sum": lambda: nu.Sum(Calc.squares(n=3)),
+    "to_list": lambda: Calc.drain().to_list(),
+    "map": lambda: Calc.drain().map(lambda x: nu.Int(x) + 1).to_list(),
+    "for_each_source": lambda: nu.ForEachDo(Calc.drain(), lambda x: Calc.bump(by=x)),
+    "root": lambda: Calc.drain(),
+    "root_snapshot": lambda: nu.Snapshot(Calc.drain()),
+    "chain_collect": lambda: Calc.bump(by=1) >> nu.Collect(Calc.drain()),
+}
+
+
+@pytest.mark.parametrize("name", list(PULLED))
+def test_a_pulled_stream_action_is_silent(name):
+    assert _unpulled(PULLED[name]()) == []

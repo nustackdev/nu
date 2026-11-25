@@ -193,8 +193,8 @@ def test_reactive_shape_ref_inherits_slot_navigation():
 
 def test_shape_ref_has_mapping_surface():
     ref = ShapeRef("loc", shape_type=Inner)
-    # Keys/values/items come from MappingForm; exists/missing come from
-    # CollectionForm inside MappingForm.
+    # Keys/values/items come from MappingSurface; exists/missing come from
+    # CollectionSurface inside MappingSurface.
     assert hasattr(ref, "keys")
     assert hasattr(ref, "values")
     assert hasattr(ref, "items")

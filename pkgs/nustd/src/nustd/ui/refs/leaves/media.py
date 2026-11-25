@@ -36,7 +36,6 @@ from typing import TYPE_CHECKING, Literal
 
 from typing_extensions import Self
 
-from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Write
 
@@ -98,12 +97,18 @@ class ImageRef(LeafRef):
         )
 
     def set_src(self, url: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(src=url))
 
     def set_alt(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(alt=text))
 
     def set_fit(self, mode: ImageFit | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(fit=mode))
 
     def set_size(
@@ -111,19 +116,29 @@ class ImageRef(LeafRef):
         width: IntArg | None,
         height: IntArg | None,
     ) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(width=width, height=height))
 
     def set_radius(self, name: ImageRadius | StrArg | None) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(radius=name))
 
     def set_aspect(self, ratio: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(aspect=ratio))
 
     def set_zoom(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(zoom=flag))
 
     def set_download(self, url: StrArg) -> Nu:
         """The url a download link saves; "" drops the link."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(download=url))
 
     def set(
@@ -134,6 +149,8 @@ class ImageRef(LeafRef):
         width: IntArg = UNSET,
         height: IntArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"src": src}
         if alt is not UNSET:
             payload["alt"] = alt
@@ -192,34 +209,54 @@ class VideoRef(LeafRef):
         )
 
     def set_src(self, url: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(src=url))
 
     def set_poster(self, url: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(poster=url))
 
     def set_fit(self, mode: VideoFit | StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(fit=mode))
 
     def set_size(self, width: IntArg | None, height: IntArg | None) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(width=width, height=height))
 
     def set_radius(self, name: VideoRadius | StrArg | None) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(radius=name))
 
     def set_aspect(self, ratio: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(aspect=ratio))
 
     def set_autoplay(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(autoplay=flag))
 
     def set_loop(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(loop=flag))
 
     def set_muted(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(muted=flag))
 
     def set_download(self, url: StrArg) -> Nu:
         """The url the transport's download link saves; "" drops the link."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(download=url))
 
     def set(
@@ -231,6 +268,8 @@ class VideoRef(LeafRef):
         loop: BoolArg = UNSET,
         muted: BoolArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"src": src}
         if poster is not UNSET:
             payload["poster"] = poster
@@ -267,19 +306,29 @@ class AudioRef(LeafRef):
         return super().slot(src=src, title=title, autoplay=autoplay, loop=loop, download=download)
 
     def set_src(self, url: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(src=url))
 
     def set_title(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(title=text))
 
     def set_autoplay(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(autoplay=flag))
 
     def set_loop(self, flag: BoolArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(loop=flag))
 
     def set_download(self, url: StrArg) -> Nu:
         """The url the row's download link saves; "" drops the link."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(download=url))
 
     def set(
@@ -289,6 +338,8 @@ class AudioRef(LeafRef):
         autoplay: BoolArg = UNSET,
         loop: BoolArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"src": src}
         if title is not UNSET:
             payload["title"] = title
@@ -325,19 +376,29 @@ class FileRef(LeafRef):
         return super().slot(src=src, name=name, size=size, mime=mime, download=download)
 
     def set_src(self, url: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(src=url))
 
     def set_name(self, text: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(name=text))
 
     def set_size(self, n_bytes: IntArg | None) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(size=n_bytes))
 
     def set_mime(self, mime: StrArg) -> Nu:
+        from nu.forms import Dict
+
         return Write(self, Dict.of(mime=mime))
 
     def set_download(self, url: StrArg) -> Nu:
         """The url the row's download link saves; "" drops the link."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(download=url))
 
     def set(
@@ -348,6 +409,8 @@ class FileRef(LeafRef):
         mime: StrArg = UNSET,
         download: StrArg = UNSET,
     ) -> Nu:
+        from nu.forms import Dict
+
         payload: dict[str, object] = {"src": src}
         if name is not UNSET:
             payload["name"] = name

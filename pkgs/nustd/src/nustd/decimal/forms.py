@@ -25,7 +25,7 @@ from __future__ import annotations
 from decimal import Decimal as _Decimal
 from typing import TYPE_CHECKING, TypeAlias
 
-from nu.lang import Form, TypedNu
+from nu.lang import Form, Surface
 
 
 if TYPE_CHECKING:
@@ -39,33 +39,12 @@ if TYPE_CHECKING:
 __all__ = ["Decimal"]
 
 
-class Decimal(Form, TypedNu[_Decimal]):
-    """``decimal.Decimal`` as a Form - exact, arbitrary-precision arithmetic.
-
-    Build one with ``Decimal.of(...)`` (string or int, coerced exactly) or
-    ``Decimal.from_float(...)``; combine with the arithmetic operators; refine
-    with the method calls. Python does the real ``Decimal`` op on the resolved
-    values, so ``Decimal.of("0.1") + Decimal.of("0.2")`` is exactly
-    ``Decimal('0.3')``.
-    """
+class DecimalSurface(Surface):
+    """The methods of ``Decimal``, shared by the ``Decimal`` form and every ref that holds one."""
 
     # =========================================================================
     # CONSTRUCTORS (new atoms in interactions)
     # =========================================================================
-
-    @classmethod
-    def of(cls, value: StrArg | IntArg) -> Decimal:
-        """Build a decimal from a string or int, exactly: ``Decimal(str(value))``."""
-        from .interactions import DecimalOf
-
-        return Decimal(DecimalOf(value))
-
-    @classmethod
-    def from_float(cls, value: FloatArg) -> Decimal:
-        """From a binary float: ``Decimal.from_float(f)`` (carries float error)."""
-        from .interactions import DecimalFromFloat
-
-        return Decimal(DecimalFromFloat(value))
 
     # =========================================================================
     # ARITHMETIC (reuse core atoms; Python does the real Decimal op)
@@ -298,3 +277,28 @@ class Decimal(Form, TypedNu[_Decimal]):
         from nu.forms import Bool
 
         return Bool(Ne(self, other))
+
+
+class Decimal(DecimalSurface, Form[_Decimal]):
+    """``decimal.Decimal`` as a Form - exact, arbitrary-precision arithmetic.
+
+    Build one with ``Decimal.of(...)`` (string or int, coerced exactly) or
+    ``Decimal.from_float(...)``; combine with the arithmetic operators; refine
+    with the method calls. Python does the real ``Decimal`` op on the resolved
+    values, so ``Decimal.of("0.1") + Decimal.of("0.2")`` is exactly
+    ``Decimal('0.3')``.
+    """
+
+    @classmethod
+    def of(cls, value: StrArg | IntArg) -> Decimal:
+        """Build a decimal from a string or int, exactly: ``Decimal(str(value))``."""
+        from .interactions import DecimalOf
+
+        return Decimal(DecimalOf(value))
+
+    @classmethod
+    def from_float(cls, value: FloatArg) -> Decimal:
+        """From a binary float: ``Decimal.from_float(f)`` (carries float error)."""
+        from .interactions import DecimalFromFloat
+
+        return Decimal(DecimalFromFloat(value))

@@ -8,7 +8,7 @@ names; ``ReactiveStrRef`` adds ``on_change``. The capability comes first, so
 
 from __future__ import annotations
 
-from nu.forms import Str
+from nu.surfaces import StrSurface
 
 from ..item import MutableItemRef, ReactiveItemRef
 
@@ -16,7 +16,7 @@ from ..item import MutableItemRef, ReactiveItemRef
 __all__ = ["ReactiveStrRef", "StrRef"]
 
 
-class StrRef(MutableItemRef, Str):
+class StrRef(MutableItemRef, StrSurface):
     """Str slot ref."""
 
 

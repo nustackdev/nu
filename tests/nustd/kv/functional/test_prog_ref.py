@@ -18,8 +18,7 @@ import pytest
 
 import nu
 from nu import Shape, arun, run
-from nu.lang import Sort
-from nu.lang.forms import TypedNu
+from nu.lang import Form, Sort
 from nu.prog import ConstructionError, PyBrace
 from nustd.kv import ProgramRef
 from nustd.kv.refs.base import PrimitiveRef
@@ -116,11 +115,9 @@ def test_on_error_catches_a_broken_stored_program(ctx) -> None:
 # --- MRO pin ------------------------------------------------------------
 
 
-def test_the_substrate_base_wins_the_mro() -> None:
-    # Bases are ``(ItemRef, Program)``. Flipped, ``TypedNu`` would win both
-    # of these: the sort would drop to a scalar query and ``_compile`` would
-    # become a passthrough over child 0, which is the parent ref, not the
-    # stored value. Neither failure raises, so it is pinned here.
+def test_the_ref_carries_the_program_surface_not_the_form() -> None:
+    # The ref mixes in the Program surface only, never the Form node, so it
+    # stays a fabric read: no passthrough over child 0 to shadow.
+    assert not issubclass(ProgramRef, Form)
     assert ProgramRef._attributes["sort"].value is Sort.REF
     assert ProgramRef._compile is PrimitiveRef._compile
-    assert ProgramRef._compile is not TypedNu._compile

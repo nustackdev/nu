@@ -2,7 +2,7 @@
 
 For a class `C`, the answer to "what can be called on it" is spread across its
 MRO. This walk resolves each name to the class that actually defines it, so a
-consumer sees `append` once, tagged with `MutableSequenceForm`, and does not
+consumer sees `append` once, tagged with `MutableSequenceSurface`, and does not
 have to walk the hierarchy itself.
 
 No Nu knowledge. The caller supplies the stop class, and everything at or

@@ -8,7 +8,7 @@ names; ``ReactiveFloatRef`` adds ``on_change``. The capability comes first, so
 
 from __future__ import annotations
 
-from nu.forms import Float
+from nu.surfaces import FloatSurface
 
 from ..item import MutableItemRef, ReactiveItemRef
 
@@ -16,7 +16,7 @@ from ..item import MutableItemRef, ReactiveItemRef
 __all__ = ["FloatRef", "ReactiveFloatRef"]
 
 
-class FloatRef(MutableItemRef, Float):
+class FloatRef(MutableItemRef, FloatSurface):
     """Float slot ref."""
 
 

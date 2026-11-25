@@ -6,7 +6,7 @@ a collection op returns is read off that declaration: a single element reads as
 the declared type's core form, and a collection result carries the declared
 types on to the form it returns, so they are not lost one op later.
 
-Pure Form mixins: no Ref or substrate knowledge, and no fabric class. Which ref
+Pure surfaces: no Ref or substrate knowledge, and no fabric class. Which ref
 a descent lands on is the fabric's business, not this module's.
 """
 
@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 
 from nu.lang.typeinfo import TypeInfo
 
-from .form import SlotForm
+from .form import SlotSurface
 
 
 if TYPE_CHECKING:
@@ -36,9 +36,9 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "CollectionForm",
-    "MutableCollectionForm",
-    "ReactiveCollectionForm",
+    "CollectionSurface",
+    "MutableCollectionSurface",
+    "ReactiveCollectionSurface",
     "holds",
 ]
 
@@ -64,8 +64,8 @@ def holds(
     return TypeInfo(py_type, key=key, elem=elem)
 
 
-class CollectionForm(SlotForm):
-    """Shape collection Form. Ops: ``exists()``, ``is_set_falsy()``, ``extract()``."""
+class CollectionSurface(SlotSurface):
+    """Shape collection surface. Ops: ``exists()``, ``is_set_falsy()``, ``extract()``."""
 
     @property
     def _declared(self) -> TypeInfo:
@@ -113,8 +113,8 @@ class CollectionForm(SlotForm):
         return Extract(self)
 
 
-class MutableCollectionForm(CollectionForm):
-    """Mutable shape collection Form. Adds ``set(value)`` and ``erase()``."""
+class MutableCollectionSurface(CollectionSurface):
+    """Mutable shape collection surface. Adds ``set(value)`` and ``erase()``."""
 
     def set(self, value: object) -> SetCmd:
         """Build a ``SetCmd``."""
@@ -135,8 +135,8 @@ class MutableCollectionForm(CollectionForm):
         return IfDo(self.exists().not_(), self.set(value))
 
 
-class ReactiveCollectionForm(MutableCollectionForm):
-    """Reactive shape collection Form. Adds observation of the slot and its subtree.
+class ReactiveCollectionSurface(MutableCollectionSurface):
+    """Reactive shape collection surface. Adds observation of the slot and its subtree.
 
     Ops:
         on_change()                      -> OnChange

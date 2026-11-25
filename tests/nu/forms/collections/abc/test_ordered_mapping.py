@@ -1,7 +1,7 @@
 """The ordered mapping tier: Mapping + Reversible, three levels.
 
-``OrderedMappingForm`` carries the reversed reads and paging; plain
-``MappingForm`` keeps the ``collections.abc.Mapping`` surface only. ``Dict``
+``OrderedMappingSurface`` carries the reversed reads and paging; plain
+``MappingSurface`` keeps the ``collections.abc.Mapping`` surface only. ``Dict``
 sits on the mutable ordered tier, and the dict-only methods live on it alone.
 """
 
@@ -12,13 +12,13 @@ import inspect
 import pytest
 
 import nu
-from nu.forms.collections.abc import (
-    MappingForm,
-    MutableMappingForm,
-    MutableOrderedMappingForm,
-    OrderedMappingForm,
-    ReactiveMappingForm,
-    ReactiveOrderedMappingForm,
+from nu.surfaces.collections.abc import (
+    MappingSurface,
+    MutableMappingSurface,
+    MutableOrderedMappingSurface,
+    OrderedMappingSurface,
+    ReactiveMappingSurface,
+    ReactiveOrderedMappingSurface,
 )
 
 
@@ -27,28 +27,28 @@ DICT_ONLY = ("copy", "merge", "merge_update")
 
 
 def test_the_tiers_stack_on_the_plain_mapping_tiers():
-    assert issubclass(OrderedMappingForm, MappingForm)
-    assert issubclass(MutableOrderedMappingForm, OrderedMappingForm)
-    assert issubclass(MutableOrderedMappingForm, MutableMappingForm)
-    assert issubclass(ReactiveOrderedMappingForm, MutableOrderedMappingForm)
-    assert issubclass(ReactiveOrderedMappingForm, ReactiveMappingForm)
+    assert issubclass(OrderedMappingSurface, MappingSurface)
+    assert issubclass(MutableOrderedMappingSurface, OrderedMappingSurface)
+    assert issubclass(MutableOrderedMappingSurface, MutableMappingSurface)
+    assert issubclass(ReactiveOrderedMappingSurface, MutableOrderedMappingSurface)
+    assert issubclass(ReactiveOrderedMappingSurface, ReactiveMappingSurface)
 
 
 def test_dict_is_a_mutable_ordered_mapping():
-    assert issubclass(nu.Dict, MutableOrderedMappingForm)
-    assert not issubclass(nu.Dict, ReactiveMappingForm)
+    assert issubclass(nu.Dict, MutableOrderedMappingSurface)
+    assert not issubclass(nu.Dict, ReactiveMappingSurface)
 
 
 @pytest.mark.parametrize("name", ORDERED_READS)
 def test_reversed_reads_are_on_the_ordered_tier_only(name: str):
-    assert not hasattr(MappingForm, name)
-    assert not hasattr(MutableMappingForm, name)
-    assert hasattr(OrderedMappingForm, name)
+    assert not hasattr(MappingSurface, name)
+    assert not hasattr(MutableMappingSurface, name)
+    assert hasattr(OrderedMappingSurface, name)
 
 
 def test_plain_keys_take_no_paging_args():
-    assert list(inspect.signature(MappingForm.keys).parameters) == ["self"]
-    assert list(inspect.signature(OrderedMappingForm.keys).parameters) == [
+    assert list(inspect.signature(MappingSurface.keys).parameters) == ["self"]
+    assert list(inspect.signature(OrderedMappingSurface.keys).parameters) == [
         "self",
         "after",
         "limit",
@@ -57,7 +57,12 @@ def test_plain_keys_take_no_paging_args():
 
 @pytest.mark.parametrize("name", DICT_ONLY)
 def test_dict_only_methods_are_on_dict_alone(name: str):
-    for form in (MappingForm, MutableMappingForm, OrderedMappingForm, MutableOrderedMappingForm):
+    for form in (
+        MappingSurface,
+        MutableMappingSurface,
+        OrderedMappingSurface,
+        MutableOrderedMappingSurface,
+    ):
         assert not hasattr(form, name), form
     assert hasattr(nu.Dict, name)
 

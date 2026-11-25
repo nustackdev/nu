@@ -14,13 +14,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar
 
-from nu.forms import FrozenSet, Set
+from nu.surfaces import FrozenSetSurface, SetSurface
 
-from ..collection import MutableCollectionForm, ReactiveCollectionForm, holds
-from .abc.set_ import MutableSetRef, ReactiveSetForm, SetLikeRef
+from ..collection import MutableCollectionSurface, ReactiveCollectionSurface, holds
+from .abc.set_ import MutableSetRef, ReactiveSetSurface, SetLikeRef
 
 
 if TYPE_CHECKING:
+    from nu.forms import FrozenSet, Set
     from nu.lang import Nu
 
 
@@ -33,26 +34,30 @@ T = TypeVar("T")
 # ---- set ---------------------------------------------------------------------
 
 
-class SetRef(MutableSetRef, Set[T]):
+class SetRef(MutableSetRef, SetSurface[T]):
     """Set slot ref. A set has no keys, so there is no descent."""
 
     def _wrap_set_result(self, operand: Nu) -> Set[T]:
+        from nu.forms import Set
+
         return Set(operand, type_info=holds(set, elem=self._declared.elem))
 
 
-class ReactiveSetRef(ReactiveSetForm, SetRef[T]):
+class ReactiveSetRef(ReactiveSetSurface, SetRef[T]):
     """Set slot ref that can be watched: adds ``on_change`` and the tree-aware watches."""
 
 
 # ---- frozenset ---------------------------------------------------------------
 
 
-class FrozenSetRef(MutableCollectionForm, SetLikeRef, FrozenSet[T]):
+class FrozenSetRef(MutableCollectionSurface, SetLikeRef, FrozenSetSurface[T]):
     """Frozenset slot ref. No descent."""
 
     def _wrap_set_result(self, operand: Nu) -> FrozenSet[T]:
+        from nu.forms import FrozenSet
+
         return FrozenSet(operand, type_info=holds(frozenset, elem=self._declared.elem))
 
 
-class ReactiveFrozenSetRef(ReactiveCollectionForm, FrozenSetRef[T]):
+class ReactiveFrozenSetRef(ReactiveCollectionSurface, FrozenSetRef[T]):
     """Frozenset slot ref that can be watched: adds ``on_change`` and the tree-aware watches."""

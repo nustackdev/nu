@@ -4,7 +4,7 @@ Covers class hierarchy, construction, and domain placement. Full subscription
 (view.on_change() with a real substrate) is deferred to substrate integration.
 
 Reactive queries all live in ``nu.core.reactive`` -- unified interface across
-substrates. Shape Form mixins reach into that module.
+substrates. Shape surfaces reach into that module.
 """
 
 from __future__ import annotations
@@ -176,26 +176,26 @@ def test_reactive_item_ref_on_change_returns_primitive_query():
 
 
 # ---------------------------------------------------------------------------
-# ReactiveCollectionForm is in the MRO of reactive Refs
+# ReactiveCollectionSurface is in the MRO of reactive Refs
 # ---------------------------------------------------------------------------
 
 
-def test_reactive_collection_form_in_mapping_ref_mro():
-    from nu.domains.shape.collection import ReactiveCollectionForm
+def test_reactive_collection_surface_in_mapping_ref_mro():
+    from nu.domains.shape.collection import ReactiveCollectionSurface
 
-    assert issubclass(ReactiveMappingRef, ReactiveCollectionForm)
-
-
-def test_reactive_collection_form_in_sequence_ref_mro():
-    from nu.domains.shape.collection import ReactiveCollectionForm
-
-    assert issubclass(ReactiveSequenceRef, ReactiveCollectionForm)
+    assert issubclass(ReactiveMappingRef, ReactiveCollectionSurface)
 
 
-def test_reactive_collection_form_in_set_ref_mro():
-    from nu.domains.shape.collection import ReactiveCollectionForm
+def test_reactive_collection_surface_in_sequence_ref_mro():
+    from nu.domains.shape.collection import ReactiveCollectionSurface
 
-    assert issubclass(ReactiveSetRef, ReactiveCollectionForm)
+    assert issubclass(ReactiveSequenceRef, ReactiveCollectionSurface)
+
+
+def test_reactive_collection_surface_in_set_ref_mro():
+    from nu.domains.shape.collection import ReactiveCollectionSurface
+
+    assert issubclass(ReactiveSetRef, ReactiveCollectionSurface)
 
 
 # ---------------------------------------------------------------------------

@@ -16,7 +16,7 @@ from nu.core import ToStr
 from nu.domains.shape import SetCmd
 from nu.lang import Nu
 from nu.mem.refs import ItemRef
-from nustd.cmath.forms import complex as ComplexForm
+from nustd.cmath.forms import ComplexSurface
 
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 __all__ = ["ComplexRef"]
 
 
-class ComplexRef(ItemRef, ComplexForm):
+class ComplexRef(ItemRef, ComplexSurface):
     """A complex slot in the dict substrate, stored as ``str(complex)``.
 
     Args:

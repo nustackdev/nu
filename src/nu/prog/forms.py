@@ -33,7 +33,7 @@ what differs between substrates.
 
 Construction takes no ``.of()``. The ``nustd`` Forms use classmethods
 because their children need parsing atoms to build; ``Program`` does not.
-``TypedNu.__init__`` wraps a single child and ``Nu`` auto-wraps a non-Term
+A ``Form`` wraps a single child and ``Nu`` auto-wraps a non-Term
 child into a ``Literal``, so ``Program(SOURCE)`` with a bare ``str`` is
 already the right node.
 """
@@ -42,7 +42,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.lang import Form, TypedNu
+from nu.lang import Form, Surface
 from nu.lang.sentinels import UNSET
 
 from .source import DEFAULT_ENTRY, DEFAULT_FILENAME
@@ -58,40 +58,8 @@ if TYPE_CHECKING:
 __all__ = ["Program"]
 
 
-class Program(Form, TypedNu[str]):
-    """Python source that constructs a Nu term.
-
-    The child yields the source text: a literal when the program is written
-    inline, a ref when it is stored. Both verbs thread the same construction
-    arguments through to :class:`~nu.prog.load.LoadNu`.
-
-    Notes:
-        - The verbs compose rather than adding atoms. ``.load()`` is a
-          ``LoadNu``, ``.run()`` is an ``Eval`` over it, and
-          ``.run(on_error=...)`` is those two inside a ``TryCatch``. The tree
-          shows the real control flow, so attribute sweeps, effect
-          classification and promise checks all reach it with no special
-          case for programs.
-        - Mixed into a substrate ref it becomes a program-valued slot
-          (``nustd.kv``'s ``ProgramRef`` and its ``nu.mem`` twin), where the
-          child is what reads the source out of storage. Nothing else about
-          the Form changes, which is why the verbs are not overridable per
-          substrate.
-        - No ``.of()`` constructor. ``Program(source)`` with a bare ``str``
-          is already the right node, because ``Nu`` auto-wraps a non-Term
-          child into a ``Literal``.
-        - Everything the value carries is a ``Str``: source text is what a
-          program is until something constructs it.
-
-    Example:
-        >>> src = '''
-        ... import nu
-        ... def out():
-        ...     return nu.Int(6) * nu.Int(7)
-        ... '''
-        >>> nu.run(nu.prog.Program(src).run())[0]
-        42
-    """
+class ProgramSurface(Surface):
+    """The methods of ``Program``, shared by the ``Program`` form and every ref that holds one."""
 
     def load(
         self,
@@ -189,3 +157,39 @@ class Program(Form, TypedNu[str]):
         if on_error is None:
             return running
         return TryCatch(running, catch=on_error, errors=ConstructionError)
+
+
+class Program(ProgramSurface, Form[str]):
+    """Python source that constructs a Nu term.
+
+    The child yields the source text: a literal when the program is written
+    inline, a ref when it is stored. Both verbs thread the same construction
+    arguments through to :class:`~nu.prog.load.LoadNu`.
+
+    Notes:
+        - The verbs compose rather than adding atoms. ``.load()`` is a
+          ``LoadNu``, ``.run()`` is an ``Eval`` over it, and
+          ``.run(on_error=...)`` is those two inside a ``TryCatch``. The tree
+          shows the real control flow, so attribute sweeps, effect
+          classification and promise checks all reach it with no special
+          case for programs.
+        - Mixed into a substrate ref it becomes a program-valued slot
+          (``nustd.kv``'s ``ProgramRef`` and its ``nu.mem`` twin), where the
+          child is what reads the source out of storage. Nothing else about
+          the Form changes, which is why the verbs are not overridable per
+          substrate.
+        - No ``.of()`` constructor. ``Program(source)`` with a bare ``str``
+          is already the right node, because ``Nu`` auto-wraps a non-Term
+          child into a ``Literal``.
+        - Everything the value carries is a ``Str``: source text is what a
+          program is until something constructs it.
+
+    Example:
+        >>> src = '''
+        ... import nu
+        ... def out():
+        ...     return nu.Int(6) * nu.Int(7)
+        ... '''
+        >>> nu.run(nu.prog.Program(src).run())[0]
+        42
+    """

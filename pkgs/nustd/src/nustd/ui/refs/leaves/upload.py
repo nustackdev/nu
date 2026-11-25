@@ -21,7 +21,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, NoReturn
 
 from typing_extensions import Self
 
-from nu.forms import Dict
 from nu.lang.null import is_null
 from nustd.ui.core import Changed, Write, check_key
 from nustd.ui.uploads.interactions import (
@@ -44,6 +43,7 @@ from .input import InputLeaf, _common, _Nullable
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from nu.forms import Iterator
     from nu.lang import Nu
     from nu.lang.args import IntArg, StrArg
     from nu.lang.runtime import Runtime
@@ -82,9 +82,11 @@ class _FileReads:
         """The whole file in memory; warns past 16 MiB. See ``GetBytes``."""
         return GetBytes(self)  # type: ignore[arg-type]
 
-    def open(self, start: IntArg = 0, end: IntArg | None = None, step: IntArg = STEP) -> OpenFile:
+    def open(self, start: IntArg = 0, end: IntArg | None = None, step: IntArg = STEP) -> Iterator:
         """A lazy stream of ``bytes`` pieces of ``[start:end]``, pulling first. See ``OpenFile``."""
-        return OpenFile(self, start, end, step)  # type: ignore[arg-type]
+        from nu.forms import Iterator
+
+        return Iterator(OpenFile(self, start, end, step))  # type: ignore[arg-type]
 
     def pull(self) -> Nu:
         """Start the whole file toward the server's cache; returns at once. See ``Pull``."""
@@ -148,14 +150,20 @@ class _UploadInput(_FileInput):
 
     def set_accept(self, accept: StrArg) -> Nu:
         """Which files the picker offers and a drop takes: ``.csv``, ``image/*``, ..."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(accept=accept))
 
     def set_prompt(self, text: StrArg) -> Nu:
         """The text in the drop zone."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(prompt=text))
 
     def set_max_size(self, size: IntArg | None) -> Nu:
         """The largest file a pick takes, in bytes; None for no limit."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(max_size=size))
 
 
@@ -332,6 +340,8 @@ class UploadFilesRef(_UploadInput):
 
     def set_max_files(self, count: IntArg | None) -> Nu:
         """The most files the selection holds; None for no limit."""
+        from nu.forms import Dict
+
         return Write(self, Dict.of(max_files=count))
 
 

@@ -16,7 +16,7 @@ from nu.domains.shape import Slot
 from nu.lang import Literal, Nu
 from nu.mem.refs import RefBase
 
-from .form import JQueue
+from .form import JQueueSurface
 
 
 if TYPE_CHECKING:
@@ -33,7 +33,7 @@ __all__ = ["JQueueRef"]
 T = TypeVar("T")
 
 
-class JQueueRef(RefBase[janus.Queue[T]], JQueue[T], Generic[T]):
+class JQueueRef(RefBase[janus.Queue[T]], JQueueSurface[T], Generic[T]):
     """A slot holding a live janus queue, bridging the loop and the threads.
 
     Reading it hands back the queue object itself rather than any stored

@@ -17,7 +17,9 @@ from .fabric import LLMFabric
 
 
 if TYPE_CHECKING:
-    from .interactions import Chat, ChatStream
+    from nu.forms import Iterator
+
+    from .interactions import Chat
 
 
 __all__ = ["LLMRef"]
@@ -55,8 +57,10 @@ class LLMRef(FabricRef):
 
         return Chat(self, **kwargs)
 
-    def chat_stream(self, **kwargs: object) -> ChatStream:
+    def chat_stream(self, **kwargs: object) -> Iterator:
         """A ``ChatStream`` on this endpoint: the reply's text deltas as they arrive."""
+        from nu.forms import Iterator
+
         from .interactions import ChatStream
 
-        return ChatStream(self, **kwargs)
+        return Iterator(ChatStream(self, **kwargs))

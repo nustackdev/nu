@@ -38,7 +38,6 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from typing_extensions import Self
 
-from nu.forms import Dict
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import Changed, Send, Write
 
@@ -366,6 +365,8 @@ class Chart(LeafRef):
 
     def set(self, data: Arg = UNSET, *, option: DictArg[str, Any] = UNSET) -> Nu:
         """Replace the data, or with ``option=`` the whole option (drawn from scratch)."""
+        from nu.forms import Dict
+
         if (data is UNSET) == (option is UNSET):
             raise TypeError("Chart.set takes data or option=, exactly one")
         if option is not UNSET:

@@ -3,7 +3,7 @@
 Mirrors ``src/nu/lang/laws/cardinality.py``. Exercises
 ``scalar_stream_refused`` and ``reduction_takes_stream``: a scalar or void
 consumer takes a stream only in its declared reduction slot, and that slot
-must hold one.
+must hold one. ``stream_is_pulled`` warns, once, on a stream nothing pulls.
 """
 
 from __future__ import annotations
@@ -25,6 +25,8 @@ from _support.law_terms import (
 )
 from _support.laws import assert_fails, assert_passes, violations
 
+import nu
+from nu.engine import Severity
 from nu.engine.structure import Declared
 from nu.lang import QueryReduction
 
@@ -168,3 +170,79 @@ def test_the_refusal_in_a_reduction_names_its_reduction_slot() -> None:
 def test_the_reduction_message_names_the_slot_and_what_it_holds() -> None:
     (v,) = [v for v in violations(ActRed(R(), Q())) if v.law == "reduction_takes_stream"]
     assert v.detail == "ActRed folds the stream in slot 1, but it holds a scalar child"
+
+
+# --- stream_is_pulled ---------------------------------------------------------
+
+
+def _unpulled(term) -> list:
+    fired = [v for v in violations(term) if v.law == "stream_is_pulled"]
+    assert all(v.severity is Severity.WARNING for v in fired)
+    return fired
+
+
+_WRAPS = {
+    "bare": lambda s: s,
+    "form": lambda s: nu.Iterator(s),
+    "snapshot": lambda s: nu.Snapshot(s),
+    "transaction": lambda s: nu.Transaction(nu.Iterator(s)),
+    "retry": lambda s: nu.Retry(s),
+}
+
+_UNPULLED = {
+    "chain": lambda s: nu.print(1) >> s,
+    "if_body": lambda s: nu.IfDo(nu.Literal(True), s),
+    "loop_body": lambda s: nu.ForRangeDo(0, 2, s),
+    "parallel": lambda s: nu.Parallel(nu.print(1), s),
+}
+
+
+@pytest.mark.parametrize("wrap", list(_WRAPS))
+@pytest.mark.parametrize("spot", list(_UNPULLED))
+def test_stream_is_pulled_warns_once_on_a_stream_action_in_a_flow_body(spot, wrap) -> None:
+    """A stream action in a Flow body validates and does nothing: one warning, at the outermost node."""
+    term = _UNPULLED[spot](_WRAPS[wrap](StreamAct(R())))
+    [v] = _unpulled(term)
+    assert "nothing pulls" in v.detail
+    assert_passes(term)  # a warning does not block validation
+
+
+@pytest.mark.parametrize("wrap", list(_WRAPS))
+@pytest.mark.parametrize("spot", list(_UNPULLED))
+def test_stream_is_pulled_leaves_a_stream_query_in_a_flow_body_to_the_error_law(spot, wrap) -> None:
+    """A Flow body takes mutators only: a stream query there is refused, not also warned."""
+    term = _UNPULLED[spot](_WRAPS[wrap](nu.Iter([1, 2])))
+    assert_fails(term, "flow_body_is_mutator")
+    assert _unpulled(term) == []
+
+
+_PULLED = {
+    "map": lambda: nu.Collect(nu.Map(nu.Iter([1, 2]), nu.Literal(0))),
+    "filter": lambda: nu.Collect(nu.Filter(nu.Iter([1, 2]), nu.Literal(True))),
+    "collect": lambda: nu.Collect(nu.Iter([1, 2])),
+    "sum": lambda: nu.Sum(nu.Iter([1, 2])),
+    "to_list": lambda: nu.List.of(1, 2).iter().to_list(),
+    "for_each_source": lambda: nu.ForEachDo(nu.Iter([1, 2]), lambda x: nu.print(x)),
+    "root": lambda: nu.Iter([1, 2]),
+    "root_snapshot": lambda: nu.Snapshot(nu.Iter([1, 2])),
+    "chain_collect": lambda: nu.print(1) >> nu.Collect(nu.Iter([1, 2])),
+}
+
+
+@pytest.mark.parametrize("name", list(_PULLED))
+def test_stream_is_pulled_is_silent_when_something_pulls(name) -> None:
+    """Streams, reductions, a ForEachDo source and the program root all pull."""
+    assert _unpulled(_PULLED[name]()) == []
+
+
+def test_stream_is_pulled_leaves_a_scalar_slot_to_the_error_law() -> None:
+    """A stream in a scalar slot is already refused; it does not also warn."""
+    term = Q(Stream())
+    assert_fails(term, "scalar_stream_refused")
+    assert _unpulled(term) == []
+
+
+def test_stream_is_pulled_warns_on_a_stream_action_in_a_strategy_body() -> None:
+    """The rule reads slots, not kinds: any Flow body slot that holds a stream warns."""
+    [v] = _unpulled(FlowS(Cmd(R()), Brk(StreamAct(R()))))
+    assert v.path == (1,)

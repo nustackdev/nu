@@ -13,7 +13,7 @@ from nu.lang import Literal
 
 from .base import StructuredRef
 from .dsl import Slot
-from .form import SlotForm
+from .form import SlotSurface
 
 
 if TYPE_CHECKING:
@@ -29,16 +29,16 @@ if TYPE_CHECKING:
 _R = TypeVar("_R")
 
 __all__ = [
-    "ItemForm",
     "ItemRef",
-    "MutableItemForm",
+    "ItemSurface",
     "MutableItemRef",
-    "ReactiveItemForm",
+    "MutableItemSurface",
     "ReactiveItemRef",
+    "ReactiveItemSurface",
 ]
 
 
-class ItemForm(SlotForm):
+class ItemSurface(SlotSurface):
     """Slot-level read surface for a leaf value. Ops: ``exists()``, ``is_set_falsy()``."""
 
     def exists(self) -> Bool:
@@ -76,7 +76,7 @@ class ItemForm(SlotForm):
         return Bool(And(self.exists(), Not(self)))
 
 
-class MutableItemForm(ItemForm):
+class MutableItemSurface(ItemSurface):
     """Slot-level write surface. Adds ``set(value)`` and ``erase()``."""
 
     def set(self, value: object) -> SetCmd:
@@ -98,7 +98,7 @@ class MutableItemForm(ItemForm):
         return IfDo(self.exists().not_(), self.set(value))
 
 
-class ReactiveItemForm(MutableItemForm):
+class ReactiveItemSurface(MutableItemSurface):
     """Slot-level reactive surface. Adds ``on_change()``."""
 
     def on_change(self) -> OnPrimitiveChange:
@@ -117,10 +117,10 @@ class ReactiveItemForm(MutableItemForm):
         return OnPrimitiveChange(self)
 
 
-class ItemRef(ItemForm, StructuredRef):
+class ItemRef(ItemSurface, StructuredRef):
     """Leaf Ref: single typed value, no child descent.
 
-    API: exists(), is_set_falsy() (from ItemForm), to(spec).
+    API: exists(), is_set_falsy() (from ItemSurface), to(spec).
     """
 
     # ``Kind.slot(...)`` is typed as the ref it builds (a ``Slot`` at run
@@ -176,15 +176,15 @@ class ItemRef(ItemForm, StructuredRef):
         return ref  # type: ignore[return-value]
 
 
-class MutableItemRef(MutableItemForm, ItemRef):
+class MutableItemRef(MutableItemSurface, ItemRef):
     """Mutable leaf Ref: single typed value with write/erase.
 
-    API: exists(), is_set_falsy(), set(v), erase() (from MutableItemForm).
+    API: exists(), is_set_falsy(), set(v), erase() (from MutableItemSurface).
     """
 
 
-class ReactiveItemRef(ReactiveItemForm, MutableItemRef):
+class ReactiveItemRef(ReactiveItemSurface, MutableItemRef):
     """Reactive leaf Ref: single typed value with observation.
 
-    API: exists(), is_set_falsy(), set(v), erase(), on_change() (from ReactiveItemForm).
+    API: exists(), is_set_falsy(), set(v), erase(), on_change() (from ReactiveItemSurface).
     """

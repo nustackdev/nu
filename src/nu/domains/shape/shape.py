@@ -11,7 +11,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .base import StructuredRef
-from .collections.abc.mapping import MappingForm, MutableMappingForm, ReactiveMappingForm
+from .collections.abc.mapping import MappingSurface, MutableMappingSurface, ReactiveMappingSurface
 
 
 if TYPE_CHECKING:
@@ -24,11 +24,11 @@ __all__ = [
 ]
 
 
-class ShapeRef(MappingForm, StructuredRef):
+class ShapeRef(MappingSurface, StructuredRef):
     """Structured container Ref; slot navigation via attribute or bracket access.
 
-    API: full MappingForm surface: exists(), is_set_falsy(), extract(), keys(),
-    values(), items(), len(), contains(), [key], .attr from shape MappingForm.
+    API: full MappingSurface surface: exists(), is_set_falsy(), extract(), keys(),
+    values(), items(), len(), contains(), [key], .attr from shape MappingSurface.
     """
 
     def __init__(
@@ -76,18 +76,18 @@ class ShapeRef(MappingForm, StructuredRef):
         )
 
 
-class MutableShapeRef(MutableMappingForm, ShapeRef):
+class MutableShapeRef(MutableMappingSurface, ShapeRef):
     """Mutable structured container Ref.
 
     Adds: store(v), erase(), set(k,v), delete(k), update(), ... (from
-    shape MutableMappingForm) on top of ShapeRef.
+    shape MutableMappingSurface) on top of ShapeRef.
     """
 
 
-class ReactiveShapeRef(ReactiveMappingForm, MutableShapeRef):
+class ReactiveShapeRef(ReactiveMappingSurface, MutableShapeRef):
     """Reactive structured container Ref.
 
     Adds: on_change() (generic), on_child_change(), on_children_change(),
-    on_descendants_change() (shape-domain, from shape.ReactiveMappingForm)
+    on_descendants_change() (shape-domain, from shape.ReactiveMappingSurface)
     on top of MutableShapeRef.
     """

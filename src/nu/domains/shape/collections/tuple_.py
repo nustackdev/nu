@@ -14,13 +14,14 @@ from typing import TYPE_CHECKING
 
 from typing_extensions import TypeVarTuple, Unpack
 
-from nu.forms import Tuple
+from nu.surfaces import TupleSurface
 
-from ..collection import MutableCollectionForm, ReactiveCollectionForm, holds
+from ..collection import MutableCollectionSurface, ReactiveCollectionSurface, holds
 from .abc.sequence import SequenceRef
 
 
 if TYPE_CHECKING:
+    from nu.forms import Tuple
     from nu.lang import Nu
 
 
@@ -30,12 +31,14 @@ __all__ = ["ReactiveTupleRef", "TupleRef"]
 Ts = TypeVarTuple("Ts")
 
 
-class TupleRef(MutableCollectionForm, SequenceRef, Tuple[Unpack[Ts]]):
+class TupleRef(MutableCollectionSurface, SequenceRef, TupleSurface[Unpack[Ts]]):
     """Tuple slot ref: ``ref[i]`` descends to the element's child ref."""
 
     def _wrap_sliceable_result(self, operand: Nu) -> Tuple:
+        from nu.forms import Tuple
+
         return Tuple(operand, type_info=holds(tuple, elem=self._declared.elem))
 
 
-class ReactiveTupleRef(ReactiveCollectionForm, TupleRef[Unpack[Ts]]):
+class ReactiveTupleRef(ReactiveCollectionSurface, TupleRef[Unpack[Ts]]):
     """Tuple slot ref that can be watched: adds ``on_change`` and the tree-aware watches."""

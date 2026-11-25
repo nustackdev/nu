@@ -247,6 +247,12 @@ def test_lines_crlf_and_no_last_newline(go, root):
     assert go(on(root, nu.Collect(data.lines("crlf.txt")))) == ["one", "two", "three"]
 
 
+def test_lines_keep_chaining(go, root):
+    upper = data.lines("a.txt").map(lambda line: nu.Str(line).upper())
+    assert go(on(root, upper.to_list())) == ["HELLO", "WORLD"]
+    assert go(on(root, (data / "docs" / "notes.md").lines().count())) == 1
+
+
 def test_lines_of_an_empty_file(go, root):
     (root / "empty.txt").write_text("")
     assert go(on(root, nu.Collect(data.lines("empty.txt")))) == []

@@ -3,7 +3,7 @@
 ``itertools`` is a function module - free functions that build and combine
 iterators, no central class - so the Nu surface mirrors that: free functions
 over Nu streams. Two layers behind it: ``functions`` (the wrappers) and
-``interactions`` (the hand-written ``StreamQuery`` atoms each wrapper builds,
+``interactions`` (the hand-written stream atoms each wrapper builds,
 hot path, e2e, no factory).
 
 A gap-fill: members already in Nu core (``map`` / ``filter`` / ``zip`` /

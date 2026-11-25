@@ -1,16 +1,30 @@
-"""Native Form layer.
+"""Native Form nodes.
 
-A Form is what a fabric location holds (an Int, a Str, a Dict, a ToList) and the
-fluent typed surface for building Nu over it. The base mixin ``Form`` and the
-passthrough ``TypedNu`` live in ``nu.lang`` (re-exported here for convenience);
-the NULL queries (``IsNull``, ``Fallback``) live in ``nu.core``.
+A form is what a fabric location holds (an Int, a Str, a Dict, a ToList): a
+Span over one body that mixes in the surface carrying its methods (``Str`` =
+``StrSurface`` on a ``Form[str]``). The surfaces, and the atoms their methods
+build, live in ``nu.surfaces``, shared with the refs that hold the same values.
+This package holds only the nodes, their constructors, and the atoms only those
+constructors build.
 
-Concrete primitive Forms live in ``primitives/``, concrete collection Forms in
-``collections/`` (with abstract contracts in ``collections/abc/``).
+Primitive nodes live in ``primitives``, collection nodes (with the dict views
+and ``Iterator``) in ``collections``, the abstract forms of the type-like
+``collections.abc`` layers (``Mapping``, ``Sequence``, ...) in ``abc``.
+``Form``, the kind, lives in ``nu.lang`` and is re-exported here for
+convenience.
 """
 
-from nu.lang import Form, TypedNu, TypedNuStream
+from nu.lang import Form
 
+from .abc import (
+    AbstractSet,
+    Collection,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    MutableSet,
+    Sequence,
+)
 from .collections import (
     Dict,
     DictItems,
@@ -35,8 +49,10 @@ from .primitives import (
 
 
 __all__ = [
+    "AbstractSet",
     "Bool",
     "Bytes",
+    "Collection",
     "Dict",
     "DictItems",
     "DictKeys",
@@ -47,12 +63,15 @@ __all__ = [
     "Int",
     "Iterator",
     "List",
+    "Mapping",
+    "MutableMapping",
+    "MutableSequence",
+    "MutableSet",
     "None_",
     "NullForm",
     "Object",
+    "Sequence",
     "Set",
     "Str",
     "Tuple",
-    "TypedNu",
-    "TypedNuStream",
 ]

@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 from nu.core import ToStr
 from nu.domains.shape import SetCmd
 from nu.lang import Nu
-from nustd.decimal.forms import Decimal as DecimalForm
+from nustd.decimal.forms import DecimalSurface
 from nustd.kv.refs import ItemRef
 
 
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 __all__ = ["DecimalRef"]
 
 
-class DecimalRef(ItemRef, DecimalForm):
+class DecimalRef(ItemRef, DecimalSurface):
     """A Decimal leaf in KV storage, kept exact by storing its str form.
 
     Notes:

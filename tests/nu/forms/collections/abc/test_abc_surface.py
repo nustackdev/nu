@@ -12,11 +12,11 @@ from __future__ import annotations
 import pytest
 
 import nu
-from nu.forms.collections.abc import (
-    MutableSequenceForm,
-    MutableSetForm,
-    SequenceForm,
-    SetLikeForm,
+from nu.surfaces.collections.abc import (
+    MutableSequenceSurface,
+    MutableSetSurface,
+    SequenceSurface,
+    SetLikeSurface,
 )
 
 
@@ -50,8 +50,8 @@ def _ctx(data: dict) -> nu.Context:
 
 @pytest.mark.parametrize("name", ["sort", "copy"])
 def test_list_only_methods_skip_the_abstract_forms(name: str):
-    assert not hasattr(SequenceForm, name)
-    assert not hasattr(MutableSequenceForm, name)
+    assert not hasattr(SequenceSurface, name)
+    assert not hasattr(MutableSequenceSurface, name)
     assert hasattr(nu.List, name)
     assert hasattr(_Port.xs, name)
 
@@ -71,12 +71,12 @@ def test_list_only_methods_skip_the_abstract_forms(name: str):
     ],
 )
 def test_mutable_sequence_form_carries_every_abc_mixin(name: str):
-    assert name in vars(MutableSequenceForm)
+    assert name in vars(MutableSequenceSurface)
 
 
 def test_first_and_last_stay_on_the_sequence_form():
-    assert "first_elem" in vars(SequenceForm)
-    assert "last_elem" in vars(SequenceForm)
+    assert "first_elem" in vars(SequenceSurface)
+    assert "last_elem" in vars(SequenceSurface)
 
 
 def test_set_at_del_at_and_extend_run_on_a_ref():
@@ -90,7 +90,7 @@ def test_set_at_del_at_and_extend_run_on_a_ref():
 
 @pytest.mark.parametrize(
     "form",
-    [MutableSequenceForm, nu.List, nu.Dict, nu.Set, type(_Port.xs)],
+    [MutableSequenceSurface, nu.List, nu.Dict, nu.Set, type(_Port.xs)],
     ids=lambda f: f.__name__,
 )
 @pytest.mark.parametrize(
@@ -117,7 +117,7 @@ def test_list_copy_runs():
 
 @pytest.mark.parametrize("name", SET_QUERIES)
 def test_named_set_queries_are_on_the_abstract_set_form(name: str):
-    assert name in vars(SetLikeForm)
+    assert name in vars(SetLikeSurface)
     assert hasattr(_Port.st, name)
     assert hasattr(nu.FrozenSet, name)
     assert hasattr(nu.Dict({"a": 1}).keys(), name)
@@ -125,13 +125,13 @@ def test_named_set_queries_are_on_the_abstract_set_form(name: str):
 
 @pytest.mark.parametrize("name", SET_UPDATES)
 def test_named_set_updates_are_on_the_abstract_mutable_set_form(name: str):
-    assert name in vars(MutableSetForm)
+    assert name in vars(MutableSetSurface)
     assert hasattr(_Port.st, name)
     assert not hasattr(nu.FrozenSet, name)
 
 
 def test_copy_skips_the_abstract_set_form():
-    assert not hasattr(SetLikeForm, "copy")
+    assert not hasattr(SetLikeSurface, "copy")
     assert hasattr(_Port.st, "copy")
     assert nu.run(nu.Set({1, 2}).copy())[0] == {1, 2}
     assert type(nu.FrozenSet(frozenset({1})).copy()) is nu.FrozenSet
@@ -150,12 +150,12 @@ def test_set_algebra_runs_on_a_ref():
     "name", ["__le__", "__lt__", "__ge__", "__gt__", "isdisjoint", "contains", "len"]
 )
 def test_set_like_form_carries_the_set_abc(name: str):
-    assert hasattr(SetLikeForm, name)
+    assert hasattr(SetLikeSurface, name)
 
 
 @pytest.mark.parametrize("name", ["add", "discard", "remove", "pop", "clear"])
 def test_mutable_set_form_carries_every_abc_mixin(name: str):
-    assert name in vars(MutableSetForm)
+    assert name in vars(MutableSetSurface)
 
 
 @pytest.mark.parametrize(

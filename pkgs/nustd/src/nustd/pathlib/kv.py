@@ -16,7 +16,7 @@ from nu.core import ToStr
 from nu.domains.shape import SetCmd
 from nu.lang import Nu
 from nustd.kv.refs import ItemRef
-from nustd.pathlib.forms import Path as PathForm
+from nustd.pathlib.forms import PathSurface
 
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 __all__ = ["PathRef"]
 
 
-class PathRef(ItemRef, PathForm):
+class PathRef(ItemRef, PathSurface):
     """A filesystem path leaf in KV storage, stored as its str form.
 
     Notes:

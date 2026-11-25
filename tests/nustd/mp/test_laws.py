@@ -232,7 +232,7 @@ FLUENT = [
     (lambda p: p.status(7), lambda p: Status(p, 7)),
     (lambda p: p.wait(7), lambda p: Wait(p, 7)),
     (lambda p: p.wait(7, 0.5), lambda p: Wait(p, 7, 0.5)),
-    (lambda p: p.workers(), lambda p: Workers(p)),
+    (lambda p: p.workers(), lambda p: nu.Iterator(Workers(p))),
 ]
 
 
@@ -246,7 +246,7 @@ def test_the_fluent_form_puts_the_receiver_in_the_pool_slot():
     ref = PoolRef()
     assert nu.tree.children(ref.kill(7))[0] is ref
     assert nu.tree.children(ref.launch())[0] is ref
-    assert nu.tree.children(ref.workers())[0] is ref
+    assert nu.tree.children(nu.tree.children(ref.workers())[0])[0] is ref
     assert nu.tree.children(ref.stop(7))[0] is ref
     assert nu.tree.children(ref.status(7))[0] is ref
     # Teleport's pool slot is children[1]; the body is children[0] by Span rule.

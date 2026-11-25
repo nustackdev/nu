@@ -12,6 +12,7 @@ Or reach a subpackage by dot-access:
 
     import nu
     nu.forms.Int        nu.core.Add
+    nu.surfaces.IntSurface
     nu.core.flows.Sequential     nu.core.spans.Retry
     nu.shape.Shape      nu.tree.map_nodes
     nu.mem.IntRef       nu.context.Attr
@@ -38,7 +39,7 @@ del _version, PackageNotFoundError
 
 # Subpackage namespaces for dot-access.
 # Early group: pure layers with no dependency on the flat root surface.
-from . import context, core, engine, factory, forms, inspect, lang, prog, tree
+from . import context, core, engine, factory, forms, inspect, lang, prog, surfaces, tree
 from .domains import shape
 
 # The mem fabric builds on the shape domain and the forms, so it comes after.
@@ -60,6 +61,7 @@ from .core import *
 from .core.flows import *
 from .core.spans import *
 from .forms import *
+from .surfaces import *
 
 # Shape DSL only; fabric atoms (Load, SetCmd, ...) stay at nu.shape.*.
 from .domains.shape import Shape, Slot
@@ -93,11 +95,12 @@ from .domains.service import Method, Service
 from .prog import Eval, LoadNu, Program
 
 # Language essentials, curated to the building blocks of a Nu program:
-#   - the root kind (``Nu``, ``TypedNu``);
+#   - the root kind (``Nu``) and ``Surface``, the methods mixin custom forms
+#     and refs build on;
 #   - the kind hierarchy (``Ref``, ``Interaction``, ``Query`` / ``ScalarQuery``
 #     / ``StreamQuery``, ``Command``, ``Action`` / ``ScalarAction`` /
 #     ``StreamAction``, ``Flow`` / ``Strategy`` / ``Control``, ``Span`` /
-#     ``Bracket`` / ``Policy``), and the reduction role (``Reduction`` and
+#     ``Bracket`` / ``Policy`` / ``Form``), and the reduction role (``Reduction`` and
 #     its ``QueryReduction``, ``ActionReduction``, ``CommandReduction``);
 #   - the argument aliases used in kind signatures (``Arg`` and the typed
 #     ``*Arg`` aliases).
@@ -138,9 +141,8 @@ from .lang import (
     Strategy,
     StreamAction,
     StreamQuery,
+    Surface,
     TupleArg,
-    TypedNu,
-    TypedNuStream,
 )
 
 # Atom builders (nu.factory subpackage): factories + @host.

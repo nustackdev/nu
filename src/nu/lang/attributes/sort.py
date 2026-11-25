@@ -3,7 +3,7 @@
 A sort is a node's structural category. Sorts form a tree with two roots, Ref
 and Interaction; ``subsort`` walks it. The composition matrix records, per
 parent sort, the child sorts that parent may hold; ``matrix_sort`` folds any
-sort onto the eight that carry a row. The synthesized ``has_command`` folds
+sort onto the ones that carry a row. The synthesized ``has_command`` folds
 the sort tree to a subtree-presence flag.
 
 The user-facing Term classes that declare these sorts live in
@@ -76,6 +76,7 @@ class Sort(StrEnum):
     SPAN = "span"
     BRACKET = "bracket"
     POLICY = "policy"
+    FORM = "form"
     DYNAMIC = "dynamic"
 
 
@@ -95,6 +96,7 @@ _PARENT: dict[Sort, Sort] = {
     Sort.CONTROL: Sort.FLOW,
     Sort.BRACKET: Sort.SPAN,
     Sort.POLICY: Sort.SPAN,
+    Sort.FORM: Sort.SPAN,
     Sort.DYNAMIC: Sort.INTERACTION,
 }
 
@@ -109,7 +111,7 @@ def subsort(sort: Sort, ancestor: Sort) -> bool:
     return False
 
 
-# The eight sorts that carry a matrix row, longest descent first so that
+# The sorts that carry a matrix row, longest descent first so that
 # ``matrix_sort`` resolves a sort to its nearest matrix ancestor.
 _MATRIX_SORTS: tuple[Sort, ...] = (
     Sort.STREAM_QUERY,
@@ -121,6 +123,7 @@ _MATRIX_SORTS: tuple[Sort, ...] = (
     Sort.CONTROL,
     Sort.BRACKET,
     Sort.POLICY,
+    Sort.FORM,
     Sort.DYNAMIC,
     Sort.REF,
 )
@@ -146,7 +149,9 @@ _UNIVERSAL = frozenset({Sort.DYNAMIC})
 
 # Child sorts that produce a value, and child sorts that do work. Action is the
 # dual citizen, in both cardinalities: a ScalarAction or StreamAction yields (so
-# joins _VALUE) and mutates Context (so joins _WORK alongside Command). A
+# joins _VALUE) and mutates Context (so joins _WORK alongside Command). The Span
+# sorts sit in both: a parent looks through a Span to its body anyway, so they
+# only decide for a bodyless Span, which span_has_body already refuses. A
 # StreamAction yielding into a scalar slot is gated by the cardinality law, not
 # here, the same way a StreamQuery sits in _VALUE yet a scalar consumer must
 # reduce it.
@@ -159,6 +164,7 @@ _VALUE = frozenset(
         Sort.STREAM_ACTION,
         Sort.BRACKET,
         Sort.POLICY,
+        Sort.FORM,
     }
 )
 _WORK = frozenset(
@@ -170,14 +176,16 @@ _WORK = frozenset(
         Sort.CONTROL,
         Sort.BRACKET,
         Sort.POLICY,
+        Sort.FORM,
     }
 )
 _ANY = _VALUE | _WORK
 
 # The composition matrix: each parent sort mapped to the child sorts it holds.
 # A value-producing parent holds values; a Strategy holds work; the parents
-# that take a body (Control, Bracket, Policy) hold anything. Action's slots
-# need values (the written value, the address) like Command's do, in either cardinality.
+# that take a body (Control, Bracket, Policy) hold anything; a Form holds values
+# only. Action's slots need values (the written value, the address) like
+# Command's do, in either cardinality.
 MATRIX: dict[Sort, frozenset[Sort]] = {
     Sort.REF: _VALUE | _UNIVERSAL,
     Sort.SCALAR_QUERY: _VALUE | _UNIVERSAL,
@@ -189,6 +197,9 @@ MATRIX: dict[Sort, frozenset[Sort]] = {
     Sort.CONTROL: _ANY | _UNIVERSAL,
     Sort.BRACKET: _ANY | _UNIVERSAL,
     Sort.POLICY: _ANY | _UNIVERSAL,
+    # A Form gives a body a typed surface, so the body must yield: a Ref, a
+    # Query, an Action, or a Span over one. A Command or Flow body is refused.
+    Sort.FORM: _VALUE | _UNIVERSAL,
     # A Dyn's sole child is its carrier, and the carrier must be value-yielding.
     # The dyn_carrier_is_scalar law tightens this further to scalar cardinality.
     Sort.DYNAMIC: _VALUE | _UNIVERSAL,

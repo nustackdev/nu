@@ -8,10 +8,10 @@ from __future__ import annotations
 
 import pytest
 
-from nu.forms.primitives.str_interactions import Join
 from nu.lang import NULL
 from nu.lang.helpers import compile, eval
 from nu.lang.literal import Literal
+from nu.surfaces.primitives.str_interactions import Join
 
 
 def _eval(term: object) -> object:

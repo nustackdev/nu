@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 from nu.core import ToStr
 from nu.domains.shape import SetCmd
 from nu.lang import Nu
-from nustd.fractions.forms import Fraction as FractionForm
+from nustd.fractions.forms import FractionSurface
 from nustd.kv.refs import ItemRef
 
 
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 __all__ = ["FractionRef"]
 
 
-class FractionRef(ItemRef, FractionForm):
+class FractionRef(ItemRef, FractionSurface):
     """A Fraction leaf in KV storage, stored as its ``numerator/denominator`` str.
 
     Notes:

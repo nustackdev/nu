@@ -15,7 +15,7 @@ beyond that type:
 """
 
 from nu.domains.shape import Extractable
-from nu.forms.collections.abc import PagedMapping
+from nu.surfaces.collections.abc import PagedMapping
 from virtuals.views import (
     ByteArrayView,
     EagerDictView,

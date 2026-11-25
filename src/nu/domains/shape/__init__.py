@@ -4,8 +4,9 @@ A Shape declares slots; each slot is a ref blueprint that a fabric completes
 with its own storage. A fabric supplies only how a path is read and written,
 and which of its refs a descent lands on.
 
-The blueprints form a grid laid out like ``nu.forms``. Every ``nu.forms`` type
-has a row, and a row is named after its form: ``Form`` swapped for ``Ref``.
+The blueprints form a grid laid out like ``nu.surfaces``. Every ``nu.surfaces`` type
+has a row, and a row is named after its form: ``Surface`` swapped for ``Ref``
+(``MappingSurface`` -> ``MappingRef``), or ``Ref`` appended (``Dict`` -> ``DictRef``).
 
 - ABC rows (``collections/abc``): one ref per ABC tier, with the slot's
   capability growing with the tier: ``MappingRef``, ``MutableMappingRef``,
@@ -17,20 +18,20 @@ has a row, and a row is named after its form: ``Form`` swapped for ``Ref``.
   capability (exists, extract, set, erase, init); the reactive ref
   (``ReactiveDictRef``, ``ReactiveIntRef``...) adds the watches.
 
-Each ref is composed directly: the ``nu.forms`` type, the slot capability base
-and ``StructuredRef``. A fabric ref picks one and adds its fabric base; the
+Each ref is composed directly: the ``nu.surfaces`` surface (``DictSurface``, never
+the ``Dict`` form node), the slot capability base and ``StructuredRef``. A fabric ref picks one and adds its fabric base; the
 fabrics name theirs the same way, so they import this package qualified
 (``shape.DictRef``).
 
 Reactive queries (``OnChange`` and its tree-aware siblings) live in
 ``nu.core.reactive``, one interface for every substrate, reached through the
-shape Form mixins.
+shape surfaces.
 """
 
 from __future__ import annotations
 
 from .base import StructuredRef, root_shape
-from .collection import MutableCollectionForm, ReactiveCollectionForm, holds
+from .collection import MutableCollectionSurface, ReactiveCollectionSurface, holds
 from .collections import (
     DictRef,
     FrozenSetRef,
@@ -102,7 +103,7 @@ __all__ = [
     "ListRef",
     "Load",
     "MappingRef",
-    "MutableCollectionForm",
+    "MutableCollectionSurface",
     "MutableItemRef",
     "MutableMappingRef",
     "MutableOrderedMappingRef",
@@ -114,7 +115,7 @@ __all__ = [
     "PrimitiveSet",
     "ReactiveBoolRef",
     "ReactiveBytesRef",
-    "ReactiveCollectionForm",
+    "ReactiveCollectionSurface",
     "ReactiveDictRef",
     "ReactiveFloatRef",
     "ReactiveFrozenSetRef",

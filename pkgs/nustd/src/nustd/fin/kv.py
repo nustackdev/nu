@@ -15,8 +15,7 @@ from typing import TYPE_CHECKING
 from nu.core import ToFloat, ToInt
 from nu.domains.shape import SetCmd
 from nu.lang import Nu
-from nustd.fin.forms import BasisPoint as BasisPointForm
-from nustd.fin.forms import Percentage as PercentageForm
+from nustd.fin.forms import BasisPointSurface, PercentageSurface
 from nustd.fin.native import PyBasisPoint, PyPercentage
 from nustd.kv.refs import ItemRef
 
@@ -28,7 +27,7 @@ if TYPE_CHECKING:
 __all__ = ["BasisPointRef", "PercentageRef"]
 
 
-class BasisPointRef(ItemRef, BasisPointForm):
+class BasisPointRef(ItemRef, BasisPointSurface):
     """A BasisPoint leaf in KV storage, stored as the raw int count of bps.
 
     Notes:
@@ -67,7 +66,7 @@ class BasisPointRef(ItemRef, BasisPointForm):
         return SetCmd(self, val)
 
 
-class PercentageRef(ItemRef, PercentageForm):
+class PercentageRef(ItemRef, PercentageSurface):
     """A Percentage leaf in KV storage, stored as the raw float percentage.
 
     Notes:

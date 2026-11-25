@@ -1,7 +1,7 @@
 """Sequence row: an ordered collection in a shape fabric, at the ABC level.
 
 Three tiers. A tier is the capability base first, then the tier below, then
-the ``nu.forms`` sequence ABC of that tier, so the shape typing and slot ops win
+the ``nu.surfaces`` sequence ABC of that tier, so the shape typing and slot ops win
 over the plain form's. Every result is typed by what the slot declared: an
 element reads as the declared value's form, and a slice carries the declared
 element type on.
@@ -14,15 +14,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from nu.forms.collections.abc.sequence import MutableSequenceForm as _MutableSequenceForm
-from nu.forms.collections.abc.sequence import ReactiveSequenceForm as _ReactiveSequenceForm
-from nu.forms.collections.abc.sequence import SequenceForm as _SequenceForm
+from nu.surfaces.collections.abc.sequence import MutableSequenceSurface as _MutableSequenceSurface
+from nu.surfaces.collections.abc.sequence import ReactiveSequenceSurface as _ReactiveSequenceSurface
+from nu.surfaces.collections.abc.sequence import SequenceSurface as _SequenceSurface
 
 from ...base import StructuredRef
 from ...collection import (
-    CollectionForm,
-    MutableCollectionForm,
-    ReactiveCollectionForm,
+    CollectionSurface,
+    MutableCollectionSurface,
+    ReactiveCollectionSurface,
     form_of,
     holds,
 )
@@ -35,16 +35,16 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "MutableSequenceForm",
     "MutableSequenceRef",
-    "ReactiveSequenceForm",
+    "MutableSequenceSurface",
     "ReactiveSequenceRef",
-    "SequenceForm",
+    "ReactiveSequenceSurface",
     "SequenceRef",
+    "SequenceSurface",
 ]
 
 
-class SequenceForm(CollectionForm, _SequenceForm):
+class SequenceSurface(CollectionSurface, _SequenceSurface):
     """Shape sequence: ordered-element ops + exists/extract, typed by the declaration."""
 
     def _wrap_element_result(self, operand: Nu) -> Object:
@@ -65,15 +65,17 @@ class SequenceForm(CollectionForm, _SequenceForm):
         return List(operand, type_info=holds(list, elem=self._declared.elem))
 
 
-class MutableSequenceForm(MutableCollectionForm, SequenceForm, _MutableSequenceForm):
+class MutableSequenceSurface(MutableCollectionSurface, SequenceSurface, _MutableSequenceSurface):
     """Mutable shape sequence: ordered-element ops + exists/extract + set/erase."""
 
 
-class ReactiveSequenceForm(ReactiveCollectionForm, MutableSequenceForm, _ReactiveSequenceForm):
+class ReactiveSequenceSurface(
+    ReactiveCollectionSurface, MutableSequenceSurface, _ReactiveSequenceSurface
+):
     """Reactive shape sequence: adds on_change and the tree-aware on_child_change family."""
 
 
-class SequenceRef(SequenceForm, StructuredRef):
+class SequenceRef(SequenceSurface, StructuredRef):
     """Ordered container Ref; ``ref[i]`` navigates to the element's child Ref.
 
     Navigation is defined once here and routes through ``_wrap_item_ref``, the
@@ -85,22 +87,22 @@ class SequenceRef(SequenceForm, StructuredRef):
     @overload
     def __getitem__(self, index: IntArg) -> StructuredRef: ...
     @overload
-    def __getitem__(self, index: slice) -> _SequenceForm: ...
-    def __getitem__(self, index: IntArg | slice) -> StructuredRef | _SequenceForm:
+    def __getitem__(self, index: slice) -> _SequenceSurface: ...
+    def __getitem__(self, index: IntArg | slice) -> StructuredRef | _SequenceSurface:
         """Int index navigates to the child Ref; slice routes to the form-level slice op."""
         if isinstance(index, slice):
             return self.slice(index.start, index.stop, index.step)  # type: ignore[no-any-return]
         return self._wrap_item_ref(index)
 
 
-class MutableSequenceRef(MutableSequenceForm, SequenceRef):
+class MutableSequenceRef(MutableSequenceSurface, SequenceRef):
     """Mutable ordered container Ref.
 
     Adds: append(v), extend(), insert(i,v), pop(), ..., store(v), erase().
     """
 
 
-class ReactiveSequenceRef(ReactiveSequenceForm, MutableSequenceRef):
+class ReactiveSequenceRef(ReactiveSequenceSurface, MutableSequenceRef):
     """Reactive ordered container Ref.
 
     Adds: on_change(), on_child_change(), on_children_change(),

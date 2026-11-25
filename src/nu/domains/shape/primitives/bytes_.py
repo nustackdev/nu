@@ -8,7 +8,7 @@ names; ``ReactiveBytesRef`` adds ``on_change``. The capability comes first, so
 
 from __future__ import annotations
 
-from nu.forms import Bytes
+from nu.surfaces import BytesSurface
 
 from ..item import MutableItemRef, ReactiveItemRef
 
@@ -16,7 +16,7 @@ from ..item import MutableItemRef, ReactiveItemRef
 __all__ = ["BytesRef", "ReactiveBytesRef"]
 
 
-class BytesRef(MutableItemRef, Bytes):
+class BytesRef(MutableItemRef, BytesSurface):
     """Bytes slot ref."""
 
 

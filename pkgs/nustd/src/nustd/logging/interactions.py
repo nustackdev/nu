@@ -22,7 +22,7 @@ import logging
 from typing import TYPE_CHECKING, cast
 
 from nu.engine.structure import Declared
-from nu.forms.collections.abc.mapping_interactions import DictOf
+from nu.forms.collections_interactions import DictOf
 from nu.lang import Command, Nu, Ref
 from nu.lang.null import is_null
 

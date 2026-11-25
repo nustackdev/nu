@@ -23,7 +23,7 @@ readme = "README.md"
 license = "Apache-2.0"
 authors = [{ name = "Gor Arakelyan", email = "gorarkln@gmail.com" }]
 requires-python = ">=3.10"
-# The kernel: language, engine, core/flows/spans/forms, tree, prog, info,
+# The kernel: language, engine, core/flows/spans/forms/surfaces, tree, prog, info,
 # inspect. No fabric backend ever lands here -- those live in the `nustd`
 # distribution. No telemetry either: the kernel sends nothing.
 dependencies = [
@@ -221,9 +221,6 @@ ignore = [
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
-
-[tool.ruff.lint.pep8-naming]
-classmethod-decorators = ["value_constructor"]  # nu.forms: a classmethod refs do not have
 
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**/*.py" = [

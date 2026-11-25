@@ -8,7 +8,7 @@ names; ``ReactiveBoolRef`` adds ``on_change``. The capability comes first, so
 
 from __future__ import annotations
 
-from nu.forms import Bool
+from nu.surfaces import BoolSurface
 
 from ..item import MutableItemRef, ReactiveItemRef
 
@@ -16,7 +16,7 @@ from ..item import MutableItemRef, ReactiveItemRef
 __all__ = ["BoolRef", "ReactiveBoolRef"]
 
 
-class BoolRef(MutableItemRef, Bool):
+class BoolRef(MutableItemRef, BoolSurface):
     """Bool slot ref."""
 
 

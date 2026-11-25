@@ -16,8 +16,7 @@ from nu.core import ToFloat, ToInt
 from nu.domains.shape import SetCmd
 from nu.lang import Nu
 from nu.mem.refs import ItemRef
-from nustd.fin.forms import BasisPoint as BasisPointForm
-from nustd.fin.forms import Percentage as PercentageForm
+from nustd.fin.forms import BasisPointSurface, PercentageSurface
 from nustd.fin.native import PyBasisPoint, PyPercentage
 
 
@@ -28,7 +27,7 @@ if TYPE_CHECKING:
 __all__ = ["BasisPointRef", "PercentageRef"]
 
 
-class BasisPointRef(ItemRef, BasisPointForm):
+class BasisPointRef(ItemRef, BasisPointSurface):
     """A BasisPoint slot in the dict substrate, stored as a raw int of bps.
 
     Args:
@@ -70,7 +69,7 @@ class BasisPointRef(ItemRef, BasisPointForm):
         return SetCmd(self, val)
 
 
-class PercentageRef(ItemRef, PercentageForm):
+class PercentageRef(ItemRef, PercentageSurface):
     """A Percentage slot in the dict substrate, stored as a raw float.
 
     Args:

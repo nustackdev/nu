@@ -1,0 +1,869 @@
+"""Int - integer interface.
+
+Int = IntSurface (arithmetic + comparison + logical + bitwise) on a ``Form[int]`` node.
+Handles int/float promotion: int op float -> Float.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, overload
+
+from nu.lang import Surface
+
+
+if TYPE_CHECKING:
+    from nu.forms import Bool, Float, Int
+    from nu.lang import BoolArg, FloatArg, IntArg
+
+
+__all__ = [
+    "IntSurface",
+]
+
+
+class IntSurface(Surface):
+    """The methods of ``Int``, shared by the ``Int`` form and every ref that holds one."""
+
+    # =========================================================================
+    # ARITHMETIC (with int/float promotion)
+    # =========================================================================
+
+    @overload
+    def __add__(self, other: IntArg) -> Int: ...
+    @overload
+    def __add__(self, other: FloatArg) -> Float: ...
+    def __add__(self, other: IntArg | FloatArg) -> Int | Float:
+        """Sum of self and other.
+
+        Args:
+            other: the value to add to self. Int or plain int keeps the
+                result Int; Float or plain float promotes it to Float.
+
+        Yields:
+            The sum. Promoted to Float when either operand is Float.
+
+        Example:
+            >>> nu.run(nu.Int(2) + nu.Int(3))[0]
+            5
+
+            >>> nu.run(nu.Int(2) + 1.5)[0]
+            3.5
+        """
+        from nu.core import Add
+        from nu.forms import Float, Int
+
+        from .float_ import FloatSurface
+
+        if isinstance(other, (float, FloatSurface)):
+            return Float(Add(self, other))
+        return Int(Add(self, other))
+
+    @overload
+    def __radd__(self, other: IntArg) -> Int: ...
+    @overload
+    def __radd__(self, other: FloatArg) -> Float: ...
+    def __radd__(self, other: IntArg | FloatArg) -> Int | Float:
+        """Sum of other and self, with self on the right.
+
+        Args:
+            other: the value on the left of the `+`. A plain float promotes
+                the result to Float; a plain int keeps it Int.
+
+        Notes:
+            - Reached only when the left operand is a plain Python int or
+              float. A Nu Int or Float on the left goes through its own
+              `__add__` first and never lands here.
+
+        Yields:
+            The sum. Promoted to Float when the left operand is a plain float.
+
+        Example:
+            >>> nu.run(3 + nu.Int(4))[0]
+            7
+        """
+        from nu.core import Add
+        from nu.forms import Float, Int
+
+        if isinstance(other, float):
+            return Float(Add(other, self))
+        return Int(Add(other, self))
+
+    @overload
+    def __sub__(self, other: IntArg) -> Int: ...
+    @overload
+    def __sub__(self, other: FloatArg) -> Float: ...
+    def __sub__(self, other: IntArg | FloatArg) -> Int | Float:
+        """Self minus other.
+
+        Args:
+            other: the value to subtract from self. Int or plain int keeps
+                the result Int; Float or plain float promotes it to Float.
+
+        Yields:
+            The difference. Promoted to Float when either operand is Float.
+
+        Example:
+            >>> nu.run(nu.Int(10) - nu.Int(3))[0]
+            7
+        """
+        from nu.core import Sub
+        from nu.forms import Float, Int
+
+        from .float_ import FloatSurface
+
+        if isinstance(other, (float, FloatSurface)):
+            return Float(Sub(self, other))
+        return Int(Sub(self, other))
+
+    @overload
+    def __rsub__(self, other: IntArg) -> Int: ...
+    @overload
+    def __rsub__(self, other: FloatArg) -> Float: ...
+    def __rsub__(self, other: IntArg | FloatArg) -> Int | Float:
+        """Other minus self, with self on the right.
+
+        Args:
+            other: the value on the left of the `-`, the minuend. A plain
+                float promotes the result to Float; a plain int keeps it Int.
+
+        Notes:
+            - Reached only when the left operand is a plain Python int or
+              float. A Nu Int or Float on the left uses its own `__sub__`
+              instead.
+
+        Yields:
+            The difference. Promoted to Float when the left operand is a
+            plain float.
+
+        Example:
+            >>> nu.run(10 - nu.Int(3))[0]
+            7
+        """
+        from nu.core import Sub
+        from nu.forms import Float, Int
+
+        if isinstance(other, float):
+            return Float(Sub(other, self))
+        return Int(Sub(other, self))
+
+    @overload
+    def __mul__(self, other: IntArg) -> Int: ...
+    @overload
+    def __mul__(self, other: FloatArg) -> Float: ...
+    def __mul__(self, other: IntArg | FloatArg) -> Int | Float:
+        """Product of self and other.
+
+        Args:
+            other: the value to multiply self by. Int or plain int keeps the
+                result Int; Float or plain float promotes it to Float.
+
+        Yields:
+            The product. Promoted to Float when either operand is Float.
+
+        Example:
+            >>> nu.run(nu.Int(6) * nu.Int(7))[0]
+            42
+        """
+        from nu.core import Mul
+        from nu.forms import Float, Int
+
+        from .float_ import FloatSurface
+
+        if isinstance(other, (float, FloatSurface)):
+            return Float(Mul(self, other))
+        return Int(Mul(self, other))
+
+    @overload
+    def __rmul__(self, other: IntArg) -> Int: ...
+    @overload
+    def __rmul__(self, other: FloatArg) -> Float: ...
+    def __rmul__(self, other: IntArg | FloatArg) -> Int | Float:
+        """Product of other and self, with self on the right.
+
+        Args:
+            other: the value on the left of the `*`. A plain float promotes
+                the result to Float; a plain int keeps it Int.
+
+        Notes:
+            - Reached only when the left operand is a plain Python int or
+              float. A Nu Int or Float on the left uses its own `__mul__`
+              instead.
+
+        Yields:
+            The product. Promoted to Float when the left operand is a plain
+            float.
+
+        Example:
+            >>> nu.run(3 * nu.Int(4))[0]
+            12
+        """
+        from nu.core import Mul
+        from nu.forms import Float, Int
+
+        if isinstance(other, float):
+            return Float(Mul(other, self))
+        return Int(Mul(other, self))
+
+    def __truediv__(self, other: IntArg | FloatArg) -> Float:
+        """Self divided by other.
+
+        Args:
+            other: the divisor. Any type accepted, the result is always Float.
+
+        Notes:
+            - Always yields Float, even when both operands are Int. Use `//`
+              for integer floor division that stays Int.
+            - A zero divisor is not caught here; the underlying Div raises at
+              evaluation time.
+
+        Yields:
+            The quotient as Float.
+            Raises at evaluation time when the divisor is zero.
+
+        Example:
+            >>> nu.run(nu.Int(6) / nu.Int(2))[0]
+            3.0
+
+            >>> nu.run(nu.Int(7) / nu.Int(2))[0]
+            3.5
+        """
+        from nu.core import Div
+        from nu.forms import Float
+
+        return Float(Div(self, other))
+
+    def __rtruediv__(self, other: IntArg | FloatArg) -> Float:
+        """Other divided by self, with self as the divisor.
+
+        Args:
+            other: the numerator, on the left of the `/`.
+
+        Notes:
+            - Always yields Float, matching `__truediv__`.
+            - Reached only when the left operand is a plain Python int or
+              float.
+
+        Yields:
+            The quotient as Float.
+            Raises at evaluation time when self evaluates to zero.
+
+        Example:
+            >>> nu.run(10 / nu.Int(4))[0]
+            2.5
+        """
+        from nu.core import Div
+        from nu.forms import Float
+
+        return Float(Div(other, self))
+
+    @overload
+    def __floordiv__(self, other: IntArg) -> Int: ...
+    @overload
+    def __floordiv__(self, other: FloatArg) -> Float: ...
+    def __floordiv__(self, other: IntArg | FloatArg) -> Int | Float:
+        """Self floor-divided by other.
+
+        Args:
+            other: the divisor. Int or plain int keeps the result Int;
+                Float or plain float promotes it to Float.
+
+        Notes:
+            - Rounds toward negative infinity, as Python's `//` does, so
+              `-7 // 2` is `-4` and not `-3`.
+
+        Yields:
+            The floored quotient. Promoted to Float when either operand is
+            Float. Raises at
+            evaluation time when the divisor is zero.
+
+        Example:
+            >>> nu.run(nu.Int(7) // nu.Int(2))[0]
+            3
+
+            >>> nu.run(nu.Int(-7) // nu.Int(2))[0]
+            -4
+        """
+        from nu.core import FloorDiv
+        from nu.forms import Float, Int
+
+        from .float_ import FloatSurface
+
+        if isinstance(other, (float, FloatSurface)):
+            return Float(FloorDiv(self, other))
+        return Int(FloorDiv(self, other))
+
+    @overload
+    def __rfloordiv__(self, other: IntArg) -> Int: ...
+    @overload
+    def __rfloordiv__(self, other: FloatArg) -> Float: ...
+    def __rfloordiv__(self, other: IntArg | FloatArg) -> Int | Float:
+        """Other floor-divided by self, with self as the divisor.
+
+        Args:
+            other: the numerator, on the left of the `//`. Plain float
+                promotes to Float; plain int keeps the result Int.
+
+        Notes:
+            - Rounds toward negative infinity, as Python's `//` does.
+            - Reached only when the left operand is a plain Python int or
+              float.
+
+        Yields:
+            The floored quotient. Promoted to Float when the left operand is
+            a plain float.
+
+        Example:
+            >>> nu.run(-7 // nu.Int(2))[0]
+            -4
+        """
+        from nu.core import FloorDiv
+        from nu.forms import Float, Int
+
+        if isinstance(other, float):
+            return Float(FloorDiv(other, self))
+        return Int(FloorDiv(other, self))
+
+    @overload
+    def __mod__(self, other: IntArg) -> Int: ...
+    @overload
+    def __mod__(self, other: FloatArg) -> Float: ...
+    def __mod__(self, other: IntArg | FloatArg) -> Int | Float:
+        """Self modulo other.
+
+        Args:
+            other: the divisor. Int or plain int keeps the result Int;
+                Float or plain float promotes it to Float.
+
+        Notes:
+            - The result's sign follows the divisor, as Python's `%` does,
+              so `-7 % 3` is `2` and not `-1`.
+
+        Yields:
+            The remainder. Promoted to Float when either operand is Float.
+
+        Example:
+            >>> nu.run(nu.Int(-7) % nu.Int(3))[0]
+            2
+        """
+        from nu.core import Mod
+        from nu.forms import Float, Int
+
+        from .float_ import FloatSurface
+
+        if isinstance(other, (float, FloatSurface)):
+            return Float(Mod(self, other))
+        return Int(Mod(self, other))
+
+    @overload
+    def __rmod__(self, other: IntArg) -> Int: ...
+    @overload
+    def __rmod__(self, other: FloatArg) -> Float: ...
+    def __rmod__(self, other: IntArg | FloatArg) -> Int | Float:
+        """Other modulo self, with self as the divisor.
+
+        Args:
+            other: the value being divided, on the left of the `%`. Plain
+                float promotes to Float; plain int keeps the result Int.
+
+        Notes:
+            - The result's sign follows the divisor, which here is self.
+            - Reached only when the left operand is a plain Python int or
+              float.
+
+        Yields:
+            The remainder. Promoted to Float when the left operand is a
+            plain float.
+
+        Example:
+            >>> nu.run(-7 % nu.Int(3))[0]
+            2
+        """
+        from nu.core import Mod
+        from nu.forms import Float, Int
+
+        if isinstance(other, float):
+            return Float(Mod(other, self))
+        return Int(Mod(other, self))
+
+    @overload
+    def __pow__(self, other: IntArg) -> Int: ...
+    @overload
+    def __pow__(self, other: FloatArg) -> Float: ...
+    def __pow__(self, other: IntArg | FloatArg) -> Int | Float:
+        """Self raised to the other power.
+
+        Args:
+            other: the exponent. Int or plain int keeps the result Int;
+                Float or plain float promotes it to Float.
+
+        Notes:
+            - A negative exponent raises at evaluation time under Int since
+              the result would be non-integer. Promote self to Float first
+              for fractional powers.
+
+        Yields:
+            The power. Promoted to Float when either operand is Float.
+
+        Example:
+            >>> nu.run(nu.Int(2) ** nu.Int(10))[0]
+            1024
+        """
+        from nu.core import Pow
+        from nu.forms import Float, Int
+
+        from .float_ import FloatSurface
+
+        if isinstance(other, (float, FloatSurface)):
+            return Float(Pow(self, other))
+        return Int(Pow(self, other))
+
+    @overload
+    def __rpow__(self, other: IntArg) -> Int: ...
+    @overload
+    def __rpow__(self, other: FloatArg) -> Float: ...
+    def __rpow__(self, other: IntArg | FloatArg) -> Int | Float:
+        """Other raised to the self power, with self as the exponent.
+
+        Args:
+            other: the base, on the left of the `**`. Plain float promotes
+                to Float; plain int keeps the result Int.
+
+        Notes:
+            - Reached only when the base is a plain Python int or float.
+
+        Yields:
+            The power. Promoted to Float when the base is a plain float.
+
+        Example:
+            >>> nu.run(2 ** nu.Int(10))[0]
+            1024
+        """
+        from nu.core import Pow
+        from nu.forms import Float, Int
+
+        if isinstance(other, float):
+            return Float(Pow(other, self))
+        return Int(Pow(other, self))
+
+    def __neg__(self) -> Int:
+        """Negation of self.
+
+        Yields:
+            The negation.
+
+        Example:
+            >>> nu.run(-nu.Int(4))[0]
+            -4
+        """
+        from nu.core import Neg
+        from nu.forms import Int
+
+        return Int(Neg(self))
+
+    def __pos__(self) -> Int:
+        """Self unchanged.
+
+        Notes:
+            - Identity for numbers. Kept for symmetry with `__neg__` and so
+              `+x` inside an expression is still a Nu term.
+
+        Yields:
+            The value unchanged.
+
+        Example:
+            >>> nu.run(+nu.Int(-4))[0]
+            -4
+        """
+        from nu.core import Pos
+        from nu.forms import Int
+
+        return Int(Pos(self))
+
+    def __abs__(self) -> Int:
+        """Absolute value of self.
+
+        Yields:
+            The magnitude.
+
+        Example:
+            >>> nu.run(abs(nu.Int(-4)))[0]
+            4
+        """
+        from nu.core import Abs
+        from nu.forms import Int
+
+        return Int(Abs(self))
+
+    # =========================================================================
+    # COMPARISON
+    # =========================================================================
+
+    def __gt__(self, other: IntArg | FloatArg) -> Bool:
+        """Self strictly greater than other.
+
+        Args:
+            other: the value to compare against. Any Int, Float, or plain
+                number.
+
+        Yields:
+            True when self is greater, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Int(5) > nu.Int(3))[0]
+            True
+        """
+        from nu.core import Gt
+        from nu.forms import Bool
+
+        return Bool(Gt(self, other))
+
+    def __lt__(self, other: IntArg | FloatArg) -> Bool:
+        """Self strictly less than other.
+
+        Args:
+            other: the value to compare against. Any Int, Float, or plain
+                number.
+
+        Yields:
+            True when self is less, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Int(5) < nu.Int(3))[0]
+            False
+        """
+        from nu.core import Lt
+        from nu.forms import Bool
+
+        return Bool(Lt(self, other))
+
+    def __ge__(self, other: IntArg | FloatArg) -> Bool:
+        """Self greater than or equal to other.
+
+        Args:
+            other: the value to compare against. Any Int, Float, or plain
+                number.
+
+        Yields:
+            True when self is greater or equal, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Int(5) >= nu.Int(5))[0]
+            True
+        """
+        from nu.core import Ge
+        from nu.forms import Bool
+
+        return Bool(Ge(self, other))
+
+    def __le__(self, other: IntArg | FloatArg) -> Bool:
+        """Self less than or equal to other.
+
+        Args:
+            other: the value to compare against. Any Int, Float, or plain
+                number.
+
+        Yields:
+            True when self is less or equal, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Int(3) <= nu.Int(5))[0]
+            True
+        """
+        from nu.core import Le
+        from nu.forms import Bool
+
+        return Bool(Le(self, other))
+
+    def __eq__(self, other: IntArg | FloatArg) -> Bool:  # type: ignore[override]
+        """Self equal to other by value.
+
+        Args:
+            other: the value to compare against. Compared numerically, so
+                `Int(1) == 1.0` is True.
+
+        Notes:
+            - Value equality, not identity. Use `is_` for identity.
+
+        Yields:
+            True when the values compare equal, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Int(1) == 1.0)[0]
+            True
+        """
+        from nu.core import Eq
+        from nu.forms import Bool
+
+        return Bool(Eq(self, other))
+
+    def __ne__(self, other: IntArg | FloatArg) -> Bool:  # type: ignore[override]
+        """Self not equal to other by value.
+
+        Args:
+            other: the value to compare against. Compared numerically.
+
+        Notes:
+            - Value inequality, not identity. Use `is_` for identity.
+
+        Yields:
+            True when the values differ, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Int(1) != nu.Int(2))[0]
+            True
+        """
+        from nu.core import Ne
+        from nu.forms import Bool
+
+        return Bool(Ne(self, other))
+
+    def is_(self, other: IntArg | FloatArg) -> Bool:
+        """Identity comparison: self is other.
+
+        Args:
+            other: the value to compare identity against.
+
+        Notes:
+            - Object identity, not value equality. For scalar comparison use
+              `==` instead.
+
+        Yields:
+            True when self and other evaluate to the same Python object,
+            False otherwise. For small ints Python interns values, so
+            distinct Int literals of equal value can still test identical.
+
+        Example:
+            >>> nu.run(nu.Int(1).is_(1.0))[0]
+            False
+
+            >>> nu.run(nu.Int(1) == 1.0)[0]
+            True
+        """
+        from nu.core import Is
+        from nu.forms import Bool
+
+        return Bool(Is(self, other))
+
+    # =========================================================================
+    # LOGICAL
+    # =========================================================================
+
+    def and_(self, other: BoolArg | IntArg) -> Bool:
+        """Logical AND of self and other.
+
+        Args:
+            other: the value to AND with self. Coerced to Bool by truthiness
+                (zero is False, everything else is True).
+
+        Notes:
+            - Short-circuits like Python: the right operand is only
+              evaluated when the left does not already decide the result.
+            - Bitwise AND is `bitand`, not this.
+
+        Yields:
+            True when both operands are truthy, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Int(1).and_(nu.Int(0)))[0]
+            False
+        """
+        from nu.core import And
+        from nu.forms import Bool
+
+        return Bool(And(self, other))
+
+    def or_(self, other: BoolArg | IntArg) -> Bool:
+        """Logical OR of self and other.
+
+        Args:
+            other: the value to OR with self. Coerced to Bool by truthiness.
+
+        Notes:
+            - Short-circuits like Python: the right operand is only
+              evaluated when the left does not already decide the result.
+            - Bitwise OR is `bitor`, not this.
+
+        Yields:
+            True when either operand is truthy, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Int(0).or_(nu.Int(5)))[0]
+            True
+        """
+        from nu.core import Or
+        from nu.forms import Bool
+
+        return Bool(Or(self, other))
+
+    def not_(self) -> Bool:
+        """Logical NOT of self.
+
+        Notes:
+            - Zero yields True, every other value yields False.
+            - Bitwise NOT is `bitnot`, not this.
+
+        Yields:
+            True when self is zero, False otherwise.
+
+        Example:
+            >>> nu.run(nu.Int(0).not_())[0]
+            True
+        """
+        from nu.core import Not
+        from nu.forms import Bool
+
+        return Bool(Not(self))
+
+    def bool_(self) -> Bool:
+        """Cast self to Bool.
+
+        Notes:
+            - Zero becomes False, every other value becomes True, matching
+              Python's truthiness rule.
+
+        Yields:
+            True when self is non-zero, False when self is zero.
+
+        Example:
+            >>> nu.run(nu.Int(5).bool_())[0]
+            True
+        """
+        from nu.core import ToBool
+        from nu.forms import Bool
+
+        return Bool(ToBool(self))
+
+    # =========================================================================
+    # BITWISE (named methods; ``& | >>`` compose flows on every term, and
+    # ``^ ~ <<`` are not defined on forms)
+    # =========================================================================
+
+    def bitand(self, other: IntArg) -> Int:
+        """Bitwise AND of self and other.
+
+        Args:
+            other: the integer to AND with self, bit by bit.
+
+        Notes:
+            - A named method because `&` composes flows (Race) on every term.
+
+        Yields:
+            The bitwise AND.
+
+        Example:
+            >>> nu.run(nu.Int(0b1100).bitand(0b1010))[0]
+            8
+        """
+        from nu.core import BitAnd
+        from nu.forms import Int
+
+        return Int(BitAnd(self, other))
+
+    def bitor(self, other: IntArg) -> Int:
+        """Bitwise OR of self and other.
+
+        Args:
+            other: the integer to OR with self, bit by bit.
+
+        Notes:
+            - A named method because `|` composes flows (Parallel) on every
+              term.
+
+        Yields:
+            The bitwise OR.
+
+        Example:
+            >>> nu.run(nu.Int(0b1100).bitor(0b1010))[0]
+            14
+        """
+        from nu.core import BitOr
+        from nu.forms import Int
+
+        return Int(BitOr(self, other))
+
+    def bitxor(self, other: IntArg) -> Int:
+        """Bitwise XOR of self and other.
+
+        Args:
+            other: the integer to XOR with self, bit by bit.
+
+        Yields:
+            The bitwise XOR.
+
+        Example:
+            >>> nu.run(nu.Int(0b1100).bitxor(0b1010))[0]
+            6
+        """
+        from nu.core import BitXor
+        from nu.forms import Int
+
+        return Int(BitXor(self, other))
+
+    def bitnot(self) -> Int:
+        """Bitwise NOT of self.
+
+        Notes:
+            - Two's complement, so `bitnot(x)` equals `-x - 1`.
+
+        Yields:
+            The bitwise complement.
+
+        Example:
+            >>> nu.run(nu.Int(5).bitnot())[0]
+            -6
+        """
+        from nu.core import BitNot
+        from nu.forms import Int
+
+        return Int(BitNot(self))
+
+    def lshift(self, other: IntArg) -> Int:
+        """Self shifted left by other bits.
+
+        Args:
+            other: the shift amount in bits. Must be non-negative at
+                evaluation time.
+
+        Notes:
+            - Fills the low bits with zeros. Equivalent to `self * 2**other`
+              for non-negative shifts.
+
+        Yields:
+            The shifted value.
+            Raises at evaluation time when the shift amount is negative.
+
+        Example:
+            >>> nu.run(nu.Int(1).lshift(4))[0]
+            16
+        """
+        from nu.core import LShift
+        from nu.forms import Int
+
+        return Int(LShift(self, other))
+
+    def rshift(self, other: IntArg) -> Int:
+        """Self shifted right by other bits.
+
+        Args:
+            other: the shift amount in bits. Must be non-negative at
+                evaluation time.
+
+        Notes:
+            - A named method because `>>` composes flows (Sequential) on
+              every term.
+            - Arithmetic shift, so the sign bit is preserved: shifting a
+              negative number stays negative.
+            - Equivalent to `self // 2**other` for non-negative shifts.
+
+        Yields:
+            The shifted value.
+            Raises at evaluation time when the shift amount is negative.
+
+        Example:
+            >>> nu.run(nu.Int(16).rshift(2))[0]
+            4
+        """
+        from nu.core import RShift
+        from nu.forms import Int
+
+        return Int(RShift(self, other))

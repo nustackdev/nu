@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeAlias
 
-from nu.lang import Form, TypedNu
+from nu.lang import Form, Surface
 from nustd.fin.native import PyBasisPoint, PyPercentage
 
 
@@ -32,43 +32,10 @@ if TYPE_CHECKING:
 __all__ = ["BasisPoint", "Percentage"]
 
 
-class Percentage(Form, TypedNu[PyPercentage]):
-    """A percentage as a Form (``75.5`` = 75.5%).
-
-    Build one with ``Percentage.of(75.5)`` (or ``from_dec`` / ``from_bps`` /
-    ``from_ratio``); convert with ``to_dec`` / ``to_bps``; apply to an amount
-    with ``apply`` / ``add_to`` / ``sub_from``.
-    """
+class PercentageSurface(Surface):
+    """The methods of ``Percentage``, shared by the ``Percentage`` form and every ref that holds one."""
 
     # --- constructors --------------------------------------------------------
-
-    @classmethod
-    def of(cls, value: FloatArg) -> Percentage:
-        """A percentage from a raw value: ``Percentage(75.5)``."""
-        from .interactions import PercentageOf
-
-        return Percentage(PercentageOf(value))
-
-    @classmethod
-    def from_dec(cls, dec: FloatArg) -> Percentage:
-        """From a decimal ratio: ``Percentage.from_dec(0.755)`` -> 75.5%."""
-        from .interactions import PercentageFromDec
-
-        return Percentage(PercentageFromDec(dec))
-
-    @classmethod
-    def from_bps(cls, bps: IntArg) -> Percentage:
-        """From basis points: ``Percentage.from_bps(7550)`` -> 75.5%."""
-        from .interactions import PercentageFromBps
-
-        return Percentage(PercentageFromBps(bps))
-
-    @classmethod
-    def from_ratio(cls, numerator: FloatArg, denominator: FloatArg) -> Percentage:
-        """From a ratio: ``Percentage.from_ratio(3, 4)`` -> 75%."""
-        from .interactions import PercentageFromRatio
-
-        return Percentage(PercentageFromRatio(numerator, denominator))
 
     # --- conversions ---------------------------------------------------------
 
@@ -214,36 +181,47 @@ class Percentage(Form, TypedNu[PyPercentage]):
         return Bool(Ne(self, other))
 
 
-class BasisPoint(Form, TypedNu[PyBasisPoint]):
-    """A basis-point count as a Form - 1/100th of a percent (``500`` = 5%).
+class Percentage(PercentageSurface, Form[PyPercentage]):
+    """A percentage as a Form (``75.5`` = 75.5%).
 
-    Build one with ``BasisPoint.of(500)`` (or ``from_pct`` / ``from_dec``);
-    convert with ``to_pct`` / ``to_dec``; apply to an amount with ``apply`` /
-    ``add_to`` / ``sub_from``.
+    Build one with ``Percentage.of(75.5)`` (or ``from_dec`` / ``from_bps`` /
+    ``from_ratio``); convert with ``to_dec`` / ``to_bps``; apply to an amount
+    with ``apply`` / ``add_to`` / ``sub_from``.
     """
 
+    @classmethod
+    def of(cls, value: FloatArg) -> Percentage:
+        """A percentage from a raw value: ``Percentage(75.5)``."""
+        from .interactions import PercentageOf
+
+        return Percentage(PercentageOf(value))
+
+    @classmethod
+    def from_dec(cls, dec: FloatArg) -> Percentage:
+        """From a decimal ratio: ``Percentage.from_dec(0.755)`` -> 75.5%."""
+        from .interactions import PercentageFromDec
+
+        return Percentage(PercentageFromDec(dec))
+
+    @classmethod
+    def from_bps(cls, bps: IntArg) -> Percentage:
+        """From basis points: ``Percentage.from_bps(7550)`` -> 75.5%."""
+        from .interactions import PercentageFromBps
+
+        return Percentage(PercentageFromBps(bps))
+
+    @classmethod
+    def from_ratio(cls, numerator: FloatArg, denominator: FloatArg) -> Percentage:
+        """From a ratio: ``Percentage.from_ratio(3, 4)`` -> 75%."""
+        from .interactions import PercentageFromRatio
+
+        return Percentage(PercentageFromRatio(numerator, denominator))
+
+
+class BasisPointSurface(Surface):
+    """The methods of ``BasisPoint``, shared by the ``BasisPoint`` form and every ref that holds one."""
+
     # --- constructors --------------------------------------------------------
-
-    @classmethod
-    def of(cls, value: IntArg) -> BasisPoint:
-        """A basis-point count from a raw int: ``BasisPoint(500)``."""
-        from .interactions import BasisPointOf
-
-        return BasisPoint(BasisPointOf(value))
-
-    @classmethod
-    def from_pct(cls, pct: FloatArg) -> BasisPoint:
-        """From a percentage: ``BasisPoint.from_pct(5.0)`` -> 500 bps."""
-        from .interactions import BasisPointFromPct
-
-        return BasisPoint(BasisPointFromPct(pct))
-
-    @classmethod
-    def from_dec(cls, dec: FloatArg) -> BasisPoint:
-        """From a decimal ratio: ``BasisPoint.from_dec(0.05)`` -> 500 bps."""
-        from .interactions import BasisPointFromDec
-
-        return BasisPoint(BasisPointFromDec(dec))
 
     # --- conversions ---------------------------------------------------------
 
@@ -371,3 +349,33 @@ class BasisPoint(Form, TypedNu[PyBasisPoint]):
         from nu.forms import Bool
 
         return Bool(Ne(self, other))
+
+
+class BasisPoint(BasisPointSurface, Form[PyBasisPoint]):
+    """A basis-point count as a Form - 1/100th of a percent (``500`` = 5%).
+
+    Build one with ``BasisPoint.of(500)`` (or ``from_pct`` / ``from_dec``);
+    convert with ``to_pct`` / ``to_dec``; apply to an amount with ``apply`` /
+    ``add_to`` / ``sub_from``.
+    """
+
+    @classmethod
+    def of(cls, value: IntArg) -> BasisPoint:
+        """A basis-point count from a raw int: ``BasisPoint(500)``."""
+        from .interactions import BasisPointOf
+
+        return BasisPoint(BasisPointOf(value))
+
+    @classmethod
+    def from_pct(cls, pct: FloatArg) -> BasisPoint:
+        """From a percentage: ``BasisPoint.from_pct(5.0)`` -> 500 bps."""
+        from .interactions import BasisPointFromPct
+
+        return BasisPoint(BasisPointFromPct(pct))
+
+    @classmethod
+    def from_dec(cls, dec: FloatArg) -> BasisPoint:
+        """From a decimal ratio: ``BasisPoint.from_dec(0.05)`` -> 500 bps."""
+        from .interactions import BasisPointFromDec
+
+        return BasisPoint(BasisPointFromDec(dec))
