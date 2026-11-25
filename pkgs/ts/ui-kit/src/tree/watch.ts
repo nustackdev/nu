@@ -5,14 +5,19 @@
 // event). A node only sends an event someone watches, so a ref nobody
 // listens to costs no frames.
 //
-// Stub: every event counts as watched until the watch table lands.
+// The table lives in the store (`@nustackdev/ui-core`), which takes the two
+// ops off the wire like any other frame. It is keyed by path, not by node: a
+// watch may land before the node is drawn, and it survives the node being
+// removed and drawn again. A host clears it when it opens a new connection
+// (`unwatchAll`), since the new session watches afresh.
 
-import type { Path } from "@nustackdev/ui-core";
+import { ANY_EVENT, type Path } from "@nustackdev/ui-core";
+import { tree } from "./store";
 
 /** The event a watch names to hear every event of a ref. */
-export const ANY = "*";
+export const ANY = ANY_EVENT;
 
 /** Whether the server listens for `event` on the node at `path`. */
-export function isWatched(_path: Path, _event: string): boolean {
-	return true;
+export function isWatched(path: Path, event: string): boolean {
+	return tree.getState().isWatched(path, event);
 }

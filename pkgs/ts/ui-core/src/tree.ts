@@ -86,8 +86,9 @@ export const OPS = {
 	// read; a field names one of its other reads. See `Reads`.
 	read: "read",
 	notify: "notify",
-	// Server to browser, payload `{event}`: someone on the server listens
-	// for `event` on this ref (`*` for every event), or stopped listening.
+	// Server to browser, plain path, payload `{event}`: someone on the
+	// server listens for `event` on this ref (`*` for every event), or
+	// stopped listening. Kept by path, apart from the nodes: see `isWatched`.
 	watch: "watch",
 	unwatch: "unwatch",
 	// Browser to server, payload a list of `[ref, payload]` pairs in order:
@@ -125,6 +126,16 @@ export type Behaviour = {
 	reads?: Reads;
 	dispose?: (ctx: DisposeCtx) => void;
 };
+
+/** The event a watch matching every event names. */
+export const ANY_EVENT = "*";
+
+/** The event a `watch` / `unwatch` frame names, or null when it names none. */
+export function watchEvent(payload: unknown): string | null {
+	if (!isPlainProps(payload)) return null;
+	const event = payload.event;
+	return typeof event === "string" && event !== "" ? event : null;
+}
 
 /** The field a read frame asks for: `""` for the main read. */
 export function readField(payload: unknown): string {
@@ -167,6 +178,22 @@ export type TreeActions = {
 	setProps: (path: Path, props: Props) => void;
 	/** Hide or show an existing node. No-op when the node is not there. */
 	setHidden: (path: Path, hidden: boolean) => void;
+	/**
+	 * Whether the server listens for `event` on the node at `path`: a watch on
+	 * that event or on `*`. A node sends only the events this answers true for.
+	 */
+	isWatched: (path: Path, event: string) => boolean;
+	/** Start sending `event` from `path`; what a `watch` frame does. */
+	watch: (path: Path, event: string) => void;
+	/** Stop sending `event` from `path`; what an `unwatch` frame does. */
+	unwatch: (path: Path, event: string) => void;
+	/** Forget every watch: a new connection's session watches afresh. */
+	unwatchAll: () => void;
+	/**
+	 * Count every event as watched, whatever the table holds. For a host whose
+	 * server sends no watches, and for tests that drive nodes with no server.
+	 */
+	setWatchAll: (on: boolean) => void;
 	/** Route an inbound frame to its node, by node type and frame op. */
 	dispatch: (frame: TreeFrame) => void;
 	/** Outbound. No-op until a sender is set. */
@@ -267,6 +294,17 @@ export function createTreeStore(options: TreeStoreOptions = {}): TreeStore {
 	// Disposals are collected inside a draft and run after the set returns, so
 	// a dispose is free to touch the store without writing into a dead draft.
 	let pending: DisposeCtx[] = [];
+
+	// What the server listens to, per path: event names, `*` for all of them.
+	// Kept out of the node tree and out of the store state on purpose. A watch
+	// may land before the node is drawn, and survives a remove and a redraw at
+	// the same path: the server's subscription is to the address, not to one
+	// incarnation of the node. Nothing renders from it, so no state, no
+	// re-render. The server counts its listeners and sends one watch and one
+	// unwatch per (path, event), so a set is enough here.
+	const watches = new Map<string, Set<string>>();
+	let watchAll = false;
+	const watchKey = (path: Path) => JSON.stringify(path);
 	const flushDispose = () => {
 		const batch = pending;
 		pending = [];
@@ -376,6 +414,38 @@ export function createTreeStore(options: TreeStoreOptions = {}): TreeStore {
 				});
 			},
 
+			isWatched: (path, event) => {
+				if (watchAll) return true;
+				const events = watches.get(watchKey(path));
+				return events !== undefined && (events.has(event) || events.has(ANY_EVENT));
+			},
+
+			watch: (path, event) => {
+				const key = watchKey(path);
+				let events = watches.get(key);
+				if (!events) {
+					events = new Set();
+					watches.set(key, events);
+				}
+				events.add(event);
+			},
+
+			unwatch: (path, event) => {
+				const key = watchKey(path);
+				const events = watches.get(key);
+				if (!events) return;
+				events.delete(event);
+				if (events.size === 0) watches.delete(key);
+			},
+
+			unwatchAll: () => {
+				watches.clear();
+			},
+
+			setWatchAll: (on) => {
+				watchAll = on;
+			},
+
 			send: (frame) => {
 				if (outbound) outbound(frame);
 			},
@@ -407,7 +477,21 @@ export function createTreeStore(options: TreeStoreOptions = {}): TreeStore {
 						id: frame.id,
 					});
 				};
+				if (frame.op === OPS.watch || frame.op === OPS.unwatch) {
+					// Generic for every type, and no node needed: the table is
+					// keyed by path, so a watch may come before the node does.
+					const event = watchEvent(frame.payload);
+					if (event === null) {
+						onError(`${frame.op} names no event`, frame.ref);
+						return;
+					}
+					if (frame.op === OPS.watch) api.watch(frame.ref, event);
+					else api.unwatch(frame.ref, event);
+					return;
+				}
 				if (frame.op === OPS.remove) {
+					// Watches stay: they belong to the path, and the node may
+					// be drawn there again.
 					api.remove(frame.ref);
 					return;
 				}

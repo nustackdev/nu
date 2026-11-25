@@ -319,8 +319,9 @@ class Changed(ScalarQuery):
     """Subscribe to client-side change notifications on a Ref.
 
     Resolves to a `Subscription` handle that ReactEvery and friends drive.
-    No outbound frame is sent when this evaluates -- the client pushes
-    `notify` frames whenever the Ref changes, and the session dispatches
+    No outbound frame is sent when this evaluates. The first callback bound
+    sends a ``watch`` for the event, the last one gone an ``unwatch``; while
+    watched, the client pushes `notify` frames and the session dispatches
     them to the subscription's callbacks.
 
     Resolves the Ref's wire path but never evals the Ref child: subscribing
@@ -330,9 +331,10 @@ class Changed(ScalarQuery):
     A Ref that sends several kinds of notify names each in the payload's
     ``event`` field, and ``event`` here takes only that kind: the rest never
     reach the callbacks. Left out, every notify on the Ref arrives. The
-    session hears which event is asked for (``subscribe(path, event=...)``),
-    so it can ask the browser for that one only; the filter here stays, so a
-    session that sends everything still hands each callback its own kind.
+    session hears which event is asked for (``subscribe(path, event=...)``)
+    and watches that one only; the filter here stays, since another
+    subscriber on the same Ref may watch more, and every notify on a path
+    reaches every subscription on it.
 
     Args:
         ref: The Ref whose notifications to take.
@@ -416,7 +418,9 @@ class ReadField(ScalarQuery):
 class _Only:
     """A subscription passing on only the notifies of one event.
 
-    Wraps each bound callback in a check on the payload's ``event`` field.
+    Wraps each bound callback in a check on the payload's ``event`` field and
+    binds the wrapper on the session's subscription, which carries the same
+    event: the watch it holds is that event's, counted there.
     The check never raises: a session drops a callback that raises as a dead
     far end. Callbacks are matched by identity, never hashed, for the same
     reason the session's own subscription does it.

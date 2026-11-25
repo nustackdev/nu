@@ -11,20 +11,6 @@ import { pathKey } from "./hooks";
 import { enqueue } from "./outbox";
 import { isWatched } from "./watch";
 
-/**
- * The shared event names, the browser's half of `nustd.ui.core.events`.
- * A domain event (`edit`, `sort`, `move`, ...) is a plain string at its node.
- */
-export const EVENTS = {
-	input: "input",
-	change: "change",
-	submit: "submit",
-	click: "click",
-	action: "action",
-	dismiss: "dismiss",
-	select: "select",
-} as const;
-
 /** Extra payload fields an event carries next to its name (`value`, `values`, ...). */
 export type EventFields = Record<string, unknown>;
 

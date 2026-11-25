@@ -7,7 +7,9 @@
 
 import { OP_ERROR, OPS, type TreeFrame } from "@nustackdev/ui-core";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { EVENTS, emit } from "./emit";
+import { emit } from "./emit";
+import { EVENTS } from "./events";
+import { flushOutbox } from "./outbox";
 import { mainRead, readOf, register, registry } from "./registry";
 import { tree } from "./store";
 
@@ -45,6 +47,7 @@ describe("emit", () => {
 
 	it("never lets a field rename the event", () => {
 		emit(["e", "s"], EVENTS.input, { event: "change", value: 1 });
+		flushOutbox();
 		expect((sent[0].payload as { event: string }).event).toBe("input");
 	});
 });

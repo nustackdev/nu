@@ -18,11 +18,23 @@ import asyncio
 import logging
 import uuid
 from abc import ABC, abstractmethod
-from collections import defaultdict
+from collections import defaultdict, deque
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Protocol
 
-from .protocol import OP_ERROR, OP_NOTIFY, OP_READ, Frame, decode, encode, read_payload
+from .events import ANY, EVENT
+from .protocol import (
+    OP_BATCH,
+    OP_ERROR,
+    OP_NOTIFY,
+    OP_READ,
+    OP_UNWATCH,
+    OP_WATCH,
+    Frame,
+    decode,
+    encode,
+    read_payload,
+)
 
 
 if TYPE_CHECKING:
@@ -76,22 +88,30 @@ class Session(ABC):
 
         ``event`` is the one event the subscriber wants, None for every event
         the node sends. The callbacks still get every notify on the path: the
-        caller filters (``Changed`` does). A session may use ``event`` to ask
-        the browser for only what someone listens to.
+        caller filters (``Changed`` does). A session uses ``event`` to ask the
+        browser for only what someone listens to (``WsSession`` watches it
+        while a callback is bound).
         """
 
 
 class WsSubscription:
-    """Observer handle returned by ``session.subscribe(path)``.
+    """Observer handle returned by ``session.subscribe(path, event)``.
+
+    Holds a watch on its (path, event) while at least one callback is bound:
+    the first bind takes it, the last unbind (or ``close``, or the last
+    callback dropped as dead) gives it back. The session counts the holders
+    and tells the browser, so a subscription nobody binds costs no frames.
+    ``event`` None is every event (``ANY``).
 
     Callbacks are held in a list and compared by identity, never hashed: one
     is often a reverse proxy into a worker process, and hashing it is a round
     trip over the wire that raises once the worker is gone.
     """
 
-    def __init__(self, session: WsSession, path: tuple[str, ...]) -> None:
+    def __init__(self, session: WsSession, path: tuple[str, ...], event: str | None = None) -> None:
         self._session = session
         self._path = path
+        self._event = ANY if event is None else event
         self._callbacks: list[Callback] = []
         self._closed = False
 
@@ -101,17 +121,19 @@ class WsSubscription:
             return
         if not any(cb is bound for bound in self._callbacks):
             self._callbacks.append(cb)
+            if len(self._callbacks) == 1:
+                self._session._hold(self._path, self._event)
 
     def unbind(self, cb: Callback) -> None:
         """Drop a previously bound callback (idempotent)."""
-        self._callbacks = [bound for bound in self._callbacks if bound is not cb]
+        self._keep([bound for bound in self._callbacks if bound is not cb])
 
     def close(self) -> None:
         """Detach from the session; further ``bind`` calls no-op."""
         if self._closed:
             return
         self._closed = True
-        self._callbacks = []
+        self._keep([])
         subs = self._session._subs.get(self._path)
         if subs is not None:
             subs.discard(self)
@@ -132,7 +154,14 @@ class WsSubscription:
             except Exception:  # the far end is a dead process
                 dead.append(cb)
         if dead:
-            self._callbacks = [cb for cb in self._callbacks if not any(cb is gone for gone in dead)]
+            self._keep([cb for cb in self._callbacks if not any(cb is gone for gone in dead)])
+
+    def _keep(self, callbacks: list[Callback]) -> None:
+        """Hold only ``callbacks``; the last one gone gives the watch back."""
+        had = bool(self._callbacks)
+        self._callbacks = callbacks
+        if had and not callbacks:
+            self._session._release(self._path, self._event)
 
 
 class WsSession(Session):
@@ -147,11 +176,28 @@ class WsSession(Session):
         self._subs: dict[tuple[str, ...], set[WsSubscription]] = defaultdict(set)
         self._pending: dict[str, asyncio.Future[Any]] = {}
         self._stopped = False
+        # Bound subscriptions per (path, event): the browser hears ``watch``
+        # when one goes from none to some, ``unwatch`` when it goes back.
+        self._watching: dict[tuple[tuple[str, ...], str], int] = {}
+        # Watch frames waiting for the one task that sends them, in order.
+        self._control: deque[Frame] = deque()
+        self._control_task: asyncio.Task[None] | None = None
 
     # ---- outbound -----------------------------------------------------------
 
     async def send(self, frame: Frame) -> None:
-        """Encode and ship one Frame on the ws."""
+        """Encode and ship one Frame on the ws, after any watch still waiting.
+
+        A ``bind`` posts its watch without waiting, so the watch goes out here
+        first when the same task sends next: an upload read binds on its
+        answer's event and then sends the command, and the browser must hear
+        the watch before the command or it drops the answer.
+        """
+        await self._flush_control()
+        await self._write(frame)
+
+    async def _write(self, frame: Frame) -> None:
+        """Put one encoded Frame on the ws. Every outbound frame ends here."""
         await self._ws.send_bytes(encode(frame))
 
     async def aread(self, path: tuple[str, ...], field: str | None = None) -> Any:
@@ -173,12 +219,71 @@ class WsSession(Session):
     def subscribe(self, path: tuple[str, ...], event: str | None = None) -> WsSubscription:
         """Return a Subscription observing notify frames for ``path``.
 
-        ``event`` is taken and not acted on yet: every notify on the path
-        reaches the subscription.
+        ``event`` is what the browser is asked to send once a callback binds
+        (None for every event). Every notify on the path that does arrive
+        still reaches the subscription: the caller filters (see ``Changed``).
+        Sends nothing by itself.
         """
-        sub = WsSubscription(self, path)
+        sub = WsSubscription(self, path, event)
         self._subs[path].add(sub)
         return sub
+
+    # ---- watches ------------------------------------------------------------
+
+    def _hold(self, path: tuple[str, ...], event: str) -> None:
+        """One more bound subscription on (path, event); the first sends ``watch``."""
+        key = (path, event)
+        prior = self._watching.get(key, 0)
+        self._watching[key] = prior + 1
+        if prior == 0:
+            self._post(Frame(OP_WATCH, ref=path, payload={EVENT: event}))
+
+    def _release(self, path: tuple[str, ...], event: str) -> None:
+        """One bound subscription fewer on (path, event); the last sends ``unwatch``."""
+        key = (path, event)
+        left = self._watching.get(key, 0) - 1
+        if left > 0:
+            self._watching[key] = left
+            return
+        if self._watching.pop(key, None) is not None:
+            self._post(Frame(OP_UNWATCH, ref=path, payload={EVENT: event}))
+
+    def _post(self, frame: Frame) -> None:
+        """Send ``frame`` without waiting, after the ones posted before it.
+
+        ``bind`` and ``close`` are sync, so a watch goes out fire and forget:
+        queued here, sent by a task in the order posted, and by the next
+        ``send`` first if that comes sooner. Either way a watch and the
+        unwatch after it never swap, and no frame sent after a bind overtakes
+        its watch. A closed session, or a call with no loop running (a
+        teardown after the loop is gone), drops it: there is no browser left
+        to tell.
+        """
+        if self._stopped:
+            return
+        self._control.append(frame)
+        if self._control_task is not None:
+            return
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            self._control.clear()
+            return
+        self._control_task = loop.create_task(self._send_control())
+
+    async def _send_control(self) -> None:
+        try:
+            await self._flush_control()
+        except Exception:  # the socket went away under us
+            _log.debug("nustd.ui watch frame not sent", exc_info=True)
+            self._control.clear()
+        finally:
+            self._control_task = None
+
+    async def _flush_control(self) -> None:
+        """Send every queued watch frame, oldest first."""
+        while self._control and not self._stopped:
+            await self._write(self._control.popleft())
 
     # ---- intake -------------------------------------------------------------
 
@@ -199,8 +304,13 @@ class WsSession(Session):
 
     def _dispatch(self, frame: Frame) -> None:
         if frame.op == OP_NOTIFY:
-            for sub in tuple(self._subs.get(frame.ref, ())):
-                sub._fire(frame.payload)
+            self._notify(frame.ref, frame.payload)
+            return
+        if frame.op == OP_BATCH:
+            # Notifies the browser queued together, in the order they
+            # happened: each fires as if it had come on its own.
+            for ref, payload in frame.payload or ():
+                self._notify(tuple(ref), payload)
             return
         if frame.op == OP_READ and frame.id is not None:
             fut = self._pending.get(frame.id)
@@ -211,6 +321,10 @@ class WsSession(Session):
             self._on_error(frame)
             return
         # Unknown inbound op: ignored.
+
+    def _notify(self, ref: tuple[str, ...], payload: Any) -> None:
+        for sub in tuple(self._subs.get(ref, ())):
+            sub._fire(payload)
 
     def _on_error(self, frame: Frame) -> None:
         """Log what the browser refused, a write naming the wrong kind for a node among them.
