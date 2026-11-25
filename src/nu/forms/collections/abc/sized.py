@@ -1,6 +1,6 @@
 """Sized capability.
 
-SizedForm: values that have a length.
+SizedSurface: values that have a length.
 
 Follows Python's collections.abc.Sized pattern.
 """
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.lang import Form
+from nu.lang import Surface
 
 
 if TYPE_CHECKING:
@@ -17,11 +17,11 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "SizedForm",
+    "SizedSurface",
 ]
 
 
-class SizedForm(Form):
+class SizedSurface(Surface):
     """Base for values that have a length, like collections.abc.Sized.
 
     Example:

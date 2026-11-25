@@ -176,26 +176,26 @@ def test_reactive_item_ref_on_change_returns_primitive_query():
 
 
 # ---------------------------------------------------------------------------
-# ReactiveCollectionForm is in the MRO of reactive Refs
+# ReactiveCollectionSurface is in the MRO of reactive Refs
 # ---------------------------------------------------------------------------
 
 
 def test_reactive_collection_form_in_mapping_ref_mro():
-    from nu.domains.shape.collection import ReactiveCollectionForm
+    from nu.domains.shape.collection import ReactiveCollectionSurface
 
-    assert issubclass(ReactiveMappingRef, ReactiveCollectionForm)
+    assert issubclass(ReactiveMappingRef, ReactiveCollectionSurface)
 
 
 def test_reactive_collection_form_in_sequence_ref_mro():
-    from nu.domains.shape.collection import ReactiveCollectionForm
+    from nu.domains.shape.collection import ReactiveCollectionSurface
 
-    assert issubclass(ReactiveSequenceRef, ReactiveCollectionForm)
+    assert issubclass(ReactiveSequenceRef, ReactiveCollectionSurface)
 
 
 def test_reactive_collection_form_in_set_ref_mro():
-    from nu.domains.shape.collection import ReactiveCollectionForm
+    from nu.domains.shape.collection import ReactiveCollectionSurface
 
-    assert issubclass(ReactiveSetRef, ReactiveCollectionForm)
+    assert issubclass(ReactiveSetRef, ReactiveCollectionSurface)
 
 
 # ---------------------------------------------------------------------------

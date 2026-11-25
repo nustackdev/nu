@@ -156,11 +156,11 @@ def test_no_child_watch(name) -> None:
 
 def test_the_ring_is_watched_whole_and_written_whole() -> None:
     from nu.core.reactive import OnChange
-    from nu.domains.shape import MutableCollectionForm, ReactiveCollectionForm
+    from nu.domains.shape import MutableCollectionSurface, ReactiveCollectionSurface
 
     assert isinstance(OUT.on_change(), OnChange)
-    assert isinstance(OUT, MutableCollectionForm)
-    assert not isinstance(OUT, ReactiveCollectionForm)
+    assert isinstance(OUT, MutableCollectionSurface)
+    assert not isinstance(OUT, ReactiveCollectionSurface)
 
 
 def test_a_position_is_a_read_not_a_ref() -> None:

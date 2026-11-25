@@ -1,10 +1,10 @@
 """Mapping collection: bases + mutations.
 
-MappingForm = Collection + keys/values/items/get_item
-MutableMappingForm = Mapping + set_item/del_item/update/pop/popitem/setdefault/clear
-OrderedMappingForm = Mapping + Reversible: reversed_keys/values/items streams + paging
-MutableOrderedMappingForm = OrderedMapping + MutableMapping
-ReactiveOrderedMappingForm = MutableOrderedMapping + ReactiveMapping
+MappingSurface = Collection + keys/values/items/get_item
+MutableMappingSurface = Mapping + set_item/del_item/update/pop/popitem/setdefault/clear
+OrderedMappingSurface = Mapping + Reversible: reversed_keys/values/items streams + paging
+MutableOrderedMappingSurface = OrderedMapping + MutableMapping
+ReactiveOrderedMappingSurface = MutableOrderedMapping + ReactiveMapping
 
 Follows Python's collections.abc.Mapping / MutableMapping pattern. Built-in-only
 methods (``copy``, ``merge``, ``merge_update``) live on ``Dict``.
@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast, overload
 
 from nu.lang.sentinels import UNSET
 
-from .collection import CollectionForm
+from .collection import CollectionSurface
 
 
 if TYPE_CHECKING:
@@ -38,12 +38,12 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "MappingForm",
-    "MutableMappingForm",
-    "MutableOrderedMappingForm",
-    "OrderedMappingForm",
-    "ReactiveMappingForm",
-    "ReactiveOrderedMappingForm",
+    "MappingSurface",
+    "MutableMappingSurface",
+    "MutableOrderedMappingSurface",
+    "OrderedMappingSurface",
+    "ReactiveMappingSurface",
+    "ReactiveOrderedMappingSurface",
 ]
 
 
@@ -54,8 +54,8 @@ CollectionResultT = TypeVar("CollectionResultT")
 ValueResultT = TypeVar("ValueResultT")
 
 
-class MappingForm(
-    CollectionForm[KeyT, CollectionResultT, ValueResultT],
+class MappingSurface(
+    CollectionSurface[KeyT, CollectionResultT, ValueResultT],
     Generic[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
 ):
     """Base for mapping values: key lookup plus key/value/item views.
@@ -111,7 +111,7 @@ class MappingForm(
 
         Notes:
             - Override point, used by `__getitem__`, `get_item`, and (on
-              MutableMappingForm) `pop`/`popitem`/`setdefault`. The base
+              MutableMappingSurface) `pop`/`popitem`/`setdefault`. The base
               implementation always raises; every concrete mapping Form
               must supply its own.
         """
@@ -144,7 +144,7 @@ class MappingForm(
 
         Notes:
             - Paging (``keys(after=, limit=)``) is on ordered mappings
-              only, `OrderedMappingForm`.
+              only, `OrderedMappingSurface`.
 
         Yields:
             A view over the keys, in the mapping's order.
@@ -220,11 +220,11 @@ class MappingForm(
         return cast("ValueResultT", self._wrap_value_result(Get(self, key, default)))
 
 
-class MutableMappingForm(
-    MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+class MutableMappingSurface(
+    MappingSurface[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
     Generic[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
 ):
-    """Base for mutable mapping values: adds in-place writes over MappingForm.
+    """Base for mutable mapping values: adds in-place writes over MappingSurface.
 
     Notes:
         - `set_item`, `del_item`, `update`, and `clear` are Commands: they
@@ -398,16 +398,16 @@ class MutableMappingForm(
         return Clear(self)
 
 
-class ReactiveMappingForm(
-    MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+class ReactiveMappingSurface(
+    MutableMappingSurface[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
     Generic[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
 ):
-    """Reactive mapping: adds any-change observation over MutableMappingForm.
+    """Reactive mapping: adds any-change observation over MutableMappingSurface.
 
     Notes:
         - The three tree-aware observers (`on_child_change`,
           `on_children_change`, `on_descendants_change`) are shape-domain
-          and live on `nu.domains.shape.collection.ReactiveCollectionForm`,
+          and live on `nu.domains.shape.collection.ReactiveCollectionSurface`,
           not here.
     """
 
@@ -431,8 +431,8 @@ class ReactiveMappingForm(
         return OnChange(self)
 
 
-class OrderedMappingForm(
-    MappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+class OrderedMappingSurface(
+    MappingSurface[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
     Generic[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
 ):
     """Base for ordered mappings: Mapping + Reversible.
@@ -440,7 +440,7 @@ class OrderedMappingForm(
     Notes:
         - Python's ``Mapping`` has no order to walk back or page through;
           ``dict`` and the ordered fabric mappings do. They sit here, a
-          hashed or unordered mapping stays on `MappingForm`.
+          hashed or unordered mapping stays on `MappingSurface`.
         - Adds the reversed reads (``reversed_keys``, ``reversed_values``,
           ``reversed_items``), streams like Python's ``reversed``, and
           paging: ``keys(after=, limit=)`` and ``reversed_keys(before=,
@@ -581,17 +581,17 @@ class OrderedMappingForm(
         return self._wrap_items_stream(ReversedItems(self))
 
 
-class MutableOrderedMappingForm(
-    OrderedMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
-    MutableMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+class MutableOrderedMappingSurface(
+    OrderedMappingSurface[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+    MutableMappingSurface[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
     Generic[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
 ):
-    """Mutable ordered mapping: the in-place writes of MutableMappingForm over an ordered mapping."""
+    """Mutable ordered mapping: the in-place writes of MutableMappingSurface over an ordered mapping."""
 
 
-class ReactiveOrderedMappingForm(
-    MutableOrderedMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
-    ReactiveMappingForm[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+class ReactiveOrderedMappingSurface(
+    MutableOrderedMappingSurface[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
+    ReactiveMappingSurface[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
     Generic[CollectionT, KeyT, ValueT, CollectionResultT, ValueResultT],
 ):
-    """Reactive ordered mapping: any-change observation over MutableOrderedMappingForm."""
+    """Reactive ordered mapping: any-change observation over MutableOrderedMappingSurface."""

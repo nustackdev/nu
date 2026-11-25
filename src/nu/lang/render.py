@@ -21,7 +21,12 @@ duck-typing on private attributes. Each node is one of:
     Command    - a mutating kind, yields nothing       (red)
     Action     - a mutating kind that also yields       (bright red)
     Flow       - a composer of mutating kinds            (blue; Strategy / Control)
-    Span       - a transparent wrapper                   (magenta; Bracket / Policy)
+    Span       - a transparent region wrapper            (magenta; Bracket / Policy)
+    Form       - a surface wrapper over its body          (dim; no region, no work)
+
+A Form is a Span too, but it governs nothing: it only gives its body a typed
+surface (``Str``, ``Int``, ``List``). It is drawn dim so the eye reads through it
+to the body, and never in Span magenta, which marks a real region.
 
 The green dot on a non-Literal Query marks a **value producer**: a kind that
 yields a computed value and contributes no WRITE. It is not a purity claim - a
@@ -38,7 +43,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 from typing import Literal as TLiteral
 
-from nu.lang.kinds import Action, Command, Flow, Query, Ref, Span
+from nu.lang.kinds import Action, Command, Flow, Form, Query, Ref, Span
 from nu.lang.literal import Literal
 from nu.tree import children, fields
 
@@ -101,7 +106,13 @@ def _is_span(node: Nu) -> bool:
     return isinstance(node, Span)
 
 
+def _is_form(node: Nu) -> bool:
+    return isinstance(node, Form)
+
+
 def _category_color(node: Nu) -> str:
+    if _is_form(node):
+        return DIM
     if _is_span(node):
         return MAGENTA
     if _is_flow(node):
@@ -178,6 +189,9 @@ def _default_label(node: Nu, *, color: bool = True) -> str:
     if not color:
         return f"● {text}" if is_value_producer else text
 
+    if _is_form(node):
+        # A surface wrapper: dim, not bold, so it recedes behind its body.
+        return f"{DIM}{text}{RESET}"
     cat_color = _category_color(node)
     colored = f"{cat_color}{BOLD}{text}{RESET}" if cat_color else f"{BOLD}{text}{RESET}"
     if is_value_producer:

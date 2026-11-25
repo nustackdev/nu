@@ -26,6 +26,5 @@ def test_a_form_subclass_keeps_its_constructors():
 @pytest.mark.parametrize("ref", [DictRef, ListRef, SetRef])
 @pytest.mark.parametrize("name", ["of", "create"])
 def test_ref_classes_have_no_value_constructor(ref, name):
+    # A ref mixes in the form's surface, never the form node that holds them.
     assert not hasattr(ref, name)
-    with pytest.raises(AttributeError, match="a ref names a place"):
-        getattr(ref, name)

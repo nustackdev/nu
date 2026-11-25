@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.lang import Form, TypedNu
+from nu.lang import Form, Surface
 
 
 if TYPE_CHECKING:
@@ -18,35 +18,8 @@ __all__ = [
 ]
 
 
-class None_(Form, TypedNu[None]):  # noqa: N801
-    """None interface. Logical only.
-
-    Notes:
-        - Wraps Python's `None`. It's the typical return of an effect-only
-          Command, one that runs for a side effect and yields nothing
-          meaningful (`sleep`, `inc`, `dec`).
-        - `==` / `!=` build an `Eq` / `Ne` term like every other Form, so
-          `x == nu.None_()` asks whether x yields None at run time. There is
-          no `is_`.
-        - NULL is not None: NULL is an address that holds nothing, None is a
-          stored value, and ``NULL == None`` is False.
-
-    Example:
-        >>> nu.run(nu.None_())[0] is None
-        True
-    """
-
-    def __init__(self, source: object = None) -> None:
-        """Wrap source as a None_ term.
-
-        Args:
-            source: the value to wrap. Defaults to `None`.
-
-        Example:
-            >>> nu.run(nu.None_())[0] is None
-            True
-        """
-        super().__init__(source)
+class NoneSurface(Surface):
+    """The methods of ``None_``. No slot holds one, so only the form carries them."""
 
     # =========================================================================
     # LOGICAL
@@ -181,3 +154,34 @@ class None_(Form, TypedNu[None]):  # noqa: N801
         from .bool_ import Bool
 
         return Bool(Ne(self, other))
+
+
+class None_(NoneSurface, Form[None]):  # noqa: N801
+    """None interface. Logical only.
+
+    Notes:
+        - Wraps Python's `None`. It's the typical return of an effect-only
+          Command, one that runs for a side effect and yields nothing
+          meaningful (`sleep`, `inc`, `dec`).
+        - `==` / `!=` build an `Eq` / `Ne` term like every other Form, so
+          `x == nu.None_()` asks whether x yields None at run time. There is
+          no `is_`.
+        - NULL is not None: NULL is an address that holds nothing, None is a
+          stored value, and ``NULL == None`` is False.
+
+    Example:
+        >>> nu.run(nu.None_())[0] is None
+        True
+    """
+
+    def __init__(self, source: object = None) -> None:
+        """Wrap source as a None_ term.
+
+        Args:
+            source: the value to wrap. Defaults to `None`.
+
+        Example:
+            >>> nu.run(nu.None_())[0] is None
+            True
+        """
+        super().__init__(source)

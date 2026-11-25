@@ -73,9 +73,9 @@ def test_list_slice_all_none():
     assert val(List([1, 2, 3])[:]) == [1, 2, 3]
 
 
-# --- SliceableForm.slice() method -------------------------------------------
+# --- SliceableSurface.slice() method -------------------------------------------
 
 
 def test_list_slice_method():
-    # List inherits SliceableForm.slice() for named-argument slicing
+    # List inherits SliceableSurface.slice() for named-argument slicing
     assert val(List([0, 1, 2, 3, 4]).slice(1, 4)) == [1, 2, 3]

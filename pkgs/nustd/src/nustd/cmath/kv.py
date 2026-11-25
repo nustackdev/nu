@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 from nu.core import ToStr
 from nu.domains.shape import SetCmd
 from nu.lang import Nu
-from nustd.cmath.forms import complex as ComplexForm
+from nustd.cmath.forms import ComplexSurface
 from nustd.kv.refs import ItemRef
 
 
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 __all__ = ["ComplexRef"]
 
 
-class ComplexRef(ItemRef, ComplexForm):
+class ComplexRef(ItemRef, ComplexSurface):
     """A complex leaf in KV storage, stored as the str Python prints for it.
 
     Notes:

@@ -45,7 +45,7 @@ from nu.lang.kinds import Ref
 
 
 if TYPE_CHECKING:
-    from nu.lang.forms import Form
+    from nu.lang.kinds import Form
 
 
 __all__ = ["TypeInfo", "value_type_for"]

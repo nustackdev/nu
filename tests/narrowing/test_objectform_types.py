@@ -209,7 +209,7 @@ assert_type((anyval[0] // 2).and_(1), Bool)
 # --- Object slots into any narrow Arg via Object variance --------------
 
 
-# Because Object is ``TypedNu[Object]`` (not ``TypedNu[object]``), it
+# Because Object is ``Form[Any]`` (not ``Form[object]``), it
 # substitutes for ``Nu[int]`` / ``Nu[str]`` / ... via Python's Object
 # variance rules. Concrete-typed refs consuming an Object keep their
 # narrow return type instead of degrading through ``__radd__``.

@@ -28,7 +28,7 @@ from datetime import timedelta as _timedelta
 from datetime import timezone as _timezone
 from typing import TYPE_CHECKING, TypeAlias, overload
 
-from nu.lang import Form, TypedNu
+from nu.lang import Form, Surface
 
 
 if TYPE_CHECKING:
@@ -45,28 +45,8 @@ if TYPE_CHECKING:
 __all__ = ["date", "datetime", "time", "timedelta", "timezone"]
 
 
-class timedelta(Form, TypedNu[_timedelta]):  # noqa: N801
-    """``datetime.timedelta`` as a Form - a span of time."""
-
-    @classmethod
-    def of(
-        cls,
-        *,
-        days: IntArg | FloatArg = 0,
-        seconds: IntArg | FloatArg = 0,
-        microseconds: IntArg | FloatArg = 0,
-        milliseconds: IntArg | FloatArg = 0,
-        minutes: IntArg | FloatArg = 0,
-        hours: IntArg | FloatArg = 0,
-        weeks: IntArg | FloatArg = 0,
-    ) -> timedelta:
-        """Build a timedelta from its components: ``timedelta(...)``."""
-        from .interactions import TimedeltaOf
-
-        # positional in the stdlib timedelta() order
-        return timedelta(
-            TimedeltaOf(days, seconds, microseconds, milliseconds, minutes, hours, weeks)
-        )
+class TimedeltaSurface(Surface):
+    """The methods of ``timedelta``, shared by the ``timedelta`` form and every ref that holds one."""
 
     def days(self) -> Int:
         """The whole-days component."""
@@ -119,7 +99,7 @@ class timedelta(Form, TypedNu[_timedelta]):  # noqa: N801
     def __truediv__(self, other: TimedeltaArg | IntArg | FloatArg) -> timedelta | Float:
         from nu.core import Div
 
-        if isinstance(other, (timedelta, _timedelta)):
+        if isinstance(other, (TimedeltaSurface, _timedelta)):
             from nu.forms import Float
 
             return Float(Div(self, other))
@@ -197,28 +177,32 @@ class timedelta(Form, TypedNu[_timedelta]):  # noqa: N801
         return Bool(Ne(self, other))
 
 
-class time(Form, TypedNu[_time]):  # noqa: N801
-    """``datetime.time`` as a Form - a wall-clock time of day."""
+class timedelta(TimedeltaSurface, Form[_timedelta]):  # noqa: N801
+    """``datetime.timedelta`` as a Form - a span of time."""
 
     @classmethod
     def of(
         cls,
-        hour: IntArg = 0,
-        minute: IntArg = 0,
-        second: IntArg = 0,
-        microsecond: IntArg = 0,
-    ) -> time:
-        """Build a time: ``time(hour, minute, second, microsecond)``."""
-        from .interactions import TimeOf
+        *,
+        days: IntArg | FloatArg = 0,
+        seconds: IntArg | FloatArg = 0,
+        microseconds: IntArg | FloatArg = 0,
+        milliseconds: IntArg | FloatArg = 0,
+        minutes: IntArg | FloatArg = 0,
+        hours: IntArg | FloatArg = 0,
+        weeks: IntArg | FloatArg = 0,
+    ) -> timedelta:
+        """Build a timedelta from its components: ``timedelta(...)``."""
+        from .interactions import TimedeltaOf
 
-        return time(TimeOf(hour, minute, second, microsecond))
+        # positional in the stdlib timedelta() order
+        return timedelta(
+            TimedeltaOf(days, seconds, microseconds, milliseconds, minutes, hours, weeks)
+        )
 
-    @classmethod
-    def from_iso(cls, value: StrArg) -> time:
-        """Parse an ISO time string: ``time.fromisoformat(s)``."""
-        from .interactions import TimeFromIso
 
-        return time(TimeFromIso(value))
+class TimeSurface(Surface):
+    """The methods of ``time``, shared by the ``time`` form and every ref that holds one."""
 
     def hour(self) -> Int:
         """The hour (0..23)."""
@@ -333,43 +317,32 @@ class time(Form, TypedNu[_time]):  # noqa: N801
         return Bool(Ne(self, other))
 
 
-class date(Form, TypedNu[_date]):  # noqa: N801
-    """``datetime.date`` as a Form - a calendar date."""
+class time(TimeSurface, Form[_time]):  # noqa: N801
+    """``datetime.time`` as a Form - a wall-clock time of day."""
 
     @classmethod
-    def of(cls, year: IntArg, month: IntArg, day: IntArg) -> date:
-        """Build a date: ``date(year, month, day)``."""
-        from .interactions import DateOf
+    def of(
+        cls,
+        hour: IntArg = 0,
+        minute: IntArg = 0,
+        second: IntArg = 0,
+        microsecond: IntArg = 0,
+    ) -> time:
+        """Build a time: ``time(hour, minute, second, microsecond)``."""
+        from .interactions import TimeOf
 
-        return date(DateOf(year, month, day))
-
-    @classmethod
-    def today(cls) -> date:
-        """Today's date: ``date.today()``."""
-        from .interactions import DateToday
-
-        return date(DateToday())
-
-    @classmethod
-    def from_iso(cls, value: StrArg) -> date:
-        """Parse an ISO date string: ``date.fromisoformat(s)``."""
-        from .interactions import DateFromIso
-
-        return date(DateFromIso(value))
+        return time(TimeOf(hour, minute, second, microsecond))
 
     @classmethod
-    def from_ordinal(cls, value: IntArg) -> date:
-        """From a proleptic Gregorian ordinal: ``date.fromordinal(n)``."""
-        from .interactions import DateFromOrdinal
+    def from_iso(cls, value: StrArg) -> time:
+        """Parse an ISO time string: ``time.fromisoformat(s)``."""
+        from .interactions import TimeFromIso
 
-        return date(DateFromOrdinal(value))
+        return time(TimeFromIso(value))
 
-    @classmethod
-    def from_timestamp(cls, value: FloatArg) -> date:
-        """From a POSIX timestamp: ``date.fromtimestamp(t)``."""
-        from .interactions import DateFromTimestamp
 
-        return date(DateFromTimestamp(value))
+class DateSurface(Surface):
+    """The methods of ``date``, shared by the ``date`` form and every ref that holds one."""
 
     def year(self) -> Int:
         """The year."""
@@ -471,7 +444,7 @@ class date(Form, TypedNu[_date]):  # noqa: N801
     def __sub__(self, other: DateArg | TimedeltaArg) -> date | timedelta:
         from nu.core import Sub
 
-        if isinstance(other, (date, _date)):
+        if isinstance(other, (DateSurface, _date)):
             return timedelta(Sub(self, other))
         return date(Sub(self, other))
 
@@ -522,56 +495,47 @@ class date(Form, TypedNu[_date]):  # noqa: N801
         return Bool(Ne(self, other))
 
 
-class datetime(Form, TypedNu[_datetime]):  # noqa: N801
-    """``datetime.datetime`` as a Form - a date and a time."""
+class date(DateSurface, Form[_date]):  # noqa: N801
+    """``datetime.date`` as a Form - a calendar date."""
 
     @classmethod
-    def of(
-        cls,
-        year: IntArg,
-        month: IntArg,
-        day: IntArg,
-        hour: IntArg = 0,
-        minute: IntArg = 0,
-        second: IntArg = 0,
-        microsecond: IntArg = 0,
-    ) -> datetime:
-        """Build a datetime: ``datetime(year, month, day, hour, ...)``."""
-        from .interactions import DatetimeOf
+    def of(cls, year: IntArg, month: IntArg, day: IntArg) -> date:
+        """Build a date: ``date(year, month, day)``."""
+        from .interactions import DateOf
 
-        return datetime(DatetimeOf(year, month, day, hour, minute, second, microsecond))
+        return date(DateOf(year, month, day))
 
     @classmethod
-    def now(cls, tz: TimezoneArg | None = None) -> datetime:
-        """The current local (or ``tz``) datetime: ``datetime.now(tz)``."""
-        from .interactions import DatetimeNow
+    def today(cls) -> date:
+        """Today's date: ``date.today()``."""
+        from .interactions import DateToday
 
-        if tz is not None:
-            return datetime(DatetimeNow(tz))
-        return datetime(DatetimeNow())
+        return date(DateToday())
 
     @classmethod
-    def from_iso(cls, value: StrArg) -> datetime:
-        """Parse an ISO datetime string: ``datetime.fromisoformat(s)``."""
-        from .interactions import DatetimeFromIso
+    def from_iso(cls, value: StrArg) -> date:
+        """Parse an ISO date string: ``date.fromisoformat(s)``."""
+        from .interactions import DateFromIso
 
-        return datetime(DatetimeFromIso(value))
-
-    @classmethod
-    def from_timestamp(cls, value: FloatArg, tz: TimezoneArg | None = None) -> datetime:
-        """From a POSIX timestamp: ``datetime.fromtimestamp(ts, tz)``."""
-        from .interactions import DatetimeFromTimestamp
-
-        if tz is not None:
-            return datetime(DatetimeFromTimestamp(value, tz))
-        return datetime(DatetimeFromTimestamp(value))
+        return date(DateFromIso(value))
 
     @classmethod
-    def combine(cls, date_value: DateArg, time_value: TimeArg) -> datetime:
-        """Combine a date and a time: ``datetime.combine(date, time)``."""
-        from .interactions import DatetimeCombine
+    def from_ordinal(cls, value: IntArg) -> date:
+        """From a proleptic Gregorian ordinal: ``date.fromordinal(n)``."""
+        from .interactions import DateFromOrdinal
 
-        return datetime(DatetimeCombine(date_value, time_value))
+        return date(DateFromOrdinal(value))
+
+    @classmethod
+    def from_timestamp(cls, value: FloatArg) -> date:
+        """From a POSIX timestamp: ``date.fromtimestamp(t)``."""
+        from .interactions import DateFromTimestamp
+
+        return date(DateFromTimestamp(value))
+
+
+class DatetimeSurface(Surface):
+    """The methods of ``datetime``, shared by the ``datetime`` form and every ref that holds one."""
 
     def year(self) -> Int:
         """The year."""
@@ -714,7 +678,7 @@ class datetime(Form, TypedNu[_datetime]):  # noqa: N801
     def __sub__(self, other: DatetimeArg | TimedeltaArg) -> datetime | timedelta:
         from nu.core import Sub
 
-        if isinstance(other, (datetime, _datetime)):
+        if isinstance(other, (DatetimeSurface, _datetime)):
             return timedelta(Sub(self, other))
         return datetime(Sub(self, other))
 
@@ -765,24 +729,60 @@ class datetime(Form, TypedNu[_datetime]):  # noqa: N801
         return Bool(Ne(self, other))
 
 
-class timezone(Form, TypedNu[_timezone]):  # noqa: N801
-    """``datetime.timezone`` as a Form - a fixed offset from UTC."""
+class datetime(DatetimeSurface, Form[_datetime]):  # noqa: N801
+    """``datetime.datetime`` as a Form - a date and a time."""
 
     @classmethod
-    def of(cls, offset: TimedeltaArg, name: StrArg | None = None) -> timezone:
-        """Build a fixed-offset zone: ``timezone(offset, name)``."""
-        from .interactions import TimezoneOf
+    def of(
+        cls,
+        year: IntArg,
+        month: IntArg,
+        day: IntArg,
+        hour: IntArg = 0,
+        minute: IntArg = 0,
+        second: IntArg = 0,
+        microsecond: IntArg = 0,
+    ) -> datetime:
+        """Build a datetime: ``datetime(year, month, day, hour, ...)``."""
+        from .interactions import DatetimeOf
 
-        if name is not None:
-            return timezone(TimezoneOf(offset, name))
-        return timezone(TimezoneOf(offset))
+        return datetime(DatetimeOf(year, month, day, hour, minute, second, microsecond))
 
     @classmethod
-    def utc(cls) -> timezone:
-        """The UTC zone: ``timezone.utc``."""
-        from .interactions import TimezoneUtc
+    def now(cls, tz: TimezoneArg | None = None) -> datetime:
+        """The current local (or ``tz``) datetime: ``datetime.now(tz)``."""
+        from .interactions import DatetimeNow
 
-        return timezone(TimezoneUtc())
+        if tz is not None:
+            return datetime(DatetimeNow(tz))
+        return datetime(DatetimeNow())
+
+    @classmethod
+    def from_iso(cls, value: StrArg) -> datetime:
+        """Parse an ISO datetime string: ``datetime.fromisoformat(s)``."""
+        from .interactions import DatetimeFromIso
+
+        return datetime(DatetimeFromIso(value))
+
+    @classmethod
+    def from_timestamp(cls, value: FloatArg, tz: TimezoneArg | None = None) -> datetime:
+        """From a POSIX timestamp: ``datetime.fromtimestamp(ts, tz)``."""
+        from .interactions import DatetimeFromTimestamp
+
+        if tz is not None:
+            return datetime(DatetimeFromTimestamp(value, tz))
+        return datetime(DatetimeFromTimestamp(value))
+
+    @classmethod
+    def combine(cls, date_value: DateArg, time_value: TimeArg) -> datetime:
+        """Combine a date and a time: ``datetime.combine(date, time)``."""
+        from .interactions import DatetimeCombine
+
+        return datetime(DatetimeCombine(date_value, time_value))
+
+
+class TimezoneSurface(Surface):
+    """The methods of ``timezone``, shared by the ``timezone`` form and every ref that holds one."""
 
     def utcoffset(self, dt: DatetimeArg | None = None) -> timedelta:
         """The offset from UTC as a timedelta."""
@@ -827,3 +827,23 @@ class timezone(Form, TypedNu[_timezone]):  # noqa: N801
         from nu.forms import Bool
 
         return Bool(Ne(self, other))
+
+
+class timezone(TimezoneSurface, Form[_timezone]):  # noqa: N801
+    """``datetime.timezone`` as a Form - a fixed offset from UTC."""
+
+    @classmethod
+    def of(cls, offset: TimedeltaArg, name: StrArg | None = None) -> timezone:
+        """Build a fixed-offset zone: ``timezone(offset, name)``."""
+        from .interactions import TimezoneOf
+
+        if name is not None:
+            return timezone(TimezoneOf(offset, name))
+        return timezone(TimezoneOf(offset))
+
+    @classmethod
+    def utc(cls) -> timezone:
+        """The UTC zone: ``timezone.utc``."""
+        from .interactions import TimezoneUtc
+
+        return timezone(TimezoneUtc())

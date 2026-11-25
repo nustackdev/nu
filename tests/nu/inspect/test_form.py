@@ -27,9 +27,9 @@ def test_other_primitive_forms_parse_too() -> None:
 def test_a_form_answers_the_same_taxonomy_questions_an_atom_does() -> None:
     record = parse_form(Int)
     assert (record.kind, record.sort, record.cardinality) == (
-        "ScalarQuery",
-        "scalar_query",
-        "scalar",
+        "Form",
+        "form",
+        "transparent",
     )
     assert record.abstract is False
 

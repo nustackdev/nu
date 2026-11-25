@@ -1,12 +1,12 @@
 """The shape grid mirrors nu.forms: every form has its row of refs, named after it.
 
-A ref is named after its form, ``Form`` swapped for ``Ref``. ABC rows have one
+A ref is named after its form, ``Surface`` swapped for ``Ref``. ABC rows have one
 ref per ABC tier (``MappingRef``, ``MutableMappingRef``, ``ReactiveMappingRef``),
 except the reactive set-like tier, which has none. Built-in and primitive rows
 have two refs: the base ref (``DictRef``) carries the slot capability (exists,
 extract, set, erase, init), the reactive ref (``ReactiveDictRef``) adds the
-watches. Each ref is its forms type under its capability base, plus
-``StructuredRef``.
+watches. Each ref carries its form's surface under its capability base, plus
+``StructuredRef``, and is never the value form node itself.
 """
 
 from __future__ import annotations
@@ -22,15 +22,22 @@ from nu.domains.shape import collection as cap
 from nu.domains.shape import item
 from nu.domains.shape.base import StructuredRef
 from nu.domains.shape.collections import abc as sabc
-from nu.domains.shape.form import SlotForm
+from nu.domains.shape.form import SlotSurface
 from nu.forms.collections import abc as fabc
-from nu.lang import TypedNu
+from nu.lang import Form
 
 
 def _ref_name(form: type) -> str:
-    """The ref name a form's row uses: ``Form`` swapped for ``Ref``, or ``Ref`` appended."""
+    """The ref name a form's row uses: ``Surface`` swapped for ``Ref``, or ``Ref`` appended."""
     name = form.__name__
-    return f"{name.removesuffix('Form')}Ref"
+    return f"{name.removesuffix('Surface')}Ref"
+
+
+def _surface(form: type) -> type:
+    """The surface a ref of this row mixes in: the value form's, or the ABC surface itself."""
+    if issubclass(form, Form):
+        return getattr(forms, f"{form.__name__}Surface")
+    return form
 
 
 # ---------------------------------------------------------------------------
@@ -39,19 +46,23 @@ def _ref_name(form: type) -> str:
 
 #: ABC forms, read tier first, and the capability base of each tier.
 ABC_ROWS: dict[str, tuple[type, ...]] = {
-    "Mapping": (fabc.MappingForm, fabc.MutableMappingForm, fabc.ReactiveMappingForm),
+    "Mapping": (fabc.MappingSurface, fabc.MutableMappingSurface, fabc.ReactiveMappingSurface),
     "OrderedMapping": (
-        fabc.OrderedMappingForm,
-        fabc.MutableOrderedMappingForm,
-        fabc.ReactiveOrderedMappingForm,
+        fabc.OrderedMappingSurface,
+        fabc.MutableOrderedMappingSurface,
+        fabc.ReactiveOrderedMappingSurface,
     ),
-    "Sequence": (fabc.SequenceForm, fabc.MutableSequenceForm, fabc.ReactiveSequenceForm),
-    "SetLike": (fabc.SetLikeForm, fabc.MutableSetForm),
+    "Sequence": (fabc.SequenceSurface, fabc.MutableSequenceSurface, fabc.ReactiveSequenceSurface),
+    "SetLike": (fabc.SetLikeSurface, fabc.MutableSetSurface),
 }
-COLLECTION_CAPS = (cap.CollectionForm, cap.MutableCollectionForm, cap.ReactiveCollectionForm)
+COLLECTION_CAPS = (
+    cap.CollectionSurface,
+    cap.MutableCollectionSurface,
+    cap.ReactiveCollectionSurface,
+)
 
 #: ABC forms with no shape ref: ``ReactiveSetRef`` is the built-in ``set`` row's.
-ABC_WITHOUT_REF = {fabc.ReactiveSetForm}
+ABC_WITHOUT_REF = {fabc.ReactiveSetSurface}
 
 BUILT_IN_ROWS = (forms.Dict, forms.List, forms.Set, forms.FrozenSet, forms.Tuple)
 PRIMITIVE_ROWS = (forms.Int, forms.Str, forms.Float, forms.Bool, forms.Bytes, forms.Object)
@@ -89,7 +100,7 @@ CELLS: list[tuple[type, type, type]] = [
         (ref, form, capability)
         for form in PRIMITIVE_ROWS
         for ref, capability in zip(
-            _two_refs(form), (item.MutableItemForm, item.ReactiveItemForm), strict=True
+            _two_refs(form), (item.MutableItemSurface, item.ReactiveItemSurface), strict=True
         )
     ),
 ]
@@ -105,23 +116,23 @@ NOT_SLOT_VALUES = {
     forms.NullForm,  # the absence of a value
 }
 
-#: The single-method ABCs ``CollectionForm`` is built from; ``CollectionForm`` is
+#: The single-method ABCs ``CollectionSurface`` is built from; ``CollectionSurface`` is
 #: the read capability itself, so they have no row of their own.
 CAPABILITY_FRAGMENTS = {
-    fabc.CollectionForm,
-    fabc.ContainerForm,
-    fabc.IterableForm,
-    fabc.SizedForm,
-    fabc.SliceableForm,
+    fabc.CollectionSurface,
+    fabc.ContainerSurface,
+    fabc.IterableSurface,
+    fabc.SizedSurface,
+    fabc.SliceableSurface,
 }
 
 
 def _all_forms() -> set[type]:
-    """Every form class ``nu.forms`` exports: built-in, primitive and ABC."""
+    """Every value form ``nu.forms`` exports (built-in, primitive) and every ABC surface."""
     found = set()
-    for module in (forms, fabc):
+    for module, base in ((forms, forms.Form), (fabc, forms.Surface)):
         for value in vars(module).values():
-            if inspect.isclass(value) and issubclass(value, forms.Form) and value is not forms.Form:
+            if inspect.isclass(value) and issubclass(value, base) and value is not base:
                 found.add(value)
     return found
 
@@ -140,7 +151,7 @@ def test_every_form_has_a_row() -> None:
 @pytest.mark.parametrize(("ref", "form", "capability"), CELLS, ids=CELL_IDS)
 def test_each_ref_is_named_after_its_form(ref: type, form: type, capability: type) -> None:
     expected = _ref_name(form)
-    if issubclass(capability, (cap.ReactiveCollectionForm, item.ReactiveItemForm)) and not (
+    if issubclass(capability, (cap.ReactiveCollectionSurface, item.ReactiveItemSurface)) and not (
         form.__name__.startswith("Reactive")
     ):
         expected = f"Reactive{expected}"
@@ -150,7 +161,7 @@ def test_each_ref_is_named_after_its_form(ref: type, form: type, capability: typ
 def test_abc_reactive_set_has_no_ref() -> None:
     assert not hasattr(sabc, "ReactiveSetRef")
     assert shape.ReactiveSetRef is shape.collections.ReactiveSetRef
-    assert issubclass(shape.ReactiveSetRef, forms.Set)
+    assert issubclass(shape.ReactiveSetRef, forms.SetSurface)
 
 
 def test_package_exports_every_ref() -> None:
@@ -178,7 +189,7 @@ def test_no_shape_only_forms_beside_the_refs() -> None:
 
 @pytest.mark.parametrize(("ref", "form", "capability"), CELLS, ids=CELL_IDS)
 def test_each_ref_is_its_form_under_its_capability(ref: type, form: type, capability: type) -> None:
-    assert issubclass(ref, form), (ref, form)
+    assert issubclass(ref, _surface(form)), (ref, form)
     assert issubclass(ref, capability), (ref, capability)
     assert issubclass(ref, StructuredRef), ref
 
@@ -187,13 +198,12 @@ def test_each_ref_is_its_form_under_its_capability(ref: type, form: type, capabi
 def test_the_slot_capability_wins_over_the_value_form(
     ref: type, form: type, capability: type
 ) -> None:
-    # A ref is a fabric read: ``Ref`` must precede ``TypedNu`` (a passthrough
-    # query), and the capability must precede the forms type, so ``set`` and
-    # the watches act on the slot.
+    # A ref shares its form's surface, never the form node: it stays a fabric
+    # read with no passthrough to shadow. The capability precedes the surface,
+    # so ``set`` and the watches act on the slot.
+    assert not issubclass(ref, Form), ref
     mro = ref.__mro__
-    if TypedNu in mro:
-        assert mro.index(StructuredRef) < mro.index(TypedNu), ref
-    assert mro.index(capability) < mro.index(form), ref
+    assert mro.index(capability) < mro.index(_surface(form)), ref
 
 
 @pytest.mark.parametrize("name", list(ABC_ROWS))
@@ -262,4 +272,4 @@ def test_built_in_rows_carry_the_built_in_only_calls() -> None:
 def test_a_fallback_off_a_slot_reads_as_the_plain_value_form() -> None:
     assert type(shape.ReactiveIntRef("n").fallback(0)) is forms.Int
     assert type(shape.DictRef("d").fallback({})) is forms.Dict
-    assert issubclass(shape.IntRef, SlotForm)
+    assert issubclass(shape.IntRef, SlotSurface)

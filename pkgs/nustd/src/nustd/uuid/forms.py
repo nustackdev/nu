@@ -18,7 +18,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, TypeAlias
 from uuid import UUID as _UUID
 
-from nu.lang import Form, TypedNu
+from nu.lang import Form, Surface
 
 
 if TYPE_CHECKING:
@@ -31,40 +31,12 @@ if TYPE_CHECKING:
 __all__ = ["UUID"]
 
 
-class UUID(Form, TypedNu[_UUID]):
-    """UUID interface - the ``uuid.UUID`` class as a Form.
-
-    Mirrors the class surface only: the ``UUID(...)`` constructor (the
-    ``from_*`` alternate constructors below) plus instance ops (accessors,
-    conversions, comparison). The module-level generators ``uuid1`` / ``uuid3``
-    / ``uuid4`` / ``uuid5`` are NOT methods here - they live in ``functions`` as
-    free functions, matching the stdlib layout.
-    """
+class UUIDSurface(Surface):
+    """The methods of ``UUID``, shared by the ``UUID`` form and every ref that holds one."""
 
     # =========================================================================
     # ALTERNATE CONSTRUCTORS (the ``UUID(...)`` class constructor; new atoms)
     # =========================================================================
-
-    @classmethod
-    def from_str(cls, value: StrArg) -> UUID:
-        """Parse a hex string (with or without hyphens) into a UUID."""
-        from .interactions import UuidFromStrQuery
-
-        return UUID(UuidFromStrQuery(value))
-
-    @classmethod
-    def from_bytes(cls, value: BytesArg) -> UUID:
-        """Build a UUID from 16 bytes."""
-        from .interactions import UuidFromBytesQuery
-
-        return UUID(UuidFromBytesQuery(value))
-
-    @classmethod
-    def from_int(cls, value: IntArg) -> UUID:
-        """Build a UUID from a 128-bit integer."""
-        from .interactions import UuidFromIntQuery
-
-        return UUID(UuidFromIntQuery(value))
 
     # =========================================================================
     # COMPONENT ACCESSORS (reuse core GetAttr)
@@ -193,3 +165,35 @@ class UUID(Form, TypedNu[_UUID]):
         from nu.forms import Bool
 
         return Bool(Ne(self, other))
+
+
+class UUID(UUIDSurface, Form[_UUID]):
+    """UUID interface - the ``uuid.UUID`` class as a Form.
+
+    Mirrors the class surface only: the ``UUID(...)`` constructor (the
+    ``from_*`` alternate constructors below) plus instance ops (accessors,
+    conversions, comparison). The module-level generators ``uuid1`` / ``uuid3``
+    / ``uuid4`` / ``uuid5`` are NOT methods here - they live in ``functions`` as
+    free functions, matching the stdlib layout.
+    """
+
+    @classmethod
+    def from_str(cls, value: StrArg) -> UUID:
+        """Parse a hex string (with or without hyphens) into a UUID."""
+        from .interactions import UuidFromStrQuery
+
+        return UUID(UuidFromStrQuery(value))
+
+    @classmethod
+    def from_bytes(cls, value: BytesArg) -> UUID:
+        """Build a UUID from 16 bytes."""
+        from .interactions import UuidFromBytesQuery
+
+        return UUID(UuidFromBytesQuery(value))
+
+    @classmethod
+    def from_int(cls, value: IntArg) -> UUID:
+        """Build a UUID from a 128-bit integer."""
+        from .interactions import UuidFromIntQuery
+
+        return UUID(UuidFromIntQuery(value))

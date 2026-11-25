@@ -9,7 +9,7 @@ scope. The tag is a config child after the fabric type, so it can be computed
 It also carries this fabric's fluent surface. ``PoolRef().launch()`` and
 ``Launch(PoolRef())`` build the same term; the methods exist so a pool ref
 reads like the thing you address rather than an argument you thread, exactly
-the way the Form mixins hang ``set()`` off an item ref.
+the way the shape surfaces hang ``set()`` off an item ref.
 """
 
 from __future__ import annotations
@@ -117,7 +117,7 @@ class PoolRef(FabricRef):
         return athunk
 
     # The interactions import this module, so every import below is lazy -
-    # the same shape nu's own Form mixins use for the same reason.
+    # the same shape nu's own surfaces use for the same reason.
 
     def launch(self, init: Bracket | Nu | None = None) -> Launch:
         """A ``Launch`` on this pool: hand out a worker, yield its id."""

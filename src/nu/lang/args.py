@@ -7,7 +7,7 @@ while still admitting the full algebraic surface (a raw python value, a
 Nu sub-tree producing one, or NULL from an absent read).
 
 Each specialized alias also admits ``Object`` explicitly: the honest
-terminal is consumable everywhere. This is redundant with the ``TypedNu
+terminal is consumable everywhere. This is redundant with the ``Nu
 [Any]`` variance trick (``Nu[Any]`` already substitutes for ``Nu[int]``
 etc.), but stating it in the alias makes the surface readable in code -
 you can see at a glance that ``IntArg`` welcomes a dynamic value.

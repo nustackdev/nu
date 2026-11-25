@@ -1,6 +1,6 @@
 """Iterable capability.
 
-IterableForm: wrapping infrastructure for collection results.
+IterableSurface: wrapping infrastructure for collection results.
 
 Follows Python's collections.abc.Iterable pattern. In Nu's tree model,
 iteration is controlled by Flows (ForEachDo, ForRangeDo) and streams
@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, TypeVar
 
-from nu.lang import Form
+from nu.lang import Surface
 
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "IterableForm",
+    "IterableSurface",
 ]
 
 
@@ -36,10 +36,10 @@ CollectionResultT = TypeVar("CollectionResultT")
 ElementResultT = TypeVar("ElementResultT")
 
 
-class IterableForm(Form, Generic[ElementT, CollectionResultT, ElementResultT]):
+class IterableSurface(Surface, Generic[ElementT, CollectionResultT, ElementResultT]):
     """Base for values that support iteration, like collections.abc.Iterable.
 
-    Subclasses (SequenceForm, MappingForm, etc.) use the wrapping hooks here
+    Subclasses (SequenceSurface, MappingSurface, etc.) use the wrapping hooks here
     to wrap op results in their own collection and element types.
     Higher-order interactions (Map, Filter, Reduce, etc.) are standalone
     functions in `abc.fn`, not methods on this class.

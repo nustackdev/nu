@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.lang import Form, TypedNu
+from nu.lang import Form, Surface
 
 
 if TYPE_CHECKING:
@@ -21,27 +21,8 @@ __all__ = [
 ]
 
 
-class Float(Form, TypedNu[float]):
-    """Float interface. Numeric + comparable + logical.
-
-    Notes:
-        - Arithmetic against an Int, or a plain int or float, stays Float.
-          There's no promotion to track since Float is already the wider
-          type.
-        - Division `/` and floor division `//` both stay Float. Unlike Int,
-          where `/` promotes to Float but `//` stays Int, here every
-          arithmetic operator returns Float.
-        - Comparison operators yield Bool. Chained comparisons like
-          `a > b > c` do not build a single term; write them as
-          `And(a > b, b > c)`.
-        - `nan` compares False against everything, including itself, so
-          `Float(nan) == Float(nan)` is False.
-        - Logical operators are the named forms `and_`, `or_`, `not_`.
-
-    Example:
-        >>> nu.run(nu.Float(2.5) * nu.Float(4.0))[0]
-        10.0
-    """
+class FloatSurface(Surface):
+    """The methods of ``Float``, shared by the ``Float`` form and every ref that holds one."""
 
     # =========================================================================
     # ARITHMETIC
@@ -641,3 +622,26 @@ class Float(Form, TypedNu[float]):
         from .bool_ import Bool
 
         return Bool(ToBool(self))
+
+
+class Float(FloatSurface, Form[float]):
+    """Float interface. Numeric + comparable + logical.
+
+    Notes:
+        - Arithmetic against an Int, or a plain int or float, stays Float.
+          There's no promotion to track since Float is already the wider
+          type.
+        - Division `/` and floor division `//` both stay Float. Unlike Int,
+          where `/` promotes to Float but `//` stays Int, here every
+          arithmetic operator returns Float.
+        - Comparison operators yield Bool. Chained comparisons like
+          `a > b > c` do not build a single term; write them as
+          `And(a > b, b > c)`.
+        - `nan` compares False against everything, including itself, so
+          `Float(nan) == Float(nan)` is False.
+        - Logical operators are the named forms `and_`, `or_`, `not_`.
+
+    Example:
+        >>> nu.run(nu.Float(2.5) * nu.Float(4.0))[0]
+        10.0
+    """

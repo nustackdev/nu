@@ -2,16 +2,16 @@
 
 from nu.core.access import SetItem
 
-from .collection import CollectionForm
-from .container import ContainerForm
-from .iterable import IterableForm
+from .collection import CollectionSurface
+from .container import ContainerSurface
+from .iterable import IterableSurface
 from .mapping import (
-    MappingForm,
-    MutableMappingForm,
-    MutableOrderedMappingForm,
-    OrderedMappingForm,
-    ReactiveMappingForm,
-    ReactiveOrderedMappingForm,
+    MappingSurface,
+    MutableMappingSurface,
+    MutableOrderedMappingSurface,
+    OrderedMappingSurface,
+    ReactiveMappingSurface,
+    ReactiveOrderedMappingSurface,
 )
 from .mapping_interactions import (
     ContainsKey,
@@ -33,7 +33,7 @@ from .mapping_interactions import (
     Values,
 )
 from .paged_mapping import PagedMapping
-from .sequence import MutableSequenceForm, ReactiveSequenceForm, SequenceForm
+from .sequence import MutableSequenceSurface, ReactiveSequenceSurface, SequenceSurface
 from .sequence_interactions import (
     Append,
     Count,
@@ -49,7 +49,7 @@ from .sequence_interactions import (
     SetIndex,
     Sort,
 )
-from .set_ import MutableSetForm, ReactiveSetForm, SetLikeForm
+from .set_ import MutableSetSurface, ReactiveSetSurface, SetLikeSurface
 from .set_interactions import (
     AddCmd,
     Difference,
@@ -68,16 +68,16 @@ from .set_interactions import (
     Union,
 )
 from .shared_interactions import Clear
-from .sized import SizedForm
-from .sliceable import SliceableForm
+from .sized import SizedSurface
+from .sliceable import SliceableSurface
 
 
 __all__ = [
     "AddCmd",
     "Append",
     "Clear",
-    "CollectionForm",
-    "ContainerForm",
+    "CollectionSurface",
+    "ContainerSurface",
     "ContainsKey",
     "Count",
     "DelIndex",
@@ -97,25 +97,25 @@ __all__ = [
     "IsSubset",
     "IsSuperset",
     "Items",
-    "IterableForm",
+    "IterableSurface",
     "Keys",
     "KeysPage",
     "Last",
-    "MappingForm",
+    "MappingSurface",
     "Merge",
     "MergeUpdate",
-    "MutableMappingForm",
-    "MutableOrderedMappingForm",
-    "MutableSequenceForm",
-    "MutableSetForm",
-    "OrderedMappingForm",
+    "MutableMappingSurface",
+    "MutableOrderedMappingSurface",
+    "MutableSequenceSurface",
+    "MutableSetSurface",
+    "OrderedMappingSurface",
     "PagedMapping",
     "Pop",
     "PopItem",
-    "ReactiveMappingForm",
-    "ReactiveOrderedMappingForm",
-    "ReactiveSequenceForm",
-    "ReactiveSetForm",
+    "ReactiveMappingSurface",
+    "ReactiveOrderedMappingSurface",
+    "ReactiveSequenceSurface",
+    "ReactiveSetSurface",
     "Remove",
     "RemoveValue",
     "Reverse",
@@ -123,15 +123,15 @@ __all__ = [
     "ReversedKeys",
     "ReversedKeysPage",
     "ReversedValues",
-    "SequenceForm",
+    "SequenceSurface",
     "SetDefault",
     "SetIndex",
     "SetItem",
-    "SetLikeForm",
+    "SetLikeSurface",
     "SetPop",
     "SetUpdate",
-    "SizedForm",
-    "SliceableForm",
+    "SizedSurface",
+    "SliceableSurface",
     "Sort",
     "SymmetricDifference",
     "SymmetricDifferenceUpdate",

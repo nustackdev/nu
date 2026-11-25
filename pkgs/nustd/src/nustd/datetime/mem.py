@@ -19,11 +19,13 @@ from nu.lang import Nu
 from nu.mem.refs import ItemRef
 from nustd.datetime._iso import datetime_from_iso, time_from_iso
 from nustd.datetime._offset import UTC, parse_timezone
-from nustd.datetime.forms import date as DateForm
-from nustd.datetime.forms import datetime as DatetimeForm
-from nustd.datetime.forms import time as TimeForm
-from nustd.datetime.forms import timedelta as TimedeltaForm
-from nustd.datetime.forms import timezone as TimezoneForm
+from nustd.datetime.forms import (
+    DateSurface,
+    DatetimeSurface,
+    TimedeltaSurface,
+    TimeSurface,
+    TimezoneSurface,
+)
 from nustd.datetime.interactions import TimedeltaTotalSeconds
 
 
@@ -34,7 +36,7 @@ if TYPE_CHECKING:
 __all__ = ["DateRef", "DatetimeRef", "TimeRef", "TimedeltaRef", "TimezoneRef"]
 
 
-class DateRef(ItemRef, DateForm):
+class DateRef(ItemRef, DateSurface):
     """A date slot in the dict substrate, stored as an ISO string.
 
     Args:
@@ -83,7 +85,7 @@ class DateRef(ItemRef, DateForm):
         return SetCmd(self, val)
 
 
-class DatetimeRef(ItemRef, DatetimeForm):
+class DatetimeRef(ItemRef, DatetimeSurface):
     """A datetime slot in the dict substrate, stored as an ISO string.
 
     Args:
@@ -134,7 +136,7 @@ class DatetimeRef(ItemRef, DatetimeForm):
         return SetCmd(self, val)
 
 
-class TimeRef(ItemRef, TimeForm):
+class TimeRef(ItemRef, TimeSurface):
     """A time-of-day slot in the dict substrate, stored as an ISO string.
 
     Args:
@@ -179,7 +181,7 @@ class TimeRef(ItemRef, TimeForm):
         return SetCmd(self, val)
 
 
-class TimedeltaRef(ItemRef, TimedeltaForm):
+class TimedeltaRef(ItemRef, TimedeltaSurface):
     """A timedelta slot in the dict substrate, stored as total seconds.
 
     Args:
@@ -229,7 +231,7 @@ class TimedeltaRef(ItemRef, TimedeltaForm):
         return SetCmd(self, val)
 
 
-class TimezoneRef(ItemRef, TimezoneForm):
+class TimezoneRef(ItemRef, TimezoneSurface):
     """A fixed-offset timezone slot, stored as its ``UTC±HH:MM`` string.
 
     Args:

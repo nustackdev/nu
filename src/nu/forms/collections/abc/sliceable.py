@@ -1,13 +1,13 @@
 """Sliceable capability.
 
-SliceableForm: values that support slicing.
+SliceableSurface: values that support slicing.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, TypeVar, cast
 
-from nu.lang import Form
+from nu.lang import Surface
 
 
 if TYPE_CHECKING:
@@ -15,14 +15,14 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "SliceableForm",
+    "SliceableSurface",
 ]
 
 
 ResultT = TypeVar("ResultT")
 
 
-class SliceableForm(Form, Generic[ResultT]):
+class SliceableSurface(Surface, Generic[ResultT]):
     """Base for values that support slicing.
 
     Example:

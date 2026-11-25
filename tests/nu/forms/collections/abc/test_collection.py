@@ -1,7 +1,7 @@
-"""Tier tests for CollectionForm.extract() — available on immutable base tier.
+"""Tier tests for CollectionSurface.extract() — available on immutable base tier.
 
 Uses the concrete Ref types (MappingRef, SequenceRef, SetLikeRef) which inherit
-CollectionForm, to verify that extract() is wired up and returns an
+CollectionSurface, to verify that extract() is wired up and returns an
 Extract on all three collection families.
 """
 

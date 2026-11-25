@@ -1,7 +1,7 @@
 """Sequence collection: bases + mutations.
 
-SequenceForm = Collection + Sliceable + first/last/index/count/reversed
-MutableSequenceForm = Sequence + set_at/del_at/append/insert/pop/extend/remove/reverse/clear
+SequenceSurface = Collection + Sliceable + first/last/index/count/reversed
+MutableSequenceSurface = Sequence + set_at/del_at/append/insert/pop/extend/remove/reverse/clear
 
 The ABC's ``[i] =``, ``del [i]`` and ``+=`` are statements that drop or rebind
 the term a form builds, so nu forms spell them ``set_at``, ``del_at`` and
@@ -26,8 +26,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast, overload
 
-from .collection import CollectionForm
-from .sliceable import SliceableForm
+from .collection import CollectionSurface
+from .sliceable import SliceableSurface
 
 
 if TYPE_CHECKING:
@@ -39,9 +39,9 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "MutableSequenceForm",
-    "ReactiveSequenceForm",
-    "SequenceForm",
+    "MutableSequenceSurface",
+    "ReactiveSequenceSurface",
+    "SequenceSurface",
 ]
 
 
@@ -51,9 +51,9 @@ CollectionResultT = TypeVar("CollectionResultT")
 ElementResultT = TypeVar("ElementResultT")
 
 
-class SequenceForm(
-    CollectionForm[ElementT, CollectionResultT, ElementResultT],
-    SliceableForm[CollectionResultT],
+class SequenceSurface(
+    CollectionSurface[ElementT, CollectionResultT, ElementResultT],
+    SliceableSurface[CollectionResultT],
     Generic[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
     """Base for ordered, indexable values, like collections.abc.Sequence.
@@ -196,8 +196,8 @@ class SequenceForm(
         return self._wrap_iterable_result(Reversed(self))
 
 
-class MutableSequenceForm(
-    SequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
+class MutableSequenceSurface(
+    SequenceSurface[CollectionT, ElementT, CollectionResultT, ElementResultT],
     Generic[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
     """Base for in-place-mutable sequences, like collections.abc.MutableSequence.
@@ -390,17 +390,17 @@ class MutableSequenceForm(
         return Clear(self)
 
 
-class ReactiveSequenceForm(
-    MutableSequenceForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
+class ReactiveSequenceSurface(
+    MutableSequenceSurface[CollectionT, ElementT, CollectionResultT, ElementResultT],
     Generic[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
-    """Sequence with change subscriptions layered on MutableSequenceForm.
+    """Sequence with change subscriptions layered on MutableSequenceSurface.
 
     Notes:
         - Adds `on_change` for any-change observation on this slot. The
           three tree-aware variants (on_child_change, on_children_change,
           on_descendants_change) are shape-domain and live on
-          `nu.domains.shape.collection.ReactiveCollectionForm`, not
+          `nu.domains.shape.collection.ReactiveCollectionSurface`, not
           here.
     """
 

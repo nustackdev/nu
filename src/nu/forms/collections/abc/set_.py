@@ -1,8 +1,8 @@
 """Set collection: bases + mutations.
 
-SetLikeForm = Collection + subset comparisons (< <= > >=) + isdisjoint
+SetLikeSurface = Collection + subset comparisons (< <= > >=) + isdisjoint
     + union/intersection/difference/symmetric_difference/issubset/issuperset
-MutableSetForm = SetLike + add/remove/discard/pop/clear
+MutableSetSurface = SetLike + add/remove/discard/pop/clear
     + update/intersection_update/difference_update/symmetric_difference_update
 
 Follows Python's collections.abc.Set / MutableSet pattern. Nu reserves ``&``
@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
-from .collection import CollectionForm
+from .collection import CollectionSurface
 
 
 if TYPE_CHECKING:
@@ -35,9 +35,9 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "MutableSetForm",
-    "ReactiveSetForm",
-    "SetLikeForm",
+    "MutableSetSurface",
+    "ReactiveSetSurface",
+    "SetLikeSurface",
 ]
 
 
@@ -47,8 +47,8 @@ CollectionResultT = TypeVar("CollectionResultT")
 ElementResultT = TypeVar("ElementResultT")
 
 
-class SetLikeForm(
-    CollectionForm[ElementT, CollectionResultT, ElementResultT],
+class SetLikeSurface(
+    CollectionSurface[ElementT, CollectionResultT, ElementResultT],
     Generic[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
     """Base for set values, like collections.abc.Set.
@@ -298,13 +298,13 @@ class SetLikeForm(
         return Bool(IsDisjoint(self, other))
 
 
-class MutableSetForm(
-    SetLikeForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
+class MutableSetSurface(
+    SetLikeSurface[CollectionT, ElementT, CollectionResultT, ElementResultT],
     Generic[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
     """Base for mutable set values, like collections.abc.MutableSet.
 
-    Adds add/remove/discard/pop/clear on top of SetLikeForm, and the
+    Adds add/remove/discard/pop/clear on top of SetLikeSurface, and the
     `update` / `*_update` methods: Nu's spelling of the ABC's in-place
     operators `|= &= -= ^=`, which Nu reserves or leaves undefined.
 
@@ -492,8 +492,8 @@ class MutableSetForm(
         return SymmetricDifferenceUpdate(self, other)
 
 
-class ReactiveSetForm(
-    MutableSetForm[CollectionT, ElementT, CollectionResultT, ElementResultT],
+class ReactiveSetSurface(
+    MutableSetSurface[CollectionT, ElementT, CollectionResultT, ElementResultT],
     Generic[CollectionT, ElementT, CollectionResultT, ElementResultT],
 ):
     """Reactive set. Adds on_change() for any-change observation.
@@ -501,7 +501,7 @@ class ReactiveSetForm(
     Notes:
         - The three tree-aware methods (on_child_change,
           on_children_change, on_descendants_change) are shape-domain and
-          live on `nu.domains.shape.collection.ReactiveCollectionForm`,
+          live on `nu.domains.shape.collection.ReactiveCollectionSurface`,
           not here.
 
     Example::

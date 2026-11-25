@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
 
-from nu.lang import TypedNu
+from nu.lang import Form
 
-from ..constructor import value_constructor
-from .abc import MutableSequenceForm
+from .abc import MutableSequenceSurface
 from .abc.sequence_interactions import ListCreate, ListOf
 
 
@@ -32,67 +31,8 @@ __all__ = [
 T = TypeVar("T")
 
 
-class List(
-    MutableSequenceForm[list[T], T, "List[T]", "Object"],
-    TypedNu[list[T]],
-    Generic[T],
-):
-    """List interface. Mutable sequence + comparable.
-
-    Notes:
-        - `+` concatenates and `*` repeats, matching Python's list
-          operators. There's no other arithmetic.
-        - Comparison operators compare element-by-element, Python list
-          ordering, and yield Bool. Chained comparisons like `a > b > c`
-          do not build a single term; write them as `And(a > b, b > c)`.
-        - Indexing with an out-of-range int raises at evaluation time,
-          matching Python. Slicing never raises; out-of-range bounds clamp
-          like Python slicing.
-        - `sort` and `copy` are list-only; the rest of the mutable
-          sequence surface (`set_at`, `del_at`, `append`, `extend`, ...)
-          comes from the shared mutable-sequence base.
-        - No subscript write/delete and no in-place `+=` / `*=`: as
-          statements they drop or rebind the term. Use `set_at`, `del_at`
-          and `extend`.
-
-    Example:
-        >>> nu.run(nu.List.of(1, 2) + nu.List.of(3, 4))[0]
-        [1, 2, 3, 4]
-    """
-
-    @value_constructor
-    def create(cls) -> List[T]:
-        """Yield a fresh empty list.
-
-        Yields:
-            An empty list.
-
-        Example:
-            >>> nu.run(nu.List.create())[0]
-            []
-        """
-        return cls(ListCreate())
-
-    @value_constructor
-    def of(cls, *items: Arg) -> List:
-        """Yield a list from positional item expressions.
-
-        Args:
-            items: the item expressions, packed into the list in order.
-                Each may be a Nu expression or a plain literal.
-
-        Notes:
-            - Sibling to `Tuple.of`, same evaluation shape, different
-              wrapping.
-
-        Yields:
-            The list `[<items[0]>, <items[1]>, ...]`.
-
-        Example:
-            >>> nu.run(nu.List.of(1, 2, 3))[0]
-            [1, 2, 3]
-        """
-        return cls(ListOf(*items))
+class ListSurface(MutableSequenceSurface[list[T], T, "List[T]", "Object"], Generic[T]):
+    """The methods of ``List``, shared by the ``List`` form and every ref that holds one."""
 
     def _wrap_sliceable_result(self, operand: Nu) -> List:
         """Wrap operand as List for slice results."""
@@ -125,15 +65,15 @@ class List(
     # nudle refs holding lists, etc.) that specializes ``T``.
 
     @overload
-    def __getitem__(self: List[bool], key: IntArg) -> Bool: ...
+    def __getitem__(self: ListSurface[bool], key: IntArg) -> Bool: ...
     @overload
-    def __getitem__(self: List[int], key: IntArg) -> Int: ...
+    def __getitem__(self: ListSurface[int], key: IntArg) -> Int: ...
     @overload
-    def __getitem__(self: List[float], key: IntArg) -> Float: ...
+    def __getitem__(self: ListSurface[float], key: IntArg) -> Float: ...
     @overload
-    def __getitem__(self: List[str], key: IntArg) -> Str: ...
+    def __getitem__(self: ListSurface[str], key: IntArg) -> Str: ...
     @overload
-    def __getitem__(self: List[bytes], key: IntArg) -> Bytes: ...
+    def __getitem__(self: ListSurface[bytes], key: IntArg) -> Bytes: ...
     @overload
     def __getitem__(self, key: IntArg) -> Object: ...
     @overload
@@ -433,3 +373,62 @@ class List(
         from ..primitives import Bool
 
         return Bool(Is(self, other))
+
+
+class List(ListSurface[T], Form[list[T]], Generic[T]):
+    """List interface. Mutable sequence + comparable.
+
+    Notes:
+        - `+` concatenates and `*` repeats, matching Python's list
+          operators. There's no other arithmetic.
+        - Comparison operators compare element-by-element, Python list
+          ordering, and yield Bool. Chained comparisons like `a > b > c`
+          do not build a single term; write them as `And(a > b, b > c)`.
+        - Indexing with an out-of-range int raises at evaluation time,
+          matching Python. Slicing never raises; out-of-range bounds clamp
+          like Python slicing.
+        - `sort` and `copy` are list-only; the rest of the mutable
+          sequence surface (`set_at`, `del_at`, `append`, `extend`, ...)
+          comes from the shared mutable-sequence base.
+        - No subscript write/delete and no in-place `+=` / `*=`: as
+          statements they drop or rebind the term. Use `set_at`, `del_at`
+          and `extend`.
+
+    Example:
+        >>> nu.run(nu.List.of(1, 2) + nu.List.of(3, 4))[0]
+        [1, 2, 3, 4]
+    """
+
+    @classmethod
+    def create(cls) -> List[T]:
+        """Yield a fresh empty list.
+
+        Yields:
+            An empty list.
+
+        Example:
+            >>> nu.run(nu.List.create())[0]
+            []
+        """
+        return cls(ListCreate())
+
+    @classmethod
+    def of(cls, *items: Arg) -> List:
+        """Yield a list from positional item expressions.
+
+        Args:
+            items: the item expressions, packed into the list in order.
+                Each may be a Nu expression or a plain literal.
+
+        Notes:
+            - Sibling to `Tuple.of`, same evaluation shape, different
+              wrapping.
+
+        Yields:
+            The list `[<items[0]>, <items[1]>, ...]`.
+
+        Example:
+            >>> nu.run(nu.List.of(1, 2, 3))[0]
+            [1, 2, 3]
+        """
+        return cls(ListOf(*items))

@@ -17,7 +17,7 @@ import pytest
 
 import nu
 import nustd
-from nu.lang import Form
+from nu.lang import Cardinality, Surface, cardinality_of
 
 
 def _terms() -> list[object]:
@@ -116,7 +116,7 @@ def test_next_raises_with_a_hint() -> None:
 def test_iteration_has_explicit_spellings() -> None:
     it = nu.List.of(1, 2).iter()
     assert isinstance(it, nu.Iterator)
-    assert isinstance(it, nu.StreamQuery)
+    assert cardinality_of(it) is Cardinality.STREAM
     assert isinstance(nu.tree.children(it)[0], nu.Iter)
     assert isinstance(nu.Object([1]).iter(), nu.Iterator)
 
@@ -279,9 +279,9 @@ def test_public_class_eq_builds_on_forms_and_raises_elsewhere(cls: type) -> None
         method = getattr(cls, name)
         assert method is not object.__dict__[name], f"{cls}: {name} is Python's default"
         owner = _owner(cls, name)
-        if issubclass(cls, Form):
-            # A Form (or a Ref carrying one) answers with its own comparison.
-            assert owner is Form or issubclass(owner, Form), f"{cls}: {name} from {owner}"
+        if issubclass(cls, Surface):
+            # A form or a Ref carrying a surface answers with its own comparison.
+            assert owner is Surface or issubclass(owner, Surface), f"{cls}: {name} from {owner}"
         else:
             assert method is getattr(nu.Nu, name), f"{cls}: bare term {name} from {owner}"
 

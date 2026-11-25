@@ -2,7 +2,7 @@
 
 A taxonomy of ``Nu`` subclasses. The leaves (``Ref``, ``ScalarQuery``,
 ``StreamQuery``, ``Command``, ``ScalarAction``, ``StreamAction``,
-``Strategy``, ``Control``, ``_Bracket``, ``Policy``) carry the sort and
+``Strategy``, ``Control``, ``_Bracket``, ``Policy``, ``Form``) carry the sort and
 cardinality bindings concrete nodes use. The interiors (``Interaction``,
 ``Query``, ``Action``, ``Flow``, ``Span``) are abstract groupings for
 ``subsort`` queries and for the dispatch surface ``Interaction._eval`` /
@@ -11,6 +11,9 @@ cardinality bindings concrete nodes use. The interiors (``Interaction``,
 This module declares kinds only, no implementations. ``_Bracket`` is the
 one kind that has a public implementation of its own: ``nu.lang.bracket``
 subclasses it into ``Bracket``, the lifecycle base every bracket extends.
+``Form`` carries its own passthrough compile, since forwarding the body is all
+a Form ever does; the methods a form offers live on a ``Surface``
+(``nu.lang.forms``), never on the kind.
 
 A reduction is not a kind. A kind says whether a node mutates and what it
 gives out; a reduction says what one of its slots takes in: a stream, folded
@@ -30,7 +33,7 @@ Cardinality value spaces).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 from nu.engine import Declared
 
@@ -39,7 +42,10 @@ from .nu import Nu
 
 
 if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
     from nu.lang.runtime import Runtime
+    from nu.lang.typeinfo import TypeInfo
 
 V_co = TypeVar("V_co", covariant=True)
 
@@ -50,6 +56,7 @@ __all__ = [
     "CommandReduction",
     "Control",
     "Flow",
+    "Form",
     "Interaction",
     "Policy",
     "Query",
@@ -189,6 +196,73 @@ class Policy(Span[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     """A Span that governs a body's execution on failure."""
 
     _sort = Declared(value=Sort.POLICY, name="sort")
+
+
+class Form(Span[V_co], Generic[V_co]):  # PEP 695 has no variance markers
+    """A Span that gives its body a typed surface.
+
+    The third Span sub-shape, next to Bracket (lifecycle) and Policy
+    (execution). A Form wraps exactly one body, does no work of its own and
+    forwards the body's yield unchanged, NULL included. Its cardinality is
+    the body's, like every Span, so a Form over a stream is a stream and a
+    Form over a scalar is a scalar; the composition matrix lets only a
+    yielding body in (a Ref, a Query, an Action, or a Span over one).
+
+    The kind is the node only. The methods (``.upper()``, ``+``, ``.pop()``)
+    come from a ``Surface`` mixed in ahead of it, which a Ref shares without
+    becoming a Form: ``Str(StrSurface, Form)`` is the value node and
+    ``StrRef(MutableItemRef, StrSurface)`` the Ref.
+
+    Compiles to a passthrough over the body's thunk. The node is kept rather
+    than elided, so its nid, its attributes and its place in an inspected
+    tree stay where the user wrote it.
+    """
+
+    _sort = Declared(value=Sort.FORM, name="sort")
+
+    def __init__(self, *children: object, type_info: TypeInfo | None = None) -> None:
+        if len(children) != 1:
+            msg = f"{type(self).__name__} wraps exactly one body, got {len(children)}"
+            raise TypeError(msg)
+        super().__init__(*children)
+        self._type_info: TypeInfo | None = type_info
+        """The declared types the body's value carries (a typed collection's
+        key and element), so the surface's own ops stay typed. None when
+        nothing is declared."""
+
+    def __init_subclass__(cls, **kwargs: object) -> None:
+        super().__init_subclass__(**kwargs)
+        if issubclass(cls, Ref):
+            # A Ref shares a form's methods through its Surface, never the
+            # node: it would inherit a sort and a compile it must then shadow.
+            msg = (
+                f"{cls.__name__} is both a Ref and a Form: mix the family's "
+                "Surface into the Ref instead of its Form"
+            )
+            raise TypeError(msg)
+
+    @property
+    def _source(self) -> Any:  # noqa: ANN401
+        """The wrapped body Term."""
+        return self._children[0]
+
+    def _compile(self, nid: int, children: tuple[Callable[..., Any], ...]) -> Callable[..., Any]:
+        (body,) = children
+
+        def thunk(rt: Runtime) -> object:
+            return body(rt)
+
+        return thunk
+
+    def _acompile(
+        self, nid: int, children: tuple[Callable[..., Any], ...]
+    ) -> Callable[..., Awaitable[Any]]:
+        (body,) = children
+
+        async def athunk(rt: Runtime) -> object:
+            return await body(rt)
+
+        return athunk
 
 
 # --- reductions: a slot role, not a kind -------------------------------------

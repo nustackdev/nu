@@ -1,13 +1,12 @@
 """kv program leaf: Nu source stored in a slot, runnable from it.
 
 The stored form is the value form (source text on both sides), so the leaf
-carries an interface rather than a codec. The base order is load-bearing: the
-leaf comes first so the ref reads storage; see the class docstring.
+carries an interface rather than a codec: the ``Program`` surface.
 """
 
 from __future__ import annotations
 
-from nu.prog import Program
+from nu.prog import ProgramSurface
 
 from .items import ItemRef
 
@@ -15,7 +14,7 @@ from .items import ItemRef
 __all__ = ["ProgramRef"]
 
 
-class ProgramRef(ItemRef, Program):
+class ProgramRef(ItemRef, ProgramSurface):
     """A Nu program stored as source text in a KV leaf, with the Program verbs.
 
     Reading it yields the source verbatim, the same as any str leaf. What the
@@ -26,10 +25,6 @@ class ProgramRef(ItemRef, Program):
     Notes:
         - No codec: source text is both the stored form and the value form,
           unlike the std refs that translate between the two.
-        - The base order is load-bearing. ``ItemRef`` first makes the class a
-          ref that reads storage; with ``Program`` first the passthrough
-          would win and the ref would yield its parent instead of the stored
-          value, silently, with no fabric touch recorded.
         - Construction errors surface when the stored source is loaded or
           run, not when it is written, so bad source stores fine.
 

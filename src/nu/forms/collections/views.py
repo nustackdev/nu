@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections.abc import ItemsView, KeysView, ValuesView
 from typing import TYPE_CHECKING, Generic, NoReturn, TypeVar
 
-from nu.lang import TypedNu
+from nu.lang import Form
 
-from .abc import CollectionForm
-from .abc.set_ import SetLikeForm
+from .abc import CollectionSurface
+from .abc.set_ import SetLikeSurface
 
 
 if TYPE_CHECKING:
@@ -30,31 +30,8 @@ K = TypeVar("K")
 V = TypeVar("V")
 
 
-class DictKeys(
-    SetLikeForm[KeysView[K], K, "Set[K]", "Object"],
-    TypedNu[KeysView[K]],
-    Generic[K],
-):
-    """View of a Dict's keys, produced by `dict.keys()`.
-
-    Notes:
-        - Set-like, as Python's `KeysView` is: the subset comparisons
-          (`<`, `<=`, `>`, `>=`), `isdisjoint`, and the named algebra
-          (`union`, `intersection`, `difference`, ...) work on it
-          directly. The named methods are Nu's spelling of the `| & - ^`
-          operators, which Nu reserves or leaves undefined.
-        - Lazy and live: it holds no keys of its own, it re-reads the
-          backing Dict on every evaluation. Mutate the Dict and the view
-          reflects it on the next `nu.run`.
-        - Iterable, sized (`len()`), and supports `contains`.
-
-    Example:
-        >>> keys = nu.Dict({"a": 1, "b": 2}).keys()
-        >>> nu.run(keys.len())[0]
-        2
-        >>> nu.run(keys.contains("a"))[0]
-        True
-    """
+class DictKeysSurface(SetLikeSurface[KeysView[K], K, "Set[K]", "Object"], Generic[K]):
+    """The methods of ``DictKeys``. No slot holds one, so only the form carries them."""
 
     def _wrap_set_result(self, operand: Nu) -> Set[K]:
         """Wrap operand as Set."""
@@ -103,38 +80,37 @@ class DictKeys(
         return Set(ToSet(self))
 
 
+class DictKeys(DictKeysSurface[K], Form[KeysView[K]], Generic[K]):
+    """View of a Dict's keys, produced by `dict.keys()`.
+
+    Notes:
+        - Set-like, as Python's `KeysView` is: the subset comparisons
+          (`<`, `<=`, `>`, `>=`), `isdisjoint`, and the named algebra
+          (`union`, `intersection`, `difference`, ...) work on it
+          directly. The named methods are Nu's spelling of the `| & - ^`
+          operators, which Nu reserves or leaves undefined.
+        - Lazy and live: it holds no keys of its own, it re-reads the
+          backing Dict on every evaluation. Mutate the Dict and the view
+          reflects it on the next `nu.run`.
+        - Iterable, sized (`len()`), and supports `contains`.
+
+    Example:
+        >>> keys = nu.Dict({"a": 1, "b": 2}).keys()
+        >>> nu.run(keys.len())[0]
+        2
+        >>> nu.run(keys.contains("a"))[0]
+        True
+    """
+
+
 _VALUES_EQ_HINT = (
     "a dict values view has no value equality (Python compares it by identity): "
     "compare a snapshot, v.to_list() == other or v.to_set() == other"
 )
 
 
-class DictValues(
-    CollectionForm[V, "List[V]", "Object"],
-    TypedNu[ValuesView[V]],
-    Generic[V],
-):
-    """View of a Dict's values, produced by `dict.values()`.
-
-    Notes:
-        - Not set-like: values can repeat and aren't required to be
-          hashable, so there's no `union`/`intersection` here,
-          unlike `DictKeys` and `DictItems`. Just Collection: iterable,
-          sized (`len()`), and `contains`.
-        - Lazy and live: it holds no values of its own, it re-reads the
-          backing Dict on every evaluation. Mutate the Dict and the view
-          reflects it on the next `nu.run`.
-        - No `==` / `!=`: Python compares values views by identity, never
-          by content, so both raise. Compare a snapshot instead:
-          `values.to_list() == [...]`.
-
-    Example:
-        >>> values = nu.Dict({"a": 1, "b": 2}).values()
-        >>> nu.run(values.len())[0]
-        2
-        >>> nu.run(values.contains(1))[0]
-        True
-    """
+class DictValuesSurface(CollectionSurface[V, "List[V]", "Object"], Generic[V]):
+    """The methods of ``DictValues``. No slot holds one, so only the form carries them."""
 
     def _wrap_element_result(self, operand: Nu) -> Object:
         """Wrap operand as Object element."""
@@ -186,31 +162,34 @@ class DictValues(
         return Set(ToSet(self))
 
 
-class DictItems(
-    SetLikeForm[ItemsView[K, V], tuple[K, V], "Set[tuple[K, V]]", "Object"],
-    TypedNu[ItemsView[K, V]],
-    Generic[K, V],
-):
-    """View of a Dict's `(key, value)` pairs, produced by `dict.items()`.
+class DictValues(DictValuesSurface[V], Form[ValuesView[V]], Generic[V]):
+    """View of a Dict's values, produced by `dict.values()`.
 
     Notes:
-        - Set-like, as Python's `ItemsView` is when the values are
-          hashable: the subset comparisons, `isdisjoint`, and the named
-          algebra (`union`, `intersection`, ...) work on it directly, Nu's
-          spelling of the `| & - ^` operators.
-        - Lazy and live: it holds no items of its own, it re-reads the
+        - Not set-like: values can repeat and aren't required to be
+          hashable, so there's no `union`/`intersection` here,
+          unlike `DictKeys` and `DictItems`. Just Collection: iterable,
+          sized (`len()`), and `contains`.
+        - Lazy and live: it holds no values of its own, it re-reads the
           backing Dict on every evaluation. Mutate the Dict and the view
           reflects it on the next `nu.run`.
-        - Iterable, sized (`len()`), and supports `contains` with a
-          `(key, value)` tuple.
+        - No `==` / `!=`: Python compares values views by identity, never
+          by content, so both raise. Compare a snapshot instead:
+          `values.to_list() == [...]`.
 
     Example:
-        >>> items = nu.Dict({"a": 1, "b": 2}).items()
-        >>> nu.run(items.len())[0]
+        >>> values = nu.Dict({"a": 1, "b": 2}).values()
+        >>> nu.run(values.len())[0]
         2
-        >>> nu.run(items.contains(("a", 1)))[0]
+        >>> nu.run(values.contains(1))[0]
         True
     """
+
+
+class DictItemsSurface(
+    SetLikeSurface[ItemsView[K, V], tuple[K, V], "Set[tuple[K, V]]", "Object"], Generic[K, V]
+):
+    """The methods of ``DictItems``. No slot holds one, so only the form carries them."""
 
     def _wrap_set_result(self, operand: Nu) -> Set[tuple[K, V]]:
         """Wrap operand as Set."""
@@ -261,3 +240,26 @@ class DictItems(
         from .set_ import Set
 
         return Set(ToSet(self))
+
+
+class DictItems(DictItemsSurface[K, V], Form[ItemsView[K, V]], Generic[K, V]):
+    """View of a Dict's `(key, value)` pairs, produced by `dict.items()`.
+
+    Notes:
+        - Set-like, as Python's `ItemsView` is when the values are
+          hashable: the subset comparisons, `isdisjoint`, and the named
+          algebra (`union`, `intersection`, ...) work on it directly, Nu's
+          spelling of the `| & - ^` operators.
+        - Lazy and live: it holds no items of its own, it re-reads the
+          backing Dict on every evaluation. Mutate the Dict and the view
+          reflects it on the next `nu.run`.
+        - Iterable, sized (`len()`), and supports `contains` with a
+          `(key, value)` tuple.
+
+    Example:
+        >>> items = nu.Dict({"a": 1, "b": 2}).items()
+        >>> nu.run(items.len())[0]
+        2
+        >>> nu.run(items.contains(("a", 1)))[0]
+        True
+    """

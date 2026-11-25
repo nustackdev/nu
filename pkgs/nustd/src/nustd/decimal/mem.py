@@ -16,7 +16,7 @@ from nu.core import ToStr
 from nu.domains.shape import SetCmd
 from nu.lang import Nu
 from nu.mem.refs import ItemRef
-from nustd.decimal.forms import Decimal as DecimalForm
+from nustd.decimal.forms import DecimalSurface
 
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 __all__ = ["DecimalRef"]
 
 
-class DecimalRef(ItemRef, DecimalForm):
+class DecimalRef(ItemRef, DecimalSurface):
     """A Decimal slot in the dict substrate, stored as its exact string form.
 
     Args:

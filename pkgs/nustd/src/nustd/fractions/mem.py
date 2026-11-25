@@ -16,7 +16,7 @@ from nu.core import ToStr
 from nu.domains.shape import SetCmd
 from nu.lang import Nu
 from nu.mem.refs import ItemRef
-from nustd.fractions.forms import Fraction as FractionForm
+from nustd.fractions.forms import FractionSurface
 
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 __all__ = ["FractionRef"]
 
 
-class FractionRef(ItemRef, FractionForm):
+class FractionRef(ItemRef, FractionSurface):
     """A Fraction slot in the dict substrate, stored as ``"numerator/denom"``.
 
     Args:

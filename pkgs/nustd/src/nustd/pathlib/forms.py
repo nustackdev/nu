@@ -28,7 +28,7 @@ from __future__ import annotations
 from pathlib import PurePath as _PurePath
 from typing import TYPE_CHECKING, TypeAlias
 
-from nu.lang import Form, TypedNu
+from nu.lang import Form, Surface
 
 
 if TYPE_CHECKING:
@@ -42,39 +42,12 @@ if TYPE_CHECKING:
 __all__ = ["Path"]
 
 
-class Path(Form, TypedNu[_PurePath]):
-    """``pathlib`` path as a Form - the pure (no filesystem I/O) surface.
-
-    Named ``Path`` to mirror ``from pathlib import Path``; backed by
-    ``PurePath``, so only the lexical operations are modeled. Build one with
-    ``Path.of(...)``; read its components as properties; transform it with the
-    method calls or the ``/`` operator.
-    """
+class PathSurface(Surface):
+    """The methods of ``Path``, shared by the ``Path`` form and every ref that holds one."""
 
     # =========================================================================
     # CONSTRUCTORS (new atoms in interactions)
     # =========================================================================
-
-    @classmethod
-    def of(cls, *segments: StrArg | PathArg) -> Path:
-        """Build a path from segments: ``PurePath(*segments)``."""
-        from .interactions import PathOf
-
-        return Path(PathOf(*segments))
-
-    @classmethod
-    def cwd(cls) -> Path:
-        """The current working directory: ``Path.cwd()``."""
-        from .interactions import PathCwd
-
-        return Path(PathCwd())
-
-    @classmethod
-    def home(cls) -> Path:
-        """The user's home directory: ``Path.home()``."""
-        from .interactions import PathHome
-
-        return Path(PathHome())
 
     # =========================================================================
     # COMPONENT READS (reuse core GetAttr)
@@ -279,3 +252,34 @@ class Path(Form, TypedNu[_PurePath]):
         from nu.forms import Bool
 
         return Bool(Ne(self, other))
+
+
+class Path(PathSurface, Form[_PurePath]):
+    """``pathlib`` path as a Form - the pure (no filesystem I/O) surface.
+
+    Named ``Path`` to mirror ``from pathlib import Path``; backed by
+    ``PurePath``, so only the lexical operations are modeled. Build one with
+    ``Path.of(...)``; read its components as properties; transform it with the
+    method calls or the ``/`` operator.
+    """
+
+    @classmethod
+    def of(cls, *segments: StrArg | PathArg) -> Path:
+        """Build a path from segments: ``PurePath(*segments)``."""
+        from .interactions import PathOf
+
+        return Path(PathOf(*segments))
+
+    @classmethod
+    def cwd(cls) -> Path:
+        """The current working directory: ``Path.cwd()``."""
+        from .interactions import PathCwd
+
+        return Path(PathCwd())
+
+    @classmethod
+    def home(cls) -> Path:
+        """The user's home directory: ``Path.home()``."""
+        from .interactions import PathHome
+
+        return Path(PathHome())

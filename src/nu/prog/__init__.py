@@ -32,7 +32,7 @@ from .constructors import BraceError, Constructor, InProcess, Venv
 from .diagnostics import ConstructionError, Diagnostic
 from .eval import Eval
 from .eval_promise import EvalPromiseError
-from .forms import Program
+from .forms import Program, ProgramSurface
 from .load import LoadNu
 
 
@@ -46,6 +46,7 @@ __all__ = [
     "InProcess",
     "LoadNu",
     "Program",
+    "ProgramSurface",
     "PyBrace",
     "Venv",
 ]

@@ -12,9 +12,9 @@ import pytest
 
 import nu
 from nu import run, shape
-from nu.domains.shape import Shape, StructuredRef
+from nu.domains.shape import Shape
 from nu.forms import Dict, Int, List, Set, Str
-from nu.lang import TypedNu
+from nu.lang import Form
 from nustd.kv import (
     BoolRef,
     BytesRef,
@@ -65,9 +65,7 @@ class Bag(Shape):
 )
 def test_each_kv_ref_sits_on_its_shape_ref(ref: type, base: type) -> None:
     assert issubclass(ref, base)
-    mro = ref.__mro__
-    if TypedNu in mro:
-        assert mro.index(StructuredRef) < mro.index(TypedNu), ref
+    assert not issubclass(ref, Form), ref
 
 
 def test_kh57_is_a_plain_mapping_not_a_dict() -> None:

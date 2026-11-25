@@ -18,11 +18,13 @@ from nu.domains.shape import SetCmd
 from nu.lang import Nu
 from nustd.datetime._iso import datetime_from_iso, time_from_iso
 from nustd.datetime._offset import UTC, parse_timezone
-from nustd.datetime.forms import date as DateForm
-from nustd.datetime.forms import datetime as DatetimeForm
-from nustd.datetime.forms import time as TimeForm
-from nustd.datetime.forms import timedelta as TimedeltaForm
-from nustd.datetime.forms import timezone as TimezoneForm
+from nustd.datetime.forms import (
+    DateSurface,
+    DatetimeSurface,
+    TimedeltaSurface,
+    TimeSurface,
+    TimezoneSurface,
+)
 from nustd.datetime.interactions import TimedeltaTotalSeconds
 from nustd.kv.refs import ItemRef
 
@@ -34,7 +36,7 @@ if TYPE_CHECKING:
 __all__ = ["DateRef", "DatetimeRef", "TimeRef", "TimedeltaRef", "TimezoneRef"]
 
 
-class DateRef(ItemRef, DateForm):
+class DateRef(ItemRef, DateSurface):
     """A date leaf in KV storage, stored as an ISO ``YYYY-MM-DD`` str.
 
     Notes:
@@ -77,7 +79,7 @@ class DateRef(ItemRef, DateForm):
         return SetCmd(self, val)
 
 
-class DatetimeRef(ItemRef, DatetimeForm):
+class DatetimeRef(ItemRef, DatetimeSurface):
     """A datetime leaf in KV storage, stored as an ISO str.
 
     Notes:
@@ -124,7 +126,7 @@ class DatetimeRef(ItemRef, DatetimeForm):
         return SetCmd(self, val)
 
 
-class TimeRef(ItemRef, TimeForm):
+class TimeRef(ItemRef, TimeSurface):
     """A time-of-day leaf in KV storage, stored as an ISO ``HH:MM:SS`` str.
 
     Notes:
@@ -163,7 +165,7 @@ class TimeRef(ItemRef, TimeForm):
         return SetCmd(self, val)
 
 
-class TimedeltaRef(ItemRef, TimedeltaForm):
+class TimedeltaRef(ItemRef, TimedeltaSurface):
     """A timedelta leaf in KV storage, stored as a float count of seconds.
 
     Notes:
@@ -207,7 +209,7 @@ class TimedeltaRef(ItemRef, TimedeltaForm):
         return SetCmd(self, val)
 
 
-class TimezoneRef(ItemRef, TimezoneForm):
+class TimezoneRef(ItemRef, TimezoneSurface):
     """A fixed-offset timezone leaf in KV storage, stored as its offset str.
 
     Notes:

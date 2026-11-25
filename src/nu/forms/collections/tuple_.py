@@ -6,10 +6,9 @@ from typing import TYPE_CHECKING, Generic
 
 from typing_extensions import TypeVarTuple, Unpack
 
-from nu.lang import TypedNu
+from nu.lang import Form
 
-from ..constructor import value_constructor
-from .abc import SequenceForm
+from .abc import SequenceSurface
 from .abc.sequence_interactions import TupleCreate, TupleOf
 
 
@@ -27,63 +26,10 @@ __all__ = [
 Ts = TypeVarTuple("Ts")
 
 
-class Tuple(
-    SequenceForm[tuple[Unpack[Ts]], object, "Tuple", "Object"],
-    TypedNu[tuple[Unpack[Ts]]],
-    Generic[Unpack[Ts]],
+class TupleSurface(
+    SequenceSurface[tuple[Unpack[Ts]], object, "Tuple", "Object"], Generic[Unpack[Ts]]
 ):
-    """Tuple interface. Immutable sequence + comparable.
-
-    Notes:
-        - No mutation methods: no `append`, `insert`, `pop`, `remove`. Every
-          op that would change contents yields a new Tuple instead, unlike
-          List which mutates in place.
-        - Arity is fixed at construction; there's no way to grow or shrink
-          one after `of`/`create`.
-        - Indexing with an out-of-range int raises at evaluation time,
-          matching Python. Slicing never raises, bounds are clamped.
-        - `+` and `*` concatenate and repeat like List's, but always
-          produce a new Tuple.
-        - Slicing yields Tuple; `iter` and `reversed` yield a stream.
-
-    Example:
-        >>> nu.run(nu.Tuple.of(1, 2, 3))[0]
-        (1, 2, 3)
-    """
-
-    @value_constructor
-    def create(cls) -> Tuple[Unpack[Ts]]:
-        """Empty tuple.
-
-        Yields:
-            `()`.
-
-        Example:
-            >>> nu.run(nu.Tuple.create())[0]
-            ()
-        """
-        return cls(TupleCreate())
-
-    @value_constructor
-    def of(cls, *items: Arg) -> Tuple:
-        """Tuple built from positional item expressions.
-
-        Args:
-            items: the expressions to evaluate and pack, in order.
-
-        Notes:
-            - Each argument is evaluated in the current context and packed:
-              `Tuple.of(x, y, z)` yields `(<x>, <y>, <z>)`. Sibling to
-              `List.of` and `Dict.of`.
-
-        Yields:
-            The packed tuple.
-
-        Example:
-            >>> nu.run(nu.Tuple.of(1, 2, 3))[0]
-            (1, 2, 3)
-        """
-        return cls(TupleOf(*items))
+    """The methods of ``Tuple``, shared by the ``Tuple`` form and every ref that holds one."""
 
     def _wrap_sliceable_result(self, operand: Nu) -> Tuple:
         """Wrap operand as Tuple for slice results."""
@@ -331,3 +277,58 @@ class Tuple(
         from ..primitives import Bool
 
         return Bool(Is(self, other))
+
+
+class Tuple(TupleSurface[Unpack[Ts]], Form[tuple[Unpack[Ts]]], Generic[Unpack[Ts]]):
+    """Tuple interface. Immutable sequence + comparable.
+
+    Notes:
+        - No mutation methods: no `append`, `insert`, `pop`, `remove`. Every
+          op that would change contents yields a new Tuple instead, unlike
+          List which mutates in place.
+        - Arity is fixed at construction; there's no way to grow or shrink
+          one after `of`/`create`.
+        - Indexing with an out-of-range int raises at evaluation time,
+          matching Python. Slicing never raises, bounds are clamped.
+        - `+` and `*` concatenate and repeat like List's, but always
+          produce a new Tuple.
+        - Slicing yields Tuple; `iter` and `reversed` yield a stream.
+
+    Example:
+        >>> nu.run(nu.Tuple.of(1, 2, 3))[0]
+        (1, 2, 3)
+    """
+
+    @classmethod
+    def create(cls) -> Tuple[Unpack[Ts]]:
+        """Empty tuple.
+
+        Yields:
+            `()`.
+
+        Example:
+            >>> nu.run(nu.Tuple.create())[0]
+            ()
+        """
+        return cls(TupleCreate())
+
+    @classmethod
+    def of(cls, *items: Arg) -> Tuple:
+        """Tuple built from positional item expressions.
+
+        Args:
+            items: the expressions to evaluate and pack, in order.
+
+        Notes:
+            - Each argument is evaluated in the current context and packed:
+              `Tuple.of(x, y, z)` yields `(<x>, <y>, <z>)`. Sibling to
+              `List.of` and `Dict.of`.
+
+        Yields:
+            The packed tuple.
+
+        Example:
+            >>> nu.run(nu.Tuple.of(1, 2, 3))[0]
+            (1, 2, 3)
+        """
+        return cls(TupleOf(*items))

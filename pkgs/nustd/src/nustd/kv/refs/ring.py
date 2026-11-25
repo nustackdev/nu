@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Generic, cast, overload
 
 from typing_extensions import TypeVar
 
-from nu.domains.shape import MutableCollectionForm, SequenceRef, Slot
+from nu.domains.shape import MutableCollectionSurface, SequenceRef, Slot
 from nu.lang.typeinfo import TypeInfo
 from virtuals.views import RingView
 
@@ -37,7 +37,7 @@ T = TypeVar("T")
 E = TypeVar("E")
 
 
-class RingRef(SequenceRef, MutableCollectionForm, ViewRef[list[T]], Generic[T]):
+class RingRef(SequenceRef, MutableCollectionSurface, ViewRef[list[T]], Generic[T]):
     """A capped log in KV storage: appends land at the end, the oldest drop.
 
     A read-only Python ``Sequence`` plus ``append``, ``extend`` and

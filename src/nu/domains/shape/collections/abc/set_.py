@@ -1,6 +1,6 @@
 """Set row: an unordered collection of unique elements in a shape fabric, at the ABC level.
 
-Three form tiers over ``SetLikeForm`` (the ``collections.abc.Set`` form). A
+Three form tiers over ``SetLikeSurface`` (the ``collections.abc.Set`` form). A
 tier is the capability base first, then the tier below, then the ``nu.forms``
 set ABC of that tier, so the shape typing and slot ops win over the plain
 form's. Every result is typed by what the slot declared: an element reads as
@@ -10,22 +10,22 @@ on.
 Refs bind that surface to an address, named after their form: ``SetLikeRef``
 and ``MutableSetRef``. A set has no keys, so there is no descent. The reactive
 tier has no ref of its own: ``ReactiveSetRef`` is the ``set`` row's, built on
-``ReactiveSetForm``.
+``ReactiveSetSurface``.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.forms.collections.abc.set_ import MutableSetForm as _MutableSetForm
-from nu.forms.collections.abc.set_ import ReactiveSetForm as _ReactiveSetForm
-from nu.forms.collections.abc.set_ import SetLikeForm as _SetLikeForm
+from nu.forms.collections.abc.set_ import MutableSetSurface as _MutableSetSurface
+from nu.forms.collections.abc.set_ import ReactiveSetSurface as _ReactiveSetSurface
+from nu.forms.collections.abc.set_ import SetLikeSurface as _SetLikeSurface
 
 from ...base import StructuredRef
 from ...collection import (
-    CollectionForm,
-    MutableCollectionForm,
-    ReactiveCollectionForm,
+    CollectionSurface,
+    MutableCollectionSurface,
+    ReactiveCollectionSurface,
     form_of,
     holds,
 )
@@ -38,15 +38,15 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "MutableSetForm",
     "MutableSetRef",
-    "ReactiveSetForm",
-    "SetLikeForm",
+    "MutableSetSurface",
+    "ReactiveSetSurface",
     "SetLikeRef",
+    "SetLikeSurface",
 ]
 
 
-class SetLikeForm(CollectionForm, _SetLikeForm):
+class SetLikeSurface(CollectionSurface, _SetLikeSurface):
     """Shape set: unordered-unique-element ops + exists/extract, typed by the declaration."""
 
     def _wrap_element_result(self, operand: Nu) -> Object:
@@ -60,26 +60,26 @@ class SetLikeForm(CollectionForm, _SetLikeForm):
 
         return Iterator(operand, type_info=holds(PyIterator, elem=self._declared.elem))
 
-    def _wrap_set_result(self, operand: Nu) -> _SetLikeForm:
+    def _wrap_set_result(self, operand: Nu) -> _SetLikeSurface:
         """Set algebra: a Set carrying the declared element type on. A row narrows it to its own type."""
         from nu.forms import Set
 
         return Set(operand, type_info=holds(set, elem=self._declared.elem))
 
 
-class MutableSetForm(MutableCollectionForm, SetLikeForm, _MutableSetForm):
+class MutableSetSurface(MutableCollectionSurface, SetLikeSurface, _MutableSetSurface):
     """Mutable shape set: set ops + exists/extract + set/erase."""
 
 
-class ReactiveSetForm(ReactiveCollectionForm, MutableSetForm, _ReactiveSetForm):
+class ReactiveSetSurface(ReactiveCollectionSurface, MutableSetSurface, _ReactiveSetSurface):
     """Reactive shape set: adds on_change and the tree-aware on_child_change family."""
 
 
-class SetLikeRef(SetLikeForm, StructuredRef):
+class SetLikeRef(SetLikeSurface, StructuredRef):
     """Unordered unique-element container Ref; no child descent."""
 
 
-class MutableSetRef(MutableSetForm, SetLikeRef):
+class MutableSetRef(MutableSetSurface, SetLikeRef):
     """Mutable unordered unique-element container Ref.
 
     Adds: add(v), remove(v), discard(v), pop(), clear(), update(), ..., set(v), erase().

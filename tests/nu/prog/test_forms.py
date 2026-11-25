@@ -56,7 +56,7 @@ def venv_brace(body: nu.Nu, tag: object = None) -> nu.Nu:
 
 
 def test_a_bare_string_is_all_it_takes() -> None:
-    # No ``.of()`` classmethod: TypedNu wraps one child and a plain str
+    # No ``.of()`` classmethod: a Form wraps one child and a plain str
     # literalizes on the way into the tree, so the source is the child.
     assert nu.run(nu.Str(Program(GREETING)))[0] == GREETING
 

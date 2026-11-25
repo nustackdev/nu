@@ -1,6 +1,6 @@
 """Collection capability.
 
-CollectionForm = Sized + Iterable + Container.
+CollectionSurface = Sized + Iterable + Container.
 
 Follows Python's collections.abc.Collection pattern.
 
@@ -14,13 +14,13 @@ from __future__ import annotations
 
 from typing import Generic, TypeVar
 
-from .container import ContainerForm
-from .iterable import IterableForm
-from .sized import SizedForm
+from .container import ContainerSurface
+from .iterable import IterableSurface
+from .sized import SizedSurface
 
 
 __all__ = [
-    "CollectionForm",
+    "CollectionSurface",
 ]
 
 
@@ -29,16 +29,16 @@ CollectionResultT = TypeVar("CollectionResultT")
 ElementResultT = TypeVar("ElementResultT")
 
 
-class CollectionForm(
-    SizedForm,
-    IterableForm[ElementT, CollectionResultT, ElementResultT],
-    ContainerForm,
+class CollectionSurface(
+    SizedSurface,
+    IterableSurface[ElementT, CollectionResultT, ElementResultT],
+    ContainerSurface,
     Generic[ElementT, CollectionResultT, ElementResultT],
 ):
     """Base for collection values, like collections.abc.Collection.
 
-    Combines `len()` from SizedForm, `contains()` from ContainerForm, and
-    the result-wrapping infrastructure from IterableForm.
+    Combines `len()` from SizedSurface, `contains()` from ContainerSurface, and
+    the result-wrapping infrastructure from IterableSurface.
 
     Example:
         >>> nu.run(nu.List([1, 2, 3]).len())[0]

@@ -1,68 +1,83 @@
-"""Form and TypedNu - the type-wrapping layer.
+"""Surface: the methods side of a form.
 
-``Form`` is a mixin that contributes shared helpers (NULL checks) to typed
-interfaces. The collection ABCs (``MappingForm``, ``SequenceForm``, ...) and the
-primitive leaves (``Int``, ``Str``, ...) inherit ``Form`` to get them.
+A form is two things that used to be one class. The node is the ``Form`` kind
+(``nu.lang.kinds``): a Span that wraps one body and forwards its yield. The
+methods are a ``Surface``: a plain mixin with no sort, no cardinality and no
+compile, so a value form and a Ref can share one method set without either
+inheriting the other's kind::
 
-``TypedNu[T]`` is a transparent ``ScalarQuery`` passthrough: it wraps a single
-Nu child (any non-Term child is auto-wrapped as a ``Literal`` by ``Nu``) and
-yields the child's value unchanged. Operand recursion lives in the child thunk;
-``TypedNu`` just forwards. Leaf interfaces inherit both ``Form`` and ``TypedNu``
-so they participate as Nu tree nodes::
+    Str(StrSurface, Form)               value form: the Span node
+    StrRef(MutableItemRef, StrSurface)  Ref: the Ref node, same methods
 
-    Int(Add(a, b)) + 1  ->  Add(Int(Add(a, b)), Literal(1))
-
-``TypedNuStream[T]`` is its stream-shaped twin: a transparent ``StreamQuery``
-passthrough over one stream child, so a stream form (``Iterator``) sits
-wherever the validator expects a stream.
-
-Hierarchy::
-
-    Form                                    mixin (NULL checks)
-    TypedNu[T]                              ScalarQuery passthrough
-    TypedNuStream[T]                        StreamQuery passthrough
-    Int(Form, TypedNu[int])            primitive leaf
-    Dict(MutableMappingForm, TypedNu[dict])   collection leaf
+``Surface`` is the root of every family's surface. It carries what all of them
+share: the NULL helpers, ``==`` / ``!=`` and ``fallback``, plus the
+``type_info`` field (the declared key and element types a typed collection
+keeps, so its own ops stay typed). Static typing rides the ``Nu[T]`` generics
+of the node a surface is mixed into; a surface carries no type parameter of
+its own.
 
 The NULL-check helpers and ``Bool`` they return live in ``nu.forms``;
-``Form`` reaches them with a lazy import so this module keeps no import-time
-dependency on the forms package (it would be a cycle: forms imports ``Form``).
+``Surface`` reaches them with a lazy import so this module keeps no
+import-time dependency on the forms package (it would be a cycle: forms
+imports ``Surface``).
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, ClassVar
 
-from .kinds import ScalarQuery, StreamQuery
+from .kinds import Form, Ref
+from .nu import Nu
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from typing_extensions import Self
 
     from nu.forms import Bool
-    from nu.lang.runtime import Runtime
     from nu.lang.typeinfo import TypeInfo
 
 
-__all__ = [
-    "Form",
-    "TypedNu",
-    "TypedNuStream",
-]
+__all__ = ["Surface"]
 
 
-T_co = TypeVar("T_co", covariant=True)
+class Surface(Nu):
+    """The methods mixin every form and every typed Ref shares.
 
+    Contributes the NULL helpers, ``fallback`` and ``==`` / ``!=``: on a
+    Surface they build ``Eq`` / ``Ne`` over the values it yields (the bare
+    ``Nu`` base raises instead). A family narrows the operand type by
+    overriding them; a family with no value equality raises.
 
-class Form:
-    """Mixin for typed interfaces. Contributes NULL-check helpers and ``==``.
-
-    ``==`` / ``!=`` on a Form build ``Eq`` / ``Ne`` over the values it yields
-    (the bare ``Nu`` base raises instead). Concrete Forms narrow the operand
-    type by overriding them; a Form with no value equality raises.
+    No kind: it declares no sort, cardinality or compile, so it is never a
+    node on its own. Mix it into one (the ``Form`` kind, a Ref). It subclasses
+    the bare ``Nu`` base so Python's MRO always puts it ahead of ``Nu``: its
+    dunders win over the ones every term carries whichever order the node
+    lists its bases in. It has no ``__init__``: the node it is mixed into
+    builds the term and sets ``_type_info`` (a value form from its
+    ``type_info`` keyword, a Ref from its slot), so the surface never sits in
+    a constructor chain.
     """
+
+    _type_info: TypeInfo | None = None
+    """The declared types this value carries (a typed collection's key and
+    element), so its own ops stay typed. None when nothing is declared."""
+
+    _value_form_cls: ClassVar[type[Form] | None] = None
+    """The value form this surface reads as, set when a Form first mixes it
+    in directly (``Str(StrSurface, Form)`` sets ``StrSurface``'s to ``Str``).
+    Lets a Ref, which has the surface but no Form, read as its value form."""
+
+    def __init_subclass__(cls, **kwargs: object) -> None:
+        super().__init_subclass__(**kwargs)
+        if not issubclass(cls, Form) or issubclass(cls, Ref):
+            return
+        for base in cls.__bases__:
+            if (
+                issubclass(base, Surface)
+                and not issubclass(base, Form)
+                and "_value_form_cls" not in base.__dict__
+            ):
+                base._value_form_cls = cls
 
     def __eq__(self, other: object) -> Bool:  # type: ignore[override]
         """Self equal to other by value: an ``Eq`` term, never a Python bool."""
@@ -79,7 +94,7 @@ class Form:
         return Bool(Ne(self, other))
 
     def is_null(self) -> Bool:
-        """True if this Form's value is NULL. On a container ref ask ``exists()`` instead."""
+        """True if this value is NULL. On a container ref ask ``exists()`` instead."""
         from nu.core import IsNull
         from nu.forms import Bool
 
@@ -120,79 +135,19 @@ class Form:
         return self._value_form()(Fallback(self, *alternatives))  # type: ignore[call-arg, return-value]
 
     def _value_form(self) -> type[Form]:
-        """This Form's value Form, past any Ref mixed in: a ``StrRef`` reads as ``Str``."""
-        from nu.forms import Object
-        from nu.lang.kinds import Ref
+        """This surface's value Form: the node itself, or what a Ref's surface reads as.
 
+        A value form answers its own class (the first Form in the MRO that is
+        no Ref). A Ref has no Form, so it answers the value form its nearest
+        surface was registered with: a ``StrRef`` reads as ``Str``. ``Object``
+        when neither is found.
+        """
         for cls in type(self).__mro__:
-            if issubclass(cls, TypedNu) and issubclass(cls, Form) and not issubclass(cls, Ref):
+            if issubclass(cls, Form) and not issubclass(cls, Ref):
                 return cls
+            registered = cls.__dict__.get("_value_form_cls")
+            if registered is not None:
+                return registered  # type: ignore[no-any-return]
+        from nu.forms import Object
+
         return Object
-
-
-class TypedNu(ScalarQuery[T_co], Generic[T_co]):  # PEP 695 has no variance markers
-    """Transparent ScalarQuery passthrough carrying a python type tag ``T``.
-
-    Wraps a single Nu child and yields its value unchanged, NULL
-    included. The type tag is for the fluent surface only; it has no
-    runtime effect.
-    """
-
-    def __init__(self, *children: object, type_info: TypeInfo | None = None) -> None:
-        super().__init__(*children)
-        self._type_info: TypeInfo | None = type_info
-        """The declared types this value carries (a typed collection's key and
-        element), so its own ops stay typed. None when nothing is declared."""
-
-    @property
-    def _source(self) -> Any:  # noqa: ANN401
-        """The wrapped child Term, or None when there is no child."""
-        return self._children[0] if self._children else None
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        (only,) = children
-
-        def thunk(rt: Runtime) -> object:
-            return only(rt)
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        (only,) = children
-
-        async def athunk(rt: Runtime) -> object:
-            return await only(rt)
-
-        return athunk
-
-
-class TypedNuStream(StreamQuery[T_co], Generic[T_co]):  # PEP 695 has no variance markers
-    """Transparent StreamQuery passthrough carrying a python type tag ``T``.
-
-    The stream twin of ``TypedNu``: wraps a single stream child and yields
-    its items unchanged, so a stream form is stream-sorted and every stream
-    consumer (``Collect``, ``Map``, ``ForEachDo``, ...) accepts it. The type
-    tag is for the fluent surface only; it has no runtime effect.
-    """
-
-    def __init__(self, *children: object, type_info: TypeInfo | None = None) -> None:
-        super().__init__(*children)
-        self._type_info: TypeInfo | None = type_info
-        """The declared types this value carries (a typed collection's key and
-        element), so its own ops stay typed. None when nothing is declared."""
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        (only,) = children
-
-        def thunk(rt: Runtime) -> object:
-            return only(rt)
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        (only,) = children
-
-        async def athunk(rt: Runtime) -> object:
-            return await only(rt)
-
-        return athunk

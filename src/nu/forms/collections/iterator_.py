@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterator as PyIterator
 from typing import TYPE_CHECKING, Generic, NoReturn, TypeVar, overload
 
-from nu.lang import Form, TypedNuStream
+from nu.lang import Form, Surface
 from nu.lang.sentinels import UNSET
 from nu.lang.typeinfo import TypeInfo
 
@@ -35,38 +35,8 @@ _EQ_HINT = (
 )
 
 
-class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
-    """Lazy stream over another form's elements.
-
-    Opened by `.iter()` on an IterableForm, which wraps the source in
-    a stream-shaped `Iter` term. A term of this shape produces its items one
-    at a time rather than as a single value, so it sits wherever a stream
-    goes: `nu.ForEachDo`, `nu.Map`, `nu.Collect`, and the itertools.
-
-    Notes:
-        - Stream-shaped, not scalar. Its surface is stream operations:
-          `map`, `filter`, `sort_by`, `unique`, `reversed`, `enumerate`,
-          `zip` and `flatten` stay streams; `count`, `sum`, `min`, `max`,
-          `any`, `all`, `first` and `last` fold it to one value that keeps
-          chaining (`.sum() > 10`); `to_list`, `to_set`, `to_tuple` and
-          `sorted` drain it into a concrete collection.
-        - No `==` / `!=`: an iterator has no value to compare, so both
-          raise. Drain it first: `it.to_list() == [...]`.
-        - An element type rides in the ``type_info`` field when the
-          source declared one (a typed collection ref opened with `.iter()`).
-          The item `first`/`last`/`min`/`max` read takes that type's form,
-          and every op whose items are still the source's (`filter`,
-          `sort_by`, `unique`, `reversed`, `to_list`, `to_set`, `sorted`)
-          carries it on. `map`, `enumerate`, `zip` and `flatten` do not:
-          they make new items.
-
-    Yields:
-        Its items in order, one per pull, until exhausted.
-
-    Example:
-        >>> nu.run(nu.List.of(1, 2, 3).iter().to_list())[0]
-        [1, 2, 3]
-    """
+class IteratorSurface(Surface, Generic[T]):
+    """The methods of ``Iterator``. No slot holds one, so only the form carries them."""
 
     def __eq__(self, other: object) -> NoReturn:
         raise TypeError(_EQ_HINT)
@@ -99,15 +69,15 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
     # Form to expect based on ``T``, as ``List.__getitem__`` does.
 
     @overload
-    def first(self: Iterator[bool], default: object = ...) -> Bool: ...
+    def first(self: IteratorSurface[bool], default: object = ...) -> Bool: ...
     @overload
-    def first(self: Iterator[int], default: object = ...) -> Int: ...
+    def first(self: IteratorSurface[int], default: object = ...) -> Int: ...
     @overload
-    def first(self: Iterator[float], default: object = ...) -> Float: ...
+    def first(self: IteratorSurface[float], default: object = ...) -> Float: ...
     @overload
-    def first(self: Iterator[str], default: object = ...) -> Str: ...
+    def first(self: IteratorSurface[str], default: object = ...) -> Str: ...
     @overload
-    def first(self: Iterator[bytes], default: object = ...) -> Bytes: ...
+    def first(self: IteratorSurface[bytes], default: object = ...) -> Bytes: ...
     @overload
     def first(self, default: object = ...) -> Object: ...
     def first(self, default=UNSET):  # type: ignore[no-untyped-def]
@@ -217,11 +187,11 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
         return Int(Count(self))
 
     @overload
-    def sum(self: Iterator[bool]) -> Int: ...
+    def sum(self: IteratorSurface[bool]) -> Int: ...
     @overload
-    def sum(self: Iterator[int]) -> Int: ...
+    def sum(self: IteratorSurface[int]) -> Int: ...
     @overload
-    def sum(self: Iterator[float]) -> Float: ...
+    def sum(self: IteratorSurface[float]) -> Float: ...
     @overload
     def sum(self) -> Object: ...
     def sum(self):  # type: ignore[no-untyped-def]
@@ -251,15 +221,15 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
         return Object(Sum(self))
 
     @overload
-    def min(self: Iterator[bool]) -> Bool: ...
+    def min(self: IteratorSurface[bool]) -> Bool: ...
     @overload
-    def min(self: Iterator[int]) -> Int: ...
+    def min(self: IteratorSurface[int]) -> Int: ...
     @overload
-    def min(self: Iterator[float]) -> Float: ...
+    def min(self: IteratorSurface[float]) -> Float: ...
     @overload
-    def min(self: Iterator[str]) -> Str: ...
+    def min(self: IteratorSurface[str]) -> Str: ...
     @overload
-    def min(self: Iterator[bytes]) -> Bytes: ...
+    def min(self: IteratorSurface[bytes]) -> Bytes: ...
     @overload
     def min(self) -> Object: ...
     def min(self):  # type: ignore[no-untyped-def]
@@ -281,15 +251,15 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
         return self._item(Min(self))
 
     @overload
-    def max(self: Iterator[bool]) -> Bool: ...
+    def max(self: IteratorSurface[bool]) -> Bool: ...
     @overload
-    def max(self: Iterator[int]) -> Int: ...
+    def max(self: IteratorSurface[int]) -> Int: ...
     @overload
-    def max(self: Iterator[float]) -> Float: ...
+    def max(self: IteratorSurface[float]) -> Float: ...
     @overload
-    def max(self: Iterator[str]) -> Str: ...
+    def max(self: IteratorSurface[str]) -> Str: ...
     @overload
-    def max(self: Iterator[bytes]) -> Bytes: ...
+    def max(self: IteratorSurface[bytes]) -> Bytes: ...
     @overload
     def max(self) -> Object: ...
     def max(self):  # type: ignore[no-untyped-def]
@@ -349,15 +319,15 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
         return Bool(AllOf(self))
 
     @overload
-    def last(self: Iterator[bool], default: object = ...) -> Bool: ...
+    def last(self: IteratorSurface[bool], default: object = ...) -> Bool: ...
     @overload
-    def last(self: Iterator[int], default: object = ...) -> Int: ...
+    def last(self: IteratorSurface[int], default: object = ...) -> Int: ...
     @overload
-    def last(self: Iterator[float], default: object = ...) -> Float: ...
+    def last(self: IteratorSurface[float], default: object = ...) -> Float: ...
     @overload
-    def last(self: Iterator[str], default: object = ...) -> Str: ...
+    def last(self: IteratorSurface[str], default: object = ...) -> Str: ...
     @overload
-    def last(self: Iterator[bytes], default: object = ...) -> Bytes: ...
+    def last(self: IteratorSurface[bytes], default: object = ...) -> Bytes: ...
     @overload
     def last(self, default: object = ...) -> Object: ...
     def last(self, default=UNSET):  # type: ignore[no-untyped-def]
@@ -578,3 +548,37 @@ class Iterator(Form, TypedNuStream[PyIterator[T]], Generic[T]):
         from .list_ import List
 
         return List(Sorted(Collect(self)), type_info=self._holding(list))
+
+
+class Iterator(IteratorSurface[T], Form[PyIterator[T]], Generic[T]):
+    """Lazy stream over another form's elements.
+
+    Opened by `.iter()` on an IterableSurface, which wraps the source in
+    a stream-shaped `Iter` term. A term of this shape produces its items one
+    at a time rather than as a single value, so it sits wherever a stream
+    goes: `nu.ForEachDo`, `nu.Map`, `nu.Collect`, and the itertools.
+
+    Notes:
+        - Stream-shaped, not scalar. Its surface is stream operations:
+          `map`, `filter`, `sort_by`, `unique`, `reversed`, `enumerate`,
+          `zip` and `flatten` stay streams; `count`, `sum`, `min`, `max`,
+          `any`, `all`, `first` and `last` fold it to one value that keeps
+          chaining (`.sum() > 10`); `to_list`, `to_set`, `to_tuple` and
+          `sorted` drain it into a concrete collection.
+        - No `==` / `!=`: an iterator has no value to compare, so both
+          raise. Drain it first: `it.to_list() == [...]`.
+        - An element type rides in the ``type_info`` field when the
+          source declared one (a typed collection ref opened with `.iter()`).
+          The item `first`/`last`/`min`/`max` read takes that type's form,
+          and every op whose items are still the source's (`filter`,
+          `sort_by`, `unique`, `reversed`, `to_list`, `to_set`, `sorted`)
+          carries it on. `map`, `enumerate`, `zip` and `flatten` do not:
+          they make new items.
+
+    Yields:
+        Its items in order, one per pull, until exhausted.
+
+    Example:
+        >>> nu.run(nu.List.of(1, 2, 3).iter().to_list())[0]
+        [1, 2, 3]
+    """

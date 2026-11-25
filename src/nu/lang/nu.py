@@ -25,7 +25,7 @@ Custom atoms extend ``Nu`` (or one of its sort subclasses); ``Term`` is reserved
 for engine-level work. ``Nu`` itself is abstract: it declares no ``sort`` /
 ``cardinality`` / effect attributes, so a plain ``Nu(...)`` cannot
 pass schema resolution. The algebraic identity element of the tree is
-``Span`` (and its sub-shapes ``Bracket`` / ``Policy``), which carries the
+``Span`` (and its sub-shapes ``Bracket`` / ``Policy`` / ``Form``), which carries the
 TRANSPARENT cardinality and the rest of the forwarding machinery.
 
 ``Nu`` is generic over ``V_co``, the yield type, covariant since ``V``

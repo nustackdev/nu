@@ -16,22 +16,22 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.forms.collections.abc.mapping import MappingForm as _MappingForm
-from nu.forms.collections.abc.mapping import MutableMappingForm as _MutableMappingForm
+from nu.forms.collections.abc.mapping import MappingSurface as _MappingSurface
+from nu.forms.collections.abc.mapping import MutableMappingSurface as _MutableMappingSurface
 from nu.forms.collections.abc.mapping import (
-    MutableOrderedMappingForm as _MutableOrderedMappingForm,
+    MutableOrderedMappingSurface as _MutableOrderedMappingSurface,
 )
-from nu.forms.collections.abc.mapping import OrderedMappingForm as _OrderedMappingForm
-from nu.forms.collections.abc.mapping import ReactiveMappingForm as _ReactiveMappingForm
+from nu.forms.collections.abc.mapping import OrderedMappingSurface as _OrderedMappingSurface
+from nu.forms.collections.abc.mapping import ReactiveMappingSurface as _ReactiveMappingSurface
 from nu.forms.collections.abc.mapping import (
-    ReactiveOrderedMappingForm as _ReactiveOrderedMappingForm,
+    ReactiveOrderedMappingSurface as _ReactiveOrderedMappingSurface,
 )
 
 from ...base import StructuredRef
 from ...collection import (
-    CollectionForm,
-    MutableCollectionForm,
-    ReactiveCollectionForm,
+    CollectionSurface,
+    MutableCollectionSurface,
+    ReactiveCollectionSurface,
     form_of,
     holds,
 )
@@ -44,22 +44,22 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "MappingForm",
     "MappingRef",
-    "MutableMappingForm",
+    "MappingSurface",
     "MutableMappingRef",
-    "MutableOrderedMappingForm",
+    "MutableMappingSurface",
     "MutableOrderedMappingRef",
-    "OrderedMappingForm",
+    "MutableOrderedMappingSurface",
     "OrderedMappingRef",
-    "ReactiveMappingForm",
+    "OrderedMappingSurface",
     "ReactiveMappingRef",
-    "ReactiveOrderedMappingForm",
+    "ReactiveMappingSurface",
     "ReactiveOrderedMappingRef",
+    "ReactiveOrderedMappingSurface",
 ]
 
 
-class MappingForm(CollectionForm, _MappingForm):
+class MappingSurface(CollectionSurface, _MappingSurface):
     """Shape mapping: key-value ops + exists/extract, typed by the declaration."""
 
     def _wrap_value_result(self, operand: Nu) -> Object:
@@ -93,15 +93,17 @@ class MappingForm(CollectionForm, _MappingForm):
         return DictItems(operand, type_info=holds(dict, key=declared.key, elem=declared.elem))
 
 
-class MutableMappingForm(MutableCollectionForm, MappingForm, _MutableMappingForm):
+class MutableMappingSurface(MutableCollectionSurface, MappingSurface, _MutableMappingSurface):
     """Mutable shape mapping: key-value ops + exists/extract + set/erase."""
 
 
-class ReactiveMappingForm(ReactiveCollectionForm, MutableMappingForm, _ReactiveMappingForm):
+class ReactiveMappingSurface(
+    ReactiveCollectionSurface, MutableMappingSurface, _ReactiveMappingSurface
+):
     """Reactive shape mapping: adds on_change and the tree-aware on_child_change family."""
 
 
-class OrderedMappingForm(MappingForm, _OrderedMappingForm):
+class OrderedMappingSurface(MappingSurface, _OrderedMappingSurface):
     """Ordered shape mapping: reversed reads and paging over the mapping surface."""
 
     def _wrap_values_stream(self, operand: Nu) -> Iterator:
@@ -119,17 +121,19 @@ class OrderedMappingForm(MappingForm, _OrderedMappingForm):
         return List(operand, type_info=holds(list, elem=self._declared.key))
 
 
-class MutableOrderedMappingForm(MutableMappingForm, OrderedMappingForm, _MutableOrderedMappingForm):
+class MutableOrderedMappingSurface(
+    MutableMappingSurface, OrderedMappingSurface, _MutableOrderedMappingSurface
+):
     """Mutable ordered shape mapping: ordered reads + in-place writes + set/erase."""
 
 
-class ReactiveOrderedMappingForm(
-    ReactiveMappingForm, MutableOrderedMappingForm, _ReactiveOrderedMappingForm
+class ReactiveOrderedMappingSurface(
+    ReactiveMappingSurface, MutableOrderedMappingSurface, _ReactiveOrderedMappingSurface
 ):
     """Reactive ordered shape mapping: adds on_change and the tree-aware on_child_change family."""
 
 
-class MappingRef(MappingForm, StructuredRef):
+class MappingRef(MappingSurface, StructuredRef):
     """Key-value container Ref; ``ref[key]`` navigates to the value's child Ref.
 
     Navigation is defined once here and routes through ``_wrap_item_ref``, the
@@ -143,14 +147,14 @@ class MappingRef(MappingForm, StructuredRef):
         return self._wrap_item_ref(key)
 
 
-class MutableMappingRef(MutableMappingForm, MappingRef):
+class MutableMappingRef(MutableMappingSurface, MappingRef):
     """Mutable key-value container Ref.
 
     Adds: set(k,v), delete(k), update(), store(v), erase() on top of MappingRef.
     """
 
 
-class ReactiveMappingRef(ReactiveMappingForm, MutableMappingRef):
+class ReactiveMappingRef(ReactiveMappingSurface, MutableMappingRef):
     """Reactive key-value container Ref.
 
     Adds: on_change() (generic), on_child_change(), on_children_change(),
@@ -158,7 +162,7 @@ class ReactiveMappingRef(ReactiveMappingForm, MutableMappingRef):
     """
 
 
-class OrderedMappingRef(OrderedMappingForm, MappingRef):
+class OrderedMappingRef(OrderedMappingSurface, MappingRef):
     """Ordered key-value container Ref.
 
     Adds: reversed_keys(), reversed_values(), reversed_items() and paged
@@ -166,7 +170,7 @@ class OrderedMappingRef(OrderedMappingForm, MappingRef):
     """
 
 
-class MutableOrderedMappingRef(MutableOrderedMappingForm, OrderedMappingRef, MutableMappingRef):
+class MutableOrderedMappingRef(MutableOrderedMappingSurface, OrderedMappingRef, MutableMappingRef):
     """Mutable ordered key-value container Ref.
 
     Adds: the in-place writes of MutableMappingRef on top of OrderedMappingRef.
@@ -174,7 +178,7 @@ class MutableOrderedMappingRef(MutableOrderedMappingForm, OrderedMappingRef, Mut
 
 
 class ReactiveOrderedMappingRef(
-    ReactiveOrderedMappingForm, MutableOrderedMappingRef, ReactiveMappingRef
+    ReactiveOrderedMappingSurface, MutableOrderedMappingRef, ReactiveMappingRef
 ):
     """Reactive ordered key-value container Ref.
 

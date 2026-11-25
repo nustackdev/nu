@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.lang import Form, TypedNu
+from nu.lang import Form, Surface
 
 
 if TYPE_CHECKING:
@@ -19,23 +19,8 @@ __all__ = [
 ]
 
 
-class Bool(Form, TypedNu[bool]):
-    """Boolean interface. Logical + comparable.
-
-    Notes:
-        - Logical operators are the named forms `and_`, `or_`, `not_`. Python
-          reserves `and`, `or`, `not` as keywords, so they cannot be method
-          names. `&`, `|` and `>>` compose flows (Race, Parallel,
-          Sequential) on a Bool like on every term.
-        - Short-circuits like Python: the right operand is only
-          evaluated when the left does not already decide the result.
-        - Comparison operators yield Bool too, treating False as less than
-          True.
-
-    Example:
-        >>> nu.run(nu.Bool(True).and_(nu.Bool(False)))[0]
-        False
-    """
+class BoolSurface(Surface):
+    """The methods of ``Bool``, shared by the ``Bool`` form and every ref that holds one."""
 
     # =========================================================================
     # LOGICAL
@@ -254,3 +239,22 @@ class Bool(Form, TypedNu[bool]):
         from nu.core import Is
 
         return Bool(Is(self, other))
+
+
+class Bool(BoolSurface, Form[bool]):
+    """Boolean interface. Logical + comparable.
+
+    Notes:
+        - Logical operators are the named forms `and_`, `or_`, `not_`. Python
+          reserves `and`, `or`, `not` as keywords, so they cannot be method
+          names. `&`, `|` and `>>` compose flows (Race, Parallel,
+          Sequential) on a Bool like on every term.
+        - Short-circuits like Python: the right operand is only
+          evaluated when the left does not already decide the result.
+        - Comparison operators yield Bool too, treating False as less than
+          True.
+
+    Example:
+        >>> nu.run(nu.Bool(True).and_(nu.Bool(False)))[0]
+        False
+    """

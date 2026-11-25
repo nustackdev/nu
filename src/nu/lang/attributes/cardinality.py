@@ -38,7 +38,7 @@ from .names import Attr
 if TYPE_CHECKING:
     from nu.engine import Path, Program
 
-__all__ = ["ATTRIBUTES", "Cardinality"]
+__all__ = ["ATTRIBUTES", "Cardinality", "cardinality_of"]
 
 
 class Cardinality(StrEnum):
@@ -76,6 +76,47 @@ def _resolve_cardinality(own: Cardinality, children: list[Cardinality]) -> Cardi
     if own is not Cardinality.TRANSPARENT:
         return own
     return children[0] if children else Cardinality.VOID
+
+
+def cardinality_of(term: object) -> Cardinality:
+    """How a built term yields, resolved through any Span to its body.
+
+    The construction-time twin of ``child_cardinality``, for code that must
+    know a term's shape before a program exists (a builder choosing a stream
+    or a scalar wrapper). Follows the same rule: a Span (a Bracket, a Policy,
+    a Form) takes its body's cardinality, a bodyless one is void, and a Dyn
+    with a promise reads as the promise pins it. A plain Python value is one
+    value, so scalar.
+
+    Ask this instead of ``isinstance(x, StreamQuery)``: a stream wrapped in a
+    form (``Iterator``) or a Span (``Snapshot``), or a ``StreamAction``, is a
+    stream too.
+
+    Example:
+        >>> from nu.lang.attributes import cardinality_of
+        >>> cardinality_of(nu.List.of(1, 2).iter())
+        <Cardinality.STREAM: 'stream'>
+        >>> cardinality_of(nu.Int(1))
+        <Cardinality.SCALAR: 'scalar'>
+    """
+    from .sort import Sort
+
+    while True:
+        attributes = getattr(type(term), "_attributes", None)
+        if attributes is None or "cardinality" not in attributes:
+            return Cardinality.SCALAR
+        sort = attributes.get("sort")
+        if sort is not None and sort.value == Sort.DYNAMIC:
+            promise = getattr(term, "dyn_promise", None) or {}
+            pinned = promise.get("cardinality")
+            return Cardinality(pinned) if pinned is not None else Cardinality.SCALAR
+        own = attributes["cardinality"].value
+        if own is not Cardinality.TRANSPARENT:
+            return own  # type: ignore[no-any-return]
+        children = getattr(term, "_children", ())
+        if not children:
+            return Cardinality.VOID
+        term = children[0]
 
 
 ATTRIBUTES: tuple[Attribute, ...] = (

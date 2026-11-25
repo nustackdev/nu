@@ -10,7 +10,7 @@ into the value.
 
 from __future__ import annotations
 
-from nu.forms import Object
+from nu.forms import ObjectSurface
 
 from ..item import MutableItemRef, ReactiveItemRef
 
@@ -18,7 +18,7 @@ from ..item import MutableItemRef, ReactiveItemRef
 __all__ = ["ObjectRef", "ReactiveObjectRef"]
 
 
-class ObjectRef(MutableItemRef, Object):
+class ObjectRef(MutableItemRef, ObjectSurface):
     """Object slot ref."""
 
 

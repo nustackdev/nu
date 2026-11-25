@@ -1,7 +1,7 @@
 """Primitive interfaces and interactions."""
 
-from .bool_ import Bool
-from .bytes_ import Bytes
+from .bool_ import Bool, BoolSurface
+from .bytes_ import Bytes, BytesSurface
 from .bytes_interactions import (
     BytesCapitalize,
     BytesCenter,
@@ -44,12 +44,12 @@ from .bytes_interactions import (
     Decode,
     Hex,
 )
-from .float_ import Float
-from .int_ import Int
-from .none_ import None_
-from .null_ import NullForm
-from .object_ import Object
-from .str_ import Str
+from .float_ import Float, FloatSurface
+from .int_ import Int, IntSurface
+from .none_ import None_, NoneSurface
+from .null_ import NullForm, NullSurface
+from .object_ import Object, ObjectSurface
+from .str_ import Str, StrSurface
 from .str_interactions import (
     Capitalize,
     Casefold,
@@ -101,6 +101,7 @@ from .str_interactions import (
 
 __all__ = [
     "Bool",
+    "BoolSurface",
     "Bytes",
     "BytesCapitalize",
     "BytesCenter",
@@ -135,6 +136,7 @@ __all__ = [
     "BytesSplitLines",
     "BytesStartsWith",
     "BytesStrip",
+    "BytesSurface",
     "BytesSwapCase",
     "BytesTitle",
     "BytesTranslate",
@@ -150,10 +152,12 @@ __all__ = [
     "ExpandTabs",
     "Find",
     "Float",
+    "FloatSurface",
     "FormatMap",
     "Hex",
     "Index",
     "Int",
+    "IntSurface",
     "IsAlnum",
     "IsAlpha",
     "IsAscii",
@@ -170,9 +174,12 @@ __all__ = [
     "LJust",
     "LStrip",
     "Lower",
+    "NoneSurface",
     "None_",
     "NullForm",
+    "NullSurface",
     "Object",
+    "ObjectSurface",
     "Partition",
     "RFind",
     "RIndex",
@@ -187,6 +194,7 @@ __all__ = [
     "SplitLines",
     "StartsWith",
     "Str",
+    "StrSurface",
     "Strip",
     "SwapCase",
     "Title",

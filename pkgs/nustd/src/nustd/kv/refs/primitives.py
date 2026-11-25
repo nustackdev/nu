@@ -16,7 +16,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
 import nu
-from nu.forms import Dict, FrozenSet, List, Set, Tuple
+from nu.forms import (
+    DictSurface,
+    FrozenSetSurface,
+    ListSurface,
+    SetSurface,
+    TupleSurface,
+)
 from nu.lang import Effect
 from nu.lang.null import is_null
 
@@ -89,7 +95,7 @@ class _WriteBackRef(ItemRef):
         return athunk
 
 
-class PrimitiveListRef(_WriteBackRef, List[T], Generic[T]):
+class PrimitiveListRef(_WriteBackRef, ListSurface[T], Generic[T]):
     """A list leaf in KV storage, written and read back whole as one blob.
 
     Notes:
@@ -141,7 +147,7 @@ class PrimitiveListRef(_WriteBackRef, List[T], Generic[T]):
         return ItemPrimitiveSetCmd(self, value)
 
 
-class PrimitiveDictRef(_WriteBackRef, Dict[K, V], Generic[K, V]):
+class PrimitiveDictRef(_WriteBackRef, DictSurface[K, V], Generic[K, V]):
     """A dict leaf in KV storage, written and read back whole as one blob.
 
     Notes:
@@ -192,7 +198,7 @@ class PrimitiveDictRef(_WriteBackRef, Dict[K, V], Generic[K, V]):
         return ItemPrimitiveSetCmd(self, value)
 
 
-class PrimitiveTupleRef(ItemRef, Tuple):
+class PrimitiveTupleRef(ItemRef, TupleSurface):
     """A tuple leaf in KV storage, written and read back whole as one blob.
 
     Notes:
@@ -234,7 +240,7 @@ class PrimitiveTupleRef(ItemRef, Tuple):
         return ItemPrimitiveSetCmd(self, value)
 
 
-class PrimitiveSetRef(_WriteBackRef, Set[T], Generic[T]):
+class PrimitiveSetRef(_WriteBackRef, SetSurface[T], Generic[T]):
     """A set leaf in KV storage, written and read back whole as one blob.
 
     Notes:
@@ -280,7 +286,7 @@ class PrimitiveSetRef(_WriteBackRef, Set[T], Generic[T]):
         return ItemPrimitiveSetCmd(self, value)
 
 
-class PrimitiveFrozenSetRef(ItemRef, FrozenSet[T], Generic[T]):
+class PrimitiveFrozenSetRef(ItemRef, FrozenSetSurface[T], Generic[T]):
     """A frozenset leaf in KV storage, written and read back whole as one blob.
 
     Notes:

@@ -8,7 +8,7 @@ names; ``ReactiveIntRef`` adds ``on_change``. The capability comes first, so
 
 from __future__ import annotations
 
-from nu.forms import Int
+from nu.forms import IntSurface
 
 from ..item import MutableItemRef, ReactiveItemRef
 
@@ -16,7 +16,7 @@ from ..item import MutableItemRef, ReactiveItemRef
 __all__ = ["IntRef", "ReactiveIntRef"]
 
 
-class IntRef(MutableItemRef, Int):
+class IntRef(MutableItemRef, IntSurface):
     """Int slot ref."""
 
 

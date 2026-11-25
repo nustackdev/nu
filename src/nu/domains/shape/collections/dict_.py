@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar
 
-from nu.forms import Dict
+from nu.forms import Dict, DictSurface
 
 from ..collection import holds
 from .abc.mapping import MutableOrderedMappingRef, ReactiveOrderedMappingRef
@@ -35,7 +35,7 @@ V = TypeVar("V")
 # value read by design; typing cannot say the child is also the value form.
 
 
-class DictRef(MutableOrderedMappingRef, Dict[K, V]):  # type: ignore[misc]
+class DictRef(MutableOrderedMappingRef, DictSurface[K, V]):
     """Dict slot ref: ``ref[key]`` descends to the value's child ref."""
 
     def _wrap_mapping_result(self, operand: Nu) -> Dict[K, V]:

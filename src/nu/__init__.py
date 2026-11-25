@@ -93,11 +93,12 @@ from .domains.service import Method, Service
 from .prog import Eval, LoadNu, Program
 
 # Language essentials, curated to the building blocks of a Nu program:
-#   - the root kind (``Nu``, ``TypedNu``);
+#   - the root kind (``Nu``) and ``Surface``, the methods mixin custom forms
+#     and refs build on;
 #   - the kind hierarchy (``Ref``, ``Interaction``, ``Query`` / ``ScalarQuery``
 #     / ``StreamQuery``, ``Command``, ``Action`` / ``ScalarAction`` /
 #     ``StreamAction``, ``Flow`` / ``Strategy`` / ``Control``, ``Span`` /
-#     ``Bracket`` / ``Policy``), and the reduction role (``Reduction`` and
+#     ``Bracket`` / ``Policy`` / ``Form``), and the reduction role (``Reduction`` and
 #     its ``QueryReduction``, ``ActionReduction``, ``CommandReduction``);
 #   - the argument aliases used in kind signatures (``Arg`` and the typed
 #     ``*Arg`` aliases).
@@ -138,9 +139,8 @@ from .lang import (
     Strategy,
     StreamAction,
     StreamQuery,
+    Surface,
     TupleArg,
-    TypedNu,
-    TypedNuStream,
 )
 
 # Atom builders (nu.factory subpackage): factories + @host.

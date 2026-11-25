@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from nu.lang import NULL, Form, Null, TypedNu
+from nu.lang import NULL, Form, Null, Surface
 
 
 __all__ = [
@@ -10,7 +10,11 @@ __all__ = [
 ]
 
 
-class NullForm(Form, TypedNu[Null]):
+class NullSurface(Surface):
+    """The methods of ``NullForm``. No slot holds one, so only the form carries them."""
+
+
+class NullForm(NullSurface, Form[Null]):
     """Wraps NULL, the value an absent read gives.
 
     Example:

@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, TypeVar, overload
 
-from nu.lang import TypedNu
+from nu.lang import Form
 
-from ..constructor import value_constructor
-from .abc import MutableOrderedMappingForm
+from .abc import MutableOrderedMappingSurface
 from .abc.mapping_interactions import DictCreate, DictOf
 
 
@@ -37,63 +36,10 @@ K = TypeVar("K")
 V = TypeVar("V")
 
 
-class Dict(
-    MutableOrderedMappingForm[dict[K, V], K, V, "Dict[K, V]", "Object"],
-    TypedNu[dict[K, V]],
-    Generic[K, V],
+class DictSurface(
+    MutableOrderedMappingSurface[dict[K, V], K, V, "Dict[K, V]", "Object"], Generic[K, V]
 ):
-    """Dict interface. Mutable ordered mapping, compared by value with `==` only.
-
-    Notes:
-        - Keys preserve insertion order, matching Python's `dict`.
-        - No ordering comparisons (`>`, `<`, `>=`, `<=`), as on Python's
-          `dict`: building one raises `TypeError`. Use `==`/`!=` for
-          content comparison.
-        - `is_` tests object identity. Each evaluation of a `Dict.of`/
-          `Dict.create` expression builds a fresh dict, so comparing two
-          separately-built dicts with `is_` is False even when their
-          contents match, unlike Python's small-string interning for Str.
-        - `copy`, `merge` and `merge_update` are dict-only; the rest of
-          the surface comes from the shared mutable ordered-mapping base.
-        - Merging is named: `merge` and `merge_update`. `&`, `|` and `>>`
-          compose flows on a Dict like on every term.
-
-    Example:
-        >>> nu.run(nu.Dict.of(a=1, b=2))[0]
-        {'a': 1, 'b': 2}
-    """
-
-    @value_constructor
-    def create(cls) -> Dict[K, V]:
-        """Fresh empty dict.
-
-        Yields:
-            A new, empty dict. Never a sentinel.
-
-        Example:
-            >>> nu.run(nu.Dict.create())[0]
-            {}
-        """
-        return cls(DictCreate())
-
-    @value_constructor
-    def of(cls, **fields: Arg) -> Dict[str, V]:
-        """Dict built from named field expressions.
-
-        Args:
-            fields: keyword arguments, each evaluated in the current
-                context and zipped back in by name: `a=x, b=y` builds
-                `{"a": <x>, "b": <y>}`. Values may be Nu expressions or
-                plain literals.
-
-        Yields:
-            The assembled dict.
-
-        Example:
-            >>> nu.run(nu.Dict.of(a=1, b=2))[0]
-            {'a': 1, 'b': 2}
-        """
-        return cls(DictOf(**fields))
+    """The methods of ``Dict``, shared by the ``Dict`` form and every ref that holds one."""
 
     def _wrap_keys_result(self, operand: Nu) -> DictKeys:
         """Wrap operand as DictKeys."""
@@ -137,15 +83,15 @@ class Dict(
     # nudle refs holding dicts, etc.) that specializes ``V``.
 
     @overload
-    def __getitem__(self: Dict[K, bool], key: Arg[K]) -> Bool: ...
+    def __getitem__(self: DictSurface[K, bool], key: Arg[K]) -> Bool: ...
     @overload
-    def __getitem__(self: Dict[K, int], key: Arg[K]) -> Int: ...
+    def __getitem__(self: DictSurface[K, int], key: Arg[K]) -> Int: ...
     @overload
-    def __getitem__(self: Dict[K, float], key: Arg[K]) -> Float: ...
+    def __getitem__(self: DictSurface[K, float], key: Arg[K]) -> Float: ...
     @overload
-    def __getitem__(self: Dict[K, str], key: Arg[K]) -> Str: ...
+    def __getitem__(self: DictSurface[K, str], key: Arg[K]) -> Str: ...
     @overload
-    def __getitem__(self: Dict[K, bytes], key: Arg[K]) -> Bytes: ...
+    def __getitem__(self: DictSurface[K, bytes], key: Arg[K]) -> Bytes: ...
     @overload
     def __getitem__(self, key: Arg[K]) -> Object: ...
     def __getitem__(self, key):  # type: ignore[no-untyped-def]
@@ -374,3 +320,58 @@ class Dict(
         from ..primitives import Bool
 
         return Bool(Is(self, other))
+
+
+class Dict(DictSurface[K, V], Form[dict[K, V]], Generic[K, V]):
+    """Dict interface. Mutable ordered mapping, compared by value with `==` only.
+
+    Notes:
+        - Keys preserve insertion order, matching Python's `dict`.
+        - No ordering comparisons (`>`, `<`, `>=`, `<=`), as on Python's
+          `dict`: building one raises `TypeError`. Use `==`/`!=` for
+          content comparison.
+        - `is_` tests object identity. Each evaluation of a `Dict.of`/
+          `Dict.create` expression builds a fresh dict, so comparing two
+          separately-built dicts with `is_` is False even when their
+          contents match, unlike Python's small-string interning for Str.
+        - `copy`, `merge` and `merge_update` are dict-only; the rest of
+          the surface comes from the shared mutable ordered-mapping base.
+        - Merging is named: `merge` and `merge_update`. `&`, `|` and `>>`
+          compose flows on a Dict like on every term.
+
+    Example:
+        >>> nu.run(nu.Dict.of(a=1, b=2))[0]
+        {'a': 1, 'b': 2}
+    """
+
+    @classmethod
+    def create(cls) -> Dict[K, V]:
+        """Fresh empty dict.
+
+        Yields:
+            A new, empty dict. Never a sentinel.
+
+        Example:
+            >>> nu.run(nu.Dict.create())[0]
+            {}
+        """
+        return cls(DictCreate())
+
+    @classmethod
+    def of(cls, **fields: Arg) -> Dict[str, V]:
+        """Dict built from named field expressions.
+
+        Args:
+            fields: keyword arguments, each evaluated in the current
+                context and zipped back in by name: `a=x, b=y` builds
+                `{"a": <x>, "b": <y>}`. Values may be Nu expressions or
+                plain literals.
+
+        Yields:
+            The assembled dict.
+
+        Example:
+            >>> nu.run(nu.Dict.of(a=1, b=2))[0]
+            {'a': 1, 'b': 2}
+        """
+        return cls(DictOf(**fields))

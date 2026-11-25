@@ -23,7 +23,7 @@ from __future__ import annotations
 from builtins import complex as _complex
 from typing import TYPE_CHECKING, TypeAlias
 
-from nu.lang import Form, TypedNu
+from nu.lang import Form, Surface
 
 
 if TYPE_CHECKING:
@@ -36,20 +36,8 @@ if TYPE_CHECKING:
 __all__ = ["complex"]
 
 
-class complex(Form, TypedNu[_complex]):  # noqa: N801
-    """``builtins.complex`` as a Form - a complex number.
-
-    Build one with ``complex.of(real, imag)``; read its parts as properties
-    (``.real`` / ``.imag``); transform it with arithmetic or ``conjugate()``.
-    Complex numbers are not orderable, so only ``eq`` / ``ne`` are provided.
-    """
-
-    @classmethod
-    def of(cls, real: FloatArg = 0, imag: FloatArg = 0) -> complex:
-        """Build a complex number: ``complex(real, imag)``."""
-        from .interactions import ComplexOf
-
-        return complex(ComplexOf(real, imag))
+class ComplexSurface(Surface):
+    """The methods of ``complex``, shared by the ``complex`` form and every ref that holds one."""
 
     def real(self) -> Float:
         """The real part."""
@@ -133,3 +121,19 @@ class complex(Form, TypedNu[_complex]):  # noqa: N801
         from nu.forms import Bool
 
         return Bool(Ne(self, other))
+
+
+class complex(ComplexSurface, Form[_complex]):  # noqa: N801
+    """``builtins.complex`` as a Form - a complex number.
+
+    Build one with ``complex.of(real, imag)``; read its parts as properties
+    (``.real`` / ``.imag``); transform it with arithmetic or ``conjugate()``.
+    Complex numbers are not orderable, so only ``eq`` / ``ne`` are provided.
+    """
+
+    @classmethod
+    def of(cls, real: FloatArg = 0, imag: FloatArg = 0) -> complex:
+        """Build a complex number: ``complex(real, imag)``."""
+        from .interactions import ComplexOf
+
+        return complex(ComplexOf(real, imag))

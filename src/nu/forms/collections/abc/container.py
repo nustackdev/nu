@@ -1,6 +1,6 @@
 """Container capability.
 
-ContainerForm: values that support containment checks.
+ContainerSurface: values that support containment checks.
 
 Follows Python's collections.abc.Container pattern.
 """
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.lang import Form
+from nu.lang import Surface
 
 
 if TYPE_CHECKING:
@@ -17,11 +17,11 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "ContainerForm",
+    "ContainerSurface",
 ]
 
 
-class ContainerForm(Form):
+class ContainerSurface(Surface):
     """Base for values that support containment checks, like collections.abc.Container.
 
     Notes:

@@ -33,7 +33,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from nu.lang import Form, TypedNu
+from nu.lang import Form, Surface
 
 
 if TYPE_CHECKING:
@@ -47,32 +47,8 @@ __all__ = [
 ]
 
 
-class Object(Form, TypedNu[Any]):
-    """The interface every term has. Full operator surface, no promise about the runtime type.
-
-    Arithmetic, bitwise, subscript, and attribute descent are all
-    absorbing: the result of any of them is another Object, since the
-    concrete type isn't known until evaluation. Comparison and logical
-    operators are the exception - they still yield Bool, because "is
-    this true" is a well-typed question even when the operand type
-    isn't.
-
-    Notes:
-        - Typed as `TypedNu[Any]`, not `TypedNu[object]`. That lets an
-          Object value slot into any narrow Arg position (IntArg, StrArg,
-          ...), so `intref + objval` resolves through Int's `__add__`
-          and lands as Int instead of falling through to Object's `__radd__`.
-        - `&`, `|` and `>>` compose flows (Race, Parallel, Sequential)
-          like on every term. Bit, set and merge operations are named
-          methods (`bitand`, `union`, `merge`, ...).
-        - There's no `__call__`. A callable value in a Nu tree goes
-          through an interaction (built via `host` or hand-written),
-          not raw Python call dispatch.
-
-    Example:
-        >>> nu.run(nu.Object(6) * nu.Object(7))[0]
-        42
-    """
+class ObjectSurface(Surface):
+    """The methods of ``Object``, shared by the ``Object`` form and every ref that holds one."""
 
     # =========================================================================
     # ARITHMETIC
@@ -1054,3 +1030,31 @@ class Object(Form, TypedNu[Any]):
         from .bool_ import Bool
 
         return Bool(HasAttr(self, name))
+
+
+class Object(ObjectSurface, Form[Any]):
+    """The interface every term has. Full operator surface, no promise about the runtime type.
+
+    Arithmetic, bitwise, subscript, and attribute descent are all
+    absorbing: the result of any of them is another Object, since the
+    concrete type isn't known until evaluation. Comparison and logical
+    operators are the exception - they still yield Bool, because "is
+    this true" is a well-typed question even when the operand type
+    isn't.
+
+    Notes:
+        - Typed as `Form[Any]`, not `Form[object]`. That lets an
+          Object value slot into any narrow Arg position (IntArg, StrArg,
+          ...), so `intref + objval` resolves through Int's `__add__`
+          and lands as Int instead of falling through to Object's `__radd__`.
+        - `&`, `|` and `>>` compose flows (Race, Parallel, Sequential)
+          like on every term. Bit, set and merge operations are named
+          methods (`bitand`, `union`, `merge`, ...).
+        - There's no `__call__`. A callable value in a Nu tree goes
+          through an interaction (built via `host` or hand-written),
+          not raw Python call dispatch.
+
+    Example:
+        >>> nu.run(nu.Object(6) * nu.Object(7))[0]
+        42
+    """

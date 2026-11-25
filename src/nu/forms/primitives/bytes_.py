@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from nu.lang import Form, TypedNu
+from nu.lang import Form, Surface
 
 
 if TYPE_CHECKING:
@@ -24,23 +24,8 @@ __all__ = [
 ]
 
 
-class Bytes(Form, TypedNu[bytes]):
-    """Bytes interface. Sliceable + comparable + logical + bytes methods.
-
-    Notes:
-        - Indexing with `[]` yields Int, the byte's value 0-255. Slicing
-          with `[:]` yields Bytes.
-        - `decode` and `hex_` are the only two methods that leave bytes:
-          `decode` produces a Str, `hex_` produces a Str of hex digits.
-          Every other method stays in Bytes.
-        - Comparison operators yield Bool, ordering lexicographically by
-          byte value, same as Python's `bytes` ordering.
-        - Logical operators are the named forms `and_`, `or_`, `not_`.
-
-    Example:
-        >>> nu.run(nu.Bytes(b"hi") + nu.Bytes(b" there"))[0]
-        b'hi there'
-    """
+class BytesSurface(Surface):
+    """The methods of ``Bytes``, shared by the ``Bytes`` form and every ref that holds one."""
 
     # =========================================================================
     # ARITHMETIC (concatenation)
@@ -1177,3 +1162,22 @@ class Bytes(Form, TypedNu[bytes]):
         from .bytes_interactions import BytesJoin
 
         return Bytes(BytesJoin(self, iterable))
+
+
+class Bytes(BytesSurface, Form[bytes]):
+    """Bytes interface. Sliceable + comparable + logical + bytes methods.
+
+    Notes:
+        - Indexing with `[]` yields Int, the byte's value 0-255. Slicing
+          with `[:]` yields Bytes.
+        - `decode` and `hex_` are the only two methods that leave bytes:
+          `decode` produces a Str, `hex_` produces a Str of hex digits.
+          Every other method stays in Bytes.
+        - Comparison operators yield Bool, ordering lexicographically by
+          byte value, same as Python's `bytes` ordering.
+        - Logical operators are the named forms `and_`, `or_`, `not_`.
+
+    Example:
+        >>> nu.run(nu.Bytes(b"hi") + nu.Bytes(b" there"))[0]
+        b'hi there'
+    """

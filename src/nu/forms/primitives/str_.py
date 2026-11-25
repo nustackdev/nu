@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from nu.lang import Form, TypedNu
+from nu.lang import Form, Surface
 
 
 if TYPE_CHECKING:
@@ -22,26 +22,8 @@ __all__ = [
 ]
 
 
-class Str(Form, TypedNu[str]):
-    """String interface. Addable + sliceable + comparable + logical + string methods.
-
-    Notes:
-        - `+` concatenates; there's no numeric arithmetic on Str.
-        - Comparison operators compare lexicographically, Python str
-          ordering, and yield Bool. Chained comparisons like `a > b > c`
-          do not build a single term; write them as `And(a > b, b > c)`.
-        - Logical operators are the named forms `and_`, `or_`, `not_`, and
-          coerce by truthiness: the empty string is False, every other
-          string is True.
-        - Failures (a search that finds nothing with `index`/`rindex`, a
-          wrong type, a multi-character `fillchar`, an unencodable
-          character, a missing `format_map` key, an out-of-range index)
-          raise, matching Python.
-
-    Example:
-        >>> nu.run(nu.Str("ab") + nu.Str("cd"))[0]
-        'abcd'
-    """
+class StrSurface(Surface):
+    """The methods of ``Str``, shared by the ``Str`` form and every ref that holds one."""
 
     # =========================================================================
     # ARITHMETIC (concatenation)
@@ -1313,3 +1295,25 @@ class Str(Form, TypedNu[str]):
         from .str_interactions import Join
 
         return Str(Join(self, iterable))
+
+
+class Str(StrSurface, Form[str]):
+    """String interface. Addable + sliceable + comparable + logical + string methods.
+
+    Notes:
+        - `+` concatenates; there's no numeric arithmetic on Str.
+        - Comparison operators compare lexicographically, Python str
+          ordering, and yield Bool. Chained comparisons like `a > b > c`
+          do not build a single term; write them as `And(a > b, b > c)`.
+        - Logical operators are the named forms `and_`, `or_`, `not_`, and
+          coerce by truthiness: the empty string is False, every other
+          string is True.
+        - Failures (a search that finds nothing with `index`/`rindex`, a
+          wrong type, a multi-character `fillchar`, an unencodable
+          character, a missing `format_map` key, an out-of-range index)
+          raise, matching Python.
+
+    Example:
+        >>> nu.run(nu.Str("ab") + nu.Str("cd"))[0]
+        'abcd'
+    """

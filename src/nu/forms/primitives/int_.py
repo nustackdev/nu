@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
 
-from nu.lang import Form, TypedNu
+from nu.lang import Form, Surface
 
 
 if TYPE_CHECKING:
@@ -23,27 +23,8 @@ __all__ = [
 ]
 
 
-class Int(Form, TypedNu[int]):
-    """Integer interface. Full numeric + comparable + logical + bitwise.
-
-    Notes:
-        - Arithmetic against a Float or a Python float promotes the result to
-          Float. Everything else stays Int.
-        - Division `/` always yields Float regardless of operand type; use
-          `//` for integer floor division that stays Int.
-        - Comparison operators yield Bool. Chained comparisons like
-          `a > b > c` do not build a single term; write them as
-          `And(a > b, b > c)`.
-        - Logical operators are the named forms `and_`, `or_`, `not_`, and
-          bit operations are named too: `bitand`, `bitor`, `bitxor`,
-          `bitnot`, `lshift`, `rshift`. `&`, `|` and `>>` compose flows
-          (Race, Parallel, Sequential) on an Int like on every term, and
-          `^`, `~`, `<<` are not defined.
-
-    Example:
-        >>> nu.run(nu.Int(6) * nu.Int(7))[0]
-        42
-    """
+class IntSurface(Surface):
+    """The methods of ``Int``, shared by the ``Int`` form and every ref that holds one."""
 
     # =========================================================================
     # ARITHMETIC (with int/float promotion)
@@ -72,9 +53,9 @@ class Int(Form, TypedNu[int]):
         """
         from nu.core import Add
 
-        from .float_ import Float
+        from .float_ import Float, FloatSurface
 
-        if isinstance(other, (float, Float)):
+        if isinstance(other, (float, FloatSurface)):
             return Float(Add(self, other))
         return Int(Add(self, other))
 
@@ -129,9 +110,9 @@ class Int(Form, TypedNu[int]):
         """
         from nu.core import Sub
 
-        from .float_ import Float
+        from .float_ import Float, FloatSurface
 
-        if isinstance(other, (float, Float)):
+        if isinstance(other, (float, FloatSurface)):
             return Float(Sub(self, other))
         return Int(Sub(self, other))
 
@@ -187,9 +168,9 @@ class Int(Form, TypedNu[int]):
         """
         from nu.core import Mul
 
-        from .float_ import Float
+        from .float_ import Float, FloatSurface
 
-        if isinstance(other, (float, Float)):
+        if isinstance(other, (float, FloatSurface)):
             return Float(Mul(self, other))
         return Int(Mul(self, other))
 
@@ -308,9 +289,9 @@ class Int(Form, TypedNu[int]):
         """
         from nu.core import FloorDiv
 
-        from .float_ import Float
+        from .float_ import Float, FloatSurface
 
-        if isinstance(other, (float, Float)):
+        if isinstance(other, (float, FloatSurface)):
             return Float(FloorDiv(self, other))
         return Int(FloorDiv(self, other))
 
@@ -370,9 +351,9 @@ class Int(Form, TypedNu[int]):
         """
         from nu.core import Mod
 
-        from .float_ import Float
+        from .float_ import Float, FloatSurface
 
-        if isinstance(other, (float, Float)):
+        if isinstance(other, (float, FloatSurface)):
             return Float(Mod(self, other))
         return Int(Mod(self, other))
 
@@ -433,9 +414,9 @@ class Int(Form, TypedNu[int]):
         """
         from nu.core import Pow
 
-        from .float_ import Float
+        from .float_ import Float, FloatSurface
 
-        if isinstance(other, (float, Float)):
+        if isinstance(other, (float, FloatSurface)):
             return Float(Pow(self, other))
         return Int(Pow(self, other))
 
@@ -892,3 +873,26 @@ class Int(Form, TypedNu[int]):
         from nu.core import RShift
 
         return Int(RShift(self, other))
+
+
+class Int(IntSurface, Form[int]):
+    """Integer interface. Full numeric + comparable + logical + bitwise.
+
+    Notes:
+        - Arithmetic against a Float or a Python float promotes the result to
+          Float. Everything else stays Int.
+        - Division `/` always yields Float regardless of operand type; use
+          `//` for integer floor division that stays Int.
+        - Comparison operators yield Bool. Chained comparisons like
+          `a > b > c` do not build a single term; write them as
+          `And(a > b, b > c)`.
+        - Logical operators are the named forms `and_`, `or_`, `not_`, and
+          bit operations are named too: `bitand`, `bitor`, `bitxor`,
+          `bitnot`, `lshift`, `rshift`. `&`, `|` and `>>` compose flows
+          (Race, Parallel, Sequential) on an Int like on every term, and
+          `^`, `~`, `<<` are not defined.
+
+    Example:
+        >>> nu.run(nu.Int(6) * nu.Int(7))[0]
+        42
+    """

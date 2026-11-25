@@ -1,23 +1,39 @@
 """Collection interfaces."""
 
 from . import abc
-from .dict_ import Dict
-from .iterator_ import Iterator
-from .list_ import List
-from .set_ import FrozenSet, Set
-from .tuple_ import Tuple
-from .views import DictItems, DictKeys, DictValues
+from .dict_ import Dict, DictSurface
+from .iterator_ import Iterator, IteratorSurface
+from .list_ import List, ListSurface
+from .set_ import FrozenSet, FrozenSetSurface, Set, SetSurface
+from .tuple_ import Tuple, TupleSurface
+from .views import (
+    DictItems,
+    DictItemsSurface,
+    DictKeys,
+    DictKeysSurface,
+    DictValues,
+    DictValuesSurface,
+)
 
 
 __all__ = [
     "Dict",
     "DictItems",
+    "DictItemsSurface",
     "DictKeys",
+    "DictKeysSurface",
+    "DictSurface",
     "DictValues",
+    "DictValuesSurface",
     "FrozenSet",
+    "FrozenSetSurface",
     "Iterator",
+    "IteratorSurface",
     "List",
+    "ListSurface",
     "Set",
+    "SetSurface",
     "Tuple",
+    "TupleSurface",
     "abc",
 ]
