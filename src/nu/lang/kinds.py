@@ -44,6 +44,7 @@ from .nu import Nu
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
 
+    from nu.engine import Program
     from nu.lang.runtime import Runtime
     from nu.lang.typeinfo import TypeInfo
 
@@ -163,9 +164,59 @@ class StreamAction(Action[V_co], Generic[V_co]):  # PEP 695 has no variance mark
 
 
 class Flow(Interaction[V_co], Generic[V_co]):  # PEP 695 has no variance markers
-    """Abstract: a Command-composing Interaction. Yields nothing."""
+    """Abstract: a Command-composing Interaction. Yields nothing.
+
+    A Flow runs its body children as work. A body that is a stream (a
+    ``StreamAction``, bare or under a Span) does its writes as it is pulled,
+    so the Flow pulls it to its end and drops its items: the body thunks are
+    wrapped to drain once, at link time, and every Flow's compile just calls
+    them. Param and config slots are left alone, they are read, not run.
+    """
 
     _cardinality = Declared(value=Cardinality.VOID, name="cardinality")
+
+    def _link(
+        self,
+        program: Program,
+        nid: int,
+        children: tuple[Callable[..., Any], ...],
+        achildren: tuple[Callable[..., Awaitable[Any]], ...],
+    ) -> tuple[tuple[Callable[..., Any], ...], tuple[Callable[..., Awaitable[Any]], ...]]:
+        from .attributes import Attr
+
+        params = program.attr(program.path_of[nid], Attr.PARAM_SLOTS) | self._config_slots()
+        cardinality = program.attrs[Attr.CHILD_CARDINALITY]
+        streams = {
+            slot
+            for slot, child in enumerate(program.children[nid])
+            if slot not in params and cardinality[child] is Cardinality.STREAM
+        }
+        if not streams:
+            return children, achildren
+        return (
+            tuple(_as_work(c) if i in streams else c for i, c in enumerate(children)),
+            tuple(_as_awork(c) if i in streams else c for i, c in enumerate(achildren)),
+        )
+
+
+def _as_work(stream: Callable[..., Any]) -> Callable[..., None]:
+    """A stream thunk run as work: pulled to its end, nothing yielded."""
+    from ._stream import drain
+
+    def thunk(rt: Runtime) -> None:
+        drain(stream(rt))
+
+    return thunk
+
+
+def _as_awork(stream: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[None]]:
+    """Async sibling of :func:`_as_work`."""
+    from ._stream import adrain
+
+    async def athunk(rt: Runtime) -> None:
+        await adrain(await stream(rt))
+
+    return athunk
 
 
 class Strategy(Flow[V_co], Generic[V_co]):  # PEP 695 has no variance markers

@@ -24,7 +24,7 @@ from nu.core.flows.parallel._scheduling import (
     merge,
 )
 from nu.lang import NULL, Literal
-from nu.lang.attributes import Attr
+from nu.lang.attributes import Attr, Cardinality
 from nu.lang.helpers import compile
 from nu.lang.runtime import Budget, Context, Runtime
 
@@ -40,11 +40,16 @@ def _fake_program(
     thunks: list[Callable] | None = None,
     athunks: list[Callable] | None = None,
     on_loop: list[bool] | None = None,
+    cardinality: list[Cardinality] | None = None,
 ) -> SimpleNamespace:
+    n = max(len(thunks or []), len(athunks or []))
     return SimpleNamespace(
         thunks=thunks or [],
         athunks=athunks or [],
-        attrs={Attr.ON_LOOP: on_loop or []},
+        attrs={
+            Attr.ON_LOOP: on_loop or [],
+            Attr.CHILD_CARDINALITY: cardinality or [Cardinality.SCALAR] * n,
+        },
     )
 
 
@@ -163,6 +168,37 @@ def test_eval_parallel_falls_through_to_sequential_at_max_parallel_one() -> None
     program = _fake_program(thunks=[lambda rt: 10, lambda rt: 20])
     rt = Runtime(program, Context())
     assert eval_parallel(rt, [0, 1]) == [10, 20]
+
+
+def test_eval_parallel_drains_a_stream_arm() -> None:
+    pulled: list[int] = []
+
+    def stream(rt: Runtime) -> object:
+        return (pulled.append(i) for i in range(3))
+
+    program = _fake_program(
+        thunks=[stream, lambda rt: 1], cardinality=[Cardinality.STREAM, Cardinality.SCALAR]
+    )
+    rt = Runtime(program, Context())
+    assert eval_parallel(rt, [0, 1]) == [None, 1]
+    assert pulled == [0, 1, 2]
+
+
+async def test_aeval_parallel_drains_a_stream_arm() -> None:
+    pulled: list[int] = []
+
+    async def gen() -> object:
+        for i in range(3):
+            pulled.append(i)
+            yield i
+
+    async def stream(rt: Runtime) -> object:
+        return gen()
+
+    program = _fake_program(athunks=[stream], cardinality=[Cardinality.STREAM])
+    rt = Runtime(program, Context())
+    await aeval_parallel(rt, [0])
+    assert pulled == [0, 1, 2]
 
 
 def test_eval_parallel_preserves_order_under_threads() -> None:

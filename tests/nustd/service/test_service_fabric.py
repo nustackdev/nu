@@ -9,6 +9,7 @@ returned by the interaction and the resulting mutation on the target object.
 from __future__ import annotations
 
 import pytest
+from _support.laws import assert_passes as _assert_passes
 
 import nu
 import nustd
@@ -128,6 +129,62 @@ def test_stream_reads_keep_chaining(app, target: Calculator):
     target.log = [("a", ()), ("b", ())]
     assert nu.run(app(Calc.squares(n=4).map(lambda x: nu.Int(x) + 1).to_list()))[0] == [1, 2, 5, 10]
     assert nu.run(app(Calc.drain().count()))[0] == 2
+    assert target.log == []
+
+
+# --- stream Action run as work in a Flow body --------------------------------
+
+# A Flow runs a StreamAction body as work: pulled to its end, so its writes
+# land, whatever form or span wraps it.
+STREAM_WORK = {
+    "chain": lambda: Calc.bump(by=1) >> Calc.drain(),
+    "chain_form": lambda: Calc.bump(by=1) >> nu.Iterator(Calc.drain()),
+    "chain_snapshot": lambda: Calc.bump(by=1) >> nu.Snapshot(Calc.drain()),
+    "chain_transaction": lambda: Calc.bump(by=1) >> nu.Transaction(nu.Iterator(Calc.drain())),
+    "chain_retry": lambda: Calc.bump(by=1) >> nu.Retry(Calc.drain()),
+    "if_body": lambda: Calc.bump(by=1) >> nu.IfDo(nu.Literal(True), Calc.drain()),
+    "if_body_form": lambda: Calc.bump(by=1) >> nu.IfDo(nu.Literal(True), nu.Iterator(Calc.drain())),
+    "loop_body": lambda: Calc.bump(by=1) >> nu.ForRangeDo(0, 2, Calc.drain()),
+}
+
+
+@pytest.mark.parametrize("name", list(STREAM_WORK))
+def test_stream_action_in_a_flow_body_runs(name: str, app, target: Calculator):
+    _assert_passes(STREAM_WORK[name]())
+    value, _ = nu.run(app(STREAM_WORK[name]()))
+    assert value is None
+    assert target.total == 1.0
+    assert target.log == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("name", list(STREAM_WORK))
+async def test_stream_action_in_a_flow_body_runs_async(name: str, app, target: Calculator):
+    value, _ = await nu.arun(app(STREAM_WORK[name]()))
+    assert value is None
+    assert target.total == 1.0
+    assert target.log == []
+
+
+def test_stream_action_parallel_arm_runs(app, target: Calculator):
+    target.log = [("a", ()), ("b", ())]
+    nu.run(app(nu.Parallel(nu.Iterator(Calc.drain()), Calc.reset())))
+    assert ("a", ()) not in target.log
+    assert ("b", ()) not in target.log
+
+
+@pytest.mark.asyncio
+async def test_stream_action_parallel_arm_runs_async(app, target: Calculator):
+    target.log = [("a", ()), ("b", ())]
+    await nu.arun(app(nu.Parallel(Calc.drain(), Calc.reset())))
+    assert ("a", ()) not in target.log
+    assert ("b", ()) not in target.log
+
+
+def test_stream_action_still_yields_where_its_stream_is_read(app, target: Calculator):
+    target.log = [("a", ())]
+    values, _ = nu.run(app(nu.Collect(nu.Snapshot(Calc.drain()))))
+    assert values == [("a", ())]
     assert target.log == []
 
 

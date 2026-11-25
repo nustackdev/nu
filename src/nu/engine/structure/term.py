@@ -43,6 +43,7 @@ if TYPE_CHECKING:
 
     from typing_extensions import Self
 
+    from nu.engine.compilation import Program
     from nu.engine.evaluation import Runtime
 
 __all__ = ["FrozenTermError", "Term", "TermMeta"]
@@ -172,6 +173,26 @@ class Term(Generic[R_contra, V_co], metaclass=TermMeta):  # PEP 695 has no varia
         return variant
 
     # --- compile hooks ------------------------------------------------------
+
+    def _link(
+        self,
+        program: Program,
+        nid: int,
+        children: tuple[Callable[[R_contra], object], ...],
+        achildren: tuple[Callable[[R_contra], Awaitable[object]], ...],
+    ) -> tuple[
+        tuple[Callable[[R_contra], object], ...],
+        tuple[Callable[[R_contra], Awaitable[object]], ...],
+    ]:
+        """The child thunks this Term at ``nid`` captures, sync and async.
+
+        Called with the built program, its attributes swept, just before
+        :meth:`_compile` and :meth:`_acompile`. A kind that runs a child
+        differently by what the program says about it (its cardinality, its
+        slot role) wraps that child's thunks here once, so its compiles stay
+        plain. The default hands them over as they are.
+        """
+        return children, achildren
 
     def _compile(
         self, nid: int, children: tuple[Callable[[R_contra], object], ...]

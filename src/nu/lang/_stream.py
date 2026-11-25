@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator, Iterator
 
-__all__ = ["aiter_any", "sync_iter"]
+__all__ = ["adrain", "aiter_any", "drain", "sync_iter"]
 
 
 def sync_iter(value: object) -> Iterator:
@@ -50,3 +50,19 @@ async def aiter_any(value: object) -> AsyncGenerator:
         return
     for x in value:  # type: ignore[union-attr]
         yield x
+
+
+def drain(value: object) -> None:
+    """Pull a sync stream to its end and drop what it yields.
+
+    How a stream runs as work: a ``StreamAction`` in a Flow body does its
+    writes as it is pulled, so the Flow pulls it through and keeps nothing.
+    """
+    for _ in value:  # type: ignore[attr-defined]
+        pass
+
+
+async def adrain(value: object) -> None:
+    """Async sibling of :func:`drain`: pull a sync or async stream to its end."""
+    async for _ in aiter_any(value):
+        pass
