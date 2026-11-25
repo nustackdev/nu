@@ -2,8 +2,7 @@
 
 Reverse-preorder walk over the index. Each Term's ``compile`` and
 ``acompile`` receive their precompiled child thunks and return the parent's,
-capturing them in a closure. The Term's ``_link`` hook sees the child thunks
-first and may wrap them. The reverse walk (``n - 1`` down to ``0``)
+capturing them in a closure. The reverse walk (``n - 1`` down to ``0``)
 guarantees a child's thunk is in hand by the time its parent is compiled.
 """
 
@@ -32,7 +31,6 @@ def emit_thunks(program: Program) -> None:
         child_thunks = tuple(thunks[c] for c in child_nids)
         child_athunks = tuple(athunks[c] for c in child_nids)
         term = terms[nid]
-        child_thunks, child_athunks = term._link(program, nid, child_thunks, child_athunks)
         thunks[nid] = term._compile(nid, child_thunks)
         athunks[nid] = term._acompile(nid, child_athunks)
     program.thunks = thunks

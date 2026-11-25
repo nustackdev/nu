@@ -27,9 +27,6 @@ its own branch, off the budget entirely. It backs ``ForEachParAsync``,
 which lives in ``nu.core.flows.control`` next to the ``ForEachDo`` it mirrors.
 ``ReconcileLatestEach`` in ``nu.core.reactive`` spawns its arms with the same
 ``_spawn_arm`` and keeps its own book of them.
-
-Every arm runs as work (``rt.work`` / ``rt.awork``): an arm that is a stream
-is pulled to its end, so a ``StreamAction`` arm does its writes.
 """
 
 from __future__ import annotations
@@ -95,9 +92,9 @@ def eval_parallel(
     del per_child, force
     nids = list(nids)
     if rt.budget.max_parallel == 1 or rt.budget.thread_pool is None:
-        return [rt.branch().work(n) for n in nids]
+        return [rt.branch().eval(n) for n in nids]
     pool = rt.budget.thread_pool
-    futures = [pool.submit(_with_contextvars(rt.branch().work), n) for n in nids]
+    futures = [pool.submit(_with_contextvars(rt.branch().eval), n) for n in nids]
     return [f.result() for f in futures]
 
 
@@ -127,8 +124,8 @@ def _drive_async(
         arm = rt.branch()
         async with sem:
             if on_loop:
-                return await arm.awork(n)
-            return await loop.run_in_executor(pool, _with_contextvars(arm.work), n)
+                return await arm.aeval(n)
+            return await loop.run_in_executor(pool, _with_contextvars(arm.eval), n)
 
     return [place(i, n) for i, n in enumerate(nids)]
 
@@ -149,7 +146,7 @@ async def aeval_parallel(
     """
     nids = list(nids)
     if rt.budget.max_parallel == 1 or rt.budget.async_sem is None:
-        coros: list = [rt.branch().awork(n) for n in nids]
+        coros: list = [rt.branch().aeval(n) for n in nids]
     else:
         coros = _drive_async(rt, nids, per_child=per_child, force=force)
     return await _join_all([asyncio.ensure_future(c) for c in coros])
@@ -240,7 +237,7 @@ async def aeval_race(
         msg = "aeval_race needs at least one nid"
         raise ValueError(msg)
     if rt.budget.max_parallel == 1 or rt.budget.async_sem is None:
-        coros: list = [rt.branch().awork(n) for n in nids]
+        coros: list = [rt.branch().aeval(n) for n in nids]
     else:
         coros = _drive_async(rt, nids, per_child=per_child, force=force)
     tasks = [asyncio.ensure_future(c) for c in coros]
@@ -268,7 +265,7 @@ async def aeval_any(
         msg = "aeval_any needs at least one nid"
         raise ValueError(msg)
     if rt.budget.max_parallel == 1 or rt.budget.async_sem is None:
-        coros: list = [rt.branch().awork(n) for n in nids]
+        coros: list = [rt.branch().aeval(n) for n in nids]
     else:
         coros = _drive_async(rt, nids, per_child=per_child, force=force)
     tasks = [asyncio.ensure_future(c) for c in coros]
@@ -303,7 +300,7 @@ def _spawn_arm(rt: Runtime, nid: int, elem: object, name: str) -> asyncio.Task:
 
     async def run() -> None:
         with arm.ctx.attrs.let(name, elem):
-            await arm.awork(nid)
+            await arm.aeval(nid)
 
     return asyncio.ensure_future(run())
 

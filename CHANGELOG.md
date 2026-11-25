@@ -14,7 +14,6 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 - Type checking of refs and flows is back to its baseline after the split
 - Docstrings, comments and test names now say surface where they still said form
-- A stream action in a flow body now runs to its end, so its writes land
 - Regression tests keep pop and popitem working as chain steps, flow bodies and spans
 - Fabric stream reads like file lines or agent prompts now chain map and folds
 - Itertools accept any stream, wrapped or acting, and their results keep chaining

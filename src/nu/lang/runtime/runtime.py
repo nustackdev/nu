@@ -16,7 +16,7 @@ Parallel-family compiles hand child nids straight there, no Runtime hop.
 Layout:
 
 - construction:         program / ctx / budget binding, ``branch``
-- dispatch:             ``eval`` / ``aeval``, ``work`` / ``awork``
+- dispatch:             ``eval`` / ``aeval``
 - sequential:           ``eval_each`` / ``aeval_each``
 - streams:              ``iter`` / ``aiter`` / ``collect`` / ``acollect``
 - boundary:             ``in_thread`` / ``a_in_thread``
@@ -91,32 +91,6 @@ class Runtime:
         Mirror of ``eval`` through the precompiled async thunk column.
         """
         return await self.program.athunks[nid](self)
-
-    def work(self, nid: int) -> object:
-        """Run the node at ``nid`` as work: a stream is pulled to its end, its items dropped.
-
-        How a Flow runs a child it holds by nid (a Parallel arm, a fan-out
-        body). A scalar or void child runs as ``eval`` does.
-        """
-        from nu.lang._stream import drain
-        from nu.lang.attributes import Attr, Cardinality
-
-        value = self.eval(nid)
-        if self.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
-            drain(value)
-            return None
-        return value
-
-    async def awork(self, nid: int) -> object:
-        """Async sibling of :meth:`work`."""
-        from nu.lang._stream import adrain
-        from nu.lang.attributes import Attr, Cardinality
-
-        value = await self.aeval(nid)
-        if self.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
-            await adrain(value)
-            return None
-        return value
 
     # --- sequential ---------------------------------------------------------
 
