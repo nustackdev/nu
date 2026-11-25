@@ -24,7 +24,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.domains.service import Method, MethodRef
-from nu.forms import Dict
+from nu.forms import Dict, Iterator
 
 from .interactions import (
     ServiceAction,
@@ -137,7 +137,7 @@ class StreamQueryRef(MethodRef):
         """
         return Method(cls, target_attr=name, defaults=defaults)  # type: ignore[return-value]
 
-    def __call__(self, **kwargs: object) -> Nu:
+    def __call__(self, **kwargs: object) -> Iterator:
         """Build the ServiceStreamQuery that calls this endpoint with the kwargs.
 
         Notes:
@@ -147,7 +147,7 @@ class StreamQueryRef(MethodRef):
         Yields:
             An unevaluated interaction. Nothing is dispatched until the tree runs.
         """
-        return ServiceStreamQuery(self, Dict.of(**kwargs))
+        return Iterator(ServiceStreamQuery(self, Dict.of(**kwargs)))
 
 
 class ActionRef(MethodRef):
@@ -236,7 +236,7 @@ class StreamActionRef(MethodRef):
         """
         return Method(cls, target_attr=name, defaults=defaults)  # type: ignore[return-value]
 
-    def __call__(self, **kwargs: object) -> Nu:
+    def __call__(self, **kwargs: object) -> Iterator:
         """Build the ServiceStreamAction that calls this endpoint with the kwargs.
 
         Notes:
@@ -246,7 +246,7 @@ class StreamActionRef(MethodRef):
         Yields:
             An unevaluated interaction. Nothing is dispatched until the tree runs.
         """
-        return ServiceStreamAction(self, Dict.of(**kwargs))
+        return Iterator(ServiceStreamAction(self, Dict.of(**kwargs)))
 
 
 class CommandRef(MethodRef):

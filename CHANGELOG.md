@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Fabric stream reads like file lines or agent prompts now chain map and folds
 - Itertools accept any stream, wrapped or acting, and their results keep chaining
 - Forms become transparent wrappers, so mutating reads like pop compose in flows
 - READMEs say what nu is plainly and list every nustd module accurately

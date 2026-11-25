@@ -124,6 +124,13 @@ def test_stream_action_yields_and_mutates(app, target: Calculator):
     assert target.log == []
 
 
+def test_stream_reads_keep_chaining(app, target: Calculator):
+    target.log = [("a", ()), ("b", ())]
+    assert nu.run(app(Calc.squares(n=4).map(lambda x: nu.Int(x) + 1).to_list()))[0] == [1, 2, 5, 10]
+    assert nu.run(app(Calc.drain().count()))[0] == 2
+    assert target.log == []
+
+
 # --- defaults / target_attr wiring ------------------------------------------
 
 

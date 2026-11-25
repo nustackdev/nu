@@ -17,6 +17,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from nu.context import FabricRef
+from nu.forms import Iterator
 from nu.lang.null import Null
 from nu.lang.sentinels import UNSET
 
@@ -39,7 +40,6 @@ if TYPE_CHECKING:
         Stop,
         Teleport,
         Wait,
-        Workers,
     )
 
 
@@ -125,11 +125,11 @@ class PoolRef(FabricRef):
 
         return Launch(self, init)
 
-    def workers(self) -> Workers:
+    def workers(self) -> Iterator:
         """A ``Workers`` stream over this pool: every live worker handed out."""
         from .interactions import Workers
 
-        return Workers(self)
+        return Iterator(Workers(self))
 
     def teleport(self, body: Nu, worker: object = None, *, carry: bool = False) -> Teleport:
         """A ``Teleport`` on this pool: run ``body`` at ``worker``, yield its value."""

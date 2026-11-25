@@ -14,6 +14,7 @@ from pathlib import PurePath, PurePosixPath
 from typing import TYPE_CHECKING, NoReturn, cast
 
 from nu.context import FabricRef
+from nu.forms import Iterator
 from nu.lang import Literal, Nu, ScalarQuery
 from nu.lang.null import Null, is_null
 from nu.lang.sentinels import UNSET
@@ -185,17 +186,19 @@ class FsRef(FabricRef):
         pattern: object = "*",
         recursive: object = False,
         kind: object = None,
-    ) -> FsList:
+    ) -> Iterator:
         """The entries of the dir ``p``, a lazy stream; see ``FsList``."""
-        return FsList(self, p, pattern, recursive, kind)
+        return Iterator(FsList(self, p, pattern, recursive, kind))
 
-    def open(self, p: object, start: object = 0, end: object = None, step: object = STEP) -> FsOpen:
+    def open(
+        self, p: object, start: object = 0, end: object = None, step: object = STEP
+    ) -> Iterator:
         """The file's bytes as a lazy stream of pieces; see ``FsOpen``."""
-        return FsOpen(self, p, start, end, step)
+        return Iterator(FsOpen(self, p, start, end, step))
 
-    def lines(self, p: object, encoding: object = "utf-8") -> FsLines:
+    def lines(self, p: object, encoding: object = "utf-8") -> Iterator:
         """The file's lines as a lazy stream; see ``FsLines``."""
-        return FsLines(self, p, encoding)
+        return Iterator(FsLines(self, p, encoding))
 
     # --- writes -------------------------------------------------------------
 
@@ -430,17 +433,17 @@ class FileRef:
 
     def list(
         self, *, pattern: object = "*", recursive: object = False, kind: object = None
-    ) -> FsList:
+    ) -> Iterator:
         """The entries of this dir, a lazy stream; see ``FsList``."""
-        return FsList(self._fs, self._path, pattern, recursive, kind)
+        return Iterator(FsList(self._fs, self._path, pattern, recursive, kind))
 
-    def open(self, start: object = 0, end: object = None, step: object = STEP) -> FsOpen:
+    def open(self, start: object = 0, end: object = None, step: object = STEP) -> Iterator:
         """The file's bytes as a lazy stream of pieces; see ``FsOpen``."""
-        return FsOpen(self._fs, self._path, start, end, step)
+        return Iterator(FsOpen(self._fs, self._path, start, end, step))
 
-    def lines(self, encoding: object = "utf-8") -> FsLines:
+    def lines(self, encoding: object = "utf-8") -> Iterator:
         """The file's lines as a lazy stream; see ``FsLines``."""
-        return FsLines(self._fs, self._path, encoding)
+        return Iterator(FsLines(self._fs, self._path, encoding))
 
     # --- writes -------------------------------------------------------------
 

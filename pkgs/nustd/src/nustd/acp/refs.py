@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from nu.context import FabricRef
+from nu.forms import Iterator
 from nu.lang import Nu, Ref, ScalarQuery
 from nu.lang.null import Null, is_null
 
@@ -158,13 +159,13 @@ class AgentRef(FabricRef):
         """
         return AcpNewSession(self, cwd, mcp_servers, additional_directories, system_prompt)
 
-    def list_sessions(self, *, cwd: StrArg | None = None) -> AcpListSessions:
+    def list_sessions(self, *, cwd: StrArg | None = None) -> Iterator:
         """Every Session the Agent keeps, one dict each; see ``AcpListSessions``.
 
         Args:
             cwd: only those under this directory; None lists all.
         """
-        return AcpListSessions(self, cwd)
+        return Iterator(AcpListSessions(self, cwd))
 
     def exists(self) -> Bool:
         """Whether a fabric is bound under this Agent's name, as a ``Bool``.
@@ -238,9 +239,9 @@ class SessionRef(Ref):
         mcp_servers: object = None,
         additional_directories: object = None,
         system_prompt: object = None,
-    ) -> AcpLoad:
+    ) -> Iterator:
         """Restore the Session: its replayed updates, then ``{modes, config_options}``; see ``AcpLoad``."""
-        return AcpLoad(self, cwd, mcp_servers, additional_directories, system_prompt)
+        return Iterator(AcpLoad(self, cwd, mcp_servers, additional_directories, system_prompt))
 
     def resume(
         self,
@@ -253,13 +254,13 @@ class SessionRef(Ref):
         """Restore the Session without a replay; see ``AcpResume``."""
         return AcpResume(self, cwd, mcp_servers, additional_directories, system_prompt)
 
-    def prompt(self, prompt: object) -> AcpPrompt:
+    def prompt(self, prompt: object) -> Iterator:
         """One Prompt Turn, streamed; see ``AcpPrompt``.
 
         Args:
             prompt: a ``str``, or a list of ACP Content Block dicts.
         """
-        return AcpPrompt(self, prompt)
+        return Iterator(AcpPrompt(self, prompt))
 
     def cancel(self) -> AcpCancel:
         """Stop the running Prompt Turn; pending permission requests are answered ``cancelled``."""
@@ -285,9 +286,9 @@ class SessionRef(Ref):
         """Remove the Session from the Agent's list."""
         return AcpDelete(self)
 
-    def updates(self) -> AcpUpdates:
+    def updates(self) -> Iterator:
         """Everything the Agent says about the Session from now on; see ``AcpUpdates``."""
-        return AcpUpdates(self)
+        return Iterator(AcpUpdates(self))
 
 
 class _AgentBound(ScalarQuery):

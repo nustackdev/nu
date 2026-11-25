@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from nu.context import FabricRef
+from nu.forms import Iterator
 from nu.lang import Nu, ScalarQuery
 from nu.lang.null import Null, is_null
 
@@ -178,7 +179,7 @@ class StoreRef(FabricRef):
         start: IntArg = 0,
         end: IntArg | None = None,
         step: IntArg = STEP,
-    ) -> BlobOpen:
+    ) -> Iterator:
         """A range of the blob as a lazy stream of byte pieces; see ``BlobOpen``.
 
         Args:
@@ -188,7 +189,7 @@ class StoreRef(FabricRef):
             step: bytes per piece.
         """
         _check_given_id(blob_id)
-        return BlobOpen(self, blob_id, start, end, step)
+        return Iterator(BlobOpen(self, blob_id, start, end, step))
 
     def meta(self, blob_id: StrArg) -> BlobMeta:
         """The blob's ``{id, size, mime, name, created_at}``."""

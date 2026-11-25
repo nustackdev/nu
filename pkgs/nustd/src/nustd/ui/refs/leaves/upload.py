@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, NoReturn
 
 from typing_extensions import Self
 
-from nu.forms import Dict
+from nu.forms import Dict, Iterator
 from nu.lang.null import is_null
 from nustd.ui.core import Changed, Write, check_key
 from nustd.ui.uploads.interactions import (
@@ -82,9 +82,9 @@ class _FileReads:
         """The whole file in memory; warns past 16 MiB. See ``GetBytes``."""
         return GetBytes(self)  # type: ignore[arg-type]
 
-    def open(self, start: IntArg = 0, end: IntArg | None = None, step: IntArg = STEP) -> OpenFile:
+    def open(self, start: IntArg = 0, end: IntArg | None = None, step: IntArg = STEP) -> Iterator:
         """A lazy stream of ``bytes`` pieces of ``[start:end]``, pulling first. See ``OpenFile``."""
-        return OpenFile(self, start, end, step)  # type: ignore[arg-type]
+        return Iterator(OpenFile(self, start, end, step))  # type: ignore[arg-type]
 
     def pull(self) -> Nu:
         """Start the whole file toward the server's cache; returns at once. See ``Pull``."""

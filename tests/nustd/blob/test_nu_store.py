@@ -85,7 +85,8 @@ def test_methods_build_the_matching_atoms():
     assert isinstance(Media.put_stream(Media.open(BID)), BlobPutStream)
     assert isinstance(Media.new_id(), BlobNewId)
     assert isinstance(Media.get(BID), BlobGet)
-    assert isinstance(Media.open(BID), BlobOpen)
+    assert isinstance(Media.open(BID), nu.Iterator)
+    assert isinstance(nu.tree.children(Media.open(BID))[0], BlobOpen)
     assert isinstance(Media.meta(BID), BlobMeta)
     assert isinstance(Media.has(BID), BlobHas)
     assert isinstance(Media.delete(BID), BlobDelete)
@@ -157,7 +158,8 @@ def test_kinds():
     assert isinstance(Media.put_stream(Media.open(BID)), nu.ActionReduction)
     assert isinstance(Media.put_stream(Media.open(BID)), nu.ScalarAction)
     assert isinstance(Media.new_id(), nu.ScalarQuery)
-    assert isinstance(Media.open(BID), nu.StreamQuery)
+    assert isinstance(nu.tree.children(Media.open(BID))[0], nu.StreamQuery)
+    assert nu.lang.cardinality_of(Media.open(BID)) is nu.lang.Cardinality.STREAM
     assert isinstance(Media.delete(BID), nu.Command)
 
 
