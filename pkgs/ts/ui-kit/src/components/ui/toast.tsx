@@ -9,19 +9,38 @@
 // Two parts. `Toaster` is mounted once near the app root and draws every
 // toast in a corner stack. `toast()` shows one from anywhere, an event
 // handler or a socket write, with no hook and no context: it returns the
-// toast's id, and `dismissToast(id)` takes it down early. Built on Radix
+// toast's id, and `dismissToast(id)` takes it down early. A toast may carry
+// one action, a button beside its text (an Undo): clicking it runs the
+// action and closes the toast. Built on Radix
 // Toast, which brings the swipe to dismiss, the pause on hover and focus, and
 // the F8 hotkey into the stack.
 
 import { cva } from "class-variance-authority";
-import { AlertCircle, AlertTriangle, Bell, CheckCircle2, Info, type LucideIcon, X } from "lucide-react";
+import {
+	AlertCircle,
+	AlertTriangle,
+	Bell,
+	CheckCircle2,
+	Info,
+	type LucideIcon,
+	X,
+} from "lucide-react";
 import { Toast as ToastPrimitive } from "radix-ui";
 import * as React from "react";
 
 import { cn } from "../../lib/utils";
+import { Button } from "./button";
 import { IconButton } from "./icon-button";
 
 export type ToastTone = "neutral" | "info" | "ok" | "warn" | "danger";
+
+/** The one button a toast may carry beside its text, eg an Undo. */
+export interface ToastAction {
+	/** What the button says, short: one word in most uses. */
+	label: string;
+	/** Runs on click; the toast closes with it. */
+	onClick: () => void;
+}
 
 export interface ToastOptions {
 	/** The one line that says what happened. */
@@ -31,11 +50,14 @@ export interface ToastOptions {
 	tone?: ToastTone;
 	/** How long it stays, in ms. Danger stays longer by default. */
 	duration?: number;
+	/** A button beside the text. */
+	action?: ToastAction;
 }
 
-export interface ToastEntry extends Required<Omit<ToastOptions, "description">> {
+export interface ToastEntry extends Required<Omit<ToastOptions, "description" | "action">> {
 	id: number;
 	description: string;
+	action: ToastAction | null;
 	open: boolean;
 }
 
@@ -86,6 +108,7 @@ export function toast(options: ToastOptions): number {
 		description: options.description ?? "",
 		tone,
 		duration: options.duration ?? (tone === "danger" ? TOAST_DANGER_DURATION : TOAST_DURATION),
+		action: options.action ?? null,
 		open: true,
 	};
 	entries = [...entries, entry];
@@ -112,7 +135,7 @@ export function useToasts(): ToastEntry[] {
 
 const toastVariants = cva(
 	[
-		"pointer-events-auto relative flex w-full items-start gap-3 rounded-md border p-3 pr-9",
+		"pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden rounded-md border p-3",
 		"bg-bg-elevated text-text-primary shadow-floating font-display text-sm",
 		// Motion per motion.md: fade + slight y-shift.
 		"data-[state=open]:animate-in data-[state=closed]:animate-out",
@@ -152,26 +175,103 @@ const ICON_TONE: Record<ToastTone, string> = {
 	danger: "text-status-danger",
 };
 
+const TIMER_TONE: Record<ToastTone, string> = {
+	neutral: "bg-text-muted",
+	info: "bg-status-info",
+	ok: "bg-status-ok",
+	warn: "bg-status-warn",
+	danger: "bg-status-danger",
+};
+
+/**
+ * The time left, as a line along the bottom edge that shrinks to nothing as
+ * the toast closes. It holds while the toast's own timer does (hover, focus,
+ * the window in the background): `paused` follows Radix's pause and resume.
+ */
+function ToastTimer({
+	duration,
+	paused,
+	tone,
+}: {
+	duration: number;
+	paused: boolean;
+	tone: ToastTone;
+}) {
+	const ref = React.useRef<HTMLDivElement | null>(null);
+	const run = React.useRef<Animation | null>(null);
+
+	React.useEffect(() => {
+		const el = ref.current;
+		if (!el || typeof el.animate !== "function" || !Number.isFinite(duration)) return;
+		const anim = el.animate([{ transform: "scaleX(1)" }, { transform: "scaleX(0)" }], {
+			duration,
+			easing: "linear",
+			fill: "forwards",
+		});
+		run.current = anim;
+		return () => anim.cancel();
+	}, [duration]);
+
+	React.useEffect(() => {
+		if (paused) run.current?.pause();
+		else run.current?.play();
+	}, [paused]);
+
+	return (
+		<div
+			ref={ref}
+			aria-hidden="true"
+			data-slot="toast-timer"
+			className={cn(
+				"pointer-events-none absolute inset-x-0 bottom-0 h-0.5 origin-left",
+				TIMER_TONE[tone],
+			)}
+		/>
+	);
+}
+
 export interface ToastProps extends React.ComponentProps<typeof ToastPrimitive.Root> {
 	tone?: ToastTone;
 	title: string;
 	description?: string;
+	action?: ToastAction | null;
 }
 
 /** One toast, as `Toaster` draws it. Usable alone inside a `ToastPrimitive.Provider`. */
-export function Toast({ tone = "neutral", title, description, className, ...props }: ToastProps) {
+export function Toast({
+	tone = "neutral",
+	title,
+	description,
+	action,
+	duration = TOAST_DURATION,
+	onPause,
+	onResume,
+	className,
+	...props
+}: ToastProps) {
 	const Icon = ICONS[tone];
+	const [paused, setPaused] = React.useState(false);
 	return (
 		<ToastPrimitive.Root
 			data-slot="toast"
 			data-tone={tone}
 			type={tone === "danger" ? "foreground" : "background"}
 			className={cn(toastVariants({ tone }), className)}
+			duration={duration}
+			onPause={() => {
+				setPaused(true);
+				onPause?.();
+			}}
+			onResume={() => {
+				setPaused(false);
+				onResume?.();
+			}}
 			{...props}
 		>
+			<ToastTimer duration={duration} paused={paused} tone={tone} />
 			<Icon aria-hidden="true" className={cn("mt-0.5 size-4 shrink-0", ICON_TONE[tone])} />
 			<div className="min-w-0 flex-1">
-				<ToastPrimitive.Title className="font-semibold leading-tight break-words">
+				<ToastPrimitive.Title className="font-semibold leading-5 break-words">
 					{title}
 				</ToastPrimitive.Title>
 				{description ? (
@@ -180,16 +280,26 @@ export function Toast({ tone = "neutral", title, description, className, ...prop
 					</ToastPrimitive.Description>
 				) : null}
 			</div>
-			<ToastPrimitive.Close asChild>
-				<IconButton
-					aria-label="Dismiss"
-					variant="ghost"
-					size="xs"
-					className="absolute right-2 top-2"
-				>
-					<X />
-				</IconButton>
-			</ToastPrimitive.Close>
+			{/* On the title's line: the action and the close, each one line tall. */}
+			<div className="flex shrink-0 items-center gap-1">
+				{action ? (
+					<ToastPrimitive.Action asChild altText={action.label}>
+						<Button
+							variant="ghost"
+							size="xs"
+							className="font-semibold text-accent-text hover:text-accent-text"
+							onClick={action.onClick}
+						>
+							{action.label}
+						</Button>
+					</ToastPrimitive.Action>
+				) : null}
+				<ToastPrimitive.Close asChild>
+					<IconButton aria-label="Dismiss" variant="ghost" size="xs">
+						<X />
+					</IconButton>
+				</ToastPrimitive.Close>
+			</div>
 		</ToastPrimitive.Root>
 	);
 }
@@ -211,6 +321,7 @@ export function Toaster({ className, label = "Notifications" }: ToasterProps) {
 					tone={t.tone}
 					title={t.title}
 					description={t.description}
+					action={t.action}
 					duration={t.duration}
 					open={t.open}
 					onOpenChange={(open) => {

@@ -152,4 +152,37 @@ describe("Toaster", () => {
 		expect(document.body.textContent).toContain("Plane removed");
 		expect(document.body.textContent).toContain("It is in the trash");
 	});
+
+	it("runs its action on click and closes", () => {
+		mount(
+			<>
+				<Probe />
+				<Toaster />
+			</>,
+		);
+		const onClick = vi.fn();
+		act(() => {
+			toast({ title: "Cell deleted", action: { label: "Undo", onClick } });
+		});
+		const button = [...document.body.querySelectorAll("button")].find(
+			(b) => b.textContent === "Undo",
+		);
+		expect(button).toBeDefined();
+		act(() => button?.click());
+		expect(onClick).toHaveBeenCalledOnce();
+		expect(shown[0].open).toBe(false);
+	});
+
+	it("draws a timer line along its bottom edge", () => {
+		mount(
+			<>
+				<Probe />
+				<Toaster />
+			</>,
+		);
+		act(() => {
+			toast({ title: "Saved" });
+		});
+		expect(document.body.querySelector('[data-slot="toast-timer"]')).not.toBeNull();
+	});
 });

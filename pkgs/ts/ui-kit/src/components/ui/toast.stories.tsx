@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Button } from "./button";
-import { type ToastTone, Toaster, toast } from "./toast";
+import { Toaster, type ToastTone, toast } from "./toast";
 
 const TONES: ToastTone[] = ["neutral", "info", "ok", "warn", "danger"];
 
@@ -23,6 +23,22 @@ export const Default: StoryObj = {
 					{tone}
 				</Button>
 			))}
+			<Toaster />
+		</div>
+	),
+};
+
+export const WithAction: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<Button
+				variant="secondary"
+				onClick={() =>
+					toast({ title: "3 cells deleted", action: { label: "Undo", onClick: () => {} } })
+				}
+			>
+				delete
+			</Button>
 			<Toaster />
 		</div>
 	),

@@ -467,6 +467,7 @@ export {
 	TOAST_EXIT,
 	TOAST_LIMIT,
 	Toast,
+	type ToastAction,
 	type ToastEntry,
 	Toaster,
 	type ToasterProps,
