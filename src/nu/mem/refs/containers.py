@@ -127,7 +127,7 @@ class DictRef(shape.DictRef[K, V], RefBase[dict[K, V]], Generic[K, V]):
         """A lazy stream over the keys, each the declared key's form."""
         return super().iter()
 
-    @overload
+    @overload  # type: ignore[override]
     def __getitem__(self: DictRef[K, bool], key: object) -> BoolRef: ...
     @overload
     def __getitem__(self: DictRef[K, int], key: object) -> IntRef: ...

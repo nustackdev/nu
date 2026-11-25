@@ -33,7 +33,7 @@ Cardinality value spaces).
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, cast
 
 from nu.engine import Declared
 
@@ -184,7 +184,8 @@ class Flow(Interaction[V_co], Generic[V_co]):  # PEP 695 has no variance markers
     ) -> tuple[tuple[Callable[..., Any], ...], tuple[Callable[..., Awaitable[Any]], ...]]:
         from .attributes import Attr
 
-        params = program.attr(program.path_of[nid], Attr.PARAM_SLOTS) | self._config_slots()
+        declared = cast("frozenset[int]", program.attr(program.path_of[nid], Attr.PARAM_SLOTS))
+        params = declared | self._config_slots()
         cardinality = program.attrs[Attr.CHILD_CARDINALITY]
         streams = {
             slot

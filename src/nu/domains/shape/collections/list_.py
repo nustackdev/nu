@@ -34,7 +34,7 @@ T = TypeVar("T")
 # element read by design; typing cannot say the child is also the element form.
 
 
-class ListRef(MutableSequenceRef, ListSurface[T]):
+class ListRef(MutableSequenceRef, ListSurface[T]):  # type: ignore[misc]
     """List slot ref: ``ref[i]`` descends to the element's child ref."""
 
     def _wrap_sliceable_result(self, operand: Nu) -> List[T]:

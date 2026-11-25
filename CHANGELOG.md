@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Type checking of refs and flows is back to its baseline after the split
 - Docstrings, comments and test names now say surface where they still said form
 - A stream action in a flow body now runs to its end, so its writes land
 - Regression tests keep pop and popitem working as chain steps, flow bodies and spans
