@@ -1,7 +1,8 @@
 // SliderRef -- numeric slider with min/max/step. Browser is source of truth.
 //
-// Dragging is a local edit (the node's `value` follows the thumb). The
-// release, or an arrow key, commits: `{event: "change"}` when the value moved
+// Dragging is a local edit (the node's `value` follows the thumb), each tick
+// that moved it sends `{event: "input", value}`. The release, or an arrow
+// key, commits: `{event: "change", value}` when the value moved
 // (./control.ts). A server-initiated write needs a handler: the scalar form
 // is a bare number and nil lands on the floor rather than as null, or the
 // slider goes uncontrolled and the next read answers null. The map form
@@ -32,7 +33,7 @@ function SliderView({ path }: NodeProps) {
 	const value = useNumberProp(path, "value", min);
 	const showValue = useBoolProp(path, "show_value", true);
 	const c = useControl(path);
-	const { edit, commit } = useCommit(path);
+	const { edit, commit } = useCommit(path, { moves: true });
 	const labelId = useId();
 
 	return (

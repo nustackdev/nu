@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 
 from typing_extensions import Self
 
-from nustd.ui.core import Submits, Write
+from nustd.ui.core import Moves, Submits, Write
 
 from .input import (
     InputLeaf,
@@ -182,11 +182,11 @@ class MultiSelectRef(_Placeholder, InputLeaf):
         return _options_write(self, opts)
 
 
-class AutocompleteRef(Submits, _Placeholder, InputLeaf):
+class AutocompleteRef(Moves, Submits, _Placeholder, InputLeaf):
     """Text input with a suggestion list; any text is a value.
 
-    The value is the text, live in the browser, as on ``InputRef``: typing
-    commits on blur, Enter commits and submits (``on_submit``). The list
+    The value is the text, live in the browser, as on ``InputRef``: each
+    keystroke is heard by ``on_input()``, typing commits on blur, Enter commits and submits (``on_submit``). The list
     under the field offers the options that match what is typed. Enter on a
     highlighted suggestion (arrow keys move the highlight) or a click on one
     puts its value in the field and commits at once, with no submit.

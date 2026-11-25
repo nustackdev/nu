@@ -55,7 +55,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tool
 // The value is a list of elements (see ./sketch-board-model). An element in
 // flight lives in a ref and only the draft layer re-renders per move;
 // `onValueChange` fires once per committed element, once per undo or redo
-// and once on clear, never per pointer move.
+// and once on clear, never per pointer move. `onEdit` is the per move one:
+// each point a stroke gains (each resize of a shape), with a `read` that
+// gives the elements as they would be, the one in flight last.
 //
 // Config is what a program sets: which `tools` exist, which toolbar
 // `controls` show (none at all is no toolbar), the starting tool, colors and
@@ -71,6 +73,11 @@ export interface SketchBoardProps
 	/** The elements. Anything off-shape is skipped, never thrown on. */
 	value: readonly unknown[];
 	onValueChange?: (value: SketchElement[]) => void;
+	/**
+	 * Each move of the element in flight. `read` gives the committed elements
+	 * plus a copy of the one in flight; call it only when they are wanted.
+	 */
+	onEdit?: (read: () => SketchElement[]) => void;
 	/** Board width in px. It never grows past its container. */
 	width?: number;
 	/** Board height in px; the width when unset. The aspect ratio holds as it shrinks. */
@@ -439,6 +446,7 @@ function ShapeMenu({
 export function SketchBoard({
 	value,
 	onValueChange,
+	onEdit,
 	width = 280,
 	height,
 	tools: toolsProp,
@@ -598,11 +606,19 @@ export function SketchBoard({
 				: shaped(activeTool, p, p, false);
 		draft.current = { id: e.pointerId, origin: p, el };
 		redraw();
+		moved(el);
+	};
+
+	// The element in flight moved: hand the board as it would be to `onEdit`.
+	// A copy, since a stroke's points keep growing in place.
+	const moved = (el: SketchElement) => {
+		onEdit?.(() => [...latest.current, structuredClone(el)]);
 	};
 
 	const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
 		const d = draft.current;
 		if (!d || d.id !== e.pointerId) return;
+		let grew = false;
 		if (d.el.type === "path") {
 			const pts = d.el.points;
 			const events = e.nativeEvent.getCoalescedEvents?.() ?? [];
@@ -612,12 +628,17 @@ export function SketchBoard({
 				const last = pts[pts.length - 1];
 				if (Math.hypot(p[0] - last[0], p[1] - last[1]) < MIN_STEP) continue;
 				pts.push(withPressure(p, ev));
+				grew = true;
 			}
 		} else {
 			const p = at(e);
-			if (p) d.el = shaped(d.el.type, d.origin, p, e.shiftKey);
+			if (p) {
+				d.el = shaped(d.el.type, d.origin, p, e.shiftKey);
+				grew = true;
+			}
 		}
 		redraw();
+		if (grew) moved(d.el);
 	};
 
 	const finish = (keep: boolean) => {

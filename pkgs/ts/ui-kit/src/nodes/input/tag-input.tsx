@@ -1,7 +1,9 @@
 // TagInputRef -- multi-tag entry field. Browser is source of truth.
 //
 // Committed tags live on the node as `value: string[]`. Adding or removing a
-// tag lands the list and sends `{event: "change"}` at once (./control.ts).
+// tag lands the list and sends `{event: "change", value}` at once
+// (./control.ts). Typing in the draft sends `{event: "input", value, draft}`:
+// `value` is the tags, as a read gives them, `draft` the text not yet a tag.
 // Enter with text in the draft adds a tag; Enter on an empty draft submits
 // (and asks an enclosing Form to submit). The store answers a read from
 // `value`.
@@ -15,8 +17,15 @@
 
 import { Label } from "../../components/ui/field";
 import { TagInput } from "../../components/ui/tag-input";
-import { type NodeEntry, type NodeProps, useBoolProp, useListProp, useProp } from "../../tree";
-import { isEnter, resetHandler, useCommit, useControl } from "./control";
+import {
+	type NodeEntry,
+	type NodeProps,
+	useBoolProp,
+	useEmit,
+	useListProp,
+	useProp,
+} from "../../tree";
+import { EVENTS, isEnter, resetHandler, submitted, useCommit, useControl } from "./control";
 
 function normalizeTags(raw: unknown): string[] {
 	if (!Array.isArray(raw)) return [];
@@ -34,7 +43,9 @@ function TagInputView({ path }: NodeProps) {
 	const maxTags = typeof rawMax === "number" ? rawMax : null;
 	const allowDuplicates = useBoolProp(path, "allow_duplicates");
 	const c = useControl(path);
+	// Not `moves`: the tags only change on a pick, the draft is what moves.
 	const { pick, submit } = useCommit(path);
+	const emit = useEmit(path);
 
 	return (
 		<div className="flex flex-col gap-1">
@@ -62,6 +73,7 @@ function TagInputView({ path }: NodeProps) {
 				onValueChange={(next) => {
 					if (!c.readOnly) pick(next);
 				}}
+				onDraftChange={(draft) => emit(EVENTS.input, { value: submitted(path), draft })}
 			/>
 		</div>
 	);

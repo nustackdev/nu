@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from typing_extensions import Self
 
 from nu.lang.sentinels import UNSET
-from nustd.ui.core import Write
+from nustd.ui.core import Moves, Write
 
 from .input import InputLeaf, _common
 
@@ -54,11 +54,12 @@ def _normalize_marks(marks: Sequence[Mark]) -> list[dict[str, object]]:
     return out
 
 
-class RangeSliderRef(InputLeaf):
+class RangeSliderRef(Moves, InputLeaf):
     """Two-thumb slider whose ``[low, high]`` value lives in the browser.
 
     The value is a two-item list, low first; the thumbs cannot cross. A drag
-    is local, the release (or an arrow key) commits, heard by ``on_change()``.
+    is local, each tick heard by ``on_input()``; the release (or an arrow
+    key) commits, heard by ``on_change()``.
     No send key, so no ``on_submit()``. ``value=None`` seeds the whole span,
     ``[min, max]``. A write that is not a pair lands as ``[min, max]``; a
     pair is clamped to the bounds and put in order.

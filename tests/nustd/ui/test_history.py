@@ -25,7 +25,7 @@ from nustd.ui import (
     decode_query,
     encode_query,
 )
-from nustd.ui.core import Changed
+from nustd.ui.core import Changed, Changes
 from nustd.ui.refs import EmptyStateRef, Row
 
 
@@ -147,8 +147,14 @@ def test_a_bare_uri_from_an_older_kit_still_reads():
     }
 
 
-def test_on_change_subscribes():
-    assert isinstance(App.nav.on_change(), Changed)
+def test_on_change_subscribes_to_change():
+    term = App.nav.on_change()
+    assert isinstance(term, Changed)
+    assert term._children[1].value == "change"
+
+
+def test_history_is_readable_and_changes():
+    assert issubclass(HistoryRef, Changes)
 
 
 def test_docstring_names_no_aread():

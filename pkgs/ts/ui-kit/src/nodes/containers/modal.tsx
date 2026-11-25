@@ -1,6 +1,7 @@
 // Modal -- dialog overlay Section. Server-owned `open` / `title`; when the
 // user dismisses (backdrop, Escape, the close button) and `dismissible` is
-// true, it closes in this tab and sends `notify` with {open: false}.
+// true, it closes in this tab and emits `change` with `value: false`. A
+// read answers whether it is open (`readOpen`), the value a `change` carries.
 //
 // `open`, `title` and `dismissible` are plain props: the default `write`
 // merges them and the coercions below handle nil at read time, so there is
@@ -17,7 +18,7 @@
 //
 // Composes the kit Dialog primitive (Radix Dialog under the hood). Overlay +
 // content pick up motion + backdrop tint from the primitive; we own the
-// notify wiring only.
+// emit wiring only.
 //
 // Layout (`layout.tsx`): `width` is the dialog's width (512px unless set),
 // the other size props sit on the dialog too, `padding` replaces its pad, and
@@ -33,7 +34,6 @@
 // required, wrap the body in `forceMount` and gate visibility with `hidden`
 // at the wrapper level.
 
-import { OPS } from "@nustackdev/ui-core";
 import { type CSSProperties, useCallback } from "react";
 import {
 	Dialog,
@@ -44,12 +44,13 @@ import {
 } from "../../components/ui/dialog";
 import { cn } from "../../lib/utils";
 import {
+	EVENTS,
 	type NodeEntry,
 	type NodeProps,
 	SlotView,
 	useBoolProp,
 	useChildren,
-	useSend,
+	useEmit,
 	useSetProps,
 	useStringProp,
 } from "../../tree";
@@ -88,7 +89,7 @@ function ModalView({ path }: NodeProps) {
 	const title = useStringProp(path, "title");
 	const dismissible = useBoolProp(path, "dismissible", true);
 	const hasHeader = useChildren(path).includes(HEADER);
-	const send = useSend(path);
+	const emit = useEmit(path);
 	const setProps = useSetProps(path);
 
 	// A dismiss closes in this tab and tells the program, like a Collapsible
@@ -98,9 +99,9 @@ function ModalView({ path }: NodeProps) {
 			if (next) return;
 			if (!dismissible) return;
 			setProps({ open: false });
-			send(OPS.notify, { open: false });
+			emit(EVENTS.change, { value: false });
 		},
-		[dismissible, send, setProps],
+		[dismissible, emit, setProps],
 	);
 
 	return (
@@ -138,4 +139,11 @@ function ModalView({ path }: NodeProps) {
 	);
 }
 
-export const Modal: NodeEntry = { component: ModalView, handlers: childHandlers };
+/** The main read of an overlay or a fold: whether it is open now. */
+export const readOpen = (props: Record<string, unknown>): boolean => Boolean(props.open ?? false);
+
+export const Modal: NodeEntry = {
+	component: ModalView,
+	handlers: childHandlers,
+	reads: { "": readOpen },
+};

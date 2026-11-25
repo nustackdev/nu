@@ -27,6 +27,7 @@ function Markdown({
 	placeholder,
 	readOnly = true,
 	onCommit,
+	onEdit,
 	onSubmit,
 	submitOn,
 	schema,
@@ -43,6 +44,7 @@ function Markdown({
 				placeholder={placeholder}
 				readOnly={readOnly}
 				onCommit={onCommit ?? noop}
+				onEdit={onEdit}
 				onSubmit={onSubmit}
 				submitOn={submitOn}
 				schema={schema}

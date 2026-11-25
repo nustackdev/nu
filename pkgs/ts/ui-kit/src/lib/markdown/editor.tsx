@@ -163,6 +163,11 @@ export type ProseEditorProps = {
 	readOnly?: boolean;
 	/** Persist. Only fires when the document actually changed. */
 	onCommit: (source: string) => void;
+	/**
+	 * Every edit, before any save. `read` gives the document as markdown; call
+	 * it only when the text is wanted, it serializes the whole document.
+	 */
+	onEdit?: (read: () => string) => void;
 	/** The deliberate send, after its commit. Editable only. */
 	onSubmit?: () => void;
 	/** Which key sends: shift+Enter (the default, Enter breaks the line) or Enter. */
@@ -196,6 +201,7 @@ export function ProseEditor({
 	placeholder: hint = "",
 	readOnly = false,
 	onCommit,
+	onEdit,
 	onSubmit,
 	submitOn = "shift+enter",
 	schema = proseSchema,
@@ -214,6 +220,7 @@ export function ProseEditor({
 	const cb = useRef({
 		value,
 		onCommit,
+		onEdit,
 		onSubmit,
 		submitOn,
 		readOnly,
@@ -222,7 +229,18 @@ export function ProseEditor({
 		onHandle,
 		stored,
 	});
-	cb.current = { value, onCommit, onSubmit, submitOn, readOnly, hint, onView, onHandle, stored };
+	cb.current = {
+		value,
+		onCommit,
+		onEdit,
+		onSubmit,
+		submitOn,
+		readOnly,
+		hint,
+		onView,
+		onHandle,
+		stored,
+	};
 	/** The handle, while the view is up; announced through `onHandle` only while editable. */
 	const handleRef = useRef<MarkdownHandle | null>(null);
 	const announcedRef = useRef(false);
@@ -448,6 +466,7 @@ export function ProseEditor({
 				if (tr.docChanged && !tr.getMeta(INBOUND)) {
 					dirtyRef.current = true;
 					queueSave();
+					cb.current.onEdit?.(() => md().serializeMarkdown(view.state.doc));
 				}
 			},
 			handleDOMEvents: {

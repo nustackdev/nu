@@ -11,7 +11,8 @@
 // inbound ops the default `write` cannot express:
 //   set_tabs   replace the tabs list wholesale
 //   set_active set the active tab id (server pin / confirmation)
-// One outbound notify on user click: payload is the clicked tab id. The
+// One outbound event on user click: `change` whose `value` is the clicked
+// tab id. A read answers the tab on show the same way (`readActive`). The
 // server may mirror it back via set_active. Inactive bodies stay mounted
 // (via forceMount + `hidden`) so leaf components keep their local state.
 // Composes the kit Tabs primitive family (Radix Tabs under the hood).
@@ -21,7 +22,6 @@
 // value reads as `line`. The size props and `scroll` (`layout.tsx`) sit on the tabs; each
 // body is one child, which carries its own layers.
 
-import { OPS } from "@nustackdev/ui-core";
 import {
 	TabsContent,
 	TabsList,
@@ -29,14 +29,15 @@ import {
 	TabsTrigger,
 } from "../../components/ui/tabs";
 import {
+	EVENTS,
 	FlowProvider,
 	type NodeEntry,
 	type NodeProps,
 	NodeView,
 	useChildren,
+	useEmit,
 	useEnumProp,
 	useListProp,
-	useSend,
 	useSetProps,
 	useStringProp,
 } from "../../tree";
@@ -61,23 +62,35 @@ function normalizeTabs(raw: unknown): Tab[] {
 	return out;
 }
 
+/** The tab on show: the pinned one when the strip has it, else the first. */
+function activeOf(tabs: Tab[], active: string): string {
+	return active && tabs.some((t) => t.id === active) ? active : (tabs[0]?.id ?? "");
+}
+
+/** The main read: the active tab's id, null while there are no tabs. */
+function readActive(props: Record<string, unknown>): string | null {
+	const tabs = normalizeTabs(props.tabs);
+	if (tabs.length === 0) return null;
+	return activeOf(tabs, props.active == null ? "" : String(props.active));
+}
+
 function TabsView({ path }: NodeProps) {
 	const rawTabs = useListProp<unknown>(path, "tabs");
 	const active = useStringProp(path, "active");
 	const variant = useEnumProp(path, "variant", VARIANTS, "line");
 	const children = useChildren(path);
 	const setProps = useSetProps(path);
-	const send = useSend(path);
+	const emit = useEmit(path);
 	const layout = useLayout(path, DEFAULTS);
 
 	const tabs = normalizeTabs(rawTabs);
-	const activeId = active && tabs.some((t) => t.id === active) ? active : (tabs[0]?.id ?? "");
+	const activeId = activeOf(tabs, active);
 	const bodies = new Set(children);
 
 	const onValueChange = (next: string) => {
 		// optimistic: pin locally first, then tell the server.
 		setProps({ active: next });
-		send(OPS.notify, next);
+		emit(EVENTS.change, { value: next });
 	};
 
 	if (tabs.length === 0) return null;
@@ -125,6 +138,7 @@ function TabsView({ path }: NodeProps) {
 export const Tabs: NodeEntry = {
 	component: TabsView,
 	fill: true,
+	reads: { "": readActive },
 	handlers: {
 		set_tabs: (ctx, payload) =>
 			ctx.update((props) => {

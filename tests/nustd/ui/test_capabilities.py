@@ -67,22 +67,12 @@ DERIVED: dict[str, str] = {
     "HistoryRef.on_path_change": "change, only the moves that touch the pathname",
 }
 
-#: Refs that break a rule today, and why. Wave 2 deletes these lines.
+#: Refs that break a rule, and why, one line each. Empty: a new ref keeps every rule.
 ALLOWLIST: dict[str, str] = {
-    "AccordionRef": "on_change on a ref that is not Readable, catch-all with no event",
     "AlertRef": "on_dismiss hears every event, not dismiss",
     "CameraCaptureRef": "get_bytes and get_slice, reads should be bytes() and slice()",
-    "CollapsibleRef": "on_change on a ref that is not Readable, catch-all with no event",
-    "DataTableRef": "on_change is a catch-all on a ref that is not Readable; on_row_click hears row",
     "EmptyStateRef": "on_action hears every event, not action",
-    "HistoryRef": "on_change is a catch-all on a ref that is not Readable",
-    "LensRef": "on_nav hears every event, there is no nav event",
     "MicCaptureRef": "get_bytes and get_slice, reads should be bytes() and slice()",
-    "ModalRef": "on_change on a ref that is not Readable, catch-all with no event",
-    "PopoverRef": "on_change on a ref that is not Readable, catch-all with no event",
-    "SheetRef": "on_change on a ref that is not Readable, catch-all with no event",
-    "TabsRef": "on_change on a ref that is not Readable, catch-all with no event",
-    "TreeRef": "on_change is a catch-all on a ref that is not Readable",
     "UploadFileRef": "get_bytes and get_slice, reads should be bytes() and slice()",
     "UploadedFileRef": "get_bytes and get_slice, reads should be bytes() and slice()",
 }
@@ -248,10 +238,7 @@ def test_on_change_and_on_submit_name_their_event():
 
 
 def test_on_input_names_input():
-    class Live(Moves, InputRef):
-        pass
-
-    assert _event_of(Live("q").on_input()) == INPUT
+    assert _event_of(InputRef("q").on_input()) == INPUT
 
 
 def test_mixins_and_events_reach_the_public_surface():

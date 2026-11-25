@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from typing_extensions import Self
 
-from nustd.ui.core import Submits, Write
+from nustd.ui.core import Moves, Submits, Write
 
 from .input import InputLeaf, _common, _Placeholder
 
@@ -25,14 +25,15 @@ if TYPE_CHECKING:
 __all__ = ["InlineEditRef"]
 
 
-class InlineEditRef(Submits, _Placeholder, InputLeaf):
+class InlineEditRef(Moves, Submits, _Placeholder, InputLeaf):
     """Text shown as plain text, edited in place. The value is the text.
 
     A click, Enter or Space opens the editor with the text selected. Enter
     saves and submits (a change when the text moved, then ``on_submit()``),
     a blur saves (a change when it moved), Escape cancels and puts the text
     back. The value lands when the edit is saved, so a read while the editor
-    is open sees the saved text. A ``required`` one saved empty is a cancel.
+    is open sees the saved text; ``on_input()`` hears each keystroke with
+    the text in the editor as ``value``. A ``required`` one saved empty is a cancel.
 
     ``error`` is a line of error text under it, and turns the editor red;
     ``set_error("")`` clears it. Inside a ``Field`` the Field's error does

@@ -21,8 +21,8 @@
 // Python names them `popover.header` and `popover.trigger`.
 //
 // The tab owns `open` while the user clicks, the way Collapsible does: a
-// toggle updates the local prop first, then ships a `notify` with
-// {open: bool}. The server opens or closes it, and changes the trigger,
+// toggle updates the local prop first, then emits `change` with the new
+// `value` (open or not), which a read answers too. The server opens or closes it, and changes the trigger,
 // through plain `write` payloads the default merge handles.
 //
 // Composes the kit Popover primitive (Radix under the hood), which owns the
@@ -31,7 +31,6 @@
 // is a stack (`gap` 3, `padding`, `justify`, `align`, `divided`, the per
 // child maps). A body taller than the room left on screen scrolls.
 
-import { OPS } from "@nustackdev/ui-core";
 import { useCallback, useId } from "react";
 import { Button } from "../../components/ui/button";
 import { IconButton } from "../../components/ui/icon-button";
@@ -50,20 +49,21 @@ import { BUTTON_SIZES, kitVariant } from "../../lib/button-look";
 import { iconFor } from "../../lib/icons";
 import { cn } from "../../lib/utils";
 import {
+	EVENTS,
 	FlowProvider,
 	type NodeEntry,
 	type NodeProps,
 	SlotView,
 	useBoolProp,
 	useChildren,
+	useEmit,
 	useEnumProp,
-	useSend,
 	useSetProps,
 	useStringProp,
 } from "../../tree";
 import { useDisabledScope } from "../input/control";
 import { childHandlers, type LayoutDefaults, Stack, useLayout } from "./layout";
-import { overlayStyle } from "./modal";
+import { overlayStyle, readOpen } from "./modal";
 
 const SIDES = ["top", "right", "bottom", "left"] as const;
 const EDGES = ["start", "center", "end"] as const;
@@ -90,14 +90,14 @@ function PopoverView({ path }: NodeProps) {
 	const hasTrigger = segments.includes(TRIGGER);
 	const headerId = useId();
 	const setProps = useSetProps(path);
-	const send = useSend(path);
+	const emit = useEmit(path);
 
 	const onOpenChange = useCallback(
 		(next: boolean) => {
 			setProps({ open: next });
-			send(OPS.notify, { open: next });
+			emit(EVENTS.change, { value: next });
 		},
-		[setProps, send],
+		[setProps, emit],
 	);
 
 	const Icon = iconFor(iconName);
@@ -180,4 +180,8 @@ function PopoverView({ path }: NodeProps) {
 	);
 }
 
-export const Popover: NodeEntry = { component: PopoverView, handlers: childHandlers };
+export const Popover: NodeEntry = {
+	component: PopoverView,
+	handlers: childHandlers,
+	reads: { "": readOpen },
+};

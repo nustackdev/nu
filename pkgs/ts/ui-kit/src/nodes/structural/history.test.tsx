@@ -66,7 +66,15 @@ const dispatch = (payload: unknown) =>
 	tree.getState().dispatch({ op: OPS.write, ref: ["nav"], payload });
 
 const value = () => tree.getState().getIn(["nav"])?.props.value;
-const notifies = () => sent.filter((f) => f.op === OPS.notify).map((f) => f.payload);
+/** The uris reported, each from a `change` notify. */
+const notifies = () =>
+	sent
+		.filter((f) => f.op === OPS.notify)
+		.map((f) => {
+			const payload = f.payload as { event?: string; value?: unknown };
+			expect(payload.event).toBe("change");
+			return payload.value;
+		});
 
 describe("HistoryRef", () => {
 	it("pushes and replaces, with state", () => {
@@ -157,5 +165,30 @@ describe("HistoryRef", () => {
 			state: { s: 1 },
 		});
 		expect(read?.id).toBe("r1");
+	});
+
+	it("reads one field of the live entry", () => {
+		mount();
+		window.history.replaceState({ s: 2 }, "", "/one?x=1#h");
+		act(() => {
+			tree
+				.getState()
+				.dispatch({ op: OPS.read, ref: ["nav"], payload: { field: "path" }, id: "r2" });
+			tree
+				.getState()
+				.dispatch({ op: OPS.read, ref: ["nav"], payload: { field: "state" }, id: "r3" });
+		});
+		const reads = sent.filter((f) => f.op === OPS.read);
+		expect(reads.map((f) => [f.id, f.payload])).toEqual([
+			["r2", "/one"],
+			["r3", { s: 2 }],
+		]);
+	});
+
+	it("sends the move as a change carrying the uri", () => {
+		mount();
+		write("/shape");
+		const frame = sent.find((f) => f.op === OPS.notify);
+		expect(frame?.payload).toEqual({ event: "change", value: "/shape" });
 	});
 });

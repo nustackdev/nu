@@ -18,7 +18,8 @@ const tagInputVariants = cva(
 	{
 		variants: {
 			variant: {
-				default: "bg-bg-surface text-text-primary border-border-default hover:border-border-strong focus-within:border-border-strong",
+				default:
+					"bg-bg-surface text-text-primary border-border-default hover:border-border-strong focus-within:border-border-strong",
 				ghost: "bg-transparent text-text-primary border-transparent hover:bg-bg-hover",
 				filled: "bg-bg-hover text-text-primary border-transparent hover:bg-bg-press",
 			},
@@ -61,6 +62,8 @@ interface TagInputProps
 		VariantProps<typeof tagInputVariants> {
 	value: string[];
 	onValueChange: (value: string[]) => void;
+	/** The text not yet a tag, on each keystroke in the field. */
+	onDraftChange?: (draft: string) => void;
 	maxTags?: number;
 	disabled?: boolean;
 	invalid?: boolean;
@@ -77,6 +80,7 @@ function TagInput({
 	disabled,
 	value,
 	onValueChange,
+	onDraftChange,
 	maxTags,
 	placeholder,
 	onKeyDown,
@@ -180,7 +184,10 @@ function TagInput({
 					"disabled:cursor-not-allowed",
 				)}
 				value={draft}
-				onChange={(event) => setDraft(event.target.value)}
+				onChange={(event) => {
+					setDraft(event.target.value);
+					onDraftChange?.(event.target.value);
+				}}
 				onKeyDown={handleKeyDown}
 				onBlur={handleBlur}
 				disabled={disabled}

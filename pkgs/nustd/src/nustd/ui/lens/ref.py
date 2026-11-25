@@ -6,10 +6,11 @@ primary value spells it ``set``. The cascade is not a single value -- it is a
 cursor and the columns that cursor produced, always together -- so there is
 ``set_columns`` and no bare ``set``.
 
-By the kit's grouping it is a content leaf: a server-owned sink the browser
-renders and the server never reads back, with no children. It lives here
-rather than in ``refs/leaves/output.py`` because it comes with two modules
-of machinery beside it, and that machinery is not a widget.
+By the kit's grouping it is a content leaf with no children: the server
+owns the columns, the browser owns the cursor, and the cursor is the one
+thing read back. It lives here rather than in ``refs/leaves/output.py``
+because it comes with two modules of machinery beside it, and that machinery
+is not a widget.
 """
 
 from __future__ import annotations
@@ -18,7 +19,7 @@ from typing import TYPE_CHECKING
 
 from typing_extensions import Self
 
-from nustd.ui.core import Changed, Write
+from nustd.ui.core import Changes, Write
 from nustd.ui.refs.leaves.base import LeafRef
 
 from .columns import DEFAULT_MAX_ROWS
@@ -32,17 +33,17 @@ if TYPE_CHECKING:
 __all__ = ["LensRef"]
 
 
-class LensRef(LeafRef):
+class LensRef(Changes, LeafRef):
     """A Shape, browsable as cascading columns. The server reads, the browser walks.
 
     Both directions carry something, and which half owns what is the whole
-    design. The **columns** are the value, and the server owns them: it walks a
-    Shape, reads the store and ships the whole cascade with ``set_columns``.
-    The **cursor** is an event, and the browser owns it: arrows and clicks move
-    it locally and it arrives here on ``on_nav`` as the whole new path, already
-    resolved, the same way a table's row click arrives as an index. Nothing is
-    ever read back off the node, which is why it groups with the sinks rather
-    than with the inputs.
+    design. The **columns** are server state: it walks a Shape, reads the
+    store and ships the whole cascade with ``set_columns``. The **cursor** is
+    the browser's: arrows and clicks move it, and each move arrives on
+    ``on_change`` as ``{event: "change", value: cursor}``, the whole new path
+    already resolved. Reading the ref is that cursor, a list of segments: the
+    one the person last moved to, or the one ``set_columns`` last shipped,
+    whichever came later.
 
     Where the columns are read from never crosses the wire. A cursor is
     relative to the Shape the caller pointed the lens at, and the prefix that
@@ -50,9 +51,9 @@ class LensRef(LeafRef):
     :mod:`nustd.ui.lens.columns`). So a lens anchored at a subtree cannot be
     talked out of it by anything the browser sends.
 
-    The ref holds no state at all. A reload starts at the root and two tabs
-    disagree freely; anything on the server that wants to move a cursor ships a
-    ``set_columns`` with the cursor it wants.
+    The server side holds no state at all. A reload starts at the root and two
+    tabs disagree freely; anything on the server that wants to move a cursor
+    ships a ``set_columns`` with the cursor it wants.
 
     Args:
         max_rows: the per-column cap. Rides in init props so the browser's
@@ -81,6 +82,6 @@ class LensRef(LeafRef):
 
         return Write(self, Dict.of(cursor=cursor, columns=columns))
 
-    def on_nav(self) -> Changed:
-        """The whole new cursor, as a list of segments the browser resolved."""
-        return Changed(self)
+    def _lift(self, raw: object) -> list[str]:
+        # The cursor as segments, [] before anything moved it.
+        return [str(s) for s in raw] if isinstance(raw, list) else []

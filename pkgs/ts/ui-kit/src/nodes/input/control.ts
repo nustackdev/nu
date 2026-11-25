@@ -1,12 +1,17 @@
 // The input contract, shared by every input node.
 //
 // Events. Every notify an input sends names its event and goes out through
-// `useEmit` (tree/emit.ts): `{event: "change"}` when a value is committed,
-// `{event: "submit", value}` when the person asks to send it (Enter in a
-// single-line field, shift+Enter in a multi-line one), carrying the value
-// sent, so `clear_on_submit` loses nothing. The Python side filters on it:
-// `on_change()` hears changes, `on_submit()` hears submits. A button sends
-// `{event: "click"}`.
+// `useEmit` (tree/emit.ts), with the value it is about as `value` (the main
+// read, `mainRead`), so no handler needs a read back:
+// - `{event: "input", value}` while the value moves, each keystroke or drag
+//   tick, from an input that moves (`useCommit(path, { moves: true })`, the
+//   Python side's `Moves`). Only a local edit that moved the value sends one.
+// - `{event: "change", value}` when a value is committed.
+// - `{event: "submit", value}` when the person asks to send it (Enter in a
+//   single-line field, shift+Enter in a multi-line one), carrying the value
+//   sent, so `clear_on_submit` loses nothing.
+// The Python side filters on it: `on_input()`, `on_change()`, `on_submit()`.
+// A button sends `{event: "click"}`.
 //
 // Reads. What a read, a submit and a form snapshot carry is the entry's main
 // read (`reads[""]`, `props.value` when unset), through `mainRead`.
@@ -160,7 +165,7 @@ function same(a: unknown, b: unknown): boolean {
 }
 
 export type Commit = {
-	/** A local edit: the value moves, nothing goes on the wire yet. */
+	/** A local edit: the value moves; an input that moves sends `input`, nothing else goes yet. */
 	edit: (value: unknown) => void;
 	/** Send a change if the value moved since the last one. */
 	commit: () => void;
@@ -170,8 +175,18 @@ export type Commit = {
 	submit: (from?: Element | null) => void;
 };
 
+/** How a node's commit path behaves. */
+export type CommitOptions = {
+	/**
+	 * The value moves while the person works it (typing, a drag): each local
+	 * edit or pick that moved the value sends `{event: "input", value}` first.
+	 */
+	moves?: boolean;
+};
+
 /** One commit path per node, with the dirty check. */
-export function useCommit(path: Path): Commit {
+export function useCommit(path: Path, options: CommitOptions = {}): Commit {
+	const moves = options.moves === true;
 	const emit = useEmit(path);
 	const setValue = useSetValue(path);
 	const key = pathKey(path);
@@ -181,11 +196,13 @@ export function useCommit(path: Path): Commit {
 	// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
 	const edit = useCallback(
 		(value: unknown) => {
-			if (base.current === null) base.current = { value: nodeAt(path)?.props.value };
+			const before = nodeAt(path)?.props.value;
+			if (base.current === null) base.current = { value: before };
 			setValue(value);
 			clearCheck(path);
+			if (moves && !same(before, value)) emit(EVENTS.input, { value: submitted(path) });
 		},
-		[key, setValue],
+		[key, setValue, emit, moves],
 	);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
@@ -194,18 +211,20 @@ export function useCommit(path: Path): Commit {
 		base.current = null;
 		if (started === null) return;
 		if (same(started.value, nodeAt(path)?.props.value)) return;
-		emit(EVENTS.change);
+		emit(EVENTS.change, { value: submitted(path) });
 	}, [key, emit]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
 	const pick = useCallback(
 		(value: unknown) => {
+			const before = nodeAt(path)?.props.value;
 			base.current = null;
 			setValue(value);
 			clearCheck(path);
-			emit(EVENTS.change);
+			if (moves && !same(before, value)) emit(EVENTS.input, { value: submitted(path) });
+			emit(EVENTS.change, { value: submitted(path) });
 		},
-		[key, setValue, emit],
+		[key, setValue, emit, moves],
 	);
 
 	const fire = useSubmit(path);
@@ -244,7 +263,7 @@ export function useSubmit(path: Path): (from?: Element | null) => void {
 	);
 }
 
-/** What a submit sends as `value`: the input's value as a form would gather it. */
+/** What an input, change or submit sends as `value`: the input's value as a form would gather it. */
 export function submitted(path: Path): unknown {
 	const node = nodeAt(path);
 	if (!node) return null;

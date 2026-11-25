@@ -2,7 +2,7 @@
 
 Wire only, through a fake session that plays the browser's History: a read
 answers where the page is, and ``move`` lands a move the way the kit's
-HistoryRef reports one, a notify carrying the new uri.
+HistoryRef reports one, ``{event: "change", value: uri}``.
 """
 
 from __future__ import annotations
@@ -49,6 +49,8 @@ class _History:
         return self.uri
 
     def subscribe(self, path: tuple[str, ...], event: str | None = None) -> _Sub:
+        # The route hears the moves as ``change``, so that is what it watches.
+        assert event == "change"
         sub = _Sub(self, path)
         self.subs.append(sub)
         return sub
@@ -57,7 +59,7 @@ class _History:
         self.uri = uri
         for sub in tuple(self.subs):
             for cb in tuple(sub.callbacks):
-                cb(uri)
+                cb({"event": "change", "value": uri})
 
     def ops(self) -> list[tuple[str, tuple[str, ...]]]:
         """What reached the tab, as (op, path), reads and history writes aside."""

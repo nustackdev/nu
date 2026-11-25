@@ -1,8 +1,8 @@
 // NumberInputRef -- numeric input with min/max/step and stepper buttons.
 // Browser is source of truth.
 //
-// Typing is a local edit (the node's `value` prop follows the field). Blur
-// commits, a stepper click or an arrow key commits at once, and Enter
+// Typing is a local edit (the node's `value` prop follows the field), each
+// one that moves the number sends `{event: "input", value}`. Blur commits, a stepper click or an arrow key commits at once, and Enter
 // commits, then submits and asks an enclosing Form to submit. See
 // ./control.ts for the contract.
 //
@@ -33,7 +33,7 @@ function NumberInputView({ path }: NodeProps) {
 	const value = toNumberOrNull(useProp<unknown>(path, "value", null));
 	const step = useNumberProp(path, "step", 1);
 	const c = useControl(path);
-	const { edit, commit, pick, submit } = useCommit(path);
+	const { edit, commit, pick, submit } = useCommit(path, { moves: true });
 
 	return (
 		<div className="flex flex-col gap-1">

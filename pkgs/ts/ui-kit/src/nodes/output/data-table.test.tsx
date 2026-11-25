@@ -1,5 +1,5 @@
 // DataTableRef on the kit DataTable: string columns and list rows (the sort
-// and row notifies, the write / append / read handlers), dict columns and
+// and row notifies, the write / append handlers, the selection read), dict columns and
 // rows (row keys, select, edit, add, delete, move), each intent one notify naming its kind in `event`, the row-level
 // ops (set_row, insert_row, remove_rows, set_order), one handler each, and
 // the column requests `columns_editable` turns on.
@@ -97,7 +97,7 @@ describe("DataTableRef, string columns and list rows", () => {
 
 	it("names a row click a row, with the row's key", () => {
 		act(() => host.querySelector<HTMLElement>("tbody td")?.click());
-		expect(notifies()).toEqual([{ event: "row", row_index: 0, key: "0" }]);
+		expect(notifies()).toEqual([{ event: "row_click", row_index: 0, key: "0" }]);
 	});
 
 	it("draws string columns, list rows and stripes", () => {
@@ -138,10 +138,10 @@ describe("DataTableRef, string columns and list rows", () => {
 		expect(texts("tbody td")).toEqual(["c", "3", "d", "4"]);
 	});
 
-	it("answers a read with columns and rows as sent", () => {
+	it("reads as the selection, [] with none", () => {
 		dispatch(OPS.read, null, "r1");
 		const read = sent.find((f) => f.op === OPS.read);
-		expect(read?.payload).toEqual({ columns: ["title", "year"], rows: [["Arrival", 2016]] });
+		expect(read?.payload).toEqual([]);
 		expect(read?.id).toBe("r1");
 	});
 });
@@ -209,7 +209,7 @@ describe("DataTableRef, dict columns and rows", () => {
 		expect(cell("a~2", "title").textContent).toBe("second a");
 		expect(cell("3", "title").textContent).toBe("missing");
 		click(cell("a~2", "title"));
-		expect(notifies()).toEqual([{ event: "row", row_index: 2, key: "a~2" }]);
+		expect(notifies()).toEqual([{ event: "row_click", row_index: 2, key: "a~2" }]);
 	});
 
 	it("keeps the selection in its props and notifies it", () => {
@@ -316,13 +316,35 @@ describe("DataTableRef, dict columns and rows", () => {
 		expect(props().rows).toEqual(ROWS);
 	});
 
-	it("answers a read with dict columns as sent", () => {
-		mount({ columns: ["id", { key: "title", kind: "text" }], rows: [{ id: "a", title: "A" }] });
-		dispatch(OPS.read, null, "r2");
-		expect(sent.find((f) => f.op === OPS.read)?.payload).toEqual({
+	it("reads the seeded selection, only keys of rows shown, in the order held", () => {
+		mount({
 			columns: ["id", { key: "title", kind: "text" }],
-			rows: [{ id: "a", title: "A" }],
+			rows: [
+				{ id: "a", title: "A" },
+				{ id: "b", title: "B" },
+			],
+			row_key: "id",
+			selection: "multi",
+			selected: ["b", "gone", "a"],
 		});
+		dispatch(OPS.read, null, "r2");
+		expect(sent.find((f) => f.op === OPS.read)?.payload).toEqual(["b", "a"]);
+		expect(cell("b", "title").closest("tr")?.getAttribute("aria-selected")).toBe("true");
+	});
+
+	it("reads a selection the person made", () => {
+		mount({
+			columns: ["id", "title"],
+			rows: [
+				{ id: "a", title: "A" },
+				{ id: "b", title: "B" },
+			],
+			row_key: "id",
+			selection: "single",
+		});
+		click(cell("b", "title"));
+		dispatch(OPS.read, null, "r3");
+		expect(sent.find((f) => f.op === OPS.read)?.payload).toEqual(["b"]);
 	});
 
 	it("appends a dict row under the cap", () => {
@@ -467,15 +489,12 @@ describe("DataTableRef, row-level ops", () => {
 		expect(texts("tbody tr td:nth-child(2)")).toEqual(["A", "B", "C"]);
 	});
 
-	it("leaves write, append and read as they were", () => {
+	it("leaves write and append as they were", () => {
 		mount({ columns: ["id", "title"], rows: DICTS, row_key: "id" });
 		dispatch("set_order", { keys: ["b"] });
 		dispatch("append", { id: "d", title: "D" });
-		dispatch(OPS.read, null, "r3");
-		expect(sent.find((f) => f.op === OPS.read)?.payload).toEqual({
-			columns: ["id", "title"],
-			rows: [DICTS[1], DICTS[0], DICTS[2], { id: "d", title: "D" }],
-		});
+		expect(props().columns).toEqual(["id", "title"]);
+		expect(props().rows).toEqual([DICTS[1], DICTS[0], DICTS[2], { id: "d", title: "D" }]);
 	});
 });
 
@@ -622,11 +641,9 @@ describe("DataTableRef, column cell specs", () => {
 		expect(tree.getState().getIn(["t", "~cells", "b", "status"])?.type).toBe("BadgeRef");
 	});
 
-	it("keeps the value as the data: sort and read see it as sent", () => {
+	it("keeps the value as the data: the rows hold it as sent", () => {
 		mount({ columns, row_key: "name", rows: [{ name: "a", status: "ok" }] });
-		dispatch("read", null, "r1");
-		const read = sent.find((f) => f.op === OPS.read);
-		expect(read?.payload).toMatchObject({ rows: [{ name: "a", status: "ok" }] });
+		expect(props().rows).toEqual([{ name: "a", status: "ok" }]);
 	});
 
 	it("draws an unregistered kind as plain text", () => {

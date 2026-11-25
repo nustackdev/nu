@@ -131,7 +131,9 @@ def browse(
 
     def live(cursor: nu.Nu, pending: nu.Nu) -> nu.Nu:
         moved = nu.ReactEvery(
-            lens.on_nav(), cursor.set(nu.Attr(key)) >> paint(nu.list(cursor)), changed_key=key
+            lens.on_change(),
+            cursor.set(nu.Attr(key)["value"]) >> paint(nu.list(cursor)),
+            changed_key=key,
         )
         written = [
             nu.ReactEvery(

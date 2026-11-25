@@ -94,6 +94,11 @@ export type CodeMirrorViewProps = {
 	submitOn?: SubmitOn;
 	/** Whether the buffer differs from `value`, on every keystroke. */
 	onDirty?: (dirty: boolean) => void;
+	/**
+	 * Every edit, keystroke by keystroke. `read` gives the buffer's text; call
+	 * it only when the text is wanted, it walks the whole document.
+	 */
+	onEdit?: (read: () => string) => void;
 	className?: string;
 	/**
 	 * Handed the live view on mount and null on teardown. The escape hatch for
@@ -153,6 +158,7 @@ export function CodeMirrorView({
 	onSubmit,
 	submitOn = "shift+enter",
 	onDirty,
+	onEdit,
 	className,
 	onView,
 }: CodeMirrorViewProps) {
@@ -164,8 +170,8 @@ export function CodeMirrorView({
 	const armedRef = useRef(false);
 	// The view binds its listeners once, so everything they read goes through
 	// a ref rather than a closed-over prop.
-	const cb = useRef({ value, original, onCommit, onSubmit, submitOn, onDirty, onView });
-	cb.current = { value, original, onCommit, onSubmit, submitOn, onDirty, onView };
+	const cb = useRef({ value, original, onCommit, onSubmit, submitOn, onDirty, onEdit, onView });
+	cb.current = { value, original, onCommit, onSubmit, submitOn, onDirty, onEdit, onView };
 
 	const diffing = original != null;
 	const readOnly = readOnlyProp || diffing;
@@ -222,6 +228,7 @@ export function CodeMirrorView({
 						if (u.docChanged && u.transactions.some((tr) => !tr.annotation(inbound))) {
 							dirtyRef.current = true;
 							cb.current.onDirty?.(u.state.doc.toString() !== cb.current.value);
+							cb.current.onEdit?.(() => u.state.doc.toString());
 						}
 						if (u.focusChanged && !u.view.hasFocus) commit();
 					}),

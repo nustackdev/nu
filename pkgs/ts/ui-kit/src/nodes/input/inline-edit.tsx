@@ -10,7 +10,8 @@
 //
 // The value lands in the store when the edit is saved, not per keystroke: a
 // read while the editor is open sees the saved text, which is what an
-// Escape would leave. A required one saved empty is a cancel.
+// Escape would leave. Each keystroke still sends `{event: "input", value}`
+// with the text in the editor, and a save `{event: "change", value}`. A required one saved empty is a cancel.
 //
 // `error` draws a kit FieldError under the text and turns the editor red
 // (the text at rest stays plain, the error line says it);
@@ -22,8 +23,16 @@ import { useEffect, useId, useRef, useState } from "react";
 import { FieldError, Label } from "../../components/ui/field";
 import { InlineEdit } from "../../components/ui/inline-edit";
 import { cn } from "../../lib/utils";
-import { type NodeEntry, type NodeProps, useProp, useStringProp } from "../../tree";
-import { asText, type InputSize, resetHandler, useCommit, useControl, valueWrite } from "./control";
+import { type NodeEntry, type NodeProps, useEmit, useProp, useStringProp } from "../../tree";
+import {
+	asText,
+	EVENTS,
+	type InputSize,
+	resetHandler,
+	useCommit,
+	useControl,
+	valueWrite,
+} from "./control";
 
 // The text at rest and the editor share one height and one text size per
 // control size, so opening the editor does not move the line.
@@ -41,7 +50,10 @@ function InlineEditView({ path }: NodeProps) {
 	const error = given || check;
 	const maxLength = useProp<number | null>(path, "max_length", null);
 	const c = useControl(path);
+	// Not `moves`: the store takes the text only on a save, so each keystroke
+	// is sent from the editor itself below.
 	const { edit, commit, submit } = useCommit(path);
+	const emit = useEmit(path);
 	const [editing, setEditing] = useState(false);
 	const shown = useRef<HTMLButtonElement | null>(null);
 	const box = useRef<HTMLDivElement | null>(null);
@@ -109,6 +121,7 @@ function InlineEditView({ path }: NodeProps) {
 							required: c.required,
 							placeholder: c.placeholder,
 							maxLength: maxLength ?? undefined,
+							onChange: (e) => emit(EVENTS.input, { value: e.currentTarget.value }),
 						}}
 					/>
 				</span>

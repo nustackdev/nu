@@ -56,6 +56,8 @@ export interface CodeProps extends Omit<React.HTMLAttributes<HTMLElement>, "onCh
 	submitOn?: SubmitOn;
 	/** Block only. Whether the buffer differs from `value`, on every keystroke. */
 	onDirty?: (dirty: boolean) => void;
+	/** Block only. Every edit; `read` gives the buffer's text, call it only when wanted. */
+	onEdit?: (read: () => string) => void;
 	/** Block only. The live CodeMirror view on mount, null on teardown. */
 	onView?: (view: EditorView | null) => void;
 	children?: React.ReactNode;
@@ -77,6 +79,7 @@ function Code({
 	onSubmit,
 	submitOn,
 	onDirty,
+	onEdit,
 	onView,
 	children,
 	...props
@@ -106,6 +109,7 @@ function Code({
 					onSubmit={onSubmit}
 					submitOn={submitOn}
 					onDirty={onDirty}
+					onEdit={onEdit}
 					onView={onView}
 				/>
 				{copyable && readOnly && <CopyButton text={source} />}

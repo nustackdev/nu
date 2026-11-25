@@ -11,19 +11,19 @@
 // A header key for a listed id is not a stray; one for an id no section has
 // is named in the notice like a stray body.
 //
-// The tab owns `open` (toggle locally first, then notify); the server owns
+// The tab owns `open` (toggle locally first, then emit); the server owns
 // the section list. One `write` op multiplexes chrome updates by payload key:
 //   {sections: [...]}  -> replace section list
 //   {open:     [...]}  -> force open set
 // That needs a handler because the default merge cannot do the multi=false
 // clamp (several open ids collapse to the first). User toggles update local
-// `open` then ship a `notify` whose payload is the post-toggle id list.
+// `open` then emit `change` whose `value` is the post-toggle id list, the
+// same list a read answers (`readOpenIds`, clamped like the view).
 // Composes the kit Accordion primitive (Radix under the hood); the primitive
 // owns chevron rotate + keyboard model. The size props and `scroll`
 // (`layout.tsx`) sit on the accordion; each body is one child, which carries
 // its own layers. Any other key of a write (a `set_layout`) merges as is.
 
-import { OPS } from "@nustackdev/ui-core";
 import {
 	AccordionContent,
 	AccordionItem,
@@ -31,6 +31,7 @@ import {
 	AccordionTrigger,
 } from "../../components/ui/accordion";
 import {
+	EVENTS,
 	FlowProvider,
 	type NodeEntry,
 	type NodeProps,
@@ -38,8 +39,8 @@ import {
 	SlotView,
 	useBoolProp,
 	useChildren,
+	useEmit,
 	useListProp,
-	useSend,
 	useSetProps,
 } from "../../tree";
 import { type LayoutDefaults, useLayout } from "./layout";
@@ -71,26 +72,32 @@ function normalizeOpen(raw: unknown): string[] {
 	return raw.filter((x) => x != null).map((x) => String(x));
 }
 
+/** The open section ids as drawn: multi=false keeps only the first. */
+function readOpenIds(props: Record<string, unknown>): string[] {
+	const open = normalizeOpen(props.open);
+	const multi = props.multi == null ? true : Boolean(props.multi);
+	return !multi && open.length > 1 ? [open[0]] : open;
+}
+
 function AccordionView({ path }: NodeProps) {
 	const rawSections = useListProp<unknown>(path, "sections");
 	const rawOpen = useListProp<unknown>(path, "open");
 	const multi = useBoolProp(path, "multi", true);
 	const children = useChildren(path);
 	const setProps = useSetProps(path);
-	const send = useSend(path);
+	const emit = useEmit(path);
 	const layout = useLayout(path, DEFAULTS);
 
 	const sections = normalizeSections(rawSections);
 	const bodies = new Set(children);
 	const ids = new Set(sections.map((s) => s.id));
 	const stray = children.filter((s) => !ids.has(s.startsWith(HEADER) ? s.slice(HEADER.length) : s));
-	const openRaw = normalizeOpen(rawOpen);
 	// multi=false with multiple ids: keep the first, drop the rest.
-	const open = !multi && openRaw.length > 1 ? [openRaw[0]] : openRaw;
+	const open = readOpenIds({ open: rawOpen, multi });
 
 	const notifyOpen = (next: string[]) => {
 		setProps({ open: next });
-		send(OPS.notify, next);
+		emit(EVENTS.change, { value: next });
 	};
 
 	const rootProps = multi
@@ -139,6 +146,7 @@ function AccordionView({ path }: NodeProps) {
 export const Accordion: NodeEntry = {
 	component: AccordionView,
 	fill: true,
+	reads: { "": readOpenIds },
 	handlers: {
 		write: (ctx, payload) => {
 			if (!payload || typeof payload !== "object" || Array.isArray(payload)) return;

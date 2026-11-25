@@ -31,8 +31,9 @@
 //   max_rows        a sliding window on write and append: the oldest rows drop on overflow.
 //   sort_column, sort_direction   the arrows; the server sorts, the browser only shows it.
 //   clickable_rows  rows point and a click (or Enter on a cell that does not edit) notifies.
-//   selection       "none" | "single" | "multi"; `selected` is the list of selected keys.
-//                   Keys of rows no longer shown drop out of it (written back, no notify).
+//   selection       "none" | "single" | "multi"; `selected` is the list of selected keys,
+//                   seeded by the slot. Keys of rows no longer shown drop out of it
+//                   (written back, no notify).
 //   editable        every column edits unless its dict says `editable: false`; the
 //                   `row_key` column never does.
 //   addable, deletable, draggable   insert, delete and move rows (keyboard, menu, drag).
@@ -75,7 +76,7 @@
 // (the server's `on_*` each take one):
 //
 //   {event: "sort", sort_column, sort_direction}             a header; confirm with set_sort
-//   {event: "row", row_index, key}                           needs clickable_rows
+//   {event: "row_click", row_index, key}                     needs clickable_rows
 //   {event: "select", keys, row_indexes}             the whole next selection; needs selection
 //   {event: "edit", key, row_index, column, value, previous}  value typed by kind; needs editable
 //   {event: "add", index}                            a new row at index; needs addable
@@ -120,9 +121,13 @@
 //                              after them; unknown keys skipped
 //   Keys are the ones the grid draws (see "Row keys", suffixes included), the first row
 //   with a key is the one touched, and a malformed payload changes nothing.
-//   read    answer {columns, rows} as they were sent.
+//
+// ## Reads
+//
+// The main read is the selection: the selected keys of rows still shown, in the
+// order `selected` holds them, [] for none.
 
-import { getNode, type NodeHandler, OPS, type Path, type Props } from "@nustackdev/ui-core";
+import { getNode, type NodeHandler, type Path, type Props } from "@nustackdev/ui-core";
 import { useCallback, useEffect, useLayoutEffect, useMemo } from "react";
 import {
 	DataTable,
@@ -135,6 +140,7 @@ import { defaultAlign } from "../../components/ui/data-table-model";
 import type { ColumnAlign } from "../../components/ui/table";
 import { Text } from "../../components/ui/text";
 import {
+	EVENTS,
 	FlowProvider,
 	type NodeEntry,
 	type NodeProps,
@@ -143,9 +149,9 @@ import {
 	registry,
 	tree,
 	useBoolProp,
+	useEmit,
 	useEnumProp,
 	useListProp,
-	useSend,
 	useSetProps,
 	useStringProp,
 } from "../../tree";
@@ -192,12 +198,6 @@ function cap(rows: WireRow[], maxRows: number): WireRow[] {
 function maxRowsOf(props: Props): number {
 	const n = Number(props.max_rows);
 	return Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
-}
-
-/** The columns as `read` answers them: strings as before, dicts as sent. */
-function sentColumns(v: unknown): unknown[] {
-	if (!Array.isArray(v)) return [];
-	return v.map((c) => (isDict(c) ? c : str(c)));
 }
 
 /** "~2", "~3", ... after a key already taken, so every key is unique and stable in order. */
@@ -340,6 +340,13 @@ function keysOf(rows: readonly WireRow[], props: Props): string[] {
 	return readTableRows(rows, cols, rowKey).map((r) => r.key);
 }
 
+/** The main read: the selected keys of rows still shown, in the order they are held. */
+function selectionOf(props: Props): string[] {
+	if (!Array.isArray(props.selected) || props.selected.length === 0) return [];
+	const shown = new Set(keysOf(readRows(props.rows), props));
+	return props.selected.map(str).filter((k) => shown.has(k));
+}
+
 /** A key as a row-level op names it: a string, or a number by its digits. */
 function keyArg(v: unknown): string | null {
 	if (typeof v === "string") return v;
@@ -438,7 +445,7 @@ function TableView({ path }: NodeProps) {
 	const draggable = useBoolProp(path, "draggable");
 	const columnsEditable = useBoolProp(path, "columns_editable");
 	const setProps = useSetProps(path);
-	const send = useSend(path);
+	const notify = useEmit(path);
 
 	const wireRows = useMemo(() => readRows(rawRows), [rawRows]);
 	const cols = useMemo(
@@ -476,11 +483,6 @@ function TableView({ path }: NodeProps) {
 		[specs, path],
 	);
 
-	const notify = useCallback(
-		(event: string, fields: Record<string, unknown>) => send(OPS.notify, { event, ...fields }),
-		[send],
-	);
-
 	const onSort = useCallback(
 		(column: string, direction: "asc" | "desc") =>
 			notify("sort", { sort_column: nameOf(column), sort_direction: direction }),
@@ -488,14 +490,14 @@ function TableView({ path }: NodeProps) {
 	);
 
 	const onActivate = useCallback(
-		(key: string, index: number) => notify("row", { row_index: index, key }),
+		(key: string, index: number) => notify("row_click", { row_index: index, key }),
 		[notify],
 	);
 
 	const onSelect = useCallback(
 		(keys: string[]) => {
 			setProps({ selected: keys });
-			notify("select", { keys, row_indexes: indexes(keys) });
+			notify(EVENTS.select, { keys, row_indexes: indexes(keys) });
 		},
 		[setProps, notify, indexes],
 	);
@@ -603,6 +605,7 @@ function TableView({ path }: NodeProps) {
 export const DataTableRef: NodeEntry = {
 	component: TableView,
 	fill: true,
+	reads: { "": selectionOf },
 	handlers: {
 		write: (ctx, payload) =>
 			ctx.update((props) => {
@@ -619,11 +622,5 @@ export const DataTableRef: NodeEntry = {
 		insert_row: rowHandler(insertRow),
 		remove_rows: rowHandler(removeRows),
 		set_order: rowHandler(setOrder),
-		read: (ctx) =>
-			ctx.send(
-				OPS.read,
-				{ columns: sentColumns(ctx.node.props.columns), rows: readRows(ctx.node.props.rows) },
-				ctx.frame.id,
-			),
 	},
 };
