@@ -4,8 +4,9 @@
 
 - ``nu``         - the ``Nu`` base class.
 - ``kinds``      - the kind taxonomy (``Ref`` / ``Interaction`` / ``ScalarQuery`` / ...).
-- ``forms``      - ``Surface``, the methods mixin a value ``Form`` and a typed Ref share.
+- ``surface``    - ``Surface``, the methods mixin a value ``Form`` and a typed Ref share.
 - ``bracket``    - ``Bracket``, the lifecycle base every bracket subclasses.
+- ``form``       - ``Form``, the node every value form extends.
 - ``args``       - argument type aliases (``IntArg``, ``StrArg``, ...) for kind signatures.
 - ``null``       - ``NULL``, the value an absent context read gives, and ``is_null``.
 - ``sentinels``  - ``UNSET``, the internal argument marker.
@@ -60,7 +61,7 @@ from .attributes import (
     subsort,
 )
 from .bracket import Bracket
-from .forms import Surface
+from .form import Form
 from .kinds import (
     Action,
     ActionReduction,
@@ -68,7 +69,6 @@ from .kinds import (
     CommandReduction,
     Control,
     Flow,
-    Form,
     Interaction,
     Policy,
     Query,
@@ -93,6 +93,7 @@ from .sentinels import (
     Unset,
     is_sentinel,
 )
+from .surface import Surface
 from .typeinfo import TypeInfo, value_type_for
 
 

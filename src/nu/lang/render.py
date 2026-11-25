@@ -43,7 +43,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 from typing import Literal as TLiteral
 
-from nu.lang.kinds import Action, Command, Flow, Form, Query, Ref, Span
+from nu.lang.kinds import Action, Command, Flow, Query, Ref, Span, _Form
 from nu.lang.literal import Literal
 from nu.tree import children, fields
 
@@ -107,7 +107,7 @@ def _is_span(node: Nu) -> bool:
 
 
 def _is_form(node: Nu) -> bool:
-    return isinstance(node, Form)
+    return isinstance(node, _Form)
 
 
 def _category_color(node: Nu) -> str:

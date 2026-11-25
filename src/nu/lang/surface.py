@@ -1,7 +1,7 @@
 """Surface: the methods side of a form.
 
-A form is two things that used to be one class. The node is the ``Form`` kind
-(``nu.lang.kinds``): a Span that wraps one body and forwards its yield. The
+A form is two things that used to be one class. The node is ``Form``
+(``nu.lang.form``): a Span that wraps one body and forwards its yield. The
 methods are a ``Surface``: a plain mixin with no sort, no cardinality and no
 compile, so a value form and a Ref can share one method set without either
 inheriting the other's kind::
@@ -26,7 +26,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from .kinds import Form, Ref
+from .form import Form
+from .kinds import Ref
 from .nu import Nu
 
 
@@ -49,7 +50,7 @@ class Surface(Nu):
     overriding them; a family with no value equality raises.
 
     No kind: it declares no sort, cardinality or compile, so it is never a
-    node on its own. Mix it into one (the ``Form`` kind, a Ref). It subclasses
+    node on its own. Mix it into one (a ``Form``, a Ref). It subclasses
     the bare ``Nu`` base so Python's MRO always puts it ahead of ``Nu``: its
     dunders win over the ones every term carries whichever order the node
     lists its bases in. It has no ``__init__``: the node it is mixed into

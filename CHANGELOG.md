@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Form implementation gets its own module beside brackets, surfaces get theirs
 - Warn when a stream sits where nothing consumes it, since streams are lazy
 - Type checking of refs and flows is back to its baseline after the split
 - Docstrings, comments and test names now say surface where they still said form
