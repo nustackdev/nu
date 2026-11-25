@@ -68,14 +68,7 @@ DERIVED: dict[str, str] = {
 }
 
 #: Refs that break a rule, and why, one line each. Empty: a new ref keeps every rule.
-ALLOWLIST: dict[str, str] = {
-    "AlertRef": "on_dismiss hears every event, not dismiss",
-    "CameraCaptureRef": "get_bytes and get_slice, reads should be bytes() and slice()",
-    "EmptyStateRef": "on_action hears every event, not action",
-    "MicCaptureRef": "get_bytes and get_slice, reads should be bytes() and slice()",
-    "UploadFileRef": "get_bytes and get_slice, reads should be bytes() and slice()",
-    "UploadedFileRef": "get_bytes and get_slice, reads should be bytes() and slice()",
-}
+ALLOWLIST: dict[str, str] = {}
 
 
 # --- walking the kit ---------------------------------------------------------

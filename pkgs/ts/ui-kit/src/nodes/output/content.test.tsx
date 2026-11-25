@@ -1,6 +1,7 @@
 // Content nodes over the real tree store: TextRef and HeadingRef type,
-// LinkRef looks, EmptyStateRef's icon and way out, BadgeRef's brand tones and
-// sizes, DividerRef's label align.
+// LinkRef looks, EmptyStateRef's icon and way out, AlertRef's dismiss,
+// WaterfallRef's selection, BadgeRef's brand tones and sizes, DividerRef's
+// label align.
 
 import { OPS, type TreeFrame } from "@nustackdev/ui-core";
 import { act } from "react";
@@ -206,7 +207,7 @@ describe("LinkRef", () => {
 });
 
 describe("EmptyStateRef", () => {
-	it("draws the icon and a way out that notifies", () => {
+	it("draws the icon and a way out that sends action", () => {
 		mount("EmptyStateRef", { label: "No planes", icon: "folder", action: "New plane" });
 		const empty = slot("empty-state");
 		expect(empty?.querySelector("svg")).not.toBeNull();
@@ -214,7 +215,7 @@ describe("EmptyStateRef", () => {
 		expect(btn?.tagName).toBe("BUTTON");
 		expect(btn?.textContent).toBe("New plane");
 		act(() => btn?.click());
-		expect(sent.map((f) => [f.op, f.ref])).toEqual([[OPS.notify, ["n"]]]);
+		expect(sent).toEqual([{ op: OPS.notify, ref: ["n"], payload: { event: "action" } }]);
 	});
 
 	it("makes the way out a link with an href", () => {
@@ -227,6 +228,53 @@ describe("EmptyStateRef", () => {
 	it("draws no button without an action", () => {
 		mount("EmptyStateRef", { label: "None" });
 		expect(slot("button")).toBeNull();
+	});
+});
+
+describe("AlertRef", () => {
+	it("sends dismiss from its X", () => {
+		mount("AlertRef", { title: "Saved", dismissible: true });
+		act(() => host.querySelector<HTMLButtonElement>("[aria-label=dismiss]")?.click());
+		expect(sent).toEqual([{ op: OPS.notify, ref: ["n"], payload: { event: "dismiss" } }]);
+	});
+});
+
+describe("WaterfallRef", () => {
+	const spans = [
+		{ id: "q", label: "query", start: 0, end: 40 },
+		{ id: "db", label: "db", start: 5, end: 30, parent: "q", tone: "ok" },
+	];
+
+	function read(id: string): unknown {
+		act(() => tree.getState().dispatch({ op: OPS.read, ref: ["n"], payload: null, id }));
+		return sent.find((f) => f.op === OPS.read && f.id === id)?.payload;
+	}
+
+	it("keeps a clicked row selected, sends change and reads it back", () => {
+		mount("WaterfallRef", { spans, selectable: true });
+		expect(read("r0")).toBe("");
+		const rows = host.querySelectorAll<HTMLButtonElement>("[data-slot=waterfall-row] button");
+		act(() => rows[1]?.click());
+		expect(rows[1]?.getAttribute("aria-pressed")).toBe("true");
+		expect(sent.at(-1)).toEqual({
+			op: OPS.notify,
+			ref: ["n"],
+			payload: {
+				event: "change",
+				value: "db",
+				label: "db",
+				start: 5,
+				end: 30,
+				tone: "ok",
+				parent: "q",
+			},
+		});
+		expect(read("r1")).toBe("db");
+	});
+
+	it("sends nothing when not selectable", () => {
+		mount("WaterfallRef", { spans });
+		expect(host.querySelector("[data-slot=waterfall-row] button")).toBeNull();
 	});
 });
 

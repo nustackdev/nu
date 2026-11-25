@@ -115,6 +115,7 @@ class _Tab(Session):
         self.closed = False
         self.posts = 0
         self.value: Any = None
+        self.watched: list[str | None] = []
 
     # Session ---------------------------------------------------------------
 
@@ -128,6 +129,7 @@ class _Tab(Session):
         return self.value
 
     def subscribe(self, path, event=None):
+        self.watched.append(event)
         sub = _Sub(self, tuple(path))
         self.subs.append(sub)
         return sub
@@ -380,12 +382,12 @@ def test_command_ops_are_the_class_names():
     ]
 
 
-# --- get_slice / get_bytes ---------------------------------------------------
+# --- slice / bytes -----------------------------------------------------------
 
 
-def test_get_slice_uncached_reads_the_slice_file_and_deletes_it(tab):
+def test_slice_uncached_reads_the_slice_file_and_deletes_it(tab):
     _pick(tab, DATA)
-    assert _run(tab, F.get_slice(10, 20)) == DATA[10:20]
+    assert _run(tab, F.slice(10, 20)) == DATA[10:20]
     [(op, ref, payload)] = tab.ops()
     assert (op, ref) == ("slice", ONE)
     assert payload["key"] is None
@@ -396,51 +398,59 @@ def test_get_slice_uncached_reads_the_slice_file_and_deletes_it(tab):
     assert tab.tab_files() == []
 
 
-def test_get_slice_ships_the_chain_so_the_node_can_be_made(tab):
+def test_each_read_watches_only_the_event_that_answers_it(tab):
     _pick(tab, DATA)
-    _run(tab, F.get_slice(0, 1))
+    _run(tab, F.slice(0, 1))
+    _run(tab, nu.Collect(F.open()))
+    _run(tab, F.discard())
+    assert tab.watched == ["slice", "upload", "discard"]
+
+
+def test_slice_ships_the_chain_so_the_node_can_be_made(tab):
+    _pick(tab, DATA)
+    _run(tab, F.slice(0, 1))
     assert [seg for seg, _, _ in tab.frames[0].chain] == list(ONE)
     assert tab.frames[0].chain[-1][1] == "UploadFileRef"
 
 
-def test_get_slice_open_end_sends_null(tab):
+def test_slice_open_end_sends_null(tab):
     _pick(tab, DATA)
-    assert _run(tab, F.get_slice(10_000)) == DATA[10_000:]
+    assert _run(tab, F.slice(10_000)) == DATA[10_000:]
     assert tab.frames[0].payload["end"] is None
 
 
-def test_get_slice_cached_reads_the_range_and_keeps_the_cache(tab):
+def test_slice_cached_reads_the_range_and_keeps_the_cache(tab):
     f = _pick(tab, DATA)
     _run(tab, F.pull())
     posts = tab.posts
-    assert _run(tab, F.get_slice(100, 200)) == DATA[100:200]
-    assert _run(tab, F.get_slice(-16)) == DATA[-16:]
-    assert _run(tab, F.get_slice(5, 2)) == b""
-    assert _run(tab, F.get_slice(10_000, 99_999)) == DATA[10_000:]
+    assert _run(tab, F.slice(100, 200)) == DATA[100:200]
+    assert _run(tab, F.slice(-16)) == DATA[-16:]
+    assert _run(tab, F.slice(5, 2)) == b""
+    assert _run(tab, F.slice(10_000, 99_999)) == DATA[10_000:]
     assert tab.posts == posts
     assert tab.tab_files() == [f.token]
 
 
-def test_get_bytes_reads_the_whole_file(tab):
+def test_bytes_reads_the_whole_file(tab):
     _pick(tab, DATA)
-    assert _run(tab, F.get_bytes()) == DATA
+    assert _run(tab, F.bytes()) == DATA
     assert tab.frames[0].payload["start"] == 0
     assert tab.frames[0].payload["end"] is None
     assert tab.tab_files() == []
 
 
-def test_get_bytes_cached(tab):
+def test_bytes_cached(tab):
     f = _pick(tab, DATA)
     _run(tab, F.pull())
-    assert _run(tab, F.get_bytes()) == DATA
+    assert _run(tab, F.bytes()) == DATA
     assert tab.tab_files() == [f.token]
 
 
-def test_get_bytes_warns_past_the_threshold(tab, caplog, monkeypatch):
-    monkeypatch.setattr(up, "GET_BYTES_WARN", 1000)
+def test_bytes_warns_past_the_threshold(tab, caplog, monkeypatch):
+    monkeypatch.setattr(up, "BYTES_WARN", 1000)
     _pick(tab, DATA)
     with caplog.at_level(logging.WARNING, logger=up.__name__):
-        assert _run(tab, F.get_bytes()) == DATA
+        assert _run(tab, F.bytes()) == DATA
     [record] = caplog.records
     message = record.getMessage()
     assert "page/sec/f" in message
@@ -448,17 +458,17 @@ def test_get_bytes_warns_past_the_threshold(tab, caplog, monkeypatch):
     assert "open()" in message
 
 
-def test_get_bytes_under_the_threshold_is_quiet(tab, caplog):
+def test_bytes_under_the_threshold_is_quiet(tab, caplog):
     _pick(tab, DATA)
     with caplog.at_level(logging.WARNING, logger=up.__name__):
-        _run(tab, F.get_bytes())
+        _run(tab, F.bytes())
     assert caplog.records == []
 
 
-def test_get_slice_refuses_a_non_int_bound(tab):
+def test_slice_refuses_a_non_int_bound(tab):
     _pick(tab, DATA)
     with pytest.raises(TypeError, match="start"):
-        _run(tab, F.get_slice("0", 4))
+        _run(tab, F.slice("0", 4))
 
 
 # --- open --------------------------------------------------------------------
@@ -596,7 +606,7 @@ def test_every_code_raises_its_error(tab, code, error):
     _pick(tab, DATA)
     tab.fail = code
     with pytest.raises(error) as slice_err:
-        _run(tab, F.get_slice(0, 4))
+        _run(tab, F.slice(0, 4))
     with pytest.raises(error):
         _collect(tab, F.open())
     assert isinstance(slice_err.value, UploadError)
@@ -605,7 +615,7 @@ def test_every_code_raises_its_error(tab, code, error):
 
 
 def test_an_empty_input_raises_no_file_on_every_read(tab):
-    for term in (F.get_slice(0, 4), F.get_bytes(), nu.Collect(F.open())):
+    for term in (F.slice(0, 4), F.bytes(), nu.Collect(F.open())):
         with pytest.raises(NoFile, match="no file is picked"):
             _run(tab, term)
 
@@ -613,28 +623,28 @@ def test_an_empty_input_raises_no_file_on_every_read(tab):
 def test_a_file_changed_on_disk_raises_file_gone(tab):
     _pick(tab, DATA, readable=False)
     with pytest.raises(FileGone, match="pick it again"):
-        _run(tab, F.get_bytes())
+        _run(tab, F.bytes())
 
 
 def test_too_large_names_the_limit_side(tab):
     _pick(tab, DATA)
     tab.fail = "too_large"
     with pytest.raises(UploadTooLarge, match="upload limit"):
-        _run(tab, F.get_bytes())
+        _run(tab, F.bytes())
 
 
 def test_a_full_server_disk_raises_no_space(tab):
     _pick(tab, DATA)
     tab.fail = "no_space"
     with pytest.raises(UploadNoSpace, match="out of disk space"):
-        _run(tab, F.get_bytes())
+        _run(tab, F.bytes())
 
 
 def test_an_unknown_code_is_a_failed_upload(tab):
     _pick(tab, DATA)
     tab.fail = "teapot"
     with pytest.raises(UploadFailed, match="teapot"):
-        _run(tab, F.get_bytes())
+        _run(tab, F.bytes())
 
 
 def test_a_token_that_names_nothing_is_refused(tab):
@@ -643,7 +653,7 @@ def test_a_token_that_names_nothing_is_refused(tab):
     (tab.root / SID / f.token).unlink()
     tab._landed = lambda f: f.token is not None  # the tab still thinks it landed
     with pytest.raises(UploadRefused):
-        _run(tab, F.get_slice(0, 4))
+        _run(tab, F.slice(0, 4))
     with pytest.raises(UploadRefused):
         _collect(tab, F.open())
 
@@ -654,7 +664,7 @@ def test_a_malformed_token_is_refused(tab):
     f.token = "../../etc/passwd"  # noqa: S105 - a path, not a secret
     tab._landed = lambda f: True
     with pytest.raises(UploadRefused):
-        _run(tab, F.get_bytes())
+        _run(tab, F.bytes())
 
 
 # --- the session ending ------------------------------------------------------
@@ -664,7 +674,7 @@ def test_a_closed_session_raises_connection_error(tab):
     _pick(tab, DATA)
     tab.closed = True
     with pytest.raises(ConnectionError):
-        _run(tab, F.get_slice(0, 4))
+        _run(tab, F.slice(0, 4))
     assert tab.subs == []
 
 
@@ -692,7 +702,7 @@ def test_the_tab_closing_mid_wait_unsubscribes(tab):
 def test_a_read_with_no_upload_view_says_who_binds_it(tab):
     _pick(tab, DATA)
     with pytest.raises(LookupError, match="UploadView"):
-        asyncio.run(nu.arun(F.get_bytes(), Context().bind(Session, tab)))
+        asyncio.run(nu.arun(F.bytes(), Context().bind(Session, tab)))
 
 
 def test_reads_ignore_answers_for_other_requests(tab):
@@ -701,8 +711,8 @@ def test_reads_ignore_answers_for_other_requests(tab):
 
     async def run():
         ctx = _ctx(tab)
-        a = nu.arun(F.get_slice(0, 3), ctx)
-        b = nu.arun(F.get_slice(3, 6), ctx)
+        a = nu.arun(F.slice(0, 3), ctx)
+        b = nu.arun(F.slice(3, 6), ctx)
         (x, _), (y, _) = await asyncio.gather(a, b)
         return x, y
 
@@ -715,8 +725,8 @@ def test_reads_ignore_answers_for_other_requests(tab):
 def test_file_i_reads_one_entry_by_index_on_the_files_node(tab):
     _pick(tab, b"first", MANY)
     _pick(tab, DATA, MANY)
-    assert _run(tab, FS.file(1).get_slice(0, 8)) == DATA[:8]
-    assert _run(tab, FS.file(0).get_bytes()) == b"first"
+    assert _run(tab, FS.file(1).slice(0, 8)) == DATA[:8]
+    assert _run(tab, FS.file(0).bytes()) == b"first"
     (op, ref, payload), _ = tab.ops()
     assert (op, ref) == ("slice", MANY)
     assert payload["key"] == 1
@@ -736,13 +746,13 @@ def test_file_i_open_and_discard(tab):
 def test_file_i_takes_a_computed_index(tab):
     _pick(tab, b"a", MANY)
     _pick(tab, b"b", MANY)
-    assert _run(tab, FS.file(nu.Int(0) + 1).get_bytes()) == b"b"
+    assert _run(tab, FS.file(nu.Int(0) + 1).bytes()) == b"b"
 
 
 def test_file_i_past_the_selection_raises_no_file(tab):
     _pick(tab, b"a", MANY)
     with pytest.raises(NoFile, match=r"page/sec/fs\.file\(4\)"):
-        _run(tab, FS.file(4).get_bytes())
+        _run(tab, FS.file(4).bytes())
 
 
 def test_file_i_is_an_entry_ref():
@@ -768,7 +778,7 @@ def test_an_entry_holds_no_children():
 
 
 def test_reading_an_entry_itself_points_at_the_reads(tab):
-    with pytest.raises(TypeError, match="get_slice"):
+    with pytest.raises(TypeError, match="slice"):
         _run(tab, FS.file(0))
 
 

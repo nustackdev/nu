@@ -23,16 +23,15 @@ from typing_extensions import Self
 
 from nu.lang.null import is_null
 from nustd.ui.core import Changed, Write, check_key
+from nustd.ui.core.events import PROGRESS, UPLOAD
 from nustd.ui.uploads.interactions import (
-    PROGRESS,
     STEP,
-    UPLOAD,
     Cancel,
     Discard,
-    GetBytes,
-    GetSlice,
     OpenFile,
     Pull,
+    ReadBytes,
+    ReadSlice,
     RemoveFile,
 )
 
@@ -74,13 +73,13 @@ class _FileReads:
     server's cache and are read there, so a read never holds the ws.
     """
 
-    def get_slice(self, start: IntArg = 0, end: IntArg | None = None) -> GetSlice:
-        """The bytes of ``[start:end]``, python slice semantics, clamped. See ``GetSlice``."""
-        return GetSlice(self, start, end)  # type: ignore[arg-type]
+    def slice(self, start: IntArg = 0, end: IntArg | None = None) -> ReadSlice:
+        """The bytes of ``[start:end]``, python slice semantics, clamped. See ``ReadSlice``."""
+        return ReadSlice(self, start, end)  # type: ignore[arg-type]
 
-    def get_bytes(self) -> GetBytes:
-        """The whole file in memory; warns past 16 MiB. See ``GetBytes``."""
-        return GetBytes(self)  # type: ignore[arg-type]
+    def bytes(self) -> ReadBytes:
+        """The whole file in memory; warns past 16 MiB. See ``ReadBytes``."""
+        return ReadBytes(self)  # type: ignore[arg-type]
 
     def open(self, start: IntArg = 0, end: IntArg | None = None, step: IntArg = STEP) -> Iterator:
         """A lazy stream of ``bytes`` pieces of ``[start:end]``, pulling first. See ``OpenFile``."""
@@ -172,7 +171,7 @@ class UploadFileRef(_Nullable, _FileReads, _UploadInput):
 
     The value is ``{key, name, mime, size, modified, state, sent, error}``,
     NULL while empty (None in a Form). Picking moves no bytes: the program
-    reads what it wants with ``get_slice``, ``get_bytes`` or ``open``, and
+    reads what it wants with ``slice``, ``bytes`` or ``open``, and
     ``pull()`` fetches the whole file ahead of the reads.
 
     Args:
@@ -187,7 +186,7 @@ class UploadFileRef(_Nullable, _FileReads, _UploadInput):
     Notes:
         - ``key`` is minted by the browser and names the handle on the wire.
           ``name`` and ``mime`` are the client's claims, not facts: sniff
-          with ``get_slice`` before trusting them.
+          with ``slice`` before trusting them.
         - ``state`` is ``picked``, ``pulling``, ``landed`` or ``failed``;
           ``sent`` the bytes sent of the last pull; ``error`` the code of the
           last failure.
@@ -196,7 +195,7 @@ class UploadFileRef(_Nullable, _FileReads, _UploadInput):
     Example:
         csv = UploadFileRef.slot(accept=".csv", label="Orders")
         nu.ReactEvery(csv.on_change(),
-            nu.let(csv.get_slice(0, 4096), show_columns) >> csv.pull())
+            nu.let(csv.slice(0, 4096), show_columns) >> csv.pull())
     """
 
     _wire_type = "UploadFileRef"
@@ -262,7 +261,7 @@ class UploadFilesRef(_UploadInput):
     Example:
         photos = UploadFilesRef.slot(accept="image/*", max_files=20)
         nu.ReactEvery(photos.on_change(), photos.pull())
-        nu.let(photos.file(0).get_slice(0, 16), sniff)
+        nu.let(photos.file(0).slice(0, 16), sniff)
     """
 
     _wire_type = "UploadFilesRef"
@@ -354,7 +353,7 @@ class UploadedFileRef(_FileReads, LeafRef):
     the index to the entry's key when the command lands.
 
     Example:
-        nu.let(photos.file(0).get_bytes(), lambda raw: thumbnail(raw))
+        nu.let(photos.file(0).bytes(), lambda raw: thumbnail(raw))
     """
 
     _wire_type: ClassVar[str] = "UploadedFileRef"
@@ -373,7 +372,7 @@ class UploadedFileRef(_FileReads, LeafRef):
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> Any:
             msg = (
-                "UploadFilesRef.file(i) is read with get_slice, get_bytes or open;"
+                "UploadFilesRef.file(i) is read with slice, bytes or open;"
                 " read the UploadFilesRef itself for the selection"
             )
             raise TypeError(msg)

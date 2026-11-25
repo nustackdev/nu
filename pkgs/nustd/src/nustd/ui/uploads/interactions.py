@@ -9,7 +9,7 @@ every read comes from the landed file. ``pull()`` and ``discard()`` change
 where a read comes from, never what it returns. The app never sees a path.
 
 - the commands ``Pull``, ``Slice``, ``Cancel``, ``Discard``, ``RemoveFile``,
-  one wire op each, and the reads ``GetSlice``, ``GetBytes``, ``OpenFile``.
+  one wire op each, and the reads ``ReadSlice``, ``ReadBytes``, ``OpenFile``.
 
 The tab holds all per file state (handle, token, running transfer). The
 program holds none: every read asks, and waits for the one notify that
@@ -27,6 +27,7 @@ from nu.engine.structure import Declared
 from nu.lang import ScalarQuery, StreamQuery
 from nu.lang.null import is_null
 from nustd.ui.core import EVENT, Frame, Send, Session
+from nustd.ui.core.events import PROGRESS, UPLOAD
 from nustd.ui.core.protocol import _op_name
 
 from .area import UploadView
@@ -43,18 +44,18 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "BYTES_WARN",
     "DISCARD",
-    "GET_BYTES_WARN",
     "PROGRESS",
     "SLICE",
     "STEP",
     "UPLOAD",
     "Cancel",
     "Discard",
-    "GetBytes",
-    "GetSlice",
     "OpenFile",
     "Pull",
+    "ReadBytes",
+    "ReadSlice",
     "RemoveFile",
     "Slice",
 ]
@@ -64,12 +65,11 @@ _log = logging.getLogger(__name__)
 
 #: Bytes per piece ``open()`` yields unless told otherwise.
 STEP = 1 << 20
-#: ``get_bytes()`` logs a warning past this many bytes.
-GET_BYTES_WARN = 16 << 20
+#: ``bytes()`` logs a warning past this many bytes.
+BYTES_WARN = 16 << 20
 
-#: The events the tab sends on an upload ref, besides ``change``.
-PROGRESS = "progress"
-UPLOAD = "upload"
+#: The answers the tab sends on an upload ref, besides ``change`` and the
+#: ``PROGRESS`` / ``UPLOAD`` of ``nustd.ui.core.events``.
 SLICE = "slice"
 DISCARD = "discard"
 
@@ -106,10 +106,11 @@ async def _ask(
 ) -> dict[str, Any]:
     """Send one command and wait for the notify that answers it.
 
-    Subscribes on the node's path before the send, so an answer cannot land
-    in between; takes the first notify whose ``event`` and ``rid`` match;
-    unsubscribes however the wait ends. Only ``send`` and ``subscribe``, so
-    any Session carries it (a nuspace worker's pipe too).
+    Subscribes to ``event`` on the node's path before the send, so the tab
+    sends the answer and it cannot land in between; takes the first notify
+    whose ``event`` and ``rid`` match; unsubscribes however the wait ends.
+    Only ``send`` and ``subscribe``, so any Session carries it (a nuspace
+    worker's pipe too).
 
     Raises:
         ConnectionError: the session refused the subscribe or the send: the
@@ -131,7 +132,7 @@ async def _ask(
             answered.set_result(note)
 
     try:
-        sub = session.subscribe(path)
+        sub = session.subscribe(path, event)
     except ConnectionError:
         raise
     except Exception as exc:
@@ -293,7 +294,7 @@ class Slice(_UploadCommand):
 
     Payload ``{key, rid, url, start, end}``, ``end`` null for the end of the
     file. Answered by a ``slice`` notify. Run on its own it drops a fresh
-    slice file at once; ``get_slice`` is what reads one.
+    slice file at once; ``slice`` is what reads one.
     """
 
     _rid = True
@@ -339,7 +340,7 @@ class RemoveFile(_UploadCommand):
 # --- reads -------------------------------------------------------------------
 
 
-class GetSlice(ScalarQuery):
+class ReadSlice(ScalarQuery):
     """The bytes of ``[start:end]`` of a picked file, in memory.
 
     Args:
@@ -361,7 +362,7 @@ class GetSlice(ScalarQuery):
         ``bytes``.
 
     Example:
-        nu.let(csv.get_slice(0, 4096), lambda head: show_columns(head))
+        nu.let(csv.slice(0, 4096), lambda head: show_columns(head))
     """
 
     _requires_async = Declared(value=True, name="requires_async")
@@ -382,8 +383,8 @@ class GetSlice(ScalarQuery):
         async def athunk(rt: Runtime) -> bytes:
             ref_nid = rt.program.children[nid][0]
             start, end = [await t(rt) for t in bounds] if bounds else (0, None)
-            start = _int("get_slice start", start) or 0
-            end = _int("get_slice end", end, optional=True)
+            start = _int("slice start", start) or 0
+            end = _int("slice end", end, optional=True)
             return await self._aread(rt, ref, ref_nid, start, end)
 
         return athunk
@@ -403,10 +404,10 @@ class GetSlice(ScalarQuery):
             await _adrop(view, token)
 
     def _before_read(self, where: str, answer: dict[str, Any]) -> None:
-        """A hook before the bytes are read; ``GetBytes`` warns there."""
+        """A hook before the bytes are read; ``ReadBytes`` warns there."""
 
 
-class GetBytes(GetSlice):
+class ReadBytes(ReadSlice):
     """The whole of a picked file, in memory.
 
     Args:
@@ -416,13 +417,13 @@ class GetBytes(GetSlice):
         - Logs a warning past 16 MiB naming the ref and the size: ``open()``
           reads a big file in pieces. There is no cap of its own; the
           intake's cap still holds.
-        - Same sources and errors as ``get_slice``.
+        - Same sources and errors as ``slice``.
 
     Yields:
         ``bytes``.
 
     Example:
-        nu.let(cfg.get_bytes(), lambda raw: load(raw))
+        nu.let(cfg.bytes(), lambda raw: load(raw))
     """
 
     def __init__(self, ref: Ref) -> None:
@@ -430,9 +431,9 @@ class GetBytes(GetSlice):
 
     def _before_read(self, where: str, answer: dict[str, Any]) -> None:
         size = answer.get("size")
-        if isinstance(size, int) and size > GET_BYTES_WARN:
+        if isinstance(size, int) and size > BYTES_WARN:
             _log.warning(
-                "nustd.ui %s: get_bytes() reads %d bytes into memory; open() reads a big file"
+                "nustd.ui %s: bytes() reads %d bytes into memory; open() reads a big file"
                 " in pieces",
                 where,
                 size,

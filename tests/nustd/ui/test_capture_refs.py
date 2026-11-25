@@ -294,9 +294,9 @@ def test_a_take_reads_like_an_upload(tab):
     data = bytes(range(256)) * 4
     tab.takes[MIC] = data
     tab.takes[CAM] = b"\xff\xd8photo"
-    assert _run(tab, M.get_bytes()) == data
-    assert _run(tab, M.get_slice(0, 4)) == data[:4]
-    assert _run(tab, C.get_slice(0, 2)) == b"\xff\xd8"
+    assert _run(tab, M.bytes()) == data
+    assert _run(tab, M.slice(0, 4)) == data[:4]
+    assert _run(tab, C.slice(0, 2)) == b"\xff\xd8"
     first = tab.frames[0]
     assert (first.op, tuple(first.ref), first.payload["key"]) == ("slice", MIC, None)
     assert first.chain[-1][1] == "MicCaptureRef"
@@ -304,4 +304,4 @@ def test_a_take_reads_like_an_upload(tab):
 
 def test_an_empty_capture_raises_no_file(tab):
     with pytest.raises(nustd.ui.NoFile):
-        _run(tab, M.get_bytes())
+        _run(tab, M.bytes())

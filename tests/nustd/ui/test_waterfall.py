@@ -1,4 +1,4 @@
-"""WaterfallRef: spans normalized on the slot and on set, partial writes, select notify."""
+"""WaterfallRef: spans normalized on the slot and on set, partial writes, the selection."""
 
 from __future__ import annotations
 
@@ -7,17 +7,24 @@ from datetime import datetime, timezone
 
 import nu
 from nu import Context, Shape
-from nustd.ui import Column, Row, Session, WaterfallRef
+from nustd.ui import Changes, Column, Row, Session, WaterfallRef
+from nustd.ui.core import CHANGE, Changed
 from nustd.ui.core.base import _wire_type_of
 from nustd.ui.refs import LeafRef
 
 
 class _RecordingSession:
-    def __init__(self) -> None:
+    def __init__(self, value: object = None) -> None:
         self.frames: list = []
+        self.value = value
+        self.reads: list = []
 
     async def send(self, frame: object) -> None:
         self.frames.append(frame)
+
+    async def aread(self, path: tuple[str, ...], field: str | None = None) -> object:
+        self.reads.append((path, field))
+        return self.value
 
 
 def _mount(**props):
@@ -89,7 +96,18 @@ def test_setters_send_only_their_keys():
     assert dict(_write(w.set_selected("x"))) == {"selected": "x"}
 
 
-def test_on_select_filters_on_the_select_event():
-    w = _mount()
-    term = w.on_select()
-    assert term.__class__.__name__ == "Changed"
+def test_the_selection_is_state_read_off_the_ref():
+    # A clicked row stays marked in the browser, so the ref reads it back.
+    assert issubclass(WaterfallRef, Changes)
+    w = _mount(selectable=True)
+    sess = _RecordingSession("db")
+    value, _ = asyncio.run(nu.arun(w, Context().bind(Session, sess)))
+    assert value == "db"
+    assert sess.reads == [(("page", "sec", "w"), None)]
+
+
+def test_on_change_hears_the_change_event_only():
+    term = _mount(selectable=True).on_change()
+    assert isinstance(term, Changed)
+    assert term._children[1].value == CHANGE
+    assert not hasattr(WaterfallRef, "on_select")

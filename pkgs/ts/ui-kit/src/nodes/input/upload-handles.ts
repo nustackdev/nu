@@ -9,7 +9,9 @@
 // of its own, so the browser is the one place that knows what landed where.
 //
 // Every byte goes over http (lib/transfer), never the ws. The program asks
-// with a command on the node's path and hears back a `notify` there:
+// with a command on the node's path and hears back an event there, sent
+// through `emit` like every other, so only when watched (a program read
+// watches its answer before it sends the command):
 //
 //   pull        {key, rid, url}              -> upload {key, rid, token, state, size, error}
 //                                               progress {key, rid, sent, size} on the way
@@ -36,10 +38,10 @@
 // a recorded Blob wrapped as a File, with its duration and size as `meta`,
 // so every command and read above works on a take unchanged.
 
-import { type NodeHandler, OPS, type Path } from "@nustackdev/ui-core";
+import type { NodeHandler, Path } from "@nustackdev/ui-core";
 import type { FileState } from "../../components/ui/file-input";
 import { postBlob, postFile, type Transfer, type TransferResult } from "../../lib/transfer";
-import { nodeAt, pathKey, tree } from "../../tree";
+import { emit, nodeAt, pathKey, tree } from "../../tree";
 import { resetInput } from "./control";
 
 export type { FileState };
@@ -136,9 +138,11 @@ function land(path: Path): void {
 	tree.getState().setProps(path, { value: filesValue(path) });
 }
 
-function notify(path: Path, payload: Record<string, unknown>): void {
-	tree.getState().send({ op: OPS.notify, ref: path, payload });
-}
+/** The events an upload node answers with, besides `change`. */
+const PROGRESS = "progress";
+const UPLOAD = "upload";
+const SLICE = "slice";
+const DISCARD = "discard";
 
 /** Stop everything a handle has on its way. Waiters hear `canceled`. */
 function release(h: Handle): void {
@@ -282,15 +286,14 @@ function progressed(path: Path, h: Handle, sent: number): void {
 	if (size <= 0 || sent - h.reported < size * PROGRESS_STEP) return;
 	h.reportedAt = now;
 	h.reported = sent;
-	notify(path, { event: "progress", key: h.key, rid: h.rid, sent, size });
+	emit(path, PROGRESS, { key: h.key, rid: h.rid, sent, size });
 	land(path);
 }
 
 // --- pull ----------------------------------------------------------------------
 
 function answerUpload(path: Path, h: Handle, rid: unknown, state: string): void {
-	notify(path, {
-		event: "upload",
+	emit(path, UPLOAD, {
 		key: h.key,
 		rid,
 		token: h.token,
@@ -340,8 +343,7 @@ const pull: NodeHandler = (ctx, payload) => {
 	const { key, rid, url } = fields(payload);
 	const found = targets(ctx.path, key);
 	if (found.length === 0) {
-		ctx.send(OPS.notify, {
-			event: "upload",
+		emit(ctx.path, UPLOAD, {
 			key: key ?? null,
 			rid,
 			token: null,
@@ -365,7 +367,7 @@ const slice: NodeHandler = (ctx, payload) => {
 	const path = ctx.path;
 	const h = target(path, key);
 	const answer = (extra: Fields) =>
-		ctx.send(OPS.notify, { event: "slice", key: h?.key ?? key ?? null, rid, ...extra });
+		emit(path, SLICE, { key: h?.key ?? key ?? null, rid, ...extra });
 	if (!h) {
 		answer({ token: null, cached: false, state: "failed", size: 0, error: "no_file" });
 		return;
@@ -416,7 +418,7 @@ const discard: NodeHandler = (ctx, payload) => {
 		if (h.state === "landed") h.state = "picked";
 		land(ctx.path);
 	}
-	ctx.send(OPS.notify, { event: "discard", key: h?.key ?? key ?? null, rid, token });
+	emit(ctx.path, DISCARD, { key: h?.key ?? key ?? null, rid, token });
 };
 
 const removeFileOp: NodeHandler = (ctx, payload) => {

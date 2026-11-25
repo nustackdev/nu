@@ -12,7 +12,7 @@ All of it lives here; a host (nudle, nuspace) only assembles it.
 - ``intake``       -- the ``POST /_nu/upload/{sid}`` route that fills the area.
 - ``interactions`` -- the commands a program sends a tab (``Pull``, ``Slice``,
                       ``Cancel``, ``Discard``, ``RemoveFile``) and the reads
-                      (``GetSlice``, ``GetBytes``, ``OpenFile``).
+                      (``ReadSlice``, ``ReadBytes``, ``OpenFile``).
 - ``errors``       -- ``UploadError`` and its subclasses, one per failure code.
 - ``presets``      -- ``uploads``, the area's bracket and route as one pair,
                       and ``upload_view``, binding each arm its tab's view.
@@ -45,14 +45,14 @@ from .errors import (
     UploadTooLarge,
 )
 from .interactions import (
-    GET_BYTES_WARN,
+    BYTES_WARN,
     STEP,
     Cancel,
     Discard,
-    GetBytes,
-    GetSlice,
     OpenFile,
     Pull,
+    ReadBytes,
+    ReadSlice,
     RemoveFile,
     Slice,
 )
@@ -60,18 +60,18 @@ from .presets import UploadViewFor, upload_view, uploads
 
 
 __all__ = [
-    "GET_BYTES_WARN",
+    "BYTES_WARN",
     "STALE_AFTER",
     "STEP",
     "UPLOAD_PREFIX",
     "Cancel",
     "Discard",
     "FileGone",
-    "GetBytes",
-    "GetSlice",
     "NoFile",
     "OpenFile",
     "Pull",
+    "ReadBytes",
+    "ReadSlice",
     "RemoveFile",
     "Slice",
     "UploadArea",

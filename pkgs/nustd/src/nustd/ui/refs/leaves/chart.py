@@ -39,7 +39,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal
 from typing_extensions import Self
 
 from nu.lang.sentinels import UNSET
-from nustd.ui.core import Changed, Send, Write
+from nustd.ui.core import CLICK, Changed, Emits, Send, Write
 
 from .base import LeafRef
 
@@ -303,7 +303,7 @@ def _quantile(sorted_vals: list[float], q: float) -> float:
 # --- the base -------------------------------------------------------------------
 
 
-class Chart(LeafRef):
+class Chart(Emits, LeafRef):
     """A chart drawn from an ECharts option. The base every typed chart builds on.
 
     ``Chart.slot(option={...})`` draws the option as given: any series,
@@ -389,7 +389,7 @@ class Chart(LeafRef):
 
     def on_click(self) -> Changed:
         """``{event, series, series_index, name, index, value}``: a data item clicked."""
-        return Changed(self, "click")
+        return Changed(self, CLICK)
 
 
 # --- shared option parts ----------------------------------------------------------

@@ -23,7 +23,6 @@
 // The store keeps the option, so a remount or a theme switch draws the
 // option with the rings' points swapped in.
 
-import { OPS } from "@nustackdev/ui-core";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Chart, type ChartClick, type ChartHandle } from "../../components/ui/chart";
 import {
@@ -35,7 +34,7 @@ import {
 	seriesWithData,
 	withSeriesData,
 } from "../../lib/chart/option";
-import { type NodeEntry, type NodeProps, pathKey, useProps, useSend } from "../../tree";
+import { EVENTS, type NodeEntry, type NodeProps, pathKey, useEmit, useProps } from "../../tree";
 import {
 	disposeStream,
 	dropSeries,
@@ -78,13 +77,15 @@ function ChartView({ path }: NodeProps) {
 	const height = _height(props.height);
 	const key = pathKey(path);
 	const handle = useRef<ChartHandle>(null);
-	const send = useSend(path);
+	const emit = useEmit(path);
 
 	// The rings are read at render, so whatever streamed before this mount
 	// (or before the last option change) is drawn with it. `key` stands in for
 	// `path`, compared by value.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: `key` stands in for `path`.
 	const composed = useMemo(() => withSeriesData(option, streamData(path)), [option, key]);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: `key` stands in for `path`.
 	useEffect(
 		() =>
 			listen(path, (dirty) => {
@@ -101,10 +102,7 @@ function ChartView({ path }: NodeProps) {
 		[key],
 	);
 
-	const onPointClick = useCallback(
-		(e: ChartClick) => send(OPS.notify, { event: "click", ...e }),
-		[send],
-	);
+	const onPointClick = useCallback((e: ChartClick) => emit(EVENTS.click, e), [emit]);
 
 	return (
 		<Chart

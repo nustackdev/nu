@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any, Literal
 from typing_extensions import Self
 
 from nu.lang.sentinels import UNSET
-from nustd.ui.core import Changed, Write
+from nustd.ui.core import ACTION, DISMISS, Changed, Emits, Write
 
 from ..vocab import HeadingTone, StatusTone, Target, TextAlign, Tone, one_of
 from ..vocab import set_href as _set_href
@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 Variant = Literal["neutral", "info", "warn", "ok", "danger"]
 
 
-class AlertRef(LeafRef):
+class AlertRef(Emits, LeafRef):
     """Display banner ref. `write` carries partial updates; `notify` fires on user dismiss.
 
     Variant maps to the Alert primitive's `tone` (5 tones per kit): `neutral`
@@ -90,7 +90,8 @@ class AlertRef(LeafRef):
         return Write(self, Dict.of(**payload))
 
     def on_dismiss(self) -> Changed:
-        return Changed(self)
+        """``{event: "dismiss"}``: the person closed the banner."""
+        return Changed(self, DISMISS)
 
 
 BadgeVariant = Literal["info", "warn", "ok", "danger", "neutral", "dashed", "brand", "secondary"]
@@ -182,7 +183,7 @@ class DividerRef(LeafRef):
 EmptySize = Literal["sm", "md"]
 
 
-class EmptyStateRef(LeafRef):
+class EmptyStateRef(Emits, LeafRef):
     """What a region says while it has nothing to show.
 
     `label` is the one line that says what is missing, `description` a smaller
@@ -263,7 +264,8 @@ class EmptyStateRef(LeafRef):
         return Write(self, Dict.of(**payload))
 
     def on_action(self) -> Changed:
-        return Changed(self)
+        """``{event: "action"}``: the person took the way out."""
+        return Changed(self, ACTION)
 
 
 GaugeVariant = Literal["neutral", "ok", "warn", "danger"]

@@ -65,7 +65,7 @@ def _text(label: str, raw: nu.Nu) -> nu.Nu:
 def _one_file() -> nu.Nu:
     """The steps a csv app takes on a pick, each logged to the list."""
     return (
-        nu.let(CSV_REF.get_slice(0, 7), lambda head: _text("head", head))
+        nu.let(CSV_REF.slice(0, 7), lambda head: _text("head", head))
         >> CSV_REF.pull()
         >> nu.let(
             nu.Collect(CSV_REF.open(step=8)),
@@ -74,9 +74,9 @@ def _one_file() -> nu.Nu:
             ),
         )
         >> nu.let(Media.put_stream(CSV_REF.open(step=8)), lambda bid: _text("blob", Media.get(bid)))
-        >> nu.let(CSV_REF.get_slice(-6), lambda tail: _text("tail", tail))
+        >> nu.let(CSV_REF.slice(-6), lambda tail: _text("tail", tail))
         >> CSV_REF.discard()
-        >> nu.let(CSV_REF.get_slice(0, 2), lambda again: _text("again", again))
+        >> nu.let(CSV_REF.slice(0, 2), lambda again: _text("again", again))
         >> LOG.append("done")
     )
 
@@ -84,9 +84,9 @@ def _one_file() -> nu.Nu:
 def _many_files() -> nu.Nu:
     """Entries by position: a slice of the second, a remove, the new first."""
     return (
-        nu.let(MANY.file(1).get_slice(0, 3), lambda b: _text("second", b))
+        nu.let(MANY.file(1).slice(0, 3), lambda b: _text("second", b))
         >> MANY.remove(0)
-        >> nu.let(MANY.file(0).get_bytes(), lambda b: _text("first", b))
+        >> nu.let(MANY.file(0).bytes(), lambda b: _text("first", b))
         >> LOG.append("done")
     )
 
