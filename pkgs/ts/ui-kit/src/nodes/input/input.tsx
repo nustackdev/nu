@@ -1,8 +1,9 @@
 // InputRef -- text input. Browser is source of truth.
 //
 // User types: the node's `value` prop updates immediately (controlled input),
-// so a read sees what is under the caret. Blur commits (`{event: "change"}`,
-// only when the value moved). Enter commits, then submits (`{event:
+// so a read sees what is under the caret, and each keystroke sends `{event:
+// "input", value}`. Blur commits (`{event: "change", value}`, only when the
+// value moved). Enter commits, then submits (`{event:
 // "submit"}`), then asks an enclosing Form to submit; focus stays put. See
 // ./control.ts for the contract every input shares.
 //
@@ -35,7 +36,7 @@ function InputView({ path }: NodeProps) {
 	const pattern = useStringProp(path, "pattern");
 	const mono = useBoolProp(path, "mono");
 	const c = useControl(path);
-	const { edit, commit, submit } = useCommit(path);
+	const { edit, commit, submit } = useCommit(path, { moves: true });
 	const field = {
 		...c.aria,
 		size: c.size,

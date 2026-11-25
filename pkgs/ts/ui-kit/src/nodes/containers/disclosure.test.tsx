@@ -1,5 +1,5 @@
 // Disclosure containers over the real tree store: what open state leaves on
-// screen, and the notify each user toggle or dismiss sends out.
+// screen, the change each user toggle or dismiss emits, and what a read answers.
 
 import { OPS, type TreeFrame } from "@nustackdev/ui-core";
 import { act } from "react";
@@ -67,10 +67,12 @@ describe("Collapsible", () => {
 		mount("c", "Collapsible", { title: "Details", open: false });
 		act(() => trigger().click());
 		expect(body()).toBe(true);
-		expect(sent).toEqual([{ op: OPS.notify, ref: ["c"], payload: { open: true }, id: undefined }]);
+		expect(sent).toEqual([
+			{ op: OPS.notify, ref: ["c"], payload: { event: "change", value: true }, id: undefined },
+		]);
 		act(() => trigger().click());
 		expect(body()).toBe(false);
-		expect(sent.at(-1)?.payload).toEqual({ open: false });
+		expect(sent.at(-1)?.payload).toEqual({ event: "change", value: false });
 	});
 
 	it("opens, closes and retitles from a server write without notifying", () => {
@@ -138,10 +140,12 @@ describe("Collapsible header", () => {
 		header("c", "Collapsible", "header");
 		act(() => headerText().click());
 		expect(body()).toBe(true);
-		expect(sent).toEqual([{ op: OPS.notify, ref: ["c"], payload: { open: true }, id: undefined }]);
+		expect(sent).toEqual([
+			{ op: OPS.notify, ref: ["c"], payload: { event: "change", value: true }, id: undefined },
+		]);
 		act(() => rowTrigger().click());
 		expect(body()).toBe(false);
-		expect(sent.at(-1)?.payload).toEqual({ open: false });
+		expect(sent.at(-1)?.payload).toEqual({ event: "change", value: false });
 	});
 
 	it("lets a button in the header click without toggling", () => {
@@ -225,7 +229,12 @@ describe("Accordion header", () => {
 		expect(sent.map((f) => f.ref)).toEqual([["a", "header:one", "go"]]);
 		act(() => headerText().click());
 		expect(regions()).toEqual(["first"]);
-		expect(sent.at(-1)).toEqual({ op: OPS.notify, ref: ["a"], payload: ["one"], id: undefined });
+		expect(sent.at(-1)).toEqual({
+			op: OPS.notify,
+			ref: ["a"],
+			payload: { event: "change", value: ["one"] },
+			id: undefined,
+		});
 	});
 });
 
@@ -254,17 +263,19 @@ describe("Sheet", () => {
 		expect(el?.style.width).toBe("560px");
 	});
 
-	it("closes on Escape and notifies {open: false}", () => {
+	it("closes on Escape and emits a change to false", () => {
 		mount("s", "Sheet", { open: true, title: "Edit host" });
 		pressEscape();
-		expect(sent).toEqual([{ op: OPS.notify, ref: ["s"], payload: { open: false }, id: undefined }]);
+		expect(sent).toEqual([
+			{ op: OPS.notify, ref: ["s"], payload: { event: "change", value: false }, id: undefined },
+		]);
 		expect(tree.getState().getIn(["s"])?.props.open).toBe(false);
 	});
 
 	it("closes on the close button, and a server write opens it again", () => {
 		mount("s", "Sheet", { open: true, title: "Edit host" });
 		act(() => (document.querySelector("[data-slot=sheet-close-icon]") as HTMLElement).click());
-		expect(sent.at(-1)?.payload).toEqual({ open: false });
+		expect(sent.at(-1)?.payload).toEqual({ event: "change", value: false });
 		expect(tree.getState().getIn(["s"])?.props.open).toBe(false);
 		write("s", { open: true });
 		expect(tree.getState().getIn(["s"])?.props.open).toBe(true);
@@ -314,7 +325,7 @@ describe("Popover", () => {
 		expect(sent.at(-1)).toEqual({
 			op: OPS.notify,
 			ref: ["p"],
-			payload: { open: true },
+			payload: { event: "change", value: true },
 			id: undefined,
 		});
 		expect(tree.getState().getIn(["p"])?.props.open).toBe(true);

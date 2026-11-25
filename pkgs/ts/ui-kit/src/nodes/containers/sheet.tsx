@@ -13,16 +13,15 @@
 // stack's layers (`gap` 4, `justify`, `align`, `divided`, the per child
 // maps).
 // When the user dismisses (backdrop, Escape, the close button) and
-// `dismissible` is true, the sheet closes in this tab and sends `notify`
-// with {open: false}, the same as Modal.
+// `dismissible` is true, the sheet closes in this tab and emits `change`
+// with `value: false`, the same as Modal; a read answers whether it is open.
 //
 // Composes the kit Sheet primitive (Radix Dialog under the hood): portal,
 // scrim, focus trap, Esc and focus restore come from it, and so do the slide
 // (`slow`, no fade), pad 20 and radius `xl`. We own the header, the body and
-// the notify. The body scrolls on its own under the header and stacks its
+// the emit. The body scrolls on its own under the header and stacks its
 // children under a block flow.
 
-import { OPS } from "@nustackdev/ui-core";
 import { useCallback } from "react";
 import {
 	SheetContent,
@@ -33,13 +32,14 @@ import {
 } from "../../components/ui/sheet";
 import { cn } from "../../lib/utils";
 import {
+	EVENTS,
 	type NodeEntry,
 	type NodeProps,
 	SlotView,
 	useBoolProp,
 	useChildren,
+	useEmit,
 	useEnumProp,
-	useSend,
 	useSetProps,
 	useStringProp,
 } from "../../tree";
@@ -51,7 +51,7 @@ import {
 	StackChildren,
 	useLayout,
 } from "./layout";
-import { overlayStyle } from "./modal";
+import { overlayStyle, readOpen } from "./modal";
 
 const SIDES = ["left", "right", "top", "bottom"] as const;
 const DEFAULTS: LayoutDefaults = { gap: 4, justify: "start", align: "stretch" };
@@ -65,7 +65,7 @@ function SheetView({ path }: NodeProps) {
 	const layout = useLayout(path, DEFAULTS);
 	const dismissible = useBoolProp(path, "dismissible", true);
 	const hasHeader = useChildren(path).includes(HEADER);
-	const send = useSend(path);
+	const emit = useEmit(path);
 	const setProps = useSetProps(path);
 
 	// A dismiss closes in this tab and tells the program, like a Collapsible
@@ -75,9 +75,9 @@ function SheetView({ path }: NodeProps) {
 			if (next) return;
 			if (!dismissible) return;
 			setProps({ open: false });
-			send(OPS.notify, { open: false });
+			emit(EVENTS.change, { value: false });
 		},
-		[dismissible, send, setProps],
+		[dismissible, emit, setProps],
 	);
 
 	return (
@@ -116,4 +116,8 @@ function SheetView({ path }: NodeProps) {
 	);
 }
 
-export const Sheet: NodeEntry = { component: SheetView, handlers: childHandlers };
+export const Sheet: NodeEntry = {
+	component: SheetView,
+	handlers: childHandlers,
+	reads: { "": readOpen },
+};

@@ -2,17 +2,19 @@
 
 - ``CollapsibleRef``: one titled region that folds, simpler than Accordion.
   The tab owns open state while the user clicks (like Accordion) and sends a
-  notify on each toggle; the server can still open or close it. Its title
+  ``change`` on each toggle; the server can still open or close it. Its title
   is a string, or a ``header`` child (a Row of anything) in its place.
 - ``SheetRef``: an edge drawer, Modal's sibling for inspectors and side
-  panels. The server owns open state; the tab sends ``{open: false}`` when
-  the user dismisses it.
+  panels. The server owns open state; the tab sends a ``change`` with
+  ``value: false`` when the user dismisses it.
 - ``PopoverRef``: a button that opens a small floating panel anchored to
   it, for settings that should take no room until asked for. The tab owns
   open state while the user clicks, like Collapsible.
 
 Open vs closed is the thing each one carries, so each has a ``set()`` for
-it, the way Modal does. Every other child is open-ended composition: build
+it, the way Modal does, and reading the Ref reads it back: ``nu.let(sheet,
+...)`` is true while the region is open. ``on_change()`` hears each move as
+``{event: "change", value: <open>}``. Every other child is open-ended composition: build
 it as a slot on the Shape or as a Ref with ``parent_ref=`` this one.
 """
 
@@ -23,7 +25,8 @@ from typing import TYPE_CHECKING, ClassVar, Literal
 from typing_extensions import Self, Unpack
 
 from nu.lang.sentinels import UNSET
-from nustd.ui.core.interactions import Changed, Write
+from nustd.ui.core.capabilities import Changes
+from nustd.ui.core.interactions import Write
 
 from .base import DictCollectionRef
 from .flow import FLOW_CHILDREN, STACK, RowRef
@@ -58,12 +61,13 @@ def _open_title(open: object, title: object) -> dict[str, object]:
     return payload
 
 
-class CollapsibleRef(ChildLayout, DictCollectionRef):
+class CollapsibleRef(Changes, ChildLayout, DictCollectionRef):
     """One titled region whose children fold away.
 
     A trigger row (chevron + title) over a body of open-ended children. The
-    user toggles it in the tab, which sends ``{open: bool}`` as a notify;
-    ``on_change()`` takes those. ``set(open=...)`` opens or closes it from
+    user toggles it in the tab, which sends ``{event: "change", value: bool}``;
+    ``on_change()`` takes those, and reading the Ref gives whether it is open
+    now. ``set(open=...)`` opens or closes it from
     the server. The body speaks the layers of a Column (``layout``):
     ``gap`` (3), ``padding``, ``justify``, ``align``, ``divided``, and the
     per child maps.
@@ -113,15 +117,15 @@ class CollapsibleRef(ChildLayout, DictCollectionRef):
 
         return Write(self, Dict.of(**_open_title(open, title)))
 
-    def on_change(self) -> Changed:
-        return Changed(self)
+    def _lift(self, raw: object) -> bool:
+        return bool(raw)
 
 
 Side = Literal["left", "right", "top", "bottom"]
 _SIDES = ("left", "right", "top", "bottom")
 
 
-class SheetRef(ChildLayout, DictCollectionRef):
+class SheetRef(Changes, ChildLayout, DictCollectionRef):
     """Drawer that slides in from an edge over the page, children as its body.
 
     Server-owned ``open`` and ``title``. For a heading that is more than a
@@ -130,7 +134,8 @@ class SheetRef(ChildLayout, DictCollectionRef):
     button kept beside it, and the sheet is named by its text. The sheet only
     places it, full width and free to shrink. When ``dismissible`` is true the user
     can close it (backdrop, Esc, the close button) and the tab sends
-    ``{open: false}``, which ``on_change()`` takes. Like Modal, the sheet
+    ``{event: "change", value: false}``, which ``on_change()`` takes; reading
+    the Ref gives whether it is open now. Like Modal, the sheet
     stays open until the program writes ``open=False`` back, so a program
     can hold it open (unsaved edits).
 
@@ -186,8 +191,8 @@ class SheetRef(ChildLayout, DictCollectionRef):
 
         return Write(self, Dict.of(**_open_title(open, title)))
 
-    def on_change(self) -> Changed:
-        return Changed(self)
+    def _lift(self, raw: object) -> bool:
+        return bool(raw)
 
 
 PopoverSide = Literal["top", "right", "bottom", "left"]
@@ -196,7 +201,7 @@ _POPOVER_SIDES = ("top", "right", "bottom", "left")
 _POPOVER_EDGES = ("start", "center", "end")
 
 
-class PopoverRef(ChildLayout, DictCollectionRef):
+class PopoverRef(Changes, ChildLayout, DictCollectionRef):
     """A button that opens a small panel floating beside it, children as its body.
 
     The trigger wears a button's look: ``label``, ``icon`` (a lucide name),
@@ -215,8 +220,9 @@ class PopoverRef(ChildLayout, DictCollectionRef):
     icon): a control inside a button is two targets in one. The button is
     named by ``tooltip``, else ``title``, else "Open".
 
-    The user opens and closes it in the tab, which sends ``{open: bool}`` as
-    a notify; ``on_change()`` takes those. ``set(open=...)`` opens or closes
+    The user opens and closes it in the tab, which sends ``{event: "change",
+    value: bool}``; ``on_change()`` takes those, and reading the Ref gives
+    whether it is open now. ``set(open=...)`` opens or closes
     it from the server. The panel is ``width`` wide (288px unless set) and
     its body speaks the layers of a Column (``layout``): ``gap`` (3),
     ``padding``, ``justify``, ``align``, ``divided``, and the per child maps.
@@ -293,5 +299,5 @@ class PopoverRef(ChildLayout, DictCollectionRef):
 
         return Write(self, Dict.of(**({} if open is UNSET else {"open": open})))
 
-    def on_change(self) -> Changed:
-        return Changed(self)
+    def _lift(self, raw: object) -> bool:
+        return bool(raw)

@@ -2,7 +2,8 @@
 // truth.
 //
 // The value is free text on the node's `value`, like InputRef: typing edits
-// it locally, blur commits (`{event: "change"}` if it moved), Enter submits
+// it locally (`{event: "input", value}` per keystroke), blur commits
+// (`{event: "change", value}` if it moved), Enter submits
 // (change first if it moved, then `{event: "submit"}`, then the enclosing
 // Form). The suggestions come from `options` (strings or {value,label}
 // maps, replaced by a map write) and filter on what is typed. Enter on a
@@ -26,7 +27,7 @@ function AutocompleteView({ path }: NodeProps) {
 	const rawOptions = useListProp<unknown>(path, "options");
 	const options = useMemo(() => normalizeOptions(rawOptions), [rawOptions]);
 	const c = useControl(path);
-	const { edit, commit, pick, submit } = useCommit(path);
+	const { edit, commit, pick, submit } = useCommit(path, { moves: true });
 	return (
 		<div className="flex flex-col gap-1">
 			{c.label && (

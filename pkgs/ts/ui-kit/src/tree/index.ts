@@ -2,7 +2,11 @@
 //
 //   store.ts    : the store instance + useTree
 //   hooks.ts    : useNode / useChildren / useSend / ...
-//   registry.ts : register(type, { component, handlers, dispose, fill })
+//   events.ts   : EVENTS, the shared event names
+//   emit.ts     : useEmit / emit, how a node sends `{event, ...fields}`
+//   watch.ts    : isWatched, which events the server listens for
+//   outbox.ts   : enqueue / flushOutbox / unbatch, where an emitted event waits for its frame
+//   registry.ts : register(type, { component, handlers, reads, dispose, fill })
 //   NodeView.tsx: type lookup and recursion
 //   flow.tsx    : the flow a container hands its children, and `useFill`
 //   history.ts  : History, the one writer of browser history and the one
@@ -16,6 +20,9 @@
 
 export type { AnchorRule, Gesture } from "./anchors";
 export { AnchorCatcher, catchAnchors, defaultAnchorRule, useAnchorCatcher } from "./anchors";
+export type { Emit, EventFields } from "./emit";
+export { emit, useEmit } from "./emit";
+export { EVENTS } from "./events";
 export type { Flow } from "./flow";
 export { FlowProvider, useFill, useFlow } from "./flow";
 export type { Entry, Move, MoveKind, MoveOptions } from "./history";
@@ -57,10 +64,21 @@ export {
 	NodeView,
 	SlotView,
 } from "./NodeView";
+export { enqueue, FLUSH_MS, flushOutbox, unbatch } from "./outbox";
 export type { Query, QueryValue } from "./query";
 export { mergeQuery, parseQuery, queryValue, serializeQuery } from "./query";
-export type { InputSpec, NodeEntry, NodeProps } from "./registry";
-export { componentFor, isFill, isGrow, register, registry, resolve } from "./registry";
+export type { InputSpec, NodeEntry, NodeProps, Reads } from "./registry";
+export {
+	componentFor,
+	isFill,
+	isGrow,
+	mainRead,
+	readOf,
+	register,
+	registry,
+	resolve,
+} from "./registry";
 export type { RouteBranch, RouteMatch, RouteParams } from "./router";
 export { matchRoute, useRoute } from "./router";
 export { tree, useTree } from "./store";
+export { ANY, isWatched } from "./watch";

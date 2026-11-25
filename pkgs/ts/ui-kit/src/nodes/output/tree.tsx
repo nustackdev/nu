@@ -8,6 +8,9 @@
 // overrides them: one copy, whoever wrote last wins. Every write is a plain
 // merge (`nodes`, `selected`, `expanded`), so the type needs no handlers.
 //
+// Reads: the main read is the selected key (null for none), `expanded` the
+// open keys.
+//
 // Outbound, one notify per intent on the tree's own path, the intent named in
 // `event` (the server's `on_*` each take one):
 //
@@ -20,7 +23,7 @@
 // The browser never edits the nodes. A rename or a move is a request the
 // server answers with the nodes as they now are.
 
-import { OPS } from "@nustackdev/ui-core";
+import type { Props } from "@nustackdev/ui-core";
 import { Edit3 } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { Badge } from "../../components/ui/badge";
@@ -29,11 +32,12 @@ import { EmptyState } from "../../components/ui/empty-state";
 import { Tree, TreeItem } from "../../components/ui/tree";
 import type { TreeMove, TreeSource } from "../../components/ui/tree-model";
 import {
+	EVENTS,
 	type NodeEntry,
 	type NodeProps,
 	useBoolProp,
+	useEmit,
 	useListProp,
-	useSend,
 	useSetProps,
 	useStringProp,
 } from "../../tree";
@@ -73,7 +77,7 @@ function TreeView({ path }: NodeProps) {
 	const rawNodes = useListProp<unknown>(path, "nodes");
 	const rawExpanded = useListProp<unknown>(path, "expanded");
 	const setProps = useSetProps(path);
-	const send = useSend(path);
+	const notify = useEmit(path);
 
 	const nodes = useMemo(() => readNodes(rawNodes), [rawNodes]);
 	const byKey = useMemo(() => new Map(nodes.map((n) => [n.key, n])), [nodes]);
@@ -98,11 +102,6 @@ function TreeView({ path }: NodeProps) {
 		return { roots, childrenOf: (key) => kids.get(key) ?? NO_KEYS };
 	}, [nodes, byKey]);
 
-	const notify = useCallback(
-		(event: string, fields: Record<string, unknown>) => send(OPS.notify, { event, ...fields }),
-		[send],
-	);
-
 	const onToggle = useCallback(
 		(key: string, open: boolean) => {
 			const next = open ? [...expandedKeys, key] : expandedKeys.filter((k) => k !== key);
@@ -115,7 +114,7 @@ function TreeView({ path }: NodeProps) {
 	const onSelect = useCallback(
 		(key: string) => {
 			setProps({ selected: key });
-			notify("select", { key });
+			notify(EVENTS.select, { key });
 		},
 		[setProps, notify],
 	);
@@ -177,4 +176,16 @@ function TreeView({ path }: NodeProps) {
 	);
 }
 
-export const TreeRef: NodeEntry = { component: TreeView, fill: true };
+/** The open keys as the browser holds them. */
+function expandedOf(props: Props): string[] {
+	return Array.isArray(props.expanded) ? props.expanded.map(str) : [];
+}
+
+export const TreeRef: NodeEntry = {
+	component: TreeView,
+	fill: true,
+	reads: {
+		"": (p) => (p.selected == null || p.selected === "" ? null : str(p.selected)),
+		expanded: expandedOf,
+	},
+};

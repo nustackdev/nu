@@ -25,7 +25,15 @@ The reusable seam under nustd.ui:
   ``Init`` /
   ``Hide`` /
   ``Display`` /
-  ``Changed``          -- interactions that flow over a Session on a Ref
+  ``Changed`` /
+  ``ReadField``        -- interactions that flow over a Session on a Ref
+- ``Emits`` /
+  ``Readable`` /
+  ``Changes`` /
+  ``Moves`` /
+  ``Submits``          -- capabilities: what a Ref is read for and heard on
+- ``EVENT``, ``ANY``,
+  ``CHANGE``, ...      -- the event vocabulary every notify names (``events``)
 
 A host builds on this core: it binds a ``Session`` and may add its own Ref
 subclasses. What is on screen and which part of it shows is the program's,
@@ -33,11 +41,23 @@ drawn with ``nustd.ui.boot`` / ``route`` / ``Ref.showing``. The widget kit
 under ``nustd.ui.refs`` targets this core, not any specific host.
 """
 
+from . import events
 from .base import ItemRef, Ref
+from .capabilities import Changes, Emits, Moves, Readable, Submits
 from .chains import Chain, boot_chains
 from .descent import as_spec, check_key, child_at
-from .interactions import (
+from .events import (
+    ACTION,
+    ANY,
+    CHANGE,
+    CLICK,
+    DISMISS,
     EVENT,
+    INPUT,
+    SELECT,
+    SUBMIT,
+)
+from .interactions import (
     Append,
     Changed,
     Clear,
@@ -45,12 +65,14 @@ from .interactions import (
     Focus,
     Hide,
     Init,
+    ReadField,
     Remove,
     Reset,
     Send,
     Write,
 )
 from .protocol import (
+    OP_BATCH,
     OP_DISPLAY,
     OP_ERROR,
     OP_HIDE,
@@ -58,6 +80,8 @@ from .protocol import (
     OP_NOTIFY,
     OP_READ,
     OP_REMOVE,
+    OP_UNWATCH,
+    OP_WATCH,
     OP_WRITE,
     Frame,
     decode,
@@ -68,7 +92,14 @@ from .session import Session, Subscription, WsSession, WsSubscription
 
 
 __all__ = [
+    "ACTION",
+    "ANY",
+    "CHANGE",
+    "CLICK",
+    "DISMISS",
     "EVENT",
+    "INPUT",
+    "OP_BATCH",
     "OP_DISPLAY",
     "OP_ERROR",
     "OP_HIDE",
@@ -76,17 +107,26 @@ __all__ = [
     "OP_NOTIFY",
     "OP_READ",
     "OP_REMOVE",
+    "OP_UNWATCH",
+    "OP_WATCH",
     "OP_WRITE",
+    "SELECT",
+    "SUBMIT",
     "Append",
     "Chain",
     "Changed",
+    "Changes",
     "Clear",
     "Display",
+    "Emits",
     "Focus",
     "Frame",
     "Hide",
     "Init",
     "ItemRef",
+    "Moves",
+    "ReadField",
+    "Readable",
     "Ref",
     "Remove",
     "Reset",
@@ -94,6 +134,7 @@ __all__ = [
     "SectionRef",
     "Send",
     "Session",
+    "Submits",
     "Subscription",
     "Write",
     "WsSession",
@@ -104,4 +145,5 @@ __all__ = [
     "child_at",
     "decode",
     "encode",
+    "events",
 ]

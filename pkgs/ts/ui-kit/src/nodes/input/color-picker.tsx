@@ -4,8 +4,9 @@
 // saturation/brightness area, a hue slider, a hex field and the optional
 // swatches. A drag in the area or on the hue is a local edit, the release
 // commits; a swatch lands and commits at once; the hex field edits as a full
-// hex is typed and commits on blur. `{event: "change"}` only when the color
-// moved (./control.ts). Enter in the hex field, or on the closed trigger,
+// hex is typed and commits on blur. Each edit that moves the color sends
+// `{event: "input", value}`, each commit `{event: "change", value}` when the
+// color moved (./control.ts). Enter in the hex field, or on the closed trigger,
 // submits (and asks an enclosing Form to submit); Space opens the popover.
 //
 // `swatches` is a list of hex strings, or "palette" for the kit chart palette
@@ -33,7 +34,7 @@ function ColorPickerView({ path }: NodeProps) {
 	const swatches = useProp<unknown>(path, "swatches", null);
 	const showHex = useProp<boolean>(path, "show_hex", true);
 	const c = useControl(path);
-	const { edit, commit, submit } = useCommit(path);
+	const { edit, commit, submit } = useCommit(path, { moves: true });
 	const labelId = useId();
 	return (
 		<div className="flex flex-col gap-1">

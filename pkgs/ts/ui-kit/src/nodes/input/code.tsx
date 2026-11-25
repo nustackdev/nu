@@ -12,8 +12,10 @@
 // A write to either text redraws the diff in the same view.
 //
 // Commit moments (the send key, blur, only when the text changed): the
-// node's `value` prop updates locally, then `{event: "change"}` goes out and
-// the server reads back. The send key also sends `{event: "submit", value}`
+// node's `value` prop updates locally, then `{event: "change", value}` goes
+// out with the text. Between commits each keystroke sends `{event: "input",
+// value}` with the editor's text, while `value` (and so a read) keeps the
+// last commit; the text is only built when someone listens. The send key also sends `{event: "submit", value}`
 // after its commit, asks an enclosing Form to submit, and with
 // `clear_on_submit` puts the declared value back, the editor's document
 // included (./control.ts `useSubmit`). `submit_on` picks the key, shift+Enter
@@ -24,18 +26,18 @@
 // language, readonly, line_numbers, wrap, show_copy, min_height, max_height,
 // submit_on, clear_on_submit} the way the store merges everything else.
 
-import { OPS } from "@nustackdev/ui-core";
 import { useCallback } from "react";
 import { Code } from "../../components/ui/code";
 import { SUBMIT_ON } from "../../lib/keyboard";
 import {
+	isWatched,
 	type NodeEntry,
 	type NodeProps,
 	useBoolProp,
+	useEmit,
 	useEnumProp,
 	useNumberProp,
 	useProps,
-	useSend,
 	useSetValue,
 	useStringProp,
 } from "../../tree";
@@ -57,16 +59,23 @@ function CodeView({ path }: NodeProps) {
 	const minHeight = useNumberProp(path, "min_height", 0);
 	const maxHeight = useNumberProp(path, "max_height", 0);
 	const setValue = useSetValue(path);
-	const send = useSend(path);
+	const emit = useEmit(path);
 
 	const commit = useCallback(
 		(source: string) => {
-			// Local first, so the read the notify provokes answers with the text
-			// that provoked it.
+			// Local first, so a read after the notify answers with the text it carried.
 			setValue(source);
-			send(OPS.notify, { event: EVENTS.change });
+			emit(EVENTS.change, { value: source });
 		},
-		[setValue, send],
+		[setValue, emit],
+	);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value, through emit.
+	const edit = useCallback(
+		(read: () => string) => {
+			if (isWatched(path, EVENTS.input)) emit(EVENTS.input, { value: read() });
+		},
+		[emit],
 	);
 
 	const fire = useSubmit(path);
@@ -85,6 +94,7 @@ function CodeView({ path }: NodeProps) {
 			minHeight={minHeight}
 			maxHeight={maxHeight}
 			onCommit={commit}
+			onEdit={edit}
 			onSubmit={submit}
 			submitOn={submitOn}
 		/>

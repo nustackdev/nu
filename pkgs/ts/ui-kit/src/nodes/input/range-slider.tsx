@@ -1,8 +1,8 @@
 // RangeSliderRef -- two-thumb slider whose `[low, high]` lives in the browser.
 //
-// Same commit path as SliderRef (./slider.tsx): dragging is a local edit, the
-// release or an arrow key commits, `{event: "change"}` only when the pair
-// moved (./control.ts). A write takes a bare pair, or a map that merges
+// Same commit path as SliderRef (./slider.tsx): dragging is a local edit sent
+// as `{event: "input", value}` per tick, the release or an arrow key commits,
+// `{event: "change", value}` only when the pair moved (./control.ts). A write takes a bare pair, or a map that merges
 // {value, min, max, step, marks, format, label, ...}; anything that is not a
 // pair of numbers lands as `[min, max]`, and a pair is clamped and put in
 // order, so the control never sees a stray shape. `reset` puts the declared
@@ -84,7 +84,7 @@ function RangeSliderView({ path }: NodeProps) {
 	const marks = marksOf(useListProp<unknown>(path, "marks"));
 	const names = useListProp<string>(path, "thumb_labels");
 	const c = useControl(path);
-	const { edit, commit } = useCommit(path);
+	const { edit, commit } = useCommit(path, { moves: true });
 	const labelId = useId();
 	const fmt = formatter(format, stepDecimals(step));
 

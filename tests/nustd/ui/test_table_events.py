@@ -48,12 +48,12 @@ class _Session:
     async def send(self, frame: object) -> None:
         self.frames.append(frame)
 
-    def subscribe(self, path: tuple[str, ...]) -> _Sub:
+    def subscribe(self, path: tuple[str, ...], event: str | None = None) -> _Sub:
         return _Sub(self.payloads)
 
 
 _SORT = {"event": "sort", "sort_column": "title", "sort_direction": "desc"}
-_ROW = {"event": "row", "row_index": 3}
+_ROW = {"event": "row_click", "row_index": 3}
 
 
 def _run(term: nu.Nu, sess: _Session) -> None:
@@ -107,7 +107,7 @@ class GridApp(Shape):
 
 _KINDS = (
     "sort",
-    "row",
+    "row_click",
     "select",
     "edit",
     "add",
@@ -120,7 +120,7 @@ _KINDS = (
     "column_kind",
     "column_align",
 )
-_ON = {"sort": "on_sort", "row": "on_row_click"}
+_ON = {"sort": "on_sort", "row_click": "on_row_click"}
 
 
 def _echo(change) -> nu.Nu:
@@ -139,6 +139,7 @@ def test_slot_defaults():
         "clickable_rows": True,
         "row_key": "",
         "selection": "none",
+        "selected": [],
         "editable": False,
         "addable": False,
         "deletable": False,
@@ -162,7 +163,7 @@ def test_slot_takes_mapping_columns_and_copies_them():
     ("term", "payload"),
     [
         (GridApp.grid.table.set_rows([{"id": "a"}]), {"rows": [{"id": "a"}]}),
-        (GridApp.grid.table.set_selected(["a", "b"]), {"selected": ["a", "b"]}),
+        (GridApp.grid.table.set_selection(["a", "b"]), {"selected": ["a", "b"]}),
         (
             GridApp.grid.table.set_sort("title", "desc"),
             {"sort_column": "title", "sort_direction": "desc"},
@@ -192,10 +193,40 @@ def test_each_on_takes_only_its_own_event(name):
     assert [f.payload for f in sess.frames] == [{"value": name}]
 
 
-def test_on_change_takes_every_event():
+def test_on_event_takes_every_event():
     sess = _Session({"event": "move", "key": "a", "index": 0})
-    _run(_echo(GridApp.grid.table.on_change()), sess)
+    _run(_echo(GridApp.grid.table.on_event()), sess)
     assert [f.payload for f in sess.frames] == [{"value": "move"}]
+
+
+def test_slot_seeds_the_selection():
+    class Seeded(Column):
+        table = DataTableRef.slot(
+            columns=["id"], row_key="id", selection="multi", selected=("a", "b")
+        )
+
+    assert Seeded.table._props["selected"] == ["a", "b"]
+
+
+class _Reads(_Session):
+    """Answers a read with ``raw``, recording each ``(path, field)`` asked."""
+
+    def __init__(self, raw: object) -> None:
+        super().__init__()
+        self.raw = raw
+        self.reads: list = []
+
+    async def aread(self, path: tuple[str, ...], field: str | None = None) -> object:
+        self.reads.append((path, field))
+        return self.raw
+
+
+@pytest.mark.parametrize(("raw", "want"), [(["a", 2], ["a", "2"]), ([], []), (None, [])])
+def test_reading_the_table_gives_the_selection(raw, want):
+    sess = _Reads(raw)
+    value, _ = asyncio.run(nu.arun(GridApp.grid.table, Context().bind(Session, sess)))
+    assert value == want
+    assert sess.reads == [(("grid", "table"), None)]
 
 
 def test_an_edit_reads_its_fields():

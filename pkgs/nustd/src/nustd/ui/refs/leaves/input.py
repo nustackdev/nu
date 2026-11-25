@@ -5,17 +5,22 @@ read-only by default (``readonly=True``), editable with ``readonly=False``,
 readable either way.
 
 The browser owns the live value. Host reads via `Ref` (round-trip
-through session), subscribes via `.on_change()` / `.on_submit()` /
-`.on_click()`.
+through session), subscribes via `.on_input()` / `.on_change()` /
+`.on_submit()` / `.on_click()`.
 
 The contract every input shares (``InputLeaf``):
 
 - the seed is ``value=`` at the slot, whatever the value's kind (text, a
   bool, a pick, a list), and ``set(value)`` writes it; ``reset()`` puts the
   seed back;
-- every notify names its event: ``on_change()`` hears ``{event: "change"}``,
-  sent when a value is committed and only when it moved (blur, Enter, a
-  pick, a toggle, a release); ``on_submit()`` hears ``{event: "submit",
+- every notify names its event: ``on_change()`` hears ``{event: "change",
+  value}``, sent when a value is committed and only when it moved (blur,
+  Enter, a pick, a toggle, a release), with the value it moved to;
+  an input whose value moves while the person works it (a text field, a
+  slider, a color, a board; ``Moves``) also sends ``{event: "input", value}``
+  per keystroke or drag tick, heard by ``on_input()``, before the change
+  that commits it. Discrete ones (a checkbox, a select, a date) only change;
+  ``on_submit()`` hears ``{event: "submit",
   value}``, sent when the person asks to send (Enter in a single-line field,
   shift+Enter in a multi-line one, or Enter with ``submit_on="enter"``;
   cmd/ctrl+Enter is never a send, it is the app's) with the value sent, so the reaction
@@ -43,7 +48,19 @@ from typing_extensions import Self
 
 from nu.lang.null import NULL
 from nu.lang.sentinels import UNSET
-from nustd.ui.core import Changed, Focus, Reset, Write
+from nustd.ui.core import (
+    CHANGE,
+    CLICK,
+    SUBMIT,
+    Changed,
+    Changes,
+    Emits,
+    Focus,
+    Moves,
+    Reset,
+    Submits,
+    Write,
+)
 
 from ..vocab import ControlSize, Target
 from ..vocab import set_href as _set_href
@@ -51,19 +68,8 @@ from .base import LeafRef
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
     from nu.lang import Nu
     from nu.lang.args import BoolArg, FloatArg, ListArg, StrArg
-    from nu.lang.runtime import Runtime
-
-
-#: The event an input sends when a value is committed.
-CHANGE = "change"
-#: The event an input sends when the person asks to send what it holds.
-SUBMIT = "submit"
-#: The event a button sends on a click.
-CLICK = "click"
 
 
 Variant = Literal["primary", "secondary", "outline", "ghost", "soft", "danger", "link"]
@@ -89,19 +95,14 @@ def _common(
     }
 
 
-class InputLeaf(LeafRef):
+class InputLeaf(Changes, LeafRef):
     """What every input Ref is: a live value in the browser, read, written, heard.
 
-    Abstract. Reading the Ref is a round trip for the live value. ``set``
-    writes it, ``reset`` puts the slot's ``value=`` back, ``on_change`` hears
-    each committed change. The common props have their setters here.
+    Abstract. ``Changes`` makes it readable (reading the Ref is a round trip
+    for the live value) and heard committed (``on_change``). ``set`` writes
+    it, ``reset`` puts the slot's ``value=`` back. The common props have
+    their setters here.
     """
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        async def athunk(rt: Runtime) -> Any:
-            return await self._aread(rt, nid)
-
-        return athunk
 
     def set(self, value: Any) -> Nu:
         return Write(self, value)
@@ -113,10 +114,6 @@ class InputLeaf(LeafRef):
     def focus(self) -> Nu:
         """Move the keyboard focus to this input."""
         return Focus(self)
-
-    def on_change(self) -> Changed:
-        """Each committed change: blur, Enter, a pick, a toggle. Never per keystroke."""
-        return Changed(self, CHANGE)
 
     def set_label(self, text: StrArg) -> Nu:
         from nu.forms import Dict
@@ -155,19 +152,6 @@ def _submit_on(owner: str, value: object) -> str:
     return value  # type: ignore[return-value]
 
 
-class _Submits:
-    """Mixin: the input has a send key, heard by ``on_submit()``."""
-
-    def on_submit(self) -> Changed:
-        """The person asked to send: Enter, or a multi-line field's send key.
-
-        The payload is ``{event: "submit", value}``, the value sent: read it
-        there (``lambda sub: save(sub["value"])``), not off the input, which
-        ``clear_on_submit`` has emptied by then.
-        """
-        return Changed(self, SUBMIT)  # type: ignore[arg-type]
-
-
 class _Nullable:
     """Mixin: the input holds no value when empty, so a read gives NULL."""
 
@@ -184,7 +168,7 @@ class _Placeholder:
         return Write(self, Dict.of(placeholder=text))  # type: ignore[arg-type]
 
 
-class ButtonRef(LeafRef):
+class ButtonRef(Emits, LeafRef):
     """Click trigger; subscribe via `.on_click()`.
 
     `size` runs 20, 24, 32 and 40 px tall, the icon-only square too. `link`
@@ -337,7 +321,7 @@ class CheckboxRef(InputLeaf):
         return Write(self, value)
 
 
-class DatePickerRef(_Nullable, _Submits, _Placeholder, InputLeaf):
+class DatePickerRef(_Nullable, Submits, _Placeholder, InputLeaf):
     """Date input whose ISO yyyy-mm-dd value lives in the browser (NULL for none).
 
     A pick is a change. Enter on the closed picker submits; Space and the
@@ -385,11 +369,11 @@ InputType = Literal["text", "search", "email", "url", "tel", "password", "number
 _INPUT_TYPES: tuple[str, ...] = get_args(InputType)
 
 
-class InputRef(_Submits, _Placeholder, InputLeaf):
+class InputRef(Moves, Submits, _Placeholder, InputLeaf):
     """Text input whose value lives in the browser.
 
-    A read sees what is under the caret. Blur commits (a change, when the
-    text moved), Enter commits and submits, and focus stays in the field.
+    A read sees what is under the caret, and `on_input()` hears each
+    keystroke. Blur commits (a change, when the text moved), Enter commits and submits, and focus stays in the field.
     `clear_on_submit` puts the seed back after each submit, for a field you
     type into, send, and type into again; the submit's payload carries the
     text sent (``sub["value"]``).
@@ -461,7 +445,7 @@ class InputRef(_Submits, _Placeholder, InputLeaf):
         return Write(self, value)
 
 
-class CodeRef(_Submits, InputLeaf):
+class CodeRef(Moves, Submits, InputLeaf):
     """Source code, read-only by default. Value is the text, both ways.
 
     Read-only it renders a highlighted block with a copy button. With
@@ -469,7 +453,8 @@ class CodeRef(_Submits, InputLeaf):
     with `set`, reads it back through `Ref` like any input Ref, and subscribes
     with `on_change()`. The browser commits on the send key and on blur, not
     on every keystroke, so a read between commits sees the last committed
-    text and not what is under the caret. The send key also submits
+    text and not what is under the caret. `on_input()` hears each keystroke
+    with the text under the caret as ``value``. The send key also submits
     (`on_submit()`, the text sent as ``sub["value"]``) and submits the `Form`
     around it, this editor's text in its values. It is shift+Enter with Enter
     the newline, or the other way round with `submit_on="enter"`, as on every
@@ -558,11 +543,11 @@ class CodeRef(_Submits, InputLeaf):
         return Write(self, Dict.of(language=name))
 
 
-class NumberInputRef(_Nullable, _Submits, _Placeholder, InputLeaf):
+class NumberInputRef(_Nullable, Moves, Submits, _Placeholder, InputLeaf):
     """Numeric input whose value lives in the browser (NULL while empty).
 
     Typing is local; blur, Enter, a stepper click or an arrow key commits.
-    Enter also submits. A cleared field holds no number, never a zero.
+    Each move of the number is heard by `on_input()`. Enter also submits. A cleared field holds no number, never a zero.
     Inside a `Form`, `min`, `max` and `required` are checked before it
     submits.
     """
@@ -641,14 +626,16 @@ class NumberInputRef(_Nullable, _Submits, _Placeholder, InputLeaf):
         return Write(self, Dict.of(**payload))
 
 
-class MarkdownRef(_Submits, _Placeholder, InputLeaf):
+class MarkdownRef(Moves, Submits, _Placeholder, InputLeaf):
     """A markdown document, read-only by default. Value is the markdown, both ways.
 
     The browser never shows the source. Read-only it renders the document;
     with `readonly=False` the same view becomes a live wysiwyg editor: the
     server writes the source with `set`, reads it back through `Ref` like any
     input Ref, and subscribes with `on_change()`. The browser notifies back
-    on a quiet moment or on blur. One engine for both modes, so a document
+    on a quiet moment or on blur. `on_input()` hears each edit with the
+    document's markdown as ``value``, so a read between saves still sees the
+    last save. One engine for both modes, so a document
     looks the same whether or not you can type in it.
 
     The send key saves at once and submits (`on_submit()`, the markdown sent
@@ -931,7 +918,7 @@ def _subset(name: str, given: object, allowed: tuple[str, ...]) -> list[str]:
     return [a for a in allowed if a in given]
 
 
-class SketchRef(InputLeaf):
+class SketchRef(Moves, InputLeaf):
     """A board a person draws on with a pointer; the elements live in the browser.
 
     Pen ink (pressure-aware from a pen), rects, ellipses, lines and arrows,
@@ -953,9 +940,10 @@ class SketchRef(InputLeaf):
     ``width``; the board fills them from ``defaults``, so a read always has
     them.
 
-    The browser sends once per element, when the pointer lifts, and once per
-    undo, redo and clear, so ``on_change()`` fires on those and never per
-    move. ``set(elements)`` draws from the server, ``set([])`` or ``clear()``
+    The browser sends a change once per element, when the pointer lifts, and
+    once per undo, redo and clear, so ``on_change()`` fires on those and never
+    per move. ``on_input()`` hears each point while a stroke is drawn, its
+    ``value`` the elements with the one in flight last. ``set(elements)`` draws from the server, ``set([])`` or ``clear()``
     wipes, and reading the Ref gives the elements. Last actor wins: a ``set``
     replaces the board outright and starts its undo history over.
 
@@ -1019,12 +1007,6 @@ class SketchRef(InputLeaf):
             value=_normalize_elements(value or []),
         )
 
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        async def athunk(rt: Runtime) -> Any:
-            return await self._aread(rt, nid)
-
-        return athunk
-
     def _lift(self, raw: object) -> list[dict[str, Any]]:
         return _normalize_elements(raw)
 
@@ -1037,10 +1019,11 @@ class SketchRef(InputLeaf):
         return Write(self, [])
 
 
-class SliderRef(InputLeaf):
+class SliderRef(Moves, InputLeaf):
     """Numeric slider whose value lives in the browser.
 
-    Dragging is local; the release (or an arrow key) commits.
+    Dragging is local, each tick heard by `on_input()`; the release (or an
+    arrow key) commits, heard by `on_change()`.
     """
 
     _wire_type = "SliderRef"
@@ -1158,10 +1141,12 @@ class SwitchRef(InputLeaf):
         return Write(self, value)
 
 
-class TagInputRef(_Submits, _Placeholder, InputLeaf):
+class TagInputRef(Moves, Submits, _Placeholder, InputLeaf):
     """Multi-tag entry field whose committed list lives in the browser.
 
     Enter with text adds a tag (a change); Enter on an empty draft submits.
+    `on_input()` hears the draft as it is typed: ``value`` is the tags, as
+    a read gives them, and ``draft`` the text not yet a tag.
     """
 
     _wire_type = "TagInputRef"
@@ -1202,11 +1187,11 @@ class TagInputRef(_Submits, _Placeholder, InputLeaf):
         return Write(self, value)
 
 
-class TextAreaRef(_Submits, _Placeholder, InputLeaf):
+class TextAreaRef(Moves, Submits, _Placeholder, InputLeaf):
     """Multi-line text input whose value lives in the browser.
 
-    Blur commits. shift+Enter commits and submits, plain Enter is a
-    newline. `submit_on="enter"` makes it a chat composer: Enter submits and
+    Each keystroke is heard by `on_input()`. Blur commits. shift+Enter
+    commits and submits, plain Enter is a newline. `submit_on="enter"` makes it a chat composer: Enter submits and
     shift+Enter is the newline, the same switch every multi-line input takes. Focus stays in the field after a submit, and
     `clear_on_submit` empties it for the next message.
 

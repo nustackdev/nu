@@ -11,9 +11,9 @@
 //     back.
 // A push or replace with no `state` leaves none.
 //
-// Reporting, one rule: every move the page makes reaches the server as a
-// notify whose payload is the new uri (path, query and hash), this ref's own
-// moves included. A router on the server listens to one stream and never has
+// Reporting, one rule: every move the page makes reaches the server as
+// `{event: "change", value: uri}`, the new uri (path, query and hash), this
+// ref's own moves included. A router on the server listens to one stream and never has
 // to guess which moves it was told about. A move this ref's write caused, one
 // another HistoryRef made, the user's back button, a link the AnchorCatcher
 // routed: all reported alike. The ref's own moves still carry its origin tag
@@ -21,17 +21,18 @@
 // current uri is mirrored into `value` on every move, so a renderer can follow
 // it like any prop.
 //
-// `read` answers with the whole entry, {uri, path, query, hash, state}, live:
-// the page can move outside anything this node saw. The Python ref reads the
-// uri off it, and the entry, the query and the state too.
+// A read answers off History, live, never off props: the page can move outside
+// anything this node saw. The main read is the whole entry, {uri, path, query,
+// hash, state}; the Python ref reads the uri off it, and the entry, the query
+// and the state too. Each field reads alone as well.
 //
 // The writes work whether or not the node is mounted; the reporting needs it
 // mounted, since it is an effect. Structural: it draws nothing.
 
-import { OPS } from "@nustackdev/ui-core";
 import { useEffect } from "react";
 import {
 	type Entry,
+	EVENTS,
 	History,
 	mergeQuery,
 	type NodeEntry,
@@ -39,7 +40,7 @@ import {
 	nodeAt,
 	pathKey,
 	serializeQuery,
-	useSend,
+	useEmit,
 	useSetValue,
 } from "../../tree";
 
@@ -82,8 +83,9 @@ function withQuery(entry: Entry, patch: Record<string, unknown>): string {
 
 function HistoryView({ path }: NodeProps) {
 	const setValue = useSetValue(path);
-	const send = useSend(path);
+	const emit = useEmit(path);
 	const key = pathKey(path);
+	// biome-ignore lint/correctness/useExhaustiveDependencies: `key` is the path by value.
 	useEffect(() => {
 		// Mirror where the page is. A write that landed before this mounted
 		// already moved it, so the live uri is what it mirrors.
@@ -92,10 +94,10 @@ function HistoryView({ path }: NodeProps) {
 			// Only while this node is still there to mirror it.
 			if (!nodeAt(path)) return;
 			setValue(move.entry.url);
-			send(OPS.notify, move.entry.url);
+			emit(EVENTS.change, { value: move.entry.url });
 		});
 		// `key` is the path by value: a node moving means a fresh listener.
-	}, [key, setValue, send]);
+	}, [key, setValue, emit]);
 	return null;
 }
 
@@ -133,8 +135,13 @@ export const HistoryRef: NodeEntry = {
 			}
 			console.warn(`HistoryRef: unknown write action "${String(action)}"`);
 		},
-		read: (ctx) => {
-			ctx.send(OPS.read, entryPayload(History.current()), ctx.frame.id);
-		},
+	},
+	reads: {
+		"": () => entryPayload(History.current()),
+		uri: () => History.current().url,
+		path: () => History.current().path,
+		query: () => History.current().query,
+		hash: () => History.current().hash,
+		state: () => History.current().state,
 	},
 };

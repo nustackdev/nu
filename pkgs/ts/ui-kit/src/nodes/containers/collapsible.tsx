@@ -2,7 +2,8 @@
 //
 // A trigger row (chevron + title) over a body of open-ended children. The tab
 // owns `open` while the user clicks, the way Accordion does: a toggle updates
-// the local prop first, then ships a `notify` with {open: bool}. The server
+// the local prop first, then emits `change` with the new `value` (open or
+// not), which a read answers too. The server
 // can still open or close it, and change the title, through plain `write`
 // payloads ({open}, {title}) that the default merge handles, so there is no
 // handler here.
@@ -24,7 +25,6 @@
 // and a click on the row's text or empty space clicks the trigger. A control
 // in the header does its own thing and does not toggle.
 
-import { OPS } from "@nustackdev/ui-core";
 import { ChevronRight } from "lucide-react";
 import { useCallback, useId } from "react";
 import {
@@ -35,16 +35,18 @@ import {
 import { rowTriggerProps, TriggerRow, TriggerRowHeader } from "../../components/ui/trigger-row";
 import { cn } from "../../lib/utils";
 import {
+	EVENTS,
 	type NodeEntry,
 	type NodeProps,
 	SlotView,
 	useBoolProp,
 	useChildren,
-	useSend,
+	useEmit,
 	useSetProps,
 	useStringProp,
 } from "../../tree";
 import { childHandlers, type LayoutDefaults, Stack, useLayout } from "./layout";
+import { readOpen } from "./modal";
 
 const DEFAULTS: LayoutDefaults = { gap: 3, justify: "start", align: "stretch" };
 const HEADER = "header";
@@ -72,7 +74,7 @@ function CollapsibleView({ path }: NodeProps) {
 	const open = useBoolProp(path, "open");
 	const title = useStringProp(path, "title");
 	const setProps = useSetProps(path);
-	const send = useSend(path);
+	const emit = useEmit(path);
 	const layout = useLayout(path, DEFAULTS);
 	const hasHeader = useChildren(path).includes(HEADER);
 	const headerId = useId();
@@ -80,9 +82,9 @@ function CollapsibleView({ path }: NodeProps) {
 	const onOpenChange = useCallback(
 		(next: boolean) => {
 			setProps({ open: next });
-			send(OPS.notify, { open: next });
+			emit(EVENTS.change, { value: next });
 		},
-		[setProps, send],
+		[setProps, emit],
 	);
 
 	return (
@@ -133,4 +135,5 @@ export const Collapsible: NodeEntry = {
 	component: CollapsibleView,
 	fill: true,
 	handlers: childHandlers,
+	reads: { "": readOpen },
 };

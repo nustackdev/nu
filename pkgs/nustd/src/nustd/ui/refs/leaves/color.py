@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING, Literal
 
 from typing_extensions import Self
 
-from nustd.ui.core import Write
+from nustd.ui.core import Moves, Submits, Write
 
-from .input import InputLeaf, _common, _Submits
+from .input import InputLeaf, _common
 
 
 if TYPE_CHECKING:
@@ -48,13 +48,13 @@ def _swatches(swatches: Sequence[str] | Palette | None) -> list[str] | str | Non
     return [normalize_hex(s) for s in swatches]
 
 
-class ColorPickerRef(_Submits, InputLeaf):
+class ColorPickerRef(Moves, Submits, InputLeaf):
     """Color input whose ``#rrggbb`` value lives in the browser.
 
     A swatch trigger opens a popover with a saturation and brightness area, a
-    hue slider, a hex field and the optional ``swatches``. A drag commits on
-    release, a swatch at once, the hex field on blur, each heard by
-    ``on_change()``. Enter in the hex field (or on the closed trigger) submits,
+    hue slider, a hex field and the optional ``swatches``. A drag moves the
+    color, each tick heard by ``on_input()``, and commits on release, a
+    swatch at once, the hex field on blur, each heard by ``on_change()``. Enter in the hex field (or on the closed trigger) submits,
     heard by ``on_submit()``. ``value=`` takes ``#abc`` or ``#aabbcc`` in any
     case and reads back as lowercase ``#aabbcc``; a write that is not a hex
     keeps the color the picker had.

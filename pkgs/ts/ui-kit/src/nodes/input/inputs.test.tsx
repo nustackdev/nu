@@ -6,7 +6,7 @@ import { OPS, type TreeFrame } from "@nustackdev/ui-core";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { NodeView, registry, tree } from "../../tree";
+import { flushOutbox, NodeView, registry, tree, unbatch } from "../../tree";
 import "..";
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -24,6 +24,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+	flushOutbox();
 	act(() => root.unmount());
 	host.remove();
 	tree.getState().remove([]);
@@ -45,6 +46,13 @@ const slot = (name: string) => host.querySelector<HTMLElement>(`[data-slot=${nam
 // A tooltip's trigger takes over the button's data-slot, so an icon button
 // under one is found by its square size class instead.
 const iconButton = () => host.querySelector<HTMLElement>("button.size-8");
+
+/** The events of every notify sent, batches opened. */
+const events = () =>
+	unbatch(sent)
+		.filter((f) => f.op === OPS.notify)
+		.map((f) => (f.payload as { event: string }).event);
+const changes = () => events().filter((e) => e === "change");
 
 describe("ButtonRef", () => {
 	it("draws an icon-only button as an IconButton named by its tooltip", () => {
@@ -267,17 +275,18 @@ describe("SketchRef", () => {
 		expect(surface()?.getAttribute("aria-label")).toBe("Sketch board, 2 elements");
 	});
 
-	it("notifies once per pen stroke, on pointer up, not on moves", () => {
+	it("changes once per pen stroke, on pointer up; the moves are input events", () => {
 		mount("SketchRef", { width: 200, value: [] });
 		const el = sized();
 		pointer(el, "pointerdown", 20, 40);
 		pointer(el, "pointermove", 60, 80);
 		pointer(el, "pointermove", 100, 120);
 		pointer(el, "pointermove", 400, -10);
+		// The moves wait in the outbox's window: nothing on the wire yet.
 		expect(sent).toEqual([]);
 		expect(slot("sketch-board-draft")).not.toBeNull();
 		pointer(el, "pointerup", 400, -10);
-		expect(sent.map((f) => f.op)).toEqual([OPS.notify]);
+		expect(events()).toEqual(["input", "input", "input", "input", "change"]);
 		expect(value()).toEqual([
 			{
 				type: "path",
@@ -367,7 +376,7 @@ describe("SketchRef", () => {
 			fire(el, "pointerup", 140, 140);
 		});
 		expect(value().length).toBe(2);
-		expect(sent.map((f) => f.op)).toEqual([OPS.notify, OPS.notify]);
+		expect(changes()).toHaveLength(2);
 	});
 
 	it("undoes, redoes and clears, one notify each", () => {
@@ -387,7 +396,7 @@ describe("SketchRef", () => {
 		expect(value()).toEqual([]);
 		key("z", { ctrlKey: true });
 		expect(value().length).toBe(2);
-		expect(sent.map((f) => f.op)).toEqual(Array(6).fill(OPS.notify));
+		expect(changes()).toHaveLength(6);
 	});
 
 	it("starts the history over on a server write", () => {

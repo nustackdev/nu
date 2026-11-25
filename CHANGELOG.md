@@ -12,6 +12,11 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Examples follow the new events, live slider added, table seeds and bad reads fixed
+- Alerts, empty states, waterfalls and uploads use the shared event names and reads
+- Inputs report live movement, and tabs, modals, trees and tables read back
+- Browser sends only events the server listens to, batching live ticks every 100 ms
+- UI refs share capability mixins, so reads and events follow one set of rules
 - Values typed only as an abstract mapping, sequence or set get their own forms
 - Methods move to their own package so refs share them without pulling form nodes
 - Form implementation gets its own module beside brackets, surfaces get theirs

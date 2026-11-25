@@ -3,7 +3,7 @@
 A take is a file the browser made instead of one the person picked. So a
 capture input is an upload input: the take stays a handle in the tab, the
 value is its metadata, and every byte read is an interaction on the ref, the
-same ``get_slice``, ``get_bytes``, ``open`` and ``pull`` an ``UploadFileRef``
+same ``slice``, ``bytes``, ``open`` and ``pull`` an ``UploadFileRef``
 has. Nothing new on the server: the intake and temp area of
 ``nustd.ui.uploads`` carry takes as they carry picks.
 
@@ -22,6 +22,7 @@ from typing import TYPE_CHECKING, Literal
 from typing_extensions import Self
 
 from nustd.ui.core import Changed, Write
+from nustd.ui.core.events import STATUS
 
 from .input import _common, _Nullable
 from .upload import _FileInput, _FileReads
@@ -45,9 +46,6 @@ __all__ = [
     "PhotoFormat",
 ]
 
-
-#: The event a capture input sends when its device or recorder moves.
-STATUS = "status"
 
 CaptureStatus = Literal["idle", "asking", "live", "recording", "paused", "blocked"]
 CameraMode = Literal["photo", "video"]
@@ -112,7 +110,7 @@ class MicCaptureRef(_CaptureInput):
     One button records; pause, resume and stop follow, with the time and a
     live level meter. The take plays back in the kit audio row, to keep, re
     record or delete. The value is the take's file dict, NULL while empty;
-    read its bytes with ``get_slice``, ``get_bytes`` or ``open`` as an
+    read its bytes with ``slice``, ``bytes`` or ``open`` as an
     ``UploadFileRef``'s.
 
     Args:
@@ -133,7 +131,7 @@ class MicCaptureRef(_CaptureInput):
 
     Example:
         memo = MicCaptureRef.slot(label="Voice memo", max_duration=120)
-        nu.ReactEvery(memo.on_change(), nu.let(memo.get_bytes(), transcribe))
+        nu.ReactEvery(memo.on_change(), nu.let(memo.bytes(), transcribe))
     """
 
     _wire_type = "MicCaptureRef"

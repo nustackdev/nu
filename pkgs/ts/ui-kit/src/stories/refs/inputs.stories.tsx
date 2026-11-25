@@ -8,12 +8,13 @@
 // before it sends, with a disabled Fieldset in it. The send key on each
 // multi-line input (shift+Enter by default, or Enter), with what it last
 // sent under it, and a CodeRef in diff mode: a change with highlighting, a
-// new file, and a long file whose unchanged runs fold.
+// new file, and a long file whose unchanged runs fold. The moving inputs,
+// each with the last `input` event it sent under it.
 
 import type { TreeFrame } from "@nustackdev/ui-core";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { useEffect } from "react";
-import { tree } from "../../tree";
+import { tree, unbatch } from "../../tree";
 import { type NodeSeed, NodeStage, sinkParameters, step } from "./harness";
 
 const meta: Meta = {
@@ -300,7 +301,7 @@ export const RangeAndColor: Story = {
 		return (
 			<NodeStage
 				root="inputs-range-color"
-				label="a release or an arrow key sends one change; Enter in the hex field submits"
+				label="a drag sends an input per tick, a release or an arrow key one change; Enter in the hex field submits"
 				chains={[
 					[
 						col,
@@ -639,26 +640,78 @@ export const CodeDiff: Story = {
 	},
 };
 
-// Stands in for the program while a story is mounted: every submit under
+// Stands in for the program while a story is mounted: every `event` under
 // `root` lands as the text of the `sent` leaf in the grid cell it came from.
-function useEchoSubmits(root: string): void {
+// A batch frame is opened into its notifies first.
+function useEcho(root: string, event: string, prefix: string): void {
 	useEffect(() => {
 		const store = tree.getState();
-		store.setSender((frame: TreeFrame) => {
-			const payload = frame.payload as { event?: string; value?: unknown } | null;
-			if (frame.ref?.[0] !== root || payload?.event !== "submit") return;
-			// root (the grid) / cell / ...: the echo sits in the cell.
-			const at = [...frame.ref.slice(0, 2), "sent"];
-			store.setProps(at, { value: `last sent: ${JSON.stringify(payload.value)}` });
+		store.setSender((sent: TreeFrame) => {
+			for (const frame of unbatch([sent])) {
+				const payload = frame.payload as { event?: string; value?: unknown } | null;
+				if (frame.ref?.[0] !== root || payload?.event !== event) continue;
+				// root (the grid) / cell / ...: the echo sits in the cell.
+				const { event: _event, ...fields } = payload;
+				const shown = "draft" in fields ? fields : payload.value;
+				const at = [...frame.ref.slice(0, 2), "sent"];
+				store.setProps(at, { value: `${prefix}: ${JSON.stringify(shown)}` });
+			}
 		});
 		return () => store.setSender(null);
-	}, [root]);
+	}, [root, event, prefix]);
 }
 
-function EchoStage(s: NodeSeed & { label?: string }) {
-	useEchoSubmits(s.root);
-	return <NodeStage {...s} />;
+function EchoStage(s: NodeSeed & { label?: string; event?: string; prefix?: string }) {
+	const { event = "submit", prefix = "last sent", ...stage } = s;
+	useEcho(stage.root, event, prefix);
+	return <NodeStage {...stage} />;
 }
+
+const MOVING: [string, Record<string, unknown>][] = [
+	["InputRef", { value: "", placeholder: "Type" }],
+	["NumberInputRef", { value: 3 }],
+	["TagInputRef", { value: ["nu"], placeholder: "Add a tag" }],
+	["SliderRef", { value: 40 }],
+	["RangeSliderRef", { value: [20, 60] }],
+	["ColorPickerRef", { value: "#8946db" }],
+];
+
+export const Moving: Story = {
+	render: () => {
+		const root = "inputs-moving";
+		const grid = step(root, "Grid", {
+			max_columns: 3,
+			min_cell_width: 200,
+			gap: 4,
+			align: "start",
+		});
+		const chains = MOVING.flatMap(([kind, props]) => {
+			const cell = step(kind, "Column", { gap: 2 });
+			return [
+				[grid, cell, step("field", kind, { label: kind, ...props })],
+				[
+					grid,
+					cell,
+					step("sent", "TextRef", {
+						value: "input: nothing yet",
+						size: "xs",
+						tone: "secondary",
+						mono: true,
+					}),
+				],
+			];
+		});
+		return (
+			<EchoStage
+				root={root}
+				event="input"
+				prefix="input"
+				label="each keystroke or drag tick sends an input with the value; the last one heard shows under each"
+				chains={chains}
+			/>
+		);
+	},
+};
 
 const SEND_KEYS = [
 	["shift+enter", "shift+Enter sends"],

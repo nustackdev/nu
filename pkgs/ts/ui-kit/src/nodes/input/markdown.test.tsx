@@ -12,7 +12,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { MarkdownHandle } from "../../lib/markdown/handle";
-import { NodeView, tree } from "../../tree";
+import { flushOutbox, NodeView, tree, unbatch } from "../../tree";
 import "..";
 import { type MarkdownEntry, markdownAt, registerMarkdown, subscribeMarkdown } from "./markdown";
 
@@ -37,6 +37,7 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
+	flushOutbox();
 	await act(async () => root.unmount());
 	host.remove();
 	tree.getState().remove([]);
@@ -68,7 +69,11 @@ function save(doc: MarkdownHandle, text: string): void {
 
 const value = () => tree.getState().getIn(PATH)?.props.value;
 const answered = (id: string) => sent.find((f) => f.op === OPS.read && f.id === id)?.payload;
-const notifies = () => sent.filter((f) => f.op === OPS.notify).length;
+const payloads = () =>
+	unbatch(sent)
+		.filter((f) => f.op === OPS.notify)
+		.map((f) => f.payload as { event: string; value?: unknown });
+const notifies = () => payloads().filter((p) => p.event !== "input").length;
 
 describe("MarkdownRef saves", () => {
 	it("sets the value locally and notifies, and answers the read with it", () => {
@@ -76,6 +81,10 @@ describe("MarkdownRef saves", () => {
 		save(doc, "b");
 		expect(value()).toBe("ab\n");
 		expect(notifies()).toBe(1);
+		expect(payloads()).toEqual([
+			{ event: "input", value: "ab\n" },
+			{ event: "change", value: "ab\n" },
+		]);
 		dispatch(OPS.read, null, "r1");
 		expect(answered("r1")).toBe("ab\n");
 	});

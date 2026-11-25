@@ -14,7 +14,7 @@ from typing_extensions import Self
 from nu.engine.structure import Declared
 from nu.lang import ScalarQuery
 from nu.lang.sentinels import UNSET
-from nustd.ui.core import Changed, Session, Write
+from nustd.ui.core import CHANGE, Changes, Session, Write
 
 from .leaves.base import LeafRef
 from .query import decode_query
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from nu.lang import Nu
     from nu.lang.args import StrArg
     from nu.lang.runtime import Runtime
-    from nustd.ui.core import Subscription
+    from nustd.ui.core import Changed, Subscription
 
 
 __all__ = ["HistoryRef", "PathChanged", "RoutePath", "TitleRef", "trim_slash"]
@@ -41,8 +41,12 @@ def trim_slash(path: str) -> str:
     return path[:-1] if len(path) > 1 and path.endswith("/") else path
 
 
-def _path_of(uri: object) -> str:
-    """The trimmed pathname of a notify's uri: no query, no hash."""
+def _path_of(payload: object) -> str:
+    """The trimmed pathname of a ``change`` notify's uri: no query, no hash.
+
+    The uri rides in ``value`` (``{event: "change", value: uri}``).
+    """
+    uri = payload.get("value") if isinstance(payload, dict) else payload
     raw = "/" if uri is None else str(uri)
     return trim_slash(raw.split("#", 1)[0].split("?", 1)[0] or "/")
 
@@ -116,9 +120,9 @@ class ReadEntry(ScalarQuery):
 class PathChanged(ScalarQuery):
     """Subscribe to the moves of a HistoryRef that change the pathname.
 
-    ``Changed`` with one filter: a move that only touches the query, the hash
-    or the state never arrives, and neither does a push to the path the page
-    is already on. The pathname is compared trimmed (``trim_slash``), so
+    ``on_change`` with one filter, on the same ``change`` watch: a move that
+    only touches the query, the hash or the state never arrives, and neither
+    does a push to the path the page is already on. The pathname is compared trimmed (``trim_slash``), so
     "/feed" to "/feed/" is no change. Subscribes first and reads where the
     page is second, one round trip, so a move between the two is not missed
     and the first move heard is measured against the page as it was.
@@ -139,7 +143,7 @@ class PathChanged(ScalarQuery):
             session = rt.ctx.fabrics.get(Session)
             ref_nid = rt.program.children[nid][0]
             path = await ref._aresolve_address(rt, ref_nid)
-            sub = session.subscribe(path)
+            sub = session.subscribe(path, event=CHANGE)
             here = _entry_of(await session.aread(path))["path"]
             return _PathMoves(sub, trim_slash(here))
 
@@ -218,7 +222,7 @@ class _PathMoves:
         self._sub.close()
 
 
-class HistoryRef(LeafRef):
+class HistoryRef(Changes, LeafRef):
     """The page's History: where it is, and the server's way to move it.
 
     Structural Ref, drawn as nothing. The browser keeps one stack
@@ -242,7 +246,8 @@ class HistoryRef(LeafRef):
 
     ``nav.on_change()`` hears every move the page makes, this ref's own
     included: its push, the user's back button, a link the host routed,
-    another HistoryRef's push. The payload is the new uri.
+    another HistoryRef's push. The payload is ``{event: "change", value: uri}``,
+    the new uri the same as reading ``nav`` gives.
     ``nav.on_path_change()`` is the same stream with only the moves that
     change the pathname, which is what ``nustd.ui.route`` listens to: a
     branch that moves the page is heard like anybody else, and a query move
@@ -254,12 +259,6 @@ class HistoryRef(LeafRef):
     """
 
     _wire_type = "HistoryRef"
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        async def athunk(rt: Runtime) -> Any:
-            return await self._aread(rt, nid)
-
-        return athunk
 
     def _lift(self, raw: object) -> object:
         # Reading the ref is the uri, as it always was; the rest of the entry
@@ -328,8 +327,8 @@ class HistoryRef(LeafRef):
         return ReadEntry(self, "path")
 
     def on_change(self) -> Changed:
-        """Every move the page makes, this ref's own included. The payload is the new uri."""
-        return Changed(self)
+        """Every move the page makes, this ref's own included: ``{event: "change", value: uri}``."""
+        return super().on_change()
 
     def on_path_change(self) -> PathChanged:
         """The moves that change the pathname; query, hash and state moves stay out."""

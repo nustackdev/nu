@@ -13,12 +13,15 @@
 // away while in use (a hidden branch, not a removed node) closes its device
 // without a word, so the node says `idle` for it.
 
-import { OPS, type Path } from "@nustackdev/ui-core";
+import type { Path } from "@nustackdev/ui-core";
 import { useCallback, useEffect, useRef } from "react";
 import type { CaptureError, CaptureStatus } from "../../lib/capture/support";
-import { type NodeEntry, pathKey, useSend } from "../../tree";
+import { type NodeEntry, pathKey, useEmit } from "../../tree";
 import { uploadEntry } from "./upload";
 import { uploadHandlers } from "./upload-handles";
+
+/** The event a capture node sends on each move of its device or recorder. */
+const STATUS = "status";
 
 /** What a capture control hands its `ref`. */
 export interface Releasable {
@@ -30,7 +33,7 @@ export interface Releasable {
 const releasers = new Map<string, () => void>();
 
 export function useCaptureNode(path: Path) {
-	const send = useSend(path);
+	const emit = useEmit(path);
 	const key = pathKey(path);
 	const handle = useRef<Releasable>(null);
 	const last = useRef<CaptureStatus>("idle");
@@ -42,17 +45,17 @@ export function useCaptureNode(path: Path) {
 			if (releasers.get(key) === release) releasers.delete(key);
 			if (last.current !== "idle") {
 				last.current = "idle";
-				send(OPS.notify, { event: "status", status: "idle", error: "" });
+				emit(STATUS, { status: "idle", error: "" });
 			}
 		};
-	}, [key, send]);
+	}, [key, emit]);
 
 	const onStatus = useCallback(
 		(status: CaptureStatus, error: CaptureError) => {
 			last.current = status;
-			send(OPS.notify, { event: "status", status, error });
+			emit(STATUS, { status, error });
 		},
-		[send],
+		[emit],
 	);
 
 	return { handle, onStatus };

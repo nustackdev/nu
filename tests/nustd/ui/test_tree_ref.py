@@ -61,7 +61,7 @@ class _Session:
     async def send(self, frame: object) -> None:
         self.frames.append(frame)
 
-    def subscribe(self, path: tuple[str, ...]) -> _Sub:
+    def subscribe(self, path: tuple[str, ...], event: str | None = None) -> _Sub:
         self.subscribed.append(path)
         sub = _Sub(self.payloads)
         self.subs.append(sub)
@@ -115,10 +115,50 @@ def test_each_on_takes_only_its_own_event(name):
     assert [f.payload for f in sess.frames] == [{"value": name}]
 
 
-def test_on_change_takes_every_event():
+def test_on_event_takes_every_event():
     sess = _Session({"event": "move", "key": "a"})
-    _run(_echo(FilesApp.files.tree.on_change()), sess)
+    _run(_echo(FilesApp.files.tree.on_event()), sess)
     assert sess.frames[0].payload == {"value": "move"}
+
+
+# --- reads --------------------------------------------------------------------
+
+
+class _Reads(_Session):
+    """Answers a read per field from ``answers``, recording each ``(path, field)``."""
+
+    def __init__(self, answers: dict) -> None:
+        super().__init__()
+        self.answers = answers
+        self.reads: list = []
+
+    async def aread(self, path: tuple[str, ...], field: str | None = None) -> object:
+        self.reads.append((path, field))
+        return self.answers.get(field)
+
+
+def _read(term: nu.Nu, sess: _Reads) -> object:
+    value, _ = asyncio.run(nu.arun(term, Context().bind(Session, sess)))
+    return value
+
+
+@pytest.mark.parametrize(("raw", "want"), [("a", "a"), ("", None), (None, None)])
+def test_reading_the_tree_gives_the_selected_key(raw, want):
+    sess = _Reads({None: raw})
+    assert _read(FilesApp.files.tree, sess) == want
+    assert sess.reads == [(("files", "tree"), None)]
+
+
+@pytest.mark.parametrize(("raw", "want"), [(["a", 1], ["a", "1"]), ([], []), (None, [])])
+def test_expanded_reads_the_open_keys(raw, want):
+    sess = _Reads({"expanded": raw})
+    assert _read(FilesApp.files.tree.expanded(), sess) == want
+    assert sess.reads == [(("files", "tree"), "expanded")]
+
+
+def test_expanded_moves_on_toggle():
+    assert TreeRef._reader_events == {"expanded": "toggle"}
+    assert FilesApp.files.tree.on_toggle()._children[1].value == "toggle"
 
 
 def test_a_filtered_subscription_skips_what_is_not_an_event():
@@ -151,4 +191,4 @@ def test_event_rides_as_a_child_not_a_field():
     change = FilesApp.files.tree.on_rename()
     assert len(nu.tree.children(change)) == 2
     assert "event" not in nu.tree.fields(change)
-    assert len(nu.tree.children(FilesApp.files.tree.on_change())) == 1
+    assert len(nu.tree.children(FilesApp.files.tree.on_event())) == 1

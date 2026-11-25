@@ -12,7 +12,7 @@ import { OPS, type TreeFrame } from "@nustackdev/ui-core";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { NodeView, tree } from "../../tree";
+import { flushOutbox, NodeView, tree, unbatch } from "../../tree";
 import "..";
 import { markdownAt } from "./markdown";
 
@@ -42,6 +42,7 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
+	flushOutbox();
 	await act(async () => root.unmount());
 	host.remove();
 	tree.getState().remove([]);
@@ -165,7 +166,11 @@ function inForm(
 	return driver(kind);
 }
 
-const notifies = () => sent.filter((f) => f.op === OPS.notify);
+// The moving `input` events are moves.test.tsx's; these tests are about the send.
+const notifies = () =>
+	unbatch(sent).filter(
+		(f) => f.op === OPS.notify && (f.payload as { event?: unknown }).event !== "input",
+	);
 const events = () =>
 	notifies().map((f) => ({ ref: f.ref, event: (f.payload as { event: string }).event }));
 const submits = () =>

@@ -9,8 +9,10 @@ spans without one read as a sequence. ``tone`` is the status tone
 
 Past ``max_rows`` the browser draws one row counting the rest, failures
 apart: no span is dropped without a number. With ``selectable``, a row click
-marks it selected and ``on_select()`` gets ``{event, id, label, start, end,
-tone, parent}``.
+marks it selected and stays marked: the selection is state the browser owns.
+The ref itself reads the selected span id ("" for none), and ``on_change()``
+gets ``{event: "change", value, label, start, end, tone, parent}``, ``value``
+the span id.
 """
 
 from __future__ import annotations
@@ -21,7 +23,7 @@ from typing import TYPE_CHECKING, Any
 
 from typing_extensions import Self
 
-from nustd.ui.core import Changed, Write
+from nustd.ui.core import Changes, Write
 
 from .base import LeafRef
 
@@ -74,12 +76,13 @@ def _normalize_spans(spans: object) -> list[dict[str, object]]:
     return out
 
 
-class WaterfallRef(LeafRef):
+class WaterfallRef(Changes, LeafRef):
     """Spans on one time axis, nested by ``parent``, capped at ``max_rows``.
 
     ``start`` / ``end`` fix the window (ms); ``None`` fits it to the spans.
     ``now`` is where running spans stop. ``label_width`` is the label column
-    in px.
+    in px. With ``selectable``, the ref reads the selected span id ("" for
+    none) and ``on_change()`` hears a row click.
     """
 
     _wire_type = "WaterfallRef"
@@ -142,9 +145,3 @@ class WaterfallRef(LeafRef):
         from nu.forms import Dict
 
         return Write(self, Dict.of(selected=span_id))
-
-    # --- browser -> server ---------------------------------------------------
-
-    def on_select(self) -> Changed:
-        """``{event, id, label, start, end, tone, parent}``: a span row clicked."""
-        return Changed(self, "select")

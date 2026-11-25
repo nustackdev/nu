@@ -2,7 +2,7 @@
 
 A collection leaf: the rows are data on the node, never child nodes, so a
 table has no children. Server owns the rows, the browser reports what you do
-to them.
+to them. The selection is the browser's: reading the table gives it.
 """
 
 from __future__ import annotations
@@ -12,8 +12,23 @@ from typing import TYPE_CHECKING, Any, Literal
 from typing_extensions import Self
 
 from nu.domains.shape import Slot
-from nustd.ui.core import Append, Changed, Ref, Send, Write
+from nustd.ui.core import Append, Changed, Emits, Readable, Ref, Send, Write
 from nustd.ui.core.base import _wire_type_of
+from nustd.ui.core.events import (
+    ADD,
+    COLUMN_ADD,
+    COLUMN_ALIGN,
+    COLUMN_DELETE,
+    COLUMN_KIND,
+    COLUMN_MOVE,
+    COLUMN_RENAME,
+    DELETE,
+    EDIT,
+    MOVE,
+    ROW_CLICK,
+    SELECT,
+    SORT,
+)
 
 from ..collections.columns import normalize_columns
 from ..collections.layout import one_of
@@ -163,13 +178,14 @@ def _looks(variant: object, density: object) -> dict[str, object]:
     return out
 
 
-class DataTableRef(LeafRef):
+class DataTableRef(Readable, Emits, LeafRef):
     """Rows and columns. The server owns the rows; the browser reports what you do.
 
     Reads by default: a header click asks for a sort, and that is all. Each
     flag below turns on one more thing to ask for. Everything the user does
     arrives as one notify on the table, its kind named in the payload's
-    ``event`` field, and each ``on_*`` takes only its own kind::
+    ``event`` field, and each ``on_*`` takes only its own kind
+    (``on_event()`` takes every one)::
 
         class Shelf(nustd.ui.Column):
             table = nustd.ui.DataTableRef.slot(
@@ -186,8 +202,10 @@ class DataTableRef(LeafRef):
     changed with :meth:`set_row`, :meth:`insert_row`, :meth:`remove_rows` and
     :meth:`set_order` (a sort it confirms with :meth:`set_sort`). A request
     the server turns down leaves the table as it was. Which rows are selected
-    the browser keeps as you click, and the server can set it with
-    :meth:`set_selected`.
+    the browser keeps as you click; the server seeds it on the slot
+    (``selected``), sets it with :meth:`set_selection`, and reads it back by
+    reading the table: the selected keys, in the order the browser holds them,
+    [] for none.
 
     **Column requests** (``columns_editable``) work the same way: an insert,
     delete, rename, move, kind or align change arrives as an ``on_column_*``
@@ -262,6 +280,7 @@ class DataTableRef(LeafRef):
         row_key: The field that keys a row (see above).
         selection: "single" or "multi" rows select; the selection arrives on
             :meth:`on_select`.
+        selected: The keys selected when the table first draws.
         editable: Cells edit in place, every column but ``row_key`` and those
             that say ``editable: False``; an edit arrives on :meth:`on_edit`.
         addable: An "Add row" button and insert above / below in the row
@@ -291,6 +310,7 @@ class DataTableRef(LeafRef):
         clickable_rows: bool = False,
         row_key: str = "",
         selection: Selection = "none",
+        selected: Sequence[str] = (),
         editable: bool = False,
         addable: bool = False,
         deletable: bool = False,
@@ -307,6 +327,7 @@ class DataTableRef(LeafRef):
             clickable_rows=clickable_rows,
             row_key=row_key,
             selection=selection,
+            selected=[str(k) for k in selected],
             editable=editable,
             addable=addable,
             deletable=deletable,
@@ -397,32 +418,36 @@ class DataTableRef(LeafRef):
 
         return Write(self, Dict.of(sort_column=column, sort_direction=direction))
 
-    def set_selected(self, keys: ListArg[str]) -> Nu:
+    def set_selection(self, keys: ListArg[str]) -> Nu:
         """Select exactly these rows, by key; [] selects none."""
         from nu.forms import Dict
 
         return Write(self, Dict.of(selected=keys))
 
-    # --- browser -> server ---------------------------------------------------
+    # --- reads ---------------------------------------------------------------
 
-    def on_change(self) -> Changed:
-        """Every event below, each naming itself in ``event``."""
-        return Changed(self)
+    def _lift(self, raw: object) -> list[str]:
+        """The selected keys; a key no row shows has already dropped out."""
+        if not isinstance(raw, (list, tuple)):
+            return []
+        return [str(k) for k in raw if k is not None]
+
+    # --- browser -> server ---------------------------------------------------
 
     def on_sort(self) -> Changed:
         """``{event, sort_column, sort_direction}``: a header clicked; confirm with ``set_sort``."""
-        return Changed(self, "sort")
+        return Changed(self, SORT)
 
     def on_row_click(self) -> Changed:
         """``{event, row_index, key}``: a body row clicked. Needs ``clickable_rows``."""
-        return Changed(self, "row")
+        return Changed(self, ROW_CLICK)
 
     def on_select(self) -> Changed:
         """``{event, keys, row_indexes}``: the whole next selection. Needs ``selection``.
 
         ``row_indexes`` runs parallel to ``keys``: each row's position as shown.
         """
-        return Changed(self, "select")
+        return Changed(self, SELECT)
 
     def on_edit(self) -> Changed:
         """``{event, key, row_index, column, value, previous}``: a cell's new value. Needs ``editable``.
@@ -430,21 +455,21 @@ class DataTableRef(LeafRef):
         ``value`` is typed by the column's kind: a str for "text" and
         "select", a number for "number", a bool for "bool".
         """
-        return Changed(self, "edit")
+        return Changed(self, EDIT)
 
     def on_add(self) -> Changed:
         """``{event, index}``: a new row asked for at ``index``. Needs ``addable``.
 
         The server decides what is in it, and its key.
         """
-        return Changed(self, "add")
+        return Changed(self, ADD)
 
     def on_delete(self) -> Changed:
         """``{event, keys, row_indexes}``: these rows asked to go. Needs ``deletable``.
 
         ``row_indexes`` runs parallel to ``keys``: each row's position as shown.
         """
-        return Changed(self, "delete")
+        return Changed(self, DELETE)
 
     def on_move(self) -> Changed:
         """``{event, key, row_index, index}``: a row asked to move. Needs ``draggable``.
@@ -452,7 +477,7 @@ class DataTableRef(LeafRef):
         ``row_index`` is where the row is now; ``index`` counts the rows
         without it, so the row lands before the row at that index, or last.
         """
-        return Changed(self, "move")
+        return Changed(self, MOVE)
 
     # Each column event names the column by its key as sent (``column``) and
     # by its position among the columns shown (``column_index``).
@@ -463,7 +488,7 @@ class DataTableRef(LeafRef):
         The server decides what it is (key, label, kind) and confirms with
         :meth:`set_columns`; list rows go again with a cell at ``index``.
         """
-        return Changed(self, "column_add")
+        return Changed(self, COLUMN_ADD)
 
     def on_column_delete(self) -> Changed:
         """``{event, column, column_index}``: a column asked to go. Needs ``columns_editable``.
@@ -472,7 +497,7 @@ class DataTableRef(LeafRef):
         cells, in the same frame (:meth:`set`). A table always keeps one
         column: the browser does not offer delete on the last one.
         """
-        return Changed(self, "column_delete")
+        return Changed(self, COLUMN_DELETE)
 
     def on_column_rename(self) -> Changed:
         """``{event, column, column_index, label, previous}``: new header text. Needs ``columns_editable``.
@@ -481,7 +506,7 @@ class DataTableRef(LeafRef):
         the label shown. The header keeps ``previous`` until the server
         confirms with :meth:`set_columns`.
         """
-        return Changed(self, "column_rename")
+        return Changed(self, COLUMN_RENAME)
 
     def on_column_move(self) -> Changed:
         """``{event, column, column_index, index}``: a column asked to move. Needs ``columns_editable``.
@@ -490,7 +515,7 @@ class DataTableRef(LeafRef):
         the column at that index, or last. Confirm with :meth:`set_columns`;
         list rows go again with their cells moved the same way.
         """
-        return Changed(self, "column_move")
+        return Changed(self, COLUMN_MOVE)
 
     def on_column_kind(self) -> Changed:
         """``{event, column, column_index, kind, previous}``: another kind asked for. Needs ``columns_editable``.
@@ -500,7 +525,7 @@ class DataTableRef(LeafRef):
         :meth:`set_columns`, and the rows when their cells were converted. A
         column switched to "select" needs its ``options`` sent with it.
         """
-        return Changed(self, "column_kind")
+        return Changed(self, COLUMN_KIND)
 
     def on_column_align(self) -> Changed:
         """``{event, column, column_index, align, previous}``: another alignment. Needs ``columns_editable``.
@@ -509,4 +534,4 @@ class DataTableRef(LeafRef):
         ``previous`` is what the column shows, its kind's default (number
         end, bool center, else start) when it sets none.
         """
-        return Changed(self, "column_align")
+        return Changed(self, COLUMN_ALIGN)

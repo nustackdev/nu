@@ -2,9 +2,11 @@
 
 The server owns the nodes, the browser owns the moment. The nodes are a flat
 list the server ships whole; which rows are open and which one is selected
-the browser keeps as you click, and the server can set either. Everything
-the user does arrives as one notify on the tree, its kind named in the
-payload's ``event`` field, and each ``on_*`` takes only its own kind::
+the browser keeps as you click, and the server can set either and read both
+back: the tree itself reads as the selected key, :meth:`TreeRef.expanded` as
+the open keys. Everything the user does arrives as one notify on the tree,
+its kind named in the payload's ``event`` field, and each ``on_*`` takes only
+its own kind (``on_event()`` takes every one)::
 
     class Files(nustd.ui.Column):
         tree = nustd.ui.TreeRef.slot(label="Files", editable=True, draggable=True)
@@ -29,7 +31,8 @@ from typing import TYPE_CHECKING, ClassVar
 
 from typing_extensions import Self
 
-from nustd.ui.core import Changed, Write
+from nustd.ui.core import Changed, Emits, Readable, Write
+from nustd.ui.core.events import MOVE, OPEN, RENAME, SELECT, TOGGLE
 
 from .base import LeafRef
 
@@ -39,13 +42,25 @@ if TYPE_CHECKING:
 
     from nu.lang import Nu
     from nu.lang.args import ListArg, StrArg
+    from nustd.ui.core import ReadField
 
 
 __all__ = ["TreeRef"]
 
 
-class TreeRef(LeafRef):
+def _keys(raw: object) -> list[str]:
+    """Keys off the wire: a list of strings, anything else none."""
+    if not isinstance(raw, (list, tuple)):
+        return []
+    return [str(k) for k in raw if k is not None]
+
+
+class TreeRef(Readable, Emits, LeafRef):
     """Nested rows that fold. The server owns the nodes; the browser reports what you do.
+
+    Reading the tree gives the selected key, None when no row is selected;
+    :meth:`expanded` gives the open keys. A selection moves on ``select``, the
+    open rows on ``toggle``.
 
     Args:
         label: The tree's accessible name, eg "Files".
@@ -57,6 +72,7 @@ class TreeRef(LeafRef):
     """
 
     _wire_type: ClassVar[str] = "TreeRef"
+    _reader_events: ClassVar[dict[str, str]] = {"expanded": TOGGLE}
 
     @classmethod
     def slot(
@@ -94,27 +110,35 @@ class TreeRef(LeafRef):
 
         return Write(self, Dict.of(expanded=keys))
 
-    # --- browser -> server ---------------------------------------------------
+    # --- reads ---------------------------------------------------------------
 
-    def on_change(self) -> Changed:
-        """Every event below, each naming itself in ``event``."""
-        return Changed(self)
+    def expanded(self) -> ReadField:
+        """The open rows' keys, as the browser holds them now."""
+        return self._read("expanded")
+
+    def _lift(self, raw: object) -> str | None:
+        return str(raw) if raw not in (None, "") else None
+
+    def _lift_field(self, field: str, raw: object) -> object:
+        return _keys(raw) if field == "expanded" else raw
+
+    # --- browser -> server ---------------------------------------------------
 
     def on_select(self) -> Changed:
         """``{event, key}``: a click or Space on a row."""
-        return Changed(self, "select")
+        return Changed(self, SELECT)
 
     def on_open(self) -> Changed:
         """``{event, key}``: Enter or a double click, the row's "do the thing"."""
-        return Changed(self, "open")
+        return Changed(self, OPEN)
 
     def on_toggle(self) -> Changed:
         """``{event, key, open}``: a row folded or unfolded."""
-        return Changed(self, "toggle")
+        return Changed(self, TOGGLE)
 
     def on_rename(self) -> Changed:
         """``{event, key, title}``: an inline rename, trimmed and changed. Needs ``editable``."""
-        return Changed(self, "rename")
+        return Changed(self, RENAME)
 
     def on_move(self) -> Changed:
         """``{event, key, parent, index}``: a drop. Needs ``draggable``.
@@ -122,4 +146,4 @@ class TreeRef(LeafRef):
         ``parent`` "" is the top level; ``index`` counts the parent's children
         without ``key``.
         """
-        return Changed(self, "move")
+        return Changed(self, MOVE)

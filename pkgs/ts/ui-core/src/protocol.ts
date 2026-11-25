@@ -19,11 +19,7 @@ export type RefPath = string[];
 // One level of a write's chain. The server always sends all three, but a chain
 // synthesized locally from a bare `ref` has no type and no props to give, so the
 // tail is optional. One type for both, or the two ends stop agreeing.
-export type ChainLevel = [
-	segment: string,
-	type?: string | null,
-	props?: Record<string, unknown>,
-];
+export type ChainLevel = [segment: string, type?: string | null, props?: Record<string, unknown>];
 
 export type Frame = {
 	op: string;

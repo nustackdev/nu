@@ -4,8 +4,10 @@
 // arrows; see components/ui/sketch-board-model). The kit SketchBoard draws an
 // element locally while the pointer moves and hands the new list over once it
 // lands, and again on undo, redo and clear. Each is a local edit plus one
-// notify, so a fast hand never floods the socket. A server-initiated read is
-// answered by the store from `value`.
+// `{event: "change", value}`. While a stroke is drawn each point sends
+// `{event: "input", value}`, the elements with the one in flight last, built
+// only when someone listens; `value` (and so a read) holds the committed
+// elements. A server-initiated read is answered by the store from `value`.
 //
 // In a Row it fills its share of the free width up to `width`, so a narrow
 // screen gets a smaller board rather than a scrollbar. Config rides as props: `tools`, `controls`, `defaults`, `width`, `height`,
@@ -15,7 +17,7 @@
 // can leave out stroke and width), and a map merges config, with `value`
 // normalized the same way. That is how a program, an agent or a replay draws.
 
-import { OPS, type Props } from "@nustackdev/ui-core";
+import type { Props } from "@nustackdev/ui-core";
 import { SketchBoard } from "../../components/ui/sketch-board";
 import {
 	normalizeElements,
@@ -26,13 +28,14 @@ import {
 } from "../../components/ui/sketch-board-model";
 import { Text } from "../../components/ui/text";
 import {
+	isWatched,
 	type NodeEntry,
 	type NodeProps,
 	useBoolProp,
+	useEmit,
 	useListProp,
 	useNumberProp,
 	useProp,
-	useSend,
 	useSetValue,
 	useStringProp,
 } from "../../tree";
@@ -52,7 +55,7 @@ function SketchView({ path }: NodeProps) {
 	const label = useStringProp(path, "label");
 	const readonly = useBoolProp(path, "readonly");
 	const setValue = useSetValue(path);
-	const send = useSend(path);
+	const emit = useEmit(path);
 
 	return (
 		<div className="flex w-full min-w-0 flex-col gap-1" style={{ maxWidth: width }}>
@@ -73,7 +76,10 @@ function SketchView({ path }: NodeProps) {
 				style={{ width: "100%", maxWidth: width }}
 				onValueChange={(next) => {
 					setValue(next);
-					send(OPS.notify, { event: EVENTS.change });
+					emit(EVENTS.change, { value: next });
+				}}
+				onEdit={(read) => {
+					if (isWatched(path, EVENTS.input)) emit(EVENTS.input, { value: read() });
 				}}
 			/>
 		</div>

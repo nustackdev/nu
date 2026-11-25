@@ -168,10 +168,10 @@ class _Tab(nustd.ui.Session):
     async def send(self, frame):
         self.frames.append(frame)
 
-    async def aread(self, path):
+    async def aread(self, path, field=None):
         return None
 
-    def subscribe(self, path):
+    def subscribe(self, path, event=None):
         return self.subscriptions.setdefault(path, _Subscription())
 
     def fire(self, **payload):

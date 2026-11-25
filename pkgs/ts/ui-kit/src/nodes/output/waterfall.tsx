@@ -7,20 +7,22 @@
 // ms; a span read here with no id takes its position. Nil on start, end or
 // now leaves the window to the spans. Composes the kit Waterfall primitive.
 //
-// With `selectable`, a row click marks the span selected locally and sends a
-// notify {event: "select", id, label, start, end, tone, parent}.
+// With `selectable`, a row click marks the span selected and it stays marked:
+// state the browser owns, so the main read is the selected span id ("" for
+// none) and the click sends {event: "change", value, label, start, end, tone,
+// parent}, `value` the span id.
 
-import { OPS } from "@nustackdev/ui-core";
 import { Waterfall } from "../../components/ui/waterfall";
 import { isTone, type WaterfallSpan } from "../../components/ui/waterfall-model";
 import {
+	EVENTS,
 	type NodeEntry,
 	type NodeProps,
 	useBoolProp,
+	useEmit,
 	useListProp,
 	useNumberProp,
 	useProp,
-	useSend,
 	useSetProps,
 	useStringProp,
 } from "../../tree";
@@ -60,7 +62,7 @@ function WaterfallView({ path }: NodeProps) {
 	const labelWidth = useNumberProp(path, "label_width", 200);
 	const selectable = useBoolProp(path, "selectable");
 	const selected = useStringProp(path, "selected");
-	const send = useSend(path);
+	const emit = useEmit(path);
 	const setProps = useSetProps(path);
 	return (
 		<Waterfall
@@ -75,9 +77,8 @@ function WaterfallView({ path }: NodeProps) {
 				selectable
 					? (s) => {
 							setProps({ selected: s.id });
-							send(OPS.notify, {
-								event: "select",
-								id: s.id,
+							emit(EVENTS.change, {
+								value: s.id,
 								label: s.label,
 								start: s.start,
 								end: s.end ?? null,
@@ -91,4 +92,7 @@ function WaterfallView({ path }: NodeProps) {
 	);
 }
 
-export const WaterfallRef: NodeEntry = { component: WaterfallView };
+export const WaterfallRef: NodeEntry = {
+	component: WaterfallView,
+	reads: { "": (p) => (typeof p.selected === "string" ? p.selected : "") },
+};

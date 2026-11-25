@@ -25,6 +25,8 @@ const browserTests = "src/**/*.browser.test.{ts,tsx}";
 export default defineConfig({
 	plugins: [react()],
 	test: {
+		// Every event counts as watched unless a test says otherwise.
+		setupFiles: ["src/vitest.setup.ts"],
 		projects: [
 			{
 				extends: true,

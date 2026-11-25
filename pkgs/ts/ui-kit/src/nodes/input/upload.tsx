@@ -21,7 +21,6 @@
 // failed, and the app draws anything more from `on_progress`. A program
 // cannot set a file, so a write takes chrome only; `reset` clears.
 
-import { OPS } from "@nustackdev/ui-core";
 import { useEffect, useId, useState } from "react";
 import { FieldError, Label } from "../../components/ui/field";
 import { FileInput, FileRow, type FileState } from "../../components/ui/file-input";
@@ -157,15 +156,12 @@ function readValue(empty: () => unknown) {
  * upload nodes, and the capture nodes with their own view.
  */
 export function uploadEntry(component: NodeEntry["component"], empty: () => unknown): NodeEntry {
-	const read = readValue(empty);
 	return {
 		component,
 		fill: true,
-		input: { empty, read },
-		handlers: {
-			...uploadHandlers,
-			read: (ctx) => ctx.send(OPS.read, read(ctx.node.props), ctx.frame.id),
-		},
+		input: { empty },
+		reads: { "": readValue(empty) },
+		handlers: uploadHandlers,
 		dispose: ({ path }) => dropFiles(path),
 	};
 }

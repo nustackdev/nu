@@ -6,7 +6,7 @@ import { OPS, type TreeFrame } from "@nustackdev/ui-core";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { NodeView, tree } from "../../tree";
+import { flushOutbox, NodeView, tree, unbatch } from "../../tree";
 import "..";
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -30,6 +30,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+	flushOutbox();
 	act(() => root.unmount());
 	host.remove();
 	tree.getState().remove([]);
@@ -58,7 +59,11 @@ const bare = (payload: unknown) => {
 	return rest;
 };
 const notifies = () =>
-	sent.filter((f) => f.op === OPS.notify).map((f) => ({ ref: f.ref, payload: bare(f.payload) }));
+	unbatch(sent)
+		// The moving `input` events are moves.test.tsx's; these tests are about commits.
+		.filter((f) => f.op === OPS.notify && !isInput(f.payload))
+		.map((f) => ({ ref: f.ref, payload: bare(f.payload) }));
+const isInput = (payload: unknown) => (payload as { event?: unknown } | null)?.event === "input";
 const propsAt = (path: string[]) => tree.getState().getIn(path)?.props ?? {};
 
 function type(el: HTMLInputElement, text: string) {

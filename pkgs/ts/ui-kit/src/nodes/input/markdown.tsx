@@ -9,7 +9,10 @@
 // you can type in it.
 //
 // Commit moments (a quiet moment, blur, the send key): the node's `value`
-// prop updates locally, then a notify goes out and the server reads back.
+// prop updates locally, then `{event: "change", value}` goes out with the
+// text. Between saves each edit sends `{event: "input", value}` with the
+// document as markdown, serialized only when someone listens; `value` (and so
+// a read) keeps the last save.
 // The send key then sends, the way a text area does (./control.ts
 // `useSubmit`): `{event: "submit", value}` with the text just saved, an
 // enclosing Form asked to submit, and with `clear_on_submit` the declared
@@ -85,12 +88,13 @@ import { Markdown } from "../../components/ui/markdown";
 import { SUBMIT_ON } from "../../lib/keyboard";
 import type { MarkdownHandle } from "../../lib/markdown/handle";
 import {
+	isWatched,
 	type NodeEntry,
 	type NodeProps,
 	pathKey,
 	useBoolProp,
+	useEmit,
 	useEnumProp,
-	useSend,
 	useSetValue,
 	useStringProp,
 } from "../../tree";
@@ -233,7 +237,7 @@ function MarkdownView({ path }: NodeProps) {
 	const readOnly = useBoolProp(path, "readonly", true) || scoped;
 	const submitOn = useEnumProp(path, "submit_on", SUBMIT_ON, "shift+enter");
 	const setValue = useSetValue(path);
-	const send = useSend(path);
+	const emit = useEmit(path);
 	const key = pathKey(path);
 	/** This editor's place in the table; set while it is mounted. */
 	const registration = useRef<MarkdownRegistration | null>(null);
@@ -246,9 +250,17 @@ function MarkdownView({ path }: NodeProps) {
 			const s = savesOf(path);
 			s.texts = [...s.texts.slice(1 - SAVES_KEPT), source];
 			s.unread = true;
-			send(OPS.notify, { event: EVENTS.change });
+			emit(EVENTS.change, { value: source });
 		},
-		[key, setValue, send],
+		[key, setValue, emit],
+	);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
+	const edit = useCallback(
+		(read: () => string) => {
+			if (isWatched(path, EVENTS.input)) emit(EVENTS.input, { value: read() });
+		},
+		[key, emit],
 	);
 
 	const fire = useSubmit(path);
@@ -277,6 +289,7 @@ function MarkdownView({ path }: NodeProps) {
 			placeholder={hint}
 			readOnly={readOnly}
 			onCommit={commit}
+			onEdit={edit}
 			onSubmit={submit}
 			submitOn={submitOn}
 			onView={onView}

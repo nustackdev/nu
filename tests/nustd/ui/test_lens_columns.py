@@ -341,14 +341,16 @@ class _Recorder(nustd.ui.Session):
     def __init__(self) -> None:
         self.frames = []
         self.subscriptions = {}
+        self.events = {}
 
     async def send(self, frame):
         self.frames.append(frame)
 
-    async def aread(self, path):
+    async def aread(self, path, field=None):
         return None
 
-    def subscribe(self, path):
+    def subscribe(self, path, event=None):
+        self.events.setdefault(path, set()).add(event)
         return self.subscriptions.setdefault(path, _Subscription())
 
     def writes(self, path):
@@ -364,6 +366,31 @@ async def _settle(check, deadline=3.0):
         await asyncio.sleep(0.02)
         waited += 0.02
     return False
+
+
+class _Cursor(_Recorder):
+    """A browser that answers a read with the cursor it is at."""
+
+    def __init__(self, cursor) -> None:
+        super().__init__()
+        self.cursor = cursor
+
+    async def aread(self, path, field=None):
+        return self.cursor
+
+
+async def test_reading_the_lens_is_its_cursor():
+    out, _ = await nu.arun(LENS, nu.Context().bind(nustd.ui.Session, _Cursor(["counts", 3])))
+    assert out == ["counts", "3"]
+    out, _ = await nu.arun(LENS, nu.Context().bind(nustd.ui.Session, _Cursor(None)))
+    assert out == []
+
+
+def test_the_lens_moves_on_change():
+    term = LENS.on_change()
+    assert isinstance(term, nustd.ui.core.Changed)
+    assert term._children[1].value == "change"
+    assert not hasattr(LENS, "on_nav")
 
 
 @pytest.mark.timeout(60)
@@ -404,7 +431,9 @@ async def test_browse_paints_the_root_column_then_repaints_on_a_move():
         assert boot["cursor"] == []
         assert [c["kind"] for c in boot["columns"]] == ["shape"]
 
-        session.subscriptions[LENS_PATH].fire(["counts", "red"])
+        # The lens listens to ``change`` alone, and the cursor rides in ``value``.
+        assert session.events[LENS_PATH] == {"change"}
+        session.subscriptions[LENS_PATH].fire({"event": "change", "value": ["counts", "red"]})
         assert await _settle(lambda: len(session.writes(LENS_PATH)) > 1)
         moved = session.writes(LENS_PATH)[-1].payload
         assert moved["cursor"] == ["counts", "red"]
@@ -457,7 +486,7 @@ async def test_browse_repaints_where_the_browser_is_when_the_store_is_written():
     arm = asyncio.create_task(nu.arun(program, ctx))
     try:
         assert await _settle(lambda: session.writes(LENS_PATH))
-        session.subscriptions[LENS_PATH].fire(["left", "title"])
+        session.subscriptions[LENS_PATH].fire({"event": "change", "value": ["left", "title"]})
         assert await _settle(lambda: "renamed" in previews())
         assert previews()[0] == "a zoo"
     finally:

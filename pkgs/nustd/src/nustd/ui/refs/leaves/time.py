@@ -20,9 +20,9 @@ from typing import TYPE_CHECKING, Any
 from typing_extensions import Self
 
 from nu.lang.sentinels import UNSET
-from nustd.ui.core import Write
+from nustd.ui.core import Submits, Write
 
-from .input import InputLeaf, _common, _Nullable, _Placeholder, _Submits
+from .input import InputLeaf, _common, _Nullable, _Placeholder
 
 
 if TYPE_CHECKING:
@@ -57,7 +57,7 @@ def _date(value: str | dt.date | None) -> str:
     return value
 
 
-class TimePickerRef(_Nullable, _Submits, InputLeaf):
+class TimePickerRef(_Nullable, Submits, InputLeaf):
     """Time of day input whose "HH:MM" value lives in the browser (NULL for none).
 
     The field is typed into, segment by segment: blur commits (a change, when
@@ -105,7 +105,7 @@ class TimePickerRef(_Nullable, _Submits, InputLeaf):
         return Write(self, value)
 
 
-class DateTimePickerRef(_Nullable, _Submits, _Placeholder, InputLeaf):
+class DateTimePickerRef(_Nullable, Submits, _Placeholder, InputLeaf):
     """Date and time input whose "YYYY-MM-DDTHH:MM" value lives in the browser (NULL for none).
 
     A calendar pick is a change at once and keeps the time already there
@@ -153,7 +153,7 @@ class DateTimePickerRef(_Nullable, _Submits, _Placeholder, InputLeaf):
         return Write(self, value)
 
 
-class DateRangePickerRef(_Submits, _Placeholder, InputLeaf):
+class DateRangePickerRef(Submits, _Placeholder, InputLeaf):
     """Span of days whose ``{"start", "end"}`` value lives in the browser.
 
     Each end is an ISO "YYYY-MM-DD", "" while unset. Picks in the open

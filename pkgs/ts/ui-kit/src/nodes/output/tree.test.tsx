@@ -107,6 +107,27 @@ describe("TreeRef", () => {
 		]);
 	});
 
+	it("reads as the selected key, and expanded as the open keys", () => {
+		mount();
+		const read = (field: string | null, id: string) => {
+			act(() => {
+				tree.getState().dispatch({
+					op: OPS.read,
+					ref: ["t"],
+					payload: field === null ? null : { field },
+					id,
+				});
+			});
+			return sent.find((f) => f.op === OPS.read && f.id === id)?.payload;
+		};
+		expect(read(null, "r1")).toBeNull();
+		expect(read("expanded", "r2")).toEqual([]);
+		act(() => row("readme").click());
+		press("src", "ArrowRight");
+		expect(read(null, "r3")).toBe("readme");
+		expect(read("expanded", "r4")).toEqual(["src"]);
+	});
+
 	it("takes the server's nodes, selection and fold state as plain writes", () => {
 		mount();
 		write({ expanded: ["src"], selected: "app" });

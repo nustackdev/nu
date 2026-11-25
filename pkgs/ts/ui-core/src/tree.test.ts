@@ -2,16 +2,14 @@
 // Everything below is a plain frame in and a plain node out.
 
 import { describe, expect, it, vi } from "vitest";
-import {
-	type Behaviour,
-	type ChainStep,
-	OPS,
-	type TreeFrame,
-	createTreeStore,
-} from "./tree";
 import { OP_ERROR } from "./protocol";
+import { type Behaviour, type ChainStep, createTreeStore, OPS, type TreeFrame } from "./tree";
 
-function step(segment: string, type: string | null = null, props?: Record<string, unknown>): ChainStep {
+function step(
+	segment: string,
+	type: string | null = null,
+	props?: Record<string, unknown>,
+): ChainStep {
 	return props ? [segment, type, props] : [segment, type];
 }
 
@@ -135,7 +133,9 @@ describe("write", () => {
 		const store = createTreeStore({ onError: (message) => errors.push(message) });
 		store.getState().write([step("a", "Card"), step("t", "TextRef", { value: "x" })]);
 
-		const applied = store.getState().write([step("a", "Grid"), step("t", "TextRef")], { value: "y" });
+		const applied = store
+			.getState()
+			.write([step("a", "Grid"), step("t", "TextRef")], { value: "y" });
 
 		expect(applied).toBe(false);
 		expect(store.getState().getIn(["a", "t"])?.props).toEqual({ value: "x" });
@@ -219,11 +219,7 @@ describe("remove", () => {
 
 		store.getState().remove(["sec"]);
 
-		expect(gone).toEqual([
-			["sec", "col", "t"],
-			["sec", "col"],
-			["sec"],
-		]);
+		expect(gone).toEqual([["sec", "col", "t"], ["sec", "col"], ["sec"]]);
 		expect(store.getState().getIn(["sec"])).toBeNull();
 		expect(store.getState().getIn(["other"])?.type).toBe("TextRef");
 	});
@@ -383,7 +379,9 @@ describe("dispatch", () => {
 	it("builds structure from an init and touches no value", () => {
 		const store = createTreeStore();
 		store.getState().write([step("a", "InputRef", { label: "L" })], { value: "typed" });
-		store.getState().dispatch(frame(OPS.init, ["a"], null, [step("a", "InputRef", { label: "L" })]));
+		store
+			.getState()
+			.dispatch(frame(OPS.init, ["a"], null, [step("a", "InputRef", { label: "L" })]));
 		store.getState().dispatch(frame(OPS.init, ["b"], null, [step("b", "TextRef", { value: "" })]));
 		expect(store.getState().getIn(["a"])?.props).toEqual({ label: "L", value: "typed" });
 		expect(store.getState().getIn(["b"])?.type).toBe("TextRef");
@@ -419,6 +417,40 @@ describe("dispatch", () => {
 		expect(sent).toEqual([{ op: OPS.read, ref: ["p"], payload: "md:hi", id: "f2" }]);
 	});
 
+	it("answers a read through the type's reads, per field", () => {
+		const sent: TreeFrame[] = [];
+		const behaviours: Record<string, Behaviour> = {
+			TreeRef: {
+				reads: {
+					"": (p) => p.selected ?? null,
+					expanded: (p) => p.expanded ?? [],
+				},
+			},
+		};
+		const store = createTreeStore({ send: (f) => sent.push(f), resolve: (t) => behaviours[t] });
+		store.getState().write([step("t", "TreeRef", { selected: "x", expanded: ["a"] })]);
+		store.getState().dispatch({ op: OPS.read, ref: ["t"], payload: null, id: "r1" });
+		store.getState().dispatch({ op: OPS.read, ref: ["t"], payload: { field: "" }, id: "r2" });
+		store
+			.getState()
+			.dispatch({ op: OPS.read, ref: ["t"], payload: { field: "expanded" }, id: "r3" });
+		expect(sent).toEqual([
+			{ op: OPS.read, ref: ["t"], payload: "x", id: "r1" },
+			{ op: OPS.read, ref: ["t"], payload: "x", id: "r2" },
+			{ op: OPS.read, ref: ["t"], payload: ["a"], id: "r3" },
+		]);
+	});
+
+	it("answers a read of a field the type does not declare with an error", () => {
+		const sent: TreeFrame[] = [];
+		const store = createTreeStore({ send: (f) => sent.push(f) });
+		store.getState().write([step("a", "InputRef", { value: "gor" })]);
+		store.getState().dispatch({ op: OPS.read, ref: ["a"], payload: { field: "nope" }, id: "f3" });
+		expect(sent).toHaveLength(1);
+		expect(sent[0]).toMatchObject({ op: OP_ERROR, ref: ["a"], id: "f3" });
+		expect((sent[0].payload as { code: string }).code).toBe("payload_invalid");
+	});
+
 	it("reports an op on a node that is not there", () => {
 		const errors: string[] = [];
 		const store = createTreeStore({ onError: (m) => errors.push(m) });
@@ -438,7 +470,9 @@ describe("dispatch", () => {
 describe("visibility", () => {
 	it("hides a node and keeps its props and children", () => {
 		const store = createTreeStore();
-		store.getState().write([step("a", "Card", { title: "T" }), step("b", "TextRef")], { value: "x" });
+		store
+			.getState()
+			.write([step("a", "Card", { title: "T" }), step("b", "TextRef")], { value: "x" });
 		store.getState().dispatch(frame(OPS.hide, ["a"], null, [step("a", "Card", { title: "T" })]));
 		const a = store.getState().getIn(["a"]);
 		expect(a?.hidden).toBe(true);
@@ -456,9 +490,14 @@ describe("visibility", () => {
 
 	it("brings a node into being hidden when the hide is the first frame", () => {
 		const store = createTreeStore();
-		store.getState().dispatch(
-			frame(OPS.hide, ["a", "b"], null, [step("a", "Column"), step("b", "TextRef", { value: "seed" })]),
-		);
+		store
+			.getState()
+			.dispatch(
+				frame(OPS.hide, ["a", "b"], null, [
+					step("a", "Column"),
+					step("b", "TextRef", { value: "seed" }),
+				]),
+			);
 		const b = store.getState().getIn(["a", "b"]);
 		expect(b?.type).toBe("TextRef");
 		expect(b?.props).toEqual({ value: "seed" });
@@ -480,11 +519,18 @@ describe("visibility", () => {
 		const store = createTreeStore({ resolve: (t) => behaviours[t] });
 		store.getState().write([step("h", "HeadingRef"), step("t", "TextRef")]);
 		store.getState().dispatch(frame(OPS.hide, ["h"], null, [step("h", "HeadingRef")]));
-		store.getState().dispatch(frame(OPS.hide, ["h", "t"], null, [step("h", "HeadingRef"), step("t", "TextRef")]));
+		store
+			.getState()
+			.dispatch(frame(OPS.hide, ["h", "t"], null, [step("h", "HeadingRef"), step("t", "TextRef")]));
 		store.getState().dispatch(frame(OPS.write, ["h"], "hello", [step("h", "HeadingRef")]));
-		store.getState().dispatch(
-			frame(OPS.write, ["h", "t"], { value: 1, hidden: false }, [step("h", "HeadingRef"), step("t", "TextRef")]),
-		);
+		store
+			.getState()
+			.dispatch(
+				frame(OPS.write, ["h", "t"], { value: 1, hidden: false }, [
+					step("h", "HeadingRef"),
+					step("t", "TextRef"),
+				]),
+			);
 		expect(store.getState().getIn(["h"])?.hidden).toBe(true);
 		expect(store.getState().getIn(["h"])?.props.label).toBe("hello");
 		expect(store.getState().getIn(["h", "t"])?.hidden).toBe(true);
@@ -494,7 +540,10 @@ describe("visibility", () => {
 		const errors: string[] = [];
 		const hide = vi.fn();
 		const behaviours: Record<string, Behaviour> = { TextRef: { handlers: { hide } } };
-		const store = createTreeStore({ resolve: (t) => behaviours[t], onError: (m) => errors.push(m) });
+		const store = createTreeStore({
+			resolve: (t) => behaviours[t],
+			onError: (m) => errors.push(m),
+		});
 		store.getState().write([step("a", "TextRef")]);
 		store.getState().dispatch(frame(OPS.hide, ["a"], null, [step("a", "TextRef")]));
 		expect(hide).not.toHaveBeenCalled();
@@ -555,7 +604,9 @@ describe("kind mismatch", () => {
 
 		store.getState().dispatch(frame(OPS.init, ["a"], null, [step("a", "Grid")]));
 		store.getState().dispatch(frame(OPS.hide, ["a"], null, [step("a", "Grid")]));
-		store.getState().dispatch(frame("set_span", ["a", "c"], [2, 1], [step("a", "Grid"), step("c")]));
+		store
+			.getState()
+			.dispatch(frame("set_span", ["a", "c"], [2, 1], [step("a", "Grid"), step("c")]));
 
 		expect(sent.map((f) => f.op)).toEqual([OP_ERROR, OP_ERROR, OP_ERROR]);
 		expect(store.getState().getIn(["a"])?.type).toBe("Card");

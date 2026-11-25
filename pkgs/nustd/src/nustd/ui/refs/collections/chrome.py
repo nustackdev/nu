@@ -25,8 +25,10 @@ from typing import TYPE_CHECKING, Any, ClassVar, Literal
 
 from typing_extensions import Self, Unpack
 
+from nu.lang.null import NULL
 from nu.lang.sentinels import UNSET
 from nustd.ui.core import child_at
+from nustd.ui.core.capabilities import Changes
 from nustd.ui.core.interactions import Changed, Reset, Send, Write
 
 from ..vocab import Target
@@ -130,10 +132,13 @@ def _admit_paired(ref: Ref, address: object, prop: str, what: str) -> None:
         raise ValueError(msg)
 
 
-class AccordionRef(DictCollectionRef):
+class AccordionRef(Changes, DictCollectionRef):
     """Stack of collapsible sections, each body the child at the section's id.
 
-    The tab owns open state, the server owns the section list. ``acc["id"]``
+    The tab owns open state, the server owns the section list. Reading the
+    Ref gives the ids of the open sections; each toggle sends
+    ``{event: "change", value: [<open ids>]}``, which ``on_change()`` takes,
+    and ``set_open()`` opens a set from the server. ``acc["id"]``
     is the body of section ``id``; an id the declared ``sections`` does not
     list is refused, since it would never draw.
 
@@ -202,8 +207,8 @@ class AccordionRef(DictCollectionRef):
         value = _normalize_open(ids) if isinstance(ids, list) else ids
         return Write(self, Dict.of(open=value))
 
-    def on_change(self) -> Changed:
-        return Changed(self)
+    def _lift(self, raw: object) -> list[str]:
+        return _normalize_open(raw)
 
 
 class _SetSectionStr(Send):
@@ -625,7 +630,7 @@ class _SetErrors(Send):
         return values[0]
 
 
-class ModalRef(ChildLayout, DictCollectionRef):
+class ModalRef(Changes, ChildLayout, DictCollectionRef):
     """Dialog overlay. Open vs closed is the thing it carries, so it has a `set()`.
 
     ``title`` heads the dialog. For more than a string (an icon, a name and
@@ -634,6 +639,10 @@ class ModalRef(ChildLayout, DictCollectionRef):
     button kept beside it, and the dialog is named by its text. The modal
     only places it, full width and free to shrink. Every other child is the
     body.
+
+    Reading the Ref gives whether the dialog is open now. When the user
+    dismisses it the tab sends ``{event: "change", value: false}``, which
+    ``on_change()`` takes.
 
     The dialog is ``width`` wide (512px unless set; a page width name reads,
     ``width="prose"``) and never grows past the window: a tall body scrolls
@@ -691,8 +700,8 @@ class ModalRef(ChildLayout, DictCollectionRef):
             payload["title"] = title
         return Write(self, Dict.of(**payload))
 
-    def on_change(self) -> Changed:
-        return Changed(self)
+    def _lift(self, raw: object) -> bool:
+        return bool(raw)
 
 
 def _normalize_tabs(raw: object) -> list[dict[str, str]]:
@@ -737,11 +746,15 @@ TabsVariant = Literal["line", "pill", "segmented"]
 _TABS_VARIANTS = ("line", "pill", "segmented")
 
 
-class TabsRef(DictCollectionRef):
+class TabsRef(Changes, DictCollectionRef):
     """Tab strip plus active body. A tab's body is the child at the tab's id.
 
     ``tabs["id"]`` is the body of tab ``id``; an id the declared ``tabs``
     does not list is refused, since it would never draw.
+
+    Reading the Ref gives the active tab's id (NULL while there are no tabs).
+    A click on a tab sends ``{event: "change", value: <id>}``, which
+    ``on_change()`` takes; ``set_active()`` picks one from the server.
 
     ``variant`` is the strip: ``line`` underlines the active tab across a full
     width rule, ``pill`` puts a chip behind it, ``segmented`` is one track
@@ -782,5 +795,5 @@ class TabsRef(DictCollectionRef):
     def set_active(self, value: StrArg) -> Nu:
         return _SetActive(self, value)
 
-    def on_change(self) -> Changed:
-        return Changed(self)
+    def _lift(self, raw: object) -> object:
+        return NULL if raw is None else str(raw)
