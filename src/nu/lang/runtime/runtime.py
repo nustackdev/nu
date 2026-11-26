@@ -81,15 +81,6 @@ class Runtime:
             return self
         return Runtime(self.program, ctx, budget=self.budget)
 
-    def _fork_attrs(self) -> Runtime:
-        """This Runtime with its own attrs table, for a concurrent arm.
-
-        TEMPORARY (task-184 phase 4 deletes attrs and this with it): the
-        frames are shared, only the attrs table is copied, so a name an arm
-        binds in attrs stays in the arm.
-        """
-        return Runtime(self.program, self.ctx._fork_attrs(), budget=self.budget)
-
     # --- dispatch -----------------------------------------------------------
 
     def eval(self, nid: int = 0) -> object:

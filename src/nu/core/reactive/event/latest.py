@@ -97,13 +97,11 @@ class ReactLatest(_DynamicBinding, Control):
             def start(bind: bool, key: object = None) -> asyncio.Task:
                 # Every run is a task of its own on a frame of its own; the
                 # initial run's frame holds no key, so a lambda's reads NULL.
-                # The attrs table is forked too (temporary, until attrs go).
-                run_rt = rt._fork_attrs()
                 if bind:
-                    run_ctx = binding.push(run_rt.ctx, (key,))
+                    run_ctx = binding.push(rt.ctx, (key,))
                 else:
-                    run_ctx, _ = binding.frame(run_rt.ctx)
-                return asyncio.ensure_future(drain_body(run_rt.on(run_ctx), body))
+                    run_ctx, _ = binding.frame(rt.ctx)
+                return asyncio.ensure_future(drain_body(rt.on(run_ctx), body))
 
             running: asyncio.Task | None = None
             getter: asyncio.Task | None = None

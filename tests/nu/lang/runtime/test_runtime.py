@@ -439,73 +439,60 @@ async def test_amerge_rejects_non_async_budget() -> None:
 # --- context interaction --------------------------------------------------
 
 
-def test_ctx_attrs_writes_are_visible_through_runtime() -> None:
-    program = compile(Literal(1))
-    ctx = Context(attrs={"x": 42, "y": None})
-    with Budget() as budget:
-        rt = Runtime(program, ctx, budget=budget)
-        assert rt.ctx.attrs.get("x") == 42
-        rt.ctx.attrs.set("y", "hello")
-    assert ctx.attrs.get("y") == "hello"
-
-
 # --- context across the thread boundary -----------------------------------
 #
-# Every arm handed to a pool thread runs on its own branch of the caller's
-# Context: it sees the caller's names, and it is not the caller's Context.
-# One case per dispatch site.
+# Every arm handed to a pool thread runs on the caller's Context itself:
+# frames are immutable, so nothing is copied and an arm only ever adds frames
+# of its own on top. One case per dispatch site.
 
 
-def _is_branch_of(arm: object, ctx: Context) -> bool:
-    return isinstance(arm, Context) and arm is not ctx and arm.attrs.get("who") == "parent"
+def _is_on(arm: object, ctx: Context) -> bool:
+    return arm is ctx
 
 
-def test_ctx_branches_on_eval_parallel_workers() -> None:
+def test_ctx_reaches_eval_parallel_workers() -> None:
     program = _fake_program(thunks=[lambda rt: rt.ctx])
-    ctx = Context(attrs={"who": "parent"})
+    ctx = Context().bind(str, "parent")
     with Budget(max_parallel=2) as budget:
         rt = Runtime(program, ctx, budget=budget)
         a, b = eval_parallel(rt, [0, 0])
-    assert _is_branch_of(a, ctx)
-    assert _is_branch_of(b, ctx)
-    assert a is not b
+    assert _is_on(a, ctx)
+    assert _is_on(b, ctx)
 
 
-async def test_ctx_branches_on_async_placement_workers() -> None:
+async def test_ctx_reaches_async_placement_workers() -> None:
     program = _fake_program(thunks=[lambda rt: rt.ctx], athunks=[None], on_loop=[False])
-    ctx = Context(attrs={"who": "parent"})
+    ctx = Context().bind(str, "parent")
     with Budget(max_parallel=2, async_mode=True) as budget:
         rt = Runtime(program, ctx, budget=budget)
         a, b = await aeval_parallel(rt, [0, 0])
-    assert _is_branch_of(a, ctx)
-    assert _is_branch_of(b, ctx)
-    assert a is not b
+    assert _is_on(a, ctx)
+    assert _is_on(b, ctx)
 
 
-def test_ctx_branches_on_merge_workers() -> None:
+def test_ctx_reaches_merge_workers() -> None:
     def gen(rt: Runtime) -> object:
         return iter([rt.ctx])
 
     program = _fake_program(thunks=[gen, gen])
-    ctx = Context(attrs={"who": "parent"})
+    ctx = Context().bind(str, "parent")
     with Budget(max_parallel=2) as budget:
         rt = Runtime(program, ctx, budget=budget)
         a, b = list(merge(rt, [0, 1]))
-    assert _is_branch_of(a, ctx)
-    assert _is_branch_of(b, ctx)
-    assert a is not b
+    assert _is_on(a, ctx)
+    assert _is_on(b, ctx)
 
 
-async def test_ctx_branches_on_amerge_workers() -> None:
+async def test_ctx_reaches_amerge_workers() -> None:
     def gen(rt: Runtime) -> object:
         return iter([rt.ctx])
 
     program = _fake_program(thunks=[gen], athunks=[None], on_loop=[False])
-    ctx = Context(attrs={"who": "parent"})
+    ctx = Context().bind(str, "parent")
     with Budget(max_parallel=2, async_mode=True) as budget:
         rt = Runtime(program, ctx, budget=budget)
         (a,) = [v async for v in amerge(rt, [0])]
-    assert _is_branch_of(a, ctx)
+    assert _is_on(a, ctx)
 
 
 def test_ctx_resolves_inside_in_thread() -> None:

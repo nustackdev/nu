@@ -25,11 +25,11 @@ __all__ = ["_ContextRef"]
 class _ContextRef(Ref):
     """A Context Ref whose address is its sole child, resolved through the runtime.
 
-    The shared base under ``Attr`` and ``FabricRef``. Both are Refs whose
-    one child *is* the address, which means the address is an ordinary Nu
-    expression and can be computed rather than fixed at write time. This base
-    spells that pattern once; a subclass decides what the address means (a
-    key in ``ctx.attrs``, a fabric type) and how a read is answered.
+    The base under ``FabricRef``: a Ref whose one child *is* the address,
+    which means the address is an ordinary Nu expression and can be computed
+    rather than fixed at write time. This base spells that pattern once; a
+    subclass decides what the address means (a fabric type) and how a read
+    is answered.
 
     Notes:
         - Address resolution is given the Ref's own node id, so it is the

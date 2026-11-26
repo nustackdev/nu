@@ -1,7 +1,7 @@
 """Support atoms for Policy span tests (Retry, Timeout).
 
 Each is a mutating atom that counts its own calls or records into an external
-log or a declared name, so retry loops, hooks, and timeout cancellation are
+log, so retry loops, hooks, and timeout cancellation are
 all observable from a test. A counter or log is never kept on the term: it is
 a live object held as data in a ``Literal`` child, the term only reads it.
 A log is the test's list behind a ``Sink``: a plain list in a Literal would be
@@ -110,7 +110,7 @@ class RecordAction(ScalarAction):
 
 
 class SlowAction(ScalarAction):
-    """Async: sleep ``seconds``, set the declared ``name`` to True, yield ``name``.
+    """Async: sleep ``seconds``, append ``name`` to ``log`` (when given), yield ``name``.
 
     Sync thunk returns ``name`` without sleeping (never reached under an
     async-only span).
@@ -118,27 +118,26 @@ class SlowAction(ScalarAction):
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def __init__(self, seconds: float, name: str = "slow") -> None:
-        super().__init__()
+    def __init__(self, seconds: float, name: str = "slow", log: list | None = None) -> None:
+        super().__init__(Sink([] if log is None else log))
         self._seconds = seconds
         self._name = name
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        name = self._name
+        name, sink = self._name, children[0]
 
         def thunk(rt: Runtime) -> object:
-            rt.ctx.attrs.set(name, True)
+            sink(rt).append(name)
             return name
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        seconds = self._seconds
-        name = self._name
+        seconds, name, sink = self._seconds, self._name, children[0]
 
         async def athunk(rt: Runtime) -> object:
             await asyncio.sleep(seconds)
-            rt.ctx.attrs.set(name, True)
+            (await sink(rt)).append(name)
             return name
 
         return athunk

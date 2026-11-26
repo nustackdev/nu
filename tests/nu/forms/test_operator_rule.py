@@ -48,13 +48,14 @@ class _Mem(nu.Shape):
     d = nu.mem.DictRef.slot(int)
     st = nu.mem.SetRef.slot(int)
     q = JQueueRef.slot(item_type=int)
+    o = nu.mem.ObjectRef.slot()
 
 
 # (name, build a term): every family of form, value and ref alike.
 TERMS = [
     ("Object", lambda: nu.Object(12)),
     ("Int", lambda: nu.Int(12)),
-    ("Attr", lambda: nu.context.Attr("n")),
+    ("ObjectRef", lambda: _Mem.o),
     ("Bool", lambda: nu.Int(1) > 0),
     ("Float", lambda: nu.Float(1.5)),
     ("Str", lambda: nu.Str("a")),

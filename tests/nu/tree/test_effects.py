@@ -7,7 +7,6 @@ iter_effects, is_pure, reads, writes, fabrics. The fabric predicates
 from __future__ import annotations
 
 import nu.mem
-from nu.context import Attr
 from nu.core.flows import Sequential
 from nu.domains.shape import Shape
 from nu.lang import Effect, Literal
@@ -23,17 +22,18 @@ from nu.tree import (
 
 
 class State(Shape):
+    x = nu.mem.IntRef.slot()
     y = nu.mem.ObjectRef.slot()
 
 
 def _read_ref():
-    return Attr("x")
+    return State.x
 
 
 def _write_tree():
-    """A set writes the mem slot ``y``; also reads ``Attr('x')``."""
+    """A set writes the mem slot ``y``; also reads the mem slot ``x``."""
     target = State.y
-    source = Attr("x")
+    source = State.x
     return target.set(source), target, source
 
 
@@ -62,7 +62,7 @@ def test_write_ref_is_not_also_a_read():
 
 def test_fabrics_folds_refs_to_their_types():
     cmd, _target, _source = _write_tree()
-    assert {nu.mem.ObjectRef, Attr} <= fabrics(cmd)
+    assert {nu.mem.ObjectRef, nu.mem.IntRef} <= fabrics(cmd)
 
 
 def test_node_effects_reads_one_level():

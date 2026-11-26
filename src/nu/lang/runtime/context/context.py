@@ -20,16 +20,14 @@ Usage:
     ctx.get(Storage)                                # -> rocksdb
     ctx.get(View, Market, site=(5,), path=(...,))   # -> shard_a
 
-``ctx.attrs`` is the flat name store interactions still bind their values in.
-It is temporary: it goes away once every binding hands its values through
-mem (task-184 phase 4).
+A parent hands values to its body only through mem: a binding pushes a frame
+holding a dict under a Shape, and the Shape's refs read it (``nu.lang.binding``).
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar, cast
 
-from .attributes import Attributes
 from .fabrics import _Entry, _find, _Frame, _missing, _view
 
 
@@ -37,44 +35,19 @@ _T = TypeVar("_T")
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping
+    from collections.abc import Callable
 
 
 __all__ = ["Context"]
 
 
 class Context:
-    """One task's environment: a stack of fabric frames (and, for now, an attrs store).
+    """One task's environment: a stack of immutable fabric frames, empty to start."""
 
-    Args:
-        attrs: names the Context starts with, e.g. a worker handoff or a
-            dispatch seed. Temporary, see the module docstring.
-    """
+    __slots__ = ("_top",)
 
-    __slots__ = ("_attrs", "_top")
-
-    def __init__(self, attrs: Mapping[str, object] | None = None) -> None:
-        self._attrs = Attributes(dict(attrs) if attrs else None)
+    def __init__(self) -> None:
         self._top: _Frame | None = None
-
-    # -- attrs (temporary) ---------------------------------------------------
-
-    @property
-    def attrs(self) -> Attributes:
-        """The name store attrs refs read and write. Temporary, see the module docstring."""
-        return self._attrs
-
-    def _fork_attrs(self) -> Context:
-        """The same frames with an own copy of the attrs table.
-
-        TEMPORARY (task-184 phase 4 deletes attrs and this with it): a
-        concurrent arm takes this so a name it binds in attrs stays in the
-        arm. Frames need no copy, they are immutable.
-        """
-        ctx = Context.__new__(Context)
-        ctx._attrs = self._attrs._branch()
-        ctx._top = self._top
-        return ctx
 
     # -- push ----------------------------------------------------------------
 
@@ -125,7 +98,6 @@ class Context:
         entry: _Entry,
     ) -> Context:
         ctx = Context.__new__(Context)
-        ctx._attrs = self._attrs
         ctx._top = _Frame(self._top, fabric_type, frozenset(tags), dict(predicates), entry)
         return ctx
 
@@ -181,4 +153,4 @@ class Context:
         while frame is not None:
             labels.append(frame.label())
             frame = frame.parent
-        return f"Context({self._attrs!r}, [{', '.join(reversed(labels))}])"
+        return f"Context([{', '.join(reversed(labels))}])"

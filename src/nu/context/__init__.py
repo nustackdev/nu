@@ -1,31 +1,24 @@
-"""The Context fabric: the in-memory ``ctx.attrs`` and fabric bindings.
+"""The Context fabric: typed fabric bindings on the Context's frames.
 
 A Fabric is an addressable space where Refs live; it resolves Refs and carries
-out the Interactions over them. The Context fabric has two axes:
+out the Interactions over them. The Context holds them as typed bindings
+(``ctx.bind`` / ``ctx.get``) for every ctx-bound thing: execution resources,
+storage handles, cluster handles, compute actors, the mem dicts Shapes read.
+Ref: ``FabricRef`` (read-only, self-yields); existence: ``.exists()``, a
+``Bool`` over ``FabricExists``. Provisioning brackets ``Provide`` /
+``ProvideList`` / ``ProvideDict`` push fabrics onto the Context for a body's
+duration. A provided fabric subclasses ``Fabric``, the base class carrying
+setup / cleanup with no-op defaults.
 
-- **attrs** - the channel the nustd bindings not yet on mem frames use to
-  hand their internal values to their body (``ctx.attrs``): a fold its
-  accumulator. Only interactions bind it; the tree reads it with ``Attr(name)`` and asks
-  ``Attr(name).exists()`` (a ``Bool`` over ``AttrExists``). It is never a store: state goes through a fabric.
-- **fabric** - typed bindings (``ctx.bind`` / ``ctx.get``) for every other
-  ctx-bound thing: execution resources, storage handles, cluster handles,
-  compute actors. Ref: ``FabricRef`` (read-only, self-yields); existence:
-  ``.exists()``, a ``Bool`` over ``FabricExists``. Provisioning brackets
-  ``Provide`` / ``ProvideList`` / ``ProvideDict`` install fabrics into the
-  Context for a body's duration.
-  A provided fabric subclasses ``Fabric``, the base class carrying setup /
-  cleanup with no-op defaults.
-
-The read on the attrs axis is the Ref's dual role; only existence needs an
-explicit query. Other concrete fabrics (``nu.mem`` in the kernel, the rest in
-``nustd``) follow the same shape in their own dirs: concrete Refs plus the
-interactions that touch that fabric. Nothing in ``nu.core`` touches a fabric -
-core is the pure Python builtins.
+Values a parent hands its body never go here by name: they go through mem
+(``nu.let`` and the bindings in ``nu.lang.binding``). Other concrete fabrics
+(``nu.mem`` in the kernel, the rest in ``nustd``) follow the same shape in
+their own dirs: concrete Refs plus the interactions that touch that fabric.
+Nothing in ``nu.core`` touches a fabric - core is the pure Python builtins.
 """
 
 from __future__ import annotations
 
-from .attrs import Attr, AttrExists
 from .fabric import (
     Fabric,
     FabricExists,
@@ -38,8 +31,6 @@ from .fabric import (
 
 
 __all__ = [
-    "Attr",
-    "AttrExists",
     "Fabric",
     "FabricExists",
     "FabricRef",

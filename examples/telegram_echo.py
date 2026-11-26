@@ -35,7 +35,7 @@ class Cursor(nu.Shape):
 # ---- One poll tick: fetch batch, echo each message, bump offset -----------
 
 
-def handle_one(update: nu.Attr) -> nu.Nu:
+def handle_one(update: nu.Nu) -> nu.Nu:
     msg = nu.Dict(update["message"])
     return Bot.send_message(
         chat_id=nu.Dict(msg["chat"])["id"],

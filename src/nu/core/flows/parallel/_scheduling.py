@@ -20,8 +20,7 @@ Threaded/Async variants at this layer.
 Every arm is a task started from the current frame: the arms share the
 parent's frames, and a frame an arm pushes is its own, never seen by a sibling
 or by the parent, whichever placement (loop, thread, or sequential fallback)
-runs it. Each arm also takes its own attrs table (``_fork_attrs``, temporary
-until attrs go in task-184 phase 4).
+runs it. Nothing is copied per arm: frames are immutable.
 
 ``aeval_foreach_par`` is the odd one out: one body nid fanned out over a
 runtime-sized list of arm Runtimes instead of a fixed set of children, each
@@ -95,9 +94,9 @@ def eval_parallel(
     del per_child, force
     nids = list(nids)
     if rt.budget.max_parallel == 1 or rt.budget.thread_pool is None:
-        return [rt._fork_attrs().eval(n) for n in nids]
+        return [rt.eval(n) for n in nids]
     pool = rt.budget.thread_pool
-    futures = [pool.submit(_with_contextvars(rt._fork_attrs().eval), n) for n in nids]
+    futures = [pool.submit(_with_contextvars(rt.eval), n) for n in nids]
     return [f.result() for f in futures]
 
 
@@ -124,11 +123,10 @@ def _drive_async(
 
     async def place(i: int, n: int) -> object:
         on_loop = _resolve_on_loop(on_loop_col, n, i, per_child, force)
-        arm = rt._fork_attrs()
         async with sem:
             if on_loop:
-                return await arm.aeval(n)
-            return await loop.run_in_executor(pool, _with_contextvars(arm.eval), n)
+                return await rt.aeval(n)
+            return await loop.run_in_executor(pool, _with_contextvars(rt.eval), n)
 
     return [place(i, n) for i, n in enumerate(nids)]
 
@@ -149,7 +147,7 @@ async def aeval_parallel(
     """
     nids = list(nids)
     if rt.budget.max_parallel == 1 or rt.budget.async_sem is None:
-        coros: list = [rt._fork_attrs().aeval(n) for n in nids]
+        coros: list = [rt.aeval(n) for n in nids]
     else:
         coros = _drive_async(rt, nids, per_child=per_child, force=force)
     return await _join_all([asyncio.ensure_future(c) for c in coros])
@@ -240,7 +238,7 @@ async def aeval_race(
         msg = "aeval_race needs at least one nid"
         raise ValueError(msg)
     if rt.budget.max_parallel == 1 or rt.budget.async_sem is None:
-        coros: list = [rt._fork_attrs().aeval(n) for n in nids]
+        coros: list = [rt.aeval(n) for n in nids]
     else:
         coros = _drive_async(rt, nids, per_child=per_child, force=force)
     tasks = [asyncio.ensure_future(c) for c in coros]
@@ -268,7 +266,7 @@ async def aeval_any(
         msg = "aeval_any needs at least one nid"
         raise ValueError(msg)
     if rt.budget.max_parallel == 1 or rt.budget.async_sem is None:
-        coros: list = [rt._fork_attrs().aeval(n) for n in nids]
+        coros: list = [rt.aeval(n) for n in nids]
     else:
         coros = _drive_async(rt, nids, per_child=per_child, force=force)
     tasks = [asyncio.ensure_future(c) for c in coros]
@@ -297,10 +295,9 @@ def _spawn_arm(arm: Runtime, nid: int) -> asyncio.Task:
 
     The arm's own frame keeps its element away from its siblings, and every
     value bound above it is shared by reference so a live handle crosses the
-    fan-out intact. The arm also takes its own attrs table (temporary, until
-    attrs go in task-184 phase 4).
+    fan-out intact.
     """
-    return asyncio.ensure_future(arm._fork_attrs().aeval(nid))
+    return asyncio.ensure_future(arm.aeval(nid))
 
 
 async def aeval_foreach_par(arms: Iterable[Runtime], nid: int) -> None:
@@ -337,7 +334,7 @@ def merge(rt: Runtime, nids: Iterable[int]) -> Iterable:
     nids = list(nids)
     if rt.budget.max_parallel == 1 or rt.budget.thread_pool is None:
         for n in nids:
-            with safely_closing(rt._fork_attrs().iter(n)) as gen:
+            with safely_closing(rt.iter(n)) as gen:
                 yield from gen
         return
 
@@ -352,7 +349,7 @@ def merge(rt: Runtime, nids: Iterable[int]) -> Iterable:
         finally:
             q.put(_DONE)
 
-    futures = [pool.submit(_with_contextvars(drain), rt._fork_attrs(), n) for n in nids]
+    futures = [pool.submit(_with_contextvars(drain), rt, n) for n in nids]
     remaining = len(futures)
     try:
         while remaining > 0:
@@ -375,13 +372,12 @@ async def amerge(rt: Runtime, nids: Iterable[int]) -> AsyncIterable:
 
     if rt.budget.max_parallel == 1:
         for n in nids:
-            arm = rt._fork_attrs()
             if on_loop_col[n]:
-                async with safely_aclosing(await arm.aiter(n)) as agen:
+                async with safely_aclosing(await rt.aiter(n)) as agen:
                     async for v in agen:
                         yield v
             else:
-                with safely_closing(arm.iter(n)) as gen:
+                with safely_closing(rt.iter(n)) as gen:
                     for v in gen:
                         yield v
         return
@@ -400,15 +396,14 @@ async def amerge(rt: Runtime, nids: Iterable[int]) -> AsyncIterable:
                 loop_.call_soon_threadsafe(q.put_nowait, v)
 
     async def run_child(n: int) -> None:
-        arm = rt._fork_attrs()
         try:
             if on_loop_col[n]:
-                async with safely_aclosing(await arm.aiter(n)) as agen:
+                async with safely_aclosing(await rt.aiter(n)) as agen:
                     async for v in agen:
                         await q.put(v)
             else:
                 async with sem:
-                    await loop.run_in_executor(pool, _with_contextvars(_drain_sync), arm, n, loop)
+                    await loop.run_in_executor(pool, _with_contextvars(_drain_sync), rt, n, loop)
         finally:
             await q.put(_DONE)
 

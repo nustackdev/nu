@@ -13,13 +13,12 @@ in ``nu.lang.helpers``.
 
 from __future__ import annotations
 
-from .context import Attributes, Context
+from .context import Context
 from .runtime import Runtime
 from .utils import Budget, into_loop, safely_aclosing, safely_closing
 
 
 __all__ = [
-    "Attributes",
     "Budget",
     "Context",
     "Runtime",

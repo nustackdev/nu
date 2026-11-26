@@ -259,7 +259,7 @@ _SEED_MOVIES: list[dict] = [
 # ---- Wire -------------------------------------------------------------------
 
 
-def _row(entry: nu.Attr) -> nu.Nu:
+def _row(entry: nu.Nu) -> nu.Nu:
     """One ``(index, movie)`` pair as a table row, keyed by the movie's index."""
     movie = entry[1]
     return nu.Dict.of(

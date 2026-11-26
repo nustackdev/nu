@@ -145,7 +145,6 @@ assert_type(Profile.age.exists(), Bool)
 assert_type(Profile.age.exists().not_(), Bool)
 assert_type(Profile.age.exists().not_(), Bool)
 assert_type(MemProfile.name.exists().not_().and_(MemProfile.age.exists()), Bool)
-assert_type(nu.context.Attr("item").exists(), Bool)
 
 
 # --- Builtin mirrors ----------------------------------------------------
