@@ -4,9 +4,8 @@ Every member is asserted against the real ``itertools`` result. Iterator
 results are materialized with a ``Collect`` over the returned stream atom
 (each function returns the raw ``StreamQuery`` -- no ``Iterator`` wrapping,
 so cardinality lines up and ``Collect`` accepts the stream directly).
-Higher-order members build their predicate / function from a typed attrs ref
-over core atoms - ``Attr("item")``, ``Attr("acc")``,
-``Attr("item")[i]``.
+Higher-order members build their predicate / function from a lambda over
+mem refs - ``lambda x: x < 4``, ``lambda acc, x: acc + x``, ``lambda p: p[0]``.
 
 Both paths are covered: ``run`` (sync) for every member, ``arun`` (async) for a
 representative spread including the higher-order and combinatoric atoms.
@@ -22,7 +21,6 @@ import pytest
 
 import nu
 import nustd
-from nu.context import Attr
 from nu.core import Collect
 from nu.lang import Context
 from nu.lang.helpers import arun, run
@@ -171,29 +169,29 @@ def test_combinations_with_replacement() -> None:
 
 def test_takewhile() -> None:
     src = [1, 2, 3, 8, 1, 2]
-    got = mat(takewhile(Attr("item") < 4, src))
+    got = mat(takewhile(lambda x: x < 4, src))
     assert got == list(pit.takewhile(lambda x: x < 4, src))
 
 
 def test_takewhile_first_false() -> None:
-    got = mat(takewhile(Attr("item") < 4, [9, 1, 2]))
+    got = mat(takewhile(lambda x: x < 4, [9, 1, 2]))
     assert got == list(pit.takewhile(lambda x: x < 4, [9, 1, 2]))
 
 
 def test_dropwhile() -> None:
     src = [1, 2, 3, 8, 1, 2]
-    got = mat(dropwhile(Attr("item") < 4, src))
+    got = mat(dropwhile(lambda x: x < 4, src))
     assert got == list(pit.dropwhile(lambda x: x < 4, src))
 
 
 def test_dropwhile_all_dropped() -> None:
-    got = mat(dropwhile(Attr("item") < 100, [1, 2, 3]))
+    got = mat(dropwhile(lambda x: x < 100, [1, 2, 3]))
     assert got == list(pit.dropwhile(lambda x: x < 100, [1, 2, 3]))
 
 
 def test_filterfalse() -> None:
     src = [1, 2, 3, 4, 5, 6]
-    got = mat(filterfalse(Attr("item") % 2, src))
+    got = mat(filterfalse(lambda x: x % 2, src))
     assert got == list(pit.filterfalse(lambda x: x % 2, src))
 
 
@@ -203,13 +201,13 @@ def test_accumulate_default_sum() -> None:
 
 def test_accumulate_with_func_sum() -> None:
     src = [1, 2, 3, 4]
-    got = mat(accumulate(src, Attr("acc") + Attr("item")))
+    got = mat(accumulate(src, lambda acc, x: acc + x))
     assert got == list(pit.accumulate(src, operator.add))
 
 
 def test_accumulate_with_func_product() -> None:
     src = [1, 2, 3, 4]
-    got = mat(accumulate(src, Attr("acc") * Attr("item")))
+    got = mat(accumulate(src, lambda acc, x: acc * x))
     assert got == list(pit.accumulate(src, operator.mul))
 
 
@@ -219,13 +217,13 @@ def test_accumulate_single() -> None:
 
 def test_starmap() -> None:
     src = [(1, 2), (3, 4), (5, 6)]
-    got = mat(starmap(Attr("item")[0] + Attr("item")[1], src))
+    got = mat(starmap(lambda p: p[0] + p[1], src))
     assert got == list(pit.starmap(operator.add, src))
 
 
 def test_starmap_mul() -> None:
     src = [(2, 3), (4, 5)]
-    got = mat(starmap(Attr("item")[0] * Attr("item")[1], src))
+    got = mat(starmap(lambda p: p[0] * p[1], src))
     assert got == list(pit.starmap(operator.mul, src))
 
 
@@ -237,7 +235,7 @@ def test_groupby_identity() -> None:
 
 def test_groupby_key() -> None:
     src = [1, 3, 5, 2, 4, 7]
-    got = mat(groupby(src, Attr("item") % 2))
+    got = mat(groupby(src, lambda x: x % 2))
     assert got == [(k, tuple(g)) for k, g in pit.groupby(src, lambda x: x % 2)]
 
 
@@ -289,19 +287,19 @@ def test_async_zip_longest() -> None:
 
 def test_async_takewhile() -> None:
     src = [1, 2, 3, 9, 1]
-    got = asyncio.run(amat(takewhile(Attr("item") < 4, src)))
+    got = asyncio.run(amat(takewhile(lambda x: x < 4, src)))
     assert got == list(pit.takewhile(lambda x: x < 4, src))
 
 
 def test_async_accumulate_func() -> None:
     src = [1, 2, 3, 4]
-    got = asyncio.run(amat(accumulate(src, Attr("acc") + Attr("item"))))
+    got = asyncio.run(amat(accumulate(src, lambda acc, x: acc + x)))
     assert got == list(pit.accumulate(src, operator.add))
 
 
 def test_async_starmap() -> None:
     src = [(1, 2), (3, 4)]
-    got = asyncio.run(amat(starmap(Attr("item")[0] + Attr("item")[1], src)))
+    got = asyncio.run(amat(starmap(lambda p: p[0] + p[1], src)))
     assert got == list(pit.starmap(operator.add, src))
 
 
@@ -316,41 +314,67 @@ def test_async_tee() -> None:
     assert [list(it) for it in value] == [list(it) for it in pit.tee([1, 2, 3], 2)]
 
 
-# --- loop-var scope -----------------------------------------------------------
+# --- the frame stays the run's own ----------------------------------------------
 
 
-def _outer_item_and_acc() -> Context:
-    ctx = Context(attrs={"item": "outer item", "acc": "outer acc"})
-    return ctx
+class Out(nu.Shape):
+    log = nu.mem.ListRef.slot(object)
 
 
 _SCOPED = [
-    (lambda: takewhile(Attr("item") < 3, [1, 2, 3, 1]), [1, 2]),
-    (lambda: dropwhile(Attr("item") < 3, [1, 2, 3, 1]), [3, 1]),
-    (lambda: filterfalse(Attr("item") < 3, [1, 2, 3, 4]), [3, 4]),
-    (lambda: accumulate([1, 2, 3], Attr("acc") * Attr("item")), [1, 2, 6]),
-    (lambda: starmap(Attr("item")[0] + Attr("item")[1], [(1, 2), (3, 4)]), [3, 7]),
-    (lambda: groupby([1, 1, 2], Attr("item") * 10), [(10, (1, 1)), (20, (2,))]),
+    (lambda: takewhile(lambda x: x < 3, [1, 2, 3, 1]), [1, 2]),
+    (lambda: dropwhile(lambda x: x < 3, [1, 2, 3, 1]), [3, 1]),
+    (lambda: filterfalse(lambda x: x < 3, [1, 2, 3, 4]), [3, 4]),
+    (lambda: accumulate([1, 2, 3], lambda acc, x: acc * x), [1, 2, 6]),
+    (lambda: starmap(lambda p: p[0] + p[1], [(1, 2), (3, 4)]), [3, 7]),
+    (lambda: groupby([1, 1, 2], lambda x: x * 10), [(10, (1, 1)), (20, (2,))]),
 ]
 _SCOPED_IDS = ["takewhile", "dropwhile", "filterfalse", "accumulate", "starmap", "groupby"]
 
 
-@pytest.mark.parametrize(("build", "expected"), _SCOPED, ids=_SCOPED_IDS)
-def test_loop_vars_are_scoped_to_each_item(build: object, expected: list) -> None:
-    ctx = _outer_item_and_acc()
-    value, _ = run(Collect(build()), ctx)
-    assert value == expected
-    assert ctx.attrs.get("item") == "outer item"
-    assert ctx.attrs.get("acc") == "outer acc"
+def _outer() -> tuple[dict, Context]:
+    data: dict = {"log": []}
+    return data, Context().bind(dict, data, Out)
 
 
 @pytest.mark.parametrize(("build", "expected"), _SCOPED, ids=_SCOPED_IDS)
-async def test_loop_vars_are_scoped_to_each_item_async(build: object, expected: list) -> None:
-    ctx = _outer_item_and_acc()
-    value, _ = await arun(Collect(build()), ctx)
+def test_the_run_frame_never_reaches_the_caller(build: object, expected: list) -> None:
+    data, ctx = _outer()
+    value, out = run(Collect(build()), ctx)  # type: ignore[operator]
     assert value == expected
-    assert ctx.attrs.get("item") == "outer item"
-    assert ctx.attrs.get("acc") == "outer acc"
+    assert out is ctx
+    assert data == {"log": []}
+
+
+@pytest.mark.parametrize(("build", "expected"), _SCOPED, ids=_SCOPED_IDS)
+async def test_the_run_frame_never_reaches_the_caller_async(build: object, expected: list) -> None:
+    _, ctx = _outer()
+    value, out = await arun(Collect(build()), ctx)  # type: ignore[operator]
+    assert value == expected
+    assert out is ctx
+
+
+class Limit(nu.Shape):
+    below = nu.mem.IntRef.slot()
+
+
+def test_a_body_reads_the_outer_frame_too() -> None:
+    ctx = Context().bind(dict, {"below": 3}, Limit)
+    value, _ = run(Collect(takewhile(lambda x: x < Limit.below, [1, 2, 5, 1])), ctx)
+    assert value == [1, 2]
+
+
+def test_accumulate_lambda_may_take_only_the_running_value() -> None:
+    assert mat(accumulate([1, 2, 3], lambda acc: acc + 100)) == [1, 101, 201]
+
+
+def test_accumulate_lambda_of_three_raises() -> None:
+    with pytest.raises(TypeError, match="so its lambda takes at most 2"):
+        accumulate([1], lambda a, b, c: a)
+
+
+def test_a_plain_tree_body_reads_nothing() -> None:
+    assert mat(filterfalse(nu.Bool(False), [1, 2])) == [1, 2]
 
 
 # --- stream detection and chaining ------------------------------------------
