@@ -3,7 +3,7 @@
 The four atoms take a ``ServerRef`` in slot 0 and read the ``WebServer`` it
 resolves to; with no server bracket open the ref reads NULL and the
 atom fails on it like any Python call would. ``SessionFor`` is the bracket an arm runs inside, holding that
-connection's transport.
+connection's transport and its id (``nustd.session.SessionId``).
 """
 
 from __future__ import annotations
@@ -13,8 +13,10 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Bracket, Command, ScalarQuery
+from nu.lang.binding import _StaticBinding
 from nu.lang.null import is_null
 
+from ..session import SessionId
 from .fabric import WebServer
 
 
@@ -26,19 +28,12 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "SID_ATTR",
     "LiveSessions",
     "MarkSessionDone",
     "SessionDone",
     "SessionFor",
     "SessionsChanged",
 ]
-
-
-#: What the fold binds each session id under. Every arm of the fold has its
-#: own attrs table, so an outer binding of the same name is shadowed only
-#: inside an arm, never across arms.
-SID_ATTR = "sid"
 
 
 _SYNC_UNSUPPORTED = "nustd.ws_server is async-only; use nu.arun"
@@ -135,30 +130,30 @@ class MarkSessionDone(Command):
         return athunk
 
 
-class SessionFor(Bracket):
-    """Bind the ws transport of the connection this arm belongs to.
+class SessionFor(_StaticBinding, Bracket):
+    """Bind the ws transport and the id of the connection this arm belongs to.
 
-    Reads the sid off the Context the fold branched for this arm, looks the
-    live session up in the server's connection book, and binds it under the
-    session class's ``_nu_bind_as`` -- the abstract type the protocol's terms
-    ask for -- falling back to the concrete class when there is none. Nothing
-    is torn down: the server owns the session and the endpoint closes it.
+    Looks the live session for ``sid`` up in the server's connection book and
+    binds it under the session class's ``_nu_bind_as`` -- the abstract type
+    the protocol's terms ask for -- falling back to the concrete class when
+    there is none. ``sid`` itself goes in a frame of its own under
+    ``SessionId``, so the body reads it as ``SessionId.sid``. Nothing is torn
+    down: the server owns the session and the endpoint closes it.
 
     Args:
         body: the tree that runs with the session bound.
-        sid_attr: the attr the fold parked this arm's session id under: a
-            str, or any Nu yielding one. A config child, evaluated on entry.
+        sid: this arm's session id, any Nu yielding it (the ref the fold
+            hands its lambda). Evaluated on entry.
     """
 
-    def __init__(self, body: Nu | None = None, *, sid_attr: StrArg = SID_ATTR) -> None:
-        super().__init__(body, sid_attr)
+    def __init__(self, body: Nu | None = None, *, sid: StrArg) -> None:
+        self._bind_static(SessionId, ("sid",))
+        super().__init__(body, sid)
 
     @asynccontextmanager
-    async def _aopen(self, ctx: Context, sid_attr: str) -> AsyncIterator[Context]:
-        attr = sid_attr
-        sid = ctx.attrs.get(attr, None)
-        if sid is None:
-            msg = f"SessionFor found no {attr!r} on the Context; it runs inside the fold"
+    async def _aopen(self, ctx: Context, sid: str) -> AsyncIterator[Context]:
+        if is_null(sid):
+            msg = "SessionFor got a NULL session id; it runs inside the fold"
             raise LookupError(msg)
         session = ctx.get(WebServer).session(sid)
         if session is None:
@@ -168,27 +163,4 @@ class SessionFor(Bracket):
             msg = f"no live ws session for {sid!r}"
             raise LookupError(msg)
         cls = type(session)
-        yield ctx.bind(getattr(cls, "_nu_bind_as", None) or cls, session)
-
-
-class _ParkSid(Bracket):
-    """Park the session id the fold hands an arm in attrs, under ``SID_ATTR``.
-
-    TEMPORARY (task-184 phase 3 moves the session id onto a Shape): the fold
-    hands the id to a lambda, and the readers still look it up in attrs.
-    Each arm of the fold runs on its own attrs table, so arms never see each
-    other's id.
-
-    Args:
-        sid: the session id, any Nu yielding it.
-        body: the tree that runs with the id parked.
-    """
-
-    def __init__(self, sid: object, body: Nu) -> None:
-        super().__init__(body, sid)
-
-    @asynccontextmanager
-    async def _aopen(self, ctx: Context, *config: object) -> AsyncIterator[Context]:
-        (sid,) = config
-        with ctx.attrs.let(SID_ATTR, sid):
-            yield ctx
+        yield self._push(ctx.bind(getattr(cls, "_nu_bind_as", None) or cls, session), (sid,))

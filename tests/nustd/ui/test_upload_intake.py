@@ -22,6 +22,7 @@ from starlette.testclient import TestClient
 import nu
 from nu.context.fabric import FabricRef
 from nu.lang.runtime import Context
+from nustd.session import SessionId
 from nustd.ui.nudle import serve
 from nustd.ui.uploads import (
     STALE_AFTER,
@@ -665,8 +666,8 @@ async def test_upload_view_binds_the_tab_view(tmp_path: Path):
     area: UploadArea = bracket.area
     server = WebServer(session_cls=_Session)
     sid = uuid.uuid4().hex
-    ctx = Context({"sid": sid}).bind(WebServer, server)
-    view, _ = await nu.arun(nu.With(bracket, body=upload_view("sid", FabricRef(UploadView))), ctx)
+    ctx = Context().bind(dict, {"sid": sid}, SessionId).bind(WebServer, server)
+    view, _ = await nu.arun(nu.With(bracket, body=upload_view(FabricRef(UploadView))), ctx)
     assert isinstance(view, UploadView)
     assert view.sid == sid
     assert view.url == f"/_nu/upload/{sid}"
@@ -675,7 +676,8 @@ async def test_upload_view_binds_the_tab_view(tmp_path: Path):
 
 async def test_upload_view_without_an_area_says_so():
     with pytest.raises(LookupError, match="UploadArea"):
-        await nu.arun(upload_view("sid", FabricRef(UploadView)), Context({"sid": uuid.uuid4().hex}))
+        ctx = Context().bind(dict, {"sid": uuid.uuid4().hex}, SessionId)
+        await nu.arun(upload_view(FabricRef(UploadView)), ctx)
 
 
 def test_a_view_built_from_the_root_resolves_what_the_area_landed(rig: _Rig, client: TestClient):

@@ -3,7 +3,8 @@
 Three terms, in the order they run:
 
 - ``sessions_fold`` -- one live arm per connection the server holds open.
-- ``session_for`` -- inside an arm, bind that connection's transport.
+- ``session_for`` -- inside an arm, bind that connection's transport and
+  its id, read as ``SessionId.sid``.
 - ``run_once`` -- inside an arm, run the program at most once per connection.
 
 The fold reads the server's connection book directly, so there is nothing
@@ -17,12 +18,15 @@ from typing import TYPE_CHECKING
 import nu
 from nu.core.io import STDOUT
 
-from .interactions import SID_ATTR, SessionFor, _ParkSid
+from ..session import SessionId
+from .interactions import SessionFor
 from .ref import ServerRef
 
 
 if TYPE_CHECKING:
-    from nu.lang import Nu
+    from collections.abc import Callable
+
+    from nu.lang import Nu, StrArg
 
 
 __all__ = [
@@ -32,34 +36,39 @@ __all__ = [
 ]
 
 
-def sessions_fold(arm: Nu) -> Nu:
+def sessions_fold(arm: Nu | Callable[..., Nu]) -> Nu:
     """Run ``arm`` once per live connection, births and deaths included.
 
     Args:
-        arm: the body one connection gets. Spawned when the connection
-            appears in the server's book, cancelled and drained when it goes.
+        arm: the body one connection gets, a lambda over the connection's
+            session id (hand it to ``session_for``). Spawned when the
+            connection appears in the server's book, cancelled and drained
+            when it goes.
 
     Notes:
         - No re-checks: the server signals opens and closes in process, on
           one channel that drops nothing, so a notification is never missed.
-    """
-    return nu.ReconcileLatestEach(
-        ServerRef().sessions(),
-        ServerRef().on_change(),
-        lambda sid: _ParkSid(sid, arm),
-    )
-
-
-def session_for(sid_attr: str = SID_ATTR, body: Nu | None = None) -> SessionFor:
-    """``SessionFor`` in call order: the attr first, then what runs under it.
+        - Each arm runs on a frame of its own, so arms never see each
+          other's id.
 
     Example:
-        session_for(SID_ATTR, run_once(program))
+        sessions_fold(lambda sid: session_for(sid, run_once(program)))
     """
-    return SessionFor(body, sid_attr=sid_attr)
+    return nu.ReconcileLatestEach(ServerRef().sessions(), ServerRef().on_change(), arm)
 
 
-def run_once(body: Nu, *, sid_attr: str = SID_ATTR) -> Nu:
+def session_for(sid: StrArg, body: Nu | None = None) -> SessionFor:
+    """``SessionFor`` in call order: the session id first, then what runs under it.
+
+    The body reads the id as ``SessionId.sid``.
+
+    Example:
+        sessions_fold(lambda sid: session_for(sid, run_once(program)))
+    """
+    return SessionFor(body, sid=sid)
+
+
+def run_once(body: Nu) -> Nu:
     """Run ``body`` for this connection at most once, and mark it done after.
 
     The fold frees the key of every arm whose task has ended and respawns it,
@@ -70,14 +79,14 @@ def run_once(body: Nu, *, sid_attr: str = SID_ATTR) -> Nu:
 
     Args:
         body: what one connection runs, whatever it sends at connect included.
-        sid_attr: the attr the fold parked this arm's session id under.
+            Runs inside ``session_for``, whose id it reads.
 
     Example:
-        session_for(SID_ATTR, run_once(program))
+        sessions_fold(lambda sid: session_for(sid, run_once(program)))
     """
-    sid = nu.Attr(sid_attr)
+    sid = SessionId.sid
 
-    def report(error: nu.Attr) -> nu.Nu:
+    def report(error: Nu) -> Nu:
         return nu.Print(STDOUT, nu.Str("ws session arm failed:"), nu.ToStr(error))
 
     return nu.IfDo(
