@@ -161,37 +161,35 @@ def test_module_level_info_uses_root_logger(caplog: pytest.LogCaptureFixture) ->
     assert caplog.records[0].getMessage() == "root-level"
 
 
+class Who(nu.Shape):
+    who = nu.StrRef.slot()
+
+
 def test_msg_can_be_a_nu_term(caplog: pytest.LogCaptureFixture) -> None:
     # Log accepts Nu terms in the msg + args slots; refs resolve at
-    # eval time. Uses a bound attr for a real test.
-    from nu.context import Attr
-
+    # eval time. Uses a bound mem ref for a real test.
     log = logging.getLogger("nu.test")
     caplog.set_level(pylogging.DEBUG, logger="nu.test")
 
-    ctx = Context(attrs={"who": "gor"})
-    run(log.info("hi %s", Attr("who")), ctx)
+    ctx = Context().bind(dict, {"who": "gor"}, Who)
+    run(log.info("hi %s", Who.who), ctx)
     assert caplog.records[0].getMessage() == "hi gor"
 
 
 def test_a_null_arg_raises_and_logs_nothing(caplog: pytest.LogCaptureFixture) -> None:
-    # An unbound attr reads NULL, and a log line is a write: it refuses NULL
-    # rather than emitting a partially-formatted string.
-    from nu.context import Attr
-
+    # A slot holding nothing reads NULL, and a log line is a write: it refuses
+    # NULL rather than emitting a partially-formatted string.
     log = logging.getLogger("nu.test")
     caplog.set_level(pylogging.DEBUG, logger="nu.test")
     with pytest.raises(ValueError, match="NULL"):
-        run(log.info("hi %s", Attr("missing")))
+        run(log.info("hi %s", Who.who), Context().bind(dict, {}, Who))
     assert caplog.records == []
 
 
 def test_fallback_keeps_a_line_with_a_missing_arg(caplog: pytest.LogCaptureFixture) -> None:
-    from nu.context import Attr
-
     log = logging.getLogger("nu.test")
     caplog.set_level(pylogging.DEBUG, logger="nu.test")
-    run(log.info("hi %s", Attr("missing").fallback("guest")))
+    run(log.info("hi %s", Who.who.fallback("guest")), Context().bind(dict, {}, Who))
     assert caplog.records[0].getMessage() == "hi guest"
 
 

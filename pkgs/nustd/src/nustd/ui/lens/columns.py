@@ -252,7 +252,7 @@ def _mapping_term(ref: StructuredRef, max_rows: int) -> nu.Nu:
     over the store for nothing.
     """
 
-    def row(key: nu.Attr) -> nu.Nu:
+    def row(key: nu.Nu) -> nu.Nu:
         if _holds_shapes(ref):
             return _door(nu.ToStr(key), "shape")
         cell: nu.Nu = LensCell(
@@ -276,7 +276,7 @@ def _sequence_term(ref: StructuredRef, max_rows: int) -> nu.Nu:
     position is the whole row, and what is behind it is a column of its own.
     """
 
-    def row(pair: nu.Attr) -> nu.Nu:
+    def row(pair: nu.Nu) -> nu.Nu:
         index = nu.ToStr(nu.GetItem(pair, nu.Int(0)))
         if _holds_shapes(ref):
             return _door(index, "shape")
