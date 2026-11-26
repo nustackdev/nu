@@ -117,7 +117,7 @@ class Held(nu.Shape):
 
 def held(body: object) -> object:
     """``body`` with ``Held`` bound in a frame of its own."""
-    return nu.Frame(Held, body, value=1)
+    return nu.let(Held, body, value=1)
 
 
 # =============================================================================
