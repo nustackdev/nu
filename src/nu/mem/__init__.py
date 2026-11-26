@@ -54,6 +54,7 @@ decides once, at build time, for every run. Build the Nu expression,
 """
 
 from nu.mem import interactions, refs
+from nu.mem._read import read
 from nu.mem.interactions import Debounce, Throttle, let
 from nu.mem.refs import (
     BoolRef,
@@ -86,5 +87,6 @@ __all__ = [
     "Throttle",
     "interactions",
     "let",
+    "read",
     "refs",
 ]

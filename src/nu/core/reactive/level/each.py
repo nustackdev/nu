@@ -9,7 +9,7 @@ from nu.engine.structure import Declared
 from nu.lang import Control
 from nu.lang._stream import aiter_any
 from nu.lang.attributes.execution import ExecOrder
-from nu.lang.binding import _DynamicBinding
+from nu.lang.binding import Binding
 
 from .._body import async_only
 from ._wakes import Wakes, read_schedule, schedule_terms
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 __all__ = ["ReconcileEach"]
 
 
-class ReconcileEach(_DynamicBinding, Control):
+class ReconcileEach(Control):
     """``ReconcileEach(items, change, lambda x: body)`` - each wake, one pass of ``body`` per element, all at once.
 
     ``Reconcile`` over a fan-out: each pass reads ``items`` and runs the body
@@ -94,10 +94,11 @@ class ReconcileEach(_DynamicBinding, Control):
         after: Iterable[float] | object = (),
         every: float | object | None = None,
     ) -> None:
+        body, self._binding = Binding.of_lambda("ReconcileEach", body, 1)
         super().__init__(
             items,
             change,
-            self._dynamic("ReconcileEach", body, 1),
+            body,
             *schedule_terms("ReconcileEach", after, every),
         )
 
@@ -115,7 +116,7 @@ class ReconcileEach(_DynamicBinding, Control):
                 while True:
                     await wakes.wait()
                     elems = [elem async for elem in aiter_any(await items(rt))]
-                    arms = [rt.on(binding.push(rt.ctx, (elem,))) for elem in elems]
+                    arms = [rt.on(binding.push(rt.ctx, elem)) for elem in elems]
                     await aeval_foreach_par(arms, body_nid)
 
         return athunk

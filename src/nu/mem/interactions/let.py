@@ -6,8 +6,8 @@ One interaction, two forms, values always passed by slot name:
     nu.let(lambda n: body(n), n=0)                # lambda given: dynamic binding
     nu.let(lambda a, b: body(a, b), a=1, b=2)
 
-Every run pushes a frame with a fresh dict under the Shape, writes the values
-into it and runs the body on that frame. The values are evaluated before the
+Every run pushes a frame with a fresh dict under the Shape holding the values
+and runs the body on that frame. The values are evaluated before the
 push, on the Context the ``let`` runs on, so a value reading the same Shape
 reads the outer frame.
 
@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING
 
 from nu.domains.shape import Shape
 from nu.lang import Bracket
-from nu.lang.binding import _DynamicBinding, lambda_params, named
+from nu.lang.binding import Binding, lambda_params
 from nu.lang.null import is_null
 from nu.lang.sentinels import UNSET
 
@@ -41,7 +41,7 @@ if TYPE_CHECKING:
 __all__ = ["Let", "let"]
 
 
-class Let(_DynamicBinding, Bracket):
+class Let(Bracket):
     """Runs a body with values held in a fresh mem frame. Built by :func:`let`."""
 
     def __init__(self, target: object, body: object = UNSET, /, **values: object) -> None:
@@ -53,24 +53,24 @@ class Let(_DynamicBinding, Bracket):
             if unknown:
                 msg = f"let over {target.__name__}: {unknown} are not slots of {target.__name__}"
                 raise TypeError(msg)
-            self._bind_static(target, tuple(values))
+            self._binding = Binding.of(target, tuple(values))
             super().__init__(body, *values.values())
             return
         if body is not UNSET:
             msg = "let(fn, **values) takes the values by name, not a body: the lambda builds it"
             raise TypeError(msg)
         lambda_params("let", target)  # a lambda, nothing else
-        built, self._binding, ordered = named("let", target, values)
+        built, self._binding, ordered = Binding.of_named("let", target, values)
         super().__init__(built, *ordered)
 
     @contextmanager
     def _open(self, ctx: Context, *values: object) -> Iterator[Context]:
-        shape = self._bind_shape
-        for name, value in zip(self._bind_slots, values, strict=False):
+        shape = self._binding.shape
+        for name, value in zip(self._binding.slots, values, strict=False):
             if is_null(value):
                 msg = f"let: cannot store NULL in {getattr(shape, '__name__', shape)}.{name}"
                 raise ValueError(msg)
-        yield self._push(ctx, values)
+        yield self._binding.push(ctx, *values)
 
 
 def let(target: object, body: object = UNSET, /, **values: object) -> Let:

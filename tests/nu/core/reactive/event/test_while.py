@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import sys
+
 import pytest
 
 import nu
@@ -26,6 +28,10 @@ def test_react_while_constructs():
     assert len(nu.tree.children(r)) == 3
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 11),
+    reason="3.10 merges identical lambdas on one line into one code object, so they share a Shape",
+)
 def test_react_while_hands_the_key_to_condition_and_body_each_on_its_own_shape():
     r = ReactWhile(ItemRef("sub"), lambda key: key, lambda key: key)
     assert r.condition_binding.shape is not r.body_binding.shape

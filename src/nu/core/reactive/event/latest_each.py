@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Control
-from nu.lang.binding import _DynamicBinding
+from nu.lang.binding import Binding
 
 from .._arms import ArmBook
 from .._body import async_only, drain_body
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 __all__ = ["ReactLatestEach"]
 
 
-class ReactLatestEach(_DynamicBinding, Control):
+class ReactLatestEach(Control):
     """Run the body per key, a newer change on a key restarting only that key's run.
 
     ``ReactLatest`` with one run per key. Binds to the change subscription
@@ -77,7 +77,8 @@ class ReactLatestEach(_DynamicBinding, Control):
     _param_slots = Declared(value=frozenset({0}), name="param_slots")
 
     def __init__(self, change: object, body: object) -> None:
-        super().__init__(change, self._dynamic("ReactLatestEach", body, 1))
+        body, self._binding = Binding.of_lambda("ReactLatestEach", body, 1)
+        super().__init__(change, body)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return async_only("ReactLatestEach")
@@ -96,7 +97,7 @@ class ReactLatestEach(_DynamicBinding, Control):
             def spawn(key: object) -> asyncio.Task:
                 # Every run is a task of its own on a frame of its own holding
                 # its key.
-                run_ctx = binding.push(rt.ctx, (key,))
+                run_ctx = binding.push(rt.ctx, key)
                 return asyncio.ensure_future(drain_body(rt.on(run_ctx), body))
 
             book = ArmBook(spawn, owner="ReactLatestEach")

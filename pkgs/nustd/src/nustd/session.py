@@ -3,8 +3,7 @@
 ``SessionId`` is the Shape the id lives under. ``nustd.ws_server.session_for``
 binds it statically for its body, a frame of its own per arm, so arms never
 see each other's id. Trees read it through the ref, ``SessionId.sid``;
-Python bracket code reads it off the Context like any mem frame, with
-:func:`session_id`.
+Python bracket code reads it off the Context with :func:`session_id`.
 
 Its own module, holding nothing but the Shape, so a reader such as
 ``nustd.ui.uploads`` imports it without loading the web server that
@@ -38,7 +37,7 @@ def session_id(ctx: Context, owner: str) -> str:
         LookupError: no ``session_for`` frame is in scope; the message names
             ``owner``.
     """
-    sid = ctx.get(dict, SessionId).get("sid") if ctx.has(dict, SessionId) else None
+    sid = nu.mem.read(ctx, SessionId, "sid", None)
     if sid is None:
         msg = f"{owner} found no session id on the Context; it runs inside session_for"
         raise LookupError(msg)

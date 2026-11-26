@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Control
-from nu.lang.binding import dynamic
+from nu.lang.binding import Binding
 
 from .._body import async_only, drain_body
 
@@ -62,8 +62,8 @@ class ReactWhile(Control):
     _param_slots = Declared(value=frozenset({0, 1}), name="param_slots")
 
     def __init__(self, change: object, condition: object, body: object) -> None:
-        condition, self.condition_binding = dynamic("ReactWhile condition", condition, 1)
-        body, self.body_binding = dynamic("ReactWhile body", body, 1)
+        condition, self.condition_binding = Binding.of_lambda("ReactWhile condition", condition, 1)
+        body, self.body_binding = Binding.of_lambda("ReactWhile body", body, 1)
         super().__init__(change, condition, body)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -85,9 +85,9 @@ class ReactWhile(Control):
             try:
                 while True:
                     key = await queue.get()
-                    if not await condition(rt.on(cond_b.push(rt.ctx, (key,)))):
+                    if not await condition(rt.on(cond_b.push(rt.ctx, key))):
                         break
-                    await drain_body(rt.on(body_b.push(rt.ctx, (key,))), body)
+                    await drain_body(rt.on(body_b.push(rt.ctx, key)), body)
             finally:
                 sub.unbind(on_change)
                 sub.close()

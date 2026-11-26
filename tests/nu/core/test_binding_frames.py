@@ -1,22 +1,30 @@
 """Every core binding hands its values through a frame of its own.
 
-A binding pushes a frame under the Shape its lambda generated, writes what it
+A binding pushes a frame under the Shape its lambda generated, holding what it
 hands, and runs the body on it. Each test checks both halves: the body read
 the value, and nothing reached the caller (the Context a run hands back is
-the one it was given). Sequential bindings keep one frame per run and write
-each value into it; concurrent ones push a frame per arm or per run.
+the one it was given). Every body execution gets a frame of its own, pushed
+from the same parent Context, so work it detaches reads its own value.
 """
 
 from __future__ import annotations
 
 import asyncio
+from typing import TYPE_CHECKING
 
 import pytest
 from _support.reactive import FEED, Body, Feed, seeded, stop, until
 
 import nu
 import nu.mem as nm
-from nu.lang import Context
+from nu.engine.structure import Declared
+from nu.lang import Context, ScalarAction
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from nu.lang.runtime import Runtime
 
 
 class Out(nu.Shape):
@@ -114,8 +122,7 @@ def test_a_nested_binding_over_the_same_lambda_shadows_the_outer() -> None:
 
 
 def test_a_lazy_map_reads_each_item_as_it_is_pulled() -> None:
-    # One frame for the run, written per item before the transform runs, so a
-    # pull reads the item it was pulled for.
+    # Each pulled item gets a frame of its own for its transform.
     stream = nu.Map(nu.Iter([1, 2, 3]), lambda x: nu.Int(x) + 1)
     assert nu.run(nu.Collect(nu.Filter(stream, lambda y: y > 2)))[0] == [3, 4]
 
@@ -179,3 +186,45 @@ async def test_react_every_runs_each_push_their_own_frame() -> None:
     feed.fire("b")
     await until(lambda: seen == ["a", "b"])
     await stop(task)
+
+
+class _Later(ScalarAction):
+    """Detached work: schedules its child's read for later and returns at once."""
+
+    _requires_async = Declared(value=True, name="requires_async")
+    _mutates = Declared(value=frozenset({0}), name="mutates")
+
+    def __init__(self, read: object, seen: list) -> None:
+        super().__init__(read)
+        self._seen = seen
+
+    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        def thunk(rt: Runtime) -> object:
+            msg = "_Later is async-only"
+            raise RuntimeError(msg)
+
+        return thunk
+
+    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
+        (read,) = children
+        seen = self._seen
+
+        async def later(rt: Runtime) -> None:
+            await asyncio.sleep(0.01)
+            seen.append(await read(rt))
+
+        async def athunk(rt: Runtime) -> None:
+            _TASKS.append(asyncio.ensure_future(later(rt)))
+
+        return athunk
+
+
+_TASKS: list[asyncio.Task] = []
+
+
+async def test_work_a_loop_body_detaches_reads_its_own_item() -> None:
+    seen: list = []
+    await nu.arun(nu.ForEachDo(nu.Iter([1, 2, 3]), lambda x: _Later(x, seen)))
+    await asyncio.gather(*_TASKS)
+    _TASKS.clear()
+    assert seen == [1, 2, 3]

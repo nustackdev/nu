@@ -19,10 +19,9 @@ iterable value and yields a list rather than posing as a stream.
 ``Map``, ``Filter`` and ``SortBy`` are dynamic bindings (``nu.lang.binding``)
 handing each item to a Nu child. The child is a lambda over the item
 (``lambda x: x > 1``): it runs once, at construction, with a mem ref to the
-item and returns the child tree. Each run pushes one frame and writes the
-current item into it before the child is evaluated for that item; the frame
-is the run's own and never reaches the caller. A child given as a plain tree
-reads no item.
+item and returns the child tree. Each item's evaluation of the child gets a
+frame of its own holding the item; the frames never reach the caller. A child
+given as a plain tree reads no item.
 """
 
 from __future__ import annotations
@@ -31,7 +30,7 @@ from typing import TYPE_CHECKING
 
 from nu.lang import ScalarQuery, StreamQuery
 from nu.lang._stream import aiter_any, sync_iter
-from nu.lang.binding import _DynamicBinding
+from nu.lang.binding import Binding
 
 
 if TYPE_CHECKING:
@@ -43,7 +42,7 @@ if TYPE_CHECKING:
 __all__ = ["Filter", "Flatten", "Map", "SortBy", "Sorted", "Unique"]
 
 
-class Map(_DynamicBinding, StreamQuery):
+class Map(StreamQuery):
     """Applies a query child to every item of a stream child (lazy).
 
     Args:
@@ -57,12 +56,9 @@ class Map(_DynamicBinding, StreamQuery):
         - The ref's Shape belongs to the lambda's code: nested lambdas each
           get their own, while one lambda used again inside its own body
           shadows the outer binding, as with ``nu.let``.
-        - One frame per run, the item written into it before ``transform``
-          runs for that item. The frame never reaches the consumer.
-        - Work detached from the run (a debounced, delayed or spawned task,
-          a stream pulled after the run moved on) reads the latest item,
-          not the one current when it started: the run keeps one frame and
-          overwrites it per item. Concurrent runs each get their own.
+        - Each item gets a frame of its own holding it, pushed when the
+          item is pulled, for that item's ``transform``. The frames never
+          reach the consumer.
         - Pulled lazily, one item at a time; nothing runs ahead of the pull.
         - No NULL check of its own: a NULL item, or a NULL result from
           ``transform``, passes straight through as a value.
@@ -77,20 +73,17 @@ class Map(_DynamicBinding, StreamQuery):
     """
 
     def __init__(self, source: Arg[Iterable], transform: Nu | Callable[..., Nu]) -> None:
-        super().__init__(source, self._dynamic("Map", transform, 1))
+        transform, self._binding = Binding.of_lambda("Map", transform, 1)
+        super().__init__(source, transform)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, transform = children
         binding = self._binding
 
         def thunk(rt: Runtime) -> object:
-            inner_ctx, data = binding.frame(rt.ctx)
-            inner = rt.on(inner_ctx)
-
             def gen() -> object:
                 for elem in sync_iter(source(rt)):
-                    binding.write(data, (elem,))
-                    yield transform(inner)
+                    yield transform(rt.on(binding.push(rt.ctx, elem)))
 
             return gen()
 
@@ -101,20 +94,16 @@ class Map(_DynamicBinding, StreamQuery):
         binding = self._binding
 
         async def athunk(rt: Runtime) -> object:
-            inner_ctx, data = binding.frame(rt.ctx)
-            inner = rt.on(inner_ctx)
-
             async def agen() -> object:
                 async for elem in aiter_any(await source(rt)):
-                    binding.write(data, (elem,))
-                    yield await transform(inner)
+                    yield await transform(rt.on(binding.push(rt.ctx, elem)))
 
             return agen()
 
         return athunk
 
 
-class Filter(_DynamicBinding, StreamQuery):
+class Filter(StreamQuery):
     """Keeps the items of a stream child for which a predicate holds (lazy).
 
     Args:
@@ -124,10 +113,6 @@ class Filter(_DynamicBinding, StreamQuery):
 
     Notes:
         - The same binding, and the same lambda form, as :class:`Map`.
-        - Work detached from the run (a debounced, delayed or spawned task,
-          a stream pulled after the run moved on) reads the latest item,
-          not the one current when it started: the run keeps one frame and
-          overwrites it per item. Concurrent runs each get their own.
         - Pulled lazily, one item at a time.
 
     Yields:
@@ -140,20 +125,17 @@ class Filter(_DynamicBinding, StreamQuery):
     """
 
     def __init__(self, source: Arg[Iterable], predicate: Nu | Callable[..., Nu]) -> None:
-        super().__init__(source, self._dynamic("Filter", predicate, 1))
+        predicate, self._binding = Binding.of_lambda("Filter", predicate, 1)
+        super().__init__(source, predicate)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, predicate = children
         binding = self._binding
 
         def thunk(rt: Runtime) -> object:
-            inner_ctx, data = binding.frame(rt.ctx)
-            inner = rt.on(inner_ctx)
-
             def gen() -> object:
                 for elem in sync_iter(source(rt)):
-                    binding.write(data, (elem,))
-                    if predicate(inner):
+                    if predicate(rt.on(binding.push(rt.ctx, elem))):
                         yield elem
 
             return gen()
@@ -165,13 +147,9 @@ class Filter(_DynamicBinding, StreamQuery):
         binding = self._binding
 
         async def athunk(rt: Runtime) -> object:
-            inner_ctx, data = binding.frame(rt.ctx)
-            inner = rt.on(inner_ctx)
-
             async def agen() -> object:
                 async for elem in aiter_any(await source(rt)):
-                    binding.write(data, (elem,))
-                    if await predicate(inner):
+                    if await predicate(rt.on(binding.push(rt.ctx, elem))):
                         yield elem
 
             return agen()
@@ -220,7 +198,7 @@ class Sorted(ScalarQuery):
         return athunk
 
 
-class SortBy(_DynamicBinding, StreamQuery):
+class SortBy(StreamQuery):
     """Its source child, ordered by a per-item key expression (eager).
 
     Args:
@@ -233,10 +211,6 @@ class SortBy(_DynamicBinding, StreamQuery):
     Notes:
         - The same binding, and the same lambda form, as :class:`Map` /
           :class:`Filter`.
-        - Work detached from the run (a debounced, delayed or spawned task,
-          a stream pulled after the run moved on) reads the latest item,
-          not the one current when it started: the run keeps one frame and
-          overwrites it per item. Concurrent runs each get their own.
         - Drains and sorts the whole source before yielding anything, so
           a pull on its output waits for the whole source.
 
@@ -255,7 +229,8 @@ class SortBy(_DynamicBinding, StreamQuery):
         key: Nu | Callable[..., Nu],
         reverse: Arg[bool] = False,
     ) -> None:
-        super().__init__(source, self._dynamic("SortBy", key, 1), reverse)
+        key, self._binding = Binding.of_lambda("SortBy", key, 1)
+        super().__init__(source, key, reverse)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         source, key_expr, reverse_t = children
@@ -263,12 +238,9 @@ class SortBy(_DynamicBinding, StreamQuery):
 
         def thunk(rt: Runtime) -> object:
             reverse = bool(reverse_t(rt))
-            inner_ctx, data = binding.frame(rt.ctx)
-            inner = rt.on(inner_ctx)
             rows: list[tuple[object, object]] = []
             for elem in sync_iter(source(rt)):
-                binding.write(data, (elem,))
-                rows.append((key_expr(inner), elem))
+                rows.append((key_expr(rt.on(binding.push(rt.ctx, elem))), elem))
             rows.sort(key=lambda kv: kv[0], reverse=reverse)
             return iter(v for _, v in rows)
 
@@ -280,12 +252,9 @@ class SortBy(_DynamicBinding, StreamQuery):
 
         async def athunk(rt: Runtime) -> object:
             reverse = bool(await reverse_t(rt))
-            inner_ctx, data = binding.frame(rt.ctx)
-            inner = rt.on(inner_ctx)
             rows: list[tuple[object, object]] = []
             async for elem in aiter_any(await source(rt)):
-                binding.write(data, (elem,))
-                rows.append((await key_expr(inner), elem))
+                rows.append((await key_expr(rt.on(binding.push(rt.ctx, elem))), elem))
             rows.sort(key=lambda kv: kv[0], reverse=reverse)
 
             async def agen() -> object:

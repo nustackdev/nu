@@ -37,7 +37,7 @@ from nu.core.flows.parallel._scheduling import _settle
 from nu.engine.structure import Declared
 from nu.lang import Attr, Cardinality, Nu, Policy
 from nu.lang._stream import aiter_any, sync_iter
-from nu.lang.binding import NO_BINDING, Binding, _DynamicBinding, dynamic
+from nu.lang.binding import Binding
 from nu.lang.sentinels import UNSET, Unset
 
 
@@ -135,7 +135,7 @@ def _async_backstop(name: str) -> Callable:
 
 def _caught(rt: Runtime, binding: Binding, exc: Exception) -> Runtime:
     """``rt`` on a frame holding the :class:`CaughtError` of ``exc``, for the catch to read."""
-    return rt.on(binding.push(rt.ctx, (CaughtError(exc),)))
+    return rt.on(binding.push(rt.ctx, CaughtError(exc)))
 
 
 def _guard(
@@ -185,7 +185,7 @@ async def _aguard(
             await finally_(rt)
 
 
-class TryCatch(_DynamicBinding, Policy):
+class TryCatch(Policy):
     """Runs ``catch`` when the body raises a matching error; ``finally_`` always runs after.
 
     Python's ``try`` one to one::
@@ -251,9 +251,10 @@ class TryCatch(_DynamicBinding, Policy):
             for name, branch in (("catch", catch), ("finally_", finally_))
             if branch is not UNSET
         )
-        bound = UNSET if catch is UNSET else self._dynamic("TryCatch", catch, 1)
         if catch is UNSET:
-            self._bind_static(None, ())
+            bound, self._binding = UNSET, Binding.none()
+        else:
+            bound, self._binding = Binding.of_lambda("TryCatch", catch, 1)
         super().__init__(body, _slot(bound), _slot(finally_), _errors_child(errors))
         self.given = given
 
@@ -374,7 +375,7 @@ class TryCatch(_DynamicBinding, Policy):
 
 async def _arun_hook(rt: Runtime, hook: Callable, binding: Binding, values: tuple) -> None:
     """Run a Retry hook on a frame holding ``values`` (error and attempt, or attempt)."""
-    await hook(rt.on(binding.push(rt.ctx, values)))
+    await hook(rt.on(binding.push(rt.ctx, *values)))
 
 
 class Retry(Policy):
@@ -493,7 +494,9 @@ class Retry(Policy):
         # Each hook is a binding of its own: error then attempt on a failure,
         # the attempt alone on success.
         bound = [
-            dynamic(f"Retry {name}", hook, handed) if hook is not UNSET else (Noop(), NO_BINDING)
+            Binding.of_lambda(f"Retry {name}", hook, handed)
+            if hook is not UNSET
+            else (Noop(), Binding.none())
             for (name, hook), handed in zip(hooks, (2, 1, 2), strict=True)
         ]
         (on_attempt_fail, oaf), (on_success, osc), (on_fail, ofl) = bound

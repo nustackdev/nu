@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Control
-from nu.lang.binding import dynamic
+from nu.lang.binding import Binding
 
 from .._body import async_only, drain_body
 from ._wakes import Wakes, read_schedule, schedule_terms
@@ -84,8 +84,8 @@ class ReconcileWhile(Control):
         after: Iterable[float] | object = (),
         every: float | object | None = None,
     ) -> None:
-        cond, _ = dynamic("ReconcileWhile", cond, 0)
-        body, _ = dynamic("ReconcileWhile", body, 0)
+        cond, _ = Binding.of_lambda("ReconcileWhile", cond, 0)
+        body, _ = Binding.of_lambda("ReconcileWhile", body, 0)
         super().__init__(change, cond, body, *schedule_terms("ReconcileWhile", after, every))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

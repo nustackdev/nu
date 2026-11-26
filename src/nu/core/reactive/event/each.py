@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Control
-from nu.lang.binding import _DynamicBinding
+from nu.lang.binding import Binding
 
 from .._body import async_only, drain_body
 from ._keyed import KeyedQueues
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 __all__ = ["ReactEach"]
 
 
-class ReactEach(_DynamicBinding, Control):
+class ReactEach(Control):
     """Run the body on every change, in order within a key, keys side by side.
 
     ``ReactEvery`` with one queue per key. Binds to the change subscription
@@ -66,7 +66,8 @@ class ReactEach(_DynamicBinding, Control):
     _param_slots = Declared(value=frozenset({0}), name="param_slots")
 
     def __init__(self, change: object, body: object) -> None:
-        super().__init__(change, self._dynamic("ReactEach", body, 1))
+        body, self._binding = Binding.of_lambda("ReactEach", body, 1)
+        super().__init__(change, body)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return async_only("ReactEach")
@@ -85,7 +86,7 @@ class ReactEach(_DynamicBinding, Control):
             async def run(key: object) -> None:
                 # Every run pushes a frame of its own: runs side by side never
                 # see each other's key.
-                await drain_body(rt.on(binding.push(rt.ctx, (key,))), body)
+                await drain_body(rt.on(binding.push(rt.ctx, key)), body)
 
             queues = KeyedQueues(run, owner="ReactEach")
             sub = await children[0](rt)
