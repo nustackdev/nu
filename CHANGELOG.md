@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Temp dir hands its path to the body lambda through a frame, no names
 - itertools and reduce hand items and accumulators to lambdas through frames, no names
 - Tests pin that a debounced body still reads its values after its frame exits
 - Name keywords on loops, catches, retries and reactions are gone; bodies take lambdas
