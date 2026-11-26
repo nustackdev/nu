@@ -128,7 +128,7 @@ class StdioRef(Ref):
         name: the stream name (``"stdout"``, ``"stderr"`` or ``"stdin"``).
 
     Notes:
-        - Unlike a Context ``Attr`` there is no address child: the stream
+        - Unlike a ``FabricRef`` there is no address child: the stream
           name is an intrinsic constant carried in a field.
         - The read thunk self-yields the stream handle; ``_write`` appends
           text and ``readline`` consumes one line. Both route through a

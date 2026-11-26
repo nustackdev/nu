@@ -62,7 +62,7 @@ class FabricRef(_ContextRef):
           ``.exists()`` when the difference matters.
         - The fabric axis is for the long-lived, typed things - storage
           handles, cluster handles, clients. What an interaction hands its
-          body lives on the attrs axis, read with ``Attr``.
+          body goes through mem: a frame under a Shape, read with its refs.
 
     Yields:
         The bound instance.

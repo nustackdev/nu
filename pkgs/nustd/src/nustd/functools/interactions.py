@@ -43,6 +43,10 @@ class Reduce(_DynamicBinding, QueryReduction):
     ``function`` is a lambda over the accumulator and the item (it may take
     only the accumulator), run once at construction with refs to them, or a
     tree that reads neither.
+
+    One frame per run, overwritten per step: work detached from the run (a
+    delayed or spawned task, a stream pulled later) reads the latest
+    accumulator and item, not the ones current when it started.
     """
 
     def __init__(

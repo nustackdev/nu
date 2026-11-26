@@ -101,8 +101,8 @@ async def test_wait_completes_when_another_branch_kills_the_worker(ctx, pool):
     wid = pool.launch()
     statuses: list = []
 
-    # Each Gather arm runs on its own branch, so the waiting arm reports
-    # through a host-side list rather than a name the parent would not see.
+    # The waiting arm reports through a host-side list, read once the
+    # Gather is over.
     @nu.host(base=nu.lang.ScalarAction, mutates=frozenset({0}))
     def keep(status: object) -> None:
         statuses.append(status)

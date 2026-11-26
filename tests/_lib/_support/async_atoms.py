@@ -14,9 +14,8 @@ Each is a childless ``ScalarAction`` (mutating, so a valid Flow body) that recor
 is observable and the *thread* it ran on is recorded. Each atom's **wrong** path
 raises, so a placement bug surfaces as an error rather than a silent pass.
 
-The record is a plain dict handed in through ``recording(ran)``: every arm runs
-on its own branch, so a write to a name would stay in the arm, while the dict is
-one shared value every branch mutates in place.
+The record is a plain dict handed in through ``recording(ran)``: one shared
+value every arm mutates in place.
 """
 
 from __future__ import annotations

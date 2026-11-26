@@ -203,6 +203,10 @@ class ForEachDo(_DynamicBinding, Control):
         - One frame for the loop's run, the element written into it before
           each body run. The frame is the loop's own: it never reaches the
           caller and is gone once the loop ends.
+        - Work detached from the run (a debounced, delayed or spawned task,
+          a stream pulled after the run moved on) reads the latest element,
+          not the one current when it started: the run keeps one frame and
+          overwrites it per element. Concurrent runs each get their own.
 
     Example:
         >>> _ = nu.run(nu.ForEachDo(nu.Iter([1, 2]), lambda x: nu.print(x)))
@@ -336,6 +340,10 @@ class ForRangeDo(_DynamicBinding, Control):
           the loop starts.
         - One frame for the loop's run, the value written before each body
           run. Same binding, and the same lambda form, as ``ForEachDo``.
+        - Work detached from the run (a debounced, delayed or spawned task,
+          a stream pulled after the run moved on) reads the latest value,
+          not the one current when it started: the run keeps one frame and
+          overwrites it per value. Concurrent runs each get their own.
         - Follows Python's ``range`` rules: a ``step`` that never reaches
           ``stop`` from ``start`` runs the body zero times rather than
           looping forever.
