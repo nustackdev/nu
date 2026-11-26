@@ -15,7 +15,7 @@ Parallel-family compiles hand child nids straight there, no Runtime hop.
 
 Layout:
 
-- construction:         program / ctx / budget binding, ``branch``
+- construction:         program / ctx / budget binding, ``on``
 - dispatch:             ``eval`` / ``aeval``
 - sequential:           ``eval_each`` / ``aeval_each``
 - streams:              ``iter`` / ``aiter`` / ``collect`` / ``acollect``
@@ -49,16 +49,18 @@ def _with_contextvars(fn: Callable) -> Callable:
 
     A pool thread starts with empty contextvars, so a var the caller set (an
     output capture, a trace id) would be unset where the work runs. Nu's own
-    Context does not ride here: a thread arm gets it as ``rt.branch()``.
+    Context does not ride here: a thread arm gets it through its ``rt``.
     """
     return functools.partial(contextvars.copy_context().run, fn)
 
 
 class Runtime:
-    """One task's Runtime: a Program, the task's own Context, and a shared Budget.
+    """A Program, the Context it runs on, and a shared Budget.
 
-    ``ctx`` is fixed for the Runtime's life. Scopes inside the task open on
-    the Context's stores; a task that starts runs on ``branch()``.
+    ``ctx`` is fixed for the Runtime's life. A scope that pushes a frame runs
+    its body on ``on(new_ctx)``, a derived Runtime; children just get that
+    one. Anything holding a Runtime (a stream, a delayed task) keeps its
+    frames alive.
     """
 
     __slots__ = ("budget", "ctx", "program")
@@ -70,9 +72,23 @@ class Runtime:
         self.ctx = ctx
         self.budget = budget if budget is not None else _Budget()
 
-    def branch(self) -> Runtime:
-        """The Runtime a starting task runs on: same Program and Budget, ``ctx.branch()``."""
-        return Runtime(self.program, self.ctx.branch(), budget=self.budget)
+    def on(self, ctx: Context) -> Runtime:
+        """The Runtime running on ``ctx``: same Program and Budget.
+
+        Returns ``self`` when ``ctx`` is already this Runtime's Context.
+        """
+        if ctx is self.ctx:
+            return self
+        return Runtime(self.program, ctx, budget=self.budget)
+
+    def _fork_attrs(self) -> Runtime:
+        """This Runtime with its own attrs table, for a concurrent arm.
+
+        TEMPORARY (task-184 phase 4 deletes attrs and this with it): the
+        frames are shared, only the attrs table is copied, so a name an arm
+        binds in attrs stays in the arm.
+        """
+        return Runtime(self.program, self.ctx._fork_attrs(), budget=self.budget)
 
     # --- dispatch -----------------------------------------------------------
 

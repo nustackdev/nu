@@ -54,12 +54,11 @@ def demo() -> None:
         name="cells",  # ps shows each worker as nu:cells-{id}
         # Every worker comes up holding one Ticks frame, so the resident body
         # and the teleports that read it see the same one.
-        init=nu.Frame(Ticks, None),
+        init=nu.let(Ticks, None),
         spares=1,  # one warm worker kept on a shelf for launches; it fills in the background
         grace=5.0,  # the whole budget for stopping a worker, and for the close
         # Launch yields the worker's id; let holds it for the rest.
         body=nu.let(
-            POOL.launch(),
             lambda worker: nu.Sequential(
                 nu.Print(nu.STDOUT, "worker id        :", worker),
                 # Dispatch returns as soon as the child has the tree and yields
@@ -77,6 +76,7 @@ def demo() -> None:
                 nu.Print(nu.STDOUT, "after stop       :", POOL.stop(worker)),
                 nu.Print(nu.STDOUT, "live workers     :", nu.Collect(POOL.workers())),
             ),
+            worker=POOL.launch(),
         ),
     )
     nu.run(tree)

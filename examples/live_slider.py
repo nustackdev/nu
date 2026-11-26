@@ -84,7 +84,7 @@ where = home.seen.set(
 )
 
 program = nu.ParallelAsync(
-    nu.let(None, heard),
+    nu.let(heard, last=None),
     settled,
     nu.ReactEvery(home.actions.ask.on_click(), where),
     nu.ReactEvery(home.peek.ask.on_click(), where),

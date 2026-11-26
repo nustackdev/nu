@@ -121,7 +121,7 @@ def _bound(seen: dict) -> _Probe:
     """Record which store brackets the body sees."""
 
     def fn(rt: Runtime) -> None:
-        fabrics = rt.ctx.fabrics
+        fabrics = rt.ctx
         for store in (Space, State):
             seen[store.__name__] = (
                 "tx"
@@ -172,7 +172,7 @@ def test_a_term_writing_two_stores_in_flows_raises_too() -> None:
 
 
 def test_mem_writes_do_not_count() -> None:
-    term = atomic(nu.let(State.m, lambda v: v.set(1)))
+    term = atomic(nu.let(lambda v: v.set(1), v=State.m))
     assert isinstance(term, Snapshot)
     assert term.scope is State
 
@@ -195,11 +195,11 @@ def test_a_write_lands_in_its_own_store(ctx) -> None:
 
 def test_only_the_touched_stores_are_bracketed(ctx) -> None:
     seen: dict = {}
-    run(atomic(nu.let(_bound(seen), lambda _: State.m.set(1))), ctx)
+    run(atomic(nu.let(lambda _: State.m.set(1), _=_bound(seen))), ctx)
     assert seen == {"Space": None, "State": "tx"}
-    run(atomic(nu.let(_bound(seen), lambda _: State.m.set(Space.n.fallback(0)))), ctx)
+    run(atomic(nu.let(lambda _: State.m.set(Space.n.fallback(0)), _=_bound(seen))), ctx)
     assert seen == {"Space": "snap", "State": "tx"}
-    run(atomic(nu.let(_bound(seen), lambda _: State.m)), ctx)
+    run(atomic(nu.let(lambda _: State.m, _=_bound(seen))), ctx)
     assert seen == {"Space": None, "State": "snap"}
 
 
@@ -220,7 +220,7 @@ def test_a_lost_commit_is_retried(ctx) -> None:
         if len(attempts) == 1:
             raise StorageTransactionConflictError("lost the commit")
 
-    run(atomic(nu.let(_Probe(lose_once), lambda _: State.m.set(3))), ctx)
+    run(atomic(nu.let(lambda _: State.m.set(3), _=_Probe(lose_once))), ctx)
     assert len(attempts) == 2
     assert run(atomic(State.m), ctx)[0] == 3
 
@@ -230,7 +230,7 @@ def test_the_last_conflict_is_raised(ctx) -> None:
         raise StorageTransactionConflictError("lost the commit")
 
     with pytest.raises(StorageTransactionConflictError):
-        run(atomic(nu.let(_Probe(always_lose), lambda _: State.m.set(3))), ctx)
+        run(atomic(nu.let(lambda _: State.m.set(3), _=_Probe(always_lose))), ctx)
     assert run(atomic(State.m.exists()), ctx)[0] is False
 
 
@@ -298,7 +298,7 @@ def test_an_inner_untagged_write_bracket_raises() -> None:
 
 def test_an_inner_read_bracket_reads_through_the_write(ctx) -> None:
     inner = Snapshot(State.m, scope=State)
-    run(atomic(State.m.set(7) >> nu.let(inner, lambda v: State.log["seen"].set(v))), ctx)
+    run(atomic(State.m.set(7) >> nu.let(lambda v: State.log["seen"].set(v), v=inner)), ctx)
     assert run(atomic(State.log["seen"]), ctx)[0] == 7
 
 
@@ -352,7 +352,7 @@ AGREE = {
     "a write keyed from another store": State.cells[Space.cell_keys["k"]].value.set(1),
     "a leaf read": State.m,
     "a container read": State.log.len(),
-    "a mem write": nu.let(State.m, lambda v: v.set(1)),
+    "a mem write": nu.let(lambda v: v.set(1), v=State.m),
     "a write through a form around a ref": nu.Dict(State.log).len(),
 }
 

@@ -11,7 +11,7 @@ interactions are ``Teleport`` (execute a tree there). Both refs subclass
   (``RayServiceRef("ledger-main")``), a tuple for a keyed fleet
   (``RayServiceRef(("ledger", 0))``), etc. The tag is a config child after
   the fabric type, so it can be computed; its value is forwarded verbatim to
-  ``ctx.fabrics.get(RayService, tag)``.
+  ``ctx.get(RayService, tag)``.
 """
 
 from __future__ import annotations
@@ -101,8 +101,8 @@ class RayServiceRef(FabricRef):
             raw = tag_of(rt)
             tag: tuple[object, ...] = () if raw is UNSET else (raw,)
             return (
-                rt.ctx.fabrics.get(svc, *tag)
-                if rt.ctx.fabrics.has(svc, *tag)
+                rt.ctx.get(svc, *tag)
+                if rt.ctx.has(svc, *tag)
                 else Null(getattr(svc, "__qualname__", None) or repr(svc))
             )
 
@@ -116,8 +116,8 @@ class RayServiceRef(FabricRef):
             raw = await tag_of(rt)
             tag: tuple[object, ...] = () if raw is UNSET else (raw,)
             return (
-                rt.ctx.fabrics.get(svc, *tag)
-                if rt.ctx.fabrics.has(svc, *tag)
+                rt.ctx.get(svc, *tag)
+                if rt.ctx.has(svc, *tag)
                 else Null(getattr(svc, "__qualname__", None) or repr(svc))
             )
 

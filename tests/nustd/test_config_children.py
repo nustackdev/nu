@@ -41,7 +41,7 @@ def test_print_options_are_its_last_three_children() -> None:
 def test_a_print_separator_can_be_read_from_the_tree() -> None:
     out = io.StringIO()
     ctx = nu.Context().bind(StdioBackend, StdioBackend(stdout=out))
-    nu.run(nu.Frame(Opts, Print(STDOUT, "a", "b", sep=Opts.sep), sep="+"), ctx)
+    nu.run(nu.let(Opts, Print(STDOUT, "a", "b", sep=Opts.sep), sep="+"), ctx)
     assert out.getvalue() == "a+b\n"
 
 
@@ -83,7 +83,7 @@ def test_a_placed_op_anchor_is_its_last_child() -> None:
 
 
 def test_log_one_extra_field_can_be_read_from_the_tree(caplog) -> None:
-    tree = nu.Frame(Opts, Log("info", "nu.t", "hi", extra={"who": Opts.tag}), tag="computed")
+    tree = nu.let(Opts, Log("info", "nu.t", "hi", extra={"who": Opts.tag}), tag="computed")
     with caplog.at_level(pylogging.INFO, logger="nu.t"):
         nu.run(tree)
     (record,) = caplog.records
@@ -95,7 +95,7 @@ def test_queue_capacity_can_be_read_from_the_tree() -> None:
         queue = nustd.queue.JQueueRef.slot(capacity=Opts.cap, item_type=int)
 
     ctx = nu.Context().bind(dict, {}, Buf)
-    q = nu.run(nu.Frame(Opts, Buf.queue, cap=3), ctx)[0]
+    q = nu.run(nu.let(Opts, Buf.queue, cap=3), ctx)[0]
     assert q.maxsize == 3
 
 
@@ -103,27 +103,25 @@ def test_queue_capacity_can_be_read_from_the_tree() -> None:
 
 
 def _bound(fabric: type, value: object, tag: object) -> nu.Context:
-    ctx = nu.Context()
-    ctx.fabrics.bind(fabric, value, tag).__enter__()
-    return ctx
+    return nu.Context().bind(fabric, value, tag)
 
 
 def test_a_pool_ref_tag_can_be_read_from_the_tree() -> None:
     ctx = _bound(WorkerPool, "gpu-pool", "gpu")
     assert nu.tree.children(PoolRef())[1].value is UNSET
-    assert nu.run(nu.Frame(Opts, PoolRef(Opts.tag), tag="gpu"), ctx)[0] == "gpu-pool"
+    assert nu.run(nu.let(Opts, PoolRef(Opts.tag), tag="gpu"), ctx)[0] == "gpu-pool"
     assert nu.run(PoolRef("gpu"), ctx)[0] == "gpu-pool"
 
 
 async def test_a_pool_ref_tag_can_be_read_from_the_tree_async() -> None:
     ctx = _bound(WorkerPool, "gpu-pool", "gpu")
-    assert (await arun(nu.Frame(Opts, PoolRef(Opts.tag), tag="gpu"), ctx))[0] == "gpu-pool"
+    assert (await arun(nu.let(Opts, PoolRef(Opts.tag), tag="gpu"), ctx))[0] == "gpu-pool"
 
 
 def test_a_ray_service_ref_tag_can_be_read_from_the_tree() -> None:
     ctx = _bound(RayService, "ledger", "ledger-main")
     assert nu.tree.children(RayServiceRef())[1].value is UNSET
-    tree = nu.Frame(Opts, RayServiceRef(Opts.tag), tag="ledger-main")
+    tree = nu.let(Opts, RayServiceRef(Opts.tag), tag="ledger-main")
     assert nu.run(tree, ctx)[0] == "ledger"
     assert nu.run(RayServiceRef("ledger-main"), ctx)[0] == "ledger"
 
@@ -132,17 +130,17 @@ def test_a_store_ref_name_can_be_read_from_the_tree() -> None:
     ctx = _bound(BlobFabric, "media-backend", "media")
     store = nustd.blob.StoreRef(Opts.tag)
     assert isinstance(store.name, nu.Nu)
-    assert nu.run(nu.Frame(Opts, store, tag="media"), ctx)[0] == "media-backend"
+    assert nu.run(nu.let(Opts, store, tag="media"), ctx)[0] == "media-backend"
     # The computed name is checked when it is evaluated.
     with pytest.raises(TypeError, match="non-empty str"):
-        nu.run(nu.Frame(Opts, store, tag=""), ctx)
+        nu.run(nu.let(Opts, store, tag=""), ctx)
 
 
 def test_an_agent_ref_name_can_be_read_from_the_tree() -> None:
     ctx = _bound(AcpFabric, "claude-agent", "claude")
     agent = nustd.acp.AgentRef(Opts.tag)
     assert isinstance(agent.name, nu.Nu)
-    assert nu.run(nu.Frame(Opts, agent, tag="claude"), ctx)[0] == "claude-agent"
+    assert nu.run(nu.let(Opts, agent, tag="claude"), ctx)[0] == "claude-agent"
 
 
 def test_a_store_ref_preset_binds_under_its_computed_name(tmp_path) -> None:
@@ -151,9 +149,9 @@ def test_a_store_ref_preset_binds_under_its_computed_name(tmp_path) -> None:
     store = nustd.blob.StoreRef(Opts.tag)
     app = nu.With(
         nustd.blob.files(store, tmp_path / "files"),
-        body=nu.let(store.put(b"hi"), lambda bid: store.get(bid)),
+        body=nu.let(lambda bid: store.get(bid), bid=store.put(b"hi")),
     )
-    assert nu.run(nu.Frame(Opts, app, tag="media"))[0] == b"hi"
+    assert nu.run(nu.let(Opts, app, tag="media"))[0] == b"hi"
 
 
 def test_an_agent_ref_preset_tags_its_bind_with_the_name_child() -> None:
@@ -161,7 +159,7 @@ def test_an_agent_ref_preset_tags_its_bind_with_the_name_child() -> None:
     spec = nustd.acp.claude(agent, cwd="/srv")
     tags = nu.tree.children(spec)[4]  # [body, cls, args, kwargs, tags, ...]
     assert nu.tree.children(tags)[0] is agent.name
-    assert nu.run(nu.Frame(Opts, tags, tag="claude"))[0] == ("claude",)
+    assert nu.run(nu.let(Opts, tags, tag="claude"))[0] == ("claude",)
 
 
 def test_a_proxy_option_can_be_computed() -> None:

@@ -293,9 +293,9 @@ def test_exclusion_is_computed() -> None:
     retry = Retry(FlakyAction(1), max_attempts=2, except_errors=excluded)
     assert nu.tree.children(retry)[15] is excluded  # appended after the errors filter
     with pytest.raises(ValueError, match="flaky 0"):
-        run(nu.Frame(Gate, retry, flag=True))
+        run(nu.let(Gate, retry, flag=True))
     value, _ = run(
-        nu.Frame(Gate, Retry(FlakyAction(1), max_attempts=2, except_errors=excluded), flag=False)
+        nu.let(Gate, Retry(FlakyAction(1), max_attempts=2, except_errors=excluded), flag=False)
     )
     assert value == "flaky"
 
@@ -304,7 +304,7 @@ async def test_exclusion_is_computed_on_the_async_path() -> None:
     excluded = nu.If(Gate.flag, ValueError, KeyError)
     with pytest.raises(ValueError, match="flaky 0"):
         await arun(
-            nu.Frame(Gate, Retry(FlakyAction(1), max_attempts=2, except_errors=excluded), flag=True)
+            nu.let(Gate, Retry(FlakyAction(1), max_attempts=2, except_errors=excluded), flag=True)
         )
 
 

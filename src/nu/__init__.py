@@ -73,7 +73,6 @@ from .mem import (
     Debounce,
     DictRef,
     FloatRef,
-    Frame,
     IntRef,
     ListRef,
     ObjectRef,

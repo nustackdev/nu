@@ -2,7 +2,7 @@
 
 Refs read here, and every binder goes through the three binding operations:
 ``let`` declares, ``set`` reassigns, ``exists`` asks. A starting task takes
-its own table with ``Context.branch``.
+its own table with ``Context._fork_attrs`` (temporary, see ``Context``).
 """
 
 from __future__ import annotations

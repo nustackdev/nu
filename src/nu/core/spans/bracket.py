@@ -12,15 +12,14 @@ with that no-op lifecycle. A fabric subclasses them and overrides the
 lifecycle to talk to a real store (see ``nustd.kv.interactions.atomicity``).
 
 The lifecycle is one method, ``_open`` - a context manager. It opens the
-boundary, provides what it opened on the task's own fabrics store for the
-body, then commits on a clean exit or rolls back on an exception:
+boundary, yields the Context the body runs on with what it opened pushed on
+top, then commits on a clean exit or rolls back on an exception:
 
     @contextmanager
     def _open(self, ctx, *config):
         txns = [...open...]                           # per-run handles, in the frame
         try:
-            with ctx.fabrics.lazy(Txn, open_txn):     # provided for the body
-                yield                                 # body runs here
+            yield ctx.lazy(Txn, open_txn)             # body runs on this Context
         except BaseException:
             for t in txns: t.abort()                  # roll back, then re-raise
             raise
@@ -31,7 +30,8 @@ The per-run handles (the open snapshots, the open transactions) live in the
 context manager's own frame, captured by closure - never on ``self``. A Term is
 immutable and shared across every execution, so it can hold no per-run state
 (see ``AUTHORING.md`` - "No per-run or cross-call state"). The Context is never
-replaced: the scope lives in the store and ends with the ``with``. For a stream
+changed: what the scope provides is a frame on the Context it yields, gone
+with the body. For a stream
 body the scope spans the drain: it opens when the stream starts and closes
 (commit / rollback) when it is exhausted, realizing the body's stream inside
 the boundary.

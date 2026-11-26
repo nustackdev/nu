@@ -44,7 +44,7 @@ class InMemoryPublisher(_InMemoryPublisher, Fabric):
 
     def setup(self, ctx: Context) -> None:
         """Read the transport from ctx, init the parent, connect."""
-        transport = ctx.fabrics.get(InMemoryTransport, *self._transport_tags)
+        transport = ctx.get(InMemoryTransport, *self._transport_tags)
         _InMemoryPublisher.__init__(self, transport=transport)
         self.connect()
 

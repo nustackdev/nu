@@ -1,7 +1,7 @@
 """Runtime: how Nu programs run.
 
 - ``runtime``   - ``Runtime``: the concrete Runtime that drives compiled Programs.
-- ``context``   - ``Context``: one task's environment, an attrs store and a fabrics store.
+- ``context``   - ``Context``: one task's environment, a stack of fabric frames.
 - ``utils``     - ``Budget``, ``into_loop``, ``safely_(a)closing``: per-call
   resources and lifecycle helpers.
 
@@ -13,7 +13,7 @@ in ``nu.lang.helpers``.
 
 from __future__ import annotations
 
-from .context import Attributes, Context, Fabrics
+from .context import Attributes, Context
 from .runtime import Runtime
 from .utils import Budget, into_loop, safely_aclosing, safely_closing
 
@@ -22,7 +22,6 @@ __all__ = [
     "Attributes",
     "Budget",
     "Context",
-    "Fabrics",
     "Runtime",
     "into_loop",
     "safely_aclosing",

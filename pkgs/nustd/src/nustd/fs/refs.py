@@ -287,7 +287,7 @@ def _lookup(rt: Runtime, fabric: object, tag: object) -> object:
     """The mount bound under exactly ``tag``, or NULL hinting the tag."""
     if not isinstance(tag, str):
         raise TypeError(f"an fs mount tag is a str, got {tag!r}")
-    fabrics = rt.ctx.fabrics
+    fabrics = rt.ctx
     kind = cast("type", fabric)
     if not tag:
         return fabrics.get(kind) if fabrics.has(kind) else Null()

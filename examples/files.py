@@ -118,7 +118,7 @@ def moved(key: nu.Nu, parent: nu.Nu, index: nu.Nu) -> nu.Nu:
         )
 
     rest = nu.Collect(nu.Filter(nu.Iter(State.nodes), lambda n: nu.Ne(n["key"], key)))
-    return nu.let(rest, place)
+    return nu.let(place, rest=rest)
 
 
 # ---- Wire -------------------------------------------------------------------

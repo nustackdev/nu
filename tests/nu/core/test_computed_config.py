@@ -34,7 +34,7 @@ class Port(nu.Shape):
 
 
 def _framed(body: nu.Nu, **init: object) -> object:
-    return nu.run(nu.Frame(Cfg, body, **init))[0]
+    return nu.run(nu.let(Cfg, body, **init))[0]
 
 
 # --- Switch / SwitchDo: case labels -------------------------------------
@@ -48,7 +48,7 @@ def test_switch_labels_come_from_a_mem_read() -> None:
 
 async def test_switch_labels_are_read_on_the_async_path() -> None:
     switch = nu.Switch("b", {Cfg.label: "hit"}, default="miss")
-    assert (await nu.arun(nu.Frame(Cfg, switch, label="b")))[0] == "hit"
+    assert (await nu.arun(nu.let(Cfg, switch, label="b")))[0] == "hit"
 
 
 def test_switch_case_count_is_the_only_field() -> None:
@@ -71,7 +71,7 @@ def test_switchdo_labels_come_from_a_mem_read(capsys: pytest.CaptureFixture[str]
 
 def test_switchdo_validates_with_its_labels_as_a_param() -> None:
     switch = nu.SwitchDo(nu.Literal("b"), {Cfg.label: nu.print("hit")})
-    nu.lang.helpers.validate(nu.lang.helpers.compile(nu.Frame(Cfg, switch)))
+    nu.lang.helpers.validate(nu.lang.helpers.compile(nu.let(Cfg, switch)))
 
 
 # --- Parallel: per-arm modes --------------------------------------------
@@ -80,17 +80,17 @@ def test_switchdo_validates_with_its_labels_as_a_param() -> None:
 async def test_parallel_modes_come_from_a_mem_read() -> None:
     ran: dict = {}
     arms = Parallel((RunsAnywhereAction("t"), Cfg.mode), RunsAnywhereAction("bare"))
-    await nu.arun(nu.Frame(Cfg, arms, mode="threaded"), recording(ran), max_parallel=2)
+    await nu.arun(nu.let(Cfg, arms, mode="threaded"), recording(ran), max_parallel=2)
     assert ran["t"].startswith("nu-worker")
     ran.clear()
-    await nu.arun(nu.Frame(Cfg, arms, mode="async"), recording(ran), max_parallel=2)
+    await nu.arun(nu.let(Cfg, arms, mode="async"), recording(ran), max_parallel=2)
     assert ran["t"] == threading.current_thread().name
 
 
 def test_a_computed_mode_is_checked_when_it_runs() -> None:
     arms = Parallel((RunsAnywhereAction("t"), Cfg.mode))
     with pytest.raises(ValueError, match="'threaded' or 'async'"):
-        nu.run(nu.Frame(Cfg, arms, mode="sideways"), recording({}))
+        nu.run(nu.let(Cfg, arms, mode="sideways"), recording({}))
 
 
 def test_a_plain_mode_is_still_checked_at_construction() -> None:
@@ -141,7 +141,7 @@ def test_trycatch_errors_are_computed() -> None:
 
 async def test_trycatch_errors_are_computed_on_the_async_path() -> None:
     errors = nu.If(Cfg.flag, ZeroDivisionError, KeyError)
-    assert (await nu.arun(nu.Frame(Cfg, _filtered(errors), flag=True)))[0] == "caught"
+    assert (await nu.arun(nu.let(Cfg, _filtered(errors), flag=True)))[0] == "caught"
 
 
 def test_trycatch_refuses_a_plain_non_exception_filter() -> None:

@@ -36,14 +36,14 @@ any query. Here ``nu.let`` holds the launched worker's id for the body::
     POOL = PoolRef()
     prog = pool(
         name="cells",
-        init=nu.Frame(Ticks, None),
+        init=nu.let(Ticks, None),
         spares=2,
-        body=nu.let(POOL.launch(), lambda w: nu.Sequential(
+        body=nu.let(lambda w: nu.Sequential(
             POOL.dispatch(ticker, w),
             nu.Print(nu.STDOUT, POOL.teleport(Ticks.n, w)),
             nu.Print(nu.STDOUT, POOL.status(w)),
             POOL.stop(w),
-        )),
+        ), w=POOL.launch()),
     )
 
 The one exception is a ``Dispatch`` body, which is quoted as a ``Literal``

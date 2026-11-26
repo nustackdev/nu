@@ -1285,7 +1285,7 @@ class FsMakeTemp(ScalarAction):
         The new dir's ``PurePosixPath`` relative to the mount.
 
     Example:
-        nu.let(data.make_temp("job-"), lambda d: (data.file(d) / "in.txt").write_text("..."))
+        nu.let(lambda d: (data.file(d) / "in.txt").write_text("..."), d=data.make_temp("job-"))
     """
 
     _mutates = _WRITES

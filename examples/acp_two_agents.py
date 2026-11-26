@@ -33,8 +33,8 @@ def answer(name: str, items: list) -> str:
 
 def draft(agent):
     return nu.let(
-        nu.Dict(agent.new_session())["session_id"],
         lambda sid: nu.print(answer(agent.name, nu.Collect(agent[sid].prompt(TASK)))),
+        sid=nu.Dict(agent.new_session())["session_id"],
     )
 
 

@@ -261,7 +261,7 @@ class BlobNewId(ScalarQuery):
         A new id, a 32 character hex ``str``.
 
     Example:
-        nu.let(Media.new_id(), lambda bid: Media.put(data, blob_id=bid))
+        nu.let(lambda bid: Media.put(data, blob_id=bid), bid=Media.new_id())
     """
 
     def __init__(self, store: object) -> None:

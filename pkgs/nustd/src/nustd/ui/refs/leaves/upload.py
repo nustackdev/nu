@@ -195,7 +195,7 @@ class UploadFileRef(_Nullable, _FileReads, _UploadInput):
     Example:
         csv = UploadFileRef.slot(accept=".csv", label="Orders")
         nu.ReactEvery(csv.on_change(),
-            nu.let(csv.slice(0, 4096), show_columns) >> csv.pull())
+            nu.let(lambda head: show_columns(head), head=csv.slice(0, 4096)) >> csv.pull())
     """
 
     _wire_type = "UploadFileRef"
@@ -261,7 +261,7 @@ class UploadFilesRef(_UploadInput):
     Example:
         photos = UploadFilesRef.slot(accept="image/*", max_files=20)
         nu.ReactEvery(photos.on_change(), photos.pull())
-        nu.let(photos.file(0).slice(0, 16), sniff)
+        nu.let(lambda head: sniff(head), head=photos.file(0).slice(0, 16))
     """
 
     _wire_type = "UploadFilesRef"
@@ -353,7 +353,7 @@ class UploadedFileRef(_FileReads, LeafRef):
     the index to the entry's key when the command lands.
 
     Example:
-        nu.let(photos.file(0).bytes(), lambda raw: thumbnail(raw))
+        nu.let(lambda raw: thumbnail(raw), raw=photos.file(0).bytes())
     """
 
     _wire_type: ClassVar[str] = "UploadedFileRef"

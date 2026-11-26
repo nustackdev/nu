@@ -62,20 +62,18 @@ class _OpenArea(Bracket):
         return cast("UploadArea", cast("Literal", self._children[1]).value)
 
     @contextmanager
-    def _open(self, ctx: Context, area: UploadArea) -> Iterator[None]:
+    def _open(self, ctx: Context, area: UploadArea) -> Iterator[Context]:
         area.setup(ctx)
         try:
-            with ctx.fabrics.bind(UploadArea, area):
-                yield
+            yield ctx.bind(UploadArea, area)
         finally:
             area.cleanup()
 
     @asynccontextmanager
-    async def _aopen(self, ctx: Context, area: UploadArea) -> AsyncIterator[None]:
+    async def _aopen(self, ctx: Context, area: UploadArea) -> AsyncIterator[Context]:
         await area.asetup(ctx)
         try:
-            with ctx.fabrics.bind(UploadArea, area):
-                yield
+            yield ctx.bind(UploadArea, area)
         finally:
             await area.acleanup()
 
@@ -144,17 +142,16 @@ class UploadViewFor(Bracket):
         super().__init__(body, sid_attr)
 
     @asynccontextmanager
-    async def _aopen(self, ctx: Context, sid_attr: str) -> AsyncIterator[None]:
+    async def _aopen(self, ctx: Context, sid_attr: str) -> AsyncIterator[Context]:
         attr = sid_attr
         sid = ctx.attrs.get(attr, None)
         if sid is None:
             msg = f"UploadViewFor found no {attr!r} on the Context; it runs inside the fold"
             raise LookupError(msg)
-        if not ctx.fabrics.has(UploadArea):
+        if not ctx.has(UploadArea):
             msg = "UploadViewFor found no UploadArea; open the uploads bracket around the fold"
             raise LookupError(msg)
-        with ctx.fabrics.bind(UploadView, ctx.fabrics.get(UploadArea).view(sid)):
-            yield
+        yield ctx.bind(UploadView, ctx.get(UploadArea).view(sid))
 
 
 def upload_view(sid_attr: str = _SID_ATTR, body: Nu | None = None) -> UploadViewFor:

@@ -1,36 +1,29 @@
-"""Fabrics - the typed binding store behind ``ctx.fabrics``.
+"""Fabric frames: the immutable stack behind a Context's typed bindings.
 
-Execution resources (storage, RPC clients, sessions, ...) live here, keyed by
-fabric type plus optional scope tags and predicate guards. A binding comes
-into scope with ``bind`` / ``lazy`` and leaves when that scope ends, whatever
-ends it, the same discipline ``Attributes.let`` gives names.
+Execution resources (storage, RPC clients, sessions, mem dicts, ...) are bound
+on a Context keyed by fabric type plus optional scope tags and predicate
+guards. Every binding is a frame: one entry and a pointer to the frame below.
+A frame is never changed after it is made, so a Context is a pointer to its
+top frame and pushing one returns a new Context.
 
-Resolution matches by fabric type first, then scope tags with subset
-fallback; predicate kwargs are evaluated against the ``**data`` passed to
-``get``.
-
-Usage:
-    fabrics = ctx.fabrics
-    with fabrics.bind(Storage, rocksdb), fabrics.bind(Storage, order_db, OrderShape):
-        fabrics.get(Storage)                        # -> rocksdb
-        fabrics.get(Storage, OrderShape)            # -> order_db
-    fabrics.has(Storage)                            # -> False
+Lookup gives the result a flat table would: per key (type plus tags, plus the
+predicate set for a guarded entry) the nearest frame wins, and across keys
+the rules are the usual ones: exact tags, then subset fallback, then
+untagged, predicates evaluated against the ``**data`` passed to ``get``.
+Nesting shadows a key and never reroutes a tagged lookup.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar, cast
+import threading
+from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
-    from types import TracebackType
 
 
-_T = TypeVar("_T")
-
-
-__all__ = ["Fabrics"]
+__all__: list[str] = []
 
 
 def _name(tag: object) -> str:
@@ -39,14 +32,25 @@ def _name(tag: object) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Entries: the atoms of the store
+# Entries: the atoms of a frame
 # ---------------------------------------------------------------------------
 
 
 class _Entry:
-    """One binding - eager (value) or lazy (factory, cached on first access)."""
+    """One binding: eager (value) or lazy (factory, built once on first lookup).
 
-    __slots__ = ("_factory", "_resolved", "_value", "_was_lazy")
+    A lazy entry is built under a lock, so concurrent first lookups call the
+    factory once, and the value is cached in the entry, which lives in the
+    frame that declared it.
+    """
+
+    __slots__ = ("_factory", "_lock", "_resolved", "_value", "_was_lazy")
+
+    _value: object
+    _factory: Callable[[], object] | None
+    _lock: threading.Lock | None
+    _resolved: bool
+    _was_lazy: bool
 
     @staticmethod
     def eager(value: object) -> _Entry:
@@ -54,6 +58,7 @@ class _Entry:
         e = _Entry.__new__(_Entry)
         e._value = value
         e._factory = None
+        e._lock = None
         e._resolved = True
         e._was_lazy = False
         return e
@@ -64,17 +69,20 @@ class _Entry:
         e = _Entry.__new__(_Entry)
         e._value = None
         e._factory = factory
+        e._lock = threading.Lock()
         e._resolved = False
         e._was_lazy = True
         return e
 
     def resolve(self) -> object:
-        """Return the value, calling the factory on first access if lazy."""
+        """Return the value, calling the factory once on first access if lazy."""
         if not self._resolved:
-            if self._factory is not None:
-                self._value = self._factory()
-                self._factory = None
-            self._resolved = True
+            with self._lock:  # type: ignore[union-attr]  # a lazy entry has one
+                if not self._resolved:
+                    if self._factory is not None:
+                        self._value = self._factory()
+                        self._factory = None
+                    self._resolved = True
         return self._value
 
     @property
@@ -88,17 +96,21 @@ class _Entry:
         return self._was_lazy
 
 
-class _GuardedEntry:
-    """A predicate-guarded binding. All predicates must pass for a match."""
+class _Frame:
+    """One immutable binding on the stack, and the frame below it."""
 
-    __slots__ = ("entry", "predicates", "scope_tags")
+    __slots__ = ("entry", "fabric_type", "parent", "predicates", "scope_tags")
 
     def __init__(
         self,
+        parent: _Frame | None,
+        fabric_type: object,
         scope_tags: frozenset,
         predicates: dict[str, Callable],
         entry: _Entry,
     ) -> None:
+        self.parent = parent
+        self.fabric_type = fabric_type
         self.scope_tags = scope_tags
         self.predicates = predicates
         self.entry = entry
@@ -107,253 +119,101 @@ class _GuardedEntry:
         """True if all predicates pass with the given data kwargs."""
         return all(pred(**data) for pred in self.predicates.values())
 
+    def label(self) -> str:
+        """The frame as ``Type+tag+...`` for a repr."""
+        labels = [_name(self.fabric_type), *(_name(t) for t in self.scope_tags)]
+        if self.predicates:
+            labels.append("+".join(self.predicates))
+        if self.entry.is_lazy:
+            labels.append("lazy")
+        return "+".join(labels)
+
 
 # ---------------------------------------------------------------------------
-# Fabrics
+# The merged view of one fabric type
 # ---------------------------------------------------------------------------
 
 
-class Fabrics:
-    """Typed binding store, and the one owner of fabric scoping.
+def _view(top: _Frame | None, fabric_type: object) -> tuple[dict[frozenset, _Entry], list[_Frame]]:
+    """Every live binding of ``fabric_type``: the nearest per key, as a flat table would hold.
 
-    ``bind`` and ``lazy`` are scopes: entering provides the binding for the
-    body and shadows an outer one of the same key, leaving restores what was
-    there. Reads resolve the most specific binding in scope.
+    Returns the plain entries by scope tags, and the guarded frames outermost
+    first (the order they were bound in), each the nearest of its key.
     """
-
-    __slots__ = ("_entries", "_guarded")
-
-    def __init__(self) -> None:
-        self._entries: dict[tuple, _Entry] = {}
-        self._guarded: dict[type, list[_GuardedEntry]] = {}
-
-    # -- scopes --------------------------------------------------------------
-
-    def bind(
-        self,
-        fabric_type: type[_T],
-        value: _T,
-        *tags: object,
-        **predicates: Callable,
-    ) -> _Provide:
-        """A scope that provides ``value`` under ``fabric_type`` and ``tags``.
-
-        Entering shadows any outer binding of the same key; leaving restores
-        it, on a clean exit and on an error alike. A generator may hold the
-        scope open across its yields, so a binding over a stream lives while
-        the stream is drained.
-
-        Args:
-            fabric_type: Primary key (type).
-            value: The value to bind.
-            *tags: Scope tags for specificity.
-            **predicates: Named guard callables. Each receives **data from get().
-        """
-        return _Provide(self, fabric_type, frozenset(tags), predicates, _Entry.eager(value))
-
-    def lazy(
-        self,
-        fabric_type: type[_T],
-        factory: Callable[[], _T],
-        *tags: object,
-        **predicates: Callable,
-    ) -> _Provide:
-        """A scope like ``bind`` whose value is built on first access and cached.
-
-        Args:
-            fabric_type: Primary key (type).
-            factory: Zero-arg callable that creates the value.
-            *tags: Scope tags for specificity.
-            **predicates: Named guard callables.
-        """
-        return _Provide(self, fabric_type, frozenset(tags), predicates, _Entry.deferred(factory))
-
-    def _put(
-        self,
-        fabric_type: type,
-        scope_tags: frozenset,
-        predicates: dict[str, Callable],
-        entry: _Entry,
-    ) -> Callable[[], None]:
-        """Install ``entry`` and return the call that puts the prior state back."""
-        if predicates:
-            guarded = _GuardedEntry(scope_tags, dict(predicates), entry)
-            self._guarded.setdefault(fabric_type, []).append(guarded)
-
-            def unguard() -> None:
-                entries = self._guarded.get(fabric_type, [])
-                if guarded in entries:
-                    entries.remove(guarded)
-                if not entries:
-                    self._guarded.pop(fabric_type, None)
-
-            return unguard
-
-        key = (fabric_type, scope_tags)
-        had_prev = key in self._entries
-        prev = self._entries.get(key)
-        self._entries[key] = entry
-
-        def restore() -> None:
-            if had_prev:
-                self._entries[key] = prev  # type: ignore[assignment]
-            else:
-                self._entries.pop(key, None)
-
-        return restore
-
-    # -- reads ---------------------------------------------------------------
-
-    def get(self, fabric_type: type[_T], *tags: object, **data: object) -> _T:
-        """Resolve the most specific binding by fabric type + scope tags.
-
-        Args:
-            fabric_type: Primary key (type).
-            *tags: Scope tags to match against.
-            **data: Passed as **kwargs to all predicates.
-
-        Raises:
-            LookupError: nothing in scope matches.
-        """
-        return cast("_T", self._resolve(fabric_type, frozenset(tags), data))
-
-    def has(self, fabric_type: type, *tags: object) -> bool:
-        """Whether a binding for fabric type + optional scope tags is in scope."""
-        try:
-            self._resolve(fabric_type, frozenset(tags), {})
-        except LookupError:
-            return False
-        return True
-
-    def was_opened(self, fabric_type: type, *tags: object) -> bool:
-        """Whether a lazy binding was materialized."""
-        entry = self._entries.get((fabric_type, frozenset(tags)))
-        return entry is not None and entry.was_opened
-
-    def predicates(self, fabric_type: type, *tags: object) -> list[tuple[dict, object]]:
-        """``(predicates, value)`` for each guarded binding at exactly these tags."""
-        scope_tags = frozenset(tags)
-        return [
-            (dict(g.predicates), g.entry.resolve())
-            for g in self._guarded.get(fabric_type, [])
-            if g.scope_tags == scope_tags
-        ]
-
-    # -- resolution ----------------------------------------------------------
-
-    def _resolve(self, fabric_type: type, scope_tags: frozenset, data: dict) -> object:
-        """Core resolution with specificity fallback.
-
-        1. Try exact scope tags match.
-        2. Subset fallback: try progressively smaller scope tag sets.
-        3. Empty scope fallback.
-        """
-        entry = self._find(fabric_type, scope_tags, data)
-        if entry is not None:
-            return entry.resolve()
-
-        if len(scope_tags) > 1:
-            tags_list = sorted(scope_tags, key=id)
-            for size in range(len(scope_tags) - 1, 0, -1):
-                for subset in _subsets_of_size(tags_list, size):
-                    entry = self._find(fabric_type, frozenset(subset), data)
-                    if entry is not None:
-                        return entry.resolve()
-
-        if scope_tags:
-            entry = self._find(fabric_type, frozenset(), data)
-            if entry is not None:
-                return entry.resolve()
-
-        tag_names = ", ".join(_name(t) for t in scope_tags)
-        data_str = ", ".join(f"{k}={v!r}" for k, v in data.items())
-        parts = [_name(fabric_type)]
-        if tag_names:
-            parts.append(f"[{tag_names}]")
-        if data_str:
-            parts.append(f"({data_str})")
-        msg = f"No binding for: {''.join(parts)}"
-        raise LookupError(msg)
-
-    def _find(self, fabric_type: type, scope_tags: frozenset, data: dict) -> _Entry | None:
-        """Find entry at exact scope level. Returns None if nothing found.
-
-        If guarded entries exist for this fabric_type with matching scope,
-        predicates are evaluated. All predicates on an entry must pass (AND).
-        At least one entry must fully match (OR across entries).
-        No fallback to non-predicate bindings at same scope if guarded exist.
-        """
-        guarded = self._guarded.get(fabric_type) if data else None
-        if guarded:
-            candidates = [g for g in guarded if g.scope_tags == scope_tags]
-            if candidates:
-                for g in candidates:
-                    if g.matches(data):
-                        return g.entry
-                return None
-
-        return self._entries.get((fabric_type, scope_tags))
-
-    # -- branch --------------------------------------------------------------
-
-    def _branch(self) -> Fabrics:
-        """Own tables, same entries: a scope opened on the copy stays on the copy."""
-        fabrics = Fabrics.__new__(Fabrics)
-        fabrics._entries = dict(self._entries)
-        fabrics._guarded = {k: list(v) for k, v in self._guarded.items()}
-        return fabrics
-
-    # -- repr ----------------------------------------------------------------
-
-    def __repr__(self) -> str:
-        parts: list[str] = []
-        for (stype, stags), entry in self._entries.items():
-            labels = [_name(stype), *(_name(t) for t in stags)]
-            if entry.is_lazy:
-                labels.append("lazy")
-            parts.append("+".join(labels))
-        for stype, entries in self._guarded.items():
-            for g in entries:
-                labels = [_name(stype), *(_name(t) for t in g.scope_tags)]
-                labels.append("+".join(g.predicates))
-                parts.append("+".join(labels))
-        return f"Fabrics({', '.join(parts)})"
+    plain: dict[frozenset, _Entry] = {}
+    guarded: list[_Frame] = []
+    seen: set[tuple] = set()
+    frame = top
+    while frame is not None:
+        if frame.fabric_type == fabric_type:
+            if frame.predicates:
+                key = (frame.scope_tags, frozenset(frame.predicates.items()))
+                if key not in seen:
+                    seen.add(key)
+                    guarded.append(frame)
+            elif frame.scope_tags not in plain:
+                plain[frame.scope_tags] = frame.entry
+        frame = frame.parent
+    guarded.reverse()
+    return plain, guarded
 
 
-class _Provide:
-    """One ``bind`` / ``lazy`` scope: provides on enter, puts the prior state back on exit."""
+def _find_at(
+    plain: dict[frozenset, _Entry], guarded: list[_Frame], scope_tags: frozenset, data: dict
+) -> _Entry | None:
+    """The entry at exactly ``scope_tags``, or None.
 
-    __slots__ = ("_entry", "_fabric_type", "_predicates", "_restore", "_scope_tags", "_store")
+    With data, guarded entries at this level are evaluated: all predicates
+    on one must pass (AND), the first passing one wins (OR across them), and
+    when guarded entries exist at this level none of the plain one is used.
+    """
+    if data and guarded:
+        candidates = [g for g in guarded if g.scope_tags == scope_tags]
+        if candidates:
+            for g in candidates:
+                if g.matches(data):
+                    return g.entry
+            return None
+    return plain.get(scope_tags)
 
-    def __init__(
-        self,
-        store: Fabrics,
-        fabric_type: type,
-        scope_tags: frozenset,
-        predicates: dict[str, Callable],
-        entry: _Entry,
-    ) -> None:
-        self._store = store
-        self._fabric_type = fabric_type
-        self._scope_tags = scope_tags
-        self._predicates = predicates
-        self._entry = entry
-        self._restore: Callable[[], None] | None = None
 
-    def __enter__(self) -> None:
-        self._restore = self._store._put(
-            self._fabric_type, self._scope_tags, self._predicates, self._entry
-        )
+def _find(
+    top: _Frame | None, fabric_type: object, scope_tags: frozenset, data: dict
+) -> _Entry | None:
+    """The most specific entry for ``fabric_type`` + ``scope_tags``, or None.
 
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc: BaseException | None,
-        tb: TracebackType | None,
-    ) -> None:
-        if self._restore is not None:
-            self._restore()
-            self._restore = None
+    1. Exact scope tags.
+    2. Subset fallback: progressively smaller scope tag sets.
+    3. The untagged binding.
+    """
+    plain, guarded = _view(top, fabric_type)
+    if not plain and not guarded:
+        return None
+    entry = _find_at(plain, guarded, scope_tags, data)
+    if entry is not None:
+        return entry
+    if len(scope_tags) > 1:
+        tags_list = sorted(scope_tags, key=id)
+        for size in range(len(scope_tags) - 1, 0, -1):
+            for subset in _subsets_of_size(tags_list, size):
+                entry = _find_at(plain, guarded, frozenset(subset), data)
+                if entry is not None:
+                    return entry
+    if scope_tags:
+        return _find_at(plain, guarded, frozenset(), data)
+    return None
+
+
+def _missing(fabric_type: object, scope_tags: frozenset, data: dict) -> LookupError:
+    """The error a lookup that finds nothing raises."""
+    tag_names = ", ".join(_name(t) for t in scope_tags)
+    data_str = ", ".join(f"{k}={v!r}" for k, v in data.items())
+    parts = [_name(fabric_type)]
+    if tag_names:
+        parts.append(f"[{tag_names}]")
+    if data_str:
+        parts.append(f"({data_str})")
+    return LookupError(f"No binding for: {''.join(parts)}")
 
 
 def _subsets_of_size(items: list, size: int) -> Generator[tuple, None, None]:

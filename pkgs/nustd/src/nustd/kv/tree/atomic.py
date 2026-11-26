@@ -10,7 +10,7 @@ It reads the term the way ``auto_flow_atomic`` does. A kv ref belongs to the
 store its chain is rooted at: the root Shape, which is also the tag its
 Navigator is bound under. A ref in a slot its node declares as mutating is a
 write, any other ref is a read, and a ref a bracket already in the term covers
-does not count. Mem refs (``nu.let``, ``nu.Frame``) are not stores and never
+does not count. Mem refs (``nu.let``) are not stores and never
 count.
 """
 

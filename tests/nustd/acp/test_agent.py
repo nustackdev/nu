@@ -86,9 +86,9 @@ async def test_new_session_takes_the_bind_defaults_and_call_overrides(tmp_path):
     server = {"name": "tools", "command": "/bin/true", "args": [], "env": []}
     other = tmp_path / "other"
     body = nu.Sequential(
-        nu.let(new_sid(), lambda sid: nu.ForEachDo(Agent[sid].prompt("stats"), Log.a.append)),
+        nu.let(lambda sid: nu.ForEachDo(Agent[sid].prompt("stats"), Log.a.append), sid=new_sid()),
         Agent.new_session(cwd=str(other), mcp_servers=[]),
-        nu.let(new_sid(), lambda sid: nu.ForEachDo(Agent[sid].prompt("stats"), Log.b.append)),
+        nu.let(lambda sid: nu.ForEachDo(Agent[sid].prompt("stats"), Log.b.append), sid=new_sid()),
     )
     _, log = await run(body, cwd=str(tmp_path), mcp_servers=[server])
     stats = stats_of(log["b"])
@@ -121,7 +121,7 @@ async def test_new_session_sends_a_system_prompt_raw(tmp_path):
         Agent.new_session(system_prompt="answer in one word", additional_directories=["/extra"]),
         Agent.new_session(system_prompt=override),
         Agent.new_session(),
-        nu.let(new_sid(), lambda sid: nu.ForEachDo(Agent[sid].prompt("stats"), Log.a.append)),
+        nu.let(lambda sid: nu.ForEachDo(Agent[sid].prompt("stats"), Log.a.append), sid=new_sid()),
     )
     _, log = await run(body, cwd=str(tmp_path))
     raw = stats_of(log["a"])["raw_new"]
@@ -143,7 +143,7 @@ SSE = {"type": "sse", "name": "events", "url": "http://localhost:1", "headers": 
 
 
 def _prompt_with(block):
-    return nu.let(new_sid(), lambda sid: nu.Collect(Agent[sid].prompt([block])))
+    return nu.let(lambda sid: nu.Collect(Agent[sid].prompt([block])), sid=new_sid())
 
 
 @pytest.mark.parametrize(
@@ -151,7 +151,10 @@ def _prompt_with(block):
     [
         (lambda: nu.Collect(Agent["old"].load()), "loadSession"),
         (lambda: Agent["old"].resume(), "sessionCapabilities.resume"),
-        (lambda: nu.let(new_sid(), lambda sid: Agent[sid].close()), "sessionCapabilities.close"),
+        (
+            lambda: nu.let(lambda sid: Agent[sid].close(), sid=new_sid()),
+            "sessionCapabilities.close",
+        ),
         (lambda: Agent["k1"].delete(), "sessionCapabilities.delete"),
         (lambda: nu.Collect(Agent.list_sessions()), "sessionCapabilities.list"),
         (lambda: Agent.logout(), "auth.logout"),
@@ -211,7 +214,8 @@ async def test_capabilities_gate_down_to_the_field(body, capability):
 async def test_what_is_always_allowed_passes_a_bare_agent():
     link = {"type": "resource_link", "uri": "file:///a", "name": "a"}
     body = nu.let(
-        new_sid(), lambda sid: nu.Last(Agent[sid].prompt([{"type": "text", "text": "hello"}, link]))
+        lambda sid: nu.Last(Agent[sid].prompt([{"type": "text", "text": "hello"}, link])),
+        sid=new_sid(),
     )
     stop, _ = await run(body, env=BARE)
     assert stop == {"stop_reason": "end_turn"}
@@ -245,7 +249,7 @@ async def test_authenticate_and_logout_reach_the_agent():
     body = nu.Sequential(
         Agent.authenticate("key"),
         Agent.logout(),
-        nu.let(new_sid(), lambda sid: nu.ForEachDo(Agent[sid].prompt("stats"), Log.a.append)),
+        nu.let(lambda sid: nu.ForEachDo(Agent[sid].prompt("stats"), Log.a.append), sid=new_sid()),
     )
     _, log = await run(body)
     stats = stats_of(log["a"])
@@ -254,7 +258,9 @@ async def test_authenticate_and_logout_reach_the_agent():
 
 
 async def test_the_client_refuses_what_it_does_not_implement():
-    body = nu.let(new_sid(), lambda sid: nu.ForEachDo(Agent[sid].prompt("client"), Log.a.append))
+    body = nu.let(
+        lambda sid: nu.ForEachDo(Agent[sid].prompt("client"), Log.a.append), sid=new_sid()
+    )
     _, log = await run(body)
     codes = stats_of(log["a"])
     assert codes == {
@@ -266,7 +272,7 @@ async def test_the_client_refuses_what_it_does_not_implement():
 
 
 async def test_notifications_the_client_does_not_handle_are_dropped_quietly(caplog):
-    body = nu.let(new_sid(), lambda sid: nu.ForEachDo(Agent[sid].prompt("noise"), Log.a.append))
+    body = nu.let(lambda sid: nu.ForEachDo(Agent[sid].prompt("noise"), Log.a.append), sid=new_sid())
     _, log = await run(body)
     assert texts(log["a"]) == ["hel", "lo"]
     assert log["a"][-1] == {"stop_reason": "end_turn"}

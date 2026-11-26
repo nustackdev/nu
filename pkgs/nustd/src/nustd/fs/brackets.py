@@ -107,7 +107,7 @@ class Lock(Bracket):
     @contextmanager
     def _open(  # pyright: ignore[reportIncompatibleMethodOverride] - config named
         self, ctx: Context, ref: object, p: object, what: object, wait: object
-    ) -> Iterator[None]:
+    ) -> Iterator[Context]:
         fabric = fabric_of(ref)
         deadline = _deadline(wait)
         while True:
@@ -119,14 +119,14 @@ class Lock(Bracket):
                     raise
             time.sleep(POLL)
         try:
-            yield
+            yield ctx
         finally:
             fabric.unlock(full, fd)
 
     @asynccontextmanager
     async def _aopen(  # pyright: ignore[reportIncompatibleMethodOverride] - config named
         self, ctx: Context, ref: object, p: object, what: object, wait: object
-    ) -> AsyncIterator[None]:
+    ) -> AsyncIterator[Context]:
         fabric = fabric_of(ref)
         deadline = _deadline(wait)
         while True:
@@ -138,7 +138,7 @@ class Lock(Bracket):
                     raise
             await asyncio.sleep(POLL)
         try:
-            yield
+            yield ctx
         finally:
             await asyncio.to_thread(fabric.unlock, full, fd)
 
@@ -175,22 +175,22 @@ class Hold(Bracket):
     @contextmanager
     def _open(  # pyright: ignore[reportIncompatibleMethodOverride] - config named
         self, ctx: Context, ref: object, p: object, text: object
-    ) -> Iterator[None]:
+    ) -> Iterator[Context]:
         fabric = fabric_of(ref)
         fabric.write(p, _text(text))
         try:
-            yield
+            yield ctx
         finally:
             fabric.remove_if_holds(p, _text(text))
 
     @asynccontextmanager
     async def _aopen(  # pyright: ignore[reportIncompatibleMethodOverride] - config named
         self, ctx: Context, ref: object, p: object, text: object
-    ) -> AsyncIterator[None]:
+    ) -> AsyncIterator[Context]:
         fabric: FsFabric = fabric_of(ref)
         await asyncio.to_thread(fabric.write, p, _text(text))
         try:
-            yield
+            yield ctx
         finally:
             await asyncio.to_thread(fabric.remove_if_holds, p, _text(text))
 

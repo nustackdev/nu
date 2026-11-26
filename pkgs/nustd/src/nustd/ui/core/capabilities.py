@@ -6,7 +6,7 @@ rules hold by structure:
 - ``Emits``    -- the Ref sends notifies; ``on_event()`` hears every one.
                   The base of every event mixin.
 - ``Readable`` -- the browser owns state the server can read back: the Ref
-                  itself is the main read (``nu.let(slider, ...)``), and
+                  itself is the main read (``nu.let(..., value=slider)``), and
                   named readers read one field each (``tree.expanded()``).
 - ``Changes``  -- readable state that moves: ``on_change()`` hears it
                   committed. Takes ``Readable``, so a Ref that announces a

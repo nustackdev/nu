@@ -79,14 +79,14 @@ DISCARD = "discard"
 
 def _view(rt: Runtime) -> UploadView:
     """This tab's ``UploadView``, or a ``LookupError`` saying who binds it."""
-    if not rt.ctx.fabrics.has(UploadView):
+    if not rt.ctx.has(UploadView):
         msg = (
             "upload refs need the tab's UploadView on the Context; nustd.ui.uploads.upload_view"
             " binds it (nudle.serve does),"
             " a host of its own binds UploadView(root, sid) beside the Session"
         )
         raise LookupError(msg)
-    return rt.ctx.fabrics.get(UploadView)
+    return rt.ctx.get(UploadView)
 
 
 def _resolve(view: UploadView, token: str, where: str) -> Path:
@@ -245,7 +245,7 @@ class _UploadCommand(Send):
         ``pull`` for its ``upload`` notify.
         """
         event = answer or cls._answer or ""
-        session = rt.ctx.fabrics.get(Session)
+        session = rt.ctx.get(Session)
         view = _view(rt)
         chain, key = await ref._aupload_target(rt, ref_nid)  # type: ignore[attr-defined]
         payload = cls._wire_payload(key, view, values)
@@ -264,7 +264,7 @@ class _UploadCommand(Send):
                 answer, view, _ = await cls._aexchange(rt, ref, ref_nid, values)
                 await self._aanswered(answer, view)
                 return
-            session = rt.ctx.fabrics.get(Session)
+            session = rt.ctx.get(Session)
             view = _view(rt) if cls._url else None
             chain, key = await ref._aupload_target(rt, ref_nid)  # type: ignore[attr-defined]
             path = tuple(seg for seg, _, _ in chain)
@@ -362,7 +362,7 @@ class ReadSlice(ScalarQuery):
         ``bytes``.
 
     Example:
-        nu.let(csv.slice(0, 4096), lambda head: show_columns(head))
+        nu.let(lambda head: show_columns(head), head=csv.slice(0, 4096))
     """
 
     _requires_async = Declared(value=True, name="requires_async")
@@ -423,7 +423,7 @@ class ReadBytes(ReadSlice):
         ``bytes``.
 
     Example:
-        nu.let(cfg.bytes(), lambda raw: load(raw))
+        nu.let(lambda raw: load(raw), raw=cfg.bytes())
     """
 
     def __init__(self, ref: Ref) -> None:

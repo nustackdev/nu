@@ -70,7 +70,7 @@ TREES = {
     "tagged": pool(
         name="laws",
         tags=("a",),
-        body=nu.mem.Frame(
+        body=nu.mem.let(
             Scratch,
             PoolRef("a").stop(Scratch.w),
             w=PoolRef("a").launch(),
@@ -78,14 +78,14 @@ TREES = {
     ),
     "workers": _provided(Scratch.ws.set(nu.Collect(Workers()))),
     "explicit_pool_ref": _provided(
-        nu.mem.Frame(
+        nu.mem.let(
             Scratch,
             Teleport(PoolRef(), body=nu.Add(1, 1), worker=Scratch.w),
             w=Launch(PoolRef()),
         ),
     ),
     "fluent": _provided(
-        nu.mem.Frame(
+        nu.mem.let(
             Scratch,
             nu.Sequential(
                 PoolRef().dispatch(RESIDENT, Scratch.w),
@@ -109,7 +109,7 @@ TREES = {
         Dispatch(body=nu.ForeverDo(Scratch.n.set(1)), worker=Scratch.w),
     ),
     "whole_lifecycle": _provided(
-        nu.mem.Frame(
+        nu.mem.let(
             Scratch,
             nu.Sequential(
                 Teleport(body=Scratch.n.set(0), worker=Scratch.w),

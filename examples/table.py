@@ -192,7 +192,6 @@ on_edit = nu.ReactEvery(
     lambda ev: nu.IfDo(
         nustd.kv.Snapshot(has(ev["key"])),
         nu.let(
-            refusal(ev["column"], ev["value"]),
             lambda why: nu.IfDo(
                 nu.Eq(why, ""),
                 nustd.kv.Transaction(
@@ -205,6 +204,7 @@ on_edit = nu.ReactEvery(
                 >> STATUS.set("Set " + nu.Str(ev["column"]) + " of " + nu.Str(ev["key"])),
                 STATUS.set("Not changed: " + nu.Str(why)),
             ),
+            why=refusal(ev["column"], ev["value"]),
         ),
         ship >> STATUS.set("Not changed: that row is gone"),
     ),
@@ -213,7 +213,6 @@ on_edit = nu.ReactEvery(
 on_add = nu.ReactEvery(
     TABLE.on_add(),
     lambda ev: nu.let(
-        nustd.kv.Snapshot("m" + nu.str(State.next_id)),
         lambda key: (
             nustd.kv.Transaction(
                 State.rows[key].cells.set(
@@ -226,6 +225,7 @@ on_add = nu.ReactEvery(
             >> nustd.kv.Snapshot(TABLE.insert_row(ev["index"], row(key)) >> arrows)
             >> STATUS.set("Added " + nu.Str(key))
         ),
+        key=nustd.kv.Snapshot("m" + nu.str(State.next_id)),
     ),
 )
 

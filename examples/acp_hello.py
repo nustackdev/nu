@@ -30,8 +30,8 @@ def answer(items: list) -> str:
 app = nu.With(
     nustd.acp.claude(Claude, cwd=tempfile.mkdtemp(), permissions="reject_once"),
     body=nu.let(
-        nu.Dict(Claude.new_session())["session_id"],
         lambda sid: nu.print(answer(nu.Collect(Claude[sid].prompt("write a haiku about rust")))),
+        sid=nu.Dict(Claude.new_session())["session_id"],
     ),
 )
 

@@ -44,7 +44,7 @@ def _shipped(name: str) -> nu.Nu:
         body=lambda root: nu.Provide(
             WorkerPool,
             kwargs={"name": name},
-            body=nu.mem.Frame(
+            body=nu.mem.let(
                 Local,
                 nu.List.of(
                     root,

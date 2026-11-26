@@ -15,8 +15,8 @@ The body is usually a lambda over the element, which mints the name; a plain
 body reads it via an attrs ref under an explicit name (itself a child, so it
 can be a Literal or a computed Ref).
 ``ForEachParAsync`` is ``ForEachDo``'s fan-out twin: same three args, same
-binding, but every element gets its own arm on the loop at once, each on its own
-Context branch so the arms cannot stomp each other's loop variable. It lives
+binding, but every element gets its own arm on the loop at once, each with its
+own attrs table so the arms cannot stomp each other's loop variable. It lives
 here, with the ForEach it mirrors, and borrows the scheduling from ``parallel``.
 Its reactive twin, ``ReconcileLatestEach``, keeps the fan-out open against a
 change subscription and lives with the other reactive flows in
@@ -126,7 +126,7 @@ class WhileDo(Control):
 
     Example:
         >>> count = lambda i: nu.WhileDo(i < 3, i.set(i + 1)) >> nu.print(i)
-        >>> _ = nu.run(nu.let(0, count))
+        >>> _ = nu.run(nu.let(count, i=0))
         3
     """
 
@@ -284,8 +284,8 @@ class ForEachParAsync(Control):
           costs no worker, and these arms are meant never to return, so there
           is nothing to ration - ``max_parallel`` bounds threads, and this
           atom uses none.
-        - Each arm runs on its own branch (``Context.branch``), so ``item``
-          is that arm's element and nothing else. The branch shares values
+        - Each arm runs with its own attrs table, so ``item`` is that
+          arm's element and nothing else. The arms share values
           by reference, so a live handle in attrs crosses fine, but an arm's
           own bindings stay in its arm.
         - Arms that never return are the point: a standing ``ForeverDo`` per

@@ -29,7 +29,7 @@ def test_a_tree_over_a_local_shape_round_trips() -> None:
     class Tally(nu.Shape):
         n = nu.mem.IntRef.slot()
 
-    term = nu.mem.Frame(Tally, nu.Add(Tally.n, 1), n=41)
+    term = nu.mem.let(Tally, nu.Add(Tally.n, 1), n=41)
     assert nu.run(wire.loads(wire.dumps(term)))[0] == 42
 
 

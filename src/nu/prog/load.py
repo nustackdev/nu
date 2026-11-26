@@ -194,8 +194,8 @@ class LoadNu(ScalarQuery):
     def _brace_of(rt: Runtime, raw: object) -> PyBrace:
         """The brace bound under ``raw`` (UNSET for untagged), or the shared in-process one."""
         tag: tuple[object, ...] = () if raw is UNSET else (raw,)
-        if rt.ctx.fabrics.has(PyBrace, *tag):
-            return rt.ctx.fabrics.get(PyBrace, *tag)
+        if rt.ctx.has(PyBrace, *tag):
+            return rt.ctx.get(PyBrace, *tag)
         return _FALLBACK
 
     @staticmethod

@@ -91,7 +91,7 @@ def test_with_ctx_accumulates_inner_reads_outer_via_ctx_get():
             self.codec_kind: str | None = None
 
         def setup(self, ctx: Context) -> None:
-            self.codec_kind = ctx.fabrics.get(Codec).kind
+            self.codec_kind = ctx.get(Codec).kind
 
     tree = With(
         Provide(Codec, kwargs={"kind": "binary"}),
@@ -179,9 +179,9 @@ def test_with_preserves_bracket_tags():
         Provide(Store, kwargs={"name": "cache"}, tag="cache"),
     )
     ctx = Context()
-    with bracket._enter(ctx):
-        assert ctx.fabrics.get(Store).name == "primary"
-        assert ctx.fabrics.get(Store, "cache").name == "cache"
+    with bracket._enter(ctx) as inner:
+        assert inner.get(Store).name == "primary"
+        assert inner.get(Store, "cache").name == "cache"
 
 
 # --- async lifecycle -----------------------------------------------------
@@ -255,7 +255,7 @@ def test_with_bracket_config_reads_the_tree():
     class Cfg(nu.Shape):
         kwargs = nu.DictRef.slot(nu.StrRef)
 
-    tree = nu.Frame(
+    tree = nu.let(
         Cfg,
         With(Provide(Counter, kwargs=Cfg.kwargs), body=FabricRef(Counter)),
         kwargs={"name": "from-mem"},
@@ -271,7 +271,7 @@ def test_with_enter_opens_every_layer_outside_a_tree():
         Provide(Counter, kwargs={"name": "b"}, tag="b"),
     )
     ctx = Context()
-    with spec._enter(ctx):
-        assert ctx.fabrics.get(Counter).name == "a"
-        assert ctx.fabrics.get(Counter, "b").name == "b"
+    with spec._enter(ctx) as inner:
+        assert inner.get(Counter).name == "a"
+        assert inner.get(Counter, "b").name == "b"
     assert Counter.events == [("setup", "a"), ("setup", "b"), ("close", "b"), ("close", "a")]

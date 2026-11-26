@@ -53,7 +53,7 @@ class Throttle(Policy):
     Example:
         >>> import asyncio
         >>> pings = lambda last: nu.ForRangeDo(0, 3, nu.Throttle(60.0, nu.print("ping"), last=last))
-        >>> _ = asyncio.run(nu.arun(nu.let(None, pings)))
+        >>> _ = asyncio.run(nu.arun(nu.let(pings, last=None)))
         ping
     """
 
@@ -107,7 +107,7 @@ class Debounce(Policy):
     Example:
         >>> import asyncio
         >>> saves = lambda pending: nu.ForRangeDo(0, 3, nu.Debounce(0.01, nu.print("saved"), pending=pending))
-        >>> _ = asyncio.run(nu.arun(nu.let(None, saves) >> nu.Delay(0.05)))
+        >>> _ = asyncio.run(nu.arun(nu.let(saves, pending=None) >> nu.Delay(0.05)))
         saved
     """
 

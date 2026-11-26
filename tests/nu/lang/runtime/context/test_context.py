@@ -1,17 +1,16 @@
 """Unit tests for ``nu.lang.runtime.context.context``.
 
-Covers ``Context`` -- one task's environment, an attrs store and a fabrics
-store. Seeding with ``Context(attrs=...)``, the setup-time ``bind`` / ``lazy``
-that return a new Context, resolution by type then scope tags with subset
-fallback, predicate-guarded reads, and ``branch`` for a starting task. The
-scoped ``fabrics.bind`` / ``lazy`` live in ``test_fabrics.py``.
+Covers ``Context`` -- a stack of immutable fabric frames. ``bind`` / ``lazy``
+push a frame and return a new Context, resolution by type then scope tags with
+subset fallback, per-key shadowing across frames, predicate-guarded reads,
+lazy entries built once, and the temporary attrs table.
 """
 
 from __future__ import annotations
 
 import pytest
 
-from nu.lang.runtime import Attributes, Context, Fabrics
+from nu.lang.runtime import Attributes, Context
 
 
 # --- service tags (test-only) ---------------------------------------------
@@ -43,9 +42,8 @@ class Shard:
 def test_fresh_context_exposes_empty_stores() -> None:
     ctx = Context()
     assert isinstance(ctx.attrs, Attributes)
-    assert isinstance(ctx.fabrics, Fabrics)
     assert dict(ctx.attrs.items()) == {}
-    assert ctx.fabrics.has(Storage) is False
+    assert ctx.has(Storage) is False
 
 
 def test_context_seeds_its_starting_names() -> None:
@@ -63,24 +61,24 @@ def test_bind_returns_new_context_without_mutating_original() -> None:
     ctx0 = Context()
     ctx1 = ctx0.bind(Storage, "rocks")
     assert ctx1 is not ctx0
-    assert ctx1.fabrics.get(Storage) == "rocks"
-    assert not ctx0.fabrics.has(Storage)
+    assert ctx1.get(Storage) == "rocks"
+    assert not ctx0.has(Storage)
 
 
 def test_bind_by_type_resolves_eagerly() -> None:
     ctx = Context().bind(Storage, "value")
-    assert ctx.fabrics.get(Storage) == "value"
+    assert ctx.get(Storage) == "value"
 
 
 def test_bind_with_scope_tag_separates_bindings() -> None:
     ctx = Context().bind(Storage, "default").bind(Storage, "orders", OrderShape)
-    assert ctx.fabrics.get(Storage) == "default"
-    assert ctx.fabrics.get(Storage, OrderShape) == "orders"
+    assert ctx.get(Storage) == "default"
+    assert ctx.get(Storage, OrderShape) == "orders"
 
 
 def test_bind_overwrite_at_same_scope() -> None:
     ctx = Context().bind(Storage, "a").bind(Storage, "b")
-    assert ctx.fabrics.get(Storage) == "b"
+    assert ctx.get(Storage) == "b"
 
 
 # --- has ------------------------------------------------------------------
@@ -88,16 +86,16 @@ def test_bind_overwrite_at_same_scope() -> None:
 
 def test_has_true_when_bound() -> None:
     ctx = Context().bind(Storage, "v")
-    assert ctx.fabrics.has(Storage) is True
+    assert ctx.has(Storage) is True
 
 
 def test_has_false_when_unbound() -> None:
-    assert Context().fabrics.has(Storage) is False
+    assert Context().has(Storage) is False
 
 
 def test_has_falls_back_to_empty_scope() -> None:
     ctx = Context().bind(Storage, "v")
-    assert ctx.fabrics.has(Storage, Market) is True
+    assert ctx.has(Storage, Market) is True
 
 
 # --- get: failure ---------------------------------------------------------
@@ -105,17 +103,17 @@ def test_has_falls_back_to_empty_scope() -> None:
 
 def test_get_raises_lookup_error_when_unbound() -> None:
     with pytest.raises(LookupError, match="No binding"):
-        Context().fabrics.get(Storage)
+        Context().get(Storage)
 
 
 def test_get_error_mentions_type_name() -> None:
     with pytest.raises(LookupError, match="Storage"):
-        Context().fabrics.get(Storage)
+        Context().get(Storage)
 
 
 def test_get_error_mentions_scope_tags() -> None:
     with pytest.raises(LookupError, match="Market"):
-        Context().fabrics.get(View, Market)
+        Context().get(View, Market)
 
 
 # --- resolution: scope-tag subset fallback --------------------------------
@@ -123,18 +121,18 @@ def test_get_error_mentions_scope_tags() -> None:
 
 def test_subset_fallback_matches_smaller_scope() -> None:
     ctx = Context().bind(Storage, "default")
-    assert ctx.fabrics.get(Storage, Market) == "default"
+    assert ctx.get(Storage, Market) == "default"
 
 
 def test_subset_fallback_prefers_more_specific() -> None:
     ctx = Context().bind(Storage, "default").bind(Storage, "for-market", Market)
-    assert ctx.fabrics.get(Storage, Market) == "for-market"
-    assert ctx.fabrics.get(Storage, Market, Shard) == "for-market"
+    assert ctx.get(Storage, Market) == "for-market"
+    assert ctx.get(Storage, Market, Shard) == "for-market"
 
 
 def test_subset_fallback_picks_partial_match() -> None:
     ctx = Context().bind(Storage, "AB", Market, Shard)
-    assert ctx.fabrics.get(Storage, Market, Shard) == "AB"
+    assert ctx.get(Storage, Market, Shard) == "AB"
 
 
 # --- lazy bindings --------------------------------------------------------
@@ -148,10 +146,10 @@ def test_lazy_is_not_resolved_until_get() -> None:
         return "made"
 
     ctx = Context().lazy(Storage, factory)
-    assert ctx.fabrics.was_opened(Storage) is False
+    assert ctx.was_opened(Storage) is False
     assert calls == []
-    assert ctx.fabrics.get(Storage) == "made"
-    assert ctx.fabrics.was_opened(Storage) is True
+    assert ctx.get(Storage) == "made"
+    assert ctx.was_opened(Storage) is True
     assert calls == [1]
 
 
@@ -163,14 +161,14 @@ def test_lazy_factory_runs_once_and_caches() -> None:
         return 42
 
     ctx = Context().lazy(Storage, factory)
-    assert ctx.fabrics.get(Storage) == 42
-    assert ctx.fabrics.get(Storage) == 42
+    assert ctx.get(Storage) == 42
+    assert ctx.get(Storage) == 42
     assert calls == [1]
 
 
 def test_was_opened_false_for_eager_binding() -> None:
     ctx = Context().bind(Storage, "v")
-    assert ctx.fabrics.was_opened(Storage) is False
+    assert ctx.was_opened(Storage) is False
 
 
 # --- predicate-guarded bindings -------------------------------------------
@@ -183,7 +181,7 @@ def test_predicate_match_selects_value() -> None:
         Market,
         sharding=lambda site, **_: site[0] < 16,
     )
-    assert ctx.fabrics.get(View, Market, site=(5,)) == "shard_a"
+    assert ctx.get(View, Market, site=(5,)) == "shard_a"
 
 
 def test_predicate_mismatch_raises_lookup() -> None:
@@ -194,7 +192,7 @@ def test_predicate_mismatch_raises_lookup() -> None:
         sharding=lambda site, **_: site[0] < 16,
     )
     with pytest.raises(LookupError):
-        ctx.fabrics.get(View, Market, site=(20,))
+        ctx.get(View, Market, site=(20,))
 
 
 def test_predicate_multiple_entries_or_across() -> None:
@@ -203,8 +201,8 @@ def test_predicate_multiple_entries_or_across() -> None:
         .bind(View, "low", Market, sharding=lambda site, **_: site[0] < 16)
         .bind(View, "high", Market, sharding=lambda site, **_: site[0] >= 16)
     )
-    assert ctx.fabrics.get(View, Market, site=(5,)) == "low"
-    assert ctx.fabrics.get(View, Market, site=(20,)) == "high"
+    assert ctx.get(View, Market, site=(5,)) == "low"
+    assert ctx.get(View, Market, site=(20,)) == "high"
 
 
 def test_predicate_all_must_pass_and() -> None:
@@ -215,11 +213,11 @@ def test_predicate_all_must_pass_and() -> None:
         a=lambda x, **_: x > 0,
         b=lambda x, **_: x < 10,
     )
-    assert ctx.fabrics.get(View, Market, x=5) == "value"
+    assert ctx.get(View, Market, x=5) == "value"
     with pytest.raises(LookupError):
-        ctx.fabrics.get(View, Market, x=-1)
+        ctx.get(View, Market, x=-1)
     with pytest.raises(LookupError):
-        ctx.fabrics.get(View, Market, x=20)
+        ctx.get(View, Market, x=20)
 
 
 # --- predicates -------------------------------------------------------
@@ -229,7 +227,7 @@ def test_predicates_returns_all_entries_at_scope() -> None:
     p1 = lambda **_: True  # noqa: E731
     p2 = lambda **_: False  # noqa: E731
     ctx = Context().bind(View, "a", Market, gate=p1).bind(View, "b", Market, gate=p2)
-    entries = ctx.fabrics.predicates(View, Market)
+    entries = ctx.predicates(View, Market)
     assert len(entries) == 2
     values = [v for _, v in entries]
     assert "a" in values
@@ -242,14 +240,14 @@ def test_predicates_filters_by_scope() -> None:
         .bind(View, "a", Market, gate=lambda **_: True)
         .bind(View, "b", Shard, gate=lambda **_: True)
     )
-    market_entries = ctx.fabrics.predicates(View, Market)
+    market_entries = ctx.predicates(View, Market)
     assert len(market_entries) == 1
     assert market_entries[0][1] == "a"
 
 
 def test_predicates_returns_empty_when_none() -> None:
     ctx = Context().bind(Storage, "v")
-    assert ctx.fabrics.predicates(Storage) == []
+    assert ctx.predicates(Storage) == []
 
 
 # --- immutability ---------------------------------------------------------
@@ -259,69 +257,116 @@ def test_bind_chain_does_not_mutate_earlier_contexts() -> None:
     ctx0 = Context()
     ctx1 = ctx0.bind(Storage, "a")
     ctx2 = ctx1.bind(View, "b")
-    assert ctx0.fabrics.has(Storage) is False
-    assert ctx1.fabrics.has(View) is False
-    assert ctx2.fabrics.has(Storage) is True
-    assert ctx2.fabrics.has(View) is True
+    assert ctx0.has(Storage) is False
+    assert ctx1.has(View) is False
+    assert ctx2.has(Storage) is True
+    assert ctx2.has(View) is True
 
 
-def test_bind_carries_the_names_as_a_branch() -> None:
+def test_bind_shares_the_attrs_table_of_its_task() -> None:
+    # attrs are one task's table until they go (task-184 phase 4): a frame
+    # pushed inside the task sees and sets the same names.
     ctx0 = Context(attrs={"k": 1})
     ctx1 = ctx0.bind(Storage, "v")
-    assert ctx1.attrs.get("k") == 1
     ctx1.attrs.set("k", 2)
-    assert ctx0.attrs.get("k") == 1
+    assert ctx0.attrs.get("k") == 2
 
 
-# --- branch ---------------------------------------------------------------
+# --- frames -----------------------------------------------------------------
 
 
-def test_branch_gives_its_own_attrs_table() -> None:
-    ctx = Context(attrs={"item": 1})
-    arm = ctx.branch()
-    arm.attrs.set("item", 2)
-    with arm.attrs.let("mine", True):
-        assert not ctx.attrs.exists("mine")
-    assert ctx.attrs.get("item") == 1
+def test_an_inner_frame_shadows_the_same_key() -> None:
+    outer = Context().bind(Storage, "outer")
+    inner = outer.bind(Storage, "inner")
+    assert inner.get(Storage) == "inner"
+    assert outer.get(Storage) == "outer"
 
 
-def test_branch_shares_attr_values_by_reference() -> None:
-    ctx = Context(attrs={"k": [1, 2]})
-    arm = ctx.branch()
-    arm.attrs.get("k").append(3)  # type: ignore[attr-defined]
-    assert ctx.attrs.get("k") is arm.attrs.get("k")
-    assert ctx.attrs.get("k") == [1, 2, 3]
+def test_nesting_never_reroutes_a_tagged_lookup() -> None:
+    # Shadowing is per key: an inner untagged binding does not hide an outer
+    # tagged one from a tagged lookup.
+    ctx = Context().bind(Storage, "orders", OrderShape).bind(Storage, "plain")
+    assert ctx.get(Storage, OrderShape) == "orders"
+    assert ctx.get(Storage) == "plain"
+    assert ctx.get(Storage, Market) == "plain"
 
 
-def test_branch_keeps_the_bindings() -> None:
-    ctx = Context().bind(Storage, "v").bind(View, "w", Market)
-    arm = ctx.branch()
-    assert arm.fabrics.get(Storage) == "v"
-    assert arm.fabrics.get(View, Market) == "w"
+def test_an_inner_frame_shadows_a_tagged_key_only_for_that_key() -> None:
+    ctx = (
+        Context()
+        .bind(Storage, "plain")
+        .bind(Storage, "outer-orders", OrderShape)
+        .bind(Storage, "inner-orders", OrderShape)
+    )
+    assert ctx.get(Storage, OrderShape) == "inner-orders"
+    assert ctx.get(Storage) == "plain"
 
 
-def test_branch_gives_its_own_fabrics_table() -> None:
-    ctx = Context()
-    arm = ctx.branch()
-    with arm.fabrics.bind(Storage, "v"):
-        assert arm.fabrics.has(Storage) is True
-        assert ctx.fabrics.has(Storage) is False
+def test_an_inner_guarded_binding_shadows_the_same_predicates() -> None:
+    gate = lambda site, **_: site < 16  # noqa: E731
+    ctx = Context().bind(View, "outer", Market, gate=gate).bind(View, "inner", Market, gate=gate)
+    assert ctx.get(View, Market, site=5) == "inner"
+    assert [v for _, v in ctx.predicates(View, Market)] == ["inner"]
 
 
-def test_branch_shares_a_lazy_instance() -> None:
+def test_guarded_bindings_list_outermost_first() -> None:
+    ctx = (
+        Context()
+        .bind(View, "a", Market, gate=lambda **_: True)
+        .bind(View, "b", Market, gate=lambda **_: True)
+    )
+    assert [v for _, v in ctx.predicates(View, Market)] == ["a", "b"]
+
+
+def test_a_lazy_binding_is_shared_by_every_context_above_its_frame() -> None:
     calls: list[int] = []
     ctx = Context().lazy(Storage, lambda: calls.append(1) or "made")
-    arm = ctx.branch()
-    assert arm.fabrics.get(Storage) == "made"
-    assert ctx.fabrics.get(Storage) == "made"
+    one, two = ctx.bind(View, "w"), ctx.bind(View, "x")
+    assert one.get(Storage) == "made"
+    assert two.get(Storage) == "made"
+    assert ctx.get(Storage) == "made"
     assert calls == [1]
 
 
-def test_branch_binding_does_not_leak_back() -> None:
-    ctx = Context()
-    arm = ctx.branch().bind(Storage, "v")
-    assert ctx.fabrics.has(Storage) is False
-    assert arm.fabrics.has(Storage) is True
+def test_a_lazy_binding_builds_once_under_concurrent_first_lookups() -> None:
+    import threading
+    import time
+    from concurrent.futures import ThreadPoolExecutor
+
+    calls: list[int] = []
+    start = threading.Barrier(8)
+
+    def factory() -> object:
+        calls.append(1)
+        time.sleep(0.02)  # wide window: every thread is in the lookup now
+        return object()
+
+    ctx = Context().lazy(Storage, factory)
+
+    def look() -> object:
+        start.wait()
+        return ctx.get(Storage)
+
+    with ThreadPoolExecutor(8) as pool:
+        got = list(pool.map(lambda _: look(), range(8)))
+    assert calls == [1]
+    assert all(g is got[0] for g in got)
+
+
+def test_was_opened_reads_the_nearest_binding_of_the_key() -> None:
+    ctx = Context().lazy(Storage, lambda: "lazy")
+    ctx.get(Storage)
+    inner = ctx.bind(Storage, "eager")
+    assert ctx.was_opened(Storage) is True
+    assert inner.was_opened(Storage) is False
+
+
+def test_attrs_fork_shares_the_frames_and_copies_the_table() -> None:
+    ctx = Context(attrs={"item": 1}).bind(Storage, "v")
+    arm = ctx._fork_attrs()
+    arm.attrs.set("item", 2)
+    assert ctx.attrs.get("item") == 1
+    assert arm.get(Storage) == "v"
 
 
 # --- repr -----------------------------------------------------------------

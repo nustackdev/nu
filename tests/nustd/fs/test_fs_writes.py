@@ -412,8 +412,7 @@ def test_make_temp_mints_per_run(go, root):
 
 def test_make_temp_feeds_a_write(go, root):
     body = nu.let(
-        data.make_temp("job-", "jobs"),
-        lambda d: (data.file(d) / "in.txt").write_text("x"),
+        lambda d: (data.file(d) / "in.txt").write_text("x"), d=data.make_temp("job-", "jobs")
     )
     go(on(root, body))
     (made,) = (root / "jobs").iterdir()

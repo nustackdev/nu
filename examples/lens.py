@@ -201,10 +201,10 @@ def by_hand(lens, shape, prefix):
     on_move = nu.ReactEvery(
         lens.on_change(),
         lambda ev: nu.let(
-            ev["value"],
             lambda cursor: nustd.kv.Snapshot(
                 lens.set_columns(cursor, nustd.ui.lens.columns(shape, cursor, prefix=prefix))
             ),
+            cursor=ev["value"],
         ),
     )
     return boot >> on_move

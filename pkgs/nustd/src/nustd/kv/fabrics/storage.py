@@ -51,7 +51,7 @@ def _resolve_publisher(
     """
     if publisher_type is None:
         return None
-    return ctx.fabrics.get(publisher_type, *tags)
+    return ctx.get(publisher_type, *tags)
 
 
 class InMemoryStorage(_InMemoryStorage, Fabric):
@@ -75,7 +75,7 @@ class InMemoryStorage(_InMemoryStorage, Fabric):
 
     def setup(self, ctx: Context) -> None:
         """Read deps from ctx, run the parent constructor, open the store."""
-        codec = ctx.fabrics.get(Codec, *self._codec_tags)
+        codec = ctx.get(Codec, *self._codec_tags)
         publisher = _resolve_publisher(ctx, self._publisher_type, self._publisher_tags)
         _InMemoryStorage.__init__(self, codec=codec, publisher=publisher)
         self.open()
@@ -127,7 +127,7 @@ class RocksDBStorage(Fabric):
         """Import rdbpy lazily, construct the backing store, and open it."""
         from virtuals.storages.rocksdb import RocksDBStorage as _RocksDBStorage
 
-        codec = ctx.fabrics.get(Codec, *self._codec_tags)
+        codec = ctx.get(Codec, *self._codec_tags)
         publisher = _resolve_publisher(ctx, self._publisher_type, self._publisher_tags)
         self._backing = _RocksDBStorage(
             path=Path(self._path),
@@ -199,7 +199,7 @@ class LMDBStorage(Fabric):
         """Import lmdb lazily, construct the backing env, and open it."""
         from virtuals.storages.lmdb import LMDBStorage as _LMDBStorage
 
-        codec = ctx.fabrics.get(Codec, *self._codec_tags)
+        codec = ctx.get(Codec, *self._codec_tags)
         publisher = _resolve_publisher(ctx, self._publisher_type, self._publisher_tags)
         self._backing = _LMDBStorage(
             path=Path(self._path),
@@ -272,7 +272,7 @@ class SQLiteStorage(Fabric):
         """Construct the backing store and open it."""
         from virtuals.storages.sqlite import SQLiteStorage as _SQLiteStorage
 
-        codec = ctx.fabrics.get(Codec, *self._codec_tags)
+        codec = ctx.get(Codec, *self._codec_tags)
         publisher = _resolve_publisher(ctx, self._publisher_type, self._publisher_tags)
         self._backing = _SQLiteStorage(
             path=Path(self._path),

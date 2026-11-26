@@ -80,7 +80,7 @@ class PoolRef(FabricRef):
 
     Example:
         pool = PoolRef()
-        mp.pool(name="cells", body=nu.let(pool.launch(), lambda w: pool.stop(w)))
+        mp.pool(name="cells", body=nu.let(lambda w: pool.stop(w), w=pool.launch()))
     """
 
     fabric = WorkerPool
@@ -97,8 +97,8 @@ class PoolRef(FabricRef):
             f = fabric(rt)
             raw = tag(rt)
             tags = () if raw is UNSET else (raw,)
-            if rt.ctx.fabrics.has(f, *tags):
-                return rt.ctx.fabrics.get(f, *tags)
+            if rt.ctx.has(f, *tags):
+                return rt.ctx.get(f, *tags)
             return Null(f.__qualname__)
 
         return thunk
@@ -110,8 +110,8 @@ class PoolRef(FabricRef):
             f = await fabric(rt)
             raw = await tag(rt)
             tags = () if raw is UNSET else (raw,)
-            if rt.ctx.fabrics.has(f, *tags):
-                return rt.ctx.fabrics.get(f, *tags)
+            if rt.ctx.has(f, *tags):
+                return rt.ctx.get(f, *tags)
             return Null(f.__qualname__)
 
         return athunk

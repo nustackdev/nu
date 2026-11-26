@@ -32,8 +32,8 @@ Example::
     app = nu.With(
         nustd.acp.claude(Claude, cwd="/srv/repo"),
         body=nu.let(
-            nu.Dict(Claude.new_session())["session_id"],
             lambda sid: nu.ForEachDo(Claude[sid].prompt("why does test_kv flake?"), nu.print),
+            sid=nu.Dict(Claude.new_session())["session_id"],
         ),
     )
 

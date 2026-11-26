@@ -63,8 +63,8 @@ def test_two_stores_on_one_path_in_one_tree(tmp_path):
         nustd.blob.lmdb(Media, path),
         nustd.blob.lmdb(Pics, path),
         body=nu.let(
-            Media.put(b"m"),
             lambda bid: Dict.of(bid=bid, via_pics=Pics.get(bid), in_pics=Pics.has(bid)),
+            bid=Media.put(b"m"),
         ),
     )
     out = nu.run(term)[0]

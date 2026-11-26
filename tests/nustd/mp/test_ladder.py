@@ -473,15 +473,15 @@ async def test_dispatch_yields_a_job_id_that_cancel_takes(tmp_path):
         statuses.append(status)
 
     body = nu.let(
-        Dispatch(body=AGuarded(str(fin), 60), worker=W),
         lambda job: nu.Sequential(
             keep(Status(worker=W)),
             Cancel(worker=W, job=job),
             nu.Delay(0.3),
             keep(Status(worker=W)),
         ),
+        job=Dispatch(body=AGuarded(str(fin), 60), worker=W),
     )
-    tree = pool_preset(name="nu-test-cancel", body=nu.mem.Frame(Local, body, w=Launch()))
+    tree = pool_preset(name="nu-test-cancel", body=nu.mem.let(Local, body, w=Launch()))
     await nu.arun(tree)
     busy, after = statuses
     assert busy.state == "busy" and len(busy.jobs) == 1
@@ -513,16 +513,16 @@ def test_two_tagged_pools_in_one_scope():
         statuses.append(status)
 
     body = nu.let(
-        a.launch(),
         lambda wa: nu.let(
-            b.launch(),
             lambda wb: nu.Sequential(
                 keep(a.status(wa)),
                 keep(b.status(wb)),
                 keep(b.stop(wb)),
                 keep(a.status(wa)),
             ),
+            wb=b.launch(),
         ),
+        wa=a.launch(),
     )
     tree = pool_preset(name="pb", tags=("b",), body=pool_preset(name="pa", tags=("a",), body=body))
     nu.run(tree)

@@ -79,7 +79,7 @@ class StoreRef(FabricRef):
 
         app = nu.With(
             nustd.blob.lmdb(Media, ".store/media"),
-            body=nu.let(Media.put(b"..."), lambda bid: Media.get(bid)),
+            body=nu.let(lambda bid: Media.get(bid), bid=Media.put(b"...")),
         )
     """
 
@@ -101,8 +101,8 @@ class StoreRef(FabricRef):
         def thunk(rt: Runtime) -> object:
             f = fabric(rt)
             name = cast("str", store_name(name_of(rt)))
-            if rt.ctx.fabrics.has(f, name):
-                return rt.ctx.fabrics.get(f, name)
+            if rt.ctx.has(f, name):
+                return rt.ctx.get(f, name)
             return Null(name)
 
         return thunk
@@ -113,8 +113,8 @@ class StoreRef(FabricRef):
         async def athunk(rt: Runtime) -> object:
             f = await fabric(rt)
             name = cast("str", store_name(await name_of(rt)))
-            if rt.ctx.fabrics.has(f, name):
-                return rt.ctx.fabrics.get(f, name)
+            if rt.ctx.has(f, name):
+                return rt.ctx.get(f, name)
             return Null(name)
 
         return athunk

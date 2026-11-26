@@ -1,12 +1,12 @@
 """Context isolation at every point a task starts.
 
-Each concurrent task runs on its own ``Context.branch()``: Parallel / Race /
-AnyN arms (on the loop, on a thread, or in the sequential fallback),
-ForEachPar arms, ReactLatest runs, and worker requests. For both stores the
-rules are the same:
+Each concurrent task starts from the current frame: Parallel / Race / AnyN
+arms (on the loop, on a thread, or in the sequential fallback), ForEachPar
+arms, ReactLatest runs, and worker requests. A frame an arm pushes is its own,
+and (until attrs go) each arm takes its own attrs table. The rules:
 
 - an arm sees what the parent had bound before the arm started;
-- siblings never see each other's ``let`` / ``set`` / ``bind``;
+- siblings never see each other's ``let`` / ``set`` / pushed frames;
 - the parent never sees an arm's, whether the arm finishes, raises, or is
   cancelled.
 
@@ -95,9 +95,16 @@ def _view(rt: Runtime) -> dict:
     ctx = rt.ctx
     return {
         "attrs": dict(ctx.attrs.items()),
-        "handle": ctx.fabrics.has(Handle),
-        "parent": ctx.fabrics.has(Parent),
+        "handle": ctx.has(Handle),
+        "parent": ctx.has(Parent),
     }
+
+
+def _push_handle(rt: Runtime) -> Context:
+    """The arm pushes a frame of its own; nobody else sees it."""
+    ctx = rt.ctx.bind(Handle, Handle())
+    assert ctx.has(Handle) is True
+    return ctx
 
 
 def _start_ctx() -> Context:
@@ -107,7 +114,7 @@ def _start_ctx() -> Context:
 
 def _assert_parent_untouched(ctx: Context) -> None:
     assert dict(ctx.attrs.items()) == {"x": 0, "p": "parent"}
-    assert ctx.fabrics.has(Handle) is False
+    assert ctx.has(Handle) is False
 
 
 # --- Nu-level regressions ---------------------------------------------------
@@ -166,7 +173,8 @@ def _async_pair(seen: dict) -> tuple[ScalarAction, ScalarAction]:
 
     async def a(rt: Runtime) -> str:
         seen["a_start"] = _view(rt)
-        with rt.ctx.attrs.let("mine", "a"), rt.ctx.fabrics.bind(Handle, Handle()):
+        with rt.ctx.attrs.let("mine", "a"):
+            _push_handle(rt)
             rt.ctx.attrs.set("x", "a")
             a_bound.set()
             await b_looked.wait()
@@ -224,7 +232,8 @@ def _sync_pair(seen: dict, *, overlap: bool) -> tuple[ScalarAction, ScalarAction
 
     def a(rt: Runtime) -> str:
         seen["a_start"] = _view(rt)
-        with rt.ctx.attrs.let("mine", "a"), rt.ctx.fabrics.bind(Handle, Handle()):
+        with rt.ctx.attrs.let("mine", "a"):
+            _push_handle(rt)
             rt.ctx.attrs.set("x", "a")
             if overlap:
                 a_bound.set()
@@ -269,8 +278,8 @@ async def test_thread_arm_keeps_its_task_context() -> None:
         seen["thread"] = threading.current_thread().name
         seen["view"] = _view(rt)
         seen["trace"] = _TRACE.get(None)
-        with rt.ctx.fabrics.bind(Handle, Handle()):
-            rt.ctx.attrs.set("x", "thread")
+        _push_handle(rt)
+        rt.ctx.attrs.set("x", "thread")
 
     _, ctx = await arun(
         ParallelThreaded(_Fn(arm), _Fn(lambda rt: None)), _start_ctx(), max_parallel=2
@@ -290,7 +299,8 @@ async def test_a_failing_arm_leaves_parent_and_sibling_alone(max_parallel: int) 
     a_bound = asyncio.Event()
 
     async def a(rt: Runtime) -> None:
-        with rt.ctx.attrs.let("mine", "a"), rt.ctx.fabrics.bind(Handle, Handle()):
+        with rt.ctx.attrs.let("mine", "a"):
+            _push_handle(rt)
             rt.ctx.attrs.set("x", "a")
             a_bound.set()
             await asyncio.sleep(0)
@@ -315,7 +325,8 @@ async def test_a_cancelled_arm_unwinds_its_own_scopes(flow: type) -> None:
 
     async def held(rt: Runtime) -> None:
         arm_ctx.append(rt.ctx)
-        with rt.ctx.attrs.let("mine", "held"), rt.ctx.fabrics.bind(Handle, Handle()):
+        with rt.ctx.attrs.let("mine", "held"):
+            _push_handle(rt)
             rt.ctx.attrs.set("x", "held")
             bound.set()
             await asyncio.Event().wait()
@@ -328,7 +339,7 @@ async def test_a_cancelled_arm_unwinds_its_own_scopes(flow: type) -> None:
     (branch,) = arm_ctx
     assert branch is not ctx
     assert branch.attrs.exists("mine") is False  # let unwound on cancel
-    assert branch.fabrics.has(Handle) is False  # bind unwound on cancel
+    assert branch.has(Handle) is False  # the pushed frame never reached the arm's own
     assert branch.attrs.get("x") == "held"  # the set stayed on the branch
     _assert_parent_untouched(ctx)
 
@@ -343,7 +354,8 @@ async def test_foreach_par_arms_are_isolated() -> None:
     async def body(rt: Runtime) -> None:
         item = rt.ctx.attrs.get("item")
         if item == 1:
-            with rt.ctx.attrs.let("mine", 1), rt.ctx.fabrics.bind(Handle, Handle()):
+            with rt.ctx.attrs.let("mine", 1):
+                _push_handle(rt)
                 rt.ctx.attrs.set("x", 1)
                 one_bound.set()
                 await two_looked.wait()
@@ -394,7 +406,8 @@ async def test_react_latest_runs_are_isolated() -> None:
     async def body(rt: Runtime) -> None:
         key = rt.ctx.attrs.get("k")
         seen[key] = _view(rt)
-        with rt.ctx.attrs.let("mine", key), rt.ctx.fabrics.bind(Handle, Handle()):
+        with rt.ctx.attrs.let("mine", key):
+            _push_handle(rt)
             rt.ctx.attrs.set("x", key)
             await asyncio.Event().wait()
 
@@ -416,30 +429,29 @@ async def test_react_latest_runs_are_isolated() -> None:
         "parent": True,
     }
     assert dict(ctx.attrs.items()) == {"x": 0, "p": "parent", "feed": feed}
-    assert ctx.fabrics.has(Handle) is False
+    assert ctx.has(Handle) is False
 
 
 # --- worker handoff -----------------------------------------------------------
 
 
-def test_worker_request_seeds_names_on_its_own_branch() -> None:
+def test_worker_request_seeds_names_on_its_own_table() -> None:
     from nustd.mp._worker import _exec_context as exec_context
 
-    worker = Context()
-    with worker.fabrics.bind(Parent, Parent()):
-        with exec_context(worker, {"x": 1}) as one, exec_context(worker, {"x": 2}) as two:
-            assert one.attrs.get("x") == 1
-            assert two.attrs.get("x") == 2
-            assert one.fabrics.has(Parent) is True  # the worker's own fabrics
-            one.attrs.set("x", 10)
-            with one.fabrics.bind(Handle, Handle()):
-                assert two.fabrics.has(Handle) is False
-            assert two.attrs.get("x") == 2
-        assert worker.attrs.exists("x") is False
-        assert worker.fabrics.has(Handle) is False
+    worker = Context().bind(Parent, Parent())
+    with exec_context(worker, {"x": 1}) as one, exec_context(worker, {"x": 2}) as two:
+        assert one.attrs.get("x") == 1
+        assert two.attrs.get("x") == 2
+        assert one.has(Parent) is True  # the worker's own fabrics
+        one.attrs.set("x", 10)
+        assert one.bind(Handle, Handle()).has(Handle) is True
+        assert two.has(Handle) is False
+        assert two.attrs.get("x") == 2
+    assert worker.attrs.exists("x") is False
+    assert worker.has(Handle) is False
 
 
-def test_worker_request_without_names_still_gets_a_branch() -> None:
+def test_worker_request_without_names_still_gets_its_own_table() -> None:
     from nustd.mp._worker import _exec_context as exec_context
 
     worker = Context()

@@ -35,11 +35,11 @@ def piece(item: dict) -> str:
 app = nu.With(
     nustd.acp.claude(Claude, cwd=tempfile.mkdtemp(), permissions="allow_once"),
     body=nu.let(
-        nu.Dict(Claude.new_session())["session_id"],
         lambda sid: nu.ForEachDo(
             Claude[sid].prompt("write hello.txt saying hi, then list the directory"),
             lambda item: nu.print(piece(item), end="", flush=True),
         ),
+        sid=nu.Dict(Claude.new_session())["session_id"],
     ),
 )
 

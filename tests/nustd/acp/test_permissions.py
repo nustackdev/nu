@@ -8,6 +8,8 @@ the request on the wire.
 
 from __future__ import annotations
 
+import inspect
+
 import pytest
 from _support.acp_fixtures import Agent, Log, has, run, texts
 
@@ -18,7 +20,8 @@ pytestmark = pytest.mark.timeout(20, method="thread")
 
 
 def with_session(body):
-    return nu.let(nu.Dict(Agent.new_session())["session_id"], body)
+    (name,) = inspect.signature(body).parameters
+    return nu.let(body, **{name: nu.Dict(Agent.new_session())["session_id"]})
 
 
 def log_all(stream, into=Log.a):
