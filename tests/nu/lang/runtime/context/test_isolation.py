@@ -449,42 +449,6 @@ async def test_react_latest_runs_are_isolated() -> None:
     assert ctx.has(Handle) is False
 
 
-# --- worker handoff -----------------------------------------------------------
-
-
-def test_worker_request_seeds_names_on_its_own_table() -> None:
-    from nustd.mp._worker import _exec_context as exec_context
-
-    worker = Context().bind(Parent, Parent())
-    with exec_context(worker, {"x": 1}) as one, exec_context(worker, {"x": 2}) as two:
-        assert one.attrs.get("x") == 1
-        assert two.attrs.get("x") == 2
-        assert one.has(Parent) is True  # the worker's own fabrics
-        one.attrs.set("x", 10)
-        assert one.bind(Handle, Handle()).has(Handle) is True
-        assert two.has(Handle) is False
-        assert two.attrs.get("x") == 2
-    assert worker.attrs.exists("x") is False
-    assert worker.has(Handle) is False
-
-
-def test_worker_request_without_names_still_gets_its_own_table() -> None:
-    from nustd.mp._worker import _exec_context as exec_context
-
-    worker = Context()
-    with exec_context(worker, None) as ctx:
-        assert ctx is not worker
-        assert dict(ctx.attrs.items()) == {}
-
-
-def test_worker_handoff_runs_a_tree_against_the_seeded_names() -> None:
-    from nustd.mp._worker import _exec_context
-
-    with _exec_context(Context(), {"x": 41}) as ctx:
-        value, _ = run(x + 1, ctx)
-    assert value == 42
-
-
 # --- brackets under a fan-out -------------------------------------------------
 
 

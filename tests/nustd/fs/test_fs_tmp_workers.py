@@ -1,16 +1,13 @@
 """A temp dir's path, handed to a lambda, reaches an ``nustd.mp`` worker.
 
 The mount itself stays in the caller's process. What travels is the path, a
-plain string. ``fs.tmp`` hands it to its lambda through a mem frame, which no
-teleport carries, so until Teleport takes its values as arguments (task-184
-phase 4) this test parks the path in ``ctx.attrs`` itself, which
-``Teleport(..., carry=True)`` copies to the worker.
+plain string: ``fs.tmp`` hands it to its lambda through a mem frame, and the
+Teleport hands it on to the worker as an arg, evaluated in the caller.
 """
 
 from __future__ import annotations
 
 import os
-from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
@@ -22,9 +19,7 @@ from nustd.mp import Launch, Teleport, WorkerPool
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator
-
-    from nu.lang.runtime import Context
+    from collections.abc import Callable
 
 
 pytestmark = pytest.mark.slow
@@ -42,21 +37,6 @@ isdir = cast("Callable[..., nu.Nu]", nu.host(os.path.isdir))
 getpid = cast("Callable[..., nu.Nu]", nu.host(os.getpid))
 
 
-class _Park(nu.Bracket):
-    """TEMPORARY (task-184 phase 4): park ``value`` in attrs under ``"root"`` for the body."""
-
-    def __init__(self, body: nu.Nu, value: object) -> None:
-        super().__init__(body, value)
-
-    @contextmanager
-    def _open(self, ctx: Context, value: object) -> Iterator[Context]:  # type: ignore[override]
-        with ctx.attrs.let("root", value):
-            yield ctx
-
-
-ROOT = nu.Attr("root")
-
-
 def _shipped(name: str) -> nu.Nu:
     """A tmp whose body asks a worker for the path, whether it is a dir there, and its pid."""
     return fs.tmp(
@@ -68,11 +48,11 @@ def _shipped(name: str) -> nu.Nu:
                 Local,
                 nu.List.of(
                     root,
-                    _Park(
-                        Teleport(
-                            body=nu.List.of(ROOT, isdir(ROOT), getpid()), worker=W, carry=True
-                        ),
-                        root,
+                    Teleport(
+                        None,
+                        lambda root: nu.List.of(root, isdir(root), getpid()),
+                        W,
+                        root=root,
                     ),
                 ),
                 w=Launch(),
@@ -89,9 +69,9 @@ def _check(got: list) -> None:
     assert not Path(here).exists()
 
 
-def test_a_carried_teleport_reads_the_tmp_path():
+def test_a_teleport_arg_hands_the_tmp_path_to_a_worker():
     _check(nu.run(_shipped("nu-test-fs-tmp"))[0])
 
 
-async def test_a_carried_teleport_reads_the_tmp_path_async():
+async def test_a_teleport_arg_hands_the_tmp_path_to_a_worker_async():
     _check((await nu.arun(_shipped("nu-test-fs-tmp-a")))[0])

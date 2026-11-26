@@ -49,18 +49,18 @@ TREES = {
     "launch_with_init": _provided(
         Scratch.w.set(Launch(init=nu.Provide(Marker, kwargs={}))),
     ),
-    "dispatch": _provided(Dispatch(body=RESIDENT, worker=Scratch.w)),
-    "dispatch_job_id": _provided(Scratch.j.set(Dispatch(body=RESIDENT, worker=Scratch.w))),
+    "dispatch": _provided(Dispatch(None, RESIDENT, Scratch.w)),
+    "dispatch_job_id": _provided(Scratch.j.set(Dispatch(None, RESIDENT, Scratch.w))),
     "dispatch_command_body": _provided(
-        Dispatch(body=Scratch.n.set(1), worker=Scratch.w),
+        Dispatch(None, Scratch.n.set(1), Scratch.w),
     ),
     "cancel": _provided(Cancel(worker=Scratch.w, job=Scratch.j)),
     "interrupt": _provided(Interrupt(worker=Scratch.w)),
     "stop": _provided(Scratch.s.set(Stop(worker=Scratch.w))),
     "stop_with_grace": _provided(Stop(worker=Scratch.w, grace=0.5)),
-    "teleport_scalar": _provided(Teleport(body=nu.Add(1, 2), worker=Scratch.w)),
+    "teleport_scalar": _provided(Teleport(None, nu.Add(1, 2), Scratch.w)),
     "teleport_command": _provided(
-        Teleport(body=Scratch.n.set(1), worker=Scratch.w),
+        Teleport(None, Scratch.n.set(1), Scratch.w),
     ),
     "kill": _provided(Kill(worker=Scratch.w)),
     "status": _provided(Scratch.s.set(Status(worker=Scratch.w))),
@@ -80,7 +80,7 @@ TREES = {
     "explicit_pool_ref": _provided(
         nu.mem.let(
             Scratch,
-            Teleport(PoolRef(), body=nu.Add(1, 1), worker=Scratch.w),
+            Teleport(PoolRef(), nu.Add(1, 1), Scratch.w),
             w=Launch(PoolRef()),
         ),
     ),
@@ -106,14 +106,14 @@ TREES = {
         ),
     ),
     "dispatch_forever_body": _provided(
-        Dispatch(body=nu.ForeverDo(Scratch.n.set(1)), worker=Scratch.w),
+        Dispatch(None, nu.ForeverDo(Scratch.n.set(1)), Scratch.w),
     ),
     "whole_lifecycle": _provided(
         nu.mem.let(
             Scratch,
             nu.Sequential(
-                Teleport(body=Scratch.n.set(0), worker=Scratch.w),
-                Dispatch(body=RESIDENT, worker=Scratch.w),
+                Teleport(None, Scratch.n.set(0), Scratch.w),
+                Dispatch(None, RESIDENT, Scratch.w),
                 Interrupt(worker=Scratch.w),
                 Stop(worker=Scratch.w),
                 Kill(worker=Scratch.w),
@@ -138,12 +138,12 @@ def _body(node: nu.Nu) -> object:
 
 def test_dispatching_a_query_is_allowed():
     """A dispatched body's value is dropped by design, whatever it yields."""
-    assert _body(Dispatch(body=nu.Add(1, 2), worker=Scratch.w)) is not None
+    assert _body(Dispatch(None, nu.Add(1, 2), Scratch.w)) is not None
 
 
 def test_dispatching_a_non_nu_body_is_refused():
     with pytest.raises(TypeError, match="needs a Nu body"):
-        Dispatch(body=42, worker=Scratch.w)
+        Dispatch(None, 42, Scratch.w)
 
 
 @pytest.mark.parametrize(
@@ -165,7 +165,7 @@ def test_a_void_mutator_without_a_ref_in_its_mutation_slot_is_refused(tree):
 
 def test_dispatch_is_a_scalar_action_yielding_the_job_id():
     """It mutates the pool and yields the job id ``Cancel`` takes. Not a Flow either way."""
-    node = Dispatch(body=RESIDENT, worker=7)
+    node = Dispatch(None, RESIDENT, 7)
     assert isinstance(node, nu.lang.ScalarAction)
     assert not isinstance(node, nu.Flow)
     assert type(node)._attributes["sort"].value is Sort.SCALAR_ACTION
@@ -205,7 +205,7 @@ def test_each_verb_has_its_sort(node, sort, mutates):
 )
 def test_a_flow_body_is_accepted_and_the_tree_still_validates(body):
     """The whole point of the Literal: a Flow body a Command could not hold."""
-    node = Dispatch(body=body, worker=Scratch.w)
+    node = Dispatch(None, body, Scratch.w)
     assert _body(node) is body
     nu.validate(nu.compile(_provided(node)))
 
@@ -218,12 +218,16 @@ def _same_shape(a: nu.Nu, b: nu.Nu) -> bool:
     return nu.tree.equal(a, b)
 
 
+def _echo(n: nu.Nu) -> nu.Nu:
+    return n
+
+
 FLUENT = [
     (lambda p: p.launch(), lambda p: Launch(p)),
     (lambda p: p.dispatch(RESIDENT, 7), lambda p: Dispatch(p, RESIDENT, 7)),
-    (lambda p: p.dispatch(RESIDENT, 7, carry=True), lambda p: Dispatch(p, RESIDENT, 7, carry=True)),
+    (lambda p: p.dispatch(_echo, 7, n=1), lambda p: Dispatch(p, _echo, 7, n=1)),
     (lambda p: p.teleport(RESIDENT, 7), lambda p: Teleport(p, RESIDENT, 7)),
-    (lambda p: p.teleport(RESIDENT, 7, carry=True), lambda p: Teleport(p, RESIDENT, 7, carry=True)),
+    (lambda p: p.teleport(_echo, 7, n=1), lambda p: Teleport(p, _echo, 7, n=1)),
     (lambda p: p.cancel(7, 3), lambda p: Cancel(p, 7, 3)),
     (lambda p: p.interrupt(7), lambda p: Interrupt(p, 7)),
     (lambda p: p.stop(7), lambda p: Stop(p, 7)),
@@ -264,8 +268,10 @@ def test_the_atoms_carry_no_caller_value_in_a_field():
     """The design constraint: ids, targets and the body are children."""
     atoms = [
         Launch(init=nu.Provide(Marker, kwargs={})),
-        Dispatch(body=RESIDENT, worker=7),
-        Teleport(body=nu.Add(1, 2), worker=7),
+        Dispatch(None, RESIDENT, 7),
+        Dispatch(None, _echo, 7, n=7),
+        Teleport(None, nu.Add(1, 2), 7),
+        Teleport(None, _echo, 7, n=7),
         Cancel(worker=7, job=7),
         Interrupt(worker=7),
         Stop(worker=7, grace=7),
@@ -278,7 +284,8 @@ def test_the_atoms_carry_no_caller_value_in_a_field():
         # A body is a term, and `==` on a term builds a comparison: skip them.
         held = nu.tree.fields(atom)
         assert 7 not in [v for v in held.values() if not isinstance(v, nu.Nu)]
-        assert set(held) <= {"carry"}
+        # The one field is the body's binding (Shape and slots), never a value.
+        assert set(held) <= {"_ship"}
     # The pool ref's tag is a config child after the fabric type, so it can be computed.
     assert nu.tree.fields(PoolRef()) == {}
     assert nu.tree.children(PoolRef())[1].value is UNSET
@@ -287,14 +294,14 @@ def test_the_atoms_carry_no_caller_value_in_a_field():
 
 def test_the_worker_id_is_still_a_child_of_dispatch():
     """The body sits after the id, held as data. The id has to stay computable."""
-    node = Dispatch(body=RESIDENT, worker=Scratch.w)
+    node = Dispatch(None, RESIDENT, Scratch.w)
     assert isinstance(nu.tree.children(node)[0], PoolRef)
     assert isinstance(nu.tree.children(node)[1], nu.mem.ObjectRef)
 
 
 def test_a_rewrite_carries_the_body_across_unchanged():
     """``evolve`` keeps the Literal child, so the body crosses as the same object."""
-    node = Dispatch(body=RESIDENT, worker=7)
+    node = Dispatch(None, RESIDENT, 7)
     variant = node.evolve(children=nu.tree.children(node))
     assert _body(variant) is RESIDENT
     assert nu.tree.children(variant)[-1] is nu.tree.children(node)[-1]
@@ -302,7 +309,7 @@ def test_a_rewrite_carries_the_body_across_unchanged():
 
 def test_no_walker_reaches_a_dispatched_body():
     """The documented consequence, asserted: the body is not in the tree."""
-    tree = _provided(Dispatch(body=RESIDENT, worker=Scratch.w))
+    tree = _provided(Dispatch(None, RESIDENT, Scratch.w))
     program = nu.compile(tree)
     assert not any(t is RESIDENT for t in program.terms)
     assert not any(isinstance(t, nu.ForeverDo) for t in program.terms)

@@ -479,7 +479,7 @@ async def test_dispatch_yields_a_job_id_that_cancel_takes(tmp_path):
             nu.Delay(0.3),
             keep(Status(worker=W)),
         ),
-        job=Dispatch(body=AGuarded(str(fin), 60), worker=W),
+        job=Dispatch(None, AGuarded(str(fin), 60), W),
     )
     tree = pool_preset(name="nu-test-cancel", body=nu.mem.let(Local, body, w=Launch()))
     await nu.arun(tree)

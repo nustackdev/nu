@@ -27,7 +27,7 @@ from typing import TYPE_CHECKING
 
 from nu.domains.shape import Shape
 from nu.lang import Bracket
-from nu.lang.binding import _DynamicBinding, lambda_params
+from nu.lang.binding import _DynamicBinding, lambda_params, named
 from nu.lang.null import is_null
 from nu.lang.sentinels import UNSET
 
@@ -59,19 +59,9 @@ class Let(_DynamicBinding, Bracket):
         if body is not UNSET:
             msg = "let(fn, **values) takes the values by name, not a body: the lambda builds it"
             raise TypeError(msg)
-        params = lambda_params("let", target)
-        missing = [p for p in params if p not in values]
-        unknown = [k for k in values if k not in params]
-        if missing or unknown:
-            parts = []
-            if missing:
-                parts.append(f"no value for {missing}")
-            if unknown:
-                parts.append(f"{unknown} name no parameter")
-            msg = f"let: the lambda's parameters are {list(params)}; {', '.join(parts)}"
-            raise TypeError(msg)
-        built = self._dynamic("let", target, len(params))
-        super().__init__(built, *(values[p] for p in params))
+        lambda_params("let", target)  # a lambda, nothing else
+        built, self._binding, ordered = named("let", target, values)
+        super().__init__(built, *ordered)
 
     @contextmanager
     def _open(self, ctx: Context, *values: object) -> Iterator[Context]:

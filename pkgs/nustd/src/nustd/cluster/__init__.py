@@ -22,8 +22,8 @@ Typical shape::
             {"actor_name": "worker-1", "num_cpus": 4},
         ],
             body=Sequential(
-                Teleport(some_tree, target=0),
-                Teleport(some_tree, target=1),
+                Teleport(some_tree, 0),
+                Teleport(some_tree, 1),
             ),
         ),
     )

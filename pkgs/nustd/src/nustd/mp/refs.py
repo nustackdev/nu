@@ -133,17 +133,24 @@ class PoolRef(FabricRef):
 
         return Iterator(Workers(self))
 
-    def teleport(self, body: Nu, worker: object = None, *, carry: bool = False) -> Teleport:
-        """A ``Teleport`` on this pool: run ``body`` at ``worker``, yield its value."""
+    def teleport(self, body: object, worker: object = None, /, **args: object) -> Teleport:
+        """A ``Teleport`` on this pool: run ``body`` at ``worker``, yield its value.
+
+        ``body`` is a tree, or a lambda over ``args`` (values by parameter
+        name, evaluated here and shipped with the body).
+        """
         from .interactions import Teleport
 
-        return Teleport(self, body, worker, carry=carry)
+        return Teleport(self, body, worker, **args)
 
-    def dispatch(self, body: Nu, worker: object = None, *, carry: bool = False) -> Dispatch:
-        """A ``Dispatch`` on this pool: ship ``body`` to ``worker``, yield the job id."""
+    def dispatch(self, body: object, worker: object = None, /, **args: object) -> Dispatch:
+        """A ``Dispatch`` on this pool: ship ``body`` to ``worker``, yield the job id.
+
+        ``body`` is a tree, or a lambda over ``args``, as for ``teleport``.
+        """
         from .interactions import Dispatch
 
-        return Dispatch(self, body, worker, carry=carry)
+        return Dispatch(self, body, worker, **args)
 
     def cancel(self, worker: object = None, job: object = None) -> Cancel:
         """A ``Cancel`` on this pool: cancel dispatched ``job`` on ``worker``."""
