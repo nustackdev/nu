@@ -15,8 +15,7 @@ Surface:
       the same verbs, the path filled in. A plain handle, not a term.
     - mount(path, tag=...), tmp(tag=...): bind a dir, or a fresh temp dir,
       as a mount for the span of a tree. ``tmp`` also takes its body as a
-      lambda over the dir's absolute path, a ``nu.Attr`` that a body
-      teleported with ``carry=True`` reads on its worker.
+      lambda over the dir's absolute path, a mem ref to a plain ``str``.
     - Lock(file, what, wait=...): hold the exclusive ``lockf`` lock on a file
       for a body's span, across processes and, on NFS, machines; refused
       with ``FsLocked``, which names the holder.

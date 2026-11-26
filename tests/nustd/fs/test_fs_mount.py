@@ -215,14 +215,28 @@ def test_tmp_lambda_on_a_tagged_mount(go):
     assert go(app) is True
 
 
-def test_tmp_root_key_binds_a_tree_body(go):
-    app = fs.tmp(root_key="root", body=nu.Eq(nu.Attr("root"), plain.where()))
-    assert go(app) is True
+def test_tmp_tree_body_is_handed_no_path(go):
+    assert go(fs.tmp(body=nu.Eq(plain.where(), plain.where()))) is True
 
 
-def test_tmp_lambda_and_root_key_are_refused():
-    with pytest.raises(ValueError, match="root_key"):
-        fs.tmp(root_key="root", body=lambda root: root)
+def test_tmp_lambda_of_no_parameter_is_a_tree(go):
+    assert go(fs.tmp(body=lambda: isdir(plain.where()))) is True
+
+
+def test_tmp_lambda_of_two_parameters_is_refused():
+    with pytest.raises(TypeError, match="at most 1"):
+        fs.tmp(body=lambda root, other: root)
+
+
+def test_tmp_path_frame_stays_inside_the_body(go):
+    # Two tmps over one lambda: each reads its own dir, the inner shadowing the outer.
+    def body(root: nu.Nu) -> nu.Nu:
+        return nu.List.of(root, fs.tmp(prefix="inner-", body=lambda inner: inner), root)
+
+    outer, inner, again = go(fs.tmp(prefix="outer-", body=body))
+    assert outer == again
+    assert Path(outer).name.startswith("outer-")
+    assert Path(inner).name.startswith("inner-")
 
 
 def test_tmp_lambda_travels_on_the_wire(go):

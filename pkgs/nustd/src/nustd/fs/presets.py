@@ -4,30 +4,29 @@ Both build a ``Provide`` over ``FsFabric``. Every option is a child of it,
 so any one of them can be a term, computed when the bracket opens.
 
 A temp dir's path is known only once it is made, so ``tmp`` also takes its
-body as a lambda over the root: the path lands in ``ctx.attrs`` under a
-name the lambda owns, the way ``nu.TryCatch`` hands its error. A plain
-string in the attrs travels where the mount cannot, such as to an
-``nustd.mp`` worker through ``Teleport(..., carry=True)``.
+body as a lambda over the root: inside the mount a dynamic binding
+(``nu.let``) evaluates the path and hands it to the lambda through a frame
+of its own, the way ``nu.TryCatch`` hands its error. The path is a plain
+``str``, so it travels where the mount cannot, such as to an ``nustd.mp``
+worker as a value the body is given.
 """
 
 from __future__ import annotations
 
 import os
-from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
-from nu.context.attrs.binders import bind
 from nu.context.fabric import Provide
-from nu.lang import Bracket, Literal, Nu
+from nu.lang import Literal, Nu
+from nu.lang.binding import is_builder, lambda_params
+from nu.mem import let
 
 from .fabric import FsFabric, check_follow
 from .refs import FsRef, check_tag
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterator, Mapping
-
-    from nu.lang.runtime import Context
+    from collections.abc import Callable, Mapping
 
 
 __all__ = ["mount", "tmp"]
@@ -84,8 +83,7 @@ def tmp(
     tag: str | Nu | FsRef = "",
     prefix: str | Nu = "nu-",
     keep: bool | Nu = False,
-    root_key: str | None = None,
-    body: Nu | Callable[[Nu], Nu] | None = None,
+    body: Nu | Callable[..., Nu] | None = None,
 ) -> Provide:
     """Mount a fresh temp dir for the body's duration, removed at exit.
 
@@ -93,18 +91,18 @@ def tmp(
         tag: the tag to bind under, or the ``FsRef`` whose tag to use.
         prefix: the temp dir's name prefix.
         keep: leave the dir behind at exit; find it with ``ref.where()``.
-        root_key: where the dir's absolute path lands in ``ctx.attrs`` for
-            a tree body to read with ``nu.Attr``. Left out, a tree body is
-            handed no path; a lambda mints its own name.
         body: the tree that runs with the mount bound, or a lambda over the
-            dir's absolute path (a ``nu.Attr``) that builds it.
+            dir's absolute path (a mem ref) that builds it. A tree is handed
+            no path.
 
     Notes:
         - Each run of the tree makes its own dir, in the system's temp dir.
         - The lambda runs once, at construction, and gets a ref to the path,
           not the path: it builds the body and never reads it in Python.
-        - The path is a plain ``str`` in the attrs, so a body teleported to
-          an ``nustd.mp`` worker with ``carry=True`` reads it there.
+        - The path is a plain ``str``, evaluated inside the mount and held
+          in the lambda's own frame for the body's span.
+        - A lambda takes at most the one parameter; one taking none is a
+          tree with no path.
 
     Yields:
         A ``Provide`` bracket binding the ``FsFabric``.
@@ -119,25 +117,19 @@ def tmp(
     """
     options: Mapping[str, object] = {"temp": True, "prefix": prefix, "keep": keep}
     tags = _tags(tag)
-    inner, (name,) = bind("fs.tmp", body, root_key=root_key)
-    if name is not None:
-        inner = _Root(inner, FsRef(tags[0] if tags else ""), name)
-    return Provide(FsFabric, kwargs=options, body=inner, tags=tags)
+    return Provide(FsFabric, kwargs=options, body=_rooted(body, tags), tags=tags)
 
 
-class _Root(Bracket):
-    """Bind the mount's absolute path in ``ctx.attrs`` under ``name`` for the body's span."""
-
-    def __init__(self, body: Nu | None, ref: FsRef, name: str | Nu) -> None:
-        # Children: [body, where, name].
-        super().__init__(body, ref.where(), name)
-
-    @contextmanager
-    def _open(  # pyright: ignore[reportIncompatibleMethodOverride] - config named
-        self, ctx: Context, where: object, name: object
-    ) -> Iterator[Context]:
-        with ctx.attrs.let(name, where):
-            yield ctx
+def _rooted(body: object, tags: tuple[object, ...]) -> object:
+    """``body``, a lambda over the mount's absolute path bound by a ``let`` inside it."""
+    if not is_builder(body):
+        return body
+    params = lambda_params("fs.tmp", body)
+    if len(params) > 1:
+        msg = f"fs.tmp hands its body 1 value, so its lambda takes at most 1; got {len(params)}"
+        raise TypeError(msg)
+    where = FsRef(tags[0] if tags else "").where()
+    return let(body, **dict.fromkeys(params, where))
 
 
 def _tags(tag: object) -> tuple[object, ...]:
