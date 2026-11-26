@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Tests pin frame isolation across arms, shadowing, streams, cancels and delayed reads
 - Bindings push immutable context frames, so concurrent bodies never share or restore state
 - Local frames take values by name, over a declared shape or a lambda
 - Benchmark for handing values to bodies and reading context, to compare the frames rework
