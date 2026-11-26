@@ -76,7 +76,7 @@ def mount(
         "mode": mode,
         "follow": follow,
     }
-    return Provide(FsFabric, options, body, tags=_tags(tag))
+    return Provide(FsFabric, kwargs=options, body=body, tags=_tags(tag))
 
 
 def tmp(
@@ -122,7 +122,7 @@ def tmp(
     inner, (name,) = bind("fs.tmp", body, root_key=root_key)
     if name is not None:
         inner = _Root(inner, FsRef(tags[0] if tags else ""), name)
-    return Provide(FsFabric, options, inner, tags=tags)
+    return Provide(FsFabric, kwargs=options, body=inner, tags=tags)
 
 
 class _Root(Bracket):

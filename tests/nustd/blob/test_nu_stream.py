@@ -63,7 +63,7 @@ def counting(kind, tmp_path):
         spec = {"backend": CountingFiles, "options": {"root": str(tmp_path / "s")}}
 
     def tree(body):
-        return nu.Provide(BlobFabric, spec, body, tag=Media.name)
+        return nu.Provide(BlobFabric, kwargs=spec, body=body, tag=Media.name)
 
     bid = nu.run(tree(Media.put(DATA)))[0]
     Reads.log.clear()

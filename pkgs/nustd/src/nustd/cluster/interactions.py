@@ -112,9 +112,9 @@ class Teleport(Policy):
         empty one.
 
     Example:
-        Provide(RayCluster, {"address": "auto"},
-            ProvideList(RayService, [{"num_cpus": 4}, {"num_cpus": 4}],
-                Parallel(
+        Provide(RayCluster, kwargs={"address": "auto"},
+            body=ProvideList(RayService, specs=[{"num_cpus": 4}, {"num_cpus": 4}],
+                body=Parallel(
                     Teleport(shard_0, target=0),
                     Teleport(shard_1, target=1),
                 ),

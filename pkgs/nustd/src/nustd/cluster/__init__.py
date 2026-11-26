@@ -16,12 +16,12 @@ are tags, the interaction is ``Teleport`` (execute a Nu tree there).
 
 Typical shape::
 
-    Provide(RayCluster, {"address": "auto"},
-        ProvideList(RayService, [
+    Provide(RayCluster, kwargs={"address": "auto"},
+        body=ProvideList(RayService, specs=[
             {"actor_name": "worker-0", "num_cpus": 4},
             {"actor_name": "worker-1", "num_cpus": 4},
         ],
-            Sequential(
+            body=Sequential(
                 Teleport(some_tree, target=0),
                 Teleport(some_tree, target=1),
             ),

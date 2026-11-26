@@ -99,7 +99,7 @@ def child_main(address: str, out: Any, prefix: tuple[str, ...]) -> None:
     """Run a tree that binds the parent's observer and listens until killed."""
     tree = nu.With(
         nustd.kv.proxy_observer(address),
-        nu.Provide(Reactor, {"out": out, "prefix": prefix}),
+        nu.Provide(Reactor, kwargs={"out": out, "prefix": prefix}),
         body=nu.Delay(60.0),
     )
     asyncio.run(nu.arun(tree, nu.Context()))
@@ -109,7 +109,7 @@ def unbind_child_main(address: str, out: Any, prefix: tuple[str, ...]) -> None:
     """Run a tree whose subscriber unbinds one of its two receivers."""
     tree = nu.With(
         nustd.kv.proxy_observer(address),
-        nu.Provide(Rebinder, {"out": out, "prefix": prefix}),
+        nu.Provide(Rebinder, kwargs={"out": out, "prefix": prefix}),
         body=nu.Delay(60.0),
     )
     asyncio.run(nu.arun(tree, nu.Context()))

@@ -100,7 +100,7 @@ def test_replacing_the_source_replaces_the_program(app_ctx: Context) -> None:
 
 def test_a_stored_program_runs_in_a_venv_brace(app_ctx: Context) -> None:
     run(App.job.set(ADDER), app_ctx)
-    tree = nu.Provide(PyBrace, {"python": sys.executable}, App.job.run())
+    tree = nu.Provide(PyBrace, kwargs={"python": sys.executable}, body=App.job.run())
     assert run(tree, app_ctx)[0] == 3
 
 

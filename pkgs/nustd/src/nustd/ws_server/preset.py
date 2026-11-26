@@ -32,7 +32,7 @@ def listen(
     ready_timeout: float = 10.0,
     shutdown_timeout: float = 5.0,
 ) -> Provide:
-    """The bare server bracket: ``Provide(WebServer, {...})``, no body.
+    """The bare server bracket: ``Provide(WebServer, kwargs={...})``, no body.
 
     For hand-assembled trees. Stack it with ``sessions_fold`` to get one live
     arm per connection. Bodyless, so it belongs in a ``nu.With`` spec slot and
@@ -65,7 +65,7 @@ def listen(
     """
     return Provide(
         WebServer,
-        {
+        kwargs={
             "session_cls": session_cls,
             "static": static,
             "routes": tuple(routes),

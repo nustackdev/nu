@@ -7,7 +7,7 @@ look every tenth of a second under a timeout (``tab_opened``).
 
 Surface:
     - Browser: the fabric, what opens a url. The system browser unless a
-      tree binds its own (``nu.Provide(MyBrowser, {})``), so a test never
+      tree binds its own (``nu.Provide(MyBrowser)``), so a test never
       launches one.
     - BrowserRef, BROWSER: the Ref. Its read yields the bound browser, or
       NULL when none is bound; ``BROWSER.open(url)`` builds the write.

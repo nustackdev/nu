@@ -75,7 +75,7 @@ def endpoint(
         "headers": headers,
         "defaults": defaults,
     }
-    return Provide(LLMFabric, kwargs, body, tags=tuple(tags))
+    return Provide(LLMFabric, kwargs=kwargs, body=body, tags=tuple(tags))
 
 
 def ollama(

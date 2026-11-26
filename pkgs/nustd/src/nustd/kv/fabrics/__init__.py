@@ -21,13 +21,13 @@ Nu-tree provisioning for the virtuals concepts:
 
 Typical stack::
 
-    Provide(Codec, binary_kwargs(),
-        Provide(InMemoryTransport, {},
-            Provide(InMemoryPublisher, {},
-                Provide(InMemoryObserver, {},
-                    Provide(RocksDBStorage, {"path": "/data/main"},
-                        Provide(Navigator, {},
-                            body,   # ctx.fabrics.get(Navigator) available here
+    Provide(Codec, kwargs=binary_kwargs(),
+        body=Provide(InMemoryTransport,
+            body=Provide(InMemoryPublisher,
+                body=Provide(InMemoryObserver,
+                    body=Provide(RocksDBStorage, kwargs={"path": "/data/main"},
+                        body=Provide(Navigator,
+                            body=body,   # ctx.fabrics.get(Navigator) available here
                         ),
                     ),
                 ),

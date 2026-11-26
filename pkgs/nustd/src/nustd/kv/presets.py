@@ -319,18 +319,18 @@ def memory_navigator(
 
     tags = tuple(tags)
     return With(
-        Provide(Codec, noop_kwargs(), tags=tags),
-        Provide(InMemoryTransport, {}, tags=tags),
-        Provide(InMemoryPublisher, {"transport_tags": tags}, tags=tags),
-        Provide(InMemoryObserver, {"transport_tags": tags}, tags=tags),
+        Provide(Codec, kwargs=noop_kwargs(), tags=tags),
+        Provide(InMemoryTransport, kwargs={}, tags=tags),
+        Provide(InMemoryPublisher, kwargs={"transport_tags": tags}, tags=tags),
+        Provide(InMemoryObserver, kwargs={"transport_tags": tags}, tags=tags),
         Provide(
             InMemoryStorage,
-            {"codec_tags": tags, "publisher_tags": tags},
+            kwargs={"codec_tags": tags, "publisher_tags": tags},
             tags=tags,
         ),
         Provide(
             Navigator,
-            {"storage_type": InMemoryStorage, "storage_tags": tags},
+            kwargs={"storage_type": InMemoryStorage, "storage_tags": tags},
             tags=tags,
         ),
     )
@@ -395,13 +395,13 @@ def rocksdb_navigator(
 
     tags = tuple(tags)
     return With(
-        Provide(Codec, binary_kwargs(), tags=tags),
-        Provide(InMemoryTransport, {}, tags=tags),
-        Provide(InMemoryPublisher, {"transport_tags": tags}, tags=tags),
-        Provide(InMemoryObserver, {"transport_tags": tags}, tags=tags),
+        Provide(Codec, kwargs=binary_kwargs(), tags=tags),
+        Provide(InMemoryTransport, kwargs={}, tags=tags),
+        Provide(InMemoryPublisher, kwargs={"transport_tags": tags}, tags=tags),
+        Provide(InMemoryObserver, kwargs={"transport_tags": tags}, tags=tags),
         Provide(
             RocksDBStorage,
-            {
+            kwargs={
                 "path": path,
                 "codec_tags": tags,
                 "publisher_tags": tags,
@@ -415,7 +415,7 @@ def rocksdb_navigator(
         ),
         Provide(
             Navigator,
-            {"storage_type": RocksDBStorage, "storage_tags": tags},
+            kwargs={"storage_type": RocksDBStorage, "storage_tags": tags},
             tags=tags,
         ),
     )
@@ -487,20 +487,20 @@ def rocksdb_navigator_redis(
 
     tags = tuple(tags)
     return With(
-        Provide(Codec, binary_kwargs(), tags=tags),
+        Provide(Codec, kwargs=binary_kwargs(), tags=tags),
         Provide(
             RedisPublisher,
-            {"redis_url": redis_url, "channel_prefix": channel_prefix},
+            kwargs={"redis_url": redis_url, "channel_prefix": channel_prefix},
             tags=tags,
         ),
         Provide(
             RedisObserver,
-            {"redis_url": redis_url, "channel_prefix": channel_prefix},
+            kwargs={"redis_url": redis_url, "channel_prefix": channel_prefix},
             tags=tags,
         ),
         Provide(
             RocksDBStorage,
-            {
+            kwargs={
                 "path": path,
                 "publisher_type": RedisPublisher,
                 "codec_tags": tags,
@@ -515,7 +515,7 @@ def rocksdb_navigator_redis(
         ),
         Provide(
             Navigator,
-            {"storage_type": RocksDBStorage, "storage_tags": tags},
+            kwargs={"storage_type": RocksDBStorage, "storage_tags": tags},
             tags=tags,
         ),
     )
@@ -575,13 +575,13 @@ def lmdb_navigator(
 
     tags = tuple(tags)
     return With(
-        Provide(Codec, binary_kwargs(), tags=tags),
-        Provide(InMemoryTransport, {}, tags=tags),
-        Provide(InMemoryPublisher, {"transport_tags": tags}, tags=tags),
-        Provide(InMemoryObserver, {"transport_tags": tags}, tags=tags),
+        Provide(Codec, kwargs=binary_kwargs(), tags=tags),
+        Provide(InMemoryTransport, kwargs={}, tags=tags),
+        Provide(InMemoryPublisher, kwargs={"transport_tags": tags}, tags=tags),
+        Provide(InMemoryObserver, kwargs={"transport_tags": tags}, tags=tags),
         Provide(
             LMDBStorage,
-            {
+            kwargs={
                 "path": path,
                 "codec_tags": tags,
                 "publisher_tags": tags,
@@ -595,7 +595,7 @@ def lmdb_navigator(
         ),
         Provide(
             Navigator,
-            {"storage_type": LMDBStorage, "storage_tags": tags},
+            kwargs={"storage_type": LMDBStorage, "storage_tags": tags},
             tags=tags,
         ),
     )
@@ -658,20 +658,20 @@ def lmdb_navigator_redis(
 
     tags = tuple(tags)
     return With(
-        Provide(Codec, binary_kwargs(), tags=tags),
+        Provide(Codec, kwargs=binary_kwargs(), tags=tags),
         Provide(
             RedisPublisher,
-            {"redis_url": redis_url, "channel_prefix": channel_prefix},
+            kwargs={"redis_url": redis_url, "channel_prefix": channel_prefix},
             tags=tags,
         ),
         Provide(
             RedisObserver,
-            {"redis_url": redis_url, "channel_prefix": channel_prefix},
+            kwargs={"redis_url": redis_url, "channel_prefix": channel_prefix},
             tags=tags,
         ),
         Provide(
             LMDBStorage,
-            {
+            kwargs={
                 "path": path,
                 "publisher_type": RedisPublisher,
                 "codec_tags": tags,
@@ -686,7 +686,7 @@ def lmdb_navigator_redis(
         ),
         Provide(
             Navigator,
-            {"storage_type": LMDBStorage, "storage_tags": tags},
+            kwargs={"storage_type": LMDBStorage, "storage_tags": tags},
             tags=tags,
         ),
     )
@@ -760,13 +760,13 @@ def sqlite_navigator(
 
     tags = tuple(tags)
     return With(
-        Provide(Codec, binary_kwargs(), tags=tags),
-        Provide(InMemoryTransport, {}, tags=tags),
-        Provide(InMemoryPublisher, {"transport_tags": tags}, tags=tags),
-        Provide(InMemoryObserver, {"transport_tags": tags}, tags=tags),
+        Provide(Codec, kwargs=binary_kwargs(), tags=tags),
+        Provide(InMemoryTransport, kwargs={}, tags=tags),
+        Provide(InMemoryPublisher, kwargs={"transport_tags": tags}, tags=tags),
+        Provide(InMemoryObserver, kwargs={"transport_tags": tags}, tags=tags),
         Provide(
             SQLiteStorage,
-            {
+            kwargs={
                 "path": path,
                 "codec_tags": tags,
                 "publisher_tags": tags,
@@ -781,7 +781,7 @@ def sqlite_navigator(
         ),
         Provide(
             Navigator,
-            {"storage_type": SQLiteStorage, "storage_tags": tags},
+            kwargs={"storage_type": SQLiteStorage, "storage_tags": tags},
             tags=tags,
         ),
     )
@@ -844,20 +844,20 @@ def sqlite_navigator_redis(
 
     tags = tuple(tags)
     return With(
-        Provide(Codec, binary_kwargs(), tags=tags),
+        Provide(Codec, kwargs=binary_kwargs(), tags=tags),
         Provide(
             RedisPublisher,
-            {"redis_url": redis_url, "channel_prefix": channel_prefix},
+            kwargs={"redis_url": redis_url, "channel_prefix": channel_prefix},
             tags=tags,
         ),
         Provide(
             RedisObserver,
-            {"redis_url": redis_url, "channel_prefix": channel_prefix},
+            kwargs={"redis_url": redis_url, "channel_prefix": channel_prefix},
             tags=tags,
         ),
         Provide(
             SQLiteStorage,
-            {
+            kwargs={
                 "path": path,
                 "publisher_type": RedisPublisher,
                 "codec_tags": tags,
@@ -873,7 +873,7 @@ def sqlite_navigator_redis(
         ),
         Provide(
             Navigator,
-            {"storage_type": SQLiteStorage, "storage_tags": tags},
+            kwargs={"storage_type": SQLiteStorage, "storage_tags": tags},
             tags=tags,
         ),
     )
@@ -912,8 +912,8 @@ def inmem_observer(*, tags: Sequence[object] = ()) -> With:
 
     tags = tuple(tags)
     return With(
-        Provide(InMemoryTransport, {}, tags=tags),
-        Provide(InMemoryObserver, {"transport_tags": tags}, tags=tags),
+        Provide(InMemoryTransport, kwargs={}, tags=tags),
+        Provide(InMemoryObserver, kwargs={"transport_tags": tags}, tags=tags),
     )
 
 
@@ -955,7 +955,7 @@ def redis_observer(
     return With(
         Provide(
             RedisObserver,
-            {"redis_url": redis_url, "channel_prefix": channel_prefix},
+            kwargs={"redis_url": redis_url, "channel_prefix": channel_prefix},
             tags=tuple(tags),
         ),
     )
@@ -1006,10 +1006,10 @@ def served_observer(
     from nustd.proxy import InvisiblesServer
 
     return With(
-        Provide(HostedObserver, {"target_tag": target_tag}),
+        Provide(HostedObserver, kwargs={"target_tag": target_tag}),
         Provide(
             InvisiblesServer,
-            {
+            kwargs={
                 "target": HostedObserver,
                 "address": address,
                 "transport": transport,

@@ -39,4 +39,4 @@ def bind(service_cls: type, *, target: object) -> Provide:
             body=nu.print(Calc.add(a=1, b=2)),
         )
     """
-    return Provide(ServiceFabric, {"target": target}, tag=service_cls)
+    return Provide(ServiceFabric, kwargs={"target": target}, tag=service_cls)

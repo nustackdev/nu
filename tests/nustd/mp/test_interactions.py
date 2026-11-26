@@ -84,8 +84,8 @@ def _await_true(fn, timeout: float = 10.0) -> bool:
 def test_provide_launch_teleport_round_trip():
     tree = nu.Provide(
         WorkerPool,
-        {"name": "nu-test-provide"},
-        nu.mem.Frame(Local, Teleport(body=nu.Add(41, 1), worker=W), w=Launch()),
+        kwargs={"name": "nu-test-provide"},
+        body=nu.mem.Frame(Local, Teleport(body=nu.Add(41, 1), worker=W), w=Launch()),
     )
     value, _ = nu.run(tree)
     assert value == 42
@@ -94,8 +94,8 @@ def test_provide_launch_teleport_round_trip():
 async def test_provide_launch_teleport_round_trip_async():
     tree = nu.Provide(
         WorkerPool,
-        {"name": "nu-test-provide-a"},
-        nu.mem.Frame(Local, Teleport(body=nu.Add(41, 1), worker=W), w=Launch()),
+        kwargs={"name": "nu-test-provide-a"},
+        body=nu.mem.Frame(Local, Teleport(body=nu.Add(41, 1), worker=W), w=Launch()),
     )
     value, _ = await nu.arun(tree)
     assert value == 42
@@ -112,8 +112,8 @@ def test_provide_teardown_kills_the_worker_it_launched():
 
     tree = nu.Provide(
         _Spy,
-        {"name": "nu-test-teardown-tree"},
-        nu.mem.Frame(Local, Teleport(body=nu.Add(1, 1), worker=W), w=Launch()),
+        kwargs={"name": "nu-test-teardown-tree"},
+        body=nu.mem.Frame(Local, Teleport(body=nu.Add(1, 1), worker=W), w=Launch()),
         bind_as=WorkerPool,
     )
     value, _ = nu.run(tree)
@@ -164,8 +164,8 @@ def test_pool_can_be_addressed_by_an_explicit_ref():
     """``PoolRef()`` reads the untagged binding."""
     tree = nu.Provide(
         WorkerPool,
-        {"name": "nu-test-ref"},
-        nu.mem.Frame(
+        kwargs={"name": "nu-test-ref"},
+        body=nu.mem.Frame(
             Local,
             Teleport(PoolRef(), body=nu.Add(2, 2), worker=W),
             w=Launch(PoolRef()),
@@ -182,8 +182,8 @@ def test_the_fluent_form_runs_the_same_as_the_constructors():
     pool = PoolRef()
     tree = nu.Provide(
         WorkerPool,
-        {"name": "nu-test-fluent"},
-        nu.mem.Frame(Local, pool.teleport(nu.Add(20, 22), W), w=pool.launch()),
+        kwargs={"name": "nu-test-fluent"},
+        body=nu.mem.Frame(Local, pool.teleport(nu.Add(20, 22), W), w=pool.launch()),
     )
     value, _ = nu.run(tree)
     assert value == 42
@@ -327,6 +327,6 @@ def test_an_init_holding_a_local_class_reaches_the_worker(ctx):
         pass
 
     bound = nu.context.FabricRef(Greeter).exists()
-    launch = Launch(init=nu.Provide(Greeter, {}, nu.Noop()))
+    launch = Launch(init=nu.Provide(Greeter, kwargs={}, body=nu.Noop()))
     tree = nu.mem.Frame(Local, Teleport(body=bound, worker=W), w=launch)
     assert nu.run(tree, ctx)[0] is True

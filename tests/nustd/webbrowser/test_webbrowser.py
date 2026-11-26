@@ -20,7 +20,7 @@ class Seen(webbrowser.Browser):
 
 def _bound(body: nu.Nu) -> nu.Nu:
     Seen.urls = []
-    return nu.Provide(Seen, {}, body)
+    return nu.Provide(Seen, kwargs={}, body=body)
 
 
 def test_open_goes_through_the_bound_browser():

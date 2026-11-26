@@ -43,8 +43,8 @@ def _shipped(name: str) -> nu.Nu:
         prefix="fs-worker-",
         body=lambda root: nu.Provide(
             WorkerPool,
-            {"name": name},
-            nu.mem.Frame(
+            kwargs={"name": name},
+            body=nu.mem.Frame(
                 Local,
                 nu.List.of(
                     root,

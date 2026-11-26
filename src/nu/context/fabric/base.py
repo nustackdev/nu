@@ -1,11 +1,16 @@
-"""``Fabric``: the base class of every provided fabric.
+"""``Fabric``: the base class of a declared nu fabric, with an optional lifecycle.
 
-A fabric is an addressable space that resolves its own Refs and carries out
-the Interactions over them: a storage handle, a cluster handle, a websocket
-server, a client. ``Provide`` / ``ProvideList`` / ``ProvideDict`` install one
-into ctx for a body's duration: the bracket constructs the instance, runs its
-setup, binds it, and runs its cleanup on exit (LIFO across nested brackets).
-The class a ``Provide`` is given must subclass ``Fabric``.
+A fabric is a long-lived, typed piece of state a program reaches through the
+Context: a storage handle, a cluster handle, a websocket server, a client.
+``Provide`` / ``ProvideList`` / ``ProvideDict`` install one into ctx for a
+body's duration: the bracket constructs the instance, runs its setup, binds
+it, and runs its cleanup on exit (LIFO across nested brackets).
+
+Subclassing ``Fabric`` is a choice, not a requirement: ``Provide`` takes any
+class. A plain class is only bound and unbound, a context manager is entered
+and exited. Subclass ``Fabric`` to declare a class as a nu fabric, or for a
+lifecycle that sees the Context (the dependency-injection channel below) or
+has to be refused under the sync runner.
 
 The base carries the whole lifecycle with defaults, so a fabric overrides only
 what it needs:
@@ -26,9 +31,6 @@ marked or not.
 brackets is already visible. That is the dependency-injection channel: an
 inner fabric reads its deps from ctx during its own setup, which is
 guaranteed to run *after* every enclosing ``Provide`` has bound.
-
-Raw ``ctx.fabrics.bind`` is not checked: anything can be bound there (a
-plain dict, a protocol-typed backend).
 
 Example::
 
@@ -57,12 +59,13 @@ __all__ = ["Fabric"]
 
 
 class Fabric:
-    """The base class of a fabric that ``Provide`` installs into ctx.
+    """The base class of a declared nu fabric, with an optional lifecycle.
 
     ``Provide`` / ``ProvideList`` / ``ProvideDict`` construct a subclass,
     run its setup, bind it on ctx for the body's duration, and run its
     cleanup on exit. Every lifecycle method has a default, so a subclass
-    overrides only the ones it needs.
+    overrides only the ones it needs. ``Provide`` takes classes that are not
+    fabrics too; this base is for the ones whose lifecycle sees the Context.
 
     Attributes:
         async_only: True when the fabric's lifecycle has to await (only

@@ -48,8 +48,8 @@ class RayClusterRef(FabricRef):
         The bound ``RayCluster``. NULL when no cluster is bound.
 
     Example:
-        Provide(RayCluster, {"address": "auto"},
-            RayClusterRef().exists(),
+        Provide(RayCluster, kwargs={"address": "auto"},
+            body=RayClusterRef().exists(),
         )
     """
 

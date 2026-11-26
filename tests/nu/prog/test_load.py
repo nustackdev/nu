@@ -63,7 +63,7 @@ PID = src("""
 
 
 def venv_brace(body: nu.Nu, **kwargs: object) -> nu.Nu:
-    return nu.Provide(PyBrace, {"python": sys.executable, **kwargs}, body)
+    return nu.Provide(PyBrace, kwargs={"python": sys.executable, **kwargs}, body=body)
 
 
 # --- LoadNu yields a term -----------------------------------------------
@@ -112,7 +112,7 @@ def test_no_brace_bound_falls_back_to_in_process() -> None:
 
 
 def test_in_process_brace_bound_by_provide() -> None:
-    tree = nu.Provide(PyBrace, {}, nu.Eval(LoadNu(GREETING)))
+    tree = nu.Provide(PyBrace, kwargs={}, body=nu.Eval(LoadNu(GREETING)))
     assert nu.run(tree)[0] == "hello world"
 
 
@@ -138,11 +138,11 @@ def test_a_tagged_brace_is_selected_by_tag() -> None:
     # the term, so the two pids differ.
     tree = nu.Provide(
         PyBrace,
-        {"python": sys.executable},
-        nu.Provide(
+        kwargs={"python": sys.executable},
+        body=nu.Provide(
             PyBrace,
-            {"python": sys.executable},
-            nu.Eq(
+            kwargs={"python": sys.executable},
+            body=nu.Eq(
                 nu.Eval(LoadNu(PID, brace="second")),
                 nu.Eval(LoadNu(PID)),
             ),
@@ -155,11 +155,11 @@ def test_a_tagged_brace_is_selected_by_tag() -> None:
 def test_the_brace_tag_can_be_computed() -> None:
     tree = nu.Provide(
         PyBrace,
-        {"python": sys.executable},
-        nu.Provide(
+        kwargs={"python": sys.executable},
+        body=nu.Provide(
             PyBrace,
-            {"python": sys.executable},
-            nu.Eq(
+            kwargs={"python": sys.executable},
+            body=nu.Eq(
                 nu.Eval(LoadNu(PID, brace=nu.context.Attr("which"))),
                 nu.Eval(LoadNu(PID)),
             ),
@@ -399,5 +399,5 @@ def test_the_pipeline_runs_a_program_authored_against_a_foreign_dep(tmp_path) ->
         def out():
             return nu.Str(Tagged.tag)
     """)
-    tree = nu.Provide(PyBrace, {"python": str(root)}, nu.Eval(LoadNu(source)))
+    tree = nu.Provide(PyBrace, kwargs={"python": str(root)}, body=nu.Eval(LoadNu(source)))
     assert nu.run(tree)[0] == "dune"

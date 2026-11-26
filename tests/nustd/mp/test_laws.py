@@ -41,13 +41,13 @@ RESIDENT = nu.ForeverDo(nu.DelayedDo(0.01, Scratch.n.set(1)))
 
 
 def _provided(body: nu.Nu) -> nu.Nu:
-    return nu.Provide(WorkerPool, {"name": "laws"}, body)
+    return nu.Provide(WorkerPool, kwargs={"name": "laws"}, body=body)
 
 
 TREES = {
     "launch": _provided(Scratch.w.set(Launch())),
     "launch_with_init": _provided(
-        Scratch.w.set(Launch(init=nu.Provide(Marker, {}))),
+        Scratch.w.set(Launch(init=nu.Provide(Marker, kwargs={}))),
     ),
     "dispatch": _provided(Dispatch(body=RESIDENT, worker=Scratch.w)),
     "dispatch_job_id": _provided(Scratch.j.set(Dispatch(body=RESIDENT, worker=Scratch.w))),
@@ -263,7 +263,7 @@ def test_the_fluent_dispatch_still_keeps_its_body_as_data():
 def test_the_atoms_carry_no_caller_value_in_a_field():
     """The design constraint: ids, targets and the body are children."""
     atoms = [
-        Launch(init=nu.Provide(Marker, {})),
+        Launch(init=nu.Provide(Marker, kwargs={})),
         Dispatch(body=RESIDENT, worker=7),
         Teleport(body=nu.Add(1, 2), worker=7),
         Cancel(worker=7, job=7),

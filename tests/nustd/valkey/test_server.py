@@ -249,7 +249,7 @@ OWNER = textwrap.dedent(
                 ).stdout.strip()
                 print(pid, keeper, flush=True)
         import asyncio
-        asyncio.run(nu.arun(nu.With(server(data_dir), nu.Provide(Report, {}), body=nu.Park())))
+        asyncio.run(nu.arun(nu.With(server(data_dir), nu.Provide(Report, kwargs={}), body=nu.Park())))
         sys.exit(0)
 
     s = ValkeyServer(data_dir=data_dir)

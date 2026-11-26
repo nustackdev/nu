@@ -46,6 +46,6 @@ def bind(
     """
     return Provide(
         HttpFabric,
-        {"base_url": base_url, "headers": headers, "timeout": timeout},
+        kwargs={"base_url": base_url, "headers": headers, "timeout": timeout},
         tag=service_cls,
     )

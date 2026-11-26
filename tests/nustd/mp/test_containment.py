@@ -283,7 +283,7 @@ def test_sigint_with_a_busy_body_ends_the_other_jobs_too(pool):
 def test_sigterm_runs_init_teardown_and_the_bodys_finally(tmp_path):
     torn = tmp_path / "torn"
     fin = tmp_path / "finally"
-    pool = WorkerPool(name="nu-test-term", init=nu.Provide(Touch, {"path": str(torn)}))
+    pool = WorkerPool(name="nu-test-term", init=nu.Provide(Touch, kwargs={"path": str(torn)}))
     pool.setup(None)
     try:
         w = pool.launch()
@@ -302,7 +302,7 @@ def test_sigterm_runs_init_teardown_and_the_bodys_finally(tmp_path):
 def test_kill_skips_the_teardown(tmp_path):
     """Kill is SIGKILL to the group: nothing in the worker runs, ``Stop`` is the polite one."""
     torn = tmp_path / "torn"
-    pool = WorkerPool(name="nu-test-killterm", init=nu.Provide(Touch, {"path": str(torn)}))
+    pool = WorkerPool(name="nu-test-killterm", init=nu.Provide(Touch, kwargs={"path": str(torn)}))
     pool.setup(None)
     try:
         w = pool.launch()
@@ -345,8 +345,8 @@ def test_sigterm_outside_a_body_winds_the_worker_down_in_order(tmp_path):
     pool = WorkerPool(name="nu-test-termidle")
     pool.setup(None)
     try:
-        idle = pool.launch(nu.Provide(Touch, {"path": str(marks[0])}))
-        resident = pool.launch(nu.Provide(Touch, {"path": str(marks[1])}))
+        idle = pool.launch(nu.Provide(Touch, kwargs={"path": str(marks[0])}))
+        resident = pool.launch(nu.Provide(Touch, kwargs={"path": str(marks[1])}))
         pool.dispatch(resident, RESIDENT)
         for w in (idle, resident):
             os.kill(pool.status(w).pid, signal.SIGTERM)
@@ -362,7 +362,7 @@ def test_a_second_sigterm_does_not_cut_the_teardown(tmp_path):
     mark = tmp_path / "torn"
     pool = WorkerPool(
         name="nu-test-twoterm",
-        init=nu.Provide(SlowTouch, {"path": str(mark), "seconds": 0.4}),
+        init=nu.Provide(SlowTouch, kwargs={"path": str(mark), "seconds": 0.4}),
     )
     pool.setup(None)
     try:
@@ -386,7 +386,7 @@ def test_cleanup_lets_every_worker_finish_init_teardown(tmp_path):
         for i, seconds in enumerate((0.6, 0.2, 0.2)):
             mark = tmp_path / f"r{round_}-w{i}"
             marks.append(mark)
-            pool.launch(nu.Provide(SlowTouch, {"path": str(mark), "seconds": seconds}))
+            pool.launch(nu.Provide(SlowTouch, kwargs={"path": str(mark), "seconds": seconds}))
         ids = pool.workers()
         start = time.monotonic()
         pool.cleanup()
@@ -460,7 +460,7 @@ def test_a_crash_during_init_still_sweeps_the_group(tmp_path):
     pool.setup(None)
     try:
         with pytest.raises(WorkerGone):
-            pool.launch(nu.Provide(CrashInInit, {"path": str(pidfile), "code": 3}))
+            pool.launch(nu.Provide(CrashInInit, kwargs={"path": str(pidfile), "code": 3}))
         sleeper = int(pidfile.read_text())
         assert _wait(lambda: _dead(sleeper), timeout=2.0)
         assert pool.workers() == []

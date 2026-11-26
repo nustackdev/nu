@@ -464,7 +464,7 @@ def spy_bind(kind, path):
         spec = {"backend": SpyLMDB, "options": {"path": str(path)}}
     else:
         spec = {"backend": SpyFiles, "options": {"root": str(path)}}
-    return nu.Provide(BlobFabric, spec, tag=Media.name)
+    return nu.Provide(BlobFabric, kwargs=spec, tag=Media.name)
 
 
 def test_backend_opens_on_enter_and_closes_on_exit(kind, tmp_path, run):

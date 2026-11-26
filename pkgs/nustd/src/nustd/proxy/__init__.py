@@ -13,11 +13,11 @@ fabric dispatch (``FabricRef``) that works locally works remotely.
 Typical topology, using ``feed_run``'s ledger-main pattern::
 
     # Server side (inside a Ray worker actor typically)
-    Provide(RocksDBStorage, {"path": "/data/ledger-main", "codec": ...},
-        Provide(Navigator, {"root_view": DictView},
-            Provide(InvisiblesServer, {"target": Navigator,
-                                       "address": "10.0.0.1:19000"},
-                serve_forever_body,
+    Provide(RocksDBStorage, kwargs={"path": "/data/ledger-main", "codec": ...},
+        body=Provide(Navigator, kwargs={"root_view": DictView},
+            body=Provide(InvisiblesServer, kwargs={"target": Navigator,
+                                                   "address": "10.0.0.1:19000"},
+                body=serve_forever_body,
             ),
         ),
     )

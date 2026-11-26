@@ -129,7 +129,7 @@ def serve_blobs(blobs: Mapping[BlobMount, BlobBackend]) -> tuple[list[Provide], 
             raise TypeError(_no_backend(mount, backend))
         if id(backend) not in held:
             held.add(id(backend))
-            brackets.append(Provide(HeldOpen, {"backend": backend}))
+            brackets.append(Provide(HeldOpen, kwargs={"backend": backend}))
         served += routes(mount, backend)
     return brackets, served
 

@@ -54,8 +54,8 @@ def demo_in_process_brace() -> None:
 
     tree = nu.Provide(
         nu.prog.PyBrace,
-        {},
-        nu.Eval(nu.LoadNu(SOURCE, scope={"who": "in-process"})),
+        kwargs={},
+        body=nu.Eval(nu.LoadNu(SOURCE, scope={"who": "in-process"})),
     )
     nu.run(tree, nu.Context().bind(dict, {}))
 
@@ -69,8 +69,8 @@ def demo_venv_brace() -> None:
     # process: the tree is constructed there and comes home over the wire.
     tree = nu.Provide(
         nu.prog.PyBrace,
-        {"python": sys.executable},
-        nu.Eval(nu.LoadNu(SOURCE, scope={"who": "venv"})),
+        kwargs={"python": sys.executable},
+        body=nu.Eval(nu.LoadNu(SOURCE, scope={"who": "venv"})),
     )
     nu.run(tree, nu.Context().bind(dict, {}))
 

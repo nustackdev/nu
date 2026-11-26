@@ -228,7 +228,7 @@ class ValkeyServer(Fabric):
     Provided once near the top of a tree, around whatever talks to it::
 
         With(
-            Provide(ValkeyServer, {"data_dir": d}),
+            Provide(ValkeyServer, kwargs={"data_dir": d}),
             sqlite_navigator_redis(db, redis_url=url_for(d)),
             body=program,
         )

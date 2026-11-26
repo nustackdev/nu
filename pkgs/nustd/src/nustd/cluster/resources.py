@@ -43,8 +43,8 @@ class RayCluster(Fabric):
 
     Typical use in the tree::
 
-        Provide(RayCluster, {"address": "auto"},
-            ProvideList(RayService, [...], body),
+        Provide(RayCluster, kwargs={"address": "auto"},
+            body=ProvideList(RayService, specs=[...], body=body),
         )
     """
 

@@ -12,6 +12,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Provide takes the class by position and the rest by keyword, Python style
+- Provide takes any class; context managers and plain classes need no Fabric base
 - Container refs re-kind like leaves, so a ref can change kind again and again
 - Code, markdown and inline edit reads return the text typed, not the last save
 - Examples follow the new events, live slider added, table seeds and bad reads fixed

@@ -1,7 +1,7 @@
 """``FabricRef``: a Ref into a Context binding.
 
 A ``FabricRef`` names a Context binding by its resolved address (the fabric
-type); a typed subclass names a ``nu.Fabric`` subclass in ``fabric``. The read is the dual role:
+type); a typed subclass names that class in ``fabric``. The read is the dual role:
 self-yield the bound fabric (``NULL`` when unbound). Fabrics are bound on the
 Context, not written through a Ref, so ``FabricRef`` is read-only *as a value*.
 """
@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING, ClassVar
 from nu.lang.null import Null
 
 from .._refs import _ContextRef
-from .base import Fabric
 
 
 if TYPE_CHECKING:
@@ -35,9 +34,8 @@ class FabricRef(_ContextRef):
     instances arrive on the Context from a ``Provide`` bracket, so the value
     side of a ``FabricRef`` is read-only.
 
-    Each concrete fabric gets its own subclass carrying the type it names (a
-    ``nu.Fabric`` subclass, checked at class definition) in the ``fabric``
-    class attribute, which is what the address falls back to
+    Each concrete fabric gets its own subclass carrying the type it names (any
+    class, checked at class definition) in the ``fabric`` class attribute, which is what the address falls back to
     when none is passed::
 
         class Solana(FabricRef):
@@ -73,20 +71,20 @@ class FabricRef(_ContextRef):
         >>> class Counter(nu.Fabric):
         ...     def __init__(self, start=0):
         ...         self.n = start
-        >>> nu.run(nu.Provide(Counter, {"start": 5}, nu.FabricRef(Counter).exists()))[0]
+        >>> nu.run(nu.Provide(Counter, kwargs={"start": 5}, body=nu.FabricRef(Counter).exists()))[0]
         True
 
         >>> nu.run(nu.FabricRef(Counter).exists())[0]
         False
     """
 
-    fabric: ClassVar[type[Fabric] | None] = None
+    fabric: ClassVar[type | None] = None
 
     def __init_subclass__(cls, **kwargs: object) -> None:
         super().__init_subclass__(**kwargs)
         named = cls.__dict__.get("fabric")
-        if named is not None and not (isinstance(named, type) and issubclass(named, Fabric)):
-            msg = f"{cls.__name__}.fabric must be a nu.Fabric subclass, got {named!r}"
+        if named is not None and not isinstance(named, type):
+            msg = f"{cls.__name__}.fabric must be a class, got {named!r}"
             raise TypeError(msg)
 
     def __init__(self, address: object = None, *config: object) -> None:

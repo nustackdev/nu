@@ -94,4 +94,4 @@ def pool(
         "ack_timeout": ack_timeout,
         "start_method": start_method,
     }
-    return Provide(WorkerPool, kwargs, body, tags=tuple(tags))
+    return Provide(WorkerPool, kwargs=kwargs, body=body, tags=tuple(tags))

@@ -83,7 +83,7 @@ def bind(
         "env": env if env is None or isinstance(env, Nu) else dict(env),
         "permissions": permissions,
     }
-    return Provide(AcpFabric, spec, tag=agent_name(agent))
+    return Provide(AcpFabric, kwargs=spec, tag=agent_name(agent))
 
 
 def claude(

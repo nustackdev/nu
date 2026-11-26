@@ -46,7 +46,7 @@ def test_with_stacks_provides_and_yields_body_result():
     class B(nu.Fabric):
         pass
 
-    tree = With(Provide(A, {}), Provide(B, {}), body=FabricRef(B))
+    tree = With(Provide(A, kwargs={}), Provide(B, kwargs={}), body=FabricRef(B))
     value, _ = run(tree)
     assert isinstance(value, B)
 
@@ -55,21 +55,21 @@ def test_with_no_brackets_just_runs_body():
     class Store(nu.Fabric):
         pass
 
-    tree = With(Provide(Store, {}), body=FabricRef(Store))
+    tree = With(Provide(Store, kwargs={}), body=FabricRef(Store))
     value, _ = run(tree)
     assert isinstance(value, Store)
 
     # Zero brackets is legal too: With(body=X) == running X directly.
-    tree = Provide(Store, {}, With(body=FabricRef(Store)))
+    tree = Provide(Store, kwargs={}, body=With(body=FabricRef(Store)))
     value, _ = run(tree)
     assert isinstance(value, Store)
 
 
 def test_with_teardown_is_lifo():
     tree = With(
-        Provide(Counter, {"name": "a"}),
-        Provide(Counter, {"name": "b"}),
-        Provide(Counter, {"name": "c"}),
+        Provide(Counter, kwargs={"name": "a"}),
+        Provide(Counter, kwargs={"name": "b"}),
+        Provide(Counter, kwargs={"name": "c"}),
         body=FabricRef(Counter),
     )
     run(tree)
@@ -94,8 +94,8 @@ def test_with_ctx_accumulates_inner_reads_outer_via_ctx_get():
             self.codec_kind = ctx.fabrics.get(Codec).kind
 
     tree = With(
-        Provide(Codec, {"kind": "binary"}),
-        Provide(Storage, {}),
+        Provide(Codec, kwargs={"kind": "binary"}),
+        Provide(Storage, kwargs={}),
         body=FabricRef(Storage),
     )
     storage, _ = run(tree)
@@ -115,9 +115,9 @@ def test_with_composes_provide_provide_list_provide_dict():
             self.k = k
 
     tree = With(
-        Provide(A, {}),
-        ProvideList(B, [{"i": 0}, {"i": 1}]),
-        ProvideDict(C, {"x": {"k": "x"}, "y": {"k": "y"}}),
+        Provide(A, kwargs={}),
+        ProvideList(B, specs=[{"i": 0}, {"i": 1}]),
+        ProvideDict(C, specs={"x": {"k": "x"}, "y": {"k": "y"}}),
         body=FabricRef(A),
     )
     a, _ = run(tree)
@@ -144,10 +144,10 @@ def test_with_partial_setup_failure_tears_down_already_entered():
             Flaky.events.append(f"close:{self.name}")
 
     tree = With(
-        Provide(Flaky, {"name": "a"}),
-        Provide(Flaky, {"name": "b"}),
-        Provide(Flaky, {"name": "c", "boom": True}),
-        Provide(Flaky, {"name": "d"}),
+        Provide(Flaky, kwargs={"name": "a"}),
+        Provide(Flaky, kwargs={"name": "b"}),
+        Provide(Flaky, kwargs={"name": "c", "boom": True}),
+        Provide(Flaky, kwargs={"name": "d"}),
         body=FabricRef(Flaky),
     )
     with pytest.raises(RuntimeError, match="boom c"):
@@ -164,8 +164,8 @@ def test_with_preserves_bracket_tags():
             self.name = name
 
     tree = With(
-        Provide(Store, {"name": "primary"}),
-        Provide(Store, {"name": "cache"}, tag="cache"),
+        Provide(Store, kwargs={"name": "primary"}),
+        Provide(Store, kwargs={"name": "cache"}, tag="cache"),
         body=FabricRef(Store),
     )
     # default binding (last bracket wins for untagged? no -- default has no tag,
@@ -175,8 +175,8 @@ def test_with_preserves_bracket_tags():
 
     # Inspect the ctx directly to verify both bindings live.
     bracket = With(
-        Provide(Store, {"name": "primary"}),
-        Provide(Store, {"name": "cache"}, tag="cache"),
+        Provide(Store, kwargs={"name": "primary"}),
+        Provide(Store, kwargs={"name": "cache"}, tag="cache"),
     )
     ctx = Context()
     with bracket._enter(ctx):
@@ -201,9 +201,9 @@ async def test_with_async_prefers_asetup_lifo_acleanup():
             Async.events.append(f"aclose:{self.name}")
 
     tree = With(
-        Provide(Async, {"name": "a"}),
-        Provide(Async, {"name": "b"}),
-        Provide(Async, {"name": "c"}),
+        Provide(Async, kwargs={"name": "a"}),
+        Provide(Async, kwargs={"name": "b"}),
+        Provide(Async, kwargs={"name": "c"}),
         body=FabricRef(Async),
     )
     await arun(tree)
@@ -217,8 +217,8 @@ async def test_with_async_prefers_asetup_lifo_acleanup():
 
 
 def test_with_brackets_are_real_nodes_of_the_tree():
-    a = Provide(Counter, {"name": "a"})
-    b = Provide(Counter, {"name": "b"})
+    a = Provide(Counter, kwargs={"name": "a"})
+    b = Provide(Counter, kwargs={"name": "b"})
     body = FabricRef(Counter)
     tree = With(a, b, body=body)
 
@@ -235,8 +235,8 @@ def test_with_brackets_are_real_nodes_of_the_tree():
 
 def test_with_nests_inside_with_in_order():
     tree = With(
-        With(Provide(Counter, {"name": "a"}), Provide(Counter, {"name": "b"})),
-        Provide(Counter, {"name": "c"}),
+        With(Provide(Counter, kwargs={"name": "a"}), Provide(Counter, kwargs={"name": "b"})),
+        Provide(Counter, kwargs={"name": "c"}),
         body=FabricRef(Counter),
     )
     value, _ = run(tree)
@@ -257,7 +257,7 @@ def test_with_bracket_config_reads_the_tree():
 
     tree = nu.Frame(
         Cfg,
-        With(Provide(Counter, Cfg.kwargs), body=FabricRef(Counter)),
+        With(Provide(Counter, kwargs=Cfg.kwargs), body=FabricRef(Counter)),
         kwargs={"name": "from-mem"},
     )
     value, _ = run(tree)
@@ -266,7 +266,10 @@ def test_with_bracket_config_reads_the_tree():
 
 
 def test_with_enter_opens_every_layer_outside_a_tree():
-    spec = With(With(Provide(Counter, {"name": "a"})), Provide(Counter, {"name": "b"}, tag="b"))
+    spec = With(
+        With(Provide(Counter, kwargs={"name": "a"})),
+        Provide(Counter, kwargs={"name": "b"}, tag="b"),
+    )
     ctx = Context()
     with spec._enter(ctx):
         assert ctx.fabrics.get(Counter).name == "a"

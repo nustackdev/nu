@@ -202,7 +202,9 @@ async def test_parallel_arms_are_isolated_under_a_parent_scope() -> None:
     tree = nu.ForEachDo(
         nu.Iter(["scoped"]),
         Provide(
-            Handle, {}, Parallel(*_async_pair(seen)) >> _Fn(lambda rt: seen.update(after=_view(rt)))
+            Handle,
+            kwargs={},
+            body=Parallel(*_async_pair(seen)) >> _Fn(lambda rt: seen.update(after=_view(rt))),
         ),
         item="q",
     )
@@ -463,7 +465,7 @@ async def test_a_bracket_fabric_is_not_seen_by_a_sibling_arm(
 ) -> None:
     handle = FabricRef(Handle)
     tree = Parallel(
-        Provide(Handle, {}, nu.print(handle.exists()) >> nu.Delay(0.05)),
+        Provide(Handle, kwargs={}, body=nu.print(handle.exists()) >> nu.Delay(0.05)),
         nu.Delay(0.01) >> nu.print(handle.exists()),
     )
     await arun(tree >> nu.print(handle.exists()), max_parallel=max_parallel)

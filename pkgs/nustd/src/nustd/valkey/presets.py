@@ -79,4 +79,4 @@ def server(
         "grace": grace,
         "watchdog": watchdog,
     }
-    return Provide(ValkeyServer, kwargs, tags=tuple(tags))
+    return Provide(ValkeyServer, kwargs=kwargs, tags=tuple(tags))

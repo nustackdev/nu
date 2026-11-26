@@ -944,7 +944,7 @@ class WorkerPool(Fabric):
     Provided once at the top of a tree, usually through the ``pool(...)``
     preset::
 
-        Provide(WorkerPool, {"init": Literal(With(...)), "name": "nu", "spares": 2}, body)
+        Provide(WorkerPool, kwargs={"init": Literal(With(...)), "name": "nu", "spares": 2}, body=body)
 
     and from there the interactions in this fabric address workers by id:
     ``Launch`` takes a warm spare or spawns one and yields its id,

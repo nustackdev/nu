@@ -48,8 +48,8 @@ PID = src("""
 
 def venv_brace(body: nu.Nu, tag: object = None) -> nu.Nu:
     if tag is None:
-        return nu.Provide(PyBrace, {"python": sys.executable}, body)
-    return nu.Provide(PyBrace, {"python": sys.executable}, body, tag=tag)
+        return nu.Provide(PyBrace, kwargs={"python": sys.executable}, body=body)
+    return nu.Provide(PyBrace, kwargs={"python": sys.executable}, body=body, tag=tag)
 
 
 # --- construction -------------------------------------------------------

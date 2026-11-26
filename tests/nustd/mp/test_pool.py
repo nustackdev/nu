@@ -85,13 +85,13 @@ def test_ids_are_monotonic_and_never_reused(pool):
 
 def test_launch_ships_the_init_bracket(pool):
     plain = pool.launch()
-    marked = pool.launch(nu.Provide(Marker, {"label": "hi"}))
+    marked = pool.launch(nu.Provide(Marker, kwargs={"label": "hi"}))
     assert pool.teleport(plain, nu.context.FabricRef(Marker).exists()) is False
     assert pool.teleport(marked, nu.context.FabricRef(Marker).exists()) is True
 
 
 def test_pool_default_init_applies_to_every_worker():
-    p = WorkerPool(name="nu-test-init", init=nu.Provide(Marker, {"label": "pool"}))
+    p = WorkerPool(name="nu-test-init", init=nu.Provide(Marker, kwargs={"label": "pool"}))
     p.setup(None)
     try:
         w = p.launch()
@@ -214,7 +214,7 @@ async def test_acleanup_reaps_under_cancellation():
     with the child still alive. ``WorkerPool.acleanup`` does its work inline with no await points, so a
     cancellation cannot land inside it.
     """
-    bracket = nu.Provide(WorkerPool, {"name": "nu-test-cancel"})
+    bracket = nu.Provide(WorkerPool, kwargs={"name": "nu-test-cancel"})
     pids: list[int] = []
     entered = asyncio.Event()
 
@@ -242,7 +242,7 @@ async def test_acleanup_reaps_under_cancellation():
 
 
 async def test_async_lifecycle_round_trip():
-    bracket = nu.Provide(WorkerPool, {"name": "nu-test-async"})
+    bracket = nu.Provide(WorkerPool, kwargs={"name": "nu-test-async"})
     ctx = nu.Context()
     async with bracket._aenter(ctx):
         pool = ctx.fabrics.get(WorkerPool)
@@ -289,7 +289,7 @@ def _poll(check, timeout: float = 10.0) -> bool:
 
 
 async def test_cancelling_ateleport_cancels_the_remote_body():
-    bracket = nu.Provide(WorkerPool, {"name": "nu-test-cancel-exec"})
+    bracket = nu.Provide(WorkerPool, kwargs={"name": "nu-test-cancel-exec"})
     ctx = nu.Context()
     async with bracket._aenter(ctx):
         pool = ctx.fabrics.get(WorkerPool)
@@ -307,7 +307,7 @@ async def test_cancelling_ateleport_cancels_the_remote_body():
 
 
 async def test_cancelling_one_exec_leaves_its_siblings_alone():
-    bracket = nu.Provide(WorkerPool, {"name": "nu-test-cancel-one"})
+    bracket = nu.Provide(WorkerPool, kwargs={"name": "nu-test-cancel-one"})
     ctx = nu.Context()
     async with bracket._aenter(ctx):
         pool = ctx.fabrics.get(WorkerPool)
@@ -345,7 +345,7 @@ def test_cancel_is_a_no_op_once_finished(pool):
 
 
 async def test_worker_death_raises_on_a_pending_ateleport():
-    bracket = nu.Provide(WorkerPool, {"name": "nu-test-death"})
+    bracket = nu.Provide(WorkerPool, kwargs={"name": "nu-test-death"})
     ctx = nu.Context()
     async with bracket._aenter(ctx):
         pool = ctx.fabrics.get(WorkerPool)

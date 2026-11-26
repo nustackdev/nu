@@ -23,10 +23,10 @@ others.
 
 Usage::
 
-    Provide(Navigator, {"..."},
-        Provide(InvisiblesServer, {"target": Navigator,
-                                   "address": "10.0.0.1:19000"},
-            body,
+    Provide(Navigator, kwargs={...},
+        body=Provide(InvisiblesServer, kwargs={"target": Navigator,
+                                               "address": "10.0.0.1:19000"},
+            body=body,
         ),
     )
 """

@@ -159,7 +159,7 @@ def test_a_store_ref_preset_binds_under_its_computed_name(tmp_path) -> None:
 def test_an_agent_ref_preset_tags_its_bind_with_the_name_child() -> None:
     agent = nustd.acp.AgentRef(Opts.tag)
     spec = nustd.acp.claude(agent, cwd="/srv")
-    tags = nu.tree.children(spec)[3]
+    tags = nu.tree.children(spec)[4]  # [body, cls, args, kwargs, tags, ...]
     assert nu.tree.children(tags)[0] is agent.name
     assert nu.run(nu.Frame(Opts, tags, tag="claude"))[0] == ("claude",)
 

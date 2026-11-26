@@ -57,7 +57,9 @@ def lmdb(
         "max_readers": max_readers,
         "writemap": writemap,
     }
-    return Provide(BlobFabric, {"backend": LMDBBackend, "options": options}, tag=store_name(store))
+    return Provide(
+        BlobFabric, kwargs={"backend": LMDBBackend, "options": options}, tag=store_name(store)
+    )
 
 
 def files(store: StoreRef | str, root: str | os.PathLike[str]) -> Provide:
@@ -71,7 +73,9 @@ def files(store: StoreRef | str, root: str | os.PathLike[str]) -> Provide:
         nu.With(nustd.blob.files(Media, "./media"), body=Media.put(b"..."))
     """
     options = {"root": os.fspath(root)}
-    return Provide(BlobFabric, {"backend": FilesBackend, "options": options}, tag=store_name(store))
+    return Provide(
+        BlobFabric, kwargs={"backend": FilesBackend, "options": options}, tag=store_name(store)
+    )
 
 
 def s3(
@@ -119,4 +123,6 @@ def s3(
         "aws_session_token": aws_session_token,
         "part_size": part_size,
     }
-    return Provide(BlobFabric, {"backend": S3Backend, "options": options}, tag=store_name(store))
+    return Provide(
+        BlobFabric, kwargs={"backend": S3Backend, "options": options}, tag=store_name(store)
+    )

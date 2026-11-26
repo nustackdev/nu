@@ -11,15 +11,15 @@ live while inner ones tear down.
 
 Three primitives, one per attach shape:
 
-    Provide(cls, kwargs, body, *, tag=None, tags=(), predicate=None)
+    Provide(cls, *, args=(), kwargs=None, body=None, tag=None, tags=(), predicate=None)
         # bind ONE instance keyed by (cls, *tags)
 
-    ProvideList(cls, [kwargs_a, kwargs_b, ...], body,
-                *, base_tag=0, extra_tags=(), predicate=None)
+    ProvideList(cls, *, specs=[kwargs_a, kwargs_b, ...], body=body,
+                base_tag=0, extra_tags=(), predicate=None)
         # bind N instances at (cls, base_tag+0, *extra_tags), ...
 
-    ProvideDict(cls, {"k1": kwargs_a, ...}, body,
-                *, extra_tags=(), predicate=None)
+    ProvideDict(cls, *, specs={"k1": kwargs_a, ...}, body=body,
+                extra_tags=(), predicate=None)
         # bind N instances at (cls, "k1", *extra_tags), ...
 
 Tag knobs (all optional, they compose):
@@ -37,13 +37,19 @@ The ecosystem is open: ``ProvideSharded``, ``ProvideRoundRobin``,
 is a ``nu.Bracket`` subclass that overrides ``_open`` / ``_aopen`` (no-ops on
 the base); the engine sees them as regular lifecycle spans.
 
-The class must subclass ``nu.Fabric``: a class given directly is checked
-when the bracket is built, a computed one when it opens. Both sync and async
-runs are supported natively via the two open methods (``_open`` and
-``_aopen``). Under the async runtime the bracket calls ``asetup`` /
-``acleanup`` (which default to the sync pair); under the sync runtime it calls
-``setup`` / ``cleanup``, and refuses before constructing it a fabric marked
-``async_only`` or one that overrides only the async half of its lifecycle.
+Any class can be provided; the lifecycle follows from what the instance is:
+
+- a ``nu.Fabric`` runs its hooks: ``setup`` / ``cleanup`` under the sync
+  runtime, ``asetup`` / ``acleanup`` (which default to the sync pair) under
+  the async one;
+- a context manager is entered and exited, the async protocol first under
+  the async runtime, and its ``__exit__`` sees the body's error;
+- anything else has no lifecycle: it is bound on entry and unbound on exit.
+
+A class given directly is checked when the bracket is built, a computed one
+when it opens. The sync runtime refuses, before constructing it, a fabric
+marked ``async_only``, one that overrides only the async half of its
+lifecycle, and an async-only context manager.
 """
 
 from __future__ import annotations
@@ -72,23 +78,24 @@ __all__ = ["Provide", "ProvideDict", "ProvideList", "With"]
 # =========================================================================
 
 
-def _construct(cls: type[Fabric], kwargs: Mapping[str, object]) -> Fabric:
-    """Build one fabric from ``cls(**kwargs)``."""
-    return cls(**kwargs)
+def _construct(cls: type, args: Sequence[object], kwargs: Mapping[str, object]) -> object:
+    """Build one instance from ``cls(*args, **kwargs)``."""
+    return cls(*args, **kwargs)
 
 
-def _require_fabric(cls: object, bracket: str) -> None:
-    """Refuse a class that is not a ``nu.Fabric`` subclass.
+def _require_class(cls: object, bracket: str) -> type:
+    """Refuse anything that is not a class.
 
     Run at build time when the class is given as a plain value, and again when
     the bracket opens, which is the first time a computed class is known.
     ``bracket`` is the refusing bracket's class name, so the message names
     ``ProvideList`` / ``ProvideDict`` / a subclass rather than ``Provide``.
     """
-    if not (isinstance(cls, type) and issubclass(cls, Fabric)):
+    if not isinstance(cls, type):
         name = getattr(cls, "__qualname__", None) or repr(cls)
-        msg = f"{bracket} takes a Fabric class, got {name}; subclass nu.Fabric"
+        msg = f"{bracket} takes a class, got {name}"
         raise TypeError(msg)
+    return cls
 
 
 def _overrides(cls: type[Fabric], name: str) -> bool:
@@ -96,49 +103,133 @@ def _overrides(cls: type[Fabric], name: str) -> bool:
     return getattr(cls, name) is not getattr(Fabric, name)
 
 
-def _refuse_async_only(cls: type[Fabric]) -> None:
-    """Sync path guard: refuse a fabric the sync runner cannot drive.
+def _is_cm(obj: object) -> bool:
+    """Whether ``obj`` (an instance or a class) is a sync context manager."""
+    kind = obj if isinstance(obj, type) else type(obj)
+    return hasattr(kind, "__enter__") and hasattr(kind, "__exit__")
+
+
+def _is_acm(obj: object) -> bool:
+    """Whether ``obj`` (an instance or a class) is an async context manager."""
+    kind = obj if isinstance(obj, type) else type(obj)
+    return hasattr(kind, "__aenter__") and hasattr(kind, "__aexit__")
+
+
+def _refuse_async_only(cls: type) -> None:
+    """Sync path guard: refuse a class whose lifecycle the sync runner cannot drive.
 
     Called before instance construction so a mis-provisioned tree fails at
     the leaf ``Provide`` with a clear message, instead of half-building an
-    instance whose ``asetup`` we can't drive. Two shapes are refused: one
-    marked ``async_only``, and one that overrides ``asetup`` (or
-    ``acleanup``) while keeping the no-op sync twin, which would otherwise
-    run under ``nu.run`` with its lifecycle silently skipped.
+    instance whose async setup we can't drive. Refused: a fabric marked
+    ``async_only``; one that overrides ``asetup`` (or ``acleanup``) while
+    keeping the no-op sync twin, which would otherwise run under ``nu.run``
+    with its lifecycle silently skipped; and an async-only context manager.
     """
-    if cls.async_only:
-        msg = f"{cls.__name__} requires the async runner (nu.arun); it is async_only"
-        raise RuntimeError(msg)
-    for sync, aio in (("setup", "asetup"), ("cleanup", "acleanup")):
-        if _overrides(cls, aio) and not _overrides(cls, sync):
-            msg = f"{cls.__name__} has no sync {sync}; use nu.arun or add {sync}()"
+    if issubclass(cls, Fabric):
+        if cls.async_only:
+            msg = f"{cls.__name__} requires the async runner (nu.arun); it is async_only"
             raise RuntimeError(msg)
+        for sync, aio in (("setup", "asetup"), ("cleanup", "acleanup")):
+            if _overrides(cls, aio) and not _overrides(cls, sync):
+                msg = f"{cls.__name__} has no sync {sync}; use nu.arun or add {sync}()"
+                raise RuntimeError(msg)
+    elif _is_acm(cls) and not _is_cm(cls):
+        msg = f"{cls.__name__} is an async context manager; use nu.arun"
+        raise RuntimeError(msg)
 
 
-def _sync_class(cls: object, bracket: str) -> type[Fabric]:
-    """The class a sync open constructs: a Fabric the sync runner can drive."""
-    _require_fabric(cls, bracket)
-    fabric = cast("type[Fabric]", cls)
-    _refuse_async_only(fabric)
-    return fabric
+def _sync_class(cls: object, bracket: str) -> type:
+    """The class a sync open constructs: one the sync runner can drive."""
+    kind = _require_class(cls, bracket)
+    _refuse_async_only(kind)
+    return kind
 
 
-def _async_class(cls: object, bracket: str) -> type[Fabric]:
-    """The class an async open constructs: any Fabric."""
-    _require_fabric(cls, bracket)
-    return cast("type[Fabric]", cls)
+def _async_class(cls: object, bracket: str) -> type:
+    """The class an async open constructs: any class."""
+    return _require_class(cls, bracket)
 
 
-def _teardown(instances: Sequence[Fabric]) -> None:
-    """Sync teardown, LIFO."""
-    for inst in reversed(instances):
-        inst.cleanup()
+class _Life:
+    """One provided instance's lifecycle, picked by what the instance is.
+
+    A ``Fabric`` runs its own hooks (``setup`` / ``cleanup``, or the async
+    pair). A context manager is entered and exited, with the body's error
+    handed to ``__exit__``. Anything else has no lifecycle: it is only bound
+    and unbound. ``Fabric`` wins over a context manager when a class is both.
+    """
+
+    __slots__ = ("inst",)
+
+    def __init__(self, inst: object) -> None:
+        self.inst = inst
+
+    def setup(self, ctx: Context) -> None:
+        inst = self.inst
+        if isinstance(inst, Fabric):
+            inst.setup(ctx)
+        elif _is_cm(inst):
+            inst.__enter__()  # type: ignore[attr-defined]
+
+    def teardown(self, exc: BaseException | None) -> None:
+        inst = self.inst
+        if isinstance(inst, Fabric):
+            inst.cleanup()
+        elif _is_cm(inst):
+            # The return value is ignored: a provided resource never swallows
+            # the body's error.
+            inst.__exit__(*_exc_info(exc))  # type: ignore[attr-defined]
+
+    async def asetup(self, ctx: Context) -> None:
+        inst = self.inst
+        if isinstance(inst, Fabric):
+            await inst.asetup(ctx)
+        elif _is_acm(inst):
+            await inst.__aenter__()  # type: ignore[attr-defined]
+        elif _is_cm(inst):
+            inst.__enter__()  # type: ignore[attr-defined]
+
+    async def ateardown(self, exc: BaseException | None) -> None:
+        inst = self.inst
+        if isinstance(inst, Fabric):
+            await inst.acleanup()
+        elif _is_acm(inst):
+            await inst.__aexit__(*_exc_info(exc))  # type: ignore[attr-defined]
+        elif _is_cm(inst):
+            inst.__exit__(*_exc_info(exc))  # type: ignore[attr-defined]
 
 
-async def _ateardown(instances: Sequence[Fabric]) -> None:
-    """Async teardown, LIFO."""
-    for inst in reversed(instances):
-        await inst.acleanup()
+def _exc_info(exc: BaseException | None) -> tuple[object, object, object]:
+    """The ``(type, value, traceback)`` triple ``__exit__`` takes."""
+    if exc is None:
+        return None, None, None
+    return type(exc), exc, exc.__traceback__
+
+
+@contextmanager
+def _torn_down(lives: list[_Life]) -> Iterator[None]:
+    """Tear ``lives`` down in reverse on exit, handing each the body's error."""
+    try:
+        yield
+    except BaseException as exc:
+        for life in reversed(lives):
+            life.teardown(exc)
+        raise
+    for life in reversed(lives):
+        life.teardown(None)
+
+
+@asynccontextmanager
+async def _atorn_down(lives: list[_Life]) -> AsyncIterator[None]:
+    """Async sibling of :func:`_torn_down`."""
+    try:
+        yield
+    except BaseException as exc:
+        for life in reversed(lives):
+            await life.ateardown(exc)
+        raise
+    for life in reversed(lives):
+        await life.ateardown(None)
 
 
 def _merge_tags(tag: object, tags: Sequence[object]) -> tuple[object, ...]:
@@ -222,20 +313,20 @@ def _bind(
 
 
 class Provide(Bracket):
-    """Constructs one fabric and binds it on the Context for the body's duration.
+    """Constructs one instance and binds it on the Context for the body's duration.
 
     This is how a stateful Nu program gets its state: nothing in the tree
     reaches a fabric that was not provided around it. On entry the bracket
-    builds ``cls(**kwargs)``, runs its setup if it has one, and binds the
-    instance on the Context under the class plus any tags. The body runs
+    builds ``cls(*args, **kwargs)``, runs its setup if it has one, and binds
+    the instance on the Context under the class plus any tags. The body runs
     against that Context. On exit teardown fires, and it fires in reverse
     order across nested brackets, so an outer fabric is still live while the
     ones inside it are tearing down.
 
     Args:
-        cls: the fabric class to construct. Also the key it binds under,
-            unless ``bind_as`` or the class's own ``_nu_bind_as`` overrides
-            that.
+        cls: the class to construct, any class. Also the key it binds
+            under, unless ``bind_as`` or the class's own ``_nu_bind_as``
+            overrides that.
         kwargs: passed straight to the constructor. A mapping whose values
             may each be a term, or a term that yields the whole mapping
             (computed, or read from a store); evaluated on entry.
@@ -259,10 +350,18 @@ class Provide(Bracket):
         - ``bind_as=`` binds the instance under a different type than it was
           constructed from, so an implementation can be provided where a
           protocol or base class is what the tree asks for.
-        - ``cls`` must subclass ``nu.Fabric``, which gives every lifecycle
-          method a default: a fabric overrides only what it needs. A class
-          given directly is checked here, a computed one when the bracket
-          opens; anything else raises ``TypeError``.
+        - ``args=`` are positional constructor arguments, passed before
+          ``kwargs``; each may be a term.
+        - The lifecycle follows from what the instance is. A ``nu.Fabric``
+          runs its hooks, which all default to no-ops, so it overrides only
+          what it needs and its ``setup`` sees the outer Context. A context
+          manager is entered and exited, and its ``__exit__`` gets the body's
+          error; its return value is ignored, so the error always
+          propagates. Anything else is only bound and unbound, which is how
+          a plain ``dict`` lands on the Context fresh for each entry.
+        - ``cls`` must be a class. One given directly is checked here, a
+          computed one when the bracket opens; anything else raises
+          ``TypeError``.
         - Under ``nu.arun`` the bracket calls ``asetup`` / ``acleanup``,
           which default to the sync pair; under ``nu.run`` it calls
           ``setup`` / ``cleanup``, and a fabric marked ``async_only``, or
@@ -280,27 +379,31 @@ class Provide(Bracket):
         >>> class Counter(nu.Fabric):
         ...     def __init__(self, start=0):
         ...         self.n = start
-        >>> nu.run(nu.Provide(Counter, {"start": 5}, nu.FabricRef(Counter).exists()))[0]
+        >>> nu.run(nu.Provide(Counter, kwargs={"start": 5}, body=nu.FabricRef(Counter).exists()))[0]
         True
+        >>> nu.run(nu.Provide(dict, kwargs={"n": 1}, body=nu.FabricRef(dict)))[0]
+        {'n': 1}
     """
 
     def __init__(
         self,
         cls: type | Nu,
+        *,
+        args: Sequence[object] | Nu = (),
         kwargs: Mapping[str, object] | Nu | None = None,
         body: Nu | None = None,
-        *,
         tag: object = None,
         tags: Sequence[object] = (),
         predicate: Callable | Nu | None = None,
         bind_as: type | Nu | None = None,
     ) -> None:
         if not isinstance(cls, Nu):
-            _require_fabric(cls, type(self).__name__)
-        # Children: [body, cls, kwargs, tags, predicate, bind_as].
+            _require_class(cls, type(self).__name__)
+        # Children: [body, cls, args, kwargs, tags, predicate, bind_as].
         super().__init__(
             body,
             cls,
+            _tuple_child(args),
             _kwargs_child(kwargs),
             _tuple_child(_merge_tags(tag, tags)),
             predicate,
@@ -312,42 +415,40 @@ class Provide(Bracket):
         self,
         ctx: Context,
         cls: type,
+        args: Sequence[object],
         kwargs: Mapping[str, object],
         tags: Sequence[object],
         predicate: Callable | None,
         bind_as: type | None,
     ) -> Iterator[None]:
         cls = _sync_class(cls, type(self).__name__)
-        instance = _construct(cls, kwargs)
-        setup_done: list[Fabric] = []
-        try:
-            instance.setup(ctx)
-            setup_done.append(instance)
-            with _bind(ctx, _bind_key(cls, bind_as), instance, tags, predicate):
+        life = _Life(_construct(cls, args, kwargs))
+        lives: list[_Life] = []
+        with _torn_down(lives):
+            life.setup(ctx)
+            lives.append(life)
+            with _bind(ctx, _bind_key(cls, bind_as), life.inst, tags, predicate):
                 yield
-        finally:
-            _teardown(setup_done)
 
     @asynccontextmanager
     async def _aopen(
         self,
         ctx: Context,
         cls: type,
+        args: Sequence[object],
         kwargs: Mapping[str, object],
         tags: Sequence[object],
         predicate: Callable | None,
         bind_as: type | None,
     ) -> AsyncIterator[None]:
         cls = _async_class(cls, type(self).__name__)
-        instance = _construct(cls, kwargs)
-        setup_done: list[Fabric] = []
-        try:
-            await instance.asetup(ctx)
-            setup_done.append(instance)
-            with _bind(ctx, _bind_key(cls, bind_as), instance, tags, predicate):
+        life = _Life(_construct(cls, args, kwargs))
+        lives: list[_Life] = []
+        async with _atorn_down(lives):
+            await life.asetup(ctx)
+            lives.append(life)
+            with _bind(ctx, _bind_key(cls, bind_as), life.inst, tags, predicate):
                 yield
-        finally:
-            await _ateardown(setup_done)
 
 
 # =========================================================================
@@ -364,7 +465,7 @@ class ProvideList(Bracket):
     member's setup sees the earlier ones already on the Context.
 
     Args:
-        cls: the fabric class every member is constructed from.
+        cls: the class every member is constructed from, any class.
         specs: one kwargs mapping per instance, in the order they are built.
             A sequence (each mapping, or any of its values, may be a term),
             or a term that yields the whole sequence; evaluated on entry.
@@ -387,7 +488,7 @@ class ProvideList(Bracket):
     Example:
         nu.ProvideList(
             RayService,
-            [{"port": 8000}, {"port": 8001}],
+            specs=[{"port": 8000}, {"port": 8001}],
             body=feed,
             extra_tags=("ledger",),
         )
@@ -396,16 +497,16 @@ class ProvideList(Bracket):
     def __init__(
         self,
         cls: type | Nu,
+        *,
         specs: Sequence[Mapping[str, object] | Nu] | Nu,
         body: Nu | None = None,
-        *,
         base_tag: int | Nu = 0,
         extra_tags: Sequence[object] | Nu = (),
         predicate: Callable | Nu | None = None,
         bind_as: type | Nu | None = None,
     ) -> None:
         if not isinstance(cls, Nu):
-            _require_fabric(cls, type(self).__name__)
+            _require_class(cls, type(self).__name__)
         # Children: [body, cls, specs, base_tag, extra_tags, predicate, bind_as].
         super().__init__(
             body,
@@ -430,17 +531,16 @@ class ProvideList(Bracket):
     ) -> Iterator[None]:
         cls = _sync_class(cls, type(self).__name__)
         bind_as = _bind_key(cls, bind_as)
-        setup_done: list[Fabric] = []
-        try:
-            with ExitStack() as provided:
-                for i, kwargs in enumerate(specs):
-                    inst = _construct(cls, kwargs)
-                    inst.setup(ctx)
-                    setup_done.append(inst)
-                    provided.enter_context(_bind(ctx, bind_as, inst, (base + i, *extra), predicate))
-                yield
-        finally:
-            _teardown(setup_done)
+        lives: list[_Life] = []
+        with _torn_down(lives), ExitStack() as provided:
+            for i, kwargs in enumerate(specs):
+                life = _Life(_construct(cls, (), kwargs))
+                life.setup(ctx)
+                lives.append(life)
+                provided.enter_context(
+                    _bind(ctx, bind_as, life.inst, (base + i, *extra), predicate)
+                )
+            yield
 
     @asynccontextmanager
     async def _aopen(
@@ -455,17 +555,17 @@ class ProvideList(Bracket):
     ) -> AsyncIterator[None]:
         cls = _async_class(cls, type(self).__name__)
         bind_as = _bind_key(cls, bind_as)
-        setup_done: list[Fabric] = []
-        try:
+        lives: list[_Life] = []
+        async with _atorn_down(lives):
             with ExitStack() as provided:
                 for i, kwargs in enumerate(specs):
-                    inst = _construct(cls, kwargs)
-                    await inst.asetup(ctx)
-                    setup_done.append(inst)
-                    provided.enter_context(_bind(ctx, bind_as, inst, (base + i, *extra), predicate))
+                    life = _Life(_construct(cls, (), kwargs))
+                    await life.asetup(ctx)
+                    lives.append(life)
+                    provided.enter_context(
+                        _bind(ctx, bind_as, life.inst, (base + i, *extra), predicate)
+                    )
                 yield
-        finally:
-            await _ateardown(setup_done)
 
 
 # =========================================================================
@@ -481,7 +581,7 @@ class ProvideDict(Bracket):
     want when the members are named rather than numbered.
 
     Args:
-        cls: the fabric class every member is constructed from.
+        cls: the class every member is constructed from, any class.
         specs: a mapping of key to kwargs. Each key becomes the tag its
             instance binds under. A mapping (each key, kwargs mapping or
             value may be a term), or a term that yields the whole mapping;
@@ -508,7 +608,7 @@ class ProvideDict(Bracket):
     Example:
         nu.ProvideDict(
             RayService,
-            {"ledger": {"port": 8000}, "index": {"port": 8001}},
+            specs={"ledger": {"port": 8000}, "index": {"port": 8001}},
             body=feed,
         )
     """
@@ -516,16 +616,16 @@ class ProvideDict(Bracket):
     def __init__(
         self,
         cls: type | Nu,
+        *,
         specs: Mapping[object, Mapping[str, object] | Nu] | Nu,
         body: Nu | None = None,
-        *,
         extra_tags: Sequence[object] | Nu = (),
         predicate: Callable | Nu | None = None,
         bind_as: type | Nu | None = None,
         parallel: bool | Nu = False,
     ) -> None:
         if not isinstance(cls, Nu):
-            _require_fabric(cls, type(self).__name__)
+            _require_class(cls, type(self).__name__)
         # Children: [body, cls, specs, extra_tags, predicate, bind_as, parallel].
         super().__init__(
             body,
@@ -550,17 +650,14 @@ class ProvideDict(Bracket):
     ) -> Iterator[None]:
         cls = _sync_class(cls, type(self).__name__)
         bind_as = _bind_key(cls, bind_as)
-        setup_done: list[Fabric] = []
-        try:
-            with ExitStack() as provided:
-                for key, kwargs in specs.items():
-                    inst = _construct(cls, kwargs)
-                    inst.setup(ctx)
-                    setup_done.append(inst)
-                    provided.enter_context(_bind(ctx, bind_as, inst, (key, *extra), predicate))
-                yield
-        finally:
-            _teardown(setup_done)
+        lives: list[_Life] = []
+        with _torn_down(lives), ExitStack() as provided:
+            for key, kwargs in specs.items():
+                life = _Life(_construct(cls, (), kwargs))
+                life.setup(ctx)
+                lives.append(life)
+                provided.enter_context(_bind(ctx, bind_as, life.inst, (key, *extra), predicate))
+            yield
 
     @asynccontextmanager
     async def _aopen(
@@ -579,34 +676,36 @@ class ProvideDict(Bracket):
         from nu.core.flows.parallel._scheduling import _join_all
 
         bind_as = _bind_key(cls, bind_as)
-        setup_done: list[Fabric] = []
-        try:
+        lives: list[_Life] = []
+        async with _atorn_down(lives):
             with ExitStack() as provided:
                 if parallel:
-                    keyed = [(key, _construct(cls, kw)) for key, kw in specs.items()]
-                    tasks = [asyncio.ensure_future(inst.asetup(ctx)) for _, inst in keyed]
+                    keyed = [(key, _Life(_construct(cls, (), kw))) for key, kw in specs.items()]
+                    tasks = [asyncio.ensure_future(life.asetup(ctx)) for _, life in keyed]
                     # Not gather: a failed or cancelled setup must not leave
                     # its siblings running, and every setup that did finish
-                    # is owed its teardown in the finally below.
+                    # is owed its teardown on the way out.
                     try:
                         await _join_all(tasks)
                     finally:
-                        setup_done.extend(
-                            inst
-                            for (_, inst), t in zip(keyed, tasks, strict=True)
+                        lives.extend(
+                            life
+                            for (_, life), t in zip(keyed, tasks, strict=True)
                             if t.done() and not t.cancelled() and t.exception() is None
                         )
-                    for key, inst in keyed:
-                        provided.enter_context(_bind(ctx, bind_as, inst, (key, *extra), predicate))
+                    for key, life in keyed:
+                        provided.enter_context(
+                            _bind(ctx, bind_as, life.inst, (key, *extra), predicate)
+                        )
                 else:
                     for key, kwargs in specs.items():
-                        inst = _construct(cls, kwargs)
-                        await inst.asetup(ctx)
-                        setup_done.append(inst)
-                        provided.enter_context(_bind(ctx, bind_as, inst, (key, *extra), predicate))
+                        life = _Life(_construct(cls, (), kwargs))
+                        await life.asetup(ctx)
+                        lives.append(life)
+                        provided.enter_context(
+                            _bind(ctx, bind_as, life.inst, (key, *extra), predicate)
+                        )
                 yield
-        finally:
-            await _ateardown(setup_done)
 
 
 # =========================================================================
@@ -622,7 +721,7 @@ class With(Bracket):
     sees everything the earlier ones bound. The body runs with all of them
     provided, and on exit teardown fires in reverse. What it buys is flatness:
     stacking peers at one level instead of writing the
-    ``Provide(a, kw, Provide(b, kw, Provide(c, kw, body)))`` cascade by hand.
+    ``Provide(a, body=Provide(b, body=Provide(c, body=body)))`` cascade by hand.
 
     Args:
         *brackets: the lifecycle brackets to enter, in order.
@@ -648,10 +747,10 @@ class With(Bracket):
 
     Example:
         nu.With(
-            nu.Provide(RayCluster, {...}),
-            nu.Provide(RayService, {...}, tag="A"),
-            nu.Provide(RayService, {...}, tag="B"),
-            nu.ProvideDict(RayService, {...}),
+            nu.Provide(RayCluster, kwargs={...}),
+            nu.Provide(RayService, kwargs={...}, tag="A"),
+            nu.Provide(RayService, kwargs={...}, tag="B"),
+            nu.ProvideDict(RayService, specs={...}),
             body=feed,
         )
     """

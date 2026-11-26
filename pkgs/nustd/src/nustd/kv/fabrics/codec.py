@@ -10,8 +10,8 @@ Preset kwargs helpers are provided for the four common combos - binary
 (pickle), text (JSON), msgpack, and noop (passthrough). They return a plain
 ``dict`` you can splat into ``Provide``::
 
-    Provide(Codec, binary_kwargs(),
-        Provide(RocksDBStorage, {"path": "/data"}, body),
+    Provide(Codec, kwargs=binary_kwargs(),
+        body=Provide(RocksDBStorage, kwargs={"path": "/data"}, body=body),
     )
 """
 

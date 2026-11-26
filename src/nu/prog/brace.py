@@ -5,8 +5,8 @@ step that makes it addressable from inside a Nu program: a parent-side
 resource, provisioned by ``Provide``, holding a live :class:`Constructor`
 that :class:`~nu.prog.load.LoadNu` looks up on ctx.
 
-    Provide(PyBrace, {"python": "/path/to/.venv/bin/python"}, body)
-    Provide(PyBrace, {}, body)   # in-process, no child, no serialization
+    Provide(PyBrace, kwargs={"python": "/path/to/.venv/bin/python"}, body=body)
+    Provide(PyBrace, body=body)   # in-process, no child, no serialization
 
 One mechanism, two framings, on purpose. A ``Provide`` at the top of an app
 is "this whole app builds its programs in that venv". The same ``Provide``
@@ -94,9 +94,9 @@ class PyBrace(Fabric):
           installs have to agree on what those names mean.
 
     Example:
-        Provide(PyBrace, {"python": "/path/to/.venv/bin/python"}, body)
+        Provide(PyBrace, kwargs={"python": "/path/to/.venv/bin/python"}, body=body)
 
-        Provide(PyBrace, {}, body)   # in-process, no child, no pickling
+        Provide(PyBrace, body=body)   # in-process, no child, no pickling
     """
 
     def __init__(

@@ -365,7 +365,7 @@ async def test_cancelled_akill_has_still_killed_the_worker(spy):
     """The SIGKILL is out before akill's first await: cancelling it changes nothing."""
     pool = WorkerPool(name="nu-test-akill", grace=0.5)
     pool.setup(None)
-    w = pool.launch(nu.Provide(IgnoreTerm, {}))  # SIGTERM ignored: only SIGKILL ends it
+    w = pool.launch(nu.Provide(IgnoreTerm, kwargs={}))  # SIGTERM ignored: only SIGKILL ends it
     pid = spy.pids[0]
     handle = spy.handles[0]
 
@@ -411,7 +411,7 @@ def test_cleanup_interrupted_by_keyboard_interrupt_leaves_no_process(spy):
     pool = WorkerPool(name="nu-test-ctrlc", grace=5.0)
     pool.setup(None)
     plain = pool.launch()
-    stubborn = pool.launch(nu.Provide(IgnoreTerm, {}))
+    stubborn = pool.launch(nu.Provide(IgnoreTerm, kwargs={}))
     pool.dispatch(stubborn, Stubborn(60))  # deaf to the stop frame and SIGINT, no SIGTERM
     assert pool.workers() == [plain, stubborn]
     pids = list(spy.pids)
@@ -439,7 +439,7 @@ def test_cleanup_interrupted_mid_ladder_kills_everything_and_records_every_exit(
     """The ladder blows up: every worker gets SIGKILL and every exit is still recorded."""
     pool = WorkerPool(name="nu-test-base", grace=5.0)
     pool.setup(None)
-    ids = [pool.launch(nu.Provide(IgnoreTerm, {})) for _ in range(2)]
+    ids = [pool.launch(nu.Provide(IgnoreTerm, kwargs={})) for _ in range(2)]
     pids = list(spy.pids)
 
     def blowing_up(handles, start, grace):
@@ -460,7 +460,7 @@ async def test_acleanup_cancelled_mid_ladder_kills_everything(spy):
     """A cancellation landing inside ``acleanup``: SIGKILL to every group, then it goes on up."""
     pool = WorkerPool(name="nu-test-acancel", grace=5.0)
     pool.setup(None)
-    w = await pool.alaunch(nu.Provide(IgnoreTerm, {}))
+    w = await pool.alaunch(nu.Provide(IgnoreTerm, kwargs={}))
     await pool.adispatch(w, Stubborn(60))
     waiter = asyncio.create_task(pool.await_exit(w))
 

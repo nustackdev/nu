@@ -129,7 +129,7 @@ def _mixed(pool: WorkerPool) -> dict[str, int]:
         "cooperative": pool.launch(),
         "sync_stuck": pool.launch(),
         "deaf_to_int": pool.launch(),
-        "wedged": pool.launch(nu.Provide(IgnoreTerm, {})),
+        "wedged": pool.launch(nu.Provide(IgnoreTerm, kwargs={})),
     }
     pool.dispatch(workers["cooperative"], RESIDENT)
     pool.dispatch(workers["sync_stuck"], Spin(60))
@@ -219,7 +219,7 @@ async def test_acleanup_climbs_the_same_ladder_and_never_blocks_the_loop():
 
 def test_stop_on_a_cooperative_worker_runs_finally_and_teardown(tmp_path):
     torn, fin = tmp_path / "torn", tmp_path / "finally"
-    pool = WorkerPool(name="nu-test-stop", init=nu.Provide(Touch, {"path": str(torn)}))
+    pool = WorkerPool(name="nu-test-stop", init=nu.Provide(Touch, kwargs={"path": str(torn)}))
     pool.setup(None)  # type: ignore[arg-type]
     try:
         w = pool.launch()
@@ -236,7 +236,7 @@ def test_stop_on_a_cooperative_worker_runs_finally_and_teardown(tmp_path):
 
 
 def test_stop_on_a_wedged_worker_ends_by_sigkill_within_grace(pool):
-    w = pool.launch(nu.Provide(IgnoreTerm, {}))
+    w = pool.launch(nu.Provide(IgnoreTerm, kwargs={}))
     pool.dispatch(w, Stubborn(60))
     time.sleep(0.1)
     start = time.monotonic()
@@ -248,7 +248,7 @@ def test_stop_on_a_wedged_worker_ends_by_sigkill_within_grace(pool):
 
 
 async def test_astop_on_a_wedged_worker_ends_by_sigkill_within_grace(pool):
-    w = await pool.alaunch(nu.Provide(IgnoreTerm, {}))
+    w = await pool.alaunch(nu.Provide(IgnoreTerm, kwargs={}))
     await pool.adispatch(w, Stubborn(60))
     await asyncio.sleep(0.1)
     ctx = nu.Context().bind(WorkerPool, pool)
@@ -259,7 +259,7 @@ async def test_astop_on_a_wedged_worker_ends_by_sigkill_within_grace(pool):
 
 
 async def test_a_cancelled_astop_kills_the_worker(pool):
-    w = await pool.alaunch(nu.Provide(IgnoreTerm, {}))
+    w = await pool.alaunch(nu.Provide(IgnoreTerm, kwargs={}))
     await pool.adispatch(w, Stubborn(60))
     task = asyncio.create_task(pool.astop(w, grace=10.0))
     await asyncio.sleep(0.2)
@@ -397,7 +397,7 @@ async def test_interrupt_reaches_a_sync_body_in_a_sub_task(pool):
 
 def test_stop_reaches_a_sync_body_in_a_sub_task_at_the_sigint_rung(tmp_path):
     torn = tmp_path / "torn"
-    pool = WorkerPool(name="nu-test-substop", init=nu.Provide(Touch, {"path": str(torn)}))
+    pool = WorkerPool(name="nu-test-substop", init=nu.Provide(Touch, kwargs={"path": str(torn)}))
     pool.setup(None)  # type: ignore[arg-type]
     try:
         w = pool.launch()
@@ -427,7 +427,7 @@ async def test_status_through_a_whole_life():
     pool = WorkerPool(name="nu-test-status", grace=1.0)
     await pool.asetup(None)  # type: ignore[arg-type]
     try:
-        launching = asyncio.create_task(pool.alaunch(nu.Provide(SlowInit, {"seconds": 0.6})))
+        launching = asyncio.create_task(pool.alaunch(nu.Provide(SlowInit, kwargs={"seconds": 0.6})))
         assert await _until(lambda: 0 in pool._workers)
         assert pool.status(0).state == "starting"
         assert pool.status(0).started_at is None
