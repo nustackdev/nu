@@ -20,6 +20,10 @@ import nustd
 from nu.lang import Cardinality, Surface, cardinality_of
 
 
+class _Mem(nu.Shape):
+    o = nu.mem.ObjectRef.slot()
+
+
 def _terms() -> list[object]:
     """One term per family: an interaction, a flow, a Form, a Ref with a Form."""
     return [
@@ -28,7 +32,7 @@ def _terms() -> list[object]:
         nu.Int(1),
         nu.List.of(1, 2),
         nu.Str("ab"),
-        nu.context.Attr("x"),
+        _Mem.o,
     ]
 
 
@@ -195,7 +199,7 @@ def test_eq_on_a_bare_term_raises(term: object) -> None:
 
 @pytest.mark.parametrize(
     "term",
-    [nu.Int(1), nu.Object(1), nu.List.of(1), nu.context.Attr("n"), nu.None_()],
+    [nu.Int(1), nu.Object(1), nu.List.of(1), _Mem.o, nu.None_()],
     ids=lambda t: type(t).__name__,
 )
 def test_eq_on_a_form_builds_a_comparison(term: object) -> None:

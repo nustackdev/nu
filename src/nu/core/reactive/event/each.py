@@ -84,10 +84,8 @@ class ReactEach(_DynamicBinding, Control):
 
             async def run(key: object) -> None:
                 # Every run pushes a frame of its own: runs side by side never
-                # see each other's key. The attrs table is forked too, for
-                # attrs readers in the body (temporary, until attrs go).
-                run_rt = rt._fork_attrs()
-                await drain_body(run_rt.on(binding.push(run_rt.ctx, (key,))), body)
+                # see each other's key.
+                await drain_body(rt.on(binding.push(rt.ctx, (key,))), body)
 
             queues = KeyedQueues(run, owner="ReactEach")
             sub = await children[0](rt)

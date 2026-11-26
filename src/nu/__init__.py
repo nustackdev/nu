@@ -15,7 +15,7 @@ Or reach a subpackage by dot-access:
     nu.surfaces.IntSurface
     nu.core.flows.Sequential     nu.core.spans.Retry
     nu.shape.Shape      nu.tree.map_nodes
-    nu.mem.IntRef       nu.context.Attr
+    nu.mem.IntRef       nu.context.FabricRef
 
 The mem fabric (``nu.mem``) is core: local state over plain dicts, its refs
 and interactions flat at the root too. The other fabrics and the standard
@@ -47,8 +47,6 @@ from . import mem
 
 # Flat re-exports: the program-authoring surface.
 from .context import (
-    Attr,
-    AttrExists,
     Fabric,
     FabricExists,
     FabricRef,

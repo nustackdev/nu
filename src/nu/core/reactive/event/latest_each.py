@@ -95,11 +95,9 @@ class ReactLatestEach(_DynamicBinding, Control):
 
             def spawn(key: object) -> asyncio.Task:
                 # Every run is a task of its own on a frame of its own holding
-                # its key. The attrs table is forked too (temporary, until
-                # attrs go).
-                run_rt = rt._fork_attrs()
-                run_ctx = binding.push(run_rt.ctx, (key,))
-                return asyncio.ensure_future(drain_body(run_rt.on(run_ctx), body))
+                # its key.
+                run_ctx = binding.push(rt.ctx, (key,))
+                return asyncio.ensure_future(drain_body(rt.on(run_ctx), body))
 
             book = ArmBook(spawn, owner="ReactLatestEach")
             sub = await children[0](rt)

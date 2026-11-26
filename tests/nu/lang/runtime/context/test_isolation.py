@@ -3,10 +3,10 @@
 Each concurrent task starts from the current frame: Parallel / Race / AnyN
 arms (on the loop, on a thread, or in the sequential fallback), ForEachPar
 arms, ReactLatest runs, and worker requests. A frame an arm pushes is its own,
-and (until attrs go) each arm takes its own attrs table. The rules:
+and nothing is copied per arm: frames are immutable. The rules:
 
 - an arm sees what the parent had bound before the arm started;
-- siblings never see each other's ``let`` / ``set`` / pushed frames;
+- siblings never see each other's pushed frames;
 - the parent never sees an arm's, whether the arm finishes, raises, or is
   cancelled.
 
@@ -26,7 +26,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 import nu
-from nu.context import Attr, FabricRef, Provide
+from nu.context import FabricRef, Provide
 from nu.core.flows import AnyN, ForEachParAsync, Parallel, ParallelThreaded, Race
 from nu.core.reactive import ReactLatest
 from nu.engine.structure import Declared
@@ -91,13 +91,9 @@ def _Fn(fn: Callable) -> ScalarAction:  # noqa: N802 (reads as the atom it build
 
 
 def _view(rt: Runtime) -> dict:
-    """What an arm can see: its names, and which fabrics resolve."""
+    """What an arm can see: which fabrics resolve."""
     ctx = rt.ctx
-    return {
-        "attrs": dict(ctx.attrs.items()),
-        "handle": ctx.has(Handle),
-        "parent": ctx.has(Parent),
-    }
+    return {"handle": ctx.has(Handle), "parent": ctx.has(Parent)}
 
 
 def _push_handle(rt: Runtime) -> Context:
@@ -108,12 +104,11 @@ def _push_handle(rt: Runtime) -> Context:
 
 
 def _start_ctx() -> Context:
-    """The parent: one name declared and one fabric provided before any arm."""
-    return Context(attrs={"x": 0, "p": "parent"}).bind(Parent, Parent())
+    """The parent: one fabric provided before any arm."""
+    return Context().bind(Parent, Parent())
 
 
 def _assert_parent_untouched(ctx: Context) -> None:
-    assert dict(ctx.attrs.items()) == {"x": 0, "p": "parent"}
     assert ctx.has(Handle) is False
 
 
@@ -121,8 +116,6 @@ def _assert_parent_untouched(ctx: Context) -> None:
 # Each arm runs the same binding (one lambda, one Shape); one arm leaving its
 # frame must never take the value away from its sibling or hand it to the
 # parent.
-
-x = nu.context.Attr("x")
 
 
 def _binding(value: object, body: Callable) -> nu.Nu:
@@ -185,12 +178,10 @@ def _async_pair(seen: dict) -> tuple[ScalarAction, ScalarAction]:
 
     async def a(rt: Runtime) -> str:
         seen["a_start"] = _view(rt)
-        with rt.ctx.attrs.let("mine", "a"):
-            _push_handle(rt)
-            rt.ctx.attrs.set("x", "a")
-            a_bound.set()
-            await b_looked.wait()
-            seen["a_inside"] = _view(rt)
+        _push_handle(rt)
+        a_bound.set()
+        await b_looked.wait()
+        seen["a_inside"] = _view(rt)
         return "a"
 
     async def b(rt: Runtime) -> str:
@@ -209,9 +200,9 @@ async def test_arms_are_isolated_on_the_loop(flow: type, max_parallel: int) -> N
     _, ctx = await arun(flow(*_async_pair(seen)), _start_ctx(), max_parallel=max_parallel)
 
     # the arm saw the parent's bindings from before it started
-    assert seen["a_start"] == {"attrs": {"x": 0, "p": "parent"}, "handle": False, "parent": True}
+    assert seen["a_start"] == {"handle": False, "parent": True}
     # the sibling never saw a's let / set / bind
-    assert seen["b"] == {"attrs": {"x": 0, "p": "parent"}, "handle": False, "parent": True}
+    assert seen["b"] == {"handle": False, "parent": True}
     _assert_parent_untouched(ctx)
 
 
@@ -232,9 +223,8 @@ async def test_parallel_arms_are_isolated_under_a_parent_scope() -> None:
         ),
     )
     _, ctx = await arun(tree, _start_ctx())
-    assert seen["b"]["attrs"] == {"x": 0, "p": "parent"}
     assert seen["b"]["handle"] is True  # the parent's Handle, not a's
-    assert seen["after"]["attrs"] == {"x": 0, "p": "parent"}
+    assert seen["after"]["handle"] is True
     assert seen["after_q"] == "scoped"  # the loop's frame reaches the fan-out and back
     _assert_parent_untouched(ctx)
 
@@ -248,12 +238,10 @@ def _sync_pair(seen: dict, *, overlap: bool) -> tuple[ScalarAction, ScalarAction
 
     def a(rt: Runtime) -> str:
         seen["a_start"] = _view(rt)
-        with rt.ctx.attrs.let("mine", "a"):
-            _push_handle(rt)
-            rt.ctx.attrs.set("x", "a")
-            if overlap:
-                a_bound.set()
-                assert b_looked.wait(2)
+        _push_handle(rt)
+        if overlap:
+            a_bound.set()
+            assert b_looked.wait(2)
         return "a"
 
     def b(rt: Runtime) -> str:
@@ -269,7 +257,7 @@ def _sync_pair(seen: dict, *, overlap: bool) -> tuple[ScalarAction, ScalarAction
 def test_sync_parallel_sequential_arms_are_isolated() -> None:
     seen: dict = {}
     _, ctx = run(Parallel(*_sync_pair(seen, overlap=False)), _start_ctx())
-    assert seen["b"] == {"attrs": {"x": 0, "p": "parent"}, "handle": False, "parent": True}
+    assert seen["b"] == {"handle": False, "parent": True}
     _assert_parent_untouched(ctx)
 
 
@@ -277,7 +265,7 @@ def test_sync_parallel_threaded_arms_are_isolated() -> None:
     seen: dict = {}
     _, ctx = run(Parallel(*_sync_pair(seen, overlap=True)), _start_ctx(), max_parallel=2)
     assert seen["a_start"]["parent"] is True
-    assert seen["b"] == {"attrs": {"x": 0, "p": "parent"}, "handle": False, "parent": True}
+    assert seen["b"] == {"handle": False, "parent": True}
     _assert_parent_untouched(ctx)
 
 
@@ -295,13 +283,12 @@ async def test_thread_arm_keeps_its_task_context() -> None:
         seen["view"] = _view(rt)
         seen["trace"] = _TRACE.get(None)
         _push_handle(rt)
-        rt.ctx.attrs.set("x", "thread")
 
     _, ctx = await arun(
         ParallelThreaded(_Fn(arm), _Fn(lambda rt: None)), _start_ctx(), max_parallel=2
     )
     assert seen["thread"].startswith("nu-worker")
-    assert seen["view"] == {"attrs": {"x": 0, "p": "parent"}, "handle": False, "parent": True}
+    assert seen["view"] == {"handle": False, "parent": True}
     assert seen["trace"] == "from-the-loop"  # Python contextvars ride along too
     _assert_parent_untouched(ctx)
 
@@ -315,12 +302,10 @@ async def test_a_failing_arm_leaves_parent_and_sibling_alone(max_parallel: int) 
     a_bound = asyncio.Event()
 
     async def a(rt: Runtime) -> None:
-        with rt.ctx.attrs.let("mine", "a"):
-            _push_handle(rt)
-            rt.ctx.attrs.set("x", "a")
-            a_bound.set()
-            await asyncio.sleep(0)
-            raise ValueError("boom")
+        _push_handle(rt)
+        a_bound.set()
+        await asyncio.sleep(0)
+        raise ValueError("boom")
 
     async def b(rt: Runtime) -> None:
         await a_bound.wait()
@@ -329,7 +314,6 @@ async def test_a_failing_arm_leaves_parent_and_sibling_alone(max_parallel: int) 
     ctx = _start_ctx()
     with pytest.raises(ValueError, match="boom"):
         await arun(Parallel(_Fn(a), _Fn(b)), ctx, max_parallel=max_parallel)
-    assert seen["b"]["attrs"] == {"x": 0, "p": "parent"}
     assert seen["b"]["handle"] is False
     _assert_parent_untouched(ctx)
 
@@ -341,22 +325,18 @@ async def test_a_cancelled_arm_unwinds_its_own_scopes(flow: type) -> None:
 
     async def held(rt: Runtime) -> None:
         arm_ctx.append(rt.ctx)
-        with rt.ctx.attrs.let("mine", "held"):
-            _push_handle(rt)
-            rt.ctx.attrs.set("x", "held")
-            bound.set()
-            await asyncio.Event().wait()
+        _push_handle(rt)
+        bound.set()
+        await asyncio.Event().wait()
 
     async def winner(rt: Runtime) -> str:
         await bound.wait()
         return "won"
 
     _, ctx = await arun(flow(_Fn(held), _Fn(winner)), _start_ctx())
-    (branch,) = arm_ctx
-    assert branch is not ctx
-    assert branch.attrs.exists("mine") is False  # let unwound on cancel
-    assert branch.has(Handle) is False  # the pushed frame never reached the arm's own
-    assert branch.attrs.get("x") == "held"  # the set stayed on the branch
+    (arm,) = arm_ctx
+    assert arm is ctx  # the arm ran on the parent's frames, nothing copied
+    assert arm.has(Handle) is False  # the frame it pushed never reached them
     _assert_parent_untouched(ctx)
 
 
@@ -370,11 +350,9 @@ async def test_foreach_par_arms_are_isolated() -> None:
     async def body(rt: Runtime) -> None:
         item = _handed(rt, term)["item"]
         if item == 1:
-            with rt.ctx.attrs.let("mine", 1):
-                _push_handle(rt)
-                rt.ctx.attrs.set("x", 1)
-                one_bound.set()
-                await two_looked.wait()
+            _push_handle(rt)
+            one_bound.set()
+            await two_looked.wait()
         else:
             await one_bound.wait()
             seen[item] = _view(rt)
@@ -382,7 +360,7 @@ async def test_foreach_par_arms_are_isolated() -> None:
 
     term = ForEachParAsync(nu.Iter(nu.Literal([1, 2])), lambda item: _Fn(body))
     _, ctx = await arun(term, _start_ctx())
-    assert seen[2] == {"attrs": {"x": 0, "p": "parent"}, "handle": False, "parent": True}
+    assert seen[2] == {"handle": False, "parent": True}
     _assert_parent_untouched(ctx)
 
 
@@ -423,13 +401,11 @@ async def test_react_latest_runs_are_isolated() -> None:
     async def body(rt: Runtime) -> None:
         key = _handed(rt, term)["k"]
         seen[key] = _view(rt)
-        with rt.ctx.attrs.let("mine", key):
-            _push_handle(rt)
-            rt.ctx.attrs.set("x", key)
-            await asyncio.Event().wait()
+        _push_handle(rt)
+        await asyncio.Event().wait()
 
-    ctx = Context(attrs={"x": 0, "p": "parent", "feed": feed}).bind(Parent, Parent())
-    term = ReactLatest(Attr("feed"), lambda k: _Fn(body))
+    ctx = Context().bind(Parent, Parent())
+    term = ReactLatest(nu.Literal(feed), lambda k: _Fn(body))
     task = asyncio.ensure_future(arun(term, ctx))
     await _until(lambda: feed.receivers)
     for key in ("a", "b"):
@@ -440,12 +416,7 @@ async def test_react_latest_runs_are_isolated() -> None:
         await task
 
     # run b started after run a had set x and bound a Handle, and saw neither
-    assert seen["b"] == {
-        "attrs": {"x": 0, "p": "parent", "feed": feed},
-        "handle": False,
-        "parent": True,
-    }
-    assert dict(ctx.attrs.items()) == {"x": 0, "p": "parent", "feed": feed}
+    assert seen["b"] == {"handle": False, "parent": True}
     assert ctx.has(Handle) is False
 
 

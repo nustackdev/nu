@@ -3,14 +3,14 @@
 Covers ``Context`` -- a stack of immutable fabric frames. ``bind`` / ``lazy``
 push a frame and return a new Context, resolution by type then scope tags with
 subset fallback, per-key shadowing across frames, predicate-guarded reads,
-lazy entries built once, and the temporary attrs table.
+and lazy entries built once.
 """
 
 from __future__ import annotations
 
 import pytest
 
-from nu.lang.runtime import Attributes, Context
+from nu.lang.runtime import Context
 
 
 # --- service tags (test-only) ---------------------------------------------
@@ -36,22 +36,12 @@ class Shard:
     """Marker scope tag."""
 
 
-# --- attrs property -------------------------------------------------------
+# --- fresh -----------------------------------------------------------------
 
 
-def test_fresh_context_exposes_empty_stores() -> None:
-    ctx = Context()
-    assert isinstance(ctx.attrs, Attributes)
-    assert dict(ctx.attrs.items()) == {}
-    assert ctx.has(Storage) is False
-
-
-def test_context_seeds_its_starting_names() -> None:
-    seed = {"x": 1}
-    ctx = Context(attrs=seed)
-    assert ctx.attrs.get("x") == 1
-    ctx.attrs.set("x", 2)
-    assert seed == {"x": 1}  # the seed is copied in, not adopted
+def test_a_fresh_context_holds_no_frames() -> None:
+    assert Context().has(Storage) is False
+    assert repr(Context()) == "Context([])"
 
 
 # --- bind: eager basic ----------------------------------------------------
@@ -263,15 +253,6 @@ def test_bind_chain_does_not_mutate_earlier_contexts() -> None:
     assert ctx2.has(View) is True
 
 
-def test_bind_shares_the_attrs_table_of_its_task() -> None:
-    # attrs are one task's table until they go (task-184 phase 4): a frame
-    # pushed inside the task sees and sets the same names.
-    ctx0 = Context(attrs={"k": 1})
-    ctx1 = ctx0.bind(Storage, "v")
-    ctx1.attrs.set("k", 2)
-    assert ctx0.attrs.get("k") == 2
-
-
 # --- frames -----------------------------------------------------------------
 
 
@@ -359,14 +340,6 @@ def test_was_opened_reads_the_nearest_binding_of_the_key() -> None:
     inner = ctx.bind(Storage, "eager")
     assert ctx.was_opened(Storage) is True
     assert inner.was_opened(Storage) is False
-
-
-def test_attrs_fork_shares_the_frames_and_copies_the_table() -> None:
-    ctx = Context(attrs={"item": 1}).bind(Storage, "v")
-    arm = ctx._fork_attrs()
-    arm.attrs.set("item", 2)
-    assert ctx.attrs.get("item") == 1
-    assert arm.get(Storage) == "v"
 
 
 # --- repr -----------------------------------------------------------------
