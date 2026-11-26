@@ -21,9 +21,7 @@ through when they already yield a stream (another itertools result, an
 their predicate or function the way Python does, as a lambda
 (``takewhile(lambda x: x < 3, xs)``). It runs once, at construction, with refs
 to what it is handed, so it builds the step and never computes with them in
-Python. A plain Nu term works too, reading the current item via
-``Attr("item")`` (and the running value via ``Attr("acc")`` for
-``accumulate``).
+Python. A plain Nu term works too and reads nothing it is handed.
 """
 
 from __future__ import annotations
@@ -38,11 +36,9 @@ from nu.lang import Cardinality, cardinality_of
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
-    from nu.context import Attr
     from nu.lang import Arg, IntArg, Nu
 
-    Step = Nu | Callable[[Attr], Nu]
-    Step2 = Nu | Callable[[Attr, Attr], Nu]
+    Step = Nu | Callable[..., Nu]
 
 
 __all__ = [
@@ -205,8 +201,7 @@ def combinations_with_replacement(iterable: Arg[Iterable], r: IntArg) -> Iterato
 def takewhile(predicate: Step, iterable: Arg[Iterable]) -> Iterator:
     """Yield while ``predicate`` holds, stop at the first falsy: ``itertools.takewhile()``.
 
-    ``predicate`` is a lambda over the item, or a tree reading it via
-    ``Attr("item")``.
+    ``predicate`` is a lambda over the item, or a tree that reads none.
 
     Example:
         >>> nu.run(nu.Collect(nustd.itertools.takewhile(lambda x: x < 3, [1, 2, 5, 1])))[0]
@@ -220,8 +215,7 @@ def takewhile(predicate: Step, iterable: Arg[Iterable]) -> Iterator:
 def dropwhile(predicate: Step, iterable: Arg[Iterable]) -> Iterator:
     """Skip while ``predicate`` holds, then yield the rest: ``itertools.dropwhile()``.
 
-    ``predicate`` is a lambda over the item, or a tree reading it via
-    ``Attr("item")``.
+    ``predicate`` is a lambda over the item, or a tree that reads none.
 
     Example:
         >>> nu.run(nu.Collect(nustd.itertools.dropwhile(lambda x: x < 3, [1, 2, 5, 1])))[0]
@@ -235,8 +229,7 @@ def dropwhile(predicate: Step, iterable: Arg[Iterable]) -> Iterator:
 def filterfalse(predicate: Step, iterable: Arg[Iterable]) -> Iterator:
     """Keep items where ``predicate`` is falsy: mirrors ``itertools.filterfalse()``.
 
-    ``predicate`` is a lambda over the item, or a tree reading it via
-    ``Attr("item")``.
+    ``predicate`` is a lambda over the item, or a tree that reads none.
 
     Example:
         >>> nu.run(nu.Collect(nustd.itertools.filterfalse(lambda x: x > 1, [1, 2, 3])))[0]
@@ -247,13 +240,13 @@ def filterfalse(predicate: Step, iterable: Arg[Iterable]) -> Iterator:
     return Iterator(FilterFalse(_stream(iterable), predicate))
 
 
-def accumulate(iterable: Arg[Iterable], func: Step2 | None = None) -> Iterator:
+def accumulate(iterable: Arg[Iterable], func: Step | None = None) -> Iterator:
     """Running accumulation: mirrors ``itertools.accumulate()``.
 
     Without ``func`` it is a running sum. With ``func``, a lambda over the
-    running value and the item, or a tree reading them via ``Attr("acc")``
-    and ``Attr("item")``, each step yields its result; the first item is
-    yielded as-is.
+    running value and the item (or just the running value), or a tree that
+    reads neither, each step yields its result; the first item is yielded
+    as-is.
 
     Example:
         >>> nu.run(nu.Collect(nustd.itertools.accumulate([1, 2, 3], lambda acc, x: nu.Int(acc) * x)))[0]
@@ -270,8 +263,7 @@ def starmap(function: Step, iterable: Arg[Iterable]) -> Iterator:
     """Apply ``function`` to unpacked items: mirrors ``itertools.starmap()``.
 
     Each item is a tuple. ``function`` is a lambda over the whole tuple,
-    reading its parts by index, or a tree reading them via
-    ``Attr("item")[0]``, ``[1]``, ...
+    reading its parts by index, or a tree that reads none.
 
     Example:
         >>> pairs = [(2, 3), (4, 5)]
@@ -287,8 +279,7 @@ def groupby(iterable: Arg[Iterable], key: Step | None = None) -> Iterator:
     """Group consecutive items by ``key``: mirrors ``itertools.groupby()``.
 
     Yields ``(key_value, tuple(group))`` pairs. ``key`` is a lambda over the
-    item, or a tree reading it via ``Attr("item")``; without it items group
-    by identity.
+    item, or a tree that reads none; without it items group by identity.
 
     Example:
         >>> nu.run(nu.Collect(nustd.itertools.groupby([1, 3, 2], lambda x: nu.Int(x) % 2)))[0]

@@ -12,14 +12,14 @@ Two atom shapes:
   ``repeat`` times, ``batched`` n, ``combinations`` r, ``product`` repeat) are
   ordinary children resolved to values before the call. Combinatoric atoms
   materialize their one source with ``list(sync_iter(source(rt)))``.
-- **higher-order** atoms carry a Nu query child plus a loop-var-name child
-  (default ``"item"``, two names ``"acc"`` / ``"item"`` for ``accumulate``),
-  exactly like ``Filter`` / ``Reduce``: bind each item under ``name`` with
-  ``ctx.attrs.let`` for one evaluation of the Nu child. The child is a lambda
-  over what it is handed, which mints the names, or a tree reading the item
-  via ``Attr("item")``.
+- **higher-order** atoms carry a Nu query child and are dynamic bindings
+  (``nu.lang.binding``), exactly like core's ``Map`` / ``Filter``: the child
+  is a lambda over what it is handed (the item; the running value and the
+  item for ``accumulate``), run once at construction with mem refs. Each run
+  pushes one frame and writes the values into it before each evaluation of
+  the child. A child given as a plain tree reads nothing.
 
-The per-item binding is scoped, not a tracked fabric write, so these atoms are
+The frame is the run's own and never reaches the caller, so these atoms are
 pure - no ``mutates`` declared.
 """
 
@@ -29,17 +29,16 @@ import itertools as _it
 import operator
 from typing import TYPE_CHECKING
 
-from nu.context.attrs.binders import bind
 from nu.lang import ScalarQuery, StreamQuery
 from nu.lang._stream import aiter_any, sync_iter
+from nu.lang.binding import _DynamicBinding
 from nu.lang.sentinels import UNSET
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from nu.context import Attr
-    from nu.lang import Arg, Nu, StrArg
+    from nu.lang import Arg, Nu
     from nu.lang.runtime import Runtime
 
 
@@ -596,36 +595,33 @@ class CombinationsWithReplacement(StreamQuery):
         return athunk
 
 
-# --- higher-order (Nu query child + loop-var) -------------------------------
+# --- higher-order (dynamic bindings over a Nu query child) ------------------
 
 
-class TakeWhile(StreamQuery):
+class TakeWhile(_DynamicBinding, StreamQuery):
     """``itertools.takewhile(predicate, iterable)`` - yield while the predicate holds.
 
-    Children: ``[source, predicate, key]``. Each item is bound under the name
-    ``key`` yields, then ``predicate`` runs; the item is yielded while truthy
-    and iteration stops at the first falsy result. A NULL result is falsy.
-    ``predicate`` is a lambda over the item, or a tree reading it with
-    ``Attr(key)``.
+    Children: ``[source, predicate]``. Each item is written into the run's
+    frame, then ``predicate`` runs; the item is yielded while truthy and
+    iteration stops at the first falsy result. A NULL result is falsy.
+    ``predicate`` is a lambda over the item, or a tree that reads none.
     """
 
-    def __init__(
-        self, source: Arg, predicate: Nu | Callable[[Attr], Nu], key: StrArg | None = None
-    ) -> None:
-        predicate, (key,) = bind("TakeWhile", predicate, key=key)
-        super().__init__(source, predicate, "item" if key is None else key)
+    def __init__(self, source: Arg, predicate: Nu | Callable[..., Nu]) -> None:
+        super().__init__(source, self._dynamic("TakeWhile", predicate, 1))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        source, predicate, key_t = children
+        source, predicate = children
+        binding = self._binding
 
         def thunk(rt: Runtime) -> object:
-            name = key_t(rt)
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
 
             def gen() -> object:
                 for elem in sync_iter(source(rt)):
-                    with rt.ctx.attrs.let(name, elem):
-                        keep = predicate(rt)
-                    if not keep:
+                    binding.write(data, (elem,))
+                    if not predicate(inner):
                         return
                     yield elem
 
@@ -634,16 +630,17 @@ class TakeWhile(StreamQuery):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        source, predicate, key_t = children
+        source, predicate = children
+        binding = self._binding
 
         async def athunk(rt: Runtime) -> object:
-            name = await key_t(rt)
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
 
             async def agen() -> object:
                 async for elem in aiter_any(await source(rt)):
-                    with rt.ctx.attrs.let(name, elem):
-                        keep = await predicate(rt)
-                    if not keep:
+                    binding.write(data, (elem,))
+                    if not await predicate(inner):
                         return
                     yield elem
 
@@ -652,34 +649,32 @@ class TakeWhile(StreamQuery):
         return athunk
 
 
-class DropWhile(StreamQuery):
+class DropWhile(_DynamicBinding, StreamQuery):
     """``itertools.dropwhile(predicate, iterable)`` - skip while the predicate holds.
 
-    Children: ``[source, predicate, key]``. Skips items while ``predicate`` is
+    Children: ``[source, predicate]``. Skips items while ``predicate`` is
     truthy; once it is falsy (NULL included), yields that item and every item
     after it with no further predicate evaluation. ``predicate`` is a lambda
-    over the item, or a tree reading it with ``Attr(key)``.
+    over the item, or a tree that reads none.
     """
 
-    def __init__(
-        self, source: Arg, predicate: Nu | Callable[[Attr], Nu], key: StrArg | None = None
-    ) -> None:
-        predicate, (key,) = bind("DropWhile", predicate, key=key)
-        super().__init__(source, predicate, "item" if key is None else key)
+    def __init__(self, source: Arg, predicate: Nu | Callable[..., Nu]) -> None:
+        super().__init__(source, self._dynamic("DropWhile", predicate, 1))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        source, predicate, key_t = children
+        source, predicate = children
+        binding = self._binding
 
         def thunk(rt: Runtime) -> object:
-            name = key_t(rt)
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
 
             def gen() -> object:
                 dropping = True
                 for elem in sync_iter(source(rt)):
                     if dropping:
-                        with rt.ctx.attrs.let(name, elem):
-                            keep = predicate(rt)
-                        if keep:
+                        binding.write(data, (elem,))
+                        if predicate(inner):
                             continue
                         dropping = False
                     yield elem
@@ -689,18 +684,19 @@ class DropWhile(StreamQuery):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        source, predicate, key_t = children
+        source, predicate = children
+        binding = self._binding
 
         async def athunk(rt: Runtime) -> object:
-            name = await key_t(rt)
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
 
             async def agen() -> object:
                 dropping = True
                 async for elem in aiter_any(await source(rt)):
                     if dropping:
-                        with rt.ctx.attrs.let(name, elem):
-                            keep = await predicate(rt)
-                        if keep:
+                        binding.write(data, (elem,))
+                        if await predicate(inner):
                             continue
                         dropping = False
                     yield elem
@@ -710,31 +706,29 @@ class DropWhile(StreamQuery):
         return athunk
 
 
-class FilterFalse(StreamQuery):
+class FilterFalse(_DynamicBinding, StreamQuery):
     """``itertools.filterfalse(predicate, iterable)`` - keep items where the predicate is falsy.
 
-    Children: ``[source, predicate, key]``. The complement of ``filter``: a
-    NULL predicate is falsy, so the item passes. ``predicate`` is a
-    lambda over the item, or a tree reading it with ``Attr(key)``.
+    Children: ``[source, predicate]``. The complement of ``filter``: a NULL
+    predicate is falsy, so the item passes. ``predicate`` is a lambda over
+    the item, or a tree that reads none.
     """
 
-    def __init__(
-        self, source: Arg, predicate: Nu | Callable[[Attr], Nu], key: StrArg | None = None
-    ) -> None:
-        predicate, (key,) = bind("FilterFalse", predicate, key=key)
-        super().__init__(source, predicate, "item" if key is None else key)
+    def __init__(self, source: Arg, predicate: Nu | Callable[..., Nu]) -> None:
+        super().__init__(source, self._dynamic("FilterFalse", predicate, 1))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        source, predicate, key_t = children
+        source, predicate = children
+        binding = self._binding
 
         def thunk(rt: Runtime) -> object:
-            name = key_t(rt)
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
 
             def gen() -> object:
                 for elem in sync_iter(source(rt)):
-                    with rt.ctx.attrs.let(name, elem):
-                        keep = predicate(rt)
-                    if not keep:
+                    binding.write(data, (elem,))
+                    if not predicate(inner):
                         yield elem
 
             return gen()
@@ -742,16 +736,17 @@ class FilterFalse(StreamQuery):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        source, predicate, key_t = children
+        source, predicate = children
+        binding = self._binding
 
         async def athunk(rt: Runtime) -> object:
-            name = await key_t(rt)
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
 
             async def agen() -> object:
                 async for elem in aiter_any(await source(rt)):
-                    with rt.ctx.attrs.let(name, elem):
-                        keep = await predicate(rt)
-                    if not keep:
+                    binding.write(data, (elem,))
+                    if not await predicate(inner):
                         yield elem
 
             return agen()
@@ -759,42 +754,32 @@ class FilterFalse(StreamQuery):
         return athunk
 
 
-class Accumulate(StreamQuery):
+class Accumulate(_DynamicBinding, StreamQuery):
     """``itertools.accumulate(iterable, func=None)`` - running accumulation.
 
-    Children: ``[source]`` (plain running sum) or ``[source, func, acc_key,
-    item_key]``. The first item is yielded as-is; each later item binds the
-    running value under ``acc_key`` and the item under ``item_key``, evaluates
-    ``func``, and yields the new running value. Without ``func`` it sums via
-    ``operator.add``. ``func`` is a lambda over the running value and the item,
-    or a tree reading them via ``Attr(acc_key)`` / ``Attr(item_key)``.
+    Children: ``[source]`` (plain running sum) or ``[source, func]``. The
+    first item is yielded as-is; for each later item the running value and
+    the item are written into the run's frame, ``func`` runs, and its result
+    is yielded as the new running value. Without ``func`` it sums via
+    ``operator.add``. ``func`` is a lambda over the running value and the
+    item (it may take only the running value), or a tree that reads none.
     """
 
-    def __init__(
-        self,
-        source: Arg,
-        func: Nu | Callable[[Attr, Attr], Nu] | None = None,
-        acc_key: StrArg | None = None,
-        item_key: StrArg | None = None,
-    ) -> None:
-        func, (acc_key, item_key) = bind("Accumulate", func, acc_key=acc_key, item_key=item_key)
+    def __init__(self, source: Arg, func: Nu | Callable[..., Nu] | None = None) -> None:
         if func is None:
+            self._bind_static(None, ())
             super().__init__(source)
         else:
-            acc_key = "acc" if acc_key is None else acc_key
-            item_key = "item" if item_key is None else item_key
-            super().__init__(source, func, acc_key, item_key)
+            super().__init__(source, self._dynamic("Accumulate", func, 2))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        has_func = len(children) > 1  # [source, func?, acc_key?, item_key?]
         source = children[0]
-        func = children[1] if has_func else None
-        acc_t = children[2] if has_func else None
-        item_t = children[3] if has_func else None
+        func = children[1] if len(children) > 1 else None  # [source, func?]
+        binding = self._binding
 
         def thunk(rt: Runtime) -> object:
-            acc_name = acc_t(rt) if acc_t is not None else None
-            item_name = item_t(rt) if item_t is not None else None
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
 
             def gen() -> object:
                 started = False
@@ -808,8 +793,8 @@ class Accumulate(StreamQuery):
                     if func is None:
                         acc = operator.add(acc, elem)
                     else:
-                        with rt.ctx.attrs.let(acc_name, acc), rt.ctx.attrs.let(item_name, elem):
-                            acc = func(rt)
+                        binding.write(data, (acc, elem))
+                        acc = func(inner)
                     yield acc
 
             return gen()
@@ -817,15 +802,13 @@ class Accumulate(StreamQuery):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        has_func = len(children) > 1  # [source, func?, acc_key?, item_key?]
         source = children[0]
-        func = children[1] if has_func else None
-        acc_t = children[2] if has_func else None
-        item_t = children[3] if has_func else None
+        func = children[1] if len(children) > 1 else None  # [source, func?]
+        binding = self._binding
 
         async def athunk(rt: Runtime) -> object:
-            acc_name = await acc_t(rt) if acc_t is not None else None
-            item_name = await item_t(rt) if item_t is not None else None
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
 
             async def agen() -> object:
                 started = False
@@ -839,8 +822,8 @@ class Accumulate(StreamQuery):
                     if func is None:
                         acc = operator.add(acc, elem)
                     else:
-                        with rt.ctx.attrs.let(acc_name, acc), rt.ctx.attrs.let(item_name, elem):
-                            acc = await func(rt)
+                        binding.write(data, (acc, elem))
+                        acc = await func(inner)
                     yield acc
 
             return agen()
@@ -848,88 +831,83 @@ class Accumulate(StreamQuery):
         return athunk
 
 
-class StarMap(StreamQuery):
+class StarMap(_DynamicBinding, StreamQuery):
     """``itertools.starmap(function, iterable)`` - apply ``function`` to unpacked items.
 
-    Children: ``[source, function, key]``. Each item is a tuple bound under
-    ``key``. ``function`` is a lambda over the tuple, or a tree reading its
-    parts via ``Attr(key)[0]``, ``[1]``, ... The result is yielded.
+    Children: ``[source, function]``. Each item is a tuple written whole into
+    the run's frame. ``function`` is a lambda over the tuple, reading its
+    parts by index (``p[0]``, ``p[1]``, ...), or a tree that reads none. The
+    result is yielded.
     """
 
-    def __init__(
-        self, source: Arg, function: Nu | Callable[[Attr], Nu], key: StrArg | None = None
-    ) -> None:
-        function, (key,) = bind("StarMap", function, key=key)
-        super().__init__(source, function, "item" if key is None else key)
+    def __init__(self, source: Arg, function: Nu | Callable[..., Nu]) -> None:
+        super().__init__(source, self._dynamic("StarMap", function, 1))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        source, function, key_t = children
+        source, function = children
+        binding = self._binding
 
         def thunk(rt: Runtime) -> object:
-            name = key_t(rt)
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
 
             def gen() -> object:
                 for elem in sync_iter(source(rt)):
-                    with rt.ctx.attrs.let(name, elem):
-                        result = function(rt)
-                    yield result
+                    binding.write(data, (elem,))
+                    yield function(inner)
 
             return gen()
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        source, function, key_t = children
+        source, function = children
+        binding = self._binding
 
         async def athunk(rt: Runtime) -> object:
-            name = await key_t(rt)
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
 
             async def agen() -> object:
                 async for elem in aiter_any(await source(rt)):
-                    with rt.ctx.attrs.let(name, elem):
-                        result = await function(rt)
-                    yield result
+                    binding.write(data, (elem,))
+                    yield await function(inner)
 
             return agen()
 
         return athunk
 
 
-class GroupBy(StreamQuery):
+class GroupBy(_DynamicBinding, StreamQuery):
     """``itertools.groupby(iterable, key=None)`` - group consecutive items by key.
 
-    Children: ``[source]`` (group by identity) or ``[source, key, name]``. The
-    key function is a lambda over the item, or a tree reading it via
-    ``Attr(name)``. Yields ``(key_value, tuple(group))`` for each run of
-    consecutive items sharing a key.
+    Children: ``[source]`` (group by identity) or ``[source, key]``. The key
+    function is a lambda over the item, or a tree that reads none. Yields
+    ``(key_value, tuple(group))`` for each run of consecutive items sharing
+    a key.
     """
 
-    def __init__(
-        self,
-        source: Arg,
-        key: Nu | Callable[[Attr], Nu] | None = None,
-        name: StrArg | None = None,
-    ) -> None:
-        key, (name,) = bind("GroupBy", key, name=name)
+    def __init__(self, source: Arg, key: Nu | Callable[..., Nu] | None = None) -> None:
         if key is None:
+            self._bind_static(None, ())
             super().__init__(source)
         else:
-            super().__init__(source, key, "item" if name is None else name)
+            super().__init__(source, self._dynamic("GroupBy", key, 1))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        has_key = len(children) > 1  # [source, key?, name?]
         source = children[0]
-        key_fn = children[1] if has_key else None
-        name_t = children[2] if has_key else None
+        key_fn = children[1] if len(children) > 1 else None  # [source, key?]
+        binding = self._binding
 
         def thunk(rt: Runtime) -> object:
-            name = name_t(rt) if name_t is not None else None
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
 
             def keyer(item: object) -> object:
                 if key_fn is None:
                     return item
-                with rt.ctx.attrs.let(name, item):
-                    return key_fn(rt)
+                binding.write(data, (item,))
+                return key_fn(inner)
 
             def gen() -> object:
                 for kval, group in _it.groupby(sync_iter(source(rt)), keyer):
@@ -940,21 +918,21 @@ class GroupBy(StreamQuery):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        has_key = len(children) > 1  # [source, key?, name?]
         source = children[0]
-        key_fn = children[1] if has_key else None
-        name_t = children[2] if has_key else None
+        key_fn = children[1] if len(children) > 1 else None  # [source, key?]
+        binding = self._binding
 
         async def athunk(rt: Runtime) -> object:
-            name = await name_t(rt) if name_t is not None else None
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
             items = [x async for x in aiter_any(await source(rt))]
             keyed = []
             for item in items:
                 if key_fn is None:
                     keyed.append((item, item))
                 else:
-                    with rt.ctx.attrs.let(name, item):
-                        keyed.append((await key_fn(rt), item))
+                    binding.write(data, (item,))
+                    keyed.append((await key_fn(inner), item))
 
             async def agen() -> object:
                 for kval, group in _it.groupby(keyed, lambda pair: pair[0]):

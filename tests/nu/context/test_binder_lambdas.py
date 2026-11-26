@@ -1,12 +1,11 @@
 """Binder lambdas: a binding's body written as a function of what it hands over.
 
 Every interaction that hands values to its body takes a lambda in that slot.
-The core bindings generate a Shape from the lambda, call it once with the
-Shape's refs and keep the tree (``nu.lang.binding``); the nustd binders still
-mint attrs names for theirs (until they move over). Covered here: each binder
-in lambda form (sync and async where it has both), nested lambdas keeping
-their values apart, the nustd explicit names still working, arity checks,
-equal trees across builds, and a cloudpickle round trip.
+Core and nustd bindings alike generate a Shape from the lambda, call it once
+with the Shape's refs and keep the tree (``nu.lang.binding``). Covered here:
+each binder in lambda form (sync and async where it has both), nested lambdas
+keeping their values apart, arity checks, equal trees across builds, and a
+cloudpickle round trip.
 """
 
 from __future__ import annotations
@@ -22,7 +21,6 @@ import nu
 import nustd
 from nu.engine.structure import Declared
 from nu.lang import NULL, ScalarAction, wire
-from nustd.functools.interactions import Reduce
 
 
 if TYPE_CHECKING:
@@ -389,32 +387,11 @@ def test_nested_lambdas_on_one_line_get_different_shapes() -> None:
     assert term._binding.shape is not term._children[1]._binding.shape
 
 
-# --- the nustd explicit names stay (until nustd moves to mem frames) ----------
-
-
-def test_explicit_names_still_work() -> None:
-    reduced = Reduce(
-        nu.Iter([1, 2]), nu.Int(nu.Attr("a")) + nu.Attr("b"), acc_key="a", item_key="b"
-    )
-    assert _value(reduced) == 3
-
-
-@pytest.mark.parametrize(
-    "build",
-    [
-        pytest.param(lambda: Reduce(nu.Iter([1]), lambda a, b: a, item_key="b"), id="Reduce"),
-    ],
-)
-def test_a_lambda_and_an_explicit_name_refuse_to_mix(build: Callable) -> None:
-    with pytest.raises(ValueError, match="not both"):
-        build()
-
-
 @pytest.mark.parametrize(
     "build",
     [
         pytest.param(lambda: nu.Map([1], lambda a, b: a), id="too many"),
-        pytest.param(lambda: nustd.functools.reduce(lambda acc: acc, [1]), id="Reduce"),
+        pytest.param(lambda: nustd.functools.reduce(lambda a, b, c: a, [1]), id="Reduce"),
         pytest.param(lambda: nu.Retry(1, on_success=lambda e, a: a), id="Retry on_success"),
         pytest.param(lambda: nu.Retry(1, on_fail=lambda e, a, x: a), id="Retry on_fail"),
     ],
