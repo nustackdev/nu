@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 import httpx
 
-from nu.context.fabric import Fabric
+from nu.context import Fabric
 
 
 if TYPE_CHECKING:

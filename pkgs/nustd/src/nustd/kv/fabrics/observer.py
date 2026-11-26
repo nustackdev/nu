@@ -24,7 +24,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.context.fabric import Fabric
+from nu.context import Fabric
 from nu.core.reactive import ObserverProtocol
 from virtuals._backends.observers.mem import InMemoryObserver as _InMemoryObserver
 

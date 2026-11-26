@@ -37,7 +37,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.routing import Mount, WebSocketRoute
 from starlette.staticfiles import StaticFiles
 
-from nu.context.fabric import Fabric
+from nu.context import Fabric
 
 
 if TYPE_CHECKING:

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from nu.context.fabric import Provide
+from nu.context import Provide
 
 from .fabric import ServiceFabric
 

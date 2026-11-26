@@ -21,7 +21,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.context.fabric import Provide
+from nu.context import Provide
 
 from .resources import ValkeyServer, socket_path_for, url_for
 

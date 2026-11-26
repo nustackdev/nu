@@ -2,6 +2,8 @@
 
 - ``runtime``   - ``Runtime``: the concrete Runtime that drives compiled Programs.
 - ``context``   - ``Context``: one task's environment, a stack of fabric frames.
+- ``frames``    - the frame stack behind a Context (entries, frames, lookup);
+  private, reached only through ``Context``.
 - ``utils``     - ``Budget``, ``into_loop``, ``safely_(a)closing``: per-call
   resources and lifecycle helpers.
 

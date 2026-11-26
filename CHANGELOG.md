@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Flatten the context packages into plain modules named after frames and fabrics
 - Give every loop body execution its own disposable frame instead of overwriting one
 - Docs say sequential loops share one frame, so detached work reads the latest item
 - Context names are gone; values reach bodies only through mem frames and lambdas

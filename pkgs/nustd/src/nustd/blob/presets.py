@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
-from nu.context.fabric import Provide
+from nu.context import Provide
 
 from .backends import FilesBackend, LMDBBackend, S3Backend
 from .backends.lmdb import DEFAULT_MAP_SIZE, DEFAULT_MAX_READERS, DEFAULT_WRITEMAP

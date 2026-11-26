@@ -11,7 +11,7 @@ same shared bus off ctx.
 
 from __future__ import annotations
 
-from nu.context.fabric import Fabric
+from nu.context import Fabric
 from virtuals.tkv.transport import InMemoryTransport as _InMemoryTransport
 
 

@@ -48,7 +48,7 @@ import warnings
 from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING
 
-from nu.context.fabric import Fabric
+from nu.context import Fabric
 
 from .errors import FsEscape, FsLocked, FsLockWarning, FsReadOnly
 

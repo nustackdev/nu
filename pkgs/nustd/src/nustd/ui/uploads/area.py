@@ -31,7 +31,7 @@ import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from nu.context.fabric import Fabric
+from nu.context import Fabric
 
 
 if TYPE_CHECKING:

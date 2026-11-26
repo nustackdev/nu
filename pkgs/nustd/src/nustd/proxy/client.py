@@ -23,7 +23,7 @@ from invisibles.core.consts import HANDLE_GET_ROOT
 from invisibles.netkit import SyncConnector
 from invisibles.netkit.framing import LengthPrefixedFraming
 from invisibles.netkit.transports import TCPTransport, UnixSocketTransport
-from nu.context.fabric import Fabric
+from nu.context import Fabric
 
 
 if TYPE_CHECKING:

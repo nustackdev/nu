@@ -6,7 +6,7 @@ no-ops (nothing to open); the fabric only owns the reference to `target`.
 
 from __future__ import annotations
 
-from nu.context.fabric import Fabric
+from nu.context import Fabric
 
 
 __all__ = ["ServiceFabric"]

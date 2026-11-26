@@ -31,7 +31,7 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
-from nu.context.fabric import Fabric
+from nu.context import Fabric
 
 from .constructors import InProcess, Venv
 from .source import DEFAULT_ENTRY, DEFAULT_FILENAME

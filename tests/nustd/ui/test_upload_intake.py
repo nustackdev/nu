@@ -20,7 +20,7 @@ from starlette.applications import Starlette
 from starlette.testclient import TestClient
 
 import nu
-from nu.context.fabric import FabricRef
+from nu.context import FabricRef
 from nu.lang.runtime import Context
 from nustd.session import SessionId
 from nustd.ui.nudle import serve

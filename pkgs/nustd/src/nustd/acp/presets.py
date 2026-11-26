@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.context.fabric import Provide
+from nu.context import Provide
 from nu.lang import Nu
 
 from . import CLAUDE, CODEX, GEMINI, OPENCODE

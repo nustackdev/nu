@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.context.fabric import Fabric
+from nu.context import Fabric
 from virtuals import Navigator as _Navigator
 from virtuals.views import DictView
 

@@ -10,9 +10,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
+from nu.lang import Ref
 from nu.lang.null import Null
-
-from .._refs import _ContextRef
 
 
 if TYPE_CHECKING:
@@ -25,7 +24,7 @@ if TYPE_CHECKING:
 __all__ = ["FabricRef"]
 
 
-class FabricRef(_ContextRef):
+class FabricRef(Ref):
     """A Ref into a Context binding, keyed by the fabric type it resolves to.
 
     The sole child is the address, and it resolves to a type rather than to a
@@ -60,7 +59,10 @@ class FabricRef(_ContextRef):
           ``nustd.cluster.refs.RayServiceRef``).
         - A binding holding NULL and no binding at all read the same, so use
           ``.exists()`` when the difference matters.
-        - The fabric axis is for the long-lived, typed things - storage
+        - The address is an ordinary Nu expression, so it can be computed
+          rather than fixed at write time. ``FabricExists`` resolves it with
+          the Ref's own node id, the same resolution the read performs.
+        - Fabrics are for the long-lived, typed things - storage
           handles, cluster handles, clients. What an interaction hands its
           body goes through mem: a frame under a Shape, read with its refs.
 
@@ -112,6 +114,21 @@ class FabricRef(_ContextRef):
             return rt.ctx.get(f) if rt.ctx.has(f) else Null(_name(f))
 
         return athunk
+
+    def _address(self, rt: Runtime, nid: int) -> object:
+        """Resolve this Ref's address; ``nid`` is the Ref's own node id."""
+        return rt.eval(rt.program.children[nid][0])
+
+    async def _aaddress(self, rt: Runtime, nid: int) -> object:
+        """Async sibling of :meth:`_address`."""
+        return await rt.aeval(rt.program.children[nid][0])
+
+    def is_set_falsy(self) -> Bool:
+        """True when the binding holds a falsy value; False when nothing is bound. Never raises."""
+        from nu.core import And, Not
+        from nu.forms import Bool
+
+        return Bool(And(self.exists(), Not(self)))
 
     def exists(self) -> Bool:
         """Whether this Ref's fabric type is bound on the Context, as a ``Bool``.

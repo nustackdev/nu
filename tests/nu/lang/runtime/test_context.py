@@ -1,4 +1,4 @@
-"""Unit tests for ``nu.lang.runtime.context.context``.
+"""Unit tests for ``nu.lang.runtime.context``.
 
 Covers ``Context`` -- a stack of immutable fabric frames. ``bind`` / ``lazy``
 push a frame and return a new Context, resolution by type then scope tags with

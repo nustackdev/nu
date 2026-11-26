@@ -15,7 +15,7 @@ import uuid
 import pytest
 
 import nu
-from nu.context.fabric import FabricRef
+from nu.context import FabricRef
 from nu.lang.runtime import Context
 from nustd.session import SessionId
 from nustd.ws_server import WebServer, run_once, session_for, sessions_fold

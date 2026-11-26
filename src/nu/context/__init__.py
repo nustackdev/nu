@@ -1,14 +1,21 @@
-"""The Context fabric: typed fabric bindings on the Context's frames.
+"""The Context's fabric bindings: typed, long-lived state on immutable frames.
 
-A Fabric is an addressable space where Refs live; it resolves Refs and carries
-out the Interactions over them. The Context holds them as typed bindings
-(``ctx.bind`` / ``ctx.get``) for every ctx-bound thing: execution resources,
-storage handles, cluster handles, compute actors, the mem dicts Shapes read.
-Ref: ``FabricRef`` (read-only, self-yields); existence: ``.exists()``, a
-``Bool`` over ``FabricExists``. Provisioning brackets ``Provide`` /
-``ProvideList`` / ``ProvideDict`` push fabrics onto the Context for a body's
-duration. A provided fabric subclasses ``Fabric``, the base class carrying
-setup / cleanup with no-op defaults.
+The Context is a stack of immutable frames holding fabric bindings. A Fabric
+is an addressable space where Refs live; it resolves Refs and carries out the
+Interactions over them. Every ctx-bound thing is a fabric binding
+(``ctx.bind`` / ``ctx.get``): execution resources, storage handles, cluster
+handles, compute actors, the mem dicts Shapes read.
+
+- ``fabric`` - ``Fabric``, the base class of a declared fabric: setup /
+  cleanup (sync and async) with no-op defaults, and the ``async_only`` flag.
+- ``refs`` - ``FabricRef``, a read-only Ref that self-yields the bound fabric
+  (``NULL`` when unbound). Subclass and set ``fabric = SomeFabric`` to name a
+  typed binding.
+- ``queries`` - ``FabricExists``, the explicit existence check behind
+  ``FabricRef.exists()``, since a bound ``NULL`` reads like no binding.
+- ``provide`` - ``Provide`` / ``ProvideList`` / ``ProvideDict`` / ``With``,
+  the Brackets that construct fabrics on entry, bind them on ctx for the
+  body's duration, and tear them down in reverse on exit.
 
 Values a parent hands its body never go here by name: they go through mem
 (``nu.let`` and the bindings in ``nu.lang.binding``). Other concrete fabrics
@@ -19,15 +26,10 @@ Nothing in ``nu.core`` touches a fabric - core is the pure Python builtins.
 
 from __future__ import annotations
 
-from .fabric import (
-    Fabric,
-    FabricExists,
-    FabricRef,
-    Provide,
-    ProvideDict,
-    ProvideList,
-    With,
-)
+from .fabric import Fabric
+from .provide import Provide, ProvideDict, ProvideList, With
+from .queries import FabricExists
+from .refs import FabricRef
 
 
 __all__ = [

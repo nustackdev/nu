@@ -30,7 +30,7 @@ from acp.schema import (
     TextContentBlock,
 )
 
-from nu.context.fabric import Fabric
+from nu.context import Fabric
 
 
 if TYPE_CHECKING:

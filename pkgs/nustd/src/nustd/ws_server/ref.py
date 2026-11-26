@@ -7,7 +7,7 @@ and the write of one connection's ``done`` flag.
 
 from __future__ import annotations
 
-from nu.context.fabric import FabricRef
+from nu.context import FabricRef
 
 from .fabric import WebServer
 from .interactions import LiveSessions, MarkSessionDone, SessionDone, SessionsChanged

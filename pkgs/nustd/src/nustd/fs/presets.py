@@ -16,7 +16,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
-from nu.context.fabric import Provide
+from nu.context import Provide
 from nu.lang import Literal, Nu
 from nu.lang.binding import is_builder, lambda_params
 from nu.mem import let

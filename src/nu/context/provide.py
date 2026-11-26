@@ -60,7 +60,7 @@ from typing import TYPE_CHECKING, cast
 from nu.lang import Bracket
 from nu.lang.nu import Nu
 
-from .base import Fabric
+from .fabric import Fabric
 
 
 if TYPE_CHECKING:

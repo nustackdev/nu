@@ -21,7 +21,7 @@ import threading
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
-from nu.context.fabric import Fabric
+from nu.context import Fabric
 from nu.core.reactive import ObserverProtocol
 
 

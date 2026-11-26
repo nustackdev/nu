@@ -28,7 +28,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeVar, cast
 
-from .fabrics import _Entry, _find, _Frame, _missing, _view
+from .frames import _Entry, _find, _Frame, _missing, _view
 
 
 _T = TypeVar("_T")

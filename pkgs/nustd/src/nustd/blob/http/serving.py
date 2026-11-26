@@ -27,7 +27,7 @@ from starlette.requests import ClientDisconnect
 from starlette.responses import JSONResponse, Response, StreamingResponse
 from starlette.routing import Route
 
-from nu.context.fabric import Fabric, Provide
+from nu.context import Fabric, Provide
 from nustd.blob import STEP, BlobBackend, BlobNotFound, BlobTooLarge
 from nustd.blob._base import check_id
 

@@ -13,7 +13,7 @@ from _support.laws import assert_fails, assert_passes
 # Import concrete Span families so ``Span.__subclasses__()`` sees them for
 # the body-at-slot-0 sweep. Side-effect imports; reference the modules to
 # keep the linter quiet.
-import nu.context.fabric.lifecycle as _ctx_lifecycle  # noqa: F401
+import nu.context.provide as _ctx_provide  # noqa: F401
 import nu.core.spans.bracket as _spans_bracket  # noqa: F401
 import nu.core.spans.policy as _spans_policy  # noqa: F401
 import nustd.kv.interactions.atomicity as _kv_atomicity  # noqa: F401

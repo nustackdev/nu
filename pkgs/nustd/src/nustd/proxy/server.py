@@ -50,7 +50,7 @@ from invisibles.netkit.executors import SimpleExecutor
 from invisibles.netkit.executors.threaded import ThreadedExecutor
 from invisibles.netkit.framing import LengthPrefixedFraming
 from invisibles.netkit.transports import TCPListener, UnixSocketListener
-from nu.context.fabric import Fabric
+from nu.context import Fabric
 
 
 if TYPE_CHECKING:

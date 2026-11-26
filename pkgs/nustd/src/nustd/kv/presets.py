@@ -45,7 +45,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Generator, Sequence
 
-    from nu.context.fabric import With
+    from nu.context import With
     from nu.lang import Nu
     from virtuals.tkv.storage import StorageProtocol
 
@@ -306,7 +306,7 @@ def memory_navigator(
     Example:
         app = nu.With(nustd.kv.memory_navigator(), body=program)
     """
-    from nu.context.fabric import Provide, With
+    from nu.context import Provide, With
     from nustd.kv.fabrics import (
         Codec,
         InMemoryObserver,
@@ -382,7 +382,7 @@ def rocksdb_navigator(
     Example:
         app = nu.With(nustd.kv.rocksdb_navigator(".dbcounter"), body=program)
     """
-    from nu.context.fabric import Provide, With
+    from nu.context import Provide, With
     from nustd.kv.fabrics import (
         Codec,
         InMemoryObserver,
@@ -475,7 +475,7 @@ def rocksdb_navigator_redis(
             body=program,
         )
     """
-    from nu.context.fabric import Provide, With
+    from nu.context import Provide, With
     from nustd.kv.fabrics import (
         Codec,
         Navigator,
@@ -562,7 +562,7 @@ def lmdb_navigator(
     Example:
         app = nu.With(nustd.kv.lmdb_navigator(".dblmdb"), body=program)
     """
-    from nu.context.fabric import Provide, With
+    from nu.context import Provide, With
     from nustd.kv.fabrics import (
         Codec,
         InMemoryObserver,
@@ -646,7 +646,7 @@ def lmdb_navigator_redis(
             body=program,
         )
     """
-    from nu.context.fabric import Provide, With
+    from nu.context import Provide, With
     from nustd.kv.fabrics import (
         Codec,
         LMDBStorage,
@@ -747,7 +747,7 @@ def sqlite_navigator(
     Example:
         app = nu.With(nustd.kv.sqlite_navigator(".db.sqlite"), body=program)
     """
-    from nu.context.fabric import Provide, With
+    from nu.context import Provide, With
     from nustd.kv.fabrics import (
         Codec,
         InMemoryObserver,
@@ -832,7 +832,7 @@ def sqlite_navigator_redis(
             body=program,
         )
     """
-    from nu.context.fabric import Provide, With
+    from nu.context import Provide, With
     from nustd.kv.fabrics import (
         Codec,
         Navigator,
@@ -907,7 +907,7 @@ def inmem_observer(*, tags: Sequence[object] = ()) -> With:
     Example:
         app = nu.With(nustd.kv.inmem_observer(), body=reactor)
     """
-    from nu.context.fabric import Provide, With
+    from nu.context import Provide, With
     from nustd.kv.fabrics import InMemoryObserver, InMemoryTransport
 
     tags = tuple(tags)
@@ -949,7 +949,7 @@ def redis_observer(
             body=reactor,
         )
     """
-    from nu.context.fabric import Provide, With
+    from nu.context import Provide, With
     from nustd.kv.fabrics import RedisObserver
 
     return With(
@@ -1001,7 +1001,7 @@ def served_observer(
             body=program,
         )
     """
-    from nu.context.fabric import Provide, With
+    from nu.context import Provide, With
     from nustd.kv.fabrics import HostedObserver
     from nustd.proxy import InvisiblesServer
 

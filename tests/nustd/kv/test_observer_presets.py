@@ -19,7 +19,7 @@ import pytest
 from _support.brackets import config
 from _support.observer_workers import child_main, unbind_child_main
 
-from nu.context.fabric import With
+from nu.context import With
 from nu.core.reactive import ObserverProtocol
 from nu.lang import Context
 from nustd.kv import proxy_observer, served_observer

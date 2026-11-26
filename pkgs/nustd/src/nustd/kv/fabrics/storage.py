@@ -24,7 +24,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from nu.context.fabric import Fabric
+from nu.context import Fabric
 from virtuals.storages.mem import InMemoryStorage as _InMemoryStorage
 
 from .codec import Codec

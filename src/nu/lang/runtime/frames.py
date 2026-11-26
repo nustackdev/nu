@@ -1,4 +1,4 @@
-"""Fabric frames: the immutable stack behind a Context's typed bindings.
+"""Frames: the immutable stack behind a Context, and the lookup over it.
 
 Execution resources (storage, RPC clients, sessions, mem dicts, ...) are bound
 on a Context keyed by fabric type plus optional scope tags and predicate

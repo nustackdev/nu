@@ -17,7 +17,7 @@ Preset kwargs helpers are provided for the four common combos - binary
 
 from __future__ import annotations
 
-from nu.context.fabric import Fabric
+from nu.context import Fabric
 from virtuals.tkv.codec.codec import Codec as _Codec
 
 

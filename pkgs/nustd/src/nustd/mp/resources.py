@@ -74,7 +74,7 @@ from multiprocessing import resource_tracker as _tracker
 from multiprocessing.connection import wait as _wait_fds
 from typing import TYPE_CHECKING
 
-from nu.context.fabric import Fabric
+from nu.context import Fabric
 from nu.lang import wire
 
 from ._exits import ExitWatch
