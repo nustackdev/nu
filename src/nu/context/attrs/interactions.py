@@ -42,8 +42,8 @@ class AttrExists(ScalarQuery):
         >>> nu.run(nu.Attr("x").exists())[0]
         False
 
-        >>> nu.run(nu.Collect(nu.Map(nu.Iter([1]), nu.Attr("item").exists())))[0]
-        [True]
+        >>> nu.run(nu.Attr("x").exists(), nu.Context({"x": 1}))[0]
+        True
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

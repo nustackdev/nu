@@ -39,26 +39,6 @@ if TYPE_CHECKING:
 __all__ = ["browse"]
 
 
-def _nav_key(lens: LensRef) -> str:
-    """Where this arm parks the cursor the browser sent.
-
-    Derived from the lens's own slot chain rather than taken as an argument.
-    It is pure mechanism -- an attrs side-channel between the subscription and
-    the body one line below it -- so a caller has no reason to name it, and a
-    default they could forget to override is a collision waiting to happen:
-    two arms binding one key in a composition read each other's cursor. Two
-    lenses are two chains, so two keys, and the name says which lens in a
-    trace.
-    """
-    segments: list[str] = []
-    ref: StructuredRef | None = lens
-    while ref is not None:
-        segments.append(str(ref._segment))
-        ref = ref._parent
-    segments.reverse()
-    return f"_lens_nav.{'.'.join(segments)}"
-
-
 #: How long a burst of writes is waited out before the lens repaints once.
 REPAINT_DELAY = 0.25
 
@@ -118,7 +98,6 @@ def browse(
             browse(App.home.one.lens, Machine, prefix=Cluster.machines["red"]),
         )
     """
-    key = _nav_key(lens)
     # The reads are rooted where the prefix is, or at the shape, and the
     # snapshot has to open on the store that root names.
     scope = shape if prefix is None else root_shape(prefix)
@@ -132,8 +111,7 @@ def browse(
     def live(cursor: nu.Nu, pending: nu.Nu) -> nu.Nu:
         moved = nu.ReactEvery(
             lens.on_change(),
-            cursor.set(nu.Attr(key)["value"]) >> paint(nu.list(cursor)),
-            changed_key=key,
+            lambda moved_to: cursor.set(moved_to["value"]) >> paint(nu.list(cursor)),
         )
         written = [
             nu.ReactEvery(

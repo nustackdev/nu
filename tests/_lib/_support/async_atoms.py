@@ -25,8 +25,10 @@ import asyncio
 import threading
 from typing import TYPE_CHECKING
 
+from nu.domains.shape import Shape
 from nu.engine.structure import Declared
 from nu.lang import Context, ScalarAction
+from nu.mem import ObjectRef
 
 
 if TYPE_CHECKING:
@@ -43,16 +45,20 @@ __all__ = [
     "recording",
 ]
 
-_RAN = "ran"
+
+class _Ran(Shape):
+    """Where the atoms here record which thread they ran on."""
+
+    ran = ObjectRef.slot()
 
 
 def recording(ran: dict) -> Context:
     """A Context the atoms here record into: ``ran[name]`` is the thread ``name`` ran on."""
-    return Context(attrs={_RAN: ran})
+    return Context().bind(dict, {"ran": ran}, _Ran)
 
 
 def _record(rt: Runtime, name: str) -> None:
-    rt.ctx.attrs.get(_RAN)[name] = threading.current_thread().name  # type: ignore[index]
+    rt.ctx.get(dict, _Ran)["ran"][name] = threading.current_thread().name
 
 
 class RunsAnywhereAction(ScalarAction):

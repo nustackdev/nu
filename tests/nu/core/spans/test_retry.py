@@ -66,7 +66,13 @@ async def test_async_retries_then_succeeds() -> None:
 
 async def test_async_on_success_hook_fires_with_attempt() -> None:
     log: list = []
-    await arun(Retry(FlakyAction(0), max_attempts=3, on_success=RecordAction(log, "ok")))
+    await arun(
+        Retry(
+            FlakyAction(0),
+            max_attempts=3,
+            on_success=lambda attempt: RecordAction(log, "ok", attempt=attempt),
+        )
+    )
     assert log == [("ok", 1, None)]
 
 
@@ -76,14 +82,14 @@ async def test_async_attempt_fail_and_fail_hooks_fire() -> None:
         Retry(
             FlakyAction(5),
             max_attempts=2,
-            on_attempt_fail=RecordAction(log, "af"),
-            on_fail=RecordAction(log, "fail"),
+            on_attempt_fail=lambda err: RecordAction(log, "af", error=err),
+            on_fail=lambda err, attempt: RecordAction(log, "fail", attempt=attempt, error=err),
         ),
     )
     assert value is None  # on_fail present -> swallow, return None
     tags = [entry[0] for entry in log]
     assert tags == ["af", "fail"]
-    assert log[-1][2] is not None  # error string was set for the fail hook
+    assert log[-1][1:] == (2, "flaky 1")  # the fail hook got the attempt and the error
 
 
 async def test_async_a_noop_on_fail_still_swallows() -> None:
@@ -189,7 +195,7 @@ async def test_async_jitter_applies_after_the_cap(
 async def test_async_max_delay_is_a_child_term(waits: list) -> None:
     cap = Add(Literal(1), Literal(2))
     retry = Retry(FlakyAction(2), max_attempts=3, delay=8.0, max_delay=cap)
-    assert nu.tree.children(retry)[13] is cap  # a child, before the errors filter
+    assert nu.tree.children(retry)[8] is cap  # a child, before the errors filter
     await arun(retry)
     assert waits == [3.0, 3.0]
 
@@ -291,7 +297,7 @@ async def test_async_stream_excluded_error_raises_on_the_first_attempt() -> None
 def test_exclusion_is_computed() -> None:
     excluded = nu.If(Gate.flag, ValueError, KeyError)
     retry = Retry(FlakyAction(1), max_attempts=2, except_errors=excluded)
-    assert nu.tree.children(retry)[15] is excluded  # appended after the errors filter
+    assert nu.tree.children(retry)[10] is excluded  # appended after the errors filter
     with pytest.raises(ValueError, match="flaky 0"):
         run(nu.let(Gate, retry, flag=True))
     value, _ = run(

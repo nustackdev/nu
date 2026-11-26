@@ -10,10 +10,9 @@ import asyncio
 from typing import TYPE_CHECKING
 
 import pytest
-from _support.reactive import Body, Feed, settle_loop, start, stop, until
+from _support.reactive import FEED, Body, Feed, settle_loop, start, stop, until
 
 import nu
-from nu.context import Attr as AttrRef
 from nu.core.reactive.event import ReactLatest, ReactLatestEach
 from nu.domains.shape import Shape
 from nu.domains.shape.item import ItemRef
@@ -36,7 +35,6 @@ def test_react_latest_each_constructs():
     change = ItemRef("sub")
     body = ItemRef("body")
     assert len(nu.tree.children(ReactLatestEach(change, body))) == 2
-    assert len(nu.tree.children(ReactLatestEach(change, body, changed_key=ItemRef("k")))) == 3
 
 
 # ---------------------------------------------------------------------------
@@ -65,7 +63,7 @@ def test_react_latest_each_mirrors_react_latest_metadata():
         latest.root, Attr.REQUIRES_ASYNC
     )
     # ReactLatest's params also take its trailing ``initial`` child.
-    assert each.attr(each.root, Attr.PARAM_SLOTS) | {3} == latest.attr(
+    assert each.attr(each.root, Attr.PARAM_SLOTS) | {2} == latest.attr(
         latest.root, Attr.PARAM_SLOTS
     )
 
@@ -83,14 +81,14 @@ def test_react_latest_each_sync_thunk_raises():
 
 
 def _latest_each(body: Callable) -> ReactLatestEach:
-    return ReactLatestEach(AttrRef("feed"), Body(body), changed_key="k")
+    return ReactLatestEach(FEED, lambda k: Body(body, k))
 
 
 def _parked(log: list) -> Callable:
     """A body that logs its start, parks forever, and logs its end when cancelled."""
 
-    async def body(rt: Runtime) -> None:
-        key = rt.ctx.attrs.get("k")
+    async def body(rt: Runtime, k: object) -> None:
+        key = k
         log.append(("start", key))
         try:
             await asyncio.Event().wait()
@@ -117,8 +115,8 @@ async def test_react_latest_each_restarts_only_that_key():
 async def test_react_latest_each_finished_run_leaves_and_runs_again_on_the_next_change():
     feed, runs = Feed(), []
 
-    async def body(rt: Runtime) -> None:
-        runs.append(rt.ctx.attrs.get("k"))
+    async def body(rt: Runtime, k: object) -> None:
+        runs.append(k)
 
     task = start(_latest_each(body), feed=feed)
     await until(lambda: feed.receivers)
@@ -135,8 +133,8 @@ async def test_react_latest_each_restart_does_not_revive_a_run_that_ended():
     feed, log = Feed(), []
     unwinding, release_a, release_b = asyncio.Event(), asyncio.Event(), asyncio.Event()
 
-    async def body(rt: Runtime) -> None:
-        key = rt.ctx.attrs.get("k")
+    async def body(rt: Runtime, k: object) -> None:
+        key = k
         log.append(("start", key))
         if key == "b":
             await release_b.wait()
@@ -170,8 +168,8 @@ async def test_react_latest_each_collapses_a_burst_on_one_key_and_keeps_the_othe
     feed, log = Feed(), []
     unwinding, gate = asyncio.Event(), asyncio.Event()
 
-    async def body(rt: Runtime) -> None:
-        key = rt.ctx.attrs.get("k")
+    async def body(rt: Runtime, k: object) -> None:
+        key = k
         log.append(("start", key))
         try:
             await asyncio.Event().wait()
@@ -198,31 +196,35 @@ async def test_react_latest_each_collapses_a_burst_on_one_key_and_keeps_the_othe
     await stop(task)
 
 
-async def test_react_latest_each_gives_each_run_a_fresh_attrs_scope():
+async def test_react_latest_each_gives_each_run_a_fresh_frame():
     feed, seen = Feed(), []
 
-    async def body(rt: Runtime) -> None:
-        seen.append((rt.ctx.attrs.get("k"), rt.ctx.attrs.get("scratch")))
-        rt.ctx.attrs.set("scratch", rt.ctx.attrs.get("k"))
-        rt.ctx.attrs.set("k", "clobbered")
+    async def record(rt: Runtime, k: object) -> None:
+        seen.append(k)
+
+    async def park(rt: Runtime) -> None:
         await asyncio.Event().wait()
 
-    task = start(_latest_each(body), feed=feed, scratch=None)
+    def body(k: nu.Nu) -> nu.Nu:
+        return Body(record, k) >> k.set("clobbered") >> Body(park)
+
+    task = start(ReactLatestEach(FEED, body), feed=feed)
     await until(lambda: feed.receivers)
     for n, key in enumerate(("a", "b", "a"), 1):
         feed.fire(key)
         await until(lambda n=n: len(seen) == n)
-    # No run sees what an earlier run bound, its own key included, even
-    # though every run rebinds both names and a's second run follows a's first.
-    assert seen == [("a", None), ("b", None), ("a", None)]
+    # No run sees what an earlier run wrote to its frame, its own key
+    # included, even though every run overwrites it and a's second run
+    # follows a's first.
+    assert seen == ["a", "b", "a"]
     await stop(task)
 
 
 async def test_react_latest_each_body_error_propagates_and_cancels_the_others():
     feed, log = Feed(), []
 
-    async def body(rt: Runtime) -> None:
-        key = rt.ctx.attrs.get("k")
+    async def body(rt: Runtime, k: object) -> None:
+        key = k
         if key == "boom":
             raise ValueError("boom")
         log.append(("start", key))
@@ -247,8 +249,8 @@ async def test_react_latest_each_body_error_propagates_and_cancels_the_others():
 async def test_react_latest_each_error_while_unwinding_propagates_before_the_restart():
     feed, starts = Feed(), []
 
-    async def body(rt: Runtime) -> None:
-        starts.append(rt.ctx.attrs.get("k"))
+    async def body(rt: Runtime, k: object) -> None:
+        starts.append(k)
         try:
             await asyncio.Event().wait()
         finally:
@@ -271,8 +273,8 @@ async def test_react_latest_each_sibling_error_during_an_unwind_starts_no_fresh_
     feed, log = Feed(), []
     unwinding, boom, release = asyncio.Event(), asyncio.Event(), asyncio.Event()
 
-    async def body(rt: Runtime) -> None:
-        key = rt.ctx.attrs.get("k")
+    async def body(rt: Runtime, k: object) -> None:
+        key = k
         log.append(("start", key))
         if key == "boom":
             await boom.wait()

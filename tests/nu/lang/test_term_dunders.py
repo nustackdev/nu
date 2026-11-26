@@ -144,17 +144,17 @@ def test_for_each_do_takes_an_iterator() -> None:
         sum = nu.mem.IntRef.slot()
 
     data = {"sum": 0}
-    body = Tally.sum.set(Tally.sum + nu.context.Attr("item"))
+    body = lambda item: Tally.sum.set(Tally.sum + item)  # noqa: E731
     nu.run(nu.ForEachDo(nu.List.of(1, 2, 3).iter(), body), nu.Context().bind(dict, data, Tally))
     assert data["sum"] == 6
 
 
 def test_iter_map_and_filter_stay_streams() -> None:
     xs = nu.List.of(1, 2, 3).iter()
-    mapped = xs.map(nu.Add(nu.context.Attr("item"), 1))
+    mapped = xs.map(lambda item: nu.Add(item, 1))
     assert isinstance(mapped, nu.Iterator)
     assert nu.run(mapped.to_list())[0] == [2, 3, 4]
-    kept = mapped.filter(nu.Gt(nu.context.Attr("item"), 2))
+    kept = mapped.filter(lambda item: nu.Gt(item, 2))
     assert nu.run(kept.to_list())[0] == [3, 4]
     assert nu.run(nu.Collect(kept))[0] == [3, 4]
 

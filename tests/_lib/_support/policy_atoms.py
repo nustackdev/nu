@@ -78,31 +78,33 @@ class FlakyAction(ScalarAction):
 class RecordAction(ScalarAction):
     """Appends ``(tag, attempt, error)`` to an external log; yields None.
 
-    Observes a hook firing and what it saw bound at ``attempt`` / ``error``.
+    Observes a hook firing and what it was handed: ``attempt`` / ``error`` are
+    children, so a hook lambda passes its parameters in
+    (``lambda err, attempt: RecordAction(log, "af", attempt=attempt, error=err)``).
+    Left out, each records None.
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def __init__(self, log: list, tag: str = "rec") -> None:
-        super().__init__(Sink(log))
+    def __init__(
+        self, log: list, tag: str = "rec", *, attempt: object = None, error: object = None
+    ) -> None:
+        super().__init__(Sink(log), attempt, error)
         self._tag = tag
 
-    def _entry(self, rt: Runtime) -> tuple:
-        return (self._tag, rt.ctx.attrs.get("attempt", None), rt.ctx.attrs.get("error", None))
-
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        (sink,) = children
+        sink, attempt, error = children
 
         def thunk(rt: Runtime) -> object:
-            sink(rt).append(self._entry(rt))
+            sink(rt).append((self._tag, attempt(rt), error(rt)))
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        (sink,) = children
+        sink, attempt, error = children
 
         async def athunk(rt: Runtime) -> object:
-            (await sink(rt)).append(self._entry(rt))
+            (await sink(rt)).append((self._tag, await attempt(rt), await error(rt)))
 
         return athunk
 

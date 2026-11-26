@@ -20,16 +20,15 @@ import asyncio
 from typing import TYPE_CHECKING
 
 import pytest
-from _support.reactive import QUIET, Body, Feed, start, until
+from _support.reactive import FEED, QUIET, Body, Feed, Src, seeded, start, until
 
-from nu.context import Attr
 from nu.core import Iter
 from nu.core.flows import Parallel, ParallelAsync
 from nu.core.flows.control import ForEachParAsync
 from nu.core.flows.parallel._scheduling import _join_all
 from nu.core.reactive import ReactEvery, Reconcile
 from nu.core.reactive.level import ReconcileLatestEach
-from nu.lang import Context, Literal
+from nu.lang import Literal
 from nu.lang.helpers import arun
 
 
@@ -104,9 +103,9 @@ async def test_reactive_branch_unbound_and_closed_when_cancel_returns(
 ) -> None:
     log: list = []
     feed = Feed()
-    each = ReconcileLatestEach(Iter(["a"]), Attr("feed"), _slow_unwind(log, "arm", 0.05), **QUIET)
+    each = ReconcileLatestEach(Iter(["a"]), FEED, _slow_unwind(log, "arm", 0.05), **QUIET)
     task = asyncio.ensure_future(
-        arun(kind(each, Body(_forever)), Context(attrs={"feed": feed}), max_parallel=width)
+        arun(kind(each, Body(_forever)), seeded(feed=feed), max_parallel=width)
     )
     await until(lambda: "arm start" in log)
     await _cancel_once(task)
@@ -136,12 +135,12 @@ async def test_a_failed_react_takes_its_live_reconcile_sibling_down(width: int) 
         drawn.append(len(drawn))
 
     term = ParallelAsync(
-        ReactEvery(Attr("dead"), Body(_forever)),
-        Reconcile(Attr("feed"), Body(draw), **QUIET),
+        ReactEvery(Src.dead, Body(_forever)),
+        Reconcile(FEED, Body(draw), **QUIET),
     )
-    attrs = {"dead": _Unbindable(), "feed": feed}
+    ctx = seeded(dead=_Unbindable(), feed=feed)
     with pytest.raises(AttributeError, match="no subscribe"):
-        await arun(term, Context(attrs=attrs), max_parallel=width)
+        await arun(term, ctx, max_parallel=width)
     assert feed.receivers == []
     before = list(drawn)
     feed.fire()
@@ -183,11 +182,10 @@ async def test_join_all_of_nothing_is_empty() -> None:
 async def test_foreach_par_cancel_lets_every_arm_finish_its_cleanup() -> None:
     log: list = []
 
-    async def arm(rt: Runtime) -> None:
-        name = rt.ctx.attrs.get("item")
+    async def arm(rt: Runtime, name: str) -> None:
         await _slow_unwind(log, name, {"a": 0.0, "b": 0.05, "c": 0.1}[name])._fn(rt)
 
-    task = start(ForEachParAsync(Iter(Literal(["a", "b", "c"])), Body(arm)))
+    task = start(ForEachParAsync(Iter(Literal(["a", "b", "c"])), lambda name: Body(arm, name)))
     await until(lambda: len(log) == 3)
     await _cancel_once(task)
     assert sorted(log[3:]) == ["a unwound", "b unwound", "c unwound"]

@@ -120,13 +120,13 @@ def test_record_taxonomy_comes_off_the_kinds_module() -> None:
 
 def test_args_come_from_a_declared_constructor_when_there_is_one() -> None:
     record = parse_interaction(Filter)
-    assert [arg.name for arg in record.args] == ["source", "predicate", "key"]
+    assert [arg.name for arg in record.args] == ["source", "predicate"]
     assert record.required == 2
-    assert record.arity == 3
+    assert record.arity == 2
 
 
 def test_the_call_form_is_on_the_record_and_nobody_reassembles_it() -> None:
-    assert parse_interaction(Filter).call == "Filter(source, predicate, key=None)"
+    assert parse_interaction(Filter).call == "Filter(source, predicate)"
     assert parse_interaction(Add).call == "Add(*children)"
 
 

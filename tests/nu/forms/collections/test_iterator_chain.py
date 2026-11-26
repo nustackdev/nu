@@ -116,7 +116,7 @@ STREAMS = [
     (lambda s: s.unique(), Unique, (1, 2, 1, 3), [1, 2, 3], []),
     (lambda s: s.reversed(), Reversed, (1, 2, 3), [3, 2, 1], []),
     (lambda s: s.sort_by(lambda x: -nu.Int(x)), SortBy, (2, 3, 1), [3, 2, 1], []),
-    (lambda s: s.sort_by(nu.context.Attr("item"), reverse=True), SortBy, (2, 3, 1), [3, 2, 1], []),
+    (lambda s: s.sort_by(lambda item: item, reverse=True), SortBy, (2, 3, 1), [3, 2, 1], []),
     (lambda s: s.enumerate(), Enumerate, ("a", "b"), [(0, "a"), (1, "b")], []),
     (lambda s: s.enumerate(5), Enumerate, ("a",), [(5, "a")], []),
     (lambda s: s.zip(_stream("x", "y")), Zip, (1, 2, 3), [(1, "x"), (2, "y")], []),

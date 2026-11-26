@@ -212,7 +212,7 @@ def test_a_command_reduction_writes_the_folded_stream_once(mode):
     data: dict = {"entries": []}
     ctx = nu.Context().bind(dict, data, Log)
     out = _run(
-        AppendAll(Log.entries, nu.Map(nu.Iter([1, 2, 3]), nu.Mul(nu.context.Attr("item"), 10))),
+        AppendAll(Log.entries, nu.Map(nu.Iter([1, 2, 3]), lambda item: nu.Mul(item, 10))),
         ctx,
         mode,
     )

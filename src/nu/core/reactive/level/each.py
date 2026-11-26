@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.context.attrs.binders import bind
 from nu.core.flows.parallel._scheduling import aeval_foreach_par
 from nu.engine.structure import Declared
 from nu.lang import Control
 from nu.lang._stream import aiter_any
 from nu.lang.attributes.execution import ExecOrder
+from nu.lang.binding import _DynamicBinding
 
 from .._body import async_only
 from ._wakes import Wakes, read_schedule, schedule_terms
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 __all__ = ["ReconcileEach"]
 
 
-class ReconcileEach(Control):
+class ReconcileEach(_DynamicBinding, Control):
     """``ReconcileEach(items, change, lambda x: body)`` - each wake, one pass of ``body`` per element, all at once.
 
     ``Reconcile`` over a fan-out: each pass reads ``items`` and runs the body
@@ -38,11 +38,9 @@ class ReconcileEach(Control):
             Bound once, before the first pass, and held for as long as this
             runs.
         body: the pass for one element, run concurrently with the others. A
-            lambda over the element, or a tree reading it with ``Attr(item)``.
-            It gets no changed key: it reads the state it keeps in step for
-            its element and makes it right.
-        item: the name to bind that pass's element under, for a tree body.
-            Optional, defaults to ``"item"``; a lambda mints its own.
+            lambda over the element, or a tree that reads none. It gets no
+            changed key: it reads the state it keeps in step for its element
+            and makes it right.
         after: re-check offsets in seconds after binding, for the window a
             fresh subscription may not yet be heard in. A term yielding an
             iterable of floats, or a literal one. Empty by default: re-checks
@@ -54,7 +52,8 @@ class ReconcileEach(Control):
 
     Notes:
         - A pass is ``ForEachParAsync`` over the current ``items``: one arm
-          per element, joined on all, first error wins and the other arms
+          per element, each on a frame of its own holding its element,
+          joined on all, first error wins and the other arms
           are cancelled and drained. The arms of a pass are meant to finish;
           an arm that runs for good holds the pass open and every later wake
           waits behind it. For arms that stay up, use
@@ -82,7 +81,7 @@ class ReconcileEach(Control):
             ReconcileEach(orders.keys(), orders.on_descendants_change(), lambda o: retotal(o))
     """
 
-    _param_slots = Declared(value=frozenset({0, 1, 3, 4, 5}), name="param_slots")
+    _param_slots = Declared(value=frozenset({0, 1, 3, 4}), name="param_slots")
     _exec_order = Declared(value=ExecOrder.PARALLEL, name="exec_order")
     _requires_async = Declared(value=True, name="requires_async")
 
@@ -91,17 +90,14 @@ class ReconcileEach(Control):
         items: object,
         change: object,
         body: object,
-        item: object = None,
         *,
         after: Iterable[float] | object = (),
         every: float | object | None = None,
     ) -> None:
-        body, (item,) = bind("ReconcileEach", body, item=item)
         super().__init__(
             items,
             change,
-            body,
-            "item" if item is None else item,
+            self._dynamic("ReconcileEach", body, 1),
             *schedule_terms("ReconcileEach", after, every),
         )
 
@@ -109,16 +105,17 @@ class ReconcileEach(Control):
         return async_only("ReconcileEach")
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        items, change, _body, item, after, every = children
+        items, change, _body, after, every = children
+        binding = self._binding
 
         async def athunk(rt: Runtime) -> None:
-            name = await item(rt)
             schedule = await read_schedule("ReconcileEach", rt, after, every)
             body_nid = rt.program.children[nid][2]
             async with Wakes(await change(rt), *schedule) as wakes:
                 while True:
                     await wakes.wait()
                     elems = [elem async for elem in aiter_any(await items(rt))]
-                    await aeval_foreach_par(rt, body_nid, elems, name)
+                    arms = [rt.on(binding.push(rt.ctx, (elem,))) for elem in elems]
+                    await aeval_foreach_par(arms, body_nid)
 
         return athunk

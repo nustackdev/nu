@@ -19,7 +19,7 @@ import pytest
 import nu
 import nu.mem as nm
 from nu.lang import wire
-from nu.mem.binding import _DynamicBinding
+from nu.lang.binding import _DynamicBinding
 
 
 if TYPE_CHECKING:
@@ -74,7 +74,7 @@ def test_the_body_sets_the_ref(run: Callable) -> None:
     data, ctx = _out()
 
     def total(n: nm.ObjectRef) -> nu.Nu:
-        add = nu.ForEachDo(nu.Iter([1, 2, 3]), n.set(n + nu.context.Attr("item")))
+        add = nu.ForEachDo(nu.Iter([1, 2, 3]), lambda item: n.set(n + item))
         return add >> Out.first.set(n)
 
     run(nm.let(total, n=0), ctx)
@@ -129,7 +129,7 @@ def test_every_run_gets_its_own_slot(run: Callable) -> None:
 
 @RUNNERS
 def test_a_stream_body_reads_the_slot_across_its_drain(run: Callable) -> None:
-    term = nm.let(lambda n: nu.Map(nu.Iter([1, 2]), n + nu.context.Attr("item")), n=10)
+    term = nm.let(lambda n: nu.Map(nu.Iter([1, 2]), lambda item: n + item), n=10)
     assert run(nu.Collect(term)) == [11, 12]
 
 

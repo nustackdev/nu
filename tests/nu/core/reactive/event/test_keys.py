@@ -12,10 +12,9 @@ from typing import TYPE_CHECKING
 
 import pytest
 from _support.policy_atoms import Sink
-from _support.reactive import Body, Feed, start, stop, until
+from _support.reactive import FEED, Body, Feed, start, stop, until
 
 import nu
-from nu.context import Attr as AttrRef
 from nu.core.reactive.event import (
     ReactEach,
     ReactEvery,
@@ -25,8 +24,7 @@ from nu.core.reactive.event import (
     ReactWhile,
 )
 from nu.engine.structure import Declared
-from nu.lang import Context, ScalarAction
-from nu.lang.helpers import arun
+from nu.lang import ScalarAction
 
 
 if TYPE_CHECKING:
@@ -40,29 +38,29 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 
 
-def _keyed(log: list) -> Body:
-    async def body(rt: Runtime) -> None:
-        log.append(rt.ctx.attrs.get("k"))
+def _keyed(log: list) -> Callable:
+    async def body(rt: Runtime, k: object) -> None:
+        log.append(k)
 
-    return Body(body)
+    return lambda k: Body(body, k)
 
 
 @pytest.mark.parametrize(
     "make",
     [
-        lambda log: ReactOnce(AttrRef("feed"), _keyed(log), changed_key="k"),
-        lambda log: ReactEvery(AttrRef("feed"), _keyed(log), changed_key="k"),
-        lambda log: ReactLatest(AttrRef("feed"), _keyed(log), changed_key="k"),
-        lambda log: ReactWhile(AttrRef("feed"), AttrRef("go"), _keyed(log), changed_key="k"),
-        lambda log: ReactEach(AttrRef("feed"), _keyed(log), changed_key="k"),
-        lambda log: ReactLatestEach(AttrRef("feed"), _keyed(log), changed_key="k"),
+        lambda log: ReactOnce(FEED, _keyed(log)),
+        lambda log: ReactEvery(FEED, _keyed(log)),
+        lambda log: ReactLatest(FEED, _keyed(log)),
+        lambda log: ReactWhile(FEED, nu.Literal(True), _keyed(log)),
+        lambda log: ReactEach(FEED, _keyed(log)),
+        lambda log: ReactLatestEach(FEED, _keyed(log)),
     ],
     ids=["ReactOnce", "ReactEvery", "ReactLatest", "ReactWhile", "ReactEach", "ReactLatestEach"],
 )
 async def test_event_flows_fire_on_a_notify_without_payload(make: Callable) -> None:
     """A ``None`` key is a real notification (a ui notify carries no payload)."""
     feed, log = Feed(), []
-    task = asyncio.ensure_future(arun(make(log), Context(attrs={"feed": feed, "go": True})))
+    task = start(make(log), feed=feed)
     await until(lambda: feed.receivers)
     feed.fire(None)
     await until(lambda: log == [None])
@@ -109,9 +107,9 @@ _KEYED = pytest.mark.parametrize(
 
 @_KEYED
 async def test_keyed_flows_take_a_lambda_over_the_key(flow: type) -> None:
-    """The lambda form mints the key's name itself; the body it builds sees every key."""
+    """The lambda body over the key: the body it builds sees every key."""
     feed, log = Feed(), []
-    task = start(flow(AttrRef("feed"), lambda key: _Record(key, log)), feed=feed)
+    task = start(flow(FEED, lambda key: _Record(key, log)), feed=feed)
     await until(lambda: feed.receivers)
     feed.fire("a")
     feed.fire("b")
@@ -122,7 +120,7 @@ async def test_keyed_flows_take_a_lambda_over_the_key(flow: type) -> None:
 @_KEYED
 async def test_keyed_flows_refuse_an_unhashable_key_naming_themselves(flow: type) -> None:
     feed = Feed()
-    task = start(flow(AttrRef("feed"), nu.Noop()), feed=feed)
+    task = start(flow(FEED, nu.Noop()), feed=feed)
     await until(lambda: feed.receivers)
     feed.fire([1])
     with pytest.raises(TypeError, match=rf"{flow.__name__}: ids must be hashable, got list"):

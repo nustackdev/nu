@@ -20,7 +20,6 @@ import nu
 import nustd.kv
 import nustd.ui
 from nustd.ui.lens import column_terms
-from nustd.ui.lens.presets import _nav_key
 from virtuals import Navigator
 
 
@@ -491,21 +490,6 @@ async def test_browse_repaints_where_the_browser_is_when_the_store_is_written():
         assert previews()[0] == "a zoo"
     finally:
         arm.cancel()
-
-
-@pytest.mark.timeout(60)
-async def test_two_lenses_on_one_page_do_not_share_a_cursor():
-    """The arm's attrs key comes off the slot chain, so two lenses are two keys."""
-
-    class Pair(nustd.ui.Column):
-        left = Panel.slot()
-        right = Panel.slot()
-
-    class Two(nu.Shape):
-        pair = Pair.slot()
-
-    assert _nav_key(Two.pair.left.lens) != _nav_key(Two.pair.right.lens)
-    assert _nav_key(Two.pair.left.lens) == _nav_key(Two.pair.left.lens)
 
 
 class Run(nu.Shape):

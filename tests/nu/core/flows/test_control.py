@@ -12,7 +12,6 @@ import asyncio
 import pytest
 
 import nu
-from nu.context import Attr as AttrRef
 from nu.core import Add, Iter, Lt
 from nu.core.flows.control import (
     Delay,
@@ -72,9 +71,9 @@ def test_ifdo_param_slots_mark_the_condition():
     assert program.attr(program.root, Attr.PARAM_SLOTS) == frozenset({0})
 
 
-def test_foreach_param_slots_mark_items_and_name():
+def test_foreach_param_slots_mark_the_items():
     program = compile(ForEachDo(Iter(Literal([1])), _incr("sum")))
-    assert program.attr(program.root, Attr.PARAM_SLOTS) == frozenset({0, 2})
+    assert program.attr(program.root, Attr.PARAM_SLOTS) == frozenset({0})
 
 
 # --- IfDo -----------------------------------------------------------------
@@ -126,40 +125,41 @@ async def test_whiledo_async_loops():
 
 
 def test_foreach_runs_body_per_item():
-    body = S.sum.set(Add(S.sum, AttrRef("item")))
     data, ctx = _seed(sum=0)
-    run(ForEachDo(Iter(Literal([1, 2, 3])), body), ctx)
+    run(ForEachDo(Iter(Literal([1, 2, 3])), lambda item: S.sum.set(Add(S.sum, item))), ctx)
     assert data["sum"] == 6
 
 
-def test_foreach_binds_item_under_custom_name():
-    body = S.sum.set(Add(S.sum, AttrRef("x")))
+def test_foreach_takes_a_tree_body_that_reads_no_item():
     data, ctx = _seed(sum=0)
-    run(ForEachDo(Iter(Literal([10, 20])), body, item="x"), ctx)
-    assert data["sum"] == 30
+    run(ForEachDo(Iter(Literal([10, 20])), S.sum.set(Add(S.sum, 1))), ctx)
+    assert data["sum"] == 2
 
 
 async def test_foreach_async_runs_body_per_item():
-    body = S.sum.set(Add(S.sum, AttrRef("item")))
     data, ctx = _seed(sum=0)
-    await arun(ForEachDo(Iter(Literal([1, 2, 3])), body), ctx)
+    await arun(ForEachDo(Iter(Literal([1, 2, 3])), lambda item: S.sum.set(Add(S.sum, item))), ctx)
     assert data["sum"] == 6
+
+
+def test_foreach_item_does_not_outlive_the_loop():
+    data, ctx = _seed(sum=0)
+    run(ForEachDo(Iter(Literal([1, 2])), lambda item: S.sum.set(Add(S.sum, item))), ctx)
+    assert data == {"sum": 3}  # nothing of the loop's frame lands in the caller's dict
 
 
 # --- ForRangeDo -----------------------------------------------------------
 
 
 def test_forrange_sums_the_index_over_the_range():
-    body = S.sum.set(Add(S.sum, AttrRef("index")))
     data, ctx = _seed(sum=0)
-    run(ForRangeDo(0, 4, body), ctx)
+    run(ForRangeDo(0, 4, lambda i: S.sum.set(Add(S.sum, i))), ctx)
     assert data["sum"] == 6  # 0 + 1 + 2 + 3
 
 
-def test_forrange_honours_step_and_custom_index_name():
-    body = S.sum.set(Add(S.sum, AttrRef("k")))
+def test_forrange_honours_step():
     data, ctx = _seed(sum=0)
-    run(ForRangeDo(0, 10, body, step=2, index="k"), ctx)
+    run(ForRangeDo(0, 10, lambda k: S.sum.set(Add(S.sum, k)), step=2), ctx)
     assert data["sum"] == 20  # 0 + 2 + 4 + 6 + 8
 
 

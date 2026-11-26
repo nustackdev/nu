@@ -18,7 +18,6 @@ import pytest
 from _support.async_atoms import BoomAction
 
 import nu
-from nu.context import Attr as AttrRef
 from nu.core.iteration import Iter
 from nu.core.spans import TryCatch
 from nu.core.transform import Map
@@ -100,38 +99,41 @@ def test_scalar_failure_runs_the_catch_in_place() -> None:
     assert value == 9
 
 
-def test_catch_can_read_the_error_bound_for_it() -> None:
-    # The catch runs with ``error`` bound; reading it yields the exception
+def test_catch_can_read_the_error_handed_to_it() -> None:
+    # The catch lambda gets the error; reading it yields the exception
     # string, which forwards as the result.
-    value, _ = run(TryCatch(BoomAction("boom"), AttrRef("error")))
+    value, _ = run(TryCatch(BoomAction("boom"), lambda error: error))
     assert value == "boom"
 
 
-def test_error_is_bound_only_while_the_catch_runs() -> None:
-    # ``error`` is a let scoped to the catch; it is gone once the catch returns.
-    _, ctx = run(TryCatch(BoomAction("boom"), Literal(9)))
-    assert not ctx.attrs.exists("error")
+def test_the_error_frame_never_reaches_the_caller() -> None:
+    # The error's frame is pushed for the catch alone; the caller's Context
+    # comes back as it went in.
+    ctx = Context()
+    _, out = run(TryCatch(BoomAction("boom"), lambda error: error), ctx)
+    assert out is ctx
 
 
 def test_catch_writes_land_on_the_live_context() -> None:
     # No isolated copy: a catch writing a mem slot bound outside is seen after.
-    catch = S.seen.set(AttrRef("error"))
+    catch = lambda error: S.seen.set(error)  # noqa: E731
     data, ctx = _mem()
     run(TryCatch(BoomAction("boom"), catch), ctx)
     assert data["seen"] == "boom"
 
 
 def test_stream_catch_reads_the_error_for_its_whole_drain() -> None:
-    # The fallback stream reads ``error`` per item, lazily, while it drains.
-    tree = TryCatch(_BoomStream(1, "mid"), Map(Iter(Literal([1, 2])), AttrRef("error")))
+    # The fallback stream reads the error per item, lazily, while it drains.
+    tree = TryCatch(
+        _BoomStream(1, "mid"), lambda error: Map(Iter(Literal([1, 2])), lambda _: error)
+    )
     items, _ = collect(compile(tree))
     assert items == [0, "mid", "mid"]
 
 
-def test_error_key_is_customizable() -> None:
-    # The handler reads the error back at the key it was written under.
-    value, _ = run(TryCatch(BoomAction("boom"), AttrRef("err2"), error_key="err2"))
-    assert value == "boom"
+def test_a_catch_lambda_takes_at_most_the_error() -> None:
+    with pytest.raises(TypeError, match="hands its body 1 value"):
+        TryCatch(BoomAction("boom"), lambda error, extra: error)
 
 
 def test_failure_without_a_catch_propagates() -> None:
@@ -239,7 +241,9 @@ async def test_async_scalar_failure_runs_the_catch() -> None:
 
 async def test_async_catch_reads_the_error_and_finally_persists() -> None:
     data, ctx = _mem()
-    value, _ = await arun(TryCatch(BoomAction("boom"), AttrRef("error"), _set("done", True)), ctx)
+    value, _ = await arun(
+        TryCatch(BoomAction("boom"), lambda error: error, _set("done", True)), ctx
+    )
     assert value == "boom"
     assert data["done"] is True
 

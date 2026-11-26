@@ -29,9 +29,8 @@ import asyncio
 from typing import TYPE_CHECKING
 
 import pytest
-from _support.reactive import QUIET, Body, Feed, Read, settle_loop, start, stop, until
+from _support.reactive import FEED, QUIET, Body, Feed, Read, settle_loop, start, stop, until
 
-from nu.context import Attr as AttrRef
 from nu.core.reactive import (
     ReactEach,
     ReactLatestEach,
@@ -52,11 +51,10 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 
 
-def _arm(log: list, ready: asyncio.Event) -> Body:
+def _arm(log: list, ready: asyncio.Event) -> Callable:
     """``a`` parks until cancelled; ``boom`` waits for ``a`` to be running, then raises."""
 
-    async def body(rt: Runtime) -> None:
-        x = rt.ctx.attrs.get("x")
+    async def body(rt: Runtime, x: object) -> None:
         if x == "boom":
             await ready.wait()
             msg = "boom"
@@ -68,7 +66,7 @@ def _arm(log: list, ready: asyncio.Event) -> Body:
         finally:
             log.append(("end", x))
 
-    return Body(body)
+    return lambda x: Body(body, x)
 
 
 def _ids(state: dict) -> Read:
@@ -99,31 +97,31 @@ async def _switch_to_boom(feed: Feed, state: dict, log: list) -> None:
 
 _ERROR_CASES = [
     pytest.param(
-        lambda s, b: ReconcileLatestEach(_ids(s), AttrRef("feed"), b, "x", **QUIET),
+        lambda s, b: ReconcileLatestEach(_ids(s), FEED, b, **QUIET),
         ["a", "boom"],
         _read_both,
         id="ReconcileLatestEach",
     ),
     pytest.param(
-        lambda s, b: ReconcileEach(_ids(s), AttrRef("feed"), b, "x", **QUIET),
+        lambda s, b: ReconcileEach(_ids(s), FEED, b, **QUIET),
         ["a", "boom"],
         _read_both,
         id="ReconcileEach",
     ),
     pytest.param(
-        lambda s, b: ReconcileLatest(_ids(s), AttrRef("feed"), b, "x", **QUIET),
+        lambda s, b: ReconcileLatest(_ids(s), FEED, b, **QUIET),
         "a",
         _switch_to_boom,
         id="ReconcileLatest",
     ),
     pytest.param(
-        lambda s, b: ReactEach(AttrRef("feed"), b, changed_key="x"),
+        lambda s, b: ReactEach(FEED, b),
         None,
         _fire_both,
         id="ReactEach",
     ),
     pytest.param(
-        lambda s, b: ReactLatestEach(AttrRef("feed"), b, changed_key="x"),
+        lambda s, b: ReactLatestEach(FEED, b),
         None,
         _fire_both,
         id="ReactLatestEach",
@@ -152,22 +150,22 @@ async def test_an_arm_error_propagates_after_the_siblings_are_drained(
 # ---------------------------------------------------------------------------
 
 
-def _finishing(log: list) -> Body:
-    async def body(rt: Runtime) -> None:
-        log.append(("start", rt.ctx.attrs.get("x")))
+def _finishing(log: list) -> Callable:
+    async def body(rt: Runtime, x: object) -> None:
+        log.append(("start", x))
 
-    return Body(body)
+    return lambda x: Body(body, x)
 
 
 _ONCE_CASES = [
     pytest.param(
-        lambda s, b: ReconcileLatestEach(_ids(s), AttrRef("feed"), b, "x", **QUIET),
+        lambda s, b: ReconcileLatestEach(_ids(s), FEED, b, **QUIET),
         ["a"],
         [],
         id="ReconcileLatestEach",
     ),
     pytest.param(
-        lambda s, b: ReconcileLatest(_ids(s), AttrRef("feed"), b, "x", **QUIET),
+        lambda s, b: ReconcileLatest(_ids(s), FEED, b, **QUIET),
         "a",
         None,
         id="ReconcileLatest",

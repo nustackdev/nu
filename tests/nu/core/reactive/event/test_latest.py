@@ -9,16 +9,15 @@ import asyncio
 from typing import TYPE_CHECKING
 
 import pytest
-from _support.reactive import Body, Feed, start, stop, until
+from _support.reactive import FEED, Body, Feed, start, stop, until
 
 import nu
-from nu.context import Attr as AttrRef
 from nu.context import With
 from nu.core.flows import ParallelAsync
 from nu.core.reactive.event import ReactEvery, ReactLatest
 from nu.domains.shape import Shape
 from nu.domains.shape.item import ItemRef
-from nu.lang import Attr, Control
+from nu.lang import NULL, Attr, Control
 from nu.lang.helpers import compile, validate
 from nustd.kv import IntRef, Snapshot, Transaction, memory_navigator
 from virtuals import Navigator
@@ -38,9 +37,8 @@ def test_react_latest_is_control():
 def test_react_latest_constructs():
     change = ItemRef("sub")
     body = ItemRef("body")
-    # [change, body, changed_key?, initial]: initial is a config child, last.
+    # [change, body, initial]: initial is a config child, last.
     assert len(nu.tree.children(ReactLatest(change, body))) == 3
-    assert len(nu.tree.children(ReactLatest(change, body, changed_key=ItemRef("k")))) == 4
 
 
 # ---------------------------------------------------------------------------
@@ -71,7 +69,7 @@ def test_react_latest_mirrors_react_every_metadata():
     # ReactLatest's params also take its trailing ``initial`` child.
     assert latest.attr(latest.root, Attr.PARAM_SLOTS) == forever.attr(
         forever.root, Attr.PARAM_SLOTS
-    ) | {3}
+    ) | {2}
 
 
 def test_react_latest_sync_thunk_raises():
@@ -82,14 +80,14 @@ def test_react_latest_sync_thunk_raises():
 
 
 def _latest(body: Callable, **kwargs: object) -> ReactLatest:
-    return ReactLatest(AttrRef("feed"), Body(body), changed_key="k", **kwargs)
+    return ReactLatest(FEED, lambda k: Body(body, k), **kwargs)
 
 
 async def test_react_latest_restarts_and_cancels_the_stale_run():
     feed, log = Feed(), []
 
-    async def body(rt: Runtime) -> None:
-        key = rt.ctx.attrs.get("k")
+    async def body(rt: Runtime, k: object) -> None:
+        key = k
         log.append(("start", key))
         try:
             await asyncio.Event().wait()
@@ -111,8 +109,8 @@ async def test_react_latest_collapses_a_burst_during_a_slow_unwind():
     feed, starts = Feed(), []
     unwinding, gate = asyncio.Event(), asyncio.Event()
 
-    async def body(rt: Runtime) -> None:
-        starts.append(rt.ctx.attrs.get("k"))
+    async def body(rt: Runtime, k: object) -> None:
+        starts.append(k)
         try:
             await asyncio.Event().wait()
         finally:
@@ -139,34 +137,22 @@ async def test_react_latest_collapses_a_burst_during_a_slow_unwind():
 async def test_react_latest_initial_runs_before_any_change():
     feed, seen = Feed(), []
 
-    async def body(rt: Runtime) -> None:
-        seen.append(rt.ctx.attrs.get("k", "unbound"))
+    async def body(rt: Runtime, k: object) -> None:
+        seen.append(k)
 
     task = start(_latest(body, initial=True), feed=feed)
     await until(lambda: seen)
-    assert seen == ["unbound"]
+    assert seen == [NULL]  # the initial run has no key: the lambda's reads NULL
     feed.fire("a")
     await until(lambda: len(seen) == 2)
-    assert seen == ["unbound", "a"]
-    await stop(task)
-
-
-async def test_react_latest_initial_sees_a_seeded_key():
-    feed, seen = Feed(), []
-
-    async def body(rt: Runtime) -> None:
-        seen.append(rt.ctx.attrs.get("k"))
-
-    task = start(_latest(body, initial=True), feed=feed, k="default")
-    await until(lambda: seen)
-    assert seen == ["default"]
+    assert seen == [NULL, "a"]
     await stop(task)
 
 
 async def test_react_latest_cancel_drains_the_body_and_unbinds():
     feed, log = Feed(), []
 
-    async def body(rt: Runtime) -> None:
+    async def body(rt: Runtime, k: object) -> None:
         log.append("start")
         try:
             await asyncio.Event().wait()
@@ -187,8 +173,8 @@ async def test_react_latest_cancel_drains_the_body_and_unbinds():
 async def test_react_latest_body_that_finishes_waits_for_the_next_change():
     feed, runs = Feed(), []
 
-    async def body(rt: Runtime) -> None:
-        runs.append(rt.ctx.attrs.get("k"))
+    async def body(rt: Runtime, k: object) -> None:
+        runs.append(k)
 
     task = start(_latest(body), feed=feed)
     await until(lambda: feed.receivers)
@@ -205,8 +191,8 @@ async def test_react_latest_body_that_finishes_waits_for_the_next_change():
 async def test_react_latest_body_error_propagates_and_unbinds():
     feed = Feed()
 
-    async def body(rt: Runtime) -> None:
-        if rt.ctx.attrs.get("k") == "boom":
+    async def body(rt: Runtime, k: object) -> None:
+        if k == "boom":
             raise ValueError("boom")
         await asyncio.Event().wait()
 
@@ -224,7 +210,7 @@ async def test_react_latest_body_error_propagates_and_unbinds():
 async def test_react_latest_error_while_unwinding_propagates():
     feed = Feed()
 
-    async def body(rt: Runtime) -> None:
+    async def body(rt: Runtime, k: object) -> None:
         try:
             await asyncio.Event().wait()
         finally:
@@ -239,23 +225,26 @@ async def test_react_latest_error_while_unwinding_propagates():
         await asyncio.wait_for(task, 2)
 
 
-async def test_react_latest_gives_each_run_a_fresh_attrs_scope():
+async def test_react_latest_gives_each_run_a_fresh_frame():
     feed, seen = Feed(), []
 
-    async def body(rt: Runtime) -> None:
-        seen.append((rt.ctx.attrs.get("k"), rt.ctx.attrs.get("scratch")))
-        rt.ctx.attrs.set("scratch", rt.ctx.attrs.get("k"))
-        rt.ctx.attrs.set("k", "clobbered")
+    async def record(rt: Runtime, k: object) -> None:
+        seen.append(k)
+
+    async def park(rt: Runtime) -> None:
         await asyncio.Event().wait()
 
-    task = start(_latest(body, initial=True), feed=feed, k="seed", scratch=None)
+    def body(k: nu.Nu) -> nu.Nu:
+        return Body(record, k) >> k.set("clobbered") >> Body(park)
+
+    task = start(ReactLatest(FEED, body, initial=True), feed=feed)
     await until(lambda: seen)
     for key in ("a", "b"):
         feed.fire(key)
-        await until(lambda key=key: seen[-1][0] == key)
-    # No run sees what an earlier run bound, and the seed is never clobbered
-    # for the next one, even though every run rebinds both names.
-    assert seen == [("seed", None), ("a", None), ("b", None)]
+        await until(lambda key=key: seen[-1] == key)
+    # No run sees what an earlier run wrote to its frame, even though every
+    # run overwrites its key.
+    assert seen == [NULL, "a", "b"]
     await stop(task)
 
 
@@ -294,14 +283,16 @@ async def test_react_latest_restart_unwinds_nested_parallel_and_kv_boundaries():
         snap.get(key)
         handles["snap"].append(snap)
 
-    async def mark(rt: Runtime) -> None:
-        started.append(rt.ctx.attrs.get("k"))
+    async def mark(rt: Runtime, k: object) -> None:
+        started.append(k)
 
-    body = Body(mark) >> ParallelAsync(
-        Transaction(arm("txn", write)),
-        Snapshot(arm("snap", read)),
-        arm("bare", lambda rt: None),
-    )
+    def body(k: nu.Nu) -> nu.Nu:
+        return Body(mark, k) >> ParallelAsync(
+            Transaction(arm("txn", write)),
+            Snapshot(arm("snap", read)),
+            arm("bare", lambda rt: None),
+        )
+
     task = start(With(memory_navigator(), body=_latest_of(body)), feed=feed)
     await until(lambda: feed.receivers)
     feed.fire("a")
@@ -324,4 +315,4 @@ async def test_react_latest_restart_unwinds_nested_parallel_and_kv_boundaries():
 
 
 def _latest_of(body: object) -> ReactLatest:
-    return ReactLatest(AttrRef("feed"), body, changed_key="k")
+    return ReactLatest(FEED, body)

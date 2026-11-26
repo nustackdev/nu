@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 from _support.reactive import (
+    FEED,
     QUIET,
     Body,
     Feed,
@@ -18,7 +19,6 @@ from _support.reactive import (
     until,
 )
 
-from nu.context import Attr as AttrRef
 from nu.core.reactive import ReconcileEach
 
 
@@ -42,8 +42,7 @@ def _rounds(
             reads.append(list(elems))
         return list(elems)
 
-    async def arm(rt: Runtime) -> None:
-        x = rt.ctx.attrs.get("x")
+    async def arm(rt: Runtime, x: object) -> None:
         log.append(("start", x))
         try:
             if plan.get(x) == "boom":
@@ -56,7 +55,7 @@ def _rounds(
         finally:
             log.append(("end", x))
 
-    return ReconcileEach(Read(read), AttrRef("feed"), Body(arm), "x", **schedule)
+    return ReconcileEach(Read(read), FEED, lambda x: Body(arm, x), **schedule)
 
 
 async def test_a_pass_runs_every_element_at_once_and_joins() -> None:

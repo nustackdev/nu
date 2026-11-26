@@ -1,10 +1,11 @@
-"""Binder lambdas: a binder's body written as a function of what it hands over.
+"""Binder lambdas: a binding's body written as a function of what it hands over.
 
-Every interaction that binds values for its body takes a lambda in that slot.
-The interaction mints the names, calls the lambda once with an ``Attr`` per
-name, and keeps the tree. Covered here: each binder in lambda form (sync and
-async where it has both), nested lambdas keeping their names apart, the
-explicit names still working, the two forms refusing to mix, arity checks,
+Every interaction that hands values to its body takes a lambda in that slot.
+The core bindings generate a Shape from the lambda, call it once with the
+Shape's refs and keep the tree (``nu.lang.binding``); the nustd binders still
+mint attrs names for theirs (until they move over). Covered here: each binder
+in lambda form (sync and async where it has both), nested lambdas keeping
+their values apart, the nustd explicit names still working, arity checks,
 equal trees across builds, and a cloudpickle round trip.
 """
 
@@ -15,11 +16,12 @@ from typing import TYPE_CHECKING
 
 import pytest
 from _support.policy_atoms import Sink
+from _support.reactive import FEED, seeded
 
 import nu
 import nustd
 from nu.engine.structure import Declared
-from nu.lang import NULL, Context, ScalarAction, wire
+from nu.lang import NULL, ScalarAction, wire
 from nustd.functools.interactions import Reduce
 
 
@@ -94,8 +96,8 @@ async def _cancel(task: asyncio.Task) -> None:
         await task
 
 
-def _start(term: object, **attrs: object) -> asyncio.Task:
-    return asyncio.ensure_future(nu.arun(term, Context(attrs=attrs)))
+def _start(term: object, **values: object) -> asyncio.Task:
+    return asyncio.ensure_future(nu.arun(term, seeded(**values)))
 
 
 def _value(term: object) -> object:
@@ -214,7 +216,7 @@ async def test_foreach_par_async_takes_a_lambda() -> None:
 
 async def test_foreach_par_reactive_takes_a_lambda() -> None:
     feed, log = _Feed(), []
-    term = nu.ReconcileLatestEach(nu.Iter([1, 2]), nu.Attr("feed"), lambda x: Record(x, log))
+    term = nu.ReconcileLatestEach(nu.Iter([1, 2]), FEED, lambda x: Record(x, log))
     task = _start(term, feed=feed)
     await _until(lambda: len(log) == 2)
     assert sorted(log) == [1, 2]
@@ -261,10 +263,17 @@ async def test_retry_mixes_a_lambda_hook_with_a_plain_one() -> None:
         nu.Div(1, 0),
         max_attempts=2,
         on_attempt_fail=lambda err, attempt: Record(attempt, log),
-        on_fail=Record(nu.Attr("error"), log),
+        on_fail=Record("gave up", log),
     )
     await nu.arun(term)
-    assert log == [1, "division by zero"]
+    assert log == [1, "gave up"]
+
+
+async def test_a_retry_hook_may_take_only_the_error() -> None:
+    log: list = []
+    term = nu.Retry(nu.Div(1, 0), max_attempts=1, on_fail=lambda err: Record(err, log))
+    await nu.arun(term)
+    assert log == ["division by zero"]
 
 
 # --- reactive ---------------------------------------------------------------
@@ -272,7 +281,7 @@ async def test_retry_mixes_a_lambda_hook_with_a_plain_one() -> None:
 
 async def test_react_takes_a_lambda() -> None:
     feed, log = _Feed(), []
-    task = _start(nu.ReactOnce(nu.Attr("feed"), lambda key: Record(key, log)), feed=feed)
+    task = _start(nu.ReactOnce(FEED, lambda key: Record(key, log)), feed=feed)
     await _until(lambda: feed.receivers)
     feed.fire("a")
     await task
@@ -281,7 +290,7 @@ async def test_react_takes_a_lambda() -> None:
 
 async def test_react_while_takes_a_lambda() -> None:
     feed, log = _Feed(), []
-    term = nu.ReactWhile(nu.Attr("feed"), True, lambda key: Record(key, log))
+    term = nu.ReactWhile(FEED, True, lambda key: Record(key, log))
     task = _start(term, feed=feed)
     await _until(lambda: feed.receivers)
     feed.fire("a")
@@ -292,25 +301,7 @@ async def test_react_while_takes_a_lambda() -> None:
 
 async def test_react_while_condition_takes_a_lambda() -> None:
     feed, log = _Feed(), []
-    term = nu.ReactWhile(
-        nu.Attr("feed"), lambda key: nu.Str(key) != "stop", lambda key: Record(key, log)
-    )
-    task = _start(term, feed=feed)
-    await _until(lambda: feed.receivers)
-    feed.fire("a")
-    feed.fire("stop")
-    await task
-    assert log == ["a"]
-
-
-async def test_react_while_condition_reads_a_named_key() -> None:
-    feed, log = _Feed(), []
-    term = nu.ReactWhile(
-        nu.Attr("feed"),
-        nu.Str(nu.Attr("k")) != "stop",
-        Record(nu.Attr("k"), log),
-        changed_key="k",
-    )
+    term = nu.ReactWhile(FEED, lambda key: nu.Str(key) != "stop", lambda key: Record(key, log))
     task = _start(term, feed=feed)
     await _until(lambda: feed.receivers)
     feed.fire("a")
@@ -322,7 +313,7 @@ async def test_react_while_condition_reads_a_named_key() -> None:
 @pytest.mark.parametrize("flow", [nu.ReactEvery, nu.ReactLatest])
 async def test_react_forever_and_latest_take_a_lambda(flow: type) -> None:
     feed, log = _Feed(), []
-    task = _start(flow(nu.Attr("feed"), lambda key: Record(key, log)), feed=feed)
+    task = _start(flow(FEED, lambda key: Record(key, log)), feed=feed)
     await _until(lambda: feed.receivers)
     feed.fire("a")
     await _until(lambda: log == ["a"])
@@ -331,7 +322,7 @@ async def test_react_forever_and_latest_take_a_lambda(flow: type) -> None:
 
 async def test_react_latest_initial_run_binds_nothing() -> None:
     feed, log = _Feed(), []
-    term = nu.ReactLatest(nu.Attr("feed"), lambda key: Record(key, log), initial=True)
+    term = nu.ReactLatest(FEED, lambda key: Record(key, log), initial=True)
     task = _start(term, feed=feed)
     await _until(lambda: log)
     assert log == [NULL]
@@ -340,7 +331,7 @@ async def test_react_latest_initial_run_binds_nothing() -> None:
 
 async def test_react_still_takes_a_plain_body_and_binds_nothing() -> None:
     feed, log = _Feed(), []
-    task = _start(nu.ReactOnce(nu.Attr("feed"), Record("fired", log)), feed=feed)
+    task = _start(nu.ReactOnce(FEED, Record("fired", log)), feed=feed)
     await _until(lambda: feed.receivers)
     feed.fire("a")
     await task
@@ -363,8 +354,8 @@ def test_nested_lambdas_read_their_own_values() -> None:
 
 def test_one_lambda_nested_in_itself_shadows_the_outer_binding() -> None:
     # The same lambda code builds every level, so every level binds the same
-    # name and the innermost one wins, as with ``nu.let``: each read sees the
-    # innermost item.
+    # Shape and the innermost frame wins, as with ``nu.let``: each read sees
+    # the innermost item.
     log: list = []
 
     def nest(depth: int, outer: tuple = ()) -> object:
@@ -376,25 +367,13 @@ def test_one_lambda_nested_in_itself_shadows_the_outer_binding() -> None:
     assert log == [[b, b] for _ in (0, 1) for b in (0, 1)]
 
 
-def test_explicit_names_keep_a_self_nested_loop_apart() -> None:
-    log: list = []
-
-    def nest(depth: int) -> object:
-        if depth == 0:
-            return Record(nu.List.of(nu.Attr("level1"), nu.Attr("level2")), log)
-        return nu.ForEachDo(nu.Iter([0, 1]), nest(depth - 1), item=f"level{depth}")
-
-    nu.run(nest(2))
-    assert log == [[a, b] for b in (0, 1) for a in (0, 1)]
-
-
-def test_a_lambda_owns_its_names_across_builds() -> None:
+def test_a_lambda_owns_its_shape_across_builds() -> None:
     def build() -> object:
         return nu.Map(nu.Iter([1]), lambda x: x)
 
     first, second = build(), build()
-    assert nu.tree.equal(first._children[2], second._children[2])
-    assert str(nu.tree.fields(first._children[2])["value"]).startswith("x@")
+    assert first._binding.shape is second._binding.shape
+    assert first._binding.slots == ("x",)
 
 
 def test_same_line_same_parameter_nested_keeps_apart() -> None:
@@ -405,21 +384,15 @@ def test_same_line_same_parameter_nested_keeps_apart() -> None:
     assert log == [["a", 1]]
 
 
-def test_nested_lambdas_on_one_line_get_different_names() -> None:
+def test_nested_lambdas_on_one_line_get_different_shapes() -> None:
     term = nu.Map(nu.Iter([[1]]), lambda x: nu.Map(nu.Iter(x), lambda x: x))
-    outer_name = term._children[2]
-    inner_name = term._children[1]._children[2]
-    assert not nu.tree.equal(outer_name, inner_name)
+    assert term._binding.shape is not term._children[1]._binding.shape
 
 
-# --- the explicit names stay --------------------------------------------------
+# --- the nustd explicit names stay (until nustd moves to mem frames) ----------
 
 
 def test_explicit_names_still_work() -> None:
-    log: list = []
-    nu.run(nu.ForEachDo(nu.Iter([1]), Record(nu.Attr("x"), log), item="x"))
-    nu.run(nu.ForEachDo(nu.Iter([2]), Record(nu.Attr("item"), log)))
-    assert log == [1, 2]
     reduced = Reduce(
         nu.Iter([1, 2]), nu.Int(nu.Attr("a")) + nu.Attr("b"), acc_key="a", item_key="b"
     )
@@ -429,14 +402,6 @@ def test_explicit_names_still_work() -> None:
 @pytest.mark.parametrize(
     "build",
     [
-        pytest.param(lambda: nu.ForEachDo([1], lambda x: x, item="x"), id="ForEachDo"),
-        pytest.param(lambda: nu.Map([1], lambda x: x, key="x"), id="Map"),
-        pytest.param(lambda: nu.ForRangeDo(0, 1, lambda i: i, index="i"), id="ForRangeDo"),
-        pytest.param(lambda: nu.TryCatch(1, catch=lambda e: e, error_key="e"), id="TryCatch"),
-        pytest.param(lambda: nu.Retry(1, on_success=lambda a: a, attempt_key="a"), id="Retry"),
-        pytest.param(
-            lambda: nu.ReactEvery(nu.Attr("f"), lambda k: k, changed_key="k"), id="ReactEvery"
-        ),
         pytest.param(lambda: Reduce(nu.Iter([1]), lambda a, b: a, item_key="b"), id="Reduce"),
     ],
 )
@@ -445,23 +410,24 @@ def test_a_lambda_and_an_explicit_name_refuse_to_mix(build: Callable) -> None:
         build()
 
 
-def test_retry_refuses_only_the_names_a_lambda_hook_binds() -> None:
-    nu.Retry(1, on_success=lambda attempt: attempt, error_key="e")  # on_success binds no error
-
-
 @pytest.mark.parametrize(
     "build",
     [
-        pytest.param(lambda: nu.ForEachDo([1], lambda: 1), id="too few"),
         pytest.param(lambda: nu.Map([1], lambda a, b: a), id="too many"),
         pytest.param(lambda: nustd.functools.reduce(lambda acc: acc, [1]), id="Reduce"),
         pytest.param(lambda: nu.Retry(1, on_success=lambda e, a: a), id="Retry on_success"),
-        pytest.param(lambda: nu.Retry(1, on_fail=lambda a: a), id="Retry on_fail"),
+        pytest.param(lambda: nu.Retry(1, on_fail=lambda e, a, x: a), id="Retry on_fail"),
     ],
 )
 def test_a_lambda_of_the_wrong_arity_raises(build: Callable) -> None:
     with pytest.raises(TypeError, match="so its lambda takes"):
         build()
+
+
+def test_a_core_lambda_may_take_fewer_values_than_handed() -> None:
+    log: list = []
+    nu.run(nu.ForEachDo([1, 2], lambda: Record("tick", log)))
+    assert log == ["tick", "tick"]
 
 
 def test_a_lambda_returning_none_raises() -> None:

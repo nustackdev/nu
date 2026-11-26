@@ -9,12 +9,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.context.attrs.binders import bind
 from nu.core.flows.parallel._scheduling import _spawn_arm
 from nu.engine.structure import Declared
 from nu.lang import Control
 from nu.lang._stream import aiter_any
 from nu.lang.attributes.execution import ExecOrder
+from nu.lang.binding import _DynamicBinding
 
 from .._arms import ArmBook
 from .._body import async_only
@@ -22,8 +22,10 @@ from ._wakes import Wakes, read_schedule, schedule_terms
 
 
 if TYPE_CHECKING:
+    import asyncio
     from collections.abc import Awaitable, Callable, Iterable
 
+    from nu.lang.binding import Binding
     from nu.lang.runtime import Runtime
 
 __all__ = ["ReconcileLatestEach", "hold_arms"]
@@ -35,6 +37,7 @@ async def hold_arms(
     nid: int,
     children: tuple[Callable, ...],
     ids: Callable[[Runtime], Awaitable[Iterable]],
+    binding: Binding,
 ) -> None:
     """Keep one arm per id live against ``change``: the level loop behind the per-id flows.
 
@@ -42,9 +45,11 @@ async def hold_arms(
         owner: the flow's name, for error messages.
         rt: the runtime the flow runs under.
         nid: the flow's own node, whose third child is the body.
-        children: the flow's compiled children ``(_, change, body, item,
-            after, every)``; the first is read through ``ids`` instead.
+        children: the flow's compiled children ``(_, change, body, after,
+            every)``; the first is read through ``ids`` instead.
         ids: answers the ids a pass should hold arms for.
+        binding: the body's binding: each arm pushes a frame of its own
+            holding its id.
 
     Notes:
         - One pass right after binding, one per notification, one per
@@ -55,11 +60,14 @@ async def hold_arms(
           and drained first, then the subscription is unbound and closed,
           then the cancellation or error goes on.
     """
-    _, change, _body, item, after, every = children
-    name = await item(rt)
+    _, change, _body, after, every = children
     schedule = await read_schedule(owner, rt, after, every)
     body_nid = rt.program.children[nid][2]
-    book = ArmBook(lambda elem: _spawn_arm(rt, body_nid, elem, name), once=True, owner=owner)
+
+    def spawn(elem: object) -> asyncio.Task:
+        return _spawn_arm(rt.on(binding.push(rt.ctx, (elem,))), body_nid)
+
+    book = ArmBook(spawn, once=True, owner=owner)
     async with Wakes(await change(rt), *schedule) as wakes:
         try:
             while True:
@@ -69,7 +77,7 @@ async def hold_arms(
             await book.drain()
 
 
-class ReconcileLatestEach(Control):
+class ReconcileLatestEach(_DynamicBinding, Control):
     """``ReconcileLatestEach(items, change, lambda x: body)`` - one arm per element, kept live against ``change``.
 
     The level flow over a fan-out: each pass reads ``items`` and makes the
@@ -83,10 +91,9 @@ class ReconcileLatestEach(Control):
         change: the change subscription that says the element set may have
             moved. Bound once, before the first pass, and held for as long as
             this runs.
-        body: the arm, run once per element, concurrently with the others. A
-            lambda over the element, or a tree reading it with ``Attr(item)``.
-        item: the name to bind that arm's element under, for a tree body.
-            Optional, defaults to ``"item"``; a lambda mints its own.
+        body: the arm, run once per element, concurrently with the others,
+            each on a frame of its own: a lambda over the element, or a tree
+            that reads none.
         after: re-check offsets in seconds after binding, for the window a
             fresh subscription may not yet be heard in. A term yielding an
             iterable of floats, or a literal one. Empty by default: re-checks
@@ -140,7 +147,7 @@ class ReconcileLatestEach(Control):
             ReconcileLatestEach(users.keys(), users.on_children_change(), lambda user: body)
     """
 
-    _param_slots = Declared(value=frozenset({0, 1, 3, 4, 5}), name="param_slots")
+    _param_slots = Declared(value=frozenset({0, 1, 3, 4}), name="param_slots")
     _exec_order = Declared(value=ExecOrder.PARALLEL, name="exec_order")
     _requires_async = Declared(value=True, name="requires_async")
 
@@ -149,17 +156,14 @@ class ReconcileLatestEach(Control):
         items: object,
         change: object,
         body: object,
-        item: object = None,
         *,
         after: Iterable[float] | object = (),
         every: float | object | None = None,
     ) -> None:
-        body, (item,) = bind("ReconcileLatestEach", body, item=item)
         super().__init__(
             items,
             change,
-            body,
-            "item" if item is None else item,
+            self._dynamic("ReconcileLatestEach", body, 1),
             *schedule_terms("ReconcileLatestEach", after, every),
         )
 
@@ -173,6 +177,6 @@ class ReconcileLatestEach(Control):
             return [elem async for elem in aiter_any(await items(rt))]
 
         async def athunk(rt: Runtime) -> None:
-            await hold_arms("ReconcileLatestEach", rt, nid, children, ids)
+            await hold_arms("ReconcileLatestEach", rt, nid, children, ids, self._binding)
 
         return athunk

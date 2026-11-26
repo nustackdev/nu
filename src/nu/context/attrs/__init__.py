@@ -1,9 +1,9 @@
 """The attrs axis of the Context fabric: how an interaction hands values to its body.
 
 ``ctx.attrs`` is a channel, not a store. An interaction binds its own internal
-values there for its body: a loop its item, a fold its accumulator, a catch the
-error, a retry the attempt, a reaction the key that changed. Only interactions
-write it, imperatively in their compile through ``ctx.attrs.let`` / ``set``.
+values there for its body: a fold its accumulator and its item, for the nustd
+bindings not yet on mem frames (the core ones hand theirs through
+``nu.lang.binding``). Only interactions write it, imperatively in their compile through ``ctx.attrs.let`` / ``set``.
 The tree only reads, through ``Attr(name)``, and ``Attr(name).exists()`` asks
 whether a name is bound. A body given as a lambda gets those reads as its
 parameters, over names the interaction mints (``binders``). State of any kind goes through a fabric instead:

@@ -37,33 +37,6 @@ def test_attr_on_an_unbound_name_is_null_and_ops_raise():
         run(Add(nu.context.Attr("missing"), Literal(1)))
 
 
-def test_attr_reads_what_map_bound_for_each_item():
-    term = nu.Collect(nu.Map(nu.Iter([1, 2, 3]), Add(nu.context.Attr("item"), 1)))
-    assert run(term)[0] == [2, 3, 4]
-
-
-def test_attr_reads_what_foreachdo_bound_for_each_item():
-    loop = nu.ForEachDo(nu.Iter([1, 2, 3]), Tally.n.set(Tally.n + nu.context.Attr("item")))
-    data: dict = {"n": 0}
-    run(loop, Context().bind(dict, data, Tally))
-    assert data == {"n": 6}
-
-
-def test_attr_reads_the_error_trycatch_bound():
-    term = nu.TryCatch(nu.raise_(ValueError, "boom"), catch=nu.ToStr(nu.context.Attr("error")))
-    assert run(term)[0] == "boom"
-
-
-async def test_attr_reads_a_binding_on_the_async_path():
-    term = nu.Collect(nu.Map(nu.Iter([1, 2]), Add(nu.context.Attr("item"), 10)))
-    assert (await arun(term))[0] == [11, 12]
-
-
-def test_the_binding_ends_with_the_binder():
-    _, ctx = run(nu.Collect(nu.Map(nu.Iter([1]), nu.context.Attr("item"))))
-    assert not ctx.attrs.exists("item")
-
-
 # --- computed address: the address is a Nu child -------------------------
 
 
@@ -82,16 +55,15 @@ async def test_computed_address_resolves_on_the_async_path():
 
 
 def test_a_reader_wraps_the_read_in_the_form_it_needs():
-    term = nu.Collect(nu.Map(nu.Iter(["ab", "c"]), nu.Str(nu.context.Attr("item")).upper()))
-    assert run(term)[0] == ["AB", "C"]
+    term = nu.Str(nu.context.Attr("s")).upper()
+    assert run(term, Context(attrs={"s": "ab"}))[0] == "AB"
 
 
 # --- .exists() -----------------------------------------------------------
 
 
 def test_attr_exists_is_true_for_a_bound_name():
-    term = nu.Collect(nu.Map(nu.Iter([1]), nu.context.Attr("item").exists()))
-    assert run(term)[0] == [True]
+    assert run(nu.context.Attr("x").exists(), Context(attrs={"x": 1}))[0] is True
 
 
 def test_attr_exists_is_false_for_an_unbound_name():

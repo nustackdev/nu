@@ -35,8 +35,8 @@ __all__ = [
 ]
 
 
-#: What the fold binds each session id under. ``ReconcileLatestEach`` branches
-#: ``ctx.attrs`` per arm, so an outer binding of the same name is shadowed only
+#: What the fold binds each session id under. Every arm of the fold has its
+#: own attrs table, so an outer binding of the same name is shadowed only
 #: inside an arm, never across arms.
 SID_ATTR = "sid"
 
@@ -169,3 +169,26 @@ class SessionFor(Bracket):
             raise LookupError(msg)
         cls = type(session)
         yield ctx.bind(getattr(cls, "_nu_bind_as", None) or cls, session)
+
+
+class _ParkSid(Bracket):
+    """Park the session id the fold hands an arm in attrs, under ``SID_ATTR``.
+
+    TEMPORARY (task-184 phase 3 moves the session id onto a Shape): the fold
+    hands the id to a lambda, and the readers still look it up in attrs.
+    Each arm of the fold runs on its own attrs table, so arms never see each
+    other's id.
+
+    Args:
+        sid: the session id, any Nu yielding it.
+        body: the tree that runs with the id parked.
+    """
+
+    def __init__(self, sid: object, body: Nu) -> None:
+        super().__init__(body, sid)
+
+    @asynccontextmanager
+    async def _aopen(self, ctx: Context, *config: object) -> AsyncIterator[Context]:
+        (sid,) = config
+        with ctx.attrs.let(SID_ATTR, sid):
+            yield ctx

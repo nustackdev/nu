@@ -5,11 +5,11 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
-from nu.context.attrs.binders import bind
 from nu.engine.structure import Declared
 from nu.lang import Control
+from nu.lang.binding import _DynamicBinding
 
-from .._body import async_only, changed, drain_body
+from .._body import async_only, drain_body
 from ._keyed import KeyedQueues
 
 
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 __all__ = ["ReactEach"]
 
 
-class ReactEach(Control):
+class ReactEach(_DynamicBinding, Control):
     """Run the body on every change, in order within a key, keys side by side.
 
     ``ReactEvery`` with one queue per key. Binds to the change subscription
@@ -34,16 +34,14 @@ class ReactEach(Control):
     Args:
         change: the change subscription to wait on.
         body: what to run on every notification: a lambda over the changed
-            key, or a tree.
-        changed_key: name the changed key is bound under while each run of
-            a tree body lasts; a lambda mints its own.
+            key, or a tree that reads none. Every run pushes a frame of its
+            own holding its key.
 
     Notes:
         - Keys must be hashable: the queues are kept by key.
-        - Each run starts from the reaction's frames with its own attrs
-          table (temporary until attrs go), values shared by reference. Runs side by side
-          never see each other's attrs, and attrs a run binds do not reach
-          the caller.
+        - Each run pushes its own frame on the reaction's frames, values
+          shared by reference. Runs side by side never see each other's
+          frames, and a frame a run pushes never reaches the caller.
         - Memory is bounded by the backlog per key, as ``ReactEvery``'s queue
           is: a key notified faster than its body runs piles notifications up.
         - An error raised by the body ends the flow and propagates: every
@@ -65,25 +63,17 @@ class ReactEach(Control):
 
     _mutates = Declared(value=frozenset(), name="mutates")
     _requires_async = Declared(value=True, name="requires_async")
-    _param_slots = Declared(value=frozenset({0, 2}), name="param_slots")
+    _param_slots = Declared(value=frozenset({0}), name="param_slots")
 
-    def __init__(
-        self,
-        change: object,
-        body: object,
-        *,
-        changed_key: object = None,
-    ) -> None:
-        body, (changed_key,) = bind("ReactEach", body, changed_key=changed_key)
-        names = () if changed_key is None else (changed_key,)
-        super().__init__(change, body, *names)
+    def __init__(self, change: object, body: object) -> None:
+        super().__init__(change, self._dynamic("ReactEach", body, 1))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return async_only("ReactEach")
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        has_ck = len(children) > 2  # [change, body, changed_key?]
         body = children[1]
+        binding = self._binding
 
         async def athunk(rt: Runtime) -> None:
             loop = asyncio.get_running_loop()
@@ -92,14 +82,12 @@ class ReactEach(Control):
             def on_change(k: object) -> None:
                 loop.call_soon_threadsafe(inbox.put_nowait, k)
 
-            changed_key_name = await children[2](rt) if has_ck else None
-
             async def run(key: object) -> None:
-                # Every run has its own attrs table: runs side by side must not
-                # share the name the key is bound under.
+                # Every run pushes a frame of its own: runs side by side never
+                # see each other's key. The attrs table is forked too, for
+                # attrs readers in the body (temporary, until attrs go).
                 run_rt = rt._fork_attrs()
-                with changed(run_rt.ctx.attrs, changed_key_name, key):
-                    await drain_body(run_rt, body)
+                await drain_body(run_rt.on(binding.push(run_rt.ctx, (key,))), body)
 
             queues = KeyedQueues(run, owner="ReactEach")
             sub = await children[0](rt)

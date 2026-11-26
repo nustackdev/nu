@@ -150,14 +150,14 @@ def test_a_mapping_stream_carries_the_declared_key_type(ctx):
 
 def test_stream_ops_keep_the_element_type_while_the_items_are_the_sources(ctx):
     run(Bag.tags.set(["x", "y"]), ctx)
-    kept = Bag.tags.iter().filter(nu.Gt(nu.context.Attr("item"), "x"))
+    kept = Bag.tags.iter().filter(lambda item: nu.Gt(item, "x"))
     assert type(kept.first()) is Str
     assert run(kept.first().upper(), ctx)[0] == "Y"
     drained = Bag.tags.iter().to_list()
     assert type(drained.first_elem()) is Str
     assert run(drained.first_elem().upper(), ctx)[0] == "X"
     assert Bag.tags.iter().to_set()._type_info.elem == TypeInfo(str)
-    assert type(Bag.tags.iter().map(nu.context.Attr("item")).first()) is Object
+    assert type(Bag.tags.iter().map(lambda item: item).first()) is Object
 
 
 def test_folds_and_stream_ops_keep_the_element_type(ctx):
@@ -169,7 +169,7 @@ def test_folds_and_stream_ops_keep_the_element_type(ctx):
     assert run(stream.last().upper(), ctx)[0] == "Y"
     assert type(stream.unique().first()) is Str
     assert type(stream.reversed().first()) is Str
-    assert type(stream.sort_by(nu.context.Attr("item")).first()) is Str
+    assert type(stream.sort_by(lambda item: item).first()) is Str
     assert type(stream.sorted().first_elem()) is Str
     assert run(stream.unique().sorted(), ctx)[0] == ["x", "y"]
     assert type(stream.count()) is Int
