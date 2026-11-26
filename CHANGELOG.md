@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Tests pin that a debounced body still reads its values after its frame exits
 - Name keywords on loops, catches, retries and reactions are gone; bodies take lambdas
 - Loops, maps, catches, retries and reactions hand their values to lambdas through frames
 - Drain-then-follow stream flow removed; it had no users and only tests
