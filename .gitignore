@@ -186,10 +186,8 @@ benchmark_results/
 .ruff_cache/
 
 # Misc
-/*playground
 .db*/
-.state*/
-.logs*/
+.notebooks/
 
 # cython files
 *.c
@@ -197,9 +195,6 @@ benchmark_results/
 *.dylib
 *.so
 lib*.so.*
-
-# syncthing
-.stfolder
 
 # ts workspace (pkgs/ts): node deps and vite output are both built, never tracked
 node_modules/
