@@ -114,3 +114,18 @@ def test_debounce_state_persists_across_a_forever_loop() -> None:
 def test_debounce_refuses_the_sync_runner() -> None:
     with pytest.raises(Exception, match="async"):
         nu.run(nm.let(Rate, nm.Debounce(0.01, nu.Add(1, 2), pending=Rate.pending)))
+
+
+def test_a_debounced_body_reads_its_frame_after_the_frame_exited() -> None:
+    # The delayed body holds the Runtime it was scheduled on, so the frames it
+    # reads stay alive after both lets have exited, when it fires.
+    call = lambda n: nm.let(Rate, nm.Debounce(0.01, Out.log.append(n), pending=Rate.pending))  # noqa: E731
+    assert _arun(nm.let(call, n=7) >> nu.Delay(0.05)) == [7]
+
+
+def test_a_debounced_loop_body_reads_the_last_item_after_the_loop() -> None:
+    # One frame for the loop's run, written per item: the one run that fires,
+    # after the loop has ended, reads the item the burst ended on.
+    call = lambda item: nm.Debounce(0.02, Out.log.append(item), pending=Rate.pending)  # noqa: E731
+    burst = nu.ForEachDo(nu.Iter([1, 2, 3]), call) >> nu.Delay(0.1)
+    assert _arun(nm.let(Rate, burst)) == [3]
