@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Benchmark for handing values to bodies and reading context, to compare the frames rework
 - Provide takes the class by position and the rest by keyword, Python style
 - Provide takes any class; context managers and plain classes need no Fabric base
 - Container refs re-kind like leaves, so a ref can change kind again and again
