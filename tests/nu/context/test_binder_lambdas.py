@@ -18,7 +18,6 @@ from _support.policy_atoms import Sink
 
 import nu
 import nustd
-from nu.core.reactive.cursor.stream import Stream
 from nu.engine.structure import Declared
 from nu.lang import NULL, Context, ScalarAction, wire
 from nustd.functools.interactions import Reduce
@@ -346,13 +345,6 @@ async def test_react_still_takes_a_plain_body_and_binds_nothing() -> None:
     feed.fire("a")
     await task
     assert log == ["fired"]
-
-
-def test_stream_binds_the_key_its_lambda_reads() -> None:
-    stream = Stream(nu.Literal(None), lambda key: nu.Iter(nu.List.of(key)))
-    _advance, _change, body, key, _log_key, _after, _every = stream._children
-    assert str(nu.tree.fields(key)["value"]).startswith("key@")
-    assert nu.tree.equal(body, nu.Iter(nu.List.of(nu.Attr(key))))
 
 
 # --- nesting ----------------------------------------------------------------

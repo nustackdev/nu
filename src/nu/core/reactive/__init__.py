@@ -35,12 +35,9 @@ Every flow lets an unhandled error out: an arm that raises cancels and
 drains its siblings, closes the subscription and re-raises. Isolation and
 supervision are composed with ``TryCatch`` and ``Retry``.
 
-``Stream`` (the cursor kind) drains an ordered collection and then follows
-it, once per item.
-
 Layout: ``protocol`` (the contract), ``sources/`` (the ``On*`` queries),
-``event/`` and ``level/`` (one module per flow), ``cursor/`` (``Stream``),
-and the private ``_body`` (running a body, binding the changed key) and
+``event/`` and ``level/`` (one module per flow), and the private ``_body``
+(running a body) and
 ``_arms`` (the arm book of the per-id flows).
 
 Nu defines the standard; fabrics (nustd.kv, and any future backend) bind
@@ -48,7 +45,6 @@ their observer under ``ObserverProtocol`` in ctx and match its structural
 shape. Nu never depends on a concrete reactive backend.
 """
 
-from nu.core.reactive.cursor import Stream
 from nu.core.reactive.event import (
     ReactEach,
     ReactEvery,
@@ -99,7 +95,6 @@ __all__ = [
     "ReconcileLatest",
     "ReconcileLatestEach",
     "ReconcileWhile",
-    "Stream",
     "Subscription",
     "WaitUntil",
 ]

@@ -5,7 +5,6 @@ Read queries (polymorphic on Ref class):
 - ``Exists``: True if the slot-0 Ref's address holds a value.
 - ``Extract``: materialise the full subtree rooted at the Ref, asking an
   ``Extractable`` read for its ``extract()``.
-- ``AdvanceCursor``: read the next key after the cursor on an ordered view.
 
 Write commands (polymorphic on Ref class):
 - ``SetCmd``: write the slot-1 value to the slot-0 Ref's address.
@@ -38,7 +37,6 @@ if TYPE_CHECKING:
     from .base import StructuredRef
 
 __all__ = [
-    "AdvanceCursor",
     "Erase",
     "Exists",
     "Extract",
@@ -129,39 +127,6 @@ class Extract(ScalarQuery):
 def _plain(value: object) -> object:
     """``value`` as plain data: an Extractable's ``extract()``, anything else as is."""
     return value.extract() if isinstance(value, Extractable) else value
-
-
-class AdvanceCursor(ScalarQuery):
-    """Read the next key after the cursor on an ordered view.
-
-    Children: ``[source_ref, cursor_ref]``. Calls ``view.next_key_after(cursor)``
-    on the ordered view yielded by slot 0. A ``None`` or absent cursor starts
-    from the beginning. Returns ``(log_key, actual_key)`` or ``None`` if exhausted.
-    """
-
-    def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        source_thunk, cursor_thunk = children[0], children[1]
-
-        def thunk(rt: Runtime) -> object:
-            view = source_thunk(rt)
-            cursor = cursor_thunk(rt)
-            if is_null(cursor):
-                cursor = None
-            return view.next_key_after(cursor)
-
-        return thunk
-
-    def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        source_thunk, cursor_thunk = children[0], children[1]
-
-        async def athunk(rt: Runtime) -> object:
-            view = await source_thunk(rt)
-            cursor = await cursor_thunk(rt)
-            if is_null(cursor):
-                cursor = None
-            return view.next_key_after(cursor)
-
-        return athunk
 
 
 # ---------------------------------------------------------------------------

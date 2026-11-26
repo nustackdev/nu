@@ -42,7 +42,7 @@ class LogDictRef(DictRef[K, V], Generic[K, V]):
     Same mapping surface as a dict slot, with the ids kept in log order:
     iteration, ``keys``, ``values`` and ``items`` come back oldest first, and
     ``reversed_keys`` newest first. Paged with ``keys(after=, limit=)`` and
-    ``reversed_keys(before=, limit=)``, followed with ``nu.Stream``.
+    ``reversed_keys(before=, limit=)``.
 
     Notes:
         - Setting a new id logs it at the end: three rows, no read, so any
