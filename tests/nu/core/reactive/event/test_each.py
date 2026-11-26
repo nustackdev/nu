@@ -10,10 +10,9 @@ import asyncio
 from typing import TYPE_CHECKING
 
 import pytest
-from _support.reactive import Body, Feed, start, stop, until
+from _support.reactive import FEED, Body, Feed, start, stop, until
 
 import nu
-from nu.context import Attr as AttrRef
 from nu.core.reactive.event import ReactEach, ReactEvery
 from nu.domains.shape import Shape
 from nu.domains.shape.item import ItemRef
@@ -36,7 +35,6 @@ def test_react_each_constructs():
     change = ItemRef("sub")
     body = ItemRef("body")
     assert len(nu.tree.children(ReactEach(change, body))) == 2
-    assert len(nu.tree.children(ReactEach(change, body, changed_key=ItemRef("k")))) == 3
 
 
 # ---------------------------------------------------------------------------
@@ -78,14 +76,14 @@ def test_react_each_sync_thunk_raises():
 
 
 def _each(body: Callable) -> ReactEach:
-    return ReactEach(AttrRef("feed"), Body(body), changed_key="k")
+    return ReactEach(FEED, lambda k: Body(body, k))
 
 
 def _gated(log: list, holds: list) -> Callable:
     """A body that logs its start, parks on a fresh gate the test releases, then logs its end."""
 
-    async def body(rt: Runtime) -> None:
-        key = rt.ctx.attrs.get("k")
+    async def body(rt: Runtime, k: object) -> None:
+        key = k
         log.append(("start", key))
         gate = asyncio.Event()
         holds.append(gate)
@@ -136,8 +134,8 @@ async def test_react_each_runs_keys_side_by_side():
 async def test_react_each_runs_a_key_again_after_its_queue_drained():
     feed, runs = Feed(), []
 
-    async def body(rt: Runtime) -> None:
-        runs.append(rt.ctx.attrs.get("k"))
+    async def body(rt: Runtime, k: object) -> None:
+        runs.append(k)
 
     task = start(_each(body), feed=feed)
     await until(lambda: feed.receivers)
@@ -153,12 +151,17 @@ async def test_react_each_runs_a_key_again_after_its_queue_drained():
 async def test_react_each_gives_each_run_its_own_key():
     feed, seen = Feed(), []
 
-    async def body(rt: Runtime) -> None:
-        first = rt.ctx.attrs.get("k")
-        await asyncio.sleep(0.01)
-        seen.append((first, rt.ctx.attrs.get("k")))
+    firsts: dict = {}
 
-    task = start(_each(body), feed=feed)
+    async def first(rt: Runtime, k: object) -> None:
+        firsts[asyncio.current_task()] = k
+        await asyncio.sleep(0.01)
+
+    async def then(rt: Runtime, k: object) -> None:
+        # The key read again, after the other run had its turn.
+        seen.append((firsts.pop(asyncio.current_task()), k))
+
+    task = start(ReactEach(FEED, lambda k: Body(first, k) >> Body(then, k)), feed=feed)
     await until(lambda: feed.receivers)
     feed.fire("a")
     feed.fire("b")
@@ -171,8 +174,8 @@ async def test_react_each_gives_each_run_its_own_key():
 async def test_react_each_body_error_propagates_and_cancels_the_others():
     feed, log = Feed(), []
 
-    async def body(rt: Runtime) -> None:
-        key = rt.ctx.attrs.get("k")
+    async def body(rt: Runtime, k: object) -> None:
+        key = k
         if key == "boom":
             raise ValueError("boom")
         log.append(("start", key))

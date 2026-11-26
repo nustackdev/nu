@@ -18,10 +18,10 @@ via ``asyncio.Queue``, so all of them require an async runtime and raise from
 their sync ``_compile`` path.
 
 A body that wants the key that changed is a lambda over it
-(``lambda key: ...``): it runs once, at construction, with a ref to the key,
-and the name it binds under is minted for it. A plain tree body binds nothing,
-unless ``changed_key`` names where to put the key for it. ``ReactWhile``'s
-condition is a binder slot the same way.
+(``lambda key: ...``): it runs once, at construction, with a mem ref to the
+key, and every run pushes a frame of its own holding its key. A plain tree
+body reads no key. ``ReactWhile``'s condition is a lambda the same way, a
+binding of its own.
 
 Two axes split the family. A wake either runs one more pass or restarts the
 running body (``Latest``), and there is either one body for the flow or one

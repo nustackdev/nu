@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.context.attrs.binders import bind
 from nu.engine.structure import Declared
 from nu.lang import Control
+from nu.lang.binding import dynamic
 
 from .._body import async_only, drain_body
 from ._wakes import Wakes, read_schedule, schedule_terms
@@ -72,7 +72,7 @@ class Reconcile(Control):
         after: Iterable[float] | object = (),
         every: float | object | None = None,
     ) -> None:
-        body, () = bind("Reconcile", body)
+        body, _ = dynamic("Reconcile", body, 0)
         super().__init__(change, body, *schedule_terms("Reconcile", after, every))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

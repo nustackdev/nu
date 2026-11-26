@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import pytest
+from _support.reactive import FEED
 
 import nu
-from nu.context import Attr as AttrRef
 from nu.core.reactive import (
     Reconcile,
     ReconcileEach,
@@ -59,9 +59,9 @@ def test_level_flows_validate(flow: type) -> None:
     ("flow", "slots"),
     [
         (Reconcile, {0, 2, 3}),
-        (ReconcileEach, {0, 1, 3, 4, 5}),
-        (ReconcileLatest, {0, 1, 3, 4, 5}),
-        (ReconcileLatestEach, {0, 1, 3, 4, 5}),
+        (ReconcileEach, {0, 1, 3, 4}),
+        (ReconcileLatest, {0, 1, 3, 4}),
+        (ReconcileLatestEach, {0, 1, 3, 4}),
         (ReconcileWhile, {0, 1, 3, 4}),
         (WaitUntil, {0, 1, 2, 3}),
     ],
@@ -74,12 +74,12 @@ def test_level_flows_are_async_only_and_declare_their_params(flow: type, slots: 
 
 def test_sync_thunks_raise() -> None:
     for term in (
-        Reconcile(AttrRef("feed"), nu.Noop()),
-        WaitUntil(AttrRef("feed"), nu.Literal(True)),
-        ReconcileWhile(AttrRef("feed"), nu.Literal(True), nu.Noop()),
-        ReconcileEach(nu.Iter([1]), AttrRef("feed"), nu.Noop()),
-        ReconcileLatest(nu.Literal(1), AttrRef("feed"), nu.Noop()),
-        ReconcileLatestEach(nu.Iter([1]), AttrRef("feed"), nu.Noop()),
+        Reconcile(FEED, nu.Noop()),
+        WaitUntil(FEED, nu.Literal(True)),
+        ReconcileWhile(FEED, nu.Literal(True), nu.Noop()),
+        ReconcileEach(nu.Iter([1]), FEED, nu.Noop()),
+        ReconcileLatest(nu.Literal(1), FEED, nu.Noop()),
+        ReconcileLatestEach(nu.Iter([1]), FEED, nu.Noop()),
     ):
         with pytest.raises(RuntimeError, match="async"):
             term._compile(0, ())(None)
@@ -87,11 +87,11 @@ def test_sync_thunks_raise() -> None:
 
 def test_a_body_cannot_ask_for_the_changed_key() -> None:
     with pytest.raises(TypeError, match="0 values"):
-        Reconcile(AttrRef("feed"), lambda key: nu.print(key))
+        Reconcile(FEED, lambda key: nu.print(key))
     with pytest.raises(TypeError, match="0 values"):
-        WaitUntil(AttrRef("feed"), lambda key: key)
+        WaitUntil(FEED, lambda key: key)
 
 
 def test_a_lambda_taking_nothing_builds_the_body() -> None:
-    term = WaitUntil(AttrRef("feed"), lambda: nu.Literal(True))
-    assert nu.tree.equal(term, WaitUntil(AttrRef("feed"), nu.Literal(True)))
+    term = WaitUntil(FEED, lambda: nu.Literal(True))
+    assert nu.tree.equal(term, WaitUntil(FEED, nu.Literal(True)))

@@ -18,6 +18,21 @@ import nu
 from nu.prog import ConstructionError, LoadNu, PyBrace
 
 
+class Seed(nu.Shape):
+    """Values a test seeds the Context with, read by the tree as computed arguments."""
+
+    entry = nu.ObjectRef.slot()
+    rewrite = nu.ObjectRef.slot()
+    scope = nu.ObjectRef.slot()
+    stored_program = nu.ObjectRef.slot()
+    which = nu.ObjectRef.slot()
+    who = nu.ObjectRef.slot()
+
+
+def _seeded(values: dict) -> nu.Context:
+    return nu.Context().bind(dict, dict(values), Seed)
+
+
 def src(text: str) -> str:
     return textwrap.dedent(text).lstrip()
 
@@ -160,13 +175,13 @@ def test_the_brace_tag_can_be_computed() -> None:
             PyBrace,
             kwargs={"python": sys.executable},
             body=nu.Eq(
-                nu.Eval(LoadNu(PID, brace=nu.context.Attr("which"))),
+                nu.Eval(LoadNu(PID, brace=Seed.which)),
                 nu.Eval(LoadNu(PID)),
             ),
             tag="second",
         ),
     )
-    assert nu.run(tree, nu.Context(attrs={"which": "second"}))[0] is False
+    assert nu.run(tree, _seeded({"which": "second"}))[0] is False
 
 
 def test_one_child_serves_many_loads_inside_one_provide() -> None:
@@ -185,27 +200,27 @@ def test_one_child_serves_many_loads_inside_one_provide() -> None:
 def test_source_can_arrive_from_a_computed_child() -> None:
     # The kv-ref path in miniature: the source is not a literal in the tree,
     # it is read at runtime from somewhere else.
-    ctx = nu.Context(attrs={"stored_program": GREETING})
-    value, _ = nu.run(nu.Eval(LoadNu(nu.context.Attr("stored_program"))), ctx)
+    ctx = _seeded({"stored_program": GREETING})
+    value, _ = nu.run(nu.Eval(LoadNu(Seed.stored_program)), ctx)
     assert value == "hello world"
 
 
 def test_scope_values_can_be_computed_children() -> None:
-    ctx = nu.Context(attrs={"who": "kv"})
-    tree = nu.Eval(LoadNu(GREETING, scope={"who": nu.context.Attr("who")}))
+    ctx = _seeded({"who": "kv"})
+    tree = nu.Eval(LoadNu(GREETING, scope={"who": Seed.who}))
     assert nu.run(tree, ctx)[0] == "hello kv"
 
 
 async def test_scope_values_can_be_computed_children_async() -> None:
-    ctx = nu.Context(attrs={"who": "kv"})
-    tree = nu.Eval(LoadNu(GREETING, scope={"who": nu.context.Attr("who")}))
+    ctx = _seeded({"who": "kv"})
+    tree = nu.Eval(LoadNu(GREETING, scope={"who": Seed.who}))
     value, _ = await nu.arun(tree, ctx)
     assert value == "hello kv"
 
 
 def test_scope_values_cross_into_a_venv_brace() -> None:
-    ctx = nu.Context(attrs={"who": "venv"})
-    tree = venv_brace(nu.Eval(LoadNu(GREETING, scope={"who": nu.context.Attr("who")})))
+    ctx = _seeded({"who": "venv"})
+    tree = venv_brace(nu.Eval(LoadNu(GREETING, scope={"who": Seed.who})))
     assert nu.run(tree, ctx)[0] == "hello venv"
 
 
@@ -220,8 +235,8 @@ def test_entry_point_name_is_a_child() -> None:
         def build():
             return nu.Str('built')
     """)
-    ctx = nu.Context(attrs={"entry": "build"})
-    tree = nu.Eval(LoadNu(source, entry=nu.context.Attr("entry")))
+    ctx = _seeded({"entry": "build"})
+    tree = nu.Eval(LoadNu(source, entry=Seed.entry))
     assert nu.run(tree, ctx)[0] == "built"
 
 
@@ -356,14 +371,14 @@ async def test_the_rewrite_runs_on_the_async_path() -> None:
 
 
 def test_the_rewrite_can_be_computed() -> None:
-    ctx = nu.Context(attrs={"rewrite": swapped})
-    term, _ = nu.run(LoadNu(HELLO, rewrite=nu.context.Attr("rewrite")), ctx)
+    ctx = _seeded({"rewrite": swapped})
+    term, _ = nu.run(LoadNu(HELLO, rewrite=Seed.rewrite), ctx)
     assert nu.run(term)[0] == "swapped"
 
 
 def test_the_whole_scope_can_be_computed() -> None:
-    ctx = nu.Context(attrs={"scope": {"who": "you"}})
-    term, _ = nu.run(LoadNu(GREETING, scope=nu.context.Attr("scope")), ctx)
+    ctx = _seeded({"scope": {"who": "you"}})
+    term, _ = nu.run(LoadNu(GREETING, scope=Seed.scope), ctx)
     assert nu.run(term)[0] == "hello you"
 
 

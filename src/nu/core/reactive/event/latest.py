@@ -5,12 +5,12 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
-from nu.context.attrs.binders import bind
 from nu.core.flows.parallel._scheduling import _settle
 from nu.engine.structure import Declared
 from nu.lang import Control
+from nu.lang.binding import _DynamicBinding
 
-from .._body import async_only, changed, drain_body
+from .._body import async_only, drain_body
 
 
 if TYPE_CHECKING:
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 __all__ = ["ReactLatest"]
 
 
-class ReactLatest(Control):
+class ReactLatest(_DynamicBinding, Control):
     """Run the body on every change, cancelling the run a newer change makes stale.
 
     ``ReactEvery`` with switch-latest semantics (Rx ``switchMap``). Binds to
@@ -35,23 +35,20 @@ class ReactLatest(Control):
     Args:
         change: the change subscription to wait on.
         body: what to run on every notification: a lambda over the changed
-            key, or a tree. May never finish (a live view, a server loop);
-            the next change is what ends it.
-        changed_key: name the changed key is bound under while each run of
-            a tree body lasts; a lambda mints its own.
+            key, or a tree that reads none. May never finish (a live view, a
+            server loop); the next change is what ends it.
         initial: run the body once straight away, before any notification:
             a bool, or any Nu yielding one, evaluated when the flow starts
-            (the last child). That run binds no key, so the body sees whatever the caller
-            seeded under ``changed_key``, or an unbound name (a lambda's key
-            reads NULL).
+            (the last child). That run has no key: a lambda's key reads
+            NULL.
 
     Notes:
         - Notifications that pile up while a cancelled run is unwinding are
           collapsed: only the newest key runs, the backlog is not replayed.
-        - Each run starts from the reaction's frames with its own attrs
-          table (temporary until attrs go), values shared by reference. A restarted body
-          never sees attrs a cancelled run left behind, and attrs a run binds
-          do not reach the caller or its siblings.
+        - Each run pushes its own frame on the reaction's frames, holding
+          its key, values shared by reference. A restarted body never sees a
+          frame a cancelled run pushed, and a frame a run pushes never
+          reaches the caller or its siblings.
         - A body that finishes on its own is fine; the flow just waits for
           the next change.
         - An error raised by the body, or while a cancelled run unwinds, ends
@@ -78,27 +75,17 @@ class ReactLatest(Control):
 
     _mutates = Declared(value=frozenset(), name="mutates")
     _requires_async = Declared(value=True, name="requires_async")
-    _param_slots = Declared(value=frozenset({0, 2, 3}), name="param_slots")
+    _param_slots = Declared(value=frozenset({0, 2}), name="param_slots")
 
-    def __init__(
-        self,
-        change: object,
-        body: object,
-        *,
-        changed_key: object = None,
-        initial: BoolArg = False,
-    ) -> None:
-        body, (changed_key,) = bind("ReactLatest", body, changed_key=changed_key)
-        names = () if changed_key is None else (changed_key,)
-        super().__init__(change, body, *names, initial)
+    def __init__(self, change: object, body: object, *, initial: BoolArg = False) -> None:
+        super().__init__(change, self._dynamic("ReactLatest", body, 1), initial)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return async_only("ReactLatest")
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        has_ck = len(children) > 3  # [change, body, changed_key?, initial]
-        initial_t = children[-1]
-        body = children[1]
+        body, initial_t = children[1], children[2]  # [change, body, initial]
+        binding = self._binding
 
         async def athunk(rt: Runtime) -> None:
             loop = asyncio.get_running_loop()
@@ -107,18 +94,16 @@ class ReactLatest(Control):
             def on_change(k: object) -> None:
                 loop.call_soon_threadsafe(queue.put_nowait, k)
 
-            changed_key_name = await children[2](rt) if has_ck else None
-
             def start(bind: bool, key: object = None) -> asyncio.Task:
-                # Every run is a task of its own, with its own attrs table.
+                # Every run is a task of its own on a frame of its own; the
+                # initial run's frame holds no key, so a lambda's reads NULL.
+                # The attrs table is forked too (temporary, until attrs go).
                 run_rt = rt._fork_attrs()
-                name = changed_key_name if bind else None
-
-                async def run() -> None:
-                    with changed(run_rt.ctx.attrs, name, key):
-                        await drain_body(run_rt, body)
-
-                return asyncio.ensure_future(run())
+                if bind:
+                    run_ctx = binding.push(run_rt.ctx, (key,))
+                else:
+                    run_ctx, _ = binding.frame(run_rt.ctx)
+                return asyncio.ensure_future(drain_body(run_rt.on(run_ctx), body))
 
             running: asyncio.Task | None = None
             getter: asyncio.Task | None = None

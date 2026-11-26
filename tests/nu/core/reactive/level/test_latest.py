@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 from _support.reactive import (
+    FEED,
     QUIET,
     Body,
     Feed,
@@ -19,7 +20,6 @@ from _support.reactive import (
 )
 
 import nu
-from nu.context import Attr as AttrRef
 from nu.core.reactive import ReconcileLatest
 from nu.lang import NULL
 
@@ -39,8 +39,7 @@ def _hold(
             reads.append(state["id"])
         return state["id"]
 
-    async def arm(rt: Runtime) -> None:
-        x = rt.ctx.attrs.get("x")
+    async def arm(rt: Runtime, x: object) -> None:
         log.append(("start", x))
         try:
             if plan.get(x) == "boom":
@@ -51,7 +50,7 @@ def _hold(
         finally:
             log.append(("end", x))
 
-    return ReconcileLatest(Read(read), AttrRef("feed"), Body(arm), "x", **schedule)
+    return ReconcileLatest(Read(read), FEED, lambda x: Body(arm, x), **schedule)
 
 
 def _starts(log: list, key: object) -> int:
@@ -66,12 +65,10 @@ def _starts(log: list, key: object) -> int:
 async def test_a_constant_id_runs_the_body_once_and_holds() -> None:
     feed, log = Feed(), []
 
-    async def arm(rt: Runtime) -> None:
-        log.append(("start", rt.ctx.attrs.get("x")))
+    async def arm(rt: Runtime, x: object) -> None:
+        log.append(("start", x))
 
-    task = start(
-        ReconcileLatest(nu.Literal("v"), AttrRef("feed"), Body(arm), "x", **QUIET), feed=feed
-    )
+    task = start(ReconcileLatest(nu.Literal("v"), FEED, lambda x: Body(arm, x), **QUIET), feed=feed)
     await until(lambda: log == [("start", "v")])
     for key in range(3):
         feed.fire(key)
@@ -159,15 +156,14 @@ def _hold_stream(
             reads.append(list(state["ids"]))
         return list(state["ids"])
 
-    async def arm(rt: Runtime) -> None:
-        x = rt.ctx.attrs.get("x")
+    async def arm(rt: Runtime, x: object) -> None:
         log.append(("start", x))
         try:
             await asyncio.Event().wait()
         finally:
             log.append(("end", x))
 
-    return ReconcileLatest(nu.Iter(Read(read)), AttrRef("feed"), Body(arm), "x", **schedule)
+    return ReconcileLatest(nu.Iter(Read(read)), FEED, lambda x: Body(arm, x), **schedule)
 
 
 async def test_a_stream_read_yields_the_id_or_nothing() -> None:

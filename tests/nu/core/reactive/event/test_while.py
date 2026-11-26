@@ -26,13 +26,10 @@ def test_react_while_constructs():
     assert len(nu.tree.children(r)) == 3
 
 
-def test_react_while_constructs_with_changed_key():
-    change = ItemRef("sub")
-    cond = ItemRef("cond")
-    body = ItemRef("body")
-    key = ItemRef("k")
-    r = ReactWhile(change, cond, body, changed_key=key)
-    assert len(nu.tree.children(r)) == 4
+def test_react_while_hands_the_key_to_condition_and_body_each_on_its_own_shape():
+    r = ReactWhile(ItemRef("sub"), lambda key: key, lambda key: key)
+    assert r.condition_binding.shape is not r.body_binding.shape
+    assert len(nu.tree.children(r)) == 3
 
 
 # ---------------------------------------------------------------------------

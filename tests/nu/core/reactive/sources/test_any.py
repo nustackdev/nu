@@ -1,6 +1,6 @@
 """Tests for OnAny: one subscription over several.
 
-Members are hand-fired ``Feed`` subscriptions read from ctx attrs, so each test
+Members are hand-fired ``Feed`` subscriptions read from a mem frame, so each test
 decides which member fires and with which key.
 """
 
@@ -10,19 +10,20 @@ import asyncio
 from typing import TYPE_CHECKING
 
 import pytest
-from _support.reactive import Body, Feed, Read, start, stop, until
+from _support.reactive import Body, Feed, Read, Src, seeded, start, stop, until
 
 import nu
-from nu.context import Attr as AttrRef
 from nu.core.reactive.event import ReactEvery
 from nu.core.reactive.level import Reconcile
 from nu.core.reactive.protocol import Subscription
 from nu.core.reactive.sources.any import OnAny
-from nu.lang import Context, ScalarQuery
+from nu.lang import ScalarQuery
 from nu.lang.helpers import arun
 
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from nu.lang.runtime import Runtime
 
 
@@ -31,7 +32,7 @@ def _feeds(*names: str) -> dict[str, Feed]:
 
 
 async def _open(term: object, feeds: dict[str, Feed]) -> Subscription:
-    sub, _ = await arun(term, Context(attrs=dict(feeds)))
+    sub, _ = await arun(term, seeded(**feeds))
     return sub
 
 
@@ -51,7 +52,7 @@ def test_on_any_with_no_member_raises_at_build():
 
 
 def test_on_any_sync_thunk_raises():
-    thunk = OnAny(AttrRef("a"))._compile(0, ())
+    thunk = OnAny(Src.a)._compile(0, ())
     with pytest.raises(RuntimeError, match="OnAny requires an async runtime; use arun"):
         thunk(None)
 
@@ -63,7 +64,7 @@ def test_on_any_sync_thunk_raises():
 
 async def test_on_any_yields_one_subscription_over_every_member():
     feeds = _feeds("a", "b")
-    sub = await _open(OnAny(AttrRef("a"), AttrRef("b")), feeds)
+    sub = await _open(OnAny(Src.a, Src.b), feeds)
     assert isinstance(sub, Subscription)
     heard: list = []
     sub.bind(heard.append)
@@ -87,7 +88,7 @@ async def test_on_any_closes_every_member_even_when_one_raises():
             raise OSError(msg)
 
     feeds = {"a": _Broken(), "b": Feed()}
-    sub = await _open(OnAny(AttrRef("a"), AttrRef("b")), feeds)
+    sub = await _open(OnAny(Src.a, Src.b), feeds)
     with pytest.raises(OSError, match="broken close"):
         sub.close()
     assert feeds["a"].closed
@@ -101,7 +102,7 @@ async def test_on_any_closes_the_opened_members_when_a_later_one_fails():
 
     feeds = _feeds("a")
     with pytest.raises(ConnectionError, match="cannot open"):
-        await _open(OnAny(AttrRef("a"), Read(fail)), feeds)
+        await _open(OnAny(Src.a, Read(fail)), feeds)
     assert feeds["a"].log == ["close"]
 
 
@@ -119,7 +120,7 @@ async def test_on_any_open_failure_survives_a_member_that_fails_to_close():
 
     feeds = {"a": _BrokenClose(), "b": Feed()}
     with pytest.raises(ConnectionError, match="cannot open"):
-        await _open(OnAny(AttrRef("a"), AttrRef("b"), Read(fail)), feeds)
+        await _open(OnAny(Src.a, Src.b, Read(fail)), feeds)
     assert feeds["a"].closed
     assert feeds["b"].closed
 
@@ -132,7 +133,7 @@ async def test_on_any_cancelled_open_survives_a_member_that_fails_to_close():
         await asyncio.Event().wait()
 
     feeds = {"a": _BrokenClose()}
-    task = asyncio.create_task(_open(OnAny(AttrRef("a"), Read(hang)), feeds))
+    task = asyncio.create_task(_open(OnAny(Src.a, Read(hang)), feeds))
     await opening.wait()
     task.cancel()
     with pytest.raises(asyncio.CancelledError):
@@ -147,7 +148,7 @@ async def test_on_any_bind_failure_unbinds_the_members_already_bound():
             raise OSError(msg)
 
     feeds = {"a": Feed(), "b": _NoBind()}
-    sub = await _open(OnAny(AttrRef("a"), AttrRef("b")), feeds)
+    sub = await _open(OnAny(Src.a, Src.b), feeds)
     with pytest.raises(OSError, match="cannot bind"):
         sub.bind(print)
     assert feeds["a"].log == ["bind", "unbind"]
@@ -159,17 +160,17 @@ async def test_on_any_bind_failure_unbinds_the_members_already_bound():
 # ---------------------------------------------------------------------------
 
 
-def _recorder(log: list) -> Body:
-    async def body(rt: Runtime) -> None:
-        log.append(rt.ctx.attrs.get("k"))
+def _recorder(log: list) -> Callable:
+    async def body(rt: Runtime, k: object) -> None:
+        log.append(k)
 
-    return Body(body)
+    return lambda k: Body(body, k)
 
 
 async def _deliveries(change: object, fires: list[tuple[str, object]], names: tuple) -> tuple:
     """What a ReactEvery over ``change`` hears for ``fires``, and each member's lifecycle."""
     feeds, seen = _feeds(*names), []
-    task = start(ReactEvery(change, _recorder(seen), changed_key="k"), **feeds)
+    task = start(ReactEvery(change, _recorder(seen)), **feeds)
     await until(lambda: all(feed.receivers for feed in feeds.values()))
     for name, key in fires:
         feeds[name].fire(key)
@@ -180,8 +181,8 @@ async def _deliveries(change: object, fires: list[tuple[str, object]], names: tu
 
 async def test_law_on_any_of_one_behaves_as_the_member():
     fires = [("a", 1), ("a", None), ("a", "x")]
-    alone = await _deliveries(AttrRef("a"), fires, ("a",))
-    wrapped = await _deliveries(OnAny(AttrRef("a")), fires, ("a",))
+    alone = await _deliveries(Src.a, fires, ("a",))
+    wrapped = await _deliveries(OnAny(Src.a), fires, ("a",))
     assert wrapped == alone
     assert alone[0] == [1, None, "x"]
 
@@ -189,9 +190,9 @@ async def test_law_on_any_of_one_behaves_as_the_member():
 async def test_law_on_any_nests():
     fires = [("a", 1), ("c", 2), ("b", None), ("c", 3), ("a", 4)]
     names = ("a", "b", "c")
-    flat = await _deliveries(OnAny(AttrRef("a"), AttrRef("b"), AttrRef("c")), fires, names)
-    nested = await _deliveries(OnAny(AttrRef("a"), OnAny(AttrRef("b"), AttrRef("c"))), fires, names)
-    left = await _deliveries(OnAny(OnAny(AttrRef("a"), AttrRef("b")), AttrRef("c")), fires, names)
+    flat = await _deliveries(OnAny(Src.a, Src.b, Src.c), fires, names)
+    nested = await _deliveries(OnAny(Src.a, OnAny(Src.b, Src.c)), fires, names)
+    left = await _deliveries(OnAny(OnAny(Src.a, Src.b), Src.c), fires, names)
     assert nested == flat == left
     assert flat[0] == [1, 2, None, 3, 4]
     assert flat[1] == {name: ["bind", "unbind", "close"] for name in names}
@@ -208,9 +209,7 @@ async def test_on_any_wakes_a_level_flow_from_any_member():
     async def body(rt: Runtime) -> None:
         passes.append(len(passes))
 
-    task = start(
-        Reconcile(OnAny(AttrRef("a"), AttrRef("b")), Body(body), after=(), every=None), **feeds
-    )
+    task = start(Reconcile(OnAny(Src.a, Src.b), Body(body), after=(), every=None), **feeds)
     await until(lambda: len(passes) == 1)  # the pass right after subscribing
     feeds["b"].fire("kb")
     await until(lambda: len(passes) == 2)

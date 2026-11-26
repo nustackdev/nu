@@ -24,8 +24,9 @@ runs it. Each arm also takes its own attrs table (``_fork_attrs``, temporary
 until attrs go in task-184 phase 4).
 
 ``aeval_foreach_par`` is the odd one out: one body nid fanned out over a
-runtime-sized list instead of a fixed set of children, each arm a loop task on
-its own attrs table, off the budget entirely. It backs ``ForEachParAsync``,
+runtime-sized list of arm Runtimes instead of a fixed set of children, each
+arm a loop task on the frame its binding pushed for it, off the budget
+entirely. It backs ``ForEachParAsync``,
 which lives in ``nu.core.flows.control`` next to the ``ForEachDo`` it mirrors.
 ``ReconcileLatestEach`` in ``nu.core.reactive`` spawns its arms with the same
 ``_spawn_arm`` and keeps its own book of them.
@@ -291,41 +292,37 @@ async def aeval_any(
 # --- fan-out over a runtime list (loop only) -------------------------------
 
 
-def _spawn_arm(rt: Runtime, nid: int, elem: object, name: str) -> asyncio.Task:
-    """Start one arm of ``nid`` for ``elem`` on its own attrs table, ``elem`` bound under ``name``.
+def _spawn_arm(arm: Runtime, nid: int) -> asyncio.Task:
+    """Start one arm of ``nid`` on ``arm``, the Runtime on the frame pushed for it.
 
-    The arm's own table keeps its loop variable away from its siblings, and
-    every value is shared by reference so a live handle crosses the fan-out
-    intact.
+    The arm's own frame keeps its element away from its siblings, and every
+    value bound above it is shared by reference so a live handle crosses the
+    fan-out intact. The arm also takes its own attrs table (temporary, until
+    attrs go in task-184 phase 4).
     """
-    arm = rt._fork_attrs()
-
-    async def run() -> None:
-        with arm.ctx.attrs.let(name, elem):
-            await arm.aeval(nid)
-
-    return asyncio.ensure_future(run())
+    return asyncio.ensure_future(arm._fork_attrs().aeval(nid))
 
 
-async def aeval_foreach_par(rt: Runtime, nid: int, elems: Iterable, name: str) -> None:
-    """Fan the body at ``nid`` out over ``elems``, one loop task each, joining on all.
+async def aeval_foreach_par(arms: Iterable[Runtime], nid: int) -> None:
+    """Fan the body at ``nid`` out over ``arms``, one loop task each, joining on all.
 
-    Every arm is an asyncio.Task on its own attrs table with ``name``
-    bound to its element. Placement is always the loop and the Budget is never
-    touched: a parked coroutine costs no worker, so there is nothing here to
-    ration. First error wins, as with ``aeval_parallel``, and the remaining
-    arms are cancelled on the way out rather than left running headless.
+    Every arm is an asyncio.Task on its own Runtime, the frame its binding
+    pushed for its element. Placement is always the loop and the Budget is
+    never touched: a parked coroutine costs no worker, so there is nothing
+    here to ration. First error wins, as with ``aeval_parallel``, and the
+    remaining arms are cancelled on the way out rather than left running
+    headless.
 
     The task list is held until the join returns, so an arm that finishes early
     stays in it as a done Task. That is the right call for a fan-out that joins
     on all - the list is the join - and the wrong one for a supervisor, which
     is why ``ReconcileLatestEach`` keeps its own book (``nu.core.reactive._arms``).
     """
-    elems = list(elems)
-    if not elems:
+    arms = list(arms)
+    if not arms:
         return
 
-    await _join_all([_spawn_arm(rt, nid, e, name) for e in elems])
+    await _join_all([_spawn_arm(arm, nid) for arm in arms])
 
 
 # --- parallel streams -----------------------------------------------------

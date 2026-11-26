@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 import nu
 from nu.core.io import STDOUT
 
-from .interactions import SID_ATTR, SessionFor
+from .interactions import SID_ATTR, SessionFor, _ParkSid
 from .ref import ServerRef
 
 
@@ -46,8 +46,7 @@ def sessions_fold(arm: Nu) -> Nu:
     return nu.ReconcileLatestEach(
         ServerRef().sessions(),
         ServerRef().on_change(),
-        arm,
-        SID_ATTR,
+        lambda sid: _ParkSid(sid, arm),
     )
 
 

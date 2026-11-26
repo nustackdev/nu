@@ -13,9 +13,8 @@ from nu.lang.typeinfo import TypeInfo
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
-    from nu.context import Attr
     from nu.forms import Bool, Bytes, Float, Int, Iterator, List, Object, Set, Str, Tuple
-    from nu.lang import Arg, IntArg, Nu, StrArg
+    from nu.lang import Arg, IntArg, Nu
 
 
 __all__ = [
@@ -101,19 +100,15 @@ class IteratorSurface(Surface, Generic[T]):
 
         return self._item(First(self) if default is UNSET else First(self, default))
 
-    def map(self, transform: Nu | Callable[[Attr], Nu], key: StrArg | None = None) -> Iterator:
+    def map(self, transform: Nu | Callable[..., Nu]) -> Iterator:
         """Each item replaced by transform's value, still a stream.
 
         Args:
             transform: evaluated once per item; its value replaces the item.
-                A lambda over the item, or a tree reading it with
-                `nu.Attr(key)`.
-            key: the name each item is bound under, for a tree transform.
-                Defaults to `"item"`; a lambda mints its own.
+                A lambda over the item, or a tree that reads none.
 
         Notes:
-            - The same binding as `nu.Map`: ``key`` is passed on only when
-              given, so a lambda and an explicit name never meet.
+            - The same binding as `nu.Map`.
 
         Yields:
             An Iterator the same length as self, lazily mapped.
@@ -122,32 +117,21 @@ class IteratorSurface(Surface, Generic[T]):
             >>> xs = nu.List.of(1, 2).iter()
             >>> nu.run(xs.map(lambda x: nu.Int(x) + 1).to_list())[0]
             [2, 3]
-
-            The same with a tree reading the default name:
-
-            >>> nu.run(xs.map(nu.Add(nu.Attr("item"), 1)).to_list())[0]
-            [2, 3]
         """
         from nu.core import Map
         from nu.forms import Iterator
 
-        return Iterator(Map(self, transform, key))
+        return Iterator(Map(self, transform))
 
-    def filter(
-        self, predicate: Nu | Callable[[Attr], Nu], key: StrArg | None = None
-    ) -> Iterator[T]:
+    def filter(self, predicate: Nu | Callable[..., Nu]) -> Iterator[T]:
         """Only the items predicate holds for, still a stream.
 
         Args:
             predicate: evaluated once per item; the item stays when it is
-                truthy. A lambda over the item, or a tree reading it with
-                `nu.Attr(key)`.
-            key: the name each item is bound under, for a tree predicate.
-                Defaults to `"item"`; a lambda mints its own.
+                truthy. A lambda over the item, or a tree that reads none.
 
         Notes:
-            - The same binding as `nu.Filter`: ``key`` is passed on only
-              when given, so a lambda and an explicit name never meet.
+            - The same binding as `nu.Filter`.
 
         Yields:
             An Iterator over the kept items, in order.
@@ -156,16 +140,11 @@ class IteratorSurface(Surface, Generic[T]):
             >>> xs = nu.List.of(1, 2, 3).iter()
             >>> nu.run(xs.filter(lambda x: x > 1).to_list())[0]
             [2, 3]
-
-            The same with a tree reading an explicit name:
-
-            >>> nu.run(xs.filter(nu.Gt(nu.Attr("n"), 1), key="n").to_list())[0]
-            [2, 3]
         """
         from nu.core import Filter
         from nu.forms import Iterator
 
-        return Iterator(Filter(self, predicate, key), type_info=self._holding(PyIterator))
+        return Iterator(Filter(self, predicate), type_info=self._holding(PyIterator))
 
     # ---- folds: stream to one value, the value keeps chaining -----------
 
@@ -355,18 +334,15 @@ class IteratorSurface(Surface, Generic[T]):
 
     def sort_by(
         self,
-        key: Nu | Callable[[Attr], Nu],
+        key: Nu | Callable[..., Nu],
         reverse: Arg[bool] = False,
-        item: StrArg | None = None,
     ) -> Iterator[T]:
         """Self ordered by a per-item key, still a stream.
 
         Args:
             key: evaluated once per item for its sort key. A lambda over the
-                item, or a tree reading it with `nu.Attr(item)`.
+                item, or a tree that reads none.
             reverse: descending order when truthy.
-            item: the name each item is bound under, for a tree key.
-                Defaults to `"item"`; a lambda mints its own.
 
         Notes:
             - Drains and sorts the whole stream before yielding the first
@@ -383,7 +359,7 @@ class IteratorSurface(Surface, Generic[T]):
         from nu.core import SortBy
         from nu.forms import Iterator
 
-        return Iterator(SortBy(self, key, reverse, item), type_info=self._holding(PyIterator))
+        return Iterator(SortBy(self, key, reverse), type_info=self._holding(PyIterator))
 
     def unique(self) -> Iterator[T]:
         """Each item once, in first-seen order, still a stream.

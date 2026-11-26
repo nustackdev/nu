@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 from _support.reactive import (
+    FEED,
     QUIET,
     Body,
     Feed,
@@ -19,7 +20,6 @@ from _support.reactive import (
 )
 
 import nu
-from nu.context import Attr as AttrRef
 from nu.core.reactive import ReconcileLatestEach
 
 
@@ -38,15 +38,14 @@ def _fold(elems: set, log: list, reads: list | None = None, **schedule: object) 
             reads.append(sorted(elems))
         return sorted(elems)
 
-    async def arm(rt: Runtime) -> None:
-        x = rt.ctx.attrs.get("x")
+    async def arm(rt: Runtime, x: object) -> None:
         log.append(("start", x))
         try:
             await asyncio.Event().wait()
         finally:
             log.append(("end", x))
 
-    return ReconcileLatestEach(Read(read), AttrRef("feed"), Body(arm), "x", **schedule)
+    return ReconcileLatestEach(Read(read), FEED, lambda x: Body(arm, x), **schedule)
 
 
 async def test_fold_starts_arms_right_after_binding() -> None:
@@ -97,11 +96,11 @@ async def test_fold_merges_a_burst_during_a_pass() -> None:
             await gate.wait()
         return ["a"]
 
-    async def arm(rt: Runtime) -> None:
-        log.append(rt.ctx.attrs.get("x"))
+    async def arm(rt: Runtime, x: object) -> None:
+        log.append(x)
         await asyncio.Event().wait()
 
-    term = ReconcileLatestEach(Read(read), AttrRef("feed"), Body(arm), "x", **QUIET)
+    term = ReconcileLatestEach(Read(read), FEED, lambda x: Body(arm, x), **QUIET)
     task = start(term, feed=feed)
     await asyncio.wait_for(started.wait(), 5)
     for key in range(10):
@@ -143,8 +142,7 @@ def _once(
             reads.append(sorted(elems))
         return sorted(elems)
 
-    async def arm(rt: Runtime) -> None:
-        x = rt.ctx.attrs.get("x")
+    async def arm(rt: Runtime, x: object) -> None:
         log.append(("start", x))
         try:
             if plan.get(x) == "boom":
@@ -155,7 +153,7 @@ def _once(
         finally:
             log.append(("end", x))
 
-    return ReconcileLatestEach(Read(read), AttrRef("feed"), Body(arm), "x", **schedule)
+    return ReconcileLatestEach(Read(read), FEED, lambda x: Body(arm, x), **schedule)
 
 
 async def test_a_finished_arm_stays_finished_while_its_element_stays() -> None:
@@ -209,9 +207,7 @@ async def test_an_arm_error_while_the_flow_waits_ends_it_at_once() -> None:
         await gate.wait()
         raise ValueError("late boom")
 
-    task = start(
-        ReconcileLatestEach(Read(read), AttrRef("feed"), Body(arm), "x", **QUIET), feed=feed
-    )
+    task = start(ReconcileLatestEach(Read(read), FEED, Body(arm), **QUIET), feed=feed)
     await until(lambda: feed.log == ["bind"])
     await settle_loop()
     gate.set()
@@ -226,7 +222,7 @@ async def test_unhashable_elements_are_a_clear_error() -> None:
     async def read(rt: Runtime) -> list:
         return [[1]]
 
-    term = ReconcileLatestEach(Read(read), AttrRef("feed"), nu.Noop(), **QUIET)
+    term = ReconcileLatestEach(Read(read), FEED, nu.Noop(), **QUIET)
     task = start(term, feed=feed)
     with pytest.raises(TypeError, match=r"ReconcileLatestEach: ids must be hashable, got list"):
         await asyncio.wait_for(task, 5)

@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 import asyncio
-from contextlib import ExitStack
 from typing import TYPE_CHECKING
 
-from nu.context.attrs.binders import bind
 from nu.engine.structure import Declared
 from nu.lang import Control
+from nu.lang.binding import dynamic
 
-from .._body import async_only, changed, drain_body
+from .._body import async_only, drain_body
 
 
 if TYPE_CHECKING:
@@ -36,17 +35,15 @@ class ReactWhile(Control):
     Args:
         change: the change subscription to wait on.
         condition: checked after each notification, before that turn's body
-            runs: a lambda over the changed key, or a tree. A falsy value
-            ends the loop.
+            runs: a lambda over the changed key, or a tree that reads none. A
+            falsy value ends the loop.
         body: what to run on a turn where the condition holds: a lambda over
-            the changed key, or a tree.
-        changed_key: name the changed key is bound under while that turn's
-            tree condition and tree body run; a lambda mints its own.
+            the changed key, or a tree that reads none.
 
     Notes:
-        - The key is bound for the whole turn, condition and body alike. A
-          lambda condition and a lambda body each read it under the name
-          their own code mints.
+        - The condition and the body are two bindings, each over its own
+          lambda and its own Shape. Every turn pushes a frame holding the
+          key for each.
         - Requires an async runtime; the sync path raises ``RuntimeError``.
 
     Example:
@@ -62,48 +59,35 @@ class ReactWhile(Control):
 
     _mutates = Declared(value=frozenset(), name="mutates")
     _requires_async = Declared(value=True, name="requires_async")
-    _param_slots = Declared(value=frozenset({0, 1, 3, 4}), name="param_slots")
+    _param_slots = Declared(value=frozenset({0, 1}), name="param_slots")
 
-    def __init__(
-        self,
-        change: object,
-        condition: object,
-        body: object,
-        *,
-        changed_key: object = None,
-    ) -> None:
-        condition, (condition_key,) = bind("ReactWhile", condition, changed_key=changed_key)
-        body, (body_key,) = bind("ReactWhile", body, changed_key=changed_key)
-        # One name when both are trees: the given ``changed_key``, or none.
-        pair = (condition_key,) if condition_key is body_key else (condition_key, body_key)
-        names = tuple(name for name in pair if name is not None)
-        super().__init__(change, condition, body, *names)
+    def __init__(self, change: object, condition: object, body: object) -> None:
+        condition, self.condition_binding = dynamic("ReactWhile condition", condition, 1)
+        body, self.body_binding = dynamic("ReactWhile body", body, 1)
+        super().__init__(change, condition, body)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return async_only("ReactWhile")
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        name_slots = children[3:]  # [change, condition, body, *names]
+        change, condition, body = children
+        cond_b, body_b = self.condition_binding, self.body_binding
 
         async def athunk(rt: Runtime) -> None:
-            names = [await slot(rt) for slot in name_slots]
             loop = asyncio.get_running_loop()
             queue: asyncio.Queue[object] = asyncio.Queue()
 
             def on_change(k: object) -> None:
                 loop.call_soon_threadsafe(queue.put_nowait, k)
 
-            sub = await children[0](rt)
+            sub = await change(rt)
             sub.bind(on_change)
             try:
                 while True:
                     key = await queue.get()
-                    with ExitStack() as turn:
-                        for name in names:
-                            turn.enter_context(changed(rt.ctx.attrs, name, key))
-                        if not await children[1](rt):
-                            break
-                        await drain_body(rt, children[2])
+                    if not await condition(rt.on(cond_b.push(rt.ctx, (key,)))):
+                        break
+                    await drain_body(rt.on(body_b.push(rt.ctx, (key,))), body)
             finally:
                 sub.unbind(on_change)
                 sub.close()

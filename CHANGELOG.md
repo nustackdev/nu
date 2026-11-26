@@ -12,6 +12,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Name keywords on loops, catches, retries and reactions are gone; bodies take lambdas
+- Loops, maps, catches, retries and reactions hand their values to lambdas through frames
 - Drain-then-follow stream flow removed; it had no users and only tests
 - Benchmark bodies use the merged local frame binding after the frames rework
 - Tests pin frame isolation across arms, shadowing, streams, cancels and delayed reads

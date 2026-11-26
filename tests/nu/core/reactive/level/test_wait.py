@@ -5,13 +5,12 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
-from _support.reactive import QUIET, Feed, Read, live_rechecks, start, until
+from _support.reactive import FEED, QUIET, Feed, Read, live_rechecks, seeded, start, until
 
 import nu
-from nu.context import Attr as AttrRef
 from nu.core.reactive import WaitUntil
 from nu.domains.shape import Shape
-from nu.lang import NULL, Context
+from nu.lang import NULL
 from nu.lang.helpers import arun
 from nustd.kv import IntRef, Snapshot, Transaction, memory_navigator
 
@@ -35,8 +34,8 @@ def _cond(state: dict, reads: list) -> Read:
 
 async def test_until_returns_at_once_when_already_true() -> None:
     feed, reads = Feed(), []
-    term = WaitUntil(AttrRef("feed"), _cond({"done": True}, reads), after=(5.0,), every=5.0)
-    await asyncio.wait_for(arun(term, Context(attrs={"feed": feed})), 5)
+    term = WaitUntil(FEED, _cond({"done": True}, reads), after=(5.0,), every=5.0)
+    await asyncio.wait_for(arun(term, seeded(feed=feed)), 5)
     assert reads == [True]
     assert feed.log == ["bind", "unbind", "close"]
     assert live_rechecks() == []
@@ -44,7 +43,7 @@ async def test_until_returns_at_once_when_already_true() -> None:
 
 async def test_until_returns_on_the_change_that_makes_it_true() -> None:
     feed, state, reads = Feed(), {"done": False}, []
-    task = start(WaitUntil(AttrRef("feed"), _cond(state, reads), **QUIET), feed=feed)
+    task = start(WaitUntil(FEED, _cond(state, reads), **QUIET), feed=feed)
     await until(lambda: reads == [False])
     feed.fire()
     await until(lambda: len(reads) == 2)
@@ -58,7 +57,7 @@ async def test_until_returns_on_the_change_that_makes_it_true() -> None:
 
 async def test_until_returns_on_a_recheck_when_the_notification_was_dropped() -> None:
     feed, state, reads = Feed(), {"done": False}, []
-    term = WaitUntil(AttrRef("feed"), _cond(state, reads), after=(0.05,), every=None)
+    term = WaitUntil(FEED, _cond(state, reads), after=(0.05,), every=None)
     task = start(term, feed=feed)
     await until(lambda: reads == [False])
     state["done"] = True
@@ -76,7 +75,7 @@ async def test_until_treats_empty_as_false() -> None:
         reads.append(1)
         return NULL if len(reads) == 1 else True
 
-    task = start(WaitUntil(AttrRef("feed"), Read(fn), **QUIET), feed=feed)
+    task = start(WaitUntil(FEED, Read(fn), **QUIET), feed=feed)
     await until(lambda: reads == [1])
     assert not task.done()
     feed.fire()

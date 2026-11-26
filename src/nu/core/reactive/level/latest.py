@@ -5,11 +5,11 @@ from __future__ import annotations
 from contextlib import aclosing
 from typing import TYPE_CHECKING
 
-from nu.context.attrs.binders import bind
 from nu.engine.structure import Declared
 from nu.lang import Control
 from nu.lang._stream import aiter_any
 from nu.lang.attributes.execution import ExecOrder
+from nu.lang.binding import _DynamicBinding
 from nu.lang.null import is_null
 
 from .._body import async_only
@@ -41,7 +41,7 @@ async def _one(owner: str, stream: object) -> object:
     return found[0] if found else None
 
 
-class ReconcileLatest(Control):
+class ReconcileLatest(_DynamicBinding, Control):
     """``ReconcileLatest(read, change, lambda x: body)`` - one arm for the id ``read`` answers, kept live against ``change``.
 
     ``ReconcileLatestEach`` over one id or none. Each pass reads the id and
@@ -60,10 +60,8 @@ class ReconcileLatest(Control):
         change: the change subscription that says the id may have moved.
             Bound once, before the first pass, and held for as long as this
             runs.
-        body: the arm, run for the id. A lambda over the id, or a tree
-            reading it with ``Attr(item)``.
-        item: the name to bind the id under, for a tree body. Optional,
-            defaults to ``"item"``; a lambda mints its own.
+        body: the arm, run for the id on a frame of its own: a lambda over
+            the id, or a tree that reads none.
         after: re-check offsets in seconds after binding, for the window a
             fresh subscription may not yet be heard in. A term yielding an
             iterable of floats, or a literal one. Empty by default: re-checks
@@ -99,7 +97,7 @@ class ReconcileLatest(Control):
             ReconcileLatest(Cell.selected, Cell.selected.on_change(), lambda row: show(row))
     """
 
-    _param_slots = Declared(value=frozenset({0, 1, 3, 4, 5}), name="param_slots")
+    _param_slots = Declared(value=frozenset({0, 1, 3, 4}), name="param_slots")
     _exec_order = Declared(value=ExecOrder.PARALLEL, name="exec_order")
     _requires_async = Declared(value=True, name="requires_async")
 
@@ -108,17 +106,14 @@ class ReconcileLatest(Control):
         read: object,
         change: object,
         body: object,
-        item: object = None,
         *,
         after: Iterable[float] | object = (),
         every: float | object | None = None,
     ) -> None:
-        body, (item,) = bind("ReconcileLatest", body, item=item)
         super().__init__(
             read,
             change,
-            body,
-            "item" if item is None else item,
+            self._dynamic("ReconcileLatest", body, 1),
             *schedule_terms("ReconcileLatest", after, every),
         )
 
@@ -138,6 +133,6 @@ class ReconcileLatest(Control):
             return [] if value is None or is_null(value) else [value]
 
         async def athunk(rt: Runtime) -> None:
-            await hold_arms("ReconcileLatest", rt, nid, children, ids)
+            await hold_arms("ReconcileLatest", rt, nid, children, ids, self._binding)
 
         return athunk

@@ -19,6 +19,17 @@ import nu
 from nu.prog import ConstructionError, LoadNu, Program, PyBrace
 
 
+class Seed(nu.Shape):
+    """Values a test seeds the Context with, read by the tree as computed arguments."""
+
+    entry = nu.ObjectRef.slot()
+    who = nu.ObjectRef.slot()
+
+
+def _seeded(values: dict) -> nu.Context:
+    return nu.Context().bind(dict, dict(values), Seed)
+
+
 def src(text: str) -> str:
     return textwrap.dedent(text).lstrip()
 
@@ -130,8 +141,8 @@ def test_entry_threads_through_load() -> None:
 
 
 def test_entry_can_be_computed() -> None:
-    ctx = nu.Context(attrs={"entry": "build"})
-    tree = Program(ENTRY_SOURCE).run(entry=nu.context.Attr("entry"))
+    ctx = _seeded({"entry": "build"})
+    tree = Program(ENTRY_SOURCE).run(entry=Seed.entry)
     assert nu.run(tree, ctx)[0] == "built"
 
 
@@ -145,8 +156,8 @@ def test_scope_threads_through_load() -> None:
 
 
 def test_scope_values_can_be_computed() -> None:
-    ctx = nu.Context(attrs={"who": "attrs"})
-    tree = Program(GREETING).run(scope={"who": nu.context.Attr("who")})
+    ctx = _seeded({"who": "attrs"})
+    tree = Program(GREETING).run(scope={"who": Seed.who})
     assert nu.run(tree, ctx)[0] == "hello attrs"
 
 
@@ -274,33 +285,36 @@ def test_on_error_also_catches_a_venv_brace_failure() -> None:
 
 
 def test_the_catch_branch_can_read_the_error_as_a_string() -> None:
-    tree = Program(BROKEN).run(on_error=nu.str(nu.context.Attr("error")))
+    tree = Program(BROKEN).run(on_error=lambda error: nu.str(error))
     value, _ = nu.run(tree)
     assert "ZeroDivisionError" in value
     assert "(line 4)" in value
+
+
+def _lineno(error: nu.Nu) -> nu.Nu:
+    return nu.GetAttr(nu.GetAttr(nu.GetAttr(error, "exception"), "diagnostic"), "lineno")
 
 
 def test_the_catch_branch_can_read_the_diagnostic_fields() -> None:
     # Two Vars hops: the exception's __dict__ carries ``diagnostic``, the
     # Diagnostic's carries ``lineno``. Both need a __dict__, which is why
     # neither type is slotted.
-    exc = nu.GetAttr(nu.context.Attr("error"), "exception")
-    diagnostic = nu.GetItem(nu.Vars(exc), "diagnostic")
-    lineno = nu.GetItem(nu.Vars(diagnostic), "lineno")
+    def lineno(error: nu.Nu) -> nu.Nu:
+        diagnostic = nu.GetItem(nu.Vars(nu.GetAttr(error, "exception")), "diagnostic")
+        return nu.GetItem(nu.Vars(diagnostic), "lineno")
+
     assert nu.run(Program(BROKEN).run(on_error=lineno))[0] == 4
 
 
 def test_the_catch_branch_can_branch_on_the_line_number() -> None:
-    exc = nu.GetAttr(nu.context.Attr("error"), "exception")
-    lineno = nu.GetAttr(nu.GetAttr(exc, "diagnostic"), "lineno")
     tree = Program(BROKEN).run(
-        on_error=nu.If(nu.Eq(lineno, 4), nu.Literal("line four"), nu.Literal("elsewhere"))
+        on_error=lambda error: nu.If(
+            nu.Eq(_lineno(error), 4), nu.Literal("line four"), nu.Literal("elsewhere")
+        )
     )
     assert nu.run(tree)[0] == "line four"
 
 
 async def test_the_catch_branch_reads_the_diagnostic_under_arun() -> None:
-    exc = nu.GetAttr(nu.context.Attr("error"), "exception")
-    lineno = nu.GetAttr(nu.GetAttr(exc, "diagnostic"), "lineno")
-    value, _ = await nu.arun(Program(BROKEN).run(on_error=lineno))
+    value, _ = await nu.arun(Program(BROKEN).run(on_error=_lineno))
     assert value == 4

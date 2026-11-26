@@ -28,9 +28,10 @@ __all__ = ["Attr"]
 class Attr(_ContextRef, ObjectSurface):
     """Reads the value an interaction handed its body under a name.
 
-    A loop binds its item, a fold its accumulator, a catch the error, a retry
-    the attempt, a reaction the key that changed. ``Attr(name)`` is how the
-    body reads it. A body written as a lambda never spells one out: the
+    The nustd bindings still on attrs (itertools, functools, fs.tmp, the
+    session id) bind what they hand here; the core bindings hand theirs
+    through mem frames instead (``nu.lang.binding``). ``Attr(name)`` is how
+    the body reads it. A body written as a lambda never spells one out: the
     interaction mints the name and hands the lambda an ``Attr`` over it. The
     sole child is the address, evaluated through the runtime like any other
     child, so a name can be fixed at write time or computed at run time.
@@ -55,8 +56,8 @@ class Attr(_ContextRef, ObjectSurface):
         >>> nu.run(nu.Attr("missing"))[0]
         <NULL Attr.missing>
 
-        >>> nu.run(nu.Collect(nu.Map(nu.Iter([1, 2]), nu.Int(nu.Attr("item")) + 1)))[0]
-        [2, 3]
+        >>> nu.run(nu.Int(nu.Attr("n")) + 1, nu.Context({"n": 2}))[0]
+        3
     """
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

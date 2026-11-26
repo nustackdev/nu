@@ -3,9 +3,9 @@
 A Fabric is an addressable space where Refs live; it resolves Refs and carries
 out the Interactions over them. The Context fabric has two axes:
 
-- **attrs** - the channel an interaction uses to hand its internal values
-  to its body (``ctx.attrs``): a loop its item, a catch the error. Only
-  interactions bind it; the tree reads it with ``Attr(name)`` and asks
+- **attrs** - the channel the nustd bindings not yet on mem frames use to
+  hand their internal values to their body (``ctx.attrs``): a fold its
+  accumulator. Only interactions bind it; the tree reads it with ``Attr(name)`` and asks
   ``Attr(name).exists()`` (a ``Bool`` over ``AttrExists``). It is never a store: state goes through a fabric.
 - **fabric** - typed bindings (``ctx.bind`` / ``ctx.get``) for every other
   ctx-bound thing: execution resources, storage handles, cluster handles,

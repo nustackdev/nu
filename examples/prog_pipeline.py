@@ -105,9 +105,12 @@ def demo_program_ref() -> None:
     nu.run(Jobs.greeter.run(scope={"who": "storage"}), ctx)
 
     # A broken program stored the same way, handled in the tree instead of
-    # by a python try block. The catch branch reads the line it died on.
+    # by a python try block. The catch lambda reads the line it died on.
     nu.run(Jobs.greeter.set("import nu\n\ndef out(who):\n    return 1 / 0\n"), ctx)
-    line = nu.GetAttr(nu.GetAttr(nu.GetAttr(nu.Attr("error"), "exception"), "diagnostic"), "lineno")
+
+    def line(error: nu.Nu) -> nu.Nu:
+        return nu.GetAttr(nu.GetAttr(nu.GetAttr(error, "exception"), "diagnostic"), "lineno")
+
     caught = nu.run(Jobs.greeter.run(scope={"who": "nobody"}, on_error=line), ctx)[0]
     print(f"  construction failed on line {caught}")
 

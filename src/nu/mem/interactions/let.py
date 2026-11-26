@@ -27,10 +27,9 @@ from typing import TYPE_CHECKING
 
 from nu.domains.shape import Shape
 from nu.lang import Bracket
+from nu.lang.binding import _DynamicBinding, lambda_params
 from nu.lang.null import is_null
 from nu.lang.sentinels import UNSET
-
-from ..binding import _DynamicBinding, lambda_params
 
 
 if TYPE_CHECKING:
@@ -76,9 +75,10 @@ class Let(_DynamicBinding, Bracket):
 
     @contextmanager
     def _open(self, ctx: Context, *values: object) -> Iterator[Context]:
+        shape = self._bind_shape
         for name, value in zip(self._bind_slots, values, strict=False):
             if is_null(value):
-                msg = f"let: cannot store NULL in {self._bind_shape.__name__}.{name}"
+                msg = f"let: cannot store NULL in {getattr(shape, '__name__', shape)}.{name}"
                 raise ValueError(msg)
         yield self._push(ctx, values)
 

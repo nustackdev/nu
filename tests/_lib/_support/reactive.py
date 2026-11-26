@@ -1,11 +1,13 @@
 """Test doubles for the reactive flows: a hand-fired subscription and coroutine terms.
 
 Reactive tests need a substrate. Most of them do without a real one: a
-``Feed`` is the ``Subscription`` the flow binds, placed in ctx attrs and read
-back with ``nu.context.Attr("feed")`` as the flow's ``change`` child, and the
-test fires it by hand (and can drop notifications). ``Body`` and ``Read`` turn
-a Python coroutine into an async-only action or query, so each test decides
-when a change lands, which one is lost, and when a pass may finish.
+``Feed`` is the ``Subscription`` the flow binds, held in a mem frame over
+``Src`` and read back with ``Src.feed`` (``FEED``) as the flow's ``change``
+child, and the test fires it by hand (and can drop notifications). ``Body``
+and ``Read`` turn a Python coroutine into an async-only action or query, so
+each test decides when a change lands, which one is lost, and when a pass may
+finish. A ``Body`` given children hands their values to the coroutine after
+``rt``: ``lambda key: Body(fn, key)`` runs ``fn(rt, key)``.
 
 Waits are event-driven with generous deadlines; nothing asserts a wall-clock
 bound.
@@ -18,6 +20,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+import nu
 from nu.core.reactive.level._wakes import Wakes
 from nu.engine.structure import Declared
 from nu.lang import Context, ScalarAction, ScalarQuery
@@ -30,11 +33,14 @@ if TYPE_CHECKING:
     from nu.lang.runtime import Runtime
 
 __all__ = [
+    "FEED",
     "QUIET",
     "Body",
     "Feed",
     "Read",
+    "Src",
     "live_rechecks",
+    "seeded",
     "settle_loop",
     "start",
     "stop",
@@ -44,6 +50,22 @@ __all__ = [
 
 #: No re-checks at all: only the wake after binding and real notifications.
 QUIET: dict = {"after": (), "every": None}
+
+
+class Src(nu.Shape):
+    """What ``start`` seeds a flow's Context with: the feed, and spares."""
+
+    feed = nu.ObjectRef.slot()
+    dead = nu.ObjectRef.slot()
+    after = nu.ObjectRef.slot()
+    every = nu.ObjectRef.slot()
+    a = nu.ObjectRef.slot()
+    b = nu.ObjectRef.slot()
+    c = nu.ObjectRef.slot()
+
+
+#: The flow's ``change`` child: the ``Feed`` ``start`` seeded.
+FEED = Src.feed
 
 
 class Feed:
@@ -84,13 +106,13 @@ class Feed:
 
 
 class Body(ScalarAction):
-    """Async-only body running ``fn(rt)``."""
+    """Async-only body running ``fn(rt, *values)``, one value per child given."""
 
     _requires_async = Declared(value=True, name="requires_async")
     _mutates = Declared(value=frozenset({0}), name="mutates")
 
-    def __init__(self, fn: Callable) -> None:
-        super().__init__()
+    def __init__(self, fn: Callable, *reads: object) -> None:
+        super().__init__(*reads)
         self._fn = fn
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -104,7 +126,7 @@ class Body(ScalarAction):
         fn = self._fn
 
         async def athunk(rt: Runtime) -> object:
-            return await fn(rt)
+            return await fn(rt, *[await read(rt) for read in children])
 
         return athunk
 
@@ -134,9 +156,14 @@ class Read(ScalarQuery):
         return athunk
 
 
-def start(term: object, **attrs: object) -> asyncio.Task:
-    """Run ``term`` as a task, with ``attrs`` (a ``feed=Feed()``, say) in ctx."""
-    return asyncio.ensure_future(arun(term, Context(attrs=attrs)))
+def seeded(**values: object) -> Context:
+    """A Context with a frame holding ``values`` (a ``feed=Feed()``, say) under ``Src``."""
+    return Context().bind(dict, dict(values), Src)
+
+
+def start(term: object, **values: object) -> asyncio.Task:
+    """Run ``term`` as a task, with ``values`` (a ``feed=Feed()``, say) under ``Src``."""
+    return asyncio.ensure_future(arun(term, seeded(**values)))
 
 
 async def until(check: Callable[[], bool], timeout: float = 5.0) -> None:

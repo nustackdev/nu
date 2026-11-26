@@ -16,57 +16,49 @@ stream in, stream out. ``Sorted`` is a ScalarQuery, like Python's ``sorted``:
 ordering must see every item before it yields the first, so it takes an
 iterable value and yields a list rather than posing as a stream.
 
-``Map``, ``Filter`` and ``SortBy`` bind each item into ``ctx.attrs`` under a
-name and evaluate a Nu child against it. The child is usually a lambda over
-the item (``lambda x: x > 1``): it runs once, at construction, with a ref to
-the item and returns the child tree, and the name is minted for it. Given as a
-plain tree instead, the child reads the item with ``Attr(<name>)`` under an
-explicit name, itself a **child** (a ``Literal`` or a Ref computed elsewhere,
-never an opaque field). The item is bound with ``ctx.attrs.let`` for the
-evaluation of that one item, so it shadows an outer name of the same spelling
-and never outlives the item.
+``Map``, ``Filter`` and ``SortBy`` are dynamic bindings (``nu.lang.binding``)
+handing each item to a Nu child. The child is a lambda over the item
+(``lambda x: x > 1``): it runs once, at construction, with a mem ref to the
+item and returns the child tree. Each run pushes one frame and writes the
+current item into it before the child is evaluated for that item; the frame
+is the run's own and never reaches the caller. A child given as a plain tree
+reads no item.
 """
 
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from nu.context.attrs.binders import bind
 from nu.lang import ScalarQuery, StreamQuery
 from nu.lang._stream import aiter_any, sync_iter
+from nu.lang.binding import _DynamicBinding
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
-    from nu.context import Attr
-    from nu.lang import Arg, Nu, StrArg
+    from nu.lang import Arg, Nu
     from nu.lang.runtime import Runtime
 
 __all__ = ["Filter", "Flatten", "Map", "SortBy", "Sorted", "Unique"]
 
 
-class Map(StreamQuery):
+class Map(_DynamicBinding, StreamQuery):
     """Applies a query child to every item of a stream child (lazy).
 
     Args:
         source: the stream to map over.
         transform: evaluated once per item; its value replaces the item. A
-            lambda over the item, or a tree reading it with ``Attr(key)``.
-        key: name each item is bound under while transform runs, for a tree
-            ``transform``. Defaults to ``"item"``; a lambda mints its own.
+            lambda over the item, or a tree that reads none.
 
     Notes:
-        - The lambda runs once, at construction, and gets a ref, not a value:
-          it builds the tree and never branches on the item in Python.
-        - The name belongs to the lambda's code: nested lambdas each get
-          their own, while one lambda used again inside its own body
-          shadows the outer binding, as with ``nu.let``. An explicit ``key``
-          keeps both readable.
-        - ``key`` is itself a child (a ``Literal`` or a Ref), not a raw
-          string, so it can be computed rather than fixed at write time.
-        - The binding lasts for that item's ``transform`` and is released
-          before the result is yielded, so it never reaches the consumer.
+        - The lambda runs once, at construction, and gets a mem ref, not a
+          value: it builds the tree and never branches on the item in Python.
+        - The ref's Shape belongs to the lambda's code: nested lambdas each
+          get their own, while one lambda used again inside its own body
+          shadows the outer binding, as with ``nu.let``.
+        - One frame per run, the item written into it before ``transform``
+          runs for that item. The frame never reaches the consumer.
         - Pulled lazily, one item at a time; nothing runs ahead of the pull.
         - No NULL check of its own: a NULL item, or a NULL result from
           ``transform``, passes straight through as a value.
@@ -78,68 +70,56 @@ class Map(StreamQuery):
     Example:
         >>> nu.run(nu.Collect(nu.Map(nu.Iter([1, 2, 3]), lambda x: nu.Int(x) + 1)))[0]
         [2, 3, 4]
-
-        The same with an explicit name:
-
-        >>> nu.run(nu.Collect(nu.Map(nu.Iter([1, 2, 3]), nu.Add(nu.Attr("n"), 1), key="n")))[0]
-        [2, 3, 4]
     """
 
-    def __init__(
-        self,
-        source: Arg[Iterable],
-        transform: Nu | Callable[[Attr], Nu],
-        key: StrArg | None = None,
-    ) -> None:
-        transform, (key,) = bind("Map", transform, key=key)
-        super().__init__(source, transform, "item" if key is None else key)
+    def __init__(self, source: Arg[Iterable], transform: Nu | Callable[..., Nu]) -> None:
+        super().__init__(source, self._dynamic("Map", transform, 1))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        source, transform, key_t = children
+        source, transform = children
+        binding = self._binding
 
         def thunk(rt: Runtime) -> object:
-            name = key_t(rt)
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
 
             def gen() -> object:
                 for elem in sync_iter(source(rt)):
-                    with rt.ctx.attrs.let(name, elem):
-                        result = transform(rt)
-                    yield result
+                    binding.write(data, (elem,))
+                    yield transform(inner)
 
             return gen()
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        source, transform, key_t = children
+        source, transform = children
+        binding = self._binding
 
         async def athunk(rt: Runtime) -> object:
-            name = await key_t(rt)
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
 
             async def agen() -> object:
                 async for elem in aiter_any(await source(rt)):
-                    with rt.ctx.attrs.let(name, elem):
-                        result = await transform(rt)
-                    yield result
+                    binding.write(data, (elem,))
+                    yield await transform(inner)
 
             return agen()
 
         return athunk
 
 
-class Filter(StreamQuery):
+class Filter(_DynamicBinding, StreamQuery):
     """Keeps the items of a stream child for which a predicate holds (lazy).
 
     Args:
         source: the stream to filter.
         predicate: evaluated once per item; the item passes when this is
-            truthy. A lambda over the item, or a tree reading it with
-            ``Attr(key)``.
-        key: name each item is bound under while predicate runs, for a tree
-            ``predicate``. Defaults to ``"item"``; a lambda mints its own.
+            truthy. A lambda over the item, or a tree that reads none.
 
     Notes:
-        - The same scoped binding, and the same lambda form, as :class:`Map`.
+        - The same binding, and the same lambda form, as :class:`Map`.
         - Pulled lazily, one item at a time.
 
     Yields:
@@ -149,33 +129,23 @@ class Filter(StreamQuery):
     Example:
         >>> nu.run(nu.Collect(nu.Filter(nu.Iter([1, 2, 3, 4]), lambda x: x > 2)))[0]
         [3, 4]
-
-        The same with the default name:
-
-        >>> nu.run(nu.Collect(nu.Filter(nu.Iter([1, 2, 3, 4]), nu.Gt(nu.Attr("item"), 2))))[0]
-        [3, 4]
     """
 
-    def __init__(
-        self,
-        source: Arg[Iterable],
-        predicate: Nu | Callable[[Attr], Nu],
-        key: StrArg | None = None,
-    ) -> None:
-        predicate, (key,) = bind("Filter", predicate, key=key)
-        super().__init__(source, predicate, "item" if key is None else key)
+    def __init__(self, source: Arg[Iterable], predicate: Nu | Callable[..., Nu]) -> None:
+        super().__init__(source, self._dynamic("Filter", predicate, 1))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        source, predicate, key_t = children
+        source, predicate = children
+        binding = self._binding
 
         def thunk(rt: Runtime) -> object:
-            name = key_t(rt)
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
 
             def gen() -> object:
                 for elem in sync_iter(source(rt)):
-                    with rt.ctx.attrs.let(name, elem):
-                        keep = predicate(rt)
-                    if keep:
+                    binding.write(data, (elem,))
+                    if predicate(inner):
                         yield elem
 
             return gen()
@@ -183,16 +153,17 @@ class Filter(StreamQuery):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        source, predicate, key_t = children
+        source, predicate = children
+        binding = self._binding
 
         async def athunk(rt: Runtime) -> object:
-            name = await key_t(rt)
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
 
             async def agen() -> object:
                 async for elem in aiter_any(await source(rt)):
-                    with rt.ctx.attrs.let(name, elem):
-                        keep = await predicate(rt)
-                    if keep:
+                    binding.write(data, (elem,))
+                    if await predicate(inner):
                         yield elem
 
             return agen()
@@ -241,21 +212,19 @@ class Sorted(ScalarQuery):
         return athunk
 
 
-class SortBy(StreamQuery):
+class SortBy(_DynamicBinding, StreamQuery):
     """Its source child, ordered by a per-item key expression (eager).
 
     Args:
         source: the stream to sort.
         key: evaluated once per item to produce its sort key. A lambda over
-            the item, like Python's ``sorted(key=...)``, or a tree reading it
-            with ``Attr(item)``.
+            the item, like Python's ``sorted(key=...)``, or a tree that
+            reads none.
         reverse: descending order when truthy. Defaults to ``False``.
-        item: name each item is bound under while ``key`` runs, for a tree
-            ``key``. Defaults to ``"item"``; a lambda mints its own.
 
     Notes:
-        - The same scoped binding, and the same lambda form, as
-          :class:`Map` / :class:`Filter`.
+        - The same binding, and the same lambda form, as :class:`Map` /
+          :class:`Filter`.
         - Drains and sorts the whole source before yielding anything, so
           a pull on its output waits for the whole source.
 
@@ -266,48 +235,45 @@ class SortBy(StreamQuery):
     Example:
         >>> nu.run(nu.Collect(nu.SortBy(nu.Iter(["bb", "a", "ccc"]), lambda s: nu.Len(s))))[0]
         ['a', 'bb', 'ccc']
-
-        The same with the default name:
-
-        >>> nu.run(nu.Collect(nu.SortBy(nu.Iter(["bb", "a", "ccc"]), nu.Len(nu.Attr("item")))))[0]
-        ['a', 'bb', 'ccc']
     """
 
     def __init__(
         self,
         source: Arg[Iterable],
-        key: Nu | Callable[[Attr], Nu],
+        key: Nu | Callable[..., Nu],
         reverse: Arg[bool] = False,
-        item: StrArg | None = None,
     ) -> None:
-        key, (item,) = bind("SortBy", key, item=item)
-        super().__init__(source, key, reverse, "item" if item is None else item)
+        super().__init__(source, self._dynamic("SortBy", key, 1), reverse)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        source, key_expr, reverse_t, item_t = children
+        source, key_expr, reverse_t = children
+        binding = self._binding
 
         def thunk(rt: Runtime) -> object:
             reverse = bool(reverse_t(rt))
-            name = item_t(rt)
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
             rows: list[tuple[object, object]] = []
             for elem in sync_iter(source(rt)):
-                with rt.ctx.attrs.let(name, elem):
-                    rows.append((key_expr(rt), elem))
+                binding.write(data, (elem,))
+                rows.append((key_expr(inner), elem))
             rows.sort(key=lambda kv: kv[0], reverse=reverse)
             return iter(v for _, v in rows)
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        source, key_expr, reverse_t, item_t = children
+        source, key_expr, reverse_t = children
+        binding = self._binding
 
         async def athunk(rt: Runtime) -> object:
             reverse = bool(await reverse_t(rt))
-            name = await item_t(rt)
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
             rows: list[tuple[object, object]] = []
             async for elem in aiter_any(await source(rt)):
-                with rt.ctx.attrs.let(name, elem):
-                    rows.append((await key_expr(rt), elem))
+                binding.write(data, (elem,))
+                rows.append((await key_expr(inner), elem))
             rows.sort(key=lambda kv: kv[0], reverse=reverse)
 
             async def agen() -> object:

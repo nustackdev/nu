@@ -35,13 +35,6 @@ def test_react_constructs_with_body():
     assert len(nu.tree.children(r)) >= 2
 
 
-def test_react_changed_key_requires_body():
-    change = ItemRef("sub")
-    key = ItemRef("k")
-    with pytest.raises(ValueError, match="changed_key requires a body"):
-        ReactOnce(change, changed_key=key)
-
-
 # ---------------------------------------------------------------------------
 # Law validation: a Control driving a mutating body validates.
 # Structural; no substrate needed.

@@ -8,16 +8,16 @@ the rest are bodies. The ``control_param_is_yielder`` law holds every param to
 a yielding child (Ref / Query / Action) and ``flow_body_is_mutator`` holds
 every body to a mutating child (Command / Action / Flow).
 
-Loop variables are scoped attrs bindings: ``ForEachDo`` / ``ForRangeDo`` bind
-the current element under a name for one body run - the same
-``ctx.attrs.let`` scope ``Map`` / ``Filter`` use, not a tracked fabric write.
-The body is usually a lambda over the element, which mints the name; a plain
-body reads it via an attrs ref under an explicit name (itself a child, so it
-can be a Literal or a computed Ref).
-``ForEachParAsync`` is ``ForEachDo``'s fan-out twin: same three args, same
-binding, but every element gets its own arm on the loop at once, each with its
-own attrs table so the arms cannot stomp each other's loop variable. It lives
-here, with the ForEach it mirrors, and borrows the scheduling from ``parallel``.
+Loop variables are dynamic bindings (``nu.lang.binding``): the body is a
+lambda over the element, called once at construction with a mem ref, and the
+loop pushes one frame for its run and writes each element into it before the
+body runs - the same binding ``Map`` / ``Filter`` use, not a tracked fabric
+write. A body given as a plain tree reads no element.
+``ForEachParAsync`` is ``ForEachDo``'s fan-out twin: same two args, same
+binding, but every element gets its own arm on the loop at once, each arm
+pushing a frame of its own so the arms never see each other's element. It
+lives here, with the ForEach it mirrors, and borrows the scheduling from
+``parallel``.
 Its reactive twin, ``ReconcileLatestEach``, keeps the fan-out open against a
 change subscription and lives with the other reactive flows in
 ``nu.core.reactive``.
@@ -33,12 +33,12 @@ import asyncio
 import time
 from typing import TYPE_CHECKING
 
-from nu.context.attrs.binders import bind
 from nu.core._cases import case_labels, checked_labels
 from nu.engine.structure import Declared
 from nu.lang import Control
 from nu.lang._stream import aiter_any, sync_iter
 from nu.lang.attributes.execution import ExecOrder
+from nu.lang.binding import _DynamicBinding
 
 
 if TYPE_CHECKING:
@@ -184,30 +184,25 @@ class ForeverDo(Control):
         return athunk
 
 
-class ForEachDo(Control):
+class ForEachDo(_DynamicBinding, Control):
     """``ForEachDo(items, lambda x: body)`` - runs ``body`` once per element of ``items``.
 
     Args:
         items: the iterable to walk.
-        body: the loop body, run once per element. A lambda over the element,
-            or a tree reading it with ``Attr(item)``.
-        item: the name to bind the current element under, for a tree body.
-            Optional, defaults to ``"item"``; a lambda mints its own.
+        body: the loop body, run once per element: a lambda over the
+            element, or a tree that reads none.
 
     Notes:
-        - The lambda runs once, at construction, and gets a ref, not a value:
-          it builds the body and never branches on the element in Python.
-        - The name belongs to the lambda's code, so nested lambdas each get
-          their own and an inner body still reads the outer element. One
-          lambda used again inside its own body binds the same name, and the
-          inner binding shadows the outer, as with ``nu.let``; an explicit
-          ``item`` keeps both readable.
-        - The current element is bound for one body run, the same scoped
-          binding ``Map`` / ``Filter`` use.
-        - ``item`` is itself evaluated once, before the loop starts, so it can
-          be a computed Ref and not just a literal name.
-        - The binding shadows an outer one of the same name and is released
-          after each run, so the outer value is back once the loop ends.
+        - The lambda runs once, at construction, and gets a mem ref, not a
+          value: it builds the body and never branches on the element in
+          Python.
+        - The ref's Shape belongs to the lambda's code, so nested lambdas
+          each get their own and an inner body still reads the outer
+          element. One lambda used again inside its own body shares its
+          Shape, and the inner loop shadows the outer, as with ``nu.let``.
+        - One frame for the loop's run, the element written into it before
+          each body run. The frame is the loop's own: it never reaches the
+          caller and is gone once the loop ends.
 
     Example:
         >>> _ = nu.run(nu.ForEachDo(nu.Iter([1, 2]), lambda x: nu.print(x)))
@@ -220,58 +215,52 @@ class ForEachDo(Control):
         >>> _ = nu.run(nu.ForEachDo(rows, lambda row: nu.ForEachDo(row, lambda c: nu.print(c))))
         a
         b
-
-        A tree body under an explicit name:
-
-        >>> _ = nu.run(nu.ForEachDo(nu.Iter([1, 2]), nu.print(nu.Attr("n")), item="n"))
-        1
-        2
     """
 
-    _param_slots = Declared(value=frozenset({0, 2}), name="param_slots")
+    _param_slots = Declared(value=frozenset({0}), name="param_slots")
 
-    def __init__(self, items: object, body: object, item: object = None) -> None:
-        body, (item,) = bind("ForEachDo", body, item=item)
-        super().__init__(items, body, "item" if item is None else item)
+    def __init__(self, items: object, body: object) -> None:
+        super().__init__(items, self._dynamic("ForEachDo", body, 1))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        items_t, body, key_t = children
+        items_t, body = children
+        binding = self._binding
 
         def thunk(rt: Runtime) -> None:
-            name = key_t(rt)
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
             for elem in sync_iter(items_t(rt)):
-                with rt.ctx.attrs.let(name, elem):
-                    body(rt)
+                binding.write(data, (elem,))
+                body(inner)
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        items_t, body, key_t = children
+        items_t, body = children
+        binding = self._binding
 
         async def athunk(rt: Runtime) -> None:
-            name = await key_t(rt)
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
             async for elem in aiter_any(await items_t(rt)):
-                with rt.ctx.attrs.let(name, elem):
-                    await body(rt)
+                binding.write(data, (elem,))
+                await body(inner)
 
         return athunk
 
 
-class ForEachParAsync(Control):
+class ForEachParAsync(_DynamicBinding, Control):
     """``ForEachParAsync(items, lambda x: body)`` - runs ``body`` once per element of ``items``, every arm on the loop at once.
 
     Args:
         items: the iterable to fan out over, evaluated once before any arm
             starts.
-        body: the arm, run once per element, concurrently with the others. A
-            lambda over the element, or a tree reading it with ``Attr(item)``.
-        item: the name to bind that arm's element under, for a tree body.
-            Optional, defaults to ``"item"``; a lambda mints its own.
+        body: the arm, run once per element, concurrently with the others: a
+            lambda over the element, or a tree that reads none.
 
     Notes:
-        - Same three args, the same lambda form and the same binding as
-          ``ForEachDo``,
-          which is why it sits here rather than in ``parallel/``; the
+        - Same two args, the same lambda form and the same binding as
+          ``ForEachDo``, which is why it sits here rather than in ``parallel/``; the
           scheduling itself is ``parallel._scheduling.aeval_foreach_par``.
         - Joins on all, like ``Parallel``, but over a runtime-sized list:
           ``Parallel`` / ``Gather`` fan out to children fixed at
@@ -284,10 +273,10 @@ class ForEachParAsync(Control):
           costs no worker, and these arms are meant never to return, so there
           is nothing to ration - ``max_parallel`` bounds threads, and this
           atom uses none.
-        - Each arm runs with its own attrs table, so ``item`` is that
-          arm's element and nothing else. The arms share values
-          by reference, so a live handle in attrs crosses fine, but an arm's
-          own bindings stay in its arm.
+        - Each arm pushes a frame of its own on the loop's frames, so its
+          element is that arm's and nothing else. What is bound above the
+          loop is shared by every arm, by reference, so a live handle
+          crosses fine, but a frame an arm pushes stays in its arm.
         - Arms that never return are the point: a standing ``ForeverDo`` per
           element joins only when the surrounding Flow is cancelled. An empty
           ``items`` completes immediately.
@@ -303,13 +292,12 @@ class ForEachParAsync(Control):
         7
     """
 
-    _param_slots = Declared(value=frozenset({0, 2}), name="param_slots")
+    _param_slots = Declared(value=frozenset({0}), name="param_slots")
     _exec_order = Declared(value=ExecOrder.PARALLEL, name="exec_order")
     _requires_async = Declared(value=True, name="requires_async")
 
-    def __init__(self, items: object, body: object, item: object = None) -> None:
-        body, (item,) = bind("ForEachParAsync", body, item=item)
-        super().__init__(items, body, "item" if item is None else item)
+    def __init__(self, items: object, body: object) -> None:
+        super().__init__(items, self._dynamic("ForEachParAsync", body, 1))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
@@ -321,34 +309,33 @@ class ForEachParAsync(Control):
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         from .parallel import _scheduling
 
-        items_t, _body, key_t = children
+        items_t = children[0]
+        binding = self._binding
 
         async def athunk(rt: Runtime) -> None:
-            name = await key_t(rt)
             elems = [elem async for elem in aiter_any(await items_t(rt))]
             body_nid = rt.program.children[nid][1]
-            await _scheduling.aeval_foreach_par(rt, body_nid, elems, name)
+            arms = [rt.on(binding.push(rt.ctx, (elem,))) for elem in elems]
+            await _scheduling.aeval_foreach_par(arms, body_nid)
 
         return athunk
 
 
-class ForRangeDo(Control):
+class ForRangeDo(_DynamicBinding, Control):
     """``ForRangeDo(start, stop, lambda i: body, *, step=1)`` - runs ``body`` once per value of ``range(start, stop, step)``.
 
     Args:
         start: the range's start.
         stop: the range's exclusive end.
-        body: the loop body, run once per value. A lambda over the value, or
-            a tree reading it with ``Attr(index)``.
-        index: the name to bind the current value under, for a tree body.
-            Optional, defaults to ``"index"``; a lambda mints its own.
+        body: the loop body, run once per value: a lambda over the value, or
+            a tree that reads none.
         step: the range's step. Optional, defaults to 1.
 
     Notes:
-        - ``start``, ``stop``, ``step`` and ``index`` are each evaluated once,
-          before the loop starts.
-        - The current value is bound for one body run. Same scoped binding,
-          and the same lambda form, as ``ForEachDo``.
+        - ``start``, ``stop`` and ``step`` are each evaluated once, before
+          the loop starts.
+        - One frame for the loop's run, the value written before each body
+          run. Same binding, and the same lambda form, as ``ForEachDo``.
         - Follows Python's ``range`` rules: a ``step`` that never reaches
           ``stop`` from ``start`` runs the body zero times rather than
           looping forever.
@@ -357,47 +344,36 @@ class ForRangeDo(Control):
         >>> _ = nu.run(nu.ForRangeDo(0, 2, lambda i: nu.print(i)))
         0
         1
-
-        A tree body under the default name:
-
-        >>> _ = nu.run(nu.ForRangeDo(0, 2, nu.print(nu.Attr("index"))))
-        0
-        1
     """
 
-    _param_slots = Declared(value=frozenset({0, 1, 2, 4}), name="param_slots")
+    _param_slots = Declared(value=frozenset({0, 1, 2}), name="param_slots")
 
-    def __init__(
-        self,
-        start: object,
-        stop: object,
-        body: object,
-        *,
-        step: object = 1,
-        index: object = None,
-    ) -> None:
-        body, (index,) = bind("ForRangeDo", body, index=index)
-        super().__init__(start, stop, step, body, "index" if index is None else index)
+    def __init__(self, start: object, stop: object, body: object, *, step: object = 1) -> None:
+        super().__init__(start, stop, step, self._dynamic("ForRangeDo", body, 1))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        start_t, stop_t, step_t, body, index_t = children
+        start_t, stop_t, step_t, body = children
+        binding = self._binding
 
         def thunk(rt: Runtime) -> None:
-            name = index_t(rt)
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
             for i in range(start_t(rt), stop_t(rt), step_t(rt)):
-                with rt.ctx.attrs.let(name, i):
-                    body(rt)
+                binding.write(data, (i,))
+                body(inner)
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        start_t, stop_t, step_t, body, index_t = children
+        start_t, stop_t, step_t, body = children
+        binding = self._binding
 
         async def athunk(rt: Runtime) -> None:
-            name = await index_t(rt)
+            inner_ctx, data = binding.frame(rt.ctx)
+            inner = rt.on(inner_ctx)
             for i in range(await start_t(rt), await stop_t(rt), await step_t(rt)):
-                with rt.ctx.attrs.let(name, i):
-                    await body(rt)
+                binding.write(data, (i,))
+                await body(inner)
 
         return athunk
 

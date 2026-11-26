@@ -49,7 +49,7 @@ from .source import DEFAULT_ENTRY, DEFAULT_FILENAME
 
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Callable, Mapping
 
     from nu.lang import Nu, StrArg
     from nu.tree import Transform
@@ -111,7 +111,7 @@ class ProgramSurface(Surface):
         filename: StrArg = DEFAULT_FILENAME,
         brace: object = UNSET,
         rewrite: Transform | None = None,
-        on_error: Nu | None = None,
+        on_error: Nu | Callable[..., Nu] | None = None,
     ) -> Nu:
         """Construct the term and drive it.
 
@@ -124,10 +124,11 @@ class ProgramSurface(Surface):
                 ctx.
             rewrite: a ``Nu -> Nu`` transform run on the constructed term,
                 before anything evaluates it.
-            on_error: branch to run when construction fails. Given one, the
+            on_error: branch to run when construction fails: a lambda over
+                the caught error, or a tree that reads none. Given one, the
                 whole thing is wrapped in a ``TryCatch`` filtered to
-                ``ConstructionError``, and the branch reads the caught
-                exception off the attrs fabric with ``Attr("error")``.
+                ``ConstructionError``, and a lambda gets the caught error as
+                its parameter (``err.exception`` is the live exception).
                 Only construction failures are caught; whatever the program
                 itself raises propagates.
 

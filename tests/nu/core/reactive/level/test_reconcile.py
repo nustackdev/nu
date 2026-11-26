@@ -6,10 +6,9 @@ import asyncio
 from typing import TYPE_CHECKING
 
 import pytest
-from _support.reactive import QUIET, Body, Feed, live_rechecks, start, stop, until
+from _support.reactive import FEED, QUIET, Body, Feed, live_rechecks, start, stop, until
 
 import nu
-from nu.context import Attr as AttrRef
 from nu.core.reactive import Reconcile, WaitUntil
 from nu.domains.shape import Shape
 from nustd.kv import IntRef, Snapshot, Transaction, memory_navigator
@@ -40,7 +39,7 @@ async def test_first_pass_runs_right_after_binding() -> None:
     async def fn(rt: Runtime) -> None:
         log.append("pass")
 
-    task = start(Reconcile(AttrRef("feed"), Body(fn), **QUIET), feed=feed)
+    task = start(Reconcile(FEED, Body(fn), **QUIET), feed=feed)
     await until(lambda: "pass" in log)
     assert log == ["bind", "pass"]
     await stop(task)
@@ -48,7 +47,7 @@ async def test_first_pass_runs_right_after_binding() -> None:
 
 async def test_state_written_before_binding_is_seen_by_the_first_pass() -> None:
     state, seen = {"v": "written before"}, []
-    task = start(Reconcile(AttrRef("feed"), _passes(state, seen), **QUIET), feed=Feed())
+    task = start(Reconcile(FEED, _passes(state, seen), **QUIET), feed=Feed())
     await until(lambda: seen)
     assert seen == ["written before"]
     await stop(task)
@@ -56,7 +55,7 @@ async def test_state_written_before_binding_is_seen_by_the_first_pass() -> None:
 
 async def test_every_notification_wakes_a_pass() -> None:
     feed, state, seen = Feed(), {"v": 0}, []
-    task = start(Reconcile(AttrRef("feed"), _passes(state, seen), **QUIET), feed=feed)
+    task = start(Reconcile(FEED, _passes(state, seen), **QUIET), feed=feed)
     await until(lambda: seen == [0])
     for v in (1, 2):
         state["v"] = v
@@ -70,13 +69,13 @@ async def test_no_changed_key_reaches_the_body() -> None:
     feed, seen = Feed(), []
 
     async def fn(rt: Runtime) -> None:
-        seen.append(dict(rt.ctx.attrs.items()))
+        seen.append(rt.ctx)
 
-    task = start(Reconcile(AttrRef("feed"), Body(fn), **QUIET), feed=feed)
+    task = start(Reconcile(FEED, Body(fn), **QUIET), feed=feed)
     await until(lambda: len(seen) == 1)
     feed.fire("the-secret-key")
     await until(lambda: len(seen) == 2)
-    assert seen == [{"feed": feed}, {"feed": feed}]
+    assert seen[0] is seen[1]  # no frame pushed per pass: nothing handed
     await stop(task)
 
 
@@ -89,7 +88,7 @@ async def test_cancel_unbinds_closes_and_leaves_no_timer_or_task() -> None:
     log: list = []
     feed = Feed(log)
     before = asyncio.all_tasks()
-    term = Reconcile(AttrRef("feed"), Body(lambda rt: asyncio.sleep(0)), after=(5.0,), every=5.0)
+    term = Reconcile(FEED, Body(lambda rt: asyncio.sleep(0)), after=(5.0,), every=5.0)
     task = start(term, feed=feed)
     await until(lambda: live_rechecks())
     await stop(task)
@@ -105,7 +104,7 @@ async def test_a_body_error_ends_the_flow_and_unbinds() -> None:
     async def fn(rt: Runtime) -> None:
         raise ValueError("boom")
 
-    task = start(Reconcile(AttrRef("feed"), Body(fn)), feed=feed)
+    task = start(Reconcile(FEED, Body(fn)), feed=feed)
     with pytest.raises(ValueError, match="boom"):
         await asyncio.wait_for(task, 5)
     assert feed.log == ["bind", "unbind", "close"]

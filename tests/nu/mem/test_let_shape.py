@@ -104,7 +104,7 @@ def test_an_initial_term_is_evaluated_once(run: Callable) -> None:
 
 @RUNNERS
 def test_the_body_writes_and_reads_the_frame(run: Callable) -> None:
-    loop = nu.ForEachDo(nu.Iter([1, 2, 3]), S.a.set(S.a + nu.context.Attr("item")))
+    loop = nu.ForEachDo(nu.Iter([1, 2, 3]), lambda item: S.a.set(S.a + item))
     data, ctx = _out()
     run(nm.let(S, loop >> Out.first.set(S.a), a=0), ctx)
     assert data["first"] == 6
@@ -120,12 +120,12 @@ def test_a_scalar_body_yields_through(run: Callable) -> None:
 
 @RUNNERS
 def test_a_stream_body_reads_the_frame_across_its_drain(run: Callable) -> None:
-    stream = nu.Map(nu.Iter([1, 2]), S.a + nu.context.Attr("item"))
+    stream = nu.Map(nu.Iter([1, 2]), lambda item: S.a + item)
     assert run(nu.Collect(nm.let(S, stream, a=10))) == [11, 12]
 
 
 def test_a_stream_body_stays_a_stream() -> None:
-    stream = nm.let(S, nu.Map(nu.Iter([1, 2]), S.a + nu.context.Attr("item")), a=10)
+    stream = nm.let(S, nu.Map(nu.Iter([1, 2]), lambda item: S.a + item), a=10)
     assert list(nu.run(stream)[0]) == [11, 12]
 
 
@@ -172,7 +172,7 @@ def test_the_binding_ends_when_the_body_is_cancelled() -> None:
 
 def test_a_stream_body_holds_its_frame_across_pulls() -> None:
     ctx = nu.Context()
-    stream = nu.run(nm.let(S, nu.Map(nu.Iter([1, 2]), S.a + nu.context.Attr("item")), a=10), ctx)[0]
+    stream = nu.run(nm.let(S, nu.Map(nu.Iter([1, 2]), lambda item: S.a + item), a=10), ctx)[0]
     first = next(iter(stream))
     assert first == 11
     assert not ctx.has(dict, S)  # the frame is the stream's, never the caller's
@@ -199,7 +199,7 @@ def test_different_shapes_coexist(run: Callable) -> None:
 @RUNNERS
 def test_every_run_gets_its_own_dict(run: Callable) -> None:
     data, ctx = _out()
-    frame = nm.let(S, S.a.init(nu.context.Attr("item")) >> Out.log.append(S.a))
+    frame = lambda item: nm.let(S, S.a.init(item) >> Out.log.append(S.a))  # noqa: E731
     run(nu.ForEachDo(nu.Iter([1, 2, 3]), frame), ctx)
     assert data["log"] == [1, 2, 3]
 
@@ -250,7 +250,7 @@ def test_an_unknown_initial_key_raises_at_construction() -> None:
 @RUNNERS
 def test_an_empty_initial_value_raises_on_entry(run: Callable) -> None:
     with pytest.raises(ValueError, match="NULL"):
-        run(nm.let(S, S.a, a=nu.context.Attr("missing")))
+        run(nm.let(T, nm.let(S, S.a, a=T.c)))  # nothing stored at T.c: NULL
 
 
 def test_extract_on_a_mem_list_is_the_plain_list():
