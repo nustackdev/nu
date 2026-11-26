@@ -61,3 +61,18 @@ def test_to_chains_several_levels(ctx):
 def test_to_under_a_declared_container(ctx):
     run(Store.orders["x"].tags["t"].to(StrRef).set("y"), ctx)
     assert run(Store.orders["x"].tags["t"], ctx)[0] == "y"
+
+
+def test_to_rekinds_a_container(ctx):
+    d = Store.things["n"].to(DictRef.slot(int))
+    n = d.to(IntRef)
+    assert type(n) is IntRef
+    run(n.set(7), ctx)
+    assert run(Store.things.get_item("n"), ctx)[0] == 7
+
+
+def test_to_rekinds_a_shape_ref(ctx):
+    order = Store.orders["x"]
+    assert isinstance(order, ShapeRef)
+    run(order.to(DictRef.slot(int))["n"].set(3), ctx)
+    assert run(Store.orders["x"].to(DictRef.slot(int)).get_item("n"), ctx)[0] == 3

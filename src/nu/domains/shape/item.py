@@ -7,12 +7,9 @@ these, so the ref itself is an operand of the value it names.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar, overload
-
-from nu.lang import Literal
+from typing import TYPE_CHECKING
 
 from .base import StructuredRef
-from .dsl import Slot
 from .form import SlotSurface
 
 
@@ -25,8 +22,6 @@ if TYPE_CHECKING:
     )
     from nu.forms import Bool
 
-
-_R = TypeVar("_R")
 
 __all__ = [
     "ItemRef",
@@ -120,60 +115,8 @@ class ReactiveItemSurface(MutableItemSurface):
 class ItemRef(ItemSurface, StructuredRef):
     """Leaf Ref: single typed value, no child descent.
 
-    API: exists(), is_set_falsy() (from ItemSurface), to(spec).
+    API: exists(), is_set_falsy() (from ItemSurface), to(spec) (from StructuredRef).
     """
-
-    # ``Kind.slot(...)`` is typed as the ref it builds (a ``Slot`` at run
-    # time), so both forms resolve to the ref class.
-    @overload
-    def to(self, spec: type[_R]) -> _R: ...
-
-    @overload
-    def to(self, spec: _R) -> _R: ...
-
-    def to(self, spec: type[_R] | _R) -> _R:
-        """This address as the kind ``spec`` names, so the chain goes on in that kind.
-
-        ``grid[0, 1].to(TableRef.slot(columns=cols))[1, 0]``. The
-        kind is named where the child is used, never declared on the container,
-        which is what lets one container hold children of different kinds.
-
-        The result replaces this ref: same parent, same address, the class and
-        props ``spec`` carries. Nothing of this ref's own kind comes along; its
-        declared ``type_info`` belonged to the kind it had. Whether the store
-        agrees with the new kind is the fabric's to check when it is used.
-
-        Args:
-            spec: a ref class (no props), or a slot spec ``Kind.slot(**props)``,
-                which is also how a Shape-backed kind is named.
-
-        Raises:
-            TypeError: ``spec`` is neither a shape ref class nor a ``Slot``.
-        """
-        if isinstance(spec, Slot):
-            slot = spec
-        elif isinstance(spec, type) and issubclass(spec, StructuredRef):
-            slot = Slot(spec)
-        else:
-            msg = (
-                f"{type(self).__name__}.to takes a ref class or a Kind.slot(...) spec, not {spec!r}"
-            )
-            raise TypeError(msg)
-        # A plain key was wrapped in a Literal when this ref was built; hand the
-        # new one the key itself, so it is built exactly as this one was.
-        address = self._children[1]
-        if type(address) is Literal and address.factory is None:
-            address = address.value
-        ref = slot.create_ref(
-            owner_shape=self._owner_shape,
-            parent_ref=self._parent,
-            address=address,
-        )
-        # Same parent, so the root shape comes along on its own. A chain placed
-        # by ``with_parent`` stays placed.
-        if self._placed:
-            ref = ref.evolve(_placed=True)
-        return ref  # type: ignore[return-value]
 
 
 class MutableItemRef(MutableItemSurface, ItemRef):

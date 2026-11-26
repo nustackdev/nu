@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Container refs re-kind like leaves, so a ref can change kind again and again
 - Code, markdown and inline edit reads return the text typed, not the last save
 - Examples follow the new events, live slider added, table seeds and bad reads fixed
 - Alerts, empty states, waterfalls and uploads use the shared event names and reads
