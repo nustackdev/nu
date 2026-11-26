@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, cast
 
 from nu.lang import Bracket
 
+from ...session import session_id
 from .area import _PREFIX, UploadArea, UploadView
 
 
@@ -27,16 +28,11 @@ if TYPE_CHECKING:
 
     from starlette.routing import Route
 
-    from nu.lang import Literal, Nu, StrArg
+    from nu.lang import Literal, Nu
     from nu.lang.runtime import Context
 
 
 __all__ = ["UploadViewFor", "upload_view", "uploads"]
-
-
-#: ``nustd.ws_server.SID_ATTR``, spelled here: that package loads the web
-#: server on import, and importing this one must not.
-_SID_ATTR = "sid"
 
 
 class _OpenArea(Bracket):
@@ -109,7 +105,7 @@ def uploads(
         nu.With(
             listen(session_cls=WsSession, routes=routes),
             bracket,
-            body=sessions_fold(session_for(SID_ATTR, upload_view(SID_ATTR, program))),
+            body=sessions_fold(lambda sid: session_for(sid, upload_view(program))),
         )
     """
     if root is None:
@@ -128,36 +124,31 @@ def uploads(
 class UploadViewFor(Bracket):
     """Bind this arm's ``UploadView``: the area, seen from one tab.
 
-    Reads the sid the fold parked on the Context and binds the area's view
-    for it, so the upload refs under it reach their tab's files and url
-    without knowing the area or the host.
+    Reads the session id ``session_for`` bound for the arm
+    (``nustd.session.SessionId``) and binds the area's view for it, so the
+    upload refs under it reach their tab's files and url without knowing
+    the area or the host.
 
     Args:
         body: the tree that runs with the view bound.
-        sid_attr: the attr the fold parked this arm's session id under: a
-            str, or any Nu yielding one. A config child, evaluated on entry.
     """
 
-    def __init__(self, body: Nu | None = None, *, sid_attr: StrArg = _SID_ATTR) -> None:
-        super().__init__(body, sid_attr)
+    def __init__(self, body: Nu | None = None) -> None:
+        super().__init__(body)
 
     @asynccontextmanager
-    async def _aopen(self, ctx: Context, sid_attr: str) -> AsyncIterator[Context]:
-        attr = sid_attr
-        sid = ctx.attrs.get(attr, None)
-        if sid is None:
-            msg = f"UploadViewFor found no {attr!r} on the Context; it runs inside the fold"
-            raise LookupError(msg)
+    async def _aopen(self, ctx: Context) -> AsyncIterator[Context]:
+        sid = session_id(ctx, "UploadViewFor")
         if not ctx.has(UploadArea):
             msg = "UploadViewFor found no UploadArea; open the uploads bracket around the fold"
             raise LookupError(msg)
         yield ctx.bind(UploadView, ctx.get(UploadArea).view(sid))
 
 
-def upload_view(sid_attr: str = _SID_ATTR, body: Nu | None = None) -> UploadViewFor:
-    """``UploadViewFor`` in call order: the attr first, then what runs under it.
+def upload_view(body: Nu | None = None) -> UploadViewFor:
+    """``UploadViewFor`` over ``body``, inside ``session_for``.
 
     Example:
-        session_for(SID_ATTR, upload_view(SID_ATTR, run_once(program)))
+        sessions_fold(lambda sid: session_for(sid, upload_view(run_once(program))))
     """
-    return UploadViewFor(body, sid_attr=sid_attr)
+    return UploadViewFor(body)

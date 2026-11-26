@@ -18,7 +18,7 @@ from nustd.blob.http.serving import serve_blobs
 from nustd.ui.core.session import WsSession
 from nustd.ui.uploads import upload_view
 from nustd.ui.uploads import uploads as upload_pair
-from nustd.ws_server import SID_ATTR, listen, run_once, session_for, sessions_fold
+from nustd.ws_server import listen, run_once, session_for, sessions_fold
 
 from . import telemetry
 
@@ -114,7 +114,7 @@ def serve(
     if uploads:
         upload_area, upload_routes = upload_pair(upload_root, cap=upload_cap)
         upload_brackets.append(upload_area)
-        arm = upload_view(SID_ATTR, arm)
+        arm = upload_view(arm)
     return nu.With(
         *blob_brackets,
         listen(
@@ -130,5 +130,5 @@ def serve(
             shutdown_timeout=shutdown_timeout,
         ),
         *upload_brackets,
-        body=sessions_fold(session_for(SID_ATTR, arm)),
+        body=sessions_fold(lambda sid: session_for(sid, arm)),
     )

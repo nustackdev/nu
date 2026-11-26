@@ -1,7 +1,7 @@
-"""``UploadViewFor``: which attr holds the arm's sid is a config child.
+"""``UploadViewFor``: the view follows the session id ``session_for`` bound.
 
-The bracket opens with its config evaluated, so the attr name can be
-computed like any other value, not only given as a constant.
+The id is read off the arm's ``SessionId`` frame, the nearest one winning, and
+a bracket with none in scope says who binds it.
 """
 
 from __future__ import annotations
@@ -9,8 +9,11 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING
 
+import pytest
+
 import nu
 from nu.lang import ScalarQuery
+from nustd.session import SessionId
 from nustd.ui.uploads import UploadArea, UploadView, UploadViewFor
 
 
@@ -37,18 +40,21 @@ class _BoundSid(ScalarQuery):
         return athunk
 
 
-def _ctx(tmp_path: Path, **attrs: object) -> nu.Context:
-    return nu.Context(attrs=attrs).bind(UploadArea, UploadArea(tmp_path, None))
+def _ctx(tmp_path: Path) -> nu.Context:
+    return nu.Context().bind(UploadArea, UploadArea(tmp_path, None))
 
 
-def test_the_sid_attr_is_a_config_child(tmp_path: Path) -> None:
-    bracket = UploadViewFor(_BoundSid(), sid_attr="tab")
-    assert nu.tree.fields(bracket) == {}
-    ctx = _ctx(tmp_path, tab="t1")
-    assert asyncio.run(nu.arun(bracket, ctx))[0] == "t1"
+def test_the_view_follows_the_bound_session_id(tmp_path: Path) -> None:
+    bracket = nu.let(SessionId, UploadViewFor(_BoundSid()), sid="t1")
+    assert asyncio.run(nu.arun(bracket, _ctx(tmp_path)))[0] == "t1"
 
 
-def test_the_sid_attr_can_be_computed(tmp_path: Path) -> None:
-    bracket = UploadViewFor(_BoundSid(), sid_attr=nu.context.Attr("which"))
-    ctx = _ctx(tmp_path, which="tab", tab="t2")
-    assert asyncio.run(nu.arun(bracket, ctx))[0] == "t2"
+def test_the_nearest_session_id_wins(tmp_path: Path) -> None:
+    inner = nu.let(SessionId, UploadViewFor(_BoundSid()), sid="t2")
+    bracket = nu.let(SessionId, inner, sid="t1")
+    assert asyncio.run(nu.arun(bracket, _ctx(tmp_path)))[0] == "t2"
+
+
+def test_no_session_id_says_who_binds_it(tmp_path: Path) -> None:
+    with pytest.raises(LookupError, match="session_for"):
+        asyncio.run(nu.arun(UploadViewFor(_BoundSid()), _ctx(tmp_path)))
