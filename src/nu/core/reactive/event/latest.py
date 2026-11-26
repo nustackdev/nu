@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from nu.core.flows.parallel._scheduling import _settle
 from nu.engine.structure import Declared
 from nu.lang import Control
-from nu.lang.binding import _DynamicBinding
+from nu.lang.binding import Binding
 
 from .._body import async_only, drain_body
 
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 __all__ = ["ReactLatest"]
 
 
-class ReactLatest(_DynamicBinding, Control):
+class ReactLatest(Control):
     """Run the body on every change, cancelling the run a newer change makes stale.
 
     ``ReactEvery`` with switch-latest semantics (Rx ``switchMap``). Binds to
@@ -78,7 +78,8 @@ class ReactLatest(_DynamicBinding, Control):
     _param_slots = Declared(value=frozenset({0, 2}), name="param_slots")
 
     def __init__(self, change: object, body: object, *, initial: BoolArg = False) -> None:
-        super().__init__(change, self._dynamic("ReactLatest", body, 1), initial)
+        body, self._binding = Binding.of_lambda("ReactLatest", body, 1)
+        super().__init__(change, body, initial)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return async_only("ReactLatest")
@@ -97,10 +98,7 @@ class ReactLatest(_DynamicBinding, Control):
             def start(bind: bool, key: object = None) -> asyncio.Task:
                 # Every run is a task of its own on a frame of its own; the
                 # initial run's frame holds no key, so a lambda's reads NULL.
-                if bind:
-                    run_ctx = binding.push(rt.ctx, (key,))
-                else:
-                    run_ctx, _ = binding.frame(rt.ctx)
+                run_ctx = binding.push(rt.ctx, key) if bind else binding.push(rt.ctx)
                 return asyncio.ensure_future(drain_body(rt.on(run_ctx), body))
 
             running: asyncio.Task | None = None

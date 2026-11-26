@@ -7,7 +7,7 @@ parameter name, the rule ``let`` follows::
     Teleport(pool, lambda root, n: body(root, n), root=some_term, n=other_term)
 
 At build the lambda is turned into a body over a generated Shape
-(:func:`nu.lang.binding.named`), and the value terms become children of the
+(:meth:`nu.lang.binding.Binding.of_named`), and the value terms become children of the
 Teleport, so the sender evaluates them. At run the body crosses as one term,
 :class:`Shipped`, holding the body, the binding and the values: on the
 remote side it pushes a frame with the values on the worker's own Context and
@@ -25,7 +25,6 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
 from nu.lang import Bracket
-from nu.lang.binding import _StaticBinding
 
 
 if TYPE_CHECKING:
@@ -38,7 +37,7 @@ if TYPE_CHECKING:
 __all__ = ["Shipped", "shipped"]
 
 
-class Shipped(_StaticBinding, Bracket):
+class Shipped(Bracket):
     """A body with the values its sender evaluated, run in a frame of their own on arrival.
 
     Built by the sender per call, never by hand. The values are fields, not
@@ -52,7 +51,7 @@ class Shipped(_StaticBinding, Bracket):
 
     @contextmanager
     def _open(self, ctx: Context) -> Iterator[Context]:
-        yield self._push(ctx, self._values)
+        yield self._binding.push(ctx, *self._values)
 
 
 def shipped(binding: Binding, values: Sequence[object], body: object) -> object:

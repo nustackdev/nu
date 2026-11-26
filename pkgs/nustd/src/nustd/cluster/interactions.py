@@ -43,7 +43,7 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Attr, Cardinality, Policy
-from nu.lang.binding import named
+from nu.lang.binding import Binding
 from nu.lang.sentinels import UNSET
 
 from .._shipped import shipped
@@ -130,7 +130,7 @@ class Teleport(Policy):
     _requires_async = Declared(value=True, name="requires_async")
 
     def __init__(self, body: object, target: object = UNSET, /, **args: object) -> None:
-        tree, self._ship, terms = named("Teleport", body, args)
+        tree, self._ship, terms = Binding.of_named("Teleport", body, args)
         super().__init__(tree, target, *terms)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Control
-from nu.lang.binding import _DynamicBinding
+from nu.lang.binding import Binding
 
 from .._body import async_only, drain_body
 
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 __all__ = ["ReactOnce"]
 
 
-class ReactOnce(_DynamicBinding, Control):
+class ReactOnce(Control):
     """Wait for one change on the subscription, run the body once, then stop.
 
     Binds to the change subscription, blocks until exactly one notification
@@ -54,10 +54,11 @@ class ReactOnce(_DynamicBinding, Control):
 
     def __init__(self, change: object, body: object = None) -> None:
         if body is None:
-            self._bind_static(None, ())
+            self._binding = Binding.none()
             super().__init__(change)
         else:
-            super().__init__(change, self._dynamic("ReactOnce", body, 1))
+            body, self._binding = Binding.of_lambda("ReactOnce", body, 1)
+            super().__init__(change, body)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return async_only("ReactOnce")
@@ -78,7 +79,7 @@ class ReactOnce(_DynamicBinding, Control):
             try:
                 key = await queue.get()
                 if has_body:
-                    await drain_body(rt.on(binding.push(rt.ctx, (key,))), children[1])
+                    await drain_body(rt.on(binding.push(rt.ctx, key)), children[1])
             finally:
                 sub.unbind(on_change)
                 sub.close()

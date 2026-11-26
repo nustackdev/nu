@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Control
-from nu.lang.binding import dynamic
+from nu.lang.binding import Binding
 
 from .._body import async_only
 from ._wakes import Wakes, read_schedule, schedule_terms
@@ -72,7 +72,7 @@ class WaitUntil(Control):
         after: Iterable[float] | object = (),
         every: float | object | None = None,
     ) -> None:
-        cond, _ = dynamic("WaitUntil", cond, 0)
+        cond, _ = Binding.of_lambda("WaitUntil", cond, 0)
         super().__init__(change, cond, *schedule_terms("WaitUntil", after, every))
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

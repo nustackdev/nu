@@ -7,8 +7,8 @@ e2e like core's folds (``Sum`` ...) since folds are a hot path.
 It is higher-order: the reducer is a Nu query child and ``Reduce`` is a
 dynamic binding (``nu.lang.binding``), like ``Map`` / ``Filter``. The reducer
 is a lambda over the accumulator and the item (``lambda acc, x: acc + x``),
-run once at construction with mem refs to both. One frame per run, the two
-values written into it before each step. A reducer given as a plain tree
+run once at construction with mem refs to both. Each step gets a frame of
+its own holding the two values. A reducer given as a plain tree
 reads neither.
 """
 
@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 
 from nu.lang import QueryReduction
 from nu.lang._stream import aiter_any, sync_iter
-from nu.lang.binding import _DynamicBinding
+from nu.lang.binding import Binding
 from nu.lang.sentinels import UNSET
 
 
@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 __all__ = ["Reduce"]
 
 
-class Reduce(_DynamicBinding, QueryReduction):
+class Reduce(QueryReduction):
     """``functools.reduce(function, iterable[, initializer])``.
 
     Children: ``[source, function, (initial)]``. Folds the source
@@ -43,10 +43,6 @@ class Reduce(_DynamicBinding, QueryReduction):
     ``function`` is a lambda over the accumulator and the item (it may take
     only the accumulator), run once at construction with refs to them, or a
     tree that reads neither.
-
-    One frame per run, overwritten per step: work detached from the run (a
-    delayed or spawned task, a stream pulled later) reads the latest
-    accumulator and item, not the ones current when it started.
     """
 
     def __init__(
@@ -56,7 +52,7 @@ class Reduce(_DynamicBinding, QueryReduction):
         *,
         initial: object = UNSET,
     ) -> None:
-        step = self._dynamic("Reduce", function, 2)
+        step, self._binding = Binding.of_lambda("Reduce", function, 2)
         if initial is UNSET:
             super().__init__(source, step)
         else:
@@ -68,8 +64,6 @@ class Reduce(_DynamicBinding, QueryReduction):
         binding = self._binding
 
         def thunk(rt: Runtime) -> object:
-            inner_ctx, data = binding.frame(rt.ctx)
-            inner = rt.on(inner_ctx)
             started = False
             acc: object = None
             if initial_t is not None:
@@ -80,8 +74,7 @@ class Reduce(_DynamicBinding, QueryReduction):
                     acc = elem
                     started = True
                     continue
-                binding.write(data, (acc, elem))
-                acc = function(inner)
+                acc = function(rt.on(binding.push(rt.ctx, acc, elem)))
             if not started:
                 msg = "reduce() of empty iterable with no initial value"
                 raise TypeError(msg)
@@ -95,8 +88,6 @@ class Reduce(_DynamicBinding, QueryReduction):
         binding = self._binding
 
         async def athunk(rt: Runtime) -> object:
-            inner_ctx, data = binding.frame(rt.ctx)
-            inner = rt.on(inner_ctx)
             started = False
             acc: object = None
             if initial_t is not None:
@@ -107,8 +98,7 @@ class Reduce(_DynamicBinding, QueryReduction):
                     acc = elem
                     started = True
                     continue
-                binding.write(data, (acc, elem))
-                acc = await function(inner)
+                acc = await function(rt.on(binding.push(rt.ctx, acc, elem)))
             if not started:
                 msg = "reduce() of empty iterable with no initial value"
                 raise TypeError(msg)

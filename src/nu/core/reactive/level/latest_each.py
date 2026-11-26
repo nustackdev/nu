@@ -14,7 +14,7 @@ from nu.engine.structure import Declared
 from nu.lang import Control
 from nu.lang._stream import aiter_any
 from nu.lang.attributes.execution import ExecOrder
-from nu.lang.binding import _DynamicBinding
+from nu.lang.binding import Binding
 
 from .._arms import ArmBook
 from .._body import async_only
@@ -25,7 +25,6 @@ if TYPE_CHECKING:
     import asyncio
     from collections.abc import Awaitable, Callable, Iterable
 
-    from nu.lang.binding import Binding
     from nu.lang.runtime import Runtime
 
 __all__ = ["ReconcileLatestEach", "hold_arms"]
@@ -65,7 +64,7 @@ async def hold_arms(
     body_nid = rt.program.children[nid][2]
 
     def spawn(elem: object) -> asyncio.Task:
-        return _spawn_arm(rt.on(binding.push(rt.ctx, (elem,))), body_nid)
+        return _spawn_arm(rt.on(binding.push(rt.ctx, elem)), body_nid)
 
     book = ArmBook(spawn, once=True, owner=owner)
     async with Wakes(await change(rt), *schedule) as wakes:
@@ -77,7 +76,7 @@ async def hold_arms(
             await book.drain()
 
 
-class ReconcileLatestEach(_DynamicBinding, Control):
+class ReconcileLatestEach(Control):
     """``ReconcileLatestEach(items, change, lambda x: body)`` - one arm per element, kept live against ``change``.
 
     The level flow over a fan-out: each pass reads ``items`` and makes the
@@ -160,10 +159,11 @@ class ReconcileLatestEach(_DynamicBinding, Control):
         after: Iterable[float] | object = (),
         every: float | object | None = None,
     ) -> None:
+        body, self._binding = Binding.of_lambda("ReconcileLatestEach", body, 1)
         super().__init__(
             items,
             change,
-            self._dynamic("ReconcileLatestEach", body, 1),
+            body,
             *schedule_terms("ReconcileLatestEach", after, every),
         )
 

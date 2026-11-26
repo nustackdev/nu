@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Bracket, Command, ScalarQuery
-from nu.lang.binding import _StaticBinding
+from nu.lang.binding import Binding
 from nu.lang.null import is_null
 
 from ..session import SessionId
@@ -130,7 +130,7 @@ class MarkSessionDone(Command):
         return athunk
 
 
-class SessionFor(_StaticBinding, Bracket):
+class SessionFor(Bracket):
     """Bind the ws transport and the id of the connection this arm belongs to.
 
     Looks the live session for ``sid`` up in the server's connection book and
@@ -147,7 +147,7 @@ class SessionFor(_StaticBinding, Bracket):
     """
 
     def __init__(self, body: Nu | None = None, *, sid: StrArg) -> None:
-        self._bind_static(SessionId, ("sid",))
+        self._binding = Binding.of(SessionId)
         super().__init__(body, sid)
 
     @asynccontextmanager
@@ -163,4 +163,4 @@ class SessionFor(_StaticBinding, Bracket):
             msg = f"no live ws session for {sid!r}"
             raise LookupError(msg)
         cls = type(session)
-        yield self._push(ctx.bind(getattr(cls, "_nu_bind_as", None) or cls, session), (sid,))
+        yield self._binding.push(ctx.bind(getattr(cls, "_nu_bind_as", None) or cls, session), sid)

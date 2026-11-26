@@ -10,9 +10,8 @@ every body to a mutating child (Command / Action / Flow).
 
 Loop variables are dynamic bindings (``nu.lang.binding``): the body is a
 lambda over the element, called once at construction with a mem ref, and the
-loop pushes one frame for its run and writes each element into it before the
-body runs - the same binding ``Map`` / ``Filter`` use, not a tracked fabric
-write. A body given as a plain tree reads no element.
+loop pushes a frame holding the element for each body run - the same binding
+``Map`` / ``Filter`` use, not a tracked fabric write. A body given as a plain tree reads no element.
 ``ForEachParAsync`` is ``ForEachDo``'s fan-out twin: same two args, same
 binding, but every element gets its own arm on the loop at once, each arm
 pushing a frame of its own so the arms never see each other's element. It
@@ -38,7 +37,7 @@ from nu.engine.structure import Declared
 from nu.lang import Control
 from nu.lang._stream import aiter_any, sync_iter
 from nu.lang.attributes.execution import ExecOrder
-from nu.lang.binding import _DynamicBinding
+from nu.lang.binding import Binding
 
 
 if TYPE_CHECKING:
@@ -184,7 +183,7 @@ class ForeverDo(Control):
         return athunk
 
 
-class ForEachDo(_DynamicBinding, Control):
+class ForEachDo(Control):
     """``ForEachDo(items, lambda x: body)`` - runs ``body`` once per element of ``items``.
 
     Args:
@@ -200,13 +199,9 @@ class ForEachDo(_DynamicBinding, Control):
           each get their own and an inner body still reads the outer
           element. One lambda used again inside its own body shares its
           Shape, and the inner loop shadows the outer, as with ``nu.let``.
-        - One frame for the loop's run, the element written into it before
-          each body run. The frame is the loop's own: it never reaches the
-          caller and is gone once the loop ends.
-        - Work detached from the run (a debounced, delayed or spawned task,
-          a stream pulled after the run moved on) reads the latest element,
-          not the one current when it started: the run keeps one frame and
-          overwrites it per element. Concurrent runs each get their own.
+        - Each body run gets a frame of its own holding its element, so
+          work it detaches (a delayed or spawned task) reads that element.
+          The frames never reach the caller.
 
     Example:
         >>> _ = nu.run(nu.ForEachDo(nu.Iter([1, 2]), lambda x: nu.print(x)))
@@ -224,18 +219,16 @@ class ForEachDo(_DynamicBinding, Control):
     _param_slots = Declared(value=frozenset({0}), name="param_slots")
 
     def __init__(self, items: object, body: object) -> None:
-        super().__init__(items, self._dynamic("ForEachDo", body, 1))
+        body, self._binding = Binding.of_lambda("ForEachDo", body, 1)
+        super().__init__(items, body)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         items_t, body = children
         binding = self._binding
 
         def thunk(rt: Runtime) -> None:
-            inner_ctx, data = binding.frame(rt.ctx)
-            inner = rt.on(inner_ctx)
             for elem in sync_iter(items_t(rt)):
-                binding.write(data, (elem,))
-                body(inner)
+                body(rt.on(binding.push(rt.ctx, elem)))
 
         return thunk
 
@@ -244,16 +237,13 @@ class ForEachDo(_DynamicBinding, Control):
         binding = self._binding
 
         async def athunk(rt: Runtime) -> None:
-            inner_ctx, data = binding.frame(rt.ctx)
-            inner = rt.on(inner_ctx)
             async for elem in aiter_any(await items_t(rt)):
-                binding.write(data, (elem,))
-                await body(inner)
+                await body(rt.on(binding.push(rt.ctx, elem)))
 
         return athunk
 
 
-class ForEachParAsync(_DynamicBinding, Control):
+class ForEachParAsync(Control):
     """``ForEachParAsync(items, lambda x: body)`` - runs ``body`` once per element of ``items``, every arm on the loop at once.
 
     Args:
@@ -301,7 +291,8 @@ class ForEachParAsync(_DynamicBinding, Control):
     _requires_async = Declared(value=True, name="requires_async")
 
     def __init__(self, items: object, body: object) -> None:
-        super().__init__(items, self._dynamic("ForEachParAsync", body, 1))
+        body, self._binding = Binding.of_lambda("ForEachParAsync", body, 1)
+        super().__init__(items, body)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> None:
@@ -319,13 +310,13 @@ class ForEachParAsync(_DynamicBinding, Control):
         async def athunk(rt: Runtime) -> None:
             elems = [elem async for elem in aiter_any(await items_t(rt))]
             body_nid = rt.program.children[nid][1]
-            arms = [rt.on(binding.push(rt.ctx, (elem,))) for elem in elems]
+            arms = [rt.on(binding.push(rt.ctx, elem)) for elem in elems]
             await _scheduling.aeval_foreach_par(arms, body_nid)
 
         return athunk
 
 
-class ForRangeDo(_DynamicBinding, Control):
+class ForRangeDo(Control):
     """``ForRangeDo(start, stop, lambda i: body, *, step=1)`` - runs ``body`` once per value of ``range(start, stop, step)``.
 
     Args:
@@ -338,12 +329,8 @@ class ForRangeDo(_DynamicBinding, Control):
     Notes:
         - ``start``, ``stop`` and ``step`` are each evaluated once, before
           the loop starts.
-        - One frame for the loop's run, the value written before each body
-          run. Same binding, and the same lambda form, as ``ForEachDo``.
-        - Work detached from the run (a debounced, delayed or spawned task,
-          a stream pulled after the run moved on) reads the latest value,
-          not the one current when it started: the run keeps one frame and
-          overwrites it per value. Concurrent runs each get their own.
+        - Each body run gets a frame of its own holding its value. Same
+          binding, and the same lambda form, as ``ForEachDo``.
         - Follows Python's ``range`` rules: a ``step`` that never reaches
           ``stop`` from ``start`` runs the body zero times rather than
           looping forever.
@@ -357,18 +344,16 @@ class ForRangeDo(_DynamicBinding, Control):
     _param_slots = Declared(value=frozenset({0, 1, 2}), name="param_slots")
 
     def __init__(self, start: object, stop: object, body: object, *, step: object = 1) -> None:
-        super().__init__(start, stop, step, self._dynamic("ForRangeDo", body, 1))
+        body, self._binding = Binding.of_lambda("ForRangeDo", body, 1)
+        super().__init__(start, stop, step, body)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         start_t, stop_t, step_t, body = children
         binding = self._binding
 
         def thunk(rt: Runtime) -> None:
-            inner_ctx, data = binding.frame(rt.ctx)
-            inner = rt.on(inner_ctx)
             for i in range(start_t(rt), stop_t(rt), step_t(rt)):
-                binding.write(data, (i,))
-                body(inner)
+                body(rt.on(binding.push(rt.ctx, i)))
 
         return thunk
 
@@ -377,11 +362,8 @@ class ForRangeDo(_DynamicBinding, Control):
         binding = self._binding
 
         async def athunk(rt: Runtime) -> None:
-            inner_ctx, data = binding.frame(rt.ctx)
-            inner = rt.on(inner_ctx)
             for i in range(await start_t(rt), await stop_t(rt), await step_t(rt)):
-                binding.write(data, (i,))
-                await body(inner)
+                await body(rt.on(binding.push(rt.ctx, i)))
 
         return athunk
 

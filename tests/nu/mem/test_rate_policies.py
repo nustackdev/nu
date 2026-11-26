@@ -123,9 +123,9 @@ def test_a_debounced_body_reads_its_frame_after_the_frame_exited() -> None:
     assert _arun(nm.let(call, n=7) >> nu.Delay(0.05)) == [7]
 
 
-def test_a_debounced_loop_body_reads_the_last_item_after_the_loop() -> None:
-    # One frame for the loop's run, written per item: the one run that fires,
-    # after the loop has ended, reads the item the burst ended on.
+def test_a_debounced_loop_body_reads_the_item_of_the_call_that_fired() -> None:
+    # Each body run has a frame of its own: the one run that fires, after the
+    # loop has ended, is the burst's last call and reads that call's item.
     call = lambda item: nm.Debounce(0.02, Out.log.append(item), pending=Rate.pending)  # noqa: E731
     burst = nu.ForEachDo(nu.Iter([1, 2, 3]), call) >> nu.Delay(0.1)
     assert _arun(nm.let(Rate, burst)) == [3]

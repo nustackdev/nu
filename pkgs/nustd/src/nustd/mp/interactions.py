@@ -81,7 +81,7 @@ from nu.lang import (
     ScalarQuery,
     StreamQuery,
 )
-from nu.lang.binding import named
+from nu.lang.binding import Binding
 from nu.lang.null import is_null
 
 from .._shipped import shipped
@@ -358,7 +358,7 @@ class Teleport(Policy):
         /,
         **args: object,
     ) -> None:
-        tree, self._ship, terms = named("Teleport", body, args)
+        tree, self._ship, terms = Binding.of_named("Teleport", body, args)
         super().__init__(tree, _pool_node(pool), worker, *terms)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
@@ -484,7 +484,7 @@ class Dispatch(ScalarAction):
         /,
         **args: object,
     ) -> None:
-        tree, self._ship, terms = named("Dispatch", body, args)
+        tree, self._ship, terms = Binding.of_named("Dispatch", body, args)
         super().__init__(_pool_node(pool), worker, Literal(_dispatch_body(tree)), *terms)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:

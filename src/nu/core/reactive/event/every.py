@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Control
-from nu.lang.binding import _DynamicBinding
+from nu.lang.binding import Binding
 
 from .._body import async_only, drain_body
 
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 __all__ = ["ReactEvery"]
 
 
-class ReactEvery(_DynamicBinding, Control):
+class ReactEvery(Control):
     """Run the body on every change, unconditionally, forever.
 
     Binds to the change subscription once and then runs the body once per
@@ -51,7 +51,8 @@ class ReactEvery(_DynamicBinding, Control):
     _param_slots = Declared(value=frozenset({0}), name="param_slots")
 
     def __init__(self, change: object, body: object) -> None:
-        super().__init__(change, self._dynamic("ReactEvery", body, 1))
+        body, self._binding = Binding.of_lambda("ReactEvery", body, 1)
+        super().__init__(change, body)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         return async_only("ReactEvery")
@@ -71,7 +72,7 @@ class ReactEvery(_DynamicBinding, Control):
             try:
                 while True:
                     key = await queue.get()
-                    await drain_body(rt.on(binding.push(rt.ctx, (key,))), children[1])
+                    await drain_body(rt.on(binding.push(rt.ctx, key)), children[1])
             finally:
                 sub.unbind(on_change)
                 sub.close()

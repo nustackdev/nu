@@ -9,7 +9,7 @@ from nu.engine.structure import Declared
 from nu.lang import Control
 from nu.lang._stream import aiter_any
 from nu.lang.attributes.execution import ExecOrder
-from nu.lang.binding import _DynamicBinding
+from nu.lang.binding import Binding
 from nu.lang.null import is_null
 
 from .._body import async_only
@@ -41,7 +41,7 @@ async def _one(owner: str, stream: object) -> object:
     return found[0] if found else None
 
 
-class ReconcileLatest(_DynamicBinding, Control):
+class ReconcileLatest(Control):
     """``ReconcileLatest(read, change, lambda x: body)`` - one arm for the id ``read`` answers, kept live against ``change``.
 
     ``ReconcileLatestEach`` over one id or none. Each pass reads the id and
@@ -110,10 +110,11 @@ class ReconcileLatest(_DynamicBinding, Control):
         after: Iterable[float] | object = (),
         every: float | object | None = None,
     ) -> None:
+        body, self._binding = Binding.of_lambda("ReconcileLatest", body, 1)
         super().__init__(
             read,
             change,
-            self._dynamic("ReconcileLatest", body, 1),
+            body,
             *schedule_terms("ReconcileLatest", after, every),
         )
 

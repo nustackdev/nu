@@ -19,7 +19,7 @@ import pytest
 import nu
 import nu.mem as nm
 from nu.lang import wire
-from nu.lang.binding import _DynamicBinding
+from nu.lang.binding import Binding
 
 
 if TYPE_CHECKING:
@@ -145,7 +145,7 @@ def test_two_builds_are_equal_trees() -> None:
 
 
 def _shape(term: nu.Nu) -> type:
-    return term._bind_shape  # type: ignore[attr-defined]
+    return term._binding.shape  # type: ignore[attr-defined]
 
 
 def test_nested_lets_never_share_a_shape() -> None:
@@ -228,15 +228,16 @@ def test_a_parameter_named_after_a_ref_method_still_works(run: Callable) -> None
 # --- free form arity (every dynamic binding) -----------------------------------
 
 
-class _Hands(_DynamicBinding, nu.Bracket):
+class _Hands(nu.Bracket):
     """A test binding handing its body two values, ``10`` and ``20``."""
 
     def __init__(self, fn: object) -> None:
-        super().__init__(self._dynamic("_Hands", fn, 2))
+        body, self._binding = Binding.of_lambda("_Hands", fn, 2)
+        super().__init__(body)
 
     @contextmanager
     def _open(self, ctx: nu.Context) -> Iterator[nu.Context]:
-        yield self._push(ctx, (10, 20))
+        yield self._binding.push(ctx, 10, 20)
 
 
 @RUNNERS
