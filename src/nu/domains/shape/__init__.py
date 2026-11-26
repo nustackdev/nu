@@ -60,7 +60,6 @@ from .collections.abc import (
 from .dsl import Shape, ShapeMeta, Slot, SlotDescriptor
 from .extractable import Extractable
 from .interactions import (
-    AdvanceCursor,
     Erase,
     Exists,
     Extract,
@@ -88,7 +87,6 @@ from .shape import MutableShapeRef, ReactiveShapeRef, ShapeRef
 
 
 __all__ = [
-    "AdvanceCursor",
     "BoolRef",
     "BytesRef",
     "DictRef",

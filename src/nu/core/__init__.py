@@ -10,7 +10,7 @@ subpackages:
   ``Timeout``, ``TryCatch``, ``Transaction``, ``Snapshot``).
 - ``reactive`` - the reactivity standard: the observer contract, the
   ``On*Change`` atoms fabrics bind against, and the flows that run bodies on
-  change (event: ``ReactOnce`` and kin; level: ``Reconcile`` and kin; ``Stream``).
+  change (event: ``ReactOnce`` and kin; level: ``Reconcile`` and kin).
 
 Everything under here is an Interaction. Forms (``nu.forms``), the kind
 taxonomy (``nu.lang``) and the fabric refs (``nu.context``, and the fabrics in
@@ -152,7 +152,6 @@ from nu.core.reactive import (
     ReconcileLatest,
     ReconcileLatestEach,
     ReconcileWhile,
-    Stream,
     WaitUntil,
 )
 from nu.core.reduction import (
@@ -295,7 +294,6 @@ __all__ = [
     "Slice",
     "SortBy",
     "Sorted",
-    "Stream",
     "Sub",
     "Sum",
     "Switch",

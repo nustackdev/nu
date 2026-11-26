@@ -18,7 +18,6 @@ from nu.context import Attr
 from nu.core import Add, Div, Filter, Iter, Map, SortBy
 from nu.core.flows import Noop
 from nu.core.flows.control import ForEachDo, ForEachParAsync, ForRangeDo
-from nu.core.reactive.cursor.stream import Stream
 from nu.core.reactive.event import ReactEvery, ReactLatest, ReactOnce, ReactWhile
 from nu.core.spans.policy import Retry, TryCatch
 from nu.engine.structure import Declared
@@ -352,39 +351,3 @@ async def test_react_latest_changed_key_stays_on_the_run_branch() -> None:
     await _until(lambda: log == ["a"])
     await _cancel(task)
     assert ctx.attrs.get("k") == "outer"
-
-
-# --- stream -------------------------------------------------------------------
-
-
-async def test_stream_key_lives_while_the_item_drains_and_is_released_on_close() -> None:
-    # ``Stream`` has no sync thunk and no substrate yet, so it is driven
-    # through its async thunk with hand-made children.
-    keys = iter([(0, "a"), (1, "b")])
-    ctx = _outer("stream_key")
-    rt = type("Rt", (), {"ctx": ctx})()
-
-    async def advance(rt: object) -> object:
-        return next(keys, None)
-
-    async def body(rt: Runtime) -> object:
-        return [rt.ctx.attrs.get("stream_key")]
-
-    async def value(v: object) -> object:
-        return v
-
-    children = (
-        advance,
-        lambda rt: value(_Feed()),
-        body,
-        lambda rt: value("stream_key"),
-        lambda rt: value("log"),
-        lambda rt: value(()),
-        lambda rt: value(None),
-    )
-    stream = Stream(Literal(None), Literal(None))
-    agen = await stream._acompile(0, children)(rt)
-    assert await agen.__anext__() == "a"
-    assert ctx.attrs.get("stream_key") == "a"  # alive while the item drains
-    await agen.aclose()
-    assert ctx.attrs.get("stream_key") == "outer"

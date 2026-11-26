@@ -6,11 +6,8 @@ minimal mock runtime. Full integration (real substrate + program) is deferred.
 
 from __future__ import annotations
 
-import pytest
-
 import nu
 from nu.domains.shape.interactions import (
-    AdvanceCursor,
     Exists,
     Extract,
     Load,
@@ -36,10 +33,6 @@ def test_extract_query_is_scalar_query():
     assert issubclass(Extract, ScalarQuery)
 
 
-def test_advance_cursor_query_is_scalar_query():
-    assert issubclass(AdvanceCursor, ScalarQuery)
-
-
 # ---------------------------------------------------------------------------
 # Construction
 # ---------------------------------------------------------------------------
@@ -61,13 +54,6 @@ def test_extract_query_constructs_with_ref():
     ref = ItemRef("slot")
     q = Extract(ref)
     assert nu.tree.children(q)
-
-
-def test_advance_cursor_query_constructs_with_two_children():
-    source = ItemRef("src")
-    cursor = ItemRef("cur")
-    q = AdvanceCursor(source, cursor)
-    assert len(nu.tree.children(q)) == 2
 
 
 # ---------------------------------------------------------------------------
@@ -122,11 +108,6 @@ def test_extract_thunk_returns_empty_for_empty_view():
     thunk = q._compile(0, (_make_thunk(NULL),))
     result = thunk(None)
     assert is_null(result)
-
-
-@pytest.mark.skip(reason="substrate impl deferred — AdvanceCursor needs view.next_key_after()")
-def test_advance_cursor_thunk_reads_next_key():
-    pass
 
 
 class _HookRef(ItemRef):

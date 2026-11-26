@@ -22,7 +22,6 @@ REACTIVE = [
     "ReconcileLatest",
     "ReconcileLatestEach",
     "ReconcileWhile",
-    "Stream",
     "WaitUntil",
 ]
 

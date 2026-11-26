@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Drain-then-follow stream flow removed; it had no users and only tests
 - Benchmark bodies use the merged local frame binding after the frames rework
 - Tests pin frame isolation across arms, shadowing, streams, cancels and delayed reads
 - Bindings push immutable context frames, so concurrent bodies never share or restore state

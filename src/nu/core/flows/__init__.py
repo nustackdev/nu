@@ -13,7 +13,7 @@ Two families:
   all.
 
 The flows driven by change subscriptions (``ReactOnce`` and the rest of the
-event kind, ``Reconcile`` and the rest of the level kind, ``Stream``) live in
+event kind, ``Reconcile`` and the rest of the level kind) live in
 ``nu.core.reactive``, next to the subscriptions they consume.
 """
 
