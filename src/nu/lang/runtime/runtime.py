@@ -66,11 +66,13 @@ class Runtime:
     __slots__ = ("budget", "ctx", "program")
 
     def __init__(self, program: Program, ctx: Context, *, budget: Budget | None = None) -> None:
-        from nu.lang.runtime.utils.budget import Budget as _Budget
+        if budget is None:
+            from nu.lang.runtime.utils.budget import Budget as _Budget
 
+            budget = _Budget()
         self.program = program
         self.ctx = ctx
-        self.budget = budget if budget is not None else _Budget()
+        self.budget = budget
 
     def on(self, ctx: Context) -> Runtime:
         """The Runtime running on ``ctx``: same Program and Budget.

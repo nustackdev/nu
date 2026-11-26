@@ -72,14 +72,20 @@ class Binding:
     no frame: ``push`` hands ``ctx`` back as it is.
     """
 
-    __slots__ = ("shape", "slots")
+    __slots__ = ("_lowers", "_slot_lowers", "shape", "slots")
 
     shape: type[Shape] | None
     slots: tuple[str, ...]
+    _lowers: Mapping[str, Callable[[object], object]]
+    _slot_lowers: tuple[tuple[str, Callable[[object], object]], ...]
 
     def __init__(self, shape: type[Shape] | None, slots: Sequence[str] = ()) -> None:
+        slots = tuple(slots)
+        lowers = {} if shape is None else _lowers(shape)
         object.__setattr__(self, "shape", shape)
-        object.__setattr__(self, "slots", tuple(slots))
+        object.__setattr__(self, "slots", slots)
+        object.__setattr__(self, "_lowers", lowers)
+        object.__setattr__(self, "_slot_lowers", tuple((s, lowers[s]) for s in slots))
 
     @classmethod
     def none(cls) -> Binding:
@@ -180,10 +186,9 @@ class Binding:
         shape = self.shape
         if shape is None:
             return ctx
-        lowers = _lowers(shape)
-        data = {name: lowers[name](v) for name, v in zip(self.slots, values, strict=False)}
+        data = {name: lower(v) for (name, lower), v in zip(self._slot_lowers, values, strict=False)}
         for name, v in named.items():
-            lower = lowers.get(name)
+            lower = self._lowers.get(name)
             if lower is None:
                 msg = f"{shape.__name__} has no slot {name!r}"
                 raise TypeError(msg)

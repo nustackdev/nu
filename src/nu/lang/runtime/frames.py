@@ -158,6 +158,20 @@ def _view(top: _Frame | None, fabric_type: object) -> tuple[dict[frozenset, _Ent
     return plain, guarded
 
 
+def _nearest(top: _Frame | None, fabric_type: object, scope_tags: frozenset) -> _Entry | None:
+    """The nearest unguarded entry at exactly ``fabric_type`` + ``scope_tags``, or None."""
+    frame = top
+    while frame is not None:
+        if (
+            frame.fabric_type == fabric_type
+            and not frame.predicates
+            and frame.scope_tags == scope_tags
+        ):
+            return frame.entry
+        frame = frame.parent
+    return None
+
+
 def _find_at(
     plain: dict[frozenset, _Entry], guarded: list[_Frame], scope_tags: frozenset, data: dict
 ) -> _Entry | None:
@@ -185,7 +199,14 @@ def _find(
     1. Exact scope tags.
     2. Subset fallback: progressively smaller scope tag sets.
     3. The untagged binding.
+
+    Without data no guard is evaluated, so an exact match is the nearest
+    unguarded frame and is found without building the view.
     """
+    if not data:
+        entry = _nearest(top, fabric_type, scope_tags)
+        if entry is not None:
+            return entry
     plain, guarded = _view(top, fabric_type)
     if not plain and not guarded:
         return None

@@ -98,7 +98,7 @@ class Context:
         entry: _Entry,
     ) -> Context:
         ctx = Context.__new__(Context)
-        ctx._top = _Frame(self._top, fabric_type, frozenset(tags), dict(predicates), entry)
+        ctx._top = _Frame(self._top, fabric_type, frozenset(tags), predicates, entry)
         return ctx
 
     # -- reads ---------------------------------------------------------------
