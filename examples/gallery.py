@@ -91,7 +91,7 @@ def item(bid: nu.Nu) -> nu.Nu:
     delete = card[1].to(ui.ButtonRef.slot(label="Delete", variant="ghost", size="sm"))
     draw = (
         PAGE.grid.insert(card, at=0)
-        >> nu.let(nustd.kv.atomic(State.media[bid]), lambda mime: media(card[0], bid, mime))
+        >> nu.let(lambda mime: media(card[0], bid, mime), mime=nustd.kv.atomic(State.media[bid]))
         >> delete.init()
     )
     # The blob first: the log moving cancels this arm, so the entry goes last.
@@ -146,25 +146,25 @@ def landed(event: nu.Nu) -> nu.Nu:
         keys: nu.List[str] = nu.List(nu.Collect(nu.Map(nu.Iter(sel), lambda f: f["key"])))
         # ``open`` pulls too, and its landing is heard here after the first one
         # stored the file and let it go: only a file still picked is stored.
-        return nu.IfDo(keys.contains(key), nu.let(keys.index(key), lambda i: store(i, sel[i])))
+        return nu.IfDo(keys.contains(key), nu.let(lambda i: store(i, sel[i]), i=keys.index(key)))
 
     def store(i: nu.Nu, entry: nu.Nu) -> nu.Nu:
         f: nu.Dict[str, str] = nu.Dict(entry)
         file = PAGE.drop.file(i)
         piped = Media.put_stream(file.open(), mime=f["mime"], name=f["name"])
         return bar.set(1.0, caption="Storing", indeterminate=True) >> nu.let(
-            piped,
             lambda bid: (
                 nustd.kv.atomic(State.media.set_item(bid, f["mime"]))
                 >> PAGE.grid.remove(key)
                 >> file.discard()
                 >> PAGE.drop.remove(i)
             ),
+            bid=piped,
         )
 
     return nu.IfDo(
         nu.Eq(ev["state"], "landed"),
-        nu.let(PAGE.drop, find),
+        nu.let(find, selection=PAGE.drop),
         bar.set(0.0, caption="Failed: " + nu.Str(ev["error"])),
     )
 

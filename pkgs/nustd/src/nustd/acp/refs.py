@@ -81,8 +81,8 @@ class AgentRef(FabricRef):
         app = nu.With(
             nustd.acp.claude(Claude, cwd="/srv/repo"),
             body=nu.let(
-                nu.Dict(Claude.new_session())["session_id"],
                 lambda sid: nu.ForEachDo(Claude[sid].prompt("hi"), nu.print),
+                sid=nu.Dict(Claude.new_session())["session_id"],
             ),
         )
     """
@@ -105,8 +105,8 @@ class AgentRef(FabricRef):
         def thunk(rt: Runtime) -> object:
             f = fabric(rt)
             name = cast("str", agent_name(name_of(rt)))
-            if rt.ctx.fabrics.has(f, name):
-                return rt.ctx.fabrics.get(f, name)
+            if rt.ctx.has(f, name):
+                return rt.ctx.get(f, name)
             return Null(name)
 
         return thunk
@@ -117,8 +117,8 @@ class AgentRef(FabricRef):
         async def athunk(rt: Runtime) -> object:
             f = await fabric(rt)
             name = cast("str", agent_name(await name_of(rt)))
-            if rt.ctx.fabrics.has(f, name):
-                return rt.ctx.fabrics.get(f, name)
+            if rt.ctx.has(f, name):
+                return rt.ctx.get(f, name)
             return Null(name)
 
         return athunk

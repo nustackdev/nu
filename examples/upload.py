@@ -89,7 +89,7 @@ def picked() -> nu.Nu:
     return nu.IfDo(
         nu.IsNull(CSV.file),
         CSV.header.set("No file yet") >> CSV.status.set("") >> CSV.rows.clear(),
-        nu.let(CSV.file.slice(0, 4096), show_header) >> CSV.file.pull(),
+        nu.let(show_header, head=CSV.file.slice(0, 4096)) >> CSV.file.pull(),
     )
 
 
@@ -109,11 +109,11 @@ def search(raw: nu.Nu) -> nu.Nu:
     hits = nu.Filter(nu.Iter(lines), lambda line: nu.Str(line).lower().contains(query))
     rows = nu.Collect(nu.Map(hits, lambda line: nu.Str(line).split(",")))
     return nu.let(
-        rows,
         lambda found: (
             CSV.rows.set_rows(nu.List(found).slice(0, 200))
             >> CSV.status.set(nu.str(nu.List(found).len()) + " rows match")
         ),
+        found=rows,
     )
 
 
@@ -122,7 +122,7 @@ csv = (
     | nu.ReactEvery(CSV.file.on_upload(), landed)
     | nu.ReactEvery(
         CSV.query.on_change(),
-        lambda _: nu.IfDo(nu.IsNull(CSV.file), nu.Noop(), nu.let(CSV.file.bytes(), search)),
+        lambda _: nu.IfDo(nu.IsNull(CSV.file), nu.Noop(), nu.let(search, raw=CSV.file.bytes())),
     )
 )
 

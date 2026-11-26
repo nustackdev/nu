@@ -113,7 +113,7 @@ def card(col, device: str, empty: str) -> nu.Nu:
 
     return (
         nu.ReactEvery(col.take.on_status(), lambda ev: col.status.set(_status(device, ev)))
-        | nu.ReactEvery(col.take.on_change(), lambda _: nu.let(col.take, kept))
+        | nu.ReactEvery(col.take.on_change(), lambda _: nu.let(kept, take=col.take))
         | nu.ReactEvery(col.take.on_upload(), landed)
     )
 

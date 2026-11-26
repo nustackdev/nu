@@ -141,7 +141,7 @@ class Teleport(Policy):
             target = await children[1](rt)
             carry = await children[2](rt)
             tag: tuple[object, ...] = () if target is UNSET else (target,)
-            service = rt.ctx.fabrics.get(RayService, *tag)
+            service = rt.ctx.get(RayService, *tag)
             attrs = dict(rt.ctx.attrs.items()) if carry else None
             result = await service.aexecute(body_term, attrs=attrs)
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:

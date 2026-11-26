@@ -61,7 +61,7 @@ class _RayServiceActor:
             await stack.__aenter__()
             ctx = Context()
             try:
-                await stack.enter_async_context(init._aenter(ctx))
+                ctx = await stack.enter_async_context(init._aenter(ctx))
             except BaseException:
                 await stack.__aexit__(None, None, None)
                 raise
@@ -80,8 +80,8 @@ class _RayServiceActor:
         """Compile ``tree`` and evaluate it against this actor's Context.
 
         Returns the root's value (``None`` for effect-only trees). Every call
-        runs on its own branch of the actor's Context with ``attrs`` bound on
-        it, so the parent's names carry over without touching the actor's
+        starts from the actor's frames, on its own attrs table with ``attrs``
+        bound in it, so the parent's names carry over without touching the actor's
         baseline or a concurrent call.
 
         Value-rooted trees (Query / Command / effectful Sequential) work
@@ -121,8 +121,8 @@ class _RayServiceActor:
 
 @contextlib.contextmanager
 def _exec_context(ctx: Context, attrs: dict | None) -> Iterator[Context]:
-    """The Context one call runs against: a branch of ``ctx`` with the caller's names bound."""
-    run_ctx = ctx.branch()
+    """The Context one call runs against: ``ctx``'s frames on an own attrs table, the caller's names bound."""
+    run_ctx = ctx._fork_attrs()  # TEMPORARY until attrs go (task-184 phase 4)
     with contextlib.ExitStack() as scope:
         for name, value in (attrs or {}).items():
             scope.enter_context(run_ctx.attrs.let(name, value))

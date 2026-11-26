@@ -113,7 +113,7 @@ class InvisiblesServer(Fabric):
         """
         tag = (self.target_tag,) if self.target_tag is not None else ()
         lookup_type = getattr(self.target, "_nu_bind_as", None) or self.target
-        root = ctx.fabrics.get(lookup_type, *tag)
+        root = ctx.get(lookup_type, *tag)
 
         config = ConnectionConfig(attrs=AttributeAccessConfig(allow_all_attrs=True))
         listener_factory = UnixSocketListener if self.transport == "unix" else TCPListener

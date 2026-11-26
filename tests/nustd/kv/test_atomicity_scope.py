@@ -1,6 +1,6 @@
 """Snapshot and Transaction as scopes on the task's fabrics store.
 
-A kv bracket provides its handle on ``ctx.fabrics`` for its body and for
+A kv bracket provides its handle on the Context its body runs on and for
 nothing else: not after the body, not to a sibling arm, and it commits or
 aborts on the way out.
 """
@@ -71,7 +71,7 @@ def _stored(seen: dict) -> _Fn:
     """Record whether KEY landed in storage, read outside any bracket."""
 
     def fn(rt: Runtime) -> None:
-        with rt.ctx.fabrics.get(Navigator).storage.snapshot() as view:
+        with rt.ctx.get(Navigator).storage.snapshot() as view:
             seen["stored"] = view.exists(KEY)
 
     return _Fn(fn)
@@ -81,11 +81,11 @@ def test_transaction_is_provided_for_its_body_only() -> None:
     seen: dict = {}
 
     def write(rt: Runtime) -> None:
-        rt.ctx.fabrics.get(TransactionProtocol).put(KEY, 1)
-        seen["inside"] = rt.ctx.fabrics.has(TransactionProtocol)
+        rt.ctx.get(TransactionProtocol).put(KEY, 1)
+        seen["inside"] = rt.ctx.has(TransactionProtocol)
 
     def after(rt: Runtime) -> None:
-        seen["after"] = rt.ctx.fabrics.has(TransactionProtocol)
+        seen["after"] = rt.ctx.has(TransactionProtocol)
 
     run(With(memory_navigator(), body=Transaction(_Fn(write)) >> _Fn(after) >> _stored(seen)))
     assert seen == {"inside": True, "after": False, "stored": True}
@@ -95,11 +95,11 @@ def test_transaction_aborts_when_the_body_raises() -> None:
     seen: dict = {}
 
     def write(rt: Runtime) -> None:
-        rt.ctx.fabrics.get(TransactionProtocol).put(KEY, 1)
+        rt.ctx.get(TransactionProtocol).put(KEY, 1)
         raise ValueError("boom")
 
     def after(rt: Runtime) -> None:
-        seen["after"] = rt.ctx.fabrics.has(TransactionProtocol)
+        seen["after"] = rt.ctx.has(TransactionProtocol)
 
     guarded = TryCatch(Transaction(_Fn(write)), catch=_Fn(lambda rt: seen.update(caught=True)))
     run(With(memory_navigator(), body=guarded >> _Fn(after) >> _stored(seen)))
@@ -110,11 +110,11 @@ def test_snapshot_is_provided_for_its_body_only() -> None:
     seen: dict = {}
 
     def read(rt: Runtime) -> None:
-        rt.ctx.fabrics.get(SnapshotProtocol).get(KEY)
-        seen["inside"] = rt.ctx.fabrics.was_opened(SnapshotProtocol)
+        rt.ctx.get(SnapshotProtocol).get(KEY)
+        seen["inside"] = rt.ctx.was_opened(SnapshotProtocol)
 
     def after(rt: Runtime) -> None:
-        seen["after"] = rt.ctx.fabrics.has(SnapshotProtocol)
+        seen["after"] = rt.ctx.has(SnapshotProtocol)
 
     run(With(memory_navigator(), body=Snapshot(_Fn(read)) >> _Fn(after)))
     assert seen == {"inside": True, "after": False}
@@ -125,13 +125,13 @@ async def test_a_sibling_arm_never_sees_the_other_arms_transaction() -> None:
     opened, looked = asyncio.Event(), asyncio.Event()
 
     async def write(rt: Runtime) -> None:
-        rt.ctx.fabrics.get(TransactionProtocol).put(KEY, 1)
+        rt.ctx.get(TransactionProtocol).put(KEY, 1)
         opened.set()
         await looked.wait()
 
     async def look(rt: Runtime) -> None:
         await opened.wait()
-        seen["sibling"] = rt.ctx.fabrics.has(TransactionProtocol)
+        seen["sibling"] = rt.ctx.has(TransactionProtocol)
         looked.set()
 
     tree = With(

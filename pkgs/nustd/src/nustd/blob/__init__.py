@@ -23,8 +23,8 @@ Example::
     app = nu.With(
         nustd.blob.lmdb(Media, ".store/media"),
         body=nu.let(
-            Media.put(Path("cat.png"), mime="image/png", name="cat.png"),
             lambda bid: Media.meta(bid),
+            bid=Media.put(Path("cat.png"), mime="image/png", name="cat.png"),
         ),
     )
 

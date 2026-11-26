@@ -85,7 +85,7 @@ def test_provide_launch_teleport_round_trip():
     tree = nu.Provide(
         WorkerPool,
         kwargs={"name": "nu-test-provide"},
-        body=nu.mem.Frame(Local, Teleport(body=nu.Add(41, 1), worker=W), w=Launch()),
+        body=nu.mem.let(Local, Teleport(body=nu.Add(41, 1), worker=W), w=Launch()),
     )
     value, _ = nu.run(tree)
     assert value == 42
@@ -95,7 +95,7 @@ async def test_provide_launch_teleport_round_trip_async():
     tree = nu.Provide(
         WorkerPool,
         kwargs={"name": "nu-test-provide-a"},
-        body=nu.mem.Frame(Local, Teleport(body=nu.Add(41, 1), worker=W), w=Launch()),
+        body=nu.mem.let(Local, Teleport(body=nu.Add(41, 1), worker=W), w=Launch()),
     )
     value, _ = await nu.arun(tree)
     assert value == 42
@@ -113,7 +113,7 @@ def test_provide_teardown_kills_the_worker_it_launched():
     tree = nu.Provide(
         _Spy,
         kwargs={"name": "nu-test-teardown-tree"},
-        body=nu.mem.Frame(Local, Teleport(body=nu.Add(1, 1), worker=W), w=Launch()),
+        body=nu.mem.let(Local, Teleport(body=nu.Add(1, 1), worker=W), w=Launch()),
         bind_as=WorkerPool,
     )
     value, _ = nu.run(tree)
@@ -127,14 +127,14 @@ def test_provide_teardown_kills_the_worker_it_launched():
 
 def test_worker_id_flows_from_a_ref(ctx, pool):
     """The id reaches Teleport through a mem slot, i.e. it is a child, not payload."""
-    tree = nu.mem.Frame(Local, Teleport(body=nu.Add(1, 2), worker=W), w=Launch())
+    tree = nu.mem.let(Local, Teleport(body=nu.Add(1, 2), worker=W), w=Launch())
     value, _ = nu.run(tree, ctx)
     assert value == 3
 
 
 def test_worker_id_flows_from_a_computed_query(ctx, pool):
     """And through a query over that ref, which a payload target could never do."""
-    tree = nu.mem.Frame(
+    tree = nu.mem.let(
         Local,
         Teleport(body=nu.Add(1, 2), worker=nu.Add(W, 0)),
         w=Launch(),
@@ -144,7 +144,7 @@ def test_worker_id_flows_from_a_computed_query(ctx, pool):
 
 
 def test_worker_id_flows_from_a_ref_into_dispatch_and_kill(ctx, pool):
-    tree = nu.mem.Frame(
+    tree = nu.mem.let(
         Local,
         Dispatch(body=RESIDENT, worker=W),
         w=Launch(),
@@ -155,7 +155,7 @@ def test_worker_id_flows_from_a_ref_into_dispatch_and_kill(ctx, pool):
     pid = pool.status(wid).pid
     assert pool.status(wid).state == "busy"
 
-    nu.run(nu.mem.Frame(Local, Kill(worker=W), w=nu.Literal(wid)), ctx)
+    nu.run(nu.mem.let(Local, Kill(worker=W), w=nu.Literal(wid)), ctx)
     assert pool.workers() == []
     assert not _pid_alive(pid)
 
@@ -165,7 +165,7 @@ def test_pool_can_be_addressed_by_an_explicit_ref():
     tree = nu.Provide(
         WorkerPool,
         kwargs={"name": "nu-test-ref"},
-        body=nu.mem.Frame(
+        body=nu.mem.let(
             Local,
             Teleport(PoolRef(), body=nu.Add(2, 2), worker=W),
             w=Launch(PoolRef()),
@@ -183,7 +183,7 @@ def test_the_fluent_form_runs_the_same_as_the_constructors():
     tree = nu.Provide(
         WorkerPool,
         kwargs={"name": "nu-test-fluent"},
-        body=nu.mem.Frame(Local, pool.teleport(nu.Add(20, 22), W), w=pool.launch()),
+        body=nu.mem.let(Local, pool.teleport(nu.Add(20, 22), W), w=pool.launch()),
     )
     value, _ = nu.run(tree)
     assert value == 42
@@ -192,7 +192,7 @@ def test_the_fluent_form_runs_the_same_as_the_constructors():
 def test_the_fluent_form_drives_a_whole_lifecycle(ctx, pool):
     ref = PoolRef()
     nu.run(
-        nu.mem.Frame(
+        nu.mem.let(
             Local,
             ref.dispatch(RESIDENT, W),
             w=ref.launch(),
@@ -214,7 +214,7 @@ def test_the_fluent_form_drives_a_whole_lifecycle(ctx, pool):
 
 
 def test_dispatch_in_a_tree_returns_promptly(ctx, pool):
-    tree = nu.mem.Frame(
+    tree = nu.mem.let(
         Local,
         Dispatch(body=RESIDENT, worker=W),
         w=Launch(),
@@ -229,7 +229,7 @@ def test_dispatch_in_a_tree_returns_promptly(ctx, pool):
 
 def test_dispatch_carries_caller_attrs_when_asked(pool):
     ctx = nu.Context(attrs={"seed": 7}).bind(WorkerPool, pool)
-    tree = nu.mem.Frame(
+    tree = nu.mem.let(
         Local,
         Dispatch(body=nu.context.Attr("seed"), worker=W, carry=True),
         w=Launch(),
@@ -244,7 +244,7 @@ def test_dispatch_carries_caller_attrs_when_asked(pool):
 
 def test_teleport_carry_can_be_computed(pool):
     ctx = nu.Context(attrs={"seed": 7, "carry": True}).bind(WorkerPool, pool)
-    tree = nu.mem.Frame(
+    tree = nu.mem.let(
         Local,
         Teleport(body=nu.context.Attr("seed"), worker=W, carry=nu.context.Attr("carry")),
         w=Launch(),
@@ -256,7 +256,7 @@ def test_teleport_carry_can_be_computed(pool):
 
 
 def test_status_as_a_tree_query(ctx, pool):
-    status, _ = nu.run(nu.mem.Frame(Local, Status(worker=W), w=Launch()), ctx)
+    status, _ = nu.run(nu.mem.let(Local, Status(worker=W), w=Launch()), ctx)
     assert isinstance(status, WorkerStatus)
     assert (status.state, status.jobs, status.exitcode, status.cause) == ("idle", (), None, None)
     assert status.pid == status.pgid
@@ -281,7 +281,7 @@ def test_the_preset_stands_the_pool_up_and_stops_it():
     tree = pool_preset(
         name="nu-test-preset",
         grace=2.0,
-        body=nu.mem.Frame(Local, ref.teleport(nu.Add(1, 1), W), w=ref.launch()),
+        body=nu.mem.let(Local, ref.teleport(nu.Add(1, 1), W), w=ref.launch()),
     )
     assert nu.run(tree)[0] == 2
 
@@ -311,14 +311,14 @@ def test_a_tree_over_a_local_shape_runs_on_a_worker(ctx):
     class Tally(nu.Shape):
         n = nu.mem.IntRef.slot()
 
-    body = nu.mem.Frame(Tally, nu.Add(Tally.n, 1), n=41)
-    tree = nu.mem.Frame(Local, Teleport(body=body, worker=W), w=Launch())
+    body = nu.mem.let(Tally, nu.Add(Tally.n, 1), n=41)
+    tree = nu.mem.let(Local, Teleport(body=body, worker=W), w=Launch())
     assert nu.run(tree, ctx)[0] == 42
 
 
 async def test_a_let_runs_on_a_worker(ctx):
-    body = nu.mem.let(41, lambda n: nu.Add(n, 1))
-    tree = nu.mem.Frame(Local, Teleport(body=body, worker=W), w=Launch())
+    body = nu.mem.let(lambda n: nu.Add(n, 1), n=41)
+    tree = nu.mem.let(Local, Teleport(body=body, worker=W), w=Launch())
     assert (await nu.arun(tree, ctx))[0] == 42
 
 
@@ -328,5 +328,5 @@ def test_an_init_holding_a_local_class_reaches_the_worker(ctx):
 
     bound = nu.context.FabricRef(Greeter).exists()
     launch = Launch(init=nu.Provide(Greeter, kwargs={}, body=nu.Noop()))
-    tree = nu.mem.Frame(Local, Teleport(body=bound, worker=W), w=launch)
+    tree = nu.mem.let(Local, Teleport(body=bound, worker=W), w=launch)
     assert nu.run(tree, ctx)[0] is True

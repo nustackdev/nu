@@ -284,13 +284,13 @@ async def test_react_latest_restart_unwinds_nested_parallel_and_kv_boundaries():
         return Body(fn)
 
     def write(rt: Runtime) -> None:
-        txn = rt.ctx.fabrics.get(TransactionProtocol)
+        txn = rt.ctx.get(TransactionProtocol)
         txn.put(key, 1)
         handles["txn"].append(txn)
-        handles["storage"].append(rt.ctx.fabrics.get(Navigator).storage)
+        handles["storage"].append(rt.ctx.get(Navigator).storage)
 
     def read(rt: Runtime) -> None:
-        snap = rt.ctx.fabrics.get(SnapshotProtocol)
+        snap = rt.ctx.get(SnapshotProtocol)
         snap.get(key)
         handles["snap"].append(snap)
 

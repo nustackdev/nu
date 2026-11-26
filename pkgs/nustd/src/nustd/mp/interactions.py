@@ -203,7 +203,7 @@ class Launch(ScalarAction):
         The worker's id, an int.
 
     Example:
-        nu.let(Launch(), lambda w: Stop(worker=w))
+        nu.let(lambda w: Stop(worker=w), w=Launch())
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -447,7 +447,7 @@ class Dispatch(ScalarAction):
         The job id, an int.
 
     Example:
-        nu.let(Dispatch(body=resident_tree, worker=w), lambda job: Cancel(worker=w, job=job))
+        nu.let(lambda job: Cancel(worker=w, job=job), job=Dispatch(body=resident_tree, worker=w))
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")
@@ -514,7 +514,7 @@ class Cancel(Command):
         Nothing.
 
     Example:
-        nu.let(Dispatch(body=resident, worker=w), lambda job: Cancel(worker=w, job=job))
+        nu.let(lambda job: Cancel(worker=w, job=job), job=Dispatch(body=resident, worker=w))
     """
 
     _mutates = Declared(value=frozenset({0}), name="mutates")

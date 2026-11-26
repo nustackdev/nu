@@ -111,7 +111,7 @@ def test_tabs_with_no_tab_reads_null():
 
 def test_tabs_read_feeds_a_program():
     ref = _mount(TabsRef.slot(tabs=[{"id": "a", "label": "A"}]))
-    assert _run(nu.let(ref, lambda active: active == "a"), _Tab("a")) is True
+    assert _run(nu.let(lambda active: active == "a", active=ref), _Tab("a")) is True
 
 
 @pytest.mark.parametrize("cls", _OPEN_REFS)

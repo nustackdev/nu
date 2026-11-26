@@ -99,11 +99,11 @@ def test_a_live_object_inside_keeps_its_identity() -> None:
 
 def test_what_a_run_does_to_the_value_never_reaches_the_program() -> None:
     lit = nu.Literal({"name": "a"})
-    nu.run(nu.Frame(Cfg, Cfg.kwargs.set(lit) >> Cfg.kwargs["name"].set("b")))
+    nu.run(nu.let(Cfg, Cfg.kwargs.set(lit) >> Cfg.kwargs["name"].set("b")))
     assert lit.value == {"name": "a"}
     nums, tags = nu.Literal([1]), nu.Literal({"a"})
-    nu.run(nu.Frame(Cfg, Cfg.nums.set(nums) >> Cfg.nums.append(9)))
-    nu.run(nu.Frame(Cfg, Cfg.tags.set(tags) >> Cfg.tags.add("z")))
+    nu.run(nu.let(Cfg, Cfg.nums.set(nums) >> Cfg.nums.append(9)))
+    nu.run(nu.let(Cfg, Cfg.tags.set(tags) >> Cfg.tags.add("z")))
     assert nums.value == [1]
     assert tags.value == {"a"}
 
@@ -111,19 +111,19 @@ def test_what_a_run_does_to_the_value_never_reaches_the_program() -> None:
 def test_a_nested_container_is_copied_too() -> None:
     lit = nu.Literal({"inner": {"k": "a"}})
     inner = Cfg.nested["inner"].to(nu.DictRef.slot(str))
-    nu.run(nu.Frame(Cfg, Cfg.nested.set(lit) >> inner["k"].set("b")))
+    nu.run(nu.let(Cfg, Cfg.nested.set(lit) >> inner["k"].set("b")))
     assert lit.value == {"inner": {"k": "a"}}
 
 
 def test_the_callers_dict_is_not_changed() -> None:
     src = {"name": "a"}
-    nu.run(nu.Frame(Cfg, Cfg.kwargs.set(src) >> Cfg.kwargs["name"].set("b")))
+    nu.run(nu.let(Cfg, Cfg.kwargs.set(src) >> Cfg.kwargs["name"].set("b")))
     assert src == {"name": "a"}
 
 
 def test_a_frame_seed_with_an_item_write_starts_from_a_on_every_run(capsys) -> None:
     name = Cfg.kwargs["name"]
-    tree = nu.Frame(Cfg, name.set(name + "b") >> nu.print(name), kwargs={"name": "a"})
+    tree = nu.let(Cfg, name.set(name + "b") >> nu.print(name), kwargs={"name": "a"})
     before = repr(tree)
     nu.run(tree)
     nu.run(tree)
@@ -222,7 +222,7 @@ def test_a_factory_matches_dict_of() -> None:
 
 def test_a_factory_kwarg_computed_from_a_mem_read() -> None:
     name = Cfg.kwargs["name"]
-    seen = nu.Frame(
+    seen = nu.let(
         Cfg,
         nu.Literal(factory=lambda who: f"hi {who}", who=name),
         kwargs={"name": "a"},

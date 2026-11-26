@@ -274,7 +274,6 @@ def sync(
         def add(ev: nu.Nu) -> nu.Nu:
             index = ev["index"]
             return nu.let(
-                _new_key(),
                 lambda key: (
                     transaction(
                         # Eight hex digits can repeat; a key taken is drawn again.
@@ -285,6 +284,7 @@ def sync(
                     )
                     >> snapshot(table.insert_row(index, row(key)) >> ship_sort())
                 ),
+                key=_new_key(),
             )
 
         def delete(ev: nu.Nu) -> nu.Nu:
@@ -339,13 +339,13 @@ def sync(
 
             def column_add(ev: nu.Nu) -> nu.Nu:
                 return nu.let(
-                    _new_key(),
                     lambda key: answer(
                         nu.Literal(True),
                         nu.WhileDo(has(key), key.set(_new_key()))
                         >> columns.set(ColumnAdded(cols(), ev["index"], key)),
                         table.set_columns(cols()),
                     ),
+                    key=_new_key(),
                 )
 
             def column_delete(ev: nu.Nu) -> nu.Nu:
@@ -409,7 +409,9 @@ def sync(
 
                 # Settled after shipping, not cleared before: a flush cut short
                 # leaves its rows owed for the next one.
-                return nu.let(dirty, lambda owed: ship(owed) >> dirty.set(Settled(dirty, owed)))
+                return nu.let(
+                    lambda owed: ship(owed) >> dirty.set(Settled(dirty, owed)), owed=dirty
+                )
 
             def watch(change: nu.Nu, what: str, depth: int = 0) -> nu.Nu:
                 return nu.ReactEvery(
@@ -451,9 +453,10 @@ def sync(
             )
         seed = transaction(nu.Sequential(*seeds))
         return seed >> nu.let(
-            nu.Literal(CLEAN), lambda dirty: nu.let(None, lambda pending: live(dirty, pending))
+            lambda dirty: nu.let(lambda pending: live(dirty, pending), pending=None),
+            dirty=nu.Literal(CLEAN),
         )
 
     if sort is not None:
         return program(sort)
-    return nu.let(None, program)
+    return nu.let(program, arrows=None)

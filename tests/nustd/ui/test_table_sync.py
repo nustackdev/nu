@@ -240,7 +240,7 @@ class _Hold(Bracket):
     @asynccontextmanager
     async def _aopen(self, ctx, into):
         into.set_result(ctx)
-        yield
+        yield ctx
 
 
 class _Store:

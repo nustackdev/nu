@@ -12,8 +12,8 @@
   open state while the user clicks, like Collapsible.
 
 Open vs closed is the thing each one carries, so each has a ``set()`` for
-it, the way Modal does, and reading the Ref reads it back: ``nu.let(sheet,
-...)`` is true while the region is open. ``on_change()`` hears each move as
+it, the way Modal does, and reading the Ref reads it back: ``nu.let(...,
+open=sheet)`` is true while the region is open. ``on_change()`` hears each move as
 ``{event: "change", value: <open>}``. Every other child is open-ended composition: build
 it as a slot on the Shape or as a Ref with ``parent_ref=`` this one.
 """

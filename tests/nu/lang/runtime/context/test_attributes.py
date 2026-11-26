@@ -2,7 +2,7 @@
 
 Covers ``Attributes`` -- the flat name store attached to ``Context``. Its only
 surface is the binding operations (``let`` / ``set`` / ``exists``) and the
-reads (``get`` / ``items``); copying is ``Context.branch``.
+reads (``get`` / ``items``); copying is ``Context._fork_attrs``.
 """
 
 from __future__ import annotations

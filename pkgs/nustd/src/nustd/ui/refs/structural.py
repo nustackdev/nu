@@ -106,7 +106,7 @@ class ReadEntry(ScalarQuery):
         field_thunk = children[1] if len(children) > 1 else None
 
         async def athunk(rt: Runtime) -> Any:
-            session = rt.ctx.fabrics.get(Session)
+            session = rt.ctx.get(Session)
             ref_nid = rt.program.children[nid][0]
             path = await ref._aresolve_address(rt, ref_nid)
             entry = _entry_of(await session.aread(path))
@@ -140,7 +140,7 @@ class PathChanged(ScalarQuery):
         ref: HistoryRef = self._children[0]
 
         async def athunk(rt: Runtime) -> Subscription:
-            session = rt.ctx.fabrics.get(Session)
+            session = rt.ctx.get(Session)
             ref_nid = rt.program.children[nid][0]
             path = await ref._aresolve_address(rt, ref_nid)
             sub = session.subscribe(path, event=CHANGE)
@@ -169,7 +169,7 @@ class RoutePath(ScalarQuery):
         ref: HistoryRef = self._children[0]
 
         async def athunk(rt: Runtime) -> str:
-            session = rt.ctx.fabrics.get(Session)
+            session = rt.ctx.get(Session)
             ref_nid = rt.program.children[nid][0]
             path = await ref._aresolve_address(rt, ref_nid)
             return trim_slash(_entry_of(await session.aread(path))["path"])

@@ -17,13 +17,15 @@ from three sources with this precedence:
 ``merge`` / ``amerge`` stay mode-agnostic - stream fan-in has no
 Threaded/Async variants at this layer.
 
-Every arm is a task, and every task runs on its own ``rt.branch()``: a name
-set or a scope opened in one arm is never seen by a sibling or by the parent,
-whichever placement (loop, thread, or sequential fallback) runs it.
+Every arm is a task started from the current frame: the arms share the
+parent's frames, and a frame an arm pushes is its own, never seen by a sibling
+or by the parent, whichever placement (loop, thread, or sequential fallback)
+runs it. Each arm also takes its own attrs table (``_fork_attrs``, temporary
+until attrs go in task-184 phase 4).
 
 ``aeval_foreach_par`` is the odd one out: one body nid fanned out over a
 runtime-sized list instead of a fixed set of children, each arm a loop task on
-its own branch, off the budget entirely. It backs ``ForEachParAsync``,
+its own attrs table, off the budget entirely. It backs ``ForEachParAsync``,
 which lives in ``nu.core.flows.control`` next to the ``ForEachDo`` it mirrors.
 ``ReconcileLatestEach`` in ``nu.core.reactive`` spawns its arms with the same
 ``_spawn_arm`` and keeps its own book of them.
@@ -92,9 +94,9 @@ def eval_parallel(
     del per_child, force
     nids = list(nids)
     if rt.budget.max_parallel == 1 or rt.budget.thread_pool is None:
-        return [rt.branch().eval(n) for n in nids]
+        return [rt._fork_attrs().eval(n) for n in nids]
     pool = rt.budget.thread_pool
-    futures = [pool.submit(_with_contextvars(rt.branch().eval), n) for n in nids]
+    futures = [pool.submit(_with_contextvars(rt._fork_attrs().eval), n) for n in nids]
     return [f.result() for f in futures]
 
 
@@ -121,7 +123,7 @@ def _drive_async(
 
     async def place(i: int, n: int) -> object:
         on_loop = _resolve_on_loop(on_loop_col, n, i, per_child, force)
-        arm = rt.branch()
+        arm = rt._fork_attrs()
         async with sem:
             if on_loop:
                 return await arm.aeval(n)
@@ -146,7 +148,7 @@ async def aeval_parallel(
     """
     nids = list(nids)
     if rt.budget.max_parallel == 1 or rt.budget.async_sem is None:
-        coros: list = [rt.branch().aeval(n) for n in nids]
+        coros: list = [rt._fork_attrs().aeval(n) for n in nids]
     else:
         coros = _drive_async(rt, nids, per_child=per_child, force=force)
     return await _join_all([asyncio.ensure_future(c) for c in coros])
@@ -237,7 +239,7 @@ async def aeval_race(
         msg = "aeval_race needs at least one nid"
         raise ValueError(msg)
     if rt.budget.max_parallel == 1 or rt.budget.async_sem is None:
-        coros: list = [rt.branch().aeval(n) for n in nids]
+        coros: list = [rt._fork_attrs().aeval(n) for n in nids]
     else:
         coros = _drive_async(rt, nids, per_child=per_child, force=force)
     tasks = [asyncio.ensure_future(c) for c in coros]
@@ -265,7 +267,7 @@ async def aeval_any(
         msg = "aeval_any needs at least one nid"
         raise ValueError(msg)
     if rt.budget.max_parallel == 1 or rt.budget.async_sem is None:
-        coros: list = [rt.branch().aeval(n) for n in nids]
+        coros: list = [rt._fork_attrs().aeval(n) for n in nids]
     else:
         coros = _drive_async(rt, nids, per_child=per_child, force=force)
     tasks = [asyncio.ensure_future(c) for c in coros]
@@ -290,13 +292,13 @@ async def aeval_any(
 
 
 def _spawn_arm(rt: Runtime, nid: int, elem: object, name: str) -> asyncio.Task:
-    """Start one arm of ``nid`` for ``elem`` on its own branch, ``elem`` bound under ``name``.
+    """Start one arm of ``nid`` for ``elem`` on its own attrs table, ``elem`` bound under ``name``.
 
-    The branch keeps the arm's loop variable and writes away from its
-    siblings, and shares every value by reference so a live handle crosses
-    the fan-out intact.
+    The arm's own table keeps its loop variable away from its siblings, and
+    every value is shared by reference so a live handle crosses the fan-out
+    intact.
     """
-    arm = rt.branch()
+    arm = rt._fork_attrs()
 
     async def run() -> None:
         with arm.ctx.attrs.let(name, elem):
@@ -308,7 +310,7 @@ def _spawn_arm(rt: Runtime, nid: int, elem: object, name: str) -> asyncio.Task:
 async def aeval_foreach_par(rt: Runtime, nid: int, elems: Iterable, name: str) -> None:
     """Fan the body at ``nid`` out over ``elems``, one loop task each, joining on all.
 
-    Every arm is an asyncio.Task on its own branch with ``name``
+    Every arm is an asyncio.Task on its own attrs table with ``name``
     bound to its element. Placement is always the loop and the Budget is never
     touched: a parked coroutine costs no worker, so there is nothing here to
     ration. First error wins, as with ``aeval_parallel``, and the remaining
@@ -338,7 +340,7 @@ def merge(rt: Runtime, nids: Iterable[int]) -> Iterable:
     nids = list(nids)
     if rt.budget.max_parallel == 1 or rt.budget.thread_pool is None:
         for n in nids:
-            with safely_closing(rt.branch().iter(n)) as gen:
+            with safely_closing(rt._fork_attrs().iter(n)) as gen:
                 yield from gen
         return
 
@@ -353,7 +355,7 @@ def merge(rt: Runtime, nids: Iterable[int]) -> Iterable:
         finally:
             q.put(_DONE)
 
-    futures = [pool.submit(_with_contextvars(drain), rt.branch(), n) for n in nids]
+    futures = [pool.submit(_with_contextvars(drain), rt._fork_attrs(), n) for n in nids]
     remaining = len(futures)
     try:
         while remaining > 0:
@@ -376,7 +378,7 @@ async def amerge(rt: Runtime, nids: Iterable[int]) -> AsyncIterable:
 
     if rt.budget.max_parallel == 1:
         for n in nids:
-            arm = rt.branch()
+            arm = rt._fork_attrs()
             if on_loop_col[n]:
                 async with safely_aclosing(await arm.aiter(n)) as agen:
                     async for v in agen:
@@ -401,7 +403,7 @@ async def amerge(rt: Runtime, nids: Iterable[int]) -> AsyncIterable:
                 loop_.call_soon_threadsafe(q.put_nowait, v)
 
     async def run_child(n: int) -> None:
-        arm = rt.branch()
+        arm = rt._fork_attrs()
         try:
             if on_loop_col[n]:
                 async with safely_aclosing(await arm.aiter(n)) as agen:

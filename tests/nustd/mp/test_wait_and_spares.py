@@ -119,7 +119,7 @@ async def test_wait_completes_when_another_branch_kills_the_worker(ctx, pool):
 
 async def test_wait_sees_a_worker_that_exits_on_its_own(ctx, pool):
     """No pool verb at all: the child leaves on a raw stop frame and Wait reads its code."""
-    tree = nu.mem.Frame(Local, Wait(worker=Local.w), w=Launch())
+    tree = nu.mem.let(Local, Wait(worker=Local.w), w=Launch())
     task = asyncio.ensure_future(nu.arun(tree, ctx))
     assert await _until(lambda: pool.workers() and pool.status(pool.workers()[0]).state == "idle")
     handle = pool._workers[pool.workers()[0]]
@@ -236,7 +236,7 @@ async def test_spares_in_a_tree_through_the_preset_leave_nothing_behind():
     tree = pool_preset(
         name="nu-test-spares-tree",
         spares=1,
-        body=nu.mem.Frame(Local, Status(worker=Local.w), w=ref.launch()),
+        body=nu.mem.let(Local, Status(worker=Local.w), w=ref.launch()),
     )
     status, _ = await nu.arun(tree)
     assert status.state == "idle"
@@ -248,7 +248,7 @@ def test_spares_in_a_sync_tree():
     tree = pool_preset(
         name="nu-test-spares-sync",
         spares=1,
-        body=nu.mem.Frame(Local, Status(worker=Local.w), w=ref.launch()),
+        body=nu.mem.let(Local, Status(worker=Local.w), w=ref.launch()),
     )
     status, _ = nu.run(tree)
     assert status.state == "idle"

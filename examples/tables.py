@@ -201,11 +201,11 @@ def show(source: nu.Nu) -> nu.Nu:
 markdown = nustd.kv.Snapshot(show(Store.notes)) >> nu.ReactEvery(
     MD.editor.on_change(),
     lambda _: nu.let(
-        nu.Str(MD.editor),
         lambda text: (
             nustd.kv.Transaction(Store.notes.set(text))
             >> (MD.preview.set(text) | MD.source.set(text))
         ),
+        text=nu.Str(MD.editor),
     ),
 )
 

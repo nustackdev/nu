@@ -60,9 +60,9 @@ def test_provide_tag_sugar_binds_under_that_tag():
 
     bracket = Provide(Store, kwargs={}, body=FabricRef(Store), tag="alpha")
     ctx = Context()
-    with bracket._enter(ctx):
-        assert ctx.fabrics.has(Store, "alpha")
-        assert not ctx.fabrics.has(Store, "beta")
+    with bracket._enter(ctx) as inner:
+        assert inner.has(Store, "alpha")
+        assert not inner.has(Store, "beta")
 
 
 def test_provide_tags_multi_bind_requires_full_tag_set():
@@ -75,14 +75,14 @@ def test_provide_tags_multi_bind_requires_full_tag_set():
     # matching a more-specific binding.
     bracket = Provide(Store, kwargs={}, body=FabricRef(Store), tags=("gpu", "worker"))
     ctx = Context()
-    with bracket._enter(ctx):
-        inst = ctx.fabrics.get(Store, "gpu", "worker")
+    with bracket._enter(ctx) as inner:
+        inst = inner.get(Store, "gpu", "worker")
         assert inst is not None
         # A more-specific request falls back to this binding as the closest match.
-        assert ctx.fabrics.get(Store, "gpu", "worker", "extra") is inst
+        assert inner.get(Store, "gpu", "worker", "extra") is inst
         # A single-tag request without the other tag does NOT match.
         with pytest.raises(LookupError):
-            ctx.fabrics.get(Store, "gpu")
+            inner.get(Store, "gpu")
 
 
 def test_provide_tag_and_tags_compose_into_one_tuple():
@@ -91,11 +91,11 @@ def test_provide_tag_and_tags_compose_into_one_tuple():
 
     bracket = Provide(Store, kwargs={}, body=FabricRef(Store), tag="primary", tags=("gpu",))
     ctx = Context()
-    with bracket._enter(ctx):
-        inst = ctx.fabrics.get(Store, "primary", "gpu")
+    with bracket._enter(ctx) as inner:
+        inst = inner.get(Store, "primary", "gpu")
         assert inst is not None
         # Order of tags at lookup does not matter (frozenset).
-        assert ctx.fabrics.get(Store, "gpu", "primary") is inst
+        assert inner.get(Store, "gpu", "primary") is inst
 
 
 def test_provide_predicate_forwards_to_ctx_bind():
@@ -110,12 +110,12 @@ def test_provide_predicate_forwards_to_ctx_bind():
 
     bracket = Provide(Store, kwargs={}, body=FabricRef(Store), predicate=match_site)
     ctx = Context()
-    with bracket._enter(ctx):
+    with bracket._enter(ctx) as inner:
         # A predicate binding resolves only against data.
-        assert not ctx.fabrics.has(Store)  # no data kwargs -> nothing to match
-        assert ctx.fabrics.get(Store, site=3) is not None
+        assert not inner.has(Store)  # no data kwargs -> nothing to match
+        assert inner.get(Store, site=3) is not None
         with pytest.raises(LookupError):
-            ctx.fabrics.get(Store, site=10)
+            inner.get(Store, site=10)
 
 
 # --- ProvideList ---------------------------------------------------------
@@ -130,10 +130,10 @@ def test_provide_list_binds_each_by_index():
         Store, specs=[{"i": 0}, {"i": 1}, {"i": 2}], body=FabricRef(Store), base_tag=10
     )
     ctx = Context()
-    with bracket._enter(ctx):
-        assert ctx.fabrics.get(Store, 10).i == 0
-        assert ctx.fabrics.get(Store, 11).i == 1
-        assert ctx.fabrics.get(Store, 12).i == 2
+    with bracket._enter(ctx) as inner:
+        assert inner.get(Store, 10).i == 0
+        assert inner.get(Store, 11).i == 1
+        assert inner.get(Store, 12).i == 2
 
 
 def test_provide_list_extra_tags_share_across_fleet():
@@ -145,10 +145,10 @@ def test_provide_list_extra_tags_share_across_fleet():
         Store, specs=[{"i": 0}, {"i": 1}], body=FabricRef(Store), extra_tags=("worker",)
     )
     ctx = Context()
-    with bracket._enter(ctx):
+    with bracket._enter(ctx) as inner:
         # index + shared extra tag both address the same binding.
-        assert ctx.fabrics.get(Store, 0, "worker").i == 0
-        assert ctx.fabrics.get(Store, 1, "worker").i == 1
+        assert inner.get(Store, 0, "worker").i == 0
+        assert inner.get(Store, 1, "worker").i == 1
 
 
 def test_provide_list_teardown_is_lifo():
@@ -205,9 +205,9 @@ def test_provide_dict_binds_each_by_key():
         body=FabricRef(Store),
     )
     ctx = Context()
-    with bracket._enter(ctx):
-        assert ctx.fabrics.get(Store, "gpu").name == "g"
-        assert ctx.fabrics.get(Store, "cpu").name == "c"
+    with bracket._enter(ctx) as inner:
+        assert inner.get(Store, "gpu").name == "g"
+        assert inner.get(Store, "cpu").name == "c"
 
 
 def test_provide_dict_extra_tags_share_across_fleet():
@@ -222,9 +222,9 @@ def test_provide_dict_extra_tags_share_across_fleet():
         extra_tags=("shard",),
     )
     ctx = Context()
-    with bracket._enter(ctx):
-        assert ctx.fabrics.get(Store, "gpu", "shard").name == "g"
-        assert ctx.fabrics.get(Store, "cpu", "shard").name == "c"
+    with bracket._enter(ctx) as inner:
+        assert inner.get(Store, "gpu", "shard").name == "g"
+        assert inner.get(Store, "cpu", "shard").name == "c"
 
 
 async def test_provide_dict_parallel_failure_cancels_siblings_and_tears_down_the_done():
@@ -298,7 +298,7 @@ def test_inner_provide_reads_outer_binding_via_ctx_get():
             self.codec_kind: str | None = None
 
         def setup(self, ctx: Context) -> None:
-            self.codec_kind = ctx.fabrics.get(Codec).kind
+            self.codec_kind = ctx.get(Codec).kind
 
     app = Provide(
         Codec, kwargs={"kind": "json"}, body=Provide(Storage, kwargs={}, body=FabricRef(Storage))
@@ -422,9 +422,9 @@ def test_provide_binds_a_plain_dict_fresh_each_entry():
 
 def test_provide_unbinds_a_plain_class_on_exit():
     ctx = Context()
-    with Provide(Plain, kwargs={}, body=FabricRef(Plain))._enter(ctx):
-        assert ctx.fabrics.has(Plain)
-    assert not ctx.fabrics.has(Plain)
+    with Provide(Plain, kwargs={}, body=FabricRef(Plain))._enter(ctx) as inner:
+        assert inner.has(Plain)
+    assert not ctx.has(Plain)
 
 
 def test_provide_feeds_mem_refs_through_bind_as(capsys):
@@ -520,9 +520,9 @@ def test_provide_list_and_dict_take_any_class():
     assert Managed.events == ["enter", "enter", ("exit", None), ("exit", None)]
     named = ProvideDict(dict, specs={"a": {"x": 1}, "b": {"x": 2}}, body=FabricRef(dict))
     ctx = Context()
-    with named._enter(ctx):
-        assert ctx.fabrics.get(dict, "a") == {"x": 1}
-        assert ctx.fabrics.get(dict, "b") == {"x": 2}
+    with named._enter(ctx) as inner:
+        assert inner.get(dict, "a") == {"x": 1}
+        assert inner.get(dict, "b") == {"x": 2}
 
 
 async def test_provide_dict_parallel_enters_async_context_managers():
@@ -677,7 +677,7 @@ def test_provide_config_sits_after_the_body_as_children():
 
 
 def test_provide_kwargs_come_from_a_mem_read():
-    tree = nu.Frame(
+    tree = nu.let(
         Cfg,
         Provide(Counter, kwargs=Cfg.kwargs, body=FabricRef(Counter)),
         kwargs={"name": "from-mem"},
@@ -688,7 +688,7 @@ def test_provide_kwargs_come_from_a_mem_read():
 
 
 async def test_provide_kwargs_come_from_a_mem_read_async():
-    tree = nu.Frame(
+    tree = nu.let(
         Cfg,
         Provide(Counter, kwargs=Cfg.kwargs, body=FabricRef(Counter)),
         kwargs={"name": "from-mem"},
@@ -717,7 +717,7 @@ def test_provide_stream_body_with_computed_config_spans_the_drain():
         def cleanup(self) -> None:
             seen.append("close")
 
-    tree = nu.Frame(
+    tree = nu.let(
         Cfg, Provide(Live, kwargs=Cfg.kwargs, body=nu.Iter([1, 2, 3])), kwargs={"name": "s"}
     )
     assert nu.collect(nu.validate(nu.compile(tree)))[0] == [1, 2, 3]
@@ -730,13 +730,13 @@ def test_one_bracket_with_config_used_twice_in_one_program(runner: str):
     # is evaluated at each, so each place opens with what the tree holds then.
     t = Provide(Counter, kwargs=Cfg.kwargs, body=Cfg.runs.set(Cfg.runs + 1))
     program = Cfg.runs.set(0) >> Cfg.kwargs.set(Cfg.first) >> t >> Cfg.kwargs.set(Cfg.second) >> t
-    tree = nu.Frame(Cfg, program, first={"name": "a"}, second={"name": "b"})
+    tree = nu.let(Cfg, program, first={"name": "a"}, second={"name": "b"})
     run(tree) if runner == "sync" else asyncio.run(arun(tree))
     assert Counter.events == [("setup", "a"), ("close", "a"), ("setup", "b"), ("close", "b")]
 
 
 def test_provide_one_kwargs_field_comes_from_a_mem_read():
-    tree = nu.Frame(
+    tree = nu.let(
         Cfg,
         Provide(Counter, kwargs={"name": Cfg.first["name"]}, body=FabricRef(Counter)),
         first={"name": "f"},
@@ -746,7 +746,7 @@ def test_provide_one_kwargs_field_comes_from_a_mem_read():
 
 
 async def test_provide_one_kwargs_field_comes_from_a_mem_read_async():
-    tree = nu.Frame(
+    tree = nu.let(
         Cfg,
         Provide(Counter, kwargs={"name": Cfg.first["name"]}, body=FabricRef(Counter)),
         first={"name": "f"},
@@ -759,7 +759,7 @@ def test_provide_a_computed_tag_binds_under_its_value():
     tree = Provide(
         Counter, kwargs={"name": "t"}, body=FabricRef(Counter).exists(), tag=Cfg.first["k"]
     )
-    value, _ = run(nu.Frame(Cfg, tree, first={"k": "computed"}))
+    value, _ = run(nu.let(Cfg, tree, first={"k": "computed"}))
     # Bound under the computed tag only, so the tagless read does not reach it.
     assert value is False
     assert Counter.events == [("setup", "t"), ("close", "t")]
@@ -773,7 +773,7 @@ def test_provide_list_one_spec_field_is_computed():
 
 
 def test_provide_dict_one_spec_field_is_computed():
-    tree = nu.Frame(
+    tree = nu.let(
         Cfg,
         ProvideDict(
             Counter, specs={"a": {"name": Cfg.first["name"]}, "b": {"name": "b"}}, body=nu.Add(1, 2)

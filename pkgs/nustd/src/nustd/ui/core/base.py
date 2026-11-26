@@ -222,7 +222,7 @@ class Ref(StructuredRef):
         """Round-trip read of the live client value (input Refs override _acompile)."""
         from .session import Session
 
-        session = rt.ctx.fabrics.get(Session)
+        session = rt.ctx.get(Session)
         path = await self._aresolve_address(rt, nid)
         return self._lift(await session.aread(path))
 

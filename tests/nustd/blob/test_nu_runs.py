@@ -76,14 +76,14 @@ def test_put_yields_an_id_and_get_reads_it_back(media, run):
 
 
 def test_put_then_get_in_one_program(media, run):
-    term = nu.let(Media.put(DATA), lambda bid: Media.get(bid))
+    term = nu.let(lambda bid: Media.get(bid), bid=Media.put(DATA))
     assert run(media(term)) == DATA
 
 
 def test_meta(media, run):
     term = nu.let(
-        Media.put(DATA, mime="image/png", name="cat.png"),
         lambda bid: Dict.of(bid=bid, meta=Media.meta(bid)),
+        bid=Media.put(DATA, mime="image/png", name="cat.png"),
     )
     out = run(media(term))
     meta = out["meta"]
@@ -142,8 +142,7 @@ def test_new_id_is_fresh_per_run(media, run):
 
 def test_put_under_a_minted_id(media, run):
     term = nu.let(
-        Media.new_id(),
-        lambda bid: Dict.of(minted=bid, put=Media.put(b"x", blob_id=bid)),
+        lambda bid: Dict.of(minted=bid, put=Media.put(b"x", blob_id=bid)), bid=Media.new_id()
     )
     out = run(media(term))
     assert out["put"] == out["minted"]
@@ -206,21 +205,21 @@ def test_put_of_a_str_is_refused(media, run):
 
 
 def test_open_whole(media, run):
-    term = nu.let(Media.put(DATA), lambda bid: nu.Collect(Media.open(bid, step=4096)))
+    term = nu.let(lambda bid: nu.Collect(Media.open(bid, step=4096)), bid=Media.put(DATA))
     pieces = run(media(term))
     assert [len(p) for p in pieces] == [4096, 4096, 2048]
     assert b"".join(pieces) == DATA
 
 
 def test_open_range(media, run):
-    term = nu.let(Media.put(DATA), lambda bid: nu.Collect(Media.open(bid, 1000, 3500, 1000)))
+    term = nu.let(lambda bid: nu.Collect(Media.open(bid, 1000, 3500, 1000)), bid=Media.put(DATA))
     pieces = run(media(term))
     assert [len(p) for p in pieces] == [1000, 1000, 500]
     assert b"".join(pieces) == DATA[1000:3500]
 
 
 def test_open_range_clamps(media, run):
-    term = nu.let(Media.put(DATA), lambda bid: nu.Collect(Media.open(bid, 10000, 99999)))
+    term = nu.let(lambda bid: nu.Collect(Media.open(bid, 10000, 99999)), bid=Media.put(DATA))
     assert b"".join(run(media(term))) == DATA[10000:]
 
 
@@ -237,8 +236,8 @@ PIECES = [DATA[i : i + 1000] for i in range(0, len(DATA), 1000)]
 
 def test_put_stream_folds_a_stream_term_into_one_blob(media, run):
     term = nu.let(
-        Media.put_stream(nu.Iter(PIECES), mime="image/png", name="cat.png"),
         lambda bid: Dict.of(bytes=Media.get(bid), meta=Media.meta(bid)),
+        bid=Media.put_stream(nu.Iter(PIECES), mime="image/png", name="cat.png"),
     )
     out = run(media(term))
     assert out["bytes"] == DATA
@@ -268,11 +267,11 @@ def test_put_stream_copies_a_blob_between_stores(kind, tmp_path, run):
         body=body,
     )
     term = nu.let(
-        Media.put(DATA, mime="image/png"),
         lambda a: nu.let(
-            Pics.put_stream(Media.open(a, step=1000), mime="image/png"),
             lambda b: Dict.of(a=a, b=b, bytes=Pics.get(b), meta=Pics.meta(b)),
+            b=Pics.put_stream(Media.open(a, step=1000), mime="image/png"),
         ),
+        a=Media.put(DATA, mime="image/png"),
     )
     out = run(tree(term))
     assert out["b"] != out["a"]
@@ -302,16 +301,16 @@ def test_put_stream_of_a_scalar_is_refused(media, run):
 
 def test_every_argument_may_be_a_term(media, run):
     term = nu.let(
-        Media.put(
-            nu.Literal(DATA),
-            mime=nu.Add("image/", "png"),
-            name=nu.Add("cat", ".png"),
-        ),
         lambda bid: Dict.of(
             meta=Media.meta(bid),
             has=Media.has(bid),
             url=BlobMount("/media").url(bid),
             part=nu.Collect(Media.open(bid, nu.Add(10, 10), nu.Add(30, 10), nu.Add(5, 5))),
+        ),
+        bid=Media.put(
+            nu.Literal(DATA),
+            mime=nu.Add("image/", "png"),
+            name=nu.Add("cat", ".png"),
         ),
     )
     out = run(media(term))
@@ -334,9 +333,7 @@ def test_two_stores_in_one_tree_stay_apart(kind, tmp_path, run):
         body=body,
     )
     term = nu.let(
-        Media.put(b"in media"),
         lambda a: nu.let(
-            Pics.put(b"in pics"),
             lambda b: Dict.of(
                 a=a,
                 b=b,
@@ -345,7 +342,9 @@ def test_two_stores_in_one_tree_stay_apart(kind, tmp_path, run):
                 b_in_media=Media.has(b),
                 b_in_pics=Pics.has(b),
             ),
+            b=Pics.put(b"in pics"),
         ),
+        a=Media.put(b"in media"),
     )
     out = run(tree(term))
     assert out["a_in_media"] and out["b_in_pics"]
@@ -384,7 +383,7 @@ def test_two_refs_of_one_name_are_one_store(kind, tmp_path, run):
     again = StoreRef("media")
     term = nu.With(
         bind(kind, Media, tmp_path / "media"),
-        body=nu.let(Media.put(b"x"), lambda bid: again.get(bid)),
+        body=nu.let(lambda bid: again.get(bid), bid=Media.put(b"x")),
     )
     assert run(term) == b"x"
 

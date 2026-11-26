@@ -124,7 +124,7 @@ class Send(Command):
         name = type(self).__name__
 
         async def athunk(rt: Runtime) -> None:
-            session = rt.ctx.fabrics.get(Session)
+            session = rt.ctx.get(Session)
             ref_nid = rt.program.children[nid][0]
             # One walk: the chain carries the segments the plain path is made
             # of, plus the type and props the browser needs to create the node.
@@ -180,7 +180,7 @@ class Remove(Command):
         ref: Ref = self._children[0]
 
         async def athunk(rt: Runtime) -> None:
-            session = rt.ctx.fabrics.get(Session)
+            session = rt.ctx.get(Session)
             ref_nid = rt.program.children[nid][0]
             path = await ref._aresolve_address(rt, ref_nid)
             await session.send(Frame(self, ref=path))
@@ -212,7 +212,7 @@ class Clear(Command):
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> None:
-            await rt.ctx.fabrics.get(Session).send(Frame(OP_REMOVE))
+            await rt.ctx.get(Session).send(Frame(OP_REMOVE))
 
         return athunk
 
@@ -241,7 +241,7 @@ class _ChainCommand(Command):
         ref: Ref = self._children[0]
 
         async def athunk(rt: Runtime) -> None:
-            session = rt.ctx.fabrics.get(Session)
+            session = rt.ctx.get(Session)
             ref_nid = rt.program.children[nid][0]
             chain = await ref._aresolve_chain(rt, ref_nid)
             for frame in self._frames(chain):
@@ -360,7 +360,7 @@ class Changed(ScalarQuery):
         event_thunk = children[1] if len(children) > 1 else None
 
         async def athunk(rt: Runtime) -> Subscription:
-            session = rt.ctx.fabrics.get(Session)
+            session = rt.ctx.get(Session)
             ref_nid = rt.program.children[nid][0]
             path = await ref._aresolve_address(rt, ref_nid)
             event = None if event_thunk is None else str(await event_thunk(rt))
@@ -405,7 +405,7 @@ class ReadField(ScalarQuery):
         lift = getattr(ref, "_lift_field", None)
 
         async def athunk(rt: Runtime) -> object:
-            session = rt.ctx.fabrics.get(Session)
+            session = rt.ctx.get(Session)
             ref_nid = rt.program.children[nid][0]
             path = await ref._aresolve_address(rt, ref_nid)
             field = str(await field_thunk(rt))

@@ -135,9 +135,9 @@ class _Root(Bracket):
     @contextmanager
     def _open(  # pyright: ignore[reportIncompatibleMethodOverride] - config named
         self, ctx: Context, where: object, name: object
-    ) -> Iterator[None]:
+    ) -> Iterator[Context]:
         with ctx.attrs.let(name, where):
-            yield
+            yield ctx
 
 
 def _tags(tag: object) -> tuple[object, ...]:

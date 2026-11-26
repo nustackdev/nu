@@ -113,8 +113,8 @@ def _stream_for(ctx: Context, name: str) -> IO:
     """Resolve a stream by name off the Context: the bound backend, else ``sys``."""
     import sys
 
-    if ctx.fabrics.has(StdioBackend):
-        return ctx.fabrics.get(StdioBackend).stream_for(name)
+    if ctx.has(StdioBackend):
+        return ctx.get(StdioBackend).stream_for(name)
     return getattr(sys, name)
 
 

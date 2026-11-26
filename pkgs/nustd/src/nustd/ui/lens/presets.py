@@ -144,4 +144,7 @@ def browse(
         ]
         return paint(nu.list(cursor)) >> nu.ParallelAsync(moved, *written)
 
-    return nu.let(nu.List.of(), lambda cursor: nu.let(None, lambda pending: live(cursor, pending)))
+    return nu.let(
+        lambda cursor: nu.let(lambda pending: live(cursor, pending), pending=None),
+        cursor=nu.List.of(),
+    )

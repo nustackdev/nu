@@ -25,10 +25,10 @@ Three primitives, one per attach shape:
 Tag knobs (all optional, they compose):
 
 - ``tag=`` on ``Provide`` is sugar for a single-tag ``tags=(tag,)``.
-- ``tags=`` binds under an unordered set of tags; ``ctx.fabrics.get(cls, t)`` matches
+- ``tags=`` binds under an unordered set of tags; ``ctx.get(cls, t)`` matches
   when ``t`` is a subset of the bound set (specificity fallback).
-- ``predicate=`` is a single guard callable forwarded into the fabrics store's
-  guarded registry: ``ctx.fabrics.get(cls, *tags, **data)`` resolves this binding only when
+- ``predicate=`` is a single guard callable forwarded to the Context as a
+  guard: ``ctx.get(cls, *tags, **data)`` resolves this binding only when
   ``predicate(**data)`` returns True. Useful for "bind a Navigator whose
   shard covers this address" without pre-computing all shard tags.
 
@@ -65,7 +65,6 @@ from .base import Fabric
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Callable, Iterator, Mapping, Sequence
-    from contextlib import AbstractContextManager
 
     from nu.lang.runtime import Context
 
@@ -300,11 +299,11 @@ def _bind(
     inst: object,
     tags: Sequence[object],
     predicate: Callable | None,
-) -> AbstractContextManager[None]:
-    """The scope providing ``inst`` on ``ctx.fabrics`` under ``cls`` + tags, optionally guarded."""
+) -> Context:
+    """``ctx`` with ``inst`` provided under ``cls`` + tags, optionally guarded."""
     if predicate is None:
-        return ctx.fabrics.bind(cls, inst, *tags)
-    return ctx.fabrics.bind(cls, inst, *tags, predicate=predicate)
+        return ctx.bind(cls, inst, *tags)
+    return ctx.bind(cls, inst, *tags, predicate=predicate)
 
 
 # =========================================================================
@@ -345,7 +344,7 @@ class Provide(Bracket):
         - ``predicate=`` is one guard callable handed to the Context's
           guarded registry: the binding resolves only when
           ``predicate(**data)`` returns True for the data passed to
-          ``ctx.fabrics.get``. Useful for "the shard that covers this address"
+          ``ctx.get``. Useful for "the shard that covers this address"
           without enumerating shard tags up front.
         - ``bind_as=`` binds the instance under a different type than it was
           constructed from, so an implementation can be provided where a
@@ -420,15 +419,14 @@ class Provide(Bracket):
         tags: Sequence[object],
         predicate: Callable | None,
         bind_as: type | None,
-    ) -> Iterator[None]:
+    ) -> Iterator[Context]:
         cls = _sync_class(cls, type(self).__name__)
         life = _Life(_construct(cls, args, kwargs))
         lives: list[_Life] = []
         with _torn_down(lives):
             life.setup(ctx)
             lives.append(life)
-            with _bind(ctx, _bind_key(cls, bind_as), life.inst, tags, predicate):
-                yield
+            yield _bind(ctx, _bind_key(cls, bind_as), life.inst, tags, predicate)
 
     @asynccontextmanager
     async def _aopen(
@@ -440,15 +438,14 @@ class Provide(Bracket):
         tags: Sequence[object],
         predicate: Callable | None,
         bind_as: type | None,
-    ) -> AsyncIterator[None]:
+    ) -> AsyncIterator[Context]:
         cls = _async_class(cls, type(self).__name__)
         life = _Life(_construct(cls, args, kwargs))
         lives: list[_Life] = []
         async with _atorn_down(lives):
             await life.asetup(ctx)
             lives.append(life)
-            with _bind(ctx, _bind_key(cls, bind_as), life.inst, tags, predicate):
-                yield
+            yield _bind(ctx, _bind_key(cls, bind_as), life.inst, tags, predicate)
 
 
 # =========================================================================
@@ -528,19 +525,17 @@ class ProvideList(Bracket):
         extra: Sequence[object],
         predicate: Callable | None,
         bind_as: type | None,
-    ) -> Iterator[None]:
+    ) -> Iterator[Context]:
         cls = _sync_class(cls, type(self).__name__)
         bind_as = _bind_key(cls, bind_as)
         lives: list[_Life] = []
-        with _torn_down(lives), ExitStack() as provided:
+        with _torn_down(lives):
             for i, kwargs in enumerate(specs):
                 life = _Life(_construct(cls, (), kwargs))
                 life.setup(ctx)
                 lives.append(life)
-                provided.enter_context(
-                    _bind(ctx, bind_as, life.inst, (base + i, *extra), predicate)
-                )
-            yield
+                ctx = _bind(ctx, bind_as, life.inst, (base + i, *extra), predicate)
+            yield ctx
 
     @asynccontextmanager
     async def _aopen(
@@ -552,20 +547,17 @@ class ProvideList(Bracket):
         extra: Sequence[object],
         predicate: Callable | None,
         bind_as: type | None,
-    ) -> AsyncIterator[None]:
+    ) -> AsyncIterator[Context]:
         cls = _async_class(cls, type(self).__name__)
         bind_as = _bind_key(cls, bind_as)
         lives: list[_Life] = []
         async with _atorn_down(lives):
-            with ExitStack() as provided:
-                for i, kwargs in enumerate(specs):
-                    life = _Life(_construct(cls, (), kwargs))
-                    await life.asetup(ctx)
-                    lives.append(life)
-                    provided.enter_context(
-                        _bind(ctx, bind_as, life.inst, (base + i, *extra), predicate)
-                    )
-                yield
+            for i, kwargs in enumerate(specs):
+                life = _Life(_construct(cls, (), kwargs))
+                await life.asetup(ctx)
+                lives.append(life)
+                ctx = _bind(ctx, bind_as, life.inst, (base + i, *extra), predicate)
+            yield ctx
 
 
 # =========================================================================
@@ -647,17 +639,17 @@ class ProvideDict(Bracket):
         predicate: Callable | None,
         bind_as: type | None,
         parallel: bool,
-    ) -> Iterator[None]:
+    ) -> Iterator[Context]:
         cls = _sync_class(cls, type(self).__name__)
         bind_as = _bind_key(cls, bind_as)
         lives: list[_Life] = []
-        with _torn_down(lives), ExitStack() as provided:
+        with _torn_down(lives):
             for key, kwargs in specs.items():
                 life = _Life(_construct(cls, (), kwargs))
                 life.setup(ctx)
                 lives.append(life)
-                provided.enter_context(_bind(ctx, bind_as, life.inst, (key, *extra), predicate))
-            yield
+                ctx = _bind(ctx, bind_as, life.inst, (key, *extra), predicate)
+            yield ctx
 
     @asynccontextmanager
     async def _aopen(
@@ -669,7 +661,7 @@ class ProvideDict(Bracket):
         predicate: Callable | None,
         bind_as: type | None,
         parallel: bool,
-    ) -> AsyncIterator[None]:
+    ) -> AsyncIterator[Context]:
         cls = _async_class(cls, type(self).__name__)
         import asyncio
 
@@ -678,34 +670,29 @@ class ProvideDict(Bracket):
         bind_as = _bind_key(cls, bind_as)
         lives: list[_Life] = []
         async with _atorn_down(lives):
-            with ExitStack() as provided:
-                if parallel:
-                    keyed = [(key, _Life(_construct(cls, (), kw))) for key, kw in specs.items()]
-                    tasks = [asyncio.ensure_future(life.asetup(ctx)) for _, life in keyed]
-                    # Not gather: a failed or cancelled setup must not leave
-                    # its siblings running, and every setup that did finish
-                    # is owed its teardown on the way out.
-                    try:
-                        await _join_all(tasks)
-                    finally:
-                        lives.extend(
-                            life
-                            for (_, life), t in zip(keyed, tasks, strict=True)
-                            if t.done() and not t.cancelled() and t.exception() is None
-                        )
-                    for key, life in keyed:
-                        provided.enter_context(
-                            _bind(ctx, bind_as, life.inst, (key, *extra), predicate)
-                        )
-                else:
-                    for key, kwargs in specs.items():
-                        life = _Life(_construct(cls, (), kwargs))
-                        await life.asetup(ctx)
-                        lives.append(life)
-                        provided.enter_context(
-                            _bind(ctx, bind_as, life.inst, (key, *extra), predicate)
-                        )
-                yield
+            if parallel:
+                keyed = [(key, _Life(_construct(cls, (), kw))) for key, kw in specs.items()]
+                tasks = [asyncio.ensure_future(life.asetup(ctx)) for _, life in keyed]
+                # Not gather: a failed or cancelled setup must not leave
+                # its siblings running, and every setup that did finish
+                # is owed its teardown on the way out.
+                try:
+                    await _join_all(tasks)
+                finally:
+                    lives.extend(
+                        life
+                        for (_, life), t in zip(keyed, tasks, strict=True)
+                        if t.done() and not t.cancelled() and t.exception() is None
+                    )
+                for key, life in keyed:
+                    ctx = _bind(ctx, bind_as, life.inst, (key, *extra), predicate)
+            else:
+                for key, kwargs in specs.items():
+                    life = _Life(_construct(cls, (), kwargs))
+                    await life.asetup(ctx)
+                    lives.append(life)
+                    ctx = _bind(ctx, bind_as, life.inst, (key, *extra), predicate)
+            yield ctx
 
 
 # =========================================================================
@@ -791,15 +778,15 @@ class With(Bracket):
         return With(*self.brackets, body=body)
 
     @contextmanager
-    def _enter(self, ctx: Context) -> Iterator[None]:
+    def _enter(self, ctx: Context) -> Iterator[Context]:
         with ExitStack() as stack:
             for b in self.brackets:
-                stack.enter_context(b._enter(ctx))
-            yield
+                ctx = stack.enter_context(b._enter(ctx))
+            yield ctx
 
     @asynccontextmanager
-    async def _aenter(self, ctx: Context) -> AsyncIterator[None]:
+    async def _aenter(self, ctx: Context) -> AsyncIterator[Context]:
         async with AsyncExitStack() as stack:
             for b in self.brackets:
-                await stack.enter_async_context(b._aenter(ctx))
-            yield
+                ctx = await stack.enter_async_context(b._aenter(ctx))
+            yield ctx

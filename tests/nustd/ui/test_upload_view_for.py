@@ -26,13 +26,13 @@ class _BoundSid(ScalarQuery):
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
-            return rt.ctx.fabrics.get(UploadView).sid
+            return rt.ctx.get(UploadView).sid
 
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         async def athunk(rt: Runtime) -> object:
-            return rt.ctx.fabrics.get(UploadView).sid
+            return rt.ctx.get(UploadView).sid
 
         return athunk
 

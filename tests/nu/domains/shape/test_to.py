@@ -153,7 +153,7 @@ def test_to_on_a_shape_ref_slot():
 
 def test_to_on_a_let_slot_after_a_container_kind(capsys):
     body = lambda x: x.to(nu.DictRef).to(nu.IntRef).set(12) >> nu.print(x)  # noqa: E731
-    nu.run(nu.let({}, body))
+    nu.run(nu.let(body, x={}))
     assert capsys.readouterr().out == "12\n"
 
 

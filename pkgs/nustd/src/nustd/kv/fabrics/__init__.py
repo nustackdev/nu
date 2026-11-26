@@ -27,7 +27,7 @@ Typical stack::
                 body=Provide(InMemoryObserver,
                     body=Provide(RocksDBStorage, kwargs={"path": "/data/main"},
                         body=Provide(Navigator,
-                            body=body,   # ctx.fabrics.get(Navigator) available here
+                            body=body,   # ctx.get(Navigator) available here
                         ),
                     ),
                 ),

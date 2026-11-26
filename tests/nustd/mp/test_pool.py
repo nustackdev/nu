@@ -220,8 +220,8 @@ async def test_acleanup_reaps_under_cancellation():
 
     async def body() -> None:
         ctx = nu.Context()
-        async with bracket._aenter(ctx):
-            pool = ctx.fabrics.get(WorkerPool)
+        async with bracket._aenter(ctx) as inner:
+            pool = inner.get(WorkerPool)
             w = await pool.alaunch()
             pids.append(_pid_of(pool, w))
             await pool.adispatch(w, RESIDENT)
@@ -244,8 +244,8 @@ async def test_acleanup_reaps_under_cancellation():
 async def test_async_lifecycle_round_trip():
     bracket = nu.Provide(WorkerPool, kwargs={"name": "nu-test-async"})
     ctx = nu.Context()
-    async with bracket._aenter(ctx):
-        pool = ctx.fabrics.get(WorkerPool)
+    async with bracket._aenter(ctx) as inner:
+        pool = inner.get(WorkerPool)
         w = await pool.alaunch()
         assert await pool.ateleport(w, nu.Add(2, 3)) == 5
         await pool.akill(w)
@@ -291,8 +291,8 @@ def _poll(check, timeout: float = 10.0) -> bool:
 async def test_cancelling_ateleport_cancels_the_remote_body():
     bracket = nu.Provide(WorkerPool, kwargs={"name": "nu-test-cancel-exec"})
     ctx = nu.Context()
-    async with bracket._aenter(ctx):
-        pool = ctx.fabrics.get(WorkerPool)
+    async with bracket._aenter(ctx) as inner:
+        pool = inner.get(WorkerPool)
         w = await pool.alaunch()
 
         call = asyncio.create_task(pool.ateleport(w, RESIDENT))
@@ -309,8 +309,8 @@ async def test_cancelling_ateleport_cancels_the_remote_body():
 async def test_cancelling_one_exec_leaves_its_siblings_alone():
     bracket = nu.Provide(WorkerPool, kwargs={"name": "nu-test-cancel-one"})
     ctx = nu.Context()
-    async with bracket._aenter(ctx):
-        pool = ctx.fabrics.get(WorkerPool)
+    async with bracket._aenter(ctx) as inner:
+        pool = inner.get(WorkerPool)
         w = await pool.alaunch()
         slow = [
             asyncio.create_task(pool.ateleport(w, nu.DelayedDo(0.3, nu.Noop()))) for _ in range(3)
@@ -347,8 +347,8 @@ def test_cancel_is_a_no_op_once_finished(pool):
 async def test_worker_death_raises_on_a_pending_ateleport():
     bracket = nu.Provide(WorkerPool, kwargs={"name": "nu-test-death"})
     ctx = nu.Context()
-    async with bracket._aenter(ctx):
-        pool = ctx.fabrics.get(WorkerPool)
+    async with bracket._aenter(ctx) as inner:
+        pool = inner.get(WorkerPool)
         w = await pool.alaunch()
         call = asyncio.create_task(pool.ateleport(w, nu.DelayedDo(30, nu.Add(1, 1))))
         await asyncio.sleep(0.2)

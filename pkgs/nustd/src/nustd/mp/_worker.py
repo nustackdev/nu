@@ -437,7 +437,7 @@ async def _run(conn: Connection, init: Bracket | None) -> None:
             ctx = Context()
             try:
                 if init is not None:
-                    await stack.enter_async_context(init._aenter(ctx))
+                    ctx = await stack.enter_async_context(init._aenter(ctx))
             except (SystemExit, KeyboardInterrupt, asyncio.CancelledError):
                 raise  # going down; the parent reads the EOF as gone
             except BaseException as exc:
@@ -535,8 +535,8 @@ async def _say(send: Callable, frame: tuple) -> None:
 
 @contextlib.contextmanager
 def _exec_context(ctx: Context, attrs: dict | None) -> Iterator[Context]:
-    """The Context one request runs against: a branch of ``ctx`` with the caller's names bound."""
-    run_ctx = ctx.branch()
+    """The Context one request runs against: ``ctx``'s frames on an own attrs table, the caller's names bound."""
+    run_ctx = ctx._fork_attrs()  # TEMPORARY until attrs go (task-184 phase 4)
     with contextlib.ExitStack() as scope:
         for name, value in (attrs or {}).items():
             scope.enter_context(run_ctx.attrs.let(name, value))

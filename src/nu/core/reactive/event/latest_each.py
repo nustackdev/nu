@@ -50,8 +50,8 @@ class ReactLatestEach(Control):
           run holds the next notification for every key until it is done.
           Other keys' running bodies are not touched, only their next
           start waits.
-        - Each run gets a fresh branch of the Context it started from: its
-          own attrs key space, values shared by reference. A restarted body
+        - Each run starts from the reaction's frames with its own attrs
+          table (temporary until attrs go), values shared by reference. A restarted body
           never sees attrs a cancelled run left behind, runs side by side
           never see each other's, and attrs a run binds do not reach the
           caller.
@@ -107,8 +107,8 @@ class ReactLatestEach(Control):
             changed_key_name = await children[2](rt) if has_ck else None
 
             def spawn(key: object) -> asyncio.Task:
-                # Every run is a task of its own, on a fresh branch.
-                run_rt = rt.branch()
+                # Every run is a task of its own, with its own attrs table.
+                run_rt = rt._fork_attrs()
 
                 async def run() -> None:
                     with changed(run_rt.ctx.attrs, changed_key_name, key):

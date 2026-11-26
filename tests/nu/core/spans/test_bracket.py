@@ -1,14 +1,14 @@
 """Tests for the Bracket span: Snapshot, Transaction (core lifecycle shells).
 
 A Bracket is a transparent Span (sort BRACKET): it runs the body inside a
-``_open`` context manager - open the boundary, provide it on ``ctx.fabrics`` for
-the body, commit on a clean exit or roll back on an exception - forwarding the
+``_open`` context manager - open the boundary, yield the Context the body runs
+on with what it provides, commit on a clean exit or roll back on an exception - forwarding the
 body's yield unchanged. At the core level ``_open`` is a pass-through, so a bare
 bracket is a pass-through; the suite pins that across void, scalar, and stream
 bodies, then drives a recording subclass to pin the lifecycle: _open opens before
 the body and closes after, success commits while failure rolls back and
 re-propagates, the per-run handle lives in the boundary's frame (not on ``self``),
-the body sees what the boundary provides and the scope ends after, and a stream
+the body sees what the boundary provides and its caller never does, and a stream
 boundary spans the whole drain (commit fires once, after exhaustion).
 """
 
@@ -115,7 +115,7 @@ def test_transaction_commits_on_success() -> None:
         def _open(self, ctx):
             events.append("open")
             try:
-                yield
+                yield ctx
             except BaseException:
                 events.append("rollback")
                 raise
@@ -135,7 +135,7 @@ def test_transaction_rolls_back_and_reraises_on_failure() -> None:
         def _open(self, ctx):
             events.append("open")
             try:
-                yield
+                yield ctx
             except BaseException:
                 events.append("rollback")
                 raise
@@ -157,7 +157,7 @@ def test_per_run_handle_lives_in_the_scope_frame_not_self() -> None:
             handle = object()  # the per-run handle, captured by the frame
             opened.append(handle)
             try:
-                yield
+                yield ctx
             finally:
                 closed.append(handle)
 
@@ -166,19 +166,18 @@ def test_per_run_handle_lives_in_the_scope_frame_not_self() -> None:
     assert closed == opened
 
 
-def test_bracket_scopes_ctx_for_body_then_restores() -> None:
+def test_bracket_pushes_a_frame_for_the_body_only() -> None:
     class Marker:
         pass
 
     class Scoped(Snapshot):
         @contextmanager
         def _open(self, ctx):
-            with ctx.fabrics.bind(Marker, Marker()):
-                yield
+            yield ctx.bind(Marker, Marker())
 
     value, ctx = run(Scoped(FabricRef(Marker).exists()))
     assert value is True  # body ran with the binding provided
-    assert not ctx.fabrics.has(Marker)  # restored: the scope ended with the body
+    assert not ctx.has(Marker)  # the frame was the body's alone
 
 
 def test_stream_boundary_spans_the_whole_drain() -> None:
@@ -189,7 +188,7 @@ def test_stream_boundary_spans_the_whole_drain() -> None:
         def _open(self, ctx):
             events.append("open")
             try:
-                yield
+                yield ctx
             except BaseException:
                 events.append("rollback")
                 raise
@@ -212,7 +211,7 @@ async def test_transaction_commits_on_success_async() -> None:
         def _open(self, ctx):
             events.append("open")
             try:
-                yield
+                yield ctx
             except BaseException:
                 events.append("rollback")
                 raise
@@ -232,7 +231,7 @@ async def test_transaction_rolls_back_on_failure_async() -> None:
         def _open(self, ctx):
             events.append("open")
             try:
-                yield
+                yield ctx
             except BaseException:
                 events.append("rollback")
                 raise
@@ -257,7 +256,7 @@ def _configured(seen: list) -> type[Transaction]:
         @contextmanager
         def _open(self, ctx, label, scale):
             seen.append(("open", label, scale))
-            yield
+            yield ctx
             seen.append(("close", label))
 
     return Configured

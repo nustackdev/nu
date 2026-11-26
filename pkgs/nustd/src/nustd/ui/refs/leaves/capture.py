@@ -131,7 +131,7 @@ class MicCaptureRef(_CaptureInput):
 
     Example:
         memo = MicCaptureRef.slot(label="Voice memo", max_duration=120)
-        nu.ReactEvery(memo.on_change(), nu.let(memo.bytes(), transcribe))
+        nu.ReactEvery(memo.on_change(), nu.let(lambda raw: transcribe(raw), raw=memo.bytes()))
     """
 
     _wire_type = "MicCaptureRef"

@@ -40,8 +40,8 @@ class ReactEach(Control):
 
     Notes:
         - Keys must be hashable: the queues are kept by key.
-        - Each run gets a fresh branch of the Context it started from: its
-          own attrs key space, values shared by reference. Runs side by side
+        - Each run starts from the reaction's frames with its own attrs
+          table (temporary until attrs go), values shared by reference. Runs side by side
           never see each other's attrs, and attrs a run binds do not reach
           the caller.
         - Memory is bounded by the backlog per key, as ``ReactEvery``'s queue
@@ -95,9 +95,9 @@ class ReactEach(Control):
             changed_key_name = await children[2](rt) if has_ck else None
 
             async def run(key: object) -> None:
-                # Every run is on a fresh branch: runs side by side must not
+                # Every run has its own attrs table: runs side by side must not
                 # share the name the key is bound under.
-                run_rt = rt.branch()
+                run_rt = rt._fork_attrs()
                 with changed(run_rt.ctx.attrs, changed_key_name, key):
                     await drain_body(run_rt, body)
 

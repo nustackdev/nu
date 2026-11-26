@@ -7,10 +7,10 @@ that is not the only one in scope, and ``body`` for the tree itself::
     POOL = mp.PoolRef()
     prog = mp.pool(
         name="cells",
-        init=nu.Frame(Ticks, None),
+        init=nu.let(Ticks, None),
         spares=2,
         grace=5.0,
-        body=nu.let(POOL.launch(), lambda w: POOL.stop(w)),
+        body=nu.let(lambda w: POOL.stop(w), w=POOL.launch()),
     )
 
 Leaving the bracket stops every worker still up, all at once, within

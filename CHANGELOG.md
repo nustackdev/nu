@@ -12,6 +12,8 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Bindings push immutable context frames, so concurrent bodies never share or restore state
+- Local frames take values by name, over a declared shape or a lambda
 - Benchmark for handing values to bodies and reading context, to compare the frames rework
 - Provide takes the class by position and the rest by keyword, Python style
 - Provide takes any class; context managers and plain classes need no Fabric base

@@ -3,12 +3,12 @@
 The core ``Snapshot`` and ``Transaction`` brackets are shape only: they mark a
 region of the tree and run the body unchanged. The versions here fill that
 shape in against real storage. Each overrides one lifecycle method, ``_open``,
-written as a ``@contextmanager``: it finds the Navigator on the ctx, provides a
-handle under it on ``ctx.fabrics`` for the body, and tears the handle down on
+written as a ``@contextmanager``: it finds the Navigator on the ctx, yields the
+ctx with a handle provided under it for the body, and tears the handle down on
 the way out. ``Transaction`` also overrides ``_aopen``, so that on an event
 loop it can wait for a storage's writer slot without blocking the loop.
 
-Binding is lazy, through ``ctx.fabrics.lazy``. A bracket that wraps a body which turns
+Binding is lazy, through ``ctx.lazy``. A bracket that wraps a body which turns
 out never to touch storage opens nothing, so wrapping generously costs nothing.
 That is what makes ``auto_flow_atomic`` safe to run over a whole tree.
 
@@ -24,7 +24,7 @@ to the right one. It is a field of the atom, so a tree rewrite carries it throug
 
 from __future__ import annotations
 
-from contextlib import ExitStack, asynccontextmanager, contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from typing import TYPE_CHECKING
 
 import nu
@@ -62,7 +62,7 @@ __all__ = [
 
 
 def _scope_tags(scope: Hashable | None) -> tuple:
-    """Build scope tags for ctx.fabrics.get / ctx.fabrics.lazy."""
+    """Build scope tags for ctx.get / ctx.lazy."""
     return (scope,) if scope is not None else ()
 
 
@@ -85,41 +85,43 @@ def _has_virtuals_write(node: Nu) -> bool:
 def _scope_navigators(ctx: Context, scope: Hashable | None) -> list[tuple[dict, Navigator]]:
     """Every Navigator under ``scope``, with its guard predicates (empty if unsharded)."""
     tags = _scope_tags(scope)
-    return ctx.fabrics.predicates(Navigator, *tags) or [({}, ctx.fabrics.get(Navigator, *tags))]
+    return ctx.predicates(Navigator, *tags) or [({}, ctx.get(Navigator, *tags))]
 
 
-@contextmanager
 def _provide_lazy(
     ctx: Context,
     protocol: type,
     scope: Hashable | None,
     begin: Callable[[Navigator], object],
     opened: list,
-) -> Iterator[None]:
+) -> Context:
     """Provide ``protocol`` for every Navigator under ``scope``, each opened on first use.
 
     A sharded setup (predicate-guarded Navigators) gets one guarded binding per
     shard; otherwise the one Navigator under the tag gets a plain binding.
     ``begin(nav)`` opens a handle; every handle opened lands in ``opened`` for
     the caller to close, commit or abort.
+
+    Returns:
+        ``ctx`` with the lazy bindings pushed on top.
     """
     tags = _scope_tags(scope)
-    with ExitStack() as provided:
-        for preds, nav in _scope_navigators(ctx, scope):
+    inner = ctx
+    for preds, nav in _scope_navigators(ctx, scope):
 
-            def open_handle(nav: Navigator = nav) -> object:
-                handle = begin(nav)
-                opened.append(handle)
-                return handle
+        def open_handle(nav: Navigator = nav) -> object:
+            handle = begin(nav)
+            opened.append(handle)
+            return handle
 
-            provided.enter_context(ctx.fabrics.lazy(protocol, open_handle, *tags, **preds))
-        yield
+        inner = inner.lazy(protocol, open_handle, *tags, **preds)
+    return inner
 
 
 class _HeldWriteSlots(dict[int, WriteSlotProtocol]):
     """Writer slots held for the Transaction body in scope, by ``id(storage)``.
 
-    Bound on ``ctx.fabrics`` by ``Transaction._aopen`` so a nested
+    Bound on the ctx by ``Transaction._aopen`` so a nested
     Transaction on the same storage borrows the enclosing slot instead of
     waiting on it, which would wait on itself.
     """
@@ -186,14 +188,13 @@ class Snapshot(_CoreSnapshot):
         return self._scope
 
     @contextmanager
-    def _open(self, ctx: Context) -> Iterator[None]:
+    def _open(self, ctx: Context) -> Iterator[Context]:
         """Provide a snapshot, opened on first read, for the body; close it on exit."""
         snaps: list[SnapshotProtocol] = []
         try:
-            with _provide_lazy(
+            yield _provide_lazy(
                 ctx, SnapshotProtocol, self.scope, lambda nav: nav.storage.begin_snapshot(), snaps
-            ):
-                yield
+            )
         finally:
             for snap in snaps:
                 snap.close()
@@ -258,7 +259,7 @@ class Transaction(_CoreTransaction):
     @contextmanager
     def _open(
         self, ctx: Context, *, slots: dict[int, WriteSlotProtocol] | None = None
-    ) -> Iterator[None]:
+    ) -> Iterator[Context]:
         """Provide a transaction, opened on first use, for the body; commit on clean exit, abort on error.
 
         Args:
@@ -269,14 +270,13 @@ class Transaction(_CoreTransaction):
         held = slots or {}
         txns: list[TransactionProtocol] = []
         try:
-            with _provide_lazy(
+            yield _provide_lazy(
                 ctx,
                 TransactionProtocol,
                 self.scope,
                 lambda nav: _begin_transaction(nav, held),
                 txns,
-            ):
-                yield
+            )
         except BaseException:
             for txn in txns:
                 txn.abort()
@@ -286,7 +286,7 @@ class Transaction(_CoreTransaction):
                 txn.commit()
 
     @asynccontextmanager
-    async def _aopen(self, ctx: Context) -> AsyncIterator[None]:
+    async def _aopen(self, ctx: Context) -> AsyncIterator[Context]:
         """Wait for each storage's writer slot, then run ``_open`` with the slots held.
 
         Each writable storage's writer slot is waited on here
@@ -298,8 +298,7 @@ class Transaction(_CoreTransaction):
         borrowed, not waited on, and left for that Transaction to release.
         A read-only storage reserves nothing.
         """
-        fabrics = ctx.fabrics
-        enclosing = fabrics.get(_HeldWriteSlots) if fabrics.has(_HeldWriteSlots) else {}
+        enclosing = ctx.get(_HeldWriteSlots) if ctx.has(_HeldWriteSlots) else {}
         slots = _HeldWriteSlots()
         owned: list[WriteSlotProtocol] = []
         try:
@@ -315,8 +314,8 @@ class Transaction(_CoreTransaction):
                     continue
                 slots[key] = await storage.areserve_write_slot()
                 owned.append(slots[key])
-            with fabrics.bind(_HeldWriteSlots, slots), self._open(ctx, slots=slots):
-                yield
+            with self._open(ctx.bind(_HeldWriteSlots, slots), slots=slots) as inner:
+                yield inner
         finally:
             for slot in owned:
                 slot.release()

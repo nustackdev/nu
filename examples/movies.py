@@ -427,8 +427,8 @@ on_filter_clear = nu.ReactEvery(
 movies_page = hydrate >> (on_add | on_row_click | on_filter_apply | on_filter_clear)
 
 detail_page = nu.let(
-    nustd.kv.Snapshot(_index(App.history.query(), nu.Len(State.movies))),
     _detail,
+    held=nustd.kv.Snapshot(_index(App.history.query(), nu.Len(State.movies))),
 )
 
 ui = App.title.set("Movies") >> nustd.ui.route(

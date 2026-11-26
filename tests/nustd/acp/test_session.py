@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import inspect
 import os
 import signal
 import time
@@ -25,7 +26,8 @@ pytestmark = pytest.mark.timeout(20, method="thread")
 
 def with_session(body):
     """``body(sid)`` on a fresh Session."""
-    return nu.let(nu.Dict(Agent.new_session())["session_id"], body)
+    (name,) = inspect.signature(body).parameters
+    return nu.let(body, **{name: nu.Dict(Agent.new_session())["session_id"]})
 
 
 def log_all(stream, into=Log.a):
@@ -331,8 +333,8 @@ async def test_one_ref_serves_every_term_of_a_tree_through_a_rewrite():
 async def test_set_config_option_yields_every_option():
     body = with_session(
         lambda sid: nu.let(
-            Agent[sid].set_config_option("fast", True),
             lambda _: Agent[sid].set_config_option("model", "large"),
+            _=Agent[sid].set_config_option("fast", True),
         )
     )
     options, _ = await run(body)

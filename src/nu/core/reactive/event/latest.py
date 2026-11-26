@@ -48,8 +48,8 @@ class ReactLatest(Control):
     Notes:
         - Notifications that pile up while a cancelled run is unwinding are
           collapsed: only the newest key runs, the backlog is not replayed.
-        - Each run gets a fresh branch of the Context it started from: its
-          own attrs key space, values shared by reference. A restarted body
+        - Each run starts from the reaction's frames with its own attrs
+          table (temporary until attrs go), values shared by reference. A restarted body
           never sees attrs a cancelled run left behind, and attrs a run binds
           do not reach the caller or its siblings.
         - A body that finishes on its own is fine; the flow just waits for
@@ -110,8 +110,8 @@ class ReactLatest(Control):
             changed_key_name = await children[2](rt) if has_ck else None
 
             def start(bind: bool, key: object = None) -> asyncio.Task:
-                # Every run is a task of its own, on a fresh branch.
-                run_rt = rt.branch()
+                # Every run is a task of its own, with its own attrs table.
+                run_rt = rt._fork_attrs()
                 name = changed_key_name if bind else None
 
                 async def run() -> None:

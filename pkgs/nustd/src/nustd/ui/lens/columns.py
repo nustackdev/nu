@@ -261,10 +261,10 @@ def _mapping_term(ref: StructuredRef, max_rows: int) -> nu.Nu:
         return cell
 
     held = nu.let(
-        nu.list(ref.keys()),
         lambda keys: _column(
             "mapping", nu.Collect(nu.Map(_capped(keys, max_rows), row)), nu.Len(keys)
         ),
+        keys=nu.list(ref.keys()),
     )
     return nu.If(ref.exists(), held, _empty_column("mapping"))
 
@@ -290,12 +290,12 @@ def _sequence_term(ref: StructuredRef, max_rows: int) -> nu.Nu:
         return cell
 
     held = nu.let(
-        nu.Collect(nu.Iter(ref)),
         lambda items: _column(
             "sequence",
             nu.Collect(nu.Map(nu.Enumerate(_capped(items, max_rows)), row)),
             nu.Len(items),
         ),
+        items=nu.Collect(nu.Iter(ref)),
     )
     return nu.If(ref.exists(), held, _empty_column("sequence"))
 

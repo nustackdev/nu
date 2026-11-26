@@ -34,10 +34,10 @@ Python type, the leaf class itself when one is passed, a ``ShapeRef`` when the
 value is a Shape, and ``ObjectRef`` for anything else. ``ShapeRef`` nests one
 Shape inside another. ``ProgramRef`` holds Nu source.
 
-``Frame`` is the stack frame of a Nu program: a fresh dict bound for one
-Shape around one body, for the values a body computes once and reads again,
-counts or accumulates. ``let`` is the one-value frame: an anonymous slot
-holding one disposable value for one body. ``Throttle`` and ``Debounce`` keep
+``let`` is the stack frame of a Nu program: a fresh dict bound for one Shape
+around one body, for the values a body computes once and reads again, counts
+or accumulates. Given a lambda instead of a Shape it generates the Shape from
+the lambda's parameters. ``Throttle`` and ``Debounce`` keep
 their state in a mem ref the caller passes.
 
 What goes into a Nu constructor is a tree, even a literal, and a mem ref is
@@ -54,7 +54,7 @@ decides once, at build time, for every run. Build the Nu expression,
 """
 
 from nu.mem import interactions, refs
-from nu.mem.interactions import Debounce, Frame, Throttle, let
+from nu.mem.interactions import Debounce, Throttle, let
 from nu.mem.refs import (
     BoolRef,
     BytesRef,
@@ -76,7 +76,6 @@ __all__ = [
     "Debounce",
     "DictRef",
     "FloatRef",
-    "Frame",
     "IntRef",
     "ListRef",
     "ObjectRef",

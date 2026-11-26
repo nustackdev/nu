@@ -110,7 +110,7 @@ class UploadView:
     No route, no sweep, no lifecycle: it names files, it never makes them.
     The host binds one per tab (``nustd.ui.uploads.upload_view`` in nudle's
     arm, its own bracket in a worker) and the upload refs read it with
-    ``ctx.fabrics.get(UploadView)``.
+    ``ctx.get(UploadView)``.
 
     Args:
         root: the area's root dir, the same one the host's area writes into.
@@ -237,12 +237,12 @@ class UploadArea(Fabric):
         # importing the area must not.
         from nustd.ws_server.fabric import WebServer
 
-        if not ctx.fabrics.has(WebServer):
+        if not ctx.has(WebServer):
             msg = "UploadArea opens inside a ws server; put it after listen(...) in the nu.With"
             raise LookupError(msg)
         self._root.mkdir(mode=0o700, parents=True, exist_ok=True)
         self._sweep_stale(time.time() - STALE_AFTER)
-        server = ctx.fabrics.get(WebServer)
+        server = ctx.get(WebServer)
         sub = server.subscribe()
         sub.bind(self._on_book)
         self._server = server
