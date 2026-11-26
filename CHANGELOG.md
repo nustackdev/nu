@@ -2,16 +2,17 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.9.0
-- **nustd** (fabrics) — 0.9.0
-- **nudle** — 0.1.15
-- **ui-core** — 0.2.4
-- **ui-kit** — 0.4.7
+- **nucore** (kernel) — 0.9.1
+- **nustd** (fabrics) — 0.9.1
+- **nudle** — 0.1.16
+- **ui-core** — 0.2.5
+- **ui-kit** — 0.4.8
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.9.1 - 2026-11-27
 
+- Release nu 0.9.1, ui-core 0.2.5, ui-kit 0.4.8, nudle 0.1.16
 - Speed up context lookups and loop bindings by skipping needless per-call work
 - Flatten the context packages into plain modules named after frames and fabrics
 - Give every loop body execution its own disposable frame instead of overwriting one
