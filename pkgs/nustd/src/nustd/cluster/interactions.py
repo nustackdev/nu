@@ -11,8 +11,9 @@ remote result and yielded once.
 
 Async-only: the body ships via ray, which requires the async runtime.
 
-``target`` is a single hashable used verbatim as the tag; omitting it (or
-passing ``UNSET``) resolves the untagged singleton. Everything matches the
+``target`` (positional only, after the body) is a single hashable used
+verbatim as the tag; omitting it (or passing ``UNSET``) resolves the untagged
+singleton. Everything matches the
 shape ``Provide`` / ``ProvideList`` / ``ProvideDict`` used to bind (int
 index for ``ProvideList``, dict key for ``ProvideDict``, no tag for a bare
 ``Provide``). ``target=None`` is a legitimate tag - the sentinel makes the
@@ -24,16 +25,16 @@ Usage::
     Teleport(body)
 
     # ProvideList index
-    Teleport(body, target=0)
+    Teleport(body, 0)
 
     # ProvideDict tuple key (matches feed_run's ("ledger", i) shape)
-    Teleport(body, target=("ledger", 0))
+    Teleport(body, ("ledger", 0))
 
     # ProvideDict string key
-    Teleport(body, target="ledger-main")
+    Teleport(body, "ledger-main")
 
-    # Carry parent's attrs to worker
-    Teleport(body, target=("indexer", 3), carry=True)
+    # Hand the body values from the caller, by parameter name
+    Teleport(lambda shard: index(shard), ("indexer", 3), shard=Job.shard)
 """
 
 from __future__ import annotations
@@ -42,15 +43,16 @@ from typing import TYPE_CHECKING
 
 from nu.engine.structure import Declared
 from nu.lang import Attr, Cardinality, Policy
+from nu.lang.binding import named
 from nu.lang.sentinels import UNSET
 
+from .._shipped import shipped
 from .resources import RayService
 
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Callable
 
-    from nu.lang import Nu
     from nu.lang.runtime import Runtime
 
 
@@ -73,27 +75,30 @@ class Teleport(Policy):
     back. Dropping a Teleport moves the work, it does not change it.
 
     Args:
-        body: the Nu to run on the actor. Captured as a term, never run on
-            the driver.
+        body: the Nu to run on the actor, or a lambda building it over the
+            values in ``args``. Captured as a term, never run on the driver.
+        target: the tag the ``RayService`` was bound under.
+        **args: the values handed to the body lambda, by parameter name.
+            Each is a child, evaluated on the driver on every run.
 
     Notes:
-        - ``target`` is the tag the ``RayService`` was bound under, passed
-          verbatim to ``ctx.get``: omit it for a bare ``Provide``, the index
-          for ``ProvideList``, the key for ``ProvideDict``. ``None`` is a
-          usable tag, distinct from omitting it. It is the node's second
-          child, so any Nu can compute it; a plain value is a ``Literal``.
-        - ``carry=True`` binds the caller's ``ctx.attrs`` on a branch
-          of the actor's Context for that one execution, so loop
-          variables bound by ``Map`` or ``Filter`` reach the body. Without
-          it the body sees only what the actor's Context already holds.
-          ``carry`` is the last child, evaluated each run, so it can be
-          computed.
+        - ``body`` and ``target`` are positional only, so a lambda
+          parameter can take any name.
+        - ``target`` is passed verbatim to ``ctx.get``: omit it for a bare
+          ``Provide``, the index for ``ProvideList``, the key for
+          ``ProvideDict``. ``None`` is a usable tag, distinct from omitting
+          it. It is the node's second child, so any Nu can compute it; a
+          plain value is a ``Literal``.
         - The body resolves its refs against the actor's Context, built on
           the actor by the ``RayService``'s ``init`` bracket or
           ``ctx_builder``. Anything bound around the Teleport in the
-          caller's tree is not visible there.
-        - The body term crosses the wire through ray's serializer, so it and
-          everything it captures must be picklable.
+          caller's tree is not visible there. What the body needs from the
+          caller goes in ``args``: the values ship with the body and are
+          bound in a frame of their own on the actor, for that one call.
+        - The body term and the values cross the wire through ray's
+          serializer, so they and everything they capture must be
+          picklable. The Shape the lambda's refs read travels by value with
+          the body.
         - Async only. The sync path raises; run with ``arun``, ``afirst`` or
           ``acollect``.
         - The wait is an await on the actor's future, so Teleports to
@@ -115,8 +120,8 @@ class Teleport(Policy):
         Provide(RayCluster, kwargs={"address": "auto"},
             body=ProvideList(RayService, specs=[{"num_cpus": 4}, {"num_cpus": 4}],
                 body=Parallel(
-                    Teleport(shard_0, target=0),
-                    Teleport(shard_1, target=1),
+                    Teleport(shard_0, 0),
+                    Teleport(shard_1, 1),
                 ),
             ),
         )
@@ -124,8 +129,9 @@ class Teleport(Policy):
 
     _requires_async = Declared(value=True, name="requires_async")
 
-    def __init__(self, body: Nu, *, target: object = UNSET, carry: object = False) -> None:
-        super().__init__(body, target, carry)
+    def __init__(self, body: object, target: object = UNSET, /, **args: object) -> None:
+        tree, self._ship, terms = named("Teleport", body, args)
+        super().__init__(tree, target, *terms)
 
     def _compile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
         def thunk(rt: Runtime) -> object:
@@ -135,15 +141,15 @@ class Teleport(Policy):
         return thunk
 
     def _acompile(self, nid: int, children: tuple[Callable, ...]) -> Callable:
-        body_term = self._children[0]
+        body_term, binding = self._children[0], self._ship
+        args = children[2:]
 
         async def athunk(rt: Runtime) -> object:
             target = await children[1](rt)
-            carry = await children[2](rt)
             tag: tuple[object, ...] = () if target is UNSET else (target,)
             service = rt.ctx.get(RayService, *tag)
-            attrs = dict(rt.ctx.attrs.items()) if carry else None
-            result = await service.aexecute(body_term, attrs=attrs)
+            values = [await arg(rt) for arg in args]
+            result = await service.aexecute(shipped(binding, values, body_term))
             if rt.program.attrs[Attr.CHILD_CARDINALITY][nid] is Cardinality.STREAM:
                 return _one(result)
             return result

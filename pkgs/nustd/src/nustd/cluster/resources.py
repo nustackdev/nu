@@ -85,8 +85,8 @@ class RayService(Fabric):
     On ``setup`` / ``asetup``: spawn a ray actor (optionally pinned to a
     named node with resource / CPU / GPU constraints) and initialize its
     ``Context`` from ``init`` (a lifecycle bracket, typically ``With(...)``)
-    or ``ctx_builder`` (a callable). ``aexecute(tree, attrs=None)`` routes
-    to the actor. On ``cleanup`` / ``acleanup``: graceful shutdown, then
+    or ``ctx_builder`` (a callable). ``aexecute(tree)`` routes the tree,
+    with any Teleport args shipped inside it, to the actor. On ``cleanup`` / ``acleanup``: graceful shutdown, then
     ``ray.kill``.
 
     Sync and async both supported. The sync path uses ``ray.get(ref)`` to
@@ -95,7 +95,7 @@ class RayService(Fabric):
     Fleets can boot in parallel via ``ProvideDict(..., parallel=True)``.
 
     ``init`` is a ``Bracket`` shipped to the actor. The actor
-    enters its ``_aopen(Context())`` on start and holds the resulting
+    enters its ``_aenter(Context())`` on start and holds the resulting
     Context live for the actor's lifetime; on shutdown the bracket tears
     down LIFO. Use ``With(*brackets)`` to compose multiple ``Provide``
     stacks.
@@ -172,9 +172,9 @@ class RayService(Fabric):
         self._actor = _RayServiceActor.options(**self._options()).remote()
         await self._actor.start.remote(self.init, self.ctx_builder)
 
-    async def aexecute(self, tree: object, attrs: dict | None = None) -> object:
+    async def aexecute(self, tree: object) -> object:
         """Ship ``tree`` to the actor and await its result."""
-        return await self._actor.aexecute.remote(tree, attrs)
+        return await self._actor.aexecute.remote(tree)
 
     async def acleanup(self) -> None:
         """Async path: await graceful shutdown so the driver stays free."""

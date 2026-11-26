@@ -85,7 +85,7 @@ def test_provide_launch_teleport_round_trip():
     tree = nu.Provide(
         WorkerPool,
         kwargs={"name": "nu-test-provide"},
-        body=nu.mem.let(Local, Teleport(body=nu.Add(41, 1), worker=W), w=Launch()),
+        body=nu.mem.let(Local, Teleport(None, nu.Add(41, 1), W), w=Launch()),
     )
     value, _ = nu.run(tree)
     assert value == 42
@@ -95,7 +95,7 @@ async def test_provide_launch_teleport_round_trip_async():
     tree = nu.Provide(
         WorkerPool,
         kwargs={"name": "nu-test-provide-a"},
-        body=nu.mem.let(Local, Teleport(body=nu.Add(41, 1), worker=W), w=Launch()),
+        body=nu.mem.let(Local, Teleport(None, nu.Add(41, 1), W), w=Launch()),
     )
     value, _ = await nu.arun(tree)
     assert value == 42
@@ -113,7 +113,7 @@ def test_provide_teardown_kills_the_worker_it_launched():
     tree = nu.Provide(
         _Spy,
         kwargs={"name": "nu-test-teardown-tree"},
-        body=nu.mem.let(Local, Teleport(body=nu.Add(1, 1), worker=W), w=Launch()),
+        body=nu.mem.let(Local, Teleport(None, nu.Add(1, 1), W), w=Launch()),
         bind_as=WorkerPool,
     )
     value, _ = nu.run(tree)
@@ -127,7 +127,7 @@ def test_provide_teardown_kills_the_worker_it_launched():
 
 def test_worker_id_flows_from_a_ref(ctx, pool):
     """The id reaches Teleport through a mem slot, i.e. it is a child, not payload."""
-    tree = nu.mem.let(Local, Teleport(body=nu.Add(1, 2), worker=W), w=Launch())
+    tree = nu.mem.let(Local, Teleport(None, nu.Add(1, 2), W), w=Launch())
     value, _ = nu.run(tree, ctx)
     assert value == 3
 
@@ -136,7 +136,7 @@ def test_worker_id_flows_from_a_computed_query(ctx, pool):
     """And through a query over that ref, which a payload target could never do."""
     tree = nu.mem.let(
         Local,
-        Teleport(body=nu.Add(1, 2), worker=nu.Add(W, 0)),
+        Teleport(None, nu.Add(1, 2), nu.Add(W, 0)),
         w=Launch(),
     )
     value, _ = nu.run(tree, ctx)
@@ -146,7 +146,7 @@ def test_worker_id_flows_from_a_computed_query(ctx, pool):
 def test_worker_id_flows_from_a_ref_into_dispatch_and_kill(ctx, pool):
     tree = nu.mem.let(
         Local,
-        Dispatch(body=RESIDENT, worker=W),
+        Dispatch(None, RESIDENT, W),
         w=Launch(),
     )
     nu.run(tree, ctx)
@@ -167,7 +167,7 @@ def test_pool_can_be_addressed_by_an_explicit_ref():
         kwargs={"name": "nu-test-ref"},
         body=nu.mem.let(
             Local,
-            Teleport(PoolRef(), body=nu.Add(2, 2), worker=W),
+            Teleport(PoolRef(), nu.Add(2, 2), W),
             w=Launch(PoolRef()),
         ),
     )
@@ -216,7 +216,7 @@ def test_the_fluent_form_drives_a_whole_lifecycle(ctx, pool):
 def test_dispatch_in_a_tree_returns_promptly(ctx, pool):
     tree = nu.mem.let(
         Local,
-        Dispatch(body=RESIDENT, worker=W),
+        Dispatch(None, RESIDENT, W),
         w=Launch(),
     )
     # Launch dominates the timing; the point is that it returns at all, since
@@ -227,29 +227,90 @@ def test_dispatch_in_a_tree_returns_promptly(ctx, pool):
     assert pool.status(pool.workers()[0]).state == "busy"
 
 
-def test_dispatch_carries_caller_attrs_when_asked(pool):
-    ctx = nu.Context(attrs={"seed": 7}).bind(WorkerPool, pool)
+def test_dispatch_hands_its_args_to_the_body(ctx, pool):
     tree = nu.mem.let(
         Local,
-        Dispatch(body=nu.context.Attr("seed"), worker=W, carry=True),
+        Dispatch(None, lambda seed: nu.Add(seed, 1), W, seed=7),
         w=Launch(),
     )
     nu.run(tree, ctx)
     wid = pool.workers()[0]
-    # The carried body reads the caller's attr on a copy of the worker Context;
-    # what we assert is that it completed rather than failing.
+    # A body reading a slot with no frame on the worker would fail with a
+    # LookupError, kept on the status; it completing clean means the value crossed.
     assert _await_true(lambda: pool.status(wid).jobs == ())
     assert pool.status(wid).errors == ()
 
 
-def test_teleport_carry_can_be_computed(pool):
-    ctx = nu.Context(attrs={"seed": 7, "carry": True}).bind(WorkerPool, pool)
+# --- teleport args ----------------------------------------------------------
+
+
+def test_teleport_args_are_evaluated_in_the_caller(ctx):
     tree = nu.mem.let(
         Local,
-        Teleport(body=nu.context.Attr("seed"), worker=W, carry=nu.context.Attr("carry")),
+        nu.let(lambda seed: Teleport(None, lambda n: nu.Add(n, 1), W, n=seed * 2), seed=3),
         w=Launch(),
     )
     assert nu.run(tree, ctx)[0] == 7
+
+
+def test_teleport_args_cross_as_values(ctx):
+    body = lambda rows, meta: nu.List.of(rows, meta)  # noqa: E731
+    tree = nu.mem.let(
+        Local,
+        Teleport(None, body, W, rows=nu.Literal(factory=lambda: [1, 2, 3]), meta={"k": "v"}),
+        w=Launch(),
+    )
+    assert nu.run(tree, ctx)[0] == [[1, 2, 3], {"k": "v"}]
+
+
+def test_a_teleported_ref_is_live_on_the_worker(ctx):
+    """The generated Shapes cross with the body; its refs and a nested binding's read on the worker."""
+    body = lambda n: nu.Collect(nu.Map(nu.Iter([1, 2]), lambda x: nu.Add(x, n)))  # noqa: E731
+    tree = nu.mem.let(Local, Teleport(None, body, W, n=40), w=Launch())
+    assert nu.run(tree, ctx)[0] == [41, 42]
+
+
+async def test_teleport_args_async(ctx):
+    tree = nu.mem.let(
+        Local,
+        nu.List.of(
+            Teleport(None, lambda a, b: nu.Add(a, b), W, a=40, b=2),
+            Teleport(None, nu.Add(1, 2), W),
+        ),
+        w=Launch(),
+    )
+    assert (await nu.arun(tree, ctx))[0] == [42, 3]
+
+
+def test_teleport_args_per_item_of_a_loop(ctx):
+    each = nu.Map(nu.Iter([1, 2, 3]), lambda x: Teleport(None, lambda y: nu.Mul(y, 10), W, y=x))
+    tree = nu.mem.let(Local, nu.Collect(each), w=Launch())
+    assert nu.run(tree, ctx)[0] == [10, 20, 30]
+
+
+def test_config_is_positional_so_a_parameter_can_take_its_name(ctx):
+    body = lambda pool, body, worker: nu.Add(pool, nu.Add(body, worker))  # noqa: E731
+    tree = nu.mem.let(
+        Local,
+        PoolRef().teleport(body, W, pool=1, body=2, worker=3),
+        w=Launch(),
+    )
+    assert nu.run(tree, ctx)[0] == 6
+
+
+@pytest.mark.parametrize(
+    ("build", "match"),
+    [
+        (lambda: Teleport(None, lambda a: a, 0), "no value for"),
+        (lambda: Teleport(None, lambda a: a, 0, a=1, b=2), "name no parameter"),
+        (lambda: Teleport(None, nu.Add(1, 2), 0, a=1), "a tree body takes no values"),
+        (lambda: Dispatch(None, lambda a: a, 0, b=1), "Dispatch"),
+        (lambda: PoolRef().teleport(lambda *a: a, 0), "fixed list"),
+    ],
+)
+def test_teleport_args_are_checked_at_build(build, match):
+    with pytest.raises(TypeError, match=match):
+        build()
 
 
 # --- the reads --------------------------------------------------------------
@@ -312,13 +373,13 @@ def test_a_tree_over_a_local_shape_runs_on_a_worker(ctx):
         n = nu.mem.IntRef.slot()
 
     body = nu.mem.let(Tally, nu.Add(Tally.n, 1), n=41)
-    tree = nu.mem.let(Local, Teleport(body=body, worker=W), w=Launch())
+    tree = nu.mem.let(Local, Teleport(None, body, W), w=Launch())
     assert nu.run(tree, ctx)[0] == 42
 
 
 async def test_a_let_runs_on_a_worker(ctx):
     body = nu.mem.let(lambda n: nu.Add(n, 1), n=41)
-    tree = nu.mem.let(Local, Teleport(body=body, worker=W), w=Launch())
+    tree = nu.mem.let(Local, Teleport(None, body, W), w=Launch())
     assert (await nu.arun(tree, ctx))[0] == 42
 
 
@@ -328,5 +389,5 @@ def test_an_init_holding_a_local_class_reaches_the_worker(ctx):
 
     bound = nu.context.FabricRef(Greeter).exists()
     launch = Launch(init=nu.Provide(Greeter, kwargs={}, body=nu.Noop()))
-    tree = nu.mem.let(Local, Teleport(body=bound, worker=W), w=launch)
+    tree = nu.mem.let(Local, Teleport(None, bound, W), w=launch)
     assert nu.run(tree, ctx)[0] is True

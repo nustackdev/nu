@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Worker and cluster bodies take their values as named args, shipped with the body
 - Logging tests and lens lambdas read values through mem instead of context names
 - Session id lives on a light shape the web fold binds; arms read its ref
 - Temp dir hands its path to the body lambda through a frame, no names

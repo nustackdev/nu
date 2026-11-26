@@ -682,11 +682,11 @@ class _WorkerHandle:
             return self._gone()
         return WorkerGone(f"worker {self.wid} is going away", wid=self.wid)
 
-    def send(self, kind: str, token: int, reply: _Reply, tree: object, attrs: dict | None) -> None:
+    def send(self, kind: str, token: int, reply: _Reply, tree: object) -> None:
         """Send an opened request's frame. A cancel that came in meanwhile follows it out."""
         try:
             with self._send_lock:
-                wire.send(self.conn, (kind, token, tree, attrs))
+                wire.send(self.conn, (kind, token, tree))
         except (OSError, ValueError, BrokenPipeError) as exc:
             with self._state:
                 self._pending.pop(token, None)
@@ -698,10 +698,10 @@ class _WorkerHandle:
         if cancelled:
             self._send_cancel(token)
 
-    def request(self, kind: str, tree: object, attrs: dict | None) -> tuple[int, _Reply]:
+    def request(self, kind: str, tree: object) -> tuple[int, _Reply]:
         """Register a waiter, send the frame, hand the token and the slot back."""
         token, reply = self.open(job=kind == "exec")
-        self.send(kind, token, reply, tree, attrs)
+        self.send(kind, token, reply, tree)
         return token, reply
 
     def cancel(self, token: int) -> None:
@@ -1341,7 +1341,7 @@ class WorkerPool(Fabric):
 
     # --- run work ----------------------------------------------------------
 
-    def dispatch(self, wid: object, tree: object, attrs: dict | None = None) -> int:
+    def dispatch(self, wid: object, tree: object) -> int:
         """Ship ``tree`` to worker ``wid`` and return its job id once the child acked it.
 
         The body keeps running in the child afterwards. Nothing is ever
@@ -1353,7 +1353,7 @@ class WorkerPool(Fabric):
         kept on the worker's status.
         """
         handle = self._target(wid)
-        token, reply = handle.request("dispatch", tree, attrs)
+        token, reply = handle.request("dispatch", tree)
         try:
             reply.wait(self.ack_timeout)
         except BaseException:
@@ -1361,7 +1361,7 @@ class WorkerPool(Fabric):
             raise
         return token
 
-    def teleport(self, wid: object, tree: object, attrs: dict | None = None) -> object:
+    def teleport(self, wid: object, tree: object) -> object:
         """Ship ``tree`` to worker ``wid`` and block for its value.
 
         Interrupted while it waits (a ``KeyboardInterrupt``), the body is
@@ -1369,7 +1369,7 @@ class WorkerPool(Fabric):
         ``Interrupted``; a worker gone meanwhile raises ``WorkerGone``.
         """
         handle = self._target(wid)
-        token, reply = handle.request("exec", tree, attrs)
+        token, reply = handle.request("exec", tree)
         try:
             return reply.wait(None)
         except BaseException:
@@ -1511,7 +1511,7 @@ class WorkerPool(Fabric):
             handle.kill_now()
         return handle
 
-    async def adispatch(self, wid: object, tree: object, attrs: dict | None = None) -> int:
+    async def adispatch(self, wid: object, tree: object) -> int:
         """Async ``dispatch``: the reader thread wakes it on the ack, no thread is held meanwhile.
 
         A caller cancelled before it has the job id could never cancel the
@@ -1522,14 +1522,14 @@ class WorkerPool(Fabric):
         handle = self._target(wid)
         token, reply = handle.open(asyncio.get_running_loop())
         try:
-            await asyncio.to_thread(handle.send, "dispatch", token, reply, tree, attrs)
+            await asyncio.to_thread(handle.send, "dispatch", token, reply, tree)
             await reply.await_(self.ack_timeout)
         except BaseException:
             self._cancel_later(handle, token)
             raise
         return token
 
-    async def ateleport(self, wid: object, tree: object, attrs: dict | None = None) -> object:
+    async def ateleport(self, wid: object, tree: object) -> object:
         """Async ``teleport``: the reader thread wakes it, no thread is held meanwhile.
 
         Cancelling the await cancels the body in the child: its task is
@@ -1543,7 +1543,7 @@ class WorkerPool(Fabric):
         handle = self._target(wid)
         token, reply = handle.open(asyncio.get_running_loop(), job=True)
         try:
-            await asyncio.to_thread(handle.send, "exec", token, reply, tree, attrs)
+            await asyncio.to_thread(handle.send, "exec", token, reply, tree)
             return await reply.await_()
         except asyncio.CancelledError:
             self._cancel_later(handle, token)

@@ -10,8 +10,8 @@ Every frame goes through ``nu.lang.wire`` (cloudpickle), and so does the
 ``init`` bracket handed over at spawn. Frames::
 
     parent -> child
-        ('exec', token, tree, attrs)      run it, reply with the value
-        ('dispatch', token, tree, attrs)  ack, then run it detached
+        ('exec', token, tree)      run it, reply with the value
+        ('dispatch', token, tree)  ack, then run it detached
         ('cancel', token)                 cancel that request's task
         ('stop', deadline)                cancel every job, tear down, exit 0
 
@@ -99,7 +99,7 @@ from nu.lang import wire
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Coroutine, Iterator
+    from collections.abc import Callable, Coroutine
     from multiprocessing.connection import Connection
 
     from nu.lang import Bracket
@@ -496,9 +496,9 @@ async def _serve(
                 if task is not None:
                     task.cancel()
                 continue
-            kind, token, tree, attrs = frame
+            kind, token, tree = frame
             reply = kind == "exec"
-            task = _spawn(tasks, _run_one(ctx, tree, attrs, token, send, reply=reply))
+            task = _spawn(tasks, _run_one(ctx, tree, token, send, reply=reply))
             jobs[token] = task
             task.add_done_callback(lambda t, token=token: over(token, t))
             if not reply:
@@ -533,20 +533,9 @@ async def _say(send: Callable, frame: tuple) -> None:
         await send(frame)
 
 
-@contextlib.contextmanager
-def _exec_context(ctx: Context, attrs: dict | None) -> Iterator[Context]:
-    """The Context one request runs against: ``ctx``'s frames on an own attrs table, the caller's names bound."""
-    run_ctx = ctx._fork_attrs()  # TEMPORARY until attrs go (task-184 phase 4)
-    with contextlib.ExitStack() as scope:
-        for name, value in (attrs or {}).items():
-            scope.enter_context(run_ctx.attrs.let(name, value))
-        yield run_ctx
-
-
 async def _run_one(
     ctx: Context,
     tree: object,
-    attrs: dict | None,
     token: int,
     send: Callable,
     *,
@@ -565,14 +554,13 @@ async def _run_one(
     task = asyncio.current_task()
     try:
         program = compile_term(tree)
-        with _exec_context(ctx, attrs) as exec_ctx:
-            _serving.bodies.add(task)  # type: ignore[arg-type]
-            marked = _IN_BODY.set(True)
-            try:
-                value, _ = await aeval(program, exec_ctx)
-            finally:
-                _IN_BODY.reset(marked)
-                _serving.bodies.discard(task)  # type: ignore[arg-type]
+        _serving.bodies.add(task)  # type: ignore[arg-type]
+        marked = _IN_BODY.set(True)
+        try:
+            value, _ = await aeval(program, ctx)
+        finally:
+            _IN_BODY.reset(marked)
+            _serving.bodies.discard(task)  # type: ignore[arg-type]
     except (asyncio.CancelledError, SystemExit):
         raise
     except KeyboardInterrupt:

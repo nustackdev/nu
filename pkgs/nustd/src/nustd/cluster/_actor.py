@@ -20,7 +20,7 @@ import ray
 
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable, Callable, Iterator
+    from collections.abc import Awaitable, Callable
 
     from nu.lang import Bracket
     from nu.lang.runtime import Context
@@ -76,13 +76,13 @@ class _RayServiceActor:
             result = await result
         self._ctx = result
 
-    async def aexecute(self, tree: object, attrs: dict | None = None) -> object:
+    async def aexecute(self, tree: object) -> object:
         """Compile ``tree`` and evaluate it against this actor's Context.
 
         Returns the root's value (``None`` for effect-only trees). Every call
-        starts from the actor's frames, on its own attrs table with ``attrs``
-        bound in it, so the parent's names carry over without touching the actor's
-        baseline or a concurrent call.
+        starts from the actor's frames; whatever the body binds is a frame of
+        its own, so nothing reaches the actor's baseline or a concurrent call.
+        Values from the caller come inside ``tree`` (Teleport args).
 
         Value-rooted trees (Query / Command / effectful Sequential) work
         directly. A stream-rooted tree returns its async generator, which
@@ -97,8 +97,7 @@ class _RayServiceActor:
             self._inflight.add(task)
         try:
             program = compile_term(tree)
-            with _exec_context(self._ctx, attrs) as ctx:
-                value, _ = await aeval(program, ctx)
+            value, _ = await aeval(program, self._ctx)
             return value
         finally:
             if task is not None:
@@ -117,13 +116,3 @@ class _RayServiceActor:
                 await self._init_stack.__aexit__(None, None, None)
             self._init_stack = None
         self._ctx = None
-
-
-@contextlib.contextmanager
-def _exec_context(ctx: Context, attrs: dict | None) -> Iterator[Context]:
-    """The Context one call runs against: ``ctx``'s frames on an own attrs table, the caller's names bound."""
-    run_ctx = ctx._fork_attrs()  # TEMPORARY until attrs go (task-184 phase 4)
-    with contextlib.ExitStack() as scope:
-        for name, value in (attrs or {}).items():
-            scope.enter_context(run_ctx.attrs.let(name, value))
-        yield run_ctx

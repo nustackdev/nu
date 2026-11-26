@@ -48,13 +48,22 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Sequence
+    from collections.abc import Callable, Mapping, Sequence
 
     from nu.domains.shape import Shape
     from nu.lang.runtime import Context
 
 
-__all__ = ["NO_BINDING", "Binding", "_DynamicBinding", "_StaticBinding", "dynamic"]
+__all__ = [
+    "NO_BINDING",
+    "Binding",
+    "_DynamicBinding",
+    "_StaticBinding",
+    "dynamic",
+    "is_builder",
+    "lambda_params",
+    "named",
+]
 
 
 _POSITIONAL = (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
@@ -163,6 +172,39 @@ def dynamic(owner: str, fn: object, handed: int) -> tuple[object, Binding]:
         msg = f"{owner}: the lambda returned None, it must return the body tree"
         raise TypeError(msg)
     return body, binding
+
+
+def named(owner: str, fn: object, values: Mapping[str, object]) -> tuple[object, Binding, tuple]:
+    """The body ``fn`` builds, its binding, and ``values`` in slot order. Build time.
+
+    The values are given by parameter name, the rule ``let`` and the
+    Teleports share: every parameter takes a value and every value names a
+    parameter. A plain tree (not a lambda) takes no values and binds nothing.
+
+    Raises:
+        TypeError: a parameter has no value, a value names no parameter, a
+            tree is given values, or ``fn`` breaks :func:`dynamic`'s rules.
+    """
+    if not is_builder(fn):
+        if values:
+            msg = (
+                f"{owner}: a tree body takes no values; got {list(values)}, pass a lambda over them"
+            )
+            raise TypeError(msg)
+        return fn, NO_BINDING, ()
+    params = lambda_params(owner, fn)
+    missing = [p for p in params if p not in values]
+    unknown = [k for k in values if k not in params]
+    if missing or unknown:
+        parts = []
+        if missing:
+            parts.append(f"no value for {missing}")
+        if unknown:
+            parts.append(f"{unknown} name no parameter")
+        msg = f"{owner}: the lambda's parameters are {list(params)}; {', '.join(parts)}"
+        raise TypeError(msg)
+    body, binding = dynamic(owner, fn, len(params))
+    return body, binding, tuple(values[p] for p in params)
 
 
 class _StaticBinding:
