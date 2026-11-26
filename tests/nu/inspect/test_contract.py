@@ -164,9 +164,9 @@ def test_the_receiver_is_dropped_only_when_the_caller_says_it_is_one() -> None:
 def test_a_call_form_renders_defaults_and_the_variadic_tail() -> None:
     args = (
         Arg(name="source"),
-        Arg(name="key", default="'item'", has_default=True),
+        Arg(name="prefix", default="'nu-'", has_default=True),
     )
-    assert render_args("Filter", args) == "Filter(source, key='item')"
+    assert render_args("Tmp", args) == "Tmp(source, prefix='nu-')"
     assert render_args("Add", (Arg(name="children", variadic=True),)) == "Add(*children)"
     assert render_args("bind", (Arg(name="defaults", keyword_variadic=True),)) == "bind(**defaults)"
     assert render_args("Now", ()) == "Now()"

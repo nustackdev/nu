@@ -184,7 +184,7 @@ def test_a_stream_body_holds_its_frame_across_pulls() -> None:
 
 
 @RUNNERS
-def test_same_shape_nested_shadows_then_restores(run: Callable) -> None:
+def test_same_shape_nested_shadows_only_inside(run: Callable) -> None:
     data, ctx = _out()
     inner = nm.let(S, Out.first.set(S.a), a=2)
     run(nm.let(S, inner >> Out.second.set(S.a), a=1), ctx)

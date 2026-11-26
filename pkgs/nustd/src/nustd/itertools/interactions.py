@@ -605,6 +605,10 @@ class TakeWhile(_DynamicBinding, StreamQuery):
     frame, then ``predicate`` runs; the item is yielded while truthy and
     iteration stops at the first falsy result. A NULL result is falsy.
     ``predicate`` is a lambda over the item, or a tree that reads none.
+
+    One frame per run, overwritten per item: work detached from the run (a
+    delayed or spawned task, a stream pulled later) reads the latest item,
+    not the one current when it started.
     """
 
     def __init__(self, source: Arg, predicate: Nu | Callable[..., Nu]) -> None:
@@ -656,6 +660,10 @@ class DropWhile(_DynamicBinding, StreamQuery):
     truthy; once it is falsy (NULL included), yields that item and every item
     after it with no further predicate evaluation. ``predicate`` is a lambda
     over the item, or a tree that reads none.
+
+    One frame per run, overwritten per item: work detached from the run (a
+    delayed or spawned task, a stream pulled later) reads the latest item,
+    not the one current when it started.
     """
 
     def __init__(self, source: Arg, predicate: Nu | Callable[..., Nu]) -> None:
@@ -712,6 +720,10 @@ class FilterFalse(_DynamicBinding, StreamQuery):
     Children: ``[source, predicate]``. The complement of ``filter``: a NULL
     predicate is falsy, so the item passes. ``predicate`` is a lambda over
     the item, or a tree that reads none.
+
+    One frame per run, overwritten per item: work detached from the run (a
+    delayed or spawned task, a stream pulled later) reads the latest item,
+    not the one current when it started.
     """
 
     def __init__(self, source: Arg, predicate: Nu | Callable[..., Nu]) -> None:
@@ -763,6 +775,10 @@ class Accumulate(_DynamicBinding, StreamQuery):
     is yielded as the new running value. Without ``func`` it sums via
     ``operator.add``. ``func`` is a lambda over the running value and the
     item (it may take only the running value), or a tree that reads none.
+
+    One frame per run, overwritten per step: work detached from the run (a
+    delayed or spawned task, a stream pulled later) reads the latest
+    accumulator and item, not the ones current when it started.
     """
 
     def __init__(self, source: Arg, func: Nu | Callable[..., Nu] | None = None) -> None:
@@ -838,6 +854,10 @@ class StarMap(_DynamicBinding, StreamQuery):
     the run's frame. ``function`` is a lambda over the tuple, reading its
     parts by index (``p[0]``, ``p[1]``, ...), or a tree that reads none. The
     result is yielded.
+
+    One frame per run, overwritten per item: work detached from the run (a
+    delayed or spawned task, a stream pulled later) reads the latest item,
+    not the one current when it started.
     """
 
     def __init__(self, source: Arg, function: Nu | Callable[..., Nu]) -> None:
@@ -885,6 +905,10 @@ class GroupBy(_DynamicBinding, StreamQuery):
     function is a lambda over the item, or a tree that reads none. Yields
     ``(key_value, tuple(group))`` for each run of consecutive items sharing
     a key.
+
+    One frame per run, overwritten per item: work detached from the run (a
+    delayed or spawned task, a stream pulled later) reads the latest item,
+    not the one current when it started.
     """
 
     def __init__(self, source: Arg, key: Nu | Callable[..., Nu] | None = None) -> None:

@@ -59,6 +59,10 @@ class Map(_DynamicBinding, StreamQuery):
           shadows the outer binding, as with ``nu.let``.
         - One frame per run, the item written into it before ``transform``
           runs for that item. The frame never reaches the consumer.
+        - Work detached from the run (a debounced, delayed or spawned task,
+          a stream pulled after the run moved on) reads the latest item,
+          not the one current when it started: the run keeps one frame and
+          overwrites it per item. Concurrent runs each get their own.
         - Pulled lazily, one item at a time; nothing runs ahead of the pull.
         - No NULL check of its own: a NULL item, or a NULL result from
           ``transform``, passes straight through as a value.
@@ -120,6 +124,10 @@ class Filter(_DynamicBinding, StreamQuery):
 
     Notes:
         - The same binding, and the same lambda form, as :class:`Map`.
+        - Work detached from the run (a debounced, delayed or spawned task,
+          a stream pulled after the run moved on) reads the latest item,
+          not the one current when it started: the run keeps one frame and
+          overwrites it per item. Concurrent runs each get their own.
         - Pulled lazily, one item at a time.
 
     Yields:
@@ -225,6 +233,10 @@ class SortBy(_DynamicBinding, StreamQuery):
     Notes:
         - The same binding, and the same lambda form, as :class:`Map` /
           :class:`Filter`.
+        - Work detached from the run (a debounced, delayed or spawned task,
+          a stream pulled after the run moved on) reads the latest item,
+          not the one current when it started: the run keeps one frame and
+          overwrites it per item. Concurrent runs each get their own.
         - Drains and sorts the whole source before yielding anything, so
           a pull on its output waits for the whole source.
 

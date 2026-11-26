@@ -102,7 +102,7 @@ def test_a_nested_let_keeps_the_outer_ref_readable(run: Callable) -> None:
 
 
 @RUNNERS
-def test_sibling_lets_inside_one_let_shadow_and_restore(run: Callable) -> None:
+def test_sibling_lets_inside_one_let_shadow_only_inside(run: Callable) -> None:
     data, ctx = _out()
     term = nm.let(
         lambda a: (

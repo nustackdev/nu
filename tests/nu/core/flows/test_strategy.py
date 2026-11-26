@@ -2,8 +2,8 @@
 
 Strategy flows compose mutating atoms directly. Coverage builds real programs
 of ``.set()`` bodies over a mem dict and runs them through ``run`` / ``arun``,
-asserting the writes landed. A concurrent arm runs on its own branch, but the
-dict bound around it is shared by reference, so arm writes land in it too. Class-hierarchy and declared-attribute checks pin the basis.
+asserting the writes landed. A concurrent arm pushes frames of its own, but
+the dict bound around it is shared by reference, so arm writes land in it too. Class-hierarchy and declared-attribute checks pin the basis.
 """
 
 from __future__ import annotations
