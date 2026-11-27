@@ -108,9 +108,10 @@ export const Matrix: StoryObj = {
 
 const DEEP = ["Home", "Workspaces", "nustack", "Projects", "Mobile", "Navigation"];
 
-// A deep trail, built from Fragments the way a mapped one is. Wide, every
-// crumb shows; under 28rem of its own width (a phone, a strip column) the
-// middle folds: Home > ... > Mobile > Navigation. Three crumbs never fold.
+// A deep trail, built from Fragments the way a mapped one is. With room,
+// every crumb shows; where the whole trail does not fit on one line (a phone,
+// a strip column) the middle folds: Home > ... > Mobile > Navigation. Three
+// crumbs never fold.
 export const Deep: StoryObj = {
 	render: () => (
 		<div className="space-y-6 p-4">
