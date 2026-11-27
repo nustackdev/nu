@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Flat nu favicons and app mark in nudle, no glow or shadow
 - Blob writes also commit on a short timer, so followers see slow sources promptly
 - Ranges on a growing blob answer only bytes that exist, never a broken promise
 - Serve blobs over http while they are still written, following until sealed
