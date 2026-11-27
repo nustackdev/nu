@@ -20,11 +20,11 @@
 // contribution: people acting. `accent-2` (Starlight) for system data.
 
 import type * as React from "react";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
+import { AnchorTip, useTapAway } from "./anchor-tip";
 import {
 	buildModel,
 	type CalendarHeatmapLevel,
@@ -173,19 +173,11 @@ function CalendarHeatmap({
 
 	// A shown tip goes on the next tap outside the grid, or a scroll (it is
 	// fixed to where the day was).
-	useEffect(() => {
-		if (!touch || active === null) return;
-		const hide = (e: Event) => {
-			if (e.type === "pointerdown" && gridRef.current?.contains(e.target as Node)) return;
-			setActive(null);
-		};
-		document.addEventListener("pointerdown", hide, true);
-		window.addEventListener("scroll", hide, true);
-		return () => {
-			document.removeEventListener("pointerdown", hide, true);
-			window.removeEventListener("scroll", hide, true);
-		};
-	}, [touch, active]);
+	useTapAway(
+		touch && active !== null,
+		(target) => !!gridRef.current?.contains(target),
+		() => setActive(null),
+	);
 
 	const onKeyDown = (e: React.KeyboardEvent) => {
 		const step: Record<string, number> = {
@@ -316,63 +308,15 @@ function CalendarHeatmap({
 			<span className="sr-only" aria-live="polite">
 				{keyboard ? tip : ""}
 			</span>
-			<HeatmapTip grid={gridRef} index={active} text={tip} keepOnScreen={touch} />
+			<AnchorTip
+				slot="calendar-heatmap-tooltip"
+				anchor={active !== null && tip ? gridRef.current?.children[active] : null}
+				keepOnScreen={touch}
+				className="max-w-none whitespace-nowrap tabular-nums"
+			>
+				{tip}
+			</AnchorTip>
 		</div>
-	);
-}
-
-/** The one floating tooltip, fixed over the hovered or walked-to day. */
-function HeatmapTip({
-	grid,
-	index,
-	text,
-	keepOnScreen,
-}: {
-	grid: React.RefObject<HTMLDivElement | null>;
-	index: number | null;
-	text: string;
-	/** Shift the tip back inside the screen, for a phone (touch mode). */
-	keepOnScreen?: boolean;
-}) {
-	const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
-	const [shift, setShift] = useState(0);
-	const tipRef = useRef<HTMLDivElement>(null);
-	useLayoutEffect(() => {
-		const cell = index === null ? null : grid.current?.children[index];
-		if (!cell || !text) {
-			setPos(null);
-			return;
-		}
-		const r = cell.getBoundingClientRect();
-		setPos({ x: r.left + r.width / 2, y: r.top });
-		setShift(0);
-	}, [grid, index, text]);
-	// Measured once placed: how far it pokes past either edge, 8px clear.
-	useLayoutEffect(() => {
-		const el = tipRef.current;
-		if (!keepOnScreen || !el || !pos) return;
-		const w = el.offsetWidth;
-		const room = document.documentElement.clientWidth;
-		const left = pos.x - w / 2;
-		const next = left < 8 ? 8 - left : left + w > room - 8 ? room - 8 - (left + w) : 0;
-		setShift((prev) => (prev === next ? prev : next));
-	}, [keepOnScreen, pos]);
-	if (!pos || !text || typeof document === "undefined") return null;
-	return createPortal(
-		<div
-			data-slot="calendar-heatmap-tooltip"
-			role="tooltip"
-			className={cn(
-				"pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-full whitespace-nowrap px-2 py-1 rounded-sm",
-				"bg-bg-elevated text-text-primary border border-border-default shadow-floating",
-				"text-xs leading-tight tabular-nums",
-			)}
-			ref={tipRef}
-			style={{ left: pos.x + shift, top: pos.y - 6 }}
-		>
-			{text}
-		</div>,
-		document.body,
 	);
 }
 

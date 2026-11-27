@@ -160,10 +160,10 @@ export const Typical: StoryObj = {
 };
 
 // One bar shown at load the way each mode reaches it: a failed deploy,
-// tapped in touch mode (a phone, or the Touch toolbar), so its sheet is open,
-// hovered on desktop, so its tooltip is. A phone is narrower than the
-// timeline's stack width, so each lane is its label line over a full-width
-// track.
+// tapped in touch mode (a phone, or the Touch toolbar), so its tip shows in
+// place over it, hovered on desktop, so its tooltip is. A phone is narrower
+// than the timeline's stack width, so each lane is its label line over a
+// full-width track.
 function ShowBar() {
 	const touch = useTouch();
 	const root = useRef<HTMLDivElement>(null);

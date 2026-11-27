@@ -3,6 +3,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { TouchProvider } from "../../lib/touch";
 import { Waterfall } from "./waterfall";
 import {
 	formatSpanTime,
@@ -139,5 +140,31 @@ describe("Waterfall", () => {
 		expect(btn?.getAttribute("aria-pressed")).toBe("true");
 		act(() => btn?.click());
 		expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: "r" }));
+	});
+});
+
+describe("Waterfall in touch mode", () => {
+	const tip = () => document.querySelector("[data-slot=waterfall-tip]");
+	const rows = () => host.querySelectorAll<HTMLButtonElement>("[data-slot=waterfall-row] button");
+
+	it("shows a tapped row's tip in place, moves it, and hides it off the rows", () => {
+		mount(
+			<TouchProvider value>
+				<Waterfall spans={trace} />
+			</TouchProvider>,
+		);
+		expect(tip()).toBeNull();
+		act(() => rows()[0].click());
+		expect(tip()?.textContent).toContain("root");
+		expect(document.querySelector("[data-slot=bottom-sheet-content]")).toBeNull();
+		act(() => rows()[3].click());
+		expect(tip()?.textContent).toContain("second");
+		act(() => rows()[3].click());
+		expect(tip()).toBeNull();
+		act(() => rows()[1].click());
+		act(() => {
+			document.body.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+		});
+		expect(tip()).toBeNull();
 	});
 });
