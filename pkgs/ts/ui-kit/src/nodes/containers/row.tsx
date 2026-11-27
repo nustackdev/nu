@@ -10,6 +10,14 @@
 // `divided`. `wrap` lets children run onto more lines. `stack_below` (px):
 // narrower than that, the row is a column, every child its full width.
 //
+// Unset, a row stacks on its own when it is a split: two or more fill
+// children side by side (cards, charts, a sidebar beside a main) in a row
+// that does not wrap. Those cannot squeeze forever, so below the kit's
+// STACK_WIDTH (560, `lib/stack.ts`) of the row's own width they stack, the
+// same as a placed grid. A toolbar (content children, one fill at most, a
+// heading beside its buttons) and a wrapping row reflow on their own and
+// never stack unasked. `stack_below` 0 keeps any row a row.
+//
 // Sizing comes from the child's kind, never from a prop on the child. Each
 // child sits in a cell, and the cell reads the child's `fill` hint:
 //
@@ -49,12 +57,14 @@
 // fill child keeps 240px as its narrowest, so it still wraps), `basis` the
 // width a child starts from, `align_self`, and `sticky` ("left" / "right").
 
-import { asOrder, ORDER_PROP, orderHandlers } from "@nustackdev/ui-core";
+import { asOrder, getNode, ORDER_PROP, orderHandlers, type Path } from "@nustackdev/ui-core";
 import { type CSSProperties, createContext, useContext, useMemo, useState } from "react";
+import { STACK_WIDTH } from "../../lib/stack";
 import { cn } from "../../lib/utils";
 import {
 	type CellProps,
 	FlowProvider,
+	isFill,
 	isGrow,
 	NodeChildren,
 	type NodeEntry,
@@ -64,6 +74,7 @@ import {
 	useNode,
 	useNumberProp,
 	useProp,
+	useTree,
 } from "../../tree";
 import {
 	type ChildMaps,
@@ -145,10 +156,24 @@ function RowCell({ path, children }: CellProps) {
 	);
 }
 
+/** How many children of the row at `path` fill (hidden ones left out). */
+function useFillCount(path: Path): number {
+	return useTree((s) => {
+		const node = getNode(s.root, path);
+		let n = 0;
+		for (const child of node?.children.values() ?? []) {
+			if (!child.hidden && isFill(child.type, child.props)) n++;
+		}
+		return n;
+	});
+}
+
 function RowView({ path }: NodeProps) {
 	const layout = useLayout(path, DEFAULTS);
 	const wrap = useBoolProp(path, "wrap");
-	const stackBelow = useNumberProp(path, "stack_below", 0);
+	const fills = useFillCount(path);
+	const split = !wrap && fills >= 2;
+	const stackBelow = useNumberProp(path, "stack_below", split ? STACK_WIDTH : 0);
 	const order = asOrder(useProp<unknown>(path, ORDER_PROP, undefined));
 	const maps = useChildMaps(path);
 	const [el, setEl] = useState<HTMLDivElement | null>(null);

@@ -34,12 +34,21 @@
 // `templateTracks` counts the column tracks a template names, so a span is
 // clamped to the board, never adding an implicit track.
 //
+// A board stacks when it is narrow: below `stackBelow` px of its own width
+// (the kit's STACK_WIDTH, 560, unless set; 0 never) it is one column, every
+// cell full width in source order, its places and spans dropped. The width is
+// the grid's own box, not the screen, so a board in a narrow desktop column
+// stacks the same as on a phone. A cell placed by an inline style
+// (`gridPlace`) is put back to auto placement by an important rule, which
+// beats an inline style that is not one.
+//
 // Gap and padding take the space scale every container takes (`lib/steps`,
 // an int step 0..16). `justify` places each cell's content across its
 // track, `align` down it.
 
 import type * as React from "react";
-import { useLayoutEffect, useState } from "react";
+import { useCallback, useLayoutEffect, useState } from "react";
+import { STACK_WIDTH, useStacked } from "../../lib/stack";
 import { GAP_CLASSES, PADDING_CLASSES, readStep } from "../../lib/steps";
 import { cn } from "../../lib/utils";
 
@@ -78,6 +87,8 @@ export interface GridProps extends React.HTMLAttributes<HTMLDivElement> {
 	cols?: string;
 	/** A row track template, with `cols`. Rows past it size to their content. */
 	rows?: string;
+	/** With `cols`: narrower than this (px), the board is one column. Default STACK_WIDTH, 0 never. */
+	stackBelow?: number;
 	ref?: React.Ref<HTMLDivElement>;
 }
 
@@ -228,16 +239,30 @@ export function Grid({
 	dense = false,
 	cols,
 	rows,
+	stackBelow = STACK_WIDTH,
 	className,
 	style,
+	ref,
 	...props
 }: GridProps) {
 	const step = readStep(gap) ?? 4;
 	const placed = cols != null && cols !== "";
+	const [el, setEl] = useState<HTMLDivElement | null>(null);
+	const setRef = useCallback(
+		(node: HTMLDivElement | null) => {
+			setEl(node);
+			if (typeof ref === "function") ref(node);
+			else if (ref) ref.current = node;
+		},
+		[ref],
+	);
+	const stacked = useStacked(el, stackBelow, placed);
 	return (
 		<div
+			ref={setRef}
 			data-slot="grid"
 			data-placed={placed ? "" : undefined}
+			data-stacked={stacked ? "" : undefined}
 			className={cn(
 				"grid *:min-w-0",
 				GAP_CLASSES[step],
@@ -245,11 +270,16 @@ export function Grid({
 				ALIGN_CLASSES[align] ?? ALIGN_CLASSES.stretch,
 				JUSTIFY_CLASSES[justify] ?? JUSTIFY_CLASSES.stretch,
 				dense && "grid-flow-row-dense",
+				stacked && "*:[grid-area:auto]!",
 				className,
 			)}
 			style={{
-				gridTemplateColumns: placed ? cols : gridTemplate(maxColumns, minCellWidth, step),
-				gridTemplateRows: placed && rows ? rows : undefined,
+				gridTemplateColumns: stacked
+					? "minmax(0, 1fr)"
+					: placed
+						? cols
+						: gridTemplate(maxColumns, minCellWidth, step),
+				gridTemplateRows: placed && rows && !stacked ? rows : undefined,
 				...style,
 			}}
 			{...props}

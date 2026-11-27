@@ -593,6 +593,7 @@ export {
 } from "./lib/roving";
 export { SAVE_DELAY, useLeaveGuard } from "./lib/save";
 export { formatShortcut, isMac, keyLabel, keySpoken, type Platform } from "./lib/shortcut";
+export { STACK_WIDTH, useStacked } from "./lib/stack";
 export { TOUCH_ATTR, TOUCH_QUERY, TouchProvider, touchDevice, useTouch } from "./lib/touch";
 export {
 	PIECE,
