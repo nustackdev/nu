@@ -566,6 +566,58 @@ body {
 	transition-duration: 280ms;
 }
 
+/* ============================== tables: the pinned column ================
+ * A table wider than its frame scrolls sideways with its first column
+ * pinned. Width, not touch: table.tsx marks the frame `data-pinned` while the
+ * table overflows it, `data-scrolled` once it has moved off its start, and
+ * sets `--table-ground` to what the table sits on. A table that fits is
+ * never marked and renders as it always has.
+ * ==========================================================================*/
+
+/* Unlayered, so they beat a cell's own `relative` (an editor's box: sticky
+ * holds an absolute child just as well) and the frame's `overflow-hidden`,
+ * which would make the table its own scroller and the pin stick to nothing.
+ * `clip` cuts the rounded corners the same way and scrolls nothing. */
+[data-slot="table-frame"][data-pinned] > table:not([data-unpinned]) {
+	overflow: clip;
+}
+[data-slot="table-frame"][data-pinned] > table:not([data-unpinned]) > * > tr > :first-child:not([colspan]) {
+	position: sticky;
+	inset-inline-start: 0;
+	z-index: 1;
+}
+/* Over a sticky header's other cells, which sit over the body. */
+[data-slot="table-frame"][data-pinned] > table:not([data-unpinned]) > thead > tr > :first-child:not([colspan]) {
+	z-index: 3;
+}
+
+/* The pinned cell is opaque: the ground, under the row's own wash (the same
+ * ladder as `table.row` in lib/recipes.ts), so the row still reads as one.
+ * In the components layer, so a cell's own fill (the header's tint) wins. */
+@layer components {
+	[data-slot="table-frame"][data-pinned] > table:not([data-unpinned]) > * > tr > :first-child:not([colspan]) {
+		background-color: var(--table-ground, var(--bg-canvas));
+		background-image: linear-gradient(var(--table-wash, transparent), var(--table-wash, transparent));
+	}
+	[data-slot="table-frame"][data-pinned] > table[data-variant="striped"] > tbody > tr:nth-child(even) {
+		--table-wash: color-mix(in oklab, var(--bg-hover) 50%, transparent);
+	}
+	[data-slot="table-frame"][data-pinned] > table > tbody > tr:hover,
+	[data-slot="table-frame"][data-pinned] > table > tbody > tr:has(> [role="gridcell"]:focus-visible) {
+		--table-wash: var(--bg-hover);
+	}
+	[data-slot="table-frame"][data-pinned] > table > tbody > tr[data-state="selected"] {
+		--table-wash: var(--bg-press);
+	}
+	/* Once the columns slide under it, a line marks where they go. */
+	[data-slot="table-frame"][data-pinned][data-scrolled] > table:not([data-unpinned]) > * > tr > :first-child:not([colspan]) {
+		box-shadow: inset -1px 0 0 var(--border-default);
+	}
+	[dir="rtl"] [data-slot="table-frame"][data-pinned][data-scrolled] > table:not([data-unpinned]) > * > tr > :first-child:not([colspan]) {
+		box-shadow: inset 1px 0 0 var(--border-default);
+	}
+}
+
 /* ============================== a11y: reduced motion ======================
  * 0.01ms (not 0) so transitionend still fires; Radix Presence needs it. See
  * motion.md §4.

@@ -563,3 +563,146 @@ function ColumnLayoutHost() {
 }
 
 export const ColumnLayout: StoryObj = { render: () => <ColumnLayoutHost /> };
+
+// --- Touch and narrow ----------------------------------------------------------
+
+// Stories that open what a finger opens, at load. With touch on (the Touch
+// toolbar, or a phone) the menus are bottom sheets; on a desktop the same play
+// opens the desktop menu. Wide puts a table wider than its box, with a height
+// of its own: the first column pins, the header sticks.
+
+const isTouch = () => document.documentElement.hasAttribute("data-nu-touch");
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+function cellOf(root: HTMLElement, row: number, col: number): HTMLElement | null {
+	const tr = root.querySelectorAll("tbody > tr")[row];
+	return (tr?.children[col] as HTMLElement | undefined) ?? null;
+}
+
+/** Long-press on touch, right-click on a desktop: the cell's menu. */
+async function holdCell(root: HTMLElement) {
+	await wait(100);
+	const td = cellOf(root, 1, 1);
+	if (!td) return;
+	const box = td.getBoundingClientRect();
+	const at = { clientX: box.left + 8, clientY: box.top + 8, bubbles: true, cancelable: true };
+	if (isTouch()) {
+		td.dispatchEvent(
+			new PointerEvent("pointerdown", { ...at, pointerType: "touch", isPrimary: true }),
+		);
+		await wait(650);
+	} else {
+		td.dispatchEvent(new MouseEvent("contextmenu", { ...at, button: 2 }));
+	}
+}
+
+/** Tap a cell, then its column's handle: the ⋯ sheet on touch, the grip's menu on a desktop. */
+async function openColumnHandle(root: HTMLElement) {
+	await wait(100);
+	cellOf(root, 1, 2)?.focus();
+	await wait(100);
+	const button = root.querySelector<HTMLElement>("[data-table-handle=column] button");
+	if (!button) return;
+	if (isTouch()) button.click();
+	else button.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, button: 0 }));
+}
+
+export const TouchCellMenu: StoryObj = {
+	render: () => (
+		<PlaygroundHost
+			selection="multi"
+			editable
+			addable
+			deletable
+			movable
+			sortable
+			activatable={false}
+			columnsEditable
+			density="default"
+			variant="default"
+		/>
+	),
+	play: ({ canvasElement }) => holdCell(canvasElement),
+};
+
+export const TouchColumnMenu: StoryObj = {
+	render: () => (
+		<PlaygroundHost
+			selection="none"
+			editable
+			addable
+			deletable
+			movable
+			sortable
+			activatable={false}
+			columnsEditable
+			density="default"
+			variant="default"
+		/>
+	),
+	play: ({ canvasElement }) => openColumnHandle(canvasElement),
+};
+
+const WIDE: DataTableColumn[] = [
+	{ key: "id", label: "ID", editable: false, wrap: "nowrap" },
+	{ key: "title", label: "Title", wrap: "nowrap" },
+	{ key: "owner", label: "Owner" },
+	{ key: "points", label: "Points", kind: "number" },
+	{ key: "done", label: "Done", kind: "bool" },
+	{ key: "state", label: "State", kind: "select", options: ["todo", "doing", "review", "done"] },
+	{ key: "due", label: "Due", wrap: "nowrap" },
+];
+
+const OWNERS = ["Ana", "Ben", "Chen", "Dara", "Eli"];
+const WIDE_ROWS: DataTableRow[] = Array.from({ length: 14 }, (_, i) => ({
+	key: `w${i + 1}`,
+	cells: [
+		`T-${i + 1}`,
+		SEED[i % SEED.length]?.cells[1] ?? "",
+		OWNERS[i % OWNERS.length],
+		(i * 7) % 13,
+		i % 3 === 0,
+		["todo", "doing", "review", "done"][i % 4],
+		`2026-12-${String((i % 28) + 1).padStart(2, "0")}`,
+	],
+}));
+
+function WideHost() {
+	const [table, setTable] = useState<Table>({ columns: WIDE, rows: WIDE_ROWS });
+	const [sort, setSort] = useState<DataTableSort>(null);
+	return (
+		<div className="space-y-3 p-4">
+			<Text size="sm" tone="secondary">
+				Wider than its box: scrolls sideways, the ID column stays. A height of its own: the header
+				stays.
+			</Text>
+			<DataTable
+				aria-label="Wide tasks"
+				className="max-h-[22rem]"
+				variant="striped"
+				columns={table.columns}
+				rows={table.rows}
+				sort={sort}
+				onSort={(column, direction) => {
+					setSort({ column, direction });
+					setTable((t) => ({ ...t, rows: sorted(t.rows, t.columns, column, direction) }));
+				}}
+				onEdit={(e) => setTable((t) => ({ ...t, rows: edited(t.rows, e, t.columns) }))}
+			/>
+		</div>
+	);
+}
+
+/** Scrolled a little each way, so the pin and the sticky header show in a still. */
+async function scrollFrame(root: HTMLElement) {
+	await wait(150);
+	const frame = root.querySelector<HTMLElement>("[data-slot=table-frame]");
+	if (!frame) return;
+	frame.scrollLeft = 120;
+	frame.scrollTop = 90;
+}
+
+export const Wide: StoryObj = {
+	render: () => <WideHost />,
+	play: ({ canvasElement }) => scrollFrame(canvasElement),
+};
