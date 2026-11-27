@@ -48,6 +48,14 @@
 // means. Read-only shows no hint, never commits, and an inbound value always
 // lands, since nobody can be mid-edit.
 //
+// ## Touch
+//
+// In touch mode (../touch.ts) the editor types the same; what changes is what
+// hover and the keyboard reached. The host's tail hint is a key to press
+// ("Cmd+Enter for a new cell"), so it is not drawn; the blank document's
+// placeholder still is, it says what goes here. A table's handles follow the
+// caret (./table.tsx). Nothing changes size.
+//
 // ## What is deliberately not here
 //
 // Nothing about neighbours. No split, no merge-up, no arrow-out, no slash
@@ -76,6 +84,7 @@ import { createRoot } from "react-dom/client";
 import { Checkbox } from "../../components/ui/checkbox";
 import type { SubmitOn } from "../keyboard";
 import { SAVE_DELAY } from "../save";
+import { useTouch } from "../touch";
 import { cn } from "../utils";
 import { codeFences } from "./fence";
 import { createHandle, type MarkdownHandle } from "./handle";
@@ -208,6 +217,7 @@ export function ProseEditor({
 	onHandle,
 	stored,
 }: ProseEditorProps) {
+	const touch = useTouch();
 	const hostRef = useRef<HTMLDivElement | null>(null);
 	const viewRef = useRef<EditorView | null>(null);
 	/** The document changed since the last commit. Gates every write. */
@@ -406,7 +416,7 @@ export function ProseEditor({
 		// the intents plugin does; the document lands a caret in a fence through
 		// the fences' own layout.
 		const fences = codeFences(schema, (intent) => contract.report(intent));
-		const tables = proseTables(schema);
+		const tables = proseTables(schema, touch);
 		const contract = createHandle({
 			schema,
 			md: md(),
@@ -432,7 +442,7 @@ export function ProseEditor({
 					() => (cb.current.readOnly ? "" : (contract.hints.blank() ?? cb.current.hint)),
 					schema,
 				),
-				tailHint(() => (cb.current.readOnly ? "" : (contract.hints.tail() ?? "")), schema),
+				tailHint(() => (cb.current.readOnly || touch ? "" : (contract.hints.tail() ?? "")), schema),
 				// The caret in the gap before or after a block it cannot enter, like a
 				// table that ends the document. Ahead of the tables, which would
 				// otherwise take the arrow.
@@ -502,7 +512,7 @@ export function ProseEditor({
 			view.destroy();
 		};
 		// The view is built once per schema and driven imperatively from here on.
-	}, [commit, saved, hold, announce, queueSave, submit, schema]);
+	}, [commit, saved, hold, announce, queueSave, submit, schema, touch]);
 
 	// -- inbound value -----------------------------------------------------
 	//

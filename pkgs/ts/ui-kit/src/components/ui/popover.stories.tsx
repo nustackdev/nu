@@ -44,6 +44,28 @@ export const Matrix: StoryObj = {
 	),
 };
 
+// Opened at load: in touch mode (a phone, or the Touch toolbar) it is a
+// bottom sheet, on desktop the anchored popover.
+export const Open: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<Popover defaultOpen>
+				<PopoverTrigger asChild>
+					<Button variant="secondary">Open popover</Button>
+				</PopoverTrigger>
+				<PopoverContent>
+					<div className="space-y-1.5">
+						<div className="text-sm font-medium text-text-primary">Popover</div>
+						<div className="text-sm text-text-secondary">
+							Anchored on desktop, a bottom sheet on touch.
+						</div>
+					</div>
+				</PopoverContent>
+			</Popover>
+		</div>
+	),
+};
+
 const meta: Meta = {
 	title: "UI/Popover",
 };

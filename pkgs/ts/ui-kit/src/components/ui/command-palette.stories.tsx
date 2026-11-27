@@ -14,8 +14,8 @@ import {
 	useCommandPaletteHotkey,
 } from "./command-palette";
 
-function Sample() {
-	const [open, setOpen] = useState(false);
+function Sample({ initialOpen = false }: { initialOpen?: boolean }) {
+	const [open, setOpen] = useState(initialOpen);
 	useCommandPaletteHotkey(setOpen);
 	return (
 		<>
@@ -70,6 +70,17 @@ export const Default: StoryObj = {
 };
 
 export const Matrix = Default;
+
+// Opened at load: full screen in touch mode (a phone, or the Touch toolbar),
+// with a Cancel in the input row and no shortcut hints; the centered dialog
+// on desktop.
+export const Open: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<Sample initialOpen />
+		</div>
+	),
+};
 
 const meta: Meta = {
 	title: "UI/CommandPalette",

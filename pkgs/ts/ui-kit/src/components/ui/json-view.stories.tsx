@@ -52,6 +52,16 @@ export const Matrix: StoryObj = {
 	),
 };
 
+// Copy on touch: the rows' hover copies are gone and one copy of the whole
+// value sits in the corner, always shown. On desktop the rows keep theirs.
+export const Copy: StoryObj = {
+	render: () => (
+		<div className="p-4">
+			<JsonView value={SAMPLE} />
+		</div>
+	),
+};
+
 const meta: Meta = {
 	title: "UI/JsonView",
 };

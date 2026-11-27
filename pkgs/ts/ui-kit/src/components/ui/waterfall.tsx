@@ -19,11 +19,24 @@
 // `onSelect` makes each row a button; `selected` marks one with the press
 // wash (palette.md states). Rows are controls, so the arrow cursor
 // (cursor.md).
+//
+// Phones and narrow columns (language/mobile.md). In touch mode there is no
+// hover tooltip: the label and duration are inline already, and a tap on a
+// row says the rest in place, over its bar (`AnchorTip`, as the calendar
+// heatmap does), unless `onSelect` owns the tap (the rows are buttons either
+// way). A tap on another row moves it; a tap on the same row, off the rows,
+// or a scroll hides it. Rows stay 24px with no bigger tap area: they are full width and touch each
+// other, so a grown area would take its neighbour's taps. Below 560px of its
+// own width (a container query, `@max-stack`, the kit's STACK_WIDTH) the
+// label column gives up room, at most 40% of the width, and every other tick
+// label goes, so the ones left fit.
 
-import type * as React from "react";
+import * as React from "react";
 
 import { formatCount } from "../../lib/count";
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
+import { AnchorTip, useTapAway } from "./anchor-tip";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip";
 import {
 	formatSpanTime,
@@ -59,6 +72,13 @@ const TONE_WORD: Record<WaterfallTone, string> = {
 };
 
 const INDENT_PX = 12;
+
+// Label column, then the track. The label takes `--waterfall-label` (the
+// `labelWidth` prop), at most 40% of the width once the waterfall is narrow.
+const COLS = cn(
+	"grid-cols-[var(--waterfall-label)_minmax(0,1fr)]",
+	"@max-stack/waterfall:grid-cols-[min(var(--waterfall-label),40%)_minmax(0,1fr)]",
+);
 
 export interface WaterfallProps
 	extends Omit<React.HTMLAttributes<HTMLDivElement>, "children" | "onSelect"> {
@@ -105,18 +125,65 @@ function Waterfall({
 	const range = win.end - win.start;
 	const at = (t: number) => ((t - win.start) / range) * 100;
 	const ticks = waterfallTicks(range);
+	// The label width rides on a var, the columns are classes, so the narrow
+	// container query can cap it.
+	const cols = { "--waterfall-label": `${labelWidth}px` } as React.CSSProperties;
+	const touch = useTouch();
+	// Touch mode, no `onSelect`: the tapped span, its tip shown over its bar.
+	const [tapped, setTapped] = React.useState<WaterfallSpan | null>(null);
+	const rowsRef = React.useRef<HTMLUListElement>(null);
+	// What a row tap does: the host's select, or in touch mode the tip (the
+	// same row again hides it).
+	const pick =
+		onSelect ??
+		(touch
+			? (span: WaterfallSpan) => setTapped((prev) => (prev?.id === span.id ? null : span))
+			: undefined);
+	// A tap off the rows hides the tip; one on a row moves or hides it itself.
+	useTapAway(
+		touch && !onSelect && tapped !== null,
+		(target) => !!rowsRef.current?.contains(target),
+		() => setTapped(null),
+	);
+	const say = (span: WaterfallSpan) => {
+		const running = isRunning(span);
+		const dur = formatTime(spanEnd(span, win.end, now) - span.start);
+		return [
+			running ? "running" : TONE_WORD[toneOf(span)],
+			running ? `${dur} so far` : dur,
+			`at +${formatTime(span.start - win.start)}`,
+		]
+			.filter(Boolean)
+			.join(" · ");
+	};
+	// What the hover tooltip and the tapped tip say: name, state, detail.
+	const tipBody = (span: WaterfallSpan) => (
+		<>
+			<span className="block font-medium">{span.label}</span>
+			<span className="block text-text-secondary tabular-nums">{say(span)}</span>
+			{span.detail ? <span className="block text-text-secondary">{span.detail}</span> : null}
+		</>
+	);
 	const { rows, hidden, hiddenDanger } = waterfallRows(spans, maxRows);
-	const cols = { gridTemplateColumns: `${labelWidth}px minmax(0, 1fr)` };
+	const tappedAt = tapped && !onSelect ? rows.findIndex((r) => r.span.id === tapped.id) : -1;
+	const tappedBar =
+		tappedAt >= 0
+			? rowsRef.current?.children[tappedAt]?.querySelector("[data-slot=waterfall-bar]")
+			: null;
 
 	return (
 		<TooltipProvider>
 			<div
 				data-slot="waterfall"
-				className={cn("flex min-w-0 flex-col font-display text-xs", className)}
+				className={cn("@container/waterfall flex min-w-0 flex-col font-display text-xs", className)}
 				style={style}
 				{...props}
 			>
-				<div data-slot="waterfall-axis" className="grid h-6 items-end gap-3" style={cols}>
+				<div
+					data-slot="waterfall-axis"
+					className={cn("grid h-6 items-end gap-3", COLS)}
+					style={cols}
+				>
 					<span />
 					<div className="relative h-full" aria-hidden="true">
 						{ticks.map((t, i) => {
@@ -128,6 +195,7 @@ function Waterfall({
 									className={cn(
 										"absolute bottom-1 whitespace-nowrap text-text-muted tabular-nums",
 										last ? "-translate-x-full" : i > 0 && "-translate-x-1/2",
+										i % 2 === 1 && "@max-stack/waterfall:hidden",
 									)}
 									style={{ left: pct(x) }}
 								>
@@ -140,7 +208,7 @@ function Waterfall({
 
 				<div className="relative">
 					<div
-						className="pointer-events-none absolute inset-y-0 right-0 grid gap-3"
+						className={cn("pointer-events-none absolute inset-y-0 right-0 grid gap-3", COLS)}
 						style={{ ...cols, left: 0 }}
 						aria-hidden="true"
 					>
@@ -156,7 +224,7 @@ function Waterfall({
 						</div>
 					</div>
 
-					<ul data-slot="waterfall-rows" className="relative">
+					<ul ref={rowsRef} data-slot="waterfall-rows" className="relative">
 						{rows.map(({ span, depth }) => {
 							const tone = toneOf(span);
 							const running = isRunning(span);
@@ -181,7 +249,9 @@ function Waterfall({
 								x1 < 75
 									? { left: `calc(${pct(x1)} + 6px)` }
 									: { right: `calc(${pct(100 - x0)} + 6px)` };
-							const isSel = selected != null && selected === span.id;
+							const isSel = onSelect
+								? selected != null && selected === span.id
+								: tapped?.id === span.id;
 							const label = (
 								<span
 									className="flex min-w-0 items-center"
@@ -198,48 +268,39 @@ function Waterfall({
 									) : null}
 								</span>
 							);
+							const bar = (
+								<span
+									data-slot="waterfall-bar"
+									data-tone={tone}
+									data-running={running || undefined}
+									role="img"
+									aria-label={words}
+									className={cn(
+										"absolute top-1/2 h-2 min-w-0.5 -translate-y-1/2 rounded-sm",
+										(running ? RUNNING_TONE_CLASS : BAR_TONE_CLASS)[tone],
+									)}
+									style={{ left: pct(x0), width: pct(x1 - x0) }}
+								>
+									{running ? (
+										<span
+											className={cn(
+												"absolute -right-0.5 top-1/2 h-3 w-1 -translate-y-1/2 rounded-sm animate-pulse",
+												RUNNING_TONE_CLASS[tone],
+											)}
+										/>
+									) : null}
+								</span>
+							);
 							const track = (
 								<span className="relative block h-6">
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<span
-												data-slot="waterfall-bar"
-												data-tone={tone}
-												data-running={running || undefined}
-												role="img"
-												aria-label={words}
-												className={cn(
-													"absolute top-1/2 h-2 min-w-0.5 -translate-y-1/2 rounded-sm",
-													(running ? RUNNING_TONE_CLASS : BAR_TONE_CLASS)[tone],
-												)}
-												style={{ left: pct(x0), width: pct(x1 - x0) }}
-											>
-												{running ? (
-													<span
-														className={cn(
-															"absolute -right-0.5 top-1/2 h-3 w-1 -translate-y-1/2 rounded-sm animate-pulse",
-															RUNNING_TONE_CLASS[tone],
-														)}
-													/>
-												) : null}
-											</span>
-										</TooltipTrigger>
-										<TooltipContent side="top">
-											<span className="block font-medium">{span.label}</span>
-											<span className="block text-text-secondary tabular-nums">
-												{[
-													running ? "running" : TONE_WORD[tone],
-													running ? `${dur} so far` : dur,
-													`at +${offset}`,
-												]
-													.filter(Boolean)
-													.join(" · ")}
-											</span>
-											{span.detail ? (
-												<span className="block text-text-secondary">{span.detail}</span>
-											) : null}
-										</TooltipContent>
-									</Tooltip>
+									{touch ? (
+										bar
+									) : (
+										<Tooltip>
+											<TooltipTrigger asChild>{bar}</TooltipTrigger>
+											<TooltipContent side="top">{tipBody(span)}</TooltipContent>
+										</Tooltip>
+									)}
 									{durInLabel ? null : (
 										<span
 											aria-hidden="true"
@@ -253,14 +314,15 @@ function Waterfall({
 							);
 							const rowClass = cn(
 								"grid h-6 w-full items-center gap-3 rounded-sm px-0 text-left",
+								COLS,
 								isSel && "bg-bg-press",
 							);
 							return (
 								<li key={span.id} data-slot="waterfall-row" data-depth={depth}>
-									{onSelect ? (
+									{pick ? (
 										<button
 											type="button"
-											aria-pressed={isSel}
+											aria-pressed={onSelect ? isSel : undefined}
 											aria-label={words}
 											className={cn(
 												rowClass,
@@ -268,7 +330,7 @@ function Waterfall({
 												"cursor-default focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
 											)}
 											style={cols}
-											onClick={() => onSelect(span)}
+											onClick={() => pick(span)}
 										>
 											{label}
 											{track}
@@ -288,7 +350,7 @@ function Waterfall({
 				{hidden > 0 ? (
 					<div
 						data-slot="waterfall-more"
-						className="grid h-7 items-center gap-3 text-text-muted"
+						className={cn("grid h-7 items-center gap-3 text-text-muted", COLS)}
 						style={cols}
 					>
 						<span>
@@ -305,6 +367,11 @@ function Waterfall({
 						</span>
 						<span />
 					</div>
+				) : null}
+				{tappedBar && tapped ? (
+					<AnchorTip slot="waterfall-tip" anchor={tappedBar} keepOnScreen>
+						{tipBody(tapped)}
+					</AnchorTip>
 				) : null}
 			</div>
 		</TooltipProvider>

@@ -35,6 +35,10 @@
 //
 // A hidden row (`t[r].hide()`) draws nothing and keeps its place number; a
 // hidden cell draws an empty cell.
+//
+// Narrow, the table scrolls sideways with its first column pinned (the kit
+// Table does that). A cell spanning rows down the first column makes the
+// rows under it start one column in, so that table pins nothing.
 
 import { getNode, type Path } from "@nustackdev/ui-core";
 import { useMemo, useState } from "react";
@@ -296,6 +300,9 @@ function TableView({ path }: NodeProps) {
 		[rawSpans, rows, cols],
 	);
 
+	// The rows under a first column cell that spans down start at column 1.
+	const unpinned = [...spanAt].some(([key, span]) => key.endsWith(",0") && span.rows > 1);
+
 	const body = [];
 	for (let r = 0; r < rows; r++) {
 		body.push(
@@ -319,7 +326,12 @@ function TableView({ path }: NodeProps) {
 			className={cn("min-w-0", typeof scroll === "string" && SCROLL_CLASSES[scroll as Scroll])}
 			style={size}
 		>
-			<TablePrimitive aria-label={label} variant={variant} density={density}>
+			<TablePrimitive
+				aria-label={label}
+				variant={variant}
+				density={density}
+				data-unpinned={unpinned || undefined}
+			>
 				{labelled || headerShown ? (
 					<TableHeader>
 						<HeaderRow

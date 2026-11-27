@@ -14,6 +14,11 @@
 // action and closes the toast. Built on Radix
 // Toast, which brings the swipe to dismiss, the pause on hover and focus, and
 // the F8 hotkey into the stack.
+//
+// In touch mode (../../lib/touch.ts) the stack moves to the top edge, clear of
+// the thumb, the on-screen keyboard and the buttons at the bottom of the
+// screen, under the notch's safe area. The newest sits on top, a toast drops
+// in from above and is swiped up to go. Same toasts, same API.
 
 import { cva } from "class-variance-authority";
 import {
@@ -28,6 +33,7 @@ import {
 import { Toast as ToastPrimitive } from "radix-ui";
 import * as React from "react";
 
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 import { Button } from "./button";
 import { IconButton } from "./icon-button";
@@ -140,13 +146,23 @@ const toastVariants = cva(
 		// Motion per motion.md: fade + slight y-shift.
 		"data-[state=open]:animate-in data-[state=closed]:animate-out",
 		"data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
-		"data-[state=open]:slide-in-from-bottom-1 data-[state=closed]:slide-out-to-bottom-1",
 		"data-[state=open]:duration-base data-[state=closed]:duration-fast",
-		"data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)]",
-		"data-[swipe=cancel]:translate-x-0 data-[swipe=end]:animate-out data-[swipe=end]:fade-out-0",
+		"data-[swipe=end]:animate-out data-[swipe=end]:fade-out-0",
 	].join(" "),
 	{
 		variants: {
+			// The edge the stack sits on: the shift comes from it, the swipe goes
+			// back to it on touch, off to the side on desktop.
+			edge: {
+				bottom: [
+					"data-[state=open]:slide-in-from-bottom-1 data-[state=closed]:slide-out-to-bottom-1",
+					"data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=cancel]:translate-x-0",
+				].join(" "),
+				top: [
+					"data-[state=open]:slide-in-from-top-1 data-[state=closed]:slide-out-to-top-1",
+					"data-[swipe=move]:translate-y-[var(--radix-toast-swipe-move-y)] data-[swipe=cancel]:translate-y-0",
+				].join(" "),
+			},
 			tone: {
 				neutral: "border-border-default",
 				info: "border-status-info-line",
@@ -155,7 +171,7 @@ const toastVariants = cva(
 				danger: "border-status-danger-line bg-status-danger-wash",
 			},
 		},
-		defaultVariants: { tone: "neutral" },
+		defaultVariants: { tone: "neutral", edge: "bottom" },
 	},
 );
 
@@ -249,6 +265,7 @@ export function Toast({
 	className,
 	...props
 }: ToastProps) {
+	const touch = useTouch();
 	const Icon = ICONS[tone];
 	const [paused, setPaused] = React.useState(false);
 	return (
@@ -256,7 +273,7 @@ export function Toast({
 			data-slot="toast"
 			data-tone={tone}
 			type={tone === "danger" ? "foreground" : "background"}
-			className={cn(toastVariants({ tone }), className)}
+			className={cn(toastVariants({ tone, edge: touch ? "top" : "bottom" }), className)}
 			duration={duration}
 			onPause={() => {
 				setPaused(true);
@@ -312,9 +329,10 @@ export interface ToasterProps {
 
 /** The stack every `toast()` lands in. Mount it once, near the app root. */
 export function Toaster({ className, label = "Notifications" }: ToasterProps) {
+	const touch = useTouch();
 	const shown = useToasts();
 	return (
-		<ToastPrimitive.Provider swipeDirection="right" label={label}>
+		<ToastPrimitive.Provider swipeDirection={touch ? "up" : "right"} label={label}>
 			{shown.map((t) => (
 				<Toast
 					key={t.id}
@@ -332,7 +350,15 @@ export function Toaster({ className, label = "Notifications" }: ToasterProps) {
 			<ToastPrimitive.Viewport
 				data-slot="toast-viewport"
 				className={cn(
-					"fixed bottom-0 right-0 z-50 flex max-h-screen w-full max-w-sm flex-col gap-2 p-4 outline-none",
+					touch
+						? // Top and centred, the newest first, under the notch. The safe
+							// area only ever adds to the usual edge air.
+							[
+								"fixed inset-x-0 top-0 z-50 mx-auto flex max-h-dvh w-full max-w-sm flex-col-reverse gap-2 p-4 outline-none",
+								"pt-[max(1rem,env(safe-area-inset-top))]",
+								"pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]",
+							]
+						: "fixed bottom-0 right-0 z-50 flex max-h-screen w-full max-w-sm flex-col gap-2 p-4 outline-none",
 					className,
 				)}
 			/>

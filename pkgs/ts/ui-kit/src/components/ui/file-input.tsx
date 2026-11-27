@@ -2,6 +2,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { Check, File as FileIcon, TriangleAlert, Upload, X } from "lucide-react";
 import * as React from "react";
 import { formatBytes } from "../../lib/count";
+import { useTouch } from "../../lib/touch";
 import { cn, ringVariants } from "../../lib/utils";
 import { Button } from "./button";
 import { IconButton } from "./icon-button";
@@ -39,6 +40,10 @@ import { IconButton } from "./icon-button";
 // progress bar: how a transfer is drawn is the app's call. A file that can no
 // longer be read (changed on disk after the pick) is struck through and asks
 // to be picked again.
+//
+// In touch mode (../../lib/touch.ts) nothing is dropped on a phone and
+// nothing is clicked, so the default prompt says tap. The zone is already
+// taller than a thumb; the frame's buttons carry their own tap areas.
 
 // Two control rows tall at each size (24, 32, 40), text as the Input's.
 const fileInputVariants = cva(
@@ -241,6 +246,7 @@ export function FileInput({
 	...props
 }: FileInputProps) {
 	usePageGuard();
+	const touch = useTouch();
 	const input = React.useRef<HTMLInputElement>(null);
 	const control = React.useRef<HTMLButtonElement>(null);
 	const depth = React.useRef(0);
@@ -412,9 +418,13 @@ export function FileInput({
 		prompt ||
 		(readOnly
 			? "Read only"
-			: multiple
-				? "Drop files or click to choose"
-				: "Drop a file or click to choose");
+			: touch
+				? multiple
+					? "Tap to choose files"
+					: "Tap to choose a file"
+				: multiple
+					? "Drop files or click to choose"
+					: "Drop a file or click to choose");
 	const line =
 		readOnly && hint === undefined ? "" : hint === undefined ? fileHint(accept, maxSize) : hint;
 	const hasHint = line !== "" && line !== null && line !== false;

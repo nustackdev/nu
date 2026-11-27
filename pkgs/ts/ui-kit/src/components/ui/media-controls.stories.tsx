@@ -139,6 +139,27 @@ export const BoundToElement: StoryObj = {
 	},
 };
 
+/**
+ * Filling its column. In touch mode the scrub thumb always shows, every
+ * piece has a 44px tap area, and volume is the mute button alone.
+ */
+export const Touch: StoryObj = {
+	render: function Story() {
+		const media = useFake({ playing: true, time: 42, duration: 225, buffered: 140 });
+		return (
+			<div className="p-4">
+				<Frame label="playing">
+					<MediaControls
+						media={media}
+						download={AUDIO_SRC}
+						fullscreen={{ active: false, onToggle: () => {} }}
+					/>
+				</Frame>
+			</div>
+		);
+	},
+};
+
 const meta: Meta = {
 	title: "UI/Media Controls",
 };

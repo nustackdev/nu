@@ -29,6 +29,11 @@
 // takes it back with a negative margin, so a focus ring on a child at the
 // edge is not clipped by the scroll.
 //
+// In touch mode the dialog is a bottom sheet (../../components/ui/dialog.tsx):
+// the window's width, `width` set aside, no close button (the sheet drags
+// down), and a modal that is not `dismissible` does not drag away either.
+// The title stays put and the body scrolls the same way.
+//
 // Radix Dialog unmounts the body while closed. Node props live in the tree
 // so they survive a close, but component-local state may reset. If more is
 // required, wrap the body in `forceMount` and gate visibility with `hidden`
@@ -42,6 +47,7 @@ import {
 	DialogTitle,
 	DialogTitleBox,
 } from "../../components/ui/dialog";
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 import {
 	EVENTS,
@@ -91,6 +97,7 @@ function ModalView({ path }: NodeProps) {
 	const hasHeader = useChildren(path).includes(HEADER);
 	const emit = useEmit(path);
 	const setProps = useSetProps(path);
+	const touch = useTouch();
 
 	// A dismiss closes in this tab and tells the program, like a Collapsible
 	// toggle. A later write of `open: true` opens it again.
@@ -105,7 +112,7 @@ function ModalView({ path }: NodeProps) {
 	);
 
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
+		<Dialog open={open} onOpenChange={onOpenChange} dismissible={dismissible}>
 			<DialogContent
 				showClose={dismissible}
 				aria-describedby={undefined}
@@ -114,7 +121,9 @@ function ModalView({ path }: NodeProps) {
 				style={overlayStyle(layout, ["width"])}
 			>
 				{/* Radix needs a title to name the dialog; an untitled one keeps one for screen readers. */}
-				<DialogHeader className={cn(!title && !hasHeader && "sr-only", dismissible && "pr-8")}>
+				<DialogHeader
+					className={cn(!title && !hasHeader && "sr-only", dismissible && !touch && "pr-8")}
+				>
 					{hasHeader ? (
 						<DialogTitleBox>
 							<SlotView path={path} segment={HEADER} />

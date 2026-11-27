@@ -6,6 +6,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { formatCount } from "../../lib/count";
+import { TouchProvider } from "../../lib/touch";
 import { readItem, readLane, readLegend } from "../../nodes/output/timeline";
 import {
 	capItems,
@@ -292,5 +293,40 @@ describe("node readers", () => {
 	it("reads the legend, known tones only", () => {
 		expect(readLegend({ ok: "done", purple: "x", danger: 3 })).toEqual({ ok: "done" });
 		expect(readLegend(null)).toEqual({});
+	});
+});
+
+describe("Timeline in touch mode", () => {
+	const tip = () => document.querySelector("[data-slot=timeline-tip]");
+	const tracks = () => host.querySelectorAll<HTMLElement>("[data-slot=timeline-track]");
+	const tap = (el: Element) =>
+		act(() => el.dispatchEvent(new MouseEvent("click", { bubbles: true })));
+
+	it("shows a tapped bar's tip in place, moves it, and hides it off the tracks", () => {
+		mount(
+			<TouchProvider value>
+				<Timeline
+					start={START}
+					end={END}
+					lanes={[
+						{ title: "a", items: [{ start: ago(30), end: ago(20), label: "first" }] },
+						{ title: "b", items: [{ start: ago(10), end: ago(5), label: "second" }] },
+					]}
+				/>
+			</TouchProvider>,
+		);
+		expect(tip()).toBeNull();
+		tap(tracks()[0]);
+		expect(tip()?.textContent).toContain("first");
+		expect(document.querySelector("[data-slot=bottom-sheet-content]")).toBeNull();
+		tap(tracks()[1]);
+		expect(tip()?.textContent).toContain("second");
+		tap(tracks()[1]);
+		expect(tip()).toBeNull();
+		tap(tracks()[0]);
+		act(() => {
+			document.body.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+		});
+		expect(tip()).toBeNull();
 	});
 });

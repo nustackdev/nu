@@ -19,6 +19,16 @@
 // with an ellipsis and the full text as the title) and `hideBelow` (px of
 // the table's width under which the column is not drawn; it stays in the
 // DOM with display:none, so column indexes stay stable).
+//
+// Narrow: a table that does not fit its frame scrolls sideways inside it, and
+// while it does its first column stays pinned to the frame's start edge, so
+// each row still says whose it is. That is width, not touch: a narrow desktop
+// column pins the same way a phone does, and a table that fits renders as it
+// always has. The frame marks itself (`data-pinned`, and `data-scrolled` once
+// moved off the start) and index.css draws the pin; the pinned cells take
+// the ground of whatever the table sits on, read here, so the columns
+// scrolling under them do not show through. A host whose first column is not
+// one column (a row span down it) opts out with `data-unpinned` on the table.
 
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
@@ -63,12 +73,15 @@ export interface TableProps
 export function Table({ className, variant, density, ...props }: TableProps) {
 	const effectiveDensity: TableDensity = density ?? "default";
 	const striped = variant === "striped";
+	const [frame, setFrame] = React.useState<HTMLDivElement | null>(null);
+	usePinnedColumn(frame);
 	return (
 		<TableContext.Provider value={{ density: effectiveDensity, striped }}>
-			<div className={table.frame}>
+			<div ref={setFrame} data-slot="table-frame" className={table.frame}>
 				<table
 					data-slot="table"
 					data-density={effectiveDensity}
+					data-variant={variant ?? "default"}
 					className={cn(tableVariants({ variant, density }), className)}
 					{...props}
 				/>
@@ -148,6 +161,64 @@ export function TableCaption({
 }
 
 export { tableVariants };
+
+// ---- the pinned first column ----------------------------------------------
+
+/** The first background up the tree that is not see-through: what the table sits on. */
+function groundOf(el: HTMLElement): string | null {
+	for (let at: HTMLElement | null = el.parentElement; at; at = at.parentElement) {
+		const bg = getComputedStyle(at).backgroundColor;
+		if (bg && bg !== "transparent" && !/(,\s*0|\/\s*0)\)$/.test(bg)) return bg;
+	}
+	return null;
+}
+
+/**
+ * Marks `frame` while its table is wider than it (`data-pinned`) and once it
+ * has scrolled off its start (`data-scrolled`), and keeps `--table-ground` on
+ * it while pinned. Attributes set straight on the element: the table does
+ * not render again as it scrolls.
+ */
+function usePinnedColumn(frame: HTMLDivElement | null) {
+	React.useLayoutEffect(() => {
+		if (!frame || typeof ResizeObserver === "undefined") return;
+		const tableEl = frame.querySelector<HTMLTableElement>(":scope > table");
+		const ground = () => {
+			const bg = groundOf(frame);
+			if (bg) frame.style.setProperty("--table-ground", bg);
+			else frame.style.removeProperty("--table-ground");
+		};
+		const scrolled = () => {
+			const over = frame.hasAttribute("data-pinned");
+			frame.toggleAttribute("data-scrolled", over && Math.abs(frame.scrollLeft) > 0);
+		};
+		const measure = () => {
+			const over = (tableEl?.scrollWidth ?? 0) > frame.clientWidth + 1;
+			if (over) ground();
+			frame.toggleAttribute("data-pinned", over);
+			scrolled();
+		};
+		measure();
+		const observer = new ResizeObserver(measure);
+		observer.observe(frame);
+		if (tableEl) observer.observe(tableEl);
+		// A theme is a class or an attribute on the document element: the
+		// ground changes color under the table without anything resizing.
+		const theme = new MutationObserver(() => {
+			if (frame.hasAttribute("data-pinned")) ground();
+		});
+		theme.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ["class", "style", "data-theme"],
+		});
+		frame.addEventListener("scroll", scrolled, { passive: true });
+		return () => {
+			observer.disconnect();
+			theme.disconnect();
+			frame.removeEventListener("scroll", scrolled);
+		};
+	}, [frame]);
+}
 
 // ---- columns -------------------------------------------------------------
 

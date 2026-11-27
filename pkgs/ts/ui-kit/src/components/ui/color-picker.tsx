@@ -17,10 +17,17 @@
 //   motion.md        Popover (kit PopoverContent), Slider thumb
 //   a11y.md          §3 Popover, Slider keys; the area is a 2D slider:
 //                    arrows move one step, Shift+arrow ten.
+//
+// In touch mode the kit Popover is a bottom sheet (./popover.tsx), so the
+// picker fills the sheet's width. The area and the hue slider opt out of the
+// sheet's drag to dismiss (`data-vaul-no-drag`), or a drag down the area
+// would pull the sheet away. The swatches, the sheet's own content, grow to
+// a thumb's size with their tap areas (`nu-tap`).
 
 import * as React from "react";
 
 import { readChartTokens } from "../../lib/chart/theme";
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 import { Input } from "./input";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
@@ -125,6 +132,7 @@ function ColorArea({
 		<div
 			ref={box}
 			data-slot="color-picker-area"
+			data-vaul-no-drag=""
 			className="relative h-32 w-full touch-none rounded-sm"
 			style={{
 				backgroundColor: `hsl(${hsv.h} 100% 50%)`,
@@ -216,6 +224,7 @@ function ColorPicker({
 }: ColorPickerProps) {
 	const [internal, setInternal] = React.useState(normalizeHex(defaultValue) ?? "#000000");
 	const value = valueProp === undefined ? internal : (normalizeHex(valueProp) ?? "#000000");
+	const touch = useTouch();
 	const [open, setOpen] = React.useState(false);
 	const trigger = React.useRef<HTMLButtonElement>(null);
 
@@ -294,12 +303,14 @@ function ColorPicker({
 				{showHex && <span className="font-mono tabular-nums">{value}</span>}
 			</PopoverTrigger>
 			<PopoverContent
-				data-slot="color-picker-content"
+				// The sheet keeps its own slot in touch mode (its motion keys on it).
+				{...(touch ? {} : { "data-slot": "color-picker-content" })}
 				align="start"
 				className="flex w-60 flex-col gap-3"
 			>
 				<ColorArea hsv={hsv} disabled={disabled} onMove={move} onCommit={() => commit()} />
 				<Slider
+					data-vaul-no-drag=""
 					size="sm"
 					min={0}
 					max={359}
@@ -363,7 +374,10 @@ function ColorPicker({
 					/>
 				</div>
 				{list.length > 0 && (
-					<div data-slot="color-picker-swatches" className="flex flex-wrap gap-1.5">
+					<div
+						data-slot="color-picker-swatches"
+						className={cn("flex flex-wrap", touch ? "gap-2" : "gap-1.5")}
+					>
 						{list.map((hex, i) =>
 							hex ? (
 								<button
@@ -378,7 +392,8 @@ function ColorPicker({
 										commit(hex);
 									}}
 									className={cn(
-										"size-5 rounded-sm border border-border-default cursor-default",
+										"rounded-sm border border-border-default cursor-default",
+										touch ? "nu-tap size-8" : "size-5",
 										"transition-transform duration-fast ease-out hover:scale-110",
 										"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated",
 										"aria-pressed:ring-2 aria-pressed:ring-accent aria-pressed:ring-offset-1 aria-pressed:ring-offset-bg-elevated",

@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { useEffect, useRef } from "react";
+import { useTouch } from "../../lib/touch";
 import { CalendarHeatmap } from "./calendar-heatmap";
 import { type CalendarHeatmapValues, dayKey } from "./calendar-heatmap-model";
 
@@ -114,6 +116,36 @@ export const Matrix: StoryObj = {
 			</div>
 		</div>
 	),
+};
+
+// The latest day, shown at load the way each mode reaches it: tapped in
+// touch mode (a phone, or the Touch toolbar), hovered on desktop. It sits at
+// the right edge, so on a phone the tip shifts back inside the screen.
+function ShowLatest() {
+	const touch = useTouch();
+	const root = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		const id = setTimeout(() => {
+			const cells = root.current?.querySelectorAll<HTMLElement>("[data-level]");
+			const cell = cells?.[cells.length - 1];
+			const grid = cell?.parentElement;
+			if (!cell || !grid) return;
+			const r = cell.getBoundingClientRect();
+			const at = { clientX: r.left + 4, clientY: r.top + 4, bubbles: true };
+			if (touch) grid.dispatchEvent(new MouseEvent("click", at));
+			else cell.dispatchEvent(new PointerEvent("pointermove", at));
+		}, 300);
+		return () => clearTimeout(id);
+	}, [touch]);
+	return (
+		<div ref={root} className="px-4 pt-16 pb-8">
+			<CalendarHeatmap values={TYPICAL} end={END} title="Finished per day" suffix="finished" />
+		</div>
+	);
+}
+
+export const Tapped: StoryObj = {
+	render: () => <ShowLatest />,
 };
 
 const meta: Meta = {

@@ -5,34 +5,59 @@
 //   space-radius.md  §Density Popover (pad 12, radius `md`)
 //   motion.md        §3 Popover (`duration-base` fade+y-shift)
 //   a11y.md          §3 Popover (Esc, focus restore, no trap)
+//
+// In touch mode (../../lib/touch.ts) the same parts render a bottom sheet
+// (./bottom-sheet.tsx): the root, trigger and close map one to one, the
+// content drops its placement props and fills the sheet, the arrow is gone
+// and the anchor is a plain box. Callers change nothing. This is the pattern
+// for every overlay in the kit: read `useTouch()` once at the top, branch.
 
-import { Popover as PopoverPrimitive } from "radix-ui";
+import { Popover as PopoverPrimitive, Slot as SlotPrimitive } from "radix-ui";
 import type * as React from "react";
 
 import { usePortalContainer } from "../../lib/portal";
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
+import {
+	BottomSheet,
+	BottomSheetClose,
+	BottomSheetContent,
+	BottomSheetTrigger,
+} from "./bottom-sheet";
 
-function Popover({
-	...props
-}: React.ComponentProps<typeof PopoverPrimitive.Root>) {
+function Popover({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Root>) {
+	const touch = useTouch();
+	if (touch) {
+		const { open, defaultOpen, onOpenChange, children } = props;
+		return (
+			<BottomSheet open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
+				{children}
+			</BottomSheet>
+		);
+	}
 	return <PopoverPrimitive.Root data-slot="popover" {...props} />;
 }
 
-function PopoverTrigger({
-	...props
-}: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
+function PopoverTrigger({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
+	const touch = useTouch();
+	if (touch) return <BottomSheetTrigger data-slot="popover-trigger" {...props} />;
 	return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />;
 }
 
-function PopoverAnchor({
-	...props
-}: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {
+function PopoverAnchor({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {
+	const touch = useTouch();
+	if (touch) {
+		// Nothing to anchor to: a sheet sits at the bottom. The box stays.
+		const { asChild, ...rest } = props;
+		const Comp = asChild ? SlotPrimitive.Slot : "div";
+		return <Comp data-slot="popover-anchor" {...rest} />;
+	}
 	return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />;
 }
 
-function PopoverClose({
-	...props
-}: React.ComponentProps<typeof PopoverPrimitive.Close>) {
+function PopoverClose({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Close>) {
+	const touch = useTouch();
+	if (touch) return <BottomSheetClose data-slot="popover-close" {...props} />;
 	return <PopoverPrimitive.Close data-slot="popover-close" {...props} />;
 }
 
@@ -40,6 +65,8 @@ function PopoverArrow({
 	className,
 	...props
 }: React.ComponentProps<typeof PopoverPrimitive.Arrow>) {
+	const touch = useTouch();
+	if (touch) return null;
 	return (
 		<PopoverPrimitive.Arrow
 			data-slot="popover-arrow"
@@ -49,18 +76,55 @@ function PopoverArrow({
 	);
 }
 
+type PopoverContentProps = React.ComponentProps<typeof PopoverPrimitive.Content> & {
+	/** Portal into this element rather than the body (or a full screen surface). */
+	container?: HTMLElement | null;
+};
+
 function PopoverContent({
 	className,
 	align = "center",
 	sideOffset = 4,
 	container,
 	...props
-}: React.ComponentProps<typeof PopoverPrimitive.Content> & {
-	/** Portal into this element rather than the body (or a full screen surface). */
-	container?: HTMLElement | null;
-}) {
+}: PopoverContentProps) {
+	const touch = useTouch();
+	const portal = usePortalContainer(container);
+	if (touch) {
+		// Placement means nothing at the bottom of the screen. The caller's
+		// classes style the body, its width yields to the sheet's.
+		const {
+			side: _side,
+			alignOffset: _alignOffset,
+			avoidCollisions: _avoidCollisions,
+			collisionBoundary: _collisionBoundary,
+			collisionPadding: _collisionPadding,
+			arrowPadding: _arrowPadding,
+			sticky: _sticky,
+			hideWhenDetached: _hideWhenDetached,
+			updatePositionStrategy: _updatePositionStrategy,
+			forceMount: _forceMount,
+			style,
+			children,
+			...rest
+		} = props;
+		// A width in the style (a node's `width`) would pull the sheet off the
+		// window's edges, so it goes the way the width classes do.
+		const { width: _width, minWidth: _minWidth, maxWidth: _maxWidth, ...kept } = style ?? {};
+		return (
+			<BottomSheetContent
+				container={portal}
+				label={rest["aria-label"] ?? "Popover"}
+				bodyClassName={cn(className, "w-full max-w-none")}
+				style={kept}
+				{...rest}
+			>
+				{children}
+			</BottomSheetContent>
+		);
+	}
 	return (
-		<PopoverPrimitive.Portal container={usePortalContainer(container)}>
+		<PopoverPrimitive.Portal container={portal}>
 			<PopoverPrimitive.Content
 				data-slot="popover-content"
 				align={align}
@@ -86,11 +150,4 @@ function PopoverContent({
 	);
 }
 
-export {
-	Popover,
-	PopoverTrigger,
-	PopoverContent,
-	PopoverAnchor,
-	PopoverArrow,
-	PopoverClose,
-};
+export { Popover, PopoverAnchor, PopoverArrow, PopoverClose, PopoverContent, PopoverTrigger };

@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import { TextSelection } from "prosemirror-state";
+import type { EditorView } from "prosemirror-view";
 import { useState } from "react";
 import { Code } from "./code";
 import { Markdown } from "./markdown";
@@ -177,6 +179,45 @@ function TablesSideBySide() {
 
 export const Tables: StoryObj = {
 	render: () => <TablesSideBySide />,
+};
+
+// An editable table with the caret put in a body cell at load. On desktop
+// the handles show once the pointer is over the table; in touch mode they
+// stand on the caret's cell, since a tap is how the caret gets there. A wide
+// table scrolls sideways inside a narrow box.
+const CARET_TABLE = `A table with the caret in it:
+
+| Ref | Kind | Reads | Note | Owner | Updated |
+| :--- | :---: | ---: | --- | --- | --- |
+| MarkdownRef | input | 1284 | the value is markdown | docs | today |
+| CodeRef | input | 421 | one code engine | kit | yesterday |
+`;
+
+function caretInCell(view: EditorView | null) {
+	if (!view) return;
+	requestAnimationFrame(() => {
+		let at = -1;
+		view.state.doc.descendants((node, pos) => {
+			if (at < 0 && node.type.name === "table_cell") at = pos + 2;
+			return at < 0;
+		});
+		if (at < 0) return;
+		view.focus();
+		view.dispatch(view.state.tr.setSelection(TextSelection.create(view.state.doc, at)));
+	});
+}
+
+function CaretInTable() {
+	const [value, setValue] = useState(CARET_TABLE);
+	return (
+		<div className="p-4">
+			<Markdown value={value} readOnly={false} onCommit={setValue} onView={caretInCell} />
+		</div>
+	);
+}
+
+export const TableCaret: StoryObj = {
+	render: () => <CaretInTable />,
 };
 
 const meta: Meta = {

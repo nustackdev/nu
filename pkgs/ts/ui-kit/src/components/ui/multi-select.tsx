@@ -2,7 +2,10 @@ import { Command as CommandPrimitive } from "cmdk";
 import { Check } from "lucide-react";
 import * as React from "react";
 
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
+import { BottomSheetFooter } from "./bottom-sheet";
+import { Button } from "./button";
 import { type ChoiceOption, toggleOption } from "./checkbox-group";
 import {
 	Combobox,
@@ -12,6 +15,7 @@ import {
 	ComboboxList,
 	ComboboxTrigger,
 	comboboxItemClass,
+	comboboxTouchItemClass,
 } from "./combobox";
 
 // Dropdown multi choice with a search field: the kit Combobox (Popover +
@@ -21,6 +25,9 @@ import {
 // (`role="combobox"`): the rest props (id, aria) land on it. It shows the
 // first picks as chips and a count for the rest. In the list each option
 // carries `aria-checked`, the listbox is `aria-multiselectable`.
+//
+// In touch mode the Combobox is a bottom sheet; a Done button under the list
+// closes it, since a pick no longer does and the way out should be in view.
 
 const chipSize = {
 	sm: "h-4 px-1 text-xs",
@@ -58,6 +65,7 @@ export function MultiSelect({
 	className,
 	...props
 }: MultiSelectProps) {
+	const touch = useTouch();
 	const [open, setOpen] = React.useState(false);
 	const labels = new Map(options.map((o) => [o.value, o.label]));
 	const shown = value.slice(0, maxChips);
@@ -107,7 +115,7 @@ export function MultiSelect({
 								data-slot="multi-select-item"
 								aria-checked={on}
 								onSelect={() => onValueChange(toggleOption(value, o.value, !on, options))}
-								className={comboboxItemClass}
+								className={cn(comboboxItemClass, touch && comboboxTouchItemClass)}
 							>
 								{o.label}
 								{on && <Check className="ml-auto size-4 text-accent-text" />}
@@ -115,6 +123,13 @@ export function MultiSelect({
 						);
 					})}
 				</ComboboxList>
+				{touch ? (
+					<BottomSheetFooter className="sticky bottom-0 bg-bg-elevated">
+						<Button size="lg" onClick={() => setOpen(false)}>
+							Done
+						</Button>
+					</BottomSheetFooter>
+				) : null}
 			</ComboboxContent>
 		</Combobox>
 	);

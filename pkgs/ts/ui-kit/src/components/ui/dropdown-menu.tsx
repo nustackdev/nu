@@ -8,13 +8,39 @@
 //
 // `DropdownMenuDetails` holds facts, not actions: label and value rows a
 // menu shows about what it acts on (a cell's id, version, last run).
+//
+// In touch mode (../../lib/touch.ts) the same parts render a bottom sheet
+// (./menu-sheet.tsx): rows at 44px, a submenu expanding in place under its
+// row. Shortcut hints stay: showing them is the app's call. Placement props
+// are dropped, the content's classes style the sheet body. Callers change
+// nothing.
 
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import { Check, ChevronRight, Circle } from "lucide-react";
 import type * as React from "react";
 
 import { usePortalContainer } from "../../lib/portal";
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
+import { BottomSheetTrigger } from "./bottom-sheet";
+import {
+	MenuSheet,
+	MenuSheetCheckboxItem,
+	type MenuSheetCheckboxItemProps,
+	MenuSheetContent,
+	MenuSheetGroup,
+	MenuSheetItem,
+	type MenuSheetItemProps,
+	MenuSheetLabel,
+	MenuSheetRadioGroup,
+	MenuSheetRadioItem,
+	type MenuSheetRadioItemProps,
+	MenuSheetSeparator,
+	MenuSheetSub,
+	MenuSheetSubContent,
+	MenuSheetSubTrigger,
+	sheetContentProps,
+} from "./menu-sheet";
 import { Shortcut } from "./shortcut";
 
 // Shared recipes. ContextMenu borrows them verbatim, and a hand-built menu that
@@ -60,12 +86,23 @@ const menuContentClasses = [
 function DropdownMenu({
 	...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
+	const touch = useTouch();
+	if (touch) {
+		const { open, defaultOpen, onOpenChange, children } = props;
+		return (
+			<MenuSheet open={open} defaultOpen={defaultOpen} onOpenChange={onOpenChange}>
+				{children}
+			</MenuSheet>
+		);
+	}
 	return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />;
 }
 
 function DropdownMenuTrigger({
 	...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Trigger>) {
+	const touch = useTouch();
+	if (touch) return <BottomSheetTrigger data-slot="dropdown-menu-trigger" {...props} />;
 	return (
 		<DropdownMenuPrimitive.Trigger
 			data-slot="dropdown-menu-trigger"
@@ -77,6 +114,8 @@ function DropdownMenuTrigger({
 function DropdownMenuGroup({
 	...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Group>) {
+	const touch = useTouch();
+	if (touch) return <MenuSheetGroup {...props} />;
 	return (
 		<DropdownMenuPrimitive.Group data-slot="dropdown-menu-group" {...props} />
 	);
@@ -85,6 +124,8 @@ function DropdownMenuGroup({
 function DropdownMenuRadioGroup({
 	...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.RadioGroup>) {
+	const touch = useTouch();
+	if (touch) return <MenuSheetRadioGroup {...props} />;
 	return (
 		<DropdownMenuPrimitive.RadioGroup
 			data-slot="dropdown-menu-radio-group"
@@ -96,6 +137,8 @@ function DropdownMenuRadioGroup({
 function DropdownMenuSub({
 	...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Sub>) {
+	const touch = useTouch();
+	if (touch) return <MenuSheetSub {...props} />;
 	return <DropdownMenuPrimitive.Sub data-slot="dropdown-menu-sub" {...props} />;
 }
 
@@ -104,8 +147,13 @@ function DropdownMenuContent({
 	sideOffset = 4,
 	...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
+	const touch = useTouch();
+	const portal = usePortalContainer();
+	if (touch) {
+		return <MenuSheetContent container={portal} className={className} {...sheetContentProps(props)} />;
+	}
 	return (
-		<DropdownMenuPrimitive.Portal container={usePortalContainer()}>
+		<DropdownMenuPrimitive.Portal container={portal}>
 			<DropdownMenuPrimitive.Content
 				data-slot="dropdown-menu-content"
 				sideOffset={sideOffset}
@@ -128,6 +176,17 @@ function DropdownMenuItem({
 	inset,
 	...props
 }: DropdownMenuItemProps) {
+	const touch = useTouch();
+	if (touch) {
+		return (
+			<MenuSheetItem
+				variant={variant}
+				inset={inset}
+				className={className}
+				{...(props as MenuSheetItemProps)}
+			/>
+		);
+	}
 	return (
 		<DropdownMenuPrimitive.Item
 			data-slot="dropdown-menu-item"
@@ -151,6 +210,18 @@ function DropdownMenuCheckboxItem({
 	checked,
 	...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.CheckboxItem>) {
+	const touch = useTouch();
+	if (touch) {
+		return (
+			<MenuSheetCheckboxItem
+				checked={checked}
+				className={className}
+				{...(props as MenuSheetCheckboxItemProps)}
+			>
+				{children}
+			</MenuSheetCheckboxItem>
+		);
+	}
 	return (
 		<DropdownMenuPrimitive.CheckboxItem
 			data-slot="dropdown-menu-checkbox-item"
@@ -173,6 +244,14 @@ function DropdownMenuRadioItem({
 	children,
 	...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.RadioItem>) {
+	const touch = useTouch();
+	if (touch) {
+		return (
+			<MenuSheetRadioItem className={className} {...(props as MenuSheetRadioItemProps)}>
+				{children}
+			</MenuSheetRadioItem>
+		);
+	}
 	return (
 		<DropdownMenuPrimitive.RadioItem
 			data-slot="dropdown-menu-radio-item"
@@ -199,6 +278,8 @@ function DropdownMenuLabel({
 	inset,
 	...props
 }: DropdownMenuLabelProps) {
+	const touch = useTouch();
+	if (touch) return <MenuSheetLabel inset={inset} className={className} {...props} />;
 	return (
 		<DropdownMenuPrimitive.Label
 			data-slot="dropdown-menu-label"
@@ -225,10 +306,12 @@ const menuDetailToneClasses = {
 } as const;
 
 function DropdownMenuDetails({ className, ...props }: React.ComponentProps<"dl">) {
+	const touch = useTouch();
 	return (
 		<dl
 			data-slot="dropdown-menu-details"
-			className={cn(menuDetailsClasses, className)}
+			// On a sheet the rows' text starts a step further in: line up with it.
+			className={cn(menuDetailsClasses, touch && "px-1", className)}
 			{...props}
 		/>
 	);
@@ -279,6 +362,8 @@ function DropdownMenuSeparator({
 	className,
 	...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Separator>) {
+	const touch = useTouch();
+	if (touch) return <MenuSheetSeparator className={className} {...props} />;
 	return (
 		<DropdownMenuPrimitive.Separator
 			data-slot="dropdown-menu-separator"
@@ -299,6 +384,14 @@ function DropdownMenuSubTrigger({
 	children,
 	...props
 }: DropdownMenuSubTriggerProps) {
+	const touch = useTouch();
+	if (touch) {
+		return (
+			<MenuSheetSubTrigger inset={inset} className={className} {...(props as MenuSheetItemProps)}>
+				{children}
+			</MenuSheetSubTrigger>
+		);
+	}
 	return (
 		<DropdownMenuPrimitive.SubTrigger
 			data-slot="dropdown-menu-sub-trigger"
@@ -320,6 +413,8 @@ function DropdownMenuSubContent({
 	className,
 	...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.SubContent>) {
+	const touch = useTouch();
+	if (touch) return <MenuSheetSubContent className={className} {...sheetContentProps(props)} />;
 	return (
 		<DropdownMenuPrimitive.SubContent
 			data-slot="dropdown-menu-sub-content"

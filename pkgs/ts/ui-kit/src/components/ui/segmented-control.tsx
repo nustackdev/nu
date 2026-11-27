@@ -39,6 +39,8 @@ const segmentedItemVariants = cva(
 		"inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-sm",
 		"font-medium text-text-secondary",
 		"cursor-default",
+		// Touch: a 44px tap area around it, unseen (index.css, `nu-tap`).
+		"nu-tap",
 		"transition-colors duration-fast ease-out",
 		"hover:text-text-primary",
 		"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas",

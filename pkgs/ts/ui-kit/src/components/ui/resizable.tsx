@@ -71,6 +71,19 @@
 //
 // A panel folded to nothing is `inert`: nothing in it takes focus or a click
 // while it cannot be seen, and it stays mounted.
+//
+// ## Stacked
+//
+// A side by side group stacks in touch mode, at any width, where a drag on a
+// thin handle is no way to arrange anything. Stacked, the panels run down one
+// column in source order, each as tall as its content and at least half the
+// group, the handles are gone and the group scrolls. The sizes are kept,
+// untouched, for when the group leaves touch mode. A panel folded to nothing
+// stays out of the stack. Width alone never stacks it: a narrow desktop
+// column keeps its panels side by side, with their handles, since a pointer
+// can still drag them.
+// A group that is already a column (vertical) keeps its shares in touch mode
+// and only loses its handles: there is nothing to stack.
 
 import type * as React from "react";
 import {
@@ -89,6 +102,7 @@ import {
 } from "react";
 import { useKeyScope } from "../../lib/keyboard";
 import { readStored, splitHandleClasses, trackDrag, writeStored } from "../../lib/resize";
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 
 /** A panel bound or size: a number is a percentage, or "N%" / "Npx". */
@@ -153,6 +167,10 @@ type Layout = { ids: string[]; sizes: number[]; span: number };
 
 type Group = {
 	orientation: ResizableOrientation;
+	/** Panels down one column, no handles: a side by side group in touch mode. */
+	stacked: boolean;
+	/** No handles: touch mode, or stacked. */
+	fixed: boolean;
 	overflow: ResizableOverflow;
 	sizes: number[];
 	ids: string[];
@@ -304,6 +322,9 @@ export function ResizablePanelGroup({
 	const rootRef = useRef<HTMLDivElement>(null);
 	const axis = orientation === "horizontal" ? "x" : "y";
 	const scroll = overflow === "scroll";
+	const touch = useTouch();
+	const horizontal = orientation === "horizontal";
+	const stacked = horizontal && touch;
 
 	// The panels' props, read straight off the children so the group knows
 	// every bound and default before anything renders.
@@ -361,15 +382,17 @@ export function ResizablePanelGroup({
 		observer.observe(root);
 		return () => observer.disconnect();
 	}, [measure]);
-	// Once before the first paint as well, so a px default never flashes.
-	useLayoutEffect(() => setSpan(measure()), [measure, shape]);
+	// Once before the first paint as well, so a px default never flashes, and
+	// again when the group unstacks: measured stacked, the panels read full
+	// width each.
+	useLayoutEffect(() => setSpan(measure()), [measure, shape, stacked]);
 
 	// A scrolling group's panels take their share of what the handles leave,
 	// in CSS, so the handles are measured before the first paint.
 	const [handles, setHandles] = useState(0);
 	useLayoutEffect(() => {
 		if (scroll) setHandles(lengthOf(HANDLES));
-	}, [scroll, lengthOf, shape]);
+	}, [scroll, lengthOf, shape, stacked]);
 
 	const boundsAt = useCallback(
 		(total: number): Bound[] => {
@@ -600,6 +623,8 @@ export function ResizablePanelGroup({
 	// A fresh value each render: the panels re-render with the group anyway.
 	const group: Group = {
 		orientation,
+		stacked,
+		fixed: stacked || touch,
 		overflow,
 		sizes,
 		ids,
@@ -620,12 +645,17 @@ export function ResizablePanelGroup({
 				data-slot="resizable-panel-group"
 				data-orientation={orientation}
 				data-overflow={overflow}
+				data-stacked={stacked ? "" : undefined}
 				className={cn(
 					"flex size-full",
-					orientation === "vertical" && "flex-col",
-					!scroll && "overflow-hidden",
-					scroll && axis === "x" && "overflow-x-auto overflow-y-hidden",
-					scroll && axis === "y" && "overflow-y-auto overflow-x-hidden",
+					stacked
+						? "flex-col overflow-x-hidden overflow-y-auto"
+						: [
+								orientation === "vertical" && "flex-col",
+								!scroll && "overflow-hidden",
+								scroll && axis === "x" && "overflow-x-auto overflow-y-hidden",
+								scroll && axis === "y" && "overflow-y-auto overflow-x-hidden",
+							],
 					className,
 				)}
 				style={
@@ -666,6 +696,27 @@ export function ResizablePanel({
 		typeof v === "string" && v.endsWith("px") ? v : undefined;
 	const min = folded ? undefined : px(minSize);
 	const max = px(maxSize);
+	if (group.stacked) {
+		// Down one column: as tall as its content, at least half the group so
+		// a panel that only fills (an editor, a list that scrolls inside)
+		// still shows, and none of the side by side sizing.
+		const gone = folded && size <= 0;
+		return (
+			<div
+				data-slot="resizable-panel"
+				data-state={collapsible ? (folded ? "collapsed" : "expanded") : undefined}
+				inert={gone ? true : undefined}
+				id={group.ids[i]}
+				className={cn(
+					"relative min-h-1/2 w-full shrink-0 overflow-hidden",
+					gone && "hidden",
+					className,
+				)}
+				style={style}
+				{...props}
+			/>
+		);
+	}
 	return (
 		<div
 			data-slot="resizable-panel"
@@ -702,6 +753,7 @@ export function ResizableHandle({
 	const group = useGroup("ResizableHandle");
 	const before = useContext(IndexContext);
 	const horizontal = group.orientation === "horizontal";
+	// Hooks first: the key scope is built whether or not the handle draws.
 	const keys = useKeyScope<HTMLDivElement>({
 		[horizontal ? "ArrowLeft" : "ArrowUp"]: () => group.onHandleKey(before, "less"),
 		[horizontal ? "ArrowRight" : "ArrowDown"]: () => group.onHandleKey(before, "more"),
@@ -710,6 +762,8 @@ export function ResizableHandle({
 		Enter: () => group.onHandleKey(before, "toggle"),
 	});
 	const b = group.bounds[before];
+	// Touch or stacked: nothing to drag, so no handle.
+	if (group.fixed) return null;
 	return (
 		// biome-ignore lint/a11y/useSemanticElements: a focusable splitter, not an <hr>
 		<div

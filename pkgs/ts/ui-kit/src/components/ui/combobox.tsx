@@ -3,12 +3,20 @@ import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { Popover as PopoverPrimitive } from "radix-ui";
 import * as React from "react";
 
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
+import { BottomSheet, BottomSheetContent, BottomSheetTrigger } from "./bottom-sheet";
 import { selectTriggerVariants } from "./select";
 
 // Combobox is Popover + cmdk. No Radix primitive covers the free-text +
 // filterable menu shape (design/primitives.md §Combobox). Trigger reuses
 // the Select trigger's visual variants so form rows read as one family.
+//
+// In touch mode (../../lib/touch.ts) the list opens in a bottom sheet
+// (./bottom-sheet.tsx), the pattern in popover.tsx: the search field pinned
+// to the top of the sheet, the options under it as 44px rows. The field is
+// not focused when the sheet opens, so the on-screen keyboard stays down
+// until the person taps it: most picks are a scroll and a tap, not a search.
 
 interface ComboboxContextValue {
 	open: boolean;
@@ -73,11 +81,18 @@ function Combobox({
 		[open, setOpen, value, setValue],
 	);
 
+	const touch = useTouch();
 	return (
 		<ComboboxContext.Provider value={ctx}>
-			<PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
-				{children}
-			</PopoverPrimitive.Root>
+			{touch ? (
+				<BottomSheet open={open} onOpenChange={setOpen}>
+					{children}
+				</BottomSheet>
+			) : (
+				<PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
+					{children}
+				</PopoverPrimitive.Root>
+			)}
 		</ComboboxContext.Provider>
 	);
 }
@@ -98,8 +113,10 @@ function ComboboxTrigger({
 	...props
 }: ComboboxTriggerProps) {
 	const ctx = useComboboxContext();
+	const touch = useTouch();
+	const Trigger = touch ? BottomSheetTrigger : PopoverPrimitive.Trigger;
 	return (
-		<PopoverPrimitive.Trigger
+		<Trigger
 			data-slot="combobox-trigger"
 			role="combobox"
 			aria-expanded={ctx.open}
@@ -109,7 +126,7 @@ function ComboboxTrigger({
 		>
 			{children}
 			<ChevronsUpDown className="opacity-60" />
-		</PopoverPrimitive.Trigger>
+		</Trigger>
 	);
 }
 
@@ -120,6 +137,25 @@ function ComboboxContent({
 	sideOffset = 4,
 	...props
 }: React.ComponentProps<typeof PopoverPrimitive.Content>) {
+	const touch = useTouch();
+	if (touch) {
+		// Placement means nothing at the bottom of the screen. No overflow clip
+		// on the list's box, so the search field can stick to the sheet's top.
+		return (
+			<BottomSheetContent
+				label={props["aria-label"] ?? "Options"}
+				bodyClassName={cn(className, "w-full max-w-none")}
+				onOpenAutoFocus={(e) => {
+					e.preventDefault();
+					(e.currentTarget as HTMLElement | null)?.focus();
+				}}
+			>
+				<CommandPrimitive data-slot="combobox-content" className="flex w-full flex-col">
+					{children}
+				</CommandPrimitive>
+			</BottomSheetContent>
+		);
+	}
 	return (
 		<PopoverPrimitive.Portal>
 			<PopoverPrimitive.Content
@@ -150,8 +186,16 @@ function ComboboxInput({
 	className,
 	...props
 }: React.ComponentProps<typeof CommandPrimitive.Input>) {
+	const touch = useTouch();
 	return (
-		<div className="flex items-center gap-2 border-b border-border-subtle px-2.5" data-slot="combobox-input-wrap">
+		<div
+			className={cn(
+				"flex items-center gap-2 border-b border-border-subtle px-2.5",
+				// Pinned to the sheet's top while the options scroll under it.
+				touch && "sticky top-0 z-10 bg-bg-elevated",
+			)}
+			data-slot="combobox-input-wrap"
+		>
 			<Search className="size-4 shrink-0 text-text-muted" aria-hidden="true" />
 			<CommandPrimitive.Input
 				data-slot="combobox-input"
@@ -171,10 +215,16 @@ function ComboboxList({
 	className,
 	...props
 }: React.ComponentProps<typeof CommandPrimitive.List>) {
+	const touch = useTouch();
 	return (
 		<CommandPrimitive.List
 			data-slot="combobox-list"
-			className={cn("max-h-72 overflow-y-auto overflow-x-hidden p-1", className)}
+			className={cn(
+				"max-h-72 overflow-y-auto overflow-x-hidden p-1",
+				// The sheet's body scrolls, not the list.
+				touch && "max-h-none overflow-visible p-0",
+				className,
+			)}
 			{...props}
 		/>
 	);
@@ -222,6 +272,17 @@ const comboboxItemClass = [
 	"[&>svg]:pointer-events-none [&>svg]:size-4 [&>svg]:shrink-0",
 ].join(" ");
 
+/**
+ * Added to `comboboxItemClass` in touch mode: the row of a sheet, 44px, ruled
+ * like `BottomSheetItem`. No resting highlight (cmdk marks the first match),
+ * only the press: the pick is the check, not a tint.
+ */
+const comboboxTouchItemClass = [
+	"min-h-11 rounded-none px-1 border-b border-border-subtle last:border-b-0",
+	"data-[selected=true]:bg-transparent data-[highlighted=true]:bg-transparent aria-selected:bg-transparent",
+	"active:bg-bg-press",
+].join(" ");
+
 interface ComboboxItemProps
 	extends Omit<React.ComponentProps<typeof CommandPrimitive.Item>, "onSelect"> {
 	onSelect?: (value: string) => void;
@@ -235,6 +296,7 @@ function ComboboxItem({
 	...props
 }: ComboboxItemProps) {
 	const ctx = useComboboxContext();
+	const touch = useTouch();
 	const selected = value !== undefined && value === ctx.value;
 	return (
 		<CommandPrimitive.Item
@@ -246,7 +308,7 @@ function ComboboxItem({
 				ctx.setOpen(false);
 				onSelect?.(picked);
 			}}
-			className={cn(comboboxItemClass, className)}
+			className={cn(comboboxItemClass, touch && comboboxTouchItemClass, className)}
 			{...props}
 		>
 			{children}
@@ -265,4 +327,5 @@ export {
 	ComboboxList,
 	ComboboxTrigger,
 	comboboxItemClass,
+	comboboxTouchItemClass,
 };

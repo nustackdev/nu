@@ -10,6 +10,11 @@
 //   take       the kit Audio row playing the take; Record again and Delete under it
 //   blocked    Record (as "Try again" when trying can help), the reason under the row
 //
+// The row follows its own width: under 16rem the recording row drops the max
+// after the time and Stop keeps its glyph only, so it still fits a narrow
+// column. Nothing here hovers, so touch mode changes nothing but the tap areas
+// and the device menu, which opens as a sheet.
+//
 // Nothing opens on mount: the first click on Record asks for the microphone,
 // and recording starts as soon as it opens. The microphone closes again once
 // the take is kept or canceled, on disable, on unmount, and when the tab is
@@ -446,7 +451,9 @@ export function MicCapture({
 						className="whitespace-nowrap font-mono text-xs tabular-nums text-text-primary"
 					>
 						{formatTime(recorder.elapsed, max ?? 0)}
-						{max ? <span className="text-text-muted"> / {formatTime(max)}</span> : null}
+						{max ? (
+							<span className="text-text-muted @max-[16rem]/mic:hidden"> / {formatTime(max)}</span>
+						) : null}
 					</span>
 				</span>
 				<LevelMeter level={level} quiet={paused} className="min-w-0 flex-1 overflow-hidden" />
@@ -469,7 +476,7 @@ export function MicCapture({
 					onClick={stop}
 				>
 					<Square aria-hidden className="fill-current" />
-					Stop
+					<span className="@max-[16rem]/mic:sr-only">Stop</span>
 				</Button>
 				<IconButton
 					variant="ghost"
@@ -575,7 +582,7 @@ export function MicCapture({
 					ref={root}
 					data-slot="mic-capture-row"
 					className={cn(
-						"flex w-full min-w-0 items-center rounded-md border bg-bg-surface",
+						"@container/mic flex w-full min-w-0 items-center rounded-md border bg-bg-surface",
 						"transition-[border-color,background-color] duration-fast ease-out",
 						FRAME[size],
 						disabled

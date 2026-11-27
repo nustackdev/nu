@@ -21,13 +21,16 @@
 // the viewer always opens fitted.
 //
 // `download`, a url, adds a download link: in the viewer's cluster, or as a
-// chip over a plain image's corner, shown on hover and focus.
+// chip over a plain image's corner, shown on hover and focus. In touch mode
+// (lib/touch.ts) nothing hovers, so the chip is always there: it is the
+// image's one action.
 
 import type { CSSProperties } from "react";
 import { Image } from "../../components/ui/image";
 import { ImageViewer } from "../../components/ui/image-viewer";
 import { MediaDownloadButton } from "../../components/ui/media-controls";
 import { TooltipProvider } from "../../components/ui/tooltip";
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 import {
 	type NodeEntry,
@@ -60,6 +63,7 @@ function asNullableInt(v: unknown): number | null {
 }
 
 function ImageView({ path }: NodeProps) {
+	const touch = useTouch();
 	const src = useStringProp(path, "src");
 	const alt = useStringProp(path, "alt");
 	const fit = useEnumProp(path, "fit", FITS, "contain");
@@ -110,8 +114,10 @@ function ImageView({ path }: NodeProps) {
 					tipSide="bottom"
 					className={cn(
 						"absolute top-2 right-2 shadow-raised",
-						"opacity-0 transition-opacity duration-fast ease-out",
-						"group-hover/image:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100",
+						!touch && [
+							"opacity-0 transition-opacity duration-fast ease-out",
+							"group-hover/image:opacity-100 focus-visible:opacity-100",
+						],
 					)}
 				/>
 			</div>

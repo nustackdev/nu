@@ -33,3 +33,6 @@ dist-ssr
 
 # vitest browser mode: screenshots of failed tests
 __screenshots__/
+
+# touch shots (ui-kit/scripts/touch-shots.mjs)
+.shots

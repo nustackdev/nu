@@ -31,6 +31,9 @@ const pageLinkVariants = cva(
 	[
 		"group/page-link min-w-0 text-text-primary no-underline",
 		"cursor-default focus-ring",
+		// Touch: a 44px tap area around a short row or a mention, unseen
+		// (index.css, `nu-tap`).
+		"nu-tap",
 		"transition-colors duration-fast ease-out",
 	].join(" "),
 	{

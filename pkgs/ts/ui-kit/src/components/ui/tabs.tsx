@@ -10,22 +10,41 @@
 //   line       underline under active trigger. Fleet-flavored default.
 //   pill       press wash chip behind active. Reads as segmented navigation.
 //   segmented  one press-wash track (like every kit track) with a raised surface pill on active.
+//
+// Narrow: a list never grows past its box. When its tabs run past the edge
+// (a phone, a strip column, a dozen tabs on a wide desk) it scrolls sideways,
+// with no scrollbar drawn, and centres the active tab once. Measured, not a
+// breakpoint: three short tabs fit a phone and change nothing. Until then the
+// list is exactly the desktop one; once it scrolls, its focus rings sit
+// inside the triggers, since a scroller clips what sits outside it.
+//
+// Touch: every trigger takes a 44px tap (`nu-tap`, index.css), so the line
+// variant draws its underline on `::before`, leaving `::after` to the tap.
 
 import { cva, type VariantProps } from "class-variance-authority";
 import { Tabs as TabsPrimitive } from "radix-ui";
 import type * as React from "react";
-import { createContext, useContext } from "react";
+import { createContext, useCallback, useContext, useLayoutEffect, useRef, useState } from "react";
 
 import { cn } from "../../lib/utils";
 
 // TabsList variants own the container chrome. Trigger active-state visuals
 // are keyed off `data-variant` on the list so triggers stay a single component.
 const tabsListVariants = cva(
-	"inline-flex items-center text-text-secondary",
+	[
+		"group/tabs-list inline-flex max-w-full items-center text-text-secondary",
+		"data-[overflow]:overflow-x-auto data-[overflow]:overscroll-x-contain data-[overflow]:scrollbar-none",
+	].join(" "),
 	{
 		variants: {
 			variant: {
-				line: "border-b border-border-subtle gap-1",
+				line: [
+					"border-b border-border-subtle gap-1",
+					// A scroller clips at its border, and the active underline
+					// overlaps it: the line moves inside, the same pixel.
+					"data-[overflow]:border-b-0 data-[overflow]:pb-px",
+					"data-[overflow]:shadow-[inset_0_-1px_0_var(--color-border-subtle)]",
+				].join(" "),
 				pill: "gap-1",
 				segmented:
 					"bg-bg-press border border-border-default rounded-md p-1 gap-1",
@@ -48,6 +67,9 @@ const tabsTriggerVariants = cva(
 		"data-[state=active]:text-text-primary",
 		"hover:text-text-primary",
 		"[&_svg]:pointer-events-none [&_svg]:shrink-0",
+		"nu-tap",
+		// In a list that scrolls the ring would be clipped, so it sits inside.
+		"group-data-[overflow]/tabs-list:focus-visible:ring-inset group-data-[overflow]/tabs-list:focus-visible:ring-offset-0",
 	].join(" "),
 	{
 		variants: {
@@ -69,11 +91,11 @@ const triggerVariantClass = {
 	line: [
 		"relative rounded-none",
 		// 2px accent underline sits just under the row baseline.
-		"data-[state=active]:after:absolute data-[state=active]:after:left-0",
-		"data-[state=active]:after:right-0 data-[state=active]:after:-bottom-px",
-		"data-[state=active]:after:h-0.5 data-[state=active]:after:bg-accent",
-		"data-[state=active]:after:content-['']",
-		"data-[state=active]:after:transition-transform data-[state=active]:after:duration-base data-[state=active]:after:ease-in-out",
+		"data-[state=active]:before:absolute data-[state=active]:before:left-0",
+		"data-[state=active]:before:right-0 data-[state=active]:before:-bottom-px",
+		"data-[state=active]:before:h-0.5 data-[state=active]:before:bg-accent",
+		"data-[state=active]:before:content-['']",
+		"data-[state=active]:before:transition-transform data-[state=active]:before:duration-base data-[state=active]:before:ease-in-out",
 	].join(" "),
 	pill: [
 		"rounded-md",
@@ -104,6 +126,52 @@ export function Tabs({
 	);
 }
 
+/**
+ * Whether a list's tabs run past its edge, kept current as the list, a tab
+ * or the set of tabs changes size. `scrollWidth` counts the overflow whether
+ * or not the list scrolls yet, so the answer never feeds back on itself.
+ * The first time it runs over, the active tab is centred.
+ */
+function useOverflowX(forwarded?: React.Ref<HTMLDivElement>) {
+	const [el, setEl] = useState<HTMLDivElement | null>(null);
+	const [over, setOver] = useState(false);
+	const fwd = useRef(forwarded);
+	fwd.current = forwarded;
+	const ref = useCallback((node: HTMLDivElement | null) => {
+		setEl(node);
+		const r = fwd.current;
+		if (typeof r === "function") r(node);
+		else if (r) (r as React.RefObject<HTMLDivElement | null>).current = node;
+	}, []);
+	useLayoutEffect(() => {
+		if (!el || typeof ResizeObserver === "undefined") return;
+		const measure = () => setOver(el.scrollWidth > el.clientWidth + 1);
+		const sizes = new ResizeObserver(measure);
+		const watch = () => {
+			sizes.disconnect();
+			sizes.observe(el);
+			for (const tab of el.children) sizes.observe(tab);
+			measure();
+		};
+		watch();
+		const tabs = new MutationObserver(watch);
+		tabs.observe(el, { childList: true });
+		return () => {
+			sizes.disconnect();
+			tabs.disconnect();
+		};
+	}, [el]);
+	useLayoutEffect(() => {
+		const active = over ? el?.querySelector<HTMLElement>('[data-state="active"]') : null;
+		if (!el || !active) return;
+		// By hand: scrollIntoView would scroll the page too.
+		const box = el.getBoundingClientRect();
+		const tab = active.getBoundingClientRect();
+		el.scrollLeft += tab.left - box.left - (box.width - tab.width) / 2;
+	}, [el, over]);
+	return { ref, over };
+}
+
 export interface TabsListProps
 	extends React.ComponentProps<typeof TabsPrimitive.List>,
 		VariantProps<typeof tabsListVariants> {}
@@ -111,13 +179,17 @@ export interface TabsListProps
 export function TabsList({
 	className,
 	variant,
+	ref,
 	...props
 }: TabsListProps) {
+	const { ref: listRef, over } = useOverflowX(ref);
 	return (
 		<TabsVariantContext.Provider value={variant ?? "line"}>
 			<TabsPrimitive.List
+				ref={listRef}
 				data-slot="tabs-list"
 				data-variant={variant ?? "line"}
+				data-overflow={over ? "" : undefined}
 				className={cn(tabsListVariants({ variant }), className)}
 				{...props}
 			/>
