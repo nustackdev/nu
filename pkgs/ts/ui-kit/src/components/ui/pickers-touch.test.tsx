@@ -2,7 +2,8 @@
 // uses on desktop. Select names its pick on the trigger while the sheet is
 // shut and picks from a sheet row; Combobox pins its search on top of the
 // sheet; Autocomplete types in the sheet and hands Enter back to the field
-// in the page; the date pickers put the calendar in a sheet.
+// in the page; the date pickers put the calendar in a sheet; the time pickers
+// put hour and minute columns in one.
 
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
@@ -19,6 +20,7 @@ import {
 } from "./combobox";
 import { DatePicker, DateRangePicker } from "./date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./select";
+import { DateTimePicker, TimePicker } from "./time-picker";
 
 (globalThis as unknown as { IS_REACT_ACT_ENVIRONMENT: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -182,5 +184,112 @@ describe("DatePicker", () => {
 			(b) => b.textContent === "Done",
 		);
 		expect(done).toBeDefined();
+	});
+});
+
+const field = () => document.querySelector<HTMLInputElement>('[data-slot="time-picker"] input');
+const column = (label: string) =>
+	sheet()?.querySelector<HTMLElement>(`[role=listbox][aria-label="${label}"]`);
+const row = (label: string, text: string) =>
+	Array.from(column(label)?.querySelectorAll<HTMLButtonElement>("[role=option]") ?? []).find(
+		(b) => b.textContent === text,
+	);
+const done = () =>
+	Array.from(sheet()?.querySelectorAll("button") ?? []).find((b) => b.textContent === "Done");
+
+describe("TimePicker", () => {
+	it("is a read-only field that opens hour and minute columns", () => {
+		touch(<TimePicker aria-label="Time" defaultValue="09:30" />);
+		const input = field();
+		expect(input?.type).toBe("text");
+		expect(input?.readOnly).toBe(true);
+		expect(input?.value).toBe("09:30");
+		act(() => input?.click());
+		expect(sheet()?.querySelector('[data-slot="time-picker-content"]')).not.toBeNull();
+		expect(column("Hour")?.querySelectorAll("[role=option]").length).toBe(24);
+		expect(column("Minute")?.querySelectorAll("[role=option]").length).toBe(60);
+		expect(column("Second")).toBeNull();
+		expect(row("Hour", "09")?.getAttribute("aria-selected")).toBe("true");
+		expect(row("Minute", "30")?.getAttribute("aria-selected")).toBe("true");
+	});
+
+	it("moves the value on each pick and commits once when the sheet shuts", () => {
+		const change = vi.fn();
+		const commit = vi.fn();
+		touch(<TimePicker defaultValue="" onValueChange={change} onValueCommit={commit} />);
+		act(() => field()?.click());
+		act(() => row("Hour", "14")?.click());
+		expect(change).toHaveBeenLastCalledWith("14:00");
+		act(() => row("Minute", "05")?.click());
+		expect(change).toHaveBeenLastCalledWith("14:05");
+		expect(commit).not.toHaveBeenCalled();
+		act(() => done()?.click());
+		expect(commit).toHaveBeenCalledTimes(1);
+		expect(commit).toHaveBeenCalledWith("14:05");
+		expect(field()?.value).toBe("14:05");
+	});
+
+	it("does not commit when the sheet shuts on the same value", () => {
+		const commit = vi.fn();
+		touch(<TimePicker defaultValue="08:00" onValueCommit={commit} />);
+		act(() => field()?.click());
+		act(() => done()?.click());
+		expect(commit).not.toHaveBeenCalled();
+	});
+
+	it("keeps seconds when the value or the step has them", () => {
+		const change = vi.fn();
+		touch(<TimePicker defaultValue="08:15:30" step={1} onValueChange={change} />);
+		act(() => field()?.click());
+		expect(row("Second", "30")?.getAttribute("aria-selected")).toBe("true");
+		act(() => row("Minute", "20")?.click());
+		expect(change).toHaveBeenLastCalledWith("08:20:30");
+	});
+
+	it("steps the minutes and holds the picks inside min and max", () => {
+		const change = vi.fn();
+		touch(<TimePicker defaultValue="" min="09:30" max="17:00" step={900} onValueChange={change} />);
+		act(() => field()?.click());
+		expect(
+			Array.from(column("Minute")?.querySelectorAll("[role=option]") ?? []).map(
+				(b) => b.textContent,
+			),
+		).toEqual(["00", "15", "30", "45"]);
+		expect(row("Hour", "08")?.disabled).toBe(true);
+		expect(row("Hour", "18")?.disabled).toBe(true);
+		act(() => row("Hour", "09")?.click());
+		expect(change).toHaveBeenLastCalledWith("09:30");
+	});
+
+	it("stays shut while disabled or read-only", () => {
+		touch(<TimePicker defaultValue="08:00" readOnly />);
+		act(() => field()?.click());
+		expect(sheet()).toBeNull();
+	});
+
+	it("stays the native time field on desktop", () => {
+		act(() => root.render(<TimePicker defaultValue="08:00" />));
+		expect(field()?.type).toBe("time");
+	});
+});
+
+describe("DateTimePicker", () => {
+	it("moves the time from the sheet and commits it when the sheet shuts", () => {
+		const change = vi.fn();
+		const commit = vi.fn();
+		touch(
+			<DateTimePicker
+				defaultValue={new Date(2026, 10, 12, 9, 30)}
+				onValueChange={change}
+				onValueCommit={commit}
+			/>,
+		);
+		expect(field()?.value).toBe("09:30");
+		act(() => field()?.click());
+		act(() => row("Hour", "18")?.click());
+		expect(change).toHaveBeenLastCalledWith(new Date(2026, 10, 12, 18, 30));
+		expect(commit).not.toHaveBeenCalled();
+		act(() => done()?.click());
+		expect(commit).toHaveBeenCalledWith(new Date(2026, 10, 12, 18, 30));
 	});
 });
