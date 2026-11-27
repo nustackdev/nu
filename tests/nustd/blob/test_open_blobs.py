@@ -33,6 +33,8 @@ from nustd.blob import (
     BlobNotFound,
     BlobSealed,
     BlobTooLarge,
+    FilesBackend,
+    LMDBBackend,
     S3Backend,
 )
 from nustd.blob._base import new_id
@@ -704,3 +706,170 @@ async def test_s3_follow_is_a_plain_read(s3):
     assert b"".join(s3.stream(bid, 10, follow=True, idle=0)) == DATA[10:]
     assert b"".join([p async for p in s3.astream(bid, follow=True, idle=0)]) == DATA
     assert s3.read(bid) == DATA
+
+
+# ---- commits by the clock ----------------------------------------------------------------
+
+
+def clocked(kind, path, interval, **options):
+    """A local backend with its default (big) batches, committing by the clock every ``interval``."""
+    made = (LMDBBackend if kind == "lmdb" else FilesBackend)(
+        path, commit_interval=interval, **options
+    )
+    made.open()
+    return made
+
+
+@pytest.mark.parametrize("bad", [-1, -0.1])
+def test_negative_commit_interval_is_refused(local, store_path, bad):
+    kind = LMDBBackend if local == "lmdb" else FilesBackend
+    with pytest.raises(ValueError, match="commit_interval"):
+        kind(store_path, commit_interval=bad)
+
+
+@pytest.mark.parametrize("interval", [0.1, None], ids=["clock", "size-only"])
+async def test_async_source_commits_by_the_clock_while_it_waits(local, store_path, interval):
+    backend = clocked(local, store_path, interval)
+    stalled, go = asyncio.Event(), asyncio.Event()
+
+    async def trickle():
+        for index in range(10):
+            await asyncio.sleep(0.01)
+            yield growing(index)
+        stalled.set()
+        await go.wait()  # the source waits: only the clock can commit now
+
+    bid = new_id()
+    try:
+        put = asyncio.create_task(backend.aput(trickle(), blob_id=bid, seal=False))
+        await asyncio.wait_for(stalled.wait(), 10)
+        await asyncio.sleep(0.4)
+        expected = b"".join(growing(index) for index in range(10))
+        if interval is None:
+            assert not await backend.aexists(bid)  # nothing filled a batch
+        else:
+            info = await backend.ainfo(bid)
+            assert (info.size, info.sealed) == (len(expected), False)
+            assert await backend.aread(bid, 0, info.size) == expected
+        go.set()
+        await asyncio.wait_for(put, 10)
+        assert await backend.aread(bid, 0, len(expected)) == expected
+    finally:
+        go.set()
+        backend.close()
+
+
+async def test_follower_sees_a_trickle_within_about_the_interval(local, store_path):
+    backend = clocked(local, store_path, 0.1)
+    bid = new_id()
+    written = {}
+
+    async def trickle():
+        size = 0
+        for index in range(15):
+            await asyncio.sleep(0.05)
+            piece = growing(index)
+            size += len(piece)
+            written[size] = time.monotonic()
+            yield piece
+
+    lags = []
+
+    async def follow():
+        seen = 0
+        while not await backend.aexists(bid):
+            await asyncio.sleep(0.005)
+        async for piece in backend.astream(bid, follow=True):
+            seen += len(piece)
+            if seen in written:
+                lags.append(time.monotonic() - written[seen])
+
+    try:
+        follower = asyncio.create_task(follow())
+        await backend.aput(trickle(), blob_id=bid)
+        await asyncio.wait_for(follower, 10)
+    finally:
+        backend.close()
+    assert lags
+    # The clock commits within the interval, a follower looks within POLL_LAST.
+    assert max(lags) < 0.1 + 0.25 + 0.3
+
+
+def test_sync_trickle_commits_as_pieces_arrive(local, store_path):
+    backend = clocked(local, store_path, 0.05)
+    bid = new_id()
+    seen = []
+
+    def trickle():
+        for index in range(12):
+            time.sleep(0.03)
+            if index == 8:
+                try:
+                    seen.append(backend.info(bid).size)
+                except BlobNotFound:
+                    seen.append(0)
+            yield growing(index)
+
+    try:
+        info = backend.put(trickle(), blob_id=bid)
+        assert backend.read(bid) == b"".join(growing(index) for index in range(12))
+        assert info.sealed
+    finally:
+        backend.close()
+    assert 0 < seen[0] <= sum(len(growing(index)) for index in range(8))
+
+
+@pytest.mark.parametrize("interval", [0, 0.01])
+def test_clock_commits_keep_the_bytes_whole_across_short_chunks(local, store_path, interval):
+    # Every piece commits, the short chunk still filling written again each time.
+    backend = clocked(local, store_path, interval, batch_size=4096)
+    if local == "lmdb":
+        backend.close()
+        backend = clocked(local, store_path, interval, batch_size=4096, chunk_size=1000)
+    try:
+        bid = backend.put(b"", seal=False).id
+        pieces = (growing(index)[: 1 + index * 97] for index in range(40))
+        expected = b"".join(growing(index)[: 1 + index * 97] for index in range(40))
+
+        def slowly():
+            for piece in pieces:
+                time.sleep(0.002)
+                yield piece
+
+        backend.append(bid, slowly())
+        assert backend.read(bid, 0, len(expected)) == expected
+        assert b"".join(backend.stream(bid, step=333)) == expected
+        backend.append(bid, b"tail")
+        backend.seal(bid)
+        assert backend.read(bid) == expected + b"tail"
+        assert leftovers(backend) == []
+    finally:
+        backend.close()
+
+
+async def test_a_failed_clock_commit_stops_a_waiting_put(local, store_path):
+    # Deleted under a put whose source waits: the clock's next commit fails,
+    # and the put raises then, not once the source moves again.
+    backend = clocked(local, store_path, 0.05)
+    never = asyncio.Event()
+
+    async def stalls():
+        yield b"a" * 100
+        await asyncio.sleep(0.2)
+        yield b"b" * 100
+        await never.wait()
+        yield b"c"
+
+    bid = new_id()
+    try:
+        put = asyncio.create_task(backend.aput(stalls(), blob_id=bid, seal=False))
+        for _ in range(100):
+            if await backend.aexists(bid):
+                break
+            await asyncio.sleep(0.01)
+        await backend.adelete(bid)
+        with pytest.raises(BlobNotFound):
+            await asyncio.wait_for(put, 5)
+        assert not await backend.aexists(bid)
+    finally:
+        backend.close()

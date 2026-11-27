@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 
 
 __all__ = [
+    "DEFAULT_COMMIT_INTERVAL",
     "POLL_FIRST",
     "POLL_LAST",
     "Busy",
@@ -48,6 +49,15 @@ Followers poll the blob's meta: there is no cross-process wake-up (a later
 option: inotify for files, a pipe or a socket per store). The wait doubles
 while the blob does not grow, up to ``POLL_LAST``, and drops back to this
 once it does.
+"""
+
+DEFAULT_COMMIT_INTERVAL = 0.25
+"""Seconds a streamed put or append holds bytes before it commits them, batch full or not.
+
+Size alone would show a slow source to its followers only a batch at a
+time (32 MiB on lmdb, 8 MiB on files); the clock shows it within about
+this long. A fast source fills its batches first and never waits on the
+clock.
 """
 
 POLL_LAST = 0.25
@@ -79,6 +89,12 @@ def check_range(start: int, end: int | None, step: int = STEP) -> None:
         raise ValueError(f"a range bound cannot be negative, got [{start}, {end})")
     if step <= 0:
         raise ValueError(f"step must be positive, got {step}")
+
+
+def check_interval(interval: float | None) -> None:
+    """Refuse a negative ``commit_interval``; None commits by size alone."""
+    if interval is not None and interval < 0:
+        raise ValueError(f"commit_interval is seconds, 0 or more, got {interval}")
 
 
 def check_idle(idle: float | None) -> None:
@@ -510,8 +526,12 @@ class Writer(Protocol):
         """Hold the next piece of an async source, cheaply, on the event loop; True when a ``flush`` is due."""
         ...
 
+    def due_in(self) -> float | None:
+        """Seconds until the bytes held are due a commit by the clock; None when nothing waits."""
+        ...
+
     def flush(self) -> None:
-        """Write what ``feed`` holds, committing as batches fill: blocking, run in a thread."""
+        """Write what ``feed`` holds, committing as batches fill or the clock says: blocking, run in a thread."""
         ...
 
     def finish(self) -> BlobInfo:
@@ -539,10 +559,48 @@ def _drive(writer: Writer, source: object, kind: str) -> BlobInfo:
 
 
 async def _adrive(writer: Writer, source: AsyncIterable[bytes]) -> BlobInfo:
-    try:
+    """Feed an async source to the writer, and commit by the clock beside it, while the source waits too.
+
+    Two tasks share the writer under a lock: one pulls the source and feeds
+    it, the other sleeps until the bytes held are due (``due_in``) and
+    flushes them. Neither cancels the source, and a piece costs no task of
+    its own. The first to fail stops the other.
+    """
+    lock = asyncio.Lock()
+    fed = asyncio.Event()
+
+    async def feed() -> None:
         async for piece in source:
-            if writer.feed(piece):
-                await settled(asyncio.to_thread(writer.flush))
+            async with lock:
+                if writer.feed(piece):
+                    await settled(asyncio.to_thread(writer.flush))
+            fed.set()
+
+    async def clock() -> None:
+        while True:
+            fed.clear()  # before the look, so a piece fed after it wakes the wait
+            left = writer.due_in()
+            if left is None:
+                await fed.wait()
+                continue
+            await asyncio.sleep(left)
+            async with lock:
+                if writer.due_in() == 0:
+                    await settled(asyncio.to_thread(writer.flush))
+
+    feeding = asyncio.ensure_future(feed())
+    ticking = asyncio.ensure_future(clock())
+    try:
+        try:
+            await asyncio.wait({feeding, ticking}, return_when=asyncio.FIRST_COMPLETED)
+        finally:
+            for task in (feeding, ticking):
+                if not task.done():
+                    task.cancel()
+            await asyncio.wait({feeding, ticking})
+        if not ticking.cancelled() and ticking.exception() is not None:
+            raise ticking.exception()  # type: ignore[misc]
+        feeding.result()
         return await settled(asyncio.to_thread(writer.finish))
     except BaseException:
         await asyncio.to_thread(writer.fail)

@@ -7,7 +7,9 @@ from typing import TYPE_CHECKING
 
 from nu.context import Provide
 
+from ._base import DEFAULT_COMMIT_INTERVAL
 from .backends import FilesBackend, LMDBBackend, S3Backend
+from .backends.files import DEFAULT_BATCH_SIZE as FILES_BATCH_SIZE
 from .backends.lmdb import (
     DEFAULT_BATCH_SIZE,
     DEFAULT_CHUNK_SIZE,
@@ -36,6 +38,7 @@ def lmdb(
     writemap: bool = DEFAULT_WRITEMAP,
     chunk_size: int = DEFAULT_CHUNK_SIZE,
     batch_size: int = DEFAULT_BATCH_SIZE,
+    commit_interval: float | None = DEFAULT_COMMIT_INTERVAL,
 ) -> Provide:
     """Give a store an LMDB env at ``path``, open while the tree runs.
 
@@ -53,6 +56,9 @@ def lmdb(
             blob keeps the size it was put with, so changing it is safe.
         batch_size: bytes of chunks per write txn. A put from a file or a
             stream holds one batch in memory.
+        commit_interval: seconds a streamed put or append holds bytes before
+            it commits them, batch full or not, so a follower sees a slow
+            source within about that long; None commits by size alone.
 
     Notes:
         - A blob is limited by ``map_size`` alone.
@@ -71,23 +77,37 @@ def lmdb(
         "writemap": writemap,
         "chunk_size": chunk_size,
         "batch_size": batch_size,
+        "commit_interval": commit_interval,
     }
     return Provide(
         BlobFabric, kwargs={"backend": LMDBBackend, "options": options}, tag=store_name(store)
     )
 
 
-def files(store: StoreRef | str, root: str | os.PathLike[str]) -> Provide:
+def files(
+    store: StoreRef | str,
+    root: str | os.PathLike[str],
+    *,
+    batch_size: int = FILES_BATCH_SIZE,
+    commit_interval: float | None = DEFAULT_COMMIT_INTERVAL,
+) -> Provide:
     """Give a store a directory of plain files at ``root``, one file per blob.
 
     Args:
         store: the store the backend binds under, its ``StoreRef`` or its name.
         root: the tree's root, made on first open.
+        batch_size: bytes written between two commits of a put or an append.
+        commit_interval: seconds a streamed put or append holds bytes before
+            it commits them, batch full or not; None commits by size alone.
 
     Example:
         nu.With(nustd.blob.files(Media, "./media"), body=Media.put(b"..."))
     """
-    options = {"root": os.fspath(root)}
+    options = {
+        "root": os.fspath(root),
+        "batch_size": batch_size,
+        "commit_interval": commit_interval,
+    }
     return Provide(
         BlobFabric, kwargs={"backend": FilesBackend, "options": options}, tag=store_name(store)
     )

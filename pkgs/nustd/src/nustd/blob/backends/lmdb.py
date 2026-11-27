@@ -13,7 +13,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from .._base import Busy, LocalBackend, _as_buffer, _pieces, _too_large, check_id, clamp
+from .._base import (
+    DEFAULT_COMMIT_INTERVAL,
+    Busy,
+    LocalBackend,
+    _as_buffer,
+    _pieces,
+    _too_large,
+    check_id,
+    check_interval,
+    clamp,
+)
 from ..protocol import BlobExists, BlobInfo, BlobNotFound, BlobSealed
 
 
@@ -122,9 +132,13 @@ class LMDBBackend(LocalBackend):
       from an mmap of the caller's file), so it costs nothing beyond LMDB's
       own. A file, an iterable or an async iterable holds up to one batch,
       ``batch_size`` bytes, in Python memory before each commit.
-    - A follower sees a streamed put a batch at a time: bytes held in a
-      batch not yet full are not readable. An ``append`` commits when it
-      ends, so small appends are the way to feed a follower promptly.
+    - A follower sees a streamed put or append as it commits: each full
+      batch, and whatever is held once ``commit_interval`` passed since the
+      last commit, the short chunk still filling included (written again,
+      fuller, by the next commit). A fast source fills its batches first and
+      never commits by the clock. A sync iterable is checked as each piece
+      arrives, so one that stalls holds its last bytes until its next piece
+      or its end; an async one is committed by the clock while it waits.
     - Each append writes the blob's short last chunk again, filled up: up
       to ``chunk_size`` bytes of LMDB writes for an append of a few. A blob
       fed by many tiny appends wants them gathered to a few hundred KiB, or
@@ -178,6 +192,9 @@ class LMDBBackend(LocalBackend):
         chunk_size: bytes per chunk of the blobs this instance puts, at most
             ``MAX_CHUNK``. Each blob keeps the size it was put with.
         batch_size: bytes of chunks per write txn, at least one chunk.
+        commit_interval: seconds a streamed put or append holds bytes before
+            it commits them, its batch full or not; None commits by size
+            alone. See ``DEFAULT_COMMIT_INTERVAL``.
     """
 
     max_size: int | None = None
@@ -192,17 +209,20 @@ class LMDBBackend(LocalBackend):
         writemap: bool = DEFAULT_WRITEMAP,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
         batch_size: int = DEFAULT_BATCH_SIZE,
+        commit_interval: float | None = DEFAULT_COMMIT_INTERVAL,
     ) -> None:
         if not 1 <= chunk_size <= MAX_CHUNK:
             raise ValueError(f"chunk_size must be within [1, {MAX_CHUNK}], got {chunk_size}")
         if batch_size < 1:
             raise ValueError(f"batch_size must be positive, got {batch_size}")
+        check_interval(commit_interval)
         self.path = Path(path)
         self.map_size = map_size
         self.max_readers = max_readers
         self.writemap = writemap
         self.chunk_size = chunk_size
         self.batch_size = batch_size
+        self.commit_interval = commit_interval
         self._env: Any = None
         self._data: Any = None
         self._meta: Any = None
@@ -499,6 +519,10 @@ class _Put:
         """This writer's claim record: an append's from the start, a put's once a batch landed before the last."""
         self._appending = False
         self._done: BlobInfo | None = None
+        self._interval = backend.commit_interval
+        self._last = time.monotonic()
+        self._visible = 0
+        """Bytes readers see: the size the last commit wrote."""
 
     @classmethod
     def appending(
@@ -512,7 +536,7 @@ class _Put:
         """An append's writer, from the blob's meta and its short last chunk, holding its claim."""
         writer = cls(backend, blob_id, chunk=record["chunk"], seal=False)
         writer._record = record
-        writer._size = record["size"]
+        writer._size = writer._visible = record["size"]
         writer._index = record["size"] // record["chunk"]
         writer._filling = tail
         writer._claim = claim
@@ -539,17 +563,30 @@ class _Put:
                     self.flush()
 
     def feed(self, piece: object) -> bool:
-        """Take in the next piece of a streamed source; True when a batch is full and due a commit."""
+        """Take in the next piece of a streamed source; True when a batch is full, or the clock says, and a commit is due."""
         view = memoryview(piece).cast("B")  # type: ignore[arg-type]
         self._count(view.nbytes)
         self._rest = view
-        return self._fill()
+        return self._fill() or self._due()
+
+    def due_in(self) -> float | None:
+        """Seconds until the chunks held are due a commit by the clock; None when nothing waits."""
+        if self._interval is None or self._size - self._rest.nbytes <= self._visible:
+            return None
+        return max(0.0, self._last + self._interval - time.monotonic())
+
+    def _due(self) -> bool:
+        left = self.due_in()
+        return left is not None and left <= 0
 
     def flush(self) -> None:
-        """Commit the full batch, and every further one the fed piece fills."""
-        self.commit(last=False)
-        while self._fill():
+        """Commit the full batch and every further one the fed piece fills; then, when the clock says, the rest held."""
+        if len(self._pending) == self._per_batch:
             self.commit(last=False)
+            while self._fill():
+                self.commit(last=False)
+        if self._due():
+            self.commit(last=False, partial=True)
 
     def finish(self) -> BlobInfo:
         """Commit the rest, sealed or not as the put asked; an append leaves the blob open."""
@@ -609,7 +646,7 @@ class _Put:
                     self._pending.append(self._filling)
                     self._filling = bytearray()
             for offset in range(0, view.nbytes, self._chunk):
-                if len(self._pending) == self._per_batch:
+                if len(self._pending) == self._per_batch or (self._pending and self._due()):
                     self.commit(last=False)
                 self._pending.append(view[offset : offset + self._chunk])
             self._done = self.commit(last=True)
@@ -618,12 +655,18 @@ class _Put:
             # Slices of an mmap keep it open; drop them on every way out.
             self._pending.clear()
 
-    def commit(self, *, last: bool) -> BlobInfo:
-        """Write the pending chunks and the meta in one txn; the last also writes the rest and seals or not."""
+    def commit(self, *, last: bool, partial: bool = False) -> BlobInfo:
+        """Write the pending chunks and the meta in one txn; the last also writes the rest and seals or not.
+
+        A ``partial`` commit, the clock's, also writes the chunk still
+        filling, short: it stays in hand, written again once it holds more.
+        """
         backend = self._backend
         env = backend._require()
         chunks = self._pending
-        if last and self._filling:
+        whole = len(chunks)
+        tail = len(self._filling) if (last or partial) and self._filling else 0
+        if tail:
             chunks.append(self._filling)
         if self._claim is None:
             # A reader slot left by a dead process pins every page freed since
@@ -646,13 +689,15 @@ class _Put:
             for chunk in chunks:
                 txn.put(_chunk_key(self._raw, index), chunk, db=backend._data)
                 index += 1
-            size = self._size if last else index * self._chunk
+            size = self._size if last else (self._index + whole) * self._chunk + tail
             self._record = {**self._record, "size": size, "sealed": last and self._seal}
             txn.put(self._key, json.dumps(self._record).encode(), db=backend._meta)
             if last and claim is not None:
                 txn.delete(self._key, db=backend._claims)
-        self._index = index
+        self._index += whole
         self._pending = []
+        self._visible = size
+        self._last = time.monotonic()
         if last:
             self._claim = None
             self._filling = bytearray()

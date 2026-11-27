@@ -11,7 +11,17 @@ from dataclasses import replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from .._base import Busy, LocalBackend, _as_buffer, _pieces, _too_large, check_id, clamp
+from .._base import (
+    DEFAULT_COMMIT_INTERVAL,
+    Busy,
+    LocalBackend,
+    _as_buffer,
+    _pieces,
+    _too_large,
+    check_id,
+    check_interval,
+    clamp,
+)
 from ..protocol import BlobExists, BlobInfo, BlobNotFound, BlobSealed
 
 
@@ -48,7 +58,9 @@ class FilesBackend(LocalBackend):
     A put creates the data file under its final name (``O_EXCL``: the create
     fails when the id is taken, so write-once comes from the filesystem
     itself, across processes) and appends to it in place. Every
-    ``batch_size`` bytes, and when the source ends, it commits: the data is
+    ``batch_size`` bytes, once ``commit_interval`` seconds passed since the
+    last commit with bytes not yet committed, and when the source ends, it
+    commits: the data is
     fsynced and the meta, with the size committed so far, is rewritten
     atomically (temp file and rename). A reader reads the data only up to
     the meta's size, so a blob is readable from its first commit and never
@@ -82,15 +94,25 @@ class FilesBackend(LocalBackend):
     Args:
         root: the tree's root, made on first open.
         batch_size: bytes written between two commits of a put or an append.
+        commit_interval: seconds a streamed put or append holds bytes before
+            it commits them, its batch full or not; None commits by size
+            alone. A sync iterable is checked as each piece arrives, an async
+            one also while it waits. See ``DEFAULT_COMMIT_INTERVAL``.
     """
 
     def __init__(
-        self, root: str | os.PathLike[str], *, batch_size: int = DEFAULT_BATCH_SIZE
+        self,
+        root: str | os.PathLike[str],
+        *,
+        batch_size: int = DEFAULT_BATCH_SIZE,
+        commit_interval: float | None = DEFAULT_COMMIT_INTERVAL,
     ) -> None:
         if batch_size < 1:
             raise ValueError(f"batch_size must be positive, got {batch_size}")
+        check_interval(commit_interval)
         self.root = Path(root)
         self.batch_size = batch_size
+        self.commit_interval = commit_interval
 
     def open(self) -> None:
         """Create the tree on first use."""
@@ -303,6 +325,7 @@ class _FileWriter:
         self._putting = putting
         self._size = self._committed = info.size
         self._held = bytearray()
+        self._last = time.monotonic()
         stat = os.fstat(fd)
         self._file = (stat.st_dev, stat.st_ino)
 
@@ -312,7 +335,7 @@ class _FileWriter:
             raise error
 
     def _write(self, view: memoryview) -> None:
-        """Append to the data file, committing each time a batch fills."""
+        """Append to the data file, committing each time a batch fills or the clock says."""
         batch = self._backend.batch_size
         while view.nbytes:
             room = batch - (self._size - self._committed)
@@ -322,6 +345,19 @@ class _FileWriter:
             view = view[written:]
             if self._size - self._committed >= batch:
                 self._commit(last=False)
+        if self._due():
+            self._commit(last=False)
+
+    def due_in(self) -> float | None:
+        """Seconds until the bytes written or held are due a commit by the clock; None when nothing waits."""
+        interval = self._backend.commit_interval
+        if interval is None or self._size + len(self._held) <= self._committed:
+            return None
+        return max(0.0, self._last + interval - time.monotonic())
+
+    def _due(self) -> bool:
+        left = self.due_in()
+        return left is not None and left <= 0
 
     def _commit(self, *, last: bool) -> None:
         os.fsync(self._fd)
@@ -331,6 +367,7 @@ class _FileWriter:
         self._backend._write_meta(info, writing=self._putting and not last)
         self._info = info
         self._committed = self._size
+        self._last = time.monotonic()
 
     def _check_ours(self) -> None:
         """Refuse to commit once the data file was deleted, or replaced, under this writer."""
@@ -368,10 +405,10 @@ class _FileWriter:
         self._count(view.nbytes)
         self._held += view
         room = self._backend.batch_size - (self._size - self._committed)
-        return len(self._held) >= min(_HOLD, room)
+        return len(self._held) >= min(_HOLD, room) or self._due()
 
     def flush(self) -> None:
-        """Write what ``feed`` holds."""
+        """Write what ``feed`` holds, and commit it when a batch filled or the clock says."""
         held, self._held = self._held, bytearray()
         self._write(memoryview(held))
 

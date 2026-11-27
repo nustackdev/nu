@@ -209,6 +209,7 @@ def test_lmdb_preset_carries_its_options(tmp_path):
         writemap=False,
         chunk_size=1 << 16,
         batch_size=1 << 18,
+        commit_interval=0.5,
     )
     kwargs = config(spec)["kwargs"]
     assert kwargs["backend"] is LMDBBackend
@@ -219,13 +220,20 @@ def test_lmdb_preset_carries_its_options(tmp_path):
         "writemap": False,
         "chunk_size": 1 << 16,
         "batch_size": 1 << 18,
+        "commit_interval": 0.5,
     }
 
 
-def test_files_preset_carries_its_root(tmp_path):
+def test_files_preset_carries_its_options(tmp_path):
     kwargs = config(nustd.blob.files(Media, tmp_path / "files"))["kwargs"]
     assert kwargs["backend"] is FilesBackend
-    assert kwargs["options"] == {"root": str(tmp_path / "files")}
+    assert kwargs["options"] == {
+        "root": str(tmp_path / "files"),
+        "batch_size": 8 << 20,
+        "commit_interval": 0.25,
+    }
+    spec = nustd.blob.files(Media, tmp_path / "f", batch_size=1 << 16, commit_interval=None)
+    assert config(spec)["kwargs"]["options"]["commit_interval"] is None
 
 
 def test_s3_preset_carries_its_options():
