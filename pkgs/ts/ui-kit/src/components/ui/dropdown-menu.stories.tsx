@@ -20,11 +20,11 @@ import {
 	DropdownMenuTrigger,
 } from "./dropdown-menu";
 
-function BasicMenu() {
+function BasicMenu({ open, subOpen }: { open?: boolean; subOpen?: boolean }) {
 	const [wrap, setWrap] = useState(true);
 	const [density, setDensity] = useState("comfy");
 	return (
-		<DropdownMenu>
+		<DropdownMenu defaultOpen={open}>
 			<DropdownMenuTrigger asChild>
 				<Button variant="secondary">Actions</Button>
 			</DropdownMenuTrigger>
@@ -40,7 +40,7 @@ function BasicMenu() {
 					Duplicate
 					<DropdownMenuShortcut keys={["mod", "D"]} />
 				</DropdownMenuItem>
-				<DropdownMenuSub>
+				<DropdownMenuSub defaultOpen={subOpen}>
 					<DropdownMenuSubTrigger>
 						<Share2 />
 						Share
@@ -131,6 +131,63 @@ export const Matrix: StoryObj = {
 				</div>
 				<BasicMenu />
 			</div>
+	),
+};
+
+// Opened at load: in touch mode (a phone, or the Touch toolbar) it is a
+// bottom sheet of 44px rows with no shortcut hints, on desktop the anchored
+// menu.
+export const Open: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<BasicMenu open />
+		</div>
+	),
+};
+
+// The submenu open too: on touch it expands in place under its row.
+export const OpenSubmenu: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<BasicMenu open subOpen />
+		</div>
+	),
+};
+
+// Facts above the actions, opened: on touch they line up with the rows.
+export const OpenWithDetails: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<DropdownMenu defaultOpen>
+				<DropdownMenuTrigger asChild>
+					<Button variant="secondary">Cell</Button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent align="start" className="w-64">
+					<DropdownMenuLabel>Text</DropdownMenuLabel>
+					<DropdownMenuDetails>
+						<DropdownMenuDetail label="Id" mono>
+							a1b2c3d4
+						</DropdownMenuDetail>
+						<DropdownMenuDetail label="Error" tone="danger" wrap>
+							ZeroDivisionError: division by zero
+						</DropdownMenuDetail>
+					</DropdownMenuDetails>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem>
+						<Edit3 />
+						Edit
+					</DropdownMenuItem>
+					<DropdownMenuItem disabled>
+						<Copy />
+						Duplicate
+					</DropdownMenuItem>
+					<DropdownMenuItem variant="danger">
+						<Trash2 />
+						Delete
+					</DropdownMenuItem>
+				</DropdownMenuContent>
+			</DropdownMenu>
+		</div>
 	),
 };
 
