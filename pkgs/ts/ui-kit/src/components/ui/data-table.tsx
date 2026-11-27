@@ -108,7 +108,7 @@ import {
 import { watchKeyboardUse } from "../../lib/modality";
 import { table } from "../../lib/recipes";
 import { ROVING_KEY, useRovingFocus } from "../../lib/roving";
-import { useTouch } from "../../lib/touch";
+import { LONG_PRESS_MS, LONG_PRESS_SLOP, useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 import { Button } from "./button";
 import { Checkbox } from "./checkbox";
@@ -287,10 +287,6 @@ function spotOf(key: string | null): Spot | null {
 	const [row, col] = JSON.parse(key) as [string | null, string];
 	return { row, col };
 }
-
-/** How long a finger rests on a cell before it is a long-press, and how far it may drift. */
-const LONG_PRESS_MS = 500;
-const LONG_PRESS_SLOP = 10;
 
 /** A control inside a cell handles its own click; the cell leaves it alone. */
 function onControl(e: React.SyntheticEvent): boolean {

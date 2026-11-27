@@ -19,7 +19,7 @@ import { ContextMenu as ContextMenuPrimitive, Slot as SlotPrimitive } from "radi
 import { Check, ChevronRight, Circle } from "lucide-react";
 import * as React from "react";
 
-import { useTouch } from "../../lib/touch";
+import { LONG_PRESS_MS, LONG_PRESS_SLOP, useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 import {
 	menuItemClasses,
@@ -47,11 +47,6 @@ import {
 	useMenuSheet,
 } from "./menu-sheet";
 import { Shortcut } from "./shortcut";
-
-/** How long a finger rests before it is a long-press, in ms. */
-const LONG_PRESS_MS = 500;
-/** How far it may drift meanwhile, in px, before it is a scroll instead. */
-const LONG_PRESS_SLOP = 10;
 
 const contextMenuContentClasses = [
 	"z-50 min-w-[10rem] overflow-hidden p-1",

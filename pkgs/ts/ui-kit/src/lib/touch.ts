@@ -27,6 +27,11 @@ export const TOUCH_QUERY = "(pointer: coarse) and (hover: none)";
 /** The document attribute the kit's touch CSS keys on. */
 export const TOUCH_ATTR = "data-nu-touch";
 
+/** How long a finger rests before it is a long-press (the touch right-click), in ms. */
+export const LONG_PRESS_MS = 500;
+/** How far it may drift meanwhile, in px, before it is a scroll instead. */
+export const LONG_PRESS_SLOP = 10;
+
 function detect(): boolean {
 	if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
 	return window.matchMedia(TOUCH_QUERY).matches;
