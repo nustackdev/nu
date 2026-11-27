@@ -102,6 +102,75 @@ export const Matrix: StoryObj = {
 	),
 };
 
+// Opened at load: in touch mode (a phone, or the Touch toolbar) a bottom
+// sheet with the actions stacked, the main one first; on desktop the dialog.
+export const Open: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<Dialog defaultOpen>
+				<DialogTrigger asChild>
+					<Button variant="secondary">Open dialog</Button>
+				</DialogTrigger>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Delete project</DialogTitle>
+						<DialogDescription>
+							This action cannot be undone. Traces, dashboards, and cached runs under this project
+							will be dropped.
+						</DialogDescription>
+					</DialogHeader>
+					<DialogFooter>
+						<DialogClose asChild>
+							<Button variant="secondary">Cancel</Button>
+						</DialogClose>
+						<DialogClose asChild>
+							<Button variant="destructive">Delete</Button>
+						</DialogClose>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+		</div>
+	),
+};
+
+const FIELDS = Array.from({ length: 14 }, (_, i) => `Field ${i + 1}`);
+
+// A form taller than the phone: the sheet caps at 90% and its body scrolls.
+export const OpenLong: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<Dialog defaultOpen>
+				<DialogTrigger asChild>
+					<Button variant="secondary">Open long dialog</Button>
+				</DialogTrigger>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Edit host</DialogTitle>
+						<DialogDescription>Changes apply on the next deploy.</DialogDescription>
+					</DialogHeader>
+					{FIELDS.map((field) => (
+						<label key={field} className="grid gap-1 text-sm text-text-secondary">
+							{field}
+							<input
+								className="h-8 rounded-md border border-border-default bg-bg-canvas px-2 text-text-primary"
+								defaultValue={`value ${field.slice(6)}`}
+							/>
+						</label>
+					))}
+					<DialogFooter>
+						<DialogClose asChild>
+							<Button variant="secondary">Cancel</Button>
+						</DialogClose>
+						<DialogClose asChild>
+							<Button>Save</Button>
+						</DialogClose>
+					</DialogFooter>
+				</DialogContent>
+			</Dialog>
+		</div>
+	),
+};
+
 const meta: Meta = {
 	title: "UI/Dialog",
 };
