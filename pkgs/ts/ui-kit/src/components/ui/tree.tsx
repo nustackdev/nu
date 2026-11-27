@@ -27,7 +27,8 @@
 // context menu, and a finger that moves scrolls the list. No hover either, so
 // what hover revealed is always there or behind the long press: the fold
 // chevron takes the icon's place on every row that folds, and a row with a
-// menu keeps its actions there (put what they do in the menu too), while a
+// menu keeps its actions there (put what they do in the menu too) and shows
+// a ⋯ at its end that opens the same menu, the way a table row does, while a
 // row with actions and no menu shows them at rest.
 //
 // ## Two parts
@@ -45,7 +46,7 @@
 // Geometry and washes are CSS variables (`--tree-*` in index.css), so an app
 // retunes a tree without touching it.
 
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Ellipsis } from "lucide-react";
 import type * as React from "react";
 import { Fragment, useCallback, useImperativeHandle, useMemo, useState } from "react";
 import { ROVING_KEY, useRovingFocus } from "../../lib/roving";
@@ -54,6 +55,7 @@ import { cn } from "../../lib/utils";
 import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from "./context-menu";
 import { IconButton } from "./icon-button";
 import { InlineEdit } from "./inline-edit";
+import { useMenuSheet } from "./menu-sheet";
 import { useTreeDrag } from "./tree-drag";
 import { flattenTree, type TreeMove, type TreeRow, type TreeSource } from "./tree-model";
 
@@ -364,7 +366,28 @@ const ACTIONS = cn(
 );
 
 // Touch: nothing to hover, so a row's actions sit at rest at its end.
-const ACTIONS_TOUCH = "flex shrink-0 items-center justify-end gap-px";
+const ACTIONS_TOUCH = "ml-auto flex shrink-0 items-center justify-end gap-px";
+
+/**
+ * Touch: the ⋯ at a row's end, opening the row's menu as the long press
+ * does. It sits inside the ContextMenu, which on touch is a menu sheet.
+ */
+function TreeMenuButton({ title }: { title: string }) {
+	const { setOpen } = useMenuSheet();
+	return (
+		<IconButton
+			variant="ghost"
+			size="sm"
+			ring="inset"
+			aria-label={`${title} options`}
+			// No focus on a press, like the chevron; the sheet takes it.
+			onMouseDown={(e) => e.preventDefault()}
+			onClick={() => setOpen(true)}
+		>
+			<Ellipsis />
+		</IconButton>
+	);
+}
 
 export type TreeItemProps = {
 	item: TreeItemState;
@@ -376,11 +399,11 @@ export type TreeItemProps = {
 	label?: React.ReactNode;
 	/**
 	 * Buttons revealed on hover or keyboard focus, at the row's end. On touch
-	 * they sit at rest, or are left out when the row has a `menu`: the long
-	 * press opens that instead.
+	 * they sit at rest, or are left out when the row has a `menu`: a ⋯ that
+	 * opens it takes their place, and so does a long press.
 	 */
 	actions?: React.ReactNode;
-	/** Items for the right-click menu, a long press on touch. */
+	/** Items for the right-click menu; on touch a long press or the row's ⋯. */
 	menu?: React.ReactNode;
 	/** Where focus goes when the right-click menu closes. */
 	onMenuCloseAutoFocus?: (e: Event) => void;
@@ -489,7 +512,11 @@ export function TreeItem({
 			) : (
 				(label ?? <span className="min-w-0 flex-1 truncate">{title}</span>)
 			)}
-			{actions && !(touch && menu) ? (
+			{touch && menu && !renaming ? (
+				<div className={ACTIONS_TOUCH}>
+					<TreeMenuButton title={title} />
+				</div>
+			) : actions && !(touch && menu) ? (
 				<div className={touch ? ACTIONS_TOUCH : ACTIONS}>{actions}</div>
 			) : null}
 		</div>

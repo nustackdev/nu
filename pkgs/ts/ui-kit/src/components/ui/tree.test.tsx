@@ -366,4 +366,15 @@ describe("Tree on touch", () => {
 		render(true, true);
 		expect(item("src").textContent).not.toContain("act");
 	});
+
+	it("opens the menu from the row's ⋯", () => {
+		render(true, true);
+		const more = item("src").querySelector<HTMLButtonElement>('button[aria-label="src options"]');
+		expect(more).not.toBeNull();
+		expect(document.body.textContent).not.toContain("menu");
+		act(() => more?.click());
+		expect(document.body.textContent).toContain("menu");
+		render(false, true);
+		expect(item("src").querySelector('button[aria-label="src options"]')).toBeNull();
+	});
 });
