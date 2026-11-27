@@ -104,6 +104,10 @@ export function Slider({
 					className={cn(
 						"block shrink-0 rounded-full bg-bg-surface border-2 border-border-strong",
 						"cursor-default",
+						// Touch: a 44px tap area around the thumb, unseen (index.css,
+						// `nu-tap`). It sits inside the root, so a tap on it still reaches
+						// the root's own pointer handling.
+						"nu-tap",
 						"transition-transform duration-fast ease-out",
 						"hover:border-accent",
 						"data-[state=active]:bg-accent data-[state=active]:border-accent data-[state=active]:scale-110",
