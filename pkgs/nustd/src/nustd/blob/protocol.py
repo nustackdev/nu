@@ -86,10 +86,12 @@ class BlobSealed(ValueError):  # noqa: N818 - a state, not an error kind
     """The blob is sealed: no more bytes may be appended to it."""
 
 
-class BlobIdle(TimeoutError):  # noqa: N818 - a state, not an error kind
+class BlobIdle(Exception):  # noqa: N818 - a state, not an error kind
     """A following read waited its ``idle`` seconds and the open blob did not grow.
 
-    Its writer may be gone: anyone may ``seal`` an abandoned blob.
+    Its writer may be gone: anyone may ``seal`` an abandoned blob. Not a
+    ``TimeoutError``: that is an ``OSError``, which a server reads as the
+    client gone.
     """
 
 

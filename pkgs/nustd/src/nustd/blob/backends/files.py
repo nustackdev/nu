@@ -33,7 +33,10 @@ _WRITE_MAX = 1 << 30
 """The most bytes one ``write`` call is handed: macOS refuses one past ``INT_MAX``."""
 
 _HOLD = 1 << 20
-"""Bytes of an async source held on the event loop before a thread writes them."""
+"""Bytes of an async source held on the event loop before a thread writes them.
+
+Fewer when the batch fills first, so a follower sees each batch commit.
+"""
 
 _WRITING = "writing"
 """The meta key a put's commits carry until its last one: a put still under way."""
@@ -364,7 +367,8 @@ class _FileWriter:
         view = memoryview(piece).cast("B")  # type: ignore[arg-type]
         self._count(view.nbytes)
         self._held += view
-        return len(self._held) >= _HOLD
+        room = self._backend.batch_size - (self._size - self._committed)
+        return len(self._held) >= min(_HOLD, room)
 
     def flush(self) -> None:
         """Write what ``feed`` holds."""

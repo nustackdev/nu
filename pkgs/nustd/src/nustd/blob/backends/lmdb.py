@@ -125,6 +125,10 @@ class LMDBBackend(LocalBackend):
     - A follower sees a streamed put a batch at a time: bytes held in a
       batch not yet full are not readable. An ``append`` commits when it
       ends, so small appends are the way to feed a follower promptly.
+    - Each append writes the blob's short last chunk again, filled up: up
+      to ``chunk_size`` bytes of LMDB writes for an append of a few. A blob
+      fed by many tiny appends wants them gathered to a few hundred KiB, or
+      a smaller ``chunk_size`` for its store.
     - A path source is put from an mmap of the caller's file. It must not be
       truncated while its put runs: touching a mapped page past the new end
       kills the process with SIGBUS, not a Python exception.

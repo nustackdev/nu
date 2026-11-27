@@ -136,6 +136,7 @@ def test_get_whole(client, blob):
     assert headers["content-length"] == str(SIZE)
     assert headers["content-disposition"] == 'inline; filename="data.bin"'
     assert headers["x-content-type-options"] == "nosniff"
+    assert headers["x-blob-sealed"] == "1"
     assert "content-range" not in headers
 
 
@@ -371,6 +372,7 @@ def test_head(client, blob, spy):
     assert response.headers["accept-ranges"] == "bytes"
     assert response.headers["content-type"] == "application/x-test"
     assert response.headers["cache-control"] == CACHE_CONTROL
+    assert response.headers["x-blob-sealed"] == "1"
     assert "content-range" not in response.headers
     assert spy.calls == ["ainfo"]
     assert spy.reads == []

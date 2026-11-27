@@ -47,6 +47,8 @@ __all__ = [
     "CACHE_CONTROL",
     "MAX_FIELD",
     "NAME_HEADER",
+    "OPEN_CACHE_CONTROL",
+    "SEALED_HEADER",
     "HeldOpen",
     "routes",
     "same_origin",
@@ -55,7 +57,13 @@ __all__ = [
 
 
 CACHE_CONTROL = "public, max-age=31536000, immutable"
-"""Every blob is write-once under its id, so a url never changes what it serves."""
+"""A sealed blob never changes under its id, so its url is cached for good."""
+
+OPEN_CACHE_CONTROL = "no-store"
+"""An open blob still grows: no cache may keep what it served so far."""
+
+SEALED_HEADER = "X-Blob-Sealed"
+"""On every GET and HEAD: ``1`` for a sealed blob, ``0`` for one still open."""
 
 NAME_HEADER = "X-Blob-Name"
 """The upload header naming the file, percent-encoded UTF-8 (``encodeURIComponent``)."""
@@ -175,7 +183,9 @@ class HeldOpen(Fabric):
         await asyncio.to_thread(self.backend.close)
 
 
-def routes(mount: BlobMount, backend: BlobBackend, *, step: int = STEP) -> list[Route]:
+def routes(
+    mount: BlobMount, backend: BlobBackend, *, step: int = STEP, idle: float | None = None
+) -> list[Route]:
     """Starlette routes serving one store's blobs at ``mount`` and taking uploads into it.
 
     A blob is at ``{at}/<id>``; an upload POSTs to ``{at}``. The backend is
@@ -189,10 +199,23 @@ def routes(mount: BlobMount, backend: BlobBackend, *, step: int = STEP) -> list[
     whole, as RFC 9110 allows; so is a ``Range`` whose ``If-Range`` is not the
     blob's ETag (a date never matches: no ``Last-Modified`` is sent). HEAD
     gives GET's headers and reads no bytes; it ignores ``Range``, as RFC 9110
-    asks. A malformed id or a missing blob is a 404.
+    asks. A malformed id or a missing blob is a 404. Every GET and HEAD says
+    ``X-Blob-Sealed: 1``, or ``0`` for an open blob.
+
+    An open blob, still being written, is served as it grows: 200 with a
+    chunked body that follows it until it is sealed, ``Cache-Control:
+    no-store``, no ETag and no length. A ``Range`` of ``bytes=a-b`` answers
+    206 with ``Content-Range: bytes a-b/*`` and waits for any of those bytes
+    not there yet; ``bytes=a-`` serves what is there now, ``a`` up to the
+    current end, or 416 when nothing is past ``a`` yet. ``bytes=0-``, a
+    suffix ``bytes=-n`` (whose end is not known yet) and any ``If-Range``
+    (an open blob has no ETag) serve the whole blob, following. HEAD of an
+    open blob carries no ``Content-Length``. A blob deleted while followed,
+    or one idle past ``idle``, breaks the body off unfinished.
 
     POST takes the raw body as the blob (a multipart form is stored as is,
-    not parsed), streamed into the backend as it arrives. The ``Content-Type``
+    not parsed), streamed into the backend as it arrives: readable, as an
+    open blob, while the upload runs, and sealed when it ends. The ``Content-Type``
     is stored whole, parameters included, so a ``charset`` comes back on GET.
     The name comes from ``X-Blob-Name`` or else ``?name=``. Answers 201 with
     ``{id, size, mime, name}`` and the blob's url in ``Location`` (under the
@@ -208,6 +231,8 @@ def routes(mount: BlobMount, backend: BlobBackend, *, step: int = STEP) -> list[
         mount: where the store sits, and its upload rules.
         backend: the store's backend, open while the routes answer.
         step: bytes per piece a GET reads and sends.
+        idle: seconds a GET following an open blob waits with no growth
+            before it breaks off; None waits while the client stays.
     """
     if step <= 0:
         raise ValueError(f"step must be positive, got {step}")
@@ -222,9 +247,14 @@ def routes(mount: BlobMount, backend: BlobBackend, *, step: int = STEP) -> list[
             info = await backend.ainfo(blob_id)
         except BlobNotFound:
             return _not_found()
+        if not info.sealed:
+            return serve_open(request, info)
         etag = f'"{info.id}"'
         if _none_match(request.headers.get("if-none-match"), etag):
-            return Response(status_code=304, headers={"etag": etag, "cache-control": CACHE_CONTROL})
+            return Response(
+                status_code=304,
+                headers={"etag": etag, "cache-control": CACHE_CONTROL, SEALED_HEADER: "1"},
+            )
         headers = _headers(info, etag, attachment=_wants_download(request))
         if request.method == "HEAD":
             return Response(headers={**headers, "content-length": str(info.size)})
@@ -255,6 +285,27 @@ def routes(mount: BlobMount, backend: BlobBackend, *, step: int = STEP) -> list[
             status_code=200 if span is None else 206,
             headers=headers,
         )
+
+    def serve_open(request: Request, info: BlobInfo) -> Response:
+        headers = _open_headers(info, attachment=_wants_download(request))
+        if request.method == "HEAD":
+            response = Response(headers=headers)
+            del response.headers["content-length"]  # no length yet: it still grows
+            return response
+        span = None
+        if "if-range" not in request.headers:
+            try:
+                span = _open_range(request.headers.get("range"), info.size)
+            except _NotSatisfiable:
+                return Response(
+                    status_code=416,
+                    headers={"content-range": "bytes */*", "accept-ranges": "bytes", **headers},
+                )
+        start, end = span or (0, None)
+        if span is not None:
+            headers["content-range"] = f"bytes {start}-{span[1] - 1}/*"
+        pieces = backend.astream(info.id, start, end, step=step, follow=True, idle=idle)
+        return StreamingResponse(pieces, status_code=200 if span is None else 206, headers=headers)
 
     async def upload(request: Request) -> Response:
         if not mount.cross_site and not same_origin(request):
@@ -350,6 +401,22 @@ def _headers(info: BlobInfo, etag: str, *, attachment: bool = False) -> dict[str
         "accept-ranges": "bytes",
         "content-type": _content_type(info.mime),
         "x-content-type-options": "nosniff",
+        SEALED_HEADER: "1",
+    }
+    disposition = _disposition(info.name, attachment=attachment)
+    if disposition is not None:
+        headers["content-disposition"] = disposition
+    return headers
+
+
+def _open_headers(info: BlobInfo, *, attachment: bool = False) -> dict[str, str]:
+    """What a GET and a HEAD of an open blob carry: never cached, no ETag, no length."""
+    headers = {
+        "cache-control": OPEN_CACHE_CONTROL,
+        "accept-ranges": "bytes",
+        "content-type": _content_type(info.mime),
+        "x-content-type-options": "nosniff",
+        SEALED_HEADER: "0",
     }
     disposition = _disposition(info.name, attachment=attachment)
     if disposition is not None:
@@ -428,6 +495,36 @@ def _byte_range(header: str | None, size: int) -> tuple[int, int] | None:
     if start >= size:
         raise _NotSatisfiable
     return start, min(end, size)
+
+
+def _open_range(header: str | None, size: int) -> tuple[int, int] | None:
+    """The half-open range one ``bytes=`` spec asks of an open blob, ``size`` bytes so far.
+
+    None serves the whole blob, following. ``a-b`` is taken as asked, ``b``
+    past the size or not: the read waits for it. ``a-`` is cut to what is
+    there now, and raises ``_NotSatisfiable`` when nothing is past ``a``
+    yet. ``0-`` and a suffix (``-n``) serve the whole blob.
+    """
+    if header is None:
+        return None
+    unit, _, spec = header.partition("=")
+    if unit.strip().lower() != "bytes":
+        return None
+    match = _SPEC.fullmatch(spec.strip())
+    if match is None:
+        return None
+    first, last = match.groups()
+    if not first:
+        return None  # a suffix: the end is not known yet
+    start = _bound(first)
+    if last:
+        end = _bound(last) + 1
+        return None if end <= start else (start, end)
+    if start == 0:
+        return None
+    if start >= size:
+        raise _NotSatisfiable
+    return start, size
 
 
 async def _chain(first: bytes, rest: AsyncIterator[bytes]) -> AsyncIterator[bytes]:

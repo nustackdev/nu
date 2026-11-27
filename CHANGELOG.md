@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Serve blobs over http while they are still written, following until sealed
 - Blob stores take open blobs: append, seal, and follow a blob while it grows
 - Let blob backends grow open blobs, seal them, and follow them while written
 - Grow s3 blobs to five TiB and stream them with parallel ranged reads
