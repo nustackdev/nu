@@ -44,7 +44,6 @@ import {
 import { Kbd } from "../../../components/ui/kbd";
 import { Skeleton } from "../../../components/ui/skeleton";
 import { useKeyScope } from "../../../lib/keyboard";
-import { useTouch } from "../../../lib/touch";
 import { cn } from "../../../lib/utils";
 import {
 	type Column,
@@ -407,8 +406,6 @@ export function LensColumns({
 	height = HEIGHT,
 	className,
 }: LensColumnsProps) {
-	// Touch mode has no arrow keys: the key hint row would read "move open back".
-	const touch = useTouch();
 	const host = useRef<HTMLDivElement | null>(null);
 	const [focused, setFocused] = useState<Record<number, number>>({});
 	// How deep the move in flight goes, or null. Drives the skeleton: a drill
@@ -523,23 +520,21 @@ export function LensColumns({
 		>
 			<div className="flex h-8 shrink-0 items-center gap-3 border-b border-border-subtle bg-bg-surface px-2">
 				<PathTrail cursor={cursor} onJump={(d) => go(cursor.slice(0, d))} />
-				{touch ? null : (
-					<div className="flex shrink-0 items-center gap-1.5 text-xs text-text-muted select-none">
-						<span className="flex items-center gap-1">
-							<Kbd aria-label="Up arrow">&#8593;</Kbd>
-							<Kbd aria-label="Down arrow">&#8595;</Kbd>
-							move
-						</span>
-						<span className="flex items-center gap-1">
-							<Kbd aria-label="Right arrow">&#8594;</Kbd>
-							open
-						</span>
-						<span className="flex items-center gap-1">
-							<Kbd aria-label="Left arrow">&#8592;</Kbd>
-							back
-						</span>
-					</div>
-				)}
+				<div className="flex shrink-0 items-center gap-1.5 text-xs text-text-muted select-none">
+					<span className="flex items-center gap-1">
+						<Kbd aria-label="Up arrow">&#8593;</Kbd>
+						<Kbd aria-label="Down arrow">&#8595;</Kbd>
+						move
+					</span>
+					<span className="flex items-center gap-1">
+						<Kbd aria-label="Right arrow">&#8594;</Kbd>
+						open
+					</span>
+					<span className="flex items-center gap-1">
+						<Kbd aria-label="Left arrow">&#8592;</Kbd>
+						back
+					</span>
+				</div>
 			</div>
 
 			<div

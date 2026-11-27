@@ -11,8 +11,6 @@ import { Kbd, type KbdProps } from "./kbd";
 //
 // The glyphs are hidden from screen readers and the combination is said once,
 // in words ("Command Shift R").
-//
-// In touch mode it draws nothing, by way of `Kbd`: no keyboard, no hint.
 
 export interface ShortcutProps extends Omit<React.HTMLAttributes<HTMLElement>, "children"> {
 	/** Key names, in the order they are held: modifiers first. */

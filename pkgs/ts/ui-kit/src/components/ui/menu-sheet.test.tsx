@@ -1,7 +1,7 @@
 // Menus in touch mode: DropdownMenu and ContextMenu render a bottom sheet of
 // rows from the same parts, keep Radix's select semantics (a tap selects and
 // closes, preventDefault keeps it open, checkbox and radio report), expand a
-// submenu in place and drop shortcut hints. ContextMenu opens on a held
+// submenu in place and keep shortcut hints. ContextMenu opens on a held
 // finger, not on one that moves. The command palette goes full screen with a
 // Cancel. Desktop keeps the Radix menus.
 
@@ -67,10 +67,12 @@ afterEach(() => {
 
 const touch = (node: React.ReactNode) => <TouchProvider value={true}>{node}</TouchProvider>;
 const sheet = () => document.querySelector('[data-slot="bottom-sheet-content"]');
+// A row by its label: the text before any shortcut hint it carries.
 const row = (text: string) =>
-	[...document.querySelectorAll<HTMLElement>('[data-slot="menu-sheet-item"]')].find(
-		(el) => el.textContent?.trim() === text,
-	);
+	[...document.querySelectorAll<HTMLElement>('[data-slot="menu-sheet-item"]')].find((el) => {
+		const hint = el.querySelector('[data-slot$="-shortcut"]')?.textContent ?? "";
+		return el.textContent?.replace(hint, "").trim() === text;
+	});
 
 describe("DropdownMenu", () => {
 	function Menu({
@@ -125,11 +127,11 @@ describe("DropdownMenu", () => {
 		expect(sheet()).toBeNull();
 	});
 
-	it("is a sheet of rows in touch mode, with no shortcut hints", () => {
+	it("is a sheet of rows in touch mode, shortcut hints kept", () => {
 		act(() => root.render(touch(<Menu />)));
 		expect(sheet()).not.toBeNull();
 		expect(document.querySelector('[data-slot="dropdown-menu-content"]')).toBeNull();
-		expect(document.querySelector('[data-slot="dropdown-menu-shortcut"]')).toBeNull();
+		expect(document.querySelector('[data-slot="dropdown-menu-shortcut"]')).not.toBeNull();
 		const body = sheet()?.querySelector('[data-slot="bottom-sheet-body"]');
 		expect(body?.className).toContain("p-2");
 		expect(body?.className).not.toContain("w-64");
@@ -258,7 +260,7 @@ describe("CommandPalette", () => {
 		act(() => root.render(touch(palette)));
 		expect(content()?.className).toContain("h-dvh");
 		expect(content()?.className).not.toContain("max-w-lg");
-		expect(document.querySelector('[data-slot="command-palette-shortcut"]')).toBeNull();
+		expect(document.querySelector('[data-slot="command-palette-shortcut"]')).not.toBeNull();
 		expect(content()?.textContent).toContain("Cancel");
 	});
 });

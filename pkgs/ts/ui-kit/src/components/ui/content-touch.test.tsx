@@ -1,11 +1,11 @@
-// Touch mode on the content components: key hints draw nothing, a stamp has
-// no hover title, a json view trades its hover copies for one corner copy,
-// and the toast stack moves to the top edge. Outside touch mode each renders
-// as it did.
+// Touch mode on the content components: key hints draw as they do on
+// desktop, a stamp has no hover title, a json view trades its hover copies
+// for one corner copy, and the toast stack moves to the top edge. Outside
+// touch mode each renders as it did.
 
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TouchProvider } from "../../lib/touch";
 import { JsonView } from "./json-view";
 import { Kbd } from "./kbd";
@@ -38,29 +38,21 @@ function render(touch: boolean, el: React.ReactElement) {
 
 const q = (sel: string) => document.querySelector(sel);
 
+// Showing key hints is the app's call: the kit draws them in both modes.
 describe("key hints", () => {
-	it("draw on desktop", () => {
-		render(
-			false,
-			<>
-				<Kbd>K</Kbd>
-				<Shortcut keys={["mod", "K"]} />
-			</>,
-		);
-		expect(q("[data-slot=kbd]")).not.toBeNull();
-		expect(q("[data-slot=shortcut]")).not.toBeNull();
-	});
-
-	it("draw nothing in touch mode", () => {
-		render(
-			true,
-			<>
-				<Kbd>K</Kbd>
-				<Shortcut keys={["mod", "K"]} />
-			</>,
-		);
-		expect(q("kbd")).toBeNull();
-	});
+	for (const touch of [false, true]) {
+		it(`draw ${touch ? "in touch mode" : "on desktop"}`, () => {
+			render(
+				touch,
+				<>
+					<Kbd>K</Kbd>
+					<Shortcut keys={["mod", "K"]} />
+				</>,
+			);
+			expect(q("[data-slot=kbd]")).not.toBeNull();
+			expect(q("[data-slot=shortcut]")).not.toBeNull();
+		});
+	}
 });
 
 describe("RelativeTime", () => {
@@ -94,6 +86,50 @@ describe("JsonView", () => {
 		render(true, <JsonView value={{ a: 1 }} collapseAll />);
 		expect(q("[aria-label='Copy JSON']")).toBeNull();
 	});
+
+	it("routes a hovered row's copy through copyText on desktop", async () => {
+		const writeText = vi.fn(() => Promise.resolve());
+		Object.defineProperty(window, "isSecureContext", { value: true, configurable: true });
+		Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+		try {
+			render(false, <JsonView value={{ a: "x" }} />);
+			// The last line is the leaf, `a`; the first is the whole object.
+			const lines = document.querySelectorAll<HTMLElement>(".w-rjv-line");
+			const line = lines[lines.length - 1];
+			act(() => {
+				line.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+			});
+			const icon = line.querySelector(".w-rjv-copied") as SVGElement;
+			await act(async () => {
+				icon.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+			});
+			expect(writeText).toHaveBeenCalledWith('"x"');
+			expect(line.querySelector(".w-rjv-copied.lucide-check")).not.toBeNull();
+		} finally {
+			delete (navigator as { clipboard?: unknown }).clipboard;
+			delete (window as { isSecureContext?: unknown }).isSecureContext;
+		}
+	});
+
+	// The corner copy goes through copyText: "Copied" on success only.
+	for (const ok of [true, false]) {
+		it(`shows copied ${ok ? "when the text got there" : "never when it did not"}`, async () => {
+			const writeText = vi.fn(() => (ok ? Promise.resolve() : Promise.reject(new Error("no"))));
+			Object.defineProperty(window, "isSecureContext", { value: true, configurable: true });
+			Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+			try {
+				render(true, <JsonView value={{ a: 1 }} />);
+				await act(async () => {
+					(q("[aria-label='Copy JSON']") as HTMLButtonElement).click();
+				});
+				expect(writeText).toHaveBeenCalledWith(JSON.stringify({ a: 1 }, null, 2));
+				expect(q("[aria-label='Copied']") !== null).toBe(ok);
+			} finally {
+				delete (navigator as { clipboard?: unknown }).clipboard;
+				delete (window as { isSecureContext?: unknown }).isSecureContext;
+			}
+		});
+	}
 });
 
 describe("Toaster", () => {

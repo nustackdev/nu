@@ -534,6 +534,7 @@ export {
 export { registerChartMap } from "./lib/chart/load";
 export { mergeOption } from "./lib/chart/option";
 export { type ChartFit, type ChartTokens, chartTheme, readChartTokens } from "./lib/chart/theme";
+export { copyText } from "./lib/clipboard";
 export { loadLanguage } from "./lib/code/languages";
 export { kitHighlight, kitTheme } from "./lib/code/theme";
 export { formatBytes, formatCount, formatFullCount } from "./lib/count";

@@ -10,10 +10,17 @@
 // copy of the whole value stands in the corner instead, always shown, the
 // way a code block's does. A host that draws its own copy of the whole value
 // turns that one off with `copyAll={false}`.
+//
+// Every copy goes through the kit's `copyText` (../../lib/clipboard.ts), the
+// library's row copies included: the row icon is drawn here, so it turns to
+// a check only when the text got there.
 
 import ReactJsonView from "@uiw/react-json-view";
+import { Check, Copy } from "lucide-react";
 import type * as React from "react";
+import { useState } from "react";
 
+import { copyText } from "../../lib/clipboard";
 import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 import { CopyButton } from "./code";
@@ -73,6 +80,51 @@ function jsonText(value: unknown): string {
 	}
 }
 
+// One row's value as its copy hands it out, the way the library spells it:
+// a string, number or literal as JSON, a branch indented.
+function rowText(value: unknown): string {
+	if (typeof value === "number" && !Number.isFinite(value)) return String(value);
+	if (typeof value === "bigint") return `${value}n`;
+	if (value instanceof Date) return value.toLocaleString();
+	try {
+		return (
+			JSON.stringify(value, (_, v) => (typeof v === "bigint" ? `${v}n` : v), 2) ?? String(value)
+		);
+	} catch {
+		return String(value);
+	}
+}
+
+// The copy at the end of a row, shown while the row is hovered. Takes the
+// library's look (size, spacing, class) and none of its click.
+type RowLook = React.SVGProps<SVGSVGElement> & { "data-copied"?: boolean };
+
+function RowCopy({ look, value }: { look: RowLook; value: unknown }) {
+	const [copied, setCopied] = useState(false);
+	const { onClick: _click, fill: _fill, "data-copied": _copied, ...rest } = look;
+	const Icon = copied ? Check : Copy;
+	return (
+		<Icon
+			{...rest}
+			aria-hidden="true"
+			color={copied ? "var(--w-rjv-copied-success-color)" : "var(--w-rjv-copied-color)"}
+			onClick={(e) => {
+				e.stopPropagation();
+				void copyText(rowText(value)).then((ok) => {
+					if (!ok) return;
+					setCopied(true);
+					window.setTimeout(() => setCopied(false), 1200);
+				});
+			}}
+		/>
+	);
+}
+
+// The library calls this for each row copy in place of its own.
+const renderRowCopy = (look: object, { value }: { value?: unknown }): React.ReactNode => (
+	<RowCopy look={look as RowLook} value={value} />
+);
+
 function JsonView({
 	value,
 	collapsed,
@@ -110,7 +162,9 @@ function JsonView({
 				displayObjectSize={displayObjectSize}
 				enableClipboard={clipboard && !touch}
 				style={mergedStyle}
-			/>
+			>
+				<ReactJsonView.Copied render={renderRowCopy} />
+			</ReactJsonView>
 			{touch && clipboard && copyAll ? (
 				<CopyButton text={jsonText(value)} label="Copy JSON" />
 			) : null}
