@@ -1,4 +1,8 @@
-"""A put from a stream never holds the whole value in memory, per backend."""
+"""A put from a stream never holds the whole value in memory, per backend.
+
+LMDB holds one batch of chunks per streamed put; these tests set it to 8 MiB,
+an eighth of the blob, and allow that much on top of the files backend's bound.
+"""
 
 from __future__ import annotations
 
@@ -10,6 +14,8 @@ from pathlib import Path
 
 import pytest
 from _support.blob_workers import LOCAL_KINDS, putter
+
+from nustd.blob import LMDBBackend
 
 
 @pytest.fixture(params=LOCAL_KINDS)
@@ -23,6 +29,19 @@ def kind(request):
 
 SIZE = 64 << 20
 STEP = 1 << 20
+BATCH = 8 << 20
+
+
+@pytest.fixture
+def backend(backend):
+    if isinstance(backend, LMDBBackend):
+        backend.batch_size = BATCH
+    return backend
+
+
+def bound(backend):
+    """The most a streamed put may hold: a few pieces, and an LMDB batch."""
+    return 8 * STEP + (BATCH if isinstance(backend, LMDBBackend) else 0)
 
 
 def pieces():
@@ -48,7 +67,7 @@ def test_iterable_put_peak_is_flat(backend):
         _, peak = tracemalloc.get_traced_memory()
     finally:
         tracemalloc.stop()
-    assert peak < 8 * STEP, f"peak {peak} for a {SIZE} byte put"
+    assert peak < bound(backend), f"peak {peak} for a {SIZE} byte put"
     check_content(backend, info.id)
 
 
@@ -59,7 +78,7 @@ async def test_async_iterable_put_peak_is_flat(backend):
         _, peak = tracemalloc.get_traced_memory()
     finally:
         tracemalloc.stop()
-    assert peak < 8 * STEP, f"peak {peak} for a {SIZE} byte put"
+    assert peak < bound(backend), f"peak {peak} for a {SIZE} byte put"
     check_content(backend, info.id)
 
 
@@ -88,7 +107,7 @@ def test_process_memory_stays_flat(kind, store_path):
     # process from outside, C heap included (LMDB's dirty pages live there).
     ctx = multiprocessing.get_context("spawn")
     ready, go = ctx.Queue(), ctx.Queue()
-    child = ctx.Process(target=putter, args=(kind, str(store_path), SIZE, ready, go))
+    child = ctx.Process(target=putter, args=(kind, str(store_path), SIZE, ready, go, BATCH))
     child.start()
     try:
         assert ready.get(timeout=60) == "ready"

@@ -58,8 +58,9 @@ class BlobMount:
             user has open elsewhere cannot fill the store.
 
     Notes:
-        - Every blob is write-once under its id, so a url never changes what
-          it serves and is cached forever.
+        - A sealed blob never changes under its id, so its url is cached
+          forever. An open one, still being written, is served as it grows
+          and never cached; ``X-Blob-Sealed`` says which.
         - A stored mime is served as given. A mount taking uploads from
           untrusted users serves their ``text/html`` or SVG inline from this
           origin, so put such a store behind its own origin or check the mime.

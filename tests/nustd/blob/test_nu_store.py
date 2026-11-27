@@ -202,7 +202,14 @@ def test_preset_refuses_what_is_no_store(bad, tmp_path):
 
 def test_lmdb_preset_carries_its_options(tmp_path):
     spec = nustd.blob.lmdb(
-        Media, tmp_path / "env", map_size=1 << 24, max_readers=16, writemap=False
+        Media,
+        tmp_path / "env",
+        map_size=1 << 24,
+        max_readers=16,
+        writemap=False,
+        chunk_size=1 << 16,
+        batch_size=1 << 18,
+        commit_interval=0.5,
     )
     kwargs = config(spec)["kwargs"]
     assert kwargs["backend"] is LMDBBackend
@@ -211,19 +218,31 @@ def test_lmdb_preset_carries_its_options(tmp_path):
         "map_size": 1 << 24,
         "max_readers": 16,
         "writemap": False,
+        "chunk_size": 1 << 16,
+        "batch_size": 1 << 18,
+        "commit_interval": 0.5,
     }
 
 
-def test_files_preset_carries_its_root(tmp_path):
+def test_files_preset_carries_its_options(tmp_path):
     kwargs = config(nustd.blob.files(Media, tmp_path / "files"))["kwargs"]
     assert kwargs["backend"] is FilesBackend
-    assert kwargs["options"] == {"root": str(tmp_path / "files")}
+    assert kwargs["options"] == {
+        "root": str(tmp_path / "files"),
+        "batch_size": 8 << 20,
+        "commit_interval": 0.25,
+    }
+    spec = nustd.blob.files(Media, tmp_path / "f", batch_size=1 << 16, commit_interval=None)
+    assert config(spec)["kwargs"]["options"]["commit_interval"] is None
 
 
 def test_s3_preset_carries_its_options():
-    spec = nustd.blob.s3(Media, bucket="media", prefix="space/", endpoint_url="http://s3.test")
+    spec = nustd.blob.s3(
+        Media, bucket="media", prefix="space/", endpoint_url="http://s3.test", read_window=2
+    )
     kwargs = config(spec)["kwargs"]
     assert kwargs["backend"] is S3Backend
     assert kwargs["options"]["bucket"] == "media"
     assert kwargs["options"]["prefix"] == "space/"
     assert kwargs["options"]["endpoint_url"] == "http://s3.test"
+    assert kwargs["options"]["read_window"] == 2

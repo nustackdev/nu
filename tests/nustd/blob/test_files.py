@@ -1,4 +1,4 @@
-"""What only the files backend promises: its layout, copy-not-link, meta as the visibility mark."""
+"""What only the files backend promises: its layout, copy-not-link, meta as the visibility mark, in-place commits."""
 
 from __future__ import annotations
 
@@ -33,15 +33,16 @@ def test_path_source_is_copied_not_linked(files, tmp_path):
     assert files.read(info.id) == b"original"
 
 
-def test_spooled_iterable_is_linked_not_copied(files):
+def test_iterable_is_written_in_place(files):
     info = files.put(iter([b"a", b"b"]))
     data = files.root / "blobs" / info.id[:2] / info.id
-    assert data.stat().st_nlink == 1  # the spool link was dropped, the data kept
+    assert data.stat().st_nlink == 1
     assert data.read_bytes() == b"ab"
+    assert list((files.root / "tmp").iterdir()) == []
 
 
 def test_data_without_meta_is_invisible(files):
-    # What a put that died between the link and the meta leaves behind.
+    # What a put that died before its first commit leaves behind.
     info = files.put(b"half")
     meta = files.root / "blobs" / info.id[:2] / f"{info.id}.json"
     meta.unlink()
@@ -56,7 +57,7 @@ def test_data_without_meta_is_invisible(files):
 
 
 def test_meta_failure_rolls_back_the_data(files, monkeypatch):
-    def broken(info):
+    def broken(info, **options):
         raise OSError("disk full")
 
     monkeypatch.setattr(files, "_write_meta", broken)

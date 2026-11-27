@@ -1,18 +1,21 @@
-"""Nu blob fabric: write-once bytes under an id, stored and read in streams.
+"""Nu blob fabric: append-only bytes under an id, stored and read in streams, readable as they grow.
 
 The fabric stores and returns, nothing else. Serving a store over http is
 ``nustd.blob.http``'s: ``BlobMount`` says where, ``serve_blobs`` serves.
 
 Surface:
-    - StoreRef(name): a named store; its terms are ``put``, ``new_id``,
-      ``get``, ``open``, ``meta``, ``has`` and ``delete``, and ``exists()``
-      asks whether a backend is bound.
+    - StoreRef(name): a named store; its terms are ``put``, ``put_stream``,
+      ``append``, ``append_stream``, ``seal``, ``new_id``, ``get``, ``open``,
+      ``meta``, ``has``, ``sealed`` and ``delete``, and ``exists()`` asks
+      whether a backend is bound.
     - lmdb(store, path), files(store, root), s3(store, bucket=...): bind a
       backend under a store's name for the span of a tree.
-    - BlobPut, BlobPutStream, BlobNewId, BlobGet, BlobOpen, BlobMeta, BlobHas, BlobDelete:
-      the interactions those terms build; BlobFabric beneath them.
+    - BlobPut, BlobPutStream, BlobAppend, BlobAppendStream, BlobSeal, BlobNewId,
+      BlobGet, BlobOpen, BlobMeta, BlobHas, BlobIsSealed, BlobDelete: the
+      interactions those terms build; BlobFabric beneath them.
     - BlobBackend: the protocol every backend keeps, sync plus async twins.
-    - BlobInfo, BlobNotFound, BlobExists, BlobTooLarge: what calls give and raise.
+    - BlobInfo, BlobNotFound, BlobExists, BlobSealed, BlobIdle, BlobTooLarge:
+      what calls give and raise.
     - LMDBBackend, FilesBackend, S3Backend: the backends, plain Python, no Nu:
       what code outside a tree takes, such as the server ``serve_blobs`` builds.
 
@@ -47,8 +50,10 @@ from .protocol import (
     AsyncSource,
     BlobBackend,
     BlobExists,
+    BlobIdle,
     BlobInfo,
     BlobNotFound,
+    BlobSealed,
     BlobTooLarge,
     Source,
 )
@@ -58,14 +63,18 @@ if TYPE_CHECKING:
     from . import http
     from .fabric import BlobFabric
     from .interactions import (
+        BlobAppend,
+        BlobAppendStream,
         BlobDelete,
         BlobGet,
         BlobHas,
+        BlobIsSealed,
         BlobMeta,
         BlobNewId,
         BlobOpen,
         BlobPut,
         BlobPutStream,
+        BlobSeal,
     )
     from .presets import files, lmdb, s3
     from .store import StoreRef
@@ -75,15 +84,19 @@ if TYPE_CHECKING:
 # process that only drives a backend never imports Nu's engine.
 _LAZY = {
     "http": "http",
+    "BlobAppend": "interactions",
+    "BlobAppendStream": "interactions",
     "BlobDelete": "interactions",
     "BlobFabric": "fabric",
     "BlobGet": "interactions",
     "BlobHas": "interactions",
+    "BlobIsSealed": "interactions",
     "BlobMeta": "interactions",
     "BlobNewId": "interactions",
     "BlobOpen": "interactions",
     "BlobPut": "interactions",
     "BlobPutStream": "interactions",
+    "BlobSeal": "interactions",
     "StoreRef": "store",
     "files": "presets",
     "lmdb": "presets",
@@ -108,19 +121,25 @@ def __dir__() -> list[str]:
 __all__ = [
     "STEP",
     "AsyncSource",
+    "BlobAppend",
+    "BlobAppendStream",
     "BlobBackend",
     "BlobDelete",
     "BlobExists",
     "BlobFabric",
     "BlobGet",
     "BlobHas",
+    "BlobIdle",
     "BlobInfo",
+    "BlobIsSealed",
     "BlobMeta",
     "BlobNewId",
     "BlobNotFound",
     "BlobOpen",
     "BlobPut",
     "BlobPutStream",
+    "BlobSeal",
+    "BlobSealed",
     "BlobTooLarge",
     "FilesBackend",
     "LMDBBackend",

@@ -6,6 +6,8 @@ import asyncio
 import io
 import os
 import time
+from collections import deque
+from concurrent.futures import Future, ThreadPoolExecutor
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote, unquote
@@ -17,20 +19,22 @@ from .._base import (
     _source_kind,
     _too_large,
     check_id,
-    check_range,
     clamp,
+    settled,
 )
-from ..protocol import STEP, BlobExists, BlobInfo, BlobNotFound
+from ..protocol import BlobExists, BlobInfo, BlobNotFound
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Iterable, Iterator
+    from collections.abc import AsyncIterable, AsyncIterator, Callable, Iterable, Iterator
 
     from ..protocol import Source
 
 
 __all__ = [
     "DEFAULT_PART_SIZE",
+    "DEFAULT_READ_WINDOW",
+    "GROW_EVERY",
     "MAX_METADATA",
     "MAX_OBJECT",
     "MAX_PARTS",
@@ -56,9 +60,24 @@ MAX_METADATA = 2 << 10
 """S3's cap on an object's user metadata, 2 KiB: the UTF-8 bytes of every key and value."""
 
 DEFAULT_PART_SIZE = 8 << 20
-"""8 MiB, boto3's own multipart chunk size.
+"""8 MiB, boto3's own multipart chunk size: the first part of a put of unknown size.
 
-A put holds one part in memory; a blob tops out at 10,000 parts, ~78 GiB.
+A put holds one part in memory.
+"""
+
+GROW_EVERY = 1000
+"""Parts a put of unknown size sends at one size before doubling it.
+
+From 8 MiB: 1,000 parts reach ~8 GiB, 5,000 ~250 GiB, and 10,000 pass S3's
+5 TiB object cap, with parts of 4 GiB at most.
+"""
+
+DEFAULT_READ_WINDOW = 4
+"""Ranged GETs one stream keeps in flight.
+
+Measured on moto with 30 ms added to each GET, as a service's first byte
+takes: 4 in flight read 1.3 to 1.4 times faster than 1, and reach 90% or more
+of 16, for pieces of 4 to 16 MiB.
 """
 
 _MISSING = frozenset({"404", "NoSuchKey", "NotFound"})
@@ -77,8 +96,12 @@ class S3Backend(ThreadedBackend):
 
     A put of a buffer up to ``part_size`` bytes is one PutObject. Anything
     bigger, and every file, path and iterable that runs past one part, goes
-    up as a multipart upload, one ``part_size`` buffer at a time; a put that
-    fails aborts its upload, so nothing is left a reader can find. A read is
+    up as a multipart upload, one part buffer at a time; a put that fails
+    aborts its upload, so nothing is left a reader can find. A buffer or a
+    path, whose size is known up front, goes in parts of
+    ``max(part_size, ceil(size / 10000))``. A file or an iterable, whose size
+    is not, starts at ``part_size`` and doubles it every ``GROW_EVERY``
+    parts, up to S3's 5 GiB. A read is
     one ranged GetObject; a stream heads the object once, then sends one
     ranged GetObject per piece, each pinned to the object's ETag.
 
@@ -89,12 +112,15 @@ class S3Backend(ThreadedBackend):
 
     Limits, all native to S3:
 
-    - One blob holds at most ``part_size * 10000`` bytes (S3 allows 10,000
-      parts; the size of a streamed put is unknown up front, so every part is
-      ``part_size``), and never more than 5 TiB. That is ~78 GiB at the
-      default 8 MiB; raise ``part_size`` for more, at the cost of that much
-      memory per running put. A bigger put raises ``BlobTooLarge`` as soon as
-      it passes the cap, and aborts what it sent.
+    - One blob holds at most 5 TiB, S3's own cap, from any source. A stream
+      of unknown size reaches it from a ``part_size`` of 6 MiB up; at 5 MiB
+      its 10,000 growing parts top out at 4.88 TiB. A bigger put raises
+      ``BlobTooLarge`` as soon as it passes the cap, and aborts what it sent.
+    - Memory per running put is one part: ``part_size`` for most puts, more
+      for a big one. A buffer costs none of its own (parts are slices of
+      it); a path of size S holds ``max(part_size, S / 10000)``, 550 MB for
+      a 5 TiB file; a stream holds its current part, which doubles past
+      ~8 GiB sent (at the 8 MiB default) and reaches 4 GiB only near 5 TiB.
     - Write-once needs a service that honours ``If-None-Match`` on writes
       (AWS since 2024, R2, MinIO). One that ignores it lets a racing put of a
       taken id overwrite it; the pre-check still refuses a taken id that is
@@ -103,7 +129,10 @@ class S3Backend(ThreadedBackend):
       an ASCII name can be about 1,900 characters, a Cyrillic one about 320
       (6 bytes each). A put over the cap raises ``ValueError`` before any
       request.
-    - No rename, no append: a change is a new blob.
+    - No open blobs (``supports_open`` is False): an object shows up whole
+      and sealed when its put lands. ``put(seal=False)`` and ``append``
+      raise ``NotImplementedError`` before any request; ``seal`` of a blob
+      is a no-op, and a following read is a plain one.
     - ``delete`` is a HeadObject then a DeleteObject. S3's delete is
       idempotent (it succeeds on a missing key), so two racing deletes may
       both report a blob.
@@ -111,8 +140,10 @@ class S3Backend(ThreadedBackend):
       keeps its parts, billed, until aborted. Give the bucket a lifecycle
       rule that aborts incomplete multipart uploads after a day.
     - A stream is pinned to the ETag it saw at its first pull: a blob deleted,
-      or deleted and put again under the same id, raises ``BlobNotFound`` at
-      the next pull.
+      or deleted and put again under the same id, raises ``BlobNotFound``
+      once the pieces read ahead of the change are pulled, within
+      ``read_window`` pulls. A stream closed early leaves its GETs in flight
+      to finish unread and sends no more.
     - S3 is strongly read-after-write consistent (AWS since 2020); a service
       that is not may miss a blob right after its put.
     - ``open`` builds the client and touches nothing: a missing bucket or bad
@@ -127,12 +158,18 @@ class S3Backend(ThreadedBackend):
         bucket: the bucket, made beforehand.
         prefix: put before every id to make its key, ``"space/"`` for
             ``space/<id>``. Nothing is added: end it with ``/`` for a folder.
-        part_size: bytes per multipart part, at least 5 MiB, at most 5 GiB.
+        part_size: bytes of a multipart put's first part, at least 5 MiB, at
+            most 5 GiB. A put that fits one part is one PutObject.
+        read_window: ranged GETs a stream keeps in flight, 1 for one at a
+            time.
         endpoint_url: the service, for anything that is not AWS (R2, MinIO).
         aws_access_key_id: with the secret and token, credentials for boto3;
             when all are left out boto3 finds them its usual way (env,
             profile, instance role).
     """
+
+    supports_open = False
+    """S3 holds no open blobs: an object is visible only once its put completes."""
 
     def __init__(
         self,
@@ -140,6 +177,7 @@ class S3Backend(ThreadedBackend):
         *,
         prefix: str = "",
         part_size: int = DEFAULT_PART_SIZE,
+        read_window: int = DEFAULT_READ_WINDOW,
         endpoint_url: str | None = None,
         region_name: str | None = None,
         profile_name: str | None = None,
@@ -151,10 +189,16 @@ class S3Backend(ThreadedBackend):
             raise ValueError(
                 f"part_size must be within [{MIN_PART_SIZE}, {MAX_PART_SIZE}], got {part_size}"
             )
+        if read_window < 1:
+            raise ValueError(f"read_window must be positive, got {read_window}")
         self.bucket = bucket
         self.prefix = prefix
+        self.read_window = read_window
         self.part_size = part_size
-        self.max_size = min(MAX_OBJECT, part_size * MAX_PARTS)
+        self.max_size = min(
+            MAX_OBJECT,
+            sum(_grown(part_size, n) for n in range(1, MAX_PARTS + 1, GROW_EVERY)) * GROW_EVERY,
+        )
         self.endpoint_url = endpoint_url
         self._session_options = {
             "region_name": region_name,
@@ -224,14 +268,12 @@ class S3Backend(ThreadedBackend):
             return False
         return True
 
-    def read(self, blob_id: str, start: int = 0, end: int | None = None) -> bytes:
+    def _read(self, blob_id: str, start: int, end: int | None) -> bytes:
         """The bytes of a range, in one ranged GetObject.
 
         S3 clamps the range's end itself; a start at or past the end answers
         416, read as empty. An empty range heads the object instead.
         """
-        check_id(blob_id)
-        check_range(start, end)
         if end is not None and end <= start:
             self._head(blob_id)
             return b""
@@ -254,53 +296,71 @@ class S3Backend(ThreadedBackend):
         finally:
             body.close()
 
-    def stream(
-        self,
-        blob_id: str,
-        start: int = 0,
-        end: int | None = None,
-        *,
-        step: int = STEP,
-    ) -> Iterator[bytes]:
+    def _pieces(self, blob_id: str, start: int, end: int | None, step: int) -> Iterator[bytes]:
         """The bytes of a range, ``step`` at a time, one ranged GetObject per piece.
 
-        A GET per piece rather than one GET read slowly: a stream pulled by a
-        slow consumer (a browser seeking through a video) holds no connection
-        between pulls, so it cannot starve the client's pool or be dropped
-        idle by the service, and each piece is a short request that retries
-        on its own. The price is one request per piece.
+        Up to ``read_window`` GETs run at once, each in a thread of the
+        stream's own, and the pieces come out in order. A GET per piece
+        rather than one GET read slowly: a stream pulled by a slow consumer
+        (a browser seeking through a video) holds no connection between
+        GETs, so it cannot starve the client's pool or be dropped idle by
+        the service, and each piece is a short request that retries on its
+        own. The price is one request per piece, and up to ``read_window``
+        pieces read ahead, held in memory until pulled.
         """
-        check_id(blob_id)
-        check_range(start, end, step)
         return self._stream_pieces(blob_id, start, end, step)
+
+    def _get_range(self, blob_id: str, lo: int, hi: int, etag: str) -> bytes:
+        """``[lo, hi)`` of the object, refused as gone unless it still has ``etag``."""
+        try:
+            response = self._client.get_object(
+                Bucket=self.bucket,
+                Key=self._key(blob_id),
+                Range=f"bytes={lo}-{hi - 1}",
+                IfMatch=etag,
+            )
+        except self._error as error:
+            if _code(error) in _MISSING or _code(error) == "PreconditionFailed":
+                raise BlobNotFound(blob_id) from None
+            raise
+        body = response["Body"]
+        try:
+            return body.read()
+        finally:
+            body.close()
 
     def _stream_pieces(
         self, blob_id: str, start: int, end: int | None, step: int
     ) -> Iterator[bytes]:
         head = self._head(blob_id)
         pos, stop = clamp(start, end, int(head["ContentLength"]))
-        while pos < stop:
-            upto = min(pos + step, stop)
-            try:
-                response = self._client.get_object(
-                    Bucket=self.bucket,
-                    Key=self._key(blob_id),
-                    Range=f"bytes={pos}-{upto - 1}",
-                    IfMatch=head["ETag"],
-                )
-            except self._error as error:
-                if _code(error) in _MISSING or _code(error) == "PreconditionFailed":
-                    raise BlobNotFound(blob_id) from None
-                raise
-            body = response["Body"]
-            try:
-                piece = body.read()
-            finally:
-                body.close()
-            if not piece:
-                return
-            yield piece
-            pos += len(piece)
+        etag = head["ETag"]
+        window = min(self.read_window, -(-(stop - pos) // step))
+        if window <= 1:
+            while pos < stop:
+                piece = self._get_range(blob_id, pos, min(pos + step, stop), etag)
+                if not piece:
+                    return
+                yield piece
+                pos += len(piece)
+            return
+        pool = ThreadPoolExecutor(max_workers=window, thread_name_prefix="nustd-blob-s3")
+        ahead: deque[Future[bytes]] = deque()
+        try:
+            while True:
+                while len(ahead) < window and pos < stop:
+                    upto = min(pos + step, stop)
+                    ahead.append(pool.submit(self._get_range, blob_id, pos, upto, etag))
+                    pos = upto
+                if not ahead:
+                    return
+                piece = ahead.popleft().result()
+                if not piece:
+                    return
+                yield piece
+        finally:
+            # Closed early: drop the GETs not begun; the ones running finish unread.
+            pool.shutdown(wait=False, cancel_futures=True)
 
     def delete(self, blob_id: str) -> bool:
         """Remove the blob; whether there was one."""
@@ -319,12 +379,14 @@ class S3Backend(ThreadedBackend):
         blob_id: str | None = None,
         mime: str = "",
         name: str = "",
+        seal: bool = True,
     ) -> BlobInfo:
-        """Store the bytes once under an id.
+        """Store the bytes once under an id, sealed: visible whole when the put lands.
 
         Nothing spools to disk: a source past one part goes up a part at a
-        time as it is read.
+        time as it is read. ``seal=False`` raises ``NotImplementedError``.
         """
+        _refuse_open(seal)
         kind = _source_kind(source)
         _check_metadata(mime, name)
         blob_id = self._claim(blob_id)
@@ -332,13 +394,16 @@ class S3Backend(ThreadedBackend):
         if kind == "buffer":
             view = _as_buffer(source)  # type: ignore[arg-type]
             self._check_size(view.nbytes)
-            return self._send(info, _slices(view, self.part_size))
+            return self._send(info, _slices(view, self._known(view.nbytes)))
         if kind == "path":
             path = Path(source)  # type: ignore[arg-type]
             with path.open("rb") as file:
-                self._check_size(os.fstat(file.fileno()).st_size)
-                return self._send(info, _parts(_pieces(file), self.part_size, self.max_size))
-        return self._send(info, _parts(_pieces(source), self.part_size, self.max_size))
+                size = os.fstat(file.fileno()).st_size
+                self._check_size(size)
+                fixed = self._known(size)
+                parts = _parts(_pieces(file), lambda _: fixed, self.max_size)
+                return self._send(info, parts)
+        return self._send(info, _parts(_pieces(source), self._growing, self.max_size))
 
     async def _aput_iterable(
         self,
@@ -346,19 +411,41 @@ class S3Backend(ThreadedBackend):
         blob_id: str | None,
         mime: str,
         name: str,
+        seal: bool,
     ) -> BlobInfo:
         """Send each part off the event loop as soon as the iterable fills it."""
+        _refuse_open(seal)
         _check_metadata(mime, name)
         blob_id = await asyncio.to_thread(self._claim, blob_id)
         info = BlobInfo(id=blob_id, size=0, mime=mime, name=name, created_at=time.time())
         upload = _Upload(self, info)
         try:
-            async for view, last in _aparts(source, self.part_size, self.max_size):
-                await _settled(asyncio.to_thread(upload.send, view, last))
+            async for view, last in _aparts(source, self._growing, self.max_size):
+                await settled(asyncio.to_thread(upload.send, view, last))
         except BaseException:
             await asyncio.to_thread(upload.abort)
             raise
         return upload.info
+
+    def append(self, blob_id: str, source: Source) -> BlobInfo:
+        """Refused: S3 holds no open blobs, so ``NotImplementedError``."""
+        raise NotImplementedError(_NO_OPEN)
+
+    async def _aappend_iterable(self, blob_id: str, source: AsyncIterable[bytes]) -> BlobInfo:
+        """Refused: S3 holds no open blobs, so ``NotImplementedError``."""
+        raise NotImplementedError(_NO_OPEN)
+
+    def seal(self, blob_id: str) -> BlobInfo:
+        """Every S3 blob is sealed: a no-op that heads the object (``BlobNotFound`` when missing)."""
+        return self.info(blob_id)
+
+    def _known(self, size: int) -> int:
+        """The part size of a put whose size is known: 10,000 parts cover it."""
+        return max(self.part_size, -(-size // MAX_PARTS))
+
+    def _growing(self, number: int) -> int:
+        """The size of part ``number`` (from 1) of a put whose size is not known."""
+        return _grown(self.part_size, number)
 
     def _check_size(self, size: int) -> None:
         error = _too_large(size, self.max_size)
@@ -509,14 +596,17 @@ def _slices(view: memoryview, size: int) -> Iterator[tuple[memoryview, bool]]:
 
 
 class _Filler:
-    """One ``size`` buffer, filled from pieces and handed out as a part when full.
+    """A part buffer, filled from pieces and handed out as a part when full.
 
     A full buffer goes out only once a further byte arrives, so the part
-    known to be the last is flagged, and the buffer is reused for every part.
+    known to be the last is flagged. The buffer is reused while the part
+    size holds, and replaced when the schedule grows it.
     """
 
-    def __init__(self, size: int, limit: int | None) -> None:
-        self._buffer = bytearray(size)
+    def __init__(self, schedule: Callable[[int], int], limit: int | None) -> None:
+        self._schedule = schedule
+        self._number = 1
+        self._buffer = bytearray(schedule(1))
         self._filled = 0
         self._total = 0
         self._limit = limit
@@ -528,12 +618,15 @@ class _Filler:
         error = _too_large(self._total, self._limit)
         if error is not None:
             raise error
-        size = len(self._buffer)
         while view.nbytes:
-            if self._filled == size:
+            if self._filled == len(self._buffer):
                 yield memoryview(self._buffer)
+                self._number += 1
+                size = self._schedule(self._number)
+                if size != len(self._buffer):
+                    self._buffer = bytearray(size)
                 self._filled = 0
-            take = min(size - self._filled, view.nbytes)
+            take = min(len(self._buffer) - self._filled, view.nbytes)
             self._buffer[self._filled : self._filled + take] = view[:take]
             self._filled += take
             view = view[take:]
@@ -544,9 +637,9 @@ class _Filler:
 
 
 def _parts(
-    pieces: Iterable[object], size: int, limit: int | None
+    pieces: Iterable[object], schedule: Callable[[int], int], limit: int | None
 ) -> Iterator[tuple[memoryview, bool]]:
-    filler = _Filler(size, limit)
+    filler = _Filler(schedule, limit)
     for piece in pieces:
         for part in filler.feed(piece):
             yield part, False
@@ -554,27 +647,30 @@ def _parts(
 
 
 async def _aparts(
-    pieces: AsyncIterable[object], size: int, limit: int | None
+    pieces: AsyncIterable[object], schedule: Callable[[int], int], limit: int | None
 ) -> AsyncIterator[tuple[memoryview, bool]]:
-    filler = _Filler(size, limit)
+    filler = _Filler(schedule, limit)
     async for piece in pieces:
         for part in filler.feed(piece):
             yield part, False
     yield filler.rest(), True
 
 
-async def _settled(call: Awaitable[None]) -> None:
-    """Await a call run in a thread; when cancelled, still wait for the thread to finish.
+_NO_OPEN = (
+    "S3Backend holds no open blobs: an object is visible only once its put completes, "
+    "so seal=False and append are not supported; put the bytes whole, or use the lmdb or "
+    "files backend for a blob read while it is written"
+)
 
-    An abort sent while a part or the upload's creation is still in flight
-    would miss it and leave parts behind.
-    """
-    task = asyncio.ensure_future(call)
-    try:
-        await asyncio.shield(task)
-    except asyncio.CancelledError:
-        await asyncio.wait({task})
-        raise
+
+def _refuse_open(seal: bool) -> None:
+    if not seal:
+        raise NotImplementedError(_NO_OPEN)
+
+
+def _grown(part_size: int, number: int) -> int:
+    """Part ``number`` (from 1) of a put of unknown size: doubled every ``GROW_EVERY``, 5 GiB at most."""
+    return min(part_size << ((number - 1) // GROW_EVERY), MAX_PART_SIZE)
 
 
 def _metadata(mime: str, name: str, created_at: float) -> dict[str, str]:

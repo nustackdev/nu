@@ -9,6 +9,7 @@ import threading
 import time
 
 import pytest
+from _support.blob_fixtures import leftovers
 
 from nustd.blob import (
     BlobBackend,
@@ -16,7 +17,6 @@ from nustd.blob import (
     BlobInfo,
     BlobNotFound,
     BlobTooLarge,
-    S3Backend,
 )
 from nustd.blob._base import check_id, clamp, new_id
 
@@ -52,13 +52,6 @@ def pending_uploads(backend):
     return sorted(upload["Key"] for upload in listing.get("Uploads", []))
 
 
-def leftovers(backend):
-    """What a put left behind: spool files, or for s3 multipart uploads never finished."""
-    if isinstance(backend, S3Backend):
-        return pending_uploads(backend)
-    return sorted(p.name for p in backend._spool_dir.iterdir())
-
-
 def stored_ids(kind, backend):
     """Every id the store holds any bytes for, visible or not."""
     if kind == "s3":
@@ -68,7 +61,9 @@ def stored_ids(kind, backend):
     if kind == "files":
         return sorted(p.name for p in (backend.root / "blobs").glob("*/*") if p.suffix != ".json")
     with backend._env.begin() as txn:
-        return sorted(k.decode() for k, _ in txn.cursor(db=backend._data))
+        chunked = {k[:16].hex() for k, _ in txn.cursor(db=backend._data)}
+        claimed = {k.decode() for k, _ in txn.cursor(db=backend._claims)}
+        return sorted(chunked | claimed)
 
 
 # ---- the protocol --------------------------------------------------------------------------

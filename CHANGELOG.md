@@ -12,6 +12,13 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Blob writes also commit on a short timer, so followers see slow sources promptly
+- Ranges on a growing blob answer only bytes that exist, never a broken promise
+- Serve blobs over http while they are still written, following until sealed
+- Blob stores take open blobs: append, seal, and follow a blob while it grows
+- Let blob backends grow open blobs, seal them, and follow them while written
+- Grow s3 blobs to five TiB and stream them with parallel ranged reads
+- Store lmdb blobs in chunks, so a blob grows as big as its map
 - Editors autosave changes on a pause; only the send key ever submits
 
 ## 0.9.1 - 2026-11-27

@@ -7,6 +7,7 @@ in the test files (pytest imports those by path).
 from __future__ import annotations
 
 import hashlib
+import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -24,10 +25,18 @@ __all__ = [
     "CONTESTED",
     "KINDS",
     "LOCAL_KINDS",
+    "appender",
     "blob_id",
     "content",
+    "follower",
+    "growing",
     "make",
+    "make_small",
     "putter",
+    "race_content",
+    "racer",
+    "stalled_putter",
+    "stalled_writer",
     "writer",
 ]
 
@@ -113,9 +122,15 @@ def writer(
         backend.close()
 
 
-def putter(kind: str, path: str, size: int, ready: Queue, go: Queue) -> None:
-    """Put ``size`` bytes from a generator once told to; for watching the process from outside."""
+def putter(kind: str, path: str, size: int, ready: Queue, go: Queue, batch: int) -> None:
+    """Put ``size`` bytes from a generator once told to; for watching the process from outside.
+
+    Args:
+        batch: the LMDB batch size, what a streamed put there holds in memory.
+    """
     backend = make(kind, Path(path))
+    if isinstance(backend, LMDBBackend):
+        backend.batch_size = batch
     backend.open()
     try:
         ready.put("ready")
@@ -131,3 +146,104 @@ def putter(kind: str, path: str, size: int, ready: Queue, go: Queue) -> None:
         go.get()
     finally:
         backend.close()
+
+
+def race_content(worker: int) -> bytes:
+    """What ``racer`` puts: 200 KiB, different per worker."""
+    return bytes([worker + 1]) * (200 << 10)
+
+
+def racer(path: str, worker: int, barrier: Barrier, out: Queue) -> None:
+    """Put ``race_content`` under ``CONTESTED`` over many small batches, past the pre-check.
+
+    Both racers claim mid-way through each other's batches, so a put that mixed
+    chunks would show.
+    """
+    backend = LMDBBackend(Path(path), chunk_size=1024, batch_size=4096)
+    backend.exists = lambda blob_id: False  # type: ignore[method-assign]
+    backend.open()
+    try:
+        data = race_content(worker)
+        barrier.wait()
+        try:
+            backend.put((data[i : i + 1000] for i in range(0, len(data), 1000)), blob_id=CONTESTED)
+            won = True
+        except BlobExists:
+            won = False
+        out.put((worker, won))
+    finally:
+        backend.close()
+
+
+def stalled_putter(path: str, blob_id: str, ready: Queue, go: Queue) -> None:
+    """Put under ``blob_id`` until a few batches landed, then stall, to be killed there."""
+    backend = LMDBBackend(Path(path), chunk_size=1024, batch_size=4096)
+    backend.open()
+
+    def pieces() -> Iterator[bytes]:
+        yield b"x" * 20_000  # five batches commit before the next pull
+        ready.put("stalled")
+        go.get()
+        yield b"never"
+
+    backend.put(pieces(), blob_id=blob_id)
+
+
+def make_small(kind: str, path: Path) -> LMDBBackend | FilesBackend:
+    """A local backend of ``kind`` that commits every few KiB, so a put spans many batches."""
+    if kind == "lmdb":
+        return LMDBBackend(path, chunk_size=1024, batch_size=4096)
+    if kind == "files":
+        return FilesBackend(path, batch_size=4096)
+    raise ValueError(kind)
+
+
+def growing(index: int) -> bytes:
+    """Piece ``index`` an appender adds: a few KiB, not a multiple of any chunk."""
+    return hashlib.sha256(f"piece:{index}".encode()).digest() * (37 + index)
+
+
+def follower(kind: str, path: str, blob_id: str, ready: Queue, out: Queue) -> None:
+    """Follow ``blob_id`` until it is sealed; report the sha256 and size of what it read."""
+    backend = make_small(kind, Path(path))
+    backend.open()
+    try:
+        ready.put("ready")
+        try:
+            data = b"".join(backend.stream(blob_id, step=1000, follow=True, idle=30))
+        except Exception as error:
+            out.put(("error", type(error).__name__))
+            return
+        out.put(("ok", hashlib.sha256(data).hexdigest(), len(data)))
+    finally:
+        backend.close()
+
+
+def appender(kind: str, path: str, blob_id: str, count: int, out: Queue) -> None:
+    """Append ``growing(0..count)`` to the open ``blob_id``, a short pause apart, then seal it."""
+    backend = make_small(kind, Path(path))
+    backend.open()
+    try:
+        for index in range(count):
+            backend.append(blob_id, growing(index))
+            time.sleep(0.01)
+        out.put(backend.seal(blob_id).size)
+    finally:
+        backend.close()
+
+
+def stalled_writer(kind: str, path: str, blob_id: str, mode: str, ready: Queue, go: Queue) -> None:
+    """Put (``mode="put"``) or append (``"append"``) a few batches, then stall, to be killed there."""
+    backend = make_small(kind, Path(path))
+    backend.open()
+
+    def pieces() -> Iterator[bytes]:
+        yield b"x" * 20_000  # several batches commit before the next pull
+        ready.put("stalled")
+        go.get()
+        yield b"never"
+
+    if mode == "put":
+        backend.put(pieces(), blob_id=blob_id)
+    else:
+        backend.append(blob_id, pieces())

@@ -1,6 +1,6 @@
 """Media.open is a real stream: a pull reads one piece and nothing runs ahead.
 
-A counting backend records every piece its ``stream`` hands out, and the
+A counting backend records every piece it reads (``_pieces``, under ``stream`` and ``astream``), and the
 thread it was read on. Pulling the first piece of a ten piece blob must read
 exactly one, under both runners, and the async runner must read it off the
 event loop's thread.
@@ -38,18 +38,18 @@ def _counted(pieces):
 
 
 class CountingFiles(FilesBackend):
-    def stream(self, blob_id, start=0, end=None, *, step=STEP):
-        return _counted(super().stream(blob_id, start, end, step=step))
+    def _pieces(self, blob_id, start, end, step):
+        return _counted(super()._pieces(blob_id, start, end, step))
 
 
 class CountingLMDB(LMDBBackend):
-    def stream(self, blob_id, start=0, end=None, *, step=STEP):
-        return _counted(super().stream(blob_id, start, end, step=step))
+    def _pieces(self, blob_id, start, end, step):
+        return _counted(super()._pieces(blob_id, start, end, step))
 
 
 class CountingS3(S3Backend):
-    def stream(self, blob_id, start=0, end=None, *, step=STEP):
-        return _counted(super().stream(blob_id, start, end, step=step))
+    def _pieces(self, blob_id, start, end, step):
+        return _counted(super()._pieces(blob_id, start, end, step))
 
 
 @pytest.fixture

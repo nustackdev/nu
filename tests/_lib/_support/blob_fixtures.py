@@ -12,10 +12,12 @@ import boto3
 import pytest
 from moto import mock_aws
 
+from nustd.blob import LMDBBackend, S3Backend
+
 from .blob_workers import BUCKET, KINDS, make
 
 
-__all__ = ["backend", "kind", "moto_s3", "spool_dir", "store_path"]
+__all__ = ["backend", "kind", "leftovers", "moto_s3", "store_path"]
 
 
 @pytest.fixture
@@ -52,6 +54,21 @@ def backend(kind, store_path):
     backend.close()
 
 
-@pytest.fixture
-def spool_dir(backend):
-    return backend._spool_dir
+def leftovers(backend):
+    """What puts left behind that no reader sees, named, sorted.
+
+    Meta temp files for files; claims and chunks with no meta for lmdb; multipart
+    uploads never finished for s3.
+    """
+    if isinstance(backend, S3Backend):
+        listing = backend._client.list_multipart_uploads(
+            Bucket=backend.bucket, Prefix=backend.prefix
+        )
+        return sorted(upload["Key"] for upload in listing.get("Uploads", []))
+    if isinstance(backend, LMDBBackend):
+        with backend._env.begin() as txn:
+            claims = [key.decode() for key, _ in txn.cursor(db=backend._claims)]
+            chunked = {key[:16].hex() for key, _ in txn.cursor(db=backend._data)}
+            orphans = [bid for bid in chunked if txn.get(bid.encode(), db=backend._meta) is None]
+        return sorted({*claims, *orphans})
+    return sorted(p.name for p in backend._temp_dir.iterdir())
