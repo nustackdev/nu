@@ -183,6 +183,9 @@ export function NumberInput({
 				)}
 			/>
 			{steppers ? (
+				// Touch: each stepper takes a 44px tap area, unseen (index.css,
+				// `nu-tap`). The two sit closer than that, so Increment, the later
+				// one, takes the middle; the outer halves stay each one's own.
 				<div className="flex shrink-0 items-center gap-0.5">
 					<button
 						type="button"
@@ -192,6 +195,7 @@ export function NumberInput({
 						aria-label="Decrement"
 						className={cn(
 							"inline-flex items-center justify-center rounded-sm text-text-secondary",
+							"nu-tap",
 							"transition-colors duration-fast ease-out",
 							"hover:bg-bg-hover hover:text-text-primary active:bg-bg-press",
 							"disabled:pointer-events-none disabled:opacity-50",
@@ -208,6 +212,7 @@ export function NumberInput({
 						aria-label="Increment"
 						className={cn(
 							"inline-flex items-center justify-center rounded-sm text-text-secondary",
+							"nu-tap",
 							"transition-colors duration-fast ease-out",
 							"hover:bg-bg-hover hover:text-text-primary active:bg-bg-press",
 							"disabled:pointer-events-none disabled:opacity-50",

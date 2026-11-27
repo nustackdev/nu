@@ -9,6 +9,8 @@ const switchVariants = cva(
 		"peer inline-flex shrink-0 items-center rounded-full",
 		"border border-transparent",
 		"cursor-default",
+		// Touch: a 44px tap area around it, unseen (index.css, `nu-tap`).
+		"nu-tap",
 		"transition-colors duration-fast ease-out",
 		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas",
 		"disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none",
