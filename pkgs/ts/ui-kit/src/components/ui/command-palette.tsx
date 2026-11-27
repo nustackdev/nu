@@ -10,13 +10,22 @@
 // focus trap + backdrop + Esc; cmdk handles filter, item roving, typeahead.
 // Consumer wires the mod+k hotkey via the exported `useCommandPaletteHotkey`
 // helper (a11y.md keeps global shortcuts consumer-owned).
+//
+// In touch mode (../../lib/touch.ts) the palette is a full screen: the
+// visible height (dvh), clear of the notch and the home indicator, the list
+// filling what the input leaves. With no Esc key, the input row carries a
+// Cancel. The screen is a kit-owned surface, so its input and rows are sized
+// for the thumb for real (44px, 16px text, which also keeps a phone from
+// zooming into the field), and shortcut hints are gone.
 
 import { Command as CommandPrimitive } from "cmdk";
 import { Dialog as DialogPrimitive } from "radix-ui";
 import { Search } from "lucide-react";
 import * as React from "react";
 
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
+import { Button } from "./button";
 import { Shortcut } from "./shortcut";
 
 // The palette's recipes, exported for a list that wears them without being
@@ -39,6 +48,9 @@ const commandItemClasses = [
 	"data-[selected=true]:[&_svg]:text-text-primary",
 ].join(" ");
 
+// Set inside a palette, so its input knows there is a dialog to cancel.
+const PaletteContext = React.createContext(false);
+
 interface CommandPaletteProps
 	extends React.ComponentProps<typeof CommandPrimitive> {
 	open: boolean;
@@ -59,6 +71,7 @@ function CommandPalette({
 	children,
 	...props
 }: CommandPaletteProps) {
+	const touch = useTouch();
 	return (
 		<DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
 			<DialogPrimitive.Portal>
@@ -76,11 +89,19 @@ function CommandPalette({
 					data-slot="command-palette-content"
 					onCloseAutoFocus={onCloseAutoFocus}
 					className={cn(
-						"fixed left-1/2 top-[20%] z-50 w-full max-w-lg -translate-x-1/2",
-						commandSurfaceClasses,
+						touch
+							? [
+									"fixed inset-x-0 top-0 z-50 flex h-dvh flex-col",
+									"bg-bg-elevated text-text-primary overflow-hidden",
+									"pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]",
+								]
+							: [
+									"fixed left-1/2 top-[20%] z-50 w-full max-w-lg -translate-x-1/2",
+									commandSurfaceClasses,
+									"data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
+								],
 						"data-[state=open]:animate-in data-[state=closed]:animate-out",
 						"data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0",
-						"data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95",
 						"data-[state=open]:duration-base data-[state=closed]:duration-base",
 						"data-[state=open]:ease-out data-[state=closed]:ease-in",
 					)}
@@ -94,13 +115,13 @@ function CommandPalette({
 					<CommandPrimitive
 						data-slot="command-palette"
 						className={cn(
-							"flex h-full w-full flex-col",
+							"flex h-full min-h-0 w-full flex-col",
 							"[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-1 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-text-secondary",
 							className,
 						)}
 						{...props}
 					>
-						{children}
+						<PaletteContext.Provider value={true}>{children}</PaletteContext.Provider>
 					</CommandPrimitive>
 				</DialogPrimitive.Content>
 			</DialogPrimitive.Portal>
@@ -112,22 +133,35 @@ function CommandInput({
 	className,
 	...props
 }: React.ComponentProps<typeof CommandPrimitive.Input>) {
+	const touch = useTouch();
+	const inPalette = React.useContext(PaletteContext);
 	return (
 		<div
 			data-slot="command-palette-input-wrapper"
-			className="flex items-center gap-2 border-b border-border-subtle px-3 h-10"
+			className={cn(
+				"flex shrink-0 items-center gap-2 border-b border-border-subtle px-3",
+				touch ? "h-11" : "h-10",
+			)}
 		>
 			<Search className="size-4 shrink-0 text-text-secondary" />
 			<CommandPrimitive.Input
 				data-slot="command-palette-input"
 				className={cn(
-					"flex h-10 w-full rounded-md bg-transparent text-sm text-text-primary outline-hidden",
+					"flex w-full rounded-md bg-transparent text-text-primary outline-hidden",
+					touch ? "h-11 text-base" : "h-10 text-sm",
 					"placeholder:text-text-muted",
 					"disabled:cursor-not-allowed disabled:opacity-50",
 					className,
 				)}
 				{...props}
 			/>
+			{touch && inPalette && (
+				<DialogPrimitive.Close asChild>
+					<Button variant="ghost" size="sm" className="shrink-0">
+						Cancel
+					</Button>
+				</DialogPrimitive.Close>
+			)}
 		</div>
 	);
 }
@@ -136,11 +170,14 @@ function CommandList({
 	className,
 	...props
 }: React.ComponentProps<typeof CommandPrimitive.List>) {
+	// Full screen in touch mode: the list takes all the height below the input.
+	const touch = useTouch();
 	return (
 		<CommandPrimitive.List
 			data-slot="command-palette-list"
 			className={cn(
-				"max-h-80 overflow-y-auto overflow-x-hidden p-1",
+				"overflow-y-auto overflow-x-hidden p-1",
+				touch ? "min-h-0 flex-1 overscroll-contain" : "max-h-80",
 				className,
 			)}
 			{...props}
@@ -203,12 +240,14 @@ function CommandItem({
 	variant = "default",
 	...props
 }: CommandItemProps) {
+	const touch = useTouch();
 	return (
 		<CommandPrimitive.Item
 			data-slot="command-palette-item"
 			data-variant={variant}
 			className={cn(
 				commandItemClasses,
+				touch && "min-h-11 text-base",
 				variant === "danger" && [
 					"text-status-danger",
 					"data-[selected=true]:bg-status-danger-wash data-[selected=true]:text-status-danger",
@@ -231,6 +270,9 @@ function CommandShortcut({
 	/** Key names, drawn as muted text (see `Shortcut`). Text children otherwise. */
 	keys?: readonly string[];
 }) {
+	// No keyboard to press it on a touch device.
+	const touch = useTouch();
+	if (touch) return null;
 	return (
 		<span data-slot="command-palette-shortcut" className={cn("ml-auto pl-4 text-xs tracking-wide text-text-muted", className)} {...props}>
 			{keys ? <Shortcut keys={keys} variant="ghost" /> : children}
