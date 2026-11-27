@@ -23,7 +23,7 @@ export const Matrix: StoryObj = {
 				<div className="mb-3 font-mono text-xs uppercase tracking-widest text-text-muted">
 					sizes
 				</div>
-				<div className="flex items-start gap-3">
+				<div className="flex flex-wrap items-start gap-3">
 					{SIZES.map((s) => (
 						<div key={s} className="w-40">
 							<TimePicker aria-label={`Time ${s}`} size={s} defaultValue="14:05" clearable />
@@ -36,7 +36,7 @@ export const Matrix: StoryObj = {
 				<div className="mb-3 font-mono text-xs uppercase tracking-widest text-text-muted">
 					states
 				</div>
-				<div className="flex items-start gap-3">
+				<div className="flex flex-wrap items-start gap-3">
 					<div className="w-40">
 						<TimePicker aria-label="Empty" />
 					</div>
@@ -61,7 +61,7 @@ export const Matrix: StoryObj = {
 				</div>
 				<div className="space-y-3">
 					{SIZES.map((s) => (
-						<div key={s} className="w-96">
+						<div key={s} className="w-full max-w-96">
 							<DateTimePicker
 								aria-label={`Starts ${s}`}
 								size={s}
@@ -70,10 +70,10 @@ export const Matrix: StoryObj = {
 							/>
 						</div>
 					))}
-					<div className="w-96">
+					<div className="w-full max-w-96">
 						<DateTimePicker aria-label="Invalid" invalid />
 					</div>
-					<div className="w-96">
+					<div className="w-full max-w-96">
 						<DateTimePicker
 							aria-label="Disabled"
 							disabled
@@ -84,6 +84,36 @@ export const Matrix: StoryObj = {
 			</div>
 		</div>
 	),
+};
+
+// Opened at load: in touch mode the hour and minute columns in a bottom sheet
+// with a Done button, on desktop the native time field focused.
+export const Open: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<div className="w-40">
+				<TimePicker aria-label="Time" defaultValue="09:30" clearable />
+			</div>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		canvasElement.querySelector<HTMLInputElement>('[data-slot="time-picker"] input')?.click();
+	},
+};
+
+// The time half of a date and time, opened at load: the same sheet, seconds
+// off, beside the date trigger.
+export const DateTimeOpen: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<div className="w-80">
+				<DateTimePicker aria-label="Starts" defaultValue={new Date(2026, 10, 12, 18, 45)} />
+			</div>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		canvasElement.querySelector<HTMLInputElement>('[data-slot="time-picker"] input')?.click();
+	},
 };
 
 const meta: Meta = {
