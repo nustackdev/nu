@@ -130,8 +130,25 @@ export function resolveVars<T>(el: Element | null, value: T): T {
 	return value;
 }
 
-/** The ECharts theme for these tokens. */
-export function chartTheme(t: ChartTokens): Record<string, unknown> {
+/** How a chart is placed, besides its colors: see `chartTheme`. */
+export type ChartFit = {
+	/** The chart's own box is narrower than `CHART_NARROW` px. */
+	narrow?: boolean;
+	/** Touch mode (lib/touch.ts). */
+	touch?: boolean;
+};
+
+/** Below this width, in px of the chart's own box, a chart is narrow. */
+export const CHART_NARROW = 560;
+
+/**
+ * The ECharts theme for these tokens. `fit` adds two things, both defaults an
+ * option can still override. A narrow chart keeps its shape and draws fewer
+ * ticks on its number and time axes, so the labels it keeps have room. In
+ * touch mode there is no hover: the tooltip opens on a tap, and stays inside
+ * the chart, since a phone has no room beside it.
+ */
+export function chartTheme(t: ChartTokens, fit: ChartFit = {}): Record<string, unknown> {
 	// hideOverlap: a narrow chart drops tick labels rather than stacking them.
 	const tick = { color: t.textMuted, fontFamily: t.mono, fontSize: 11, hideOverlap: true };
 	const axisName = { color: t.textMuted, fontFamily: t.sans, fontSize: 11 };
@@ -143,7 +160,7 @@ export function chartTheme(t: ChartTokens): Record<string, unknown> {
 		splitLine: { show: splitLine, lineStyle: { color: t.borderSubtle, type: [3, 3] } },
 		splitArea: { show: false },
 	});
-	const value = axis(true);
+	const value = fit.narrow ? { ...axis(true), splitNumber: 3 } : axis(true);
 	const parted = { borderColor: t.ground, borderWidth: 1 };
 	return {
 		color: t.palette,
@@ -167,6 +184,7 @@ export function chartTheme(t: ChartTokens): Record<string, unknown> {
 			pageIconInactiveColor: t.borderSubtle,
 		},
 		tooltip: {
+			...(fit.touch ? { triggerOn: "click", confine: true } : {}),
 			// Matches the kit Tooltip: elevated surface, default border, the
 			// floating shadow and sm radius. The tooltip is an element inside
 			// the chart, so the shadow var resolves in its theme.

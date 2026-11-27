@@ -533,7 +533,7 @@ export {
 } from "./lib/anchor";
 export { registerChartMap } from "./lib/chart/load";
 export { mergeOption } from "./lib/chart/option";
-export { type ChartTokens, chartTheme, readChartTokens } from "./lib/chart/theme";
+export { type ChartFit, type ChartTokens, chartTheme, readChartTokens } from "./lib/chart/theme";
 export { loadLanguage } from "./lib/code/languages";
 export { kitHighlight, kitTheme } from "./lib/code/theme";
 export { formatBytes, formatCount, formatFullCount } from "./lib/count";
