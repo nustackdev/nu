@@ -55,6 +55,23 @@ export const Matrix: StoryObj = {
 	),
 };
 
+// Opened at load: on desktop the hint shows; in touch mode (a phone, or the
+// Touch toolbar) it never opens, and the button stands alone.
+export const Open: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<TooltipProvider>
+				<Tooltip defaultOpen>
+					<TooltipTrigger asChild>
+						<Button variant="secondary">Hover me</Button>
+					</TooltipTrigger>
+					<TooltipContent side="right">Tooltip content</TooltipContent>
+				</Tooltip>
+			</TooltipProvider>
+		</div>
+	),
+};
+
 const meta: Meta = {
 	title: "UI/Tooltip",
 };
