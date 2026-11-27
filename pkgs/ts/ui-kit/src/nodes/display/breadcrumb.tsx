@@ -8,6 +8,11 @@
 // text, and links act like LinkRef's: real anchors through `anchorProps`,
 // this tab unless the crumb's `target` is "_blank", with the external mark
 // when the href points at another host.
+//
+// The trail folds its middle crumbs when it is narrow, and so sizes from
+// where it sits rather than from its crumbs (see the kit Breadcrumb). A block
+// or a grid cell gives it a width; on a row or a line it would take none, so
+// there it takes the room the others leave.
 
 import { ExternalLink } from "lucide-react";
 import { Fragment } from "react";
@@ -20,7 +25,8 @@ import {
 	BreadcrumbSeparator,
 } from "../../components/ui/breadcrumb";
 import { anchorProps, crossHost } from "../../lib/anchor";
-import { type NodeEntry, type NodeProps, useListProp } from "../../tree";
+import { cn } from "../../lib/utils";
+import { type NodeEntry, type NodeProps, useFlow, useListProp } from "../../tree";
 
 type Crumb = { label: string; href: string; target: string };
 
@@ -36,12 +42,13 @@ function toCrumb(raw: unknown): Crumb | null {
 }
 
 function BreadcrumbView({ path }: NodeProps) {
+	const flow = useFlow();
 	const crumbs = useListProp<unknown>(path, "items")
 		.map(toCrumb)
 		.filter((c): c is Crumb => c !== null);
 	if (crumbs.length === 0) return null;
 	return (
-		<Breadcrumb>
+		<Breadcrumb className={cn((flow === "row" || flow === "inline") && "min-w-0 flex-1")}>
 			<BreadcrumbList>
 				{crumbs.map((crumb, i) => {
 					const last = i === crumbs.length - 1;
