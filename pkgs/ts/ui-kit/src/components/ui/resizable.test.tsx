@@ -7,6 +7,8 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { STACK_WIDTH } from "../../lib/stack";
+import { TouchProvider } from "../../lib/touch";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "./resizable";
 
 // React 19 wants this before render or it logs a warning per test.
@@ -353,6 +355,63 @@ describe("Resizable", () => {
 			expect(panels()[0].dataset.state).toBe("collapsed");
 			press(handle(), "Enter");
 			expect(panels()[0].dataset.state).toBe("expanded");
+		});
+	});
+
+	describe("stacked", () => {
+		const group = () => host.querySelector<HTMLElement>("[data-slot=resizable-panel-group]");
+
+		function Split({ orientation }: { orientation?: "horizontal" | "vertical" }) {
+			return (
+				<ResizablePanelGroup orientation={orientation}>
+					<ResizablePanel defaultSize={30}>a</ResizablePanel>
+					<ResizableHandle />
+					<ResizablePanel>b</ResizablePanel>
+				</ResizablePanelGroup>
+			);
+		}
+
+		it("stacks a side by side group in touch mode, with no handles", () => {
+			mount(
+				<TouchProvider value>
+					<Split />
+				</TouchProvider>,
+			);
+			expect(group()?.dataset.stacked).toBe("");
+			expect(group()?.className).toContain("flex-col");
+			expect(handle()).toBeUndefined();
+			expect(panels().map((p) => p.style.flex)).toEqual(["", ""]);
+		});
+
+		it("keeps a vertical group's shares in touch mode, without handles", () => {
+			mount(
+				<TouchProvider value>
+					<Split orientation="vertical" />
+				</TouchProvider>,
+			);
+			expect(group()?.dataset.stacked).toBeUndefined();
+			expect(handle()).toBeUndefined();
+			expect(grow(panels()[0])).toBeCloseTo(30);
+		});
+
+		it("stacks below the stack width of its own box, and comes back above it", () => {
+			const saved = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "clientWidth");
+			let width = STACK_WIDTH - 1;
+			Object.defineProperty(HTMLElement.prototype, "clientWidth", {
+				configurable: true,
+				get: () => width,
+			});
+			try {
+				mount(<Split />);
+				expect(group()?.dataset.stacked).toBe("");
+				width = STACK_WIDTH;
+				mount(<Split key="again" />);
+				expect(group()?.dataset.stacked).toBeUndefined();
+				expect(handle()).toBeDefined();
+				expect(grow(panels()[0])).toBeCloseTo(30);
+			} finally {
+				if (saved) Object.defineProperty(HTMLElement.prototype, "clientWidth", saved);
+			}
 		});
 	});
 });

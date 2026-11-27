@@ -3,9 +3,14 @@
 //   space-radius.md  §3 container widths (the `--container-*` tokens)
 //   space-radius.md  §1 spacing scale (gutter and gap steps)
 //
-// Fluid below the cap, so the width never jumps at a breakpoint. The one
-// thing that follows the window is the side gutter: 16px on a phone, 32px
-// from `md`, 48px from `lg`. `padding` (a space step, 0..16) replaces it with
+// Fluid below the cap, so the width never jumps at a breakpoint. The side
+// gutter steps with the room the frame is given, not the window: 16px, 32px
+// from 768px wide, 48px from 1024px. A frame that fills the page reads the
+// page's width, the same steps `md` and `lg` would take; a frame in a narrow
+// desktop column gets the phone's 16px, since layout follows the box (see
+// language/mobile.md "layout"). Padding in percent is a share of the width
+// the frame sits in, and `clamp` turns each step into a switch: 0 below
+// its width, the full 16px above it. `padding` (a space step, 0..16) replaces it with
 // one step on every side, `padding={0}` for a page that runs edge to edge.
 // Children stack down the frame with `gap` between them. The props are the
 // wire's: `maxWidth` is `max_width`, `padding` is `padding`.
@@ -31,8 +36,9 @@ export const PAGE_WIDTH_CLASSES: Record<PageWidth, string> = {
 	full: "max-w-full",
 };
 
-/** The responsive side gutter, drawn while no `padding` step is given. */
-const GUTTER = "px-4 md:px-8 lg:px-12";
+/** The stepped side gutter (16 / 32 / 48), drawn while no `padding` step is given. */
+const GUTTER =
+	"px-[calc(1rem_+_clamp(0rem,(100%_-_767.5px)_*_1000,1rem)_+_clamp(0rem,(100%_-_1023.5px)_*_1000,1rem))]";
 
 export type ContainerProps = React.ComponentProps<"div"> & {
 	/** The cap, a page width name. */

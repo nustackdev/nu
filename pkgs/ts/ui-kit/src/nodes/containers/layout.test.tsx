@@ -444,7 +444,7 @@ describe("Container", () => {
 		write(["p", "Container", { padding: 0, gap: 2 }]);
 		show(["p"]);
 		const el = host.querySelector<HTMLElement>("[data-slot=container]");
-		expect(el?.className).not.toContain("md:px-8");
+		expect(el?.className).not.toContain("clamp(");
 		expect(el?.className).toContain("p-0");
 		expect(el?.className).toContain("gap-2");
 	});
