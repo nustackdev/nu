@@ -12,7 +12,8 @@ Surface:
     - BlobPut, BlobPutStream, BlobNewId, BlobGet, BlobOpen, BlobMeta, BlobHas, BlobDelete:
       the interactions those terms build; BlobFabric beneath them.
     - BlobBackend: the protocol every backend keeps, sync plus async twins.
-    - BlobInfo, BlobNotFound, BlobExists, BlobTooLarge: what calls give and raise.
+    - BlobInfo, BlobNotFound, BlobExists, BlobSealed, BlobIdle, BlobTooLarge:
+      what calls give and raise.
     - LMDBBackend, FilesBackend, S3Backend: the backends, plain Python, no Nu:
       what code outside a tree takes, such as the server ``serve_blobs`` builds.
 
@@ -47,8 +48,10 @@ from .protocol import (
     AsyncSource,
     BlobBackend,
     BlobExists,
+    BlobIdle,
     BlobInfo,
     BlobNotFound,
+    BlobSealed,
     BlobTooLarge,
     Source,
 )
@@ -114,6 +117,7 @@ __all__ = [
     "BlobFabric",
     "BlobGet",
     "BlobHas",
+    "BlobIdle",
     "BlobInfo",
     "BlobMeta",
     "BlobNewId",
@@ -121,6 +125,7 @@ __all__ = [
     "BlobOpen",
     "BlobPut",
     "BlobPutStream",
+    "BlobSealed",
     "BlobTooLarge",
     "FilesBackend",
     "LMDBBackend",

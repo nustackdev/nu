@@ -19,11 +19,10 @@ from .._base import (
     _source_kind,
     _too_large,
     check_id,
-    check_range,
     clamp,
     settled,
 )
-from ..protocol import STEP, BlobExists, BlobInfo, BlobNotFound
+from ..protocol import BlobExists, BlobInfo, BlobNotFound
 
 
 if TYPE_CHECKING:
@@ -130,7 +129,10 @@ class S3Backend(ThreadedBackend):
       an ASCII name can be about 1,900 characters, a Cyrillic one about 320
       (6 bytes each). A put over the cap raises ``ValueError`` before any
       request.
-    - No rename, no append: a change is a new blob.
+    - No open blobs (``supports_open`` is False): an object shows up whole
+      and sealed when its put lands. ``put(seal=False)`` and ``append``
+      raise ``NotImplementedError`` before any request; ``seal`` of a blob
+      is a no-op, and a following read is a plain one.
     - ``delete`` is a HeadObject then a DeleteObject. S3's delete is
       idempotent (it succeeds on a missing key), so two racing deletes may
       both report a blob.
@@ -165,6 +167,9 @@ class S3Backend(ThreadedBackend):
             when all are left out boto3 finds them its usual way (env,
             profile, instance role).
     """
+
+    supports_open = False
+    """S3 holds no open blobs: an object is visible only once its put completes."""
 
     def __init__(
         self,
@@ -263,14 +268,12 @@ class S3Backend(ThreadedBackend):
             return False
         return True
 
-    def read(self, blob_id: str, start: int = 0, end: int | None = None) -> bytes:
+    def _read(self, blob_id: str, start: int, end: int | None) -> bytes:
         """The bytes of a range, in one ranged GetObject.
 
         S3 clamps the range's end itself; a start at or past the end answers
         416, read as empty. An empty range heads the object instead.
         """
-        check_id(blob_id)
-        check_range(start, end)
         if end is not None and end <= start:
             self._head(blob_id)
             return b""
@@ -293,14 +296,7 @@ class S3Backend(ThreadedBackend):
         finally:
             body.close()
 
-    def stream(
-        self,
-        blob_id: str,
-        start: int = 0,
-        end: int | None = None,
-        *,
-        step: int = STEP,
-    ) -> Iterator[bytes]:
+    def _pieces(self, blob_id: str, start: int, end: int | None, step: int) -> Iterator[bytes]:
         """The bytes of a range, ``step`` at a time, one ranged GetObject per piece.
 
         Up to ``read_window`` GETs run at once, each in a thread of the
@@ -312,8 +308,6 @@ class S3Backend(ThreadedBackend):
         own. The price is one request per piece, and up to ``read_window``
         pieces read ahead, held in memory until pulled.
         """
-        check_id(blob_id)
-        check_range(start, end, step)
         return self._stream_pieces(blob_id, start, end, step)
 
     def _get_range(self, blob_id: str, lo: int, hi: int, etag: str) -> bytes:
@@ -385,12 +379,14 @@ class S3Backend(ThreadedBackend):
         blob_id: str | None = None,
         mime: str = "",
         name: str = "",
+        seal: bool = True,
     ) -> BlobInfo:
-        """Store the bytes once under an id.
+        """Store the bytes once under an id, sealed: visible whole when the put lands.
 
         Nothing spools to disk: a source past one part goes up a part at a
-        time as it is read.
+        time as it is read. ``seal=False`` raises ``NotImplementedError``.
         """
+        _refuse_open(seal)
         kind = _source_kind(source)
         _check_metadata(mime, name)
         blob_id = self._claim(blob_id)
@@ -415,8 +411,10 @@ class S3Backend(ThreadedBackend):
         blob_id: str | None,
         mime: str,
         name: str,
+        seal: bool,
     ) -> BlobInfo:
         """Send each part off the event loop as soon as the iterable fills it."""
+        _refuse_open(seal)
         _check_metadata(mime, name)
         blob_id = await asyncio.to_thread(self._claim, blob_id)
         info = BlobInfo(id=blob_id, size=0, mime=mime, name=name, created_at=time.time())
@@ -428,6 +426,18 @@ class S3Backend(ThreadedBackend):
             await asyncio.to_thread(upload.abort)
             raise
         return upload.info
+
+    def append(self, blob_id: str, source: Source) -> BlobInfo:
+        """Refused: S3 holds no open blobs, so ``NotImplementedError``."""
+        raise NotImplementedError(_NO_OPEN)
+
+    async def _aappend_iterable(self, blob_id: str, source: AsyncIterable[bytes]) -> BlobInfo:
+        """Refused: S3 holds no open blobs, so ``NotImplementedError``."""
+        raise NotImplementedError(_NO_OPEN)
+
+    def seal(self, blob_id: str) -> BlobInfo:
+        """Every S3 blob is sealed: a no-op that heads the object (``BlobNotFound`` when missing)."""
+        return self.info(blob_id)
 
     def _known(self, size: int) -> int:
         """The part size of a put whose size is known: 10,000 parts cover it."""
@@ -644,6 +654,18 @@ async def _aparts(
         for part in filler.feed(piece):
             yield part, False
     yield filler.rest(), True
+
+
+_NO_OPEN = (
+    "S3Backend holds no open blobs: an object is visible only once its put completes, "
+    "so seal=False and append are not supported; put the bytes whole, or use the lmdb or "
+    "files backend for a blob read while it is written"
+)
+
+
+def _refuse_open(seal: bool) -> None:
+    if not seal:
+        raise NotImplementedError(_NO_OPEN)
 
 
 def _grown(part_size: int, number: int) -> int:

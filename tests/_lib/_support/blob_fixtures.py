@@ -57,7 +57,7 @@ def backend(kind, store_path):
 def leftovers(backend):
     """What puts left behind that no reader sees, named, sorted.
 
-    Spool files for files; claims and chunks with no meta for lmdb; multipart
+    Meta temp files for files; claims and chunks with no meta for lmdb; multipart
     uploads never finished for s3.
     """
     if isinstance(backend, S3Backend):
@@ -71,4 +71,4 @@ def leftovers(backend):
             chunked = {key[:16].hex() for key, _ in txn.cursor(db=backend._data)}
             orphans = [bid for bid in chunked if txn.get(bid.encode(), db=backend._meta) is None]
         return sorted({*claims, *orphans})
-    return sorted(p.name for p in backend._spool_dir.iterdir())
+    return sorted(p.name for p in backend._temp_dir.iterdir())

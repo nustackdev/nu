@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 import mmap
 import os
@@ -14,24 +13,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from .._base import (
-    ThreadedBackend,
-    _as_buffer,
-    _pieces,
-    _source_kind,
-    _too_large,
-    check_id,
-    check_range,
-    clamp,
-    settled,
-)
-from ..protocol import STEP, BlobExists, BlobInfo, BlobNotFound
+from .._base import Busy, LocalBackend, _as_buffer, _pieces, _too_large, check_id, clamp
+from ..protocol import BlobExists, BlobInfo, BlobNotFound, BlobSealed
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterable, Iterator
-
-    from ..protocol import Source
+    from collections.abc import Iterator
 
 
 __all__ = [
@@ -94,28 +81,37 @@ _INDEX = 8
 """Bytes of a chunk's index in its key, big-endian, so a blob's chunks sort in order."""
 
 
-class LMDBBackend(ThreadedBackend):
+class LMDBBackend(LocalBackend):
     """Blobs in one LMDB environment: each cut into chunks, ranges read straight from the map.
 
     Three named dbs. ``data`` holds the chunks, keyed by the id's 16 raw bytes
     and the chunk's index (8 bytes, big-endian), so a blob's chunks sit
     together in key order and a range is one cursor walk. ``meta`` holds id
-    to json: the ``BlobInfo`` and the blob's chunk size, so a store can mix
-    chunk sizes and the default can change. ``claims`` holds the ids whose
-    put is still writing, with the writer's pid.
+    to json: the ``BlobInfo``, the blob's chunk size (so a store can mix
+    chunk sizes and the default can change) and a token naming the put that
+    made it. ``claims`` holds the ids a put or an append is still writing,
+    with the writer's pid.
 
     A put fills chunks as the source is read and commits them in batches,
-    each batch its own short write txn. The meta goes in with the last batch:
-    a blob is visible exactly while its meta exists, so it shows up whole or
-    not at all. A put that fits one batch is one txn and writes no claim.
+    each batch its own short write txn that also writes the meta with the
+    size committed so far: a blob is readable from its first batch, open
+    until the last one seals it (or leaves it open, ``seal=False``). Only
+    whole chunks commit before the last batch; the last commits the rest. An
+    append starts from the blob's last chunk: a short one is filled up
+    first, rewritten in the same txn as the meta that counts its new bytes,
+    so a reader sees the old chunk with the old size or the new with the
+    new, never a mix.
 
-    Write-once: a put that needs more than one batch claims its id in the
-    same txn as its first chunks, under the env's write lock. The claim is
-    refused when the id has a meta or a live claim, so a racing put of a
-    taken id raises ``BlobExists`` before it writes a chunk, and two puts
-    never mix chunks. Every later batch checks the claim is still its own;
-    the last one drops it with the meta written. A put that fails deletes
-    its chunks and its claim.
+    Write-once ids and one writer per blob: a put that needs more than one
+    batch claims its id in the same txn as its first chunks, under the env's
+    write lock. The claim is refused when the id has a meta or a live claim,
+    so a racing put of a taken id raises ``BlobExists`` before it writes a
+    chunk. An append claims the open blob in a txn of its own before it
+    reads its source, and a second append, or a seal, waits while a live
+    claim holds the blob. Every later batch checks the claim is still its
+    own; the last one drops it. A put that fails deletes its chunks, its
+    meta and its claim; an append that fails drops its claim and keeps the
+    batches it committed.
 
     Limits, all native to LMDB:
 
@@ -126,6 +122,9 @@ class LMDBBackend(ThreadedBackend):
       from an mmap of the caller's file), so it costs nothing beyond LMDB's
       own. A file, an iterable or an async iterable holds up to one batch,
       ``batch_size`` bytes, in Python memory before each commit.
+    - A follower sees a streamed put a batch at a time: bytes held in a
+      batch not yet full are not readable. An ``append`` commits when it
+      ends, so small appends are the way to feed a follower promptly.
     - A path source is put from an mmap of the caller's file. It must not be
       truncated while its put runs: touching a mapped page past the new end
       kills the process with SIGBUS, not a Python exception.
@@ -134,11 +133,14 @@ class LMDBBackend(ThreadedBackend):
       process, writes also pass through a ``threading.Lock`` first: py-lmdb
       hangs every thread when one write txn aborts while another thread
       waits to begin one, and a put that loses an id race aborts.
-    - A process that dies mid-put leaves its chunks and its claim, invisible.
-      They are swept the first time a process opens the env, and before then
-      by the next put or ``delete`` of that id. A claim is dead when its pid
-      is no longer running (``os.kill(pid, 0)``), as LMDB judges its own
-      reader slots; a pid reused since keeps the claim until it exits.
+    - A process that dies mid-put leaves its chunks, meta and claim: the
+      blob reads as missing at once (a reader checks the claim of an open
+      blob), and is swept the first time a process opens the env, and before
+      then by the next put, seal or ``delete`` of that id. One that dies
+      mid-append leaves the blob open with what it committed, its claim
+      dropped the same way. A claim is dead when its pid is no longer
+      running (``os.kill(pid, 0)``), as LMDB judges its own reader slots; a
+      pid reused since keeps the claim until it exits.
     - The env must be on local disk, never NFS (mmap plus a lock file), and
       every process on it in one pid namespace. LMDB allows one open env per
       path per process, so every instance on one path in a process shares
@@ -289,122 +291,123 @@ class LMDBBackend(ThreadedBackend):
     def _begin(self, *, write: bool = False) -> Any:  # noqa: ANN401
         return self._require().begin(write=write, buffers=not write)
 
-    # ---- puts --------------------------------------------------------------------------------
+    # ---- writes ------------------------------------------------------------------------------
 
-    def put(
-        self,
-        source: Source,
-        *,
-        blob_id: str | None = None,
-        mime: str = "",
-        name: str = "",
-    ) -> BlobInfo:
-        """Store the bytes once under an id, a batch of chunks per write txn.
+    def _create(self, blob_id: str, mime: str, name: str, seal: bool) -> _Put:
+        """A put's writer: it takes the id in the txn of its first batch."""
+        self._require()
+        return _Put(self, blob_id, chunk=self.chunk_size, mime=mime, name=name, seal=seal)
 
-        Nothing spools: a buffer or a path goes in as slices of itself, a file
-        or an iterable a batch at a time as it is read.
+    def _begin_append(self, blob_id: str) -> _Put:
+        """Claim the open blob, in a txn of its own, before its source is read."""
+        env = self._require()
+        key = blob_id.encode()
+        with self._write_lock, env.begin(write=True) as txn:
+            record = self._writable(txn, key)
+            if record is not None and not _sealed(record):
+                index, rest = divmod(record["size"], record["chunk"])
+                tail = bytearray()
+                if rest:
+                    found = txn.get(_chunk_key(bytes.fromhex(blob_id), index), db=self._data)
+                    tail = bytearray(found[:rest])
+                claim = _new_claim("append")
+                txn.put(key, claim, db=self._claims)
+                return _Put.appending(self, blob_id, record, tail, claim)
+        # Raised after the txn, so a dead writer's claim cleared on the way stays cleared.
+        if record is None:
+            raise BlobNotFound(blob_id)
+        raise BlobSealed(blob_id)
+
+    def _seal_once(self, blob_id: str) -> BlobInfo:
+        """Mark the blob sealed in one txn, once no live writer holds it."""
+        info = self.info(blob_id)
+        if info.sealed:
+            return info
+        env = self._require()
+        key = blob_id.encode()
+        with self._write_lock, env.begin(write=True) as txn:
+            record = self._writable(txn, key)
+            if record is not None and not _sealed(record):
+                record["sealed"] = True
+                txn.put(key, json.dumps(record).encode(), db=self._meta)
+        if record is None:
+            raise BlobNotFound(blob_id)
+        return BlobInfo.from_dict(record)
+
+    def _writable(self, txn: Any, key: bytes) -> dict[str, Any] | None:  # noqa: ANN401
+        """The blob's meta record, in a write txn; ``Busy`` while a live writer holds it.
+
+        A dead writer's claim is cleared on the way: a put's with its blob, an
+        append's alone.
         """
-        kind = _source_kind(source)
-        self._require()
-        blob_id = self._claim(blob_id)
-        writer = _Put(self, blob_id, mime, name)
-        try:
-            if kind == "buffer":
-                return writer.write_view(_as_buffer(source))  # type: ignore[arg-type]
-            if kind == "path":
-                return _put_path(writer, Path(source))  # type: ignore[arg-type]
-            for piece in _pieces(source):
-                writer.feed(piece)
-                while writer.fill():
-                    writer.commit(last=False)
-            return writer.commit(last=True)
-        except BaseException:
-            writer.abort()
-            raise
-
-    async def _aput_iterable(
-        self,
-        source: AsyncIterable[bytes],
-        blob_id: str | None,
-        mime: str,
-        name: str,
-    ) -> BlobInfo:
-        """Fill chunks as the iterable yields; commit each batch off the event loop."""
-        self._require()
-        blob_id = await asyncio.to_thread(self._claim, blob_id)
-        writer = _Put(self, blob_id, mime, name)
-        try:
-            async for piece in source:
-                writer.feed(piece)
-                while writer.fill():
-                    await settled(asyncio.to_thread(writer.commit, last=False))
-            return await settled(asyncio.to_thread(writer.commit, last=True))
-        except BaseException:
-            await asyncio.to_thread(writer.abort)
-            raise
+        claim = txn.get(key, db=self._claims)
+        if claim is not None:
+            if _alive(claim):
+                raise Busy(key.decode())
+            _drop(txn, self._meta, self._data, self._claims, key, claim)
+        found = txn.get(key, db=self._meta)
+        return None if found is None else json.loads(bytes(found))
 
     # ---- reads -------------------------------------------------------------------------------
+
+    def _visible(self, txn: Any, key: bytes) -> dict[str, Any] | None:  # noqa: ANN401
+        """The blob's meta record, or None when there is none or its put died mid-way."""
+        found = txn.get(key, db=self._meta)
+        if found is None:
+            return None
+        record: dict[str, Any] = json.loads(bytes(found))
+        if not _sealed(record):
+            claim = txn.get(key, db=self._claims)
+            if claim is not None and _kind(claim) == "put" and not _alive(claim):
+                return None
+        return record
 
     def info(self, blob_id: str) -> BlobInfo:
         """What the blob is, apart from its bytes."""
         check_id(blob_id)
         with self._begin() as txn:
-            raw = txn.get(blob_id.encode(), db=self._meta)
-            if raw is None:
-                raise BlobNotFound(blob_id)
-            return BlobInfo.from_dict(json.loads(bytes(raw)))
+            record = self._visible(txn, blob_id.encode())
+        if record is None:
+            raise BlobNotFound(blob_id)
+        return BlobInfo.from_dict(record)
 
     def exists(self, blob_id: str) -> bool:
-        """Whether a whole blob sits under the id."""
+        """Whether a blob sits under the id, open or sealed."""
         check_id(blob_id)
         with self._begin() as txn:
-            return txn.get(blob_id.encode(), db=self._meta) is not None
+            return self._visible(txn, blob_id.encode()) is not None
 
-    def read(self, blob_id: str, start: int = 0, end: int | None = None) -> bytes:
+    def _read(self, blob_id: str, start: int, end: int | None) -> bytes | None:
         """The bytes of a range, copied out of the map in one piece."""
-        check_id(blob_id)
-        check_range(start, end)
         with self._begin() as txn:
-            found = txn.get(blob_id.encode(), db=self._meta)
-            if found is None:
+            record = self._visible(txn, blob_id.encode())
+            if record is None:
                 raise BlobNotFound(blob_id)
-            record = json.loads(bytes(found))
-            lo, hi = clamp(start, end, record["size"])
+            size = record["size"]
+            if not _sealed(record) and (end is None or end > size):
+                return None
+            lo, hi = clamp(start, end, size)
             return self._copy(txn, blob_id, record["chunk"], lo, hi)
 
-    def stream(
-        self,
-        blob_id: str,
-        start: int = 0,
-        end: int | None = None,
-        *,
-        step: int = STEP,
-    ) -> Iterator[bytes]:
-        """The bytes of a range, ``step`` at a time.
-
-        Each piece is its own read txn, so the blob is looked up again at every
-        pull: one gone or replaced since the first raises ``BlobNotFound``.
-        """
-        check_id(blob_id)
-        check_range(start, end, step)
-        return self._pieces(blob_id, start, end, step)
-
     def _pieces(self, blob_id: str, start: int, end: int | None, step: int) -> Iterator[bytes]:
-        # The meta record, written in the same txn as the last chunks, names one
-        # put: a later pull that finds another (or none) never splices two blobs.
+        # Each piece is its own read txn, so the blob is looked up again at
+        # every pull. The meta's token names one put: a later pull that finds
+        # another (or none) never splices two blobs. Appends keep the token.
         key = blob_id.encode()
-        meta: bytes | None = None
+        made: object = None
         chunk = pos = stop = 0
         while True:
             with self._begin() as txn:
                 found = txn.get(key, db=self._meta)
-                if found is None or (meta is not None and found != meta):
+                if found is None:
                     raise BlobNotFound(blob_id)
-                if meta is None:
-                    meta = bytes(found)
-                    record = json.loads(meta)
+                record = json.loads(bytes(found))
+                if made is None:
+                    made = _made(record)
                     chunk = record["chunk"]
                     pos, stop = clamp(start, end, record["size"])
+                elif _made(record) != made:
+                    raise BlobNotFound(blob_id)
                 if pos >= stop:
                     return
                 piece = self._copy(txn, blob_id, chunk, pos, min(pos + step, stop))
@@ -441,50 +444,76 @@ class LMDBBackend(ThreadedBackend):
     def delete(self, blob_id: str) -> bool:
         """Remove the blob, its chunks in the same txn; whether there was one.
 
-        Also clears what a dead put left under the id. A put still writing is
-        left alone.
+        An open blob goes too, while it is written: its writer's next batch
+        raises ``BlobNotFound``. Also clears what a dead put left under the id.
         """
         check_id(blob_id)
         key = blob_id.encode()
-        raw = bytes.fromhex(blob_id)
         env = self._require()
         with self._write_lock, env.begin(write=True) as txn:
-            if txn.get(key, db=self._meta) is not None:
+            found = self._visible(txn, key) is not None
+            if txn.get(key, db=self._meta) is not None or txn.get(key, db=self._claims) is not None:
                 txn.delete(key, db=self._meta)
-                _clear(txn, self._data, raw)
-                return True
-            claim = txn.get(key, db=self._claims)
-            if claim is not None and not _alive(claim):
                 txn.delete(key, db=self._claims)
-                _clear(txn, self._data, raw)
-            return False
+                _clear(txn, self._data, bytes.fromhex(blob_id))
+            return found
 
 
 class _Put:
-    """One put's trip into the env: chunks filled, then committed a batch per write txn.
+    """One put's or one append's trip into the env: chunks filled, then committed a batch per write txn.
 
     A buffer or a path hands in slices of itself; a streamed source fills
-    chunks of its own. Not thread safe: one put runs one call at a time, the
-    async one in turns between the event loop and a thread.
+    chunks of its own. Not thread safe: one writer runs one call at a time,
+    the async one in turns between the event loop and a thread.
     """
 
-    def __init__(self, backend: LMDBBackend, blob_id: str, mime: str, name: str) -> None:
+    def __init__(
+        self,
+        backend: LMDBBackend,
+        blob_id: str,
+        *,
+        chunk: int,
+        mime: str = "",
+        name: str = "",
+        seal: bool = True,
+    ) -> None:
         self._backend = backend
         self._id = blob_id
         self._key = blob_id.encode()
         self._raw = bytes.fromhex(blob_id)
-        self._chunk = backend.chunk_size
-        self._per_batch = max(1, backend.batch_size // backend.chunk_size)
-        self._mime = mime
-        self._name = name
-        self._created_at = time.time()
+        self._chunk = chunk
+        self._per_batch = max(1, backend.batch_size // chunk)
+        self._seal = seal
+        info = BlobInfo(id=blob_id, size=0, mime=mime, name=name, created_at=time.time())
+        self._record: dict[str, Any] = {**info.to_dict(), "chunk": chunk, "token": uuid.uuid4().hex}
         self._size = 0
         self._index = 0
         self._pending: list[Any] = []
         self._filling = bytearray()
         self._rest = memoryview(b"")
         self._claim: bytes | None = None
-        """This put's claim record, once a batch landed before the last."""
+        """This writer's claim record: an append's from the start, a put's once a batch landed before the last."""
+        self._appending = False
+        self._done: BlobInfo | None = None
+
+    @classmethod
+    def appending(
+        cls,
+        backend: LMDBBackend,
+        blob_id: str,
+        record: dict[str, Any],
+        tail: bytearray,
+        claim: bytes,
+    ) -> _Put:
+        """An append's writer, from the blob's meta and its short last chunk, holding its claim."""
+        writer = cls(backend, blob_id, chunk=record["chunk"], seal=False)
+        writer._record = record
+        writer._size = record["size"]
+        writer._index = record["size"] // record["chunk"]
+        writer._filling = tail
+        writer._claim = claim
+        writer._appending = True
+        return writer
 
     def _count(self, size: int) -> None:
         self._size += size
@@ -492,13 +521,59 @@ class _Put:
         if error is not None:
             raise error
 
-    def feed(self, piece: object) -> None:
-        """Take in the next piece of a streamed source; ``fill`` moves it into chunks."""
+    # ---- the Writer surface ------------------------------------------------------------------
+
+    def take(self, source: object, kind: str) -> None:
+        """Write a whole sync source; a buffer or a path commits its last batch here too."""
+        if kind == "buffer":
+            self._write_view(_as_buffer(source))  # type: ignore[arg-type]
+        elif kind == "path":
+            _put_path(self, Path(source))  # type: ignore[arg-type]
+        else:
+            for piece in _pieces(source):
+                if self.feed(piece):
+                    self.flush()
+
+    def feed(self, piece: object) -> bool:
+        """Take in the next piece of a streamed source; True when a batch is full and due a commit."""
         view = memoryview(piece).cast("B")  # type: ignore[arg-type]
         self._count(view.nbytes)
         self._rest = view
+        return self._fill()
 
-    def fill(self) -> bool:
+    def flush(self) -> None:
+        """Commit the full batch, and every further one the fed piece fills."""
+        self.commit(last=False)
+        while self._fill():
+            self.commit(last=False)
+
+    def finish(self) -> BlobInfo:
+        """Commit the rest, sealed or not as the put asked; an append leaves the blob open."""
+        if self._done is not None:
+            return self._done
+        return self.commit(last=True)
+
+    def fail(self) -> None:
+        """Undo, while this writer still holds its claim: a put deletes its blob, an append drops its claim."""
+        self._pending = []
+        self._filling = bytearray()
+        claim, self._claim = self._claim, None
+        if claim is None:
+            return  # nothing committed, or the last commit landed
+        backend = self._backend
+        with backend._write_lock, backend._require().begin(write=True) as txn:
+            if txn.get(self._key, db=backend._claims) == claim:
+                txn.delete(self._key, db=backend._claims)
+                if not self._appending:
+                    txn.delete(self._key, db=backend._meta)
+                    _clear(txn, backend._data, self._raw)
+
+    def close(self) -> None:
+        """Nothing held between calls but Python memory."""
+
+    # ---- inside ------------------------------------------------------------------------------
+
+    def _fill(self) -> bool:
         """Move the fed piece into chunks; True when a batch is full and due a commit first.
 
         Call again after the commit, until False: a piece bigger than a batch
@@ -515,21 +590,32 @@ class _Put:
         self._rest = view
         return len(self._pending) == self._per_batch
 
-    def write_view(self, view: memoryview) -> BlobInfo:
-        """Put a whole buffer, as slices of it: nothing is copied before LMDB's own copy."""
+    def _write_view(self, view: memoryview) -> BlobInfo:
+        """Put a whole buffer, as slices of it: nothing is copied before LMDB's own copy.
+
+        An append first fills the blob's short last chunk from the buffer's head.
+        """
         self._count(view.nbytes)
         try:
+            if self._filling:
+                take = min(self._chunk - len(self._filling), view.nbytes)
+                self._filling += view[:take]
+                view = view[take:]
+                if len(self._filling) == self._chunk:
+                    self._pending.append(self._filling)
+                    self._filling = bytearray()
             for offset in range(0, view.nbytes, self._chunk):
                 if len(self._pending) == self._per_batch:
                     self.commit(last=False)
                 self._pending.append(view[offset : offset + self._chunk])
-            return self.commit(last=True)
+            self._done = self.commit(last=True)
+            return self._done
         finally:
             # Slices of an mmap keep it open; drop them on every way out.
             self._pending.clear()
 
     def commit(self, *, last: bool) -> BlobInfo:
-        """Write the pending chunks in one txn; the last one also writes the meta."""
+        """Write the pending chunks and the meta in one txn; the last also writes the rest and seals or not."""
         backend = self._backend
         env = backend._require()
         chunks = self._pending
@@ -539,31 +625,28 @@ class _Put:
             # A reader slot left by a dead process pins every page freed since
             # it began; clearing them before the first write keeps the file small.
             env.reader_check()
-        info = BlobInfo(
-            id=self._id,
-            size=self._size,
-            mime=self._mime,
-            name=self._name,
-            created_at=self._created_at,
-        )
         claim = self._claim
         with backend._write_lock, env.begin(write=True) as txn:
             if claim is None:
                 self._take(txn)
                 if not last:
-                    claim = json.dumps({"pid": os.getpid(), "token": uuid.uuid4().hex}).encode()
+                    claim = _new_claim("put")
                     txn.put(self._key, claim, db=backend._claims)
-            elif txn.get(self._key, db=backend._claims) != self._claim:
-                raise BlobExists(self._id)  # swept as dead and taken: not ours anymore
+            else:
+                held = txn.get(self._key, db=backend._claims)
+                if held is None:
+                    raise BlobNotFound(self._id)  # deleted under this writer
+                if held != claim:
+                    raise BlobExists(self._id)  # swept as dead and taken: not ours anymore
             index = self._index
             for chunk in chunks:
                 txn.put(_chunk_key(self._raw, index), chunk, db=backend._data)
                 index += 1
-            if last:
-                record = {**info.to_dict(), "chunk": self._chunk}
-                txn.put(self._key, json.dumps(record).encode(), db=backend._meta)
-                if claim is not None:
-                    txn.delete(self._key, db=backend._claims)
+            size = self._size if last else index * self._chunk
+            self._record = {**self._record, "size": size, "sealed": last and self._seal}
+            txn.put(self._key, json.dumps(self._record).encode(), db=backend._meta)
+            if last and claim is not None:
+                txn.delete(self._key, db=backend._claims)
         self._index = index
         self._pending = []
         if last:
@@ -571,42 +654,28 @@ class _Put:
             self._filling = bytearray()
         else:
             self._claim = claim
-        return info
+        return BlobInfo.from_dict(self._record)
 
     def _take(self, txn: Any) -> None:  # noqa: ANN401
         """Check the id is free inside the write txn; a dead put's leftovers are swept."""
         backend = self._backend
-        if txn.get(self._key, db=backend._meta) is not None:
-            raise BlobExists(self._id)
         claim = txn.get(self._key, db=backend._claims)
         if claim is not None:
             if _alive(claim):
                 raise BlobExists(self._id)
-            txn.delete(self._key, db=backend._claims)
-            _clear(txn, backend._data, self._raw)
-
-    def abort(self) -> None:
-        """Delete what this put committed, when it still holds its claim."""
-        self._pending = []
-        self._filling = bytearray()
-        claim, self._claim = self._claim, None
-        if claim is None:
-            return  # nothing committed, or the last commit landed
-        backend = self._backend
-        with backend._write_lock, backend._require().begin(write=True) as txn:
-            if txn.get(self._key, db=backend._claims) == claim:
-                txn.delete(self._key, db=backend._claims)
-                _clear(txn, backend._data, self._raw)
+            _drop(txn, backend._meta, backend._data, backend._claims, self._key, claim)
+        if txn.get(self._key, db=backend._meta) is not None:
+            raise BlobExists(self._id)
 
 
 def _put_path(writer: _Put, path: Path) -> BlobInfo:
     """Put a file from an mmap of it, never read into Python memory."""
     with path.open("rb") as file:
         if os.fstat(file.fileno()).st_size == 0:
-            return writer.write_view(memoryview(b""))  # an empty file cannot be mapped
+            return writer._write_view(memoryview(b""))  # an empty file cannot be mapped
         mapped = mmap.mmap(file.fileno(), 0, access=mmap.ACCESS_READ)
         try:
-            return writer.write_view(memoryview(mapped))
+            return writer._write_view(memoryview(mapped))
         finally:
             try:
                 mapped.close()
@@ -616,6 +685,42 @@ def _put_path(writer: _Put, path: Path) -> BlobInfo:
 
 def _chunk_key(raw: bytes, index: int) -> bytes:
     return raw + index.to_bytes(_INDEX, "big")
+
+
+def _sealed(record: dict[str, Any]) -> bool:
+    """Whether a meta record is sealed; one written before blobs could be open is."""
+    return bool(record.get("sealed", True))
+
+
+def _made(record: dict[str, Any]) -> object:
+    """What names the put that made a blob: its token, or its creation time on a record with none."""
+    return record.get("token") or record.get("created_at")
+
+
+def _new_claim(kind: str) -> bytes:
+    """A claim record for this process: ``put`` or ``append``."""
+    return json.dumps({"pid": os.getpid(), "token": uuid.uuid4().hex, "kind": kind}).encode()
+
+
+def _kind(claim: bytes | memoryview) -> str:
+    """A claim's kind; a claim of the earlier layout is a put's."""
+    return str(json.loads(bytes(claim)).get("kind", "put"))
+
+
+def _drop(
+    txn: Any,  # noqa: ANN401
+    meta: Any,  # noqa: ANN401
+    data: Any,  # noqa: ANN401
+    claims: Any,  # noqa: ANN401
+    key: bytes,
+    claim: bytes | memoryview,
+) -> None:
+    """Clear a dead writer's claim: a put's blob goes with it, an append's committed bytes stay."""
+    kind = _kind(claim)
+    txn.delete(key, db=claims)
+    if kind == "put":
+        txn.delete(key, db=meta)
+        _clear(txn, data, bytes.fromhex(key.decode()))
 
 
 def _clear(txn: Any, data: Any, raw: bytes) -> None:  # noqa: ANN401
@@ -643,7 +748,7 @@ def _alive(claim: bytes | memoryview) -> bool:
 
 
 def _sweep(shared: _Shared) -> None:
-    """Clear the chunks and claims of puts whose process died; no write txn when none did."""
+    """Clear the claims of writers whose process died, and a dead put's blob; no write txn when none did."""
     with shared.env.begin(db=shared.claims) as txn:
         dead = [bytes(key) for key, claim in txn.cursor() if not _alive(claim)]
     if not dead:
@@ -652,8 +757,7 @@ def _sweep(shared: _Shared) -> None:
         for key in dead:
             claim = txn.get(key, db=shared.claims)
             if claim is not None and not _alive(claim):
-                txn.delete(key, db=shared.claims)
-                _clear(txn, shared.data, bytes.fromhex(key.decode()))
+                _drop(txn, shared.meta, shared.data, shared.claims, key, claim)
 
 
 @dataclass

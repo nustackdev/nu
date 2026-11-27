@@ -92,7 +92,8 @@ def test_meta(media, run):
     assert meta["mime"] == "image/png"
     assert meta["name"] == "cat.png"
     assert meta["created_at"] > 0
-    assert set(meta) == {"id", "size", "mime", "name", "created_at"}
+    assert meta["sealed"] is True
+    assert set(meta) == {"id", "size", "mime", "name", "created_at", "sealed"}
 
 
 def test_has(media, run):

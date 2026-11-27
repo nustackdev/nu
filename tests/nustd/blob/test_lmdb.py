@@ -317,11 +317,13 @@ def dead_pid():
 
 
 def plant_dead_put(backend, blob_id, chunks=3):
-    """What a process killed mid-put leaves: chunks and a claim, no meta."""
+    """What a process killed mid-put leaves: chunks, an open meta and a claim."""
     raw = bytes.fromhex(blob_id)
-    claim = json.dumps({"pid": dead_pid(), "token": "t"}).encode()
+    claim = json.dumps({"pid": dead_pid(), "token": "t", "kind": "put"}).encode()
+    record = {"id": blob_id, "size": chunks * 100, "chunk": 100, "sealed": False, "token": "m"}
     with backend._env.begin(write=True) as txn:
         txn.put(blob_id.encode(), claim, db=backend._claims)
+        txn.put(blob_id.encode(), json.dumps(record).encode(), db=backend._meta)
         for index in range(chunks):
             txn.put(raw + index.to_bytes(8, "big"), b"x" * 100, db=backend._data)
 
@@ -365,7 +367,7 @@ def test_delete_clears_a_dead_put(tmp_path):
         backend.close()
 
 
-def test_live_put_holds_its_id(tmp_path):
+def test_live_put_holds_its_id_and_is_read_while_it_runs(tmp_path):
     backend = chunked(tmp_path, 100, 300)
     bid = new_id()
     landed, go = threading.Event(), threading.Event()
@@ -385,11 +387,13 @@ def test_live_put_holds_its_id(tmp_path):
             backend.put(b"other", blob_id=bid)
         with pytest.raises(BlobExists):
             backend.put(iter([b"x" * 1000]), blob_id=bid)
-        assert backend.delete(bid) is False  # a live put is left alone
-        assert not backend.exists(bid)
+        info = backend.info(bid)
+        assert (info.size, info.sealed) == (900, False)  # three batches of whole chunks
+        assert b"".join(backend.stream(bid)) == pattern(900)
         go.set()
         writer.join(10)
         assert backend.read(bid) == pattern(2000)
+        assert backend.info(bid).sealed
         assert leftovers(backend) == []
     finally:
         go.set()
