@@ -56,7 +56,7 @@ function JsonViewerView({ path }: NodeProps) {
 				</div>
 			)}
 			<div className="px-3 pb-2">
-				<JsonView value={data} collapsed={depth} />
+				<JsonView value={data} collapsed={depth} copyAll={false} />
 			</div>
 		</div>
 	);
