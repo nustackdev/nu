@@ -37,7 +37,11 @@
 // order op is answered with an error and changes nothing.
 //
 // `stack_below` (px): under that width the board is one column, cells in
-// that reading order and no spans, so a phone gets a stack.
+// that reading order and no spans, so a phone gets a stack. Unset, it is the
+// kit's STACK_WIDTH (560, `lib/stack.ts`), the width every placed layout
+// gives up its columns at; 0 keeps the board at every width. The node
+// measures and stacks the board itself, since its cells need to know, so the
+// primitive's own stacking is off here.
 
 import { asOrder, keyedOrder, ORDER_PROP, orderHandlers } from "@nustackdev/ui-core";
 import { type CSSProperties, createContext, useContext, useMemo, useState } from "react";
@@ -49,6 +53,7 @@ import {
 	templateTracks,
 	useTrackCount,
 } from "../../components/ui/grid";
+import { STACK_WIDTH } from "../../lib/stack";
 import { cn } from "../../lib/utils";
 import {
 	type CellProps,
@@ -173,7 +178,7 @@ function GridView({ path }: NodeProps) {
 	const maps = useChildMaps(path);
 	const cols = readTemplate(useProp<unknown>(path, "cols", ""));
 	const rows = readTemplate(useProp<unknown>(path, "rows", ""));
-	const stackBelow = useNumberProp(path, "stack_below", 0);
+	const stackBelow = useNumberProp(path, "stack_below", STACK_WIDTH);
 	const order = asOrder(useProp<unknown>(path, ORDER_PROP, undefined));
 	const placed = cols !== "";
 	const spanning = Object.keys(maps.span).length > 0;
@@ -209,6 +214,7 @@ function GridView({ path }: NodeProps) {
 			dense={dense}
 			cols={stacked ? "minmax(0, 1fr)" : cols || undefined}
 			rows={stacked ? undefined : rows || undefined}
+			stackBelow={0}
 			data-mode={mode}
 			className={layout.scroll}
 			style={layout.size}
