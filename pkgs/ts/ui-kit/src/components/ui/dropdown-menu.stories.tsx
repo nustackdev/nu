@@ -6,6 +6,8 @@ import {
 	DropdownMenu,
 	DropdownMenuCheckboxItem,
 	DropdownMenuContent,
+	DropdownMenuDetail,
+	DropdownMenuDetails,
 	DropdownMenuItem,
 	DropdownMenuLabel,
 	DropdownMenuRadioGroup,
@@ -79,6 +81,45 @@ export const Default: StoryObj = {
 		<div className="p-8">
 				<BasicMenu />
 			</div>
+	),
+};
+
+/** Facts above the actions: what the menu acts on, read-only. */
+export const WithDetails: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<DropdownMenu>
+				<DropdownMenuTrigger asChild>
+					<Button variant="secondary">Cell</Button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent align="start" className="w-64">
+					<DropdownMenuLabel>Text</DropdownMenuLabel>
+					<DropdownMenuDetails>
+						<DropdownMenuDetail label="Id" mono>
+							a1b2c3d4
+						</DropdownMenuDetail>
+						<DropdownMenuDetail label="Version" mono>
+							v7
+						</DropdownMenuDetail>
+						<DropdownMenuDetail label="Ran" mono tone="warn">
+							v5
+						</DropdownMenuDetail>
+						<DropdownMenuDetail label="Error" tone="danger" wrap>
+							ZeroDivisionError: division by zero
+						</DropdownMenuDetail>
+					</DropdownMenuDetails>
+					<DropdownMenuSeparator />
+					<DropdownMenuItem>
+						<Edit3 />
+						Edit
+					</DropdownMenuItem>
+					<DropdownMenuItem variant="danger">
+						<Trash2 />
+						Delete
+					</DropdownMenuItem>
+				</DropdownMenuContent>
+			</DropdownMenu>
+		</div>
 	),
 };
 

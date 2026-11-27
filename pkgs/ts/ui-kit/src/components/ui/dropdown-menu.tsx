@@ -5,6 +5,9 @@
 //   space-radius.md  item row 28
 //   motion.md        §3 DropdownMenu (`duration-base` fade + y-shift)
 //   a11y.md          §3 DropdownMenu (arrows, submenu, typeahead)
+//
+// `DropdownMenuDetails` holds facts, not actions: label and value rows a
+// menu shows about what it acts on (a cell's id, version, last run).
 
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import { Check, ChevronRight, Circle } from "lucide-react";
@@ -209,6 +212,69 @@ function DropdownMenuLabel({
 	);
 }
 
+// Facts about what the menu acts on, read-only, between its label and its
+// items: a label column and a value column. Not items, so arrows and
+// typeahead pass over them; the label and value say it to a screen reader.
+const menuDetailsClasses =
+	"grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 px-2 py-1.5 text-xs";
+
+const menuDetailToneClasses = {
+	default: "text-text-secondary",
+	warn: "text-status-warn",
+	danger: "text-status-danger",
+} as const;
+
+function DropdownMenuDetails({ className, ...props }: React.ComponentProps<"dl">) {
+	return (
+		<dl
+			data-slot="dropdown-menu-details"
+			className={cn(menuDetailsClasses, className)}
+			{...props}
+		/>
+	);
+}
+
+interface DropdownMenuDetailProps {
+	label: React.ReactNode;
+	/** Its value. Truncates on one line unless `wrap`. */
+	children: React.ReactNode;
+	/** The value's ink: a value worth a second look reads `warn`, one gone wrong `danger`. */
+	tone?: keyof typeof menuDetailToneClasses;
+	/** Long values (an error) wrap instead of truncating. */
+	wrap?: boolean;
+	/** The value in the code face: ids, versions, figures. */
+	mono?: boolean;
+	className?: string;
+}
+
+function DropdownMenuDetail({
+	label,
+	children,
+	tone = "default",
+	wrap,
+	mono,
+	className,
+}: DropdownMenuDetailProps) {
+	return (
+		<>
+			<dt data-slot="dropdown-menu-detail-label" className="text-text-muted">
+				{label}
+			</dt>
+			<dd
+				data-slot="dropdown-menu-detail-value"
+				className={cn(
+					menuDetailToneClasses[tone],
+					wrap ? "break-words" : "truncate",
+					mono && "font-mono",
+					className,
+				)}
+			>
+				{children}
+			</dd>
+		</>
+	);
+}
+
 function DropdownMenuSeparator({
 	className,
 	...props
@@ -288,6 +354,8 @@ export {
 	DropdownMenuRadioGroup,
 	DropdownMenuRadioItem,
 	DropdownMenuLabel,
+	DropdownMenuDetails,
+	DropdownMenuDetail,
 	DropdownMenuSeparator,
 	DropdownMenuGroup,
 	DropdownMenuSub,
@@ -297,6 +365,7 @@ export {
 	menuItemClasses,
 	menuItemDangerClasses,
 	menuContentClasses,
+	menuDetailsClasses,
 	menuSeparatorClasses,
 	menuShortcutClasses,
 };

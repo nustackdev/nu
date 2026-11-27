@@ -166,6 +166,8 @@ export {
 	DropdownMenu,
 	DropdownMenuCheckboxItem,
 	DropdownMenuContent,
+	DropdownMenuDetail,
+	DropdownMenuDetails,
 	DropdownMenuGroup,
 	DropdownMenuItem,
 	DropdownMenuLabel,
@@ -178,6 +180,7 @@ export {
 	DropdownMenuSubTrigger,
 	DropdownMenuTrigger,
 	menuContentClasses,
+	menuDetailsClasses,
 	menuItemClasses,
 	menuItemDangerClasses,
 	menuSeparatorClasses,
@@ -307,6 +310,7 @@ export {
 	stepDecimals,
 } from "./components/ui/range-slider";
 export {
+	formatAbsolute,
 	formatRelativeTime,
 	RELATIVE_TIME_MODES,
 	RelativeTime,
