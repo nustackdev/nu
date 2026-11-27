@@ -139,8 +139,16 @@ function FileBrowser() {
 										</IconButton>
 									</>
 								}
+								// On touch the actions give way to this menu, a long press:
+								// it carries what they do too.
 								menu={
 									<>
+										{node?.folder ? (
+											<ContextMenuItem onSelect={() => setLog(`new in ${title}`)}>
+												<Plus />
+												New file
+											</ContextMenuItem>
+										) : null}
 										<ContextMenuItem onSelect={item.startRename}>
 											<Edit3 />
 											Rename

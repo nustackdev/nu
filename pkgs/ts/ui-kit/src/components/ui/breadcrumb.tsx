@@ -9,6 +9,16 @@
 // shadcn's Breadcrumb pattern so consumer sites feel familiar. `Slot.Root` on
 // BreadcrumbLink lets a router <Link> take over the anchor node without a
 // wrapper.
+//
+// Narrow: the trail follows its own width (a container query on the nav),
+// not the screen's. Under 28rem a trail of four crumbs or more keeps the
+// first, the parent and the current page and folds the rest into an
+// ellipsis, so a phone and a strip column read "Home > ... > Parent > Page"
+// on one line. CSS on the rendered items, so a trail built from Fragments
+// folds as well as a flat one. It assumes the usual shape: crumbs and
+// separators taking turns, a crumb first and last. The nav sizes from where
+// it sits, not from its crumbs: in a flex row give it room (`min-w-0
+// flex-1`), as the kit's own callers do.
 
 import { Slot as SlotPrimitive } from "radix-ui";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
@@ -24,7 +34,7 @@ export function Breadcrumb({
 		<nav
 			aria-label="Breadcrumb"
 			data-slot="breadcrumb"
-			className={cn(className)}
+			className={cn("@container/breadcrumb", className)}
 			{...props}
 		/>
 	);
@@ -39,6 +49,12 @@ export function BreadcrumbList({
 			data-slot="breadcrumb-list"
 			className={cn(
 				"flex flex-wrap items-center gap-1.5 text-sm text-text-secondary",
+				// Narrow, four crumbs or more (seven items): drop every item
+				// between the first separator and the parent's, and draw the
+				// ellipsis after the first separator, so a separator follows it.
+				"@max-md/breadcrumb:has-[>li:nth-child(7)]:[&>li:nth-child(n+3):nth-last-child(n+5)]:hidden",
+				"@max-md/breadcrumb:has-[>li:nth-child(7)]:[&>li:nth-child(2)]:after:ms-1.5",
+				"@max-md/breadcrumb:has-[>li:nth-child(7)]:[&>li:nth-child(2)]:after:content-['…']",
 				className,
 			)}
 			{...props}
@@ -75,7 +91,7 @@ export function BreadcrumbLink({
 			data-slot="breadcrumb-link"
 			className={cn(
 				"text-text-secondary transition-colors duration-fast ease-out",
-				"cursor-default",
+				"cursor-default nu-tap",
 				"hover:text-accent-text",
 				"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas rounded-sm",
 				className,

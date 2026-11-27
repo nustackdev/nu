@@ -84,3 +84,33 @@ const meta: Meta = {
 };
 
 export default meta;
+
+const MANY = ["Overview", "Traces", "Config", "Logs", "Metrics", "Alerts", "Deploys", "Settings"];
+
+// More tabs than a phone or a strip column holds: the list scrolls sideways
+// and opens with the active tab centred. On a wide page it is the plain list.
+export const Many: StoryObj = {
+	render: () => (
+		<div className="space-y-8 p-4">
+			{VARIANTS.map((v) => (
+				<div key={v}>
+					<div className="mb-2 font-mono text-xs text-text-muted">{v}</div>
+					<Tabs defaultValue="Metrics">
+						<TabsList variant={v} className={v === "line" ? undefined : "self-start"}>
+							{MANY.map((t) => (
+								<TabsTrigger key={t} value={t}>
+									{t}
+								</TabsTrigger>
+							))}
+						</TabsList>
+						{MANY.map((t) => (
+							<TabsContent key={t} value={t}>
+								<div className="p-3 text-sm text-text-primary">{t} content.</div>
+							</TabsContent>
+						))}
+					</Tabs>
+				</div>
+			))}
+		</div>
+	),
+};

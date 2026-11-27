@@ -5,6 +5,7 @@
 import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { TouchProvider } from "../../lib/touch";
 import { Tree, TreeItem, type TreeProps } from "./tree";
 import { dropEdge, dropMove, flattenTree, subtreeOf, type TreeSource } from "./tree-model";
 
@@ -307,5 +308,62 @@ describe("Tree", () => {
 		mount();
 		expect(item("src").draggable).toBe(false);
 		expect(host.querySelector('[data-slot="tree-tail"]')).toBeNull();
+	});
+});
+
+describe("Tree on touch", () => {
+	/** A file tree with icons, actions and, when asked, a menu, in a forced mode. */
+	function render(touch: boolean, menu: boolean) {
+		act(() =>
+			root.render(
+				<TouchProvider value={touch}>
+					<Tree
+						aria-label="Files"
+						source={SOURCE}
+						expanded={new Set()}
+						onToggle={() => {}}
+						onMove={() => {}}
+						renderItem={(item) => (
+							<TreeItem
+								item={item}
+								title={item.row.key}
+								icon={<i data-icon />}
+								actions={<button type="button">act</button>}
+								menu={menu ? <span>menu</span> : undefined}
+							/>
+						)}
+					/>
+				</TouchProvider>,
+			),
+		);
+	}
+
+	it("drags nothing", () => {
+		render(true, false);
+		expect(item("src").draggable).toBe(false);
+		expect(host.querySelector('[data-slot="tree-tail"]')).toBeNull();
+		render(false, false);
+		expect(item("src").draggable).toBe(true);
+	});
+
+	it("shows the chevron in the icon's place on a row that folds", () => {
+		render(true, false);
+		expect(item("src").querySelector("[data-icon]")).toBeNull();
+		expect(item("src").querySelector('button[aria-label="Expand"]')?.className).not.toContain(
+			"opacity-0",
+		);
+		// A leaf keeps its icon.
+		expect(item("README.md").querySelector("[data-icon]")).not.toBeNull();
+		render(false, false);
+		expect(item("src").querySelector("[data-icon]")).not.toBeNull();
+	});
+
+	it("shows actions at rest, or leaves them to the menu", () => {
+		render(true, false);
+		expect(
+			item("src").querySelector("button:not([aria-label])")?.parentElement?.className,
+		).not.toContain("opacity-0");
+		render(true, true);
+		expect(item("src").textContent).not.toContain("act");
 	});
 });

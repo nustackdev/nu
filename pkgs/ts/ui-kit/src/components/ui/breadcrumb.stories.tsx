@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Slash } from "lucide-react";
+import { Fragment } from "react";
 import {
 	Breadcrumb,
 	BreadcrumbEllipsis,
@@ -102,6 +103,36 @@ export const Matrix: StoryObj = {
 					</Breadcrumb>
 				</div>
 			</div>
+	),
+};
+
+const DEEP = ["Home", "Workspaces", "nustack", "Projects", "Mobile", "Navigation"];
+
+// A deep trail, built from Fragments the way a mapped one is. Wide, every
+// crumb shows; under 28rem of its own width (a phone, a strip column) the
+// middle folds: Home > ... > Mobile > Navigation. Three crumbs never fold.
+export const Deep: StoryObj = {
+	render: () => (
+		<div className="space-y-6 p-4">
+			{[DEEP, DEEP.slice(0, 4), DEEP.slice(0, 3)].map((trail) => (
+				<Breadcrumb key={trail.length}>
+					<BreadcrumbList>
+						{trail.map((crumb, i) => (
+							<Fragment key={crumb}>
+								<BreadcrumbItem>
+									{i === trail.length - 1 ? (
+										<BreadcrumbPage>{crumb}</BreadcrumbPage>
+									) : (
+										<BreadcrumbLink href="#">{crumb}</BreadcrumbLink>
+									)}
+								</BreadcrumbItem>
+								{i === trail.length - 1 ? null : <BreadcrumbSeparator />}
+							</Fragment>
+						))}
+					</BreadcrumbList>
+				</Breadcrumb>
+			))}
+		</div>
 	),
 };
 
