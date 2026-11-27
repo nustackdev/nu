@@ -9,6 +9,8 @@
 // xs step (typography.md, chart tick labels), subtle grid lines, and a tooltip
 // dressed like the kit's own.
 
+import { STACK_WIDTH } from "../stack";
+
 export type ChartTokens = {
 	palette: string[];
 	sequential: string[];
@@ -138,8 +140,8 @@ export type ChartFit = {
 	touch?: boolean;
 };
 
-/** Below this width, in px of the chart's own box, a chart is narrow. */
-export const CHART_NARROW = 560;
+/** Below this width, in px of its own box, a chart is narrow: the kit stack width. */
+export const CHART_NARROW = STACK_WIDTH;
 
 /**
  * The ECharts theme for these tokens. `fit` adds two things, both defaults an

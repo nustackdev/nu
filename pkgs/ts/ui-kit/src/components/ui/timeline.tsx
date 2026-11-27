@@ -306,16 +306,16 @@ const ROW_GEOMETRY: Record<number, [number, number, number]> = {
 
 // label | track | count. The label column holds a title and a 14px mark; the
 // count column fits "48.2K items". Narrow (the timeline's own width under
-// 560px): label | count on one line, the track spanning both under them
+// STACK_WIDTH, 560px, `@max-stack`): label | count on one line, the track spanning both under them
 // (`TRACK_CELL`), the spacers of the axis and more rows gone (`SPACER`). One
 // row when wide, so a row gap there draws nothing. Whole class strings, so
 // Tailwind finds every one.
 const GRID = cn(
 	"grid grid-cols-[minmax(0,12rem)_minmax(0,1fr)_4.5rem] items-center gap-x-3",
-	"@max-[560px]/timeline:grid-cols-[minmax(0,1fr)_auto]",
+	"@max-stack/timeline:grid-cols-[minmax(0,1fr)_auto]",
 );
-const TRACK_CELL = "@max-[560px]/timeline:order-last @max-[560px]/timeline:col-span-2";
-const SPACER = "@max-[560px]/timeline:hidden";
+const TRACK_CELL = "@max-stack/timeline:order-last @max-stack/timeline:col-span-2";
+const SPACER = "@max-stack/timeline:hidden";
 
 /** Half a tap's width, px: how far from a bar a tap still picks it. */
 const TAP_REACH = 22;
@@ -596,7 +596,7 @@ export function Timeline({
 						<div
 							key={lane.id ?? i}
 							data-slot="timeline-lane"
-							className={cn(GRID, "h-6", "@max-[560px]/timeline:h-auto @max-[560px]/timeline:pb-1")}
+							className={cn(GRID, "h-6", "@max-stack/timeline:h-auto @max-stack/timeline:pb-1")}
 						>
 							<LaneLabel lane={lane} />
 							<Track

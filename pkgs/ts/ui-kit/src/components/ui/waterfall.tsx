@@ -25,8 +25,9 @@
 // row says the rest in a bottom sheet, unless `onSelect` owns the tap (the rows are buttons either way). Rows
 // stay 24px with no bigger tap area: they are full width and touch each
 // other, so a grown area would take its neighbour's taps. Below 560px of its
-// own width (a container query) the label column gives up room, at most 40%
-// of the width, and every other tick label goes, so the ones left fit.
+// own width (a container query, `@max-stack`, the kit's STACK_WIDTH) the
+// label column gives up room, at most 40% of the width, and every other tick
+// label goes, so the ones left fit.
 
 import * as React from "react";
 
@@ -74,7 +75,7 @@ const INDENT_PX = 12;
 // `labelWidth` prop), at most 40% of the width once the waterfall is narrow.
 const COLS = cn(
 	"grid-cols-[var(--waterfall-label)_minmax(0,1fr)]",
-	"@max-[560px]/waterfall:grid-cols-[min(var(--waterfall-label),40%)_minmax(0,1fr)]",
+	"@max-stack/waterfall:grid-cols-[min(var(--waterfall-label),40%)_minmax(0,1fr)]",
 );
 
 export interface WaterfallProps
@@ -169,7 +170,7 @@ function Waterfall({
 									className={cn(
 										"absolute bottom-1 whitespace-nowrap text-text-muted tabular-nums",
 										last ? "-translate-x-full" : i > 0 && "-translate-x-1/2",
-										i % 2 === 1 && "@max-[560px]/waterfall:hidden",
+										i % 2 === 1 && "@max-stack/waterfall:hidden",
 									)}
 									style={{ left: pct(x) }}
 								>
