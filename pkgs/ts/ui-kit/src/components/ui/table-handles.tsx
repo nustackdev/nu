@@ -32,9 +32,18 @@
 // The host says which row (`<tr>`) and which column (its header cell) the
 // handles stand for, and whether they show (`visible`); the handles measure
 // themselves onto those, again when the table scrolls sideways or changes
-// size. A column scrolled out of sight hides its handle. Hidden is
+// size. A column (or a row) scrolled out of sight hides its handle. Hidden is
 // `invisible`, so a hidden handle is no tab stop. While a menu is open both
 // stay shown. The looks are the `tableHandle` recipe (lib/recipes.ts).
+//
+// ## Touch
+//
+// In touch mode (../../lib/touch.ts) there is no pointer to follow: the host
+// shows the handles on the tapped cell, each a ⋯ (the grips promise a drag
+// that touch does not do), and a handle's menu opens as a bottom sheet
+// (`TableMenuSheet`), the rows the same items in the same words, a submenu
+// laid out as a titled group, radio choices as rows with a check. Long-press
+// on a cell is the host's other way in, the same sheet.
 //
 // ## Keyboard
 //
@@ -55,6 +64,9 @@ import {
 	BetweenHorizontalStart,
 	BetweenVerticalEnd,
 	BetweenVerticalStart,
+	Check,
+	Ellipsis,
+	EllipsisVertical,
 	GripHorizontal,
 	GripVertical,
 	type LucideIcon,
@@ -72,7 +84,9 @@ import {
 	useState,
 } from "react";
 import { tableHandle } from "../../lib/recipes";
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
+import { BottomSheet, BottomSheetContent, BottomSheetItem } from "./bottom-sheet";
 import {
 	ContextMenuItem,
 	ContextMenuRadioGroup,
@@ -428,6 +442,126 @@ export function TableMenuContextItems({ items }: { items: readonly TableMenuItem
 	return <>{renderItems(CONTEXT, items)}</>;
 }
 
+/* ================================ sheet ================================== */
+
+/** Items split at their separators, each run a group. */
+function groupsOf(items: readonly TableMenuItem[]): TableMenuItem[][] {
+	const out: TableMenuItem[][] = [[]];
+	for (const item of items) {
+		if (item.type === "separator") out.push([]);
+		else out[out.length - 1]?.push(item);
+	}
+	return out.filter((g) => g.length > 0);
+}
+
+/** The rows of a sheet for some items; `done` closes it once one is picked. */
+function sheetRows(items: readonly TableMenuItem[], done: () => void): React.ReactNode {
+	return items.map((item) => {
+		switch (item.type) {
+			case "separator":
+				return null;
+			case "radio":
+				return (
+					<div key={item.id}>
+						{item.options.map((o) => {
+							const on = o.value === item.value;
+							return (
+								<BottomSheetItem
+									key={o.value}
+									role="menuitemradio"
+									aria-checked={on}
+									selected={on}
+									onClick={() => {
+										if (!on) item.onValueChange(o.value);
+										done();
+									}}
+								>
+									<span className="flex-1">{o.label}</span>
+									{on ? <Check aria-hidden="true" /> : null}
+								</BottomSheetItem>
+							);
+						})}
+					</div>
+				);
+			case "sub":
+				// No submenus on a sheet: the sub's items as a group under its name.
+				return (
+					<div key={item.id}>
+						<div className="pt-1 pb-0.5 text-xs font-medium uppercase tracking-wide text-text-muted">
+							{item.label}
+						</div>
+						{sheetRows(item.items, done)}
+					</div>
+				);
+			default: {
+				const Icon = item.icon;
+				return (
+					<BottomSheetItem
+						key={item.id}
+						role="menuitem"
+						variant={item.danger ? "danger" : "default"}
+						disabled={item.disabled}
+						onClick={() => {
+							item.onSelect();
+							done();
+						}}
+					>
+						{Icon ? <Icon aria-hidden="true" /> : null}
+						{item.label}
+					</BottomSheetItem>
+				);
+			}
+		}
+	});
+}
+
+export type TableMenuSheetProps = {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	items: readonly TableMenuItem[];
+	/** What the menu acts on, shown over the rows (a row's name, a column's). */
+	title?: string;
+	/** The sheet's accessible name when there is no title. */
+	label: string;
+	/** Where focus goes once the sheet closes; the host's cell. */
+	onCloseAutoFocus?: (e: Event) => void;
+};
+
+/**
+ * A table menu as a bottom sheet: what a handle or a long-press opens in
+ * touch mode. Picking a row runs it and closes the sheet; groups keep the
+ * menu's separators as a gap with a line.
+ */
+export function TableMenuSheet({
+	open,
+	onOpenChange,
+	items,
+	title,
+	label,
+	onCloseAutoFocus,
+}: TableMenuSheetProps) {
+	const done = () => onOpenChange(false);
+	return (
+		<BottomSheet open={open} onOpenChange={onOpenChange}>
+			<BottomSheetContent title={title} label={label} onCloseAutoFocus={onCloseAutoFocus}>
+				<div role="menu" aria-label={label}>
+					{groupsOf(items).map((group, i) => (
+						<div
+							// Groups never reorder while the sheet is open.
+							// biome-ignore lint/suspicious/noArrayIndexKey: positional groups
+							key={i}
+							data-slot="table-menu-sheet-group"
+							className={cn(i > 0 && "mt-2 border-t border-border-default pt-1")}
+						>
+							{sheetRows(group, done)}
+						</div>
+					))}
+				</div>
+			</BottomSheetContent>
+		</BottomSheet>
+	);
+}
+
 /* ================================ handles ================================ */
 
 /** An element, or a lookup run when the handles measure (a ref's element, say). */
@@ -456,6 +590,9 @@ export type TableHandlesProps = {
 	/** Each handle's accessible name, eg "Row 3 options". */
 	rowLabel: string;
 	columnLabel: string;
+	/** Touch mode: what each sheet acts on, shown over its rows (eg the row's name). */
+	rowTitle?: string;
+	columnTitle?: string;
 	/** Whether the host shows the handles now; an open menu keeps them shown. */
 	visible: boolean;
 	/**
@@ -499,13 +636,22 @@ export function TableHandles({
 	columnItems,
 	rowLabel,
 	columnLabel,
+	rowTitle,
+	columnTitle,
 	visible,
 	reachable = false,
 	onOpenChange,
 	onCloseAutoFocus,
 	ref,
 }: TableHandlesProps) {
+	const touch = useTouch();
 	const [open, setOpen] = useState<TableHandleKind | null>(null);
+	// A sheet keeps its last rows while it slides away: the items go empty
+	// the moment it closes, and the sheet would shrink to nothing on its way out.
+	const sheetItems = useRef<Record<TableHandleKind, readonly TableMenuItem[]>>({
+		row: [],
+		column: [],
+	});
 	const openRef = useRef(open);
 	openRef.current = open;
 	const [at, setAt] = useState<{ row: Point; column: Point }>({ row: null, column: null });
@@ -526,12 +672,15 @@ export function TableHandles({
 		const s = resolve(scroller)?.getBoundingClientRect();
 		const r = resolve(row)?.getBoundingClientRect();
 		const c = resolve(column)?.getBoundingClientRect();
-		const rowAt: Point = r
-			? {
-					x: Math.round(Math.max(r.left, s?.left ?? r.left) - ox),
-					y: Math.round(r.top + r.height / 2 - oy),
-				}
-			: null;
+		// A row scrolled out of a table with a height of its own has no handle either.
+		const rowMid = r ? r.top + r.height / 2 : 0;
+		const rowAt: Point =
+			r && (!s || (rowMid >= s.top && rowMid <= s.bottom))
+				? {
+						x: Math.round(Math.max(r.left, s?.left ?? r.left) - ox),
+						y: Math.round(rowMid - oy),
+					}
+				: null;
 		let columnAt: Point = null;
 		if (c) {
 			const mid = c.left + c.width / 2;
@@ -626,9 +775,44 @@ export function TableHandles({
 		point: Point,
 		items: readonly TableMenuItem[],
 		label: string,
+		title: string | undefined,
 		box: React.RefObject<HTMLSpanElement | null>,
 	) => {
 		const on = shown && point !== null;
+		if (open === which) sheetItems.current[which] = items;
+		const button = (
+			<IconButton
+				variant="secondary"
+				size="xs"
+				aria-label={label}
+				aria-keyshortcuts={tableMenuKeys[which]}
+				// Faded, it answers the pointer but is no tab stop.
+				tabIndex={on || reachable ? undefined : -1}
+				// Opens on press; keeping the press from moving focus keeps the cell or caret.
+				onMouseDown={(e) => e.preventDefault()}
+				// The keys it advertises open its own menu here too.
+				onKeyDown={(e) => {
+					if (!tableMenuKey(e)) return;
+					e.preventDefault();
+					change(which);
+				}}
+				// The browser's menu would cover the handle's own.
+				onContextMenu={(e) => e.preventDefault()}
+				{...(touch ? { onClick: () => change(which) } : {})}
+			>
+				{touch ? (
+					which === "row" ? (
+						<EllipsisVertical />
+					) : (
+						<Ellipsis />
+					)
+				) : which === "row" ? (
+					<GripVertical />
+				) : (
+					<GripHorizontal />
+				)}
+			</IconButton>
+		);
 		return (
 			<span
 				ref={box}
@@ -647,58 +831,57 @@ export function TableHandles({
 				)}
 				style={point ? { left: point.x, top: point.y } : undefined}
 			>
-				<DropdownMenu
-					modal={false}
-					open={open === which}
-					onOpenChange={(o) => {
-						if (o) change(which);
-						else if (openRef.current === which) change(null);
-					}}
-				>
-					<DropdownMenuTrigger asChild>
-						<IconButton
-							variant="secondary"
-							size="xs"
-							aria-label={label}
-							aria-keyshortcuts={tableMenuKeys[which]}
-							// Faded, it answers the pointer but is no tab stop.
-							tabIndex={on || reachable ? undefined : -1}
-							// Opens on press; keeping the press from moving focus keeps the cell or caret.
-							onMouseDown={(e) => e.preventDefault()}
-							// The keys it advertises open its own menu here too.
-							onKeyDown={(e) => {
-								if (!tableMenuKey(e)) return;
-								e.preventDefault();
-								change(which);
+				{touch ? (
+					<>
+						{button}
+						<TableMenuSheet
+							open={open === which}
+							onOpenChange={(o) => {
+								if (o) change(which);
+								else if (openRef.current === which) change(null);
 							}}
-							// The browser's menu would cover the handle's own.
-							onContextMenu={(e) => e.preventDefault()}
-						>
-							{which === "row" ? <GripVertical /> : <GripHorizontal />}
-						</IconButton>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent
-						side="bottom"
-						align="start"
-						className="w-48"
-						onCloseAutoFocus={onCloseAutoFocus}
+							items={open === which ? items : sheetItems.current[which]}
+							title={title}
+							label={label}
+							onCloseAutoFocus={onCloseAutoFocus}
+						/>
+					</>
+				) : (
+					<DropdownMenu
+						modal={false}
+						open={open === which}
+						onOpenChange={(o) => {
+							if (o) change(which);
+							else if (openRef.current === which) change(null);
+						}}
 					>
-						<TableMenuDropdownItems items={items} />
-					</DropdownMenuContent>
-				</DropdownMenu>
+						<DropdownMenuTrigger asChild>{button}</DropdownMenuTrigger>
+						<DropdownMenuContent
+							side="bottom"
+							align="start"
+							className="w-48"
+							onCloseAutoFocus={onCloseAutoFocus}
+						>
+							<TableMenuDropdownItems items={items} />
+						</DropdownMenuContent>
+					</DropdownMenu>
+				)}
 			</span>
 		);
 	};
 
 	return (
 		<>
-			{hasRow ? handle("row", at.row, itemsOf(rowItems, open === "row"), rowLabel, rowBox) : null}
+			{hasRow
+				? handle("row", at.row, itemsOf(rowItems, open === "row"), rowLabel, rowTitle, rowBox)
+				: null}
 			{hasColumn
 				? handle(
 						"column",
 						at.column,
 						itemsOf(columnItems, open === "column"),
 						columnLabel,
+						columnTitle,
 						columnBox,
 					)
 				: null}
