@@ -8,12 +8,21 @@
 //
 // Reuses Radix Dialog: same portal, backdrop, focus trap, Esc semantics.
 // The variance is chrome: side prop drives slide direction and edge-fit.
+//
+// In touch mode (../../lib/touch.ts) a left or right sheet takes the whole
+// width: a 440px drawer on a phone is a sliver of page beside a panel, so it
+// becomes a screen that slides in, square and borderless, `width` set
+// aside. Every side keeps clear of the notch and the home indicator, and the
+// footer stacks its actions full width, the main one first. A sheet stays a
+// sheet: it is already an edge surface, so it does not turn into the bottom
+// sheet the other overlays become.
 
 import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 import { Dialog as SheetPrimitive } from "radix-ui";
 import type * as React from "react";
 
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 import { lengthCss } from "./dialog";
 import { IconButton } from "./icon-button";
@@ -116,15 +125,28 @@ function SheetContent({
 	showClose = true,
 	...props
 }: SheetContentProps) {
+	const touch = useTouch();
+	const edge = side ?? "right";
+	const across = edge === "left" || edge === "right";
 	const size: React.CSSProperties = {};
-	if (width !== undefined) size.width = lengthCss(width);
+	if (width !== undefined && !(touch && across)) size.width = lengthCss(width);
 	if (height !== undefined) size.height = lengthCss(height);
 	return (
 		<SheetPortal>
 			<SheetOverlay />
 			<SheetPrimitive.Content
 				data-slot="sheet-content"
-				className={cn(sheetContentVariants({ side }), className)}
+				className={cn(
+					sheetContentVariants({ side }),
+					touch && across && "w-full rounded-none border-0",
+					// The safe areas, on the edges the sheet touches. Each is 0 off a
+					// phone, where the pad stays the 20 it is.
+					touch && edge !== "bottom" && "pt-[max(1.25rem,env(safe-area-inset-top))]",
+					touch && edge !== "top" && "pb-[max(1.25rem,env(safe-area-inset-bottom))]",
+					touch && edge !== "right" && "pl-[max(1.25rem,env(safe-area-inset-left))]",
+					touch && edge !== "left" && "pr-[max(1.25rem,env(safe-area-inset-right))]",
+					className,
+				)}
 				style={{ ...size, ...style }}
 				{...props}
 			>
@@ -138,7 +160,11 @@ function SheetContent({
 							size="sm"
 							ring="inset"
 							aria-label="Close"
-							className="absolute right-4 top-4"
+							className={cn(
+								"absolute right-4 top-4",
+								touch && edge !== "bottom" && "top-[max(1rem,env(safe-area-inset-top))]",
+								touch && edge !== "left" && "right-[max(1rem,env(safe-area-inset-right))]",
+							)}
 						>
 							<X />
 						</IconButton>
@@ -159,11 +185,19 @@ function SheetHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
 	);
 }
 
+// In touch mode the actions stack full width, the main one (last in the
+// source, as in the row) first, the way a bottom sheet's do.
 function SheetFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+	const touch = useTouch();
 	return (
 		<div
 			data-slot="sheet-footer"
-			className={cn("mt-auto flex flex-col gap-2 sm:flex-row sm:justify-end", className)}
+			className={cn(
+				touch
+					? "mt-auto flex flex-col-reverse gap-2 [&>*]:w-full"
+					: "mt-auto flex flex-col gap-2 sm:flex-row sm:justify-end",
+				className,
+			)}
 			{...props}
 		/>
 	);

@@ -413,7 +413,8 @@ function ImageViewer({
 			)}
 
 			{(expandable || expandedProp !== undefined) && (
-				<Dialog open={expanded} onOpenChange={setExpanded}>
+				// Already the whole window, so a dialog on touch too, not a bottom sheet.
+				<Dialog open={expanded} onOpenChange={setExpanded} sheet={false}>
 					<DialogContent
 						data-slot="image-viewer-overlay"
 						aria-describedby={undefined}

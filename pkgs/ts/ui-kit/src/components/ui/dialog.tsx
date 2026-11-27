@@ -5,13 +5,31 @@
 //   space-radius.md  §Density Dialog (pad 24, radius `lg`)
 //   motion.md        §3 Dialog (overlay + content: `duration-slow` fade+scale)
 //   a11y.md          §3 Dialog (focus trap, Esc, focus restore)
+//
+// In touch mode (../../lib/touch.ts) a dialog is a bottom sheet
+// (./bottom-sheet.tsx), the popover pattern (./popover.tsx): the root,
+// trigger, close, title and description map one to one, the content fills
+// the sheet and drops its width, the corner close icon is gone (the sheet
+// drags down, and a tap outside or back closes it), and the footer stacks
+// its actions full width, the main one first. A dialog that already covers
+// the window, like the image viewer's full view, opts out with
+// `sheet={false}` and stays a dialog.
 
 import { cva } from "class-variance-authority";
 import { X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "radix-ui";
-import type * as React from "react";
+import * as React from "react";
 
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
+import {
+	BottomSheet,
+	BottomSheetClose,
+	BottomSheetContent,
+	BottomSheetDescription,
+	BottomSheetTitle,
+	BottomSheetTrigger,
+} from "./bottom-sheet";
 import { IconButton } from "./icon-button";
 
 // `width` caps the content (512px unless set: a number is px, text any CSS
@@ -38,15 +56,73 @@ export function lengthCss(value: number | string | undefined): string | undefine
 	return typeof value === "number" ? `${value}px` : value;
 }
 
-function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
-	return <DialogPrimitive.Root data-slot="dialog" {...props} />;
+// Whether the dialog above is a bottom sheet. Set by the root, so its parts
+// follow the root's choice (a `sheet={false}` dialog stays a dialog in touch
+// mode); outside a root, the touch mode decides.
+const SheetContext = React.createContext<boolean | undefined>(undefined);
+
+function useSheet(): boolean {
+	const touch = useTouch();
+	return React.useContext(SheetContext) ?? touch;
+}
+
+export interface DialogProps extends React.ComponentProps<typeof DialogPrimitive.Root> {
+	/**
+	 * In touch mode, show as a bottom sheet (the default). False keeps the
+	 * dialog as it is, for one that already covers the window.
+	 */
+	sheet?: boolean;
+	/**
+	 * False: the user cannot close the sheet (drag, tap outside, Esc), only
+	 * `open` can. On desktop it does nothing, a controlled dialog refuses a
+	 * close in `onOpenChange`; a sheet would still drag away, so a dialog
+	 * that refuses passes this too.
+	 */
+	dismissible?: boolean;
+}
+
+function Dialog({ sheet = true, dismissible = true, ...props }: DialogProps) {
+	const touch = useTouch();
+	const asSheet = touch && sheet;
+	if (asSheet) {
+		const { open, defaultOpen, onOpenChange, children } = props;
+		return (
+			<SheetContext.Provider value={true}>
+				<BottomSheet
+					open={open}
+					defaultOpen={defaultOpen}
+					onOpenChange={onOpenChange}
+					dismissible={dismissible}
+				>
+					{children}
+				</BottomSheet>
+			</SheetContext.Provider>
+		);
+	}
+	return (
+		<SheetContext.Provider value={false}>
+			<DialogPrimitive.Root data-slot="dialog" {...props} />
+		</SheetContext.Provider>
+	);
 }
 
 function DialogTrigger({ ...props }: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
+	const sheet = useSheet();
+	if (sheet) return <BottomSheetTrigger data-slot="dialog-trigger" {...props} />;
 	return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
 }
 
 function DialogClose({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Close>) {
+	const sheet = useSheet();
+	if (sheet) {
+		return (
+			<BottomSheetClose
+				data-slot="dialog-close"
+				className={cn("cursor-default", className)}
+				{...props}
+			/>
+		);
+	}
 	return (
 		<DialogPrimitive.Close
 			data-slot="dialog-close"
@@ -56,7 +132,12 @@ function DialogClose({ className, ...props }: React.ComponentProps<typeof Dialog
 	);
 }
 
+// Portal and overlay are the desktop dialog's own parts. The sheet brings
+// its own, so in touch mode the portal passes its children through and the
+// overlay draws nothing.
 function DialogPortal({ ...props }: React.ComponentProps<typeof DialogPrimitive.Portal>) {
+	const sheet = useSheet();
+	if (sheet) return <>{props.children}</>;
 	return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
 }
 
@@ -64,6 +145,8 @@ function DialogOverlay({
 	className,
 	...props
 }: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
+	const sheet = useSheet();
+	if (sheet) return null;
 	return (
 		<DialogPrimitive.Overlay
 			data-slot="dialog-overlay"
@@ -96,7 +179,24 @@ function DialogContent({
 	showClose = true,
 	...props
 }: DialogContentProps) {
+	const sheet = useSheet();
 	const cap = lengthCss(width);
+	if (sheet) {
+		// The sheet is the window's width, so the width props go. The caller's
+		// classes style the body, laid out the way the dialog lays out its
+		// children: one column, 16 apart. The rest of the style (a height, for
+		// a big form that wants the sheet tall) sits on the sheet.
+		const { width: _width, minWidth: _minWidth, maxWidth: _maxWidth, ...rest } = style ?? {};
+		return (
+			<BottomSheetContent
+				style={rest}
+				bodyClassName={cn("grid grid-cols-[minmax(0,1fr)] content-start gap-4", className)}
+				{...props}
+			>
+				{children}
+			</BottomSheetContent>
+		);
+	}
 	return (
 		<DialogPortal>
 			<DialogOverlay />
@@ -138,17 +238,37 @@ function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
 	);
 }
 
+// Actions in source order, the main one last. On a sheet they stack full
+// width with the main one first, the reverse of the row, so the same
+// children read right on both.
 function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+	const sheet = useSheet();
 	return (
 		<div
 			data-slot="dialog-footer"
-			className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end", className)}
+			className={cn(
+				sheet
+					? "flex flex-col-reverse gap-2 [&>*]:w-full"
+					: "flex flex-col-reverse gap-2 sm:flex-row sm:justify-end",
+				className,
+			)}
 			{...props}
 		/>
 	);
 }
 
+// On a sheet the title keeps the dialog's look, it only names the sheet.
 function DialogTitle({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Title>) {
+	const sheet = useSheet();
+	if (sheet) {
+		return (
+			<BottomSheetTitle
+				data-slot="dialog-title"
+				className={cn("text-2xl font-semibold leading-tight text-text-primary", className)}
+				{...props}
+			/>
+		);
+	}
 	return (
 		<DialogPrimitive.Title
 			data-slot="dialog-title"
@@ -163,6 +283,9 @@ function DialogTitle({ className, ...props }: React.ComponentProps<typeof Dialog
 // Radix's Title, so the dialog is named by its text, but it brings no type
 // of its own, and it takes the width while letting its content shrink.
 function DialogTitleBox({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+	// The same in touch mode: the sheet's root is a Radix Dialog root too
+	// (./bottom-sheet.tsx), so Radix's title names it, and a box brings no
+	// type of its own the way the sheet's title would.
 	return (
 		<DialogPrimitive.Title asChild>
 			<div data-slot="dialog-title-box" className={cn("min-w-0", className)} {...props} />
@@ -174,6 +297,16 @@ function DialogDescription({
 	className,
 	...props
 }: React.ComponentProps<typeof DialogPrimitive.Description>) {
+	const sheet = useSheet();
+	if (sheet) {
+		return (
+			<BottomSheetDescription
+				data-slot="dialog-description"
+				className={cn("text-sm text-text-secondary", className)}
+				{...props}
+			/>
+		);
+	}
 	return (
 		<DialogPrimitive.Description
 			data-slot="dialog-description"

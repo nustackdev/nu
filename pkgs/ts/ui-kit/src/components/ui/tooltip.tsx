@@ -8,11 +8,17 @@
 //
 // Kit overrides the Radix 300ms default to 200ms (primitives.md §Tooltip);
 // mount TooltipProvider once near the app root.
+//
+// In touch mode (../../lib/touch.ts) a tooltip never opens: there is no
+// hover to ask for it, and a hint that pops up on a tap or a focus covers
+// what the finger is on. The parts still render, so a trigger keeps its
+// element and handlers; what a label must say is written inline instead.
 
 import { Tooltip as TooltipPrimitive } from "radix-ui";
 import * as React from "react";
 
 import { usePortalContainer } from "../../lib/portal";
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 
 // Content box geometry, for OverflowTooltip to size a tooltip before it opens.
@@ -68,6 +74,12 @@ function Tooltip({
 	/** Asked before the tooltip starts opening; false keeps it shut. */
 	canOpen?: () => boolean;
 }) {
+	const touch = useTouch();
+	if (touch) {
+		// Held shut and never asked: neither `open` nor `onOpenChange` reach it.
+		const { open: _open, defaultOpen: _defaultOpen, onOpenChange: _onOpenChange, ...rest } = props;
+		return <TooltipPrimitive.Root data-slot="tooltip" {...rest} open={false} />;
+	}
 	return (
 		<CanOpenContext.Provider value={canOpen}>
 			<TooltipPrimitive.Root data-slot="tooltip" {...props} />
@@ -103,8 +115,11 @@ function TooltipContent({
 	children,
 	...props
 }: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+	const touch = useTouch();
+	const portal = usePortalContainer();
+	if (touch) return null;
 	return (
-		<TooltipPrimitive.Portal container={usePortalContainer()}>
+		<TooltipPrimitive.Portal container={portal}>
 			<TooltipPrimitive.Content
 				data-slot="tooltip-content"
 				sideOffset={sideOffset}

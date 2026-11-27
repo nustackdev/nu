@@ -1,6 +1,7 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import { Slot as SlotPrimitive } from "radix-ui";
 import type * as React from "react";
+import { useTouch } from "../../lib/touch";
 import { cn, ringVariants } from "../../lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
@@ -12,6 +13,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 // `tip` puts the kit Tooltip on it, the usual way to say what a glyph does
 // (`tipSide` places it, bottom by default). It composes with a menu trigger
 // on the outside: `<DropdownMenuTrigger asChild><IconButton tip=... />`.
+// In touch mode there is no tooltip (./tooltip.tsx), so `tip` is dropped
+// and the button renders bare; its `aria-label` still names it.
 const iconButtonVariants = cva(
 	[
 		"inline-flex items-center justify-center rounded-md",
@@ -82,6 +85,7 @@ export function IconButton({
 	type = "button",
 	...props
 }: IconButtonProps) {
+	const touch = useTouch();
 	const Comp = asChild ? SlotPrimitive.Root : "button";
 	// "button" unless told otherwise, like Button: inside a form it never submits by accident.
 	const button = (
@@ -92,7 +96,7 @@ export function IconButton({
 			{...props}
 		/>
 	);
-	if (tip === undefined || tip === null) return button;
+	if (tip === undefined || tip === null || touch) return button;
 	return (
 		<Tooltip>
 			<TooltipTrigger asChild>{button}</TooltipTrigger>

@@ -3,8 +3,10 @@ import { Badge } from "./badge";
 import { Button } from "./button";
 import {
 	Sheet,
+	SheetClose,
 	SheetContent,
 	SheetDescription,
+	SheetFooter,
 	SheetHeader,
 	SheetTitle,
 	SheetTitleBox,
@@ -79,6 +81,36 @@ export const Matrix: StoryObj = {
 				header box
 			</div>
 			<HeaderSample />
+		</div>
+	),
+};
+
+// Opened at load: in touch mode (a phone, or the Touch toolbar) a side
+// sheet takes the whole width and stacks its actions; on desktop the 440px
+// drawer.
+export const Open: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<Sheet defaultOpen>
+				<SheetTrigger asChild>
+					<Button variant="secondary">Open sheet</Button>
+				</SheetTrigger>
+				<SheetContent>
+					<SheetHeader>
+						<SheetTitle>Edit host</SheetTitle>
+						<SheetDescription>Changes apply on the next deploy.</SheetDescription>
+					</SheetHeader>
+					<div className="text-sm text-text-secondary">web-03, 4 vCPU, 16 GB, up 12 days.</div>
+					<SheetFooter>
+						<SheetClose asChild>
+							<Button variant="secondary">Cancel</Button>
+						</SheetClose>
+						<SheetClose asChild>
+							<Button>Save</Button>
+						</SheetClose>
+					</SheetFooter>
+				</SheetContent>
+			</Sheet>
 		</div>
 	),
 };

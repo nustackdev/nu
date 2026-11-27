@@ -104,14 +104,19 @@ function PopoverContent({
 			hideWhenDetached: _hideWhenDetached,
 			updatePositionStrategy: _updatePositionStrategy,
 			forceMount: _forceMount,
+			style,
 			children,
 			...rest
 		} = props;
+		// A width in the style (a node's `width`) would pull the sheet off the
+		// window's edges, so it goes the way the width classes do.
+		const { width: _width, minWidth: _minWidth, maxWidth: _maxWidth, ...kept } = style ?? {};
 		return (
 			<BottomSheetContent
 				container={portal}
 				label={rest["aria-label"] ?? "Popover"}
 				bodyClassName={cn(className, "w-full max-w-none")}
+				style={kept}
 				{...rest}
 			>
 				{children}
