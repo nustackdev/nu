@@ -2,16 +2,17 @@
 
 ## Packages shipped from this repo
 
-- **nucore** (kernel) — 0.9.1
-- **nustd** (fabrics) — 0.9.1
-- **nudle** — 0.1.16
+- **nucore** (kernel) — 0.9.2
+- **nustd** (fabrics) — 0.9.2
+- **nudle** — 0.1.17
 - **ui-core** — 0.2.5
-- **ui-kit** — 0.4.8
+- **ui-kit** — 0.4.9
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
+## 0.9.2 - 2026-11-28
 
+- Release nu 0.9.2, ui-kit 0.4.9, nudle 0.1.17
 - One tap size token; kit sheet controls grow for the thumb on touch
 - Touch tables: tap selects, tap again edits, multi selection is its own mode
 - Tap a table cell on touch to edit it
