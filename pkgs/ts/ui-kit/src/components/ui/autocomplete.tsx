@@ -211,6 +211,7 @@ function TouchAutocomplete({
 	id,
 	className,
 	onKeyDown,
+	onClick,
 	readOnly,
 	disabled,
 	placeholder,
@@ -242,8 +243,10 @@ function TouchAutocomplete({
 					placeholder={placeholder}
 					value={value}
 					onChange={(e) => onValueChange(e.target.value)}
-					onClick={() => {
-						if (canOpen) setOpen(true);
+					// The caller's click runs first; a preventDefault keeps the sheet shut.
+					onClick={(e) => {
+						onClick?.(e);
+						if (canOpen && !e.defaultPrevented) setOpen(true);
 					}}
 					onKeyDown={(e) => {
 						if (canOpen && e.key === "ArrowDown") {
