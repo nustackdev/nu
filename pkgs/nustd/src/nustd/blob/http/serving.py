@@ -28,8 +28,8 @@ from starlette.responses import JSONResponse, Response, StreamingResponse
 from starlette.routing import Route
 
 from nu.context import Fabric, Provide
-from nustd.blob import STEP, BlobBackend, BlobNotFound, BlobTooLarge
-from nustd.blob._base import check_id
+from nustd.blob import STEP, BlobBackend, BlobIdle, BlobNotFound, BlobTooLarge
+from nustd.blob._base import _Waiter, check_id
 
 from . import BlobMount
 
@@ -204,14 +204,28 @@ def routes(
 
     An open blob, still being written, is served as it grows: 200 with a
     chunked body that follows it until it is sealed, ``Cache-Control:
-    no-store``, no ETag and no length. A ``Range`` of ``bytes=a-b`` answers
-    206 with ``Content-Range: bytes a-b/*`` and waits for any of those bytes
-    not there yet; ``bytes=a-`` serves what is there now, ``a`` up to the
-    current end, or 416 when nothing is past ``a`` yet. ``bytes=0-``, a
-    suffix ``bytes=-n`` (whose end is not known yet) and any ``If-Range``
-    (an open blob has no ETag) serve the whole blob, following. HEAD of an
-    open blob carries no ``Content-Length``. A blob deleted while followed,
-    or one idle past ``idle``, breaks the body off unfinished.
+    no-store``, no ETag and no length. ``bytes=0-``, a suffix ``bytes=-n``
+    (whose end is not known yet) and any ``If-Range`` (an open blob has no
+    ETag) serve it so too. HEAD of an open blob carries no ``Content-Length``.
+
+    A ``Range`` of ``bytes=a-b`` or ``bytes=a-`` on an open blob answers 206
+    with only the bytes that exist when it answers: ``a`` up to ``b``, or to
+    the current end when that comes first, with ``Content-Range: bytes
+    a-c/*`` and a ``Content-Length`` that say exactly that. When nothing past
+    ``a`` exists yet it waits for the first byte there (or the seal, then
+    served as a sealed blob, 416 if it ended before ``a``; 416 ``bytes */*``
+    when ``idle`` passes first). It never promises bytes the blob may never
+    hold: a blob sealed short of ``b`` would leave a 206 short of its own
+    ``Content-Range``, which RFC 9110 calls an incomplete message. A short
+    206 is what RFC 9110 lets a server send for a range it can serve in
+    part, and what media elements and download managers handle: they ask
+    again from where it ended. The rest comes by asking again, or by the
+    whole, following GET.
+
+    A blob deleted while its body is sent breaks the body off unfinished
+    (the connection drops), so a client sees a truncated transfer, never a
+    short one that looks whole; with a ``Content-Length`` it can tell. The
+    following body breaks off so too, and when ``idle`` passes.
 
     POST takes the raw body as the blob (a multipart form is stored as is,
     not parsed), streamed into the backend as it arrives: readable, as an
@@ -248,7 +262,7 @@ def routes(
         except BlobNotFound:
             return _not_found()
         if not info.sealed:
-            return serve_open(request, info)
+            return await serve_open(request, info)
         etag = f'"{info.id}"'
         if _none_match(request.headers.get("if-none-match"), etag):
             return Response(
@@ -286,26 +300,47 @@ def routes(
             headers=headers,
         )
 
-    def serve_open(request: Request, info: BlobInfo) -> Response:
+    async def serve_open(request: Request, info: BlobInfo) -> Response:
         headers = _open_headers(info, attachment=_wants_download(request))
         if request.method == "HEAD":
             response = Response(headers=headers)
             del response.headers["content-length"]  # no length yet: it still grows
             return response
-        span = None
-        if "if-range" not in request.headers:
-            try:
-                span = _open_range(request.headers.get("range"), info.size)
-            except _NotSatisfiable:
-                return Response(
-                    status_code=416,
-                    headers={"content-range": "bytes */*", "accept-ranges": "bytes", **headers},
-                )
-        start, end = span or (0, None)
-        if span is not None:
-            headers["content-range"] = f"bytes {start}-{span[1] - 1}/*"
-        pieces = backend.astream(info.id, start, end, step=step, follow=True, idle=idle)
-        return StreamingResponse(pieces, status_code=200 if span is None else 206, headers=headers)
+        want = None if "if-range" in request.headers else _open_range(request.headers.get("range"))
+        if want is None:
+            pieces = backend.astream(info.id, step=step, follow=True, idle=idle)
+            return StreamingResponse(pieces, headers=headers)
+        start, end = want
+        try:
+            info = await reach(info, start)
+        except BlobNotFound:
+            return _not_found()
+        except BlobIdle:
+            return Response(
+                status_code=416,
+                headers={"content-range": "bytes */*", "accept-ranges": "bytes", **headers},
+            )
+        if info.sealed:
+            return await serve(request)  # sealed while it waited: served as any sealed blob
+        stop = info.size if end is None else min(end, info.size)
+        headers["content-range"] = f"bytes {start}-{stop - 1}/*"
+        headers["content-length"] = str(stop - start)
+        pieces = backend.astream(info.id, start, stop, step=step)
+        try:
+            first = await pieces.__anext__()
+        except StopAsyncIteration:
+            first = b""
+        except BlobNotFound:
+            return _not_found()
+        return StreamingResponse(_chain(first, pieces), status_code=206, headers=headers)
+
+    async def reach(info: BlobInfo, start: int) -> BlobInfo:
+        """The blob's info once a byte past ``start`` exists, or it is sealed."""
+        waiter = _Waiter(info.id, idle)
+        while info.size <= start and not info.sealed:
+            await asyncio.sleep(waiter.next_wait())
+            info = await backend.ainfo(info.id)
+        return info
 
     async def upload(request: Request) -> Response:
         if not mount.cross_site and not same_origin(request):
@@ -497,13 +532,11 @@ def _byte_range(header: str | None, size: int) -> tuple[int, int] | None:
     return start, min(end, size)
 
 
-def _open_range(header: str | None, size: int) -> tuple[int, int] | None:
-    """The half-open range one ``bytes=`` spec asks of an open blob, ``size`` bytes so far.
+def _open_range(header: str | None) -> tuple[int, int | None] | None:
+    """The half-open range one ``bytes=`` spec asks of an open blob: ``(start, end)``, end None for open-ended.
 
-    None serves the whole blob, following. ``a-b`` is taken as asked, ``b``
-    past the size or not: the read waits for it. ``a-`` is cut to what is
-    there now, and raises ``_NotSatisfiable`` when nothing is past ``a``
-    yet. ``0-`` and a suffix (``-n``) serve the whole blob.
+    None serves the whole blob, following: no ``Range``, one that does not
+    parse, ``0-``, and a suffix (``-n``), whose end is not known yet.
     """
     if header is None:
         return None
@@ -515,16 +548,12 @@ def _open_range(header: str | None, size: int) -> tuple[int, int] | None:
         return None
     first, last = match.groups()
     if not first:
-        return None  # a suffix: the end is not known yet
+        return None
     start = _bound(first)
     if last:
         end = _bound(last) + 1
         return None if end <= start else (start, end)
-    if start == 0:
-        return None
-    if start >= size:
-        raise _NotSatisfiable
-    return start, size
+    return None if start == 0 else (start, None)
 
 
 async def _chain(first: bytes, rest: AsyncIterator[bytes]) -> AsyncIterator[bytes]:

@@ -193,19 +193,18 @@ def test_range_inside_an_open_blob(client, store):
     assert response.status_code == 206
     assert response.content == DATA[100:200]
     assert response.headers["content-range"] == "bytes 100-199/*"
+    assert response.headers["content-length"] == "100"
     assert response.headers["x-blob-sealed"] == "0"
 
 
-def test_range_past_the_size_waits_for_the_bytes(client, store):
+def test_range_past_the_size_serves_only_what_exists(client, store):
+    # Never a promise the blob may not keep: the answer is what is there.
     bid = store.put(DATA[:1000], seal=False).id
-    writer = later(0.2, store.append, bid, DATA[1000:5000])
-    try:
-        response = client.get(url(bid), headers={"range": "bytes=500-2999"})
-    finally:
-        writer.join(10)
+    response = client.get(url(bid), headers={"range": "bytes=500-2999"})
     assert response.status_code == 206
-    assert response.content == DATA[500:3000]
-    assert response.headers["content-range"] == "bytes 500-2999/*"
+    assert response.content == DATA[500:1000]
+    assert response.headers["content-range"] == "bytes 500-999/*"
+    assert response.headers["content-length"] == "500"
 
 
 def test_open_ended_range_serves_what_is_there(client, store):
@@ -216,11 +215,78 @@ def test_open_ended_range_serves_what_is_there(client, store):
     assert response.headers["content-range"] == "bytes 400-999/*"
 
 
-def test_open_ended_range_past_the_end_is_416(client, store):
+@pytest.mark.parametrize("first", [1000, 1200])
+@pytest.mark.parametrize("last", ["", "2999"])
+def test_range_past_the_end_waits_for_its_first_byte(client, store, first, last):
     bid = store.put(DATA[:1000], seal=False).id
-    response = client.get(url(bid), headers={"range": "bytes=1000-"})
+    writer = later(0.2, store.append, bid, DATA[1000:1500])
+    try:
+        response = client.get(url(bid), headers={"range": f"bytes={first}-{last}"})
+    finally:
+        writer.join(10)
+    assert response.status_code == 206
+    assert response.content == DATA[first:1500]
+    assert response.headers["content-range"] == f"bytes {first}-1499/*"
+
+
+def test_range_past_the_end_of_a_blob_sealed_short_is_416(client, store):
+    bid = store.put(DATA[:1000], seal=False).id
+    writer = later(0.2, store.seal, bid)
+    try:
+        response = client.get(url(bid), headers={"range": "bytes=1500-2999"})
+    finally:
+        writer.join(10)
+    assert response.status_code == 416
+    assert response.headers["content-range"] == "bytes */1000"
+
+
+def test_range_answered_once_sealed_is_a_sealed_answer(client, store):
+    bid = store.put(DATA[:1000], seal=False).id
+
+    def finish():
+        store.append(bid, DATA[1000:2000])
+        store.seal(bid)
+
+    writer = later(0.2, finish)
+    try:
+        response = client.get(url(bid), headers={"range": "bytes=1500-2999"})
+    finally:
+        writer.join(10)
+    assert response.status_code == 206
+    assert response.content == DATA[1500:2000]
+    # Seen open past its wait it says ``*``; seen sealed, the length.
+    assert response.headers["content-range"] in ("bytes 1500-1999/2000", "bytes 1500-1999/*")
+
+
+def test_range_waiting_past_idle_is_416(store):
+    bid = store.put(DATA[:1000], seal=False).id
+    with TestClient(app_of(store, idle=0.1)) as client:
+        response = client.get(url(bid), headers={"range": "bytes=2000-2999"})
     assert response.status_code == 416
     assert response.headers["content-range"] == "bytes */*"
+
+
+async def test_range_of_a_blob_deleted_mid_body_breaks_off(local, store):
+    bid = (await store.aput(DATA, seal=False)).id
+    app = app_of(store, step=1000)
+    deleted = []
+
+    def on_send(message):
+        if message["type"] == "http.response.body" and message.get("body") and not deleted:
+            deleted.append(store.delete(bid))
+
+    headers = [("range", "bytes=0-9999")]
+    if local == "lmdb":
+        # Each piece is looked up again: the body stops and the request fails, so
+        # a client sees a broken transfer, never a short one that looks whole.
+        with pytest.raises(Exception, match=bid):
+            await drive(app, "GET", url(bid), headers=headers, on_send=on_send)
+    else:
+        # An open file keeps its bytes (POSIX): the range is served whole.
+        sent = await drive(app, "GET", url(bid), headers=headers, on_send=on_send)
+        assert body_of(sent) == DATA[:10000]
+        assert headers_of(sent)["content-length"] == "10000"
+    assert deleted == [True]
 
 
 @pytest.mark.parametrize(

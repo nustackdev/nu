@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Ranges on a growing blob answer only bytes that exist, never a broken promise
 - Serve blobs over http while they are still written, following until sealed
 - Blob stores take open blobs: append, seal, and follow a blob while it grows
 - Let blob backends grow open blobs, seal them, and follow them while written
