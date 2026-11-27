@@ -82,11 +82,15 @@
 //
 // Touch (../../lib/touch.ts) changes how it is worked, not how it looks.
 // There is no pointer to follow: the handles stand on the tapped cell, a ⋯
-// each, and open their menus as bottom sheets. A tap on a cell that edits
-// starts the edit, as Enter does (a bool flips); elsewhere it activates. A tap on a header sorts, or renames one that does not sort.
+// each, and open their menus as bottom sheets. A tap works as a click: it
+// focuses the cell, selects its row (one row, multi or not) and activates.
+// A second tap on the focused cell edits it, as a phone spreadsheet does (a
+// bool flips). A tap on a header sorts, or renames one that does not sort.
 // Long-press is right-click: on a cell the row's menu, on a header the
-// column's, as a sheet. Rows do not drag (the menu moves them), and in a
-// multi selection a tap toggles its row, there being no Shift or Cmd to hold.
+// column's, as a sheet. Rows do not drag (the menu moves them). There being
+// no Shift or Cmd to hold, a multi selection is a mode: "Select rows" in the
+// row's menu starts it, a tap then toggles its row, and "Done" under the
+// table (or untoggling the last row) ends it and clears the selection.
 //
 // ## Out of scope
 //
@@ -94,7 +98,7 @@
 // cells, clipboard, type-to-edit, optimistic edits, and sorting or filtering
 // in the browser: the host sorts, the grid shows what it is handed.
 
-import { ChevronDown, ChevronUp, Pencil, Plus, SquareCheck } from "lucide-react";
+import { ChevronDown, ChevronUp, ListChecks, Pencil, Plus, SquareCheck } from "lucide-react";
 import type * as React from "react";
 import {
 	useCallback,
@@ -417,6 +421,10 @@ export function DataTable({
 	// press is no click.
 	const [sheet, setSheet] = useState<"cell" | "head" | null>(null);
 	const pressedAt = useRef(0);
+	// Touch: what held the focus when the finger came down, so a tap knows it
+	// is the second one on the focused cell; and whether rows are being picked.
+	const tapFrom = useRef<Element | null>(null);
+	const [picking, setPicking] = useState(false);
 
 	// Columns: the header being renamed, a rename asked for from a menu (it
 	// waits for the menu to close, as "Edit cell" does), the header a
@@ -861,12 +869,20 @@ export function DataTable({
 		colPending.current = null;
 		// Keep the keyboard on the cell, so the arrows work next.
 		const el = e.currentTarget;
+		const again = touch && tapFrom.current === el;
+		tapFrom.current = null;
 		if (!el.contains(document.activeElement)) el.focus({ preventScroll: true });
 		if (onControl(e)) return;
 		if (Date.now() - pressedAt.current < 700) return;
+		// Touch: a second tap on the focused cell edits it; a finger has no
+		// double click to ask for it.
+		if (again && !picking && cols[c]?.editable) {
+			startEdit({ row: r, col: c });
+			return;
+		}
 		if (selecting) {
 			const range = e.shiftKey && multi;
-			const toggle = (touch || e.metaKey || e.ctrlKey) && multi;
+			const toggle = (touch ? picking : e.metaKey || e.ctrlKey) && multi;
 			const next = clickSelection(selection, selected, order, row.key, anchor.current, {
 				range,
 				toggle,
@@ -878,23 +894,31 @@ export function DataTable({
 			if (!range || anchor.current === null || !order.includes(anchor.current)) {
 				anchor.current = row.key;
 			}
+			// Untoggling the last picked row ends the picking.
+			if (touch && picking && next.length === 0) setPicking(false);
 		}
-		// Touch: a tap on a cell that edits starts the edit, as Enter does; a
-		// finger has no double click to ask for it.
-		if (touch && cols[c]?.editable) {
-			startEdit({ row: r, col: c });
-			return;
-		}
+		// While picking, a tap only toggles.
+		if (touch && picking) return;
 		onActivate?.(row.key, r, e);
 	};
 
-	/** The right-click menu: edit the cell (not on touch), then the row's menu. */
+	/** The right-click menu: edit the cell ("Select rows" on touch), then the row's menu. */
 	const menuItems = (at: CellPos): TableMenuItem[] | null => {
 		const col = cols[at.col];
 		const row = rows[at.row];
 		if (!col || !row) return null;
 		const items: TableMenuItem[] = [];
-		// Touch: a tap edits, so the long-press sheet holds the row's menu alone.
+		// Touch: a multi selection starts here, there being no modifier to hold.
+		if (touch && multi && selecting && !picking) {
+			items.push({
+				type: "item",
+				id: "select",
+				label: tableMenuText.selectRows,
+				icon: ListChecks,
+				onSelect: () => setPicking(true),
+			});
+		}
+		// Touch: a second tap edits, so the long-press sheet leaves it out.
 		if (col.editable && !touch) {
 			const bool = col.kind === "bool";
 			items.push({
@@ -1106,8 +1130,10 @@ export function DataTable({
 		onAdd !== undefined ||
 		onMove !== undefined ||
 		onDelete !== undefined ||
-		// Touch: a tap edits, so editing alone puts nothing in the menu.
-		(!touch && cols.some((c) => c.editable));
+		// Touch: a second tap edits, so editing alone puts nothing in the menu;
+		// picking rows does.
+		(!touch && cols.some((c) => c.editable)) ||
+		(touch && multi && selecting);
 
 	const body = (
 		<TableBody
@@ -1519,6 +1545,7 @@ export function DataTable({
 			start = null;
 		};
 		const down = (e: PointerEvent) => {
+			tapFrom.current = document.activeElement;
 			cancel();
 			if (e.pointerType === "mouse" || !e.isPrimary) return;
 			const target = e.target as Element;
@@ -1693,6 +1720,28 @@ export function DataTable({
 					</>
 				) : null}
 			</div>
+			{touch && picking ? (
+				// Picking rows: how many, and the way out. Sticks to the bottom of a
+				// long page so the way out stays in reach.
+				<div
+					data-slot="data-table-picking"
+					className="sticky bottom-0 z-[4] flex w-full items-center justify-between gap-2 bg-bg-surface py-1"
+				>
+					<span className="text-sm text-text-secondary tabular-nums" aria-live="polite">
+						{tableMenuText.rowsSelected(selected.length)}
+					</span>
+					<Button
+						variant="secondary"
+						size="sm"
+						onClick={() => {
+							setPicking(false);
+							select([]);
+						}}
+					>
+						{tableMenuText.doneSelecting}
+					</Button>
+				</div>
+			) : null}
 			{onAdd ? (
 				<Button
 					ref={addButton}

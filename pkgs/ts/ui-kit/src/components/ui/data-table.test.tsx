@@ -1190,8 +1190,9 @@ describe("DataTable", () => {
 	});
 });
 
-// Touch mode: the same grid worked by a finger. A tap edits a cell that edits
-// and renames a header that does not sort. Long-press opens a cell's or a
+// Touch mode: the same grid worked by a finger. A second tap on the focused
+// cell edits it, a tap renames a header that does not sort, and a multi
+// selection is a mode started from the row's menu. Long-press opens a cell's or a
 // header's menu as a bottom sheet, the handles stand on the tapped cell as ⋯
 // and open sheets too, rows do not drag, and a tap toggles a multi selection.
 describe("DataTable on touch", () => {
@@ -1230,6 +1231,13 @@ describe("DataTable on touch", () => {
 		return el;
 	};
 
+	/** A finger's tap: down, up, then the click it makes. */
+	const tap = (el: Element) => {
+		act(() => finger("pointerdown", el));
+		act(() => finger("pointerup", el));
+		click(el);
+	};
+
 	beforeEach(() => vi.useFakeTimers());
 	afterEach(() => vi.useRealTimers());
 
@@ -1252,23 +1260,30 @@ describe("DataTable on touch", () => {
 		expect(onDelete).toHaveBeenCalledWith(["r2"]);
 	});
 
-	it("edits a cell on a tap, and activates one that does not edit", () => {
+	it("activates on a tap and edits on a second tap of the focused cell", () => {
 		const onActivate = vi.fn();
 		touchMount({ onEdit: vi.fn(), onActivate });
-		click(cell("r2", "title"));
-		expect(input().value).toBe("Beta");
-		expect(onActivate).not.toHaveBeenCalled();
-		type("Beta", "Escape");
-		touchMount({ onActivate });
-		click(cell("r2", "title"));
+		tap(cell("r2", "title"));
 		expect(host.querySelector("input")).toBeNull();
+		expect(onActivate).toHaveBeenCalledTimes(1);
+		tap(cell("r2", "title"));
+		expect(input().value).toBe("Beta");
 		expect(onActivate).toHaveBeenCalledTimes(1);
 	});
 
-	it("flips a bool on a tap anywhere in its cell", () => {
+	it("does not edit on a first tap of another cell", () => {
+		touchMount({ onEdit: vi.fn() });
+		tap(cell("r1", "title"));
+		tap(cell("r2", "title"));
+		expect(host.querySelector("input")).toBeNull();
+	});
+
+	it("flips a bool on a second tap anywhere in its cell", () => {
 		const onEdit = vi.fn();
 		touchMount({ onEdit });
-		click(cell("r1", "done"));
+		tap(cell("r1", "done"));
+		expect(onEdit).not.toHaveBeenCalled();
+		tap(cell("r1", "done"));
 		expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ column: "done", value: true }));
 	});
 
@@ -1331,7 +1346,7 @@ describe("DataTable on touch", () => {
 		expect(rowEl("r1").getAttribute("draggable")).toBeNull();
 	});
 
-	it("toggles a multi selection on a tap", () => {
+	it("selects one row per tap in a multi selection, until picking starts", () => {
 		const spy = vi.fn();
 		act(() =>
 			root.render(
@@ -1340,11 +1355,44 @@ describe("DataTable on touch", () => {
 				</TouchProvider>,
 			),
 		);
-		click(cell("r1", "title"));
-		click(cell("r3", "title"));
-		expect(spy).toHaveBeenLastCalledWith(["r1", "r3"]);
-		click(cell("r1", "title"));
+		tap(cell("r1", "title"));
+		tap(cell("r3", "title"));
 		expect(spy).toHaveBeenLastCalledWith(["r3"]);
+		const bar = () => host.querySelector('[data-slot="data-table-picking"]');
+		expect(bar()).toBeNull();
+		act(() => finger("pointerdown", cell("r1", "title")));
+		act(() => vi.advanceTimersByTime(600));
+		act(() => sheetItem(t.selectRows).click());
+		act(() => vi.advanceTimersByTime(800));
+		expect(bar()?.textContent).toContain(t.rowsSelected(1));
+		tap(cell("r3", "title"));
+		expect(spy).toHaveBeenLastCalledWith(["r1", "r3"]);
+		tap(cell("r1", "title"));
+		expect(spy).toHaveBeenLastCalledWith(["r3"]);
+		const done = [...(bar()?.querySelectorAll("button") ?? [])].find(
+			(b) => b.textContent === t.doneSelecting,
+		);
+		act(() => done?.click());
+		expect(spy).toHaveBeenLastCalledWith([]);
+		expect(bar()).toBeNull();
+	});
+
+	it("ends picking when the last picked row is untoggled", () => {
+		const spy = vi.fn();
+		act(() =>
+			root.render(
+				<TouchProvider value>
+					<Selecting mode="multi" spy={spy} />
+				</TouchProvider>,
+			),
+		);
+		act(() => finger("pointerdown", cell("r2", "title")));
+		act(() => vi.advanceTimersByTime(600));
+		act(() => sheetItem(t.selectRows).click());
+		act(() => vi.advanceTimersByTime(800));
+		tap(cell("r2", "title"));
+		expect(spy).toHaveBeenLastCalledWith([]);
+		expect(host.querySelector('[data-slot="data-table-picking"]')).toBeNull();
 	});
 
 	it("draws the same grid as on desktop", () => {

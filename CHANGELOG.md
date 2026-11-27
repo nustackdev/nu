@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Touch tables: tap selects, tap again edits, multi selection is its own mode
 - Tap a table cell on touch to edit it
 - Icon picker joins the kit and nustd.ui, emoji or glyph, a sheet on phones
 - Mobile version for overlays: dialogs, menus and popovers open as bottom sheets

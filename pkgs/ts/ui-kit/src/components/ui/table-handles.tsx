@@ -159,6 +159,11 @@ export const tableMenuText = {
 	moveRowDown: "Move row down",
 	deleteRow: "Delete row",
 	deleteRows: (n: number) => `Delete ${n} rows`,
+	/** Touch: start picking rows, a tap then toggling each. */
+	selectRows: "Select rows",
+	/** Touch: how many rows are picked, while picking. */
+	rowsSelected: (n: number) => (n === 1 ? "1 selected" : `${n} selected`),
+	doneSelecting: "Done",
 	insertColumnLeft: "Insert column left",
 	insertColumnRight: "Insert column right",
 	moveColumnLeft: "Move column left",
