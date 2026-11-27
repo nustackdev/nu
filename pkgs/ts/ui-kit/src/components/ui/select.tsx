@@ -11,6 +11,7 @@ import {
 	BottomSheetItem,
 	BottomSheetTrigger,
 } from "./bottom-sheet";
+import { MenuSheetSeparator } from "./menu-sheet";
 
 // Radix Select wrapped with kit tokens. Trigger reads like the Input primitive
 // (design/primitives.md §Select) so form rows stay flush. Content is a
@@ -485,10 +486,8 @@ function SelectSeparator({
 	const touch = useTouch();
 	const collecting = React.useContext(CollectContext);
 	if (collecting) return null;
-	// Sheet rows carry their own rule: a gap is the break between groups.
-	if (touch) {
-		return <div aria-hidden="true" data-slot="select-separator" className={cn("h-3", className)} />;
-	}
+	// The break between groups the menu sheets draw: a stronger line, then air.
+	if (touch) return <MenuSheetSeparator data-slot="select-separator" className={className} />;
 	return (
 		<SelectPrimitive.Separator
 			data-slot="select-separator"
