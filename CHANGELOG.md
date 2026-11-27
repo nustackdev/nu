@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Store lmdb blobs in chunks, so a blob grows as big as its map
 - Editors autosave changes on a pause; only the send key ever submits
 
 ## 0.9.1 - 2026-11-27

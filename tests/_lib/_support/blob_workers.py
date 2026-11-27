@@ -28,6 +28,9 @@ __all__ = [
     "content",
     "make",
     "putter",
+    "race_content",
+    "racer",
+    "stalled_putter",
     "writer",
 ]
 
@@ -113,9 +116,15 @@ def writer(
         backend.close()
 
 
-def putter(kind: str, path: str, size: int, ready: Queue, go: Queue) -> None:
-    """Put ``size`` bytes from a generator once told to; for watching the process from outside."""
+def putter(kind: str, path: str, size: int, ready: Queue, go: Queue, batch: int) -> None:
+    """Put ``size`` bytes from a generator once told to; for watching the process from outside.
+
+    Args:
+        batch: the LMDB batch size, what a streamed put there holds in memory.
+    """
     backend = make(kind, Path(path))
+    if isinstance(backend, LMDBBackend):
+        backend.batch_size = batch
     backend.open()
     try:
         ready.put("ready")
@@ -131,3 +140,44 @@ def putter(kind: str, path: str, size: int, ready: Queue, go: Queue) -> None:
         go.get()
     finally:
         backend.close()
+
+
+def race_content(worker: int) -> bytes:
+    """What ``racer`` puts: 200 KiB, different per worker."""
+    return bytes([worker + 1]) * (200 << 10)
+
+
+def racer(path: str, worker: int, barrier: Barrier, out: Queue) -> None:
+    """Put ``race_content`` under ``CONTESTED`` over many small batches, past the pre-check.
+
+    Both racers claim mid-way through each other's batches, so a put that mixed
+    chunks would show.
+    """
+    backend = LMDBBackend(Path(path), chunk_size=1024, batch_size=4096)
+    backend.exists = lambda blob_id: False  # type: ignore[method-assign]
+    backend.open()
+    try:
+        data = race_content(worker)
+        barrier.wait()
+        try:
+            backend.put((data[i : i + 1000] for i in range(0, len(data), 1000)), blob_id=CONTESTED)
+            won = True
+        except BlobExists:
+            won = False
+        out.put((worker, won))
+    finally:
+        backend.close()
+
+
+def stalled_putter(path: str, blob_id: str, ready: Queue, go: Queue) -> None:
+    """Put under ``blob_id`` until a few batches landed, then stall, to be killed there."""
+    backend = LMDBBackend(Path(path), chunk_size=1024, batch_size=4096)
+    backend.open()
+
+    def pieces() -> Iterator[bytes]:
+        yield b"x" * 20_000  # five batches commit before the next pull
+        ready.put("stalled")
+        go.get()
+        yield b"never"
+
+    backend.put(pieces(), blob_id=blob_id)

@@ -115,7 +115,7 @@ class BlobPut(ScalarAction):
         - Inside a block that can retry, mint first with ``BlobNewId`` and
           pass the id: a retry then raises ``BlobExists`` rather than leaving
           a second copy behind.
-        - A file or an iterable spools to the store's disk first and is never
+        - A file or an iterable goes to the store as it is read and is never
           held whole in memory.
         - The source is one value: a stream term, such as another store's
           ``open``, is refused by the tree's checks. Put a stream with
@@ -189,9 +189,8 @@ class BlobPutStream(ActionReduction):
     Notes:
         - A reduction: slot 1 takes the stream and the put folds it into one
           write. Every other slot is one value.
-        - The pieces go straight to the backend as they are pulled, which
-          spools them to the store's disk; the whole blob is never held in
-          memory.
+        - The pieces go straight to the backend as they are pulled; the whole
+          blob is never held in memory.
         - Id, mime and name work as in ``BlobPut``, retries included.
 
     Yields:

@@ -8,7 +8,13 @@ from typing import TYPE_CHECKING
 from nu.context import Provide
 
 from .backends import FilesBackend, LMDBBackend, S3Backend
-from .backends.lmdb import DEFAULT_MAP_SIZE, DEFAULT_MAX_READERS, DEFAULT_WRITEMAP
+from .backends.lmdb import (
+    DEFAULT_BATCH_SIZE,
+    DEFAULT_CHUNK_SIZE,
+    DEFAULT_MAP_SIZE,
+    DEFAULT_MAX_READERS,
+    DEFAULT_WRITEMAP,
+)
 from .backends.s3 import DEFAULT_PART_SIZE
 from .fabric import BlobFabric
 from .store import store_name
@@ -28,6 +34,8 @@ def lmdb(
     map_size: int = DEFAULT_MAP_SIZE,
     max_readers: int = DEFAULT_MAX_READERS,
     writemap: bool = DEFAULT_WRITEMAP,
+    chunk_size: int = DEFAULT_CHUNK_SIZE,
+    batch_size: int = DEFAULT_BATCH_SIZE,
 ) -> Provide:
     """Give a store an LMDB env at ``path``, open while the tree runs.
 
@@ -41,8 +49,13 @@ def lmdb(
         writemap: put straight into the map rather than through C heap
             pages. On by default on Linux, off on macOS, where each commit
             costs time in proportion to ``map_size``; see ``LMDBBackend``.
+        chunk_size: bytes per chunk a blob is cut into inside the env. Each
+            blob keeps the size it was put with, so changing it is safe.
+        batch_size: bytes of chunks per write txn. A put from a file or a
+            stream holds one batch in memory.
 
     Notes:
+        - A blob is limited by ``map_size`` alone.
         - Runs in one process that bind the same path share one open env,
           so they may overlap. They must agree on ``map_size``,
           ``max_readers`` and ``writemap``, or the later one raises.
@@ -56,6 +69,8 @@ def lmdb(
         "map_size": map_size,
         "max_readers": max_readers,
         "writemap": writemap,
+        "chunk_size": chunk_size,
+        "batch_size": batch_size,
     }
     return Provide(
         BlobFabric, kwargs={"backend": LMDBBackend, "options": options}, tag=store_name(store)

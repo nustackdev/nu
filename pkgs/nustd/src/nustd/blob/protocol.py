@@ -74,9 +74,9 @@ class BlobExists(LookupError):  # noqa: N818 - a state, not an error kind
 
 
 class BlobTooLarge(ValueError):  # noqa: N818 - a state, not an error kind
-    """The backend cannot hold one value this big.
+    """The backend cannot hold one blob this big.
 
-    LMDB caps a value near 4 GiB.
+    S3 caps an object at 5 TiB; a backend's ``max_size``, when set, caps it lower.
     """
 
 

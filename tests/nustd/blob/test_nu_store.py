@@ -202,7 +202,13 @@ def test_preset_refuses_what_is_no_store(bad, tmp_path):
 
 def test_lmdb_preset_carries_its_options(tmp_path):
     spec = nustd.blob.lmdb(
-        Media, tmp_path / "env", map_size=1 << 24, max_readers=16, writemap=False
+        Media,
+        tmp_path / "env",
+        map_size=1 << 24,
+        max_readers=16,
+        writemap=False,
+        chunk_size=1 << 16,
+        batch_size=1 << 18,
     )
     kwargs = config(spec)["kwargs"]
     assert kwargs["backend"] is LMDBBackend
@@ -211,6 +217,8 @@ def test_lmdb_preset_carries_its_options(tmp_path):
         "map_size": 1 << 24,
         "max_readers": 16,
         "writemap": False,
+        "chunk_size": 1 << 16,
+        "batch_size": 1 << 18,
     }
 
 

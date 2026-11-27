@@ -10,13 +10,13 @@ import uuid
 from collections.abc import AsyncIterable, Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar
 
 from .protocol import STEP, BlobExists, BlobInfo, BlobTooLarge
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator, Iterator
+    from collections.abc import AsyncIterator, Awaitable, Iterator
 
     from .protocol import AsyncSource, Source
 
@@ -30,6 +30,7 @@ __all__ = [
     "check_range",
     "clamp",
     "new_id",
+    "settled",
     "spool",
 ]
 
@@ -196,6 +197,23 @@ async def aspool(
     return path
 
 
+_T = TypeVar("_T")
+
+
+async def settled(call: Awaitable[_T]) -> _T:
+    """Await a call run in a thread; when cancelled, still wait for the thread to finish.
+
+    A cleanup sent while a write is still in flight would miss it and leave
+    that write behind.
+    """
+    task = asyncio.ensure_future(call)
+    try:
+        return await asyncio.shield(task)
+    except asyncio.CancelledError:
+        await asyncio.wait({task})
+        raise
+
+
 class ThreadedBackend:
     """A backend with blocking sync calls, and async twins that run them in a thread.
 
@@ -337,7 +355,7 @@ class ThreadedBackend:
 
 
 class LocalBackend(ThreadedBackend):
-    """A backend on this machine's disk: every put that is not a buffer or a path spools first.
+    """A backend that takes a put whole: every put that is not a buffer or a path spools first.
 
     A subclass provides ``open``, ``close``, ``info``, ``exists``, ``read``,
     ``stream``, ``delete``, ``_store`` and ``_spool_dir``. The put surface,

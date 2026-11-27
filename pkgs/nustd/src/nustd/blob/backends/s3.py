@@ -19,12 +19,13 @@ from .._base import (
     check_id,
     check_range,
     clamp,
+    settled,
 )
 from ..protocol import STEP, BlobExists, BlobInfo, BlobNotFound
 
 
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Iterable, Iterator
+    from collections.abc import AsyncIterable, AsyncIterator, Iterable, Iterator
 
     from ..protocol import Source
 
@@ -354,7 +355,7 @@ class S3Backend(ThreadedBackend):
         upload = _Upload(self, info)
         try:
             async for view, last in _aparts(source, self.part_size, self.max_size):
-                await _settled(asyncio.to_thread(upload.send, view, last))
+                await settled(asyncio.to_thread(upload.send, view, last))
         except BaseException:
             await asyncio.to_thread(upload.abort)
             raise
@@ -561,20 +562,6 @@ async def _aparts(
         for part in filler.feed(piece):
             yield part, False
     yield filler.rest(), True
-
-
-async def _settled(call: Awaitable[None]) -> None:
-    """Await a call run in a thread; when cancelled, still wait for the thread to finish.
-
-    An abort sent while a part or the upload's creation is still in flight
-    would miss it and leave parts behind.
-    """
-    task = asyncio.ensure_future(call)
-    try:
-        await asyncio.shield(task)
-    except asyncio.CancelledError:
-        await asyncio.wait({task})
-        raise
 
 
 def _metadata(mime: str, name: str, created_at: float) -> dict[str, str]:

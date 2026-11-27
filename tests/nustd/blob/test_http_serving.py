@@ -508,10 +508,7 @@ def test_upload_client_disconnect_stores_nothing(backend, kind):
     ]
     asyncio.run(_asgi(app, "POST", "/media", messages=messages))
     assert stored(backend, kind) == 0
-    if kind == "s3":
-        assert multipart_uploads(backend) == []
-    else:
-        assert list(backend._spool_dir.iterdir()) == []
+    assert blob_fixtures.leftovers(backend) == []
 
 
 def test_upload_over_cap_streamed_stores_nothing(spy, kind):
@@ -526,10 +523,7 @@ def test_upload_over_cap_streamed_stores_nothing(spy, kind):
         ok = client.post("/media", content=b"x" * 500)
         assert ok.status_code == 201
     assert stored(spy.backend, kind) == 1
-    if kind == "s3":
-        assert multipart_uploads(spy.backend) == []
-    else:
-        assert list(spy.backend._spool_dir.iterdir()) == []
+    assert blob_fixtures.leftovers(spy.backend) == []
 
 
 @pytest.mark.parametrize("kind", ["s3"])
@@ -554,7 +548,7 @@ def test_backend_cap_is_413(backend):
     with make_client(backend) as client:
         response = client.post("/media", content=iter([b"x" * 80, b"x" * 80]))
     assert response.status_code == 413
-    assert list(backend._spool_dir.iterdir()) == []
+    assert blob_fixtures.leftovers(backend) == []
 
 
 async def _post_stream(backend, total, piece, on_piece=None):
@@ -607,6 +601,8 @@ def test_upload_reaches_backend_while_body_still_arrives(backend):
 @pytest.mark.parametrize("kind", ["lmdb", "files"])
 def test_large_upload_is_not_buffered(backend):
     total = 64 << 20
+    if isinstance(backend, LMDBBackend):
+        backend.batch_size = 8 << 20  # what an LMDB put holds: an eighth of the upload
     tracemalloc.start()
     try:
         response = asyncio.run(_post_stream(backend, total, 256 << 10))
