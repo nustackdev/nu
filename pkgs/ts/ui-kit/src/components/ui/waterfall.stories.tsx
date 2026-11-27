@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useTouch } from "../../lib/touch";
 import { Waterfall, type WaterfallSpan } from "./waterfall";
 
 // One job: load, compute, write, nested two levels deep.
@@ -38,6 +39,31 @@ export const Default: StoryObj = {
 			<Waterfall spans={trace} />
 		</div>
 	),
+};
+
+// The failed write tapped at load in touch mode (a phone, or the Touch
+// toolbar): the sheet says what the hover tooltip would. On desktop nothing
+// opens; the narrow frame shows the capped label column and fewer ticks.
+function TapFailed() {
+	const touch = useTouch();
+	const root = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		if (!touch) return;
+		const id = setTimeout(() => {
+			const bar = root.current?.querySelector("[data-slot=waterfall-bar][data-tone=danger]");
+			bar?.closest("button")?.click();
+		}, 300);
+		return () => clearTimeout(id);
+	}, [touch]);
+	return (
+		<div ref={root} className="p-4 max-w-3xl">
+			<Waterfall spans={trace} />
+		</div>
+	);
+}
+
+export const Tapped: StoryObj = {
+	render: () => <TapFailed />,
 };
 
 // Spans with no parent read as a sequence.
