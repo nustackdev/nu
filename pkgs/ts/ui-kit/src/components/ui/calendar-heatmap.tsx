@@ -11,13 +11,19 @@
 // is one tab stop; arrows walk the days (left/right a week, up/down a day)
 // and the tooltip follows, read out through a polite live region.
 //
+// In touch mode there is no hover: a tap shows the day under the finger,
+// found from where it landed (an 8px square is smaller than a fingertip, a
+// tap in a gap still means its nearest day). A tap on the same day, outside
+// the grid, or a scroll hides it again. The tip stays inside the screen.
+//
 // Native SVG-free markup on kit tokens. Afterglow by default, for
 // contribution: people acting. `accent-2` (Starlight) for system data.
 
 import type * as React from "react";
-import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 import {
 	buildModel,
@@ -110,6 +116,7 @@ function CalendarHeatmap({
 		return buildModel(values, last ?? new Date(), Math.max(1, Math.floor(weeks)), weekStart);
 	}, [values, endKey, weeks, weekStart]);
 
+	const touch = useTouch();
 	const [active, setActive] = useState<number | null>(null);
 	const [keyboard, setKeyboard] = useState(false);
 	const gridRef = useRef<HTMLDivElement>(null);
@@ -152,6 +159,33 @@ function CalendarHeatmap({
 		setKeyboard(false);
 		setActive(i === undefined ? null : Number(i));
 	}, []);
+
+	// The day a tap means: its week column and weekday row, from the point.
+	const onTap = (e: React.MouseEvent<HTMLDivElement>) => {
+		const r = e.currentTarget.getBoundingClientRect();
+		const col = Math.floor((e.clientX - r.left + 1.5) / STEP);
+		const row = Math.floor((e.clientY - r.top + 1.5) / STEP);
+		const i = col * 7 + Math.max(0, Math.min(6, row));
+		const hit = i >= 0 && i < model.days.length && model.days[i].level !== null ? i : null;
+		setKeyboard(false);
+		setActive((prev) => (hit === prev ? null : hit));
+	};
+
+	// A shown tip goes on the next tap outside the grid, or a scroll (it is
+	// fixed to where the day was).
+	useEffect(() => {
+		if (!touch || active === null) return;
+		const hide = (e: Event) => {
+			if (e.type === "pointerdown" && gridRef.current?.contains(e.target as Node)) return;
+			setActive(null);
+		};
+		document.addEventListener("pointerdown", hide, true);
+		window.addEventListener("scroll", hide, true);
+		return () => {
+			document.removeEventListener("pointerdown", hide, true);
+			window.removeEventListener("scroll", hide, true);
+		};
+	}, [touch, active]);
 
 	const onKeyDown = (e: React.KeyboardEvent) => {
 		const step: Record<string, number> = {
@@ -238,10 +272,11 @@ function CalendarHeatmap({
 						aria-label={label}
 						// biome-ignore lint/a11y/noNoninteractiveTabindex: one tab stop the arrows walk
 						tabIndex={0}
-						onPointerMove={onPointerMove}
-						onPointerLeave={() => setActive(null)}
+						onPointerMove={touch ? undefined : onPointerMove}
+						onPointerLeave={touch ? undefined : () => setActive(null)}
+						onClick={touch ? onTap : undefined}
 						onKeyDown={onKeyDown}
-						onBlur={() => setActive(null)}
+						onBlur={touch ? undefined : () => setActive(null)}
 						className={cn(
 							"grid grid-flow-col grid-rows-[repeat(7,8px)] auto-cols-[8px] gap-[3px] rounded-[2px]",
 							"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas",
@@ -281,7 +316,7 @@ function CalendarHeatmap({
 			<span className="sr-only" aria-live="polite">
 				{keyboard ? tip : ""}
 			</span>
-			<HeatmapTip grid={gridRef} index={active} text={tip} />
+			<HeatmapTip grid={gridRef} index={active} text={tip} keepOnScreen={touch} />
 		</div>
 	);
 }
@@ -291,12 +326,17 @@ function HeatmapTip({
 	grid,
 	index,
 	text,
+	keepOnScreen,
 }: {
 	grid: React.RefObject<HTMLDivElement | null>;
 	index: number | null;
 	text: string;
+	/** Shift the tip back inside the screen, for a phone (touch mode). */
+	keepOnScreen?: boolean;
 }) {
 	const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+	const [shift, setShift] = useState(0);
+	const tipRef = useRef<HTMLDivElement>(null);
 	useLayoutEffect(() => {
 		const cell = index === null ? null : grid.current?.children[index];
 		if (!cell || !text) {
@@ -305,7 +345,18 @@ function HeatmapTip({
 		}
 		const r = cell.getBoundingClientRect();
 		setPos({ x: r.left + r.width / 2, y: r.top });
+		setShift(0);
 	}, [grid, index, text]);
+	// Measured once placed: how far it pokes past either edge, 8px clear.
+	useLayoutEffect(() => {
+		const el = tipRef.current;
+		if (!keepOnScreen || !el || !pos) return;
+		const w = el.offsetWidth;
+		const room = document.documentElement.clientWidth;
+		const left = pos.x - w / 2;
+		const next = left < 8 ? 8 - left : left + w > room - 8 ? room - 8 - (left + w) : 0;
+		setShift((prev) => (prev === next ? prev : next));
+	}, [keepOnScreen, pos]);
 	if (!pos || !text || typeof document === "undefined") return null;
 	return createPortal(
 		<div
@@ -316,7 +367,8 @@ function HeatmapTip({
 				"bg-bg-elevated text-text-primary border border-border-default shadow-floating",
 				"text-xs leading-tight tabular-nums",
 			)}
-			style={{ left: pos.x, top: pos.y - 6 }}
+			ref={tipRef}
+			style={{ left: pos.x + shift, top: pos.y - 6 }}
 		>
 			{text}
 		</div>,

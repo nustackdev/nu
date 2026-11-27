@@ -30,6 +30,13 @@
 // `maxItems` a lane draws its danger items and then its newest ones, and the
 // count on the right is still the lane's full count.
 //
+// Phones and narrow columns (language/mobile.md). In touch mode there is no
+// hover: a tap on a track picks the bar under the finger (or the nearest one
+// within half a tap's width, since a short bar is 3px) and opens a bottom
+// sheet with what the tooltip says. Below 560px of its own width (a
+// container query) a lane stacks: label and count on one line, the track the
+// full width under them, so the bars keep the room a phone has.
+//
 // Times are numbers on one scale, epoch ms (what `Date.now()` gives and what
 // the axis and tooltip format). The window is any span, seconds to weeks;
 // the axis words its ticks to fit ("15m", "2h 30m", "3d ago").
@@ -38,7 +45,9 @@ import type { LucideIcon } from "lucide-react";
 import * as React from "react";
 
 import { formatCount, formatFullCount } from "../../lib/count";
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
+import { BottomSheet, BottomSheetContent } from "./bottom-sheet";
 import { Icon } from "./icon";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip";
 
@@ -296,8 +305,20 @@ const ROW_GEOMETRY: Record<number, [number, number, number]> = {
 };
 
 // label | track | count. The label column holds a title and a 14px mark; the
-// count column fits "48.2K items".
-const GRID = "grid grid-cols-[minmax(0,12rem)_minmax(0,1fr)_4.5rem] items-center gap-3";
+// count column fits "48.2K items". Narrow (the timeline's own width under
+// 560px): label | count on one line, the track spanning both under them
+// (`TRACK_CELL`), the spacers of the axis and more rows gone (`SPACER`). One
+// row when wide, so a row gap there draws nothing. Whole class strings, so
+// Tailwind finds every one.
+const GRID = cn(
+	"grid grid-cols-[minmax(0,12rem)_minmax(0,1fr)_4.5rem] items-center gap-x-3",
+	"@max-[560px]/timeline:grid-cols-[minmax(0,1fr)_auto]",
+);
+const TRACK_CELL = "@max-[560px]/timeline:order-last @max-[560px]/timeline:col-span-2";
+const SPACER = "@max-[560px]/timeline:hidden";
+
+/** Half a tap's width, px: how far from a bar a tap still picks it. */
+const TAP_REACH = 22;
 
 type Hover = { lane: number; index: number } | null;
 
@@ -326,13 +347,18 @@ function Track({
 	names,
 	hovered,
 	onHover,
+	onTap,
+	className,
 }: {
+	className?: string;
 	layout: TimelineLayout;
 	label: string;
 	span: number;
 	names: Partial<Record<TimelineTone, string>>;
 	hovered: number | null;
 	onHover: (index: number | null) => void;
+	/** Touch mode: a tap picked this bar. Set, the track has no hover tooltip. */
+	onTap?: (index: number) => void;
 }) {
 	const [top0, height, step] = ROW_GEOMETRY[layout.rows] ?? ROW_GEOMETRY[MAX_ROWS];
 	const place = (m: TimelineMark): React.CSSProperties => ({
@@ -342,18 +368,42 @@ function Track({
 		top: top0 + m.row * step,
 		height,
 	});
-	const hit = hovered === null ? null : layout.marks[hovered];
+	const hit = hovered === null || onTap ? null : layout.marks[hovered];
+	// The bar a tap at `x` means: the one under it, the topmost row first,
+	// else the nearest within TAP_REACH.
+	const pick = (e: React.MouseEvent<HTMLDivElement>) => {
+		if (!onTap) return;
+		const r = e.currentTarget.getBoundingClientRect();
+		const x = e.clientX - r.left;
+		let best = -1;
+		let gap = TAP_REACH;
+		layout.marks.forEach((m, i) => {
+			const a = (m.left / 100) * r.width;
+			const b = Math.max(a + MIN_BAR, a + (m.width / 100) * r.width);
+			const d = x < a ? a - x : x > b ? x - b : 0;
+			if (d < gap || (d === 0 && gap === 0 && m.row < layout.marks[best].row)) {
+				gap = d;
+				best = i;
+			}
+		});
+		if (best >= 0) onTap(best);
+	};
 	return (
 		<div
 			data-slot="timeline-track"
 			role="img"
 			aria-label={label}
-			className="relative h-6"
-			onPointerOver={(e) => {
-				const el = (e.target as HTMLElement).closest<HTMLElement>("[data-index]");
-				onHover(el ? Number(el.dataset.index) : null);
-			}}
-			onPointerLeave={() => onHover(null)}
+			className={cn("relative h-6", className)}
+			onPointerOver={
+				onTap
+					? undefined
+					: (e) => {
+							const el = (e.target as HTMLElement).closest<HTMLElement>("[data-index]");
+							onHover(el ? Number(el.dataset.index) : null);
+						}
+			}
+			onPointerLeave={onTap ? undefined : () => onHover(null)}
+			onClick={onTap ? pick : undefined}
 		>
 			<div aria-hidden="true" className="absolute inset-x-0 top-1/2 h-px bg-border-subtle" />
 			{layout.marks.map((m, i) => (
@@ -385,6 +435,42 @@ function Track({
 				</Tooltip>
 			)}
 		</div>
+	);
+}
+
+/** Touch mode: the tapped bar, said in a sheet titled by its lane. */
+function TappedSheet({
+	tapped,
+	lanes,
+	laid,
+	span,
+	names,
+	onClose,
+}: {
+	tapped: Hover;
+	lanes: TimelineLane[];
+	laid: TimelineLayout[];
+	span: number;
+	names: Partial<Record<TimelineTone, string>>;
+	onClose: () => void;
+}) {
+	// Kept through the closing slide, after `tapped` is cleared.
+	const last = React.useRef<{ lane: TimelineLane; mark: TimelineMark } | null>(null);
+	const mark = tapped ? laid[tapped.lane]?.marks[tapped.index] : undefined;
+	if (tapped && mark) last.current = { lane: lanes[tapped.lane], mark };
+	const shown = last.current;
+	return (
+		<BottomSheet open={!!mark} onOpenChange={(open) => !open && onClose()}>
+			{shown && (
+				<BottomSheetContent
+					title={shown.lane.title}
+					label={typeof shown.lane.title === "string" ? shown.lane.title : "Item"}
+					bodyClassName="text-sm"
+				>
+					<ItemTip mark={shown.mark} span={span} name={names[shown.mark.tone]} />
+				</BottomSheetContent>
+			)}
+		</BottomSheet>
 	);
 }
 
@@ -471,7 +557,10 @@ export function Timeline({
 	className,
 	...props
 }: TimelineProps) {
+	const touch = useTouch();
 	const [hover, setHover] = React.useState<Hover>(null);
+	// Touch mode: the bar a tap picked, shown in a sheet.
+	const [tapped, setTapped] = React.useState<Hover>(null);
 	const shown = React.useMemo(
 		() => (maxLanes > 0 ? lanes.slice(0, maxLanes) : lanes),
 		[lanes, maxLanes],
@@ -489,7 +578,11 @@ export function Timeline({
 	for (const l of laid) for (const m of l.marks) if (names[m.tone]) present[m.tone] = names[m.tone];
 	return (
 		<TooltipProvider delayDuration={0}>
-			<div data-slot="timeline" className={cn("flex flex-col", className)} {...props}>
+			<div
+				data-slot="timeline"
+				className={cn("@container/timeline flex flex-col", className)}
+				{...props}
+			>
 				{Object.keys(present).length > 0 && (
 					<TimelineLegend className="mb-2 justify-end" names={present} />
 				)}
@@ -499,15 +592,29 @@ export function Timeline({
 						lane.countLabel || `${formatCount(count)} ${count === 1 ? noun : plural}`;
 					const title = typeof lane.title === "string" ? lane.title : "";
 					return (
-						<div key={lane.id ?? i} data-slot="timeline-lane" className={cn(GRID, "h-6")}>
+						<div
+							key={lane.id ?? i}
+							data-slot="timeline-lane"
+							className={cn(GRID, "h-6", "@max-[560px]/timeline:h-auto @max-[560px]/timeline:pb-1")}
+						>
 							<LaneLabel lane={lane} />
 							<Track
+								className={TRACK_CELL}
 								layout={laid[i]}
 								label={title ? `${title}: ${countText}` : countText}
 								span={span}
 								names={names}
-								hovered={hover?.lane === i ? hover.index : null}
+								hovered={
+									touch
+										? tapped?.lane === i
+											? tapped.index
+											: null
+										: hover?.lane === i
+											? hover.index
+											: null
+								}
 								onHover={(index) => setHover(index === null ? null : { lane: i, index })}
+								onTap={touch ? (index) => setTapped({ lane: i, index }) : undefined}
 							/>
 							<span
 								data-slot="timeline-count"
@@ -525,26 +632,41 @@ export function Timeline({
 							<b className="font-medium tabular-nums text-text-secondary">+{formatCount(left)}</b>{" "}
 							{moreLabel}
 						</span>
-						<span />
+						<span className={SPACER} />
 						<span className="flex justify-end">{more}</span>
 					</div>
 				)}
 				{axis !== "none" && (
 					<div data-slot="timeline-axis" aria-hidden="true" className={cn(GRID, "mt-1.5")}>
-						<span />
-						<div className="flex justify-between text-xs tabular-nums text-text-muted">
+						<span className={SPACER} />
+						<div
+							className={cn(
+								"flex justify-between text-xs tabular-nums text-text-muted",
+								TRACK_CELL,
+							)}
+						>
 							{timelineTicks(start, end, axis).map((t, i) => (
 								// biome-ignore lint/suspicious/noArrayIndexKey: five fixed ticks, labels can repeat
 								<span key={i}>{t}</span>
 							))}
 						</div>
-						<span />
+						<span className={SPACER} />
 					</div>
 				)}
 				{note && (
 					<p data-slot="timeline-note" className="mt-2 text-xs text-text-muted">
 						{note}
 					</p>
+				)}
+				{touch && (
+					<TappedSheet
+						tapped={tapped}
+						lanes={shown}
+						laid={laid}
+						span={span}
+						names={names}
+						onClose={() => setTapped(null)}
+					/>
 				)}
 			</div>
 		</TooltipProvider>

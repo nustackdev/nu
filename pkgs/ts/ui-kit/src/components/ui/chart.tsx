@@ -20,6 +20,13 @@
 // series replaced as a list (`resetKey` changing draws from scratch instead).
 // The `patch` handle merges a partial option straight into the instance, no
 // React render, which is what a stream of points goes through.
+//
+// Phones and narrow columns (language/mobile.md): a chart cannot reflow, so
+// it keeps its height and draws fewer ticks once its own box is narrower than
+// `CHART_NARROW`, and in touch mode its tooltip opens on a tap instead of a
+// hover. Both are theme defaults (`chartTheme`'s fit), so crossing the width
+// re-inits like a theme switch does, and an option that sets its own
+// `splitNumber` or `triggerOn` keeps it.
 
 import * as React from "react";
 import { type ECharts, type EChartsInstance, loadECharts } from "../../lib/chart/load";
@@ -31,12 +38,14 @@ import {
 	seriesOf,
 } from "../../lib/chart/option";
 import {
+	CHART_NARROW,
 	type ChartTokens,
 	chartTheme,
 	readChartTokens,
 	resolveVars,
 	tokensKey,
 } from "../../lib/chart/theme";
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 
 export type { ChartOption } from "../../lib/chart/option";
@@ -133,6 +142,9 @@ export function Chart({
 	const tokens = React.useRef<ChartTokens | null>(null);
 	const onClick = React.useRef(onPointClick);
 	onClick.current = onPointClick;
+	const touch = useTouch();
+	// Unmeasured (0, as in a test DOM) counts as wide.
+	const [narrow, setNarrow] = React.useState(false);
 
 	const [lib, setLib] = React.useState<ECharts | null>(null);
 	const [themeKey, setThemeKey] = React.useState("");
@@ -194,7 +206,9 @@ export function Chart({
 	React.useEffect(() => {
 		const node = el.current;
 		if (!lib || !node || !tokens.current || !themeKey) return;
-		const chart = lib.init(node, chartTheme(tokens.current), { renderer: "canvas" });
+		const chart = lib.init(node, chartTheme(tokens.current, { narrow, touch }), {
+			renderer: "canvas",
+		});
 		inst.current = chart;
 		chart.setOption(prepare(node, drawn.current), { notMerge: true });
 		chart.on("click", (p) => {
@@ -205,7 +219,7 @@ export function Chart({
 			chart.dispose();
 			if (inst.current === chart) inst.current = null;
 		};
-	}, [lib, themeKey]);
+	}, [lib, themeKey, narrow, touch]);
 
 	React.useEffect(() => {
 		if (option === lastProp.current && resetKey === lastReset.current) return;
@@ -219,13 +233,36 @@ export function Chart({
 		);
 	}, [option, resetKey]);
 
+	// A tapped tooltip stays up until the next tap. One outside the chart
+	// closes it, the way a tap outside closes a sheet.
 	React.useEffect(() => {
+		if (!touch) return;
+		const away = (e: PointerEvent) => {
+			if (!el.current?.contains(e.target as Node))
+				inst.current?.dispatchAction({ type: "hideTip" });
+		};
+		document.addEventListener("pointerdown", away, true);
+		return () => document.removeEventListener("pointerdown", away, true);
+	}, [touch]);
+
+	// Own width, measured before the first draw so a narrow chart does not
+	// init wide and then again narrow.
+	React.useLayoutEffect(() => {
 		const node = el.current;
-		if (!node || typeof ResizeObserver === "undefined") return;
+		if (!node) return;
+		const measure = () => {
+			const w = node.clientWidth;
+			setNarrow(w > 0 && w < CHART_NARROW);
+		};
+		measure();
+		if (typeof ResizeObserver === "undefined") return;
 		let frame = 0;
 		const watch = new ResizeObserver(() => {
 			cancelAnimationFrame(frame);
-			frame = requestAnimationFrame(() => inst.current?.resize());
+			frame = requestAnimationFrame(() => {
+				measure();
+				inst.current?.resize();
+			});
 		});
 		watch.observe(node);
 		return () => {
