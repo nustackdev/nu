@@ -10,7 +10,8 @@
 // Every instance shares one clock: a single timer set for the soonest moment
 // any mounted stamp changes its text. A stamp under a minute old wakes every
 // second, under an hour every minute, and so on, each on the exact boundary
-// where its text turns over. The hover title is the absolute time.
+// where its text turns over. The hover title is the absolute time, on
+// desktop: touch mode (../../lib/touch.ts) has no hover, so no title either.
 //
 // A stamp a little in the future (clock skew) reads as now. A missing or
 // non-finite stamp draws a muted "-".
@@ -18,6 +19,7 @@
 import type * as React from "react";
 import { useEffect, useState } from "react";
 
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 
 export type RelativeTimeMode = "ago" | "duration";
@@ -128,6 +130,7 @@ export interface RelativeTimeProps
 }
 
 export function RelativeTime({ ts, mode = "ago", className, title, ...props }: RelativeTimeProps) {
+	const touch = useTouch();
 	const valid = Number.isFinite(ts);
 	const [now, setNow] = useState(() => Date.now());
 
@@ -155,7 +158,7 @@ export function RelativeTime({ ts, mode = "ago", className, title, ...props }: R
 			data-slot="relative-time"
 			data-mode={mode}
 			dateTime={new Date(ts).toISOString()}
-			title={title ?? formatAbsolute(ts)}
+			title={title ?? (touch ? undefined : formatAbsolute(ts))}
 			className={cn("whitespace-nowrap tabular-nums", className)}
 			{...props}
 		>

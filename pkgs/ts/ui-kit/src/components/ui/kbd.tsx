@@ -1,5 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 
 // A key, or a whole combination as one: semantic `<kbd>` in the text face
@@ -11,6 +12,9 @@ import { cn } from "../../lib/utils";
 // so it reads on any surface in both themes. For a hint that stands apart:
 // in a field, a tooltip, a list of shortcuts. `ghost` is muted text and
 // nothing else, for a hint beside a label it belongs to: a menu row.
+//
+// In touch mode (../../lib/touch.ts) there is no keyboard to press, so a key
+// hint draws nothing: if what it says matters, the label around it says it.
 const kbdVariants = cva(
 	"inline-flex items-center justify-center whitespace-nowrap rounded-sm font-sans font-medium text-xs leading-none tracking-wide",
 	{
@@ -40,6 +44,8 @@ export interface KbdProps
 		VariantProps<typeof kbdVariants> {}
 
 export function Kbd({ className, variant, size, ...props }: KbdProps) {
+	const touch = useTouch();
+	if (touch) return null;
 	return (
 		<kbd data-slot="kbd" className={cn(kbdVariants({ variant, size, className }))} {...props} />
 	);

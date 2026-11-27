@@ -4,11 +4,19 @@
 // tokens by mapping the library's inline style keys to kit CSS custom
 // properties. `collapsed` is the library's prop for default collapse depth;
 // pass `collapseAll` for the read-only shape.
+//
+// The library's copy is a button per row that shows on hover. Touch mode
+// (../../lib/touch.ts) has no hover, so there the rows carry none and one
+// copy of the whole value stands in the corner instead, always shown, the
+// way a code block's does. A host that draws its own copy of the whole value
+// turns that one off with `copyAll={false}`.
 
 import ReactJsonView from "@uiw/react-json-view";
 import type * as React from "react";
 
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
+import { CopyButton } from "./code";
 
 // The library merges this object over its defaults. Keys are its own literal
 // style hooks; values reference our tokens through CSS variables so the theme
@@ -52,6 +60,17 @@ export interface JsonViewProps
 	displayObjectSize?: boolean;
 	size?: "sm" | "md";
 	style?: React.CSSProperties;
+	/** Touch mode only: the corner copy of the whole value. On by default. */
+	copyAll?: boolean;
+}
+
+// The whole value as the copy hands it out: indented, the way it reads.
+function jsonText(value: unknown): string {
+	try {
+		return JSON.stringify(value ?? {}, null, 2) ?? "";
+	} catch {
+		return String(value);
+	}
 }
 
 function JsonView({
@@ -63,8 +82,11 @@ function JsonView({
 	size = "sm",
 	className,
 	style,
+	copyAll = true,
 	...props
 }: JsonViewProps) {
+	const touch = useTouch();
+	const clipboard = !collapseAll;
 	const collapsedValue = collapseAll ? true : collapsed;
 	const mergedStyle: React.CSSProperties = {
 		...(jsonViewStyle as unknown as React.CSSProperties),
@@ -75,6 +97,7 @@ function JsonView({
 			data-slot="json-view"
 			className={cn(
 				"w-full font-mono",
+				touch && "relative",
 				size === "sm" ? "text-xs" : "text-sm",
 				className,
 			)}
@@ -85,9 +108,12 @@ function JsonView({
 				collapsed={collapsedValue}
 				displayDataTypes={displayDataTypes}
 				displayObjectSize={displayObjectSize}
-				enableClipboard={!collapseAll}
+				enableClipboard={clipboard && !touch}
 				style={mergedStyle}
 			/>
+			{touch && clipboard && copyAll ? (
+				<CopyButton text={jsonText(value)} label="Copy JSON" />
+			) : null}
 		</div>
 	);
 }

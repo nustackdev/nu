@@ -130,6 +130,35 @@ export const Diff: StoryObj = {
 	},
 };
 
+// A read-only block with copy and lines longer than any phone: the lines
+// scroll sideways inside the block, the copy button stays in its corner, on
+// touch as on desktop.
+export const Copyable: StoryObj = {
+	render: () => (
+		<div className="p-4 space-y-6">
+			<div>
+				<div className={label}>copyable, long lines scroll</div>
+				<Code
+					block
+					copyable
+					language="python"
+					value={`def run(plane: str, cells: list[str], *, timeout: float = 30.0, retries: int = 3) -> dict[str, object]:\n    return {"plane": plane, "cells": cells, "timeout": timeout, "retries": retries, "ok": True}\n`}
+				/>
+			</div>
+			<div>
+				<div className={label}>copyable, wrapped</div>
+				<Code
+					block
+					copyable
+					wrap
+					language="sh"
+					value="uv pip install --python 3.10 --index-url https://pypi.org/simple nustack nuspace nudle"
+				/>
+			</div>
+		</div>
+	),
+};
+
 type Args = {
 	language: keyof typeof SAMPLES;
 	readOnly: boolean;

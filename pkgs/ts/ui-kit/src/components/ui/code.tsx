@@ -13,6 +13,11 @@
 // JetBrains Mono; colors come from the `--syntax-*` tokens, so the `.dark`
 // flip restyles every block with no observer. Unknown languages render plain.
 //
+// A long line scrolls sideways inside the block unless `wrap` is on, on any
+// width: code that reflows reads wrong. The copy button is never a hover
+// reveal, so it is there on touch as on desktop, with the 44px tap area every
+// control takes in touch mode (`nu-tap`, index.css).
+//
 // The block's box is the code box recipe (lib/recipes.ts), which the markdown
 // editor's fences sit in too, so a fence and a block on a page are one surface.
 
@@ -134,8 +139,11 @@ function Code({
 	);
 }
 
-/** The corner copy affordance of a read-only block. Also drawn on markdown code fences. */
-function CopyButton({ text }: { text: string }) {
+/**
+ * The corner copy affordance of a read-only block. Also drawn on markdown code
+ * fences, and on a `JsonView` in touch mode. `label` names what it copies.
+ */
+function CopyButton({ text, label = "Copy code" }: { text: string; label?: string }) {
 	const [copied, setCopied] = useState(false);
 	const copy = useCallback(() => {
 		void navigator.clipboard?.writeText(text).then(() => {
@@ -148,9 +156,9 @@ function CopyButton({ text }: { text: string }) {
 		<button
 			type="button"
 			onClick={copy}
-			aria-label={copied ? "Copied" : "Copy code"}
+			aria-label={copied ? "Copied" : label}
 			className={cn(
-				"absolute top-1.5 right-1.5 inline-flex size-6 items-center justify-center",
+				"nu-tap absolute top-1.5 right-1.5 inline-flex size-6 items-center justify-center",
 				"rounded-sm text-text-secondary bg-bg-elevated border border-border-subtle",
 				"hover:text-text-primary hover:bg-bg-hover active:bg-bg-press",
 				"transition-colors duration-fast ease-out",
