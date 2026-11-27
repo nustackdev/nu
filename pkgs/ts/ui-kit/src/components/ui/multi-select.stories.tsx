@@ -79,6 +79,19 @@ export const Matrix: StoryObj = {
 	),
 };
 
+// Opened at load: in touch mode a bottom sheet with the search on top, the
+// options as rows and Done under them; on desktop the anchored list.
+export const Open: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<Sample />
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		canvasElement.querySelector<HTMLElement>('[data-slot="multi-select-trigger"]')?.click();
+	},
+};
+
 const meta: Meta = {
 	title: "UI/MultiSelect",
 };

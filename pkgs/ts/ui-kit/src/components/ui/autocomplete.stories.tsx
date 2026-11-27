@@ -67,6 +67,22 @@ export const Matrix: StoryObj = {
 	),
 };
 
+// Opened at load (an arrow down on the field): in touch mode a bottom sheet
+// with the field on top and the suggestions as rows, on desktop the list
+// under the field.
+export const Open: StoryObj = {
+	render: () => (
+		<div className="p-8 max-w-sm">
+			<Sample seed="l" />
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		const field = canvasElement.querySelector<HTMLInputElement>('[data-slot="autocomplete"] input');
+		field?.focus();
+		field?.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+	},
+};
+
 const meta: Meta = {
 	title: "UI/Autocomplete",
 };

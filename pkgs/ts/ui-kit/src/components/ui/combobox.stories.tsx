@@ -20,11 +20,11 @@ const FRUITS = [
 	{ value: "orange", label: "Orange" },
 ];
 
-function Sample() {
-	const [value, setValue] = useState("");
+function Sample({ seed = "", open }: { seed?: string; open?: boolean }) {
+	const [value, setValue] = useState(seed);
 	const selected = FRUITS.find((f) => f.value === value);
 	return (
-		<Combobox value={value} onValueChange={setValue}>
+		<Combobox value={value} onValueChange={setValue} defaultOpen={open}>
 			<ComboboxTrigger className="w-56">
 				<span>{selected ? selected.label : "Pick a fruit"}</span>
 			</ComboboxTrigger>
@@ -54,6 +54,16 @@ export const Default: StoryObj = {
 };
 
 export const Matrix = Default;
+
+// Opened at load with a pick: in touch mode a bottom sheet, the search field
+// pinned on top and the options as rows; on desktop the anchored list.
+export const Open: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<Sample seed="cherry" open />
+		</div>
+	),
+};
 
 const meta: Meta = {
 	title: "UI/Combobox",
