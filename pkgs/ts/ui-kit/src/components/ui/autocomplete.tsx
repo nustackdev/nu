@@ -1,7 +1,9 @@
 import { Popover as PopoverPrimitive } from "radix-ui";
 import * as React from "react";
 
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
+import { BottomSheet, BottomSheetContent, BottomSheetItem } from "./bottom-sheet";
 import type { ChoiceOption } from "./checkbox-group";
 import { comboboxItemClass } from "./combobox";
 import { Input } from "./input";
@@ -16,6 +18,17 @@ import { Input } from "./input";
 // a Popover anchored to it that does not take focus, and a click on a
 // suggestion keeps the caret where it was. The list and its rows share the
 // Combobox look.
+//
+// In touch mode (../../lib/touch.ts) a tap on the field opens a bottom sheet
+// (./bottom-sheet.tsx) with the field again at its top, focused, and the
+// suggestions as rows under it: typing over a floating list fights the
+// on-screen keyboard for the little room there is. The field in the page
+// stays the control the label, the form and the caller hold; it takes no
+// on-screen keyboard of its own (`inputMode="none"`), a hardware keyboard
+// still types there. Typing in the sheet moves the value as typing in the
+// field does, a tap on a row picks, and Enter closes the sheet and hands
+// the Enter to the field in the page, so a caller's submit runs from where
+// it always does.
 
 export interface AutocompleteProps
 	extends Omit<React.ComponentProps<"input">, "value" | "onChange" | "size" | "defaultValue"> {
@@ -38,7 +51,12 @@ function matching(options: ChoiceOption[], text: string): ChoiceOption[] {
 	);
 }
 
-export function Autocomplete({
+export function Autocomplete(props: AutocompleteProps) {
+	const touch = useTouch();
+	return touch ? <TouchAutocomplete {...props} /> : <DesktopAutocomplete {...props} />;
+}
+
+function DesktopAutocomplete({
 	value,
 	onValueChange,
 	onPick,
@@ -180,5 +198,109 @@ export function Autocomplete({
 				</PopoverPrimitive.Content>
 			</PopoverPrimitive.Portal>
 		</PopoverPrimitive.Root>
+	);
+}
+
+function TouchAutocomplete({
+	value,
+	onValueChange,
+	onPick,
+	options,
+	size = "md",
+	invalid,
+	id,
+	className,
+	onKeyDown,
+	onClick,
+	readOnly,
+	disabled,
+	placeholder,
+	...props
+}: AutocompleteProps) {
+	const auto = React.useId();
+	const listId = `${id ?? auto}-list`;
+	const [open, setOpen] = React.useState(false);
+	const field = React.useRef<HTMLInputElement>(null);
+	const matches = React.useMemo(() => matching(options, value), [options, value]);
+	const canOpen = !readOnly && !disabled;
+
+	return (
+		<BottomSheet open={open && canOpen} onOpenChange={setOpen}>
+			<div data-slot="autocomplete" className={cn("w-full", className)}>
+				<Input
+					ref={field}
+					id={id}
+					role="combobox"
+					aria-autocomplete="list"
+					aria-expanded={open}
+					aria-haspopup="dialog"
+					autoComplete="off"
+					inputMode="none"
+					size={size}
+					invalid={invalid}
+					readOnly={readOnly}
+					disabled={disabled}
+					placeholder={placeholder}
+					value={value}
+					onChange={(e) => onValueChange(e.target.value)}
+					// The caller's click runs first; a preventDefault keeps the sheet shut.
+					onClick={(e) => {
+						onClick?.(e);
+						if (canOpen && !e.defaultPrevented) setOpen(true);
+					}}
+					onKeyDown={(e) => {
+						if (canOpen && e.key === "ArrowDown") {
+							e.preventDefault();
+							setOpen(true);
+							return;
+						}
+						onKeyDown?.(e);
+					}}
+					{...props}
+				/>
+			</div>
+			<BottomSheetContent label={props["aria-label"] ?? (placeholder || "Suggestions")}>
+				<div className="sticky top-0 z-10 bg-bg-elevated pb-2">
+					<Input
+						role="combobox"
+						aria-label={props["aria-label"] ?? placeholder}
+						aria-autocomplete="list"
+						aria-expanded={matches.length > 0}
+						aria-controls={listId}
+						autoComplete="off"
+						enterKeyHint="done"
+						size={size}
+						placeholder={placeholder}
+						value={value}
+						onChange={(e) => onValueChange(e.target.value)}
+						onKeyDown={(e) => {
+							if (e.key !== "Enter" || e.nativeEvent.isComposing || e.keyCode === 229) return;
+							e.preventDefault();
+							setOpen(false);
+							// The caller's Enter (a submit) belongs to the field in the page.
+							field.current?.dispatchEvent(
+								new KeyboardEvent("keydown", { key: "Enter", bubbles: true, cancelable: true }),
+							);
+						}}
+					/>
+				</div>
+				<div id={listId} role="listbox" data-slot="autocomplete-list">
+					{matches.map((o) => (
+						<BottomSheetItem
+							key={o.value}
+							role="option"
+							aria-selected={false}
+							data-slot="autocomplete-item"
+							onClick={() => {
+								setOpen(false);
+								onPick(o.value);
+							}}
+						>
+							{o.label}
+						</BottomSheetItem>
+					))}
+				</div>
+			</BottomSheetContent>
+		</BottomSheet>
 	);
 }

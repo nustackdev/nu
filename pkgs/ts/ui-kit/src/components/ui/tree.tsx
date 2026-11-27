@@ -21,6 +21,16 @@
 //
 // Rename and drag are on only when their callback is given.
 //
+// ## Touch
+//
+// In touch mode (../../lib/touch.ts) there is no drag: a long press is the
+// context menu, and a finger that moves scrolls the list. No hover either, so
+// what hover revealed is always there or behind the long press: the fold
+// chevron takes the icon's place on every row that folds, and a row with a
+// menu keeps its actions there (put what they do in the menu too) and shows
+// a ⋯ at its end that opens the same menu, the way a table row does, while a
+// row with actions and no menu shows them at rest.
+//
 // ## Two parts
 //
 // `Tree` draws the rows, owns the keyboard, the rename in flight and the drag.
@@ -36,14 +46,16 @@
 // Geometry and washes are CSS variables (`--tree-*` in index.css), so an app
 // retunes a tree without touching it.
 
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Ellipsis } from "lucide-react";
 import type * as React from "react";
 import { Fragment, useCallback, useImperativeHandle, useMemo, useState } from "react";
 import { ROVING_KEY, useRovingFocus } from "../../lib/roving";
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 import { ContextMenu, ContextMenuContent, ContextMenuTrigger } from "./context-menu";
 import { IconButton } from "./icon-button";
 import { InlineEdit } from "./inline-edit";
+import { useMenuSheet } from "./menu-sheet";
 import { useTreeDrag } from "./tree-drag";
 import { flattenTree, type TreeMove, type TreeRow, type TreeSource } from "./tree-model";
 
@@ -149,6 +161,9 @@ export function Tree({
 		selectedKey,
 	);
 	const [renaming, setRenaming] = useState<string | null>(null);
+	// No drag on touch: a held finger opens the menu, a moving one scrolls.
+	const touch = useTouch();
+	const movable = onMove !== undefined && !touch;
 
 	useImperativeHandle(ref, () => ({ focusKey }), [focusKey]);
 
@@ -234,7 +249,7 @@ export function Tree({
 	return (
 		// `contents`: a box for the drag's leave only; rows and tail stay laid
 		// out by whatever holds the tree.
-		<div className="contents" {...(onMove ? drag.leaveProps : {})}>
+		<div className="contents" {...(movable ? drag.leaveProps : {})}>
 			<div
 				role="tree"
 				aria-label={label}
@@ -288,7 +303,7 @@ export function Tree({
 							onDoubleClick: (e) => {
 								if (!onControl(e)) onActivate?.(key, e);
 							},
-							...(onMove && renaming !== key ? drag.itemProps(key) : {}),
+							...(movable && renaming !== key ? drag.itemProps(key) : {}),
 						},
 					};
 					return (
@@ -311,7 +326,7 @@ export function Tree({
 				})}
 				{rows.length === 0 ? empty : null}
 			</div>
-			{onMove ? (
+			{movable ? (
 				<div data-slot="tree-tail" className="relative min-h-8 flex-1" {...drag.tailProps}>
 					{drag.target?.key === null ? dropLine(0, "before") : null}
 				</div>
@@ -350,6 +365,30 @@ const ACTIONS = cn(
 	"[&:has([data-state=open])]:pointer-events-auto [&:has([data-state=open])]:w-auto [&:has([data-state=open])]:opacity-100",
 );
 
+// Touch: nothing to hover, so a row's actions sit at rest at its end.
+const ACTIONS_TOUCH = "ml-auto flex shrink-0 items-center justify-end gap-px";
+
+/**
+ * Touch: the ⋯ at a row's end, opening the row's menu as the long press
+ * does. It sits inside the ContextMenu, which on touch is a menu sheet.
+ */
+function TreeMenuButton({ title }: { title: string }) {
+	const { setOpen } = useMenuSheet();
+	return (
+		<IconButton
+			variant="ghost"
+			size="sm"
+			ring="inset"
+			aria-label={`${title} options`}
+			// No focus on a press, like the chevron; the sheet takes it.
+			onMouseDown={(e) => e.preventDefault()}
+			onClick={() => setOpen(true)}
+		>
+			<Ellipsis />
+		</IconButton>
+	);
+}
+
 export type TreeItemProps = {
 	item: TreeItemState;
 	/** The row's text: the default label, what a rename opens with, its name. */
@@ -358,9 +397,13 @@ export type TreeItemProps = {
 	icon?: React.ReactNode;
 	/** Replaces the default label (eg a link). Not shown while renaming. */
 	label?: React.ReactNode;
-	/** Buttons revealed on hover or keyboard focus, at the row's end. */
+	/**
+	 * Buttons revealed on hover or keyboard focus, at the row's end. On touch
+	 * they sit at rest, or are left out when the row has a `menu`: a ⋯ that
+	 * opens it takes their place, and so does a long press.
+	 */
 	actions?: React.ReactNode;
-	/** Items for the right-click menu. */
+	/** Items for the right-click menu; on touch a long press or the row's ⋯. */
 	menu?: React.ReactNode;
 	/** Where focus goes when the right-click menu closes. */
 	onMenuCloseAutoFocus?: (e: Event) => void;
@@ -381,11 +424,15 @@ export function TreeItem({
 	className,
 }: TreeItemProps) {
 	const { row, selected, foldable, renaming, dragging } = item;
-	const swap = icon !== undefined && foldable && !dragging;
+	const touch = useTouch();
+	// Touch: the chevron hover would have shown is there at rest, in the
+	// icon's place, so a row that folds shows it can.
+	const chevronOnly = touch && foldable;
+	const swap = icon !== undefined && foldable && !dragging && !touch;
 
 	const lane = (
 		<span className="group/tree-lane mr-(--tree-gap) grid w-(--tree-lane) shrink-0 place-items-center *:[grid-area:1/1]">
-			{icon !== undefined ? (
+			{icon !== undefined && !chevronOnly ? (
 				<span
 					className={cn(
 						"pointer-events-none flex size-4 shrink-0 items-center justify-center text-text-muted [&_svg]:size-4",
@@ -413,7 +460,7 @@ export function TreeItem({
 					}}
 					className={cn(
 						"transition-[opacity,background-color,color] duration-fast ease-out",
-						icon !== undefined && "opacity-0",
+						icon !== undefined && !chevronOnly && "opacity-0",
 						swap && CHEVRON_IN,
 					)}
 				>
@@ -445,6 +492,8 @@ export function TreeItem({
 						: "hover:bg-(--tree-hover) hover:text-text-primary",
 				item.dragged && "opacity-50",
 				item.dropInto && "ring-2 ring-accent ring-inset",
+				// A long press opens the menu, not the browser's own link callout.
+				touch && menu && "[-webkit-touch-callout:none]",
 				className,
 			)}
 		>
@@ -463,7 +512,13 @@ export function TreeItem({
 			) : (
 				(label ?? <span className="min-w-0 flex-1 truncate">{title}</span>)
 			)}
-			{actions ? <div className={ACTIONS}>{actions}</div> : null}
+			{touch && menu && !renaming ? (
+				<div className={ACTIONS_TOUCH}>
+					<TreeMenuButton title={title} />
+				</div>
+			) : actions && !(touch && menu) ? (
+				<div className={touch ? ACTIONS_TOUCH : ACTIONS}>{actions}</div>
+			) : null}
 		</div>
 	);
 

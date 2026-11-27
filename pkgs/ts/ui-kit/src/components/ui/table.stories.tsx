@@ -136,6 +136,47 @@ export const Matrix: StoryObj = {
 	),
 };
 
+// Wider than its box: the table scrolls sideways inside its frame and the
+// first column stays pinned, on a phone and in a narrow desktop column alike.
+// Scrolled a little at load, so a still shows the pin.
+const WIDE_COLUMNS = ["Run", "Model", "Tokens", "Status", "Latency", "Region", "Started"];
+
+export const Wide: StoryObj = {
+	render: () => (
+		<div className="p-4">
+			<Table variant="striped">
+				<TableHeader>
+					<TableRow>
+						{WIDE_COLUMNS.map((c) => (
+							<TableHead key={c}>{c}</TableHead>
+						))}
+					</TableRow>
+				</TableHeader>
+				<TableBody>
+					{ROWS.map((r, i) => (
+						<TableRow key={r.id} selected={i === 2}>
+							<TableCell className="font-mono whitespace-nowrap">{r.id}</TableCell>
+							<TableCell className="whitespace-nowrap">{r.model}</TableCell>
+							<TableCell className="text-right font-mono">{r.tokens}</TableCell>
+							<TableCell>
+								<Badge variant={r.status}>{r.status}</Badge>
+							</TableCell>
+							<TableCell className="text-right font-mono">{r.latency}</TableCell>
+							<TableCell className="whitespace-nowrap">eu-central-1</TableCell>
+							<TableCell className="whitespace-nowrap font-mono">2026-11-27 18:4{i}</TableCell>
+						</TableRow>
+					))}
+				</TableBody>
+			</Table>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		await new Promise((r) => setTimeout(r, 150));
+		const frame = canvasElement.querySelector<HTMLElement>("[data-slot=table-frame]");
+		if (frame) frame.scrollLeft = 100;
+	},
+};
+
 const meta: Meta = {
 	title: "UI/Table",
 };

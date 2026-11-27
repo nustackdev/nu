@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
+import type * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { type SampleName, sampleOption } from "../../stories/refs/chart-samples";
 import { Chart, type ChartClick, type ChartHandle, type ChartOption } from "./chart";
@@ -127,6 +128,81 @@ export const PointClick: StoryObj = {
 	render: () => (
 		<div className="p-8">
 			<Clicks />
+		</div>
+	),
+};
+
+// Tapped once at load, in the middle of the plot: on touch (a phone, or the
+// Touch toolbar) the tooltip opens on that tap and stays inside the chart, on
+// desktop a click opens it too. A narrow box (a phone, the Frame toolbar)
+// draws fewer ticks on the value axis.
+const DENSE: ChartOption = {
+	tooltip: { trigger: "axis" },
+	legend: {},
+	xAxis: {
+		type: "category",
+		data: Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, "0")}:00`),
+	},
+	yAxis: { type: "value" },
+	series: [
+		{
+			type: "line",
+			name: "requests",
+			showSymbol: false,
+			data: Array.from({ length: 24 }, (_, i) => Math.round(900 + 600 * Math.sin(i / 3.5))),
+		},
+		{
+			type: "line",
+			name: "errors",
+			showSymbol: false,
+			data: Array.from({ length: 24 }, (_, i) => Math.round(120 + 80 * Math.cos(i / 2.5))),
+		},
+	],
+};
+
+// Taps the middle of the plot once the chart has drawn, the way a finger
+// would: down, up, click.
+function TapAtLoad({ children }: { children: React.ReactNode }) {
+	const root = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		let live = true;
+		const tap = async () => {
+			const end = Date.now() + 8000;
+			let canvas: HTMLCanvasElement | null = null;
+			while (live && !canvas && Date.now() < end) {
+				canvas = root.current?.querySelector("canvas") ?? null;
+				if (!canvas) await new Promise((r) => setTimeout(r, 100));
+			}
+			// Past the entry animation, so the tooltip lands on the drawn line.
+			// Asked again after: the first draw can be replaced (a theme read
+			// at load re-inits), and the old canvas is gone.
+			await new Promise((r) => setTimeout(r, 600));
+			canvas = root.current?.querySelector("canvas") ?? null;
+			if (!live || !canvas) return;
+			const r = canvas.getBoundingClientRect();
+			const at = {
+				clientX: r.left + r.width * 0.55,
+				clientY: r.top + r.height * 0.5,
+				bubbles: true,
+			};
+			canvas.dispatchEvent(new MouseEvent("mousedown", at));
+			canvas.dispatchEvent(new MouseEvent("mouseup", at));
+			canvas.dispatchEvent(new MouseEvent("click", at));
+		};
+		tap();
+		return () => {
+			live = false;
+		};
+	}, []);
+	return <div ref={root}>{children}</div>;
+}
+
+export const Tapped: StoryObj = {
+	render: () => (
+		<div className="p-4">
+			<TapAtLoad>
+				<Chart option={DENSE} />
+			</TapAtLoad>
 		</div>
 	),
 };

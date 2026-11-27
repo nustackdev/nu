@@ -73,6 +73,21 @@
 // also drag, a line marking where the drop lands. "Add row" sits under the
 // table when `onAdd` is given.
 //
+// ## Touch and narrow
+//
+// Narrow is width, so it holds on a desktop column as on a phone: a table
+// wider than its box scrolls sideways with its first column pinned (the kit
+// Table does that), and the header sticks to the top of a table given a
+// height of its own (a `className` that bounds it), the rows scrolling under.
+//
+// Touch (../../lib/touch.ts) changes how it is worked, not how it looks.
+// There is no pointer to follow: the handles stand on the tapped cell, a ⋯
+// each, and open their menus as bottom sheets. Long-press is right-click: on
+// a cell "Edit cell" and the row's menu, on a header the column's, as a
+// sheet. A double tap edits, as a double click does. Rows do not drag (the
+// menu moves them), and in a multi selection a tap toggles its row, there
+// being no Shift or Cmd to hold.
+//
 // ## Out of scope
 //
 // Virtualization, pagination, merged cells, column resize, range selection of
@@ -93,6 +108,7 @@ import {
 import { watchKeyboardUse } from "../../lib/modality";
 import { table } from "../../lib/recipes";
 import { ROVING_KEY, useRovingFocus } from "../../lib/roving";
+import { LONG_PRESS_MS, LONG_PRESS_SLOP, useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 import { Button } from "./button";
 import { Checkbox } from "./checkbox";
@@ -144,6 +160,7 @@ import {
 	type TableHandlesHandle,
 	TableMenuContextItems,
 	type TableMenuItem,
+	TableMenuSheet,
 	tableMenuKey,
 	tableMenuText,
 } from "./table-handles";
@@ -303,6 +320,7 @@ export function DataTable({
 	className,
 	ref,
 }: DataTableProps) {
+	const touch = useTouch();
 	const cols = useMemo<Col[]>(
 		() =>
 			columns.map((c) => {
@@ -395,6 +413,10 @@ export function DataTable({
 	// When a shortcut last opened a menu: the browser's own context menu event
 	// that the same key may send right after opens nothing.
 	const shortcutAt = useRef(0);
+	// Touch: the sheet a long-press opened, and when, so the tap that ends the
+	// press is no click.
+	const [sheet, setSheet] = useState<"cell" | "head" | null>(null);
+	const pressedAt = useRef(0);
 
 	// Columns: the header being renamed, a rename asked for from a menu (it
 	// waits for the menu to close, as "Edit cell" does), the header a
@@ -841,9 +863,10 @@ export function DataTable({
 		const el = e.currentTarget;
 		if (!el.contains(document.activeElement)) el.focus({ preventScroll: true });
 		if (onControl(e)) return;
+		if (Date.now() - pressedAt.current < 700) return;
 		if (selecting) {
 			const range = e.shiftKey && multi;
-			const toggle = (e.metaKey || e.ctrlKey) && multi;
+			const toggle = (touch || e.metaKey || e.ctrlKey) && multi;
 			const next = clickSelection(selection, selected, order, row.key, anchor.current, {
 				range,
 				toggle,
@@ -886,16 +909,23 @@ export function DataTable({
 	};
 
 	const onCellContextMenu = (e: React.MouseEvent<HTMLElement>, r: number, c: number) => {
-		const row = rows[r];
-		const col = cols[c];
-		if (!row || !col) return;
-		pending.current = null;
 		// The context menu event a menu shortcut sends after it: the shortcut's
 		// own menu is open already, so this one opens nothing.
-		if (Date.now() - shortcutAt.current < 1000) return;
-		if (!menuItems({ row: r, col: c })) return;
-		menuOffered.current = true;
-		e.currentTarget.focus({ preventScroll: true });
+		if (Date.now() - shortcutAt.current < 1000) {
+			pending.current = null;
+			return;
+		}
+		if (openCellMenu(e.currentTarget, r, c)) menuOffered.current = true;
+	};
+
+	/** A cell's menu, on that cell: false when it has nothing to offer. */
+	const openCellMenu = (el: HTMLElement, r: number, c: number): boolean => {
+		const row = rows[r];
+		const col = cols[c];
+		if (!row || !col) return false;
+		pending.current = null;
+		if (!menuItems({ row: r, col: c })) return false;
+		el.focus({ preventScroll: true });
 		if (selecting && !selected.includes(row.key)) {
 			anchor.current = row.key;
 			select(clickSelection(selection, selected, order, row.key, null));
@@ -903,6 +933,7 @@ export function DataTable({
 		menuTarget.current = { row: row.key, col: col.key, index: r };
 		editAfterMenu.current = false;
 		setMenuAt(menuTarget.current);
+		return true;
 	};
 
 	// --- Drag ----------------------------------------------------------------
@@ -912,7 +943,8 @@ export function DataTable({
 	): React.HTMLAttributes<HTMLTableRowElement> & {
 		draggable?: boolean;
 	} => {
-		if (!onMove || editing?.row === key) return {};
+		// No drag on touch: a held finger is a long-press, and the menu moves rows.
+		if (!onMove || touch || editing?.row === key) return {};
 		return {
 			draggable: true,
 			onDragStart: (e) => {
@@ -1141,7 +1173,13 @@ export function DataTable({
 									onDoubleClick={(e) => {
 										if (!onControl(e) && col.kind !== "bool") startEdit({ row: r, col: c });
 									}}
-									onContextMenu={hasMenu ? (e) => onCellContextMenu(e, r, c) : undefined}
+									onContextMenu={
+										touch
+											? (e) => e.preventDefault()
+											: hasMenu
+												? (e) => onCellContextMenu(e, r, c)
+												: undefined
+									}
 								>
 									{isEditing ? (
 										<>
@@ -1170,16 +1208,21 @@ export function DataTable({
 	const hasColumnMenu = cols.some((_, c) => columnItems(c, null).length > 0);
 
 	const onHeadContextMenu = (e: React.MouseEvent<HTMLElement>, c: number) => {
-		const col = cols[c];
-		if (!col) return;
 		if (Date.now() - shortcutAt.current < 1000) return;
-		if (columnItems(c, null).length === 0) return;
-		headMenuOffered.current = true;
-		if (header) e.currentTarget.focus({ preventScroll: true });
+		if (openHeadMenu(e.currentTarget, c)) headMenuOffered.current = true;
+	};
+
+	/** A header's column menu, on that header: false when it has nothing to offer. */
+	const openHeadMenu = (el: HTMLElement, c: number): boolean => {
+		const col = cols[c];
+		if (!col) return false;
+		if (columnItems(c, null).length === 0) return false;
+		if (header) el.focus({ preventScroll: true });
 		colDest.current = null;
 		renameAfterMenu.current = null;
 		headTarget.current = { row: null, col: col.key, colIndex: c };
 		setHeadMenuAt({ col: col.key, row: null });
+		return true;
 	};
 
 	const head = (
@@ -1231,12 +1274,17 @@ export function DataTable({
 									: undefined
 							}
 							onContextMenu={
-								hasColumnMenu
-									? (e: React.MouseEvent<HTMLElement>) => onHeadContextMenu(e, c)
-									: undefined
+								touch
+									? (e: React.MouseEvent<HTMLElement>) => e.preventDefault()
+									: hasColumnMenu
+										? (e: React.MouseEvent<HTMLElement>) => onHeadContextMenu(e, c)
+										: undefined
 							}
 							className={cn(
-								renaming === col.key && "relative",
+								// Sticks while rows scroll under it, when the table has a height to
+								// scroll in; sticky holds the rename editor as \`relative\` would.
+								"sticky top-0",
+								c === 0 ? "z-[3]" : "z-[2]",
 								ALIGN[col.align],
 								header && table.gridCell,
 								col.sortable && "cursor-default select-none hover:text-text-primary",
@@ -1279,15 +1327,18 @@ export function DataTable({
 	// What the handles stand for: the cell a menu is open on, else the one
 	// under the pointer, else the focused one. Where they stand is one thing,
 	// whether they show another: see `visible` below.
-	const spot =
-		handleAt ?? hover ?? (keyboard ? spotOf(tabKey) : lastHover.current) ?? spotOf(tabKey);
+	// On touch nothing hovers: the tapped (focused) cell, always.
+	const spot = touch
+		? (handleAt ?? spotOf(tabKey))
+		: (handleAt ?? hover ?? (keyboard ? spotOf(tabKey) : lastHover.current) ?? spotOf(tabKey));
 	const spotRow = spot?.row != null ? order.indexOf(spot.row) : -1;
 	const spotCol = spot ? cols.findIndex((c) => c.key === spot.col) : -1;
 	const handleRow = spotRow >= 0 ? rows[spotRow] : undefined;
 	const handleCol = spotCol >= 0 ? cols[spotCol] : undefined;
 
 	const pointerOver = (e: PointerEvent) => {
-		if (handleAt || drag) return;
+		// A tap sends pointer events too; on touch the handles follow the focus alone.
+		if (handleAt || drag || touch) return;
 		const target = e.target as Element;
 		const td = target.closest?.("td, th") as HTMLTableCellElement | null;
 		if (!td || !box.current?.contains(td)) {
@@ -1377,6 +1428,121 @@ export function DataTable({
 		renameAfter();
 	};
 
+	/** After a header's menu closed: back on the header (or where the focus was sent), then a rename. */
+	const afterHeadMenu = (e: Event) => {
+		e.preventDefault();
+		const at = headTarget.current;
+		headTarget.current = null;
+		if (!at) return;
+		const dest = colDest.current;
+		colDest.current = null;
+		if (dest !== null) focusKey(dest);
+		else backTo({ ...at, index: 0 });
+		renameAfter();
+	};
+
+	/**
+	 * After a cell's menu closed: back to the cell, or where its row was if a
+	 * delete or a move took it away; then the edit "Edit cell" asked for.
+	 */
+	const afterCellMenu = (e: Event) => {
+		e.preventDefault();
+		const at = menuTarget.current;
+		if (!at) return;
+		restore(at);
+		if (editAfterMenu.current) {
+			editAfterMenu.current = false;
+			const row = order.indexOf(at.row);
+			const col = cols.findIndex((c) => c.key === at.col);
+			if (row >= 0 && col >= 0) startEdit({ row, col });
+		}
+	};
+
+	/** The cell menu's items for where it was opened, while that row is still there. */
+	const cellMenuItems = (): TableMenuItem[] =>
+		menuAt && order.includes(menuAt.row)
+			? (menuItems({
+					row: order.indexOf(menuAt.row),
+					col: Math.max(
+						0,
+						cols.findIndex((c) => c.key === menuAt.col),
+					),
+				}) ?? [])
+			: [];
+
+	/** The header menu's items for the column it was opened on, while it is still there. */
+	const headMenuItems = (): TableMenuItem[] =>
+		headMenuAt && colKeys.includes(headMenuAt.col)
+			? columnItems(colKeys.indexOf(headMenuAt.col), headMenuAt.row)
+			: [];
+
+	// Touch: a finger held still on a cell or a header opens its menu as a
+	// sheet. Listened for on the box, as the handles' pointer is; a drift, a
+	// lift or the browser taking the gesture for a scroll calls it off.
+	const longPress = (cell: HTMLTableCellElement) => {
+		const tr = cell.parentElement as HTMLElement | null;
+		if (!tr) return;
+		const c = cell.cellIndex;
+		let opened = false;
+		if (tr.closest("thead")) opened = hasColumnMenu && openHeadMenu(cell, c);
+		else {
+			const r = tr.dataset.row ? order.indexOf(tr.dataset.row) : -1;
+			opened = r >= 0 && hasMenu && openCellMenu(cell, r, c);
+		}
+		if (!opened) return;
+		pressedAt.current = Date.now();
+		setSheet(tr.closest("thead") ? "head" : "cell");
+	};
+	const onLongPress = useRef(longPress);
+	onLongPress.current = longPress;
+
+	useEffect(() => {
+		const el = box.current;
+		if (!touch || !el) return;
+		let timer: number | null = null;
+		let start: { x: number; y: number } | null = null;
+		const cancel = () => {
+			if (timer !== null) window.clearTimeout(timer);
+			timer = null;
+			start = null;
+		};
+		const down = (e: PointerEvent) => {
+			cancel();
+			if (e.pointerType === "mouse" || !e.isPrimary) return;
+			const target = e.target as Element;
+			// An editor open in the cell keeps the finger for its own text.
+			if (target.closest?.("input, textarea, [contenteditable=true]")) return;
+			const cell = target.closest?.("td, th") as HTMLTableCellElement | null;
+			if (!cell || !el.contains(cell)) return;
+			start = { x: e.clientX, y: e.clientY };
+			timer = window.setTimeout(() => {
+				timer = null;
+				start = null;
+				onLongPress.current(cell);
+			}, LONG_PRESS_MS);
+		};
+		const move = (e: PointerEvent) => {
+			if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > LONG_PRESS_SLOP) {
+				cancel();
+			}
+		};
+		el.addEventListener("pointerdown", down);
+		el.addEventListener("pointermove", move);
+		el.addEventListener("pointerup", cancel);
+		el.addEventListener("pointercancel", cancel);
+		return () => {
+			cancel();
+			el.removeEventListener("pointerdown", down);
+			el.removeEventListener("pointermove", move);
+			el.removeEventListener("pointerup", cancel);
+			el.removeEventListener("pointercancel", cancel);
+		};
+	}, [touch]);
+
+	// What the long-press sheets act on: the cell's row, the header's column.
+	const menuRow = menuAt ? rows[order.indexOf(menuAt.row)] : undefined;
+	const headCol = headMenuAt ? cols[colKeys.indexOf(headMenuAt.col)] : undefined;
+
 	const handleEls = (
 		<TableHandles
 			ref={handles}
@@ -1404,13 +1570,16 @@ export function DataTable({
 			rowLabel={
 				handleRow ? tableMenuText.rowHandle(rowName(handleRow)) : tableMenuText.rowHandleIdle
 			}
+			rowTitle={handleRow ? rowName(handleRow) : undefined}
+			columnTitle={handleCol?.label}
 			columnLabel={
 				handleCol ? tableMenuText.columnHandle(handleCol.label) : tableMenuText.columnHandleIdle
 			}
 			// Under the pointer, or on the focused cell while working from the
 			// keyboard. A click focuses a cell too, but the handles do not stay
 			// on it once the pointer leaves the table.
-			visible={hover !== null || (focusIn && keyboard)}
+			// On touch: on the tapped cell while the focus is in the table.
+			visible={touch ? focusIn : hover !== null || (focusIn && keyboard)}
 			reachable={focusIn}
 			onOpenChange={(which) => {
 				if (which) {
@@ -1436,8 +1605,16 @@ export function DataTable({
 			data-slot="data-table"
 			className={cn("flex min-w-0 flex-col items-start gap-1.5", className)}
 		>
-			{/* The box the handles sit in: outside the sideways scroll, so they are not clipped. */}
-			<div ref={boxRef} className="relative w-full">
+			{/* The box the handles sit in: outside the sideways scroll, so they are not
+			    clipped. A column, so a table given a height scrolls its rows in its frame. */}
+			<div
+				ref={boxRef}
+				className={cn(
+					"relative flex min-h-0 w-full flex-col [&>[data-slot=table-frame]]:min-h-0",
+					// A held finger opens the menu, not the text selection and its callout.
+					touch && "select-none [-webkit-touch-callout:none]",
+				)}
+			>
 				<Table
 					role="grid"
 					aria-label={label}
@@ -1445,75 +1622,33 @@ export function DataTable({
 					aria-multiselectable={multi ? true : undefined}
 					variant={variant}
 					density={density}
+					// Clipped, not hidden: a hidden overflow makes the table its own
+					// scroller, and the sticky header would stick to nothing.
+					className="overflow-clip"
 				>
-					{hasColumnMenu ? (
+					{hasColumnMenu && !touch ? (
 						<ContextMenu
 							onOpenChange={(open) => {
 								if (!open) setHeadMenuAt(null);
 							}}
 						>
 							<ContextMenuTrigger asChild>{head}</ContextMenuTrigger>
-							<ContextMenuContent
-								className="min-w-48"
-								onCloseAutoFocus={(e) => {
-									e.preventDefault();
-									const at = headTarget.current;
-									headTarget.current = null;
-									if (!at) return;
-									const dest = colDest.current;
-									colDest.current = null;
-									if (dest !== null) focusKey(dest);
-									else backTo({ ...at, index: 0 });
-									renameAfter();
-								}}
-							>
-								{headMenuAt && colKeys.includes(headMenuAt.col) ? (
-									<TableMenuContextItems
-										items={columnItems(colKeys.indexOf(headMenuAt.col), headMenuAt.row)}
-									/>
-								) : null}
+							<ContextMenuContent className="min-w-48" onCloseAutoFocus={afterHeadMenu}>
+								<TableMenuContextItems items={headMenuItems()} />
 							</ContextMenuContent>
 						</ContextMenu>
 					) : (
 						head
 					)}
-					{hasMenu ? (
+					{hasMenu && !touch ? (
 						<ContextMenu
 							onOpenChange={(open) => {
 								if (!open) setMenuAt(null);
 							}}
 						>
 							<ContextMenuTrigger asChild>{body}</ContextMenuTrigger>
-							<ContextMenuContent
-								className="min-w-48"
-								onCloseAutoFocus={(e) => {
-									// Back to the cell, or where its row was if a delete or a
-									// move took it away; then the edit "Edit cell" asked for.
-									e.preventDefault();
-									const at = menuTarget.current;
-									if (!at) return;
-									restore(at);
-									if (editAfterMenu.current) {
-										editAfterMenu.current = false;
-										const row = order.indexOf(at.row);
-										const col = cols.findIndex((c) => c.key === at.col);
-										if (row >= 0 && col >= 0) startEdit({ row, col });
-									}
-								}}
-							>
-								{menuAt && order.includes(menuAt.row) ? (
-									<TableMenuContextItems
-										items={
-											menuItems({
-												row: order.indexOf(menuAt.row),
-												col: Math.max(
-													0,
-													cols.findIndex((c) => c.key === menuAt.col),
-												),
-											}) ?? []
-										}
-									/>
-								) : null}
+							<ContextMenuContent className="min-w-48" onCloseAutoFocus={afterCellMenu}>
+								<TableMenuContextItems items={cellMenuItems()} />
 							</ContextMenuContent>
 						</ContextMenu>
 					) : (
@@ -1521,6 +1656,30 @@ export function DataTable({
 					)}
 				</Table>
 				{handleEls}
+				{touch ? (
+					<>
+						<TableMenuSheet
+							open={sheet === "cell"}
+							onOpenChange={(open) => {
+								if (!open) setSheet(null);
+							}}
+							items={cellMenuItems()}
+							title={menuRow ? rowName(menuRow) : undefined}
+							label={tableMenuText.rowHandle(menuRow ? rowName(menuRow) : "")}
+							onCloseAutoFocus={afterCellMenu}
+						/>
+						<TableMenuSheet
+							open={sheet === "head"}
+							onOpenChange={(open) => {
+								if (!open) setSheet(null);
+							}}
+							items={headMenuItems()}
+							title={headCol?.label}
+							label={tableMenuText.columnHandle(headCol?.label ?? "")}
+							onCloseAutoFocus={afterHeadMenu}
+						/>
+					</>
+				) : null}
 			</div>
 			{onAdd ? (
 				<Button

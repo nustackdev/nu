@@ -45,6 +45,11 @@
 // command on the selection. Shift+F10 or the Menu key opens the caret row's
 // menu and Alt+Shift+F10 its column's, since Tab here moves between cells.
 //
+// In touch mode (../touch.ts) there is no pointer resting over a cell to
+// follow, so the handles do what they do from the keyboard: they stand on the
+// caret's cell while the caret is in the table, and a tap in a cell brings
+// them there. Their menus open the way every kit menu does on touch.
+//
 // The handles are a node view's chrome, mounted with React the way a fence's
 // picker is (./fence.tsx), and they follow the read-only flip the same way:
 // a read-only table draws exactly what an editable one does minus the
@@ -570,6 +575,7 @@ class TableView implements NodeView {
 		view: EditorView,
 		getPos: () => number | undefined,
 		forget: () => void,
+		touch: boolean,
 	) {
 		this.node = node;
 		this.view = view;
@@ -602,20 +608,24 @@ class TableView implements NodeView {
 		this.dom.appendChild(this.control);
 		this.root = createRoot(this.control);
 
-		this.dom.addEventListener("pointerover", (e) => {
-			this.stay();
-			this.pointerOver(e);
-		});
-		// Not at once: see TABLE_HANDLE_LEAVE_DELAY.
-		this.dom.addEventListener("pointerleave", () => {
-			this.stay();
-			this.leaving = window.setTimeout(() => {
-				this.leaving = null;
-				this.pointerIn = false;
-				if (!this.menu) this.hover = null;
-				this.sync();
-			}, TABLE_HANDLE_LEAVE_DELAY);
-		});
+		// Touch has no hover: a tap would read as the pointer arriving and, on
+		// lifting, leaving. The caret leads instead, as from the keyboard.
+		if (!touch) {
+			this.dom.addEventListener("pointerover", (e) => {
+				this.stay();
+				this.pointerOver(e);
+			});
+			// Not at once: see TABLE_HANDLE_LEAVE_DELAY.
+			this.dom.addEventListener("pointerleave", () => {
+				this.stay();
+				this.leaving = window.setTimeout(() => {
+					this.leaving = null;
+					this.pointerIn = false;
+					if (!this.menu) this.hover = null;
+					this.sync();
+				}, TABLE_HANDLE_LEAVE_DELAY);
+			});
+		}
 		this.control.addEventListener("focusin", () => {
 			this.handleFocus = true;
 			this.sync();
@@ -627,10 +637,15 @@ class TableView implements NodeView {
 		});
 		// The whole editor, not just this table: the caret arrives here by keys
 		// typed anywhere in the document.
-		this.unwatch = watchKeyboardUse(view.dom, (keyboard) => {
-			this.keyboard = keyboard;
-			this.sync();
-		});
+		if (touch) {
+			this.keyboard = true;
+			this.unwatch = () => {};
+		} else {
+			this.unwatch = watchKeyboardUse(view.dom, (keyboard) => {
+				this.keyboard = keyboard;
+				this.sync();
+			});
+		}
 		this.sync();
 	}
 
@@ -829,8 +844,11 @@ export type ProseTables = {
 	nodeViews: Record<string, NodeViewConstructor>;
 };
 
-/** Tables for one editor. Build one per view: it tracks that view's tables. */
-export function proseTables(s: ProseSchema): ProseTables {
+/**
+ * Tables for one editor. Build one per view: it tracks that view's tables.
+ * `touch` is the editor's touch mode: the handles follow the caret, not hover.
+ */
+export function proseTables(s: ProseSchema, touch = false): ProseTables {
 	const live = new Set<TableView>();
 	const syncAll = () => {
 		for (const table of live) table.sync();
@@ -915,7 +933,7 @@ export function proseTables(s: ProseSchema): ProseTables {
 		plugins: [sync, menus, normalizer(s), tableEditing()],
 		nodeViews: {
 			[s.nodeType.table.name]: (node, view, getPos) => {
-				const table: TableView = new TableView(node, view, getPos, () => live.delete(table));
+				const table: TableView = new TableView(node, view, getPos, () => live.delete(table), touch);
 				live.add(table);
 				return table;
 			},

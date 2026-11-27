@@ -11,6 +11,8 @@ import {
 	CollapsibleContent,
 	Collapsible as CollapsibleRoot,
 } from "../../components/ui/collapsible";
+import { Grid as GridPrimitive } from "../../components/ui/grid";
+import { STACK_WIDTH } from "../../lib/stack";
 import { NodeView, tree } from "../../tree";
 import "..";
 import {
@@ -323,6 +325,40 @@ describe("Row", () => {
 			width.restore();
 		}
 	});
+
+	it("stacks a split of fill children under the stack width, unasked", () => {
+		const width = stubWidth(400);
+		try {
+			write(["r", "Row"], ["a", "Card"]);
+			write(["r", "Row"], ["b", "Card"]);
+			show(["r"]);
+			const el = host.firstElementChild as HTMLElement;
+			expect(el.dataset.stacked).toBe("");
+			width.set(STACK_WIDTH);
+			expect(el.dataset.stacked).toBeUndefined();
+			dispatch(["r"], "write", { stack_below: 0 });
+			width.set(300);
+			expect(el.dataset.stacked).toBeUndefined();
+		} finally {
+			width.restore();
+		}
+	});
+
+	it("never stacks a toolbar or a wrapping row unasked", () => {
+		const width = stubWidth(300);
+		try {
+			write(["t", "Row"], ["h", "Card"]);
+			write(["t", "Row"], ["b", "ButtonRef"]);
+			write(["w", "Row", { wrap: true }], ["a", "Card"]);
+			write(["w", "Row"], ["b", "Card"]);
+			show(["t"]);
+			expect((host.firstElementChild as HTMLElement).dataset.stacked).toBeUndefined();
+			show(["w"]);
+			expect((host.firstElementChild as HTMLElement).dataset.stacked).toBeUndefined();
+		} finally {
+			width.restore();
+		}
+	});
 });
 
 describe("surfaces", () => {
@@ -408,7 +444,7 @@ describe("Container", () => {
 		write(["p", "Container", { padding: 0, gap: 2 }]);
 		show(["p"]);
 		const el = host.querySelector<HTMLElement>("[data-slot=container]");
-		expect(el?.className).not.toContain("md:px-8");
+		expect(el?.className).not.toContain("clamp(");
 		expect(el?.className).toContain("p-0");
 		expect(el?.className).toContain("gap-2");
 	});
@@ -499,6 +535,64 @@ describe("Grid stack_below", () => {
 			width.set(900);
 			expect(grid.dataset.mode).toBe("placed");
 			expect(cells[0].style.gridColumn).toBe("1 / span 2");
+		} finally {
+			width.restore();
+		}
+	});
+
+	it("stacks a board under the stack width when stack_below is unset, never at 0", () => {
+		const width = stubWidth(STACK_WIDTH - 1);
+		try {
+			write(["g", "Grid", { cols: "2fr 1fr" }], ["0,0", "TextRef"]);
+			show(["g"]);
+			const grid = host.querySelector("[data-slot=grid]") as HTMLElement;
+			expect(grid.dataset.mode).toBe("stacked");
+			width.set(STACK_WIDTH);
+			expect(grid.dataset.mode).toBe("placed");
+			dispatch(["g"], "write", { stack_below: 0 });
+			width.set(200);
+			expect(grid.dataset.mode).toBe("placed");
+		} finally {
+			width.restore();
+		}
+	});
+});
+
+describe("Grid primitive stacking", () => {
+	it("stacks a placed board under its own width and drops the cells' places", () => {
+		const width = stubWidth(400);
+		try {
+			act(() =>
+				root.render(
+					<GridPrimitive cols="2fr 1fr" rows="64px auto">
+						<div style={{ gridColumn: "2" }} />
+					</GridPrimitive>,
+				),
+			);
+			const grid = host.querySelector("[data-slot=grid]") as HTMLElement;
+			expect(grid.dataset.stacked).toBe("");
+			expect(grid.style.gridTemplateColumns).toBe("minmax(0, 1fr)");
+			expect(grid.style.gridTemplateRows).toBe("");
+			expect(grid.className).toContain("*:[grid-area:auto]!");
+			width.set(900);
+			expect(grid.dataset.stacked).toBeUndefined();
+			expect(grid.style.gridTemplateColumns).toBe("2fr 1fr");
+		} finally {
+			width.restore();
+		}
+	});
+
+	it("never stacks an equal grid, or a board with stackBelow 0", () => {
+		const width = stubWidth(200);
+		try {
+			act(() => root.render(<GridPrimitive maxColumns={3} />));
+			expect(
+				(host.querySelector("[data-slot=grid]") as HTMLElement).dataset.stacked,
+			).toBeUndefined();
+			act(() => root.render(<GridPrimitive cols="1fr 1fr" stackBelow={0} />));
+			expect(
+				(host.querySelector("[data-slot=grid]") as HTMLElement).dataset.stacked,
+			).toBeUndefined();
 		} finally {
 			width.restore();
 		}

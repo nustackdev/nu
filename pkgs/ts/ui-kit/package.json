@@ -35,6 +35,7 @@
 		"prepack": "npm run build:css",
 		"storybook": "storybook dev -p 6006",
 		"storybook:build": "storybook build",
+		"shots": "node scripts/touch-shots.mjs",
 		"typecheck": "tsc --noEmit",
 		"check": "biome check .",
 		"test": "vitest run",
@@ -77,6 +78,7 @@
 		"react-dom": "^19.2.0",
 		"tailwind-merge": "^3.4.0",
 		"tailwindcss": "^4.1.18",
+		"vaul": "^1.1.2",
 		"zustand": "^5.0.13"
 	},
 	"devDependencies": {

@@ -17,11 +17,16 @@
 // (the text at rest stays plain, the error line says it);
 // inside a Field the Field's error does the same. Readonly draws the text
 // as plain text, not a button; disabled draws a disabled button.
+//
+// The pencil says the text edits. On desktop it shows on hover and focus; in
+// touch mode (../../lib/touch.ts) there is no hover, so it always shows: the
+// one action the text has, inline. The text takes a 44px tap area.
 
 import { Pencil } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { FieldError, Label } from "../../components/ui/field";
 import { InlineEdit } from "../../components/ui/inline-edit";
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 import {
 	type NodeEntry,
@@ -62,6 +67,7 @@ function InlineEditView({ path }: NodeProps) {
 	// is sent from the editor itself below.
 	const { edit, commit, submit } = useCommit(path);
 	const emit = useEmit(path);
+	const touch = useTouch();
 	const [editing, setEditing] = useState(false);
 	const shown = useRef<HTMLButtonElement | null>(null);
 	const box = useRef<HTMLDivElement | null>(null);
@@ -160,7 +166,7 @@ function InlineEditView({ path }: NodeProps) {
 					}}
 					className={cn(
 						atRest,
-						"group cursor-text text-text-primary",
+						"group nu-tap cursor-text text-text-primary",
 						"transition-colors duration-fast ease-out hover:bg-bg-hover",
 						"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
 						"disabled:cursor-not-allowed disabled:opacity-50",
@@ -171,7 +177,12 @@ function InlineEditView({ path }: NodeProps) {
 					{text}
 					<Pencil
 						aria-hidden
-						className="size-3.5 shrink-0 text-text-muted opacity-0 transition-opacity duration-fast group-hover:opacity-100 group-focus-visible:opacity-100"
+						className={cn(
+							"size-3.5 shrink-0 text-text-muted transition-opacity duration-fast",
+							touch
+								? "opacity-100"
+								: "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100",
+						)}
 					/>
 				</button>
 			)}

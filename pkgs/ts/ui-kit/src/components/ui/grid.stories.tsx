@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { Card, CardContent, CardHeader, CardTitle } from "./card";
-import { Grid } from "./grid";
+import { Grid, gridPlace } from "./grid";
 import { Stat, StatDelta, StatLabel, StatValue } from "./stat";
 import { Text } from "./text";
 
@@ -119,6 +119,38 @@ export const Align: StoryObj = {
 					</Grid>
 				</div>
 			))}
+		</div>
+	),
+};
+
+/**
+ * Placed: a "2fr 1fr" board, a wide cell over two rows and two beside it.
+ * Narrower than 560px of its own width (a phone, a narrow column) it stacks
+ * to one column in source order, the places dropped.
+ */
+export const Placed: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<Grid cols="2fr 1fr" gap={3}>
+				<div style={gridPlace(0, 0, 1, 2, 2)}>
+					<Card className="h-full">
+						<CardHeader>
+							<CardTitle>Overview</CardTitle>
+						</CardHeader>
+						<CardContent className="pb-4">
+							<Text tone="secondary">
+								The main cell, two rows tall beside the stats while the board is wide.
+							</Text>
+						</CardContent>
+					</Card>
+				</div>
+				<div style={gridPlace(0, 1, 1, 1, 2)}>
+					<StatCard i={0} />
+				</div>
+				<div style={gridPlace(1, 1, 1, 1, 2)}>
+					<StatCard i={1} />
+				</div>
+			</Grid>
 		</div>
 	),
 };

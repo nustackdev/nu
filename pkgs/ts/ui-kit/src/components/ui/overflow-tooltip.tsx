@@ -11,9 +11,14 @@
 // A `right` tooltip that would run off the window opens below instead. Radix
 // only ever flips to the opposite side, and left of a sidebar is off-screen
 // too.
+//
+// In touch mode (../../lib/touch.ts) there is no tooltip: the trigger
+// renders as it is, and the ellipsis stays.
 
 import type * as React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+
+import { useTouch } from "../../lib/touch";
 
 import {
 	TOOLTIP_CHROME_PX,
@@ -59,6 +64,7 @@ export function OverflowTooltip({
 	disabled = false,
 	children,
 }: OverflowTooltipProps) {
+	const touch = useTouch();
 	const trigger = useRef<HTMLElement | null>(null);
 	// A callback, since TooltipTrigger types its ref as a button and `asChild`
 	// puts whatever element the caller hands in there.
@@ -87,6 +93,7 @@ export function OverflowTooltip({
 		[side],
 	);
 
+	if (touch) return children;
 	return (
 		<Tooltip open={open && !disabled} onOpenChange={onOpenChange} canOpen={canOpen}>
 			<TooltipTrigger asChild ref={triggerRef}>

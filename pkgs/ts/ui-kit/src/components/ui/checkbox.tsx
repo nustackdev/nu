@@ -10,6 +10,8 @@ const checkboxVariants = cva(
 		"group peer inline-flex shrink-0 items-center justify-center rounded-sm",
 		"border border-border-default bg-bg-surface text-accent-fg",
 		"cursor-default",
+		// Touch: a 44px tap area around it, unseen (index.css, `nu-tap`).
+		"nu-tap",
 		"transition-colors duration-fast ease-out",
 		"hover:border-border-strong",
 		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg-canvas",

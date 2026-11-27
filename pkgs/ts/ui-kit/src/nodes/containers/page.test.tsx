@@ -155,9 +155,9 @@ describe("Container", () => {
 		for (const c of ["w-full", "mx-auto", "max-w-main", "flex-col", "gap-6"]) {
 			expect(cls).toContain(c);
 		}
-		// The gutter follows the window, nothing else does.
-		for (const c of ["px-4", "md:px-8", "lg:px-12"]) expect(cls).toContain(c);
-		expect(cls).not.toMatch(/(sm|md|lg|xl):max-w/);
+		// The gutter steps with the width the frame sits in, never the window.
+		expect(cls).toContain("px-[calc(1rem_+_clamp(");
+		expect(cls).not.toMatch(/(sm|md|lg|xl):/);
 		// Children stack as blocks, in the order they landed.
 		expect(q("[data-probe]")?.textContent).toBe("block");
 		expect(frame?.textContent).toBe("blockb");

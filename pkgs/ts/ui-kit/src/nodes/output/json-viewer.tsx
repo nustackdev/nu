@@ -10,6 +10,7 @@
 import { Copy } from "lucide-react";
 import { IconButton } from "../../components/ui/icon-button";
 import { JsonView } from "../../components/ui/json-view";
+import { copyText } from "../../lib/clipboard";
 import {
 	type NodeEntry,
 	type NodeProps,
@@ -39,9 +40,7 @@ function JsonViewerView({ path }: NodeProps) {
 	const maxH = typeof rawMaxH === "number" && Number.isFinite(rawMaxH) ? rawMaxH : null;
 	const data = sortable ? sortKeys(value ?? {}) : (value ?? {});
 	const copy = () => {
-		if (navigator.clipboard?.writeText) {
-			void navigator.clipboard.writeText(JSON.stringify(value, null, 2));
-		}
+		void copyText(JSON.stringify(value, null, 2));
 	};
 	return (
 		<div
@@ -56,7 +55,7 @@ function JsonViewerView({ path }: NodeProps) {
 				</div>
 			)}
 			<div className="px-3 pb-2">
-				<JsonView value={data} collapsed={depth} />
+				<JsonView value={data} collapsed={depth} copyAll={false} />
 			</div>
 		</div>
 	);

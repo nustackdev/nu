@@ -188,6 +188,8 @@
 	--container-panel:     60rem;
 	--container-main:      75rem;
 	--container-dashboard: 87.5rem;
+	/* 560: placed layouts stack below it (`@max-stack:`). lib/stack.ts STACK_WIDTH */
+	--container-stack:     35rem;
 
 	/* motion durations */
 	--duration-instant: 0ms;

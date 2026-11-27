@@ -7,7 +7,8 @@
 import { OPS, type TreeFrame } from "@nustackdev/ui-core";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { TouchProvider } from "../../lib/touch";
 import { NodeView, tree } from "../../tree";
 import "..";
 
@@ -147,6 +148,49 @@ describe("TimePickerRef", () => {
 		expect(propsAt(["n"]).value).toBe("07:00");
 		dispatch(["n"], OPS.read, null, "r");
 		expect(sent.at(-1)).toMatchObject({ op: OPS.read, id: "r", payload: "07:00" });
+	});
+});
+
+describe("TimePickerRef in touch mode", () => {
+	// vaul asks matchMedia when the sheet opens; jsdom has none.
+	beforeEach(() => {
+		vi.stubGlobal("matchMedia", () => ({
+			matches: false,
+			addEventListener() {},
+			removeEventListener() {},
+		}));
+	});
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
+	const sheetRow = (label: string, text: string) =>
+		Array.from(
+			document.querySelectorAll<HTMLButtonElement>(`[aria-label="${label}"] [role=option]`),
+		).find((b) => b.textContent === text) ?? null;
+	const sheetDone = () =>
+		Array.from(
+			document.querySelectorAll<HTMLButtonElement>('[data-slot="bottom-sheet-content"] button'),
+		).find((b) => b.textContent === "Done") ?? null;
+
+	it("edits with each pick and sends one change when the sheet shuts", () => {
+		put(["n", "TimePickerRef", { value: "" }]);
+		act(() =>
+			root.render(
+				<TouchProvider value={true}>
+					<NodeView path={["n"]} />
+				</TouchProvider>,
+			),
+		);
+		const field = host.querySelector('[data-slot="time-picker"] input') as HTMLInputElement;
+		click(field);
+		click(sheetRow("Hour", "07"));
+		click(sheetRow("Minute", "45"));
+		expect(propsAt(["n"]).value).toBe("07:45");
+		expect(notifies()).toEqual([]);
+		click(sheetDone());
+		expect(notifies()).toEqual([CHANGE]);
+		expect(field.value).toBe("07:45");
 	});
 });
 

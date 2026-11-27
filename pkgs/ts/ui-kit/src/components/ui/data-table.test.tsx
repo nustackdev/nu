@@ -6,6 +6,7 @@
 import { act, useState } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { TouchProvider } from "../../lib/touch";
 import {
 	DataTable,
 	type DataTableColumn,
@@ -1186,5 +1187,128 @@ describe("DataTable", () => {
 				]);
 			});
 		});
+	});
+});
+
+// Touch mode: the same grid worked by a finger. Long-press opens a cell's or a
+// header's menu as a bottom sheet, the handles stand on the tapped cell as ⋯
+// and open sheets too, rows do not drag, and a tap toggles a multi selection.
+describe("DataTable on touch", () => {
+	const t = tableMenuText;
+	const all = { onAdd: vi.fn(), onDelete: vi.fn(), onMove: vi.fn(), onSort: vi.fn() };
+
+	function touchMount(props: Extra = {}) {
+		act(() =>
+			root.render(
+				<TouchProvider value>
+					<DataTable aria-label="Tasks" columns={COLUMNS} rows={ROWS} {...props} />
+				</TouchProvider>,
+			),
+		);
+	}
+
+	const finger = (type: string, el: Element, x = 10, y = 10) =>
+		el.dispatchEvent(
+			new PointerEvent(type, {
+				bubbles: true,
+				cancelable: true,
+				pointerType: "touch",
+				isPrimary: true,
+				clientX: x,
+				clientY: y,
+			}),
+		);
+	const sheet = () => document.querySelector('[data-slot="bottom-sheet-content"]');
+	const sheetTexts = () =>
+		[...document.querySelectorAll('[data-slot="menu-sheet-item"]')].map((b) => b.textContent);
+	const sheetItem = (text: string) => {
+		const el = [...document.querySelectorAll<HTMLElement>('[data-slot="menu-sheet-item"]')].find(
+			(b) => b.textContent === text,
+		);
+		if (!el) throw new Error(`no sheet item ${text}`);
+		return el;
+	};
+
+	beforeEach(() => vi.useFakeTimers());
+	afterEach(() => vi.useRealTimers());
+
+	it("opens a cell's menu as a sheet on a long-press, and runs a pick", () => {
+		const onDelete = vi.fn();
+		touchMount({ ...all, onDelete, onEdit: vi.fn() });
+		act(() => finger("pointerdown", cell("r2", "title")));
+		expect(sheet()).toBeNull();
+		act(() => vi.advanceTimersByTime(600));
+		expect(sheet()).not.toBeNull();
+		expect(sheetTexts()).toEqual([
+			"Edit cell",
+			t.insertRowAbove,
+			t.insertRowBelow,
+			t.moveRowUp,
+			t.moveRowDown,
+			t.deleteRow,
+		]);
+		expect(sheet()?.textContent).toContain("Beta");
+		act(() => sheetItem(t.deleteRow).click());
+		expect(onDelete).toHaveBeenCalledWith(["r2"]);
+	});
+
+	it("calls a long-press off when the finger drifts or lifts", () => {
+		touchMount(all);
+		act(() => finger("pointerdown", cell("r2", "title")));
+		act(() => finger("pointermove", cell("r2", "title"), 40, 10));
+		act(() => vi.advanceTimersByTime(600));
+		expect(sheet()).toBeNull();
+		act(() => finger("pointerdown", cell("r2", "title")));
+		act(() => finger("pointerup", cell("r2", "title")));
+		act(() => vi.advanceTimersByTime(600));
+		expect(sheet()).toBeNull();
+	});
+
+	it("opens a header's column menu as a sheet on a long-press", () => {
+		touchMount({ ...all, onColumnDelete: vi.fn() });
+		act(() => finger("pointerdown", cell(null, "points")));
+		act(() => vi.advanceTimersByTime(600));
+		expect(sheetTexts()).toContain(t.sortAscending);
+		expect(sheetTexts()).toContain(t.deleteColumn);
+	});
+
+	it("shows ⋯ handles on the tapped cell, a sheet behind each", () => {
+		touchMount(all);
+		const row = host.querySelector<HTMLElement>("[data-table-handle=row] button");
+		expect(row?.parentElement?.className).toContain("invisible");
+		act(() => cell("r2", "points").focus());
+		expect(row?.parentElement?.className).not.toContain("invisible");
+		expect(row?.getAttribute("aria-haspopup")).toBeNull();
+		act(() => row?.click());
+		expect(sheet()).not.toBeNull();
+		expect(sheetTexts()).toContain(t.deleteRow);
+		expect(sheetTexts()).not.toContain("Edit cell");
+	});
+
+	it("does not drag rows", () => {
+		touchMount(all);
+		expect(rowEl("r1").getAttribute("draggable")).toBeNull();
+	});
+
+	it("toggles a multi selection on a tap", () => {
+		const spy = vi.fn();
+		act(() =>
+			root.render(
+				<TouchProvider value>
+					<Selecting mode="multi" spy={spy} />
+				</TouchProvider>,
+			),
+		);
+		click(cell("r1", "title"));
+		click(cell("r3", "title"));
+		expect(spy).toHaveBeenLastCalledWith(["r1", "r3"]);
+		click(cell("r1", "title"));
+		expect(spy).toHaveBeenLastCalledWith(["r3"]);
+	});
+
+	it("draws the same grid as on desktop", () => {
+		touchMount();
+		expect(host.querySelectorAll('[role="gridcell"]')).toHaveLength(12);
+		expect(host.querySelector('[data-slot="table-frame"]')).not.toBeNull();
 	});
 });

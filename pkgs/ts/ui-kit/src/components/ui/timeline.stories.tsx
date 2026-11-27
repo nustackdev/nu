@@ -14,6 +14,8 @@ import {
 	Store,
 	Terminal,
 } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { useTouch } from "../../lib/touch";
 import { Button } from "./button";
 import {
 	Timeline,
@@ -155,6 +157,41 @@ export const Typical: StoryObj = {
 			/>
 		</Section>
 	),
+};
+
+// One bar shown at load the way each mode reaches it: a failed deploy,
+// tapped in touch mode (a phone, or the Touch toolbar), so its tip shows in
+// place over it, hovered on desktop, so its tooltip is. A phone is narrower
+// than the timeline's stack width, so each lane is its label line over a
+// full-width track.
+function ShowBar() {
+	const touch = useTouch();
+	const root = useRef<HTMLDivElement>(null);
+	useEffect(() => {
+		const id = setTimeout(() => {
+			const bar = root.current?.querySelectorAll<HTMLElement>(
+				"[data-slot=timeline-bar][data-tone=danger]",
+			)[0];
+			const track = bar?.parentElement;
+			if (!bar || !track) return;
+			const r = bar.getBoundingClientRect();
+			const at = { clientX: r.left + r.width / 2, clientY: r.top + r.height / 2, bubbles: true };
+			if (touch) track.dispatchEvent(new MouseEvent("click", at));
+			else bar.dispatchEvent(new PointerEvent("pointerover", at));
+		}, 300);
+		return () => clearTimeout(id);
+	}, [touch]);
+	return (
+		<div ref={root}>
+			<Section title="Last hour" sub="tap a bar">
+				<Timeline start={END - H} end={END} lanes={TYPICAL} noun="job" legend={NAMES} />
+			</Section>
+		</div>
+	);
+}
+
+export const Tapped: StoryObj = {
+	render: () => <ShowBar />,
 };
 
 const POWER: TimelineLane[] = [

@@ -9,6 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fileGlyph, fileName, fileType } from "../../components/ui/file";
 import { MediaControls, Scrubber } from "../../components/ui/media-controls";
 import { EMPTY_SNAPSHOT, type MediaApi, type MediaSnapshot } from "../../lib/media/use-media";
+import { TouchProvider } from "../../lib/touch";
 import { NodeView, tree } from "../../tree";
 import "..";
 import { normAspect } from "./image";
@@ -37,9 +38,12 @@ afterEach(() => {
 	tree.getState().remove([]);
 });
 
-function mount(type: string, props: Record<string, unknown>) {
+function mount(type: string, props: Record<string, unknown>, touch?: boolean) {
 	tree.getState().write([["n", type, props]]);
-	act(() => root.render(<NodeView path={["n"]} />));
+	const view = <NodeView path={["n"]} />;
+	act(() =>
+		root.render(touch === undefined ? view : <TouchProvider value={touch}>{view}</TouchProvider>),
+	);
 }
 
 function dispatch(payload: unknown) {
@@ -148,15 +152,105 @@ describe("ImageRef", () => {
 			const cluster = overlay?.querySelector("[data-slot=image-viewer-controls]");
 			const last = [...(cluster?.querySelectorAll("button") ?? [])].at(-1);
 			expect(last?.getAttribute("aria-label")).toBe("Exit full screen");
-			expect(cls(cluster ?? null)).toEqual(expect.arrayContaining(["right-5", "bottom-5"]));
+			// 20px in from the corner, plus the safe area on a phone.
+			expect(cls(cluster ?? null)).toEqual(
+				expect.arrayContaining([
+					"right-[calc(1.25rem+env(safe-area-inset-right))]",
+					"bottom-[calc(1.25rem+env(safe-area-inset-bottom))]",
+				]),
+			);
 			const close = overlay?.querySelector("[data-slot=image-viewer-close]");
 			expect(close?.getAttribute("aria-label")).toBe("Close");
-			expect(cls(close ?? null)).toEqual(expect.arrayContaining(["top-5", "right-5"]));
+			expect(cls(close ?? null)).toEqual(
+				expect.arrayContaining([
+					"top-[calc(1.25rem+env(safe-area-inset-top))]",
+					"right-[calc(1.25rem+env(safe-area-inset-right))]",
+				]),
+			);
 			const stage = overlay?.querySelector("[data-slot=image-viewer-stage]") as HTMLElement;
 			act(() => {
 				stage.dispatchEvent(new KeyboardEvent("keydown", { key: "f", bubbles: true }));
 			});
 			expect(document.querySelector("[data-slot=image-viewer-overlay]")).toBeNull();
+		} finally {
+			w.mockRestore();
+			h.mockRestore();
+		}
+	});
+
+	it("shows the download chip and the zoom cluster at rest in touch mode, hover only otherwise", () => {
+		mount("ImageRef", { src: "/a.png", alt: "Shot", download: "/a.png?download=1" });
+		expect(cls(slot("media-download"))).toContain("opacity-0");
+		act(() => root.unmount());
+		tree.getState().remove([]);
+		root = createRoot(host);
+		mount("ImageRef", { src: "/a.png", alt: "Shot", download: "/a.png?download=1" }, true);
+		expect(cls(slot("media-download"))).not.toContain("opacity-0");
+
+		const w = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(400);
+		const h = vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(300);
+		try {
+			act(() => root.unmount());
+			tree.getState().remove([]);
+			root = createRoot(host);
+			mount("ImageRef", { src: "/a.png", alt: "Shot", zoom: true }, true);
+			const img = slot("image-viewer-stage")?.querySelector("img") as HTMLImageElement;
+			Object.defineProperty(img, "naturalWidth", { value: 800 });
+			Object.defineProperty(img, "naturalHeight", { value: 600 });
+			act(() => {
+				img.dispatchEvent(new Event("load"));
+			});
+			expect(cls(slot("image-viewer-controls"))).not.toContain("opacity-0");
+			// At fit a finger still scrolls the page; the pinch is the viewer's.
+			expect(cls(slot("image-viewer-stage"))).toEqual(
+				expect.arrayContaining(["touch-pan-x", "touch-pan-y"]),
+			);
+		} finally {
+			w.mockRestore();
+			h.mockRestore();
+		}
+	});
+
+	it("pinches with two fingers and toggles fit on a double tap, in touch mode", () => {
+		const w = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(400);
+		const h = vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(300);
+		try {
+			mount("ImageRef", { src: "/a.png", alt: "Shot", zoom: true }, true);
+			const stage = slot("image-viewer-stage") as HTMLElement;
+			const img = stage.querySelector("img") as HTMLImageElement;
+			Object.defineProperty(img, "naturalWidth", { value: 800 });
+			Object.defineProperty(img, "naturalHeight", { value: 600 });
+			act(() => {
+				img.dispatchEvent(new Event("load"));
+			});
+			stage.setPointerCapture ??= () => {};
+			const touch = (type: string, id: number, x: number, y = 100) =>
+				act(() => {
+					stage.dispatchEvent(
+						new PointerEvent(type, {
+							bubbles: true,
+							pointerType: "touch",
+							pointerId: id,
+							clientX: x,
+							clientY: y,
+						}),
+					);
+				});
+			const zoom = () => slot("image-viewer-zoom")?.textContent;
+			expect(zoom()).toBe("50%");
+			// Fingers 100px apart spread to 200px: twice the scale.
+			touch("pointerdown", 1, 100);
+			touch("pointerdown", 2, 200);
+			touch("pointermove", 2, 300);
+			expect(zoom()).toBe("100%");
+			touch("pointerup", 2, 300);
+			touch("pointerup", 1, 100);
+			// A double tap from a zoom goes back to fit, then in again.
+			touch("pointerdown", 3, 150);
+			touch("pointerup", 3, 150);
+			touch("pointerdown", 4, 152);
+			touch("pointerup", 4, 152);
+			expect(zoom()).toBe("50%");
 		} finally {
 			w.mockRestore();
 			h.mockRestore();
@@ -201,6 +295,27 @@ describe("VideoRef", () => {
 		expect(slot("video")?.className).toContain("rounded-none");
 		expect(slot("video-controls")).not.toBeNull();
 		expect(host.querySelector("[role=slider][aria-label=Seek]")).not.toBeNull();
+	});
+
+	it("keeps the transport up while playing in touch mode, where nothing hovers", () => {
+		const play = () => {
+			const v = host.querySelector("video") as HTMLVideoElement;
+			Object.defineProperty(v, "paused", { value: false, configurable: true });
+			act(() => {
+				v.dispatchEvent(new Event("play"));
+			});
+		};
+		mount("VideoRef", { src: "/clip.mp4" });
+		play();
+		expect(slot("video")?.dataset.state).toBe("playing");
+		expect(slot("video-controls")?.hasAttribute("data-shown")).toBe(false);
+		act(() => root.unmount());
+		tree.getState().remove([]);
+		root = createRoot(host);
+		mount("VideoRef", { src: "/clip.mp4" }, true);
+		play();
+		expect(slot("video")?.dataset.state).toBe("playing");
+		expect(slot("video-controls")?.hasAttribute("data-shown")).toBe(true);
 	});
 
 	it("says there is no video without a source, and swaps one in on a write", () => {
@@ -434,6 +549,22 @@ describe("MediaVolume", () => {
 		act(() => mute().blur());
 		act(() => mute().focus());
 		expect(panel()).not.toBeNull();
+	});
+
+	it("is the mute button alone in touch mode: no panel on hover or focus", () => {
+		act(() =>
+			root.render(
+				<TouchProvider value>
+					<Harness />
+				</TouchProvider>,
+			),
+		);
+		fire(mute(), "pointerover", { pointerType: "touch" });
+		act(() => mute().focus());
+		expect(panel()).toBeNull();
+		act(() => mute().click());
+		expect(mute().getAttribute("aria-label")).toBe("Unmute");
+		expect(panel()).toBeNull();
 	});
 
 	it("does not hold the panel up for a focus a click gave", async () => {
