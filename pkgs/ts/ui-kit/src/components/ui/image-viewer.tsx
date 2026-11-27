@@ -12,17 +12,27 @@
 //   f            full window, and back
 //   arrows       pan, while zoomed (shift for a longer step)
 //
+// In touch mode (../../lib/touch.ts) the hand does the same: two fingers
+// pinch toward their midpoint and move the image as they go, one finger pans
+// while zoomed, a double tap toggles fit. At fit a one finger swipe still
+// scrolls the page, so a viewer in a long page does not trap it.
+//
 // Until the reader zooms, the view follows the box: a resize refits. Past 1:1
 // the image draws with hard pixels, so a small or ML image stays crisp. The
 // controls cluster in the corner rests hidden and shows on hover or focus
-// (`controls="always"` pins it, `"none"` drops it); on a touch screen it is
-// always shown. `expandable` adds a button that opens the same viewer over
-// the whole window, Esc to close (`expanded` holds it from outside). It is
-// the video player's full screen button, and in the full window view the
-// exit button takes its place in the cluster, so the way out is where the
-// way in was; a solid close button sits top right too. `download` adds a
-// download link to the cluster, in both views. `pixel` shows the
-// image pixel under the pointer.
+// (`controls="always"` pins it, `"none"` drops it); in touch mode, where
+// nothing hovers, it is always shown. `expandable` adds a button that opens
+// the same viewer over the whole window, Esc to close (`expanded` holds it
+// from outside). It is the video player's full screen button, and in the full
+// window view the exit button takes its place in the cluster, so the way out
+// is where the way in was; a solid close button sits top right too, both
+// clear of the notch and the home indicator. `download` adds a download link
+// to the cluster, in both views. `pixel` shows the image pixel under the
+// pointer.
+//
+// The full window view is the viewer's own full screen: a kit Dialog with
+// sheet={false}, so it stays the whole window in touch mode, where a kit
+// Dialog otherwise becomes a bottom sheet.
 //
 // The box has no size of its own: give it a height, or an `aspectRatio` with
 // a width. With neither it is 320px tall (h-80).
@@ -30,6 +40,7 @@
 import { Download, Maximize, Minimize, RotateCcw, X, ZoomIn, ZoomOut } from "lucide-react";
 import * as React from "react";
 import { useKeyScope } from "../../lib/keyboard";
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "./dialog";
 import { IconButton } from "./icon-button";
@@ -57,6 +68,17 @@ import { Shortcut } from "./shortcut";
 import { TooltipProvider } from "./tooltip";
 
 const PAN_STEP = 48;
+/** A second tap within this long, and this close, is a double tap. */
+const DOUBLE_TAP_MS = 300;
+const DOUBLE_TAP_PX = 24;
+/** A touch that moved further than this was a swipe, not a tap. */
+const TAP_SLOP_PX = 10;
+// The full window view's corners: 20px in, plus the notch and home
+// indicator's safe area on a phone (zero elsewhere).
+const EDGE_BL =
+	"bottom-[calc(1.25rem+env(safe-area-inset-bottom))] left-[calc(1.25rem+env(safe-area-inset-left))]";
+const EDGE_BR =
+	"right-[calc(1.25rem+env(safe-area-inset-right))] bottom-[calc(1.25rem+env(safe-area-inset-bottom))]";
 
 export interface ImageViewerProps extends Omit<React.ComponentProps<"div">, "children"> {
 	src?: string;
@@ -120,6 +142,7 @@ function ImageViewer({
 	style,
 	...props
 }: ImageViewerProps) {
+	const touch = useTouch();
 	const stageRef = React.useRef<HTMLDivElement>(null);
 	const box = useBoxSize(stageRef);
 	const [img, setImg] = React.useState<Size | null>(null);
@@ -133,6 +156,13 @@ function ImageViewer({
 		onExpandedChange?.(open);
 	};
 	const drag = React.useRef<{ id: number; x: number; y: number } | null>(null);
+	// Touch: the fingers down, where each one started, the pinch in progress
+	// (its start: finger distance, midpoint in the box, the view then), and
+	// the last tap, for the double tap.
+	const fingers = React.useRef(new Map<number, Point & { x0: number; y0: number }>());
+	const pinch = React.useRef<{ dist: number; mid: Point; view: View } | null>(null);
+	const pinched = React.useRef(false);
+	const lastTap = React.useRef<{ t: number; x: number; y: number } | null>(null);
 
 	// A new source starts over: unknown size, following the box. Done during
 	// render, so a cached image's load cannot land before the reset.
@@ -203,13 +233,51 @@ function ImageViewer({
 		return () => el.removeEventListener("wheel", onWheel);
 	}, [show]);
 
+	// The two fingers' distance and midpoint (in the box), for the pinch.
+	const span = (el: Element) => {
+		const [a, b] = [...fingers.current.values()];
+		return {
+			dist: Math.hypot(a.x - b.x, a.y - b.y),
+			mid: pointIn(el, { clientX: (a.x + b.x) / 2, clientY: (a.y + b.y) / 2 }),
+		};
+	};
+
 	const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-		if (e.button !== 0 || !pannable) return;
+		if (e.button !== 0) return;
+		if (e.pointerType === "touch") {
+			const at = { x: e.clientX, y: e.clientY };
+			fingers.current.set(e.pointerId, { ...at, x0: at.x, y0: at.y });
+			if (fingers.current.size === 1) pinched.current = false;
+			if (fingers.current.size === 2 && ready) {
+				// The second finger turns a pan into a pinch, from wherever the
+				// image is now.
+				const { dist, mid } = span(e.currentTarget);
+				pinch.current = { dist: Math.max(1, dist), mid, view };
+				pinched.current = true;
+				drag.current = null;
+				setDragging(false);
+				return;
+			}
+			if (fingers.current.size > 2) return;
+		}
+		if (!pannable) return;
 		e.currentTarget.setPointerCapture(e.pointerId);
 		drag.current = { id: e.pointerId, x: e.clientX, y: e.clientY };
 		setDragging(true);
 	};
 	const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+		const finger = fingers.current.get(e.pointerId);
+		if (finger) {
+			finger.x = e.clientX;
+			finger.y = e.clientY;
+			const p = pinch.current;
+			if (p && fingers.current.size >= 2) {
+				const { dist, mid } = span(e.currentTarget);
+				const zoomed = zoomAt(p.view, (p.view.scale * dist) / p.dist, p.mid, size, box);
+				show(panBy(zoomed, mid.x - p.mid.x, mid.y - p.mid.y, size, box), false);
+				return;
+			}
+		}
 		const d = drag.current;
 		if (d && d.id === e.pointerId) {
 			const dx = e.clientX - d.x;
@@ -220,15 +288,51 @@ function ImageViewer({
 		if (pixel && ready) setHover(pixelAt(view, pointIn(e.currentTarget, e), size));
 	};
 	const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+		const finger = fingers.current.get(e.pointerId);
+		if (finger) {
+			fingers.current.delete(e.pointerId);
+			if (pinch.current && fingers.current.size < 2) {
+				pinch.current = null;
+				// The finger left on the glass carries on as a pan, from here.
+				const [rest] = [...fingers.current.entries()];
+				const { view: v, size: s, box: b } = live.current;
+				if (rest && canPan(v, s, b)) {
+					drag.current = { id: rest[0], x: rest[1].x, y: rest[1].y };
+					setDragging(true);
+				}
+			}
+			if (e.type === "pointerup" && fingers.current.size === 0 && !pinched.current) {
+				const moved = Math.hypot(e.clientX - finger.x0, e.clientY - finger.y0);
+				if (moved <= TAP_SLOP_PX) tapped(e);
+			}
+		}
 		if (drag.current?.id !== e.pointerId) return;
 		drag.current = null;
 		setDragging(false);
 	};
 
-	const onDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+	const toggleAt = (at: Point) => {
 		if (!ready) return;
-		const next = toggleView(view, pointIn(e.currentTarget, e), size, box);
-		show(next, true);
+		show(toggleView(view, at, size, box), true);
+	};
+	const onDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+		toggleAt(pointIn(e.currentTarget, e));
+	};
+	// A double tap is the double click. Counted here rather than left to the
+	// browser, which does not send a dblclick for a double tap everywhere.
+	const tapped = (e: React.PointerEvent<HTMLDivElement>) => {
+		const last = lastTap.current;
+		const now = e.timeStamp;
+		if (
+			last &&
+			now - last.t <= DOUBLE_TAP_MS &&
+			Math.hypot(e.clientX - last.x, e.clientY - last.y) <= DOUBLE_TAP_PX
+		) {
+			lastTap.current = null;
+			toggleAt(pointIn(e.currentTarget, e));
+			return;
+		}
+		lastTap.current = { t: now, x: e.clientX, y: e.clientY };
 	};
 
 	const onLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -271,6 +375,8 @@ function ImageViewer({
 					"rounded-[inherit]",
 					pannable ? (dragging ? "cursor-grabbing" : "cursor-grab") : "cursor-default",
 					pannable && "touch-none",
+					// At fit the page keeps its one finger scroll, the pinch is ours.
+					touch && !pannable && "touch-pan-x touch-pan-y",
 				)}
 				{...keys}
 				onPointerDown={onPointerDown}
@@ -278,7 +384,7 @@ function ImageViewer({
 				onPointerUp={endDrag}
 				onPointerCancel={endDrag}
 				onPointerLeave={() => setHover(null)}
-				onDoubleClick={onDoubleClick}
+				onDoubleClick={touch ? undefined : onDoubleClick}
 			>
 				{src ? (
 					<img
@@ -315,7 +421,7 @@ function ImageViewer({
 					aria-hidden="true"
 					className={cn(
 						"pointer-events-none absolute rounded-sm px-1.5 py-0.5",
-						onExit ? "bottom-5 left-5" : "bottom-2 left-2",
+						onExit ? EDGE_BL : "bottom-2 left-2",
 						"border border-border-subtle bg-bg-elevated shadow-raised",
 						"font-mono text-xs tabular-nums text-text-secondary",
 					)}
@@ -333,11 +439,12 @@ function ImageViewer({
 						aria-label="Zoom"
 						className={cn(
 							"absolute flex items-center gap-0.5 rounded-md p-0.5",
-							onExit ? "right-5 bottom-5" : "right-2 bottom-2",
+							onExit ? EDGE_BR : "right-2 bottom-2",
 							"border border-border-subtle bg-bg-elevated shadow-raised",
 							"transition-opacity duration-fast ease-out",
 							controls === "hover" &&
-								"opacity-0 group-hover/viewer:opacity-100 group-focus-within/viewer:opacity-100 [@media(hover:none)]:opacity-100",
+								!touch &&
+								"opacity-0 group-hover/viewer:opacity-100 group-focus-within/viewer:opacity-100",
 						)}
 					>
 						<Control
@@ -442,7 +549,10 @@ function ImageViewer({
 								variant="secondary"
 								size="md"
 								aria-label="Close"
-								className="absolute top-5 right-5 shadow-raised"
+								className={cn(
+									"absolute shadow-raised",
+									"top-[calc(1.25rem+env(safe-area-inset-top))] right-[calc(1.25rem+env(safe-area-inset-right))]",
+								)}
 							>
 								<X />
 							</IconButton>

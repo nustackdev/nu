@@ -14,6 +14,10 @@
 // in either theme. With nothing to play (no source, or one that failed) it
 // is a plain sunken well in the page's theme.
 //
+// In touch mode (../../lib/touch.ts) nothing hovers, so the transport stays
+// up the whole time rather than fading on idle: a tap on the picture plays or
+// pauses, and the controls are always where the thumb expects them.
+//
 // In full screen the browser shows only the frame, so the speed menu and the
 // tooltips, which portal to the page body, portal into the frame instead.
 //
@@ -30,6 +34,7 @@ import { VideoOff } from "lucide-react";
 import * as React from "react";
 import { useMedia, useMediaKeys } from "../../lib/media/use-media";
 import { PortalContainerContext } from "../../lib/portal";
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 import { EmptyState } from "./empty-state";
 import { MediaControls } from "./media-controls";
@@ -102,6 +107,7 @@ export function Video({
 	children,
 	...props
 }: VideoProps) {
+	const touch = useTouch();
 	const media = useMedia();
 	const frame = React.useRef<HTMLDivElement>(null);
 	const fullscreen = useFullscreen(frame);
@@ -126,7 +132,7 @@ export function Video({
 		onFullscreen: fullscreen.supported ? fullscreen.toggle : undefined,
 	});
 
-	const shown = !media.playing || active || menuOpen;
+	const shown = touch || !media.playing || active || menuOpen;
 	const empty = !src;
 	const failed = !empty && media.error;
 

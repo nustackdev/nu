@@ -79,6 +79,15 @@ export const Autoplay: StoryObj = {
 	),
 };
 
+/** Filling its column. In touch mode the transport stays up the whole time. */
+export const Touch: StoryObj = {
+	render: () => (
+		<div className="p-4">
+			<Video src={FLOWER} label="Flower" download={FLOWER} />
+		</div>
+	),
+};
+
 const meta: Meta = {
 	title: "UI/Video",
 };

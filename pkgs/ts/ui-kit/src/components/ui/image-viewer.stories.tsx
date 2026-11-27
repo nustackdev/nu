@@ -141,6 +141,26 @@ export const Fullscreen: StoryObj = {
 	},
 };
 
+/**
+ * Filling its column, the way a phone or a narrow desk column shows it. In
+ * touch mode the cluster is always up (nothing hovers), two fingers pinch,
+ * one pans once zoomed, a double tap toggles fit.
+ */
+export const Touch: StoryObj = {
+	render: () => (
+		<div className="p-4">
+			<ImageViewer
+				src={PHOTO}
+				alt="Landscape"
+				radius="md"
+				download={PHOTO}
+				className="border border-border-subtle"
+				aspectRatio="4 / 3"
+			/>
+		</div>
+	),
+};
+
 const meta: Meta = {
 	title: "UI/ImageViewer",
 };

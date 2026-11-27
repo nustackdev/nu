@@ -11,8 +11,10 @@
 //
 // `download` ends the row with a download link.
 //
-// The row fits its container: under 20rem it drops the speed menu, under
-// 18rem the volume too, so play, the waveform and the time always show.
+// The row fits its container: under 24rem it drops the speed menu, under
+// 20rem the volume too, and a long title gives way before the waveform, so
+// play, the waveform, the time and the download always show. A phone is
+// about 22rem wide.
 //
 // The row takes focus and owns the transport keys like Video, with `,` and
 // `.` stepping a tenth of a second while paused. It draws no box of its own:
@@ -213,7 +215,7 @@ export function Audio({
 					<span
 						data-slot="audio-title"
 						title={title}
-						className="w-[28%] max-w-56 shrink-0 truncate text-sm text-text-primary"
+						className="w-[28%] max-w-56 min-w-0 truncate text-sm text-text-primary"
 					>
 						{title}
 					</span>
@@ -238,10 +240,10 @@ export function Audio({
 				)}
 				<MediaTime time={media.time} duration={media.duration} />
 				{/* A narrow row keeps play, the waveform and the time: speed goes first, then volume. */}
-				<span className="flex shrink-0 @max-2xs/audio:hidden">
+				<span className="flex shrink-0 @max-xs/audio:hidden">
 					<MediaVolume media={media} glyphClassName="text-text-primary" />
 				</span>
-				<span className="flex shrink-0 @max-xs/audio:hidden">
+				<span className="flex shrink-0 @max-sm/audio:hidden">
 					<MediaRate media={media} />
 				</span>
 				{download ? <MediaDownloadButton href={download} className="text-text-primary" /> : null}
