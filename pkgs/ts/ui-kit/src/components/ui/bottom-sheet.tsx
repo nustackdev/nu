@@ -66,7 +66,6 @@ function BottomSheetContent({
 		<Vaul.Portal container={usePortalContainer(container)}>
 			<Vaul.Overlay data-slot="bottom-sheet-overlay" className="fixed inset-0 z-50 bg-bg-overlay" />
 			<Vaul.Content
-				data-slot="bottom-sheet-content"
 				aria-describedby={undefined}
 				className={cn(
 					"fixed inset-x-0 bottom-0 z-50 flex max-h-[90dvh] flex-col outline-hidden",
@@ -75,6 +74,8 @@ function BottomSheetContent({
 					className,
 				)}
 				{...props}
+				// After the props: the motion CSS keys on this slot, so a caller cannot replace it.
+				data-slot="bottom-sheet-content"
 			>
 				<div
 					aria-hidden="true"
