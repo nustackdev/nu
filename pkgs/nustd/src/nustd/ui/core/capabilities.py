@@ -90,7 +90,7 @@ class Changes(Readable, Emits):
     """Mixin: readable state that moves, heard committed by ``on_change()``."""
 
     def on_change(self) -> Changed:
-        """Each committed change: blur, Enter, a pick, a toggle, a release.
+        """Each committed change: blur, Enter, a quiet moment, a pick, a toggle, a release.
 
         Never per keystroke or drag tick: that is ``on_input()``, where the
         Ref has one.

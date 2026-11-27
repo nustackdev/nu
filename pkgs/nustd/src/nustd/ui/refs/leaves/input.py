@@ -451,8 +451,9 @@ class CodeRef(Moves, Submits, InputLeaf):
     Read-only it renders a highlighted block with a copy button. With
     `readonly=False` the same view becomes an editor: the server seeds the text
     with `set`, reads it back through `Ref` like any input Ref, and subscribes
-    with `on_change()`. The browser commits on the send key and on blur, not
-    on every keystroke, while a read sees the text as it stands, edits not
+    with `on_change()`. The browser commits on a quiet moment in the typing,
+    on blur and on the send key, not on every keystroke, and a commit never
+    submits. A read sees the text as it stands, edits not
     committed yet included. `on_input()` hears each keystroke with that text
     as ``value``. The send key also submits
     (`on_submit()`, the text sent as ``sub["value"]``) and submits the `Form`
@@ -1191,8 +1192,9 @@ class TagInputRef(Moves, Submits, _Placeholder, InputLeaf):
 class TextAreaRef(Moves, Submits, _Placeholder, InputLeaf):
     """Multi-line text input whose value lives in the browser.
 
-    Each keystroke is heard by `on_input()`. Blur commits. shift+Enter
-    commits and submits, plain Enter is a newline. `submit_on="enter"` makes it a chat composer: Enter submits and
+    Each keystroke is heard by `on_input()`. A quiet moment in the typing and
+    a blur commit (`on_change()`), and neither submits. shift+Enter commits
+    and submits, plain Enter is a newline. `submit_on="enter"` makes it a chat composer: Enter submits and
     shift+Enter is the newline, the same switch every multi-line input takes. Focus stays in the field after a submit, and
     `clear_on_submit` empties it for the next message.
 

@@ -10,6 +10,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
+## Unreleased
+
+- Editors autosave changes on a pause; only the send key ever submits
+
 ## 0.9.1 - 2026-11-27
 
 - Release nu 0.9.1, ui-core 0.2.5, ui-kit 0.4.8, nudle 0.1.16

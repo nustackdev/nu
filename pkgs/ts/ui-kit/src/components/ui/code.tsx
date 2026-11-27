@@ -26,7 +26,8 @@ import type { SubmitOn } from "../../lib/keyboard";
 import { codeBox } from "../../lib/recipes";
 import { cn } from "../../lib/utils";
 
-export interface CodeProps extends Omit<React.HTMLAttributes<HTMLElement>, "onChange"> {
+export interface CodeProps
+	extends Omit<React.HTMLAttributes<HTMLElement>, "onChange" | "onSubmit"> {
 	block?: boolean;
 	/** A copy button in the corner of a block. Shown only while read-only. */
 	copyable?: boolean;
@@ -48,10 +49,10 @@ export interface CodeProps extends Omit<React.HTMLAttributes<HTMLElement>, "onCh
 	/** Block only. Height bounds in px; the block grows between them. 0 is no bound. */
 	minHeight?: number;
 	maxHeight?: number;
-	/** Block only. Fires on the send key and on blur, and only when the text changed. */
+	/** Block only. The change: a quiet moment, blur and the send key, only when the text changed. */
 	onCommit?: (source: string) => void;
-	/** The send key in the editor, after its commit. */
-	onSubmit?: () => void;
+	/** Block only. The submit: the send key and nothing else, after its commit, with the text. */
+	onSubmit?: (source: string) => void;
 	/** Block only. Which key sends: shift+Enter (default) or Enter. */
 	submitOn?: SubmitOn;
 	/** Block only. Whether the buffer differs from `value`, on every keystroke. */

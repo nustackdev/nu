@@ -13,15 +13,17 @@
 //
 // ## Saving
 //
-// Not every keystroke. The send key is the deliberate save and blur is the
-// accidental one, and a commit that round-trips to the same text is dropped.
-// The send key then submits (`onSubmit`): shift+Enter with Enter the newline,
-// or the other way round with `submitOn="enter"`. Cmd/ctrl+Enter does
-// nothing here; it passes through to the app. Whatever
-// the owner does with `value` in that submit (puts the declared text back,
-// say) lands in the document.
-// `onDirty` is the live read in between, for a host that wants to show an
-// unsaved marker.
+// Change and submit are two things (../save.ts). A commit (`onCommit`) is the
+// change: it goes out at a quiet moment while you type and on blur, the way
+// any editor autosaves, and one that round-trips to the same text is dropped.
+// It runs nothing. The send key is the submit (`onSubmit`, with the text):
+// it commits first, then submits. Shift+Enter with Enter the newline, or the
+// other way round with `submitOn="enter"`. Nothing else submits. Cmd/ctrl+Enter
+// does nothing here; it passes through to the app. Whatever the owner does
+// with `value` in that submit (puts the declared text back, say) lands in the
+// document. An owner that acts only on submits ignores the commits and keeps
+// `value` at the last submit, so `onDirty`, the live read in between, says
+// "not yet submitted".
 //
 // ## Diff
 //
@@ -62,6 +64,7 @@ import { EditorView } from "@codemirror/view";
 import type * as React from "react";
 import { useCallback, useEffect, useLayoutEffect, useReducer, useRef } from "react";
 import type { SubmitOn } from "../keyboard";
+import { SAVE_DELAY } from "../save";
 import { codeBase, codeEditing, codeGutter, codeReading } from "./extensions";
 import { loadLanguage } from "./languages";
 import { kitDiffTheme } from "./theme";
@@ -86,10 +89,10 @@ export type CodeMirrorViewProps = {
 	/** Height bounds in px. The view grows with its content between them; 0 is no bound. */
 	minHeight?: number;
 	maxHeight?: number;
-	/** Persist. Fires on the send key and on blur, and only when the text changed. */
+	/** The change: a quiet moment, blur, and the send key, only when the text changed. Runs nothing. */
 	onCommit?: (source: string) => void;
-	/** The deliberate send, after its commit. */
-	onSubmit?: () => void;
+	/** The submit: the send key and nothing else, after its commit, with the text. */
+	onSubmit?: (source: string) => void;
 	/** Which key sends: shift+Enter (the default, Enter is the newline) or Enter. */
 	submitOn?: SubmitOn;
 	/** Whether the buffer differs from `value`, on every keystroke. */
@@ -168,6 +171,8 @@ export function CodeMirrorView({
 	const dirtyRef = useRef(false);
 	/** The diff compartment holds a merge view. */
 	const armedRef = useRef(false);
+	/** The quiet-moment commit, pending while you type. */
+	const saveTimer = useRef<number | null>(null);
 	// The view binds its listeners once, so everything they read goes through
 	// a ref rather than a closed-over prop.
 	const cb = useRef({ value, original, onCommit, onSubmit, submitOn, onDirty, onEdit, onView });
@@ -186,6 +191,10 @@ export function CodeMirrorView({
 	}).current;
 
 	const commit = useCallback(() => {
+		if (saveTimer.current !== null) {
+			window.clearTimeout(saveTimer.current);
+			saveTimer.current = null;
+		}
 		const view = viewRef.current;
 		if (!view) return;
 		dirtyRef.current = false;
@@ -200,9 +209,17 @@ export function CodeMirrorView({
 	// text would stay. The bump makes it look again once that render is in.
 	const [submits, bump] = useReducer((n: number) => n + 1, 0);
 	const submit = useCallback(() => {
-		cb.current.onSubmit?.();
+		cb.current.onSubmit?.(viewRef.current?.state.doc.toString() ?? cb.current.value);
 		bump();
 	}, []);
+
+	const queueSave = useCallback(() => {
+		if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
+		saveTimer.current = window.setTimeout(() => {
+			saveTimer.current = null;
+			commit();
+		}, SAVE_DELAY);
+	}, [commit]);
 
 	const modeFor = useCallback(
 		(ro: boolean) => (ro ? codeReading : editing(commit, submit, () => cb.current.submitOn)),
@@ -229,6 +246,7 @@ export function CodeMirrorView({
 							dirtyRef.current = true;
 							cb.current.onDirty?.(u.state.doc.toString() !== cb.current.value);
 							cb.current.onEdit?.(() => u.state.doc.toString());
+							queueSave();
 						}
 						if (u.focusChanged && !u.view.hasFocus) commit();
 					}),
@@ -240,6 +258,8 @@ export function CodeMirrorView({
 
 		return () => {
 			cb.current.onView?.(null);
+			if (saveTimer.current !== null) window.clearTimeout(saveTimer.current);
+			saveTimer.current = null;
 			viewRef.current = null;
 			view.destroy();
 		};

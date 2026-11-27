@@ -11,7 +11,8 @@
 // never gathered by a Form since nobody types into it. Nil turns the diff off.
 // A write to either text redraws the diff in the same view.
 //
-// Commit moments (the send key, blur, only when the text changed): the
+// Commit moments (a quiet moment while you type, blur, the send key, only
+// when the text changed; ../../lib/save.ts): the
 // node's `value` prop updates locally, then `{event: "change", value}` goes
 // out with the text. Between commits each keystroke sends `{event: "input",
 // value}` with the editor's text, built only when someone listens, while

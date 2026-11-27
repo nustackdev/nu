@@ -6,9 +6,10 @@ subscription to exactly that wire name, so the method and the wire never
 drift apart.
 
 - ``INPUT``    -- the value is moving: each keystroke, each drag tick
-- ``CHANGE``   -- browser-owned state committed: blur, Enter, release, pick,
-                  toggle, tab switch, open or close
-- ``SUBMIT``   -- the person asked to send
+- ``CHANGE``   -- browser-owned state committed: blur, Enter, a quiet moment
+                  in a text editor, release, pick, toggle, tab switch, open
+                  or close.
+- ``SUBMIT``   -- the person asked to send: the send key and nothing else
 - ``CLICK``, ``ACTION``, ``DISMISS`` -- triggers, no state
 - the domain events a ref family sends (a tree's ``RENAME``, a table's
   ``SORT``, an upload's ``PROGRESS``, ...)
@@ -62,7 +63,7 @@ ANY = "*"
 
 #: The value is moving: each keystroke, each drag tick.
 INPUT = "input"
-#: Browser-owned state committed: blur, Enter, release, pick, toggle, open/close.
+#: Browser-owned state committed: blur, Enter, a quiet moment, release, pick, toggle, open/close.
 CHANGE = "change"
 #: The person asked to send what the input (or Form) holds.
 SUBMIT = "submit"

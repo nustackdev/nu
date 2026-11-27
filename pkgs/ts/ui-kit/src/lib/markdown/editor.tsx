@@ -75,6 +75,7 @@ import { useCallback, useEffect, useLayoutEffect, useReducer, useRef } from "rea
 import { createRoot } from "react-dom/client";
 import { Checkbox } from "../../components/ui/checkbox";
 import type { SubmitOn } from "../keyboard";
+import { SAVE_DELAY } from "../save";
 import { cn } from "../utils";
 import { codeFences } from "./fence";
 import { createHandle, type MarkdownHandle } from "./handle";
@@ -89,9 +90,6 @@ import {
 } from "./rules";
 import { type ProseSchema, proseSchema } from "./schema";
 import { cellBelow, exitTable, leaveTable, nextCell, previousCell, proseTables } from "./table";
-
-/** Quiet-moment autosave. Long enough that a typist never triggers it. */
-const SAVE_DELAY = 800;
 
 /** Marks a transaction as the inbound value landing, not an edit. */
 const INBOUND = "nu-inbound";

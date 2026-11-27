@@ -522,6 +522,7 @@ export { formatBytes, formatCount, formatFullCount } from "./lib/count";
 export { ICON_NAMES, iconFor, isIconName } from "./lib/icons";
 export type { KeyBindings, KeyScope } from "./lib/keyboard";
 export { useKeyScope } from "./lib/keyboard";
+export { SAVE_DELAY, useLeaveGuard } from "./lib/save";
 export type { ProseEditorProps } from "./lib/markdown/editor";
 export { ProseEditor } from "./lib/markdown/editor";
 export type {

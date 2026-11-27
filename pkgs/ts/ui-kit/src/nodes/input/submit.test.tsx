@@ -12,6 +12,7 @@ import { OPS, type TreeFrame } from "@nustackdev/ui-core";
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { SAVE_DELAY } from "../../lib/save";
 import { flushOutbox, NodeView, tree, unbatch } from "../../tree";
 import "..";
 import { markdownAt } from "./markdown";
@@ -300,6 +301,43 @@ describe("send key, read-only", () => {
 				new KeyboardEvent("keydown", { key: "Enter", shiftKey: true, bubbles: true }),
 			);
 		});
+		expect(submits()).toEqual([]);
+	});
+});
+
+// Change and submit are two events (../../lib/save.ts): typing sends a change
+// at a quiet moment and a blur flushes one, and neither ever submits. Only the
+// send key does.
+describe.each([
+	"TextAreaRef",
+	"CodeRef",
+	"MarkdownRef",
+] as Kind[])("%s change, not submit", (kind) => {
+	it("sends a change at a quiet moment and on blur, never a submit", async () => {
+		const d = alone(kind);
+		d.type("hello");
+		expect(events()).toEqual([]);
+		await act(async () => {
+			await new Promise((r) => setTimeout(r, SAVE_DELAY + 100));
+		});
+		flushOutbox();
+		expect(events()).toEqual([{ ref: ["in"], event: "change" }]);
+		expect(valueAt(["in"])).toBe(text(kind, "hello"));
+
+		d.type(" there");
+		const away = document.createElement("button");
+		document.body.appendChild(away);
+		act(() => away.focus());
+		// CodeMirror tells a focus change a moment later, on its own timer.
+		await act(async () => {
+			await new Promise((r) => setTimeout(r, 50));
+		});
+		away.remove();
+		flushOutbox();
+		expect(events()).toEqual([
+			{ ref: ["in"], event: "change" },
+			{ ref: ["in"], event: "change" },
+		]);
 		expect(submits()).toEqual([]);
 	});
 });

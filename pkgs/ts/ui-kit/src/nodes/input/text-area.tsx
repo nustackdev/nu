@@ -1,7 +1,10 @@
 // TextAreaRef -- multi-line text input. Browser is source of truth.
 //
 // User types: the node's `value` prop updates immediately (controlled), and
-// each keystroke sends `{event: "input", value}`. Blur commits. shift+Enter commits, then submits, and plain Enter is a newline.
+// each keystroke sends `{event: "input", value}`. A quiet moment in the
+// typing and a blur commit (`{event: "change", value}`, ../../lib/save.ts).
+// shift+Enter commits, then submits, and plain Enter is a newline; nothing
+// else submits.
 // `submit_on="enter"` turns it into a chat composer: Enter submits and
 // shift+Enter is the newline. Focus stays put either way. See ./control.ts.
 //
@@ -35,7 +38,7 @@ function TextAreaView({ path }: NodeProps) {
 	const mono = useBoolProp(path, "mono");
 	const submitOn = useEnumProp(path, "submit_on", SUBMIT_ON, "shift+enter");
 	const c = useControl(path);
-	const { edit, commit, submit } = useCommit(path, { moves: true });
+	const { edit, commit, submit } = useCommit(path, { moves: true, settles: true });
 
 	const cls = [autoResize ? "[field-sizing:content]" : null, mono ? "font-mono" : null]
 		.filter(Boolean)

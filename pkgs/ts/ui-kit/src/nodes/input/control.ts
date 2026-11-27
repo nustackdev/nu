@@ -16,12 +16,16 @@
 // Reads. What a read, a submit and a form snapshot carry is the entry's main
 // read (`reads[""]`, `props.value` when unset), through `mainRead`.
 //
-// Commits. A text-like input edits locally as you type (the store's `value`
-// prop, so a read sees what is under the caret) and commits on blur and on
-// submit. One commit path per node with a dirty check: a commit sends a
-// change only when the value moved since the last one, so tabbing through a
-// form sends nothing and Enter followed by blur sends one change, not two.
-// Enter never blurs, and never fires while an IME is composing.
+// Commits. A change and a submit are two events (../../lib/save.ts): a
+// change says the value moved, a submit says the person sent it, and only the
+// send key submits. A text-like input edits locally as you type (the store's
+// `value` prop, so a read sees what is under the caret) and commits on blur
+// and on submit; a multi-line one also commits at a quiet moment while you
+// type (`useCommit(path, { settles: true })`), the way the code and markdown
+// editors autosave. One commit path per node with a dirty check: a commit
+// sends a change only when the value moved since the last one, so tabbing
+// through a form sends nothing and Enter followed by blur sends one change,
+// not two. Enter never blurs, and never fires while an IME is composing.
 //
 // Chrome. `useControl` folds the common props every input takes (label,
 // disabled, readonly, required, autofocus, size, placeholder) with the
@@ -68,6 +72,7 @@ import {
 	useRef,
 } from "react";
 import { useFieldControl } from "../../components/ui/field";
+import { SAVE_DELAY } from "../../lib/save";
 import {
 	ACTIONS_SLOT,
 	EVENTS,
@@ -182,16 +187,40 @@ export type CommitOptions = {
 	 * edit or pick that moved the value sends `{event: "input", value}` first.
 	 */
 	moves?: boolean;
+	/**
+	 * A multi-line text: a quiet moment in the typing commits too, not only a
+	 * blur or the send key, so the change keeps up the way an editor autosaves.
+	 */
+	settles?: boolean;
 };
 
 /** One commit path per node, with the dirty check. */
 export function useCommit(path: Path, options: CommitOptions = {}): Commit {
 	const moves = options.moves === true;
+	const settles = options.settles === true;
 	const emit = useEmit(path);
 	const setValue = useSetValue(path);
 	const key = pathKey(path);
 	// The value the server last heard about, once an edit started; null while clean.
 	const base = useRef<{ value: unknown } | null>(null);
+	/** The quiet-moment commit, pending while you type (`settles`). */
+	const timer = useRef<number | null>(null);
+	const stopTimer = useCallback(() => {
+		if (timer.current === null) return;
+		window.clearTimeout(timer.current);
+		timer.current = null;
+	}, []);
+	useEffect(() => stopTimer, [stopTimer]);
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
+	const commit = useCallback(() => {
+		stopTimer();
+		const started = base.current;
+		base.current = null;
+		if (started === null) return;
+		if (same(started.value, nodeAt(path)?.props.value)) return;
+		emit(EVENTS.change, { value: submitted(path) });
+	}, [key, emit, stopTimer]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
 	const edit = useCallback(
@@ -201,18 +230,16 @@ export function useCommit(path: Path, options: CommitOptions = {}): Commit {
 			setValue(value);
 			clearCheck(path);
 			if (moves && !same(before, value)) emit(EVENTS.input, { value: submitted(path) });
+			if (settles) {
+				stopTimer();
+				timer.current = window.setTimeout(() => {
+					timer.current = null;
+					commit();
+				}, SAVE_DELAY);
+			}
 		},
-		[key, setValue, emit, moves],
+		[key, setValue, emit, moves, settles, stopTimer, commit],
 	);
-
-	// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
-	const commit = useCallback(() => {
-		const started = base.current;
-		base.current = null;
-		if (started === null) return;
-		if (same(started.value, nodeAt(path)?.props.value)) return;
-		emit(EVENTS.change, { value: submitted(path) });
-	}, [key, emit]);
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: path is compared by value.
 	const pick = useCallback(
