@@ -12,6 +12,13 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Tap a table cell on touch to edit it
+- Icon picker joins the kit and nustd.ui, emoji or glyph, a sheet on phones
+- Mobile version for overlays: dialogs, menus and popovers open as bottom sheets
+- Mobile version for inputs and pickers: selects, dates, times and colors fit the thumb
+- Mobile version for tables, trees, charts and media, worked by tap instead of hover
+- Touch interactions on mobile: bigger tap areas, no hover, no tooltips, no drag
+- Layout adaptations for mobile: grids stack, wide content scrolls, no focus zoom
 - Flat nu favicons and app mark in nudle, no glow or shadow
 - Blob writes also commit on a short timer, so followers see slow sources promptly
 - Ranges on a growing blob answer only bytes that exist, never a broken promise

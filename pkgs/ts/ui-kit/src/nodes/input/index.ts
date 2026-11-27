@@ -12,6 +12,7 @@ import { ColorPickerRef } from "./color-picker";
 import { DatePickerRef } from "./date-picker";
 import { DateRangePickerRef } from "./date-range-picker";
 import { DateTimePickerRef } from "./date-time-picker";
+import { IconPickerRef } from "./icon-picker";
 import { InlineEditRef } from "./inline-edit";
 import { InputRef } from "./input";
 import { MarkdownRef } from "./markdown";
@@ -57,6 +58,7 @@ const entries: Record<string, NodeEntry> = {
 	ToggleRef,
 	SketchRef,
 	ColorPickerRef,
+	IconPickerRef,
 	UploadFileRef,
 	UploadFilesRef,
 	MicCaptureRef,

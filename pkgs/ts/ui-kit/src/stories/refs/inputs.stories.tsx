@@ -288,6 +288,7 @@ const STATE_KINDS: [string, Record<string, unknown>][] = [
 	["SliderRef", { value: 40 }],
 	["RangeSliderRef", { value: [20, 60] }],
 	["ColorPickerRef", { value: "#4269d0" }],
+	["IconPickerRef", { value: "lucide:rocket" }],
 	["SegmentedControlRef", { options: ["Day", "Week", "Month"], value: "Week" }],
 	["CheckboxGroupRef", { options: ["drama", "comedy", "sci-fi"], value: ["drama"] }],
 	["MultiSelectRef", { options: PACKAGES, value: ["nu", "nustd"] }],
@@ -301,7 +302,7 @@ export const RangeAndColor: Story = {
 		return (
 			<NodeStage
 				root="inputs-range-color"
-				label="a drag sends an input per tick, a release or an arrow key one change; Enter in the hex field submits"
+				label="a drag sends an input per tick, a release or an arrow key one change; Enter in the hex field submits; an icon pick sends one change"
 				chains={[
 					[
 						col,
@@ -338,6 +339,16 @@ export const RangeAndColor: Story = {
 							label: "Ink",
 							value: "#111111",
 							swatches: ["#111111", "#555555", "#999999", "#dddddd"],
+						}),
+					],
+					[col, step("mark", "IconPickerRef", { label: "Icon", value: "emoji:🌱" })],
+					[
+						col,
+						step("glyph", "IconPickerRef", {
+							label: "Glyph",
+							value: "",
+							kinds: ["lucide"],
+							placeholder: "Pick a glyph",
 						}),
 					],
 				]}

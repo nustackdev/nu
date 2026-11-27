@@ -82,11 +82,11 @@
 //
 // Touch (../../lib/touch.ts) changes how it is worked, not how it looks.
 // There is no pointer to follow: the handles stand on the tapped cell, a ⋯
-// each, and open their menus as bottom sheets. Long-press is right-click: on
-// a cell "Edit cell" and the row's menu, on a header the column's, as a
-// sheet. A double tap edits, as a double click does. Rows do not drag (the
-// menu moves them), and in a multi selection a tap toggles its row, there
-// being no Shift or Cmd to hold.
+// each, and open their menus as bottom sheets. A tap on a cell that edits
+// starts the edit, as Enter does (a bool flips); elsewhere it activates. A tap on a header sorts, or renames one that does not sort.
+// Long-press is right-click: on a cell the row's menu, on a header the
+// column's, as a sheet. Rows do not drag (the menu moves them), and in a
+// multi selection a tap toggles its row, there being no Shift or Cmd to hold.
 //
 // ## Out of scope
 //
@@ -854,7 +854,7 @@ export function DataTable({
 
 	// --- Mouse ---------------------------------------------------------------
 
-	const onCellClick = (e: React.MouseEvent<HTMLElement>, r: number) => {
+	const onCellClick = (e: React.MouseEvent<HTMLElement>, r: number, c: number) => {
 		const row = rows[r];
 		if (!row) return;
 		pending.current = null;
@@ -879,16 +879,23 @@ export function DataTable({
 				anchor.current = row.key;
 			}
 		}
+		// Touch: a tap on a cell that edits starts the edit, as Enter does; a
+		// finger has no double click to ask for it.
+		if (touch && cols[c]?.editable) {
+			startEdit({ row: r, col: c });
+			return;
+		}
 		onActivate?.(row.key, r, e);
 	};
 
-	/** The right-click menu: edit the cell, then the row's menu. */
+	/** The right-click menu: edit the cell (not on touch), then the row's menu. */
 	const menuItems = (at: CellPos): TableMenuItem[] | null => {
 		const col = cols[at.col];
 		const row = rows[at.row];
 		if (!col || !row) return null;
 		const items: TableMenuItem[] = [];
-		if (col.editable) {
+		// Touch: a tap edits, so the long-press sheet holds the row's menu alone.
+		if (col.editable && !touch) {
 			const bool = col.kind === "bool";
 			items.push({
 				type: "item",
@@ -924,7 +931,8 @@ export function DataTable({
 		const col = cols[c];
 		if (!row || !col) return false;
 		pending.current = null;
-		if (!menuItems({ row: r, col: c })) return false;
+		// Nothing to offer (on touch, a table whose cells only edit): no menu.
+		if (!menuItems({ row: r, col: c })?.length) return false;
 		el.focus({ preventScroll: true });
 		if (selecting && !selected.includes(row.key)) {
 			anchor.current = row.key;
@@ -1098,7 +1106,8 @@ export function DataTable({
 		onAdd !== undefined ||
 		onMove !== undefined ||
 		onDelete !== undefined ||
-		cols.some((c) => c.editable);
+		// Touch: a tap edits, so editing alone puts nothing in the menu.
+		(!touch && cols.some((c) => c.editable));
 
 	const body = (
 		<TableBody
@@ -1169,7 +1178,7 @@ export function DataTable({
 									onKeyDown={(e) => {
 										if (e.target === e.currentTarget) onCellKeyDown(e, r, c);
 									}}
-									onClick={(e) => onCellClick(e, r)}
+									onClick={(e) => onCellClick(e, r, c)}
 									onDoubleClick={(e) => {
 										if (!onControl(e) && col.kind !== "bool") startEdit({ row: r, col: c });
 									}}
@@ -1269,7 +1278,10 @@ export function DataTable({
 											if (renaming === col.key) return;
 											colPending.current = null;
 											e.currentTarget.focus({ preventScroll: true });
-											sortBy(col);
+											if (Date.now() - pressedAt.current < 700) return;
+											// Touch: a tap renames a header that does not sort, as Enter does.
+											if (touch && !col.sortable && onColumnRename) setRenaming(col.key);
+											else sortBy(col);
 										}
 									: undefined
 							}

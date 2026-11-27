@@ -78,6 +78,7 @@
 		"react-dom": "^19.2.0",
 		"tailwind-merge": "^3.4.0",
 		"tailwindcss": "^4.1.18",
+		"unicode-emoji-json": "^0.9.0",
 		"vaul": "^1.1.2",
 		"zustand": "^5.0.13"
 	},

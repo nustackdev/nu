@@ -28,6 +28,7 @@ from nustd.ui.refs import (
     Field,
     Form,
     FormRef,
+    IconPickerRef,
     InlineEditRef,
     InputLeaf,
     InputRef,
@@ -130,6 +131,7 @@ INPUTS = [
     DatePickerRef,
     DateRangePickerRef,
     DateTimePickerRef,
+    IconPickerRef,
     InlineEditRef,
     InputRef,
     MultiSelectRef,
@@ -212,7 +214,7 @@ def test_submit_inputs():
         assert hasattr(cls, "on_submit"), cls.__name__
     assert hasattr(ColorPickerRef, "on_submit")
     assert not hasattr(RangeSliderRef, "on_submit")
-    for cls in (CheckboxRef, SwitchRef, SelectRef, SliderRef, SketchRef):
+    for cls in (CheckboxRef, SwitchRef, SelectRef, SliderRef, SketchRef, IconPickerRef):
         assert not hasattr(cls, "on_submit"), cls.__name__
 
 

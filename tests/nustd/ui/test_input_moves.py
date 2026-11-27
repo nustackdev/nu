@@ -22,6 +22,7 @@ from nustd.ui.refs import (
     CodeRef,
     ColorPickerRef,
     DatePickerRef,
+    IconPickerRef,
     InlineEditRef,
     InputRef,
     MarkdownRef,
@@ -53,7 +54,7 @@ MOVING = [
     SketchRef,
 ]
 
-DISCRETE = [CheckboxRef, SwitchRef, ToggleRef, SelectRef, DatePickerRef]
+DISCRETE = [CheckboxRef, SwitchRef, ToggleRef, SelectRef, DatePickerRef, IconPickerRef]
 
 
 class _Notifies:

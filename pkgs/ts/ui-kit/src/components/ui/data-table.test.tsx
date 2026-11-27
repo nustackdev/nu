@@ -1190,7 +1190,8 @@ describe("DataTable", () => {
 	});
 });
 
-// Touch mode: the same grid worked by a finger. Long-press opens a cell's or a
+// Touch mode: the same grid worked by a finger. A tap edits a cell that edits
+// and renames a header that does not sort. Long-press opens a cell's or a
 // header's menu as a bottom sheet, the handles stand on the tapped cell as ⋯
 // and open sheets too, rows do not drag, and a tap toggles a multi selection.
 describe("DataTable on touch", () => {
@@ -1240,7 +1241,6 @@ describe("DataTable on touch", () => {
 		act(() => vi.advanceTimersByTime(600));
 		expect(sheet()).not.toBeNull();
 		expect(sheetTexts()).toEqual([
-			"Edit cell",
 			t.insertRowAbove,
 			t.insertRowBelow,
 			t.moveRowUp,
@@ -1250,6 +1250,47 @@ describe("DataTable on touch", () => {
 		expect(sheet()?.textContent).toContain("Beta");
 		act(() => sheetItem(t.deleteRow).click());
 		expect(onDelete).toHaveBeenCalledWith(["r2"]);
+	});
+
+	it("edits a cell on a tap, and activates one that does not edit", () => {
+		const onActivate = vi.fn();
+		touchMount({ onEdit: vi.fn(), onActivate });
+		click(cell("r2", "title"));
+		expect(input().value).toBe("Beta");
+		expect(onActivate).not.toHaveBeenCalled();
+		type("Beta", "Escape");
+		touchMount({ onActivate });
+		click(cell("r2", "title"));
+		expect(host.querySelector("input")).toBeNull();
+		expect(onActivate).toHaveBeenCalledTimes(1);
+	});
+
+	it("flips a bool on a tap anywhere in its cell", () => {
+		const onEdit = vi.fn();
+		touchMount({ onEdit });
+		click(cell("r1", "done"));
+		expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ column: "done", value: true }));
+	});
+
+	it("opens no sheet on a long-press when cells only edit", () => {
+		touchMount({ onEdit: vi.fn() });
+		act(() => finger("pointerdown", cell("r2", "title")));
+		act(() => vi.advanceTimersByTime(600));
+		expect(sheet()).toBeNull();
+	});
+
+	it("renames a header on a tap when it does not sort, sorts when it does", () => {
+		const onColumnRename = vi.fn();
+		const onSort = vi.fn();
+		touchMount({ onColumnRename });
+		click(cell(null, "title"));
+		expect(input().value).toBe("title");
+		type("Name", "Enter");
+		expect(onColumnRename).toHaveBeenCalledWith("title", "Name");
+		touchMount({ onColumnRename, onSort });
+		click(cell(null, "points"));
+		expect(host.querySelector("input")).toBeNull();
+		expect(onSort).toHaveBeenCalledWith("points", "asc");
 	});
 
 	it("calls a long-press off when the finger drifts or lifts", () => {

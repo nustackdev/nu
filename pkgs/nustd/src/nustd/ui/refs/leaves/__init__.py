@@ -16,6 +16,7 @@
 - input:  tab-owned inputs (Toggle among them), plus MarkdownRef and CodeRef.
 - range:  RangeSliderRef, a two-thumb slider.
 - color:  ColorPickerRef.
+- icon_picker: IconPickerRef, an icon (lucide glyph or emoji) as a stored string.
 - inline_edit: InlineEditRef, text that edits in place.
 - upload: UploadFile, UploadFiles and the entry UploadedFile, picked files
           read on demand, plus the upload errors from nustd.ui.uploads.
@@ -66,6 +67,7 @@ from .choice import (
 from .color import ColorPickerRef
 from .data_table import DataTableRef, InsertRow, RemoveRows, SetOrder, SetRow
 from .display import AvatarRef, BreadcrumbRef, SkeletonRef, SpinnerRef, StatusPillRef
+from .icon_picker import IconPickerRef
 from .inline_edit import InlineEditRef
 from .input import (
     ButtonRef,
@@ -149,6 +151,7 @@ __all__ = [
     "HeatmapChart",
     "Histogram",
     "HtmlRef",
+    "IconPickerRef",
     "IconRef",
     "ImageRef",
     "InlineEditRef",

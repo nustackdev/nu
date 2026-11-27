@@ -131,6 +131,9 @@
 		"JetBrains Mono",
 		ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Monaco, Consolas,
 		"Liberation Mono", "Courier New", monospace;
+	/* an emoji as an icon: the platform's colour font, never the text face's */
+	--font-emoji:
+		"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
 
 	/* type scale: size, line-height, letter-spacing per step */
 	--text-xs:                 0.6875rem;

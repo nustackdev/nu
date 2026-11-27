@@ -248,6 +248,34 @@ export {
 	iconVariants,
 } from "./components/ui/icon";
 export { IconButton, iconButtonVariants } from "./components/ui/icon-button";
+export {
+	IconMark,
+	type IconMarkProps,
+	type IconMarkSize,
+} from "./components/ui/icon-mark";
+export { ICON_PACK, type IconPackEntry, type IconPackGroup } from "./components/ui/icon-pack";
+export {
+	ICON_PICKER_COLUMNS,
+	IconPicker,
+	IconPickerContent,
+	type IconPickerContentProps,
+	IconPickerField,
+	type IconPickerFieldProps,
+	type IconPickerProps,
+} from "./components/ui/icon-picker";
+export {
+	EMOJI_PREFIX,
+	type Emoji,
+	type EmojiGroup,
+	formatIcon,
+	type IconKind,
+	type IconValue,
+	LUCIDE_PREFIX,
+	loadEmoji,
+	normalizeIcon,
+	parseIcon,
+	RECENT_ICONS_KEY,
+} from "./components/ui/icon-picker-model";
 export { Image } from "./components/ui/image";
 export { ImageViewer, type ImageViewerProps } from "./components/ui/image-viewer";
 export { InlineEdit, type InlineEditProps } from "./components/ui/inline-edit";
