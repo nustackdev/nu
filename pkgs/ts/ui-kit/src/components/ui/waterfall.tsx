@@ -22,8 +22,10 @@
 //
 // Phones and narrow columns (language/mobile.md). In touch mode there is no
 // hover tooltip: the label and duration are inline already, and a tap on a
-// row says the rest in a bottom sheet, unless `onSelect` owns the tap (the rows are buttons either way). Rows
-// stay 24px with no bigger tap area: they are full width and touch each
+// row says the rest in place, over its bar (`AnchorTip`, as the calendar
+// heatmap does), unless `onSelect` owns the tap (the rows are buttons either
+// way). A tap on another row moves it; a tap on the same row, off the rows,
+// or a scroll hides it. Rows stay 24px with no bigger tap area: they are full width and touch each
 // other, so a grown area would take its neighbour's taps. Below 560px of its
 // own width (a container query, `@max-stack`, the kit's STACK_WIDTH) the
 // label column gives up room, at most 40% of the width, and every other tick
@@ -34,7 +36,7 @@ import * as React from "react";
 import { formatCount } from "../../lib/count";
 import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
-import { BottomSheet, BottomSheetContent } from "./bottom-sheet";
+import { AnchorTip, useTapAway } from "./anchor-tip";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip";
 import {
 	formatSpanTime,
@@ -123,17 +125,26 @@ function Waterfall({
 	const range = win.end - win.start;
 	const at = (t: number) => ((t - win.start) / range) * 100;
 	const ticks = waterfallTicks(range);
-	const { rows, hidden, hiddenDanger } = waterfallRows(spans, maxRows);
 	// The label width rides on a var, the columns are classes, so the narrow
 	// container query can cap it.
 	const cols = { "--waterfall-label": `${labelWidth}px` } as React.CSSProperties;
 	const touch = useTouch();
-	// Touch mode, no `onSelect`: the tapped span, said in a sheet.
+	// Touch mode, no `onSelect`: the tapped span, its tip shown over its bar.
 	const [tapped, setTapped] = React.useState<WaterfallSpan | null>(null);
-	const last = React.useRef<WaterfallSpan | null>(null);
-	if (tapped) last.current = tapped;
-	// What a row tap does: the host's select, or in touch mode the sheet.
-	const pick = onSelect ?? (touch ? setTapped : undefined);
+	const rowsRef = React.useRef<HTMLUListElement>(null);
+	// What a row tap does: the host's select, or in touch mode the tip (the
+	// same row again hides it).
+	const pick =
+		onSelect ??
+		(touch
+			? (span: WaterfallSpan) => setTapped((prev) => (prev?.id === span.id ? null : span))
+			: undefined);
+	// A tap off the rows hides the tip; one on a row moves or hides it itself.
+	useTapAway(
+		touch && !onSelect && tapped !== null,
+		(target) => !!rowsRef.current?.contains(target),
+		() => setTapped(null),
+	);
 	const say = (span: WaterfallSpan) => {
 		const running = isRunning(span);
 		const dur = formatTime(spanEnd(span, win.end, now) - span.start);
@@ -145,6 +156,20 @@ function Waterfall({
 			.filter(Boolean)
 			.join(" · ");
 	};
+	// What the hover tooltip and the tapped tip say: name, state, detail.
+	const tipBody = (span: WaterfallSpan) => (
+		<>
+			<span className="block font-medium">{span.label}</span>
+			<span className="block text-text-secondary tabular-nums">{say(span)}</span>
+			{span.detail ? <span className="block text-text-secondary">{span.detail}</span> : null}
+		</>
+	);
+	const { rows, hidden, hiddenDanger } = waterfallRows(spans, maxRows);
+	const tappedAt = tapped && !onSelect ? rows.findIndex((r) => r.span.id === tapped.id) : -1;
+	const tappedBar =
+		tappedAt >= 0
+			? rowsRef.current?.children[tappedAt]?.querySelector("[data-slot=waterfall-bar]")
+			: null;
 
 	return (
 		<TooltipProvider>
@@ -199,7 +224,7 @@ function Waterfall({
 						</div>
 					</div>
 
-					<ul data-slot="waterfall-rows" className="relative">
+					<ul ref={rowsRef} data-slot="waterfall-rows" className="relative">
 						{rows.map(({ span, depth }) => {
 							const tone = toneOf(span);
 							const running = isRunning(span);
@@ -273,21 +298,7 @@ function Waterfall({
 									) : (
 										<Tooltip>
 											<TooltipTrigger asChild>{bar}</TooltipTrigger>
-											<TooltipContent side="top">
-												<span className="block font-medium">{span.label}</span>
-												<span className="block text-text-secondary tabular-nums">
-													{[
-														running ? "running" : TONE_WORD[tone],
-														running ? `${dur} so far` : dur,
-														`at +${offset}`,
-													]
-														.filter(Boolean)
-														.join(" · ")}
-												</span>
-												{span.detail ? (
-													<span className="block text-text-secondary">{span.detail}</span>
-												) : null}
-											</TooltipContent>
+											<TooltipContent side="top">{tipBody(span)}</TooltipContent>
 										</Tooltip>
 									)}
 									{durInLabel ? null : (
@@ -357,17 +368,10 @@ function Waterfall({
 						<span />
 					</div>
 				) : null}
-				{touch && !onSelect ? (
-					<BottomSheet open={!!tapped} onOpenChange={(open) => !open && setTapped(null)}>
-						{last.current ? (
-							<BottomSheetContent title={last.current.label} bodyClassName="text-sm">
-								<span className="block tabular-nums">{say(last.current)}</span>
-								{last.current.detail ? (
-									<span className="mt-1 block text-text-secondary">{last.current.detail}</span>
-								) : null}
-							</BottomSheetContent>
-						) : null}
-					</BottomSheet>
+				{tappedBar && tapped ? (
+					<AnchorTip slot="waterfall-tip" anchor={tappedBar} keepOnScreen>
+						{tipBody(tapped)}
+					</AnchorTip>
 				) : null}
 			</div>
 		</TooltipProvider>

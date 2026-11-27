@@ -394,18 +394,14 @@ describe("Resizable", () => {
 			expect(grow(panels()[0])).toBeCloseTo(30);
 		});
 
-		it("stacks below the stack width of its own box, and comes back above it", () => {
+		it("keeps a narrow desktop group side by side, with its handles", () => {
 			const saved = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "clientWidth");
-			let width = STACK_WIDTH - 1;
 			Object.defineProperty(HTMLElement.prototype, "clientWidth", {
 				configurable: true,
-				get: () => width,
+				get: () => STACK_WIDTH - 1,
 			});
 			try {
 				mount(<Split />);
-				expect(group()?.dataset.stacked).toBe("");
-				width = STACK_WIDTH;
-				mount(<Split key="again" />);
 				expect(group()?.dataset.stacked).toBeUndefined();
 				expect(handle()).toBeDefined();
 				expect(grow(panels()[0])).toBeCloseTo(30);

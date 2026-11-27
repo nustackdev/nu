@@ -42,8 +42,9 @@ export const Default: StoryObj = {
 };
 
 // The failed write tapped at load in touch mode (a phone, or the Touch
-// toolbar): the sheet says what the hover tooltip would. On desktop nothing
-// opens; the narrow frame shows the capped label column and fewer ticks.
+// toolbar): a tip over its bar says what the hover tooltip would. On desktop
+// nothing opens; the narrow frame shows the capped label column and fewer
+// ticks.
 function TapFailed() {
 	const touch = useTouch();
 	const root = useRef<HTMLDivElement>(null);

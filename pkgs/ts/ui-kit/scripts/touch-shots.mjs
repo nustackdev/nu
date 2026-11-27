@@ -21,6 +21,14 @@
 // `.shots/` (`--out` to move them) with an index.html contact sheet.
 // A story that opens an overlay should open at load (`defaultOpen`) or in a
 // `play` function; the shot waits for the page to settle.
+//
+// A shot fails on the wrong touch mode, a page error, Storybook's own error
+// page (its error display, `body.sb-show-errordisplay`, or no preview), or a
+// story that drew nothing (an empty root and nothing portalled to the body).
+// The error page is mostly vite's first load: it optimises a dependency,
+// reloads, and the story's module fetch fails meanwhile ("Failed to fetch
+// dynamically imported module"). So a broken load is retried once, after a
+// short wait, before it counts.
 
 import { spawn } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -76,6 +84,32 @@ async function waitFor(url, ms) {
 	throw new Error(`storybook did not come up at ${url}`);
 }
 
+// What the loaded story page shows: Storybook's error page (its message), an
+// empty story, or neither. Read in the page.
+function readStory() {
+	const body = document.body;
+	const shown = (cls) => body.classList.contains(cls);
+	if (shown("sb-show-errordisplay") || shown("sb-show-nopreview")) {
+		const message = document.querySelector("#error-message")?.textContent?.trim();
+		return { error: message || (shown("sb-show-nopreview") ? "no preview" : "storybook error page") };
+	}
+	const text = body.innerText || "";
+	const m = text.match(/Failed to fetch dynamically imported module[^\n]*/);
+	if (m) return { error: m[0] };
+	const root = document.querySelector("#storybook-root");
+	const docs = document.querySelector("#storybook-docs");
+	const drawn = (el) => !!el && (el.children.length > 0 || (el.textContent || "").trim() !== "");
+	// Storybook's own body children; anything else is a story's portal.
+	const own = (el) =>
+		el.id === "storybook-root" ||
+		el.id === "storybook-docs" ||
+		el.classList.contains("sb-wrapper") ||
+		["SCRIPT", "STYLE", "LINK", "TEMPLATE", "NOSCRIPT"].includes(el.tagName);
+	const portalled = [...body.children].some((el) => !own(el) && drawn(el));
+	if (!drawn(root) && !drawn(docs) && !portalled) return { error: "story root is empty" };
+	return { error: null };
+}
+
 async function bootStorybook() {
 	const port = await freePort();
 	const proc = spawn("npx", ["storybook", "dev", "--ci", "--no-open", "--quiet", "-p", String(port)], {
@@ -112,13 +146,33 @@ try {
 			});
 			const page = await ctx.newPage();
 			for (const story of stories) {
-				const errors = [];
+				let errors = [];
 				page.removeAllListeners("pageerror");
 				page.on("pageerror", (e) => errors.push(e.message));
 				const q = `id=${story.id}&viewMode=story${mode.globals ? `&globals=${mode.globals}` : ""}`;
-				await page.goto(`${sb.url}/iframe.html?${q}`, { waitUntil: "networkidle" });
-				await page.waitForSelector("#storybook-root > *, #storybook-docs > *", { timeout: 15_000 }).catch(() => {});
-				await page.waitForTimeout(Number(args.settle));
+				const load = async () => {
+					errors = [];
+					await page.goto(`${sb.url}/iframe.html?${q}`, { waitUntil: "networkidle" });
+					// The story drawn, or Storybook's error page up, whichever first.
+					await page
+						.waitForFunction(
+							() =>
+								document.querySelector("#storybook-root > *, #storybook-docs > *") ||
+								document.body.classList.contains("sb-show-errordisplay"),
+							null,
+							{ timeout: 15_000 },
+						)
+						.catch(() => {});
+					await page.waitForTimeout(Number(args.settle));
+					return page.evaluate(readStory);
+				};
+				let { error: broken } = await load();
+				if (broken) {
+					console.log(`retry ${story.id} ${mode.name} ${engine} (${broken})`);
+					await page.waitForTimeout(3000);
+					({ error: broken } = await load());
+				}
+				if (broken) errors.unshift(`storybook: ${broken}`);
 				const touchOn = await page.evaluate(() => document.documentElement.hasAttribute("data-nu-touch"));
 				const file = `${story.id}--${mode.name}-${engine}.png`;
 				await page.screenshot({ path: path.join(args.out, file), fullPage: false });

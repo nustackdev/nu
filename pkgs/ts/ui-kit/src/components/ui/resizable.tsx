@@ -74,13 +74,14 @@
 //
 // ## Stacked
 //
-// A side by side group stacks: in touch mode, where a drag on a thin handle
-// is no way to arrange anything, and when the group's own box is narrower
-// than the kit's STACK_WIDTH (560, `lib/stack.ts`), where the panels cannot
-// share the width. Stacked, the panels run down one column in source order,
-// each as tall as its content and at least half the group, the handles are
-// gone and the group scrolls. The sizes are kept, untouched, for when the
-// group is wide again. A panel folded to nothing stays out of the stack.
+// A side by side group stacks in touch mode, at any width, where a drag on a
+// thin handle is no way to arrange anything. Stacked, the panels run down one
+// column in source order, each as tall as its content and at least half the
+// group, the handles are gone and the group scrolls. The sizes are kept,
+// untouched, for when the group leaves touch mode. A panel folded to nothing
+// stays out of the stack. Width alone never stacks it: a narrow desktop
+// column keeps its panels side by side, with their handles, since a pointer
+// can still drag them.
 // A group that is already a column (vertical) keeps its shares in touch mode
 // and only loses its handles: there is nothing to stack.
 
@@ -101,7 +102,6 @@ import {
 } from "react";
 import { useKeyScope } from "../../lib/keyboard";
 import { readStored, splitHandleClasses, trackDrag, writeStored } from "../../lib/resize";
-import { STACK_WIDTH } from "../../lib/stack";
 import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 
@@ -167,7 +167,7 @@ type Layout = { ids: string[]; sizes: number[]; span: number };
 
 type Group = {
 	orientation: ResizableOrientation;
-	/** Panels down one column, no handles: touch, or a narrow side by side group. */
+	/** Panels down one column, no handles: a side by side group in touch mode. */
 	stacked: boolean;
 	/** No handles: touch mode, or stacked. */
 	fixed: boolean;
@@ -324,17 +324,7 @@ export function ResizablePanelGroup({
 	const scroll = overflow === "scroll";
 	const touch = useTouch();
 	const horizontal = orientation === "horizontal";
-	// Narrow is read off the group's own box, by the same observer that
-	// keeps its length below, so one resize answers both.
-	const canNarrow = horizontal && !touch;
-	const [narrow, setNarrow] = useState(false);
-	const readNarrow = useCallback(() => {
-		const width = rootRef.current?.clientWidth ?? 0;
-		// Not laid out yet (a hidden tab) reads 0: no answer.
-		if (canNarrow && width > 0) setNarrow(width < STACK_WIDTH);
-	}, [canNarrow]);
-	useLayoutEffect(readNarrow, [readNarrow]);
-	const stacked = horizontal && (touch || (canNarrow && narrow));
+	const stacked = horizontal && touch;
 
 	// The panels' props, read straight off the children so the group knows
 	// every bound and default before anything renders.
@@ -388,13 +378,10 @@ export function ResizablePanelGroup({
 	useEffect(() => {
 		const root = rootRef.current;
 		if (!root || typeof ResizeObserver === "undefined") return;
-		const observer = new ResizeObserver(() => {
-			readNarrow();
-			setSpan(measure());
-		});
+		const observer = new ResizeObserver(() => setSpan(measure()));
 		observer.observe(root);
 		return () => observer.disconnect();
-	}, [measure, readNarrow]);
+	}, [measure]);
 	// Once before the first paint as well, so a px default never flashes, and
 	// again when the group unstacks: measured stacked, the panels read full
 	// width each.

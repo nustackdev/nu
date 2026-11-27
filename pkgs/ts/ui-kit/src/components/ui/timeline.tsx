@@ -32,8 +32,10 @@
 //
 // Phones and narrow columns (language/mobile.md). In touch mode there is no
 // hover: a tap on a track picks the bar under the finger (or the nearest one
-// within half a tap's width, since a short bar is 3px) and opens a bottom
-// sheet with what the tooltip says. Below 560px of its own width (a
+// within half a tap's width, since a short bar is 3px) and shows what the
+// tooltip says in place, over the bar (`AnchorTip`, as the calendar heatmap
+// does). A tap on another bar moves it; a tap on the same bar, off the bars,
+// or a scroll hides it. Below 560px of its own width (a
 // container query) a lane stacks: label and count on one line, the track the
 // full width under them, so the bars keep the room a phone has.
 //
@@ -47,7 +49,7 @@ import * as React from "react";
 import { formatCount, formatFullCount } from "../../lib/count";
 import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
-import { BottomSheet, BottomSheetContent } from "./bottom-sheet";
+import { AnchorTip, useTapAway } from "./anchor-tip";
 import { Icon } from "./icon";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip";
 
@@ -357,9 +359,10 @@ function Track({
 	names: Partial<Record<TimelineTone, string>>;
 	hovered: number | null;
 	onHover: (index: number | null) => void;
-	/** Touch mode: a tap picked this bar. Set, the track has no hover tooltip. */
-	onTap?: (index: number) => void;
+	/** Touch mode: a tap picked this bar, or none (null). Set, the track has no hover tooltip. */
+	onTap?: (index: number | null) => void;
 }) {
+	const trackRef = React.useRef<HTMLDivElement>(null);
 	const [top0, height, step] = ROW_GEOMETRY[layout.rows] ?? ROW_GEOMETRY[MAX_ROWS];
 	const place = (m: TimelineMark): React.CSSProperties => ({
 		left: `${m.left}%`,
@@ -386,11 +389,16 @@ function Track({
 				best = i;
 			}
 		});
-		if (best >= 0) onTap(best);
+		onTap(best >= 0 ? best : null);
 	};
+	// Touch mode: the tapped bar's tip, in place over it.
+	const tapped =
+		onTap && hovered !== null ? trackRef.current?.querySelector(`[data-index="${hovered}"]`) : null;
+	const tappedMark = tapped && hovered !== null ? layout.marks[hovered] : null;
 	return (
 		// biome-ignore lint/a11y/useKeyWithClickEvents: the tap is touch only, a pointer-only pick like the desktop hover it replaces.
 		<div
+			ref={trackRef}
 			data-slot="timeline-track"
 			role="img"
 			aria-label={label}
@@ -435,43 +443,12 @@ function Track({
 					</TooltipContent>
 				</Tooltip>
 			)}
-		</div>
-	);
-}
-
-/** Touch mode: the tapped bar, said in a sheet titled by its lane. */
-function TappedSheet({
-	tapped,
-	lanes,
-	laid,
-	span,
-	names,
-	onClose,
-}: {
-	tapped: Hover;
-	lanes: TimelineLane[];
-	laid: TimelineLayout[];
-	span: number;
-	names: Partial<Record<TimelineTone, string>>;
-	onClose: () => void;
-}) {
-	// Kept through the closing slide, after `tapped` is cleared.
-	const last = React.useRef<{ lane: TimelineLane; mark: TimelineMark } | null>(null);
-	const mark = tapped ? laid[tapped.lane]?.marks[tapped.index] : undefined;
-	if (tapped && mark) last.current = { lane: lanes[tapped.lane], mark };
-	const shown = last.current;
-	return (
-		<BottomSheet open={!!mark} onOpenChange={(open) => !open && onClose()}>
-			{shown && (
-				<BottomSheetContent
-					title={shown.lane.title}
-					label={typeof shown.lane.title === "string" ? shown.lane.title : "Item"}
-					bodyClassName="text-sm"
-				>
-					<ItemTip mark={shown.mark} span={span} name={names[shown.mark.tone]} />
-				</BottomSheetContent>
+			{tappedMark && (
+				<AnchorTip slot="timeline-tip" anchor={tapped} keepOnScreen>
+					<ItemTip mark={tappedMark} span={span} name={names[tappedMark.tone]} />
+				</AnchorTip>
 			)}
-		</BottomSheet>
+		</div>
 	);
 }
 
@@ -560,8 +537,17 @@ export function Timeline({
 }: TimelineProps) {
 	const touch = useTouch();
 	const [hover, setHover] = React.useState<Hover>(null);
-	// Touch mode: the bar a tap picked, shown in a sheet.
+	// Touch mode: the bar a tap picked, its tip shown over it.
 	const [tapped, setTapped] = React.useState<Hover>(null);
+	const rootRef = React.useRef<HTMLDivElement>(null);
+	// A tap off the tracks hides the tip; one on a track picks (or misses) itself.
+	useTapAway(
+		touch && tapped !== null,
+		(target) =>
+			!!rootRef.current?.contains(target) &&
+			!!(target as Element).closest?.("[data-slot=timeline-track]"),
+		() => setTapped(null),
+	);
 	const shown = React.useMemo(
 		() => (maxLanes > 0 ? lanes.slice(0, maxLanes) : lanes),
 		[lanes, maxLanes],
@@ -580,6 +566,7 @@ export function Timeline({
 	return (
 		<TooltipProvider delayDuration={0}>
 			<div
+				ref={rootRef}
 				data-slot="timeline"
 				className={cn("@container/timeline flex flex-col", className)}
 				{...props}
@@ -615,7 +602,16 @@ export function Timeline({
 											: null
 								}
 								onHover={(index) => setHover(index === null ? null : { lane: i, index })}
-								onTap={touch ? (index) => setTapped({ lane: i, index }) : undefined}
+								onTap={
+									touch
+										? (index) =>
+												setTapped((prev) =>
+													index === null || (prev?.lane === i && prev.index === index)
+														? null
+														: { lane: i, index },
+												)
+										: undefined
+								}
 							/>
 							<span
 								data-slot="timeline-count"
@@ -658,16 +654,6 @@ export function Timeline({
 					<p data-slot="timeline-note" className="mt-2 text-xs text-text-muted">
 						{note}
 					</p>
-				)}
-				{touch && (
-					<TappedSheet
-						tapped={tapped}
-						lanes={shown}
-						laid={laid}
-						span={span}
-						names={names}
-						onClose={() => setTapped(null)}
-					/>
 				)}
 			</div>
 		</TooltipProvider>

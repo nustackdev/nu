@@ -3,8 +3,9 @@
 // Layout follows a component's own width, never the screen's (see
 // language/mobile.md "layout"). Fluid layouts (equal grids, wrapping rows)
 // reflow on their own and need no number. Placed ones (a "2fr 1fr" board, a
-// split of fill children side by side, a resizable group) cannot squeeze
-// forever, so below this width they stack into one column, in source order.
+// split of fill children side by side) cannot squeeze forever, so below this
+// width they stack into one column, in source order. A resizable group is not
+// one of them: its handles let a pointer make room, so only touch stacks it.
 // One width for the whole kit, so a board and a split in the same narrow
 // column give up at the same moment.
 //
