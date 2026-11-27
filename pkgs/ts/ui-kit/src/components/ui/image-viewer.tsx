@@ -301,7 +301,10 @@ function ImageViewer({
 					setDragging(true);
 				}
 			}
-			if (e.type === "pointerup" && fingers.current.size === 0 && !pinched.current) {
+			// The double tap is touch mode's: elsewhere (a touch screen laptop)
+			// the browser's own dblclick already toggles, and both would undo it.
+			const lifted = e.type === "pointerup" && fingers.current.size === 0;
+			if (touch && lifted && !pinched.current) {
 				const moved = Math.hypot(e.clientX - finger.x0, e.clientY - finger.y0);
 				if (moved <= TAP_SLOP_PX) tapped(e);
 			}
