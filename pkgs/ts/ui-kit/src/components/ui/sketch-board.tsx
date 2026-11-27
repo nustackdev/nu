@@ -67,6 +67,13 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tool
 //
 // Keys, with the board focused: P pen, R rect, O ellipse, L line, A arrow,
 // mod+Z undo, mod+shift+Z or mod+Y redo, Esc drops the element in flight.
+//
+// A finger draws, it never scrolls or zooms the page: the surface takes no
+// touch gestures (`touch-none`), and a native touchmove guard backs that up
+// for a WebKit that starts an overscroll bounce anyway. A long press does not
+// call up the callout. In touch mode (../../lib/touch.ts) the toolbar keeps
+// its size, each button gets a 44px tap area, and the color and size pickers
+// open as sheets, the way every kit popover does.
 
 export interface SketchBoardProps
 	extends Omit<React.HTMLAttributes<HTMLDivElement>, "onChange" | "defaultValue"> {
@@ -278,7 +285,7 @@ function ColorPicker({
 							aria-label={c}
 							title={c}
 							className={cn(
-								"flex size-7 items-center justify-center rounded-md cursor-default",
+								"nu-tap flex size-7 items-center justify-center rounded-md cursor-default",
 								"transition-colors duration-fast ease-out hover:bg-bg-hover active:bg-bg-press",
 								"aria-pressed:bg-bg-press",
 								"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
@@ -337,7 +344,7 @@ function SizePicker({
 							aria-pressed={Math.abs(s - value) < 1e-9}
 							aria-label={`Size ${s}`}
 							className={cn(
-								"flex size-8 items-center justify-center rounded-md cursor-default text-text-primary",
+								"nu-tap flex size-8 items-center justify-center rounded-md cursor-default text-text-primary",
 								"transition-colors duration-fast ease-out hover:bg-bg-hover active:bg-bg-press",
 								"aria-pressed:bg-bg-press",
 								"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
@@ -380,7 +387,7 @@ function ToolButton({
 				aria-label={meta.label}
 				aria-pressed={active}
 				data-state={active ? "on" : "off"}
-				className={toggleVariants({ size })}
+				className={cn(toggleVariants({ size }), "nu-tap")}
 				onClick={() => onPick(tool)}
 			>
 				<Icon aria-hidden />
@@ -412,7 +419,7 @@ function ShapeMenu({
 						type="button"
 						aria-label="Shapes"
 						data-state={active ? "on" : "off"}
-						className={cn(toggleVariants({ size }), "gap-0.5 px-1")}
+						className={cn(toggleVariants({ size }), "nu-tap gap-0.5 px-1")}
 					>
 						<Icon aria-hidden />
 						<ChevronDown aria-hidden className="size-3! opacity-60" />
@@ -702,6 +709,19 @@ export function SketchBoard({
 		}
 	};
 
+	// touch-none on the surface already keeps the page still; this is for a
+	// WebKit that still pans or bounces the page under a drawing finger. Not
+	// passive, so it can cancel; only while the board takes input.
+	React.useEffect(() => {
+		const surface = surfaceRef.current;
+		if (!surface || readonly) return;
+		const hold = (e: TouchEvent) => {
+			if (e.cancelable) e.preventDefault();
+		};
+		surface.addEventListener("touchmove", hold, { passive: false });
+		return () => surface.removeEventListener("touchmove", hold);
+	}, [readonly]);
+
 	const keyRef = React.useRef(handleKey);
 	keyRef.current = handleKey;
 	React.useEffect(() => {
@@ -837,7 +857,7 @@ export function SketchBoard({
 					"transition-[border-color] duration-fast ease-out",
 					readonly
 						? "cursor-default"
-						: "touch-none select-none cursor-crosshair hover:border-border-strong group-data-[drawing]/sketch:border-border-strong",
+						: "touch-none select-none [-webkit-touch-callout:none] cursor-crosshair hover:border-border-strong group-data-[drawing]/sketch:border-border-strong",
 				)}
 				onPointerDown={readonly ? undefined : onPointerDown}
 				onPointerMove={readonly ? undefined : onPointerMove}

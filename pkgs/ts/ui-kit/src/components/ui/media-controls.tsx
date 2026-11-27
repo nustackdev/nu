@@ -10,6 +10,13 @@
 // buffered run and a hover time under the pointer, and takes any track the
 // player draws (a waveform). It keeps slider semantics: role, a time in words
 // for `aria-valuetext`, arrows, page keys, home and end.
+//
+// In touch mode (../../lib/touch.ts) the pieces keep their look and size; a
+// finger gets a 44px tap area on each, the scrub thumb always shows (there is
+// no hover to bring it up), and volume is the mute button alone: a phone sets
+// the level with its own buttons, and iOS does not let a page set it at all.
+// The speed menu opens as a sheet, as every kit menu does. The players keep
+// their bar up the whole time in touch mode.
 
 import {
 	Download,
@@ -36,6 +43,7 @@ import {
 	timeAt,
 } from "../../lib/media/model";
 import type { MediaApi } from "../../lib/media/use-media";
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 import { Button } from "./button";
 import {
@@ -98,6 +106,7 @@ export function Scrubber({
 	className,
 	...props
 }: ScrubberProps) {
+	const touch = useTouch();
 	const box = React.useRef<HTMLDivElement>(null);
 	const [hover, setHover] = React.useState<number | null>(null);
 	// While dragging, the bar follows the pointer, not the element: a seek can
@@ -152,6 +161,8 @@ export function Scrubber({
 			{...props}
 			className={cn(
 				"group/scrub relative flex h-4 w-full touch-none select-none items-center rounded-sm",
+				// Touch: a 44px tall tap area; the buttons under it come later and win.
+				"nu-tap",
 				"cursor-default outline-hidden",
 				"focus-visible:ring-2 focus-visible:ring-ring",
 				!live && "pointer-events-none",
@@ -188,7 +199,7 @@ export function Scrubber({
 			{children ? (
 				children({ played, buffered: fractionOf(buffered, duration), hover: shown })
 			) : (
-				<ScrubBar played={played} buffered={fractionOf(buffered, duration)} />
+				<ScrubBar played={played} buffered={fractionOf(buffered, duration)} thumb={touch} />
 			)}
 			{shown !== null && live ? (
 				<span
@@ -208,8 +219,16 @@ export function Scrubber({
 	);
 }
 
-/** The plain scrub track: loaded run, played run, and a thumb on hover, focus or drag. */
-function ScrubBar({ played, buffered }: { played: number; buffered: number }) {
+/** The plain scrub track: loaded run, played run, and a thumb on hover, focus or drag (always, with `thumb`). */
+function ScrubBar({
+	played,
+	buffered,
+	thumb = false,
+}: {
+	played: number;
+	buffered: number;
+	thumb?: boolean;
+}) {
 	return (
 		<>
 			<span className="relative h-1 w-full overflow-hidden rounded-full bg-bg-press">
@@ -228,6 +247,7 @@ function ScrubBar({ played, buffered }: { played: number; buffered: number }) {
 					"pointer-events-none absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent",
 					"opacity-0 transition-opacity duration-fast ease-out",
 					"group-hover/scrub:opacity-100 group-focus-visible/scrub:opacity-100 group-data-[dragging]/scrub:opacity-100",
+					thumb && "opacity-100",
 				)}
 				style={{ left: `${played * 100}%` }}
 			/>
@@ -315,6 +335,7 @@ export function MediaVolume({
 	/** The panel opened or closed: a player keeps its bar up meanwhile. */
 	onOpenChange?: (open: boolean) => void;
 }) {
+	const touch = useTouch();
 	const level = media.muted ? 0 : media.volume;
 	const percent = Math.round(level * 100);
 	const Glyph = level === 0 ? VolumeX : level < 0.5 ? Volume1 : Volume2;
@@ -358,6 +379,26 @@ export function MediaVolume({
 		},
 		[],
 	);
+
+	if (touch) {
+		return (
+			<div
+				data-slot="media-volume"
+				data-state="closed"
+				className={cn("flex items-center", className)}
+			>
+				<IconButton
+					variant="ghost"
+					size="sm"
+					aria-label={label}
+					className={glyphClassName}
+					onClick={media.toggleMute}
+				>
+					<Glyph />
+				</IconButton>
+			</div>
+		);
+	}
 
 	return (
 		<Popover open={open} onOpenChange={(next) => !next && show(false)}>
