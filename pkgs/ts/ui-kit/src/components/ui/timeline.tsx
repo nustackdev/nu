@@ -389,6 +389,7 @@ function Track({
 		if (best >= 0) onTap(best);
 	};
 	return (
+		// biome-ignore lint/a11y/useKeyWithClickEvents: the tap is touch only, a pointer-only pick like the desktop hover it replaces.
 		<div
 			data-slot="timeline-track"
 			role="img"
