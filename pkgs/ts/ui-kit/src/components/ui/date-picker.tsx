@@ -104,10 +104,11 @@ const dayPickerClassNames = {
 // areas grown (`nu-tap`), one month column.
 const touchDayPickerClassNames = {
 	...dayPickerClassNames,
-	root: "py-1",
+	// Relative, so the arrows sit on the caption and not on the sheet's edge.
+	root: "relative py-1",
 	months: "flex flex-col gap-4",
 	month_caption: "flex justify-center relative items-center h-11",
-	nav: "flex items-center gap-1 absolute inset-x-0 top-1 justify-between px-2",
+	nav: "flex h-11 items-center gap-1 absolute inset-x-0 top-1 justify-between px-1",
 	button_previous: cn(dayPickerClassNames.button_previous, "nu-tap"),
 	button_next: cn(dayPickerClassNames.button_next, "nu-tap"),
 	weekday: "text-text-muted w-11 font-normal text-xs uppercase tracking-wider",

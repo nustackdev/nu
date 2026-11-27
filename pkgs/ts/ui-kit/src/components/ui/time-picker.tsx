@@ -236,8 +236,13 @@ export function DateTimePicker({
 	const firstTime = (d: Date) => (min && sameDay(d, min) ? timeOf(min) : "");
 
 	return (
-		<div data-slot="date-time-picker" className={cn("flex w-full items-center gap-2", className)}>
-			<div className="min-w-0 flex-1">
+		// A fluid row: the time drops under the date when the row cannot hold
+		// a readable date beside it, rather than squeezing the date to nothing.
+		<div
+			data-slot="date-time-picker"
+			className={cn("flex w-full flex-wrap items-center gap-2", className)}
+		>
+			<div className="min-w-32 flex-[1_1_9rem]">
 				<DatePicker
 					id={id}
 					name={name}
