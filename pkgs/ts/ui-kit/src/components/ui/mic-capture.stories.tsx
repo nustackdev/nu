@@ -265,6 +265,18 @@ export const Lost: StoryObj = {
 	),
 };
 
+/** Recording, filling its column: a phone, or a narrow desk column. */
+export const Touch: StoryObj = {
+	beforeEach: fakes(),
+	render: () => (
+		<div className="p-4">
+			<Driven steps={[{ click: "Record" }]}>
+				<Mic maxDuration={60} />
+			</Driven>
+		</div>
+	),
+};
+
 const meta: Meta = {
 	title: "UI/MicCapture",
 	parameters: sinkParameters,

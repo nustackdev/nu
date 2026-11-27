@@ -103,6 +103,15 @@ export const States: StoryObj = {
 	),
 };
 
+/** Filling its column. In touch mode volume is the mute button alone. */
+export const Touch: StoryObj = {
+	render: () => (
+		<div className="p-4">
+			<Audio src={ROAR} title="t-rex-roar.mp3" download={ROAR} />
+		</div>
+	),
+};
+
 const meta: Meta = {
 	title: "UI/Audio",
 };

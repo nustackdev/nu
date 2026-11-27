@@ -542,6 +542,15 @@ export function SketchBoard({
 	// --- pointer ---
 	const surfaceRef = React.useRef<HTMLDivElement>(null);
 	const rootRef = React.useRef<HTMLDivElement>(null);
+	// The board's drawn width: under `width` when its container is narrower.
+	const [shown, setShown] = React.useState<number | null>(null);
+	React.useLayoutEffect(() => {
+		const root = rootRef.current;
+		if (!root || typeof ResizeObserver === "undefined") return;
+		const watch = new ResizeObserver(([entry]) => setShown(Math.round(entry.contentRect.width)));
+		watch.observe(root);
+		return () => watch.disconnect();
+	}, []);
 	const draft = React.useRef<{
 		id: number;
 		origin: [number, number];
@@ -734,7 +743,9 @@ export function SketchBoard({
 
 	// --- toolbar ---
 	const has = (c: SketchControl) => controls.includes(c);
-	const btn: BtnSize = W < 420 ? "sm" : "md";
+	// The toolbar sizes from the board as drawn, not as asked: a 600px board
+	// in a 320px column gets the small buttons, so the toolbar fits on it.
+	const btn: BtnSize = (shown ?? W) < 420 ? "sm" : "md";
 	const showTools = has("tools") && tools.length > 1;
 	const groupA = [
 		showTools && tools.includes("pen") && (

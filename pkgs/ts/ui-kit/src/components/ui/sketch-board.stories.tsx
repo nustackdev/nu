@@ -335,6 +335,22 @@ export const DarkAndLight: StoryObj = {
 	),
 };
 
+/**
+ * A 600px board in whatever column it gets, the stroke colors open. The
+ * toolbar sizes itself from the board as drawn. In touch mode a finger draws
+ * without moving the page and the pickers open as sheets.
+ */
+export const Touch: StoryObj = {
+	render: () => (
+		<div className="p-4">
+			<Board width={600} height={400} initial={DIAGRAM} />
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		canvasElement.querySelector<HTMLElement>('[data-sketch-control="Stroke color"]')?.click();
+	},
+};
+
 const meta: Meta = {
 	title: "UI/SketchBoard",
 };
