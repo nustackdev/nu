@@ -23,7 +23,8 @@ from botocore.exceptions import ClientError
 
 from nustd.blob import BlobExists, BlobNotFound, BlobTooLarge, S3Backend
 from nustd.blob._base import new_id
-from nustd.blob.backends.s3 import DEFAULT_PART_SIZE, MAX_PARTS, MIN_PART_SIZE
+from nustd.blob.backends import s3 as s3_module
+from nustd.blob.backends.s3 import MAX_OBJECT, MAX_PART_SIZE, MIN_PART_SIZE
 
 
 PART = MIN_PART_SIZE
@@ -222,10 +223,38 @@ def test_too_large_known_size_sends_nothing(s3, tmp_path, monkeypatch, source):
     assert calls == []
 
 
-def test_max_size_follows_part_size():
-    assert S3Backend("b", part_size=PART).max_size == PART * MAX_PARTS
-    assert S3Backend("b").max_size == DEFAULT_PART_SIZE * MAX_PARTS
-    assert S3Backend("b", part_size=5 << 30).max_size == 5 << 40  # S3's 5 TiB cap
+def test_max_size_is_s3s_own_cap():
+    # Growing parts pass 5 TiB from 6 MiB up; at 5 MiB they top out just short.
+    assert S3Backend("b").max_size == MAX_OBJECT
+    assert S3Backend("b", part_size=6 << 20).max_size == MAX_OBJECT
+    assert S3Backend("b", part_size=5 << 30).max_size == MAX_OBJECT
+    assert MAX_OBJECT * 0.97 < S3Backend("b", part_size=PART).max_size < MAX_OBJECT
+
+
+def test_growing_part_sizes():
+    backend = S3Backend("b")
+    assert backend._growing(1) == backend._growing(1000) == 8 << 20
+    assert backend._growing(1001) == backend._growing(2000) == 16 << 20
+    assert backend._growing(9001) == 4 << 30
+    assert S3Backend("b", part_size=1 << 30)._growing(10_000) == MAX_PART_SIZE
+
+
+def test_known_size_part_pick():
+    backend = S3Backend("b")
+    assert backend._known(1) == backend._known(10_000 * (8 << 20)) == 8 << 20
+    assert backend._known(10_000 * (8 << 20) + 1) == (8 << 20) + 1
+    assert backend._known(MAX_OBJECT) == -(-MAX_OBJECT // 10_000)
+
+
+def test_growing_parts_go_up_and_read_back(s3, monkeypatch):
+    # Every part doubles: 5, 10, 20 MiB and a short last one, as S3 allows.
+    monkeypatch.setattr(s3_module, "GROW_EVERY", 1)
+    data = pattern(35 << 20 | 4321)
+    info = s3.put(pieces(data))
+    assert parts_of(s3, info.id) == 4
+    assert s3.read(info.id) == data
+    assert s3.read(info.id, (15 << 20) - 5, (15 << 20) + 5) == data[(15 << 20) - 5 : (15 << 20) + 5]
+    assert pending(s3) == []
 
 
 @pytest.mark.parametrize("size", [PART - 1, (5 << 30) + 1])
@@ -351,6 +380,7 @@ def test_prefix_keeps_stores_apart(moto_s3):
 
 
 def test_stream_is_one_ranged_get_per_piece(s3, monkeypatch):
+    s3.read_window = 1
     info = s3.put(DATA[:10_000])
     ranges = []
     call = s3._client.get_object
@@ -365,14 +395,95 @@ def test_stream_is_one_ranged_get_per_piece(s3, monkeypatch):
     assert ranges == ["bytes=100-1099", "bytes=1100-2099", "bytes=2100-3099"]
 
 
-def test_stream_of_a_blob_replaced_mid_way_raises(s3):
-    info = s3.put(DATA[:3000])
+@pytest.mark.parametrize("window", [1, 2, 4])
+def test_stream_of_a_blob_replaced_mid_way_raises(s3, window):
+    s3.read_window = window
+    info = s3.put(DATA[:20_000])
     pieces = s3.stream(info.id, step=1000)
     assert next(pieces) == DATA[:1000]
     s3.delete(info.id)
-    s3.put(b"y" * 3000, blob_id=info.id)
+    s3.put(b"y" * 20_000, blob_id=info.id)
+    # The pieces read ahead of the change come out; the next GET is refused.
     with pytest.raises(BlobNotFound):
+        for _ in range(window):
+            assert next(pieces) != b"y" * 1000
+
+
+def recorded_gets(s3, monkeypatch, delay=0.0):
+    """The ranges the stream asks for, from whichever thread asks."""
+    ranges = []
+    lock = threading.Lock()
+    call = s3._client.get_object
+
+    def get(**kw):
+        with lock:
+            ranges.append(kw.get("Range"))
+        time.sleep(delay)
+        return call(**kw)
+
+    monkeypatch.setattr(s3._client, "get_object", get)
+    return ranges
+
+
+@pytest.mark.parametrize("window", [2, 4, 16])
+@pytest.mark.parametrize("step", [1000, 4096, 7777])
+def test_stream_reads_ahead_in_order(s3, monkeypatch, window, step):
+    s3.read_window = window
+    data = DATA[:50_000]
+    info = s3.put(data)
+    ranges = recorded_gets(s3, monkeypatch, delay=0.001)
+    pieces = list(s3.stream(info.id, 123, 49_000, step=step))
+    assert b"".join(pieces) == data[123:49_000]
+    assert all(len(piece) == step for piece in pieces[:-1])
+    assert len(ranges) == len(pieces)
+    starts = sorted(int(r.split("=")[1].split("-")[0]) for r in ranges)
+    assert starts == list(range(123, 49_000, step))
+
+
+def test_stream_keeps_at_most_a_window_ahead(s3, monkeypatch):
+    s3.read_window = 3
+    info = s3.put(DATA[:20_000])
+    ranges = recorded_gets(s3, monkeypatch)
+    pieces = s3.stream(info.id, step=1000)
+    assert ranges == []  # nothing before the first pull
+    for pulled in range(1, 6):
         next(pieces)
+        time.sleep(0.05)
+        assert len(ranges) <= pulled + 2  # the one pulled, and the window ahead of it
+
+
+def test_closed_stream_sends_no_more_gets(s3, monkeypatch):
+    s3.read_window = 4
+    info = s3.put(DATA[:50_000])
+    ranges = recorded_gets(s3, monkeypatch, delay=0.02)
+    pieces = s3.stream(info.id, step=1000)
+    next(pieces)
+    pieces.close()
+    time.sleep(0.2)  # past any GET still in flight
+    sent = len(ranges)
+    assert sent <= 5
+    time.sleep(0.1)
+    assert len(ranges) == sent
+
+
+async def test_cancelled_astream_sends_no_more_gets(s3, monkeypatch):
+    s3.read_window = 4
+    info = s3.put(DATA[:50_000])
+    ranges = recorded_gets(s3, monkeypatch, delay=0.02)
+    pieces = s3.astream(info.id, step=1000)
+    assert await pieces.__anext__() == DATA[:1000]
+    await pieces.aclose()
+    await asyncio.sleep(0.2)
+    sent = len(ranges)
+    assert sent <= 5
+    await asyncio.sleep(0.1)
+    assert len(ranges) == sent
+
+
+@pytest.mark.parametrize("window", [0, -1])
+def test_read_window_bounds(window):
+    with pytest.raises(ValueError, match="read_window"):
+        S3Backend("b", read_window=window)
 
 
 def test_read_past_the_end_of_an_empty_blob(s3):
@@ -464,6 +575,29 @@ def check_sent(received):
     assert sum(parts) == BIG
     assert parts[:-1] == [PART] * (len(parts) - 1)
     assert received[-1][0] == "CompleteMultipartUpload"
+
+
+def test_streamed_parts_grow_on_schedule(sink, monkeypatch):
+    monkeypatch.setattr(s3_module, "GROW_EVERY", 2)
+    backend, received = sink
+    info = backend.put(big_pieces())
+    assert info.size == BIG
+    parts = [size for operation, size in received if operation == "UploadPart"]
+    assert parts == [PART, PART, 2 * PART, 2 * PART, 4 * PART, BIG - 10 * PART]
+
+
+@pytest.mark.parametrize("source", ["bytes", "path"])
+def test_known_size_picks_one_part_size(sink, monkeypatch, tmp_path, source):
+    # 4 parts allowed: a 64 MiB blob goes up as four of 16 MiB, not thirteen of 5.
+    monkeypatch.setattr(s3_module, "MAX_PARTS", 4)
+    backend, received = sink
+    data = b"".join(big_pieces())
+    if source == "path":
+        (tmp_path / "src").write_bytes(data)
+        data = tmp_path / "src"
+    backend.put(data)
+    parts = [size for operation, size in received if operation == "UploadPart"]
+    assert parts == [BIG // 4] * 4
 
 
 def test_iterable_put_peak_is_one_part(sink):

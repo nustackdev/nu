@@ -15,7 +15,7 @@ from .backends.lmdb import (
     DEFAULT_MAX_READERS,
     DEFAULT_WRITEMAP,
 )
-from .backends.s3 import DEFAULT_PART_SIZE
+from .backends.s3 import DEFAULT_PART_SIZE, DEFAULT_READ_WINDOW
 from .fabric import BlobFabric
 from .store import store_name
 
@@ -105,6 +105,7 @@ def s3(
     aws_secret_access_key: str | None = None,
     aws_session_token: str | None = None,
     part_size: int = DEFAULT_PART_SIZE,
+    read_window: int = DEFAULT_READ_WINDOW,
 ) -> Provide:
     """Give a store a bucket of any S3-compatible service, one object per blob.
 
@@ -121,8 +122,10 @@ def s3(
             boto3 find credentials in each process (env, profile, role).
         aws_secret_access_key: as ``aws_access_key_id``.
         aws_session_token: as ``aws_access_key_id``, for temporary keys.
-        part_size: bytes per multipart part, at least 5 MiB. A put holds one
-            part in memory, and a blob holds at most 10,000 parts.
+        part_size: bytes of a multipart put's first part, at least 5 MiB. A
+            put holds one part in memory; a stream of unknown size doubles
+            its parts every 1,000, so a blob reaches S3's 5 TiB.
+        read_window: ranged GETs a stream keeps in flight.
 
     Example:
         nu.With(nustd.blob.s3(Media, bucket="media", prefix="space/"), body=Media.put(b"..."))
@@ -137,6 +140,7 @@ def s3(
         "aws_secret_access_key": aws_secret_access_key,
         "aws_session_token": aws_session_token,
         "part_size": part_size,
+        "read_window": read_window,
     }
     return Provide(
         BlobFabric, kwargs={"backend": S3Backend, "options": options}, tag=store_name(store)

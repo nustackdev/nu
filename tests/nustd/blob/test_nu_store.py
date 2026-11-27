@@ -229,9 +229,12 @@ def test_files_preset_carries_its_root(tmp_path):
 
 
 def test_s3_preset_carries_its_options():
-    spec = nustd.blob.s3(Media, bucket="media", prefix="space/", endpoint_url="http://s3.test")
+    spec = nustd.blob.s3(
+        Media, bucket="media", prefix="space/", endpoint_url="http://s3.test", read_window=2
+    )
     kwargs = config(spec)["kwargs"]
     assert kwargs["backend"] is S3Backend
     assert kwargs["options"]["bucket"] == "media"
     assert kwargs["options"]["prefix"] == "space/"
     assert kwargs["options"]["endpoint_url"] == "http://s3.test"
+    assert kwargs["options"]["read_window"] == 2

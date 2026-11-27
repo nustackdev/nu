@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- Grow s3 blobs to five TiB and stream them with parallel ranged reads
 - Store lmdb blobs in chunks, so a blob grows as big as its map
 - Editors autosave changes on a pause; only the send key ever submits
 
