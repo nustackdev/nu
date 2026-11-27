@@ -175,7 +175,7 @@ function BottomSheetDescription({
 // sheet being a kit-owned surface sized for the thumb for real.
 const bottomSheetItemVariants = cva(
 	[
-		"flex w-full min-h-11 items-center gap-3 px-1 text-left text-base",
+		"flex w-full min-h-tap items-center gap-3 px-1 text-left text-base",
 		"border-b border-border-subtle last:border-b-0",
 		"cursor-default outline-hidden",
 		"active:bg-bg-press focus-visible:bg-bg-hover",

@@ -303,7 +303,7 @@ export function Toast({
 					<ToastPrimitive.Action asChild altText={action.label}>
 						<Button
 							variant="ghost"
-							size="xs"
+							size={touch ? "sm" : "xs"}
 							className="font-semibold text-accent-text hover:text-accent-text"
 							onClick={action.onClick}
 						>
@@ -312,7 +312,7 @@ export function Toast({
 					</ToastPrimitive.Action>
 				) : null}
 				<ToastPrimitive.Close asChild>
-					<IconButton aria-label="Dismiss" variant="ghost" size="xs">
+					<IconButton aria-label="Dismiss" variant="ghost" size={touch ? "sm" : "xs"}>
 						<X />
 					</IconButton>
 				</ToastPrimitive.Close>

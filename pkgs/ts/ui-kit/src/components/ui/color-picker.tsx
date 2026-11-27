@@ -329,13 +329,16 @@ function ColorPicker({
 				<div className="flex items-center gap-2">
 					<span
 						aria-hidden
-						className="size-6 shrink-0 rounded-sm border border-border-default"
+						className={cn(
+							"shrink-0 rounded-sm border border-border-default",
+							touch ? "size-8" : "size-6",
+						)}
 						style={{ backgroundColor: value }}
 					/>
 					<Input
 						data-slot="color-picker-hex"
 						aria-label="Hex color"
-						size="sm"
+						size={touch ? "md" : "sm"}
 						className="font-mono"
 						spellCheck={false}
 						autoComplete="off"

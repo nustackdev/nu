@@ -3,6 +3,7 @@ import { Minus, Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type * as React from "react";
 
+import { field } from "../../lib/recipes";
 import { cn } from "../../lib/utils";
 
 // Matching Input sm/md/lg row heights per space-radius.md §Density Input.
@@ -20,9 +21,9 @@ const numberInputVariants = cva(
 	{
 		variants: {
 			size: {
-				sm: "h-6 px-2 text-sm",
-				md: "h-8 px-2.5 text-base",
-				lg: "h-10 px-3 text-lg",
+				sm: `${field.height.sm} px-2 text-sm`,
+				md: `${field.height.md} px-2.5 text-base`,
+				lg: `${field.height.lg} px-3 text-lg`,
 			},
 			variant: {
 				default: "",

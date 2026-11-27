@@ -541,8 +541,8 @@ body {
 		position: absolute;
 		top: 50%;
 		left: 50%;
-		width: max(100%, 44px);
-		height: max(100%, 44px);
+		width: max(100%, var(--spacing-tap, 44px));
+		height: max(100%, var(--spacing-tap, 44px));
 		transform: translate(-50%, -50%);
 	}
 }

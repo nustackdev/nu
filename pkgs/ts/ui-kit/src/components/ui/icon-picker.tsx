@@ -306,7 +306,7 @@ function IconPicker({
 													"hover:bg-bg-hover hover:text-text-primary active:bg-bg-press",
 													"focus-visible:bg-bg-press focus-visible:text-text-primary focus-visible:outline-hidden",
 													"focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
-													touch ? "h-11 w-full" : "size-8",
+													touch ? "h-tap w-full" : "size-8",
 													on && "bg-bg-press text-text-primary",
 												)}
 												onFocus={() => setActive(i)}
@@ -332,7 +332,7 @@ function IconPicker({
 					{offered.length > 1 ? (
 						<TabsList variant="line" className="border-b-0">
 							{offered.map((k) => (
-								<TabsTrigger key={k} value={k} size="sm">
+								<TabsTrigger key={k} value={k} size={touch ? "md" : "sm"}>
 									{TAB_LABEL[k]}
 								</TabsTrigger>
 							))}
@@ -341,14 +341,15 @@ function IconPicker({
 						<span />
 					)}
 					{onRemove && current ? (
-						<Button variant="ghost" size="sm" onClick={onRemove}>
+						<Button variant="ghost" size={touch ? "md" : "sm"} onClick={onRemove}>
 							{removeLabel}
 						</Button>
 					) : null}
 				</div>
 				<div className={cn("pt-2 pb-1", pad)}>
 					<Input
-						size="sm"
+						// Touch: the sheet is the kit's own, so its search is a thumb's size.
+						size={touch ? "lg" : "sm"}
 						type="search"
 						aria-label={SEARCH_LABEL[tab]}
 						placeholder={SEARCH_LABEL[tab]}

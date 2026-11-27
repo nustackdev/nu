@@ -4,6 +4,7 @@ import { Select as SelectPrimitive } from "radix-ui";
 import * as React from "react";
 
 import { useTouch } from "../../lib/touch";
+import { field } from "../../lib/recipes";
 import { cn } from "../../lib/utils";
 import {
 	BottomSheet,
@@ -47,9 +48,9 @@ const selectTriggerVariants = cva(
 				filled: "bg-bg-hover text-text-primary border-transparent hover:bg-bg-press",
 			},
 			size: {
-				sm: "h-6 px-2 text-sm [&>svg]:size-3.5",
-				md: "h-8 px-2.5 text-lg [&>svg]:size-4",
-				lg: "h-10 px-3 text-lg [&>svg]:size-4",
+				sm: `${field.height.sm} px-2 text-sm [&>svg]:size-3.5`,
+				md: `${field.height.md} px-2.5 text-lg [&>svg]:size-4`,
+				lg: `${field.height.lg} px-3 text-lg [&>svg]:size-4`,
 			},
 			invalid: {
 				true: "border-status-danger focus-visible:ring-status-danger",

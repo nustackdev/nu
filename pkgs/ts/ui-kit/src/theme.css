@@ -176,6 +176,9 @@
 
 	/* spacing base; Tailwind v4 generates p-*, m-*, gap-*, w-*, h-* off this */
 	--spacing: 0.25rem;
+	/* A thumb's tap, 44px: what touch sizes a kit-owned surface's rows and
+	 * cells to (h-tap, size-tap), and the unseen area `nu-tap` grows to. */
+	--spacing-tap: 2.75rem;
 
 	/* radius scale */
 	--radius-none: 0;

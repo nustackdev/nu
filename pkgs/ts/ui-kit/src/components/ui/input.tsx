@@ -1,5 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import type * as React from "react";
+import { field } from "../../lib/recipes";
 import { cn, ringVariants } from "../../lib/utils";
 
 // Text field. Sizes 24 / 32 / 40 match Button row heights so form rows sit
@@ -29,9 +30,9 @@ const inputVariants = cva(
 					"border-status-danger focus-visible:ring-status-danger focus-visible:border-status-danger",
 			},
 			size: {
-				sm: "h-6 px-2 py-1 text-sm",
-				md: "h-8 px-2.5 py-1.5 text-lg",
-				lg: "h-10 px-3 py-2 text-lg",
+				sm: `${field.height.sm} px-2 py-1 text-sm`,
+				md: `${field.height.md} px-2.5 py-1.5 text-lg`,
+				lg: `${field.height.lg} px-3 py-2 text-lg`,
 			},
 			ring: ringVariants,
 		},

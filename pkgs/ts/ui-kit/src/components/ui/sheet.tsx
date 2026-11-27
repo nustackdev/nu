@@ -157,7 +157,7 @@ function SheetContent({
 						<IconButton
 							data-slot="sheet-close-icon"
 							variant="ghost"
-							size="sm"
+							size={touch ? "md" : "sm"}
 							ring="inset"
 							aria-label="Close"
 							className={cn(

@@ -24,6 +24,7 @@ import { Search } from "lucide-react";
 import * as React from "react";
 
 import { useTouch } from "../../lib/touch";
+import { field } from "../../lib/recipes";
 import { cn } from "../../lib/utils";
 import { Button } from "./button";
 import { Shortcut } from "./shortcut";
@@ -140,7 +141,7 @@ function CommandInput({
 			data-slot="command-palette-input-wrapper"
 			className={cn(
 				"flex shrink-0 items-center gap-2 border-b border-border-subtle px-3",
-				touch ? "h-11" : "h-10",
+				touch ? "h-tap" : field.height.lg,
 			)}
 		>
 			<Search className="size-4 shrink-0 text-text-secondary" />
@@ -148,7 +149,7 @@ function CommandInput({
 				data-slot="command-palette-input"
 				className={cn(
 					"flex w-full rounded-md bg-transparent text-text-primary outline-hidden",
-					touch ? "h-11 text-base" : "h-10 text-sm",
+					touch ? "h-tap text-base" : [field.height.lg, "text-sm"],
 					"placeholder:text-text-muted",
 					"disabled:cursor-not-allowed disabled:opacity-50",
 					className,
@@ -247,7 +248,7 @@ function CommandItem({
 			data-variant={variant}
 			className={cn(
 				commandItemClasses,
-				touch && "min-h-11 text-base",
+				touch && "min-h-tap text-base",
 				variant === "danger" && [
 					"text-status-danger",
 					"data-[selected=true]:bg-status-danger-wash data-[selected=true]:text-status-danger",

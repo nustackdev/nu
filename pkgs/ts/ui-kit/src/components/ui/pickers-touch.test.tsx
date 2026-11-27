@@ -119,7 +119,7 @@ describe("Combobox", () => {
 		expect(s?.querySelector('[data-slot="combobox-input-wrap"]')?.className).toContain("sticky");
 		const rows = s?.querySelectorAll('[data-slot="combobox-item"]');
 		expect(rows?.length).toBe(2);
-		expect(rows?.[0].className).toContain("min-h-11");
+		expect(rows?.[0].className).toContain("min-h-tap");
 		// The keyboard stays down until the search is tapped.
 		expect(document.activeElement?.getAttribute("data-slot")).not.toBe("combobox-input");
 	});
@@ -170,7 +170,7 @@ describe("DatePicker", () => {
 		expect(s?.querySelector('[data-slot="date-picker-content"]')).not.toBeNull();
 		expect(
 			s?.querySelector("button[name], td button, [role=gridcell] button")?.className,
-		).toContain("size-11");
+		).toContain("size-tap");
 	});
 
 	it("shows one month and a Done button for a range", () => {

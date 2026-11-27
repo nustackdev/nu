@@ -288,7 +288,7 @@ describe("IconPicker on touch", () => {
 			await new Promise((r) => setTimeout(r, 0));
 		});
 		const first = cell("file text");
-		expect(first?.className).toContain("h-11");
+		expect(first?.className).toContain("h-tap");
 		expect(first?.hasAttribute("title")).toBe(false);
 		expect(document.activeElement).not.toBe(search());
 		// Before the sheet is measured, seven columns a row.

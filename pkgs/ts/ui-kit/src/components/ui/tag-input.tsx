@@ -2,6 +2,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { X } from "lucide-react";
 import * as React from "react";
 
+import { field } from "../../lib/recipes";
 import { cn } from "../../lib/utils";
 
 // Multi-value input rendered as chip tokens. No Radix equivalent
@@ -28,9 +29,9 @@ const tagInputVariants = cva(
 				filled: "bg-bg-hover text-text-primary border-transparent hover:bg-bg-press",
 			},
 			size: {
-				sm: "min-h-6 px-1.5 py-0.5 text-sm",
-				md: "min-h-8 px-2 py-1 text-lg",
-				lg: "min-h-10 px-2.5 py-1.5 text-lg",
+				sm: `${field.minHeight.sm} px-1.5 py-0.5 text-sm`,
+				md: `${field.minHeight.md} px-2 py-1 text-lg`,
+				lg: `${field.minHeight.lg} px-2.5 py-1.5 text-lg`,
 			},
 			invalid: {
 				true: "border-status-danger focus-within:ring-status-danger",

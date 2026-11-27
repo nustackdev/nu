@@ -3,6 +3,7 @@ import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { Popover as PopoverPrimitive } from "radix-ui";
 import * as React from "react";
 
+import { field } from "../../lib/recipes";
 import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
 import { BottomSheet, BottomSheetContent, BottomSheetTrigger } from "./bottom-sheet";
@@ -200,7 +201,9 @@ function ComboboxInput({
 			<CommandPrimitive.Input
 				data-slot="combobox-input"
 				className={cn(
-					"flex h-8 w-full bg-transparent text-base outline-hidden",
+					"flex w-full bg-transparent text-base outline-hidden",
+					// Touch: a step up, the sheet being the kit's own surface.
+					touch ? field.height.lg : field.height.md,
 					"text-text-primary placeholder:text-text-muted",
 					"disabled:cursor-not-allowed disabled:opacity-50",
 					className,
@@ -278,7 +281,7 @@ const comboboxItemClass = [
  * only the press: the pick is the check, not a tint.
  */
 const comboboxTouchItemClass = [
-	"min-h-11 rounded-none px-1 border-b border-border-subtle last:border-b-0",
+	"min-h-tap rounded-none px-1 border-b border-border-subtle last:border-b-0",
 	"data-[selected=true]:bg-transparent data-[highlighted=true]:bg-transparent aria-selected:bg-transparent",
 	"active:bg-bg-press",
 ].join(" ");

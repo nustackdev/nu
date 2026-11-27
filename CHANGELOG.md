@@ -12,6 +12,7 @@ Below is the changelog for **nu** - the full commit stream. Newest first.
 
 ## Unreleased
 
+- One tap size token; kit sheet controls grow for the thumb on touch
 - Touch tables: tap selects, tap again edits, multi selection is its own mode
 - Tap a table cell on touch to edit it
 - Icon picker joins the kit and nustd.ui, emoji or glyph, a sheet on phones

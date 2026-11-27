@@ -100,20 +100,20 @@ const dayPickerClassNames = {
 	hidden: "invisible",
 } as const;
 
-// The calendar in a sheet: the same paint, days at 44px, the arrows' tap
-// areas grown (`nu-tap`), one month column.
+// The calendar in a sheet: the same paint, days a thumb's tap (`size-tap`),
+// the arrows a step up with their tap areas grown (`nu-tap`), one month column.
 const touchDayPickerClassNames = {
 	...dayPickerClassNames,
 	// Relative, so the arrows sit on the caption and not on the sheet's edge.
 	root: "relative py-1",
 	months: "flex flex-col gap-4",
-	month_caption: "flex justify-center relative items-center h-11",
-	nav: "flex h-11 items-center gap-1 absolute inset-x-0 top-1 justify-between px-1",
-	button_previous: cn(dayPickerClassNames.button_previous, "nu-tap"),
-	button_next: cn(dayPickerClassNames.button_next, "nu-tap"),
-	weekday: "text-text-muted w-11 font-normal text-xs uppercase tracking-wider",
-	day: "size-11 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
-	day_button: dayPickerClassNames.day_button.replace("size-8", "size-11"),
+	month_caption: "flex justify-center relative items-center h-tap",
+	nav: "flex h-tap items-center gap-1 absolute inset-x-0 top-1 justify-between px-1",
+	button_previous: cn(dayPickerClassNames.button_previous.replace("size-7", "size-8"), "nu-tap"),
+	button_next: cn(dayPickerClassNames.button_next.replace("size-7", "size-8"), "nu-tap"),
+	weekday: "text-text-muted w-tap font-normal text-xs uppercase tracking-wider",
+	day: "size-tap text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+	day_button: dayPickerClassNames.day_button.replace("size-8", "size-tap"),
 } as const;
 
 const dayPickerComponents = {

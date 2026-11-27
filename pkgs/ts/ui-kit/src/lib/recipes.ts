@@ -223,3 +223,14 @@ const codeBox =
 	"relative w-full overflow-hidden rounded-md bg-bg-sunken border border-border-subtle";
 
 export { codeBox, heading, list, type TableDensity, TONES, type Tone, table, tableHandle, tone };
+
+/**
+ * A field's height per size: 24 / 32 / 40. Every one-line field reads it
+ * (`Input`, `NumberInput`, `Select`, the search lines of the combobox and the
+ * command palette), and `TagInput` its floor, as chips wrap it taller. One
+ * scale, so a form's fields line up whatever they are.
+ */
+export const field = {
+	height: { sm: "h-6", md: "h-8", lg: "h-10" },
+	minHeight: { sm: "min-h-6", md: "min-h-8", lg: "min-h-10" },
+} as const;
