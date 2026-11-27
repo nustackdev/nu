@@ -10,13 +10,10 @@
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
 
-## Unreleased
-
-- Release ui-kit 0.5.0, nudle 0.2.0
-
 ## 0.9.2 - 2026-11-28
 
-- Release nu 0.9.2, ui-kit 0.4.9, nudle 0.1.17
+- Release ui-kit 0.5.0, nudle 0.2.0
+- Release nu 0.9.2
 - One tap size token; kit sheet controls grow for the thumb on touch
 - Touch tables: tap selects, tap again edits, multi selection is its own mode
 - Tap a table cell on touch to edit it
