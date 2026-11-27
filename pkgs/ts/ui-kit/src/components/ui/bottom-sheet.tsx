@@ -5,9 +5,16 @@
 //   motion.md           `duration-slow`, ease out in, ease in out (index.css)
 //
 // Built on vaul, itself on Radix Dialog: same portal, focus trap, Esc and
-// open / onOpenChange as Dialog and Sheet, plus drag down to dismiss and the
-// sheet riding up with the on-screen keyboard. vaul is wrapped here and
-// nowhere else, so swapping it is this one file.
+// open / onOpenChange as Dialog and Sheet, plus drag down to dismiss. vaul is
+// wrapped here and nowhere else, so swapping it is this one file.
+//
+// The sheet rides up with the on-screen keyboard on its own
+// (../../lib/on-screen-keyboard.ts), not with vaul's `repositionInputs`: that
+// one also sets the sheet's height from where its top sits as the keyboard
+// opens, and on iOS, where the page pans as it opens, a short form stretched
+// to most of the screen. Here the sheet is lifted by exactly what the
+// keyboard covers and capped to the room left above it; its height stays its
+// content's.
 //
 // One shape: anchored to the bottom, as tall as its content, capped at 90% of
 // the viewport, the body scrolling inside past that. A grab handle on top, the
@@ -22,11 +29,13 @@ import { VisuallyHidden } from "radix-ui";
 import type * as React from "react";
 import { Drawer as Vaul } from "vaul";
 
+import { useOnScreenKeyboard } from "../../lib/on-screen-keyboard";
 import { usePortalContainer } from "../../lib/portal";
 import { cn } from "../../lib/utils";
 
 function BottomSheet({ ...props }: React.ComponentProps<typeof Vaul.Root>) {
-	return <Vaul.Root {...props} />;
+	// The keyboard is the content's to follow (`BottomSheetContent`).
+	return <Vaul.Root repositionInputs={false} {...props} />;
 }
 
 function BottomSheetTrigger({ ...props }: React.ComponentProps<typeof Vaul.Trigger>) {
@@ -60,8 +69,19 @@ function BottomSheetContent({
 	label,
 	container,
 	children,
+	style,
 	...props
 }: BottomSheetContentProps) {
+	// Up with the keyboard: lifted by what it covers, at most 90% of what is
+	// left above it, no safe area under it (the keyboard is there instead).
+	const keyboard = useOnScreenKeyboard();
+	const lifted: React.CSSProperties | undefined = keyboard.inset
+		? {
+				bottom: keyboard.inset,
+				maxHeight: Math.round(keyboard.visible * 0.9),
+				paddingBottom: 0,
+			}
+		: undefined;
 	return (
 		<Vaul.Portal container={usePortalContainer(container)}>
 			<Vaul.Overlay data-slot="bottom-sheet-overlay" className="fixed inset-0 z-50 bg-bg-overlay" />
@@ -74,6 +94,8 @@ function BottomSheetContent({
 					className,
 				)}
 				{...props}
+				style={lifted ? { ...style, ...lifted } : style}
+				data-keyboard={keyboard.inset ? "" : undefined}
 				// After the props: the motion CSS keys on this slot, so a caller cannot replace it.
 				data-slot="bottom-sheet-content"
 			>
