@@ -11,14 +11,18 @@ from nu.lang.null import Null, is_null
 from ._base import check_id
 from .fabric import BlobFabric
 from .interactions import (
+    BlobAppend,
+    BlobAppendStream,
     BlobDelete,
     BlobGet,
     BlobHas,
+    BlobIsSealed,
     BlobMeta,
     BlobNewId,
     BlobOpen,
     BlobPut,
     BlobPutStream,
+    BlobSeal,
 )
 from .protocol import STEP
 
@@ -28,7 +32,7 @@ if TYPE_CHECKING:
 
     from nu.forms import Iterator
     from nu.forms.primitives import Bool
-    from nu.lang import IntArg, StrArg
+    from nu.lang import BoolArg, FloatArg, IntArg, StrArg
     from nu.lang.runtime import Runtime
 
 
@@ -68,6 +72,10 @@ class StoreRef(FabricRef):
           mutating atoms land their write through.
         - ``exists()`` asks whether a backend is bound; ``has(id)`` asks
           whether a blob is stored.
+        - A blob is append-only: a put seals it when its source ends, or
+          leaves it open (``seal=False``) to grow by ``append`` until
+          ``seal``. Readers see it as it commits; ``open(follow=True)``
+          keeps reading until it is sealed.
         - The store knows nothing about urls. Serving a store over http is
           the web layer's, which says where (``nustd.blob.http.BlobMount``).
 
@@ -128,8 +136,9 @@ class StoreRef(FabricRef):
         blob_id: StrArg | None = None,
         mime: StrArg = "",
         name: StrArg = "",
+        seal: BoolArg = True,
     ) -> BlobPut:
-        """Store bytes once and yield the new id; see ``BlobPut``.
+        """Store bytes under a fresh id and yield the id; see ``BlobPut``.
 
         Args:
             source: bytes, a ``Path``, a binary file or an iterable of bytes;
@@ -139,9 +148,12 @@ class StoreRef(FabricRef):
                 time.
             mime: the media type the bytes are served as.
             name: the file name a download offers.
+            seal: seal the blob when the source ends. False leaves it open
+                for ``append``; ``put(b"", seal=False)`` makes an empty open
+                blob.
         """
         _check_given_id(blob_id)
-        return BlobPut(self, source, blob_id, mime, name)
+        return BlobPut(self, source, blob_id, mime, name, seal)
 
     def put_stream(
         self,
@@ -150,8 +162,9 @@ class StoreRef(FabricRef):
         blob_id: StrArg | None = None,
         mime: StrArg = "",
         name: StrArg = "",
+        seal: BoolArg = True,
     ) -> BlobPutStream:
-        """Store a stream of byte pieces once and yield the new id; see ``BlobPutStream``.
+        """Store a stream of byte pieces under a fresh id and yield the id; see ``BlobPutStream``.
 
         Args:
             source: a stream term of ``bytes`` pieces, such as another store's
@@ -160,16 +173,44 @@ class StoreRef(FabricRef):
                 time.
             mime: the media type the bytes are served as.
             name: the file name a download offers.
+            seal: seal the blob when the stream ends; False leaves it open.
         """
         _check_given_id(blob_id)
-        return BlobPutStream(self, source, blob_id, mime, name)
+        return BlobPutStream(self, source, blob_id, mime, name, seal)
+
+    def append(self, blob_id: StrArg, source: object) -> BlobAppend:
+        """Add bytes to the end of an open blob; see ``BlobAppend``.
+
+        Args:
+            blob_id: the open blob's id.
+            source: bytes, a ``Path``, a binary file or an iterable of bytes;
+                under an async run also an async iterable. Not a stream term:
+                append one with ``append_stream``.
+        """
+        _check_given_id(blob_id)
+        return BlobAppend(self, blob_id, source)
+
+    def append_stream(self, blob_id: StrArg, source: object) -> BlobAppendStream:
+        """Add a stream of byte pieces to the end of an open blob; see ``BlobAppendStream``.
+
+        Args:
+            blob_id: the open blob's id.
+            source: a stream term of ``bytes`` pieces.
+        """
+        _check_given_id(blob_id)
+        return BlobAppendStream(self, blob_id, source)
+
+    def seal(self, blob_id: StrArg) -> BlobSeal:
+        """Close the blob, no more bytes will come; sealing again is a no-op. See ``BlobSeal``."""
+        _check_given_id(blob_id)
+        return BlobSeal(self, blob_id)
 
     def new_id(self) -> BlobNewId:
         """A fresh id, minted at run time, for a put inside a block that can retry."""
         return BlobNewId(self)
 
     def get(self, blob_id: StrArg) -> BlobGet:
-        """The blob's bytes, whole."""
+        """The blob's bytes, whole; on an open blob, once it is sealed."""
         _check_given_id(blob_id)
         return BlobGet(self, blob_id)
 
@@ -179,6 +220,9 @@ class StoreRef(FabricRef):
         start: IntArg = 0,
         end: IntArg | None = None,
         step: IntArg = STEP,
+        *,
+        follow: BoolArg = False,
+        idle: FloatArg | None = None,
     ) -> Iterator:
         """A range of the blob as a lazy stream of byte pieces; see ``BlobOpen``.
 
@@ -187,21 +231,33 @@ class StoreRef(FabricRef):
             start: the first byte, from 0.
             end: one past the last byte; None for the end of the blob.
             step: bytes per piece.
+            follow: on an open blob, read to the current end, then wait for
+                more until it is sealed; an ``end`` past the current size
+                waits for those bytes.
+            idle: seconds a following stream waits with no growth before
+                ``BlobIdle``; None waits for ever.
         """
         from nu.forms import Iterator
 
         _check_given_id(blob_id)
-        return Iterator(BlobOpen(self, blob_id, start, end, step))
+        return Iterator(BlobOpen(self, blob_id, start, end, step, follow, idle))
 
     def meta(self, blob_id: StrArg) -> BlobMeta:
-        """The blob's ``{id, size, mime, name, created_at}``."""
+        """The blob's ``{id, size, mime, name, created_at, sealed}``."""
         _check_given_id(blob_id)
         return BlobMeta(self, blob_id)
 
     def has(self, blob_id: StrArg) -> BlobHas:
-        """Whether a whole blob sits under the id."""
+        """Whether a blob sits under the id, open or sealed."""
         _check_given_id(blob_id)
         return BlobHas(self, blob_id)
+
+    def sealed(self, blob_id: StrArg) -> Bool:
+        """Whether the blob is sealed, as a ``Bool``; see ``BlobIsSealed``."""
+        from nu.forms.primitives import Bool
+
+        _check_given_id(blob_id)
+        return Bool(BlobIsSealed(self, blob_id))
 
     def delete(self, blob_id: StrArg) -> BlobDelete:
         """Remove the blob; a missing one is a no-op."""
