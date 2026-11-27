@@ -4,11 +4,15 @@
 
 - **nucore** (kernel) — 0.9.2
 - **nustd** (fabrics) — 0.9.2
-- **nudle** — 0.1.17
+- **nudle** — 0.2.0
 - **ui-core** — 0.2.5
-- **ui-kit** — 0.4.9
+- **ui-kit** — 0.5.0
 
 Below is the changelog for **nu** - the full commit stream. Newest first.
+
+## Unreleased
+
+- Release ui-kit 0.5.0, nudle 0.2.0
 
 ## 0.9.2 - 2026-11-28
 
