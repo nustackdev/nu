@@ -16,6 +16,8 @@ const iconButtonVariants = cva(
 	[
 		"inline-flex items-center justify-center rounded-md",
 		"cursor-default",
+		// Touch: a 44px tap area around it, unseen (index.css, `nu-tap`).
+		"nu-tap",
 		"transition-colors duration-fast ease-out",
 		"disabled:pointer-events-none disabled:opacity-50",
 		"focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",

@@ -29,6 +29,20 @@ export { Autocomplete, type AutocompleteProps } from "./components/ui/autocomple
 export { Avatar, AvatarFallback, AvatarImage } from "./components/ui/avatar";
 export { Badge, badgeVariants } from "./components/ui/badge";
 export {
+	BottomSheet,
+	BottomSheetClose,
+	BottomSheetContent,
+	type BottomSheetContentProps,
+	BottomSheetDescription,
+	BottomSheetFooter,
+	BottomSheetHeader,
+	BottomSheetItem,
+	type BottomSheetItemProps,
+	BottomSheetTitle,
+	BottomSheetTrigger,
+	bottomSheetItemVariants,
+} from "./components/ui/bottom-sheet";
+export {
 	Breadcrumb,
 	BreadcrumbEllipsis,
 	BreadcrumbItem,
@@ -526,7 +540,6 @@ export { formatBytes, formatCount, formatFullCount } from "./lib/count";
 export { ICON_NAMES, iconFor, isIconName } from "./lib/icons";
 export type { KeyBindings, KeyScope } from "./lib/keyboard";
 export { useKeyScope } from "./lib/keyboard";
-export { SAVE_DELAY, useLeaveGuard } from "./lib/save";
 export type { ProseEditorProps } from "./lib/markdown/editor";
 export { ProseEditor } from "./lib/markdown/editor";
 export type {
@@ -578,7 +591,9 @@ export {
 	type RovingOptions,
 	useRovingFocus,
 } from "./lib/roving";
+export { SAVE_DELAY, useLeaveGuard } from "./lib/save";
 export { formatShortcut, isMac, keyLabel, keySpoken, type Platform } from "./lib/shortcut";
+export { TOUCH_ATTR, TOUCH_QUERY, TouchProvider, touchDevice, useTouch } from "./lib/touch";
 export {
 	PIECE,
 	type PieceOptions,
