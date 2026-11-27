@@ -16,7 +16,7 @@
 // filling what the input leaves. With no Esc key, the input row carries a
 // Cancel. The screen is a kit-owned surface, so its input and rows are sized
 // for the thumb for real (44px, 16px text, which also keeps a phone from
-// zooming into the field), and shortcut hints are gone.
+// zooming into the field). Shortcut hints stay: showing them is the app's call.
 
 import { Command as CommandPrimitive } from "cmdk";
 import { Dialog as DialogPrimitive } from "radix-ui";
@@ -270,9 +270,6 @@ function CommandShortcut({
 	/** Key names, drawn as muted text (see `Shortcut`). Text children otherwise. */
 	keys?: readonly string[];
 }) {
-	// No keyboard to press it on a touch device.
-	const touch = useTouch();
-	if (touch) return null;
 	return (
 		<span data-slot="command-palette-shortcut" className={cn("ml-auto pl-4 text-xs tracking-wide text-text-muted", className)} {...props}>
 			{keys ? <Shortcut keys={keys} variant="ghost" /> : children}

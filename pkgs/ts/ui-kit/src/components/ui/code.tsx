@@ -26,6 +26,7 @@ import { Check, Copy } from "lucide-react";
 import type * as React from "react";
 import { useCallback, useState } from "react";
 
+import { copyText } from "../../lib/clipboard";
 import { CodeMirrorView } from "../../lib/code/view";
 import type { SubmitOn } from "../../lib/keyboard";
 import { codeBox } from "../../lib/recipes";
@@ -146,7 +147,8 @@ function Code({
 function CopyButton({ text, label = "Copy code" }: { text: string; label?: string }) {
 	const [copied, setCopied] = useState(false);
 	const copy = useCallback(() => {
-		void navigator.clipboard?.writeText(text).then(() => {
+		void copyText(text).then((ok) => {
+			if (!ok) return;
 			setCopied(true);
 			// Reset after a brief acknowledgement window.
 			window.setTimeout(() => setCopied(false), 1200);

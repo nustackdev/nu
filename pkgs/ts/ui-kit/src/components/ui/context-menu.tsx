@@ -418,9 +418,6 @@ function ContextMenuShortcut({
 	/** Key names, drawn as muted text (see `Shortcut`). Text children otherwise. */
 	keys?: readonly string[];
 }) {
-	// No keyboard to press it on a touch device.
-	const touch = useTouch();
-	if (touch) return null;
 	return (
 		<span data-slot="context-menu-shortcut" className={cn(menuShortcutClasses, className)} {...props}>
 			{keys ? <Shortcut keys={keys} variant="ghost" /> : children}

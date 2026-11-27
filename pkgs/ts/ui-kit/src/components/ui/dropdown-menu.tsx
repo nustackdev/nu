@@ -11,8 +11,9 @@
 //
 // In touch mode (../../lib/touch.ts) the same parts render a bottom sheet
 // (./menu-sheet.tsx): rows at 44px, a submenu expanding in place under its
-// row, shortcut hints gone. Placement props are dropped, the content's
-// classes style the sheet body. Callers change nothing.
+// row. Shortcut hints stay: showing them is the app's call. Placement props
+// are dropped, the content's classes style the sheet body. Callers change
+// nothing.
 
 import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import { Check, ChevronRight, Circle } from "lucide-react";
@@ -432,9 +433,6 @@ function DropdownMenuShortcut({
 	/** Key names, drawn as muted text (see `Shortcut`). Text children otherwise. */
 	keys?: readonly string[];
 }) {
-	// No keyboard to press it on a touch device.
-	const touch = useTouch();
-	if (touch) return null;
 	return (
 		<span data-slot="dropdown-menu-shortcut" className={cn(menuShortcutClasses, className)} {...props}>
 			{keys ? <Shortcut keys={keys} variant="ghost" /> : children}
