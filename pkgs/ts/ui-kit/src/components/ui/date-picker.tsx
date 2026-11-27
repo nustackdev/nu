@@ -4,7 +4,15 @@ import { Popover as PopoverPrimitive } from "radix-ui";
 import * as React from "react";
 import { DayPicker, type DateRange } from "react-day-picker";
 
+import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
+import {
+	BottomSheet,
+	BottomSheetContent,
+	BottomSheetFooter,
+	BottomSheetTrigger,
+} from "./bottom-sheet";
+import { Button } from "./button";
 import { IconButton } from "./icon-button";
 import { selectTriggerVariants } from "./select";
 
@@ -12,6 +20,12 @@ import { selectTriggerVariants } from "./select";
 // nav and grid semantics; the wrapper paints their class hooks with kit
 // tokens (design/primitives.md §DatePicker). Trigger reuses the Select
 // trigger variants so form rows read as one family.
+//
+// In touch mode (../../lib/touch.ts) the calendar opens in a bottom sheet
+// (./bottom-sheet.tsx), the pattern in popover.tsx. The sheet is a kit-owned
+// surface, so its calendar is sized for the thumb for real: 44px days, one
+// month at a time (a range picker too), a Done button under a range since a
+// pick does not close it. The trigger keeps its look.
 
 type Variant = "default" | "ghost" | "filled";
 type Size = "sm" | "md" | "lg";
@@ -86,6 +100,21 @@ const dayPickerClassNames = {
 	hidden: "invisible",
 } as const;
 
+// The calendar in a sheet: the same paint, days at 44px, the arrows' tap
+// areas grown (`nu-tap`), one month column.
+const touchDayPickerClassNames = {
+	...dayPickerClassNames,
+	root: "py-1",
+	months: "flex flex-col gap-4",
+	month_caption: "flex justify-center relative items-center h-11",
+	nav: "flex items-center gap-1 absolute inset-x-0 top-1 justify-between px-2",
+	button_previous: cn(dayPickerClassNames.button_previous, "nu-tap"),
+	button_next: cn(dayPickerClassNames.button_next, "nu-tap"),
+	weekday: "text-text-muted w-11 font-normal text-xs uppercase tracking-wider",
+	day: "size-11 text-center text-sm p-0 relative focus-within:relative focus-within:z-20",
+	day_button: dayPickerClassNames.day_button.replace("size-8", "size-11"),
+} as const;
+
 const dayPickerComponents = {
 	// Swap react-day-picker's chevron for a lucide one so the icon set stays
 	// consistent across the kit.
@@ -126,8 +155,10 @@ function TriggerSurface({
 	/** A clear button sits over the trigger's end: leave room, drop the calendar glyph. */
 	clearing?: boolean;
 }) {
+	const touch = useTouch();
+	const Trigger = touch ? BottomSheetTrigger : PopoverPrimitive.Trigger;
 	return (
-		<PopoverPrimitive.Trigger
+		<Trigger
 			{...triggerProps}
 			data-slot="date-picker-trigger"
 			data-empty={empty || undefined}
@@ -146,7 +177,7 @@ function TriggerSurface({
 		>
 			<span className="truncate">{label}</span>
 			{clearing ? null : <Calendar className="opacity-60" />}
-		</PopoverPrimitive.Trigger>
+		</Trigger>
 	);
 }
 
@@ -220,6 +251,67 @@ function popoverContentClasses(className?: string) {
 	);
 }
 
+// The calendar's surface: an anchored popover, or a bottom sheet in touch
+// mode. Root and content are one choice, made once in the picker.
+function PickerRoot({
+	touch,
+	open,
+	onOpenChange,
+	children,
+}: {
+	touch: boolean;
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	children: React.ReactNode;
+}) {
+	if (touch) {
+		return (
+			<BottomSheet open={open} onOpenChange={onOpenChange}>
+				{children}
+			</BottomSheet>
+		);
+	}
+	return (
+		<PopoverPrimitive.Root open={open} onOpenChange={onOpenChange}>
+			{children}
+		</PopoverPrimitive.Root>
+	);
+}
+
+function PickerContent({
+	touch,
+	slot,
+	label,
+	children,
+}: {
+	touch: boolean;
+	slot: string;
+	label: string;
+	children: React.ReactNode;
+}) {
+	if (touch) {
+		return (
+			<BottomSheetContent label={label}>
+				<div data-slot={slot} className="flex flex-col items-center">
+					{children}
+				</div>
+			</BottomSheetContent>
+		);
+	}
+	return (
+		<PopoverPrimitive.Portal>
+			<PopoverPrimitive.Content
+				data-slot={slot}
+				align="start"
+				sideOffset={4}
+				className={popoverContentClasses()}
+			>
+				{children}
+			</PopoverPrimitive.Content>
+		</PopoverPrimitive.Portal>
+	);
+}
+
 function DatePicker({
 	value: valueProp,
 	defaultValue = null,
@@ -258,8 +350,9 @@ function DatePicker({
 	const clearing = clearable && Boolean(value) && !disabled;
 	const clear = clearing ? () => setValue(null) : null;
 
+	const touch = useTouch();
 	const picker = (
-		<PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
+		<PickerRoot touch={touch} open={open} onOpenChange={setOpen}>
 			<TriggerSurface
 				variant={variant}
 				size={size}
@@ -275,35 +368,25 @@ function DatePicker({
 				triggerProps={clearKeys(triggerProps, clear)}
 				clearing={clearing}
 			/>
-			<PopoverPrimitive.Portal>
-				<PopoverPrimitive.Content
-					data-slot="date-picker-content"
-					align="start"
-					sideOffset={4}
-					className={popoverContentClasses()}
-				>
-					<DayPicker
-						mode="single"
-						selected={value ?? undefined}
-						defaultMonth={value ?? undefined}
-						onSelect={(next) => {
-							setValue(next ?? null);
-							if (next) setOpen(false);
-						}}
-						disabled={
-							min || max
-								? [
-										...(min ? [{ before: min }] : []),
-										...(max ? [{ after: max }] : []),
-									]
-								: undefined
-						}
-						classNames={dayPickerClassNames}
-						components={dayPickerComponents}
-					/>
-				</PopoverPrimitive.Content>
-			</PopoverPrimitive.Portal>
-		</PopoverPrimitive.Root>
+			<PickerContent touch={touch} slot="date-picker-content" label={ariaLabel ?? placeholder}>
+				<DayPicker
+					mode="single"
+					selected={value ?? undefined}
+					defaultMonth={value ?? undefined}
+					onSelect={(next) => {
+						setValue(next ?? null);
+						if (next) setOpen(false);
+					}}
+					disabled={
+						min || max
+							? [...(min ? [{ before: min }] : []), ...(max ? [{ after: max }] : [])]
+							: undefined
+					}
+					classNames={touch ? touchDayPickerClassNames : dayPickerClassNames}
+					components={dayPickerComponents}
+				/>
+			</PickerContent>
+		</PickerRoot>
 	);
 	if (!clearable) return picker;
 	return (
@@ -357,8 +440,9 @@ function DateRangePicker({
 	const clearing = clearable && !empty && !disabled;
 	const clear = clearing ? () => setValue(null) : null;
 
+	const touch = useTouch();
 	const picker = (
-		<PopoverPrimitive.Root open={open} onOpenChange={setOpen}>
+		<PickerRoot touch={touch} open={open} onOpenChange={setOpen}>
 			<TriggerSurface
 				variant={variant}
 				size={size}
@@ -374,33 +458,34 @@ function DateRangePicker({
 				triggerProps={clearKeys(triggerProps, clear)}
 				clearing={clearing}
 			/>
-			<PopoverPrimitive.Portal>
-				<PopoverPrimitive.Content
-					data-slot="date-range-picker-content"
-					align="start"
-					sideOffset={4}
-					className={popoverContentClasses()}
-				>
-					<DayPicker
-						mode="range"
-						numberOfMonths={2}
-						selected={value ?? undefined}
-						defaultMonth={value?.from}
-						onSelect={(next) => setValue(next ?? null)}
-						disabled={
-							min || max
-								? [
-										...(min ? [{ before: min }] : []),
-										...(max ? [{ after: max }] : []),
-									]
-								: undefined
-						}
-						classNames={dayPickerClassNames}
-						components={dayPickerComponents}
-					/>
-				</PopoverPrimitive.Content>
-			</PopoverPrimitive.Portal>
-		</PopoverPrimitive.Root>
+			<PickerContent
+				touch={touch}
+				slot="date-range-picker-content"
+				label={ariaLabel ?? placeholder}
+			>
+				<DayPicker
+					mode="range"
+					numberOfMonths={touch ? 1 : 2}
+					selected={value ?? undefined}
+					defaultMonth={value?.from}
+					onSelect={(next) => setValue(next ?? null)}
+					disabled={
+						min || max
+							? [...(min ? [{ before: min }] : []), ...(max ? [{ after: max }] : [])]
+							: undefined
+					}
+					classNames={touch ? touchDayPickerClassNames : dayPickerClassNames}
+					components={dayPickerComponents}
+				/>
+				{touch ? (
+					<BottomSheetFooter className="w-full">
+						<Button size="lg" onClick={() => setOpen(false)}>
+							Done
+						</Button>
+					</BottomSheetFooter>
+				) : null}
+			</PickerContent>
+		</PickerRoot>
 	);
 	if (!clearable) return picker;
 	return (

@@ -86,6 +86,33 @@ export const Matrix: StoryObj = {
 	),
 };
 
+// Opened at load with a pick: in touch mode (a phone, or the Touch toolbar)
+// the options are rows of a bottom sheet, on desktop the anchored list.
+export const Open: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<Select defaultOpen defaultValue="banana">
+				<SelectTrigger className="w-48">
+					<SelectValue placeholder="Pick a fruit" />
+				</SelectTrigger>
+				<SelectContent>
+					<SelectGroup>
+						<SelectLabel>Fruits</SelectLabel>
+						<SelectItem value="apple">Apple</SelectItem>
+						<SelectItem value="banana">Banana</SelectItem>
+						<SelectItem value="cherry">Cherry</SelectItem>
+						<SelectSeparator />
+						<SelectItem value="grape">Grape</SelectItem>
+						<SelectItem value="mango" disabled>
+							Mango
+						</SelectItem>
+					</SelectGroup>
+				</SelectContent>
+			</Select>
+		</div>
+	),
+};
+
 const meta: Meta = {
 	title: "UI/Select",
 };

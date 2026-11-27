@@ -54,6 +54,38 @@ export const Matrix: StoryObj = {
 	),
 };
 
+// Opened at load: in touch mode the calendar in a bottom sheet with 44px
+// days, on desktop the anchored popover.
+export const Open: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<div className="w-56">
+				<DatePicker defaultValue={new Date(2026, 10, 12)} clearable />
+			</div>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		canvasElement.querySelector<HTMLElement>('[data-slot="date-picker-trigger"]')?.click();
+	},
+};
+
+// A range, opened at load: one month and a Done button in touch mode, two
+// months side by side on desktop.
+export const RangeOpen: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<div className="w-72">
+				<DateRangePicker
+					defaultValue={{ from: new Date(2026, 10, 9), to: new Date(2026, 10, 14) }}
+				/>
+			</div>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		canvasElement.querySelector<HTMLElement>('[data-slot="date-picker-trigger"]')?.click();
+	},
+};
+
 const meta: Meta = {
 	title: "UI/DatePicker",
 };

@@ -67,6 +67,21 @@ export const Matrix: StoryObj = {
 	),
 };
 
+// Opened at load: in touch mode the picker fills a bottom sheet, on desktop
+// the anchored popover.
+export const Open: StoryObj = {
+	render: () => (
+		<div className="p-8">
+			<div className="w-44">
+				<ColorPicker defaultValue="#8946db" swatches="palette" aria-label="Accent" />
+			</div>
+		</div>
+	),
+	play: async ({ canvasElement }) => {
+		canvasElement.querySelector<HTMLElement>('[data-slot="color-picker-trigger"]')?.click();
+	},
+};
+
 const meta: Meta = {
 	title: "UI/ColorPicker",
 };

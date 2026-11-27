@@ -7,6 +7,10 @@ import { cn } from "../../lib/utils";
 // Multi-value input rendered as chip tokens. No Radix equivalent
 // (design/primitives.md §TagInput). Wrapper mirrors Input variants so it
 // sits flush next to other form controls.
+//
+// In touch mode a chip's remove button keeps its look and takes a 44px tap
+// area (`nu-tap`, index.css); the field flows on as chips wrap, nothing else
+// changes.
 
 const tagInputVariants = cva(
 	[
@@ -161,7 +165,7 @@ function TagInput({
 						aria-label={`Remove ${tag}`}
 						disabled={disabled}
 						className={cn(
-							"inline-flex items-center justify-center rounded-sm text-text-secondary hover:text-text-primary",
+							"nu-tap inline-flex items-center justify-center rounded-sm text-text-secondary hover:text-text-primary",
 							"focus:outline-hidden focus-visible:ring-2 focus-visible:ring-ring",
 							"disabled:pointer-events-none",
 						)}
