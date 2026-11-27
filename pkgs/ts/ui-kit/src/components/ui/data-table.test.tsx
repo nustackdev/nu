@@ -1220,9 +1220,9 @@ describe("DataTable on touch", () => {
 		);
 	const sheet = () => document.querySelector('[data-slot="bottom-sheet-content"]');
 	const sheetTexts = () =>
-		[...document.querySelectorAll('[data-slot="bottom-sheet-item"]')].map((b) => b.textContent);
+		[...document.querySelectorAll('[data-slot="menu-sheet-item"]')].map((b) => b.textContent);
 	const sheetItem = (text: string) => {
-		const el = [...document.querySelectorAll<HTMLElement>('[data-slot="bottom-sheet-item"]')].find(
+		const el = [...document.querySelectorAll<HTMLElement>('[data-slot="menu-sheet-item"]')].find(
 			(b) => b.textContent === text,
 		);
 		if (!el) throw new Error(`no sheet item ${text}`);

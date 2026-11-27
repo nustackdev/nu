@@ -41,9 +41,9 @@
 // In touch mode (../../lib/touch.ts) there is no pointer to follow: the host
 // shows the handles on the tapped cell, each a ⋯ (the grips promise a drag
 // that touch does not do), and a handle's menu opens as a bottom sheet
-// (`TableMenuSheet`), the rows the same items in the same words, a submenu
-// laid out as a titled group, radio choices as rows with a check. Long-press
-// on a cell is the host's other way in, the same sheet.
+// (`TableMenuSheet`): the same items in the same words, drawn by the kit's
+// menu sheet (./menu-sheet.tsx) like any touch DropdownMenu. Long-press on a
+// cell is the host's other way in, the same sheet.
 //
 // ## Keyboard
 //
@@ -64,7 +64,6 @@ import {
 	BetweenHorizontalStart,
 	BetweenVerticalEnd,
 	BetweenVerticalStart,
-	Check,
 	Ellipsis,
 	EllipsisVertical,
 	GripHorizontal,
@@ -86,7 +85,7 @@ import {
 import { tableHandle } from "../../lib/recipes";
 import { useTouch } from "../../lib/touch";
 import { cn } from "../../lib/utils";
-import { BottomSheet, BottomSheetContent, BottomSheetItem } from "./bottom-sheet";
+import { BottomSheetContent } from "./bottom-sheet";
 import {
 	ContextMenuItem,
 	ContextMenuRadioGroup,
@@ -109,6 +108,16 @@ import {
 	DropdownMenuTrigger,
 } from "./dropdown-menu";
 import { IconButton } from "./icon-button";
+import {
+	MenuSheet,
+	MenuSheetItem,
+	MenuSheetRadioGroup,
+	MenuSheetRadioItem,
+	MenuSheetSeparator,
+	MenuSheetSub,
+	MenuSheetSubContent,
+	MenuSheetSubTrigger,
+} from "./menu-sheet";
 import type { ColumnAlign } from "./table";
 
 /* ================================ model ================================== */
@@ -387,6 +396,18 @@ const CONTEXT: Parts = {
 	SubContent: ContextMenuSubContent,
 };
 
+// Touch mode: the rows of the kit's menu sheet, the ones a DropdownMenu or a
+// ContextMenu turns into on touch, so a table's menu reads like every other.
+const SHEET: Parts = {
+	Item: MenuSheetItem,
+	Separator: MenuSheetSeparator,
+	RadioGroup: MenuSheetRadioGroup,
+	RadioItem: MenuSheetRadioItem,
+	Sub: MenuSheetSub,
+	SubTrigger: MenuSheetSubTrigger,
+	SubContent: MenuSheetSubContent,
+};
+
 function renderItems(P: Parts, items: readonly TableMenuItem[]): React.ReactNode {
 	return items.map((item) => {
 		switch (item.type) {
@@ -444,77 +465,6 @@ export function TableMenuContextItems({ items }: { items: readonly TableMenuItem
 
 /* ================================ sheet ================================== */
 
-/** Items split at their separators, each run a group. */
-function groupsOf(items: readonly TableMenuItem[]): TableMenuItem[][] {
-	const out: TableMenuItem[][] = [[]];
-	for (const item of items) {
-		if (item.type === "separator") out.push([]);
-		else out[out.length - 1]?.push(item);
-	}
-	return out.filter((g) => g.length > 0);
-}
-
-/** The rows of a sheet for some items; `done` closes it once one is picked. */
-function sheetRows(items: readonly TableMenuItem[], done: () => void): React.ReactNode {
-	return items.map((item) => {
-		switch (item.type) {
-			case "separator":
-				return null;
-			case "radio":
-				return (
-					<div key={item.id}>
-						{item.options.map((o) => {
-							const on = o.value === item.value;
-							return (
-								<BottomSheetItem
-									key={o.value}
-									role="menuitemradio"
-									aria-checked={on}
-									selected={on}
-									onClick={() => {
-										if (!on) item.onValueChange(o.value);
-										done();
-									}}
-								>
-									<span className="flex-1">{o.label}</span>
-									{on ? <Check aria-hidden="true" /> : null}
-								</BottomSheetItem>
-							);
-						})}
-					</div>
-				);
-			case "sub":
-				// No submenus on a sheet: the sub's items as a group under its name.
-				return (
-					<div key={item.id}>
-						<div className="pt-1 pb-0.5 text-xs font-medium uppercase tracking-wide text-text-muted">
-							{item.label}
-						</div>
-						{sheetRows(item.items, done)}
-					</div>
-				);
-			default: {
-				const Icon = item.icon;
-				return (
-					<BottomSheetItem
-						key={item.id}
-						role="menuitem"
-						variant={item.danger ? "danger" : "default"}
-						disabled={item.disabled}
-						onClick={() => {
-							item.onSelect();
-							done();
-						}}
-					>
-						{Icon ? <Icon aria-hidden="true" /> : null}
-						{item.label}
-					</BottomSheetItem>
-				);
-			}
-		}
-	});
-}
-
 export type TableMenuSheetProps = {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
@@ -529,8 +479,9 @@ export type TableMenuSheetProps = {
 
 /**
  * A table menu as a bottom sheet: what a handle or a long-press opens in
- * touch mode. Picking a row runs it and closes the sheet; groups keep the
- * menu's separators as a gap with a line.
+ * touch mode. The kit's menu sheet rows (./menu-sheet.tsx), titled with what
+ * the menu acts on: picking a row runs it and closes the sheet, a submenu
+ * opens in place under its row.
  */
 export function TableMenuSheet({
 	open,
@@ -540,25 +491,17 @@ export function TableMenuSheet({
 	label,
 	onCloseAutoFocus,
 }: TableMenuSheetProps) {
-	const done = () => onOpenChange(false);
 	return (
-		<BottomSheet open={open} onOpenChange={onOpenChange}>
-			<BottomSheetContent title={title} label={label} onCloseAutoFocus={onCloseAutoFocus}>
-				<div role="menu" aria-label={label}>
-					{groupsOf(items).map((group, i) => (
-						<div
-							// Groups never reorder while the sheet is open.
-							// biome-ignore lint/suspicious/noArrayIndexKey: positional groups
-							key={i}
-							data-slot="table-menu-sheet-group"
-							className={cn(i > 0 && "mt-2 border-t border-border-default pt-1")}
-						>
-							{sheetRows(group, done)}
-						</div>
-					))}
-				</div>
+		<MenuSheet open={open} onOpenChange={onOpenChange}>
+			<BottomSheetContent
+				title={title}
+				label={label}
+				onCloseAutoFocus={onCloseAutoFocus}
+				bodyClassName="w-full min-w-0 max-w-none"
+			>
+				{renderItems(SHEET, items)}
 			</BottomSheetContent>
-		</BottomSheet>
+		</MenuSheet>
 	);
 }
 
